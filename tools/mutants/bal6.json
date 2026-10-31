@@ -200,8 +200,8 @@
   {
     "name": "BAL6-GAUNTLETS-the-plate-offset-off-by-one",
     "file": "src/systems/item/itemTemplates.js",
-    "old": "conditionMultipliersByMaterial[plateMetal(mat)]",
-    "new": "conditionMultipliersByMaterial[plateMetal(mat) + 1]",
+    "old": "      max = Math.trunc((max * (conditionMultipliersByMaterial[plateMetal(mat)] ?? 4)) / 4); // BAL6-GAUNTLETS: the plate decode's one home (armorMaterials.js plateMetal)",
+    "new": "      max = Math.trunc((max * (conditionMultipliersByMaterial[plateMetal(mat) + 1] ?? 4)) / 4); // BAL6-GAUNTLETS: the plate decode's one home (armorMaterials.js plateMetal)",
     "tests": [
       "test/systems/audit23_systems.test.js"
     ]

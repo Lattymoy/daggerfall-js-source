@@ -30,7 +30,7 @@ Materials Bag tells the listeners as if it were new. So the pack is watched, not
   is not announced if the player switches to Enhanced Plus later.
 - **The mark.** A piece that could ever announce (`markable` - a weapon that is not ammunition, armour, clothing,
   jewellery, an artifact, a card) gets `acquired: true` the first frame it stands in one of the lists. An unmarked one
-  there is an arrival. The mark is a declared item field (`itemFields.js:"acquired: bool(),"`), so it rides the save and
+  there is an arrival. The mark is a declared item field (`itemFields.js:"acquired: bool()"`), so it rides the save and
   the house's chests: a piece taken back out of the player's own storage, or picked back up off the ground, is not new.
 - **The receiver's mark.** Like `equipSlot` and `questItem`, the mark is stripped off the wire
   (`systems/loot/loot.js:"for (const k of RECEIVER_MARKS) delete out[k];"`) and off the zone's death record

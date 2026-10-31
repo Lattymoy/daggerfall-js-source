@@ -332,8 +332,8 @@
   {
     "name": "PROF2-37-ingots-undyed",
     "file": "src/systems/item/itemTemplates.js",
-    "old": "  if (Number.isFinite(t.iconDye)) return { archive, record, dye: t.iconDye, dyeTarget: DYE_TARGETS.WeaponsAndArmor };\n",
-    "new": "",
+    "old": "  if (Number.isFinite(t.iconDye)) return { archive, record, dye: t.iconDye, dyeTarget: DYE_TARGETS.WeaponsAndArmor };\n  // PROF3: a Repair Kit's picture is the Warhammer's, dyed by the metal it mends (the item's `kitMetal`, profTemplates.js kitDye)",
+    "new": "  // PROF3: a Repair Kit's picture is the Warhammer's, dyed by the metal it mends (the item's `kitMetal`, profTemplates.js kitDye)",
     "tests": [
       "test/net/prof2_client.test.js"
     ]

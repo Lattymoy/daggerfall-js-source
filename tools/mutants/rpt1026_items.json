@@ -29,8 +29,8 @@
   {
     "name": "HELD-OUT-every-entity",
     "file": "src/systems/item/heldOut.js",
-    "old": "    if (h.entity !== entity) continue;",
-    "new": "",
+    "old": "    if (h.entity !== entity) continue;\n    let list = null;",
+    "new": "    let list = null;",
     "tests": [
       "test/systems/rpt1026_items.test.js"
     ]

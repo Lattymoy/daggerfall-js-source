@@ -395,8 +395,8 @@
   {
     "name": "NM-metal-twice",
     "file": "src/systems/item/itemInfo.js",
-    "old": "|| namesItsMetal(item, material)) return name;",
-    "new": ") return name;",
+    "old": "  if (!material || withholdsMaterialPrefix(item) || namesItsMetal(item, material)) return name;",
+    "new": "  if (!material || withholdsMaterialPrefix(item)) return name;",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -404,8 +404,8 @@
   {
     "name": "NM-the-whole-name-asked",
     "file": "src/systems/item/itemInfo.js",
-    "old": "String(templateText(templateByIndex(item?.templateIndex)) ?? '').toLowerCase().startsWith(",
-    "new": "String(itemNameParts(item).name ?? '').toLowerCase().startsWith(",
+    "old": "  String(templateText(templateByIndex(item?.templateIndex)) ?? '')",
+    "new": "  String(itemNameParts(item).name ?? '')",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]

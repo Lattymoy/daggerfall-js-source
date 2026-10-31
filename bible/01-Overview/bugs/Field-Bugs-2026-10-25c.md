@@ -42,7 +42,7 @@ THE CHANGE:
   list alone is read for puts (a list some load replaced is not, and carries no mark). A leaf module: the planner reaches
   it without the room modules, whose import graph reaches back to the windows.
 - `planDropGold` asks whether the remote list is marked (`shared`, by default `isRoomCarried(remote)`) and clamps the
-  amount to the room left on the gold stack it lands on (`itemTransfer.js:"export function sharedGoldRoom(remote) {"`:
+  amount to the room left on the gold stack it lands on (`itemTransfer.js:"export function sharedGoldRoom"`:
   `LOOT_STACK_MAX` less the stack `addItem` merges into - PORTAL-BULK's `portalStoneRoom` law, for coin), with a box that
   names the room left, as the wagon's clamp does; a full stack refuses (`sharedGoldFull`) and says so. Both windows
   already show the plan's notice, so neither changed. The ground, the wagon, the bag, a companion's pack, a home's

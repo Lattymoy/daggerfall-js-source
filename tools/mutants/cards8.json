@@ -44,8 +44,8 @@
   {
     "name": "C8-name-stored",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  if (isIliacCard(item)) return iliacCardName(item);   // CARDS8",
-    "new": "  if (false) return iliacCardName(item);   // CARDS8",
+    "old": "  if (isIliacCard(item)) return iliacCardName(item); // CARDS8: \"Card: Rat\" - the catalog's, never stored (a split mints a fresh record)",
+    "new": "  if (false) return iliacCardName(item); // CARDS8: \"Card: Rat\" - the catalog's, never stored (a split mints a fresh record)",
     "tests": [
       "test/systems/auditrealm.test.js",
       "test/net/iliac/cards7_rules.test.js",
@@ -58,8 +58,8 @@
   {
     "name": "C8-lines-unsaid",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  else if (isIliacCard(item)) for (const text of iliacCardLines(item)) out.push({ text, center: true });   // CARDS8\n",
-    "new": "",
+    "old": "  else if (isIliacCard(item))\n    for (const text of iliacCardLines(item)) out.push({ text, center: true }); // CARDS8\n  else if (isCardBinder(item))",
+    "new": "  else if (isCardBinder(item))",
     "tests": [
       "test/systems/auditrealm.test.js",
       "test/net/iliac/cards7_rules.test.js",

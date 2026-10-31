@@ -135,7 +135,7 @@ struck and one "Daedra's Heart" row ("3.00 kg", if read right, is three hearts, 
 FIXED. HEART-KEPT (B1, a return to DFU's law): a foe's clone says it is one (`questClone`, declared in `itemFields.js`,
 `foe.js:"return this.itemQueue.map((it) => (it?.questItem ? { ...it, questClone: true } : { ...it }));"`), and the read of
 a quest's own record in the pack is one law beside keepsQuestItem
-(`itemTransfer.js:"export function heldQuestRecordIndex(items, dfItem, { clones = false } = {}) {"`) - the record, or a
+(`itemTransfer.js:"export function heldQuestRecordIndex"`) - the record, or a
 restored copy that is no clone; playerHasItem never takes a clone for it
 (`world.js:"playerHasItem: (dfItem) => _heldItemIndex(dfItem, false) >= 0,"`), and Item.Dispose's sweep
 (removeItemFromPlayer) still finds one, own copy first. bootWorld 6 logical lines out (36,364 -> 36,358), its ceiling

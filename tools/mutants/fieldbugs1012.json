@@ -22,7 +22,7 @@
     "name": "RING-HOLD-the-end-unnoticed",
     "file": "src/systems/item/itemIds.js",
     "note": "AUTO-HOLD (PIN MOVED): re-aimed by content and renamed (it was -the-review-unnoticed) - the timed hold's notice, its piece named (AUDIT AUTO-HOLD)",
-    "old": "  if (now === 'law' && why?.code === 'until' && Number.isSafeInteger(why.until)) return tradeHeldUntilNotice(/** @type {number} */ (why.until), typeof name === 'string' && name ? name : null);",
+    "old": "  if (now === 'law' && why?.code === 'until' && Number.isSafeInteger(why.until))\n    return tradeHeldUntilNotice(/** @type {number} */ (why.until), typeof name === 'string' && name ? name : null);",
     "new": "",
     "tests": [
       "test/systems/item/ringhold.test.js"

@@ -47,8 +47,8 @@
   {
     "name": "FB1016-STOLEN-GOODS-take-unmarked",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "(moved) => { takenFromKeeping(stolenFrom, item, moved); returnedToKeeping(returnTo, item, moved); },",
-    "new": "(moved) => { returnedToKeeping(returnTo, item, moved); },",
+    "old": "      takenFromKeeping(stolenFrom, item, moved);\n      returnedToKeeping(returnTo, item, moved);",
+    "new": "      returnedToKeeping(returnTo, item, moved);",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ],
@@ -57,8 +57,8 @@
   {
     "name": "FB1016-STOLEN-GOODS-marked-after-the-merge",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "(moved) => { takenFromKeeping(stolenFrom, item, moved); returnedToKeeping(returnTo, item, moved); },\n    (moved, held) => landedInKeeping(returnTo, item, moved, held));",
-    "new": "(moved) => { returnedToKeeping(returnTo, item, moved); },\n    (moved, held) => { landedInKeeping(returnTo, item, moved, held); takenFromKeeping(stolenFrom, item, held); });",
+    "old": "      takenFromKeeping(stolenFrom, item, moved);\n      returnedToKeeping(returnTo, item, moved);\n    },\n    (moved, held) => landedInKeeping(returnTo, item, moved, held),",
+    "new": "      returnedToKeeping(returnTo, item, moved);\n    },\n    (moved, held) => {\n      landedInKeeping(returnTo, item, moved, held);\n      takenFromKeeping(stolenFrom, item, held);\n    },",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ],
@@ -67,8 +67,8 @@
   {
     "name": "FB1016-STOLEN-GOODS-put-back-kept",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "(moved) => { takenFromKeeping(stolenFrom, item, moved); returnedToKeeping(returnTo, item, moved); },",
-    "new": "(moved) => { takenFromKeeping(stolenFrom, item, moved); },",
+    "old": "      returnedToKeeping(returnTo, item, moved);\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ],
@@ -164,8 +164,8 @@
   {
     "name": "FB1016-STOLEN-GOODS-undeclared",
     "file": "src/systems/item/itemFields.js",
-    "old": "  stolen: bool(),\n",
-    "new": "",
+    "old": "  stolen: bool(),\n  // SELL-AS-FOUND (AUDIT ECON O1): the condition the world handed a piece over at - Roleplay & Realism: Items' rolls on",
+    "new": "  // SELL-AS-FOUND (AUDIT ECON O1): the condition the world handed a piece over at - Roleplay & Realism: Items' rolls on",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "FB1016B-SG-AUDIT-S1-the-split-source-unasked",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "(moved) => { takenFromKeeping(stolenFrom, item, moved);",
-    "new": "(moved) => { takenFromKeeping(stolenFrom, moved, moved);",
+    "old": "      takenFromKeeping(stolenFrom, item, moved);",
+    "new": "      takenFromKeeping(stolenFrom, moved, moved);",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "FB1016B-SG-AUDIT-S1-where-it-landed-unasked",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "    (moved, held) => landedInKeeping(returnTo, item, moved, held));",
-    "new": "    (moved, held) => null);",
+    "old": "    (moved, held) => landedInKeeping(returnTo, item, moved, held),",
+    "new": "    (moved, held) => null,",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "FB1016B-SG-AUDIT-S1-the-coin-uncounted",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "    takenFromKeeping(stolenFrom, item, coin);",
-    "new": "    void coin;",
+    "old": "    takenFromKeeping(stolenFrom, item, coin); // STOLEN-GOODS AUDIT S1: the owner's coin out of their keeping - the theft's basket counts a handful too; the purse it lands in is a number, and carries no mark",
+    "new": "    void coin; // STOLEN-GOODS AUDIT S1: the owner's coin out of their keeping - the theft's basket counts a handful too; the purse it lands in is a number, and carries no mark",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]

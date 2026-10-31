@@ -93,8 +93,8 @@
   {
     "name": "ACCOMPARE-wdm-min-without-its-material",
     "file": "src/systems/item/itemInfo.js",
-    "old": "return [weaponMinDamage(item.templateIndex) + mod, weaponMaxDamage(item.templateIndex) + mod];",
-    "new": "return [weaponMinDamage(item.templateIndex), weaponMaxDamage(item.templateIndex) + mod];",
+    "old": "  return [weaponMinDamage(item.templateIndex) + mod, weaponMaxDamage(item.templateIndex) + mod];",
+    "new": "  return [weaponMinDamage(item.templateIndex), weaponMaxDamage(item.templateIndex) + mod];",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]

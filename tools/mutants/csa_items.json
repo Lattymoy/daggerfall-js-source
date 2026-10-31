@@ -94,8 +94,8 @@
   {
     "name": "CSA-H-registry-dup",
     "file": "src/systems/item/itemTemplates.js",
-    "old": "  if (_otherModItems.some((r) => r.templateIndex === templateIndex && r.group === group)) return;\n",
-    "new": "",
+    "old": "  if (_otherModItems.some((r) => r.templateIndex === templateIndex && r.group === group)) return;\n  _otherModItems.push({ templateIndex, group, isOn });",
+    "new": "  _otherModItems.push({ templateIndex, group, isOn });",
     "tests": [
       "test/systems/csa_items.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "CSA-H-registry-off-ignored",
     "file": "src/systems/item/itemTemplates.js",
-    "old": "const otherModItemsForGroup = (group) => _otherModItems.filter((r) => r.group === group && r.isOn())",
-    "new": "const otherModItemsForGroup = (group) => _otherModItems.filter((r) => r.group === group)",
+    "old": "const otherModItemsForGroup = (group) =>\n  _otherModItems.filter((r) => r.group === group && r.isOn()).map((r) => r.templateIndex);",
+    "new": "const otherModItemsForGroup = (group) => _otherModItems.filter((r) => r.group === group).map((r) => r.templateIndex);",
     "tests": [
       "test/systems/csa_items.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "CSA-H-registry-dropped",
     "file": "src/systems/item/itemTemplates.js",
-    "old": "  registerCustomItemsForGroup(otherModItemsForGroup);\n",
-    "new": "",
+    "old": "  registerCustomItemsForGroup(otherModItemsForGroup);\n}",
+    "new": "}",
     "tests": [
       "test/systems/csa_items.test.js"
     ]

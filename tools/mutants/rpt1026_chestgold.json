@@ -2,8 +2,8 @@
   {
     "name": "CHESTGOLD-click-pays-purse",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "if (toPlayer && isGoldPieces(item) && from?.pileCoins !== true) {",
-    "new": "if (toPlayer && isGoldPieces(item)) {",
+    "old": "  if (toPlayer && isGoldPieces(item) && from?.pileCoins !== true) {",
+    "new": "  if (toPlayer && isGoldPieces(item)) {",
     "tests": [
       "test/systems/decor/rpt1026_chestgold.test.js"
     ],

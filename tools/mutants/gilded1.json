@@ -156,8 +156,8 @@
   {
     "name": "GILDED1-the-metal-prefix",
     "file": "src/systems/item/itemInfo.js",
-    "old": "return !itemIsIdentified(item) || !!item?.artifact || !!item?.legendary || !!item?.aetheric || !!item?.gilded;",
-    "new": "return !itemIsIdentified(item) || !!item?.artifact || !!item?.legendary || !!item?.aetheric;",
+    "old": "  return !itemIsIdentified(item) || !!item?.artifact || !!item?.legendary || !!item?.aetheric || !!item?.gilded;",
+    "new": "  return !itemIsIdentified(item) || !!item?.artifact || !!item?.legendary || !!item?.aetheric;",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]

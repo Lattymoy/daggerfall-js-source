@@ -12,8 +12,8 @@
   {
     "name": "HANDWRAPS-shelf-metal",
     "file": "src/systems/item/itemTemplates.js",
-    "old": "  if (named.templateIndex === HAND_WRAPS_TEMPLATE) named.material = 0;",
-    "new": "",
+    "old": "  if (named.templateIndex === HAND_WRAPS_TEMPLATE) named.material = 0; // HAND-WRAPS: cloth, no metal (a shelf mints at a random one)",
+    "new": "  // HAND-WRAPS: cloth, no metal (a shelf mints at a random one)",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "HANDWRAPS-metal-named",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  if (item?.group === 'Weapons' && !isAmmunition(item) && !isHandWraps(item)) return materialText(item);",
-    "new": "  if (item?.group === 'Weapons' && !isAmmunition(item)) return materialText(item);",
+    "old": "  if (item?.group === 'Weapons' && !isAmmunition(item) && !isHandWraps(item)) return materialText(item); // HAND-WRAPS: cloth, no metal",
+    "new": "  if (item?.group === 'Weapons' && !isAmmunition(item)) return materialText(item); // HAND-WRAPS: cloth, no metal",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "HANDWRAPS-damage-row",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  item?.group === 'Weapons' && !isAmmunition(item) && !isHandWraps(item)   // HAND-WRAPS",
-    "new": "  item?.group === 'Weapons' && !isAmmunition(item)   // HAND-WRAPS",
+    "old": "  item?.group === 'Weapons' && !isAmmunition(item) && !isHandWraps(item) // HAND-WRAPS: the fists' damage, no weapon's",
+    "new": "  item?.group === 'Weapons' && !isAmmunition(item) // HAND-WRAPS: the fists' damage, no weapon's",
     "tests": [
       "test/combat/handwraps.test.js"
     ],

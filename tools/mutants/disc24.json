@@ -38,8 +38,8 @@
   {
     "name": "D24B-horse-borrowed-again",
     "file": "src/systems/item/itemTemplates.js",
-    "old": ".filter((i) => i !== TRANSPORT_HORSE)",
-    "new": ".filter(() => true)",
+    "old": "const BORROWED_ART_INDICES = new Set(\n  (GROUP_TEMPLATE_INDICES.Transportation ?? []).filter((i) => i !== TRANSPORT_HORSE),\n);",
+    "new": "const BORROWED_ART_INDICES = new Set((GROUP_TEMPLATE_INDICES.Transportation ?? []).filter(() => true));",
     "tests": [
       "test/ui/enhanced/disc24b_transport_pictures.test.js",
       "test/systems/audit63_items_loot.test.js"
@@ -48,8 +48,8 @@
   {
     "name": "D24B-cart-has-no-model",
     "file": "src/systems/item/itemTemplates.js",
-    "old": "  if (item?.templateIndex === TRANSPORT_SMALL_CART) return WAGON_KINDS[wagonKindOf(item)].icon;\n",
-    "new": "",
+    "old": "  if (item?.templateIndex === TRANSPORT_SMALL_CART) return WAGON_KINDS[wagonKindOf(item)].icon;\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/ui/enhanced/disc24b_transport_pictures.test.js",
       "test/systems/audit63_items_loot.test.js"

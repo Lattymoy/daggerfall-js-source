@@ -1,7 +1,48 @@
 [
-  {"name": "AUDIT-RPT1026-G1-the-oldest-bodies-first", "file": "src/scenes/dungeonContext.js", "old": ".sort((a, b) => (a.dead ? 1 : 0) - (b.dead ? 1 : 0) || (a.dead ? (b._diedAt ?? 0) - (a._diedAt ?? 0) : 0))", "new": ".sort((a, b) => (a.dead ? 1 : 0) - (b.dead ? 1 : 0))", "tests": ["test/net/audit_rpt1026_items.test.js"], "why": "the frame as RPT1026-ITEMS BODY-CAP left it: the room's numbering, so the cap sheds the body that has just fallen"},
-  {"name": "AUDIT-RPT1026-G1-the-earliest-dead-first", "file": "src/scenes/dungeonContext.js", "old": "(a.dead ? (b._diedAt ?? 0) - (a._diedAt ?? 0) : 0)", "new": "(a.dead ? (a._diedAt ?? 0) - (b._diedAt ?? 0) : 0)", "tests": ["test/net/audit_rpt1026_items.test.js"]},
-  {"name": "AUDIT-RPT1026-G2-the-rooms-rule-not-forced", "file": "src/systems/online/onlineLane.js", "old": "Controls: Object.freeze({ AllowMagicRepairs: 'True' }),", "new": "Controls: Object.freeze({}),", "tests": ["test/systems/audit_rpt1026_items_kept.test.js"]},
-  {"name": "AUDIT-RPT1026-G2-the-host-ctx-reads-no-setting", "file": "src/scenes/hostEnchant.js", "old": "get allowMagicRepairs() { return getBool('Controls', 'AllowMagicRepairs'); },", "new": "get allowMagicRepairs() { return false; },", "tests": ["test/systems/audit_rpt1026_items_kept.test.js"]},
-  {"name": "AUDIT-RPT1026-G5-the-held-lot-not-read-against-the-pack", "file": "src/systems/item/heldOut.js", "old": " && !pack.includes(it) && ", "new": " && ", "tests": ["test/systems/audit_rpt1026_items_heldout.test.js"]}
+  {
+    "name": "AUDIT-RPT1026-G1-the-oldest-bodies-first",
+    "file": "src/scenes/dungeonContext.js",
+    "old": ".sort((a, b) => (a.dead ? 1 : 0) - (b.dead ? 1 : 0) || (a.dead ? (b._diedAt ?? 0) - (a._diedAt ?? 0) : 0))",
+    "new": ".sort((a, b) => (a.dead ? 1 : 0) - (b.dead ? 1 : 0))",
+    "tests": [
+      "test/net/audit_rpt1026_items.test.js"
+    ],
+    "why": "the frame as RPT1026-ITEMS BODY-CAP left it: the room's numbering, so the cap sheds the body that has just fallen"
+  },
+  {
+    "name": "AUDIT-RPT1026-G1-the-earliest-dead-first",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "(a.dead ? (b._diedAt ?? 0) - (a._diedAt ?? 0) : 0)",
+    "new": "(a.dead ? (a._diedAt ?? 0) - (b._diedAt ?? 0) : 0)",
+    "tests": [
+      "test/net/audit_rpt1026_items.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RPT1026-G2-the-rooms-rule-not-forced",
+    "file": "src/systems/online/onlineLane.js",
+    "old": "Controls: Object.freeze({ AllowMagicRepairs: 'True' }),",
+    "new": "Controls: Object.freeze({}),",
+    "tests": [
+      "test/systems/audit_rpt1026_items_kept.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RPT1026-G2-the-host-ctx-reads-no-setting",
+    "file": "src/scenes/hostEnchant.js",
+    "old": "get allowMagicRepairs() { return getBool('Controls', 'AllowMagicRepairs'); },",
+    "new": "get allowMagicRepairs() { return false; },",
+    "tests": [
+      "test/systems/audit_rpt1026_items_kept.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-RPT1026-G5-the-held-lot-not-read-against-the-pack",
+    "file": "src/systems/item/heldOut.js",
+    "old": "      if (it && typeof it === 'object' && !pack.includes(it) && !out.includes(it)) out.push(it);",
+    "new": "      if (it && typeof it === 'object' && !out.includes(it)) out.push(it);",
+    "tests": [
+      "test/systems/audit_rpt1026_items_heldout.test.js"
+    ]
+  }
 ]

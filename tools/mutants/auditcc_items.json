@@ -52,8 +52,8 @@
   {
     "name": "AUDIT-CC-I5-the-putrid-card-nourishes",
     "file": "src/systems/item/itemInfo.js",
-    "old": "text: s >= FOOD_STAGE.Putrid ? 'Putrid. Too disgusting to force down.'",
-    "new": "text: s > FOOD_STAGE.Putrid ? 'Putrid. Too disgusting to force down.'",
+    "old": "        s >= FOOD_STAGE.Putrid",
+    "new": "        s > FOOD_STAGE.Putrid",
     "tests": [
       "test/systems/survival/auditcc_items.test.js"
     ],

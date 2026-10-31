@@ -11,8 +11,8 @@
   {
     "name": "LOOT18-a-quest-item-junked",
     "file": "src/systems/item/itemJunk.js",
-    "old": "JUNK_GROUPS.includes(item.group) && !item.questItem && !isBound(item);",
-    "new": "JUNK_GROUPS.includes(item.group) && !isBound(item);",
+    "old": "export const junkable = (/** @type {any} */ item) =>\n  !!item && JUNK_GROUPS.includes(item.group) && !item.questItem && !isBound(item);",
+    "new": "export const junkable = (/** @type {any} */ item) => !!item && JUNK_GROUPS.includes(item.group) && !isBound(item);",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LOOT18-a-bound-piece-junked",
     "file": "src/systems/item/itemJunk.js",
-    "old": "JUNK_GROUPS.includes(item.group) && !item.questItem && !isBound(item);",
-    "new": "JUNK_GROUPS.includes(item.group) && !item.questItem;",
+    "old": "export const junkable = (/** @type {any} */ item) =>\n  !!item && JUNK_GROUPS.includes(item.group) && !item.questItem && !isBound(item);",
+    "new": "export const junkable = (/** @type {any} */ item) => !!item && JUNK_GROUPS.includes(item.group) && !item.questItem;",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "LOOT18-junk-keeps-the-lock",
     "file": "src/systems/item/itemJunk.js",
-    "old": "  if (on) { item.junk = true; setLocked(item, false); } else delete item.junk;",
-    "new": "  if (on) { item.junk = true; } else delete item.junk;",
+    "old": "    setLocked(item, false);\n  } else delete item.junk;",
+    "new": "  } else delete item.junk;",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LOOT18-cleared-is-a-false",
     "file": "src/systems/item/itemJunk.js",
-    "old": "  if (on) { item.junk = true; setLocked(item, false); } else delete item.junk;",
-    "new": "  if (on) { item.junk = true; setLocked(item, false); } else item.junk = false;",
+    "old": "  } else delete item.junk;",
+    "new": "  } else item.junk = false;",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LOOT18-the-mark-undeclared",
     "file": "src/systems/item/itemFields.js",
-    "old": "  junk: bool(),\n",
-    "new": "",
+    "old": "  junk: bool(),\n  // SS4: a piece bound to its owner by how it was won (systems/item/itemBound.js - the Sigil Broker's wares) - true, or absent",
+    "new": "  // SS4: a piece bound to its owner by how it was won (systems/item/itemBound.js - the Sigil Broker's wares) - true, or absent",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]

@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-QL-REWARD-5-metal-prefix-kept",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  if (item?.qlNamed === true) return true;\n",
-    "new": "",
+    "old": "  if (item?.qlNamed === true) return true;\n  return !itemIsIdentified(item) || !!item?.artifact || !!item?.legendary || !!item?.aetheric || !!item?.gilded;",
+    "new": "  return !itemIsIdentified(item) || !!item?.artifact || !!item?.legendary || !!item?.aetheric || !!item?.gilded;",
     "tests": [
       "test/systems/questlines/ql3_rewards.test.js"
     ]

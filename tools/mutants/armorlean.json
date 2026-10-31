@@ -56,8 +56,8 @@
   {
     "name": "ARMOR-TYPE-no-row",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  push('Type', itemArmorTypeLine(item));",
-    "new": "",
+    "old": "  push('Type', itemArmorTypeLine(item)); // ARMOR-TYPE: Leather, Chain or Plate",
+    "new": "  // ARMOR-TYPE: Leather, Chain or Plate",
     "tests": [
       "test/systems/item/armortype_info.test.js"
     ]

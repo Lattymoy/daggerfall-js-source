@@ -563,8 +563,8 @@
   {
     "name": "PORTAL1-classic-card-silent",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  else if (isPortalStone(item)) for (const text of portalStoneLines()) out.push({ text, center: true });   // PORTAL1",
-    "new": "",
+    "old": "  else if (isPortalStone(item))\n    for (const text of portalStoneLines()) out.push({ text, center: true }); // PORTAL1\n  else if (isWeirKey(item))",
+    "new": "  else if (isWeirKey(item))",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]

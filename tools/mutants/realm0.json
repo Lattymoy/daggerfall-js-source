@@ -312,8 +312,8 @@
   {
     "name": "REALM0-bound-undeclared",
     "file": "src/systems/item/itemFields.js",
-    "old": "  bound: bool(),\n",
-    "new": "",
+    "old": "  bound: bool(),\n  // SS5: the Sigil Stones the Broker took for a ware (systems/sigil/sigilBroker.js brokerStock) - its dismantle's measure",
+    "new": "  // SS5: the Sigil Stones the Broker took for a ware (systems/sigil/sigilBroker.js brokerStock) - its dismantle's measure",
     "tests": [
       "test/systems/realm0.test.js"
     ]

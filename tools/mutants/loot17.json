@@ -218,8 +218,8 @@
   {
     "name": "LOOT17-the-count-undeclared",
     "file": "src/systems/item/itemFields.js",
-    "old": "  honed: int({ min: 1, max: 63 }),   // LOOT17 (bible/06-Systems/Loot-II-Arc.md section 9): the hones a piece has taken - what the next costs (reforge.js honePrice), or absent\n",
-    "new": "",
+    "old": "  honed: int({ min: 1, max: 63 }), // LOOT17 (bible/06-Systems/Loot-II-Arc.md section 9): the hones a piece has taken - what the next costs (reforge.js honePrice), or absent\n  cursed: rec(validEnchantment), // LOOT16 (bible/06-Systems/Loot-II-Arc.md section 8): a cursed find's drawback - the enchantment the temple lifts, or absent (loot.js validLootItem: lootRarity.js validCurse)",
+    "new": "  cursed: rec(validEnchantment), // LOOT16 (bible/06-Systems/Loot-II-Arc.md section 8): a cursed find's drawback - the enchantment the temple lifts, or absent (loot.js validLootItem: lootRarity.js validCurse)",
     "tests": [
       "test/systems/loot17_hone.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "LOOT17-the-count-from-nothing",
     "file": "src/systems/item/itemFields.js",
-    "old": "  honed: int({ min: 1, max: 63 }),",
-    "new": "  honed: int({ min: 0, max: 63 }),",
+    "old": "  honed: int({ min: 1, max: 63 }), // LOOT17 (bible/06-Systems/Loot-II-Arc.md section 9): the hones a piece has taken - what the next costs (reforge.js honePrice), or absent",
+    "new": "  honed: int({ min: 0, max: 63 }), // LOOT17 (bible/06-Systems/Loot-II-Arc.md section 9): the hones a piece has taken - what the next costs (reforge.js honePrice), or absent",
     "tests": [
       "test/systems/loot17_hone.test.js"
     ]

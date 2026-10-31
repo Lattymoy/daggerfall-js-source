@@ -123,8 +123,8 @@
   {
     "name": "RPT1026-WEIR-card-unsaid",
     "file": "src/systems/item/itemInfo.js",
-    "old": "out.push({ text: EG_TEXT.keyLine, center: true }, { text: weirKeySharedLine(), center: true });",
-    "new": "out.push({ text: EG_TEXT.keyLine, center: true });",
+    "old": "    out.push({ text: EG_TEXT.keyLine, center: true }, { text: weirKeySharedLine(), center: true }); // AUDIT EG V (c, L8-6): the Weir Key's line (section 5), its name and weight above it; RPT1026-CLIENT: and whose the keys are",
+    "new": "    out.push({ text: EG_TEXT.keyLine, center: true }); // AUDIT EG V (c, L8-6): the Weir Key's line (section 5), its name and weight above it; RPT1026-CLIENT: and whose the keys are",
     "tests": [
       "test/systems/eliteGates/rpt1026_client_weirface.test.js"
     ],

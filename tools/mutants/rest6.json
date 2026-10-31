@@ -252,8 +252,8 @@
   {
     "name": "REST6-the-card-says-nothing",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  else if (isRestItem(item)) for (const text of restItemLines(item)) out.push({ text, center: true });   // REST6\n",
-    "new": "",
+    "old": "  else if (isRestItem(item))\n    for (const text of restItemLines(item)) out.push({ text, center: true }); // REST6\n  else if (isPortalStone(item))",
+    "new": "  else if (isPortalStone(item))",
     "tests": [
       "test/systems/survival/rest6_consumables.test.js"
     ]

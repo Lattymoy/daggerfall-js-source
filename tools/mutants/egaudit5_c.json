@@ -966,8 +966,8 @@
   {
     "name": "AUDIT-EG-V-c-L8-6-line-unshown",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  else if (isWeirKey(item)) out.push({ text: EG_TEXT.keyLine, center: true }, { text: weirKeySharedLine(), center: true });",
-    "new": "",
+    "old": "  else if (isWeirKey(item))\n    out.push({ text: EG_TEXT.keyLine, center: true }, { text: weirKeySharedLine(), center: true }); // AUDIT EG V (c, L8-6): the Weir Key's line (section 5), its name and weight above it; RPT1026-CLIENT: and whose the keys are",
+    "new": "  // AUDIT EG V (c, L8-6): the Weir Key's line (section 5), its name and weight above it; RPT1026-CLIENT: and whose the keys are",
     "tests": [
       "test/ui/eliteGates/egaudit5_c_hud.test.js"
     ]
@@ -975,8 +975,8 @@
   {
     "name": "AUDIT-EG-V-c-L8-6-card-unbuilt",
     "file": "src/systems/item/itemInfo.js",
-    "old": " || isWeirKey(item) || isSoulCake(item) || isHearthOffering(item) || isStarglass(item) || isLockpick(item)) record = survivalInfoTokens(item);",
-    "new": " || isLockpick(item)) record = survivalInfoTokens(item);",
+    "old": "    isWeirKey(item) ||\n    isSoulCake(item) ||\n    isHearthOffering(item) ||\n    isStarglass(item) ||\n    isLockpick(item)",
+    "new": "    isLockpick(item)",
     "tests": [
       "test/ui/eliteGates/egaudit5_c_hud.test.js"
     ]

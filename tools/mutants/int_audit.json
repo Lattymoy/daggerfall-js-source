@@ -478,8 +478,8 @@
   {
     "name": "INTA-the-piece-unnamed",
     "file": "src/systems/item/itemIds.js",
-    "old": "  if (typeof name === 'string' && name) return tradeHeldLawNotice(name);\n",
-    "new": "",
+    "old": "  if (typeof name === 'string' && name) return tradeHeldLawNotice(name);\n  return /** @type {any} */ (TRADE_HELD_NOTICES)[now] ?? TRADE_HELD_NOTICES.law;",
+    "new": "  return /** @type {any} */ (TRADE_HELD_NOTICES)[now] ?? TRADE_HELD_NOTICES.law;",
     "tests": [
       "test/systems/item/int4_itemids.test.js"
     ]

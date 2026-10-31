@@ -438,8 +438,8 @@
   {
     "name": "PROF3-kit-least-worn",
     "file": "src/systems/item/itemTemplates.js",
-    "old": "wornFirst(b) - wornFirst(a) || conditionShare(a) - conditionShare(b);",
-    "new": "wornFirst(b) - wornFirst(a) || conditionShare(b) - conditionShare(a);",
+    "old": "export const mendOrder = (a, b) => wornFirst(b) - wornFirst(a) || conditionShare(a) - conditionShare(b);",
+    "new": "export const mendOrder = (a, b) => wornFirst(b) - wornFirst(a) || conditionShare(b) - conditionShare(a);",
     "tests": [
       "test/systems/prof3_client.test.js"
     ]
@@ -474,8 +474,8 @@
   {
     "name": "PROF3-name-no-mark",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  if ((item?.quality === 4 || item?.marked === true) && typeof item.maker === 'string' && item.maker && makerMark(item.maker) === item.maker\n    && typeof item.provenance === 'string' && PROVENANCE_RE.test(item.provenance)) return",
-    "new": "  if (false) return",
+    "old": "  if (\n    (item?.quality === 4 || item?.marked === true) &&\n    typeof item.maker === 'string' &&\n    item.maker &&\n    makerMark(item.maker) === item.maker &&\n    typeof item.provenance === 'string' &&\n    PROVENANCE_RE.test(item.provenance)\n  )\n    return { name: `${item.maker}'s ${material ? `${material} ` : ''}${base}`, material: '' };",
+    "new": "  if (false) return { name: `${item.maker}'s ${material ? `${material} ` : ''}${base}`, material: '' };",
     "tests": [
       "test/systems/prof3_client.test.js"
     ]

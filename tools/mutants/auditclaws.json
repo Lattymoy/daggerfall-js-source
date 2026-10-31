@@ -164,8 +164,8 @@
   {
     "name": "AUDIT-CLAWS-B2-the-value-one-metal-up",
     "file": "src/systems/item/itemTemplates.js",
-    "old": "materialValue(t.basePrice, plateMetal(m))",
-    "new": "materialValue(t.basePrice, plateMetal(m) + 1)",
+    "old": "    if (isPlate(m)) return materialValue(t.basePrice, plateMetal(m)); // plate (AUDIT CLAWS B2: the decode's one home)",
+    "new": "    if (isPlate(m)) return materialValue(t.basePrice, plateMetal(m) + 1); // plate (AUDIT CLAWS B2: the decode's one home)",
     "tests": [
       "test/systems/audit18_systems_items.test.js",
       "test/systems/shopstock.test.js"

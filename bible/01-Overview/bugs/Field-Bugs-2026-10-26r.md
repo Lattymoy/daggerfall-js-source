@@ -350,7 +350,7 @@ through the chest's door, which parked one of the chest's own rows on the pack. 
 the pack. Both skins.
 
 FIXED.
-- A LIST WHOSE MOVES A SERVICE SETTLES KEEPS ITS COIN A PILE (`itemTransfer.js:"if (toPlayer && isGoldPieces(item) && from?.pileCoins !== true) {"`).
+- A LIST WHOSE MOVES A SERVICE SETTLES KEEPS ITS COIN A PILE (`itemTransfer.js:"if (toPlayer && isGoldPieces(item) && from?.pileCoins !== true)"`).
   The shared chest's list carries the mark (`decorGrants.js:"Object.defineProperty(goods, 'pileCoins', { value: true })"`),
   so in both windows a pile taken from it lands in the window's pack as a pile. The close counts the coins leaving
   (whole piles and handfuls cut off one), tells the service (`purse` on the settle), and pays the purse in the act's
@@ -608,7 +608,7 @@ and a smith's restore made it count again. On the real producers (a Daedric cuir
 its low end, two field kits, a blow's wear back to the mark): a smith's whole repair then sold at 29% where a piece only a
 smith ever repaired sells at 19%; kits a wear apart credited 14,748 of a room the piece held 6,555 of (35% at a smith).
 
-FIXED. `foundMark.js:"export function spendOwnMends(item, at = item?.currentCondition) {"` cuts `selfMended` to what the
+FIXED. `foundMark.js:"export function spendOwnMends"` cuts `selfMended` to what the
 piece holds above its mark, and every rise of a found piece's condition calls it first: an own mend before it credits
 (creditOwnMend, at its `from`), a smith's paid repair before it restores - `repairService.js:"export function repairWhole"`,
 the one door every paid repair restores through (the finished job's `repairJobsAt`, and the two InstantRepairs arms of
@@ -2650,7 +2650,7 @@ keeps none. The throw is now `throwWeirKeyFace` then the restack to the balance
 (`egFind.js:"if (Array.isArray(entity?.items))"`).
 
 THE WORDS. Nothing the player saw said the keys are the account's. The key's card carries, under its own line, *Every
-character on your account shares the same Weir Keys.* (`itemInfo.js:"export const weirKeySharedLine = () =>"`,
+character on your account shares the same Weir Keys.* (`itemInfo.js:"export const weirKeySharedLine"`,
 `eg.key.shared`, drafted in the thirteen whole languages with the key's name as each table already says it). Not in
 `EG_TEXT`: that table rides the relay's bundle, and a line there moved the relay's law (`test/net/relayversion.test.js`)
 for words the relay never reads - so no RELAY_VERSION is owed.

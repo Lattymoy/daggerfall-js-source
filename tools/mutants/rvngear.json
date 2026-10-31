@@ -371,8 +371,8 @@
   {
     "name": "RVN-GEAR-realm-walk-blind",
     "file": "src/systems/item/possessedItems.js",
-    "old": "out.push(...lists(Object.values(objectOf(/** @type {any} */ (r).companion?.gear)).filter(",
-    "new": "out.push(...lists([].filter(",
+    "old": "      out.push(\n        ...lists(\n          Object.values(objectOf(/** @type {any} */ (r).companion?.gear)).filter((it) => it && typeof it === 'object'),\n        ),\n      ); // RVN-GEAR: and the kit it wears (revenantGear.js)",
+    "new": "      out.push(...lists([].filter((it) => it && typeof it === 'object'))); // RVN-GEAR: and the kit it wears (revenantGear.js)",
     "tests": [
       "test/systems/revenant/rvngear.test.js"
     ]

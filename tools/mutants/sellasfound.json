@@ -52,8 +52,8 @@
   {
     "name": "SELL-AS-FOUND-undeclared",
     "file": "src/systems/item/itemFields.js",
-    "old": "  foundCondition: int({ min: 0 }),\n",
-    "new": "",
+    "old": "  foundCondition: int({ min: 0 }),\n  // MEND-THIRD (AUDIT MEND-THIRD, 2026-10-19): the points its owner's OWN mends - a Repair Kit, Repairs Objects, the Varla",
+    "new": "  // MEND-THIRD (AUDIT MEND-THIRD, 2026-10-19): the points its owner's OWN mends - a Repair Kit, Repairs Objects, the Varla",
     "tests": [
       "test/systems/sell_as_found.test.js",
       "test/systems/rri2_realism.test.js"

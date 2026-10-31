@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-WEAPON-POOL-P1-found-mark-left-behind",
     "file": "src/systems/item/foundMark.js",
-    "old": "  if (isFoundMarked(item)) item.foundCondition = share(item.foundCondition);\n",
-    "new": "",
+    "old": "  if (isFoundMarked(item)) item.foundCondition = share(item.foundCondition);\n  if (Number.isInteger(item.selfMended)) item.selfMended = share(item.selfMended);",
+    "new": "  if (Number.isInteger(item.selfMended)) item.selfMended = share(item.selfMended);",
     "tests": [
       "test/systems/auditweaponpool.test.js"
     ]

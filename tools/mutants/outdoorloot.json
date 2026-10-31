@@ -395,8 +395,8 @@
   {
     "name": "OUTDOOR-LOOT-stale-row-copies-the-piece",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "if (Array.isArray(from) && !from.includes(item)) return null;",
-    "new": "void 0;",
+    "old": "  if (Array.isArray(from) && !from.includes(item)) return null;",
+    "new": "  void 0;",
     "tests": [
       "test/net/bodyloot_protocol.test.js",
       "test/systems/itemTransfer.test.js"

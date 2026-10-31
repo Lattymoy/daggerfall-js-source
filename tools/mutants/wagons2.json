@@ -600,8 +600,8 @@
   {
     "name": "WAGONS2-AUDIT-an-unknown-paint-lawful",
     "file": "src/systems/item/itemFields.js",
-    "old": "&& l[k] >= 0 && l[k] < 6)),",
-    "new": "&& l[k] >= 0)),",
+    "old": "    Object.keys(l).every((k) => ['o', 'w', 'f', 'c'].includes(k) && Number.isInteger(l[k]) && l[k] >= 0 && l[k] < 6),",
+    "new": "    Object.keys(l).every((k) => ['o', 'w', 'f', 'c'].includes(k) && Number.isInteger(l[k]) && l[k] >= 0),",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ]
@@ -627,8 +627,8 @@
   {
     "name": "WAGONS2-VISIT-AUDIT-an-unknown-door-lawful",
     "file": "src/systems/item/itemFields.js",
-    "old": "wagonEntry: oneOf(['private', 'party', 'public', 'guild']),",
-    "new": "wagonEntry: str(),",
+    "old": "  wagonEntry: oneOf(['private', 'party', 'public', 'guild']),",
+    "new": "  wagonEntry: str(),",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ]

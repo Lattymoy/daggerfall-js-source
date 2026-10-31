@@ -30,8 +30,8 @@
   {
     "name": "MEND-WORN-order-least-worn",
     "file": "src/systems/item/itemTemplates.js",
-    "old": "wornFirst(b) - wornFirst(a) || conditionShare(a) - conditionShare(b);",
-    "new": "wornFirst(b) - wornFirst(a) || conditionShare(b) - conditionShare(a);",
+    "old": "export const mendOrder = (a, b) => wornFirst(b) - wornFirst(a) || conditionShare(a) - conditionShare(b);",
+    "new": "export const mendOrder = (a, b) => wornFirst(b) - wornFirst(a) || conditionShare(b) - conditionShare(a);",
     "tests": [
       "test/systems/mend_worn.test.js"
     ]

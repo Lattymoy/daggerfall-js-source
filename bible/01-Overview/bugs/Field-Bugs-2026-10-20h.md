@@ -396,7 +396,7 @@ in the pool of the host the player stands in: the street's, a building's (`world
 dungeon's (`dungeonContext.js:"droppedPool: () => droppedLoot,"`). A take goes through the window every pile opens with,
 and the book asks the room for what the window moved. Traced end to end on the real code: the account service's
 `/v1/wild/fall`, the relay's Room driven in-process (`server/src/index.js:"async _wildWord(ws, a, d, now) {"`), the street's pool
-(`droppedLoot.js:"function seedPile("`) and the window's take (`itemTransfer.js:"export function planTake(item, {"` and
+(`droppedLoot.js:"function seedPile("`) and the window's take (`itemTransfer.js:"export function planTake"` and
 `applyTransfer`, called as `enhancedInventory.js`'s `take()` calls them, through the encumbrance gate). Two faults:
 
 - A TAKE OF PART OF THE PILE (REMAINS-TAKE). The window takes only what the pack has room for: CanCarryAmount caps it
@@ -797,7 +797,7 @@ trap's kill door hands the foe's own mobile id to the trap
 and the gem takes it (`mysticism.js:"trap.trappedSoulType"`) - DFU's own law: EnemyEntity.cs:217 hands
 `SoulTrap.FillEmptyTrapItem((MobileTypes)mobileEnemy.ID)` and SoulTrap.cs:158 writes it. With the mod installed DFU's
 EnemyBasics holds the custom id, and ItemHelper.cs:352-368 names the gem "Soul Trap (Ogre)", as the port does
-(`itemInfo.js:"const shownSoulName = (soul) => getLocalizedEnemyName(soul, enemyDisplayName(soul));"`).
+(`itemInfo.js:"const shownSoulName"`).
 
 Item law 8 took only DFU's ranges (`itemLaw.js:"const soulLawful = "`: 0-42 and 128-146), so a gem holding any of the
 fifty was a `soul` finding (`itemLaw.js:"&& soulLawful(item.trappedSoulType))) out.add('soul');"`). The account service
@@ -805,7 +805,7 @@ judges every realm checkpoint headless with that law
 (`judge.js:"for (const code of findingsOf(it)) keep({ code, list: li, at: i, t: it?.templateIndex ?? null });"`), the
 verdict holds the character and adds a strike (`verdict.js:"  if (law > 0 || (until != null && until > nowS)) return 'law';"`),
 and the client announces the hold (`realmHoldHost.js:"session.onTradeHeld"`) by the template's name
-(`itemIds.js:"  const name = now === 'law' && why ? lawTemplate(why.t)?.name : null;"`). Reproduced word for word through
+(`itemIds.js:"const name = now"`). Reproduced word for word through
 the real Worker: "The realm is reviewing this character: it carries a Soul Trap the game could not have made. Trading is
 frozen until it is gone. Holds add up: from the third, trading stays frozen for a week even after it is gone, and for a
 month each time after that." While the hold stands every route that hands the character's value to another player

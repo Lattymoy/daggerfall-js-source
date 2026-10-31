@@ -29,8 +29,8 @@
   {
     "name": "WAGONS1-the-750-still-read",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "effectiveUnitWeightInKg(item), wagonKg, totalWeight(remote)",
-    "new": "effectiveUnitWeightInKg(item), WAGON_KG_LIMIT, totalWeight(remote)",
+    "old": "    const canHold = canHoldAmount(stack, effectiveUnitWeightInKg(item), wagonKg, totalWeight(remote)); // WAGONS1: the driven wagon's capacity",
+    "new": "    const canHold = canHoldAmount(stack, effectiveUnitWeightInKg(item), WAGON_KG_LIMIT, totalWeight(remote)); // WAGONS1: the driven wagon's capacity",
     "tests": [
       "test/systems/item/wagons1.test.js"
     ]

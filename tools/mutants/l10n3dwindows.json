@@ -72,7 +72,7 @@
   {
     "name": "L10N3d2-systems-itemTransfer-143-wagonFullGold",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "export const wagonFullGoldText = (n) => formatText(localizedText('wagonFullGold', 'Your wagon could only hold {0} gold pieces.'), n);",
+    "old": "export const wagonFullGoldText = (n) =>\n  formatText(localizedText('wagonFullGold', 'Your wagon could only hold {0} gold pieces.'), n);",
     "new": "export const wagonFullGoldText = (n) => formatText('Your wagon could only hold {0} gold pieces.', n);",
     "tests": [
       "test/systems/l10n3d_sites.test.js",

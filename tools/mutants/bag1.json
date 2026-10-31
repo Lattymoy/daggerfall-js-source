@@ -93,8 +93,8 @@
   {
     "name": "BAG1-a-loaded-bag-dropped",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "  if (bagLoaded && isBagItem(item)) return { ok: false, refusal: REFUSAL.bagLoaded };",
-    "new": "  void bagLoaded;",
+    "old": "  if (bagLoaded && isBagItem(item)) return { ok: false, refusal: REFUSAL.bagLoaded }; // BAG1",
+    "new": "  void bagLoaded; // BAG1",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]

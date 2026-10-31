@@ -38,8 +38,8 @@
   {
     "name": "THUNDERLOCK-ART-the-list-door-bypassed",
     "file": "src/systems/item/itemTemplates.js",
-    "old": "  { const own = ownItemImage(item); if (own) return {",
-    "new": "  { const own = ownItemImage(item); if (own && false) return {",
+    "old": "    if (own)",
+    "new": "    if (own && false)",
     "tests": [
       "test/systems/thunderlockart.test.js"
     ]

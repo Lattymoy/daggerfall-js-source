@@ -353,8 +353,8 @@
   {
     "name": "SIGIL1-field-undeclared",
     "file": "src/systems/item/itemFields.js",
-    "old": "  sigil: rec(validSigil),\n",
-    "new": "",
+    "old": "  sigil: rec(validSigil),\n  // LOCK1: the player's lock (systems/item/itemLock.js) - true, or absent",
+    "new": "  // LOCK1: the player's lock (systems/item/itemLock.js) - true, or absent",
     "tests": [
       "test/systems/sigil/sigil1.test.js",
       "test/systems/rf5_itemfields.test.js"

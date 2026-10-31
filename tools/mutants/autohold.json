@@ -256,7 +256,7 @@
   {
     "name": "AUTOHOLD-the-carried-unread",
     "file": "src/systems/item/itemIds.js",
-    "old": "  for (const list of ownLists(entity)) for (const it of list) { const k = ledgerKeyOf(it); if (k) out.add(k); }",
+    "old": "  for (const list of ownLists(entity))\n    for (const it of list) {\n      const k = ledgerKeyOf(it);\n      if (k) out.add(k);\n    }",
     "new": "",
     "tests": [
       "test/server/autohold.test.js"
@@ -436,8 +436,8 @@
   {
     "name": "AUTOHOLD-AUDIT-the-timed-piece-unnamed",
     "file": "src/systems/item/itemIds.js",
-    "old": "tradeHeldUntilNotice(/** @type {number} */ (why.until), typeof name === 'string' && name ? name : null)",
-    "new": "tradeHeldUntilNotice(/** @type {number} */ (why.until))",
+    "old": "    return tradeHeldUntilNotice(/** @type {number} */ (why.until), typeof name === 'string' && name ? name : null);",
+    "new": "    return tradeHeldUntilNotice(/** @type {number} */ (why.until));",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -472,8 +472,8 @@
   {
     "name": "AUTOHOLD-AUDIT-a-key-twice-one-piece",
     "file": "src/systems/item/itemIds.js",
-    "old": "if (k && want.has(k)) { pieces.push(it); found.add(k); }",
-    "new": "if (k && want.has(k) && !found.has(k)) { pieces.push(it); found.add(k); }",
+    "old": "      if (k && want.has(k)) {",
+    "new": "      if (k && want.has(k) && !found.has(k)) {",
     "tests": [
       "test/server/autohold.test.js"
     ]

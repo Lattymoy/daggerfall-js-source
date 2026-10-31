@@ -242,8 +242,8 @@
   {
     "name": "HEART-KEPT-clones-read-as-own",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "const own = list.findIndex((it) => same(it) && !it.questClone);",
-    "new": "const own = list.findIndex((it) => same(it));",
+    "old": "  const own = list.findIndex((it) => same(it) && !it.questClone);",
+    "new": "  const own = list.findIndex((it) => same(it));",
     "tests": [
       "test/systems/questlines/fb1025i_daedraheart.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "HEART-KEPT-no-quest-identity",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "const same = (it) => !!it?.questItem && it.questUID",
-    "new": "const same = (it) => false && !!it?.questItem && it.questUID",
+    "old": "    !!it?.questItem && it.questUID === dfItem.questUID && it.questSymbol?.name === dfItem.questSymbol?.name;",
+    "new": "    false && !!it?.questItem && it.questUID === dfItem.questUID && it.questSymbol?.name === dfItem.questSymbol?.name;",
     "tests": [
       "test/systems/questlines/fb1025i_daedraheart.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "HEART-KEPT-dispose-finds-no-clone",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "return own >= 0 || !clones ? own : list.findIndex(same);",
-    "new": "return own;",
+    "old": "  return own >= 0 || !clones ? own : list.findIndex(same);",
+    "new": "  return own;",
     "tests": [
       "test/systems/questlines/fb1025i_daedraheart.test.js"
     ],

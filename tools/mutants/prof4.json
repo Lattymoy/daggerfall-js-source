@@ -733,8 +733,8 @@
   {
     "name": "PROF4-name-no-joiner-mark",
     "file": "src/systems/item/itemInfo.js",
-    "old": "if ((item?.quality === 4 || item?.marked === true) && typeof item.maker === 'string'",
-    "new": "if (item?.quality === 4 && typeof item.maker === 'string'",
+    "old": "    (item?.quality === 4 || item?.marked === true) &&",
+    "new": "    item?.quality === 4 &&",
     "tests": [
       "test/systems/prof4_client.test.js"
     ]

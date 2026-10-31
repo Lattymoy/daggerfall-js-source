@@ -75,8 +75,8 @@
   {
     "name": "AUDITLWII2-S1-field",
     "file": "src/systems/item/itemFields.js",
-    "old": "  counterBought: bool(),\n",
-    "new": "  counterBought: int(),\n",
+    "old": "  counterBought: bool(),",
+    "new": "  counterBought: int(),",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]

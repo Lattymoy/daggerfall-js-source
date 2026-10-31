@@ -132,8 +132,8 @@
   {
     "name": "RPT1026-LEDGERLAW-98-credit-unspent",
     "file": "src/systems/item/foundMark.js",
-    "old": "  spendOwnMends(item, from);   // RPT1026-LEDGERLAW",
-    "new": "  // RPT1026-LEDGERLAW",
+    "old": "  spendOwnMends(item, from); // RPT1026-LEDGERLAW: what wear took since the last mend is spent, never credited again",
+    "new": "  // RPT1026-LEDGERLAW: what wear took since the last mend is spent, never credited again",
     "tests": [
       "test/systems/item/rpt1026_ledgerlaw_mend.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "RPT1026-LEDGERLAW-98-spend-to-condition",
     "file": "src/systems/item/foundMark.js",
-    "old": "Math.max(0, Math.trunc(at ?? 0) - item.foundCondition)",
-    "new": "Math.max(0, Math.trunc(at ?? 0))",
+    "old": "  item.selfMended = Math.min(item.selfMended, Math.max(0, Math.trunc(at ?? 0) - item.foundCondition));",
+    "new": "  item.selfMended = Math.min(item.selfMended, Math.max(0, Math.trunc(at ?? 0)));",
     "tests": [
       "test/systems/item/rpt1026_ledgerlaw_mend.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "RPT1026-LEDGERLAW-269-look-unsaid",
     "file": "src/systems/item/itemLook.js",
-    "old": "stolen: isStolen(it) ? stolenLine() : null",
-    "new": "stolen: null",
+    "old": "  return { rows, magic, stolen: isStolen(it) ? stolenLine() : null };",
+    "new": "  return { rows, magic, stolen: null };",
     "tests": [
       "test/ui/rpt1026_ledgerlaw_stolen.test.js"
     ],

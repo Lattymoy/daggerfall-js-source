@@ -51,7 +51,7 @@
     "name": "JAN1-NaN-is-a-value",
     "file": "src/systems/item/itemTemplates.js",
     "old": "export const itemValueOf = (item) => (Number.isFinite(item?.value) ? item.value : itemBaseValue(item ?? {}));",
-    "new": "export const itemValueOf = (item) => (item?.value ?? itemBaseValue(item ?? {}));",
+    "new": "export const itemValueOf = (item) => item?.value ?? itemBaseValue(item ?? {});",
     "tests": [
       "test/systems/jan1_fixes.test.js"
     ]

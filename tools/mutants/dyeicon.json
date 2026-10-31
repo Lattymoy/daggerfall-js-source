@@ -38,8 +38,8 @@
   {
     "name": "DYE-ICON-the-artifact-dyed",
     "file": "src/systems/item/itemDye.js",
-    "old": "if ((item.group === 'Weapons' || item.group === 'Armor') && !item.artifact) return DYE_TARGETS.WeaponsAndArmor;",
-    "new": "if (item.group === 'Weapons' || item.group === 'Armor') return DYE_TARGETS.WeaponsAndArmor;",
+    "old": "  if ((item.group === 'Weapons' || item.group === 'Armor') && !item.artifact) return DYE_TARGETS.WeaponsAndArmor;",
+    "new": "  if (item.group === 'Weapons' || item.group === 'Armor') return DYE_TARGETS.WeaponsAndArmor;",
     "tests": [
       "test/systems/item/dyeicon.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "DYE-ICON-the-clothing-on-the-metal-table",
     "file": "src/systems/item/itemDye.js",
-    "old": "if (item.group === 'MensClothing' || item.group === 'WomensClothing') return DYE_TARGETS.Clothing;",
-    "new": "if (item.group === 'MensClothing' || item.group === 'WomensClothing') return DYE_TARGETS.WeaponsAndArmor;",
+    "old": "  if (item.group === 'MensClothing' || item.group === 'WomensClothing') return DYE_TARGETS.Clothing;",
+    "new": "  if (item.group === 'MensClothing' || item.group === 'WomensClothing') return DYE_TARGETS.WeaponsAndArmor;",
     "tests": [
       "test/systems/item/dyeicon.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DYE-ICON-the-image-without-it",
     "file": "src/systems/item/itemTemplates.js",
-    "old": "  if (t.kitDye && Number.isFinite(_kitDye?.(item))) return { archive, record, dye: _kitDye(item), dyeTarget: DYE_TARGETS.WeaponsAndArmor };\n  return { archive, record, dye: itemDyeColor(item), dyeTarget: itemDyeTarget(item) };",
-    "new": "  if (t.kitDye && Number.isFinite(_kitDye?.(item))) return { archive, record, dye: _kitDye(item), dyeTarget: DYE_TARGETS.WeaponsAndArmor };\n  return { archive, record, dye: itemDyeColor(item) };",
+    "old": "    return { archive, record, dye: _kitDye(item), dyeTarget: DYE_TARGETS.WeaponsAndArmor };\n  return { archive, record, dye: itemDyeColor(item), dyeTarget: itemDyeTarget(item) };",
+    "new": "    return { archive, record, dye: _kitDye(item), dyeTarget: DYE_TARGETS.WeaponsAndArmor };\n  return { archive, record, dye: itemDyeColor(item) };",
     "tests": [
       "test/systems/item/dyeicon.test.js"
     ]

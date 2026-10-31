@@ -268,7 +268,7 @@
   {
     "name": "DW3-5-an-artifact-asks-by-its-metal",
     "file": "src/systems/item/itemDye.js",
-    "old": "  if (item.artifact) return DYE_COLORS.Unchanged;   // SetArtifact :611, the last writer",
+    "old": "  if (item.artifact) return DYE_COLORS.Unchanged; // SetArtifact :611, the last writer",
     "new": "",
     "tests": [
       "test/systems/dw3_icons.test.js"

@@ -29,8 +29,8 @@
   {
     "name": "MACRO-3-the-powers-list-skips-past-None",
     "file": "src/systems/item/itemPowers.js",
-    "old": "if (!e || e.type === T.None || e.type === 65535 || e.type == null) break;",
-    "new": "if (!e || e.type === T.None || e.type === 65535 || e.type == null) continue;",
+    "old": "    if (!e || e.type === T.None || e.type === 65535 || e.type == null) break;",
+    "new": "    if (!e || e.type === T.None || e.type === 65535 || e.type == null) continue;",
     "tests": [
       "test/systems/item/macro3_nowalk.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "MACRO-3-unidentified-lists-its-powers-anyway",
     "file": "src/systems/item/itemPowers.js",
-    "old": "  if (!identified) return [localizedText('powersUnknown', POWERS_UNKNOWN_TEXT)];\n",
-    "new": "",
+    "old": "  if (!identified) return [localizedText('powersUnknown', POWERS_UNKNOWN_TEXT)];\n  const powers = itemPowers();",
+    "new": "  const powers = itemPowers();",
     "tests": [
       "test/systems/item/macro3_nowalk.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "MACRO-3-an-artifact-reads-the-wrong-record",
     "file": "src/systems/item/itemPowers.js",
-    "old": "lines?.(ARTIFACT_POWERS_TEXT_BASE + (item.artifactIndexBitfield >> 1))",
-    "new": "lines?.(ARTIFACT_POWERS_TEXT_BASE + item.artifactIndexBitfield)",
+    "old": "    const rows = lines?.(ARTIFACT_POWERS_TEXT_BASE + (item.artifactIndexBitfield >> 1)) ?? [];",
+    "new": "    const rows = lines?.(ARTIFACT_POWERS_TEXT_BASE + item.artifactIndexBitfield) ?? [];",
     "tests": [
       "test/systems/item/macro3_nowalk.test.js"
     ]

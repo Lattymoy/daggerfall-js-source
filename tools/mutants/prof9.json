@@ -1001,8 +1001,8 @@
   {
     "name": "PROF9-field-noRot-unsaved",
     "file": "src/systems/item/itemFields.js",
-    "old": "  noRot: bool(),\n  chef: bool(),",
-    "new": "  noRot: str(),\n  chef: bool(),",
+    "old": "  noRot: bool(),",
+    "new": "  noRot: str(),",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "INT4-a-stack-earns-an-id",
     "file": "src/systems/item/itemIds.js",
-    "old": "  if (Number.isInteger(it.stackCount) && it.stackCount > 1) return false;\n",
-    "new": "",
+    "old": "  if (Number.isInteger(it.stackCount) && it.stackCount > 1) return false;\n  if (it.templateIndex === LETTER_OF_CREDIT_TEMPLATE) return true;",
+    "new": "  if (it.templateIndex === LETTER_OF_CREDIT_TEMPLATE) return true;",
     "tests": [
       "test/systems/item/int4_itemids.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "INT4-an-id-stamped-again",
     "file": "src/systems/item/itemIds.js",
-    "old": "      if (!valuablePiece(it) || (typeof it.uid === 'string' && ITEM_UID_RE.test(it.uid)) || !Object.isExtensible(it)) continue;",
+    "old": "      if (!valuablePiece(it) || (typeof it.uid === 'string' && ITEM_UID_RE.test(it.uid)) || !Object.isExtensible(it))\n        continue;",
     "new": "      if (!valuablePiece(it) || !Object.isExtensible(it)) continue;",
     "tests": [
       "test/systems/item/int4_itemids.test.js"

@@ -1148,8 +1148,8 @@
   {
     "name": "PROF12-item-name-potent",
     "file": "src/systems/item/itemInfo.js",
-    "old": "${Number.isInteger(item.potent) && item.potent > 0 ? 'Potent ' : ''}",
-    "new": "${''}",
+    "old": "  if (isPotion(item))\n    return {\n      name: `${Number.isInteger(item.potent) && item.potent > 0 ? 'Potent ' : ''}${potionMacroName(item) ?? base}`,\n      material,\n    };",
+    "new": "  if (isPotion(item)) return { name: `${''}${potionMacroName(item) ?? base}`, material };",
     "tests": [
       "test/systems/prof12_client.test.js"
     ]
@@ -1175,8 +1175,8 @@
   {
     "name": "PROF12-item-field",
     "file": "src/systems/item/itemFields.js",
-    "old": "  potent: int({ min: 25, max: 40 }),\n",
-    "new": "",
+    "old": "  potent: int({ min: 25, max: 40 }),\n  // AUDIT LW-II-2 S1: a piece an NPC counter sold online (systems/tradeModes.js markCounterBought) - true, or absent: no",
+    "new": "  // AUDIT LW-II-2 S1: a piece an NPC counter sold online (systems/tradeModes.js markCounterBought) - true, or absent: no",
     "tests": [
       "test/systems/rf5_itemfields.test.js",
       "test/systems/prof12_client.test.js"

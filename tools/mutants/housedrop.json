@@ -11,8 +11,8 @@
   {
     "name": "HOUSE-gold-ignores-floor",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "  if (groundRefusal && !usingWagon) return { ok: false, refusal: { reason: 'ground', text: groundRefusal }, notice: null };",
-    "new": "  void groundRefusal;",
+    "old": "  if (groundRefusal && !usingWagon)\n    return { ok: false, refusal: { reason: 'ground', text: groundRefusal }, notice: null }; // HOUSE-DROP: gold on a floor that refuses it",
+    "new": "  void groundRefusal; // HOUSE-DROP: gold on a floor that refuses it",
     "tests": [
       "test/systems/housedrop.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "HOUSE-wagon-is-floor",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "  if (groundRefusal && !usingWagon) return",
-    "new": "  if (groundRefusal) return",
+    "old": "  if (groundRefusal && !usingWagon)\n    return { ok: false, refusal: { reason: 'ground', text: groundRefusal }, notice: null }; // HOUSE-DROP: gold on a floor that refuses it",
+    "new": "  if (groundRefusal) return { ok: false, refusal: { reason: 'ground', text: groundRefusal }, notice: null }; // HOUSE-DROP: gold on a floor that refuses it",
     "tests": [
       "test/systems/housedrop.test.js"
     ]

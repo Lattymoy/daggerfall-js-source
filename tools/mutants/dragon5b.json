@@ -200,8 +200,8 @@
   {
     "name": "DRAGON5b-the-bags-left-out-of-the-held-lists",
     "file": "src/systems/item/possessedItems.js",
-    "old": "  out.push(...lists(save?.dragonKeep?.bags));   // DRAGON5b: the tamed dragon's saddlebags\n",
-    "new": "",
+    "old": "  out.push(...lists(save?.dragonKeep?.bags)); // DRAGON5b: the tamed dragon's saddlebags\n  return out;",
+    "new": "  return out;",
     "tests": [
       "test/net/dragon/dragon5b_keep.test.js"
     ]

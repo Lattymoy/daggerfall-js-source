@@ -341,8 +341,8 @@
   {
     "name": "APPEARANCES-the-field-undeclared",
     "file": "src/systems/item/itemFields.js",
-    "old": "  appearance: rec(validAppearanceField),\n",
-    "new": "",
+    "old": "  appearance: rec(validAppearanceField),\n  // GLOW-SET (bible/05-Combat/Weapon-Glow.md law 9): a staff's pick of glow, one of the wire's words (net/wire.js",
+    "new": "  // GLOW-SET (bible/05-Combat/Weapon-Glow.md law 9): a staff's pick of glow, one of the wire's words (net/wire.js",
     "tests": [
       "test/systems/appearances.test.js"
     ]

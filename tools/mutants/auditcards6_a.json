@@ -110,8 +110,8 @@
   {
     "name": "AC6-A5-classic-gate",
     "file": "src/systems/item/itemInfo.js",
-    "old": "isCardBinder(item) || isCardPack(item) || isWeirKey(item) || isSoulCake(item) || isHearthOffering(item) || isStarglass(item) || isLockpick(item)) record = survivalInfoTokens(item);",
-    "new": "isCardBinder(item) || isWeirKey(item) || isSoulCake(item) || isHearthOffering(item) || isStarglass(item) || isLockpick(item)) record = survivalInfoTokens(item);",
+    "old": "    isCardPack(item) ||\n    isWeirKey(item) ||",
+    "new": "    isWeirKey(item) ||",
     "tests": [
       "test/systems/auditcards6_a.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AC6-A5-enhanced-gate",
     "file": "src/systems/item/itemInfo.js",
-    "old": "isCardBinder(item) || isCardPack(item) || isOatsItem(item)",
-    "new": "isCardBinder(item) || isOatsItem(item)",
+    "old": "    isCardPack(item) ||\n    isOatsItem(item) ||",
+    "new": "    isOatsItem(item) ||",
     "tests": [
       "test/systems/auditcards6_a.test.js"
     ]

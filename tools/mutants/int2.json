@@ -21,8 +21,8 @@
     "name": "INT2-the-world-owned",
     "file": "src/systems/item/possessedItems.js",
     "note": "AUDIT AUTO-HOLD (PIN MOVED): re-aimed by content - possessedItemLists moved from the judge to its one home, which the judge hands on",
-    "old": "    if (rooms.has(sc) || rented.has(sc?.sceneName)) for (const c of arrayOf(sc?.lootContainers))",
-    "new": "    for (const c of arrayOf(sc?.lootContainers))",
+    "old": "    if (rooms.has(sc) || rented.has(sc?.sceneName))\n      for (const c of arrayOf(sc?.lootContainers)) out.push(...lists(/** @type {any} */ (c)?.items));",
+    "new": "    for (const c of arrayOf(sc?.lootContainers)) out.push(...lists(/** @type {any} */ (c)?.items));",
     "tests": [
       "test/server/int2_judge.test.js"
     ]

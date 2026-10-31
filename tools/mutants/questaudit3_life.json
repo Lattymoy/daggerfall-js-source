@@ -353,8 +353,8 @@
   {
     "name": "QA3L-SHELF-TWIN-no-refusal",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "  if (holdsQuestTwin([bag, entity?.items, entity?.wagonItems, entity?.bagItems], item)) return { ok: false, refusal: REFUSAL.questTwin };\n",
-    "new": "",
+    "old": "  if (holdsQuestTwin([bag, entity?.items, entity?.wagonItems, entity?.bagItems], item))\n    return { ok: false, refusal: REFUSAL.questTwin };\n  // AUDIT 26: the quest arm, the OTHER caller. `from` is remoteItems",
+    "new": "  // AUDIT 26: the quest arm, the OTHER caller. `from` is remoteItems",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "QA3L-SHELF-TWIN-basket-unread",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "holdsQuestTwin([bag, entity?.items, entity?.wagonItems, entity?.bagItems], item)",
-    "new": "holdsQuestTwin([entity?.items, entity?.wagonItems, entity?.bagItems], item)",
+    "old": "  if (holdsQuestTwin([bag, entity?.items, entity?.wagonItems, entity?.bagItems], item))",
+    "new": "  if (holdsQuestTwin([entity?.items, entity?.wagonItems, entity?.bagItems], item))",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "QA3L-SHELF-TWIN-pack-unread",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "holdsQuestTwin([bag, entity?.items, entity?.wagonItems, entity?.bagItems], item)",
-    "new": "holdsQuestTwin([bag, entity?.wagonItems, entity?.bagItems], item)",
+    "old": "  if (holdsQuestTwin([bag, entity?.items, entity?.wagonItems, entity?.bagItems], item))",
+    "new": "  if (holdsQuestTwin([bag, entity?.wagonItems, entity?.bagItems], item))",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "QA3L-SHELF-TWIN-wagon-unread",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "holdsQuestTwin([bag, entity?.items, entity?.wagonItems, entity?.bagItems], item)",
-    "new": "holdsQuestTwin([bag, entity?.items, entity?.bagItems], item)",
+    "old": "  if (holdsQuestTwin([bag, entity?.items, entity?.wagonItems, entity?.bagItems], item))\n    return { ok: false, refusal: REFUSAL.questTwin };",
+    "new": "  if (holdsQuestTwin([bag, entity?.items, entity?.bagItems], item)) return { ok: false, refusal: REFUSAL.questTwin };",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "QA3L-SHELF-TWIN-bag-unread",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "holdsQuestTwin([bag, entity?.items, entity?.wagonItems, entity?.bagItems], item)",
-    "new": "holdsQuestTwin([bag, entity?.items, entity?.wagonItems], item)",
+    "old": "  if (holdsQuestTwin([bag, entity?.items, entity?.wagonItems, entity?.bagItems], item))\n    return { ok: false, refusal: REFUSAL.questTwin };",
+    "new": "  if (holdsQuestTwin([bag, entity?.items, entity?.wagonItems], item)) return { ok: false, refusal: REFUSAL.questTwin };",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "QA3L-SHELF-TWIN-itself-a-twin",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "l.some((x) => x !== item && x?.questItem",
-    "new": "l.some((x) => x?.questItem",
+    "old": "      Array.isArray(l) &&\n      l.some((x) => x !== item && x?.questItem && x.questUID === item.questUID && x.questSymbol?.name === name),",
+    "new": "      Array.isArray(l) && l.some((x) => x?.questItem && x.questUID === item.questUID && x.questSymbol?.name === name),",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "QA3L-SHELF-TWIN-permanent-copy-a-twin",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "x !== item && x?.questItem && x.questUID",
-    "new": "x !== item && x.questUID",
+    "old": "      Array.isArray(l) &&\n      l.some((x) => x !== item && x?.questItem && x.questUID === item.questUID && x.questSymbol?.name === name),",
+    "new": "      Array.isArray(l) && l.some((x) => x !== item && x.questUID === item.questUID && x.questSymbol?.name === name),",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "QA3L-SHELF-TWIN-any-quest-a-twin",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "x?.questItem && x.questUID === item.questUID && x.questSymbol?.name === name",
-    "new": "x?.questItem && x.questSymbol?.name === name",
+    "old": "    (l) =>\n      Array.isArray(l) &&\n      l.some((x) => x !== item && x?.questItem && x.questUID === item.questUID && x.questSymbol?.name === name),",
+    "new": "    (l) => Array.isArray(l) && l.some((x) => x !== item && x?.questItem && x.questSymbol?.name === name),",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "QA3L-SHELF-TWIN-any-symbol-a-twin",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "x?.questItem && x.questUID === item.questUID && x.questSymbol?.name === name",
-    "new": "x?.questItem && x.questUID === item.questUID",
+    "old": "    (l) =>\n      Array.isArray(l) &&\n      l.some((x) => x !== item && x?.questItem && x.questUID === item.questUID && x.questSymbol?.name === name),",
+    "new": "    (l) => Array.isArray(l) && l.some((x) => x !== item && x?.questItem && x.questUID === item.questUID),",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "QA3L-SHELF-TWIN-kept-pack-unread",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "[entity?.items, entity?.wagonItems, entity?.bagItems, entity?.otherItems]",
-    "new": "[entity?.wagonItems, entity?.bagItems, entity?.otherItems]",
+    "old": "  return [entity?.items, entity?.wagonItems, entity?.bagItems, entity?.otherItems].some(",
+    "new": "  return [entity?.wagonItems, entity?.bagItems, entity?.otherItems].some(",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "QA3L-SHELF-TWIN-kept-wagon-unread",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "[entity?.items, entity?.wagonItems, entity?.bagItems, entity?.otherItems]",
-    "new": "[entity?.items, entity?.bagItems, entity?.otherItems]",
+    "old": "  return [entity?.items, entity?.wagonItems, entity?.bagItems, entity?.otherItems].some(",
+    "new": "  return [entity?.items, entity?.bagItems, entity?.otherItems].some(",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "QA3L-SHELF-TWIN-kept-bag-unread",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "[entity?.items, entity?.wagonItems, entity?.bagItems, entity?.otherItems]",
-    "new": "[entity?.items, entity?.wagonItems, entity?.otherItems]",
+    "old": "  return [entity?.items, entity?.wagonItems, entity?.bagItems, entity?.otherItems].some(",
+    "new": "  return [entity?.items, entity?.wagonItems, entity?.otherItems].some(",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "QA3L-SHELF-TWIN-kept-repairer-unread",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "[entity?.items, entity?.wagonItems, entity?.bagItems, entity?.otherItems]",
-    "new": "[entity?.items, entity?.wagonItems, entity?.bagItems]",
+    "old": "  return [entity?.items, entity?.wagonItems, entity?.bagItems, entity?.otherItems].some(",
+    "new": "  return [entity?.items, entity?.wagonItems, entity?.bagItems].some(",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "QA3L-SHELF-TWIN-kept-permanent-copy",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "l.some((it) => it?.questItem && it.questUID === uid",
-    "new": "l.some((it) => it.questUID === uid",
+    "old": "    (l) => Array.isArray(l) && l.some((it) => it?.questItem && it.questUID === uid && it.questSymbol?.name === name),",
+    "new": "    (l) => Array.isArray(l) && l.some((it) => it.questUID === uid && it.questSymbol?.name === name),",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "QA3L-SHELF-TWIN-kept-any-quest",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "it?.questItem && it.questUID === uid && it.questSymbol?.name === name",
-    "new": "it?.questItem && it.questSymbol?.name === name",
+    "old": "    (l) => Array.isArray(l) && l.some((it) => it?.questItem && it.questUID === uid && it.questSymbol?.name === name),",
+    "new": "    (l) => Array.isArray(l) && l.some((it) => it?.questItem && it.questSymbol?.name === name),",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "QA3L-SHELF-TWIN-kept-any-symbol",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "it?.questItem && it.questUID === uid && it.questSymbol?.name === name",
-    "new": "it?.questItem && it.questUID === uid",
+    "old": "    (l) => Array.isArray(l) && l.some((it) => it?.questItem && it.questUID === uid && it.questSymbol?.name === name),",
+    "new": "    (l) => Array.isArray(l) && l.some((it) => it?.questItem && it.questUID === uid),",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]

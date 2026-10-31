@@ -275,8 +275,8 @@
   {
     "name": "REFORGE-REPLACE-the-count-unbounded-on-the-wire",
     "file": "src/systems/item/itemFields.js",
-    "old": "  reforges: int({ min: 1, max: REFORGES_MAX }),",
-    "new": "  reforges: int(),",
+    "old": "  reforges: int({ min: 1, max: REFORGES_MAX }), // REFORGE-REPLACE (Loot-Arc.md section 11): the reforges a piece has taken - what the next costs (reforge.js reforgePrice, temperLaw.js reforgeEssence), or absent",
+    "new": "  reforges: int(), // REFORGE-REPLACE (Loot-Arc.md section 11): the reforges a piece has taken - what the next costs (reforge.js reforgePrice, temperLaw.js reforgeEssence), or absent",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]

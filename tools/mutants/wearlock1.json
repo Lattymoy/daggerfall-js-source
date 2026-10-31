@@ -101,8 +101,8 @@
   {
     "name": "LOCK1-the-wagon-closed",
     "file": "src/systems/item/itemLock.js",
-    "old": "Object.freeze(['drop', 'sell', 'trade'])",
-    "new": "Object.freeze(['drop', 'sell', 'trade', 'stow'])",
+    "old": "export const LOCK_CLOSES = Object.freeze(['drop', 'sell', 'trade']);",
+    "new": "export const LOCK_CLOSES = Object.freeze(['drop', 'sell', 'trade', 'stow']);",
     "tests": [
       "test/systems/wearlock1.test.js"
     ]

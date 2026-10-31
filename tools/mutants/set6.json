@@ -137,8 +137,8 @@
   {
     "name": "SET6-the-record-field-undeclared",
     "file": "src/systems/item/itemFields.js",
-    "old": "  aetheric: str(),   // SET6: an Aetheric piece's record (systems/aetheric.js) - Ruhn's Regalia\n",
-    "new": "",
+    "old": "  aetheric: str(), // SET6: an Aetheric piece's record (systems/aetheric.js) - Ruhn's Regalia\n  gilded: str(), // GILDED1: a Gilded piece's record (systems/gilded.js) - the Hourlock",
+    "new": "  gilded: str(), // GILDED1: a Gilded piece's record (systems/gilded.js) - the Hourlock",
     "tests": [
       "test/systems/set6_aetheric.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SET6-the-daedric-prefix",
     "file": "src/systems/item/itemInfo.js",
-    "old": "return !itemIsIdentified(item) || !!item?.artifact || !!item?.legendary || !!item?.aetheric || !!item?.gilded;",
-    "new": "return !itemIsIdentified(item) || !!item?.artifact || !!item?.legendary || !!item?.gilded;",
+    "old": "  return !itemIsIdentified(item) || !!item?.artifact || !!item?.legendary || !!item?.aetheric || !!item?.gilded;",
+    "new": "  return !itemIsIdentified(item) || !!item?.artifact || !!item?.legendary || !!item?.gilded;",
     "tests": [
       "test/systems/set6_aetheric.test.js"
     ]

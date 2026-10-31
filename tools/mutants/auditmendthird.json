@@ -82,8 +82,8 @@
   {
     "name": "AUDIT-MEND-THIRD-owner-mends-not-moved",
     "file": "src/systems/item/foundMark.js",
-    "old": "  if (Number.isInteger(item.selfMended)) item.selfMended = share(item.selfMended);\n",
-    "new": "",
+    "old": "  if (Number.isInteger(item.selfMended)) item.selfMended = share(item.selfMended);\n}",
+    "new": "}",
     "tests": [
       "test/systems/auditmendthird.test.js"
     ],

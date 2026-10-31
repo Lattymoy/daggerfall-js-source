@@ -1177,8 +1177,8 @@
   {
     "name": "AC5-C-M27",
     "file": "src/systems/item/itemInfo.js",
-    "old": "text: isIliacCard(item) ? iliacCardName(item) : shownItemName(item)",
-    "new": "text: false ? iliacCardName(item) : shownItemName(item)",
+    "old": "    { text: isIliacCard(item) ? iliacCardName(item) : (shownItemName(item) ?? t?.name ?? ''), center: true },",
+    "new": "    { text: false ? iliacCardName(item) : (shownItemName(item) ?? t?.name ?? ''), center: true },",
     "tests": [
       "test/systems/item/auditcards5_items.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -1196,8 +1196,8 @@
   {
     "name": "AC5-C-M28",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  else if (isCardBinder(item)) for (const text of BINDER_CARD_LINES) out.push({ text, center: true });   // CARDS8\n",
-    "new": "",
+    "old": "  else if (isCardBinder(item))\n    for (const text of BINDER_CARD_LINES) out.push({ text, center: true }); // CARDS8\n  else if (isCardPack(item))",
+    "new": "  else if (isCardPack(item))",
     "tests": [
       "test/systems/item/auditcards5_items.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -1215,8 +1215,8 @@
   {
     "name": "AC5-C-M31",
     "file": "src/systems/item/itemFields.js",
-    "old": "Array.isArray(d.cards) && d.cards.length <= 40",
-    "new": "Array.isArray(d.cards)",
+    "old": "  d.cards.length <= 40 &&\n  d.cards.every((c) => typeof c === 'string' && c.length > 0 && c.length <= 40);",
+    "new": "  d.cards.every((c) => typeof c === 'string' && c.length > 0 && c.length <= 40);",
     "tests": [
       "test/systems/item/auditcards5_items.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -1234,8 +1234,8 @@
   {
     "name": "AC5-C-M32",
     "file": "src/systems/item/itemFields.js",
-    "old": "d.cards.every((c) => typeof c === 'string' && c.length > 0 && c.length <= 40);",
-    "new": "d.cards.every((c) => typeof c === 'string');",
+    "old": "  d.cards.every((c) => typeof c === 'string' && c.length > 0 && c.length <= 40);",
+    "new": "  d.cards.every((c) => typeof c === 'string');",
     "tests": [
       "test/systems/item/auditcards5_items.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -3692,8 +3692,8 @@
   {
     "name": "AC5-C-M29",
     "file": "src/systems/item/itemInfo.js",
-    "old": "if (isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item) || isWeirKey(item) || isSoulCake(item) || isHearthOffering(item) || isStarglass(item) || isLockpick(item)) record = survivalInfoTokens(item);",
-    "new": "if (isPortalStone(item) || isWalletItem(item) || isCardPack(item) || isWeirKey(item) || isSoulCake(item) || isHearthOffering(item) || isStarglass(item) || isLockpick(item)) record = survivalInfoTokens(item);",
+    "old": "    isWalletItem(item) ||\n    isIliacCard(item) ||\n    isCardBinder(item) ||\n    isCardPack(item) ||\n    isWeirKey(item) ||",
+    "new": "    isWalletItem(item) ||\n    isCardPack(item) ||\n    isWeirKey(item) ||",
     "tests": [
       "test/systems/item/auditcards5_items.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -3711,8 +3711,8 @@
   {
     "name": "AC5-C-M30",
     "file": "src/systems/item/itemInfo.js",
-    "old": "isPortalStone(item) || isWalletItem(item) || isIliacCard(item) || isCardBinder(item) || isCardPack(item) || isOatsItem(item) || isWagonKitItem(item) || isLockpick(item);   // AUDIT LOCKPICK B2",
-    "new": "isPortalStone(item) || isWalletItem(item) || isCardPack(item) || isOatsItem(item) || isWagonKitItem(item) || isLockpick(item);   // AUDIT LOCKPICK B2",
+    "old": "    isWalletItem(item) ||\n    isIliacCard(item) ||\n    isCardBinder(item) ||\n    isCardPack(item) ||\n    isOatsItem(item) ||",
+    "new": "    isWalletItem(item) ||\n    isCardPack(item) ||\n    isOatsItem(item) ||",
     "tests": [
       "test/systems/item/auditcards5_items.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -3730,8 +3730,8 @@
   {
     "name": "AC5-C-M33",
     "file": "src/systems/item/itemFields.js",
-    "old": "export const validBinderDeck = (d) => !!d && typeof d === 'object' && !Array.isArray(d)",
-    "new": "export const validBinderDeck = (d) => !!d && typeof d === 'object'",
+    "old": "  !Array.isArray(d) &&\n  typeof d.name === 'string' &&",
+    "new": "  typeof d.name === 'string' &&",
     "tests": [
       "test/systems/item/auditcards5_items.test.js",
       "test/systems/item/cards8_binder.test.js",

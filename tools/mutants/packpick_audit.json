@@ -334,8 +334,8 @@
   {
     "name": "AUDIT-PACK-PICK-C36-look-powers-always-identified",
     "file": "src/systems/item/itemLook.js",
-    "old": "magicPowersLines(it, { identified: itemIsIdentified(it) })",
-    "new": "magicPowersLines(it, { identified: true })",
+    "old": "      for (const t of magicPowersLines(it, { identified: itemIsIdentified(it) }))\n        if (t && !magic.includes(t)) magic.push(t);",
+    "new": "      for (const t of magicPowersLines(it, { identified: true })) if (t && !magic.includes(t)) magic.push(t);",
     "tests": [
       "test/ui/packpick.test.js",
       "test/ui/homevendor_ui.test.js",
@@ -345,8 +345,8 @@
   {
     "name": "AUDIT-PACK-PICK-C38-look-rows-labels-dropped",
     "file": "src/systems/item/itemLook.js",
-    "old": "(r.label ? `${r.label}: ${r.text}` : r.text)",
-    "new": "r.text",
+    "old": "    rows = itemStatRows(it).map((r) => (r.label ? `${r.label}: ${r.text}` : r.text));",
+    "new": "    rows = itemStatRows(it).map((r) => r.text);",
     "tests": [
       "test/ui/packpick.test.js"
     ]
