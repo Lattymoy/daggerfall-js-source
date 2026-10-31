@@ -1,0 +1,22 @@
+[
+  {
+    "name": "ATTACK-MOVE-turn-paints-stance",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "if (isAnimating) updateBillboard(frameCurrent, o, isAnimating.table); else updateBillboardDelayed(frameCurrent, o, stateCurrent);",
+    "new": "updateBillboardDelayed(frameCurrent, o, stateCurrent);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ],
+    "why": "a turn mid-swing paints the walk"
+  },
+  {
+    "name": "ATTACK-MOVE-queued-stance-fires",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "if (isAnimating && p.table !== isAnimating.table) continue;",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
+    ],
+    "why": "a walk repaint queued before the swing lands on it"
+  }
+]

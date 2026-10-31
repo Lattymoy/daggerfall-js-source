@@ -611,6 +611,9 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       const p = pending[i];
       if (--p.left > 0) { i++; continue; }
       pending.splice(i, 1);
+      // ATTACK-MOVE (a player, 2026-10-31: "attack animations do not play properly when you attack and move
+      // simultaneously"): the walk's clock and a stance change queue their repaints beside a clip - none lands on it
+      if (isAnimating && p.table !== isAnimating.table) continue;
       updateBillboard(p.frame, p.orientation, p.table);
     }
   }
@@ -756,7 +759,11 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     currentAngle = signedAngleY(toCamera, facing);
     const o = orientationFor(facing, toCamera);
     orientationChosen = o;   // SPRITE-FLICKER
-    if (o !== lastOrientation || force || forceOrient || !shown) { forceOrient = false; updateBillboardDelayed(frameCurrent, o, stateCurrent); }
+    if (o !== lastOrientation || force || forceOrient || !shown) {
+      forceOrient = false;
+      // ATTACK-MOVE: a turn mid-clip turns the clip's own frame, not the stance's
+      if (isAnimating) updateBillboard(frameCurrent, o, isAnimating.table); else updateBillboardDelayed(frameCurrent, o, stateCurrent);
+    }
     // [IL] TorchOffset (IL_47df-IL_48bd), third person only: Selfie (2)
     // parks PlayerTorch half way from the head to the camera; Billboard
     // (1) puts it 0.45 up the sprite and half a metre along the facing.

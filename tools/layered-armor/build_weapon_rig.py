@@ -113,23 +113,27 @@ HAND = {
 # Walk and idle frames whose hammer hides its shaft - a front view's points at the camera, a back view's is behind the
 # body with its butt out - and a swing's whose grip the trace missed draw the weapon on Daggerfall's own sword
 # (TEXTURE.482, .481: the Archer, one render with the strips) instead: (grip, the head's place at the hammer's length, and
-# the blade's side: f before the body, b behind it, x hidden - a back view's, behind the arm: the pommel shows where the
-# butt was, as Daggerfall's back views show it - None as the art's hammer is). The grip is the fist's blade side (a front view's: the hand its fill
-# leaves). The sword's own length is twice the hammer's, so the head's place is half way to its tip.
+# the blade's side: f before the body, b behind it, None as the art's hammer is; a sixth, the handle's; a seventh, its
+# width's share, `wx`, where the frame turns it edge on). The grip is the
+# fist's blade side (a front view's: the hand its fill leaves). The sword's own length is twice the hammer's, so the
+# head's place is half way to its tip. BACK-CARRY (2026-10-31, a player: "drawn claymore is visually not in character's
+# hand"): the back walk hung the blade forward, hidden, its grip and pommel below the fist - read as the hammer's stub.
+# It hangs down from the fist now, out with the arm's swing as the hammer's head hangs, before the body, edge on to the
+# eye; the handle behind.
 SHAFT = {
     ('male', '0-0'): (7, 66, 11.7, 58.6, 'f'), ('male', '0-1'): (6.5, 63, 9.7, 52.7, 'f'),
     ('male', '0-3'): (5, 63, 7.7, 52.7, 'f'), ('male', '2-2'): (37.5, 56.5, 11.2, 50.6, None),
     ('male', '3-0'): (46.1, 60.1, 20.3, 52.4, 'b'), ('male', '3-1'): (49.7, 57.8, 26.5, 47.9, 'b'),
     ('male', '3-2'): (59.9, 62.6, 43.5, 53.7, 'b'), ('male', '3-3'): (54.7, 58.9, 33.1, 50.5, 'b'),
-    ('male', '4-0'): (51.5, 59, 38.9, 45.2, 'x'), ('male', '4-1'): (57.5, 56.5, 46.8, 41.2, 'x'),
-    ('male', '4-2'): (65, 59.5, 67.1, 40.9, 'x'), ('male', '4-3'): (56.5, 57, 45.0, 42.2, 'x'),
+    ('male', '4-0'): (51.5, 59, 61.8, 74.6, 'f', 'b', 0.4), ('male', '4-1'): (57.5, 56.5, 66.9, 72.7, 'f', 'b', 0.4),
+    ('male', '4-2'): (65, 59.5, 69.7, 77.6, 'f', 'b', 0.4), ('male', '4-3'): (56.5, 57, 65.9, 73.2, 'f', 'b', 0.4),
     ('male', '15-0'): (10.5, 58.5, 18.6, 50.9, 'f'), ('male', '16-0'): (28, 54, 18.9, 44.1, 'f'),
     ('male', '18-0'): (26.9, 50.5, 8.3, 41.7, None),
     ('female', '0-0'): (50, 88, 44.2, 86.8, 'f'), ('female', '0-1'): (51, 82, 52.9, 71.3, 'f'),
     ('female', '0-2'): (52, 85, 54.1, 74.7, 'f'), ('female', '0-3'): (48.5, 84, 49.4, 74.2, 'f'), ('female', '3-0'): (87.2, 93.3, 73.1, 87.3, 'b'),
     ('female', '3-1'): (83.7, 89.4, 60.7, 80.3, 'b'), ('female', '3-2'): (64.5, 78.5, 48.3, 71.1, None),
-    ('female', '3-3'): (83.4, 88.5, 63.8, 76.8, 'b'), ('female', '4-0'): (81.5, 91, 92.6, 79.9, 'x'), ('female', '4-1'): (82, 88.5, 75.0, 74.5, 'x'),
-    ('female', '4-2'): (79, 90.5, 72.6, 76.2, 'x'), ('female', '4-3'): (81.5, 88.5, 77.0, 73.5, 'x'),
+    ('female', '3-3'): (83.4, 88.5, 63.8, 76.8, 'b'), ('female', '4-0'): (81.5, 91, 87.0, 105.7, 'f', 'b', 0.4), ('female', '4-1'): (82, 88.5, 89.0, 102.5, 'f', 'b', 0.4),
+    ('female', '4-2'): (79, 90.5, 85.4, 104.8, 'f', 'b', 0.4), ('female', '4-3'): (81.5, 88.5, 86.0, 103.5, 'f', 'b', 0.4),
     ('female', '15-0'): (49, 85.5, 53, 78.3, 'f'), ('female', '16-0'): (54, 78, 47, 69.4, 'f'),
     ('female', '18-0'): (59.7, 77.7, 43.4, 69.8, None),
     ('female', '8-2'): (63, 68, 87.4, 69.4, 'b'),   # a swing's: the fist is out at the left, the hammer behind the body
@@ -587,16 +591,18 @@ def main(only=None):
         ln = round(float(np.percentile(lengths, 95)), 1)
         for rf, per in frames.items():   # Daggerfall's sword, where the hammer hides its shaft
             for fam, p in zip(FAMS, per):
-                p.pop('carry', None); p.pop('hang', None); p.pop('w', None)
+                p.pop('carry', None); p.pop('hang', None); p.pop('w', None); p.pop('wx', None)
                 if (body, rf) not in SHAFT: continue
-                gx, gy, ex, ey, blade = SHAFT[(body, rf)]
+                gx, gy, ex, ey, blade, *more = SHAFT[(body, rf)]
+                handle = more[:1]
+                if len(more) > 1: p['wx'] = more[1]
                 ox, oy = (p['q'][0] - HAND[(body, rf)]['q'][0], p['q'][1] - HAND[(body, rf)]['q'][1]) if (body, rf) in HAND else (0, 0)
                 p['w'] = [round(gx + ox, 1), round(gy + oy, 1), round(ex + ox, 1), round(ey + oy, 1)]
                 tiles = np.array(Image.open(f'{V}/weapon/{body}/{rf}.png').convert('RGBA')); tw = tiles.shape[1] // len(FAMS)
                 m = tiles[:, FAMS.index(fam) * tw:(FAMS.index(fam) + 1) * tw, 3] > 0
                 d = depth({'q': p['w'][:2], 't': p['w'][2:], 'm': m, 'L': stable(body, rf, fam)[1]})
                 d = d[:-LO - 3] + 'b' * 3 + d[-LO:]   # the fist closes over the handle
-                p['d'] = d if blade is None else d[:-LO] + blade * (HI + 1)
+                p['d'] = d if blade is None else (handle[0] * -LO if handle else d[:-LO]) + blade * (HI + 1)
         for rf, per in frames.items():   # the bow's hand, where a frame carries one
             for p in per:
                 p.pop('bow', None); p.pop('bowM', None)

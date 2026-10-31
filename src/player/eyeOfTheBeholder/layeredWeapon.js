@@ -583,11 +583,11 @@ export function drawWeapon(out, fr, code, len, view = 2, art = {}) {
   const depthAt = (proj) => depth[Math.max(0, Math.min(depth.length - 1, Math.round(proj) - lo))];
   const shown = (alpha, proj) => { const k = depthAt(proj); return k !== 'x' && (!alpha || k === 'f'); };
   const px = { ux, uy, nx, ny, minS: 1.1 / (k * f) };
-  const side = fr.side || 1;
+  const side = fr.side || 1, wx = fr.wx ?? 1;   // BACK-CARRY: its width's share where the frame turns it edge on
   // a flail's chain hangs: its heavier side down the picture, whatever the hammer's face
   const face = shape === 'fl' || shape === 'lf' ? (ny >= 0 ? 1 : -1) : side;
   if (pic) {
-    const L = { qx, qy, ux, uy, nx, ny, along: /** @type {number} */ (art.cm) * f, across: /** @type {number} */ (art.cm), side: face };
+    const L = { qx, qy, ux, uy, nx, ny, along: /** @type {number} */ (art.cm) * f, across: /** @type {number} */ (art.cm) * wx, side: face };
     const was = d.slice();
     // the doll's hand gap: its handle, where no fist of the art's covers it
     if (pic.bridge) drawPicture(out, pic, L, (a, proj) => !a && shown(a, proj), pic.bridge);
@@ -602,7 +602,7 @@ export function drawWeapon(out, fr, code, len, view = 2, art = {}) {
   const box = [Math.min(ends[0][0], ends[1][0]) - wide, Math.min(ends[0][1], ends[1][1]) - wide, Math.max(ends[0][0], ends[1][0]) + wide, Math.max(ends[0][1], ends[1][1]) + wide];
   return paint(out, (x, y) => {
     const ex = x - qx, ey = y - qy;
-    const proj = ex * ux + ey * uy, s = proj / (k * f), v = (ex * nx + ey * ny) / k;
+    const proj = ex * ux + ey * uy, s = proj / (k * f), v = (ex * nx + ey * ny) / (k * wx);
     if (s < sMin - 1 || s > sMax + 1 || Math.abs(v) > 20) return null;
     return sample(parts, s, v, side, px);
   }, (a, x, y) => shown(a, (x - qx) * ux + (y - qy) * uy), box, metal);

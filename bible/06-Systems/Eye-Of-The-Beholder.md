@@ -1170,6 +1170,21 @@ DEPARTURE from the assembly, the sixth, recorded in the Ledger row.
 weapon's tick), `test/net/disc23b_eotb_sprites.test.js` (a peer's stroke by `an`); `tools/mutants/onestroke.json`.
 `tools/mutants/disc23b.json`'s clip-never-ends record re-aimed at the shot's own frames. Not verified in a browser.
 
+## ATTACK-MOVE (2026-10-31): a swing on the move plays whole
+
+A player's report, through the owner: "attack animations do not play properly when you attack and move
+simultaneously". The IL's `LoopIdleBillboard` runs beside a clip: while walking its clock advanced and repainted the
+walk table between the swing's frames, and a turn (`UpdateOrientation`) repainted the stance too. On the move the
+screen flickered between the walk and the swing.
+
+**The change.** `eotbBody.js`: a stance's delayed repaint (the walk's clock, a table change, one queued just before
+the clip) is dropped while a clip plays - the repaint after the clip paints the stance again - and a turn mid-clip
+repaints the clip's own frame at the new view. A peer's walker already rested its clock under a shot
+(`peerRiders.js`). A DEPARTURE from the assembly, the seventh, recorded in the Ledger row.
+
+**Pins.** `test/player/eyeOfTheBeholder/eotb_body.test.js` ATTACK-MOVE (every frame of a swing on the move, the eye
+swung round mid-swing, is the swing, turned with the eye; the walk after it); `tools/mutants/attackmove.json`. Not verified in a browser.
+
 ## BACK-HOLSTER (2026-10-30): the sheathed weapon on the sprite's back - NOT the mod's
 
 Mac: "For layered/skins in third person. I want to implement back holstered weapon visuals for the sprites which rotate

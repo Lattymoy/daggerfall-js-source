@@ -384,21 +384,31 @@ test('the held picture is drawn on the frame\'s line from the fist; a bow from i
   assert.ok(Math.abs(bottom - top - rig.male.bow * Math.cos(Math.PI / 15)) <= 3, `tip to tip ${bottom - top}: the loose's own bow`);
 });
 
-test('from behind the blade is hidden behind the arm and the pommel shows; from the side the bow is in the near hand', { skip: !PNG && 'no pngjs' }, async () => {
+test('BACK-CARRY: from behind the blade hangs from the fist before the body, edge on; from the side the bow is in the near hand', { skip: !PNG && 'no pngjs' }, async () => {
+  // a player (2026-10-31): "drawn claymore is visually not in character's hand" - the back walk hid the blade forward
   const withPic = { ...opts, heldArt: async () => sword({ handle: 24 }) };
-  for (const [body, frames] of [['male', ['4-0', '4-1', '4-2', '4-3']], ['female', ['4-0', '4-1', '4-2', '4-3']]]) {
-    let pommel = 0;
-    for (const rf of frames) {
-      const armed = await decodeLayered(`LA:${body}:leather_leather_leather:${rf}:lll@ls1`, decodePng, withPic);
-      let red = 0;
-      for (let i = 0; i < armed.width * armed.height; i++) {
-        const [r, g, b] = armed.data.subarray(i * 4, i * 4 + 3);
-        if (r > 200 && g < 60 && b < 60) red++;
-        if (b > 200 && r < 60 && g < 60) pommel++;
-      }
-      assert.equal(red, 0, `${body} ${rf}: no blade from behind`);
+  for (const body of ['male', 'female']) for (const rf of ['4-0', '4-1', '4-2', '4-3']) {
+    const armed = await decodeLayered(`LA:${body}:leather_leather_leather:${rf}:lll@ls1`, decodePng, withPic);
+    const fr = weaponRigOf(body, rf), [gx, gy, ex, ey] = fr.w, D = Math.hypot(ex - gx, ey - gy), nx = -(ey - gy) / D, ny = (ex - gx) / D;
+    assert.ok((ey - gy) / D > 0.7, `${body} ${rf}: the line hangs down`);
+    let red = 0, above = 0, across = 0, guard = 0;
+    for (let i = 0; i < armed.width * armed.height; i++) {
+      const [r, g, b] = armed.data.subarray(i * 4, i * 4 + 3), x = (i % armed.width) + 0.5, y = ((i / armed.width) | 0) + 0.5;
+      if (r > 200 && g < 60 && b < 60) { red++; if (y < gy - 1) above++; }
+      if (g > 200 && r < 60 && b < 60) { guard++; across = Math.max(across, Math.abs((x - gx) * nx + (y - gy) * ny)); }
     }
-    assert.ok(pommel > 0, `${body}: the pommel shows below the fist`);
+    assert.ok(red > 10 && above === 0, `${body} ${rf}: the blade below the fist (${red} px, ${above} above)`);
+    // edge on: the guard's nine picture px reach 4.5 cm px from the line seen flat - well under that here
+    assert.ok(guard > 0 && across <= 4.5 * rig[body].cm * 0.6, `${body} ${rf}: the guard edge on (${across.toFixed(1)} px across)`);
+    // and the drawn shape, where no picture is had: its guard's 12 cm reach edge on too
+    const shape = await decodeLayered(`LA:${body}:leather_leather_leather:${rf}:lll@ls1`, decodePng, { ...opts, heldArt: async () => null });
+    const empty = await decodeLayered(`LA:${body}:leather_leather_leather:${rf}:lll@0`, decodePng, opts);
+    let reach = 0;
+    for (let i = 0; i < shape.width * shape.height; i++) {
+      if ([0, 1, 2, 3].every((c) => shape.data[i * 4 + c] === empty.data[i * 4 + c])) continue;
+      reach = Math.max(reach, Math.abs(((i % shape.width) + 0.5 - gx) * nx + (((i / shape.width) | 0) + 0.5 - gy) * ny));
+    }
+    assert.ok(reach > 0 && reach <= 12 * rig[body].cm * 0.6, `${body} ${rf}: the shape's guard edge on (${reach.toFixed(1)} px)`);
   }
   for (const body of ['male', 'female']) for (const rf of ['2-0', '2-1', '2-2', '2-3', '17-0']) {
     const fr = weaponRigOf(body, rf), [gx, gy] = fr.w ?? fr.q;

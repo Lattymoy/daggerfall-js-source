@@ -157,10 +157,15 @@ flinch), the pommel stays joined to the guard, and a fist the art keeps covers i
 **Held.** Daggerfall's walk holds the weapon before the body, pointed ahead and a little up: its Archer's sword
 (TEXTURE.482, .481, one render with the strips) lies along the hammer's shaft wherever both show. Where the hammer hides
 its shaft, the weapon is drawn on the sword's line instead (`SHAFT`, the rig's `w`). A front view's points at the
-camera, up from the hand and before the body. A back-3/4 view's crosses behind the body and shows past it. From behind,
-the blade is hidden behind the arm and only the pommel shows, where the art's butt was (`x`), as Daggerfall's back views
-show it. The grip is the fist's blade side (a front view's: the hand its fill leaves). The fist closes over the handle.
-Nothing hangs from the hand: the third pass's carry is gone.
+camera, up from the hand and before the body. A back-3/4 view's crosses behind the body and shows past it. The grip
+is the fist's blade side (a front view's: the hand its fill leaves). The fist closes over the handle.
+
+**BACK-CARRY** (2026-10-31, a player, through the owner: "drawn claymore is visually not in character's hand"; "you can
+still see parts of default hammer weapon in right hand"). From behind the walk hid the blade forward, as Daggerfall's
+Archer does, and showed only the grip and pommel below the fist - read as the hammer's stub, the weapon gone. A
+departure from Daggerfall's back views: the blade hangs down from the fist, out with the arm's swing as the art's hammer
+head hangs, before the body; the handle behind the fist; edge on to the eye (the rig's `wx`, its width's share: the
+guard short, not a bar across the hip). `layered_weapons.test.js` BACK-CARRY.
 
 **Where no picture comes** (a gun, a page with no canvas: the pins), the game draws the weapon: each template a shape
 in centimetres (the hammer's grip to head is 70), supersampled, shaded from the upper left and rimmed dark, in the

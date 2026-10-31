@@ -1478,5 +1478,25 @@
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
     "why": "a skin swings the tool: the skin system changed"
+  },
+  {
+    "name": "BACK-CARRY-flat",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "wx = fr.wx ?? 1;",
+    "new": "wx = 1;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the back walk's blade seen flat: its guard a bar across the hip"
+  },
+  {
+    "name": "BACK-CARRY-shape-flat",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "v = (ex * nx + ey * ny) / (k * wx);",
+    "new": "v = (ex * nx + ey * ny) / k;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a drawn shape seen flat where the frame turns it edge on"
   }
 ]

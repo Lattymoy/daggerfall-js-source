@@ -568,3 +568,28 @@ test('OW-BIG (Mac: "The player sprite needs to appear larger"): under the travel
   const tv = readFileSync(join(root, 'src/scenes/travelView.js'), 'utf8');
   assert.match(tv, /grow: tvOwnGrow\(Math\.hypot\(shown\.eye\[0\] - f\[0\], shown\.eye\[1\] - f\[1\], shown\.eye\[2\] - f\[2\]\)\),/, 'the view hands the host the step from its own eye');
 });
+
+test('ATTACK-MOVE (a player, 2026-10-31: "attack animations do not play properly when you attack and move simultaneously"): a swing on the move plays whole - no walk frame, nor a turn, repaints over it', async () => {
+  const { b } = await liveBody();
+  ticks(b, 30, walk({ sheathed: false }));
+  b.tick(1 / 60, walk({ sheathed: false, attacking: true, swingN: 1 }));
+  assert.ok(b.state().clip, 'the swing started');
+  const seen = [];
+  for (let i = 0; i < 240 && b.state().clip; i++) {
+    const cam = i % 40 < 20 ? [0, 1.5, -2] : [2, 1.5, 0];   // the eye swung round the walker mid-swing too
+    b.tick(1 / 60, walk({ sheathed: false, attacking: i < 20, swingN: 1, cameraPos: cam }));
+    if (b.state().clip) seen.push(b.state().shown.table);
+  }
+  assert.ok(seen.length > 6, `the clip ran ${seen.length} frames`);
+  assert.deepEqual([...new Set(seen)], ['AttackMelee'], 'every frame of the swing is the swing');
+  ticks(b, 12, walk({ sheathed: false }));
+  assert.equal(b.state().shown.table, 'MoveMelee', 'the walk again after it');
+  // and a turn mid-swing turns the swing: the eye swung round, the clip's own frame drawn at the new view
+  ticks(b, 30, walk({ sheathed: false }));
+  b.tick(1 / 60, walk({ sheathed: false, attacking: true, swingN: 2 }));
+  const before = b.state().shown.orientation;
+  for (let i = 0; i < 12; i++) b.tick(1 / 60, walk({ sheathed: false, swingN: 2, cameraPos: [2, 1.5, 0] }));
+  assert.ok(b.state().clip, 'still swinging');
+  assert.notEqual(b.state().shown.orientation, before, 'the swing turned with the eye');
+  assert.equal(b.state().shown.table, 'AttackMelee');
+});
