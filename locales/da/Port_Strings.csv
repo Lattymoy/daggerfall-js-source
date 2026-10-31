@@ -4702,6 +4702,8 @@ menu.settings.tip.vsyncVulkan,"Med grafikbackenden Vulkan holder skrivebordsappe
 menu.settings.unavailableBlurb,"Fastlagt af browseren eller af dette spil. Hver række siger, hvad du får i stedet."
 menu.settings.unavailableTitle,"Ikke tilgængelig her"
 menu.sheet.close,"Luk"
+menu.shop.hide,"Skjul butikken"
+menu.shop.hideNote,"Fjern butikken fra pauseskærmen. Din Aurum og dine genstande bliver på din konto."
 menu.skipVideo.name,"Spring startvideo over"
 menu.skipVideo.note,"Åbn direkte på hovedmenuen. Gælder fra næste start."
 menu.spire.fill.name,"Farefyld"

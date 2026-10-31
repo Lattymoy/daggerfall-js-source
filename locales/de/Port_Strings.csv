@@ -4702,6 +4702,8 @@ menu.settings.tip.vsyncVulkan,"Mit dem Grafik-Backend Vulkan lässt die Desktop-
 menu.settings.unavailableBlurb,"Vom Browser oder von diesem Spiel festgelegt. Jede Zeile sagt, was du stattdessen bekommst."
 menu.settings.unavailableTitle,"Hier nicht verfügbar"
 menu.sheet.close,"Schließen"
+menu.shop.hide,"Shop ausblenden"
+menu.shop.hideNote,"Nimmt den Shop vom Pausenbildschirm. Dein Aurum und deine Gegenstände bleiben auf deinem Konto."
 menu.skipVideo.name,"Startvideo überspringen"
 menu.skipVideo.note,"Direkt im Hauptmenü öffnen. Gilt ab dem nächsten Start."
 menu.spire.fill.name,"Gefahrenfüllung"

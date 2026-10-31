@@ -4702,6 +4702,8 @@ menu.settings.tip.vsyncVulkan,"S grafickým rozhraním Vulkan to desktopová apl
 menu.settings.unavailableBlurb,"Pevně dáno prohlížečem nebo touto hrou. Každý řádek uvádí, co dostaneš místo toho."
 menu.settings.unavailableTitle,"Zde nedostupné"
 menu.sheet.close,"Zavřít"
+menu.shop.hide,"Skrýt obchod"
+menu.shop.hideNote,"Odebere obchod z obrazovky pauzy. Tvé Aurum a předměty zůstanou na účtu."
 menu.skipVideo.name,"Přeskočit úvodní video"
 menu.skipVideo.note,"Otevřít rovnou hlavní nabídku. Platí od příštího spuštění."
 menu.spire.fill.name,"Výplň nebezpečí"

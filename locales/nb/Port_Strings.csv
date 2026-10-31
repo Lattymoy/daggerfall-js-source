@@ -4702,6 +4702,8 @@ menu.settings.tip.vsyncVulkan,"Med grafikkbackenden Vulkan holder skrivebordsapp
 menu.settings.unavailableBlurb,"Låst av nettleseren eller av dette spillet. Hver rad sier hva du får i stedet."
 menu.settings.unavailableTitle,"Ikke tilgjengelig her"
 menu.sheet.close,"Lukk"
+menu.shop.hide,"Skjul butikken"
+menu.shop.hideNote,"Fjern butikken fra pauseskjermen. Aurum og gjenstandene dine blir på kontoen din."
 menu.skipVideo.name,"Hopp over startvideo"
 menu.skipVideo.note,"Åpne rett på hovedmenyen. Gjelder fra neste oppstart."
 menu.spire.fill.name,"Farefyll"

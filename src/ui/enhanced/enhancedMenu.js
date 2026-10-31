@@ -471,6 +471,7 @@ const shopFlowOf = () => {
 /** SHOP (the owner: "A new glyph panel alongside the timer and mailbox that will be used for our monetization shop"): THE
  *  GEM on the pause face, at the end of the row of marks `chain` - online or not, for the account is the shop's. */
 function shopGem(home, chain) {
+  if (getPref('shopHidden')) { shopOpen = false; shopAnchor?.(); shopAnchor = null; return null; }   // SHOP-HIDE: the player's own Hide the shop
   const gem = shopMark(document, { open: shopOpen, onOpen: () => { shopOpen = true; shopFocusIn = true; render(); } });
   home.append(gem);
   shopAnchor = anchorSeason(gem, chain, home.querySelector?.('.px-profile'), home);
@@ -3152,6 +3153,8 @@ function portRowsInterface({ pause = false } = {}) {
   if (!pause) { const packRow = translationPackRow(); if (packRow) out.push(packRow); }   // L10N3b: and its translation pack
   out.push(hudScaleRow());
   out.push(mapScaleRow());   // MAP-SCALE
+  out.push(prefRow('shopHidden', t('menu.shop.hide', 'Hide the shop'),
+    t('menu.shop.hideNote', 'Take the shop off the pause screen. Your Aurum and your items stay on your account.')));   // SHOP-HIDE
   out.push(prefRow('standingAll', 'Every faction\'s standing',
     'Show your reputation with every guild, temple, knightly order, kingdom, coven, vampire clan and Daedric Prince on the character sheet\'s Standing page, including ones you don\'t belong to.'));   // EVERY-STANDING
   if (isEnhanced()) out.push(...hudLayoutRows());   // HUD-MOVE: the Enhanced Plus HUD's own - Classic draws none of it

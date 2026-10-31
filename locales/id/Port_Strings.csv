@@ -4702,6 +4702,8 @@ menu.settings.tip.vsyncVulkan,"Dengan backend grafis Vulkan, aplikasi desktop me
 menu.settings.unavailableBlurb,"Ditetapkan oleh peramban atau oleh permainan ini. Setiap baris menyebutkan apa yang kamu dapat sebagai gantinya."
 menu.settings.unavailableTitle,"Tidak tersedia di sini"
 menu.sheet.close,"Tutup"
+menu.shop.hide,"Sembunyikan toko"
+menu.shop.hideNote,"Hapus toko dari layar jeda. Aurum dan itemmu tetap ada di akunmu."
 menu.skipVideo.name,"Lewati video pembuka"
 menu.skipVideo.note,"Langsung buka ke menu utama. Berlaku saat peluncuran berikutnya."
 menu.spire.fill.name,"Isian bahaya"

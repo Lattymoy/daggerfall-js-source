@@ -4702,6 +4702,8 @@ menu.settings.tip.vsyncVulkan,"С графичния модул Vulkan прил�
 menu.settings.unavailableBlurb,"Фиксирани от браузъра или от тази игра. Всеки ред казва какво получавате вместо това."
 menu.settings.unavailableTitle,"Не са достъпни тук"
 menu.sheet.close,"Затвори"
+menu.shop.hide,"Скрий магазина"
+menu.shop.hideNote,"Махни магазина от екрана за пауза. Твоят Aurum и предметите ти остават в акаунта."
 menu.skipVideo.name,"Пропусни началното видео"
 menu.skipVideo.note,"Отваря направо главното меню. Прилага се при следващото стартиране."
 menu.spire.fill.name,"Запълване на опасността"

@@ -4702,6 +4702,8 @@ menu.settings.tip.vsyncVulkan,"그래픽 백엔드가 Vulkan이면 데스크톱 
 menu.settings.unavailableBlurb,"브라우저나 이 게임이 고정한 설정입니다. 각 줄에 대신 무엇이 적용되는지 적혀 있습니다."
 menu.settings.unavailableTitle,"여기서는 사용할 수 없음"
 menu.sheet.close,"닫기"
+menu.shop.hide,"상점 숨기기"
+menu.shop.hideNote,"일시 정지 화면에서 상점을 없앱니다. Aurum과 아이템은 계정에 그대로 남습니다."
 menu.skipVideo.name,"시작 영상 건너뛰기"
 menu.skipVideo.note,"바로 메인 메뉴로 엽니다. 다음 실행부터 적용됩니다."
 menu.spire.fill.name,"위험 채우기"

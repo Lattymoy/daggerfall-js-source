@@ -233,6 +233,12 @@ held is tried on and told how it is had (AUDIT-STOREFRONT II, lane E 8: `wardrob
 the wares and the season's law); one held is worn through the flow's own door. On a narrow card the stage stands first
 and the picker right under it (lane E 7), so a choice pointed at is tried on in sight.
 
+**Hide the shop** (SHOP-HIDE, 2026-10-30, the owner: "a settings toggle that disables the shop interface ingame. Off by
+default"). The Interface tab's Shop section holds it (`port:shopHidden`, `src/systems/uiPrefs.js`), off as the game ships.
+On, the pause screen draws no gem (`enhancedMenu.js` shopGem), so the window has no door. It is the device's choice: the
+account's Aurum, its items and the Folios are untouched, and a coffer or a gift still pays. `test/ui/shop_hide.test.js`;
+`tools/mutants/shop_hide.json`.
+
 ## 10. Online
 
 The token's new claim is `fx`, the effects kit: three characters, the kill effect, the portal skin and the mount look,

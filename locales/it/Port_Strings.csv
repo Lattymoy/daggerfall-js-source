@@ -4702,6 +4702,8 @@ menu.settings.tip.vsyncVulkan,"Con il backend grafico Vulkan, l'app desktop lo t
 menu.settings.unavailableBlurb,"Fissate dal browser o da questo gioco. Ogni riga dice cosa ottieni al loro posto."
 menu.settings.unavailableTitle,"Non disponibili qui"
 menu.sheet.close,"Chiudi"
+menu.shop.hide,"Nascondi il negozio"
+menu.shop.hideNote,"Toglie il negozio dalla schermata di pausa. I tuoi Aurum e i tuoi oggetti restano sul tuo account."
 menu.skipVideo.name,"Salta il video iniziale"
 menu.skipVideo.note,"Apri direttamente il menu principale. Vale dal prossimo avvio."
 menu.spire.fill.name,"Riempimento del pericolo"

@@ -4702,6 +4702,8 @@ menu.settings.tip.vsyncVulkan,"Avec le moteur graphique Vulkan, l'application de
 menu.settings.unavailableBlurb,"Fixé par le navigateur ou par ce jeu. Chaque ligne indique ce que vous obtenez à la place."
 menu.settings.unavailableTitle,"Indisponible ici"
 menu.sheet.close,"Fermer"
+menu.shop.hide,"Masquer la boutique"
+menu.shop.hideNote,"Retire la boutique de l’écran de pause. Votre Aurum et vos objets restent sur votre compte."
 menu.skipVideo.name,"Passer la vidéo de démarrage"
 menu.skipVideo.note,"Ouvrir directement le menu principal. S’applique au prochain lancement."
 menu.spire.fill.name,"Remplissage du danger"

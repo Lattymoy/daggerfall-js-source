@@ -4702,6 +4702,8 @@ menu.settings.tip.vsyncVulkan,"Cu motorul grafic Vulkan, aplicația desktop îl 
 menu.settings.unavailableBlurb,"Fixat de browser sau de acest joc. Fiecare rând spune ce primești în schimb."
 menu.settings.unavailableTitle,"Indisponibil aici"
 menu.sheet.close,"Închide"
+menu.shop.hide,"Ascunde magazinul"
+menu.shop.hideNote,"Scoate magazinul de pe ecranul de pauză. Aurum-ul și obiectele tale rămân în cont."
 menu.skipVideo.name,"Sari peste videoclipul de început"
 menu.skipVideo.note,"Deschide direct meniul principal. Se aplică la următoarea pornire."
 menu.spire.fill.name,"Umplerea pericolului"

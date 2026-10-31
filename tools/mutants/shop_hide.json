@@ -1,0 +1,23 @@
+[
+  {
+    "name": "SHOP-HIDE-on-by-default",
+    "file": "src/systems/uiPrefs.js",
+    "old": "  shopHidden: false,\n",
+    "new": "  shopHidden: true,\n",
+    "tests": ["test/ui/shop_hide.test.js"]
+  },
+  {
+    "name": "SHOP-HIDE-the-pref-unread",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  if (getPref('shopHidden')) { shopOpen = false; shopAnchor?.(); shopAnchor = null; return null; }",
+    "new": "  if (false) { shopOpen = false; shopAnchor?.(); shopAnchor = null; return null; }",
+    "tests": ["test/ui/shop_hide.test.js"]
+  },
+  {
+    "name": "SHOP-HIDE-the-row-unplaced",
+    "file": "src/ui/settings/settingsMap.js",
+    "old": "    sec(\"shop\", \"Shop\", [\"port:shopHidden\"]),   // SHOP-HIDE\n",
+    "new": "",
+    "tests": ["test/ui/shop_hide.test.js"]
+  }
+]

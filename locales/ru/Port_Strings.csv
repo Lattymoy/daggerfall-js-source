@@ -4702,6 +4702,8 @@ menu.settings.tip.vsyncVulkan,"С графическим движком Vulkan �
 menu.settings.unavailableBlurb,"Задано браузером или этой игрой. В каждой строке сказано, что вы получаете взамен."
 menu.settings.unavailableTitle,"Здесь недоступно"
 menu.sheet.close,"Закрыть"
+menu.shop.hide,"Скрыть магазин"
+menu.shop.hideNote,"Убирает магазин с экрана паузы. Ваш Aurum и предметы остаются на аккаунте."
 menu.skipVideo.name,"Пропускать стартовое видео"
 menu.skipVideo.note,"Сразу открывать главное меню. Применяется при следующем запуске."
 menu.spire.fill.name,"Заливка опасности"
