@@ -2,9 +2,9 @@
 // PRIVATE-HOST's END-TO-END PROBE: a private server hosted the way the desktop shell hosts one (app/lib/privateHost.mjs:
 // the game's relay in local workerd, the host's own sign-in key), and two players in the real game - the host's own
 // page on the host's address, a guest's through a bridge, as a friend's shell joins. Each page is told the address the
-// way the shell's preload tells it (window.daggerShell.privateServer), and boots a new character offline-style: the
-// private hook takes it online. PASS: both pages online on the private relay, each sees the other, the account service
-// is never asked, and no page error.  ARENA2_PATH=... node tools/privateHostProbe.mjs  (PORT: vite's; PLAYERS: pages; CHROMIUM: a browser's path;
+// way the shell's preload tells it (window.daggerShell.privateServer), and loads a local save - composed first by an
+// offline boot, as a player's own character is - which the private hook takes online. PASS: both pages online on the
+// private relay, each sees the other, no main server is asked, and no page error.  ARENA2_PATH=... node tools/privateHostProbe.mjs  (PORT: vite's; PLAYERS: pages; CHROMIUM: a browser's path;
 // 2 by default). Not in the suite: it boots the whole game twice.
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
@@ -16,7 +16,8 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
 import { SWIFTSHADER_ARGS } from './frameProbe.mjs';
-import { probePlugins } from './onlineFrameProbe.mjs';   // the online probe's seams: ?shot kept online, __probeOnline
+import { probePlugins } from './onlineFrameProbe.mjs';
+import { SAVE_DATA_PREFIX } from '../src/systems/characterId.js';   // the online probe's seams: ?shot kept online, __probeOnline
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const PORT = Number(process.env.PORT || 5261);
@@ -41,18 +42,27 @@ const browser = await chromium.launch({ args: SWIFTSHADER_ARGS, ...(process.env.
 let failed = false;
 const pages = [];
 try {
+  console.log('== a local character: an offline boot, saved');
+  const compose = await browser.newContext({ viewport: { width: W, height: H } });
+  const cp = await compose.newPage();
+  await cp.goto(`http://localhost:${PORT}/play/?world&region=Daggerfall&loc=Daggerfall&class=1&novideo&shot&play&tod=15:00`);
+  await cp.waitForFunction(() => window.__shotReady === true, null, { timeout: 1500000, polling: 1000 });
+  const saveText = await cp.evaluate(() => window.__probeSaveText());
+  await compose.close();
+  if (!saveText) throw new Error('the offline boot composed no save');
+  console.log(`   ${(saveText.length / 1024).toFixed(0)} KB of save`);
   for (let i = 0; i < PLAYERS; i++) {
     const url = i === 0 ? server.url : bridge.url;
     const ctx = await browser.newContext({ viewport: { width: W, height: H } });
-    await ctx.addInitScript((u) => { window.daggerShell = { privateServer: { url: u } }; }, url);
+    await ctx.addInitScript(({ u, k, t }) => { window.daggerShell = { privateServer: { url: u } }; try { localStorage.setItem(k, t); } catch { /* none */ } }, { u: url, k: `${SAVE_DATA_PREFIX}1`, t: saveText });
     const page = await ctx.newPage();
     const errors = [];
     const asked = [];
     page.on('pageerror', (e) => errors.push(e.message));
-    page.on('request', (r) => { if (/workers\.dev|private\.invalid/.test(r.url())) asked.push(r.url()); });
+    page.on('request', (r) => { if (/workers\.dev|daggerfalljs\.dev/.test(r.url())) asked.push(r.url()); });   // private.invalid is the no-service address, which never answers
     page.on('console', (m) => { if (/\[(online|private|realm)\]/.test(m.text())) console.log(`   p${i} ${m.type()}: ${m.text().slice(0, 200)}`); });
-    // a new character, as a player who made one offline would play - the private hook takes the boot online
-    await page.goto(`http://localhost:${PORT}/play/?world&region=Daggerfall&loc=Daggerfall&class=${1 + i}&novideo&shot&play&tod=15:00`);
+    // the player's own character, loaded as the game's Load door loads one - the private hook takes the boot online
+    await page.goto(`http://localhost:${PORT}/play/?world&load&loadkey=1&novideo&shot&play`);
     pages.push({ page, errors, asked, label: i === 0 ? 'host' : `guest ${i}` });
   }
   // the meeting is the session's, which runs from the first online frame - long before a software-rendered page is
