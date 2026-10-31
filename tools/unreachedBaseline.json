@@ -5,5 +5,6 @@
  "src/systems/gateTier.js": "EG1: the gate's tier words. The HUD, the timers and the herald still spell them themselves (Elite-Gates.md section 2).",
  "src/world/peaks/massif.js": "PEAKS2: a range's relief, pinned and waiting for the kernel's shaper (03-World/Peaks.md).",
  "src/world/settlement/legacySettlement.js": "RMB-CONTRACTS RMBC1: Daggerfall's towns read as plans, pinned and staged for the editor's seam (RMBC8) and its homes (RMBC7) (03-World/RMB-Contracts.md).",
+ "src/world/settlement/settlementEditor.js": "RMB-CONTRACTS RMBC9: the WORLD 2.0 editor's seam, pinned and waiting for the editor that arc builds (03-World/RMB-Contracts.md).",
  "src/world/tamriel/tamrielRaster.js": "TAMRIEL1: the continent as byte planes, kept for a later use (03-World/Tamriel.md, The raster)."
 }

@@ -30,10 +30,10 @@ test('RMBC3 the generator reads no engine\'s Math.sin, cos, atan2 or hypot (muta
   }
 });
 
-test('RMBC3 golden prints: three plans bit for bit at generator version 1 (mutant: any change to the layout)', () => {
-  assert.equal(SETTLEMENT_GENERATOR_VERSION, 1);
+test('RMBC3 golden prints: three plans bit for bit at generator version 2 (mutant: any change to the layout)', () => {
+  assert.equal(SETTLEMENT_GENERATOR_VERSION, 2);   // PIN MOVED (RMBC9): 1 -> 2, each district its own draw
   const print = (archetype) => settlementPrint(generateSettlement({ place: PLACE, origin: { px: 1000, py: 200, east: 0, north: 0 }, seed: 7, archetype, style: 'Hammerfell', site: { east: 400, north: 400, radius: 90 }, env: SYNTHETIC[archetype] }).plan);
-  assert.deepEqual([print('fort'), print('river'), print('wetland')], [2924236142, 3082883572, 3655091972]);
+  assert.deepEqual([print('fort'), print('river'), print('wetland')], [269690621, 3713739039, 1280778289]);   // PIN MOVED (RMBC9): version 2's
 });
 
 test('RMBC3 one layout, two parts: the worker\'s layout dressed is the whole generator\'s plan; its dressing draws on the seed too (mutants: either part unseeded)', () => {

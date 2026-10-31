@@ -254,7 +254,7 @@
   {
     "name": "RMBC2-open-gone",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "|| rng(17, i) < openShare",
+    "old": "|| draw(17, c.k, c.j, local) < openShare",
     "new": "",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"

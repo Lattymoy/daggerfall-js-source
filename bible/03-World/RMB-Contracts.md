@@ -348,10 +348,26 @@ The host files each house's yard frame on its pixel's `homeFrames` (`fileHomeFra
 `pixelBuild.js` names a settlement pixel's homes by its place and its province's region (`settlementHomeTown`,
 `settlementHomeRegion`). Quest markers and an interior's people ask no minted key: no quest stands in a generated house.
 
+## RMBC9 - the editor's seam (BUILT, 2026-10-31)
+
+`settlementEditor.js` is what the WORLD 2.0 editor asks: `editSettlementRow` changes a row's controls within
+`PARAM_BOUNDS` and fixes its structure, or refuses the patch whole; `regenerateDistrict` dresses one district from a
+seed of its own (`districtSeeds`), and every other district keeps its buildings, keys and types, a service its published
+plot (`published`); a protected key's loss is refused; `planDiff` names what was added, removed, moved and retyped. The
+generator draws each district from its own seed and each plot by its cell and number, so `SETTLEMENT_GENERATOR_VERSION`
+is 2 and the golden prints and the published ledgers moved with it (`tools/settlementRevise.mjs --write`; nothing had
+shipped). The editor itself is the WORLD 2.0 arc's.
+
+The revision found Aleth Quay standing empty: main's merge had moved its shore from 174 m to 146 m along the
+published way, so its quay stood 28 m into the water and every cell was wet. A published shore now keeps its way and
+reads its distance from the ground every client stands (16 cells there). A published row is laid out on its pixel's
+land with no road cut into it (`standSettlementGround`'s `bare`), so no network setting moves its plan.
+`tools/settlementRevise.mjs` now refuses a row that no longer fits its ground.
+
 ## Next slices
 
-- **RMBC9 the editor's seam.** The WORLD 2.0 editor reads and writes a row's `params` and `fix`, and regenerates a
-  district by its anchors.
+- **A layout that follows the roads out** (RD-11's third): outskirts along a town's approach roads, so a grown town
+  reads as grown and not as a crescent.
 
 ## THE FOUR HOSTS (Home.md)
 

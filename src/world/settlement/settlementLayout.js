@@ -11,7 +11,7 @@ import { SETTLEMENT_STYLES, SETTLEMENT_ARCHETYPES } from './settlementStyles.js'
 
 export const GENERATOR_ID = 'rmbc-terrace';
 /** Raised when the same inputs would lay out a different plan. A published plan keeps the version it was made by. */
-export const SETTLEMENT_GENERATOR_VERSION = 1;
+export const SETTLEMENT_GENERATOR_VERSION = 2;   // 2: RMBC9 - each district its own draw, each plot by its cell and number
 /** Most an arc runs between two of its points, metres. */
 export const ARC_STEP = 8;
 /** The canal between two decks of an island settlement, metres. */
@@ -30,7 +30,7 @@ export const CUT_STEPS_MAX = 2.5;
  * @typedef {readonly [number, number]} Pt
  * @typedef {{ heightAt: (east: number, north: number) => number, waterAt?: (east: number, north: number) => boolean, blockedAt?: (east: number, north: number) => boolean }} SiteEnv
  * @typedef {{ place: number, origin: { px: number, py: number, east: number, north: number }, seed: number, archetype: string, style: string,
- *   site: { east: number, north: number, radius: number }, env?: SiteEnv, roads?: number[], ledger?: any, keys?: 'anchored', protectedKeys?: number[],
+ *   site: { east: number, north: number, radius: number }, env?: SiteEnv, roads?: number[], ledger?: any, keys?: 'anchored', districtSeeds?: Record<string, number>, protectedKeys?: number[],
  *   published?: any[], params?: { size?: number, density?: number, bands?: number, sectors?: number, open?: number },
  *   fix?: { layout?: string, centre?: number[], shore?: { dir: number[], at: number } }, core?: { centre: number[], half: number, y: number }, bounds?: { e0: number, e1: number, n0: number, n1: number } }} SettlementInput
  */
@@ -93,6 +93,14 @@ function findShore(env, site) {
   return null;
 }
 
+/** RMBC9: a published shore - its direction fixed, its distance read from the ground every client stands, so a ground
+ *  that moves its water moves the quay with it; null with no water that way. */
+function shoreAlong(env, site, dir) {
+  if (!env.waterAt || !dir) return null;
+  for (let step = 1; step <= site.radius * 2; step++) if (env.waterAt(site.east + dir[0] * step, site.north + dir[1] * step)) return { dir, at: step };
+  return null;
+}
+
 /** n spans of [0.6, 1.4] weight, laid end to end over `total`. */
 export function splits(rng, n, total, salt) {
   const w = Array.from({ length: n }, (_, i) => 0.6 + 0.8 * rng(salt, i));
@@ -132,7 +140,7 @@ export function layoutSettlement(input, env) {
     else [layout, centre] = ['ring', 'site'];
   }
   const ring = layout === 'ring';
-  const shore = centre === 'water' ? fix.shore ?? findShore(env, site) : null;
+  const shore = centre === 'water' ? (fix.shore ? shoreAlong(env, site, fix.shore.dir) : null) ?? findShore(env, site) : null;   // RMBC9: a fixed shore's way, its distance the ground's
   if (centre === 'water' && !shore) centre = 'contour';
   const islands = A.islands || st.deck > 0;
   const deck = islands ? Math.max(st.deck, A.islands ? 1.4 : 0) : 0;

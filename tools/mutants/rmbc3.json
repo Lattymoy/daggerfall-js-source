@@ -110,7 +110,7 @@
   {
     "name": "RMBC3-stand-unasked",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "null) : standSettlementGround(px, py, samples);",
+    "old": "null) : standSettlementGround(px, py, samples, bare);",
     "new": "null) : null;",
     "tests": [
       "test/world/settlement/rmbc3_ground.test.js"
@@ -146,7 +146,7 @@
   {
     "name": "RMBC3-print-blind",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "null) : standSettlementGround(px, py, samples);",
+    "old": "null) : standSettlementGround(px, py, samples, bare);",
     "new": "null) : null;",
     "tests": [
       "test/net/fb1017f_groundgate.test.js"

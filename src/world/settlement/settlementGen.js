@@ -37,6 +37,8 @@ export function dressSettlement(input, L) {
   if (!st) throw new RangeError(`no settlement style '${input.style}' (settlementStyles.js SETTLEMENT_STYLES)`);
   const rng = (...ns) => hash32(seed >>> 0, place >>> 0, ...ns) / 0x100000000;
   const pick = (range, ...ns) => range[0] + (range[1] - range[0]) * rng(...ns);
+  // RMBC9: each district draws from its own seed (the editor's `districtSeeds`), each plot by its own cell and number
+  const rngOf = (/** @type {number} */ j) => { const base = (input.districtSeeds?.[`d${j}`] ?? seed) >>> 0; return (/** @type {number[]} */ ...salt) => hash32(base, place >>> 0, ...salt) / 0x100000000; };
   const density = clampWithin(params.density ?? 1, 0.5, 2), openShare = clampWithin(params.open ?? 0.08, 0, 0.9);
   const frame = polarFrame(L.c), inset = (v, s) => frame.du(s, v);
   const { ring, inner, uStart, uSpan, vOut, edges, radii, reachOf, grids, gateSectors, gateBand, gap, ws, wl, plotDepth, bands, sectors, size, keepHalf, made, datum, pads, layout } = L;
@@ -68,28 +70,29 @@ export function dressSettlement(input, L) {
     const rf = c.a + ws, depth = Math.min(plotDepth, c.b - st.back - rf);
     if (depth < st.depth[0] * 0.7) continue;
     const us = c.u0 + inset(rf, gap / 2 + wl), ue = c.u1 - inset(rf, gap / 2);
-    const n = Math.floor(((ue - us) * rf) / (pick(st.frontage, 8, c.k, c.j) / density));
+    const draw = rngOf(c.j), choose = (/** @type {readonly number[]} */ range, /** @type {number[]} */ ...salt) => range[0] + (range[1] - range[0]) * draw(...salt);
+    const n = Math.floor(((ue - us) * rf) / (choose(st.frontage, 8, c.k, c.j) / density));
     if (n < 1) continue;
-    for (const [s0, s1] of splits(rng, n, ue - us, 9 + c.k * 31 + c.j)) {
-      const p0 = us + s0, p1 = us + s1, i = plots.length;
-      const id = `${c.id}.p${plots.filter((p) => p.pad === c.id).length}`;
+    for (const [s0, s1] of splits(draw, n, ue - us, 9 + c.k * 31 + c.j)) {
+      const p0 = us + s0, p1 = us + s1, local = plots.filter((p) => p.pad === c.id).length;
+      const id = `${c.id}.p${local}`;
       const poly = [...along(frame, grids[c.j], p0, p1, rf), ...along(frame, grids[c.j], p0, p1, rf + depth).reverse()];
       plots.push({ id, pad: c.id, poly, street: `s${c.k}.${c.j}`, district: `d${c.j}` });
       // a chord sags inside its arc: the front wall's across the whole plot, the plot's back edge's across one grid step
       const half = (p1 - p0) / 2, sag = rf * (1 - dcos(half));
       const step = (c.u1 - c.u0) / Math.max(1, grids[c.j].length - 1), backSag = (rf + depth) * (1 - dcos(Math.min(half, step / 2)));
-      const set = 0.5 + rng(16, i) * 1.2;
-      const r1 = rf + set + sag, bd = Math.min(depth - set - 0.05 - sag - backSag, pick(st.depth, 10, i)), r2 = r1 + bd;
+      const set = 0.5 + draw(16, c.k, c.j, local) * 1.2;
+      const r1 = rf + set + sag, bd = Math.min(depth - set - 0.05 - sag - backSag, choose(st.depth, 10, c.k, c.j, local)), r2 = r1 + bd;
       const g = st.gap / 2, q0 = (r) => p0 + inset(r, g), q1 = (r) => p1 - inset(r, g);
       const fp = [frame.toW(q0(r1), r1), frame.toW(q1(r1), r1), frame.toW(q1(r2), r2), frame.toW(q0(r2), r2)];
       const width = dhypot(fp[1][0] - fp[0][0], fp[1][1] - fp[0][1]);
-      if (width < 5 || bd < 5 || rng(17, i) < openShare) {
-        features.push({ id: `g${features.length}`, kind: 'garden', pad: c.id, at: ringCentroid(poly) });
+      if (width < 5 || bd < 5 || draw(17, c.k, c.j, local) < openShare) {
+        features.push({ id: `g${id}`, kind: 'garden', pad: c.id, at: ringCentroid(poly) });
         continue;
       }
       const door = /** @type {Pt} */ ([cm((fp[0][0] + fp[1][0]) / 2), cm((fp[0][1] + fp[1][1]) / 2)]);
       const facing = degrees(compassBearing(-dsin((p0 + p1) / 2), -dcos((p0 + p1) / 2)));   // toward the street: the frame's centre
-      const prestige = (1 - (c.k - 1) / Math.max(1, bands)) * 0.6 + (gateSectors.includes(c.j) ? 0.3 : 0) + rng(11, i) * 0.1;
+      const prestige = (1 - (c.k - 1) / Math.max(1, bands)) * 0.6 + (gateSectors.includes(c.j) ? 0.3 : 0) + draw(11, c.k, c.j, local) * 0.1;
       proposed.push({ id, c, fp, door, facing, prestige, area: width * bd });
     }
   }
@@ -104,7 +107,11 @@ export function dressSettlement(input, L) {
   const T = BUILDING_TYPES, taken = new Map();
   if (mound) taken.set('keep', { type: T.Palace, factionId: 0 });
   const order = [...proposed].sort((x, y) => y.prestige - x.prestige || (x.id < y.id ? -1 : 1));
+  // RMBC9: a service keeps the plot it was published on while that plot stands - a district regenerated moves no other's
+  const was = new Map((input.published ?? []).map((building) => [building.anchor, building.type]));
   for (const s of A.services) {
+    const kept = order.find((plot) => !taken.has(plot.id) && was.get(plot.id) === T[s.type]);
+    if (kept) { taken.set(kept.id, { type: T[s.type], factionId: T[s.type] === T.Temple ? DIVINES[st.temple] : s.guild ? GUILD_FACTION_IDS[s.guild] : 0 }); continue; }
     const score = (p) => (s.near === 'plaza' ? -p.c.k : s.near === 'gate' ? (gateSectors.includes(p.c.j) ? 10 : 0) + (ring ? p.c.k : -p.c.k) : 0) * 10 + p.prestige + (s.type === 'Temple' ? p.area / 100 : 0);
     const free = order.filter((p) => !taken.has(p.id));
     if (!free.length) break;
@@ -127,7 +134,7 @@ export function dressSettlement(input, L) {
   if (cells.has('plaza') && !L.core) features.push({ id: 'centre', kind: A.centreFeature, pad: 'plaza', at: frame.toW(uStart + 0.3, Math.min(inner * 0.7, inner - 2)) });   // RMBC6: a core is the town's own
   for (const c of cells.values()) {
     if (c.k < 1) continue;
-    for (let t = 0; t < 3; t++) if (rng(13, c.k, c.j, t) < 0.5) features.push({ id: `t${c.id}.${t}`, kind: 'tree', pad: c.id, at: frame.toW(c.u0 + (c.u1 - c.u0) * (0.25 + t * 0.25), c.b - st.back / 2) });
+    for (let t = 0; t < 3; t++) if (rngOf(c.j)(13, c.k, c.j, t) < 0.5) features.push({ id: `t${c.id}.${t}`, kind: 'tree', pad: c.id, at: frame.toW(c.u0 + (c.u1 - c.u0) * (0.25 + t * 0.25), c.b - st.back / 2) });
   }
   const allStops = grids.flat().filter((u, i, a) => i === 0 || u - a[i - 1] > 1e-9);
   const footprint = dedupe(L.c, [...edges.flatMap(([u0, u1], j) => along(frame, grids[j], u0, u1, outR(j))),

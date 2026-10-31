@@ -250,7 +250,8 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   // ground as the roads and the sites left it, its pads carved in; the layout rides back for the host to dress and stand
   // RMBC6: a town's outskirts round its core, on the land its roads, its own ground, its camps and its water leave
   const camps = (wod?.picks ?? []).map(({ rect }) => ({ xMin: rect.x, xMax: rect.x + rect.width, yMin: rect.y, yMax: rect.y + rect.height }));
-  const settlement = hasLocation ? (growth && locationRect ? standTownGrowth(px, py, samples, growth, locationRect, { paths, tilemap, camps }) : null) : standSettlementGround(px, py, samples);
+  const bare = () => generateSamples(woods, px, py, HEIGHTMAP_DIMENSION, landform ? createLandforms({ woods, roads: null, sites, beyond, climates }) : null);   // RMBC9: the land with no road
+  const settlement = hasLocation ? (growth && locationRect ? standTownGrowth(px, py, samples, growth, locationRect, { paths, tilemap, camps }) : null) : standSettlementGround(px, py, samples, bare);
   const tilemapBytes = convertTilemap(tilemap);
   // PERF-EXT26: the one grid law, the restride's too; AUDIT WATER-NEXT P1: and the bed under its water, carved here
   const grid = restrideGrid({ woods, px, py, stride, samples, landforms, bed: bed ? tilemapBytes : null, meets: meetsOf(meets, landforms) });

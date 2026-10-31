@@ -861,6 +861,7 @@ const HARDCODED = {
   'src/world/urban/townLook.js': 15,   // URBANIZER U1: why each province's towns wear their building set - the table's own notes, read by no screen
   'src/world/settlement/settlementContract.js': 47,   // RMB-CONTRACTS RMBC1: the check's problems - read by its tests, its probes and the editor's report, no screen a player sees
   'src/world/settlement/settlementIds.js': 7,   // RMB-CONTRACTS RMBC1: the key ledger's problems, as the check's
+  'src/world/settlement/settlementEditor.js': 5,   // RMB-CONTRACTS RMBC9: a row's patch's problems, read by the WORLD 2.0 editor - a builder's screen, no player's
 };
 
 test('L10N4 the ratchet: no file holds more hard-coded English than it did - route a new sentence through t(key, en, args); when a count falls, write the map down again', () => {

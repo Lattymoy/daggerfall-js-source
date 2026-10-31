@@ -147,7 +147,7 @@ test('RMBC6 one layout, every client: the same job, rect and ground lay the same
 test('RMBC6 the wiring (by source): the kernel grows a location\'s pixel, the build hands it its town, the trees clear both, the frame reads the carve (mutants: each seam)', () => {
   const read = (f) => readFileSync(new URL(`../../../src/${f}`, import.meta.url), 'utf8');
   const gen = read('world/terrain/terrainGen.js');
-  assert.match(gen, /const settlement = hasLocation \? \(growth && locationRect \? standTownGrowth\(px, py, samples, growth, locationRect, \{ paths, tilemap, camps \}\) : null\) : standSettlementGround\(px, py, samples\);/);
+  assert.match(gen, /const settlement = hasLocation \? \(growth && locationRect \? standTownGrowth\(px, py, samples, growth, locationRect, \{ paths, tilemap, camps \}\) : null\) : standSettlementGround\(px, py, samples, bare\);/);   // PIN MOVED (RMBC9): a published settlement laid on the land with no road
   assert.match(gen, /locationRect: wodResult\?\.locationRect \?\? growthClearing\(locationRect, settlement\) \?\? settlement\?\.rect \?\? null,/);
   assert.match(read('scenes/pixelBuild.js'), /\n {6}growth: growthJobAt\(groundLocation, px, py\),/);
   assert.match(read('scenes/groundFrameHost.js'), /if \(liftRectAt\(px, py\)\) return grownMovedAt\(built\.get\(`\$\{px\},\$\{py\}`\)\?\.settlement, host\.state\.pixelTranslation\(px, py\), x, z, heightCell\);/);

@@ -1,0 +1,85 @@
+[
+  {
+    "name": "RMBC9-bound-open",
+    "file": "src/world/settlement/settlementEditor.js",
+    "old": "if (!Number.isFinite(value) || value < range[0] || value > range[1]) {",
+    "new": "if (!Number.isFinite(value) || value < range[0]) {",
+    "tests": [
+      "test/world/settlement/rmbc9_editor.test.js"
+    ]
+  },
+  {
+    "name": "RMBC9-layout-unchecked",
+    "file": "src/world/settlement/settlementEditor.js",
+    "old": "if (!FIX_LAYOUTS.includes(wanted?.layout)) problems.push(",
+    "new": "if (false) problems.push(",
+    "tests": [
+      "test/world/settlement/rmbc9_editor.test.js"
+    ]
+  },
+  {
+    "name": "RMBC9-refused-half",
+    "file": "src/world/settlement/settlementEditor.js",
+    "old": "return problems.length ? { row, problems } : { row: { ...row, params, fix }, problems };",
+    "new": "return { row: { ...row, params, fix }, problems };",
+    "tests": [
+      "test/world/settlement/rmbc9_editor.test.js"
+    ]
+  },
+  {
+    "name": "RMBC9-district-seed-unread",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "const base = (input.districtSeeds?.[`d${j}`] ?? seed) >>> 0;",
+    "new": "const base = seed >>> 0;",
+    "tests": [
+      "test/world/settlement/rmbc9_editor.test.js"
+    ]
+  },
+  {
+    "name": "RMBC9-plot-by-global",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "const set = 0.5 + draw(16, c.k, c.j, local) * 1.2;",
+    "new": "const set = 0.5 + draw(16, plots.length) * 1.2;",
+    "tests": [
+      "test/world/settlement/rmbc9_editor.test.js"
+    ]
+  },
+  {
+    "name": "RMBC9-services-unkept",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "if (kept) { taken.set(kept.id,",
+    "new": "if (false) { taken.set(kept.id,",
+    "tests": [
+      "test/world/settlement/rmbc9_editor.test.js"
+    ]
+  },
+  {
+    "name": "RMBC9-protected-unread",
+    "file": "src/world/settlement/settlementEditor.js",
+    "old": "{ ...input, ledger, published, protectedKeys, districtSeeds:",
+    "new": "{ ...input, ledger, published, districtSeeds:",
+    "tests": [
+      "test/world/settlement/rmbc9_editor.test.js"
+    ]
+  },
+  {
+    "name": "RMBC9-diff-crossed",
+    "file": "src/world/settlement/settlementEditor.js",
+    "old": "    moved: keys((k) => was.has(k) && stand(was.get(k)) !== stand(now.get(k)), now),",
+    "new": "    moved: keys((k) => was.has(k) && was.get(k).type !== now.get(k).type, now),",
+    "tests": [
+      "test/world/settlement/rmbc9_editor.test.js"
+    ]
+  },
+  {
+    "name": "RMBC9-shore-pinned",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "(fix.shore ? shoreAlong(env, site, fix.shore.dir) : null) ?? findShore(env, site)",
+    "new": "fix.shore ?? findShore(env, site)",
+    "tests": [
+      "test/world/settlement/rmbc9_editor.test.js",
+      "test/world/settlement/rmbc2_gen.test.js",
+      "test/world/settlement/rmbc3_exact.test.js"
+    ]
+  }
+]

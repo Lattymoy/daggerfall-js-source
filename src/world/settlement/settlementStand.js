@@ -27,14 +27,16 @@ export function sampleEnv(samples) {
 
 /**
  * Lay out the pixel's settlement and carve its ground into `samples` in place; null where none stands.
- * @param {number} px @param {number} py @param {Float32Array} samples
+ * @param {number} px @param {number} py @param {Float32Array} samples @param {(() => Float32Array)|null} [bare] the land with no road
  * @returns {{ mapId: number, ordinal: number, layout: ReturnType<typeof layoutSettlement>, rect: { xMin: number, xMax: number, yMin: number, yMax: number } }|null}
  */
-export function standSettlementGround(px, py, samples) {
+export function standSettlementGround(px, py, samples, bare = null) {
   const row = settlementOnPixel(px, py);
   if (!row) return null;
   const input = settlementInput(row, px, py);
-  const layout = layoutSettlement(input, sampleEnv(samples));
+  // RMBC9: laid out on the land with no road cut into it (`bare()`, the kernel's), so its plan is its inputs' and the
+  // land's whatever network a client stands; carved into the ground as it is
+  const layout = layoutSettlement(input, sampleEnv(bare?.() ?? samples));
   const metres = Float64Array.from(samples, (s) => s * M);
   carveSettlementGround(metres, HEIGHTMAP_DIMENSION, SAMPLE_M, { pads: layout.pads, origin: input.origin }, layout.datum);
   for (let i = 0; i < samples.length; i++) { const v = Math.fround(metres[i] / M); if (v !== samples[i]) samples[i] = v; }

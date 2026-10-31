@@ -82,6 +82,7 @@ async function main() {
     const conflicts = revisionConflicts(input, g.settlement.layout, guarded.get(place) ?? [], before[place] ?? []);
     for (const c of conflicts) refused.push(`${row.name} (${place}): ${c.code} ${c.key ?? ''} ${c.why}`);
     const made = dressSettlement(input, g.settlement.layout);
+    if (!made.report.ok) refused.push(`${row.name}: no longer fits its ground (${made.report.counts.buildings} buildings, cut ${made.report.fit.cutMax} m)`);   // RMBC9: a row that stands empty is refused
     dump[place] = kept(made.plan);
     ledgers.set(row.ordinal, made.ledger);
   }
