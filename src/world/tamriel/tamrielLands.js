@@ -6,7 +6,7 @@
 // its climate's land. Pure and worker-safe (world/ and formats/ alone): the terrain worker reads the flora and the props.
 import { tamrielBiomeAt, BIOME_BY_KEY } from './tamrielBiomes.js';
 import { climateNeighbourIn } from './tamrielGround.js';
-import { skyrimCoverPicks } from './skyrimFlora.js';   // Skyrim plant picks (art door: skyrimFloraArt.js)
+import { skyrimCoverPicks } from './skyrimFlora.js'; // Skyrim plant picks (art door: skyrimFloraArt.js)
 
 /**
  * THE FOREST FIELD'S QUANTILES (terrainNature.js forestCover), every 1%, measured over 400,000 world tiles of the
