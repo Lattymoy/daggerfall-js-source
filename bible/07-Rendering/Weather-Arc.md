@@ -1582,5 +1582,10 @@ takes PUDDLE_SHEEN_SOIL, not glass. `roadAmt` smears soil↔stones at the paving
 mask and marches previous depth so a bush hides the pane. Soil scatters more than stone. Distance softens from
 WIN_GLINT_NEAR_M to WIN_GLINT_FAR_M. Stone panes take +25% soft. Mesh compiles no `winGlint`.
 
-**Not yet.** A puddle mirrors no wall or tree until a screen-space reflection pass reads the previous frame's colour -
-today only lit panes and the sky. A porch's floor still wets as the street does. Meshes take no puddles. No eave drips.
+**WET1e.** Building/tree colour in puddles is a separate full-res pass at the air resolve (not terrain FS - that TDRd):
+one continuous aim-height sample along the reflection ray of THIS frame (leans up with R.y), soft world-space
+confidence + blur. Dual bands and ray-march picked different UVs per pixel → horizontal stripe tears. Search length
+grows with puddle distance. Gated by wetGround-matched `pudNoise` and WET_PROXY_FAR_M. Puddle `winGlint` / lamp
+`wetGlint` boosts are off once fill passes WET_PROXY_GATE. Ripple drops vary size/width/amp per tick. Terrain still does sky.
+
+**Not yet.** True SSR / Hi-Z. A porch's floor still wets as the street does. Meshes take no puddles. No eave drips.

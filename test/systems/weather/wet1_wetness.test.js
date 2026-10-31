@@ -10,7 +10,10 @@ import {
 } from '../../../src/systems/weather/wetness.js';
 import { EL_TERRAIN_FS, EL_MESH_FS } from '../../../src/render/enhancedLighting.js';
 import { snowTerrainFs } from '../../../src/render/snowfallGlsl.js';
-import { RIPPLE_RATE, WET_SHEEN_SOIL, WET_SHEEN_ROAD, PUDDLE_EDGE, PUDDLE_DARK, PUDDLE_GLOSS, PUDDLE_SHEEN_SOIL, PUDDLE_STRETCH, WIN_GLINT_LOD0 } from '../../../src/render/wetGlsl.js';
+import { RIPPLE_RATE, RIPPLE_WIDTH, RIPPLE_SLOPE, RIPPLE_NEAR_M, RIPPLE_GROW1, WET_SHEEN_SOIL, WET_SHEEN_ROAD, PUDDLE_EDGE, PUDDLE_DARK, PUDDLE_GLOSS, PUDDLE_SHEEN_SOIL, PUDDLE_STRETCH, WIN_GLINT_LOD0, PUDDLE_FLAT, PUDDLE_SALT, PUDDLE_SPREAD, RAIN_WET_GLSL } from '../../../src/render/wetGlsl.js';
+import { PUDDLE_PASS_FS, PUDDLE_BLEND_FS, WET_PROXY_DIST_M, WET_PROXY_DIST_FAR_M, WET_PROXY_STEPS, WET_PROXY_GATE, WET_PROXY_AIM0_M, WET_PROXY_AIM1_M, WET_PROXY_MIN_HIT_Y, WET_PROXY_BELOW_EYE_M, WET_PROXY_NEAR_M, WET_PROXY_FAR_M, WET_PROXY_ALPHA, WET_PROXY_BLUR0, PUDDLE_PROXY_FLAT, PUDDLE_PROXY_SPREAD, PUDDLE_PROXY_EDGE, PUDDLE_PROXY_SALT } from '../../../src/render/puddleProxyGlsl.js';
+import { airPassPrograms } from '../../../src/render/airPass.js';
+import { SNOW_TILE_M } from '../../../src/render/snowCoverGlsl.js';
 import { LAB_WX_FS, LAB_WX_VS, packShelters, SHELTER_MAX, SHELTER_REACH_M } from '../../../src/render/precipitation.js';
 import { Renderer } from '../../../src/render/renderer.js';
 
@@ -118,7 +121,7 @@ test('WET1d: a puddle is dark water with a point of each lamp and lit window in 
   assert.ok(EL_TERRAIN_FS.includes('elWetPow = mix('), 'the ground tightens the lobe in a puddle');
   assert.ok(EL_TERRAIN_FS.includes('road = roadAmt(data, unwrapped)'), 'soil↔stones smear at the paving\'s edge');
   assert.ok(EL_TERRAIN_FS.includes('soilK = mix(0.1, 1.0, road)'), 'soil\'s lamp and window glints are a tenth');
-  assert.ok(EL_TERRAIN_FS.includes('if (wetW.y > 0.0) lit += winGlint('), 'dry ground skips the pane march');
+  assert.ok(EL_TERRAIN_FS.includes('pudGlint > 0.0') && EL_TERRAIN_FS.includes('lit += winGlint('), 'dry / proxy-owned puddles skip the pane march');
   assert.ok(EL_TERRAIN_FS.includes('soilScatter = (1.0 - road) * 0.4'), 'soil scatters more than stone, lightly');
   assert.ok(EL_TERRAIN_FS.includes('reflect(-V, n)'), 'the glass is mirrored, not the lamp');
   assert.ok(EL_TERRAIN_FS.includes('winGlintOcc('), 'a bush between the puddle and the pane hides it');
@@ -128,6 +131,41 @@ test('WET1d: a puddle is dark water with a point of each lamp and lit window in 
   assert.ok(EL_TERRAIN_FS.includes('PUDDLE_STRETCH') || EL_TERRAIN_FS.includes('exp(-a * a / t2'), 'lamp streak is squeezed along the view');
   assert.ok(!EL_MESH_FS.includes('winGlint(vWorldPos'), 'a wall is not a puddle');
   assert.ok(!EL_MESH_FS.includes('winGlintOcc('), 'mesh does not compile the puddle pane march');
+});
+
+test('WET1e: puddle colour is a separate half-res pass, not terrain FS', () => {
+  assert.ok(WET_PROXY_DIST_M >= 30 && WET_PROXY_DIST_FAR_M >= 50 && WET_PROXY_FAR_M >= 60 && WET_PROXY_STEPS === 1 && WET_PROXY_GATE >= 0.15);
+  assert.ok(WET_PROXY_AIM1_M > WET_PROXY_AIM0_M && WET_PROXY_AIM0_M >= 2 && WET_PROXY_AIM1_M >= 4, 'aim height leans with R.y');
+  assert.equal(PUDDLE_PROXY_SALT, PUDDLE_SALT);
+  assert.equal(PUDDLE_PROXY_SPREAD, PUDDLE_SPREAD);
+  assert.equal(PUDDLE_PROXY_EDGE, PUDDLE_EDGE);
+  assert.ok(WET_PROXY_FAR_M > WET_PROXY_NEAR_M && WET_PROXY_NEAR_M >= 4, 'smooth distance fade');
+  assert.deepEqual([...PUDDLE_PROXY_FLAT], [...PUDDLE_FLAT]);
+  assert.ok(PUDDLE_PASS_FS.includes(` / ${SNOW_TILE_M}`), 'same tile metres as wetGround');
+  assert.ok(PUDDLE_PASS_FS.includes('uFrame') && PUDDLE_PASS_FS.includes('uVP'), 'this frame colour + VP');
+  assert.ok(PUDDLE_PASS_FS.includes('aimH') && PUDDLE_PASS_FS.includes('sampleBlur'), 'one continuous aim + soft blur');
+  assert.ok(PUDDLE_PASS_FS.includes('length(sceneW - rayP)'), 'world-space confidence');
+  assert.ok(PUDDLE_PASS_FS.includes('maxT') && PUDDLE_PASS_FS.includes(`${WET_PROXY_DIST_FAR_M}`), 'search grows when backing off');
+  assert.ok(PUDDLE_PASS_FS.includes(`${WET_PROXY_BLUR0}`), 'blur dial in the sample');
+  assert.ok(!PUDDLE_PASS_FS.includes('uPrevColor'), 'no fixed prevColour stamp');
+  assert.ok(!PUDDLE_PASS_FS.includes('bool behind(') && !PUDDLE_PASS_FS.includes('vec4 band('), 'no march / dual band (stripes)');
+  assert.ok(PUDDLE_PASS_FS.includes(`${WET_PROXY_MIN_HIT_Y}`), 'reject ground self-hits');
+  assert.ok(PUDDLE_PASS_FS.includes(`${WET_PROXY_BELOW_EYE_M}`), 'skip flat roofs above the eye');
+  assert.ok(PUDDLE_PASS_FS.includes('distFade') && PUDDLE_PASS_FS.includes(`${WET_PROXY_FAR_M}`), 'fade in with approach');
+  assert.ok(PUDDLE_PASS_FS.includes('nFlat'), 'level mirror, not noisy half-res normals');
+  assert.ok(PUDDLE_PASS_FS.includes('pudNoise') && PUDDLE_PASS_FS.includes('flatN'), 'mask is wetGround-shaped blobs');
+  assert.ok(PUDDLE_PASS_FS.includes(`${WET_PROXY_ALPHA}`), 'mirror alpha dial');
+  assert.ok(PUDDLE_DARK <= 0.12, 'puddles darker than wet stone');
+  assert.ok(EL_TERRAIN_FS.includes('pudGlint'), 'lamp/window glints yield to the colour proxy');
+  assert.ok(!EL_TERRAIN_FS.includes('mix(1.0, 1.25, wetW.y)'), 'no sky boost stacking on the proxy');
+  assert.ok(RIPPLE_RATE <= 1.5 && RIPPLE_GROW1 >= 0.7 && RIPPLE_WIDTH >= 0.1, 'ripples live long enough to spread');
+  assert.ok(RAIN_WET_GLSL.includes('mix(0.5, 1.55') && RAIN_WET_GLSL.includes('mix(0.6, 1.45'), 'drop size and width vary');
+  assert.ok(RAIN_WET_GLSL.includes('smoothstep(1.0, 0.78, age)') && RAIN_WET_GLSL.includes(`smoothstep(${RIPPLE_NEAR_M}`), 'soft late age + distance fade');
+
+  assert.ok(PUDDLE_BLEND_FS.includes('uPuddle'), 'resolve blend reads the half-res out');
+  assert.ok(!EL_TERRAIN_FS.includes('uPrevColor'), 'terrain FS must not sample prev colour (TDR)');
+  assert.ok(!EL_TERRAIN_FS.includes('wetProxy'), 'no in-terrain proxy');
+  assert.ok(airPassPrograms({ vs: { mesh: 'm', bb: 'b' } }, false).some((p) => p[1] === PUDDLE_PASS_FS), 'air boot lists the pass');
 });
 
 test('WET1c: rain runs down a roof and off its face, not down a wall or the ground', () => {

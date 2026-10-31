@@ -3324,6 +3324,7 @@ export class Renderer {
     if (sc) this.gl.disable(this.gl.SCISSOR_TEST);
     if (this._perfOpen) this._perf?.mark('air');   // VC6d: the AO, the bloom, the shafts and the resolve - a WORLD frame's (AUDIT RETRO1 J8: a menu's resolve, the meter closed, opened a span nothing closed)
     this._air.setCloudShadow(this._cloudShadow ?? this._deckOwed);   // VC6c: the FRAME's deck - the host sets it after beginFrame, so the shafts can only read it here
+    this._air.setWet?.(this._wet);   // WET1e: puddle proxy pass gates on fill
     this._air.composite();   // EL4: the resolve - the frame to the canvas
     // AUDIT-AIR1: THE RESOLVE IS A FOREIGN PASS, and this seam - alone of
     // the seven - never said so. `composite()` binds units 0..4 (VOL1: the glow on 4) and

@@ -101,6 +101,7 @@ import { billboardKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-
 import { windfallLawOn, swayShare } from './windfallSway.js';   // WINDFALL1: a flat's lean under Windfall's law, as the main pass drew it
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { GLASS_INTERIOR, GLASS_EXTERIOR, RW_SEED_GLSL } from './realWindows.js';   // RW1: an interior's declared glass, which the emission replay never blooms - FINAL AUDIT: nor a dark room's
+import { PUDDLE_PASS_FS, PUDDLE_BLEND_FS, WET_PROXY_GATE } from './puddleProxyGlsl.js';   // WET1e: puddle colour proxy - own pass, not terrain FS
 
 /** The kill door: `?air=off` keeps EL1 and EL2 and drops the three effects. */
 export function airOn(search = globalThis.location?.search ?? '') {
@@ -1290,6 +1291,7 @@ export function airPassPrograms(opts, volLinear) {
     quad(brightFs(0)), quad(brightFs(1)),
     quad(resolveFs(0, 0)), quad(resolveFs(0, 1)), quad(resolveFs(1, 0)), quad(resolveFs(1, 1)),
     quad(VOLBLUR_FS),
+    quad(PUDDLE_PASS_FS), quad(PUDDLE_BLEND_FS),   // WET1e
     ...(opts.glsl ? [quad(volFs(opts.glsl, opts.maxLights ?? 48, volLinear))] : []),
     ...(opts.glsl && volLinear ? [quad(volToneFs(opts.glsl))] : []),
   ];
@@ -1319,6 +1321,8 @@ export class AirPass {
       bright: [0, 1].map((glow) => P(QUAD_VS, brightFs(glow), ['uFrame', 'uRect', 'uCanvas', 'uThreshold', 'uBloomSize', 'uVol'])),   // AUDIT VOL1: the glow's core blooms
       resolve: [0, 1].map((glow) => [0, 1].map((shafts) => P(QUAD_VS, resolveFs(glow, shafts), ['uFrame', 'uBloom', 'uShaft', 'uRect', 'uCanvas', 'uGrade', 'uAO', 'uAOMix', 'uVol']))),   // VOL1
       volBlur: P(QUAD_VS, VOLBLUR_FS, ['uSrc', 'uTexel', 'uDepth', 'uProjInfo', 'uRect', 'uCanvas']),   // VOL1: the tile's average, by depth
+      puddle: P(QUAD_VS, PUDDLE_PASS_FS, ['uDepth', 'uFrame', 'uProjInfo', 'uRect', 'uCanvas', 'uVP', 'uViewRot', 'uCamPos', 'uWet']),   // WET1e: march this frame, not a fixed prev stamp
+      puddleBlend: P(QUAD_VS, PUDDLE_BLEND_FS, ['uPuddle']),   // WET1e
       vol: null, volTone: null,   // VOL1: built below, only with the lane's GLSL in hand
     };
     // the fullscreen quad and the glare's corner quad
@@ -1375,6 +1379,7 @@ export class AirPass {
     this._prevEye = new Float32Array(3); this._prevEyeSet = false;   // LA-POST6: the last prepared frame's eye - a jump past AIR_CONTACT_CUT is a cut
     this._glareHold = new Map(); this._glareFrame = 0;   // LA-POST2: each light's held range by its place (glareKey), and the glare pass's count
     this.contactParams = new Float32Array([AIR_CONTACT_LENGTH, AIR_CONTACT_THICKNESS, AIR_CONTACT_FLOOR, 0]);
+    this._wet = new Float32Array(4);   // WET1e: puddle fill gates the proxy pass
     this.pending = false;   // a resolve is owed to the frame
     this.width = 0; this.height = 0;
     this.targets = null;
@@ -1456,7 +1461,7 @@ export class AirPass {
   /** EL4: the frame image for a canvas of W x H - RGBA8 with a 24-bit depth
    *  TEXTURE (EL6: the AO, the glares, the emitters and the shafts read it
    *  at the resolve - the frame's own depth, no replay), (re)allocated when
-   *  the canvas changes size. */
+   *  the canvas changes size. WET1e: half-res prevColour + puddleOut (never draw attachments). */
   _ensureFrame(W, H, slot = 'canvas') {
     const gl = this.gl;
     const kept = this._frames[slot];
@@ -1495,9 +1500,30 @@ export class AirPass {
       gl.clear(gl.DEPTH_BUFFER_BIT);   // the depth alone - the colour is the frame's own clear's
       depths.push(depth); fbos.push(fb);
     }
+    // WET1e: half-res prevColour (legacy blit); full-res puddle out - half-res tore reflections into bands
+    const pw = Math.max(1, W >> 1), ph = Math.max(1, H >> 1);
+    const mkColor = (cw, ch) => {
+      const t = gl.createTexture();
+      gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, cw, ch, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      const fb = gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+      return { tex: t, fbo: fb, w: cw, h: ch };
+    };
+    const prev = mkColor(pw, ph), puddle = mkColor(W, H);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindTexture(gl.TEXTURE_2D, null);
-    this.frame = this._frames[slot] = { tex, depths, fbos, depthIndex: 0, depth: depths[0], prevDepth: depths[1], fbo: fbos[0], w: W, h: H, worldDepth: false };
+    this.frame = this._frames[slot] = {
+      tex, depths, fbos, depthIndex: 0, depth: depths[0], prevDepth: depths[1],
+      prevColor: prev.tex, prevColorFbo: prev.fbo, prevColorW: pw, prevColorH: ph,
+      puddle: puddle.tex, puddleFbo: puddle.fbo, puddleW: W, puddleH: H,
+      fbo: fbos[0], w: W, h: H, worldDepth: false,
+    };
     this.prevValid = false;   // a new frame image: the previous depth is the far plane
     if (!this.lum) this._ensureAdapt();
     return this.frame;
@@ -1506,6 +1532,8 @@ export class AirPass {
   _deleteFrame(k) {
     const gl = this.gl;
     gl.deleteTexture(k.tex); for (const d of k.depths) gl.deleteTexture(d); for (const f of k.fbos) gl.deleteFramebuffer(f);
+    if (k.prevColor) { gl.deleteTexture(k.prevColor); gl.deleteFramebuffer(k.prevColorFbo); }   // WET1e
+    if (k.puddle) { gl.deleteTexture(k.puddle); gl.deleteFramebuffer(k.puddleFbo); }   // WET1e
     if (k.aoDepth) { gl.deleteTexture(k.aoDepth); gl.deleteFramebuffer(k.aoFbo); }   // GRASS-LIT
     if (k.uwFbo) { gl.deleteTexture(k.uwColor); gl.deleteTexture(k.uwDepth); gl.deleteFramebuffer(k.uwFbo); }   // WATER-NEXT 2
   }
@@ -1634,6 +1662,17 @@ export class AirPass {
     if (!(W > 0 && H > 0)) return null;   // AUDIT-EL F18
     const f = this._ensureFrame(W, H, slot);
     const gl = this.gl;
+    // WET1e: copy last world colour into detached half-res prevColour BEFORE the clear wipes the shared tex
+    if (f.worldDepth && f.prevColorFbo) {
+      // must not be bound as a sample source - blit into a bound texture is ignored on many drivers (spawn frame froze)
+      gl.activeTexture(gl.TEXTURE0 + 1);
+      gl.bindTexture(gl.TEXTURE_2D, null);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, null);
+      gl.bindFramebuffer(gl.READ_FRAMEBUFFER, f.fbo);
+      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, f.prevColorFbo);
+      gl.blitFramebuffer(0, 0, f.w, f.h, 0, 0, f.prevColorW, f.prevColorH, gl.COLOR_BUFFER_BIT, gl.LINEAR);
+    }
     // EL8: this frame writes the other depth; the one just written is the previous
     f.depthIndex ^= 1;
     f.depth = f.depths[f.depthIndex]; f.prevDepth = f.depths[f.depthIndex ^ 1];
@@ -1647,6 +1686,11 @@ export class AirPass {
     this.canvas[0] = W; this.canvas[1] = H;
     this.pending = true;   // AUDIT-EL F5: a bound frame is a resolve owed, whether or not the passes ran for it
     return f.fbo;
+  }
+  /** WET1e: the frame's wet uniform - puddle fill gates the proxy pass. */
+  setWet(w) {
+    if (w) this._wet.set(w);
+    else this._wet.fill(0);
   }
 
   /**
@@ -2126,10 +2170,58 @@ export class AirPass {
     gl.uniform2fv(PR.uCanvas, this.canvas);
     gl.uniform4fv(PR.uGrade, this.grade);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    // WET1e: puddle colour proxy AFTER resolve - own half-res pass, never in terrain FS (that TDRd)
+    if (prepared) this._puddleProxy(rect);
     gl.bindVertexArray(null);
     gl.depthMask(true);
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
+  }
+
+  /**
+   * WET1e: half-res screen-space march of THIS frame's colour into puddles, then src-alpha blend onto the resolve.
+   * Gated on puddle fill; uses current depth/colour (fixed prev stamps stretched into double facades).
+   */
+  _puddleProxy(rect) {
+    const gl = this.gl, F = this.frame, P = this.programs, f = this.f;
+    if (!F?.tex || !F.puddleFbo || !f?.eye || !(this._wet[1] > WET_PROXY_GATE)) return;
+    const PP = P.puddle;
+    gl.disable(gl.BLEND);   // WET1e: resolve left blend off; keep the half-res out opaque writes
+    gl.bindFramebuffer(gl.FRAMEBUFFER, F.puddleFbo);
+    gl.viewport(0, 0, F.puddleW, F.puddleH);
+    gl.useProgram(PP.p);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, F.depth);
+    gl.uniform1i(PP.uDepth, 0);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, F.tex);
+    gl.uniform1i(PP.uFrame, 1);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform4fv(PP.uProjInfo, this.projInfo);
+    gl.uniform4fv(PP.uRect, rect);
+    gl.uniform2fv(PP.uCanvas, this.canvas);
+    gl.uniformMatrix4fv(PP.uVP, false, this._vp);
+    const v = f.view, R = this._viewRot;
+    R[0] = v[0]; R[1] = v[4]; R[2] = v[8]; R[3] = v[1]; R[4] = v[5]; R[5] = v[9]; R[6] = v[2]; R[7] = v[6]; R[8] = v[10];
+    gl.uniformMatrix3fv(PP.uViewRot, false, R);
+    gl.uniform3fv(PP.uCamPos, f.eye);
+    gl.uniform4fv(PP.uWet, this._wet);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    // blend onto the resolved image (canvas or retro target)
+    const dest = this.resolveTo?.fbo ?? null;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, dest);
+    gl.viewport(0, 0, F.w, F.h);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.useProgram(P.puddleBlend.p);
+    gl.bindTexture(gl.TEXTURE_2D, F.puddle);
+    gl.uniform1i(P.puddleBlend.uPuddle, 0);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.disable(gl.BLEND);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.activeTexture(gl.TEXTURE0);
   }
 
   /** EL4: drop the frame target without resolving (the door closed, the lane left mid-frame). */
