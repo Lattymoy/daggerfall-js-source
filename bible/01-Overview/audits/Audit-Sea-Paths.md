@@ -13,7 +13,7 @@ composes them):
 
 Every finding below was reproduced before a line changed, and each fix carries an `AUDIT SEA PATHS <ID>` comment. The
 pins are `test/systems/naval/auditseapaths.test.js`, beside the pins they moved (`PIN MOVED` where each stands). The
-mutants are `tools/mutants/auditseapaths.json`: 38, 37 dead, one equivalent as recorded. Fifteen records of earlier
+mutants are `tools/mutants/auditseapaths.json`: 39, 38 dead, one equivalent as recorded. Fifteen records of earlier
 lists aimed at lines these fixes moved; each was re-aimed by content and dies again.
 
 ## Fixed - AI ships in the scene
@@ -66,8 +66,9 @@ lists aimed at lines these fixes moved; each was re-aimed by content and dies ag
   sea no ground streams. A plan with one end in the Eltheric Ocean's box and one out of it is none (the crossing is
   the way), and a plan inside it keeps to the box.
 - **PL-3, 631 Eltheric port isles unreachable.** Their town and every pixel about it read water, and a landfall was a
-  step onto dry ground. A place on water with no land beside it is landed on itself; one with land beside it lands
-  there as before. Syrisol Landing and Ishomere Landing plan by helm and by passage.
+  step onto dry ground. A place on water with no dry pixel within the landfall's reach (3 pixels) is landed on itself;
+  one with dry ground in reach lands there as before (AUDIT STARTS V4). Syrisol Landing and Ishomere Landing plan by
+  helm and by passage.
 - **PL-4, a boat to hand made walkable trips fail.** The search afloat and ashore spent its count (Wayrest to Markarth,
   Daggerfall to Farrun, boat parts packed). A plan with a boat that finds nothing is planned again on foot
   (`tvMooredDry`); a passenger is never set walking.

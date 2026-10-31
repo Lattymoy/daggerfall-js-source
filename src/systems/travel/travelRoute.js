@@ -1189,9 +1189,10 @@ function* searchSteps(from, to, { roads, tracks, isWater, width, height, bounds,
   const startLayer = !sea ? 0 : sea.start === 'sea' ? AFLOAT : ASHORE;
   const seaGoal = !!sea && sea.goal === 'sea';
   const goalOk = (layer) => !sea || (seaGoal ? layer === AFLOAT : layer !== AFLOAT);
-  // AUDIT SEA PATHS PL-3: A PLACE STOOD ON WATER WITH NO LAND BESIDE IT is landed on itself - a landfall was a step onto a dry
-  // pixel, and 631 of the Eltheric Ocean's port isles (Syrisol Landing, Ishomere Landing) read water about their town
-  const goalIsle = !!sea && !seaGoal && isWater(to.x, to.y) && DIR_DELTA.every(([, dx, dy]) => isWater(to.x + dx, to.y + dy));
+  // AUDIT SEA PATHS PL-3: A PLACE STOOD ON WATER WITH NO DRY PIXEL WITHIN VOYAGE_LANDFALL_PX is landed on itself - a landfall
+  // was a step onto dry ground, and 631 of the Eltheric Ocean's port isles (Syrisol Landing, Ishomere Landing) read water
+  // about their town; one with dry ground in reach lands there (AUDIT STARTS V4)
+  const goalIsle = !!sea && !seaGoal && isWater(to.x, to.y) && !nearestDry(to, isWater);
   // OWS2: land about a water pixel - a sailed step into it is a coast's
   const nearLand = (x, y) => {
     for (const [, dx, dy] of DIR_DELTA) if (!isWater(x + dx, y + dy)) return true;

@@ -13,7 +13,7 @@ open waters of tamriel and ensure its perfect"*. Three cold lanes, each finding 
 leaving port aimed at land and circled; the stall read speed, not progress; harbour voyages given up at the mouth; the
 Bay's lanes read the coastal dilation, so Daggerfall, Sentinel and Wayrest ran no packet; raiders and lane legs crossed
 land; sea legs past the Bay never arrived; plans crossed the Veil; 631 Eltheric port isles were unreachable; the no-way
-clock ended every detour. All fixed but the six left open with the reason, with 38 mutants (37 dead, one equivalent).
+clock ended every detour. All fixed but the six left open with the reason, with 39 mutants (38 dead, one equivalent).
 Record: `01-Overview/audits/Audit-Sea-Paths.md`.
 
 **2026-10-31 - AUDIT PROP-GROUND.** The owner: *"Audit"*, of PROP-GROUND (`3582fe992`, the street laid under a prop past

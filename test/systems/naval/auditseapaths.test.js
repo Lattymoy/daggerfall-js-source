@@ -292,7 +292,7 @@ test('AUDIT SEA PATHS PL-2: the Veil is crossed by the crossing alone - a plan w
   assert.ok(inside && inside.pixels.every((q) => inEther(q.x, q.y)), 'a way inside it found');
 });
 
-test('AUDIT SEA PATHS PL-3: an Eltheric port isle whose town and every pixel about it read water is landed on itself; one with land beside it lands on the land (mutants: the isle\'s own landfall gone)', () => {
+test('AUDIT SEA PATHS PL-3: an Eltheric port isle whose town and every pixel within the landfall\'s reach read water is landed on itself; one with land beside it lands on the land (mutants: the isle\'s own landfall gone; the isle by its neighbours alone - AUDIT STARTS V4 its pin)', () => {
   const isle = planRoute({ x: 5000, y: -5000 }, { x: 5010, y: -5000 }, { isWater: () => true, sea: { start: 'sea', again: false } });
   assert.equal(isle?.kinds.at(-1), 'landfall');
   assert.deepEqual(isle.pixels.at(-1), { x: 5010, y: -5000 });

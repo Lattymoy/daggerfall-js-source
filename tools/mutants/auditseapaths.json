@@ -305,8 +305,16 @@
     "old": "        if (wet && !(goalIsle && n === goal)) {",
     "new": "        if (wet) {",
     "tests": [
-      "test/systems/naval/auditseapaths.test.js",
-      "test/systems/travel/ows2_crossing.test.js"
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-PL-3-the-isle-by-its-neighbours-alone",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  const goalIsle = !!sea && !seaGoal && isWater(to.x, to.y) && !nearestDry(to, isWater);",
+    "new": "  const goalIsle = !!sea && !seaGoal && isWater(to.x, to.y) && DIR_DELTA.every(([, dx, dy]) => isWater(to.x + dx, to.y + dy));",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
     ]
   },
   {
