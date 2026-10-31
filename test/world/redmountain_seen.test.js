@@ -85,14 +85,14 @@ const frame = (fog) => ({
   eye: [0, 10, 0], worldProj: new Float32Array(16).fill(1),
 });
 
-test('RED-MOUNTAIN-SEEN the draw: in the ash the ring, the field and the band stand wholly in the fog\'s colour - its ramp closed, its hold whole, no summit through it - and the lava, the plume and the curtain are not drawn; in clear air as before; in the heavy fog nothing (mutants: the hold; the band\'s hold; the summits through the weather; the fire through the weather; no row, no return)', () => {
+test('RED-MOUNTAIN-SEEN the draw: in the ash the ring, the field and the band stand wholly in the fog\'s colour - its ramp closed, its hold whole, no summit through it - and the lava, the plume and the curtain are drawn by its law (AUDIT FB1031 II G1); in clear air as before; in the heavy fog nothing (mutants: the hold; the band\'s hold; the summits through the weather; no row, no return)', () => {
   const ash = stubRing();
   ash.r.draw(new Float32Array(16), frame(FOG_SETTINGS.ashfall));
   assert.equal(ash.seen.draws, 1, 'the horizon drawn');
   assert.deepEqual([ash.seen.u1f.uFogStart, ash.seen.u1f.uFogEnd, ash.seen.u1f.uHazeHold], [0, 0, 1], 'the ramp closed, the hold whole');
   assert.ok(ash.seen.u1f.uSummitFrom > 1e8, 'no thinner air');
   assert.deepEqual([ash.seen.band.fogStart, ash.seen.band.fogEnd, ash.seen.band.hold], [0, 0, 1], 'the band\'s trees as the ground');
-  assert.equal(ash.seen.fire, 0, 'no fire through the ash');
+  assert.equal(ash.seen.fire, 1, 'the fire through the ash, by its law');   // PIN MOVED (AUDIT FB1031 II G1): it was not drawn
   const sun = stubRing();
   sun.r.draw(new Float32Array(16), frame({ mode: 'linear', start: 0, end: 4000, excludeSky: true }));
   assert.deepEqual([sun.seen.u1f.uFogStart, sun.seen.u1f.uFogEnd, sun.seen.u1f.uHazeHold], [0, 4000, RING_HAZE_HOLD]);

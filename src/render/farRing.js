@@ -1164,13 +1164,15 @@ export class FarRingRenderer {
     }
     if (this._band?.count && this._floraOf()) this._drawBand(view, origin, { ambient, sunScale, sunColor, moonScale, moonColor, fogColor, fogStart, fogEnd, hold: rf.hold, law: rf.law, density: rf.density, exposure, haze, hazeEye: hazeEye ?? eye ?? FLAT_UP, farField: !!farField, deck: this.renderer?.cloudShadow ?? null });   // FAR-TREES: the near trees past the grid, nearest of the pass
     // RED-MOUNTAIN: the volcano's lava and plume, then GHOSTFENCE's curtain and halos - each hidden by the cone where no
-    // depth stands, both hazed by this ring's own law
+    // depth stands, both hazed by this ring's own law. AUDIT FB1031 II G1: through the weather too, by its law from the
+    // world fog's own point (TV1: the traveller under the travel view), no summit in thinner air - they had been dropped
+    // whole under every weather row, no lava even at the crater's rim
     const cone = eye && worldProj ? this._coneNow() : null, fire = cone ? this._fireNow(cone) : null, fence = eye && worldProj ? this._fenceNow() : null;
-    if ((fire || fence) && !rf.weather) {   // RED-MOUNTAIN-SEEN: no lava, plume or curtain through the weather
+    if (fire || fence) {
       const focus = this.renderer?.focus;
       const pass = { ringOrigin: origin, baseX: this.baseX, baseY: this.baseY, view, worldProj, worldFar: worldProj[14] / (worldProj[10] + 1), fovY, aspect, far, eye,
-        fog: { color: fogColor, start: fogStart, end: fogEnd }, rim: farField ? [FAR_RIM_START, FAR_RIM_END] : [RING_RIM_START, RING_RIM_END], hold: RING_HAZE_HOLD,
-        summitFrom: summitFromOf(this._floraRadius), depth: this._depthBox(origin), light: Math.max(ambient[0], ambient[1], ambient[2]) + 0.6 * sunScale, lightDir, seconds: this._now() / 1000,
+        fog: { color: fogColor, start: fogStart, end: fogEnd, law: rf.law, density: rf.density }, rim: farField ? [FAR_RIM_START, FAR_RIM_END] : [RING_RIM_START, RING_RIM_END], hold: RING_HAZE_HOLD,
+        summitFrom: rf.weather ? NO_SUMMIT : summitFromOf(this._floraRadius), hazeFrom: rf.weather && focus && focus[3] > 0.5 ? focus : eye, depth: this._depthBox(origin), light: Math.max(ambient[0], ambient[1], ambient[2]) + 0.6 * sunScale, lightDir, seconds: this._now() / 1000,
         cone: cone ? coneIn(cone.at, origin, this.baseX, this.baseY) : null,
         ground: { feet: fenceFeet(), built: this._builtNow, mid: mid?.built ? this._midGround : null, ring: this._ringY },
         morph: { from: focus && focus[3] > 0.5 ? focus : eye, start: MID_MORPH_START, end: MID_MORPH_END } };

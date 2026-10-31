@@ -173,7 +173,7 @@ void main() {
   float d = distance(vWorld, uEye), fade = 1.0 - smoothstep(${f1(GLOW.fade[0])}, ${f1(GLOW.fade[1])}, d);
   if (fade <= 0.0 || nearDrawn() || hidden(vWorld, ${f1(GLOW.margin)})) discard;   // the fade's test first: the walk is the dear part
   float a = curtainOf(vSide, flow(vec2(vSide.x / 7.0, vSide.y * 2.4), vec2(0.0, 1.6), uTime));
-  o = vec4(${v3(GLOW.ghost)} * (a * ${f1(GLOW.curtain)} * nightOf(uLight) * fade * (1.0 - hazeAt(d, vWorld.y))), 0.0);
+  o = vec4(${v3(GLOW.ghost)} * (a * ${f1(GLOW.curtain)} * nightOf(uLight) * fade * (1.0 - hazeOf(vWorld))), 0.0);
 }`;
 
 export const FENCE_HALO_VS = HEAD + `layout(location = 0) in vec4 aCorner;   // x, z; the quad's corner
@@ -206,7 +206,7 @@ void main() {
   float q = dot(vCorner, vCorner), d = distance(vWorld, uEye), fade = 1.0 - smoothstep(${f1(GLOW.fade[1])}, ${f1(GLOW.fade[2])}, d);
   if (q >= 1.0 || fade <= 0.0 || nearDrawn() || hidden(vWorld, ${f1(GLOW.margin)})) discard;
   float a = (1.0 - q) * (1.0 - q) * vShare;
-  o = vec4(${v3(GLOW.ghost)} * (a * ${f1(GLOW.halo)} * nightOf(uLight) * fade * (1.0 - hazeAt(d, vWorld.y))), 0.0);
+  o = vec4(${v3(GLOW.ghost)} * (a * ${f1(GLOW.halo)} * nightOf(uLight) * fade * (1.0 - hazeOf(vWorld))), 0.0);
 }`;
 
 /** FIRST-USE: the glow's two programs, as its constructor builds them. */

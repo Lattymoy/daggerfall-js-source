@@ -63,13 +63,6 @@
     "tests": ["test/world/redmountain_seen.test.js"]
   },
   {
-    "name": "RED-MOUNTAIN-SEEN-the-fire-through-the-weather",
-    "file": "src/render/farRing.js",
-    "old": "    if ((fire || fence) && !rf.weather) {",
-    "new": "    if ((fire || fence)) {",
-    "tests": ["test/world/redmountain_seen.test.js"]
-  },
-  {
     "name": "RED-MOUNTAIN-SEEN-the-host-s-old-gate",
     "file": "src/scenes/world.js",
     "old": "    if (farRing && ringFogOf(fogNow)) {",

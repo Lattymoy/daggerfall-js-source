@@ -122,7 +122,7 @@ hazed as the streamed ground is, and no seam stands where the grid ends.
   and the eye's slack was given back the whole ray - from low land far off, the lake showed through the summit. A river
   is never thinner than a few pixels: a line of fire at night.
 - **Its door** is `?redfire=off`. It stands with the Landforms row, and where the far ring is drawn - in a clear day's
-  linear fog, not in rain or snow. Its programs are started at the boot's idle and its pass built through a door that
+  linear fog, and in rain, snow and ash by the weather's own law (AUDIT FB1031 II G1, below). Its programs are started at the boot's idle and its pass built through a door that
   never waits on their compile (AUDIT RED-MOUNTAIN F5).
 
 ## The Ghostfence (GHOSTFENCE)
@@ -192,11 +192,11 @@ about 130 m off the far views' smooth ground there. By day it keeps 30% of its n
   RED-MOUNTAIN).
 - The snowpack's levels reach 8 km (section A's BIOME PRECIPITATION law; the classic lane is untouched).
 - The plume leans the same way every day: no wind is read (the rite smoke's own reading).
-- The lava casts no light on the ground. The lava and the plume are not drawn under a weather fog, nor where the far
-  ring is not (the classic skin, the heavy fog, the sandstorm, `?ring=off`).
+- The lava casts no light on the ground. The lava and the plume are not drawn where the far ring is not (the classic
+  skin, the heavy fog, the sandstorm, `?ring=off`).
 - The Ghostfence stands with the Landforms row or without it (the Tribunal's, not the land's). Its curtain and halos
-  are the far ring's pass: on the classic skin, in rain, snow or ASHFALL1's ashfall (exp fog, Red Mountain's half of
-  its hours) and by `?ring=off` its pylons stand and their orbs glow, without them.
+  are the far ring's pass: on the classic skin, in the heavy fog or the sandstorm and by `?ring=off` its pylons stand
+  and their orbs glow, without them.
 - **RED-MOUNTAIN-SEEN** (FIELD FEEDBACK 2026-10-31, #feature-feedback: "Red Mountain doesn't always render, not sure if
   bug or just issue with how distant terrain works. Or an issue with my setup."). Past the streamed grid the cone stands
   in the far views alone, and they were drawn under a linear fog row only. Every exp row has hidden the ground by the
@@ -228,6 +228,15 @@ about 130 m off the far views' smooth ground there. By day it keeps 30% of its n
   the streamed ground closes into at the grid's edge, and a far view lit apart would put a step there. The grey skyline
   at night is the world fog's. A darker snow at night would be a change to the world's fog for the whole frame - OPEN,
   the owner's call.
+- **AUDIT FB1031 II G1** ("Red Mountain doesn't always render"). The lava, the plume and the Ghostfence's curtain and
+  halos are drawn in the far ring's pass alone, near and far, and the pass dropped them under every weather row: in the
+  ash (half Red Mountain's hours), a dusting, a sprinkle, and Dynamic Skies' overcast, rain and snow. No lava stood even
+  at the rim, where the land 300 m off still showed 16% to 95%, and the plume went at a front's switch.
+- Now they are drawn, fogged by the row's own law and density (`render/redMountainFire.js` `hazeAt`, `uFogLaw`) from
+  the world fog's point (`uHazeFrom`: the traveller under the travel view), so each keeps what the land keeps at its
+  distance. The lava's cap, the plume's floor and its colour's and fire's shares hold in clear air alone. From the
+  rim's crest the lake, 1.6 to 2.7 km off, keeps 9% to 2% in a dusting, 31% to 13% in a sprinkle, nothing in the whole
+  ash. Clear air draws as before, bit for bit.
 - Not changed: after a fast travel past the far field's reach (480 pixels about its base) the ring alone closes the
   horizon at 28 km until the new field is laid - in node a cold field took 1.3 s about Vvardenfell and 0.26 s in the Bay,
   a band at a time between the stream's pixel jobs; a nearer jump keeps the old field standing. On the classic skin, and
@@ -239,7 +248,7 @@ about 130 m off the far views' smooth ground there. By day it keeps 30% of its n
 
 ## Pins
 
-- **`test/world/redmountain_seen.test.js` (3)** and **`tools/mutants/redmountainseen.json` (13, all dead):** the rows
+- **`test/world/redmountain_seen.test.js` (3)** and **`tools/mutants/redmountainseen.json` (12, all dead):** the rows
   (the classic and Dynamic Skies'), the reading at the grid's edge, the draw under a GL stub (the ash, clear air, the
   heavy fog) and the host by source. **AUDIT FB1031 L2:** `test/render/fb1031_light.test.js` (the law at every Land
   View's edge on the shader's own text, the draw handing it to the ring and the band's trees) and
@@ -248,6 +257,10 @@ about 130 m off the far views' smooth ground there. By day it keeps 30% of its n
   call), four of this list's mutants and EL-DISTANCE's far-ring one re-aimed by content. **PIN MOVED:** `test/ui/farring.test.js` and `test/render/farsea1.test.js` (the
   gate), `test/render/tv4_weather_above.test.js` (the reading, the ash added), `test/systems/dynamicSkies.test.js` (the
   row handed whole).
+- **AUDIT FB1031 II G1:** `test/world/fb1031ii_fire.test.js` (4: the pass under every row, the uniforms, each draw's
+  share on the shaders' own text, clear air's caps) and `tools/mutants/fb1031ii_fire.json` (19, all dead). PIN MOVED:
+  `redmountain_seen.test.js`'s draw (the fire drawn through the ash; `redmountainseen.json`'s fire-gate record retired)
+  and `test/world/audit_redmountain.test.js` F4/F6 (the law and the point the same in both lenses).
 
 - **`test/world/redmountain.test.js` (8, one gated on ARENA2):** the flank's measure and its directions; the frame on
   the authored shape and on a fit; the land (past its reach to the bit, the floor, the crown, the keep, the breach, each
