@@ -34,7 +34,7 @@ export function privateSubject(storage) {
     const kept = storage?.getItem?.(SUBJECT_KEY);
     if (typeof kept === 'string' && /^p[0-9a-f]{24}$/.test(kept)) return kept;
   } catch { /* unreadable: a new one */ }
-  const made = 'p' + [...globalThis.crypto.getRandomValues(new Uint8Array(12))].map((b) => b.toString(16).padStart(2, '0')).join('');
+  const made = 'p' + [...globalThis.crypto.getRandomValues(new Uint8Array(12))].map((byte) => byte.toString(16).padStart(2, '0')).join('');
   try { storage?.setItem?.(SUBJECT_KEY, made); } catch { /* unsaved: this run's own */ }
   return made;
 }
@@ -50,8 +50,8 @@ export function privateMinter(server, { fetch, subject, name }) {
   const at = server.url.replace(/^ws/, 'http') + '/private/token';
   return async () => {
     try {
-      const n = sanitizeName(String(name() ?? '')) || 'Traveller';
-      const res = await fetch(at, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ s: subject(), n }) });
+      const shown = sanitizeName(String(name() ?? '')) || 'Traveller';
+      const res = await fetch(at, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ s: subject(), n: shown }) });
       if (!res.ok) return null;
       const got = await res.json();
       return typeof got?.tok === 'string' ? got.tok : null;
@@ -71,7 +71,7 @@ export function privateBoot(params, publish, name) {
   const server = privateServer();
   if (!server) return null;
   startPrivateRun();
-  runMinter = privateMinter(server, { fetch: (u, i) => globalThis.fetch(u, i), subject: () => privateSubject(appStorage()), name });
+  runMinter = privateMinter(server, { fetch: (url, init) => globalThis.fetch(url, init), subject: () => privateSubject(appStorage()), name });
   if (params.has('realmnew')) { params.delete('realmnew'); params.set('online', ''); params.set('realm', 'private'); params.set('load', ''); }
   const realm = params.has('realm');
   return {
