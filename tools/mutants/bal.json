@@ -296,8 +296,8 @@
   {
     "name": "BAL4-an-unstamped-off-stays",
     "file": "src/systems/uiPrefs.js",
-    "old": "const PREF1_ADOPT_NEW_DEFAULT = Object.freeze(['lootRarity', 'enhancedAI']);",
-    "new": "const PREF1_ADOPT_NEW_DEFAULT = Object.freeze(['lootRarity']);",
+    "old": "const PREF1_ADOPT_NEW_DEFAULT = Object.freeze(['lootRarity', 'enhancedAI']); // BAL4: and the Enhanced AI - see loadPrefs",
+    "new": "const PREF1_ADOPT_NEW_DEFAULT = Object.freeze(['lootRarity']); // BAL4: and the Enhanced AI - see loadPrefs",
     "tests": [
       "test/systems/pref1_shelf.test.js"
     ]
@@ -517,7 +517,7 @@
   {
     "name": "AUDIT-BAL-all-off-forgotten",
     "file": "src/systems/uiPrefs.js",
-    "old": "        if (p.featuresRestore && typeof p.featuresRestore === 'object' && p.enhancedAI === undefined) _prefs.enhancedAI = false;",
+    "old": "        if (p.featuresRestore && typeof p.featuresRestore === 'object' && p.enhancedAI === undefined)\n          _prefs.enhancedAI = false;",
     "new": "",
     "tests": [
       "test/systems/pref1_shelf.test.js"
@@ -526,8 +526,8 @@
   {
     "name": "AUDIT-BAL-all-off-over-a-word",
     "file": "src/systems/uiPrefs.js",
-    "old": "if (p.featuresRestore && typeof p.featuresRestore === 'object' && p.enhancedAI === undefined) _prefs.enhancedAI = false;",
-    "new": "if (p.featuresRestore && typeof p.featuresRestore === 'object') _prefs.enhancedAI = false;",
+    "old": "        if (p.featuresRestore && typeof p.featuresRestore === 'object' && p.enhancedAI === undefined)\n          _prefs.enhancedAI = false;",
+    "new": "        if (p.featuresRestore && typeof p.featuresRestore === 'object') _prefs.enhancedAI = false;",
     "tests": [
       "test/systems/pref1_shelf.test.js"
     ]

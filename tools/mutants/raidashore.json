@@ -2,8 +2,8 @@
   {
     "name": "RAID-ASHORE-seam-unasked",
     "file": "src/systems/warmAshesShips.js",
-    "old": "      h.raidAshore?.(this.parentQuest);\n",
-    "new": "",
+    "old": "      h.raidAshore?.(this.parentQuest);\n      this.parentQuest.questBreak = true;",
+    "new": "      this.parentQuest.questBreak = true;",
     "tests": [
       "test/systems/quest/raidashore.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RAID-ASHORE-quest-left-running",
     "file": "src/systems/warmAshesShips.js",
-    "old": "      this.parentQuest.endQuest();\n",
-    "new": "",
+    "old": "      this.parentQuest.endQuest();\n      this.setComplete();",
+    "new": "      this.setComplete();",
     "tests": [
       "test/systems/quest/raidashore.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RAID-ASHORE-taken-at-sea",
     "file": "src/systems/warmAshesShips.js",
-    "old": "    if (h.currentRegionIndex?.() === WA_SEA_REGION) {\n      resetShipVariants();",
-    "new": "    if (false) {\n      resetShipVariants();",
+    "old": "    if (h.currentRegionIndex?.() === WA_SEA_REGION) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/quest/raidashore.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RAID-ASHORE-fast-travel-unguarded",
     "file": "src/systems/warmAshesShips.js",
-    "old": "if (travelShip) return raidRefusal() === 'busy' ? 'busy' : armRaid();",
-    "new": "if (travelShip) return armRaid();",
+    "old": "  if (travelShip) return raidRefusal() === 'busy' ? 'busy' : armRaid();",
+    "new": "  if (travelShip) return armRaid();",
     "tests": [
       "test/systems/quest/raidashore.test.js"
     ]

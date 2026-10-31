@@ -142,8 +142,8 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "  if (!sameEntries(was, _bundle)) tierChanged();\n  return _bundle.size;",
-    "new": "  for (const k of [..._bundleBytesOf.keys()]) dropDecoded(k);\n  if (!sameEntries(was, _bundle)) tierChanged();\n  return _bundle.size;"
+    "old": "  if (!sameEntries(was, _bundle)) tierChanged();",
+    "new": "  for (const k of [..._bundleBytesOf.keys()]) dropDecoded(k);\n  if (!sameEntries(was, _bundle)) tierChanged();"
   },
   {
     "name": "AUDITVE-R1-stale-picture-answered",
@@ -151,8 +151,8 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "const decodedFrom = (key, entry) => (entry && _decodedFrom.get(key) === srcOf(entry) ? _decoded.get(key) ?? null : null);",
-    "new": "const decodedFrom = (key, entry) => (entry ? _decoded.get(key) ?? null : null);"
+    "old": "const decodedFrom = (key, entry) =>\n  entry && _decodedFrom.get(key) === srcOf(entry) ? (_decoded.get(key) ?? null) : null;",
+    "new": "const decodedFrom = (key, entry) => (entry ? (_decoded.get(key) ?? null) : null);"
   },
   {
     "name": "AUDITVE-R1-archive-preloaded-once",
@@ -196,8 +196,8 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "      if (srcOf(liveEntry(key)) !== srcOf(entry)) return;   // AUDIT VE R8: switched away while it decoded - it lands nowhere\n",
-    "new": ""
+    "old": "      if (srcOf(liveEntry(key)) !== srcOf(entry)) return; // AUDIT VE R8: switched away while it decoded - it lands nowhere\n      putDecoded(key, entry, c32);",
+    "new": "      putDecoded(key, entry, c32);"
   },
   {
     "name": "AUDITVE-R8-late-record-kept",
@@ -205,8 +205,8 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "        if (srcOf(liveEntry(key)) !== srcOf(entry)) return null;   // AUDIT VE R8: switched away while it decoded\n",
-    "new": ""
+    "old": "          if (srcOf(liveEntry(key)) !== srcOf(entry)) return null; // AUDIT VE R8: switched away while it decoded\n          putDecoded(key, entry, c32);",
+    "new": "          putDecoded(key, entry, c32);"
   },
   {
     "name": "AUDITVE-R2-door-never-registers",

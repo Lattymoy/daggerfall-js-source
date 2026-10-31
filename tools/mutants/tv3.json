@@ -122,8 +122,8 @@
   {
     "name": "TV3-law-alone-sends",
     "file": "src/systems/travellerMarks.js",
-    "old": "  if (alone) return null;\n",
-    "new": "",
+    "old": "  if (alone) return null;\n  const l = st.last;",
+    "new": "  const l = st.last;",
     "tests": [
       "test/scenes/tv3_travellers.test.js"
     ],
@@ -142,7 +142,7 @@
   {
     "name": "TV3-law-never-stale",
     "file": "src/systems/travellerMarks.js",
-    "old": "      for (const [id, m] of marks) { if (now - m.at > TRAV_STALE_MS) marks.delete(id); else out.push(m); }",
+    "old": "      for (const [id, m] of marks) {\n        if (now - m.at > TRAV_STALE_MS) marks.delete(id);\n        else out.push(m);\n      }",
     "new": "      for (const [, m] of marks) out.push(m);",
     "tests": [
       "test/scenes/tv3_travellers.test.js"
@@ -342,8 +342,8 @@
   {
     "name": "AUDIT-DEEP-T3-6-book-no-age",
     "file": "src/systems/travellerMarks.js",
-    "old": "at: now - age });",
-    "new": "at: now });",
+    "old": "      at: now - age,",
+    "new": "      at: now,",
     "tests": [
       "test/scenes/tv3_travellers.test.js"
     ],
@@ -462,8 +462,8 @@
   {
     "name": "OVERWORLD-NAMES-book-drops-renown",
     "file": "src/systems/travellerMarks.js",
-    "old": "lv: f.lv ?? null, gt: f.gt ?? null, ",
-    "new": "",
+    "old": "      lv: f.lv ?? null,\n      gt: f.gt ?? null,\n      p: f.p,",
+    "new": "      p: f.p,",
     "tests": [
       "test/scenes/tv3_travellers.test.js"
     ],

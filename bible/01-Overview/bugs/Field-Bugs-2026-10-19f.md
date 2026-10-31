@@ -1271,7 +1271,7 @@ THE FIX. The review's third act on one character, `realm-mend { id, ticket, was,
 purse, still the `was` staff reckoned from (`mend-moved` otherwise: played since, or the wrong character) and below
 nothing (`mend-not-negative` otherwise), is SET to nothing - never added to - and `gold`, what the character is owed (0
 to one int's worth), comes as ONE LETTER OF CREDIT at the front of the pack. That is what the trade window itself pays
-for a sum the pack cannot carry (`tradeModes.js:"export function sellProceeds(tradePrice,"`, DaggerfallTradeWindow's
+for a sum the pack cannot carry (`tradeModes.js:"export function sellProceeds"`, DaggerfallTradeWindow's
 sell arm), so it is how an honest sale of a lot that big pays; a purse of coin would weigh tonnes. The act shares the
 repair's machinery, which both run now (`review.js:"async function staffMend(ctx, row, kind, ticket, change, steps, answer) {"`):
 a developer's alone, the dead never, once a ticket in `realm_repairs` (a mend's row names no faction and no bit, 0 and 0,

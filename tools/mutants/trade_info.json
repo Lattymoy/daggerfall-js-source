@@ -86,8 +86,8 @@
     "tests": [
       "test/systems/tradeinfo.test.js"
     ],
-    "old": "? `${num(Math.max(0, Math.trunc(Number(item.value) || 0)))} gold` : null);",
-    "new": "? `${num(0)} gold` : null);",
+    "old": "  item?.templateIndex === LETTER_OF_CREDIT_TEMPLATE\n    ? `${num(Math.max(0, Math.trunc(Number(item.value) || 0)))} gold`\n    : null;",
+    "new": "  item?.templateIndex === LETTER_OF_CREDIT_TEMPLATE ? `${num(0)} gold` : null;",
     "note": "TRADE-LOC II (PIN MOVED): re-aimed by content - the figure is letterWorthGold's now, and letterWorthLine says it after its word"
   }
 ]

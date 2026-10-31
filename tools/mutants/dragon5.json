@@ -38,8 +38,8 @@
   {
     "name": "DRAGON5-the-key-preferring-the-dragon",
     "file": "src/systems/transport.js",
-    "old": "  if (hasHorse(items)) return TRANSPORT_MODES.Horse;\n",
-    "new": "  if (hasDragon(items)) return TRANSPORT_MODES.Dragon;\n  if (hasHorse(items)) return TRANSPORT_MODES.Horse;\n",
+    "old": "  if (hasHorse(items)) return TRANSPORT_MODES.Horse;",
+    "new": "  if (hasDragon(items)) return TRANSPORT_MODES.Dragon;\n  if (hasHorse(items)) return TRANSPORT_MODES.Horse;",
     "tests": [
       "test/net/dragon/dragon5_mount.test.js"
     ]

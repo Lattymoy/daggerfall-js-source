@@ -29,8 +29,8 @@
   {
     "name": "FIELD-GUN13-4-the-muzzle-throws-no-light",
     "file": "src/systems/thunderlock.js",
-    "old": "  const glow = entity?._thunderlockFlash;\n  if (!(glow > 0) || !feet) return null;",
-    "new": "  const glow = entity?._thunderlockFlash;\n  if (true) return null;\n  if (!(glow > 0) || !feet) return null;",
+    "old": "  if (!(glow > 0) || !feet) return null;",
+    "new": "  if (true) return null;\n  if (!(glow > 0) || !feet) return null;",
     "tests": [
       "test/systems/thunderlock.test.js"
     ]

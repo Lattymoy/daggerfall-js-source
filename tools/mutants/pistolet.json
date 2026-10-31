@@ -84,8 +84,8 @@
   {
     "name": "GF-two-draws",
     "file": "src/systems/thunderlock.js",
-    "old": "    rolls();\n    return [];",
-    "new": "    rolls(); rolls();\n    return [];",
+    "old": "    return [];",
+    "new": "    rolls();\n    return [];",
     "tests": [
       "test/systems/pistolet.test.js",
       "test/systems/pelletsscarce.test.js"
@@ -103,8 +103,8 @@
   {
     "name": "GF-half-weight-back",
     "file": "src/systems/thunderlock.js",
-    "old": "  id: 'dwarven-thunderlock',   // its id kept: the find's place, not its prize (GUNS-UNFOUND)\n  minTier: FIND_MIN_TIER,\n",
-    "new": "  id: 'dwarven-thunderlock',   // its id kept: the find's place, not its prize (GUNS-UNFOUND)\n  minTier: FIND_MIN_TIER,\n  weight: 0.5,\n",
+    "old": "  mint: (rolls = Math.random) => {",
+    "new": "  weight: 0.5,\n  mint: (rolls = Math.random) => {",
     "tests": [
       "test/systems/pistolet.test.js"
     ]
@@ -343,8 +343,8 @@
   {
     "name": "TL-light-side-ignored",
     "file": "src/systems/thunderlock.js",
-    "old": "const side = entity._thunderlockFlashSide === -1 ? -1 : 1;",
-    "new": "const side = 1;",
+    "old": "  const side = entity._thunderlockFlashSide === -1 ? -1 : 1;",
+    "new": "  const side = 1;",
     "tests": [
       "test/systems/pistolet.test.js",
       "test/systems/thunderlock.test.js"
@@ -386,8 +386,8 @@
   {
     "name": "LL-pistol-unclaimed",
     "file": "src/systems/thunderlock.js",
-    "old": "templates: [THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE],",
-    "new": "templates: [THUNDERLOCK_TEMPLATE],",
+    "old": "  templates: [THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE],",
+    "new": "  templates: [THUNDERLOCK_TEMPLATE],",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]

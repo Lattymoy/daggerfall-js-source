@@ -441,8 +441,8 @@
   {
     "name": "TECHFX1-the-default-off",
     "file": "src/systems/uiPrefs.js",
-    "old": "  techniqueMotion: 1,\n",
-    "new": "  techniqueMotion: 0,\n",
+    "old": "  techniqueMotion: 1,",
+    "new": "  techniqueMotion: 0,",
     "tests": [
       "test/systems/techfx1.test.js"
     ]

@@ -65,8 +65,8 @@
   {
     "name": "CT-trade-on-by-default",
     "file": "src/systems/uiPrefs.js",
-    "old": "  chatTrade: false, chatLfg: false,",
-    "new": "  chatTrade: true, chatLfg: false,",
+    "old": "  chatTrade: false,",
+    "new": "  chatTrade: true,",
     "tests": [
       "test/ui/chattrade1.test.js"
     ]

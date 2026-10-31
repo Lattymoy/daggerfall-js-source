@@ -187,8 +187,8 @@
   {
     "name": "ARMORY-the-piece-over-the-element",
     "file": "src/systems/weaponGlow.js",
-    "old": "  if (i >= 0) return glowSpec(PROC_ELEMENTS[i], glowLevel(_total));\n  const worn = armoryWeaponLook();",
-    "new": "  const worn = armoryWeaponLook();\n  if (worn) return glowSpec(worn, ARMORY_LEVEL);\n  if (i >= 0) return glowSpec(PROC_ELEMENTS[i], glowLevel(_total));",
+    "old": "  if (i >= 0) return glowSpec(PROC_ELEMENTS[i], glowLevel(_total));\n  const worn = armoryWeaponLook(); // ARMORY: law 7 - the Aura Armory's weapon piece, where no element shows",
+    "new": "  const worn = armoryWeaponLook();\n  if (worn) return glowSpec(worn, ARMORY_LEVEL);\n  if (i >= 0) return glowSpec(PROC_ELEMENTS[i], glowLevel(_total)); // ARMORY: law 7 - the Aura Armory's weapon piece, where no element shows",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ]
@@ -196,8 +196,8 @@
   {
     "name": "ARMORY-the-arcane-over-the-piece",
     "file": "src/systems/weaponGlow.js",
-    "old": "  if (worn) return glowSpec(worn, ARMORY_LEVEL);\n  return arcane",
-    "new": "  if (worn && !(arcane && isEnchanted(item))) return glowSpec(worn, ARMORY_LEVEL);\n  return arcane",
+    "old": "  if (worn) return glowSpec(worn, ARMORY_LEVEL);",
+    "new": "  if (worn && !(arcane && isEnchanted(item))) return glowSpec(worn, ARMORY_LEVEL);",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ]
@@ -205,8 +205,8 @@
   {
     "name": "ARMORY-the-edge-read-as-the-brand",
     "file": "src/systems/weaponGlow.js",
-    "old": "ARMORY_GLOW = Object.freeze({ breachbrand: 'brand', eternaledge: 'edge' });",
-    "new": "ARMORY_GLOW = Object.freeze({ breachbrand: 'brand', eternaledge: 'brand' });",
+    "old": "export const ARMORY_GLOW = Object.freeze({ breachbrand: 'brand', eternaledge: 'edge' });",
+    "new": "export const ARMORY_GLOW = Object.freeze({ breachbrand: 'brand', eternaledge: 'brand' });",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ]
@@ -259,8 +259,8 @@
   {
     "name": "ARMORY-a-body-kit-on-the-blades-stage",
     "file": "src/systems/weaponGlow.js",
-    "old": ".every(([s, k]) => s === 'weapon' || !k)",
-    "new": ".every(() => true)",
+    "old": "  Object.entries(armoryKitPieces(kit)).every(([s, k]) => s === 'weapon' || !k) ? armoryWeaponLook(kit) : null;",
+    "new": "  Object.entries(armoryKitPieces(kit)).every(() => true) ? armoryWeaponLook(kit) : null;",
     "tests": [
       "test/render/armory.test.js"
     ]

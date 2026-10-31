@@ -174,8 +174,8 @@
   {
     "name": "GILDED1-the-gold-forgotten-in-a-list",
     "file": "src/systems/thunderlock.js",
-    "old": "  ? (forPaperDoll ? ART_RECORDS.gildedDoll : ART_RECORDS.gildedIcon)",
-    "new": "  ? (forPaperDoll ? ART_RECORDS.gildedDoll : ART_RECORDS.icon)",
+    "old": "      : ART_RECORDS.gildedIcon",
+    "new": "      : ART_RECORDS.icon",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]

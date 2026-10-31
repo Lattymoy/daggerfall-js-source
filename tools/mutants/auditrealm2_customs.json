@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-REALM2-T1-the-pack-offers-a-boat",
     "file": "src/systems/tradePack.js",
-    "old": "  if (BOAT_TEMPLATES.includes(item.templateIndex)) return 'Boat deeds and boat parts cannot be traded.';   // AUDIT REALM2 T1\n",
-    "new": "",
+    "old": "  if (BOAT_TEMPLATES.includes(item.templateIndex)) return 'Boat deeds and boat parts cannot be traded.'; // AUDIT REALM2 T1\n  if (isBagItem(item)) return BAG_TRADE_TEXT; // BAG1: the bag is its owner's",
+    "new": "  if (isBagItem(item)) return BAG_TRADE_TEXT; // BAG1: the bag is its owner's",
     "tests": [
       "test/systems/auditrealm2_customs.test.js"
     ]

@@ -371,8 +371,8 @@
   {
     "name": "PEERRANGE-shelf-literal",
     "file": "src/systems/uiPrefs.js",
-    "old": "  peerRange: 300,\n",
-    "new": "  peerRange: 150,\n",
+    "old": "  peerRange: 300,",
+    "new": "  peerRange: 150,",
     "tests": [
       "test/systems/peerrange.test.js"
     ]

@@ -140,8 +140,8 @@
   {
     "name": "AUDIT-REALM-L1F1-the-pack-order-unread",
     "file": "src/systems/tradePack.js",
-    "old": "    picks(entries) { const items = list(); return entries.map(({ item }) => items.indexOf(item)); },",
-    "new": "    picks(entries) { return entries.map((_, i) => i); },",
+    "old": "      const items = list();\n      return entries.map(({ item }) => items.indexOf(item));",
+    "new": "      return entries.map((_, i) => i);",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]

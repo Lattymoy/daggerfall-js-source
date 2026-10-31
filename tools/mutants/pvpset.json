@@ -155,8 +155,8 @@
   {
     "name": "PVP-SET-the-bar-not-held-up",
     "file": "src/systems/uiSkin.js",
-    "old": "isEnhanced() && (hotbarForced() || HOTBAR_STYLES",
-    "new": "isEnhanced() && (HOTBAR_STYLES",
+    "old": "export const hotbarInForce = () => isEnhanced() && (hotbarForced() || HOTBAR_STYLES.includes(getPref('quickbarStyle')));",
+    "new": "export const hotbarInForce = () => isEnhanced() && HOTBAR_STYLES.includes(getPref('quickbarStyle'));",
     "tests": [
       "test/systems/wild/pvpset.test.js"
     ]

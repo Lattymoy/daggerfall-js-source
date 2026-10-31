@@ -458,8 +458,8 @@
   {
     "name": "MARKET-ANY-pack-an-unwireable-piece-offered",
     "file": "src/systems/tradePack.js",
-    "old": "(pack.wire([{ item, count: Math.max(1, item.stackCount ?? 1) }])?.[0] ? null : 'shape')",
-    "new": "null",
+    "old": "          const why =\n            goodRefusal(item) ??\n            (pack.wire([{ item, count: Math.max(1, item.stackCount ?? 1) }])?.[0] ? null : 'shape');",
+    "new": "          const why = goodRefusal(item) ?? null;",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -476,8 +476,8 @@
   {
     "name": "MARKET-ANY-pack-the-keeper-unasked",
     "file": "src/systems/tradePack.js",
-    "old": "filter((it) => it && !(typeof it.provenance === 'string' && kept(it.provenance)))",
-    "new": "filter((it) => it)",
+    "old": "        .filter((it) => it && !(typeof it.provenance === 'string' && kept(it.provenance)))",
+    "new": "        .filter((it) => it)",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]
@@ -485,8 +485,8 @@
   {
     "name": "MARKET-ANY-pack-nothing-said",
     "file": "src/systems/tradePack.js",
-    "old": "      say(why === 'bought' ? marketArrivedText(name) : why === 'returned' ? marketBackText(name) : `${name} is in your pack.`);\n",
-    "new": "",
+    "old": "      say(\n        why === 'bought'\n          ? marketArrivedText(name)\n          : why === 'returned'\n            ? marketBackText(name)\n            : `${name} is in your pack.`,\n      );\n      return true;",
+    "new": "      return true;",
     "tests": [
       "test/systems/fb1001_market_goods.test.js"
     ]

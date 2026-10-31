@@ -38,8 +38,8 @@
   {
     "name": "REST-OPT-switch-off-by-default",
     "file": "src/systems/uiPrefs.js",
-    "old": "  restWithParty: true,",
-    "new": "  restWithParty: false,",
+    "old": "  restWithParty: true, // REST-OPT: off - I rest alone, and the party rests without me",
+    "new": "  restWithParty: false, // REST-OPT: off - I rest alone, and the party rests without me",
     "tests": [
       "test/systems/party/restopt.test.js"
     ]

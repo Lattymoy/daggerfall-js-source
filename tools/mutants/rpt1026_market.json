@@ -119,7 +119,7 @@
   {
     "name": "RPT1026-MARKET-ARRIVE-the-pack-says-nothing-came",
     "file": "src/systems/tradePack.js",
-    "old": "      say(why === 'bought' ? marketArrivedText(name) : why === 'returned' ? marketBackText(name) : `${name} is in your pack.`);",
+    "old": "      say(\n        why === 'bought'\n          ? marketArrivedText(name)\n          : why === 'returned'\n            ? marketBackText(name)\n            : `${name} is in your pack.`,\n      );",
     "new": "      say(`${name} is in your pack.`);",
     "tests": [
       "test/net/rpt1026_market_arrive.test.js"

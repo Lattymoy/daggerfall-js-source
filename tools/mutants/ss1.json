@@ -32,8 +32,8 @@
     "name": "SS1-the-table-takes-a-bound-piece",
     "file": "src/systems/tradePack.js",
     "note": "AUDIT AUTO-HOLD (PIN MOVED): re-aimed by content - the refusal's words are boundTradeText(item)",
-    "old": "  if (isBound(item)) return boundTradeText(item);   // SS1; AUDIT AUTO-HOLD: a piece the realm locked, in its own words\n",
-    "new": "",
+    "old": "  if (isBound(item)) return boundTradeText(item); // SS1; AUDIT AUTO-HOLD: a piece the realm locked, in its own words\n  if (BOAT_TEMPLATES.includes(item.templateIndex)) return 'Boat deeds and boat parts cannot be traded.'; // AUDIT REALM2 T1",
+    "new": "  if (BOAT_TEMPLATES.includes(item.templateIndex)) return 'Boat deeds and boat parts cannot be traded.'; // AUDIT REALM2 T1",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
     ]
@@ -41,8 +41,8 @@
   {
     "name": "SS1-a-peers-bound-lot-taken",
     "file": "src/systems/tradePack.js",
-    "old": "unwire(records) { const items = wholeLot(records); return items && !items.some(isBound) ? items : null; },",
-    "new": "unwire(records) { const items = wholeLot(records); return items; },",
+    "old": "      return items && !items.some(isBound) ? items : null;",
+    "new": "      return items;",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
     ],

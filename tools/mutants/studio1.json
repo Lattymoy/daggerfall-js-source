@@ -11,8 +11,8 @@
   {
     "name": "STUDIO1-the-stand-in-mark-not-taken",
     "file": "src/systems/textureReplacement.js",
-    "old": "  if (under.standIn) studio.standIn = true;\n",
-    "new": "",
+    "old": "  if (under.standIn) studio.standIn = true;\n  if (under.lazy) studio.lazy = true;",
+    "new": "  if (under.lazy) studio.lazy = true;",
     "tests": [
       "test/systems/studioArt/studio1_door.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "STUDIO1-the-offset-not-taken",
     "file": "src/systems/textureReplacement.js",
-    "old": "  studio.offset ??= under.offset ?? null;\n",
-    "new": "",
+    "old": "  studio.offset ??= under.offset ?? null;\n}",
+    "new": "}",
     "tests": [
       "test/systems/studioArt/studio1_door.test.js",
       "test/systems/studioArt/auditstudio1.test.js"
@@ -40,8 +40,8 @@
   {
     "name": "STUDIO1-a-late-cover-kept-undecoded",
     "file": "src/systems/textureReplacement.js",
-    "old": "      dropDecoded(key);   // decoded again with what it covers\n",
-    "new": "",
+    "old": "      dropDecoded(key); // decoded again with what it covers\n      n++;",
+    "new": "      n++;",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "STUDIO1-lazy-not-inherited",
     "file": "src/systems/textureReplacement.js",
-    "old": "  if (under.lazy) studio.lazy = true;\n",
-    "new": "",
+    "old": "  if (under.lazy) studio.lazy = true;\n  if (under.readOnly) studio.readOnly = true; // AUDIT DEX B5",
+    "new": "  if (under.readOnly) studio.readOnly = true; // AUDIT DEX B5",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -338,8 +338,8 @@
   {
     "name": "STUDIO1-absorbed-uncounted",
     "file": "src/systems/textureReplacement.js",
-    "old": "      dropDecoded(key);   // decoded again with what it covers\n      n++;\n      continue;",
-    "new": "      dropDecoded(key);   // decoded again with what it covers\n      continue;",
+    "old": "      n++;\n      continue;",
+    "new": "      continue;",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "STUDIO1-studio-records-any",
     "file": "src/systems/textureReplacement.js",
-    "old": "if (e.studio && e.archive === a && e.frame === 0 && e.map === 'Albedo' && e.dye == null) out.push(e.record);",
-    "new": "if (e.archive === a && e.frame === 0 && e.map === 'Albedo' && e.dye == null) out.push(e.record);",
+    "old": "    if (e.studio && e.archive === a && e.frame === 0 && e.map === 'Albedo' && e.dye == null) out.push(e.record);",
+    "new": "    if (e.archive === a && e.frame === 0 && e.map === 'Albedo' && e.dye == null) out.push(e.record);",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "STUDIO1-hold-never-let-go",
     "file": "src/systems/textureReplacement.js",
-    "old": "    .then(() => { clearTimeout(timer); _holds.delete(held); });",
-    "new": "    .then(() => { clearTimeout(timer); });",
+    "old": "    _holds.delete(held);\n  });",
+    "new": "  });",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -374,8 +374,8 @@
   {
     "name": "STUDIO1-hold-unbounded",
     "file": "src/systems/textureReplacement.js",
-    "old": "new Promise((r) => { timer = setTimeout(r, atMost); })",
-    "new": "new Promise((r) => { timer = setTimeout(r, atMost * 1000); })",
+    "old": "      timer = setTimeout(r, atMost);",
+    "new": "      timer = setTimeout(r, atMost * 1000);",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -392,7 +392,7 @@
   {
     "name": "STUDIO1-no-box-no-scale",
     "file": "src/systems/textureReplacement.js",
-    "old": "    if (base) { own.box = { width: base.width, height: base.height }; if (base.recordScale && !own.recordScale) own.recordScale = base.recordScale; }",
+    "old": "    if (base) {\n      own.box = { width: base.width, height: base.height };\n      if (base.recordScale && !own.recordScale) own.recordScale = base.recordScale;\n    }",
     "new": "    void base;",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
@@ -401,8 +401,8 @@
   {
     "name": "STUDIO1-no-scale",
     "file": "src/systems/textureReplacement.js",
-    "old": "if (base.recordScale && !own.recordScale) own.recordScale = base.recordScale; }",
-    "new": "}",
+    "old": "      if (base.recordScale && !own.recordScale) own.recordScale = base.recordScale;\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "STUDIO1-size-not-the-box",
     "file": "src/systems/textureReplacement.js",
-    "old": "return d ? (d.box ?? { width: d.width, height: d.height }) : { width: 1, height: 1 }; };",
-    "new": "return d ? { width: d.width, height: d.height } : { width: 1, height: 1 }; };",
+    "old": "    return d ? (d.box ?? { width: d.width, height: d.height }) : { width: 1, height: 1 };",
+    "new": "    return d ? { width: d.width, height: d.height } : { width: 1, height: 1 };",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -419,8 +419,8 @@
   {
     "name": "STUDIO1-bitmap-at-the-box",
     "file": "src/systems/textureReplacement.js",
-    "old": "return { ...(m ? { width: m.width, height: m.height } : size(record)), data: null, rgba: topDownRgba(d), record, frame }; },",
-    "new": "return { ...size(record), data: null, rgba: topDownRgba(d), record, frame }; },",
+    "old": "      return {\n        ...(m ? { width: m.width, height: m.height } : size(record)),\n        data: null,\n        rgba: topDownRgba(d),\n        record,\n        frame,\n      };",
+    "new": "      return { ...size(record), data: null, rgba: topDownRgba(d), record, frame };",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -437,8 +437,8 @@
   {
     "name": "STUDIO1-a-dyed-studio-makes-a-set",
     "file": "src/systems/textureReplacement.js",
-    "old": "e.map === bare.map && e.dye != null && !e.studio) return dye;",
-    "new": "e.map === bare.map && e.dye != null) return dye;",
+    "old": "      e.dye != null &&\n      !e.studio",
+    "new": "      e.dye != null",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]

@@ -398,8 +398,8 @@
   {
     "name": "AD-F-gold-not-restored",
     "file": "src/systems/tradePack.js",
-    "old": "      if (handle.gold) addGoldPieces(entity, handle.gold);",
-    "new": "",
+    "old": "      if (handle.gold) addGoldPieces(entity, handle.gold);\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/quest/auditdrops.test.js"
     ]

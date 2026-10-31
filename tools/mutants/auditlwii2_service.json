@@ -39,8 +39,8 @@
   {
     "name": "AUDITLWII2-S1-stamp-online",
     "file": "src/systems/tradeModes.js",
-    "old": "  if (!online) return 0;\n  const lot = (items ?? []).filter(",
-    "new": "  const lot = (items ?? []).filter(",
+    "old": "  if (!online) return 0;\n  const lot = (items ?? []).filter((it) => it && typeof it === 'object');",
+    "new": "  const lot = (items ?? []).filter((it) => it && typeof it === 'object');",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "AUDITLWII2-S1-stamp-mark",
     "file": "src/systems/tradeModes.js",
-    "old": "    it[PATRON_COUNTER_MARK] = true;\n    if (paid)",
-    "new": "    if (paid)",
+    "old": "    it[PATRON_COUNTER_MARK] = true;\n    if (paid) it[COUNTER_PAID_MARK] = base + Math.floor((rest * asks[i]) / total / stackOf(it));",
+    "new": "    if (paid) it[COUNTER_PAID_MARK] = base + Math.floor((rest * asks[i]) / total / stackOf(it));",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]

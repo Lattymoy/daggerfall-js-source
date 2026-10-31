@@ -2,8 +2,8 @@
   {
     "name": "L10N3d-getter-reads-english",
     "file": "src/systems/textManager.js",
-    "old": "Object.defineProperty(out, key, { enumerable: true, get: () => localizedText(key, value, collection) });",
-    "new": "Object.defineProperty(out, key, { enumerable: true, get: () => value });",
+    "old": "    Object.defineProperty(out, key, { enumerable: true, get: () => localizedText(key, value, collection) });",
+    "new": "    Object.defineProperty(out, key, { enumerable: true, get: () => value });",
     "tests": [
       "test/systems/l10n3d.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "L10N3d-collection-ignored",
     "file": "src/systems/textManager.js",
-    "old": "Object.defineProperty(out, key, { enumerable: true, get: () => localizedText(key, value, collection) });",
-    "new": "Object.defineProperty(out, key, { enumerable: true, get: () => localizedText(key, value) });",
+    "old": "    Object.defineProperty(out, key, { enumerable: true, get: () => localizedText(key, value, collection) });",
+    "new": "    Object.defineProperty(out, key, { enumerable: true, get: () => localizedText(key, value) });",
     "tests": [
       "test/systems/l10n3d.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "L10N3d-not-enumerable",
     "file": "src/systems/textManager.js",
-    "old": "Object.defineProperty(out, key, { enumerable: true, get: () => localizedText(key, value, collection) });",
-    "new": "Object.defineProperty(out, key, { enumerable: false, get: () => localizedText(key, value, collection) });",
+    "old": "    Object.defineProperty(out, key, { enumerable: true, get: () => localizedText(key, value, collection) });",
+    "new": "    Object.defineProperty(out, key, { enumerable: false, get: () => localizedText(key, value, collection) });",
     "tests": [
       "test/systems/l10n3d.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "L10N3d-not-frozen",
     "file": "src/systems/textManager.js",
-    "old": "    Object.defineProperty(out, key, { enumerable: true, get: () => localizedText(key, value, collection) });\n  }\n  return /** @type {Readonly<T>} */ (Object.freeze(out));\n}",
-    "new": "    Object.defineProperty(out, key, { enumerable: true, get: () => localizedText(key, value, collection) });\n  }\n  return /** @type {Readonly<T>} */ (out);\n}",
+    "old": "  return /** @type {Readonly<T>} */ (Object.freeze(out));",
+    "new": "  return /** @type {Readonly<T>} */ (out);",
     "tests": [
       "test/systems/l10n3d.test.js"
     ]

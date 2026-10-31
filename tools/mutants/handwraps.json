@@ -212,8 +212,8 @@
   {
     "name": "WRAPS-AURA-dropped",
     "file": "src/systems/weaponGlow.js",
-    "old": "  if (isHandWraps(item)) return fistGlow(undefined, true);",
-    "new": "",
+    "old": "  if (isHandWraps(item)) return fistGlow(undefined, true); // WRAPS-AURA (mob: \"wraps are glowing without the aura on\"): wraps glow by the weapon aura alone",
+    "new": "  // WRAPS-AURA (mob: \"wraps are glowing without the aura on\"): wraps glow by the weapon aura alone",
     "tests": [
       "test/combat/handwraps.test.js"
     ],

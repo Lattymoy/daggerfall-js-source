@@ -182,8 +182,8 @@
   {
     "name": "PC-the-shown-door-unasked",
     "file": "src/systems/textManager.js",
-    "old": "tryGetLocalizedText(TextCollections.Factions, id) ?? portFactionName(id) ?? fallback;",
-    "new": "tryGetLocalizedText(TextCollections.Factions, id) ?? fallback;",
+    "old": "export const getLocalizedFactionName = (id, fallback) =>\n  tryGetLocalizedText(TextCollections.Factions, id) ?? portFactionName(id) ?? fallback;",
+    "new": "export const getLocalizedFactionName = (id, fallback) => tryGetLocalizedText(TextCollections.Factions, id) ?? fallback;",
     "tests": [
       "test/world/worldWide/provincecourts.test.js"
     ]

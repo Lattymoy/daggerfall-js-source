@@ -853,7 +853,7 @@ FIXED.
   signature is kept, as 0125 kept the key's - the migration runs before the Worker that carries law 9, so a checkpoint law
   8 judges in that gap finds the same gem and is no new strike. Written as a staff act (`by: 'soul-lift'`); an untimed hold
   lifts at the character's first checkpoint under law 9 in any case.
-- TRADE-WHOLE (`tradePack.js:"function wholeLot(records) {"`): the trade's pack clamps its lot whole or not at all, which
+- TRADE-WHOLE (`tradePack.js:"function wholeLot"`): the trade's pack clamps its lot whole or not at all, which
   is what `wire` and `unwire` were documented to do ("or null if any is no item"). An offer holding a refused piece is
   refused with "That cannot be traded." and the piece stays in the pack; a peer's lot that carries one ends the trade
   with a message (tradeUnreadableText). validLootList is unchanged for the chests, bodies and shelves AUDIT INT made it

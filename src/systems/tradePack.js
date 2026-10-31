@@ -12,18 +12,29 @@
 //     Sigil Stone is never handed to another player - and a peer's lot carrying one is refused whole, below), and a
 //     Come Sail Away boat's deed or parts (AUDIT REALM2 T1: the realm's own law, net/realm/realmTradeLaw.js BOAT_TEMPLATES);
 //   - weight is systems/inventory.js's own arithmetic against combat/formulas.js entityMaxEncumbrance.
-import { isBagItem } from '../net/bagLaw.js';   // BAG1
-import { activeWagonItem } from './wagon/wagonKinds.js';   // WAGONS2 (AUDIT)
+import { isBagItem } from '../net/bagLaw.js'; // BAG1
+import { activeWagonItem } from './wagon/wagonKinds.js'; // WAGONS2 (AUDIT)
 import { validLootList } from './loot/loot.js';
-import { itemLongName } from './item/itemInfo.js';   // MARKET-ANY: a pack piece named as the pack names it
-import { goodRefusal, GOOD_REFUSAL_WORDS } from '../net/marketLaw.js';   // MARKET-ANY: what may list from the pack
-import { splitStack, addItem, itemWeight, totalWeight, carriedWeight, isSummoned, isGoldPieces, addGoldPieces, goldPiecesOf, GOLD_PIECE_WEIGHT_KG } from './inventory.js';
+import { itemLongName } from './item/itemInfo.js'; // MARKET-ANY: a pack piece named as the pack names it
+import { goodRefusal, GOOD_REFUSAL_WORDS } from '../net/marketLaw.js'; // MARKET-ANY: what may list from the pack
+import {
+  splitStack,
+  addItem,
+  itemWeight,
+  totalWeight,
+  carriedWeight,
+  isSummoned,
+  isGoldPieces,
+  addGoldPieces,
+  goldPiecesOf,
+  GOLD_PIECE_WEIGHT_KG,
+} from './inventory.js';
 import { isEquipped } from './equip.js';
 import { clearLightSourceOnLeave } from './item/itemTransfer.js';
 import { entityMaxEncumbrance } from '../combat/formulas.js';
-import { isBound, boundTradeText } from './item/itemBound.js';   // SS1: a bound piece never leaves for another player
-import { BOAT_TEMPLATES } from '../net/realm/realmTradeLaw.js';   // AUDIT REALM2 T1: nor a boat's deed or parts - what they stand for stays in the giver's save
-import { marketArrivedText, marketBackText } from '../net/marketArrivals.js';   // RPT1026-MARKET ARRIVE: what came, said
+import { isBound, boundTradeText } from './item/itemBound.js'; // SS1: a bound piece never leaves for another player
+import { BOAT_TEMPLATES } from '../net/realm/realmTradeLaw.js'; // AUDIT REALM2 T1: nor a boat's deed or parts - what they stand for stays in the giver's save
+import { marketArrivedText, marketBackText } from '../net/marketArrivals.js'; // RPT1026-MARKET ARRIVE: what came, said
 
 /** BAG1: the Materials Bag stays with its owner - a list of its own rides with it (systems/materialsBag.js), which no
  *  trade moves; every General Store sells another. */
@@ -35,9 +46,9 @@ export function tradeRefusal(item) {
   if (item.questItem) return 'Quest items cannot be traded.';
   if (isSummoned(item)) return 'Summoned items cannot be traded.';
   if (isGoldPieces(item)) return 'Offer gold with the gold box.';
-  if (isBound(item)) return boundTradeText(item);   // SS1; AUDIT AUTO-HOLD: a piece the realm locked, in its own words
-  if (BOAT_TEMPLATES.includes(item.templateIndex)) return 'Boat deeds and boat parts cannot be traded.';   // AUDIT REALM2 T1
-  if (isBagItem(item)) return BAG_TRADE_TEXT;   // BAG1: the bag is its owner's
+  if (isBound(item)) return boundTradeText(item); // SS1; AUDIT AUTO-HOLD: a piece the realm locked, in its own words
+  if (BOAT_TEMPLATES.includes(item.templateIndex)) return 'Boat deeds and boat parts cannot be traded.'; // AUDIT REALM2 T1
+  if (isBagItem(item)) return BAG_TRADE_TEXT; // BAG1: the bag is its owner's
   return null;
 }
 /** WAGONS2 (AUDIT): what the shop's Sell says by dropping the click (systems/tradeModes.js - "Are we trying to sell the
@@ -56,7 +67,8 @@ export function packTradeRefusal(item, entity) {
 /** WAGONS2 (FINAL AUDIT): THE LOADED WAGON HELD - `item` the wagon `entity` drives (the best owned), with goods in its
  *  store: the one law the pack's refusal above and the keyed shelf's (scenes/worldModes.js loadedWagonHeld) read - the
  *  shelf restated it, pinned by its text alone. */
-export const wagonLoadedHeld = (item, entity) => !!item && item === activeWagonItem(entity?.items ?? []) && (entity?.wagonItems?.length ?? 0) > 0;
+export const wagonLoadedHeld = (item, entity) =>
+  !!item && item === activeWagonItem(entity?.items ?? []) && (entity?.wagonItems?.length ?? 0) > 0;
 
 /** TRADE-WHOLE (FIELD BUGS 2026-10-20h, found tracing SOUL-LAW): A LOT IS CLAMPED WHOLE OR NOT AT ALL. validLootList lets a
  *  piece the item law refuses go and keeps the rest (AUDIT INT: a forged piece in a chest cost every honest one beside
@@ -79,7 +91,7 @@ function offerWeight(entries, gold) {
 /** MARKET-ANY: another player's pack record, listed in the Goods view, as this game would hold it - through the wire's
  *  clamp (validLootList) - or null. Its name (createMarketGoods goodName) and, MARKET-LOOK, the board's look at it
  *  (ui/marketTab.js) both read this one item. @param {any} rec */
-export const goodItemOf = (rec) => (rec ? validLootList([rec])?.[0] ?? null : null);
+export const goodItemOf = (rec) => (rec ? (validLootList([rec])?.[0] ?? null) : null);
 
 /**
  * The adapter over one entity's pack. `entity` is the live player entity (`items`, `goldPieces`).
@@ -92,7 +104,7 @@ export const goodItemOf = (rec) => (rec ? validLootList([rec])?.[0] ?? null : nu
 export function createTradePack(entity, { stampIds = null } = {}) {
   const list = () => (entity.items ??= []);
   return {
-    offerable: (item) => packTradeRefusal(item, entity),   // WAGONS2 (AUDIT): the loaded wagon stays
+    offerable: (item) => packTradeRefusal(item, entity), // WAGONS2 (AUDIT): the loaded wagon stays
 
     /** [{item,count}] -> the records that go on the wire, or null. A partial stack is the origin's record at the count. */
     wire(entries) {
@@ -101,7 +113,7 @@ export function createTradePack(entity, { stampIds = null } = {}) {
       // realm finds is the one offered, and a piece looted since the last checkpoint trades instead of being refused
       stampIds?.({ items: entries.map((e) => e.item) });
       const recs = entries.map(({ item, count }) => {
-        const copy = JSON.parse(JSON.stringify(item));   // a plain-data copy: nothing from the pack rides the frame by reference
+        const copy = JSON.parse(JSON.stringify(item)); // a plain-data copy: nothing from the pack rides the frame by reference
         const have = Math.max(1, item.stackCount ?? 1);
         if (have > 1 || count > 1) copy.stackCount = count;
         return copy;
@@ -112,19 +124,31 @@ export function createTradePack(entity, { stampIds = null } = {}) {
     /** The peer's records as this game would mint them - every one through the wire clamp - or null if any is no item,
      *  or any is BOUND (SS1: a peer that holds one out - an older build, a forged frame - offers what may not change
      *  hands, and the lot is refused whole, the trade's own word for a forgery). */
-    unwire(records) { const items = wholeLot(records); return items && !items.some(isBound) ? items : null; },
+    unwire(records) {
+      const items = wholeLot(records);
+      return items && !items.some(isBound) ? items : null;
+    },
 
     /** AUDIT REALM L1-F1: where each offered item stands in the pack - its index in the list a save writes as `items`
      *  (systems/save/save.js snapshotPlayer keeps the order) - read BEFORE the goods are reserved, so a realm trade's half
      *  names the very records its checkpoint holds (net/realm/realmTradeLaw.js realmTradePickOf); -1 for one not here. */
-    picks(entries) { const items = list(); return entries.map(({ item }) => items.indexOf(item)); },
+    picks(entries) {
+      const items = list();
+      return entries.map(({ item }) => items.indexOf(item));
+    },
 
     /** Take the goods OUT of the pack (reserve). All-or-nothing: a lot that is not entirely here comes back null. */
     take(entries, gold) {
       const items = list();
       if (!(gold >= 0) || gold > goldPiecesOf(entity)) return null;
       for (const { item, count } of entries) {
-        if (!items.includes(item) || count < 1 || count > Math.max(1, item.stackCount ?? 1) || packTradeRefusal(item, entity)) return null;
+        if (
+          !items.includes(item) ||
+          count < 1 ||
+          count > Math.max(1, item.stackCount ?? 1) ||
+          packTradeRefusal(item, entity)
+        )
+          return null;
       }
       const taken = [];
       for (const { item, count } of entries) {
@@ -136,7 +160,10 @@ export function createTradePack(entity, { stampIds = null } = {}) {
         } else {
           // a partial stack: the picked half is minted and pushed by splitStack, then lifted straight back out
           const picked = splitStack(items, item, count);
-          if (!picked) { this.restore({ taken, gold: 0 }); return null; }
+          if (!picked) {
+            this.restore({ taken, gold: 0 });
+            return null;
+          }
           items.splice(items.indexOf(picked), 1);
           taken.push({ item: picked, origin: item });
         }
@@ -159,7 +186,8 @@ export function createTradePack(entity, { stampIds = null } = {}) {
     give(received, gold) {
       const items = list();
       for (const it of received) {
-        if (isGoldPieces(it)) addGoldPieces(entity, it.stackCount ?? 1);   // a gold pile is a counter, never an item in the pack
+        if (isGoldPieces(it))
+          addGoldPieces(entity, it.stackCount ?? 1); // a gold pile is a counter, never an item in the pack
         else addItem(items, it);
       }
       if (gold) addGoldPieces(entity, gold);
@@ -196,12 +224,24 @@ export function createMarketGoods(entity, { kept = () => false, say = () => {} }
      *  crafted piece's way (from the pack, or as a crafted piece) is the service's to say - the tab asks it. */
     goods() {
       const pack = createTradePack(entity);
-      return (entity.items ?? []).filter((it) => it && !(typeof it.provenance === 'string' && kept(it.provenance))).map((item) => {
-        // a piece the trade's wire will not carry (a row this game does not know) is no piece the service could match
-        const why = goodRefusal(item) ?? (pack.wire([{ item, count: Math.max(1, item.stackCount ?? 1) }])?.[0] ? null : 'shape');
-        const loaded = !why && packTradeRefusal(item, entity) === WAGON_LOADED_TRADE_TEXT;   // WAGONS2 (AUDIT): the loaded wagon, said
-        return { item, name: itemLongName(item), why: why ? (GOOD_REFUSAL_WORDS[/** @type {keyof typeof GOOD_REFUSAL_WORDS} */ (why)] ?? why) : loaded ? WAGON_LOADED_MARKET_WORDS : null };
-      });
+      return (entity.items ?? [])
+        .filter((it) => it && !(typeof it.provenance === 'string' && kept(it.provenance)))
+        .map((item) => {
+          // a piece the trade's wire will not carry (a row this game does not know) is no piece the service could match
+          const why =
+            goodRefusal(item) ??
+            (pack.wire([{ item, count: Math.max(1, item.stackCount ?? 1) }])?.[0] ? null : 'shape');
+          const loaded = !why && packTradeRefusal(item, entity) === WAGON_LOADED_TRADE_TEXT; // WAGONS2 (AUDIT): the loaded wagon, said
+          return {
+            item,
+            name: itemLongName(item),
+            why: why
+              ? (GOOD_REFUSAL_WORDS[/** @type {keyof typeof GOOD_REFUSAL_WORDS} */ (why)] ?? why)
+              : loaded
+                ? WAGON_LOADED_MARKET_WORDS
+                : null,
+          };
+        });
     },
     /** A piece of the pack as it lists: its record as the trade's wire projects it (what the service matches against
      *  the record - realmTradeLaw recordIsOffered), its index in the list the save writes as `items` (tradePack picks -
@@ -236,7 +276,13 @@ export function createMarketGoods(entity, { kept = () => false, say = () => {} }
       if (!items?.length) return false;
       pack.give(items, 0);
       const name = itemLongName(items[0]);
-      say(why === 'bought' ? marketArrivedText(name) : why === 'returned' ? marketBackText(name) : `${name} is in your pack.`);
+      say(
+        why === 'bought'
+          ? marketArrivedText(name)
+          : why === 'returned'
+            ? marketBackText(name)
+            : `${name} is in your pack.`,
+      );
       return true;
     },
   };

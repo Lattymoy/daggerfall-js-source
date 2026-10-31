@@ -164,8 +164,8 @@
   {
     "name": "OWS3-raid-no-coroutine",
     "file": "src/systems/warmAshesShips.js",
-    "old": "  const armed = armRaid();\n  onPostFastTravel();\n  return armed;",
-    "new": "  const armed = armRaid();\n  return armed;",
+    "old": "  onPostFastTravel();\n  return armed;",
+    "new": "  return armed;",
     "tests": [
       "test/systems/ows3_raiders.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "OWS3-raid-twice",
     "file": "src/systems/warmAshesShips.js",
-    "old": "  if (hasTraveledbyShip || _boardIn !== null || raidRunning()) return 'busy';\n",
-    "new": "\n",
+    "old": "  if (hasTraveledbyShip || _boardIn !== null || raidRunning()) return 'busy';\n  if (tempShip) return 'lent';",
+    "new": "  if (tempShip) return 'lent';",
     "tests": [
       "test/systems/ows3_raiders.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "OWS3-arm-no-lend",
     "file": "src/systems/warmAshesShips.js",
-    "old": "    tempShip = true;\n    h.assignShip?.(SHIP_TYPES.Large);   // \"Temporary ship assigned.\"",
-    "new": "    h.assignShip?.(SHIP_TYPES.Large);   // \"Temporary ship assigned.\"",
+    "old": "    tempShip = true;\n    h.assignShip?.(SHIP_TYPES.Large); // \"Temporary ship assigned.\"",
+    "new": "    h.assignShip?.(SHIP_TYPES.Large); // \"Temporary ship assigned.\"",
     "tests": [
       "test/systems/ows3_raiders.test.js"
     ]

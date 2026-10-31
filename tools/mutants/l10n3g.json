@@ -137,8 +137,8 @@
   {
     "name": "L10N3g-grammar-not-chosen",
     "file": "src/systems/textManager.js",
-    "old": "  for (const loc of localeChain(_locale)) {\n    const rules = _grammars.get(loc) ?? _grammars.get(loc.split('-')[0]);",
-    "new": "  for (const loc of []) {\n    const rules = _grammars.get(loc) ?? _grammars.get(loc.split('-')[0]);",
+    "old": "  for (const loc of localeChain(_locale)) {",
+    "new": "  for (const loc of []) {",
     "tests": [
       "test/systems/l10n3g_grammar.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "L10N3g-chosen-for-every-language",
     "file": "src/systems/textManager.js",
-    "old": "  GrammarManager.grammarProcessor = DEFAULT_GRAMMAR;\n}\n",
-    "new": "  GrammarManager.grammarProcessor = _grammars.get('fr') ?? DEFAULT_GRAMMAR;\n}\n",
+    "old": "  }\n  GrammarManager.grammarProcessor = DEFAULT_GRAMMAR;",
+    "new": "  }\n  GrammarManager.grammarProcessor = _grammars.get('fr') ?? DEFAULT_GRAMMAR;",
     "tests": [
       "test/systems/l10n3g_grammar.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "L10N3g-getters-per-processor",
     "file": "src/systems/textManager.js",
-    "old": "  setHeroGenderGetter(getter) { GrammarManager.heroGender = typeof getter === 'function' ? getter : null; }",
-    "new": "  setHeroGenderGetter(getter) { this.hero = getter; }",
+    "old": "    GrammarManager.heroGender = typeof getter === 'function' ? getter : null;",
+    "new": "    this.hero = getter;",
     "tests": [
       "test/systems/l10n3g_grammar.test.js"
     ]

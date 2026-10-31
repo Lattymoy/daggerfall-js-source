@@ -440,8 +440,8 @@
   {
     "name": "FB1016B-SG-AUDIT-S3-the-buy-kept",
     "file": "src/systems/tradeModes.js",
-    "old": "  for (const it of items ?? []) clearStolen(it);\n",
-    "new": "",
+    "old": "  for (const it of items ?? []) clearStolen(it);\n  if (!online) return 0;",
+    "new": "  if (!online) return 0;",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]

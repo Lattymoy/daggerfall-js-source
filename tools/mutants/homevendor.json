@@ -130,8 +130,8 @@
   {
     "name": "HOMEVENDOR-a-bad-waypoint-taken",
     "file": "src/systems/vendorWaypoint.js",
-    "old": "if (!Number.isSafeInteger(map) || map <= 0 || !Number.isSafeInteger(buildingKey) || buildingKey <= 0) return false;",
-    "new": "if (!Number.isSafeInteger(buildingKey) || buildingKey <= 0) return false;",
+    "old": "  if (!Number.isSafeInteger(map) || map <= 0 || !Number.isSafeInteger(buildingKey) || buildingKey <= 0) return false;",
+    "new": "  if (!Number.isSafeInteger(buildingKey) || buildingKey <= 0) return false;",
     "tests": [
       "test/ui/homevendor_ui.test.js"
     ]

@@ -155,8 +155,8 @@
   {
     "name": "GF2-VEINCRACKS-a-share-past-one-kept",
     "file": "src/systems/veinCrack.js",
-    "old": "  c[0] = Math.min(1, share);\n",
-    "new": "  c[0] = share;\n",
+    "old": "  c[0] = Math.min(1, share);",
+    "new": "  c[0] = share;",
     "tests": [
       "test/systems/gf2_veincracks.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "GF2-VEINCRACKS-the-field-reallocated",
     "file": "src/systems/veinCrack.js",
-    "old": "  const c = batch.crack ?? (batch.crack = [0, 0]);\n",
-    "new": "  const c = (batch.crack = [0, 0]);\n",
+    "old": "  const c = batch.crack ?? (batch.crack = [0, 0]);",
+    "new": "  const c = (batch.crack = [0, 0]);",
     "tests": [
       "test/systems/gf2_veincracks.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "GF2-VEINCRACKS-nought-cracked",
     "file": "src/systems/veinCrack.js",
-    "old": "  if (!(share > 0)) { if (batch.crack) batch.crack = null; return; }\n",
-    "new": "  if (!(share >= 0)) { if (batch.crack) batch.crack = null; return; }\n",
+    "old": "  if (!(share > 0)) {",
+    "new": "  if (!(share >= 0)) {",
     "tests": [
       "test/systems/gf2_veincracks.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "GF2-VEINCRACKS-the-seed-unwrapped",
     "file": "src/systems/veinCrack.js",
-    "old": "  c[1] = Number.isFinite(seed) ? seed - Math.floor(seed) : 0;\n",
-    "new": "  c[1] = seed;\n",
+    "old": "  c[1] = Number.isFinite(seed) ? seed - Math.floor(seed) : 0;",
+    "new": "  c[1] = seed;",
     "tests": [
       "test/systems/gf2_veincracks.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "GF2-VEINCRACKS-one-pattern-for-every-vein",
     "file": "src/systems/veinCrack.js",
-    "old": "  return (h >>> 0) / 4294967296;\n",
-    "new": "  return 0.5;\n",
+    "old": "  return (h >>> 0) / 4294967296;",
+    "new": "  return 0.5;",
     "tests": [
       "test/systems/gf2_veincracks.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "GF2-VEINCRACKS-the-early-out-lost",
     "file": "src/systems/veinCrack.js",
-    "old": "  if (uCrack.x <= 0.0) return 1.0;\n",
-    "new": "  if (uCrack.x < 0.0) return 1.0;\n",
+    "old": "  if (uCrack.x <= 0.0) return 1.0;",
+    "new": "  if (uCrack.x < 0.0) return 1.0;",
     "tests": [
       "test/systems/gf2_veincracks.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "GF2-VEINCRACKS-the-heart-light",
     "file": "src/systems/veinCrack.js",
-    "old": "heart * ${VEIN_CRACK_ORDER.heart.toFixed(2)} ?",
-    "new": "heart * 0.45 ?",
+    "old": "  return uCrack.x >= own * ${VEIN_CRACK_ORDER.own.toFixed(2)} + heart * ${VEIN_CRACK_ORDER.heart.toFixed(2)} ? ${VEIN_CRACK_SHADE.toFixed(2)} : 1.0;",
+    "new": "  return uCrack.x >= own * ${VEIN_CRACK_ORDER.own.toFixed(2)} + heart * 0.45 ? ${VEIN_CRACK_SHADE.toFixed(2)} : 1.0;",
     "tests": [
       "test/systems/gf2_veincracks.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "GF2-VEINCRACKS-the-heart-a-corner",
     "file": "src/systems/veinCrack.js",
-    "old": "  float heart = length(texel / size - 0.5) * 1.6;\n",
-    "new": "  float heart = length(texel / size) * 1.6;\n",
+    "old": "  float heart = length(texel / size - 0.5) * 1.6;",
+    "new": "  float heart = length(texel / size) * 1.6;",
     "tests": [
       "test/systems/gf2_veincracks.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "GF2-VEINCRACKS-the-shade-lighter",
     "file": "src/systems/veinCrack.js",
-    "old": "? ${VEIN_CRACK_SHADE.toFixed(2)} : 1.0;",
-    "new": "? 0.5 : 1.0;",
+    "old": "  return uCrack.x >= own * ${VEIN_CRACK_ORDER.own.toFixed(2)} + heart * ${VEIN_CRACK_ORDER.heart.toFixed(2)} ? ${VEIN_CRACK_SHADE.toFixed(2)} : 1.0;",
+    "new": "  return uCrack.x >= own * ${VEIN_CRACK_ORDER.own.toFixed(2)} + heart * ${VEIN_CRACK_ORDER.heart.toFixed(2)} ? 0.5 : 1.0;",
     "tests": [
       "test/systems/gf2_veincracks.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "GF2-VEINCRACKS-the-seam-wide",
     "file": "src/systems/veinCrack.js",
-    "old": "  if ((d2 - d1) * ${VEIN_CRACK_CELL.toFixed(1)} > 1.0) return 1.0;",
-    "new": "  if ((d2 - d1) * ${VEIN_CRACK_CELL.toFixed(1)} > 2.5) return 1.0;",
+    "old": "  if ((d2 - d1) * ${VEIN_CRACK_CELL.toFixed(1)} > 1.0) return 1.0;   // not on a seam",
+    "new": "  if ((d2 - d1) * ${VEIN_CRACK_CELL.toFixed(1)} > 2.5) return 1.0;   // not on a seam",
     "tests": [
       "test/systems/gf2_veincracks.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "GF2-VEINCRACKS-the-seed-unread",
     "file": "src/systems/veinCrack.js",
-    "old": " + uCrack.y * 61.7) * 43758.5453); }",
-    "new": " + 0.0) * 43758.5453); }",
+    "old": "float crackHash(vec2 c) { return fract(sin(dot(c, vec2(127.1, 311.7)) + uCrack.y * 61.7) * 43758.5453); }",
+    "new": "float crackHash(vec2 c) { return fract(sin(dot(c, vec2(127.1, 311.7)) + 0.0) * 43758.5453); }",
     "tests": [
       "test/systems/gf2_veincracks.test.js"
     ]

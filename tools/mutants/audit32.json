@@ -99,8 +99,8 @@
   {
     "name": "AUDIT32-L1-far-never-moves",
     "file": "src/systems/traceAct.js",
-    "old": "      st.far = hi;\n",
-    "new": "",
+    "old": "      st.far = hi;\n    }",
+    "new": "    }",
     "tests": [
       "test/net/audit32_law.test.js"
     ]
@@ -108,8 +108,8 @@
   {
     "name": "AUDIT32-L1-clock-at-the-press",
     "file": "src/systems/traceAct.js",
-    "old": "st.tracing = true; st.t0 = null; st.far = aim.yaw;",
-    "new": "st.tracing = true; st.t0 = st.t; st.far = aim.yaw;",
+    "old": "          st.t0 = null;",
+    "new": "          st.t0 = st.t;",
     "tests": [
       "test/net/audit32_law.test.js"
     ]
@@ -117,8 +117,8 @@
   {
     "name": "AUDIT32-L5-any-bearing",
     "file": "src/systems/traceAct.js",
-    "old": "const aim = given && Number.isFinite(given.yaw) && Number.isFinite(given.pitch) ? given : null;",
-    "new": "const aim = given;",
+    "old": "      const aim = given && Number.isFinite(given.yaw) && Number.isFinite(given.pitch) ? given : null;",
+    "new": "      const aim = given;",
     "tests": [
       "test/net/audit32_law.test.js"
     ]
@@ -126,8 +126,8 @@
   {
     "name": "AUDIT32-L5-chord-past-the-line",
     "file": "src/systems/traceAct.js",
-    "old": "const hi = Math.min(b.yaw, endYaw);",
-    "new": "const hi = b.yaw;",
+    "old": "    const hi = Math.min(b.yaw, endYaw);",
+    "new": "    const hi = b.yaw;",
     "tests": [
       "test/net/audit32_law.test.js"
     ]

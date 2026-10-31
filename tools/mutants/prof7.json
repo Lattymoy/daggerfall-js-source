@@ -675,8 +675,8 @@
   {
     "name": "PROF7-trace-no-chord",
     "file": "src/systems/traceAct.js",
-    "old": "const lo = st.far, n = Math.ceil((hi - lo) / TRACE_ACT.stepDeg - 1e-9);",
-    "new": "const lo = st.far, n = 1;",
+    "old": "        n = Math.ceil((hi - lo) / TRACE_ACT.stepDeg - 1e-9);",
+    "new": "        n = 1;",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -684,8 +684,8 @@
   {
     "name": "PROF7-trace-let-go-kept",
     "file": "src/systems/traceAct.js",
-    "old": "      if (!held || !aim) { reset(); st.slips++; return; }",
-    "new": "      if (!aim) { reset(); st.slips++; return; }",
+    "old": "      if (!held || !aim) {",
+    "new": "      if (!aim) {",
     "tests": [
       "test/net/prof7_law.test.js"
     ]

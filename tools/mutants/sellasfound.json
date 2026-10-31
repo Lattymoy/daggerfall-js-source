@@ -22,8 +22,8 @@
   {
     "name": "SELL-AS-FOUND-the-mark-never-read",
     "file": "src/systems/tradeModes.js",
-    "old": "saleConditionPercentage(item, { online })) * stack;",
-    "new": "conditionPercentage(item)) * stack;",
+    "old": "        const c =\n          calculateCost(counterValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) *\n          stack; // JAN1: an item with no finite value is priced at its base, never NaN; CRAFT-WORTH: a crafted piece at its plain worth",
+    "new": "        const c = calculateCost(counterValueOf(item), quality, priceAdjustment, conditionPercentage(item)) * stack; // JAN1: an item with no finite value is priced at its base, never NaN; CRAFT-WORTH: a crafted piece at its plain worth",
     "tests": [
       "test/systems/sell_as_found.test.js",
       "test/systems/rri2_realism.test.js"

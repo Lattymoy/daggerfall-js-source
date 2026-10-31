@@ -162,8 +162,8 @@
   {
     "name": "FIELD-GUN17-18-the-muzzle-light-is-white-again",
     "file": "src/systems/thunderlock.js",
-    "old": "color: orbColour()",
-    "new": "color: [1, 1, 1]",
+    "old": "    color: orbColour(), // FIELD-GUN17: `withPlayerLights` takes a light's own colour where it has one",
+    "new": "    color: [1, 1, 1], // FIELD-GUN17: `withPlayerLights` takes a light's own colour where it has one",
     "tests": [
       "test/systems/thunderlock.test.js"
     ]

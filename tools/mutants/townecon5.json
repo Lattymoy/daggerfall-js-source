@@ -405,8 +405,8 @@
   {
     "name": "TOWNECON-AUDIT2-PRICE1-asks-plain",
     "file": "src/systems/tradeModes.js",
-    "old": "buyItemPrice(it, { quality: 10, online, holidayId, guildFactionId })",
-    "new": "buyItemPrice(it, { quality: 10, online })",
+    "old": "  const asks = lot.map((it) =>\n    Math.max(buyItemPrice(it, { quality: 10, online, holidayId, guildFactionId }), stackOf(it)),\n  ); // a gold a piece at least, as a purchase asks",
+    "new": "  const asks = lot.map((it) => Math.max(buyItemPrice(it, { quality: 10, online }), stackOf(it))); // a gold a piece at least, as a purchase asks",
     "tests": [
       "test/systems/townecon_audit2.test.js"
     ],
@@ -426,8 +426,8 @@
   {
     "name": "TOWNECON-AUDIT2-PRICE5-floor-zero",
     "file": "src/systems/tradeModes.js",
-    "old": "  const base = paid && /** @type {number} */ (price) >= pieces ? 1 : 0;",
-    "new": "  const base = 0;",
+    "old": "  const base = paid && /** @type {number} */ (price) >= pieces ? 1 : 0; // PRICE-5: a gold a piece first, where the lot paid it",
+    "new": "  const base = 0; // PRICE-5: a gold a piece first, where the lot paid it",
     "tests": [
       "test/systems/townecon_audit2.test.js",
       "test/systems/townecon.test.js"
@@ -437,8 +437,8 @@
   {
     "name": "TOWNECON-AUDIT2-PRICE6-value-unmarked",
     "file": "src/systems/tradeModes.js",
-    "old": "    if (Number.isFinite(v) && v >= 0) it[COUNTER_VALUE_MARK] = Math.round(v);   // PRICE-6\n",
-    "new": "",
+    "old": "    if (Number.isFinite(v) && v >= 0) it[COUNTER_VALUE_MARK] = Math.round(v); // PRICE-6\n  });",
+    "new": "  });",
     "tests": [
       "test/systems/townecon_audit2.test.js"
     ],

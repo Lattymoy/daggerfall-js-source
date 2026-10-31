@@ -119,8 +119,8 @@
   {
     "name": "HORSE-TIERS-the-old-on-read-as-the-default",
     "file": "src/systems/uiPrefs.js",
-    "old": "_prefs.horseCare = p.horseCare === HORSE_CARE_OLD_ON ? HORSE_CARE_OLD_ON_TIER : PREF_DEFAULTS.horseCare;",
-    "new": "_prefs.horseCare = PREF_DEFAULTS.horseCare;",
+    "old": "        if (p.horseCare !== undefined && !isStoredHorseCare(p.horseCare))\n          _prefs.horseCare = p.horseCare === HORSE_CARE_OLD_ON ? HORSE_CARE_OLD_ON_TIER : PREF_DEFAULTS.horseCare;",
+    "new": "        if (p.horseCare !== undefined && !isStoredHorseCare(p.horseCare)) _prefs.horseCare = PREF_DEFAULTS.horseCare;",
     "tests": [
       "test/systems/horsetiers.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "HORSE-TIERS-junk-kept",
     "file": "src/systems/uiPrefs.js",
-    "old": "        if (p.horseCare !== undefined && !isStoredHorseCare(p.horseCare)) _prefs.horseCare =",
-    "new": "        if (false) _prefs.horseCare =",
+    "old": "        if (p.horseCare !== undefined && !isStoredHorseCare(p.horseCare))",
+    "new": "        if (false)",
     "tests": [
       "test/systems/horsetiers.test.js"
     ]

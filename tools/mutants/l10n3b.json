@@ -20,8 +20,8 @@
   {
     "name": "L10N3b-any-font-number",
     "file": "src/systems/translationPacks.js",
-    "old": "/^(FONT000[0-4])-SDF\\.(ttf|otf)$/i",
-    "new": "/^(FONT000[0-9])-SDF\\.(ttf|otf)$/i",
+    "old": "    if ((m = /^(FONT000[0-4])-SDF\\.(ttf|otf)$/i.exec(file))) return { kind: PACK_KIND.FONT, name: m[1].toUpperCase() };",
+    "new": "    if ((m = /^(FONT000[0-9])-SDF\\.(ttf|otf)$/i.exec(file))) return { kind: PACK_KIND.FONT, name: m[1].toUpperCase() };",
     "tests": [
       "test/systems/l10n3b.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "L10N3b-quest-without-loc",
     "file": "src/systems/translationPacks.js",
-    "old": "if (sub === 'quests' && (m = /^(.+)-LOC\\.txt$/i.exec(file)))",
-    "new": "if (sub === 'quests' && (m = /^(.+?)(?:-LOC)?\\.txt$/i.exec(file)))",
+    "old": "    if (sub === 'quests' && (m = /^(.+)-LOC\\.txt$/i.exec(file)))",
+    "new": "    if (sub === 'quests' && (m = /^(.+?)(?:-LOC)?\\.txt$/i.exec(file)))",
     "tests": [
       "test/systems/l10n3b.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "L10N3b-namegen-a-table",
     "file": "src/systems/translationPacks.js",
-    "old": "  if (/^NameGen\\.txt$/i.test(file)) return { kind: PACK_KIND.NAMEGEN, name: 'NameGen' };\n",
-    "new": "",
+    "old": "  if (/^NameGen\\.txt$/i.test(file)) return { kind: PACK_KIND.NAMEGEN, name: 'NameGen' };\n  if ((m = /^([A-Za-z0-9_]+)\\.txt$/i.exec(file))) return { kind: PACK_KIND.TEXT_TABLE, name: m[1] };",
+    "new": "  if ((m = /^([A-Za-z0-9_]+)\\.txt$/i.exec(file))) return { kind: PACK_KIND.TEXT_TABLE, name: m[1] };",
     "tests": [
       "test/systems/l10n3b.test.js"
     ]
@@ -66,7 +66,7 @@
     "name": "L10N3b-fonts-a-translation",
     "file": "src/systems/translationPacks.js",
     "old": "export const isTranslationPack = (counts) => !!counts && counts.table + counts.quest + counts.book > 0;",
-    "new": "export const isTranslationPack = (counts) => !!counts && counts.table + counts.quest + counts.book + counts.font + counts.nameGen > 0;",
+    "new": "export const isTranslationPack = (counts) =>\n  !!counts && counts.table + counts.quest + counts.book + counts.font + counts.nameGen > 0;",
     "tests": [
       "test/systems/l10n3b.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "L10N3b-pack-text-no-chain",
     "file": "src/systems/textManager.js",
-    "old": "  for (const loc of localeChain(code)) {\n    const v = _docs.get(loc)?.get(`${kind}:${name}`);",
-    "new": "  for (const loc of [code]) {\n    const v = _docs.get(loc)?.get(`${kind}:${name}`);",
+    "old": "  for (const loc of localeChain(code)) {",
+    "new": "  for (const loc of [code]) {",
     "tests": [
       "test/systems/l10n3b.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "L10N3b-clear-keeps-documents",
     "file": "src/systems/textManager.js",
-    "old": "  if (_docs.delete(locale) || had) { _listCache.clear(); _revision++; }",
-    "new": "  if (had) { _listCache.clear(); _revision++; }",
+    "old": "  if (_docs.delete(locale) || had) {",
+    "new": "  if (had) {",
     "tests": [
       "test/systems/l10n3b.test.js"
     ]

@@ -181,8 +181,8 @@
   {
     "name": "AUDITREST-the-campfire-full-price",
     "file": "src/systems/tradeModes.js",
-    "old": "  return (isPotion(item) || isCampfireKit(item) || isFirewood(item)) && !holiday",
-    "new": "  return (isPotion(item) || isFirewood(item)) && !holiday",
+    "old": "  return (isPotion(item) || isCampfireKit(item) || isFirewood(item)) && !holiday\n    ? essentialPrice(held, { online })\n    : held; // AUDIT REST: REST2's Campfire and Firewood arm",
+    "new": "  return (isPotion(item) || isFirewood(item)) && !holiday ? essentialPrice(held, { online }) : held; // AUDIT REST: REST2's Campfire and Firewood arm",
     "tests": [
       "test/systems/survival/auditrest.test.js"
     ]

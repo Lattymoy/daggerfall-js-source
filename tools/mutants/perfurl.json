@@ -29,8 +29,8 @@
   {
     "name": "PERFURL-skin-door-parses-again",
     "file": "src/systems/uiSkin.js",
-    "old": "return clean(pageParam('skin', search));",
-    "new": "return clean(new URLSearchParams(search).get('skin'));",
+    "old": "  return clean(pageParam('skin', search)); // PERF-URL",
+    "new": "  return clean(new URLSearchParams(search).get('skin')); // PERF-URL",
     "tests": [
       "test/systems/perfurl_doors.test.js"
     ]

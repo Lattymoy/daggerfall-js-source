@@ -266,6 +266,6 @@ test('DW3 wiring: the paper doll asks by item.dyeColor and blits an imported tex
   assert.match(pipe, /const variant = mips === false \? \(swap && token \? `#ui_\$\{token\}` : dyed \? `#ui_dye\$\{dye\}_\$\{dyeTarget\}` : '#ui'\) : undefined;/, 'DYE-ICON: a dyed classic picture keys apart too, by dye and swatch, apart from a replacement\'s');
   assert.match(pipe, /return variant;/);
   assert.match(rd('src/systems/item/itemTemplates.js'), /return \{ archive, record, dye: itemDyeColor\(item\), dyeTarget: itemDyeTarget\(item\) \};/);
-  assert.match(rd('src/systems/textureReplacement.js'), /const lane = async \(\) => \{ while \(next < todo\.length\) await one\(todo\[next\+\+\]\); \};/, 'the preload runs in lanes');
+  assert.match(rd('src/systems/textureReplacement.js'), /const lane = async \(\) => \{\n\s*while \(next < todo\.length\) await one\(todo\[next\+\+\]\);\n\s*\};/, 'the preload runs in lanes');
   assert.equal(PRELOAD_CONCURRENCY, 8);
 });

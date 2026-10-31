@@ -491,7 +491,7 @@ test('STEED1 THE HOSTS (world.js, exterior.js): the upkeep built before the mod\
   assert.match(rd('src/ui/hud/hud.js'), /drawGripBar\(renderer, canvas, art, grip \?\? steed, s\);/, 'the classic HUD: the horse\'s breath in the grip\'s place');
   assert.match(rd('src/ui/enhanced/enhancedHud.js'), /const gr = opts\.grip \?\? opts\.steed \?\? null;\n\s*const gripWord = opts\.grip \? 'Grip' : 'Horse';/, 'the enhanced HUD: under the horse\'s word');
   for (const host of ['src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) assert.equal(/upkeep\.(tick|rideScale|bar)\(/.test(rd(host)), false, `${host}: no transport indoors`);
-  assert.match(rd('src/systems/transport.js'), /dismountOnTransition = \(mode, transition\) =>\n\s*\(transition === 'ToBuildingInterior' \|\| transition === 'ToDungeonInterior' \? TRANSPORT_MODES\.Foot : mode\);/);
+  assert.match(rd('src/systems/transport.js'), /dismountOnTransition = \(mode, transition\) =>\n\s*transition === 'ToBuildingInterior' \|\| transition === 'ToDungeonInterior' \? TRANSPORT_MODES\.Foot : mode;/);
 });
 
 test('AUDIT STEED1 THE KEEP\'S CLOCK: a load and a new character start it afresh (upkeep.reset, at every door the hosts load through), and so does the switch turned off - a horse is never fed back the span from a minute another character, or another session, last kept it (mutants: AUDIT-STEED1-off-keeps-clock, AUDIT-STEED1-load-no-reset)', () => {

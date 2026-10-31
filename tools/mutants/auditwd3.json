@@ -305,7 +305,7 @@
   {
     "name": "AWD3-STANDIN-NEVER-YIELDS",
     "file": "src/systems/textureReplacement.js",
-    "old": "const vendorOf = (key) => { const v = _vendor.get(key); return v && !(v.yields && ownPick(key)) ? v : null; };",
+    "old": "const vendorOf = (key) => {\n  const v = _vendor.get(key);\n  return v && !(v.yields && ownPick(key)) ? v : null;\n};",
     "new": "const vendorOf = (key) => _vendor.get(key) ?? null;",
     "tests": [
       "test/world/wd3_standins.test.js"

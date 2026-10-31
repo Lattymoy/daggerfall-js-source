@@ -111,8 +111,8 @@
   {
     "name": "BAG1-the-bag-traded",
     "file": "src/systems/tradePack.js",
-    "old": "  if (isBagItem(item)) return BAG_TRADE_TEXT;",
-    "new": "  void BAG_TRADE_TEXT;",
+    "old": "  if (isBagItem(item)) return BAG_TRADE_TEXT; // BAG1: the bag is its owner's",
+    "new": "  void BAG_TRADE_TEXT; // BAG1: the bag is its owner's",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]

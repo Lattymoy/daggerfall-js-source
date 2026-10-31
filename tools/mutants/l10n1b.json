@@ -83,8 +83,8 @@
   {
     "name": "L10N1b-tIn-current-chain",
     "file": "src/systems/textManager.js",
-    "old": "const v = readTable(runtimeCollectionName(TextCollections.Port), key, localeChain(code));",
-    "new": "const v = readTable(runtimeCollectionName(TextCollections.Port), key);",
+    "old": "  const v = readTable(runtimeCollectionName(TextCollections.Port), key, localeChain(code));",
+    "new": "  const v = readTable(runtimeCollectionName(TextCollections.Port), key);",
     "tests": [
       "test/systems/l10n1b.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "L10N1b-writer-quotes-bare",
     "file": "src/systems/textManager.js",
-    "old": "out += `${key},\"${value.replaceAll('\"', '\"\"')}\"\\n`;",
-    "new": "out += `${key},\"${value}\"\\n`;",
+    "old": "    out += `${key},\"${value.replaceAll('\"', '\"\"')}\"\\n`;",
+    "new": "    out += `${key},\"${value}\"\\n`;",
     "tests": [
       "test/systems/l10n1b.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "L10N1b-writer-key-quote",
     "file": "src/systems/textManager.js",
-    "old": "if (/[\",\\r\\n]/.test(key))",
-    "new": "if (/[,\\r\\n]/.test(key))",
+    "old": "    if (/[\",\\r\\n]/.test(key))",
+    "new": "    if (/[,\\r\\n]/.test(key))",
     "tests": [
       "test/systems/l10n1b.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "L10N1b-writer-trailing-break",
     "file": "src/systems/textManager.js",
-    "old": "if (/^[\\r\\n]|[\\r\\n]$/.test(value))",
-    "new": "if (/^[\\r\\n]/.test(value))",
+    "old": "    if (/^[\\r\\n]|[\\r\\n]$/.test(value))\n      throw new Error(`a string-table value cannot begin or end with a line break: ${key}`);",
+    "new": "    if (/^[\\r\\n]/.test(value)) throw new Error(`a string-table value cannot begin or end with a line break: ${key}`);",
     "tests": [
       "test/systems/l10n1b.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "L10N1b-writer-no-header",
     "file": "src/systems/textManager.js",
-    "old": "  let out = 'Key,Value\\n';\n",
-    "new": "  let out = '';\n",
+    "old": "  let out = 'Key,Value\\n';",
+    "new": "  let out = '';",
     "tests": [
       "test/systems/l10n1b.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "L10N1b-pref-default-french",
     "file": "src/systems/uiPrefs.js",
-    "old": "  language: 'en',\n",
-    "new": "  language: 'fr',\n",
+    "old": "  language: 'en',",
+    "new": "  language: 'fr',",
     "tests": [
       "test/systems/l10n1b.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "L10N1b-offered-default-true",
     "file": "src/systems/uiPrefs.js",
-    "old": "  languageOffered: false,\n",
-    "new": "  languageOffered: true,\n",
+    "old": "  languageOffered: false,",
+    "new": "  languageOffered: true,",
     "tests": [
       "test/systems/l10n1b.test.js"
     ]

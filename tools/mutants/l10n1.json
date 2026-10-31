@@ -11,8 +11,8 @@
   {
     "name": "L10N1-csv-header-any-value",
     "file": "src/systems/textManager.js",
-    "old": "if (rows.length > 0 && rows[0][0] === 'Key' && rows[0][1] === 'Value') rows.shift();",
-    "new": "if (rows.length > 0 && rows[0][0] === 'Key') rows.shift();",
+    "old": "  if (rows.length > 0 && rows[0][0] === 'Key' && rows[0][1] === 'Value') rows.shift();",
+    "new": "  if (rows.length > 0 && rows[0][0] === 'Key') rows.shift();",
     "tests": [
       "test/systems/l10n1.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "L10N1-csv-bom-kept",
     "file": "src/systems/textManager.js",
-    "old": "  const s = String(csvText).replace(/^\\uFEFF/, '');\n  if (!s) return null;",
-    "new": "  const s = String(csvText);\n  if (!s) return null;",
+    "old": "  const s = String(csvText).replace(/^\\uFEFF/, '');",
+    "new": "  const s = String(csvText);",
     "tests": [
       "test/systems/l10n1.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "L10N1-csv-quotes-not-unescaped",
     "file": "src/systems/textManager.js",
-    "old": "return value.substring(1, value.length - 1).replaceAll('\"\"', '\"');",
-    "new": "return value.substring(1, value.length - 1);",
+    "old": "  if (value.length > 0 && value[0] === '\"') return value.substring(1, value.length - 1).replaceAll('\"\"', '\"');",
+    "new": "  if (value.length > 0 && value[0] === '\"') return value.substring(1, value.length - 1);",
     "tests": [
       "test/systems/l10n1.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "L10N1-dictionary-duplicate-kept",
     "file": "src/systems/textManager.js",
-    "old": "    if (dict.has(k)) throw new Error(`An item with the same key has already been added. Key: ${k}`);\n",
-    "new": "",
+    "old": "    if (dict.has(k)) throw new Error(`An item with the same key has already been added. Key: ${k}`);\n    dict.set(k, v);",
+    "new": "    dict.set(k, v);",
     "tests": [
       "test/systems/l10n1.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "L10N1-flats-default-is-flats",
     "file": "src/systems/textManager.js",
-    "old": "  if (collection === TextCollections.TextFlats) return DEFAULT_COLLECTION_NAMES.Internal;\n",
-    "new": "",
+    "old": "  if (collection === TextCollections.TextFlats) return DEFAULT_COLLECTION_NAMES.Internal;\n  return DEFAULT_COLLECTION_NAMES[collection] ?? DEFAULT_COLLECTION_NAMES.Internal;",
+    "new": "  return DEFAULT_COLLECTION_NAMES[collection] ?? DEFAULT_COLLECTION_NAMES.Internal;",
     "tests": [
       "test/systems/l10n1.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "L10N1-empty-reversion-answers",
     "file": "src/systems/textManager.js",
-    "old": "  if (reversion) return reversion;\n  if (exception) throw new Error(`Localized text not found for collection='${collection}', key='${key}'`);",
-    "new": "  if (reversion != null) return reversion;\n  if (exception) throw new Error(`Localized text not found for collection='${collection}', key='${key}'`);",
+    "old": "  if (v !== undefined) return v;\n  if (reversion) return reversion;",
+    "new": "  if (v !== undefined) return v;\n  if (reversion != null) return reversion;",
     "tests": [
       "test/systems/l10n1.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "L10N1-chain-without-base",
     "file": "src/systems/textManager.js",
-    "old": "  if (!out.includes(BASE_LOCALE)) out.push(BASE_LOCALE);\n",
-    "new": "",
+    "old": "  if (!out.includes(BASE_LOCALE)) out.push(BASE_LOCALE);\n  return out;",
+    "new": "  return out;",
     "tests": [
       "test/systems/l10n1.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "L10N1-switch-keeps-list-cache",
     "file": "src/systems/textManager.js",
-    "old": "  _locale = next;\n  _listCache.clear();",
-    "new": "  _locale = next;",
+    "old": "  _listCache.clear();\n  _revision++;",
+    "new": "  _revision++;",
     "tests": [
       "test/systems/l10n1.test.js"
     ],
@@ -85,8 +85,8 @@
   {
     "name": "L10N1-patch-keeps-list-cache",
     "file": "src/systems/textManager.js",
-    "old": "  if (n) { _listCache.clear(); _revision++; }\n  return n;",
-    "new": "  if (n) { _revision++; }\n  return n;",
+    "old": "  if (n) {\n    _listCache.clear();\n    _revision++;",
+    "new": "  if (n) {\n    _revision++;",
     "tests": [
       "test/systems/l10n1.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "L10N1-region-range-off-by-one",
     "file": "src/systems/textManager.js",
-    "old": "regionIndex < 0 || regionIndex >= list.length) return canonical(regionIndex);",
-    "new": "regionIndex < 0 || regionIndex > list.length) return canonical(regionIndex);",
+    "old": "  if (!list?.length || !Number.isInteger(regionIndex) || regionIndex < 0 || regionIndex >= list.length)",
+    "new": "  if (!list?.length || !Number.isInteger(regionIndex) || regionIndex < 0 || regionIndex > list.length)",
     "tests": [
       "test/systems/l10n1.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "L10N1-constant-not-pseudo",
     "file": "src/systems/textManager.js",
-    "old": "  return _locale === PSEUDO_LOCALE ? pseudoLocalize(en) : en;\n}",
-    "new": "  return en;\n}",
+    "old": "  return _locale === PSEUDO_LOCALE ? pseudoLocalize(en) : en;",
+    "new": "  return en;",
     "tests": [
       "test/systems/l10n1.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "L10N1-plural-always-other",
     "file": "src/systems/textManager.js",
-    "old": "pluralRules(locale, node.type === 'selectordinal' ? 'ordinal' : 'cardinal').select(shown) : 'other';",
-    "new": "'other' : 'other';",
+    "old": "      const cat = Number.isFinite(shown)\n        ? pluralRules(locale, node.type === 'selectordinal' ? 'ordinal' : 'cardinal').select(shown)\n        : 'other';",
+    "new": "      const cat = Number.isFinite(shown) ? 'other' : 'other';",
     "tests": [
       "test/systems/l10n1.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "L10N1-ordinal-as-cardinal",
     "file": "src/systems/textManager.js",
-    "old": "node.type === 'selectordinal' ? 'ordinal' : 'cardinal'",
-    "new": "'cardinal'",
+    "old": "      const cat = Number.isFinite(shown)\n        ? pluralRules(locale, node.type === 'selectordinal' ? 'ordinal' : 'cardinal').select(shown)\n        : 'other';",
+    "new": "      const cat = Number.isFinite(shown) ? pluralRules(locale, 'cardinal').select(shown) : 'other';",
     "tests": [
       "test/systems/l10n1.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "L10N1-doubled-apostrophe-kept",
     "file": "src/systems/textManager.js",
-    "old": "        if (next === \"'\") { text += \"'\"; i += 2; continue; }",
-    "new": "        if (next === \"'\") { text += \"''\"; i += 2; continue; }",
+    "old": "        if (next === \"'\") {\n          text += \"'\";",
+    "new": "        if (next === \"'\") {\n          text += \"''\";",
     "tests": [
       "test/systems/l10n1.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "L10N1-pseudo-eats-macros",
     "file": "src/systems/textManager.js",
-    "old": "const PSEUDO_KEEP = /%[A-Za-z][A-Za-z0-9]*|",
-    "new": "const PSEUDO_KEEP = /",
+    "old": "const PSEUDO_KEEP =\n  /%[A-Za-z][A-Za-z0-9]*|\\{\\d+\\}|\\[\\/[^\\]]*\\]|={0,2}#?_{0,4}[A-Za-z][A-Za-z0-9.]*_(?=\\W|$)|<[^>\\s]{1,8}>|&[a-z]+;|&#\\d+;/g;",
+    "new": "const PSEUDO_KEEP = /\\{\\d+\\}|\\[\\/[^\\]]*\\]|={0,2}#?_{0,4}[A-Za-z][A-Za-z0-9.]*_(?=\\W|$)|<[^>\\s]{1,8}>|&[a-z]+;|&#\\d+;/g;",
     "tests": [
       "test/systems/l10n1.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "L10N1-font-no-sdf",
     "file": "src/systems/textManager.js",
-    "old": "  _fonts.set(fontKey(locale, fontName), font);\n  _forceSdf?.();",
-    "new": "  _fonts.set(fontKey(locale, fontName), font);",
+    "old": "  _forceSdf?.();\n}",
+    "new": "}",
     "tests": [
       "test/systems/l10n1.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "L10N1-listener-throw-stops-rest",
     "file": "src/systems/textManager.js",
-    "old": "for (const fn of [..._listeners]) { try { fn(next); } catch (err) { console.error('[text] a locale listener threw:', err?.message ?? err); } }",
-    "new": "for (const fn of [..._listeners]) fn(next);",
+    "old": "  for (const fn of [..._listeners]) {\n    try {\n      fn(next);\n    } catch (err) {\n      console.error('[text] a locale listener threw:', err?.message ?? err);\n    }\n  }",
+    "new": "  for (const fn of [..._listeners]) fn(next);",
     "tests": [
       "test/systems/l10n1.test.js"
     ]

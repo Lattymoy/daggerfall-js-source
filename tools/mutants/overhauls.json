@@ -50,8 +50,8 @@
     "tests": [
       "test/ui/overhauls.test.js"
     ],
-    "old": "  if (uiSkin(search) !== 'classic') return null;\n",
-    "new": ""
+    "old": "  if (uiSkin(search) !== 'classic') return null;\n  const url = uiPackOverride(search);",
+    "new": "  const url = uiPackOverride(search);"
   },
   {
     "name": "OVH-override-door-wears-the-stored-pack",
@@ -59,8 +59,8 @@
     "tests": [
       "test/ui/overhauls.test.js"
     ],
-    "old": "(skinOverride(search) ? UI_PACK_NONE : clean(getPref('uiPack')) ?? UI_PACK_NONE)",
-    "new": "(clean(getPref('uiPack')) ?? UI_PACK_NONE)"
+    "old": "  const id = url ?? (skinOverride(search) ? UI_PACK_NONE : (clean(getPref('uiPack')) ?? UI_PACK_NONE));",
+    "new": "  const id = url ?? clean(getPref('uiPack')) ?? UI_PACK_NONE;"
   },
   {
     "name": "OVH-cifrci-case-fold-dropped",

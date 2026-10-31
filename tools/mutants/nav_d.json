@@ -200,8 +200,8 @@
   {
     "name": "NAV-D-naval-falling-through",
     "file": "src/systems/warmAshesShips.js",
-    "old": "    if (gate === 'naval') { this.setComplete(); return; }",
-    "new": "    if (gate === 'naval') { this.setComplete(); }",
+    "old": "      return;\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/naval/nav_d_boarding.test.js"
     ]
@@ -210,7 +210,7 @@
     "name": "NAV-D-wait-completing",
     "file": "src/systems/warmAshesShips.js",
     "old": "    if (gate === 'wait') return;",
-    "new": "    if (gate === 'wait') { this.setComplete(); return; }",
+    "new": "    if (gate === 'wait') {\n      this.setComplete();\n      return;\n    }",
     "tests": [
       "test/systems/naval/nav_d_boarding.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "NAV-D-under-way-forgets-the-lent-ship",
     "file": "src/systems/warmAshesShips.js",
-    "old": "  if (tempShip) return 'lent';\n",
-    "new": "",
+    "old": "  if (tempShip) return 'lent';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/naval/nav_d_boarding.test.js"
     ]

@@ -26,7 +26,10 @@ export const VEIN_CRACK_ORDER = Object.freeze({ own: 0.35, heart: 0.75 });
  *  blow's crack allocates nothing past its first. */
 export function setBatchCrack(batch, share, seed = 0) {
   if (!batch) return;
-  if (!(share > 0)) { if (batch.crack) batch.crack = null; return; }
+  if (!(share > 0)) {
+    if (batch.crack) batch.crack = null;
+    return;
+  }
   const c = batch.crack ?? (batch.crack = [0, 0]);
   c[0] = Math.min(1, share);
   c[1] = Number.isFinite(seed) ? seed - Math.floor(seed) : 0;
@@ -36,7 +39,10 @@ export function setBatchCrack(batch, share, seed = 0) {
 export function crackSeedOf(key) {
   let h = 2166136261;
   const s = String(key ?? '');
-  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
   return (h >>> 0) / 4294967296;
 }
 

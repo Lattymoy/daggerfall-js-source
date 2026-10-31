@@ -31,8 +31,8 @@
   {
     "name": "CAPITAL-TREES-the-entry-drops-it",
     "file": "src/systems/textureReplacement.js",
-    "old": "readOnly: e.readOnly === true, cutout: e.cutout === true };",
-    "new": "readOnly: e.readOnly === true, cutout: false };",
+    "old": "      cutout: e.cutout === true,",
+    "new": "      cutout: false,",
     "tests": [
       "test/world/capitaltrees.test.js"
     ]

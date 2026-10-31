@@ -59,8 +59,8 @@
   {
     "name": "JAN1-the-sell-arm-reads-the-value-raw",
     "file": "src/systems/tradeModes.js",
-    "old": "        const c = calculateCost(counterValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack;   // JAN1",
-    "new": "        const c = calculateCost(item.value, quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack;   // JAN1",
+    "old": "          calculateCost(counterValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) *\n          stack; // JAN1: an item with no finite value is priced at its base, never NaN; CRAFT-WORTH: a crafted piece at its plain worth",
+    "new": "          calculateCost(item.value, quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack; // JAN1: an item with no finite value is priced at its base, never NaN; CRAFT-WORTH: a crafted piece at its plain worth",
     "tests": [
       "test/systems/jan1_fixes.test.js"
     ]
@@ -68,8 +68,8 @@
   {
     "name": "JAN1-the-repair-arm-reads-the-value-raw",
     "file": "src/systems/tradeModes.js",
-    "old": "        cost += calculateItemRepairCost(itemValueOf(item), quality,",
-    "new": "        cost += calculateItemRepairCost(item.value, quality,",
+    "old": "          calculateItemRepairCost(itemValueOf(item), quality, item.currentCondition ?? 0, item.maxCondition ?? 0, {",
+    "new": "          calculateItemRepairCost(item.value, quality, item.currentCondition ?? 0, item.maxCondition ?? 0, {",
     "tests": [
       "test/systems/jan1_fixes.test.js"
     ]

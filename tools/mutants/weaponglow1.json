@@ -2,8 +2,8 @@
   {
     "name": "WEAPON-GLOW1-tie-goes-to-the-later-element",
     "file": "src/systems/weaponGlow.js",
-    "old": "(best < 0 || _sums[i] > _sums[best])",
-    "new": "(best < 0 || _sums[i] >= _sums[best])",
+    "old": "  for (let i = 0; i < _sums.length; i++) if (_sums[i] > 0 && (best < 0 || _sums[i] > _sums[best])) best = i;",
+    "new": "  for (let i = 0; i < _sums.length; i++) if (_sums[i] > 0 && (best < 0 || _sums[i] >= _sums[best])) best = i;",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WEAPON-GLOW1-a-magic-band-reads-rare",
     "file": "src/systems/weaponGlow.js",
-    "old": "(total <= GLOW_LEVEL_EDGES[0] ? 1",
-    "new": "(total < GLOW_LEVEL_EDGES[0] ? 1",
+    "old": "export const glowLevel = (total) => (total <= GLOW_LEVEL_EDGES[0] ? 1 : total <= GLOW_LEVEL_EDGES[1] ? 2 : 3);",
+    "new": "export const glowLevel = (total) => (total < GLOW_LEVEL_EDGES[0] ? 1 : total <= GLOW_LEVEL_EDGES[1] ? 2 : 3);",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WEAPON-GLOW1-no-kill-door",
     "file": "src/systems/weaponGlow.js",
-    "old": "if (pageParam('weaponglow', search) === 'off') return false;",
-    "new": "",
+    "old": "  if (pageParam('weaponglow', search) === 'off') return false;\n  return pref !== false;",
+    "new": "  return pref !== false;",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WEAPON-GLOW1-the-outline-tells-the-unidentified",
     "file": "src/systems/weaponGlow.js",
-    "old": "!Array.isArray(item.affixes) || !rarityKnown(item)) return -1;",
-    "new": "!Array.isArray(item.affixes)) return -1;",
+    "old": "  if (!ladder || !item || !Array.isArray(item.affixes) || !rarityKnown(item)) return -1;",
+    "new": "  if (!ladder || !item || !Array.isArray(item.affixes)) return -1;",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WEAPON-GLOW1-arcane-on-the-classic-hand",
     "file": "src/systems/weaponGlow.js",
-    "old": "return arcane && isEnchanted(item) ? glowSpec('arcane', ARCANE_LEVEL) : null;",
-    "new": "return isEnchanted(item) ? glowSpec('arcane', ARCANE_LEVEL) : null;",
+    "old": "  return arcane && isEnchanted(item) ? glowSpec('arcane', ARCANE_LEVEL) : null;",
+    "new": "  return isEnchanted(item) ? glowSpec('arcane', ARCANE_LEVEL) : null;",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WEAPON-GLOW1-the-ladder-pref-unread",
     "file": "src/systems/weaponGlow.js",
-    "old": "const i = elementIndex(item, ladder ?? lootRarityOn());",
-    "new": "const i = elementIndex(item, ladder ?? true);",
+    "old": "  const i = elementIndex(item, ladder ?? lootRarityOn());",
+    "new": "  const i = elementIndex(item, ladder ?? true);",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],
@@ -57,8 +57,8 @@
   {
     "name": "WEAPON-GLOW1-a-forged-line-counts",
     "file": "src/systems/weaponGlow.js",
-    "old": "if (a?.id !== 'elemental' || !validAffix(a)) continue;",
-    "new": "if (a?.id !== 'elemental') continue;",
+    "old": "    if (a?.id !== 'elemental' || !validAffix(a)) continue; // validAffix: its param one of PROC_ELEMENTS, its value in band",
+    "new": "    if (a?.id !== 'elemental') continue; // validAffix: its param one of PROC_ELEMENTS, its value in band",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],
@@ -77,8 +77,8 @@
   {
     "name": "WEAPON-GLOW1-the-ramp-left-open",
     "file": "src/systems/weaponGlow.js",
-    "old": "ramp: Object.freeze(GLOW_RAMPS[/** @type {keyof typeof GLOW_RAMPS} */ (look)].flat()),",
-    "new": "ramp: GLOW_RAMPS[/** @type {keyof typeof GLOW_RAMPS} */ (look)].flat(),",
+    "old": "        ramp: Object.freeze(GLOW_RAMPS[/** @type {keyof typeof GLOW_RAMPS} */ (look)].flat()),",
+    "new": "        ramp: GLOW_RAMPS[/** @type {keyof typeof GLOW_RAMPS} */ (look)].flat(),",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],
@@ -87,8 +87,8 @@
   {
     "name": "WEAPON-GLOW1-any-level-a-spec",
     "file": "src/systems/weaponGlow.js",
-    "old": "return (row && Number.isInteger(level) && row[level]) || null;",
-    "new": "return (row && row[level]) || null;",
+    "old": "  return (row && Number.isInteger(level) && row[level]) || null;",
+    "new": "  return (row && row[level]) || null;",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],

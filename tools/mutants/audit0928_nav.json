@@ -97,8 +97,8 @@
   {
     "name": "N8-the-png-decode-reads-back-a-gpu-canvas",
     "file": "src/systems/textureReplacement.js",
-    "old": "const ctx = canvas.getContext('2d', { willReadFrequently: true });",
-    "new": "const ctx = canvas.getContext('2d');",
+    "old": "  const ctx = canvas.getContext('2d', { willReadFrequently: true });",
+    "new": "  const ctx = canvas.getContext('2d');",
     "tests": [
       "test/ai/nav/audit0928_nav.test.js"
     ]

@@ -209,8 +209,8 @@
   {
     "name": "PACK-PHONE-the-body-shown-by-default",
     "file": "src/systems/uiPrefs.js",
-    "old": "  packPhoneDoll: false,",
-    "new": "  packPhoneDoll: true,",
+    "old": "  packPhoneDoll: false, // PACK-PHONE (FIELD BUGS 2026-09-30): the pack's body on a phone - hidden until the header's Body shows it",
+    "new": "  packPhoneDoll: true, // PACK-PHONE (FIELD BUGS 2026-09-30): the pack's body on a phone - hidden until the header's Body shows it",
     "tests": [
       "test/systems/fb0930_packphone.test.js"
     ]

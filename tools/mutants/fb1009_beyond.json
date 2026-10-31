@@ -161,8 +161,8 @@
   {
     "name": "TV-BEYOND-mark-clamped-onto-the-bay",
     "file": "src/systems/travellerMarks.js",
-    "old": "const cx = Math.max((1 - WORLD_PIXEL_BOUND) * NATIVE_PIXEL, Math.min(WORLD_PIXEL_BOUND * NATIVE_PIXEL - 1, x));",
-    "new": "const cx = Math.max(0, Math.min(1000 * NATIVE_PIXEL - 1, x));",
+    "old": "  const cx = Math.max((1 - WORLD_PIXEL_BOUND) * NATIVE_PIXEL, Math.min(WORLD_PIXEL_BOUND * NATIVE_PIXEL - 1, x));",
+    "new": "  const cx = Math.max(0, Math.min(1000 * NATIVE_PIXEL - 1, x));",
     "tests": [
       "test/systems/travel/fb1009_beyond.test.js"
     ]
@@ -170,8 +170,8 @@
   {
     "name": "TV-BEYOND-mark-truncated",
     "file": "src/systems/travellerMarks.js",
-    "old": "const px = Math.floor(cx / NATIVE_PIXEL), pzRow = Math.floor(cz / NATIVE_PIXEL);",
-    "new": "const px = Math.trunc(cx / NATIVE_PIXEL), pzRow = Math.trunc(cz / NATIVE_PIXEL);",
+    "old": "  const px = Math.floor(cx / NATIVE_PIXEL),\n    pzRow = Math.floor(cz / NATIVE_PIXEL);",
+    "new": "  const px = Math.trunc(cx / NATIVE_PIXEL),\n    pzRow = Math.trunc(cz / NATIVE_PIXEL);",
     "tests": [
       "test/systems/travel/fb1009_beyond.test.js"
     ]

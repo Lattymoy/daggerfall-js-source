@@ -482,8 +482,8 @@
   {
     "name": "WAGONS2-AUDIT-the-trades-offer-unread",
     "file": "src/systems/tradePack.js",
-    "old": "offerable: (item) => packTradeRefusal(item, entity),",
-    "new": "offerable: (item) => tradeRefusal(item),",
+    "old": "    offerable: (item) => packTradeRefusal(item, entity), // WAGONS2 (AUDIT): the loaded wagon stays",
+    "new": "    offerable: (item) => tradeRefusal(item), // WAGONS2 (AUDIT): the loaded wagon stays",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ]
@@ -491,8 +491,8 @@
   {
     "name": "WAGONS2-AUDIT-the-trades-reserve-unread",
     "file": "src/systems/tradePack.js",
-    "old": "|| packTradeRefusal(item, entity)) return null;",
-    "new": "|| tradeRefusal(item)) return null;",
+    "old": "        if (\n          !items.includes(item) ||\n          count < 1 ||\n          count > Math.max(1, item.stackCount ?? 1) ||\n          packTradeRefusal(item, entity)\n        )",
+    "new": "        if (!items.includes(item) || count < 1 || count > Math.max(1, item.stackCount ?? 1) || tradeRefusal(item))",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ]
@@ -500,8 +500,8 @@
   {
     "name": "WAGONS2-AUDIT-the-markets-words-unsaid",
     "file": "src/systems/tradePack.js",
-    "old": ": loaded ? WAGON_LOADED_MARKET_WORDS : null };",
-    "new": ": null };",
+    "old": "            why: why\n              ? (GOOD_REFUSAL_WORDS[/** @type {keyof typeof GOOD_REFUSAL_WORDS} */ (why)] ?? why)\n              : loaded\n                ? WAGON_LOADED_MARKET_WORDS\n                : null,",
+    "new": "            why: why ? (GOOD_REFUSAL_WORDS[/** @type {keyof typeof GOOD_REFUSAL_WORDS} */ (why)] ?? why) : null,",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ]

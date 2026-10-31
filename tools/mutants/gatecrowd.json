@@ -272,8 +272,8 @@
   {
     "name": "GATECROWD-pref-default-literal",
     "file": "src/systems/uiPrefs.js",
-    "old": "  gateCrowd: 0,\n",
-    "new": "  gateCrowd: 12,\n",
+    "old": "  gateCrowd: 0,",
+    "new": "  gateCrowd: 12,",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]

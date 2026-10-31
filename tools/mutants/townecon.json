@@ -572,8 +572,8 @@
   {
     "name": "TOWNECON-LAW3-share-even",
     "file": "src/systems/tradeModes.js",
-    "old": "  const asks = lot.map((it) => Math.max(buyItemPrice(it, { quality: 10, online, holidayId, guildFactionId }), stackOf(it)));",
-    "new": "  const asks = lot.map((it) => stackOf(it));",
+    "old": "  const asks = lot.map((it) =>\n    Math.max(buyItemPrice(it, { quality: 10, online, holidayId, guildFactionId }), stackOf(it)),\n  ); // a gold a piece at least, as a purchase asks",
+    "new": "  const asks = lot.map((it) => stackOf(it)); // a gold a piece at least, as a purchase asks",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -602,7 +602,7 @@
   {
     "name": "TOWNECON-LAW3-sellmagic-untallied",
     "file": "src/systems/tradeModes.js",
-    "old": "        sold(item, c, stack);   // LAW-3: the stack it hands over cost what it cost",
+    "old": "        sold(item, c, stack); // LAW-3: the stack it hands over cost what it cost",
     "new": "",
     "tests": [
       "test/systems/townecon.test.js"

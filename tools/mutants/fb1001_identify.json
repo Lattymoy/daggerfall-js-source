@@ -20,8 +20,8 @@
   {
     "name": "TRADE-KNOWN-the-wire-copy-strips-it",
     "file": "src/systems/tradePack.js",
-    "old": "const copy = JSON.parse(JSON.stringify(item));",
-    "new": "const copy = JSON.parse(JSON.stringify(item)); delete copy.isIdentified;",
+    "old": "        const copy = JSON.parse(JSON.stringify(item)); // a plain-data copy: nothing from the pack rides the frame by reference",
+    "new": "        const copy = JSON.parse(JSON.stringify(item));\n        delete copy.isIdentified; // a plain-data copy: nothing from the pack rides the frame by reference",
     "tests": [
       "test/systems/fb1001_identify.test.js"
     ]

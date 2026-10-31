@@ -213,8 +213,8 @@
   {
     "name": "AUDITLOOT-F8-the-last-lock-powerless",
     "file": "src/systems/thunderlock.js",
-    "old": "  power: Object.freeze({ name: 'Dwemer Defiance',",
-    "new": "  powerless: Object.freeze({ name: 'Dwemer Defiance',",
+    "old": "  power: Object.freeze({",
+    "new": "  powerless: Object.freeze({",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "AUDITLOOT-F8-the-last-lock-at-anything",
     "file": "src/systems/thunderlock.js",
-    "old": "kind: 'bane', foes: FOE_FAMILIES.daedra, pct: 50,",
-    "new": "kind: 'bane', foes: [...FOE_FAMILIES.daedra, 0], pct: 50,",
+    "old": "    foes: FOE_FAMILIES.daedra,",
+    "new": "    foes: [...FOE_FAMILIES.daedra, 0],",
     "tests": [
       "test/systems/auditloot.test.js"
     ]

@@ -191,8 +191,8 @@
   {
     "name": "WAGONS2-FINAL-the-first-wagon-in-the-pack",
     "file": "src/systems/tradeModes.js",
-    "old": "  usedWagon: activeWagonItem(entity?.items ?? []),\n",
-    "new": "  usedWagon: (entity?.items ?? []).find((it) => it?.group === 'Transportation' && it.templateIndex === 93) ?? null,\n",
+    "old": "  usedWagon: activeWagonItem(entity?.items ?? []),",
+    "new": "  usedWagon: (entity?.items ?? []).find((it) => it?.group === 'Transportation' && it.templateIndex === 93) ?? null,",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]

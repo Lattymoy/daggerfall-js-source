@@ -272,7 +272,7 @@ PVP-SET (the owner, 2026-10-29: "player should get a whole second hot bar of the
 exsistning one u stack one on top", "need a menu to make spells for thr hot bar small easy"): the hotbar has two sets of
 the same slots (`quickslots.js:"export function useHotbarSet"`). The PvP set is in force while my flag is up in
 the zone or the PvP menu is open (`pvpSpellMenu.js:"const inForce = () => on() || open;"`): the same bar and
-place, keys 1 to 0, held up whatever the bar's style (`uiSkin.js:"export function forceHotbar(fn) {"`). It takes toolkit
+place, keys 1 to 0, held up whatever the bar's style (`uiSkin.js:"export function forceHotbar"`). It takes toolkit
 spells and items, never a book spell; the save keeps the normal set alone. It lives in the browser; an old bar
 (`dfo.pvpKitBar.v1`) lands on keys 3 to 0 with the normal set's potions on 1 and 2
 (`pvpSet.js:"export function pvpStoreFromV1(v1, main = []) {"`).

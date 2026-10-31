@@ -2,8 +2,8 @@
   {
     "name": "THUNDERLOCK-ART-the-dye-kept",
     "file": "src/systems/textureReplacement.js",
-    "old": "  for (const e of _vendor.values()) if (e.archive === bare.archive && e.record === bare.record && e.frame === bare.frame && e.map === bare.map && e.dye != null && !e.studio) return dye;   // STUDIO1: a studio picture of one dye makes no dyed set of a stand-in\n  return null;\n};",
-    "new": "  for (const e of _vendor.values()) if (e.archive === bare.archive && e.record === bare.record && e.frame === bare.frame && e.map === bare.map && e.dye != null && !e.studio) return dye;   // STUDIO1: a studio picture of one dye makes no dyed set of a stand-in\n  return dye;\n};",
+    "old": "      return dye; // STUDIO1: a studio picture of one dye makes no dyed set of a stand-in\n  return null;",
+    "new": "      return dye; // STUDIO1: a studio picture of one dye makes no dyed set of a stand-in\n  return dye;",
     "tests": [
       "test/systems/thunderlockart.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "THUNDERLOCK-ART-every-record-undyed",
     "file": "src/systems/textureReplacement.js",
-    "old": "  for (const e of _vendor.values()) if (e.archive === bare.archive && e.record === bare.record && e.frame === bare.frame && e.map === bare.map && e.dye != null && !e.studio) return dye;   // STUDIO1: a studio picture of one dye makes no dyed set of a stand-in\n  return null;\n};",
-    "new": "  return null;\n};",
+    "old": "  for (const e of _vendor.values())\n    if (\n      e.archive === bare.archive &&\n      e.record === bare.record &&\n      e.frame === bare.frame &&\n      e.map === bare.map &&\n      e.dye != null &&\n      !e.studio\n    )\n      return dye; // STUDIO1: a studio picture of one dye makes no dyed set of a stand-in\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/thunderlockart.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "THUNDERLOCK-ART-a-real-archive-undyed",
     "file": "src/systems/textureReplacement.js",
-    "old": "  if (!bare?.standIn) return dye;\n",
-    "new": "  if (!bare) return dye;\n",
+    "old": "  if (!bare?.standIn) return dye;",
+    "new": "  if (!bare) return dye;",
     "tests": [
       "test/systems/thunderlockart.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "THUNDERLOCK-ART-the-doll-layer-in-a-list",
     "file": "src/systems/thunderlock.js",
-    "old": "  : (forPaperDoll ? ART_RECORDS.doll : ART_RECORDS.icon));",
-    "new": "  : (forPaperDoll ? ART_RECORDS.doll : ART_RECORDS.doll));",
+    "old": "      : ART_RECORDS.icon;",
+    "new": "      : ART_RECORDS.doll;",
     "tests": [
       "test/systems/thunderlockart.test.js"
     ]

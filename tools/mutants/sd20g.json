@@ -129,8 +129,8 @@
   {
     "name": "SD20G-D4-no-back-off",
     "file": "src/systems/wayOut.js",
-    "old": "offWait = onField(from) ? fieldEvery : Math.min(refieldEvery, offWait * 2);",
-    "new": "offWait = fieldEvery;",
+    "old": "        offWait = onField(from) ? fieldEvery : Math.min(refieldEvery, offWait * 2); // still off: not again so soon",
+    "new": "        offWait = fieldEvery; // still off: not again so soon",
     "tests": [
       "test/systems/quest/sd20g_delve.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "SD20G-D4-new-cells-unattached",
     "file": "src/systems/wayOut.js",
-    "old": "      else if (covered < c.pts.length) { attachCells(c, field, covered, clear); covered = c.pts.length; }\n",
-    "new": "",
+    "old": "      else if (covered < c.pts.length) {\n        attachCells(c, field, covered, clear);\n        covered = c.pts.length;\n      }\n      let from = nearestCell(c, feet);",
+    "new": "      let from = nearestCell(c, feet);",
     "tests": [
       "test/systems/quest/sd20g_delve.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "SD20G-D4-asks-unpaced",
     "file": "src/systems/wayOut.js",
-    "old": "const spend = () => left-- > 0 && clock() < until;",
-    "new": "const spend = () => left-- > 0;",
+    "old": "      const spend = () => left-- > 0 && clock() < until;",
+    "new": "      const spend = () => left-- > 0;",
     "tests": [
       "test/systems/quest/sd20g_delve.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "SD20G-D4-a-walled-step-left-walked",
     "file": "src/systems/wayOut.js",
-    "old": "          if (!ok && (f.next[j] === i || f.next[i] === j)) walled = true;\n",
-    "new": "",
+    "old": "          if (!ok && (f.next[j] === i || f.next[i] === j)) walled = true;\n        }",
+    "new": "        }",
     "tests": [
       "test/systems/quest/sd20g_delve.test.js"
     ]

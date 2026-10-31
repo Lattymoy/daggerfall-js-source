@@ -84,8 +84,8 @@
   {
     "name": "TRADE-WHOLE-unwire-piecewise",
     "file": "src/systems/tradePack.js",
-    "old": "unwire(records) { const items = wholeLot(records);",
-    "new": "unwire(records) { const items = validLootList(records);",
+    "old": "      const items = wholeLot(records);",
+    "new": "      const items = validLootList(records);",
     "tests": [
       "test/systems/item/fb1020h_soul.test.js"
     ],
@@ -94,8 +94,8 @@
   {
     "name": "TRADE-WHOLE-count-unasked",
     "file": "src/systems/tradePack.js",
-    "old": "return items && items.length === records.length ? items : null;",
-    "new": "return items;",
+    "old": "  return items && items.length === records.length ? items : null;",
+    "new": "  return items;",
     "tests": [
       "test/systems/item/fb1020h_soul.test.js"
     ],
