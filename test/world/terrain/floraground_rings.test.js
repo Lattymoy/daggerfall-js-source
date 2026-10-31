@@ -89,6 +89,9 @@ function plantsOn(hm, n = 400) {
   return { centers, ground };
 }
 
+/** The centres' places alone - OW-SEAT's mark (floraSeat.js ON_GROUND) rides a ground plant's own array. */
+const xyz = (cs) => cs.map((c) => [c[0], c[1], c[2]]);
+
 /** A renderer that keeps what each batch was last drawn at. */
 function drawRecorder() {
   const at = new Map();
@@ -144,7 +147,7 @@ test('FLORA-GROUND THE RINGS every plant of the ground is drawn on the ground it
   assert.equal(r.moves, moves, 'seated again at the same ring: nothing moves');
   p._stride = 1;
   seatFlora(p, r);
-  assert.deepEqual(r.at.get(batch), centers, 'promoted: every plant back on the walk floor');
+  assert.deepEqual(r.at.get(batch), xyz(centers), 'promoted: every plant back on the walk floor');
   const bed = bedOf(1), carved = drawnOracle(hm, 1, bed);
   p._bed = { depths: bed };
   seatFlora(p, r);
@@ -183,10 +186,10 @@ test('FLORA-GROUND THE RINGS a felled tree lies under the ground its pixel draws
   seatFlora(p, r);
   const near = r.at.get(batch);
   assert.ok(Math.abs(near[f][1] - (centers[f][1] - size.h - 1)) < 1e-9, 'promoted, the felled tree still down - under the walk floor');
-  assert.deepEqual(near.filter((_, i) => i !== f), centers.filter((_, i) => i !== f), 'and the rest on the walk floor');
+  assert.deepEqual(near.filter((_, i) => i !== f), xyz(centers.filter((_, i) => i !== f)), 'and the rest on the walk floor');
   assert.equal(drawnCentre({ lift: null, size }, centers[1], 1, false), centers[1], 'a centre nothing moves is the centre itself');
   sinkFelled(p.forest, new Set(), r);
-  assert.deepEqual(r.at.get(batch), centers, 'a day\'s turn stands it again');
+  assert.deepEqual(r.at.get(batch), xyz(centers), 'a day\'s turn stands it again');
 });
 
 /** A renderer that records what it is asked - the GPU's calls through a GL that answers anything (GRAHT1's own). */

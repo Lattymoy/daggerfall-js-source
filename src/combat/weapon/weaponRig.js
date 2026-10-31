@@ -84,6 +84,7 @@ import { conditionPercentage } from '../../systems/item/itemInfo.js';   // SW1: 
 import { isShieldTemplate } from '../../systems/armorMaterials.js';   // SW1: GetShieldProtectedBodyParts' own test
 import { rriNativeMaterialValue } from '../../systems/roleplayRealismItems/rriItems.js';
 import { riddenHorseLook } from '../../systems/horse/horseCoats.js';   // COATS1: the sprite body's mount wears the ridden horse's look   // AUDIT 68 S09-v-shield-material-ignored: the port's one NativeMaterialValue
+import { ownMountLook } from '../../systems/horse/mountLook.js';   // STOREFRONT: my mount look on my body's horse
 import { createHandheldTorches, isHeldLight } from '../../systems/handheldTorches.js';   // HT1: Handheld Torches' component, one per rig beside the widget; TORCH-VIS: and its own light test
 import { lanternAtWaist } from '../../systems/playerTorch.js';   // HT-WAIST: a lantern hung at the waist is in no hand - the ladder, the Morrowind body and the sprite ask the one question
 import { liveVampirism } from '../../systems/racialLive.js';   // PORTRAIT3D: a vampire's body wears the race's vampire head
@@ -102,7 +103,8 @@ import { walkSpeed } from '../../player/motor.js';   // WW1: GetBaseSpeed's walk
 import { localizedText, t } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; TWO-HANDS: the lead's two lines, the port's own
 import { HANDS_MODE, twoHanded, runHandsWanted, runHandsKept, runPhaseOfBob, MIRROR_UV, otherHand, guardStep } from '../twoHands/handsLaw.js';   // TWO-HANDS: how the hands are held, and when they run
 import { spellHandOf, tellSpellHand, castPending, drawSpellHand, guardDrop } from '../twoHands/spellHand.js';   // SPELL-HAND: a spell in the free hand beside a one-handed weapon
-import { stepTechnique, claimShot, techniqueFlying, TECHNIQUE_ACTION } from '../techniques.js';   // TECH1: the technique key - every host's rig steps the one runner
+import { stepTechnique, claimShot, techniqueFlying, TECHNIQUE_ACTION, SIGNATURE_ACTION } from '../techniques.js';
+import { touchHeld } from '../../ui/touch/touchHeld.js';   // AUDIT TECH-FEEDBACK II F6: the Martial technique's touch button   // TECH1: the technique key - every host's rig steps the one runner
 import '../../systems/martialPowers.js';   // MARTIAL3/4 (bible/05-Combat/Martial-Specialisations.md): what the martial paths and the weapons past 100 DO - registered at import, so every host's rig (exterior.js, world.js, worldModes.js' interiors, dungeonContext.js' dungeons) has them
 import { techniqueHands } from '../technique/techniqueFx.js';   // TECH-FX: a technique's push of the first-person layer
 import { playerHarmedWithin } from '../../systems/harmMark.js';   // RIFLE-STANCE: a foe's harm on the player - the fight a long gun's aim reads
@@ -779,6 +781,23 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     fpArm.setStandIn?.(beast ? !(wolf && isMwWerewolf(entity)) : wolf);
   };
   bindArm();
+  // LAYERED-DUAL (2026-10-30, the owner: "We need to find a way to implement duel wielding perfectly"): a pair's right
+  // and left weapons for the layered body, and the hand whose blow is in flight - nothing of it outside a pair
+  const layeredPair = () => (playerWeapon.handsMode !== HANDS_MODE.Dual ? { pairRight: null, pairLeft: null, pairStrike: null } : {
+    pairRight: playerWeapon.handItem('R'), pairLeft: playerWeapon.handItem('L'),
+    pairStrike: playerWeapon.machine.state !== 'Idle' && playerWeapon.strike ? playerWeapon.strike.hand : null,
+  });
+  // SPELL-BURST: the cast's element, drawn in the layered body's hands, and a weapon kept in hand beside the spell
+  const layeredCast = () => ({ castElement: castPlaying() ? cast.element : null, spellHand: !!spellHandNow() });
+  // AUDIT (2026-10-31): a gathering act's tool in the body's hands, as the walkers draw mine (peerRiders walkerHands,
+  // WALK_GATHER_STROKES): held ready, each blow the swing's second stroke - odd counts, one a blow
+  let toolBlows = 0, toolStriking = false;
+  const layeredTool = () => {
+    const tool = actTool(), strike = !!tool && !!tool.state && tool.state !== 'Idle';
+    if (strike && !toolStriking) toolBlows++;
+    toolStriking = strike;
+    return tool ? { heldWeapon: tool, toolInHand: true, usingBow: false, spellcasting: false, attacking: strike, swingN: -(2 * toolBlows + 1), pairRight: null, pairLeft: null, pairStrike: null } : {};
+  };
   // EOTB5: THE OTHER BODY, attached in the same breath as the arm it
   // stands in for. THE FOUR HOSTS named: exterior.js, world.js,
   // worldModes.js and dungeonContext.js - none of them carries a call,
@@ -821,9 +840,12 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     sheathed: playerWeapon.sheathed,
     spellcasting: spellArmed(),
     usingBow: !!playerWeapon.machine.isBow,
+    heldWeapon: playerWeapon.weapon ?? null,   // LAYERED-WEAPONS: the item the sprite's hands hold (player/eyeOfTheBeholder/layeredWeapon.js)
+    ...layeredPair(),   // LAYERED-DUAL: a pair's two weapons and the hand striking
+    ...layeredCast(),   // SPELL-BURST: the cast's element and the spell hand
     transformed: !!entity && isTransformedLycanthrope(entity),
     lycanthropyType: (entity && liveLycanthropy(entity)?.infectionType) || 0,
-    horseLook: entity ? riddenHorseLook(entity.items ?? []) : 0,   // COATS1: its code
+    horseLook: entity ? ownMountLook(riddenHorseLook(entity.items ?? [])) : 0,   // COATS1: its code; STOREFRONT: my mount look over it
     died: !!entity && (entity.health ?? 1) <= 0,
     motion: camera?.()?.move ?? null,
     attacking: playerWeapon.machine.state !== 'Idle',
@@ -841,6 +863,10 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     animCtx: playerWeapon.animCtx(),
     concealment: entity ? concealmentFlags(entity) : null,
     hipLantern: !!entity && lanternAtWaist(entity.lightSource),   // HT-WAIST: the lit lantern hangs at the sprite's hip, and swings as it walks
+    handItem: playerWeapon.handItem(playerWeapon.leadHand),   // BACK-HOLSTER: the weapon of the hand in use - on the sprite's back sheathed, its glow round the sprite drawn
+    handWraps: playerWeapon.wrapsOf(playerWeapon.leadHand),   // BACK-HOLSTER GLOW: and a bare fist's Hand Wraps, as handGlowOf asks them
+    hasAmmo: hasAmmoFor(entity?.items, playerWeapon.handItem(playerWeapon.leadHand)),   // QUIVER: arrows in the quiver on the sprite's back (WS1's)
+    ...layeredTool(),   // AUDIT: a gathering act's tool over the weapon's hands
   });
   const bindBody = () => eotbBody.attach(renderer, eotbState);
   bindBody();
@@ -1930,14 +1956,16 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // loosing) and the camera this rig rides.
       _techDt = dt;
       _techCtx ??= {
-        rig: _techRig, entity, pw: playerWeapon, cam: null, collider: null, held: false, ready: false, cancel: false, paralyzed: false, blocked: false, holding: false,
-        startSwing: (s) => { if (!playerWeapon.techniqueStrike(s)) return false; fpAttack(s, _techDt); return true; },
+        rig: _techRig, entity, pw: playerWeapon, cam: null, collider: null, held: false, held2: false, ready: false, cancel: false, paralyzed: false, blocked: false, holding: false,
+        startSwing: (s) => { if (!playerWeapon.techniqueStrike(s)) return false; fpArm.cutAttack?.(); fpAttack(s, _techDt); return true; },   // TECH-CANCEL: the arm's blow cut once the strike began (AUDIT TECH-FEEDBACK F2, F6)
+        cutSwing: () => { if (playerWeapon.cutSwing()) fpArm.cutAttack?.(); },   // AUDIT TECH-FEEDBACK II F3: a flight's launch
         door: technique, say, noteShot: noteShotHere,
       };
       const tc = _techCtx;
       if (camNow?.pos && camNow?.feet) { _techCam.pos = camNow.pos; _techCam.yaw = camNow.yaw ?? 0; _techCam.pitch = camNow.pitch ?? 0; _techCam.feet = camNow.feet; tc.cam = _techCam; } else tc.cam = null;
       tc.collider = collider?.() ?? null;
       tc.held = !!actionDown?.(TECHNIQUE_ACTION);
+      tc.held2 = !!actionDown?.(SIGNATURE_ACTION) || touchHeld(SIGNATURE_ACTION);   // TECH-KEY2: the martial path's own key - or its touch button (AUDIT TECH-FEEDBACK II F6)
       tc.ready = !paralyzed && !!c && canAttack && !armLoosing && !_heldHit && !!camNow?.pos && !!camNow?.feet;   // AUDIT TECH1: and no plain shot's hit still held for the arm (MW-D42) - the click path's own gate
       tc.cancel = !!activateHeld();
       tc.paralyzed = !!paralyzed;   // AUDIT TECH1: a held body's machine is frozen - and so is its technique's clock
@@ -2039,7 +2067,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // arrow is loosed, so the arm's wind-up must stop holding at max
         // attack and run to its release key.
         const m = playerWeapon.machine;
-        if (!(m.isBow && m.state === 'StrikeUp')) fpArm.release();
+        if (!(m.isBow && m.state === 'StrikeUp')) fpArm.release(m.isBow ? playerWeapon.strikeSchedule(dt) : null);   // MW-DRAW-PACE: a held draw's loose on the classic clock
         fpArm.update(dt);
       }
       if (paralyzed) return [];

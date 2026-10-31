@@ -246,7 +246,7 @@ const lift = (head) => { const i = W.indexOf(head); assert.ok(i > 0, head); retu
 
 test('TESA8 the host by source: the lairs\' templates, count and pools off the game\'s rows before they go, under the countryside\'s door; their rates over the same Bay land; past the Bay Arena\'s place, else the country\'s, else the lair\'s', () => {
   assert.match(W, /const _lairTemplates = _countryTemplates \? lairTemplates\(_classicRows \?\? _hubRows\.map\(classicRow\)\.filter\(Boolean\), isMainStoryDungeon\) : null;/);
-  assert.match(W, /const _lairCounts = _lairTemplates \? countryCounts\(_lairTemplates, \(x, y\) => maps\.getClimateIndex\(x, y\)\) : null;/);
+  assert.match(W, /const _lairCounts = _lairTemplates \? countryCounts\(_lairTemplates, \(x, y\) => filedClimate\(x, y, maps\.getClimateIndex\(x, y\)\)\) : null;/);   // PIN MOVED (AUDIT FOUNDATION II L1): the Bay's count off the files as they came
   assert.match(W, /const _lairPools = _lairTemplates \? lairPools\(_lairTemplates\) : null;/);
   assert.ok(W.indexOf('const _lairPools = ') < W.indexOf('  _classicRows = null;   // read, let go'));
   assert.match(W, /const bayLandNow = \(\) => \(_pastBay\.bayLand \?\?= bayLand\(/);

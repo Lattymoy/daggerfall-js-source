@@ -12,6 +12,8 @@ import { armoryKitWith } from '../net/armoryLaw.js';
 import { newPose, poseAtRest, poseFromBones, poseFromFigure, spriteMarks, spriteArmsSeen, poseWorld, ARMORY_BONES, POSE_AT } from './armoryPose.js';
 import { previewMesh } from './auraPreview.js';
 import { ortho, lookAt, multiply } from '../world/mat4.js';
+import { createEffectStage } from './effectStage.js';   // STOREFRONT: a kill effect or a portal skin tried on
+import { prefersReducedMotion } from '../systems/hitFlash.js';   // STOREFRONT: the viewer's less motion, read live
 
 /** THE STAGE'S FRAME, one for every body: an orthographic camera `pitch` (rad) over level, the highest a plate's anchor
  *  can stand over the body (stageTopOf) `top` of the way down the picture and the near edge of the widest aura's ring
@@ -40,6 +42,8 @@ export function stageCameraOfBones(/** @type {number} */ head, /** @type {Record
   const pose = newPose();
   return stageCamera(poseFromBones(bones, pose) ? stageTopOf(head, pose) : head, aspect);
 }
+/** STOREFRONT: no burn - the body whole. */
+const NO_BURN = new Float32Array(4);
 /** The floor's reach (m), drawn under every body. */
 export const STAGE_FLOOR_R = 1.25;
 /** THE DEPTH STAND-IN for a Morrowind picture: each part a prism between two pose points, its half-width across the body
@@ -56,9 +60,22 @@ layout(location = 0) in vec3 aP; layout(location = 1) in vec3 aN;
 uniform mat4 uVP;
 out vec3 vN; out vec3 vW;
 void main() { vN = aN; vW = aP; gl_Position = uVP * vec4(aP, 1.0); }`;
+// STOREFRONT: a kill tried on burns the body away from the feet up, its edge in the kill's colour (uDissolve: share, rgb)
+export const STAGE_BURN_GLSL = `
+uniform vec4 uDissolve;
+float bh(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+float bn(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(bh(i), bh(i + vec2(1.0, 0.0)), f.x), mix(bh(i + vec2(0.0, 1.0)), bh(i + vec2(1.0, 1.0)), f.x), f.y); }
+bool burnt(float up, vec2 q, inout vec3 c) {
+  if (uDissolve.x <= 0.0) return false;
+  float k = 0.5 * up + 0.5 * (0.65 * bn(q * vec2(18.0, 30.0)) + 0.35 * bn(q * vec2(60.0, 90.0))), edge = uDissolve.x * 1.15 - 0.075;
+  if (k < edge) return true;
+  if (k < edge + 0.06) c = mix(c, uDissolve.yzw * 1.6, 0.85);
+  return false;
+}`;
 const MESH_FS = `#version 300 es
 precision highp float;
 in vec3 vN; in vec3 vW; uniform vec3 uEye; uniform vec3 uGround; uniform int uFloor; out vec4 o;
+${STAGE_BURN_GLSL}
 void main() {
   if (uFloor == 1) {
     float r = length(vW.xz);
@@ -67,7 +84,9 @@ void main() {
   }
   vec3 n = normalize(vN), e = normalize(uEye - vW);
   float key = max(dot(n, normalize(vec3(0.3, 0.8, 0.5))), 0.0), rim = pow(1.0 - max(dot(n, e), 0.0), 3.0);
-  o = vec4(vec3(0.07, 0.065, 0.085) + vec3(0.09, 0.085, 0.1) * key + vec3(0.16, 0.14, 0.3) * rim, 1.0);
+  vec3 c = vec3(0.07, 0.065, 0.085) + vec3(0.09, 0.085, 0.1) * key + vec3(0.16, 0.14, 0.3) * rim;
+  if (burnt(vW.y / 1.9, vec2(vW.x + vW.z * 0.7, vW.y * 0.5) * 2.0, c)) discard;
+  o = vec4(c, 1.0);
 }`;
 // a picture on a quad: the Morrowind picture over the whole canvas (uScreen 1, its rows top down), or a sprite's card
 // standing in the world (uScreen 0, its rows bottom up), cut at half alpha and writing depth as the world's card does.
@@ -85,10 +104,13 @@ void main() {
 const PIC_FS = `#version 300 es
 precision highp float; precision highp int;
 in vec2 vUv; uniform sampler2D uTex; uniform int uScreen; out vec4 o;
+${STAGE_BURN_GLSL}
 void main() {
   vec4 c = texture(uTex, vUv);
   if (uScreen == 0 && c.a < 0.5) discard;
-  o = uScreen == 1 ? c : vec4(c.rgb, 1.0);
+  vec3 rgb = c.rgb;
+  if (burnt(uScreen == 1 ? 1.0 - vUv.y : vUv.y, vUv, rgb)) discard;
+  o = uScreen == 1 ? vec4(rgb, c.a) : vec4(rgb, 1.0);
 }`;
 
 /** The depth stand-in's triangles round a pose (`pts`, world): an eight-sided prism a part, its across axis the body's
@@ -116,13 +138,13 @@ export function proxyMesh(/** @type {ArrayLike<number>} */ pts, /** @type {Recor
 
 /**
  * THE STAGE on `canvas`: `body` drawn with `aura` at its feet and `kit` on it until stopped - a Morrowind body (fpArm
- * stage(): { kind: 'mw', width, height, data, proj, view, eye, bones, head }), a sprite ({ kind: 'sprite', width, height,
- * colors, mpp, base, shift }, its rows bottom first) or the stand-in (null). Answers { setBody, setKit, setAura, headAt,
+ * stage()), a sprite (its rows bottom first) or the stand-in (null). Answers { setBody, setKit, setAura, setEffect, headAt,
  * stop, alive, step }, null with no WebGL2; `headAt()` the plate's anchor in CSS px (ui/nameLayer.js's), or null.
  * @param {HTMLCanvasElement} canvas
- * @param {{ body?: any, kit?: string|null, aura?: string|null, now?: () => number, clear?: number[], ground?: number[], pitch?: number }} [o]
+ * @param {{ body?: any, kit?: string|null, aura?: string|null, now?: () => number, clear?: number[], ground?: number[], pitch?: number,
+ *   cue?: ((slot: string, key: string|null) => void)|null }} [o] `cue` an effect's loop beginning (STOREFRONT: its sound)
  */
-export function startCharacterStage(canvas, { body = null, kit = null, aura = null, now = () => performance.now() / 1000, clear = [0.035, 0.03, 0.055], ground = [0.11, 0.1, 0.13], pitch = STAGE_FRAME.pitch } = {}) {
+export function startCharacterStage(canvas, { body = null, kit = null, aura = null, now = () => performance.now() / 1000, clear = [0.035, 0.03, 0.055], ground = [0.11, 0.1, 0.13], pitch = STAGE_FRAME.pitch, cue = null } = {}) {
   /** @type {WebGL2RenderingContext|null} */
   const gl = /** @type {any} */ (canvas.getContext('webgl2', { alpha: false, antialias: true, preserveDrawingBuffer: false }));
   if (!gl) return null;
@@ -137,7 +159,7 @@ export function startCharacterStage(canvas, { body = null, kit = null, aura = nu
   const meshProg = program(MESH_VS, MESH_FS), picProg = program(PIC_VS, PIC_FS);
   if (!meshProg || !picProg) return null;
   const uni = (/** @type {WebGLProgram} */ p, /** @type {string[]} */ names) => Object.fromEntries(names.map((n) => [n, gl.getUniformLocation(p, n)]));
-  const MU = uni(meshProg, ['uVP', 'uEye', 'uGround', 'uFloor']), PU = uni(picProg, ['uVP', 'uScreen', 'uRight', 'uCard', 'uTex']);
+  const MU = uni(meshProg, ['uVP', 'uEye', 'uGround', 'uFloor', 'uDissolve']), PU = uni(picProg, ['uVP', 'uScreen', 'uRight', 'uCard', 'uTex', 'uDissolve']);
   const vbo = (/** @type {Float32Array} */ data, /** @type {number} */ stride) => {
     const vao = gl.createVertexArray(), buf = gl.createBuffer();
     gl.bindVertexArray(vao); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
@@ -154,6 +176,9 @@ export function startCharacterStage(canvas, { body = null, kit = null, aura = nu
   let aurPass = null, armPass = null;
   try { aurPass = new AuraRingRenderer(gl); } catch { aurPass = null; }
   try { armPass = new ArmoryRenderer(gl); } catch { armPass = null; }
+  // STOREFRONT: the effects tried on - a kill on the body, a portal behind it - and each loop's cue (`cue`: its sound)
+  const effects = createEffectStage(gl, { reduced: () => prefersReducedMotion(), onCue: (sl, k) => cue?.(sl, k) });   // less motion followed mid-session
+  let lastT = now();
 
   const t0 = now();
   const pose = newPose();
@@ -212,6 +237,10 @@ export function startCharacterStage(canvas, { body = null, kit = null, aura = nu
     if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
     const cam = camera(w, h);
     vp = multiply(cam.proj, cam.view);
+    effects.step(t - lastT, headY());   // STOREFRONT
+    lastT = t;
+    const burn = effects.burn();
+    const right = [cam.view[0], cam.view[4], cam.view[8]];
     wearer.kindle = Math.min(1, (t - wearer.since) / AURA_KINDLE_S);
     kitWearer.kindle = Math.min(1, (t - kitWearer.since) / AURA_KINDLE_S);
     gl.viewport(0, 0, w, h);
@@ -219,10 +248,14 @@ export function startCharacterStage(canvas, { body = null, kit = null, aura = nu
     gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE);
     gl.useProgram(meshProg);
     gl.uniformMatrix4fv(MU.uVP, false, vp); gl.uniform3fv(MU.uEye, cam.eye); gl.uniform3fv(MU.uGround, ground);
+    gl.uniform4fv(MU.uDissolve, burn ?? NO_BURN);
     gl.bindVertexArray(standVbo.vao);
     gl.uniform1i(MU.uFloor, 1); gl.drawArrays(gl.TRIANGLES, 0, stand.floorN);
+    effects.drawBehind(vp, right);   // STOREFRONT: a portal tried on stands behind the body
+    gl.useProgram(meshProg); gl.bindVertexArray(standVbo.vao);
     if (!shown) { gl.uniform1i(MU.uFloor, 0); gl.drawArrays(gl.TRIANGLES, stand.floorN, stand.count - stand.floorN); }
     gl.useProgram(picProg);
+    gl.uniform4fv(PU.uDissolve, burn ?? NO_BURN);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex); gl.uniform1i(PU.uTex, 0);
     gl.bindVertexArray(quad.vao);
     if (shown?.kind === 'mw') {
@@ -231,7 +264,7 @@ export function startCharacterStage(canvas, { body = null, kit = null, aura = nu
       gl.uniform1i(PU.uScreen, 1); gl.drawArrays(gl.TRIANGLES, 0, 6);
       gl.disable(gl.BLEND); gl.enable(gl.DEPTH_TEST); gl.depthMask(true);
       gl.useProgram(meshProg); gl.colorMask(false, false, false, false);
-      if (proxy) { gl.bindVertexArray(proxy.vao); gl.uniform1i(MU.uFloor, 0); gl.drawArrays(gl.TRIANGLES, 0, proxy.count); }
+      if (proxy && !burn) { gl.bindVertexArray(proxy.vao); gl.uniform1i(MU.uFloor, 0); gl.drawArrays(gl.TRIANGLES, 0, proxy.count); }   // STOREFRONT: a body burning away hides nothing
       gl.colorMask(true, true, true, true);
     } else if (shown?.kind === 'sprite' && sprite) {
       gl.uniformMatrix4fv(PU.uVP, false, vp); gl.uniform3f(PU.uRight, cam.view[0], cam.view[4], cam.view[8]);
@@ -239,13 +272,15 @@ export function startCharacterStage(canvas, { body = null, kit = null, aura = nu
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
     gl.bindVertexArray(null);
-    if (wearer.aura) aurPass?.draw([wearer], cam.proj, cam.view, new Float32Array(cam.eye), t, null);
-    if (kitWearer.kit) armPass?.draw([kitWearer], cam.proj, cam.view, new Float32Array(cam.eye), t, null);
+    if (wearer.aura && !burn) aurPass?.draw([wearer], cam.proj, cam.view, new Float32Array(cam.eye), t, null);   // STOREFRONT: gone with the body it burns off
+    if (kitWearer.kit && !burn) armPass?.draw([kitWearer], cam.proj, cam.view, new Float32Array(cam.eye), t, null);
+    effects.drawFront(cam.proj, cam.view, cam.eye);   // STOREFRONT: the kill's and the portal's bursts
     raf = globalThis.requestAnimationFrame?.(frame) ?? 0;
   };
   function stop() {
     stopped = true;
     if (raf) globalThis.cancelAnimationFrame?.(raf);
+    effects.destroy();
     gl.getExtension('WEBGL_lose_context')?.loseContext();   // EVERY ALLOCATION HAS AN OWNER: the context and all it held
   }
   setBody(body);
@@ -254,6 +289,9 @@ export function startCharacterStage(canvas, { body = null, kit = null, aura = nu
     setBody,
     setKit(/** @type {string|null} */ next) { if (next !== kitWearer.kit) { kitWearer.kit = next; kitWearer.since = now(); } },
     setAura(/** @type {string|null} */ next) { if (next !== wearer.aura) { wearer.aura = next; wearer.since = now(); } },
+    /** STOREFRONT: an effect tried on - `slot` 'kill' or 'portal' and its look (a portal's null: the violet vortex), any
+     *  other slot none. */
+    setEffect(/** @type {string|null} */ slot, /** @type {string|null} */ key) { effects.set(slot, key); },
     /** The plate's anchor in CSS pixels, or null: the head point (net/remotePlayers.js namePoints' `head`), or over it
      *  the tip of the head piece worn or tried on (armoryHeadTip) - as the world's names stand. */
     headAt() {

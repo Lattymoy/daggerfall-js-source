@@ -234,12 +234,12 @@ import {
   devicesOf, accountView, displayName, accountKind,
   register, login, recover, changePassword, setEmail, overRate, overAccountRate, accountRateFull,
   newRecoveryCodes,   // RECOVERY-SET: a new set of codes from the profile
-  accountWardrobe, equipTitle, equipAura, equipArmory, equipArmoryKit, equipIcon, equipGlyph, buyInsignia, insigniaPurse, creditPlay, isMuted, mutedUntil,
+  accountWardrobe, equipTitle, equipAura, equipArmory, equipArmoryKit, equipEffect, equipIcon, equipGlyph, buyInsignia, insigniaPurse, creditPlay, isMuted, mutedUntil,
   duelRecordOf, claimDuel, gateRecordOf, claimGate, legalRefusal,
   nameAsOf, wornNameOf, chooseNameAs,   // NAME-AS: the name the room reads - the account's or the character's
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
-import { mintToken, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, mintHomeOrder, mintYardOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, CHAPTER_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf } from '../../src/net/identityToken.js';
+import { mintToken, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, mintHomeOrder, mintYardOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, CHAPTER_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf, glyphsInOrder } from '../../src/net/identityToken.js';
 import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUTES, SAFE_OPEN_ROUTES, STAFF_ROUTES, savePathOf, realmPathOf, poiPathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES, maintaining, routeDb, d1BookmarkOf, D1_BOOKMARK_RE, d1Overloaded, noteOverload, shedding, REPLICA_ROUTES, replicaDb, REPLICA_ANY, SHED_NO_REPLICA } from './service.js';   // SCALE4d: the routes a read replica may serve, and the session they are served on
 import { poiRolesOf, putPoiAsset, getPoiAsset, savePoiDraft, submitPoi, withdrawPoi, requestRetire, reviewPoi, rollbackPoi, listPoi, poiHistory, poiQueue, poiLiveFeed, poiHeldVersion, poiFeedTag, listShelf, shelfEntry, shelve, unshelve, POI_ASSET_MAX, POI_DRAFT_BODY_MAX, POI_LIVE_ASSET_MAX_AGE_S } from './poi.js';   // POI-1: the POI store - builders draft, an approver decides, the feed is what is live; POI-4b: the library's shelf
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
@@ -256,7 +256,7 @@ import { seaSeasonBoard } from './seaSeason.js';   // SEA-SEASON: the sea's seas
 import { seaWreck, seaPrizeCollect, seaPrizeReclaim } from './seaWreck.js';   // SHIP-PVP: a wreck at sea, and its prize
 import { deckOrderOf, claimIliac, iliacBoardOf } from './iliac.js';
 import { claimGambit, gambitBoardOf } from './gambit.js';   // KG6: The King's Gambit's season board and its GRANDMASTER   // CARDS10: a ranked seat's deck vouched for, Iliac Hand's season board and its title
-import { titleWorn, glyphsOf, glyphsHidden, auraWorn, iconWorn, armoryWorn } from './titles.js';
+import { titleWorn, glyphsOf, glyphsHidden, auraWorn, iconWorn, armoryWorn, sailclothHeld, effectsWorn } from './titles.js';
 import { withHonours } from './honours.js';   // SIGN-BATCH: the three games' honours on a badge's row, in one batch
 import { claimArena, arenaAttempt, arenaBoardOf, arenaTeam, arenaRatingOf, ARENA_HONOUR_PATHS, ARENA_RENOWN_REGION } from './arena.js';   // ARENA4: the arena's records, its board, its banners, and the honours the mint reads
 import { arenaSeasonOf } from '../../src/net/arena/arenaLaw.js';
@@ -288,6 +288,8 @@ import { settleBrokerSale } from './brokerSales.js';   // AUDIT FB1024 (BROKER-R
 import { startsEg } from './egStarts.js';   // EG-F: the start window's preflight
 import { claimLamp } from './lamp.js';
 import { festivalOf, findFestival, buyFestival, festivalTown, setOffering, fillOffering, takeInOffering, takeFromOffering, FEST_STATUS } from './festival.js';   // WITCH1: the Witches' Festival   // LAMP-KEEPER II: I Love Lamp, laid on the row
+import { passOf, findPass, BATTLE_PASS_STATUS, unlockPass, buyPass } from './battlePass.js';   // STOREFRONT: the Battle Pass - the account's pass and a deed's find; PASS-PANELS: a track opened and an item bought
+import { claimMaul, SEASON_MAUL_STATUS } from './seasonClaim.js';   // AUDIT LANE 5: the Resonant Maul's day
 import { claimQl, QL_STATUS } from './questlines.js';   // QL12: a questline's step claimed - what the service witnessed, paid
 import { voteHome } from './homeVotes.js';   // HOME-VOTE: a town's word on a player's house
 import { claimHome, releaseHome, setHomeEntry, homesInTown, homesOf, setHomeLook, homeLayoutsKept, arenaMoveHome, arenaMovesOf, arenaMoveSeen, holdDeed, inheritHome } from './homes.js';   // HOME1: the online homes' routes; HOME-LOOK: its outside; WD3: the towns' layouts; ARENA4b: the homes the arena displaced, moved; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held
@@ -295,6 +297,7 @@ import { homeTransfer } from './homeTransfer.js';   // a house offered to one ac
 import { roomsOf, offerRoom, withdrawRoom, rentRoom, collectRent } from './rent.js';   // HOME-RENT: a home's rooms, rented
 import {
   foundGuild, guildOf, invitesOf, inviteToGuild, answerInvite, leaveGuild, removeFromGuild, rankGuildMember, renameGuildRanks,
+  setGuildPowers, requestToJoin, withdrawJoinRequest, answerJoinRequest,   // GUILD-RANKS, GUILD-REQUESTS
   depositToGuild, withdrawFromGuild, handOverGuild, disbandGuild, guildBadgeOf, mintMemberOf,
   renameGuild,   // GUILD2a
 } from './guilds.js';   // GUILD1: the guilds' routes; GUILD1c: the guild a token carries
@@ -370,17 +373,22 @@ import { staffRoute, STAFF_STATUS, STAFF_SESSION_HEADER, auditStatement } from '
 import { staffMessagesFor, staffMessageOk } from './staffMessage.js';   // STAFF-PANEL5-MESSAGE: the game's two doors
 import { hiddenToken, takeHiddenSeen } from './staffHidden.js';   // STAFF-PANEL5-HIDDEN: a hidden staff member's token, and a private home it entered
 import { HIDDEN_SEEN_PATH, HIDDEN_SEEN_MAX_BYTES, HIDDEN_SEEN_SIG_HEADER } from '../../src/net/hiddenSeen.js';
-import { discordSigned, discordInteraction, DISCORD_BODY_MAX } from './discord.js';   // SAFE8: the moderators' queue in Discord
+import { discordSigned, discordInteraction, DISCORD_BODY_MAX } from './discord.js';
+import { guildShopOf, buyGuildWare, guildArmsOf } from './guildShop.js';   // GUILD-SHOP: the guild shop, in silver; every guild's arms by its tag
+import { submitGuildLogo, withdrawGuildLogo, clearGuildLogo, guildLogoBytes } from './guildLogos.js';   // GUILD-LOGO: a guild's own logo, reviewed on Discord
+import { GUILD_LOGO_BODY_MAX, guildLogoPathOf } from '../../src/net/guild/guildLogoLaw.js';   // SAFE8: the moderators' queue in Discord
 import { FEED_MAX_BYTES, FEED_SIG_HEADER } from '../../src/net/safety/chatFeed.js';   // SAFE5: the relay's feed of public lines
 import { heartbeat } from './heartbeat.js';   // SCALE4c: one request for a tab's three clocks
 import { ADMIT_ROUTES, admitWait } from './admit.js';   // ADMIT-LINE: the sign-in line
 export { AdmitGate } from './admit.js';   // ADMIT-LINE: the line's Durable Object (wrangler.toml binds it from this module)
 import {
-  patreonLinkOn, openPatreon, sealPatreon, patreonExchange, patreonIdentity, linkPatreon, unlinkPatreon, patreonWebhook,
+  patreonLinkOn, openPatreon, sealPatreon, patreonExchange, patreonIdentity, linkPatreon, unlinkPatreon, patreonWebhook, patreonScopeOk, patreonCampaignOf, patreonCentsPayable,
   patreonCardOf, pledgeTitles, patreonHtml, patreonPage, patreonConfirmPage, patreonLinkedPage,
   PATREON_PAGES, PATREON_TICKET_S, PATREON_HOOK_MAX_BYTES, PATREON_CALLBACK_PATH,
 } from './patreon.js';   // PATREON-LINK: a patron's own Patreon, linked
-import { SHOP_OPEN_ROUTES, SHOP_WEBHOOK_PATH, SHOP_HOOK_MAX_BYTES, shopDoor, shopCardOf } from './shop.js';   // SHOP: the shop's doors, and its card on the account read
+import { SHOP_OPEN_ROUTES, SHOP_WEBHOOK_PATH, SHOP_HOOK_MAX_BYTES, shopDoor, shopCardOf, closeStale } from './shop.js';   // SHOP: the shop's doors, and its card on the account read
+import { aurumCardOf, buyWare, AURUM_STATUS, aurumOpenFor } from './aurum.js';   // AURUM: the balance, the day's deals and a ware bought
+import { claimCache, AURUM_CACHE_STATUS } from './aurumCache.js';   // AURUM-CACHES: a cache claimed
 
 // THIS MODULE EXPORTS `default` AND NOTHING ELSE, and that is a
 // runtime requirement rather than a preference: in a module Worker
@@ -517,6 +525,10 @@ const GUILD_STATUS = Object.freeze({
   'guild-writ-escrow': 409,   // AUDIT 31 A15: a closed writ's escrow waiting on a full treasury
   'guild-contracts': 409,   // AUDIT SILVER-WAYS B3: a guild with a contract standing does not go (its siblings' conflict, never a bad request)
   'guild-rate': 429,
+  // GUILD-RANKS: a powers table the law refuses; GUILD-REQUESTS: no such request, no guild of that tag, the guild's own
+  // invitation standing, the character's or the guild's list full, the asker joined elsewhere meanwhile
+  'bad-powers': 400, 'no-request': 404, 'no-guild-tag': 404, 'guild-invited': 409, 'guild-requests-max': 409, 'guild-requests-full': 409, 'guild-request-joined': 409,
+  'guild-requested': 409, 'guild-ranks-moved': 409, 'vault-grant-over': 403,   // AUDIT GUILD-RANKS B1, A5, A2
   // GUILD1d (Seats-Arc 8): the hall - a building somebody owns, the guild's one hall already held, none held, one moved
   // under its sale, a guild kept from going by it; and the heraldry - the same again, changed meanwhile, the Drakes short
   'home-taken': 409, 'guild-hall-have': 409, 'guild-hall-moved': 409, 'guild-hall': 409, 'guild-hall-none': 404, 'home-rate': 429,
@@ -529,7 +541,7 @@ const GUILD_STATUS = Object.freeze({
   // GUILD2a: a new name - the same as the old, a word the filter refuses, too soon after the last, a siege week, the
   // realm's gold short, moved under it; GUILD2b: the vault - the standing short, the day's limit, full, empty, moved,
   // a piece the record does not hold or may not leave, a guild kept from going by its vault
-  'guild-rename-same': 409, 'guild-name-word': 400, 'guild-rank-word': 400, 'guild-rename-soon': 409, 'guild-rename-siege': 409, 'guild-rename-gold': 409, 'guild-rename-moved': 409,
+  'guild-rename-same': 409, 'guild-name-word': 400, 'guild-rank-word': 400, 'guild-rename-soon': 409, 'guild-rename-siege': 409, 'guild-rename-silver': 409, 'no-ware': 400, 'guild-ware-held': 409, 'guild-ware-max': 409, 'marks-short': 409, 'guild-rename-moved': 409,
   'guild-vault-rank': 403, 'guild-vault-limit': 409, 'guild-vault-full': 409, 'guild-vault-empty': 404, 'guild-vault-moved': 409, 'vault-goods': 409, 'guild-vault': 409,
   'realm-only': 400, 'bad-vault-item': 400, 'bad-vault-count': 400, 'bad-vault-slot': 400, 'bad-vault-grant': 400,
   'guild-seat': 409, 'guild-battle': 409,   // SEAT1c: a guild holding a Charter, or named in a battle still to come, does not go
@@ -542,6 +554,9 @@ const GUILD_STATUS = Object.freeze({
   // of the guild's to give up, the treasury short
   'seats-closed': 403, 'bad-rid': 400, 'castle-none': 404, 'castle-not-held': 409, 'castle-taken': 409, 'castle-not-yours': 404, 'guild-marks-short': 409,
   'seats-settling': 503,   // AUDIT DOMAINS S6: a castle act while another holds the Turning - asked again in a moment
+  // GUILD-LOGO: a review already under way, none to withdraw, a picture of the wrong size, shape or kind
+  'guild-ware-hall': 409, 'guild-ware-none': 409,   // GUILD-SHOP: a guild's own furniture - its hall alone, its stock spent
+  'logo-pending': 409, 'logo-soon': 429, 'guild-logo': 409, 'logo-none': 404, 'logo-bytes': 400, 'logo-type': 400, 'logo-square': 400, 'logo-side': 400,
 });
 /** MARKS1: each Marks refusal's status - not this account's (a guest, the switch, a rank, a developer's; AUDIT 625 S1:
  *  the finds of an account not yet a week registered) 403, no guild 404, short or capped 409, the hour's acts spent
@@ -871,7 +886,8 @@ const service = {
     const slot = savePathOf(path);
     const realmSlot = realmPathOf(path);   // REALM P1: a realm character's save, matched as a save slot is
     const poiPath = poiPathOf(path);   // POI-1: the POI store's paths, matched the same way
-    if (!ROUTES.has(path) && !slot && !realmSlot && !poiPath) return no('not-found', 404, origin);
+    const logoPath = guildLogoPathOf(path);   // GUILD-LOGO: a guild's logo, by its id
+    if (!ROUTES.has(path) && !slot && !realmSlot && !poiPath && !logoPath) return no('not-found', 404, origin);
 
     if (!env.DB) return no('no-database', 503, origin);
     // ADMIT-LINE (admit.js): A SIGN-IN TAKES ITS PLACE IN THE LINE before it costs the database a statement - the open
@@ -932,13 +948,14 @@ const service = {
           if (!player?.handle) return page(PATREON_PAGES.account, 403);
           const token = await patreonExchange(outbound, env, code, `${url.origin}${PATREON_CALLBACK_PATH}`);
           if ('error' in token) return page(PATREON_PAGES.down, 502);
-          const who = await patreonIdentity(outbound, token.token);
+          const who = await patreonIdentity(outbound, token.token, patreonCampaignOf(env));
           if ('error' in who) return page(PATREON_PAGES.down, 502);
+          const o = patreonScopeOk(token.scope) ? 1 : 0, aurum = aurumOpenFor(player, env) ? patreonCentsPayable(who, !!o, env) ?? 0 : 0;   // AUDIT PATRON-AURUM H1, A1
           // NOTHING IS WRITTEN HERE. The page names the game account the state did, and the yes carries a sealed ticket -
           // so a link somebody else started is read by the patron before it can be finished.
           const from = await db.prepare('SELECT handle FROM players WHERE patreon_user = ?1 AND id <> ?2').bind(who.user, player.id).first();
-          const ticket = await sealPatreon('ticket', { p: player.id, u: who.user, k: token.token, x: nowS + PATREON_TICKET_S }, env, { subtle, rand });
-          return patreonHtml(patreonConfirmPage({ handle: player.handle, name: who.name, titles: pledgeTitles(who.tiers, who.status, env), ticket, from: from?.handle ?? null }));
+          const ticket = await sealPatreon('ticket', { p: player.id, u: who.user, k: token.token, o, x: nowS + PATREON_TICKET_S }, env, { subtle, rand });
+          return patreonHtml(patreonConfirmPage({ handle: player.handle, name: who.name, titles: pledgeTitles(who.tiers, who.status, env), ticket, from: from?.handle ?? null, aurum }));
         }
         // /v1/patreon/confirm - the page's own form
         if (request.method !== 'POST') return no('method', 405, origin);
@@ -947,13 +964,13 @@ const service = {
         if (!ticket || typeof ticket.k !== 'string') return page(PATREON_PAGES.expired, 400);
         // THE YES WRITES WHAT PATREON SAYS NOW - asked again with the patron's own token, not what the page showed: a
         // pledge cancelled between the page and the press holds nothing, and a yes pressed twice is Patreon asked twice.
-        const who = await patreonIdentity(outbound, ticket.k);
+        const who = await patreonIdentity(outbound, ticket.k, patreonCampaignOf(env));
         if ('error' in who) return page(PATREON_PAGES.down, 502);
         if (who.user !== ticket.u) return page(PATREON_PAGES.expired, 400);   // the token answers for another Patreon account now
-        const r = await linkPatreon(ctx, { p: ticket.p, u: who.user, t: who.tiers.join(','), s: who.status });
+        const row = await db.prepare('SELECT id, handle FROM players WHERE id = ?1').bind(ticket.p).first();
+        const r = await linkPatreon(ctx, { p: ticket.p, u: who.user, t: who.tiers.join(','), s: who.status, c: aurumOpenFor(row, env) ? patreonCentsPayable(who, ticket.o === 1, env) : null });   // AUDIT PATRON-AURUM H1, A1
         if ('error' in r) return page(PATREON_PAGES.account, 403);
-        const row = await db.prepare('SELECT handle FROM players WHERE id = ?1').bind(ticket.p).first();
-        return patreonHtml(patreonLinkedPage({ handle: row?.handle ?? '', titles: pledgeTitles(who.tiers, who.status, env) }));
+        return patreonHtml(patreonLinkedPage({ handle: row?.handle ?? '', titles: pledgeTitles(who.tiers, who.status, env), aurum: r.aurum }));
       }
 
       // SHOP (shop.js): THE SHOP'S DOORS, no session - each proven by what it carries, answered before the JSON ladder as
@@ -1077,7 +1094,7 @@ const service = {
       // PRIVATE-REPORT: and a report's words, to theirs (reportLaw.js REPORT_BODY_BYTES). LOST-SPOILS: and a floor's leftovers,
       // to theirs (lostLaw.js LOST_BODY_MAX - the largest spoils send past 4 KiB)
       const body = request.method === 'POST'
-        ? await readBody(request, path === '/v1/realm/lineage' ? LINEAGE_BODY_MAX : path === '/v1/realm/trade' ? REALM_TRADE_BODY_MAX : path === '/v1/homes/decor/batch' ? DECOR_BATCH_BYTES : path === '/v1/safety/report' ? REPORT_BODY_MAX : path === '/v1/report/send' ? REPORT_BODY_BYTES : path === '/v1/post/lost' ? LOST_BODY_MAX : MAX_BODY_BYTES) : {};   // SAFE3: a report's stamped lines; DECOR-BATCH: a home's Confirm; LOST-SPOILS
+        ? await readBody(request, path === '/v1/realm/lineage' ? LINEAGE_BODY_MAX : path === '/v1/realm/trade' ? REALM_TRADE_BODY_MAX : path === '/v1/homes/decor/batch' ? DECOR_BATCH_BYTES : path === '/v1/safety/report' ? REPORT_BODY_MAX : path === '/v1/report/send' ? REPORT_BODY_BYTES : path === '/v1/guilds/logo' ? GUILD_LOGO_BODY_MAX : path === '/v1/post/lost' ? LOST_BODY_MAX : MAX_BODY_BYTES) : {};   // SAFE3: a report's stamped lines; DECOR-BATCH: a home's Confirm; LOST-SPOILS
       if (body === undefined && path === '/v1/realm/lineage') return no('lineage-too-large', 413, origin);
       if (body === undefined && path === '/v1/homes/decor/batch') return no('too-large', 413, origin);   // DECOR-BATCH: past 128 KiB, before a session is read
       if (!body) return no('body', 400, origin);
@@ -1115,6 +1132,16 @@ const service = {
           const r = await getPoiAsset({ ...ctx, db: env.DB, bucket: env.SAVES }, poiPath.sha, { builder: false });
           return 'error' in r ? no(r.error, r.error === 'no-storage' ? 503 : 404, origin) : poiAssetResponse(r, origin);
         }
+      }
+      // GUILD-LOGO: A LOGO'S PICTURE NEEDS NO SESSION - the Discord card shows it under review, and every player draws it
+      // once approved. Bounded per address as a POI asset is; an approved one kept a day, one under review never kept.
+      if (logoPath) {
+        if (request.method !== 'GET') return no('method', 405, origin);
+        const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+        if (overAccountRate(`logo:${ip}`, nowS, POI_OPEN_MAX, ACCOUNT_WINDOW_S)) return no('rate', 429, origin);
+        const r = await guildLogoBytes({ db: env.DB, bucket: env.SAVES }, logoPath);
+        if ('error' in r) return no(r.error, r.error === 'no-storage' ? 503 : 404, origin);
+        return new Response(r.bytes, { status: 200, headers: { 'content-type': r.type, 'access-control-allow-origin': origin, 'cache-control': r.approved ? 'public, max-age=86400' : 'no-store', 'x-content-type-options': 'nosniff' } });
       }
       // ═══ AUDIT-ACC F13: A CREDENTIAL DOES NOT GO IN A URL ══════
       //
@@ -1275,11 +1302,13 @@ const service = {
         const rb = seats && renownCharacterOk(body.character) ? await ribbonOf(ctx.db, who.player.id, body.character, seasonOf(seatWeekOf(nowS * 1000), zero), member) : null;
         const wardrobe = {
           ...seatT,
-          g: [...glyphsOf(who.player, env, nowS), ...(seatBadge?.glyphs ?? [])],
+          g: glyphsInOrder([...glyphsOf(who.player, env, nowS), ...(seatBadge?.glyphs ?? [])]),   // STOREFRONT (the wire audit): in the order, and once each, the token's mask hands the room
           au: auraWorn(who.player, env),   // WB9g: the aura worn, the title's law - absent for none; AEGIS: a list's read off the config
           pi: iconWorn(who.player, env),   // WITCH1: the profile icon worn, the aura's law - absent for none (the character's face)
           ak: armoryWorn(who.player, env),   // ARMORY: the Aura Armory's kit worn, the aura's law - absent for none
+          fx: effectsWorn(who.player, env),   // STOREFRONT: the effects kit worn (a kill effect, a portal skin, a mount look) - absent for none
           ...(rb ? { rb } : {}),
+          sc: sailclothHeld(who.player, env),   // AUDIT GUILD-SHOP S2: the Guild Sailcloth held - a peer's ship flies its cloth only so
         };
         // GLYPH-WEAR: the glyphs taken off ride BESIDE `g`, never out of it - `g` is what is true and what the relay's
         // rights read (/red, /dm); `gx` is paint, which every face that draws a badge leaves out. Absent for none.
@@ -1367,6 +1396,7 @@ const service = {
           aura: wardrobe.au ?? null,   // WB9g: the aura at my own feet, beside the token as the title is
           icon: wardrobe.pi ?? null,   // WITCH1: the profile icon in my own portrait well, beside the token as the aura is
           armory: wardrobe.ak ?? null,   // ARMORY: the kit on my own body, beside the token as the aura is
+          effects: wardrobe.fx ?? null,   // STOREFRONT: my kill effect, portals' skin and mount's look, beside the token as the kit is
           ribbon: wardrobe.rb ?? null,   // SEASON1 part two: the ribbon under my own name, beside the token as the aura is
           house: houseWorn ?? null,   // LEGACY7: the house my token wears, beside it as the ribbon is
           expiresAt: nowS + MAX_TTL_S,
@@ -1400,6 +1430,8 @@ const service = {
           // pledge holds, and the link to follow (a state sealed for this account, under the origin that served this)
           patreon: await patreonCardOf(who.player, env, { subtle, rand, nowS, origin: url.origin }),
           shop: await shopCardOf(who.player, env, { subtle, rand, nowS, origin: url.origin }),   // SHOP: the wares, what is held, and a Buy link each
+          pass: await passOf(ctx, who.player, env).then((c) => ('error' in c ? null : c)),   // STOREFRONT: the season's card - a guest's, or none, null
+          aurum: await aurumCardOf(ctx, who.player, env),   // AURUM: the balance, the day's wares, the week's deeds - a guest's null
         }, 200, origin);
       }
 
@@ -1872,7 +1904,7 @@ const service = {
           if (!('error' in r)) return json(await yardOrderOf(r, settled, body?.mapId, who.player.id, env, subtle, nowS), 200, origin);   // YC2: a yard that moved, said to every page online
           const said = realmNo(r);
           if (said) return said;
-          const status = r.error === 'decor-cap' || r.error === 'yard-cap' || r.error === 'decor-taken' || r.error === 'guild-treasury-full' || r.error === 'vendor-stocked' || r.error === 'decor-rev' || r.error === 'decor-holds' || r.error === 'decor-shut' || r.error === 'decor-held' || r.error === 'decor-busy' || r.error === 'decor-lapsed' ? 409   // RPT1026-CHESTGOLD: a hold run out; GUILD1d: a hall piece's half back, into a full treasury; HOME-VENDOR: a stocked trader stays; DECOR-BATCH: a stale revision, or a chest that still holds goods; DECOR-ACCESS: shut, held, or open to someone else
+          const status = r.error === 'decor-cap' || r.error === 'yard-cap' || r.error === 'decor-taken' || r.error === 'guild-treasury-full' || r.error === 'vendor-stocked' || r.error === 'decor-rev' || r.error === 'decor-holds' || r.error === 'decor-shut' || r.error === 'decor-held' || r.error === 'decor-busy' || r.error === 'decor-lapsed' || r.error === 'guild-ware-hall' || r.error === 'guild-ware-none' ? 409   // GUILD-SHOP: a guild's own piece out of its hall, or its stock spent; RPT1026-CHESTGOLD: a hold run out; GUILD1d: a hall piece's half back, into a full treasury; HOME-VENDOR: a stocked trader stays; DECOR-BATCH: a stale revision, or a chest that still holds goods; DECOR-ACCESS: shut, held, or open to someone else
             : r.error === 'decor-rate' ? 429
               : r.error === 'no-home' || r.error === 'no-decor' ? 404
                 : r.error === 'no-storage' || r.error === 'server' ? 503 : 400;
@@ -1969,6 +2001,7 @@ const service = {
           return 'error' in r ? no(r.error, GUILD_STATUS[r.error] ?? 400, origin) : json(await guildOrdersOf(r, who.player.id, env, subtle, nowS), 200, origin);
         }
         if (path === '/v1/guilds/invites') return json(await invitesOf(ctx, who.player), 200, origin);
+        if (path === '/v1/guilds/arms') return json(await guildArmsOf(ctx, body), 200, origin);   // GUILD-SHOP: any session's - a peer's arms by its tag
         if (accountKind(who.player) !== 'linked') return no('guilds-need-account', 403, origin);
         const castleAct = (f) => async (c, p, b) => (seatsOpenFor(p, env) && (await settleDueOnce(c.db, nowS, seasonZeroOf(env.SEASON_ZERO_WEEK), domainsWeekOf(env.DOMAINS_WEEK))).pending ? { error: 'seats-settling' } : f(c, p, b));
         const act = {
@@ -1976,6 +2009,8 @@ const service = {
           '/v1/guilds/leave': leaveGuild, '/v1/guilds/remove': removeFromGuild, '/v1/guilds/rank': rankGuildMember,
           '/v1/guilds/ranks': renameGuildRanks, '/v1/guilds/deposit': depositToGuild, '/v1/guilds/withdraw': withdrawFromGuild,
           '/v1/guilds/handover': handOverGuild, '/v1/guilds/disband': disbandGuild,
+          // GUILD-RANKS: what each rank may do; GUILD-REQUESTS: a request to join sent, taken back and answered
+          '/v1/guilds/powers': setGuildPowers, '/v1/guilds/request': requestToJoin, '/v1/guilds/request/withdraw': withdrawJoinRequest, '/v1/guilds/request/answer': answerJoinRequest,
           // GUILD1d: the hall bought and sold from the treasury, who may walk in, and the heraldry (halls.js)
           '/v1/guilds/hall/buy': buyHall, '/v1/guilds/hall/sell': sellHall, '/v1/guilds/hall/entry': setHallEntry, '/v1/guilds/heraldry': setHeraldry,
           // GUILD1e: the guild's own board - its notes, its members' alone (guildBoard.js, the Notice Board's switch)
@@ -1988,9 +2023,11 @@ const service = {
           // DOMAINS S6: after the Turnings due, as every seat act is (a castle bought in the minutes a week has turned
           // unsettled bought a crown that Turning was about to lapse, and lost half its price at once)
           '/v1/guilds/castle/buy': castleAct(buyCastle), '/v1/guilds/castle/sell': castleAct(sellCastle),
+          // GUILD-SHOP (bible/11-Multiplayer/Guild-Shop.md): the shop and a ware bought in silver; a logo sent for review and withdrawn
+          '/v1/guilds/shop': guildShopOf, '/v1/guilds/shop/buy': buyGuildWare, '/v1/guilds/logo': submitGuildLogo, '/v1/guilds/logo/withdraw': withdrawGuildLogo, '/v1/guilds/logo/clear': clearGuildLogo,
         }[path];
         if (!act) return no('not-found', 404, origin);
-        const r = await act({ ...ctx, env, bucket: env.SAVES }, who.player, body);   // REALM P2.2: a realm character's record is in R2; AUDIT 28 M5: the switch says whether the Marks show
+        const r = await act({ ...ctx, env, bucket: env.SAVES, self: url.origin }, who.player, body);   // GUILD-LOGO: `self` the service's own origin, a logo's address; REALM P2.2: a realm character's record is in R2; AUDIT 28 M5: the switch says whether the Marks show
         if (!('error' in r)) return json(await homeOrdersOf(await guildOrdersOf(r, who.player.id, env, subtle, nowS), who.player.id, env, subtle, nowS), 200, origin);   // QUEST-HOME: a hall bought or sold
         if (r.error === 'seq') return json({ error: 'seq', seq: r.seq }, 409, origin);   // REALM P2.2: the service's own, as a checkpoint's
         if (r.error === 'home-layout') return json({ error: 'home-layout', layout: r.layout ?? null }, 409, origin);   // AUDIT PRE-MERGE 1003 WD1: the town's layout, as /v1/homes/claim answers it
@@ -1998,6 +2035,7 @@ const service = {
         // next new name may come - each dropped here, so the page could say neither
         if ((r.error === 'guild-name-word' || r.error === 'guild-rank-word') && typeof r.word === 'string') return json({ error: r.error, why: r.word }, GUILD_STATUS[r.error], origin);   // TEXT-F1: a rank's name's word too
         if (r.error === 'guild-rename-soon' && Number.isSafeInteger(r.at)) return json({ error: r.error, at: r.at }, GUILD_STATUS[r.error], origin);
+        if (r.error === 'logo-soon' && Number.isSafeInteger(r.at)) return json({ error: r.error, at: r.at }, GUILD_STATUS[r.error], origin);   // AUDIT GUILD-SHOP S3: and when the next logo may go
         // GUILD3c (bible/11-Multiplayer/Guilds-Made-Plain.md): a leave's or a disbanding's refusal names everything that holds the guild
         if (Array.isArray(r.keeps)) return json({ error: r.error, keeps: r.keeps }, GUILD_STATUS[r.error] ?? 400, origin);
         return no(r.error, GUILD_STATUS[r.error] ?? 400, origin);
@@ -2323,6 +2361,13 @@ const service = {
         return r.error ? no(r.error, r.error === 'armory-not-held' ? 403 : 400, origin) : json(r, 200, origin);
       }
 
+      if (path === '/v1/account/effect' && request.method === 'POST') {
+        // STOREFRONT: WEAR ONE EFFECT IN ITS SLOT (a kill effect, a portal skin, a mount look), OR BARE IT - the armory's door
+        // a slot at a time. 403 for one not held, as the aura's; 400 for a slot or key the service does not know.
+        const r = await equipEffect(ctx, await withSeatTitles(ctx, who.player, env), env, body.slot, body.key ?? null);
+        return r.error ? no(r.error, r.error === 'not-held' ? 403 : 400, origin) : json(r, 200, origin);
+      }
+
       if (path === '/v1/account/icon' && request.method === 'POST') {
         // WITCH1: WEAR ONE PROFILE ICON, OR NONE - the aura's door, in the portrait well. 403 for `not-held`, as the aura's.
         const r = await equipIcon(ctx, await withSeatTitles(ctx, who.player, env), env, body.icon ?? null);
@@ -2347,7 +2392,60 @@ const service = {
         }[path];
         if (!act) return no('not-found', 404, origin);
         const r = await act();
+        if (progressRoute) await progressSpent(ctx, who.player.id, path, r);   // INT17: a find's ask answered (AUDIT PASS 3)
         if ('error' in r) return json({ error: r.error, ...(Number.isSafeInteger(r.cakes) ? { cakes: r.cakes } : {}), ...(Number.isSafeInteger(r.bowls) ? { bowls: r.bowls } : {}) }, FEST_STATUS[r.error] ?? 400, origin);
+        return json(r, 200, origin);
+      }
+
+      // ═══ STOREFRONT: THE BATTLE PASS ═══════════════════════════════════
+      //
+      // bible/06-Systems/Battle-Pass.md: the account's pass (its tracks, items, day and challenges), and a deed's find -
+      // AUDIT PASS 3: a progression claim, its seat asked at the door (progress.js PROGRESS_ROUTES)
+      if (path === '/v1/pass/mine' || path === '/v1/pass/find') {
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const r = path === '/v1/pass/mine' ? await passOf(ctx, who.player, env) : await findPass(ctx, who.player, body, env);
+        if (progressRoute) await progressSpent(ctx, who.player.id, path, r);   // INT17: an ask answered
+        if ('error' in r) return json({ error: r.error }, BATTLE_PASS_STATUS[/** @type {keyof typeof BATTLE_PASS_STATUS} */ (r.error)] ?? 400, origin);
+        return json(r, 200, origin);
+      }
+
+      if (path === '/v1/pass/unlock' || path === '/v1/pass/buy') {
+        // PASS-PANELS (bible/06-Systems/Battle-Pass.md): THE PREMIUM TRACK OPENED, AND AN ITEM BOUGHT, FOR AURUM - one
+        // guarded batch each (battlePass.js); the answer is the wardrobe after it, the Aurum's card and the pass's card.
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const r = path === '/v1/pass/unlock' ? await unlockPass(ctx, who.player, body, env) : await buyPass(ctx, who.player, body, env);
+        if ('error' in r) return json({ error: r.error, ...(Number.isSafeInteger(r.balance) ? { balance: r.balance } : {}) }, BATTLE_PASS_STATUS[/** @type {keyof typeof BATTLE_PASS_STATUS} */ (r.error)] ?? 400, origin);
+        const after = await withSeatTitles(ctx, r.row, env);
+        return json({ ...r, row: undefined, ...accountWardrobe(after, env, nowS), aurum: await aurumCardOf(ctx, after, env), pass: await passOf(ctx, after, env) }, 200, origin);
+      }
+
+      if (path === '/v1/season/maul') {
+        // AUDIT LANE 5 (bible/06-Systems/Battle-Pass.md section 6): THE RESONANT MAUL'S DAY - a yes once a UTC day an account,
+        // inside the Heart stage; the page mints the Maul on it alone (seasonClaim.js).
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const r = await claimMaul(ctx, who.player, body);
+        if ('error' in r) return json({ error: r.error }, SEASON_MAUL_STATUS[/** @type {keyof typeof SEASON_MAUL_STATUS} */ (r.error)] ?? 400, origin);
+        return json(r, 200, origin);
+      }
+
+      if (path === '/v1/aurum/buy') {
+        // AURUM (bible/06-Systems/Aurum.md): A WARE BOUGHT FOR AURUM - AURUM-ONLY, any ware but a pack - one transaction
+        // (aurum.js buyWare); the answer is the wardrobe after it and the Aurum's card, so the window shows the ware held
+        // and the balance at once.
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const r = await buyWare(ctx, who.player, body, env);
+        if ('error' in r) return json({ error: r.error, ...(Number.isSafeInteger(r.balance) ? { balance: r.balance } : {}), ...(Number.isSafeInteger(r.price) ? { price: r.price } : {}) }, AURUM_STATUS[/** @type {keyof typeof AURUM_STATUS} */ (r.error)] ?? 400, origin);
+        await closeStale(ctx, env, (u, i) => globalThis.fetch(u, i), who.player.id);   // AUDIT-STOREFRONT III A6: a money page for it left open
+        const after = await withSeatTitles(ctx, r.row, env);
+        return json({ ok: true, ware: r.ware, spent: r.spent, ...accountWardrobe(after, env, nowS), aurum: await aurumCardOf(ctx, after, env) }, 200, origin);
+      }
+
+      if (path === '/v1/aurum/cache') {
+        // AURUM-CACHES (bible/06-Systems/Aurum.md section 3a): AN AURUM CACHE CLAIMED - one ledger line a cache an account,
+        // under the day's bound (aurumCache.js claimCache)
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const r = await claimCache(ctx, who.player, body, env);
+        if ('error' in r) return json({ error: r.error }, AURUM_CACHE_STATUS[/** @type {keyof typeof AURUM_CACHE_STATUS} */ (r.error)] ?? 400, origin);
         return json(r, 200, origin);
       }
 

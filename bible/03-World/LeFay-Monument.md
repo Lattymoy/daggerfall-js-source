@@ -1,11 +1,13 @@
-# The Monument to Julian LeFay (LEFAY1, HOLD-MONUMENT)
+# The Monuments to Julian LeFay and Patrick Stewart (LEFAY1, GOTHWAY-MONUMENT, STEWART-MONUMENT)
 
 > DF-LOOK (2026-10-15, `01-Overview/DF-Art.md`): the monument's stone and its plaque are painted here again (DF-ART's swap to Daggerfall's records reverted), laid on in Daggerfall's colours as they go up - grained and snapped to the player's own ART_PAL.COL (`world/dfLook.js`).
 
 THE PORT'S OWN (2026-10-08). Asked: *"In the middle of gothway garden, I want to build and implement a monument to
 Julian LeFay, one of the creators of daggerfall, with the ability of people to interact and throw flowers on it."*
-Moved (HOLD-MONUMENT, 2026-10-14, Mac: *"Move julian monument to outside of privateers hold"*): it stands outside
-Privateer's Hold now, the first ground every new character walks out onto, and no longer in Gothway Garden.
+Moved (HOLD-MONUMENT, 2026-10-14, Mac: *"Move julian monument to outside of privateers hold"*) outside Privateer's Hold,
+then back (GOTHWAY-MONUMENT, 2026-10-30, the owner: *"move the Julian monument to a more player facing location in
+gothway. Where players mostly populate"*) to Gothway Garden's north entrance. A second (STEWART-MONUMENT, the same day:
+*"add a Patrick Stewart monument in the Imperial City next to the gold white tower"*) stands by the White-Gold Tower.
 
 Julian LeFay (1965 - 2025) led Daggerfall as its creative director and programmer, and is remembered as the father of
 The Elder Scrolls. Daggerfall has no monument to anyone, so nothing here has a DFU original to be faithful to: it is a
@@ -13,33 +15,30 @@ departure, Ledger A (LEFAY).
 
 ## What stands
 
-**Where (HOLD-MONUMENT).** Outside Privateer's Hold, the Daggerfall region's dungeon every new character climbs out of
-(`world/lefayMonument.js` `isLefayTown`: the region by its name in `REGION_NAMES`, the place by its own - a pack's read
-keeps both; the constant keeps its LEFAY1 name, `LEFAY_TOWN`, so every host and the save read it as they did). Its
-exterior is the one 1x1 block `CUSTAA30.RMB`. Two things the block's automap does not draw are closed before the spot is
-looked for (`lefaySpotOf`'s `exit` and `camp`): THE WAY OUT OF THE HOLD (AUDIT FIVE-ASKS B1/B2) - the exit landing every
-character climbing out of the dungeon is stood on (`player/enterExit.js` `dungeonEntranceLanding` over the block's own
-dungeon-entrance door, measured by both exterior hosts as they stand it - `lefayExitOf`), closed `MONUMENT_LANDING_M`
-(3.2 m) either side of the line from `MONUMENT_DOOR_BACK_M` (4 m) behind it, the doorway, to `MONUMENT_WALK_M` (8 m)
-ahead of it, the walk out - and World of Daggerfall's camp round the Hold (`world/worldOfDaggerfall/wodPrivateersHold.js` `HOLD_MODELS`,
-handed in by both exterior hosts; its ruins `MONUMENT_RUIN_KEEP_M`, 8 m, the rest `MONUMENT_CAMP_KEEP_M`, 4 m), closed
-whether the mod stands the camp or not, so a client with it off stands the monument where one with it on does. The
-search starts at the exit landing (`lefaySpot`'s `from`), so it stands beside the walk out - the first thing a new
-character sees. A block with no dungeon door measured falls back to its start marker (the archive-199 record-10 editor
-flat, `world/locationEntrance.js` `locationStartMarkers` over `world/rmbFlats.js` `collectMiscFlats` - a dungeon's
-arrival never stands on it, B1), its landing closed, and with no marker to the grid's middle; a null spot is warned of
-in the console (B8). The Hold is no town (locationType 4, no wandering people): there is no people's navgrid to carve, and
-`carveLefay` stays for one that has. LEFAY1's law, which follows, is otherwise unchanged: the spot is the open ground
-nearest that start, read off the location's own navgrid
-(`world/city/cityNavigation.js`, DFU's CityNavigation carve: every automap byte a building, a tree or a lamp draws is closed,
-and the water with it): the nearest cell whose every cell centred within `MONUMENT_CLEAR_M` (5.8 m) of it is open - open
-ground to 5.6 m from its middle at the least, past the flowers' ring at its foot, and a ring of open cells round the
-people's carve (below) to walk round it by - each road cell under it
-costing `MONUMENT_ROAD_COST` (0.3 cells) of distance, so it stands on a green beside a street rather than across one
-where the town has a green (`lefaySpot`, `lefaySpotOf`). It is read on the enhanced water table always (the classic
-table walks the shallows), whichever lane a client plays. A function of the layout alone: every client stands it on the
-same spot. The wandering people's navgrid is closed within `MONUMENT_CARVE_M` (3.6 m) of it - the cells of its clear
-disc (`carveLefay`) - so they walk round it, a walker's sprite clear of the flowers at its foot.
+**Where (GOTHWAY-MONUMENT).** Gothway Garden's north entrance, where the road in from Privateer's Hold crosses the
+town's border: the first town every new character walks into, and the way GOTHWAY-NORTH stood its bounty boards for
+them (`11-Multiplayer/Wild-Zone.md`). `world/lefayMonument.js` `northEntrance` reads the town's own navgrid's last
+rows (`ENTRANCE_BAND_M`, 8 m): the run of road across them nearest the border's middle, else the widest open way in.
+`lefaySpotOf` closes that way, `MONUMENT_WAY_M` (3.2 m) either side of it and `MONUMENT_WAY_IN_M` (16 m) in, and
+stands the monument on the open ground nearest it. On the freeware that is cell (88, 188): 5.6 m inside the border,
+beside the road's west edge. With no way in it stands nearest the grid's middle, as LEFAY1 did.
+
+The spot is found before the town's yards are placed, so they keep `MONUMENT_KEEP_M` off it, and the people's navgrid
+is carved round it (`carveLefay`). The camp and exit code HOLD-MONUMENT used is gone with it.
+
+**Where the spot's law is LEFAY1's.** The navgrid is DFU's CityNavigation carve (`world/city/cityNavigation.js`): every
+automap byte a building, a tree or a lamp draws is closed, and the water with it, on the enhanced water table always
+(AUDIT LEFAY1 A3). The spot is the nearest cell whose every cell within `MONUMENT_CLEAR_M` (5.8 m) is open, each road
+cell under it `MONUMENT_ROAD_COST` (0.3 cells) further (`lefaySpot`). A function of the layout alone: every client
+stands it on one spot. The people's navgrid is closed within `MONUMENT_CARVE_M` (3.6 m) of it.
+
+**STEWART-MONUMENT.** Patrick Stewart gave Emperor Uriel Septim VII his voice in The Elder Scrolls IV: Oblivion, and
+Daggerfall's emperor is Uriel Septim VII. His monument is LeFay's stone with its own plaque (`STEWART_PLAQUE`, record
+5): PATRICK / STEWART on two large lines (one is too wide at twice the size), then THE VOICE OF / URIEL SEPTIM VII.
+It stands on the tower's plaza in the Imperial City's centre slice (`isStewartSlice`, slice 312): `STEWART_AT`, 25 m
+out from the rotunda's wall at bearing 80, north of the walk to the palace door (it faces east), 50 m from the
+arrivals' marker before the door. `stewartSpot` takes it into the slice's location frame (the city's middle is four
+blocks in each way). Its plaque names him and "The voice of Emperor Uriel Septim VII", with LeFay's rows. Ledger A.
 
 **What.** Three octagonal granite steps (corner radii 2.8, 2.15 and 1.5 m, tops at 0.3, 0.6 and 0.9 m, the lowest sunk
 0.4 m below the ground so a gentle slope never shows light under it), a marble pedestal (its base moulding, its die and
@@ -61,16 +60,16 @@ from the hand (0.35 m under the eye) on an 850 ms arc, 0.9 m over the line at it
 side (within 0.7 rad of the bearing to them): on the top step (35% of throws), the middle (30%), the lowest (20%) or the
 ground at its foot (15%) (`tossRest`, `flowerPlace`, `tossPoint`). At most one every 1.2 s. It is laid where it lands.
 
-**The tribute is the character's.** Each character keeps how many it laid and the newest 48 where they lay
-(`normalTribute`, `layFlower`; `systems/save/save.js` carries `lefayTribute` in the player's snapshot - a save from before
-it laid none). A pile laid stands there again after a load. NOTHING IS SENT: another player sees their own pile, not
+**The tribute is the character's.** Each character keeps how many it laid at each monument and the newest 48 where
+they lay (`normalTribute`, `layFlower`; `systems/save/save.js` carries `lefayTribute` and `stewartTribute` - a save from
+before it laid none). A pile laid stands there again after a load. NOTHING IS SENT: another player sees their own pile, not
 yours, and does not see your throw.
 
 **The press and the plaque.** In the street's one ray (`scenes/worldModes.js` `exteriorActivationTargets`, the
 `monumentTargets` both exterior hosts hand it), two boxes under one key - its steps, and its column from the cornice's
 square to its gilt point (`MONUMENT_BOXES`), so the air over its lower steps is not its own and a door seen past it is
 not pressed into it - each met at its stone when the ray enters it over air or the eye stands inside it (its collider
-bucket and its key are one name, `lefay:monument` - activate.js's CASTLE1 and DISC19-E laws), its reach a static NPC's
+bucket and its key are one name, `monument:<id>` - activate.js's CASTLE1 and DISC19-E laws), its reach a static NPC's
 (6.4 m); too far speaks DFU's refusal. The plaque (WORLD-HOVER) names it -
 "Monument to Julian LeFay", "1965 - 2025", "Father of The Elder Scrolls", and "You have laid N flowers here" once a
 character has - and lists two rows: **Throw flowers** and **Read the inscription**. A press does the lit row; with no
@@ -79,16 +78,15 @@ lie."), and anything else throws a flower ("You lay flowers for Julian LeFay.", 
 
 ## The four hosts
 
-- `scenes/world.js` - WIRED. The pixel's build finds the spot (`lefaySpotOf` over the laid-out place, on the enhanced
-  water table whatever the water switch says, the camp handed in - HOLD-MONUMENT) and keeps it on the pixel (`lefay`,
-  the location frame); a place with people would have their navgrid carved before they are made (the Hold has none). The pool (`scenes/lefayMonumentHost.js`) is made beside the Sigil Broker,
-  framed before the lights and the world pass, drawn in it, its flowers on the live flats' axis; taken down at a change
-  of place, a re-anchor and a load, and stood again by the next frame that finds Privateer's Hold built.
-- `scenes/exterior.js` - WIRED. The bench's Privateer's Hold (`?region=Daggerfall&loc=Privateer's Hold`): the same
-  pool on its fixed frame, the ground its one plane, the camp handed in as world.js hands it.
-- `scenes/worldModes.js` - WIRED for the press both exterior hosts share (the targets, the `lefay:` arm with the
-  too-far refusal and the plaque's lit row). Its interiors stand no street and no monument.
-- `scenes/dungeonContext.js` - stands no street; nothing of the monument reaches it.
+- `scenes/world.js` - WIRED. The pixel's build (`scenes/pixelBuild.js`) asks `monumentSpotOf` before the yards and
+  keeps the answer on the pixel (`monument`: its id and its spot, the location frame), a near view only. One pool a
+  monument (`scenes/lefayMonumentHost.js` `createMonuments`), made beside the Sigil Broker; `site(id)` finds the pixel
+  that stands it. Framed, drawn, its flowers on the live flats' axis; taken down at a change of place, a re-anchor and
+  a load. The words both share, and Stewart's, read through `t()` (`monument.*`).
+- `scenes/exterior.js` - WIRED. The bench's Gothway Garden (`?region=Daggerfall&loc=Gothway Garden`): the same pools on
+  its fixed frame. The bench cannot load the Imperial City's slices, so it never stands Stewart's (FLAGGED).
+- `scenes/worldModes.js` - WIRED for the press both exterior hosts share: the targets and the `monument:` key's arm.
+- `scenes/dungeonContext.js` - stands no street; nothing of the monuments reaches it.
 
 ## The pool's law
 
@@ -104,17 +102,13 @@ unseen, and the count still counts.
 
 ## Verification
 
-- `test/world/lefay1_monument.test.js` (21): the place (HOLD-MONUMENT: the Hold, and Gothway Garden no longer); the
-  Hold's spot (beside the exit landing and never on the way out - AUDIT FIVE-ASKS B1/B2 - or, with no door, beside its
-  start marker and never on its landing, clear of every model of the camp - and handed no camp,
-  among them; the camp closed only in a block of its name; no marker, the grid's middle; neither host closes the camp
-  only when the mod is on); the spot (the middle, round a building, beside a road, all road, none);
-  a laid-out town's spot equal to the people's own navgrid's on the enhanced lane; the carve; the stone's faces by picture and all wound
-  outward; the plaque's face (its picture's top-left at the plaque's top, on the viewer's left, on all four faces); the
-  art (deterministic, opaque, every letter drawn, every line fitting, the cut texels counted); a throw's rest and
-  flight; the tribute and its round trip through the save; the pool (its ground, bucket, boxes, recentre, its town gone,
-  no ground; held back from a body; the press's arms, the flight, the landing, the cooldown, the hover, a loaded pile,
-  dispose); and the wiring in the hosts and the save. Five more hold AUDIT LEFAY1's lenses B and C (below).
+- `test/world/lefay1_monument.test.js` (26): GOTHWAY-MONUMENT - the town by its names, the way in (`northEntrance`),
+  the spot beside it and never on it, and on the freeware Gothway Garden's own cell (88, 188), the Hold north of it
+  (ARENA2 only). STEWART-MONUMENT - the slice, the spot on the plaza's open stone, its frame back through
+  `imperialAnchorOf` from every block, both pools at once, his plaque, its letters and the save. LEFAY1's spot law,
+  carve, stone, art, throw, tribute and pool, as before.
+- `tools/mutants/gothway_monument.json`: 26 mutants, all dead. `tools/mutants/hold_monument.json` is RETIRED with the
+  Hold's spot.
 - `tools/mutants/lefay1.json`: 79 mutants, 79 dead (34 at the slice, 4 by lens A, 32 by lens B, 9 with lens C's fixes). Three more were
   run by lens B and left out as equivalent: the carve's bounds check (the clear disc is always in bounds and holds the
   carve's), `flowerPlace`'s ring fallback (an entry is normalised before it is placed) and `tossPoint`'s low clamp (a
@@ -166,11 +160,7 @@ NUDE-HOSTS names; each mended.
 
 ## Not done / open
 
-- **Not seen in the game with ARENA2.** CUSTAA30's real layout is not in this tree (HOLD-MONUMENT): where its start
-  marker and the spot fall, how the monument sits beside the Hold's entrance, whether the camp's keep radii (4 m, the
-  ruins 8 m - read off the camp's positions, not its models' bounds) hold it clear of every tent and ruin, and the TEXTURE.254 flowers' look on its steps are unverified by eye.
-  The spot's law is the town's own navgrid, so it cannot stand in a building or on water; whether a green near the
-  middle exists, or it stands on a road there, is the layout's.
-- **Online, nothing is shared.** Each character's pile is its own. A shared tally (every player's flowers at the one
-  monument) would ride the account service (a table and a cached read, the yards' pattern - `scenes/homeYards.js`) and
-  is not built.
+- **Not seen in the game.** Both spots are measured off the layouts (Gothway Garden's on the freeware), not by eye: how
+  the monument reads beside the road in, and whether any of the port's later props stand on the plaza beside it.
+- **Online, nothing is shared.** Each character's pile is its own. A shared tally would ride the account service (a
+  table and a cached read, the yards' pattern - `scenes/homeYards.js`) and is not built.

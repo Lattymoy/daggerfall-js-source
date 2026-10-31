@@ -12,8 +12,8 @@
   {
     "name": "SCALE4b-guild-board-swept-on-read",
     "file": "server-account/src/guildBoard.js",
-    "old": "  const { me } = a;\n  const g = await db.prepare('SELECT id, name, tag, heraldry FROM guilds WHERE id = ?').bind(me.guild_id).first();",
-    "new": "  const { me } = a;\n  await sweepGuildNotes(db, nowS);\n  const g = await db.prepare('SELECT id, name, tag, heraldry FROM guilds WHERE id = ?').bind(me.guild_id).first();",
+    "old": "  const { me, powers } = a;\n  const g = await db.prepare('SELECT id, name, tag, heraldry FROM guilds WHERE id = ?').bind(me.guild_id).first();",
+    "new": "  const { me, powers } = a;\n  await sweepGuildNotes(db, nowS);\n  const g = await db.prepare('SELECT id, name, tag, heraldry FROM guilds WHERE id = ?').bind(me.guild_id).first();",
     "tests": [
       "test/server/scale4b.test.js"
     ],

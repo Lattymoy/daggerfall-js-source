@@ -47,7 +47,7 @@
   {
     "name": "DECORROOMY-claim-unkept",
     "file": "server-account/src/homes.js",
-    "old": "  const kept = homeGroundOk(ground, townBlocks, price) ? homeGroundKept(ground) : null;",
+    "old": "  const kept = homeGroundOk(ground, townBlocks, homeGroundPrice(mapId, buildingKey, price, ground, townBlocks, layout)) ? homeGroundKept(ground) : null;",
     "new": "  const kept = null;",
     "tests": [
       "test/server/decorroomy_service.test.js"
@@ -56,7 +56,7 @@
   {
     "name": "DECORROOMY-claim-unheld",
     "file": "server-account/src/homes.js",
-    "old": "  const kept = homeGroundOk(ground, townBlocks, price) ? homeGroundKept(ground) : null;",
+    "old": "  const kept = homeGroundOk(ground, townBlocks, homeGroundPrice(mapId, buildingKey, price, ground, townBlocks, layout)) ? homeGroundKept(ground) : null;",
     "new": "  const kept = typeof ground === 'number' ? homeGroundKept(ground) : null;",
     "tests": [
       "test/server/decorroomy_service.test.js"
@@ -128,7 +128,7 @@
   {
     "name": "DECORROOMY-ground-unheld",
     "file": "server-account/src/decorAccess.js",
-    "old": "  if (!homeGroundOk(ground, townBlocks, home.price)) return { error: 'bad-home' };\n",
+    "old": "  if (!homeGroundOk(ground, townBlocks, homeGroundPrice(mapId, buildingKey, Number(home.price), ground, townBlocks, home.layout ?? null))) return { error: 'bad-home' };   // AUDIT FOUNDATION P2: a row's price, the law's ground\n",
     "new": "",
     "tests": [
       "test/server/decorroomy_service.test.js"

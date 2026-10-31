@@ -104,6 +104,7 @@ import { readWagonLook, wagonLookOfCode, WAGON_OUTSIDE_LOOKS, CARAVAN_INSIDE_LOO
 import { validWagonKind, wagonHitchOf, WAGON_KINDS, wagonHorsesOf } from '../systems/wagon/wagonKinds.js';
 import { CARAVAN_TEXT } from '../systems/caravanRoom.js';
 import { recolorHorse, horseLookCode, horseLookOfCode, lookSuffix } from '../systems/horse/horseCoats.js';   // COATS1: the horses' looks, dyed as they upload
+import { ownMountLook, peerMountLook } from '../systems/horse/mountLook.js';   // STOREFRONT: and the owners' mount looks over them
 import { DECOR_DRAW, DECOR_SHADOW, DECOR_SKIP, castOnly } from './decor/decorRoom.js';   // PERF-TEAMS: the host's view verdict (world.js yardCull), as the merchant yards' wagons take it; PERF-WAGON: and the one maps-alone renderer
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 
@@ -493,7 +494,7 @@ export function createHorseCartPool({
       const views = [..._stillPx];
       for (; up.views < views.length && _dyeBudget > 0; up.views++, _dyeBudget--) {
         const [v, px] = views[up.views];
-        renderer.uploadTexture(HORSE_ARCHIVE, horseStillRecord(v, c), recolorHorse(px, c));
+        renderer.uploadTexture(HORSE_ARCHIVE, horseStillRecord(v, c), recolorHorse(px, c, { view: v }));   // AUDIT-STOREFRONT: its view, for a look's chest
       }
     }
     const still = up.views >= _stillPx.size;
@@ -502,7 +503,7 @@ export function createHorseCartPool({
       for (; up.walks < frames.length && _dyeBudget > 0; up.walks++, _dyeBudget--) {
         const [k, px] = frames[up.walks];
         const [v, f] = k.split('#').map(Number);
-        renderer.uploadTexture(HORSE_ARCHIVE, horseWalkRecord(v, f, c), recolorHorse(px, c));
+        renderer.uploadTexture(HORSE_ARCHIVE, horseWalkRecord(v, f, c), recolorHorse(px, c, { view: v }));
       }
     }
     return still && (up.walks >= _walkPx.size || !_walkReady);
@@ -523,8 +524,9 @@ export function createHorseCartPool({
     const old = [..._looksUp].filter(([, u]) => u.used < _frameNo - 1).sort((a, b) => a[1].used - b[1].used);
     for (const [c] of old.slice(0, _looksUp.size - HORSE_LOOKS_KEPT)) dropLook(c);
   }
-  /** COATS1: the look an owner's horses wear ('' mine, a peer's key - theirs off their word, the bay before one says). */
-  const lookOfOwner = (owner) => horseLookCode(horseLookOfCode(owner === '' ? horseLook?.() : _peers.get(owner)?.horseLook ?? 0));
+  /** COATS1: the look an owner's horses wear ('' mine, a peer's key - theirs off their word, the bay before one says), a
+   *  peer's standing at `at` (the scene's). */
+  const lookOfOwner = (owner, at = null) => horseLookCode(horseLookOfCode(owner === '' ? ownMountLook(horseLook?.()) : peerMountLook(_peers.get(owner)?.ownerId ?? owner, _peers.get(owner)?.horseLook ?? 0, at)));   // STOREFRONT: each in its owner's mount look, a peer's by the Others' effects choice
   const horseArt = { ensureStationary, ensureWalk, hasWalk: () => _walkReady, ensureLook: ensureHorseLook };
 
   // ── the runtime's physics
@@ -747,7 +749,7 @@ export function createHorseCartPool({
       e.speed += (v - e.speed) * (dt > 0 ? Math.min(1, dt / H3D_EASE) : 1);
       e.at = [h.position[0], h.position[1], h.position[2]];
       const yaw = Math.atan2(h.forward[0], h.forward[2]);
-      rig.step(e.horse, { feet: h.position, yaw, speed: e.speed, dt, look: lookOfOwner(owner), pose: false });
+      rig.step(e.horse, { feet: h.position, yaw, speed: e.speed, dt, look: lookOfOwner(owner, h.position), pose: false });
       if (g !== 1) rig.place(e.horse, h.position, yaw, g);
       e.out = poseWhereSeen(rig, e.horse, h.position, cam, _eye, _frameNo, e.phase, e.out);   // HORSE-VIEW: posed in the last pass's view, on its cadence - and as it comes into it (HORSE-VIEW II's audit)
       e.frame = _frameNo; e.conceal = owner ? conceal : null;
@@ -800,7 +802,7 @@ export function createHorseCartPool({
     if (_stillReady) for (const h of team) {
       if (!h.drawn) continue;
       const b = horseBatch(teamKey(owner, i++));
-      if (b) { poseHorseBatch(b, cameraPos, h, h.g, lookOfOwner(owner)); if (owner) b.conceal = conceal; }   // COATS1: in its owner's look
+      if (b) { poseHorseBatch(b, cameraPos, h, h.g, lookOfOwner(owner, h.position)); if (owner) b.conceal = conceal; }   // COATS1: in its owner's look
     }
     dropTeamBatches(owner, i);
   }
@@ -1266,7 +1268,7 @@ export function createHorseCartPool({
     if (!cameraPos) return;
     for (const [owner, team] of _teams) {
       let i = 0;
-      for (const h of team) { if (!h.drawn) continue; const b = _horseBatches.get(teamKey(owner, i++)); if (b) poseHorseBatch(b, cameraPos, h, h.g, lookOfOwner(owner)); }   // AUDIT COATS3D A1: in its owner's look, as poseTeam turned it - without it, the bay's every frame
+      for (const h of team) { if (!h.drawn) continue; const b = _horseBatches.get(teamKey(owner, i++)); if (b) poseHorseBatch(b, cameraPos, h, h.g, lookOfOwner(owner, h.position)); }   // AUDIT COATS3D A1: in its owner's look, as poseTeam turned it - without it, the bay's every frame
     }
   }
   /** WAGONS3: the harnesses in the world pass - world-space meshes, casting no shadow (a strap's would be a speckle). */
@@ -1731,7 +1733,7 @@ export function createHorseCartPool({
     const horses = (_teams.get(owner) ?? []).filter((h) => h.drawn && (h.hitched || f.hitched || lone)).map((h) => ({ at: [h.position[0], h.position[1], h.position[2]], forward: [h.forward[0], h.forward[1], h.forward[2]] }));
     const p = owner === '' ? null : _peers.get(owner) ?? null;
     const w = f.wagon, turn = owner === '' ? w.turn ?? { angle: w.angle ?? 0 } : p?.turn ?? { angle: w.angle ?? 0 };
-    return { kind: w.model, look: w.look ?? null, tier: w.tier ?? 0, turn, hitched: !!f.hitched, conceal: p?.look ?? null, horseLook: lookOfOwner(owner), lone: !!lone, at: [f.at[0], f.at[1], f.at[2]], rotation: [...f.rotation], horses };
+    return { kind: w.model, look: w.look ?? null, tier: w.tier ?? 0, turn, hitched: !!f.hitched, conceal: p?.look ?? null, horseLook: lookOfOwner(owner, f.at), lone: !!lone, at: [f.at[0], f.at[1], f.at[2]], rotation: [...f.rotation], horses };
   }
 
   // ── HCC-PARK: THE CELL'S MEMORY OF A PARKED TEAM (net/wire.js's header)

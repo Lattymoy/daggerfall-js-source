@@ -2,7 +2,7 @@
  {
   "name": "STREAM1-every-promotion-is-paid-on-the-crossings-own-frame-again",
   "file": "src/scenes/world.js",
-  "old": "        if (want === 1) restridePending.set(`${p.px},${p.py}`, p);   // the dear way round\n        else { restridePending.delete(`${p.px},${p.py}`); restrideTerrain(p, want); }",
+  "old": "        if (want === 1) restridePending.set(`${p.px},${p.py}`, p);   // the dear way round\n        else { restridePending.delete(`${p.px},${p.py}`); (terrainGen.threaded ? restrideOffThread : restrideTerrain)(p, want); }   // OW-DEMOTE: the worker's too, where one is up",
   "new": "        restrideTerrain(p, want);",
   "tests": ["test/world/terrain/stream1_restride.test.js"]
  },

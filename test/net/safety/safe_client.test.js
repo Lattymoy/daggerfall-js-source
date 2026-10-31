@@ -868,7 +868,7 @@ test('AUDIT SAFE CLIENT-13 + DOC-10 THE MODERATOR\'S WORDS AND THE PAGE\'S OTHER
   assert.deepEqual(r.links.map((l) => l.mute.length).concat(arena.mute.length), [1, 1, 1], 'carried to every room - the arena\'s too');
   r.links[0].onBanned({ until: 2e9 });
   assert.equal(arena.left, 1, 'and left on a ban');
-  // CHAT-POST: an item posted from the pack goes straight to the tab's session (world.js postItemInChat -> chatSend)
+  // CHAT-POST: a linked item in a typed line goes through the session's mayChat gate
   const { FakeWS, sockets } = fakeSocketClass();
   const { s, ws } = welcomedSession(FakeWS, sockets, CHAT_WORLD_ROOM);
   const g = hostRig({ conduct: false, opts: { links: () => [s] } });

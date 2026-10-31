@@ -42,6 +42,8 @@ import { LOCATION_TYPES, mapPixelToLongitudeLatitude } from '../src/formats/maps
 import { capitalsOn } from '../src/scenes/shared.js';
 import { locationKeyOf } from '../src/world/locationKey.js';   // PIN MOVED (BAY-LEFT-B): the clone carries its own buildings' key
 import { fabricSliceSites } from '../src/world/imperialFabricBuildings.js';   // PIN MOVED (BAY-LEFT-B): and the Imperial City's fabric's
+import { regionOfTheatre } from '../src/formats/mapsTables.js';   // PIN MOVED (AUDIT FOUNDATION A1): the clone's region its province's
+import { THEATRE_KEYS } from '../src/world/worldWide/worldGrid.js';
 import { hostText } from './hostText.mjs';   // HOST-SPLIT (at the merge of main): the world host read whole - its pixel build stands in scenes/pixelBuild.js
 import { createSwapBehind } from '../src/scenes/swapBehind.js';
 
@@ -307,17 +309,17 @@ test('TESA10 the host by source: the base and the blocks off the game\'s rows be
   assert.match(W, /if \(\(_arenaTemplates \|\| _countryTemplates \|\| _capitalBase\) && !onTheBay\(px, py\)\) return \(locationIndex\.get\(`\$\{px\},\$\{py\}`\)\?\.superTier \? locationIndex\.get\(`\$\{px\},\$\{py\}`\) : null\) \|\| \(params\.has\('online'\) && zoneHalls\.standIn\(cyrodiilMask\(\), px, py\)\) \|\| host\.capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && host\.arenaLocationAt\(px, py\)\) \|\| host\.countryLocationAt\(px, py\) \|\| host\.lairLocationAt\(px, py\) \|\| spawnPastBayAt\(px, py\);/);   // PIN MOVED (HOST-SPLIT, SPAWN-WORLD 2026-10-26): _locationToBuild is scenes/spawnStandHost.js's, the places' rolls through `host`   // PIN MOVED (SPAWN-WORLD 2026-10-26): online, the spawner's last - never on a place   // PIN MOVED (WW5, bible/03-World/World-Wide.md WW5): a province's Hollow first, as its lane stands it in the index (scenes/superDungeon/sdLanes.js) - carried into scenes/spawnStandHost.js at the packages' merge (AUDIT BAY-LEFT)
 });
 
-test('TESA10 the host\'s ask: the capital on its pixel stood once, its region the pixel\'s; Arena\'s place on it its slot, and stood again when the slot changes; none elsewhere, and none with the door shut', () => {
+test('TESA10 the host\'s ask: the capital on its pixel stood once, its region its province\'s; Arena\'s place on it its slot, and stood again when the slot changes; none elsewhere, and none with the door shut', () => {
   setTamrielFit({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 });
   const kinds = [...new Set(Array.from({ length: IMPERIAL_SPAN ** 2 }, (_, s) => imperialSlicePlan(s).flat()).flat())].filter(imperialClassic);   // PIN MOVED (IC-GRAND): the plan by its law
   const names = new Map(kinds.map((k) => [k, [`${k}AA00.RMB`]]));
   const base = { ...city(9, ['X']), exterior: { exteriorData: { blockNames: ['X'] }, buildings: [] } };
   // PIN MOVED (BAY-LEFT-B): the clone's MapTable key its own buildings' (world/locationKey.js), the Imperial City's fabric's
   // with them - the harness hands the clone its three leaves
-  const make = (open, arena) => new Function('capitalOnPixel', 'synthesizeCapitalLocation', 'base', 'names', 'arena', 'capitalSlicePort', 'capitalCentrePixel', 'locationKeyOf', 'CAPITALS', 'fabricSliceSites', `
+  const make = (open, arena) => new Function('capitalOnPixel', 'synthesizeCapitalLocation', 'base', 'names', 'arena', 'capitalSlicePort', 'capitalCentrePixel', 'locationKeyOf', 'CAPITALS', 'fabricSliceSites', 'regionOfTheatre', 'THEATRE_KEYS', `
     const _capitalBase = ${open ? 'base' : 'null'}, _capitalNames = names, _arenaTemplates = {}, locationIndex = new Map();
     const arenaPlaceOnPixel = () => (arena.on ? arena.place : null), blocks = { getBlockByName: () => null };
-    const maps = { getRegionIndexAt: () => 23, getClimateIndex: () => 231 }, REGION_NAMES = { 23: 'Wrothgarian Mountains' }, getWorldClimateSettings = (c) => ({ worldClimate: c });
+    const maps = { getRegionIndexAt: () => 23, getClimateIndex: () => 231 }, REGION_NAMES = { 23: 'Wrothgarian Mountains', 70: 'Cyrodiil' }, getWorldClimateSettings = (c) => ({ worldClimate: c });
     const host = { _locIndexGen: 0 };   // PIN MOVED (HOST-SPLIT, at the merge of main): the place law is scenes/tamrielPlacesHost.js's, the index's generation the host's live name
     const registerTamrielPlaces = () => {};   // PIN MOVED (WW7-1): the capital's ask registers the places past the Bay first - none here
     const townClimateAt = (px, py, c) => c;   // PIN MOVED (AUDIT RELEASE R2-5f): the clone's own climate law - the city's ground stands on the pixel's
@@ -325,13 +327,15 @@ test('TESA10 the host\'s ask: the capital on its pixel stood once, its region th
     ${lift('  function capitalCloneOf(at, px, py, slot) {')}   // PIN MOVED (AUDIT RELEASE R2-5f): the clone laid out apart from its standing, as the quest layer reads it
     const arenaPixels = () => null;   // PIN MOVED (BAY-LEFT-SEA): the clone handed its harbour's pin (tamrielPlacesHost.js capitalPinPort) - none pinned here
     ${lift('  function capitalPinPort(k) {')}
-    return { capitalLocationAt, index: locationIndex, gen: () => host._locIndexGen };`)(capitalOnPixel, synthesizeCapitalLocation, base, names, arena, capitalSlicePort, capitalCentrePixel, locationKeyOf, CAPITALS, fabricSliceSites);
+    return { capitalLocationAt, index: locationIndex, gen: () => host._locIndexGen };`)(capitalOnPixel, synthesizeCapitalLocation, base, names, arena, capitalSlicePort, capitalCentrePixel, locationKeyOf, CAPITALS, fabricSliceSites, regionOfTheatre, THEATRE_KEYS);
   const arena = { on: false, place: null };
   const h = make(true, arena);
   const loc = h.capitalLocationAt(2069, 658);
   assert.equal(loc.name, 'Imperial City');
   assert.equal(h.index.get('2069,658'), loc);
-  assert.deepEqual([loc.regionIndex, loc.regionName, loc.politic, loc.climate.worldClimate], [23, 'Wrothgarian Mountains', 151, 231]);
+  // PIN MOVED (AUDIT FOUNDATION A1): its region its province's, as the registry's row - never the pixel's, which reads 0 on
+  // a harbour's sea
+  assert.deepEqual([loc.regionIndex, loc.regionName, loc.politic, loc.climate.worldClimate], [70, 'Cyrodiil', 198, 231]);
   assert.equal(h.capitalLocationAt(2069, 658), loc, 'once');
   assert.equal(h.gen(), 1);
   // PIN MOVED (TESA11): the pixel east of it the city's east slice - a location of its own, the Arena District's; PIN MOVED

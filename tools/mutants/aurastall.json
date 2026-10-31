@@ -30,8 +30,8 @@
   {
     "name": "AS-built-outside-the-door",
     "file": "src/scenes/auraHost.js",
-    "old": "const pass = auraPassOf();",
-    "new": "const pass = new AuraRingRenderer(renderer.gl);",
+    "old": "const pass = auraDraw.length ? auraPassOf() : null;",
+    "new": "const pass = auraDraw.length ? new AuraRingRenderer(renderer.gl) : null;",
     "tests": [
       "test/render/shaderstall.test.js"
     ]

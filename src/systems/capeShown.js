@@ -1,8 +1,10 @@
 // @ts-check
 // CAPE-TOGGLE (2026-10-29, the owner: "add a cape/helmet toggle option in the inventory for people", then "Worn cloaks
 // plus any aura", seen by everyone, the helmet later): WHETHER THIS PLAYER'S CAPES ARE DRAWN - a worn cloak (the
-// Cloak1 and Cloak2 slots) and any aura. Hidden, my body is drawn without them on my screen and on everyone's: the look
-// leaves the cloak out and says `hc` (net/wire.js validLook), which a peer's aura reads. What is worn is unchanged.
+// Cloak1 and Cloak2 slots). Hidden, my body is drawn without it on my screen and on everyone's: the look leaves the
+// cloak out and says `hc` (net/wire.js validLook). What is worn is unchanged. AURA-STAYS (2026-10-30, mob: "aura turn off
+// when u toggle cap", "it saposta help show the aura not tuen it off"): the aura is no longer hidden with it - the
+// switch takes the cloak off so the aura shows (scenes/auraHost.js).
 // bible/04-Characters/Cape-Toggle.md. Not a DFU member: Daggerfall Unity has no such switch.
 import { getPref, setPref } from './uiPrefs.js';
 import { equipTableOf } from './equip.js';

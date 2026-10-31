@@ -199,7 +199,7 @@ test('LC1: the renderer on the fake GL - the two integer textures made with the 
   const r = new Renderer(canvas);
   assert.equal(made(calls).length, 2, 'WL1: two integer textures, made with the renderer - the window lights\' band is read on either set');
   assert.deepEqual(made(calls).map((c) => [c[3], c[4], c[5], c[7], c[8]]), [[gl.RG16UI, CLUSTER_GRID_W, CLUSTER_GRID_H * CLUSTER_BANDS, gl.RG_INTEGER, gl.UNSIGNED_SHORT], [gl.R8UI, CLUSTER_LIST_W, CLUSTER_LIST_ROWS * CLUSTER_BANDS, gl.RED_INTEGER, gl.UNSIGNED_BYTE]]);
-  assert.equal(CLUSTER_BANDS, 2, 'the lanterns\' band and the windows\'');
+  assert.equal(CLUSTER_BANDS, 3, 'the lanterns\' band, the windows\' and (LIGHT-REACH, PIN MOVED) the windows\' far rows\'');
   calls.length = 0;
   r.setLightingLane(EL_LANE);
   assert.equal(made(calls).length, 0, 'none more with the lane');

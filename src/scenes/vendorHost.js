@@ -11,6 +11,7 @@ import { homeMayEnter as vendorDoorOpen } from '../net/homeLaw.js';
 import { goldText as vendorGoldText } from '../net/marketLaw.js';
 import { createMarketArrivals } from '../net/marketArrivals.js';   // RPT1026-MARKET ARRIVE: what the market sends reaches the pack on its own
 import { t } from '../systems/textManager.js';
+import { registerVendorHouseReader } from '../systems/vendorHouses.js';   // VENDOR-HOUSES: the town map's blue traders
 
 /** @param {any} host */
 export function createVendorHost(host) {
@@ -99,6 +100,7 @@ export function createVendorHost(host) {
     return { ...r, data: { ...r.data, rows } };
   };
   const vendorMarketOpen = () => !!marketBook && profBook?.state.open === true && marksBook?.state?.open !== false;
+  registerVendorHouseReader((region) => (vendorMarketOpen() ? vendorReachable(region) : null), { open: vendorMarketOpen });   // VENDOR-HOUSES: the houses the town map inks blue
   /** The board's Vendors tab: the region's traders, read fresh. */
   const vendorBoardHost = (region) => ({
     mode: 'board', region, regionName: REGION_NAMES[region] ?? 'the region',

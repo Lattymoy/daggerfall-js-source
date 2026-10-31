@@ -1,0 +1,47 @@
+[
+  {
+    "name": "BEAT-LANE-angle-alone",
+    "file": "src/systems/seaHelm.js",
+    "old": "st.tack * off < -H.laneDeg || -st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM",
+    "new": "st.tack * off < -H.laneDeg",
+    "tests": [
+      "test/systems/travel/fb1030d_beatlane.test.js"
+    ]
+  },
+  {
+    "name": "BEAT-LANE-metres-alone",
+    "file": "src/systems/seaHelm.js",
+    "old": "st.tack * off < -H.laneDeg || -st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM",
+    "new": "-st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM",
+    "tests": [
+      "test/systems/travel/fb1030d_beatlane.test.js"
+    ]
+  },
+  {
+    "name": "BEAT-LANE-near-side",
+    "file": "src/systems/seaHelm.js",
+    "old": "-st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM",
+    "new": "st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM",
+    "tests": [
+      "test/systems/travel/fb1030d_beatlane.test.js"
+    ]
+  },
+  {
+    "name": "BEAT-LANE-wide",
+    "file": "src/systems/seaHelm.js",
+    "old": "  laneM: 400,",
+    "new": "  laneM: 4000,",
+    "tests": [
+      "test/systems/travel/fb1030d_beatlane.test.js"
+    ]
+  },
+  {
+    "name": "BEAT-LANE-host-untold",
+    "file": "src/scenes/world.js",
+    "old": "bearing: seaHeadingOf(mark[0] - p[0], mark[2] - p[2]), dist, wind:",
+    "new": "bearing: seaHeadingOf(mark[0] - p[0], mark[2] - p[2]), wind:",
+    "tests": [
+      "test/systems/travel/fb1030d_beatlane.test.js"
+    ]
+  }
+]

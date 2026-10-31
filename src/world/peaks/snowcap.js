@@ -21,6 +21,7 @@
 import { CLIMATES } from '../../formats/mapsTables.js';
 import { tamrielBiomeAt } from '../tamriel/tamrielBiomes.js';
 import { bayEdgeDistance, SEAM_PX } from '../tamriel/tamrielGround.js';
+import { landLayer } from '../land/landLayer.js';   // AUDIT FOUNDATION II L4: a row's climate past the Bay
 import { redMountainLiftAt } from '../tamriel/redMountain.js';   // RED-MOUNTAIN: its fire raises the line with the cone
 import { STREAMING_TERRAIN_SCALE } from '../terrain/terrainSampler.js';
 import { CAP_FACE } from '../../render/snowCapGlsl.js';   // the face's dials: their home is the shader's leaf (boot2)
@@ -87,9 +88,9 @@ const smoothstep = (a, b, v) => smooth01((v - a) / (b - a));
  */
 export function capLineOfPixel(px, py, climateAt) {
   if (bayEdgeDistance(px, py) > SEAM_PX) {
-    const z = tamrielBiomeAt(px, py);
+    const row = landLayer().climateAt(px, py), z = row === undefined ? tamrielBiomeAt(px, py) : null;   // AUDIT FOUNDATION II L4: a row's climate its line
     const v = z ? SNOWCAP.zones[/** @type {keyof typeof SNOWCAP.zones} */ (z.key)] : undefined;
-    const line = v !== undefined ? v : SNOWCAP.climates[z ? z.climate : climateAt(px, py)] ?? SNOWCAP.climates[C.Woodlands];
+    const line = v !== undefined ? v : SNOWCAP.climates[z ? z.climate : row ?? climateAt(px, py)] ?? SNOWCAP.climates[C.Woodlands];
     // RED-MOUNTAIN: the volcano's fire - its ash never holds snow, so the line rides up its cone (the land's own line
     // over the land under it), and the Ashlands on its foot stay as bare as the plateau they were
     return line >= CAP_NONE ? line : line + redMountainLiftAt(px, py) * STREAMING_TERRAIN_SCALE;

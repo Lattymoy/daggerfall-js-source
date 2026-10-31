@@ -353,7 +353,8 @@ test('primary cabin routing publishes the actual indoor pose to the shared owner
   const args = { modes: { mode: 'interior', sailingCabin: { origin: [10, 20, 30] }, roomIdentity: () => ({ private: true, boatUid: 101 }) },
     state: { compensation: [0, 100, 0], localFromWorld: (x, z) => [x - 500, z - 600], worldCoords: (p) => ({ x: p[0] + 500, z: p[2] + 600 }) },
     player: { pos: [1, -30, 2] }, cam: { yaw: 0.2, pitch: 0.1 }, worldCoordToMapPixel, roomKeyFor, privateInteriorOf,
-    _questLoc: () => null, privateRoomHere: () => room, siegeSession: null, royalSession: null, campToWire: (p) => p };
+    _questLoc: () => null, privateRoomHere: () => room, siegeSession: null, royalSession: null, campToWire: (p) => p,
+    withIndoorFloor: (p) => p, indoorSceneY: (p, ctx, comp) => p.y + comp };   // INDOOR-FLOOR: a cabin is no interiorCtx's room - the wire's height (test/net/fb1030_indoorfloor.test.js)
   const route = new Function(...Object.keys(args), `let onlineToScene, sceneToOnline; ${worldSource.slice(start, end)} return { key, pose, mp, onlineToScene };`)(...Object.values(args));
   assert.equal(route.key, room); assert.equal(route.mp, null);
   assert.deepEqual([route.pose.x, route.pose.y, route.pose.z], [501, -130, 602]);

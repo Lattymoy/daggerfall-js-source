@@ -36,10 +36,12 @@ export { decorGoldMove, decorGoldDelta };
 import { prepareRealmRecord, realmSideOf, realmActFirst, recordMovedOf, mustChange, dropObjects, dropIfUnnamed, REALM_ID_RE } from './realm.js';   // REALM P2.2b; AUDIT REALM L1-F2: the record asked first; AUDIT REALM2 S2/S3
 import { payFromSave, creditSave } from '../../src/net/realm/realmGoldLaw.js';   // REALM P2.2b: the wallet's own order, over the record
 import { GUILD_TREASURY_MAX } from '../../src/net/guild/guildLaw.js';   // GUILD1d: a hall's treasury's cap
-import { HALL_POWERS } from '../../src/net/hallLaw.js';   // GUILD1d: a hall's keepers
+import { guildPowerSql } from './guildPowerSql.js';   // GUILD1d: a hall's keepers; GUILD-RANKS: as the guild set them
 import { SEAT_HALL_DECOR_CAP } from '../../src/net/townSeatLaw.js';   // SEAT-HALL: the Charter Room's pieces
 import { homeShownRead, homeShownOf } from './homeVotes.js';   // AUDIT HOME-VOTE A3: a shunned home's room, its insiders' alone; DECOR-BATCH: its read in the room's one request
 import { decorStaysShunned } from '../../src/net/homeVoteLaw.js';   // AUDIT HOME-VOTE B2: its hired trader stands
+import { guildPieceRule, guildStockGuard, guildStockSpent } from './guildFurniture.js';   // GUILD-SHOP: a guild's own furniture, in its hall
+import { heraldryOfRow } from './halls.js';   // GUILD-SHOP: a hall's arms, said with its pieces
 
 /**
  * REALM P2.2b: WHAT A PIECE'S CHANGE COSTS, as the client's wallet pays it - placed: what it cost (`paid`); grown: the
@@ -101,7 +103,7 @@ async function realmDecorWrite(ctx, player, at, { mapId, buildingKey, delta, wri
 export const OWNS = `EXISTS (SELECT 1 FROM (SELECT ? AS m, ? AS b, ? AS p, ? AS c) k JOIN homes h ON h.map_id = k.m AND h.building_key = k.b
   WHERE (h.guild_id IS NULL AND h.player = k.p AND (h.deed = 0 OR h.char_id = k.c))
     OR (h.guild_id IS NOT NULL AND EXISTS (SELECT 1 FROM guild_members g WHERE g.guild_id = h.guild_id AND g.player = k.p AND g.char_id = k.c
-      AND g.rank IN (${HALL_POWERS.decorate.join(', ')})
+      AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}
       AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p))))`;   // AUDIT GUILD1d S2: a realm character's - its moves and stations are paid on its record, never on a client's word
 /** GUILD1d: the guild whose hall a building is, or null (a home, or nobody's). */
 const hallGuildOf = async (db, mapId, buildingKey) => (await db.prepare('SELECT guild_id FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first())?.guild_id ?? null;
@@ -119,7 +121,7 @@ const hallGuildOf = async (db, mapId, buildingKey) => (await db.prepare('SELECT 
  */
 const SEAT_OWNS = `EXISTS (SELECT 1 FROM (SELECT ? AS m, ? AS b, ? AS p, ? AS c) k JOIN town_seat_holds h ON h.key = k.m
   WHERE h.tier = 'palace' AND EXISTS (SELECT 1 FROM guild_members g WHERE g.guild_id = h.guild_id AND g.player = k.p AND g.char_id = k.c
-    AND g.rank IN (${HALL_POWERS.decorate.join(', ')})
+    AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}
     AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p)))`;
 /** The guild holding the palace seat at `mapId`, or null. */
 const seatHallGuildOf = async (db, mapId) => (await db.prepare("SELECT guild_id FROM town_seat_holds WHERE key = ? AND tier = 'palace'").bind(mapId).first())?.guild_id ?? null;
@@ -261,7 +263,12 @@ export async function decorOf({ db }, player, { mapId, buildingKey, seat = false
     return { mapId, buildingKey, pieces: results.map(pieceOfRow).filter(Boolean), hidden: [], rev: revOf(revRow?.results?.[0]) };
   }
   const capRead = db.prepare('SELECT ground, guild_id FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey);   // DECOR-ROOMY
-  const [{ results = [] }, shown, hidden, revRow, capRow] = await db.batch([piecesRead, homeShownRead(db, mapId, buildingKey, player?.id), hiddenRead(db, mapId, buildingKey), revRead, capRead]);
+  // GUILD-SHOP: a guild hall's arms, worn by its own pieces (their banners and shields) - in the same request
+  const armsRead = db.prepare(`SELECT g.tag, g.name, g.heraldry, l.id AS logo FROM homes h JOIN guilds g ON g.id = h.guild_id
+    LEFT JOIN guild_logos l ON l.id = g.logo AND l.state = 'approved' WHERE h.map_id = ? AND h.building_key = ?`).bind(mapId, buildingKey);
+  const [{ results = [] }, shown, hidden, revRow, capRow, armsRow] = await db.batch([piecesRead, homeShownRead(db, mapId, buildingKey, player?.id), hiddenRead(db, mapId, buildingKey), revRead, capRead, armsRead]);
+  const a = armsRow?.results?.[0];
+  const arms = a ? { arms: { tag: a.tag, name: a.name, heraldry: heraldryOfRow(a.heraldry), logo: a.logo ?? null } } : {};
   const pieces = results.map(pieceOfRow).filter(Boolean);
   const rev = revOf(revRow?.results?.[0]);
   const home = capRow?.results?.[0] ?? null;
@@ -269,8 +276,8 @@ export async function decorOf({ db }, player, { mapId, buildingKey, seat = false
   // AUDIT HOME-VOTE A3: a home the town voted below zero is handed to anyone but its insiders as Daggerfall furnished it
   // - no placed piece but its hired trader with goods on sale (a shop, never a decoration: B2, II A1), nothing taken out
   // - by the service, so a build from before HOME-VOTE shows no more than the law (homeVotes.js homeShownTo)
-  if (!homeShownOf(shown?.results?.[0] ?? null)) return { mapId, buildingKey, pieces: await shopOf(db, mapId, pieces), hidden: [], rev, cap };
-  return { mapId, buildingKey, pieces, hidden: hiddenListOf(hidden?.results?.[0] ?? null), rev, cap, measured: home?.ground != null };
+  if (!homeShownOf(shown?.results?.[0] ?? null)) return { mapId, buildingKey, pieces: await shopOf(db, mapId, pieces), hidden: [], rev, cap, ...arms };
+  return { mapId, buildingKey, pieces, hidden: hiddenListOf(hidden?.results?.[0] ?? null), rev, cap, measured: home?.ground != null, ...arms };
 }
 
 /** BASE-HIDE: what the home's owner took out of the room (migration 0015) - projected on the way out, so a list the law
@@ -346,6 +353,8 @@ export async function placeDecor(ctx, player, { mapId, buildingKey, character, p
     if (yard === true && S.seat) return { error: 'hall-yard' };
     if (sent.item) return { error: 'hall-item' };
   }
+  const guildRule = guildPieceRule(sent, { hall: guildHall, yard: yard === true });   // GUILD-SHOP: a guild's own piece, in its hall alone
+  if (guildRule) return { error: guildRule };
   const out = yard === true ? 1 : 0;
   // DECOR-ROOMY: a home's room holds its own cap, by its ground
   const roomCap = S.seat ? S.cap : decorCapOf((await db.prepare('SELECT ground FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first())?.ground);
@@ -364,12 +373,13 @@ export async function placeDecor(ctx, player, { mapId, buildingKey, character, p
   // disenchant between the read and this INSERT took the row (and the piece) away
   const pv = typeof p.item?.pv === 'string' ? p.item.pv : null;
   const pvSql = pv ? ' AND EXISTS (SELECT 1 FROM products WHERE provenance = ? AND owner = ? AND listed = 0)' : '';
+  const [stockSql, stockBinds] = guildStockGuard(p, mapId, buildingKey);   // GUILD-SHOP: while the guild owns one more than its halls stand
   const insert = db.prepare(`INSERT OR IGNORE INTO ${S.table} (map_id, building_key, id, model, flat_archive, flat_record, place, placed_at, item, paid, yard)
     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${S.owns} AND (SELECT COUNT(*) FROM ${S.table} WHERE ${countSql}) < ?
-      AND ${ruleSql}${pvSql}`)
+      AND ${ruleSql}${pvSql}${stockSql}`)
     .bind(mapId, buildingKey, p.id, p.model, p.flat?.[0] ?? null, p.flat?.[1] ?? null, placeJson(p), nowS, p.item ? JSON.stringify(p.item) : null,
       side.at ? ledger : 0, out, mapId, buildingKey, player.id, character, ...countBinds, out ? DECOR_YARD_CAP : (guildHall ? DECOR_HALL_CAP : roomCap),
-      ...ruleBinds, ...(pv ? [pv, player.id] : []));
+      ...ruleBinds, ...(pv ? [pv, player.id] : []), ...stockBinds);
   /** AUDIT GUILD1d S3: a placement the hall's rule refused, in its own word - or null. AUDIT PROF-541 B2: a kept piece's
    *  row gone between, 'bad-decor' (the piece is not what was sent). */
   const hallWord = async () => (pv && !(await db.prepare('SELECT 1 FROM products WHERE provenance = ? AND owner = ? AND listed = 0').bind(pv, player.id).first()) ? 'bad-decor'
@@ -388,6 +398,7 @@ export async function placeDecor(ctx, player, { mapId, buildingKey, character, p
   if (r?.meta?.changes) return { ok: true, piece: p };
   const hallSaid = await hallWord();
   if (hallSaid) return { error: hallSaid };
+  if (await guildStockSpent(db, p, mapId, buildingKey) && !(await db.prepare(`SELECT 1 FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ?`).bind(mapId, buildingKey, p.id).first())) return { error: 'guild-ware-none' };   // GUILD-SHOP
   const owns = await db.prepare(`SELECT ${S.owns} AS owns`).bind(mapId, buildingKey, player.id, character).first();
   if (!owns?.owns) return { error: 'no-home' };
   const row = await db.prepare(`SELECT * FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ?`).bind(mapId, buildingKey, p.id).first();
@@ -422,6 +433,7 @@ export async function moveDecor(ctx, player, { mapId, buildingKey, character, id
   // gold or hold things (a piece the law refuses reads as nothing, and its cost would be owed at a sale)
   const was = pieceOfRow(row);
   if (!was || !decorPieceOf({ ...was, ...pl })) return { error: 'bad-decor' };
+  if (guildPieceRule({ ...was, ...pl }, { hall: true, yard: false })) return { error: 'bad-decor' };   // AUDIT GUILD-SHOP S5: a guild piece moved stays one - nothing held, no station
   // DECOR-FIGURE: a figure moved to any size but its own is refused - one grown before this keeps its record's scale on a
   // turn or a station (it is drawn at its own size all the same), and is brought back to it by any move of the placer's
   if (!decorScaleOk({ ...was, ...pl }) && pl.scale !== was.scale) return { error: 'decor-figure' };   // AUDIT HOME-VOTE II C2: its own word - a stale copy's turn of a figure brought back to 1 on another device

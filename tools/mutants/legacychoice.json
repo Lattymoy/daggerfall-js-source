@@ -72,8 +72,8 @@
   {
     "name": "LEGACY-CHOICE-no-third-online",
     "file": "src/ui/legacy/legacyModelChoice.js",
-    "old": "    ...(online ? [Object.freeze({ id: NO_LINEAGE,",
-    "new": "    ...(false ? [Object.freeze({ id: NO_LINEAGE,",
+    "old": "  const casual = online ? [Object.freeze({ id: NO_LINEAGE,",
+    "new": "  const casual = false ? [Object.freeze({ id: NO_LINEAGE,",
     "tests": [
       "test/systems/legacychoice.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "LEGACY-CHOICE-third-offline",
     "file": "src/ui/legacy/legacyModelChoice.js",
-    "old": "    ...(online ? [Object.freeze({ id: NO_LINEAGE,",
-    "new": "    ...(true ? [Object.freeze({ id: NO_LINEAGE,",
+    "old": "  const casual = online ? [Object.freeze({ id: NO_LINEAGE,",
+    "new": "  const casual = true ? [Object.freeze({ id: NO_LINEAGE,",
     "tests": [
       "test/systems/legacychoice.test.js"
     ],
@@ -238,5 +238,16 @@
       "test/systems/legacychoice.test.js"
     ],
     "note": "LEGACY-POINTER: a question back on the canvas (the skin switched under it) never took the canvas pointer again."
+  },
+  {
+    "name": "CASUAL-FIRST-casual-last",
+    "file": "src/ui/legacy/legacyModelChoice.js",
+    "old": "  return Object.freeze([...casual, ...models]);",
+    "new": "  return Object.freeze([...models, ...casual]);",
+    "tests": [
+      "test/systems/legacychoice.test.js",
+      "test/systems/legacy/casuallife.test.js"
+    ],
+    "note": "CASUAL-FIRST: online Casual went back behind the two models, so Enter without reading founds an Enduring house."
   }
 ]

@@ -290,7 +290,7 @@ test('AUDIT GROWTH LANE1-11 HOW IT IS USED: the spell from any spell shelf; a fo
   setPref(LOOT_RARITY_KEY, false);
   assert.equal(useLine('technique'), 'Once chosen, press your Weapon Technique key while fighting with one of its two skills.');
   setPref(LOOT_RARITY_KEY, true);
-  try { assert.match(useLine('technique'), / A weapon with a technique of its own uses that instead\.$/); } finally { setPref(LOOT_RARITY_KEY, false); }
+  try { assert.match(useLine('technique'), / A weapon with a technique of its own uses that instead, and your Martial Technique key uses this one\.$/); } finally { setPref(LOOT_RARITY_KEY, false); }   // PIN MOVED (TECH-KEY2)
 });
 
 test('AUDIT GROWTH LANE1-5/6/7 THE RIDERS SAY WHAT THE POWERS DO: the Brawler\'s answers that foe\'s blows only, the Bloodmage\'s a target below the line after the hit, the Berserker\'s arrows too (mutants: the old overclaim; the old underclaim)', () => {

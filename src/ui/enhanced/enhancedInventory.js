@@ -61,7 +61,6 @@ import { getPref, setPref } from '../../systems/uiPrefs.js';   // PLUS7: getPref
 import { USE_PENDING, powersRows, INFO_TEXT_POWERS } from '../native/nativeInventory.js';   // PLUS10: the Info box's powers record
 import { itemInfoRows, questLetterName } from '../../systems/item/itemInfo.js';   // PLUS10: the classic Info popup's own text
 import { magicPowersLines } from '../../systems/item/itemPowers.js';   // PLUS10: %mpw
-import { CHAT_MAX } from '../../net/wire.js';   // CHAT-POST: a posted item is one chat line
 import { itemIsIdentified } from '../../systems/tradeModes.js';   // PLUS10: MagicPowers' identified arm
 import { PACK_PAGES, PAGE_IDS, pageOf, filterByPage } from '../packPages.js';   // PX31: the pack's nine pages (the classic keeps DFU's four)
 import { isCardBinder, isIliacCard, binderDecks } from '../../systems/iliac/iliacItems.js';   // CARDS8: the binder holds the cards
@@ -146,7 +145,7 @@ import { isFestivalFace } from '../../systems/festival/soulCake.js';   // AUDIT 
 import { isSurvivalItem } from '../../systems/survival/items.js';
 import { hoodCapable, hoodUp } from '../../systems/survival/temperature.js';   // HOOD-SAID: the one hood law, on the card and the panel
 import { heirloomLine } from '../../systems/legacy/heirloom.js';   // LEGACY4: Project Legacy's heirlooms, named on the card
-import { rarityAttr, rarityLines, lootRarityOn, techniqueDetail, techniqueLineOf } from '../../systems/loot/lootRarity.js';   // LR1: the row's tier attribute and the card's lines
+import { rarityAttr, rarityLines, lootRarityOn } from '../../systems/loot/lootRarity.js';   // LR1: the row's tier attribute and the card's lines
 import { pieceLines } from '../../net/recipeLaw.js';   // PROF3: a crafted piece's quality and maker, above its powers
 import { craftedJewelPoints } from '../../systems/enchanting.js';   // AUDIT PROF-541 R2-C4: a jewel's points as the item maker reads them
 import { sigilCard } from '../sigilCard.js';   // SIGIL-UI: the sigil's own block on the card
@@ -686,8 +685,6 @@ let salvageSel = null;
 let wellOpen = null, wellAsk = null, gemTargets = null, wellPick = null;   // AUDIT GEM: `wellPick` the selection these belong to
 let walletAsked = false;   // WALLET1: the account's silver asked afresh once a mount, as the wallet's sheet first shows
 /** CHAT-POST: what the card says after a post or a link into the field. */
-export const POSTED_TEXT = 'Posted in chat.';
-export const NOT_POSTED_TEXT = 'Could not post that in chat right now.';
 export const LINKED_TEXT = 'Linked in chat.';
 export const NOT_LINKED_TEXT = 'Could not link that in chat right now.';
 /** ENH-NOTICE3: the notice panel's OWNER. A module-level object and not
@@ -2318,8 +2315,8 @@ function equippedList() {
   return wrap;
 }
 
-/** CAPE-TOGGLE: THE CAPE SWITCH, an eye in the Cloaks panel's bottom-right corner - my worn cloak and my aura drawn or
- *  hidden, for me and every player (systems/capeShown.js). A sibling in the panel's grid cell, since a filled panel is a
+/** CAPE-TOGGLE: THE CAPE SWITCH, an eye in the Cloaks panel's bottom-right corner - my worn cloak drawn or hidden, for me
+ *  and every player (systems/capeShown.js); my aura stays on either way. A sibling in the panel's grid cell, since a filled panel is a
  *  button and holds none; an icon of one size, clear of the count and a raised hood's chip, in every language. */
 function capeSwitch(/** @type {string} */ area) {
   const on = capeShown();
@@ -2328,7 +2325,7 @@ function capeSwitch(/** @type {string} */ area) {
   b.style.gridArea = area;
   b.setAttribute('aria-pressed', String(on));
   b.setAttribute('aria-label', t('inventory.cape.label', 'Show cape'));
-  b.title = t('inventory.cape.title', 'Shows or hides your cloak and your aura. Other players see the same.');
+  b.title = t('inventory.cape.title', 'Shows or hides your cloak. Your aura stays on. Other players see the same.');
   const eye = svg('svg', { viewBox: '0 0 16 16', width: 14, height: 14, 'aria-hidden': 'true' });
   eye.append(svg('path', { d: 'M1 8 Q8 0 15 8 Q8 16 1 8 Z', fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5 }), svg('circle', { cx: 8, cy: 8, r: 2.2, fill: 'currentColor' }));
   if (!on) eye.append(svg('path', { d: 'M2 14 L14 2', stroke: 'currentColor', 'stroke-width': 1.8 }));   // struck through: hidden
@@ -3393,11 +3390,10 @@ export function itemPowerLines(item, d = deps, { set = true, lore = true, techni
 }
 
 /** CARD-FIT (the card audit, U4 + U10): AN ITEM'S MAGIC IN A FEW LINES, for a place with no room for the card's blocks
- *  - the trade window's strip and a chat post: the tier and its affixes (the lore is the Info box's), the sigil's own
- *  line (its stage, and a weapon's blow - the card draws it in rows, and the strip and the post said nothing of it),
- *  and the set by its name - its tiers are the card's and the Info box's. `worn` says how much of the set the reader
- *  wears ("Ruhn's Regalia: 2 of 9 worn, Faint" - my own trade window's reader is me); a chat line is read by others,
- *  so it names the set and no more (it posted the poster's worn count and stage, and ran out mid-tier). */
+ *  - the trade window's strip: the tier and its affixes (the lore is the Info box's), the sigil's own line (its stage,
+ *  and a weapon's blow - the card draws it in rows), and the set by its name - its tiers are the card's and the Info
+ *  box's. `worn` says how much of the set the reader wears ("Ruhn's Regalia: 2 of 9 worn, Faint" - my own trade
+ *  window's reader is me); elsewhere it names the set and no more. */
 export function itemBriefLines(item, d = deps, { worn = false } = {}) {
   const lines = itemPowerLines(item, d, { set: false, lore: false });
   const sigil = setSigilLines(item)[0];
@@ -3412,25 +3408,6 @@ export function itemChatLabel(item, d = deps) {
   const line = itemLine(item, d?.entity);
   const name = line.name || '?';
   return line.stack ? `${name} x${line.stack}` : name;
-}
-
-/** CHAT-POST (2026-09-27, Discord - Tabitha: "Link in chat / Post in chat"; "random magic items' details in chat"):
- *  AN ITEM AS ONE CHAT LINE - its label in brackets (itemChatLabel). The record rides beside the words on the wire
- *  (net/wire.js validChatItem); a client that hears it draws a coloured [Name] and the pack's hover card. The brief
- *  stats stay in the text for an older relay that drops the record, cut at a whole word to CHAT_MAX. */
-export function itemChatText(item, d = deps) {
-  const line = itemLine(item, d?.entity);
-  const label = itemChatLabel(item, d);
-  const parts = [line.damage != null ? `Damage ${line.damage}` : null, line.armour != null ? `Armour ${line.armour}` : null,
-    ...itemBriefLines(item, d)].filter(Boolean);
-  // TECH1 (AUDIT): a technique's "what a press does" line stays on the card - the post names the line itself, and keeps
-  // the room under CHAT_MAX for the piece's other lines (a gem's, a set's) that it would have cut
-  const told = techniqueDetail(techniqueLineOf(item));
-  const said = told ? parts.filter((p) => p !== told) : parts;
-  const text = `[${label}]${said.length ? ` ${said.join(' · ')}` : ''}`;
-  if (text.length <= CHAT_MAX) return text;
-  const cut = text.slice(0, CHAT_MAX - 3);
-  return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), label.length + 2)).replace(/[\s·]+$/, '')}...`;
 }
 
 /** GEM3 (bible/06-Systems/Gem-Sockets.md section 5): WHO SETS A GEM - the player, as the presses read them (the pack
@@ -3766,14 +3743,11 @@ function itemActs(picked, side, { qty = true } = {}) {
   const info = el('button', 'act', 'Info');
   info.onclick = () => openInfo(picked);
   acts.append(info);
-  // CHAT-POST: link into the field (write a line around it) or post as its own line - online, where the host hands the door
+  // CHAT-POST: link into the field (write a line around it) - online, where the host hands the door
   if (deps.canPostItem?.()) {
     const link = el('button', 'act', 'Link in chat');
     link.onclick = () => { notice = deps.linkItem?.(picked) ? LINKED_TEXT : NOT_LINKED_TEXT; render(); };
     acts.append(link);
-    const post = el('button', 'act', 'Post in chat');
-    post.onclick = () => { notice = deps.postItem?.(itemChatText(picked), picked) ? POSTED_TEXT : NOT_POSTED_TEXT; render(); };
-    acts.append(post);
   }
   for (const b of acts.querySelectorAll('button')) if (b.classList.contains('act')) pairGuard(b);   // AUDIT MERGE-PLUS C1
   return acts;

@@ -25,11 +25,14 @@
 import {
   fleetShip, fleetShips, fleetBook, titleOf, titleDeedsIn, knowShip, renameShip, addRefit, setShipPort, retitle, refitOf, loanOwed, settleCredit,
   shipLabel, upgradeCost, materialCount, UPGRADE_LINES, UPGRADE_TIERS, MATERIALS, BOAT_PARTS_TEMPLATE, setShipColours,
-  REFIT_NUMERALS, meltCounts, materialsFor, takeAllMaterials, refitShare, setShipLivery, setShipCabin, setShipFittings, setShipPlaque,
+  REFIT_NUMERALS, meltCounts, materialsFor, takeAllMaterials, refitShare, setShipLivery, setShipCabin, setShipFittings, setShipPlaque, setShipFigurehead,
 } from '../systems/fleet.js';
 import { captainRefit } from '../systems/naval/captainTree.js';   // CAPTAIN-TREE: her captain's stars over her refits
 import { flagSizeOf } from '../systems/naval/shipFlag.js';   // SHIP-COLOURS: the hulls that fly a flag
-import { liveryPartsOf, isPaint } from '../systems/naval/shipLivery.js';   // SHIP-LIVERY: the paints a hull takes
+import { liveryPartsOf, isPaint, clothHull } from '../systems/naval/shipLivery.js';   // SHIP-LIVERY: the paints a hull takes
+import { sailClothCode } from '../systems/naval/sailCloth.js';   // GUILD-SHOP: her sailcloth, the Guild Sailcloth's
+import { guildWareHeld } from '../net/guild/guildStock.js';
+import { SAILCLOTH_SHUT } from '../ui/sailClothPanel.js';
 import { cabinShipType } from '../systems/sailingCabin.js';   // CABIN-LOOK: the hulls with a cabin below
 import { SHIP_TYPES } from '../systems/banking.js';
 import { HULL_NAMES, HULL_PRICES } from '../systems/comeSailAway/comeSailAwayBoat.js';
@@ -42,6 +45,7 @@ import { optionPath } from '../ui/settings/settingsMap.js';   // ORG2: a switch 
 import { holdsCargo } from './holdDoor.js';   // CARGO-ANYWHERE: the hulls that carry a hold
 import { t } from '../systems/textManager.js';   // CARGO-ANYWHERE: the hold's words in the player's language
 import { etherWildRingAt } from '../systems/wild/etherWild.js';   // AUDIT FOE-KEEPS E3: the open sea's PvP waters
+import { figureheadHull, liveryCarvingPaint } from '../systems/naval/figurehead.js';   // FIGUREHEAD: the hulls with a stem for a carving
 
 /** The hulls whose prefab carries a live `Crewed` node (Come Sail Away's Small Ship, Large Galley and Carrack - the
  *  Rowboat's is inactive): a ship with hands, who sail her to a port and mend her where she lies. */
@@ -193,9 +197,11 @@ export function createFleetHost(deps) {
         hold: holdsCargo(rec.hull),   // CARGO-ANYWHERE: her Hold button - every hull but the Rowboat's
         flag: !!flagSizeOf(rec.hull), colours: rec.colours ?? null,   // SHIP-COLOURS: whether she flies a flag, and the one she flies
         paints: liveryPartsOf(rec.hull), livery: rec.livery ?? null,   // SHIP-LIVERY: the parts her paint takes, and her paint
+        clothable: clothHull(rec.hull), cloth: clothHull(rec.hull) ? guildWareHeld('guildsails') : false,   // GUILD-SHOP: whether her sail takes a sailcloth, and whether it is to be had (null: unread)
         cabin: cabinShipType(rec.hull) !== SHIP_TYPES.None ? rec.cabin ?? 0 : null,   // CABIN-LOOK: her cabin's stain (null: she has no cabin)
         fittings: rec.deck?.length ?? 0,   // DECK-PROPS: how many fittings stand on her deck
         plaque: !!rec.plaque, named: !!rec.name,   // SHIP-PLAQUE: her name on her bows, and whether she has one to show
+        carvable: figureheadHull(rec.hull), figurehead: rec.figurehead ?? 0, carvingPaint: liveryCarvingPaint(rec.hull, rec.livery),   // FIGUREHEAD: her stem, her carving, its paint
         can: { summon: why.summon, away: why.away, repair: why.repair, yard: why.yard, refit: why.refit },
       });
     }
@@ -255,6 +261,13 @@ export function createFleetHost(deps) {
       deps.changed?.();
       return said(true, rec.plaque ? t('naval.plaque.shown', 'Ship name shown on the bow.') : t('naval.plaque.hidden', 'Ship name hidden.'));
     }
+    if (verb === 'figurehead') {
+      // FIGUREHEAD: her carving stood at her stem, or taken down (0) - wherever she lies, free; her word said again
+      if (!figureheadHull(rec.hull)) return said(false, t('naval.figurehead.noStem', 'This ship has no stem for a figurehead.'));
+      if (!setShipFigurehead(uid, arg)) return said(false, t('naval.figurehead.bad', 'Unknown figurehead.'));
+      deps.changed?.();
+      return said(true, rec.figurehead ? t('naval.figurehead.done', 'Figurehead carved. Other players will see it.') : t('naval.figurehead.bare', 'Figurehead removed.'));
+    }
     if (verb === 'colours') {
       // SHIP-COLOURS: her flag hoisted (systems/naval/shipFlag.js's), or struck for the mod's pennant (null) - wherever she lies
       if (!flagSizeOf(rec.hull)) return said(false, t('naval.flag.noMast', 'This ship has no masthead for a flag.'));
@@ -268,6 +281,8 @@ export function createFleetHost(deps) {
       // CABIN-LOOK: and her cabin's stain with it, where she has a cabin (made at her next visit below) - both read before
       // either is set, so a paint refused leaves her as she was
       const below = cabinShipType(rec.hull) !== SHIP_TYPES.None, cabin = arg?.cabin ?? 0;
+      // GUILD-SHOP: a sailcloth other than hers is the Guild Sailcloth's - one she flies already stays through a repaint
+      if (sailClothCode(arg?.cloth) && sailClothCode(arg?.cloth) !== sailClothCode(rec.livery?.cloth) && guildWareHeld('guildsails') !== true) return said(false, SAILCLOTH_SHUT());
       if ((below && !isPaint(cabin)) || !setShipLivery(uid, arg ?? null)) return said(false, t('naval.paint.bad', 'Unknown paint.'));
       if (below) setShipCabin(uid, cabin);
       deps.changed?.();

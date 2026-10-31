@@ -292,7 +292,7 @@ test('EG-H2 THE SWEEP (section 24, THE ONE CONSTRUCTION SEAM): every rule\'s doo
     ['P', 'const portalDoorRefusal = () => {', 'const hold = portalHoldNow();', ['portalStone']],
     ['K', 'export function spirePotionRefusal(item) {', 'try {', ['potions']],
     ['K', 'export function spirePotionDrunk(item) {', 'try {', ['potions']],
-    ['T', 'export function refusal(hand, ctx) {', '\n}\n', ['techFlight']],
+    ['T', 'export function refusal(hand, ctx, key = 1) {', '\n}\n', ['techFlight']],
     ['S', 'export function parkourDeps(', '\n}\n', ['runLeap']],   // EG-PERFECT: the running leap's door, the four hosts' one parkour deps
   ];
   const readRules = new Set();

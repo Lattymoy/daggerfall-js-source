@@ -54,9 +54,16 @@ something a player holds.
 
 ## 4. How a piece is had, and worn
 
+> STOREFRONT (2026-10-29): in the shop's second law the Eternal set is a ware that gives its five pieces, as a bundle
+> does - holding it holds them, and its price falls by the share of them already held (`06-Systems/Storefront.md` section 3).
+
 A piece is the ACCOUNT's, as an aura is: every character on the account may wear it, and the kit worn follows the
 account. What is held is read off the account's row at every ask (`server-account/src/titles.js` armoryHeld). A guest
 holds none.
+
+GUILD-SHOP (2026-10-30, `11-Multiplayer/Guild-Shop.md` section 3): the **Insignia Armlet** is the arms slot's guild
+piece, bought for silver in the guild window's Shop - its bit on `players.guild_wares`, read by armoryHeld beside the
+others. It draws the wearer's guild's crest on a gilt band round the left upper arm.
 
 **The Sigil Broker.** The Dagonfire pieces are her insignia (`src/net/insignia.js` INSIGNIA, ids `armory:<piece>`),
 sold beside the Gatebreaker title and Dagon's Fire aura through their one door (`/v1/account/insignia`,
@@ -66,7 +73,7 @@ window draws each piece on its own stage, as the shop does (`src/ui/brokerWindow
 Daggerfall Unity has no such sale; this is the WB9g Broker's law, extended.
 
 **The shop.** The Eternal pieces are wares of the kind `armory`, a section of their own in the window
-(`src/net/shopLaw.js`): **The Eternal Set** at $20 (`armory:eternalset`, bit 256) gives all five, and each piece is $6
+(`src/net/shopLaw.js`): **The Eternal Set** at $20 (`armory:eternalset`, bit 256; AURUM-ONLY, 2,000 Aurum) gives all five, and each piece is $6 (600 Aurum)
 alone. A ware already had is not sold again (`shopOwns`): a piece the set gave, or the set once the five singles are held.
 Each is on sale while `SHOP_ON_SALE` names it.
 
@@ -75,6 +82,14 @@ set's **Wear** sends it, or `null` to bare all five. The service refuses a piece
 not of its slot (`no-piece`, 400); a kit with one such piece is refused whole. The account card's **Aura Armory** row
 lists each slot with the pieces held for it. The Collections page lists every piece by slot, held or not, and how it is
 had.
+
+**The Crystal Spurs** (THANKS-POST, 2026-10-30, the owner: "a free arm armoury aura. Small and varied crystallized arm
+spikes that rotate color gradient but not overbearing"). An arms piece of its own line, `crystal`, code `d`, never sold:
+the Storefront update's gift to every account standing then (`src/net/giftLaw.js`, `06-Systems/Aurum.md` section 3c). Five
+spurs an arm, both arms (`src/render/armoryPass.js` ARMORY_SPURS): small six-sided cones of crystal, each its own size and
+way round the arm, leaning toward the hand. A sprite shows the upper arm's three. Their colour turns slowly through
+amethyst, aqua and rose (PRISM_RGB, a turn in 20 seconds), each spur its own phase, the tip brightest, a glint running
+up the edges. Drawn at ARMORY_SPUR_GAIN, under the other pieces' full light. `test/server/thanks_post.test.js`.
 
 ## 5. Online
 
@@ -113,6 +128,13 @@ feet are the two leg runs nearest the body, a robe split at its quarters, a staf
 traced up from the neck. On a side view the near arm lies over the body with no edge to read, so its arm pieces keep
 the sets' rows, turned with the body.
 
+**The arm's band** (ARMORY-MIRROR, `01-Overview/bugs/Field-Bugs-2026-10-30e.md`). Each arm's band is read too: from a
+third of the way down, the first row where the arm stands clear of the body, and its width there; never clear, where
+its colour ends. Every arm piece is
+worn on it, as wide: the Insignia Armlet's patch, and the Ashbound Bracers' and the Eternal Armlets' line moved across
+through it. A side view's stand half an arm in from the body's back edge, where the pictures paint its near arm. An arm
+the picture hides behind the body (`armSide`) wears none.
+
 **The pieces.** Tubes round a limb or the brow, a decal on the chest, cards for embers and motes. Light is added, the
 depth tested and never written, and the fog applied. One program a piece (the auras' AURA-SPLIT law), each started at
 the boot's idle (`src/render/playPrograms.js`). Every rate is whole over the auras' clock, so nothing jumps at its wrap.
@@ -134,6 +156,11 @@ band at the knee with the Origin's spark.
 THE CARD LAW: on a sprite every point is lifted toward the eye (`ARMORY_LIFT_M`), so a piece lies on the card's near
 side and what stands behind the body is hidden by the card's own depth. A chest piece weighs how squarely it faces the
 eye; the Eternal Sigil also burns on the back, clear of a rig's torso.
+
+**The card's right** (ARMORY-MIRROR, `01-Overview/bugs/Field-Bugs-2026-10-30e.md`). A sprite's points move across its
+card along the billboard's own right (`render/armoryPass.js` cardRightOf). Under the world's mirrored lens that is the
+view's first row turned round; under the stage's plain lens, the row itself. Read off the row in the world, every
+piece stood mirrored across the card.
 
 **A sprite's forearm is not drawn.** A painting has no elbow or wrist to measure past the shoulder, so on a sprite an
 arm piece is drawn on the upper arm alone; the forearm draws on a rig. The legs draw from the knee down on both.
@@ -158,8 +185,9 @@ the Eternal Edge a blue-violet line with a light running along it, a fainter one
 GILDED-GLOW; AUDIT FB1029f D3: the owner may turn this round). An element shows next, because it is the blow's truth.
 The armory piece shows before the arcane look.
 On the classic hand the piece's outline is drawn on the plain sheet, so an enchanted weapon's own sheet gives way to it
-while the piece is worn. A sprite in third person shows no weapon piece: its weapon is painted into the picture, with
-nothing to measure.
+while the piece is worn. A sprite in third person wears it as an outline round the weapon in its hand while drawn - a
+skin's round the whole sprite, whose weapon is painted into its picture - and on the weapon on its back while sheathed
+(BACK-HOLSTER GLOW, LAYERED-GLOW, `05-Combat/Weapon-Glow.md` "On a sprite").
 
 **In the shop** a weapon piece stands on a stage of its own (`src/render/weaponPiecePreview.js`): a longsword of
 Daggerfall's pixels, outlined by the classic hand's own shaders - the field baked once, the band drawn each frame.
@@ -224,6 +252,9 @@ peer's name lifts only over a head piece drawn in that frame, and a sprite's Cin
 - `test/systems/weaponglow1.test.js` law 7 - the weapon piece's place among the looks.
 - `tools/armoryProbe.mjs` - the pass on a real GPU (Chromium): on the stand-in, the sprite and retail's Morrowind
   skeleton; placement, the card law, the clock's wrap, and the weapon pieces' stages.
+- `tools/armorySpriteProbe.mjs` - Layered Gearing through the renderer's own billboard under the world's mirrored lens,
+  eight views, eight bodies: each piece on the part its picture paints (ARMORY-MIRROR). `test/render/armorymirror.test.js` pins the card's
+  right and a side view's armlet; `tools/mutants/armorymirror.json` mutates them.
 - `01-Overview/audits/Audit-Armory.md` - the audit and what it fixed.
 - `tools/mutants/armory.json` - every law above, mutated.
 - `test/ui/profileslots.test.js` - the slots, the presses, the stage's frame, the head pieces' tips, the bodies, and the

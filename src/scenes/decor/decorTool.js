@@ -80,6 +80,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { createDecorScan } from '../../systems/decor/decorScan.js';
+import { guildPieceLeft } from '../../net/guild/guildStock.js';   // GUILD-SHOP: the guild's own hall pieces, its stock
+import { guildStockText } from '../../ui/guild/guildShopText.js';
 import { decorModsLive, DECOR_MODS_LIVE_S } from '../../systems/decor/decorMods.js';   // AUDIT 05b A3: the mods' pieces offered while they stand
 import { createDecorRooms } from '../../systems/decor/decorRooms.js';   // DECOR-ROOMS: a house's rooms, found in its own walls
 import { createDecorDoorways, decorDoorwaysFree, decorDoorwayAimed, decorDoorFit, decorDoorwayQuad, decorIsDoor } from '../../systems/decor/decorDoorways.js';   // HOME-DOORS
@@ -568,6 +570,7 @@ export function createDecorTool(deps) {
     if (!key) return;
     const entry = entryForKey(key);
     if (!entry) return;
+    if (!decorRoomEntries([entry], deps.room?.(), null, liveMods())?.length) return;   // AUDIT GUILD-SHOP R6: a slot's piece in a room that takes it alone (a hall's in a hall)
     const fly = [...placing.fly];
     endPlacing();
     beginPlacing(entry, null, { hotbar: true, at: fly });
@@ -752,7 +755,9 @@ export function createDecorTool(deps) {
     return m?.box ? free.filter((w) => decorDoorFit(w, m.box)?.fills) : free;
   }
   /** HOME-YARD (AUDIT): THE GROUND A PIECE COVERS, as offsets from where it stands in the room's frame - its model's box
-   *  turned and sized as it stands (a flat's width, square), so a lot is asked about all of it, not its middle alone. */
+   *  turned and sized as it stands (a flat's width, square), so a lot is asked about all of it, not its middle alone.
+   *  WALL-TOUCH: a flat turns to the eye, so its ground is the circle of half its width, as the placer stands it off a
+   *  wall - not half its picture's diagonal, which put every lamp hung on a house's wall into the house. */
   function footprintOf(p) {
     const piece = p?.piece;
     if (!piece) return [];
@@ -761,10 +766,11 @@ export function createDecorTool(deps) {
     if (m?.box) {
       const [x0, , z0, x1, , z1] = m.box;
       const yaw = ((piece.rot?.[0] ?? 0) * Math.PI) / 180, c = Math.cos(yaw), sn = Math.sin(yaw);
-      return [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([lx, lz]) => [(c * lx + sn * lz) * s, (-sn * lx + c * lz) * s]);   // mat4 trs: local x to (cos, -sin), z to (sin, cos)
+      const corners = [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([lx, lz]) => [(c * lx + sn * lz) * s, (-sn * lx + c * lz) * s]);   // mat4 trs: local x to (cos, -sin), z to (sin, cos)
+      return Object.assign(corners, { bottom: m.box[1] * s });   // AUDIT FB1030 Y5: its foot, under its origin by as much as it reaches
     }
-    const r = (p.radius ?? 0) * s;
-    return r > 0 ? [[-r, -r], [r, -r], [r, r], [-r, r]] : [];
+    const r = (p.flatSize?.w > 0 ? p.flatSize.w / 2 : p.radius ?? 0) * s;
+    return r > 0 ? Array.from({ length: 8 }, (_, i) => [r * Math.cos((i * Math.PI) / 4), r * Math.sin((i * Math.PI) / 4)]) : [];   // AUDIT FB1030 Y8: the ground it turns over, so a diagonal wall too
   }
   /** Where a placed piece stands, in this visit's frame. */
   const piecePoint = (piece) => { const o = deps.origin?.() ?? [0, 0, 0]; return [o[0] + piece.pos[0], o[1] + piece.pos[1], o[2] + piece.pos[2]]; };
@@ -891,7 +897,7 @@ export function createDecorTool(deps) {
       ready: s.phase() === 'done',
       sized: s.lateSized(),   // AUDIT 05b A3: a piece measured since - its price, listed
       radiusOf: (e) => s.radiusOf(e),
-      priceOf: (e) => { const rad = s.radiusOf(e); return rad ? decorPrice(rad, 1) : null; },
+      priceOf: (e) => { if (e?.guild != null) return 0; const rad = s.radiusOf(e); return rad ? decorPrice(rad, 1) : null; },   // GUILD-SHOP: the guild's piece costs no gold
       gold: deps.wallet?.().gold ?? 0,
       count: pool.size(),
       cap: capHere(r),
@@ -1073,7 +1079,7 @@ export function createDecorTool(deps) {
     const yard = !!deps.room?.()?.yard;   // HOME-YARD: outside, nothing is held and no piece carries a light of its own (YARD-LIGHT: a lamp lights as the town's)
     const entry0 = editing ? { ...catalogueEntry, light: editing.light ?? null, storage: !!editing.storage, station: editing.station ?? null } : catalogueEntry;   // AUDIT HOME-STATIONS S1: a moved station stays one
     const entry = yard ? { ...entry0, storage: false, light: null, station: null } : entry0;
-    const free = entry.kind === 'own';   // DECOR2a: the player's own item - no price, whatever its size
+    const free = entry.kind === 'own' || entry.guild != null;   // DECOR2a: the player's own item - no price, whatever its size; GUILD-SHOP: nor the guild's own piece (its silver was paid)
     // a move, and a duplicate, already paid for a size: the scan may not have reached it yet
     const priced = editing ?? (Number.isSafeInteger(pose?.paid) && pose.paid > 0 && pose.scale > 0 ? pose : null);
     const radius = free ? null : s.radiusOf(catalogueEntry) ?? (priced ? priced.paid / (DECOR_PRICE_PER_METRE * priced.scale) : null);
@@ -2055,8 +2061,10 @@ export function createDecorTool(deps) {
     const by = cur.model == null && axis === 0 && !isNatureArchive(cur.flat?.[0]) ? Math.sign(deg) * 180 : deg;
     const next = decorPieceOf({ ...cur, rot: cur.rot.map((v, i) => (i === axis ? wrapTurn(Math.round((v + by) * 10) / 10) : v)) });
     if (!next) return false;
-    const why = whyNotHere({ piece: next, radius: ensureScan().radiusOf(entryOf(next)) ?? null });
-    if (why) { deps.say?.(why); return false; }
+    const radius = ensureScan().radiusOf(entryOf(next)) ?? null, why = whyNotHere({ piece: next, radius });
+    // WALL-TOUCH (AUDIT FB1030 M3): a flat's ground is a circle, the same turned - refused only for what it did not stand
+    // in already (a lamp on a wall flips); a model's turned box, whenever it is refused
+    if (why && (next.model != null || why !== whyNotHere({ piece: cur, radius }))) { deps.say?.(why); return false; }
     pool.put(next);
     if (r.kind !== 'home') return true;   // offline, the room's pool is its save
     const owed = turnsOwed.get(piece.id);
@@ -2376,7 +2384,7 @@ export function createDecorTool(deps) {
     const price = p.door && p.piece ? p.piece.paid : p.placer ? p.placer.price() : null;   // HOME-DOORS: a door's price is its fit's
     const edit = p.editing && p.placer ? decorEditPrice(p.radius, p.editing, p.door && p.piece ? p.piece.scale : p.placer.state().scale) : null;
     bar?.show({
-      name: p.editing ? `Moving ${p.entry.name}` : p.entry.name, price, priceText: edit ? decorEditText(edit) : p.free ? 'free' : null,
+      name: p.editing ? `Moving ${p.entry.name}` : p.entry.name, price, priceText: edit ? decorEditText(edit) : p.entry.guild != null ? guildStockText(p.entry, guildPieceLeft(p.entry, roomPieces())) : p.free ? 'free' : null,   // GUILD-SHOP: what is left of the guild's stock
       count: pool.size(), cap: capHere(deps.room?.()),
       snap: !!p.placer?.state().snap, why: placingWhy(p, price),
       sized: decorEntrySized(p.entry), preview: !!p.lock,   // DECOR-FIGURE: no Smaller or Bigger for one of Daggerfall's people
@@ -2466,7 +2474,8 @@ export function createDecorTool(deps) {
       if (pay > gold) return `You need ${pay - gold} more gold.`;
       return !deps.touch && !deps.locked?.() ? 'Click to look around again.' : null;
     }
-    if (p.free && !deps.packHas?.(p.entry.own)) return p.entry.furnishing ? 'It is no longer among your things.' : 'It is no longer in your pack.';   // DECOR2a (DECOR2b: furniture)
+    if (p.free && p.entry.kind === 'own' && !deps.packHas?.(p.entry.own)) return p.entry.furnishing ? 'It is no longer among your things.' : 'It is no longer in your pack.';   // DECOR2a (DECOR2b: furniture)
+    if (p.entry.guild != null && guildPieceLeft(p.entry, roomPieces()) <= 0) return guildStockText(p.entry, 0);   // GUILD-SHOP: the guild's stock spent here
     const why = decorWhyNot({ price, ready: true, gold: deps.wallet?.().gold ?? 0, count: pool.size(), cap: capHere(deps.room?.()), yard: !!deps.room?.()?.yard, hall: !!deps.room?.()?.hall });
     if (why) return why;
     return !deps.touch && !deps.locked?.() ? 'Click to look around again.' : null;

@@ -152,8 +152,8 @@
   {
     "name": "AUDIT-GROWTH-L1-11-ladder-unread",
     "file": "src/ui/growth/specGuide.js",
-    "old": "return lootRarityOn() ? t('growth.spec.useTechniqueOwn'",
-    "new": "return true ? t('growth.spec.useTechniqueOwn'",
+    "old": "return lootRarityOn() ? t('growth.spec.useTechniqueBoth'",
+    "new": "return true ? t('growth.spec.useTechniqueBoth'",
     "tests": [
       "test/ui/growth/growth1_tab.test.js"
     ],

@@ -32,7 +32,7 @@ export const DRAGON_ADMIT_R = 600;
 export const DRAGON_FAN_R = 4000;
 
 /** Seconds of reference damage each fighter's share stands for (section 4), and its fighters' bound. */
-export const DRAGON_TTK_S = 200;
+export const DRAGON_TTK_S = 720;   // DRAGON-HARDER (the owner: "The dragon is way too easy to kill"): 200 before - the bucket deals 3x its reference, so it fell in a minute; 720 is twelve minutes at reference, four at the cap
 export const DRAGON_FIGHTERS_MAX = 128;
 /** The most blows one account lands a second. */
 export const DRAGON_HIT_HZ_MAX = 4;

@@ -155,7 +155,8 @@ const edge = (side, px) => `${side}:calc(${px}px + env(safe-area-inset-${side}, 
 // name every caller imports.
 import { isTouchDevice } from './touchDevice.js';
 export { isTouchDevice };
-import { touchButtonSlots, layoutTouchCorner, attackStroke } from './touchButtons.js';   // TOUCH-BUTTONS: the corner is the player's
+import { touchButtonSlots, layoutTouchCorner, attackStroke } from './touchButtons.js';
+import { setTouchHeld, clearTouchHeld } from './touchHeld.js';   // AUDIT TECH-FEEDBACK II F6: a hold button's action, held   // TOUCH-BUTTONS: the corner is the player's
 
 const KEY_NAMES = { KeyW: 'w', KeyA: 'a', KeyS: 's', KeyD: 'd', KeyZ: 'z', Space: ' ', ShiftLeft: 'Shift', Tab: 'Tab', Escape: 'Escape', Enter: 'Enter', ArrowUp: 'ArrowUp', ArrowDown: 'ArrowDown', Equal: '=', Minus: '-' };
 function synth(type, code) {
@@ -397,6 +398,7 @@ export function attachTouch(canvas, hooks = {}) {
     if (sig === cornerSig) return;
     cornerSig = sig;
     for (const [b, c] of slotHeld) { slotHeld.delete(b); upCode(c, liveNeeds()); }   // nothing stays down under a button that is going
+    clearTouchHeld();
     if (attacking) { attacking = null; hooks.attack?.(0, 0, false); }
     for (const b of slotButtons) b.remove();
     slotButtons = [];
@@ -405,7 +407,7 @@ export function attachTouch(canvas, hooks = {}) {
       let b = null;
       const at = [edge('right', right), edge('bottom', 16), action.w ?? 60];
       if (action.kind === 'hold') {
-        b = button(action.glyph, ...at, () => { slotHeld.set(b, downAction(action.id)); }, () => { const c = slotHeld.get(b) ?? null; slotHeld.delete(b); upCode(c, liveNeeds()); });
+        b = button(action.glyph, ...at, () => { slotHeld.set(b, downAction(action.id)); setTouchHeld(action.id, true); }, () => { const c = slotHeld.get(b) ?? null; slotHeld.delete(b); upCode(c, liveNeeds()); setTouchHeld(action.id, false); });
         if (action.id === 'Jump') jumpSlides(b);   // EG-ZH: in the Spire a Jump press that keeps sliding becomes look
       } else if (action.kind === 'tap') {
         // AUDIT CAPTAIN'S SEA S2: a SHARE's action (the Spyglass on K beside the road's follow) by the host's own door -
@@ -742,6 +744,6 @@ export function attachTouch(canvas, hooks = {}) {
     el: ui,
     setLockDot,
     axes: () => (stickId !== null && getPref('touchAnalogStick') ? { x: stickX, y: stickY } : null),   // TI2
-    dispose() { clearInterval(navTimer); setGyro(false); closeEntry(); ui.remove(); if (_openEntry === openEntry) _openEntry = null; },   // RPT1026-MISC TOUCH-FIELD: a layer gone raises no entry - AUDIT RPT1026 L1: and takes its entry, the page's own now
+    dispose() { clearInterval(navTimer); setGyro(false); closeEntry(); clearTouchHeld(); ui.remove(); if (_openEntry === openEntry) _openEntry = null; },   // RPT1026-MISC TOUCH-FIELD: a layer gone raises no entry - AUDIT RPT1026 L1: and takes its entry, the page's own now
   };
 }

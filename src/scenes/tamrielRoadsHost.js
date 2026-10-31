@@ -20,7 +20,7 @@ import { createTamrielRoadsClient } from '../world/tamrielRoadsClient.js';
 import { regionLattice, regionsByNearness, regionWanted, regionAt, inputsPrint, REGION_APRON, GROUND_ROLL_VERSION } from '../world/tamrielRoads.js';
 import { keptLandRegions, fnv32 } from '../world/tamriel/tamrielBootCache.js';   // AUDIT RELEASE R4-4: the boot's continent kept
 import { BIOMES_VERSION } from '../world/tamriel/tamrielBiomes.js';
-import { arenaJoins, joinLayer, joinRunPixels } from '../world/arenaRoads.js';
+import { arenaJoins, joinLayer, joinRunPixels, keepArenaRoadsHost, keptArenaRoadsHost } from '../world/arenaRoads.js';
 import { tamrielFrameInBay, tamrielFit, inBay, pictureToBay, BAY_W, BAY_H } from '../world/tamriel/tamrielFrame.js';
 import { tamrielTrace } from '../world/tamriel/tamrielLand.js';
 import { CAPITALS, capitalGates, capitalSpanPixels, capitalOnPixel, capitalCentrePixel, capitalSpan } from '../world/tamrielCapitals.js';
@@ -29,6 +29,7 @@ import { LOCATION_TYPES } from '../formats/mapsFile.js';
 import { resetPastBayPlaces, addPastBayPlaces } from '../world/pastBayPlaces.js';
 import { cyrodiilTrunkSpec, CYRODIIL_ROADS } from '../world/road/cyrodiilRoads.js';   // VOYAGER-CYRODIIL
 import { resetExactPieces, addExactPieces, clearExactPieces } from '../systems/travel/landPieces.js';   // EXACT-PIECES: the land's pieces, a region at a time
+import { landLayer } from '../world/land/landLayer.js';   // FOUNDATION F4: the land's rows, in the kept set's print
 
 /** VOYAGER-CYRODIIL: THE IMPERIAL CITY'S KEY in the capitals' table - its ring and its gates the plan's own. */
 export const CYRODIIL_CAPITAL = 'imperial-city';
@@ -71,7 +72,7 @@ export function createTamrielRoadsHost({ terrainGen, woodsBytes, heightAt, joinL
   /** @type {Array<{ key: string, x0: number, y0: number, x1: number, y1: number }>} */ let grids = [];
   /** @type {Set<string>} */ let done = new Set();
   /** @type {Array<(grid: { x0: number, y0: number, x1: number, y1: number }, build: number) => void>} */ const told = [];
-  return {
+  const api = {
     /**
      * Each frame, with the player's pixel: a build when what stands moved, the build re-ordered as the player goes.
      * @param {?{ x: number, y: number }} player
@@ -111,8 +112,10 @@ export function createTamrielRoadsHost({ terrainGen, woodsBytes, heightAt, joinL
     },
     /** WW7-9: `fn(grid, build)` told as each region lands - its grid, the pixels its layer and its places may move. */
     onRegion(fn) { told.push(fn); },
-    dispose() { roadsClient?.dispose(); clearExactPieces(); },
+    dispose() { roadsClient?.dispose(); clearExactPieces(); if (keptArenaRoadsHost() === api) keepArenaRoadsHost(null); },
   };
+  keepArenaRoadsHost(api);   // W14: the season's fissures past the Bay keep off these roads once they are laid (scenes/seasonHost.js)
+  return api;
 
   function start(towns, spec, capitals, held, player) {
     roadsClient ??= createTamrielRoadsClient({ log });
@@ -134,7 +137,7 @@ export function createTamrielRoadsHost({ terrainGen, woodsBytes, heightAt, joinL
     at = regionAt(lattice, from.x, from.y);
     const trace = tamrielTrace(), fit = tamrielFit();
     // AUDIT RELEASE R4-4: the regions with land a returning boot scanned before, on this very ground, kept (tamrielBootCache.js)
-    const ground = `w1|g${GROUND_ROLL_VERSION}|b${BIOMES_VERSION}|${fit ? `${fit.ox}:${fit.oy}:${fit.ppu}` : '-'}|${fnv32(woodsBytes ?? []).toString(36)}`;   // w1: the kept set is the regions EXACT-PIECES wants (regionWanted - the Bay's own too), not the regions with land a boot before it kept
+    const ground = `w1|g${GROUND_ROLL_VERSION}|b${BIOMES_VERSION}|${landLayer().stamp ? `l${landLayer().stamp}|` : ''}${fit ? `${fit.ox}:${fit.oy}:${fit.ppu}` : '-'}|${fnv32(woodsBytes ?? []).toString(36)}`;   // w1: the kept set is the regions EXACT-PIECES wants (regionWanted - the Bay's own too), not the regions with land a boot before it kept
     const regions = regionsByNearness(lattice, keptLandRegions({ lattice, scan: (r) => regionWanted(r, heightAt), ground }), from);   // EXACT-PIECES: the Bay's own regions too
     // AUDIT TESA II R9: the crossings' runs past the Bay held as an Arena place's pixel is - no rolled place on the road
     const inputs = { woodsBytes, trace, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null, spec, nodes, obstacles, gates, held: [...held, ...joinRunPixels(joins)], lattice, trunks };

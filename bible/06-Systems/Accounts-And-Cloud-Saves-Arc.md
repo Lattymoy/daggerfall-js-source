@@ -5476,6 +5476,13 @@ make the aura misallign".
   content in `seraphwings.json` (5), `shadowcloak.json` (2), `climb5.json` and `auditclimbarc.json`.
 - Left, said: not seen in a running game client - the test drives the real sprite body and the real peer layers frame
   by frame, no GPU; the wings still stand on a rider at the saddle's rest pose (no shoulders read off a horse's frame).
+- **At the painted body** (BACK-HOLSTER, 2026-10-30; Mac: "Why is the cape backwards on the side facing?"). The cape and
+  the wings hung from the sprite's feet, but a side view's picture paints its body up to a third of a metre toward its
+  back (the sword held out front widens it), so the cape was worn on the chest. For the aura pass alone,
+  `scenes/auraHost.js` moves each sprite's cape or wings to its painted body along the view's right
+  (`render/auraRing.js` auraSpriteAcross, the Aura Armory's own `dx`; auraShiftAcross) and back after it, so the swing
+  never reads a picture's change as a step. A ring at the feet stays at the feet (`06-Systems/Eye-Of-The-Beholder.md`
+  BACK-HOLSTER).
 
 ## LEGACY7 — Project Legacy's lines and the tombstone (2026-10-06, acct87 - acct84 on its branch, renumbered past SERPENT-SET's acct84, then YARD-SHED's acct85, then YARD-HEIGHT's acct86 at the merges of main)
 
@@ -6223,3 +6230,30 @@ style". The glyph and the aura's nirnroots are one path (`GLYPH_PATH.nirnrootsag
   (the leaf one colour).
 - **Seen** in headless Chromium's WebGL2 (`tools/auraProbe.mjs`, 101/101): the leaves round the waist in the smoke, over
   the runes. Not seen in a running game client.
+
+## BLOOD-OF-COLDHARBOUR — Trakel's own: Blood of Coldharbour, its rose and the Vampiric Haze (2026-10-30, world297, acct230)
+
+For the in-game account trakel, a $200 patron. The owner: "Travel is a $200 patron but isnt listed. All $200 patrons
+ingame have custom stuff", read as Trakel, whose own asks came with it: the title "Blood of Coldharbour", "violet and
+crimson ... especially when blended together", a rose glyph after their reference, and "a dark violet, smokey haze that
+drifts around the sprite with more pronounced particles of crimson like blood that bubble up from the ground and drift
+off into daedric runes". Asked, the owner named the handle **trakel**. NIRNROOT-SAGE's law throughout; no DFU member.
+
+- **The grant** (`server-account/src/titles.js`): `COLDHARBOUR_HANDLES = "trakel"` grants the title, its glyph
+  (`TIER_GLYPH.coldharbour`) and the aura (`TIER_AURA.coldharbour: 'vampirichaze'`) together, case-folded. Taking the
+  handle off takes all three on the next token. Trakel's Aurum is PATRON-AURUM's (`06-Systems/Aurum.md` section 3b).
+- **The vocabulary** (`src/net/identityToken.js`): `coldharbour` last in TITLES and GLYPHS, `vampirichaze` last in
+  AURAS. The relay reads them, so world297 is re-hashed in place; it deploys before acct230, as STOREFRONT says.
+- **The face** (`src/ui/playerBadge.js`, `COLD_*`): the ring's lavender, the outer petals' violet, the crimson, the
+  heart's blood, the spiral's rose, the haze's smoke and the magenta the crimson and the violet blend into - the title's
+  one colour, 63 from the nearest (Shadow Fang's crimson). The title is crimson into magenta into lavender, edged in
+  black. THE ROSE: a ring of eight hooked thorns, its inside wound back; five details over it - the violet petals, the
+  crimson points between them, the heart, its spiral, and the drop at the ring's foot. `R` on the classic face.
+- **The look** (`src/render/auraRing.js`, `AURA_LOOK.vampirichaze`, kind 20, premultiplied): crimson runes and pooling
+  blood over a violet shade at the feet, low haze on the strip, and the third draw - wisps of the haze drifting about the
+  body, and drops of blood rising like embers, each opening into a rune past `HAZE_RUNE_AT` of its rise and fading
+  (`hazePuff`, `hazeEmber`, `hazeCardsInto`). Its cards ride the Sage's uniforms (`HAZE_CARDS` no more than
+  `SAGE_CARDS`); every rate and life whole over the clock.
+- **Pinned** by `test/net/coldharbour.test.js` (the words and paint, the rose's shape, the grant, the service end to
+  end, the law, the shader and its vertex run); `tools/mutants/coldharbour.json`. Seen in headless Chromium through the
+  shop's own aura stage. Not seen in a running game client.

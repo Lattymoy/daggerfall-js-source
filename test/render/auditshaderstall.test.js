@@ -126,7 +126,7 @@ test('AUDIT SHADER-STALL the passes play meets are started at the boot\'s idle w
   // nodes' glow and the sea fight's effects, with the auras' and the armory's last; PIN MOVED (SKYRIM-AURORA): and the
   // sky's aurora after them - met only in Skyrim, its door never waits (AUDIT SKYRIM-AURORA B5)
   const want = [...GATE_PASS_PROGRAMS, ...telegraphPrograms(false), ...telegraphPrograms(true), ...GATE_FX_PROGRAMS, ...CRYSTAL_PROGRAMS, ...NODE_GLINT_PROGRAMS, ...FIRE_PROGRAMS, ...GLOW_PROGRAMS, ...NODE_GLOW_PROGRAMS, ...NAVAL_PROGRAMS, ...AURA_PROGRAMS, ...ARMORY_PROGRAMS, ...AURORA_PROGRAMS];
-  assert.equal(ARMORY_PROGRAMS.length, 8, 'a program a body piece');
+  assert.equal(ARMORY_PROGRAMS.length, 10, 'a program a body piece');   // PIN MOVED: THANKS-POST - the Crystal Spurs'; GUILD-SHOP - the Insignia Armlet's
   assert.deepEqual(playPrograms(), want);
   const on = fakeGl();
   const turns = [];

@@ -80,6 +80,7 @@ import { WILD_FALLS_KEEP_S } from './wild.js';   // INT9: a death's drop's keepi
 import { settleHolds, REZ_SETTLE_MAX } from './legacy.js';   // REZ-BLOODLINE AUDIT R1: a held fall's window closed
 import { spendLapsedStakes } from './eg.js';   // EG-ZM: the Weir Key's stake's clock
 import { TOWN_ECON_SWEEPS, TOWN_ECON_SEEN_SWEEP, townEconKeptFrom, townEconSeenFrom, keepTownShares, townsOpen } from './townEcon.js';   // TOWN-ECON TE2: a town's acts past the days kept; AUDIT TOWN-ECON 2 SVC-3: the shares kept once
+import { tickRegionClock } from './regionClock.js';   // FOUNDATION F2: the regions' clock, ticked with the shares
 import { settleStaleYardCells } from './yardCells.js';   // YARD-CELL: a town's yard cells built again where a cascade left them stale
 import { STAFF_AUDIT_KEEP_S } from './staff.js';   // STAFF-PANEL1: the audit log's month
 import { censusDay, censusBackfill } from './staffCensus.js';   // STAFF-PANEL4-CENSUS: the census's day and its one backfill, off peak
@@ -151,7 +152,10 @@ export const MINUTE_JOBS = Object.freeze([
   ['seat-facts', async (ctx, env) => (seatsSwitchOf(env?.SEATS_OPEN) === 'off' ? 0 : keepSeatFacts(ctx.db, ctx.nowS))],
   // AUDIT TOWN-ECON 2 SVC-3 (townEcon.js keepTownShares): the towns' shares counted once for the whole service each keeping,
   // into the one row every isolate reads - where every isolate read every town's days on the primary
-  ['town-shares', async (ctx, env) => (townsOpen(env) ? keepTownShares(ctx.db, ctx.nowS) : 0)],
+  // FOUNDATION F2 (regionClock.js tickRegionClock): and the regions' clock, ticked once a UTC day off the towns' acts - in
+  // this job, so no job's share of the firing shrinks (AUDIT SCALE A2); a quiet minute asks it nothing. AUDIT FOUNDATION
+  // C3: the shares first, so a clock that fails leaves them kept
+  ['town-shares', async (ctx, env) => (townsOpen(env) ? (await keepTownShares(ctx.db, ctx.nowS)) + (await tickRegionClock(ctx.db, ctx.nowS)) : 0)],
   // YARD-CELL (yardCells.js settleStaleYardCells): a town's yard cells built again where a write no decor route made left
   // them stale - a home released, an account gone, a sweep; until then such a cell is read from its rows, as before
   ['yard-cells', (ctx) => settleStaleYardCells(ctx.db)],

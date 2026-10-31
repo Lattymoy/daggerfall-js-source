@@ -41,7 +41,7 @@ export const ACT_KINDS = Object.freeze({
   'arena-won': 'world',   // a ladder bout won in the Arena (never a bout between players - AUDIT QUESTLINES ACTS-6)
   'revenant-knelt': 'world',   // a revenant made to kneel
   'star-taken': 'world',   // a star taken on the Firmament - each star once (never one given back and taken again - AUDIT QUESTLINES ACTS-5)
-  'wyrd-met': 'world',   // a Wyrd Sister's window opened at a tavern's door (the Witches' Festival - AUDIT STAR8 T1: Morwen's letter); never a find (festivalClient.js ACT_NOT_FOUND)
+  'wyrd-met': 'world',   // a Wyrd Sister's window opened at a tavern's door (the Witches' Festival - AUDIT STAR8 T1: Morwen's letter); never a find (ACT_NOT_FOUND)
   // the endgame (each also a receipt the service holds - section 5.3)
   'rite-broken': 'endgame',   // Dagon's Faithful's rite broken before the breach opened
   'breach-closed': 'endgame',   // a Dagon's Breach closed
@@ -54,11 +54,16 @@ export const ACT_KINDS = Object.freeze({
   'star-held': 'endgame',   // a fallen star held through its master's fall (the Starfall - STAR8)
   'heart-star-held': 'endgame',   // the Heart-Star held - the Witches' Night's last star; said in the same turn as its `star-held`, so the festival's finds count one deed (festivalClient.js ONE DEED, ONE FIND)
   // KETCH (bible/11-Multiplayer/Sky-Ketch.md section 13): the sky-ketch's three (the last a receipt the service holds)
-  'ketch-boarded': 'endgame',   // the anchor-lift ridden up to the Sky-Ketch Mzunthar (the mode machine stood me aboard)
-  'ketch-cell-banked': 'endgame',   // an aether cell of mine set in the Starved Engine or a resonator (the ship's room said it)
+  'ketch-boarded': 'endgame',   // the anchor-lift ridden up to the Sky-Ketch Mzunthar (the mode machine stood me aboard); never a find (ACT_NOT_FOUND)
+  'ketch-cell-banked': 'endgame',   // an aether cell of mine set in the Starved Engine or a resonator (the ship's room said it); never a find (ACT_NOT_FOUND)
   'warden-felled': 'endgame',   // the Tonal Warden felled - its k1 receipt counted once (`recorded`)
 });
 export const ACT_IDS = Object.freeze(Object.keys(ACT_KINDS));
+/** THE ACTS NO FIND PAYS - one list for the Witches' Festival's finds and the Battle Pass's (festivalClient.js, passClient.js),
+ *  so an act is judged once: an elite foe's fall (its kill asked its own), a Wyrd Sister's window opened (no deed), and the
+ *  Ketch's lift ridden and a cell banked - said again at will, with no receipt behind them (AUDIT PASS 1: seven rides filled
+ *  the pass's day). The Warden felled is the Ketch's endgame find. */
+export const ACT_NOT_FOUND = Object.freeze(['elite-foe-slain', 'wyrd-met', 'ketch-boarded', 'ketch-cell-banked']);
 
 let _sink = null;
 /** The bridge's registration: `fn(kind, n)` hears every act (the layer's act). Null unregisters. */
