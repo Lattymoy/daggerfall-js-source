@@ -17,7 +17,8 @@ export const BASELINE = 'tools/unreachedBaseline.json';
 export const ENTRY_DIRS = Object.freeze(['server', 'server-account', 'app', 'scripts', 'tools', 'public']);
 const CODE = /\.(m?js|cjs|html)$/;
 
-const IMPORT = /(?:import|export)\s[^;]*?from\s*['"]([^'"]+)['"]|import\(\s*['"`]([^'"`$]+)['"`]\s*\)|import\s*['"]([^'"]+)['"]|src=["']([^"']+\.m?js)["']|new URL\(\s*['"]([^'"]+)['"]|new (?:Shared)?Worker\(\s*['"]([^'"]+)['"]/g;
+const IMPORT =
+  /(?:import|export)\s[^;]*?from\s*['"]([^'"]+)['"]|import\(\s*['"`]([^'"`$]+)['"`]\s*\)|import\s*['"]([^'"]+)['"]|src=["']([^"']+\.m?js)["']|new URL\(\s*['"]([^'"]+)['"]|new (?:Shared)?Worker\(\s*['"]([^'"]+)['"]/g;
 const GLOB = /import\.meta\.glob\(\s*(\[[^\]]*\]|['"][^'"]+['"])/g;
 
 /** Every code file under `dir` (repo-relative), skipping installed packages. */
@@ -37,7 +38,8 @@ export function specifiersIn(text) {
   }
   const globs = [];
   for (const g of text.matchAll(GLOB)) {
-    for (const p of g[1].match(/['"][^'"]+['"]/g) ?? []) if (!p.startsWith('\'!') && !p.startsWith('"!')) globs.push(p.slice(1, -1));
+    for (const p of g[1].match(/['"][^'"]+['"]/g) ?? [])
+      if (!p.startsWith("'!") && !p.startsWith('"!')) globs.push(p.slice(1, -1));
   }
   return { plain, globs };
 }
@@ -49,7 +51,11 @@ export function unreached(root = ROOT) {
   const entries = [...pages, 'src/main.js', ...ENTRY_DIRS.flatMap((d) => walk(root, d))];
   const isFile = (p) => existsSync(join(root, p)) && statSync(join(root, p)).isFile();
   const target = (from, spec) => {
-    const abs = spec.startsWith('/') ? spec.slice(1) : relative(root, resolve(root, dirname(from), spec)).split('\\').join('/');
+    const abs = spec.startsWith('/')
+      ? spec.slice(1)
+      : relative(root, resolve(root, dirname(from), spec))
+          .split('\\')
+          .join('/');
     return [abs, `${abs}.js`, `${abs}/index.js`].find(isFile) ?? null;
   };
   const seen = new Set(entries);
@@ -59,10 +65,16 @@ export function unreached(root = ROOT) {
     const { plain, globs } = specifiersIn(readFileSync(join(root, file), 'utf8'));
     const next = plain.map((s) => target(file, s)).filter(Boolean);
     for (const g of globs) {
-      const base = relative(root, resolve(root, dirname(file), g.split('*')[0])).split('\\').join('/');
+      const base = relative(root, resolve(root, dirname(file), g.split('*')[0]))
+        .split('\\')
+        .join('/');
       next.push(...src.filter((f) => f.startsWith(base)));
     }
-    for (const t of next) if (!seen.has(t)) { seen.add(t); stack.push(t); }
+    for (const t of next)
+      if (!seen.has(t)) {
+        seen.add(t);
+        stack.push(t);
+      }
   }
   return src.filter((f) => !seen.has(f)).sort();
 }
