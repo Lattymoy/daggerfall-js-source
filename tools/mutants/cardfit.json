@@ -130,8 +130,8 @@
   {
     "name": "CARDFIT-the-brief-not-the-row",
     "file": "src/ui/setCard.js",
-    "old": "el('span', 'set-tier-text', full ? t.text : t.brief)",
-    "new": "el('span', 'set-tier-text', t.text)",
+    "old": "    body.append(el('span', 'set-tier-text', full ? t.text : t.brief));",
+    "new": "    body.append(el('span', 'set-tier-text', t.text));",
     "tests": [
       "test/ui/enhanced/cardfit.test.js",
       "test/systems/set5_ui.test.js"
@@ -149,8 +149,8 @@
   {
     "name": "CARDFIT-the-stage-off-the-head",
     "file": "src/ui/setCard.js",
-    "old": "full || v.stage < 0 ? `${v.count}/${v.of}` : `${v.count}/${v.of} · ${v.stageName}`",
-    "new": "`${v.count}/${v.of}`",
+    "old": "  head.append(\n    el('span', 'set-name', v.name),\n    el('span', 'set-count', full || v.stage < 0 ? `${v.count}/${v.of}` : `${v.count}/${v.of} · ${v.stageName}`),\n  );",
+    "new": "  head.append(el('span', 'set-name', v.name), el('span', 'set-count', `${v.count}/${v.of}`));",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "CARDFIT-the-sentence-off-the-row",
     "file": "src/ui/setCard.js",
-    "old": "    const whole = full ? '' : t.text;\n",
-    "new": "    const whole = '';\n",
+    "old": "    const whole = full ? '' : t.text;",
+    "new": "    const whole = '';",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "CARDFIT-the-sigil-whole-on-the-card",
     "file": "src/ui/sigilCard.js",
-    "old": "  if (!full) return compactSigil(box, head, v, setPiece);\n",
-    "new": "",
+    "old": "  if (!full) return compactSigil(box, head, v, setPiece);\n  // what it gives in my hand now, and at its full growth - SET5: a set's armour carries no blow; its sigil is its",
+    "new": "  // what it gives in my hand now, and at its full growth - SET5: a set's armour carries no blow; its sigil is its",
     "tests": [
       "test/ui/enhanced/cardfit.test.js",
       "test/ui/enhanced/sigilui1.test.js",
@@ -178,8 +178,8 @@
   {
     "name": "CARDFIT-the-fill-on-my-renown-stage",
     "file": "src/ui/sigilCard.js",
-    "old": "    const next = i === v.rank + 1;",
-    "new": "    const next = i === v.stage + 1;",
+    "old": "    const next = i === v.rank + 1; // the stage it is growing INTO - its own growth's, whatever my Renown lets it burn at",
+    "new": "    const next = i === v.stage + 1; // the stage it is growing INTO - its own growth's, whatever my Renown lets it burn at",
     "tests": [
       "test/ui/enhanced/sigilui1.test.js"
     ]
@@ -187,8 +187,8 @@
   {
     "name": "CARDFIT-the-long-numbers",
     "file": "src/ui/sigilCard.js",
-    "old": "v.to == null ? 'Fully grown' : `${v.xp.toLocaleString('en-US')}/${v.to.toLocaleString('en-US')}`",
-    "new": "sigilProgressText(v)",
+    "old": "  const prog = el(\n    'span',\n    'sigil-progress',\n    v.to == null ? 'Fully grown' : `${v.xp.toLocaleString('en-US')}/${v.to.toLocaleString('en-US')}`,\n  );",
+    "new": "  const prog = el('span', 'sigil-progress', sigilProgressText(v));",
     "tests": [
       "test/ui/enhanced/sigilui1.test.js",
       "test/ui/enhanced/cardfit.test.js"
@@ -197,8 +197,8 @@
   {
     "name": "CARDFIT-the-hold-unsaid-on-the-card",
     "file": "src/ui/sigilCard.js",
-    "old": "  if (v.held) box.append(el('p', 'sigil-note', `Renown limit:",
-    "new": "  if (false) box.append(el('p', 'sigil-note', `Renown limit:",
+    "old": "  if (v.held) box.append(el('p', 'sigil-note', `Renown limit: ${v.stages[v.stage + 1].name} at Renown ${v.unlock}`));",
+    "new": "  if (false) box.append(el('p', 'sigil-note', `Renown limit: ${v.stages[v.stage + 1].name} at Renown ${v.unlock}`));",
     "tests": [
       "test/ui/enhanced/sigilui1.test.js"
     ]

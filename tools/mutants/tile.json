@@ -12,8 +12,8 @@
   {
     "name": "TILE-2-the-portrait-blocks-the-list",
     "file": "src/ui/saveTile.js",
-    "old": "    waited.then((art) => { if (art) { fallback.remove(); well.append(art); } }).catch(() => {});",
-    "new": "    fallback.remove();\n    waited.then((art) => { if (art) well.append(art); }).catch(() => {});",
+    "old": "    waited\n      .then((art) => {\n        if (art) {\n          fallback.remove();\n          well.append(art);\n        }",
+    "new": "    fallback.remove();\n    waited\n      .then((art) => {\n        if (art) well.append(art);",
     "tests": [
       "test/ui/savetile.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "TILE-3-a-face-that-will-not-load-escapes-into-the-pane",
     "file": "src/ui/saveTile.js",
-    "old": ".catch(() => {});\n  } else if (face) {",
-    "new": ";\n  } else if (face) {",
+    "old": "    waited\n      .then((art) => {\n        if (art) {\n          fallback.remove();\n          well.append(art);\n        }\n      })\n      .catch(() => {});",
+    "new": "    waited.then((art) => {\n      if (art) {\n        fallback.remove();\n        well.append(art);\n      }\n    });",
     "tests": [
       "test/ui/savetile.test.js"
     ],

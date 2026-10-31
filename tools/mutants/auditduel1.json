@@ -193,8 +193,8 @@
   {
     "name": "AUDIT-DUEL1-D3-the-pad-ignored",
     "file": "src/ui/quickslotTags.js",
-    "old": "controller: !!pad?.controller",
-    "new": "controller: false",
+    "old": "  const tag = quickslotTag(CELL_ACTIONS.main, {\n    bindings: store,\n    controller: !!pad?.controller,\n    family: pad?.family ?? 'xbox',\n  });",
+    "new": "  const tag = quickslotTag(CELL_ACTIONS.main, { bindings: store, controller: false, family: pad?.family ?? 'xbox' });",
     "tests": [
       "test/systems/disc21.test.js"
     ]

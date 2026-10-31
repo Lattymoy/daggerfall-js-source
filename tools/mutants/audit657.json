@@ -195,8 +195,8 @@
   {
     "name": "AUDIT657-B9-the-top-guild-at-the-line",
     "file": "src/ui/seatTab.js",
-    "old": "goes to the strongest guild with at least ${n(CLAIM_THRESHOLD[t])} influence whose treasury can pay ${n(CLAIM_FEE[t])} silver.",
-    "new": "goes to the top guild with ${n(CLAIM_THRESHOLD[t])} influence, for ${n(CLAIM_FEE[t])} silver from its treasury.",
+    "old": "      `At the Turning, Sunday 18:00 UTC, an unheld Charter goes to the strongest guild with at least ${n(CLAIM_THRESHOLD[t])} influence whose treasury can pay ${n(CLAIM_FEE[t])} silver. Two guilds within ${Math.round(CONTESTED_MARGIN * 100)}% of each other meet in a Tourney for it.`,",
+    "new": "      `At the Turning, Sunday 18:00 UTC, an unheld Charter goes to the top guild with ${n(CLAIM_THRESHOLD[t])} influence, for ${n(CLAIM_FEE[t])} silver from its treasury. Two guilds within ${Math.round(CONTESTED_MARGIN * 100)}% of each other meet in a Tourney for it.`,",
     "tests": [
       "test/ui/audit657_board.test.js",
       "test/ui/board_ui.test.js"
@@ -205,8 +205,8 @@
   {
     "name": "AUDIT657-B9-tribute-a-members-earning",
     "file": "src/ui/seatTab.js",
-    "old": "a home in the town, Renown and seat writs. The Guildmaster adds Tribute from the treasury.",
-    "new": "a home in the town, Renown, seat writs and Tribute.",
+    "old": "      `Members ${n(SEAT_MEMBER_WAIT_S / 86400)} days in the guild earn influence in the seat's region: walking the town (the Watch), closing Dagon's Breaches, a home in the town, Renown and seat writs. The Guildmaster adds Tribute from the treasury. One account counts for at most ${n(ACCOUNT_SEAT_WEEK_CAP)} a week at a seat.`,",
+    "new": "      `Members ${n(SEAT_MEMBER_WAIT_S / 86400)} days in the guild earn influence in the seat's region: walking the town (the Watch), closing Dagon's Breaches, a home in the town, Renown, seat writs and Tribute. One account counts for at most ${n(ACCOUNT_SEAT_WEEK_CAP)} a week at a seat.`,",
     "tests": [
       "test/ui/audit657_board.test.js"
     ]
@@ -214,8 +214,8 @@
   {
     "name": "AUDIT657-D4-the-guides-fold-forgotten",
     "file": "src/ui/seatTab.js",
-    "old": "SEAT_PANELS.guide, guideOpen ?? seatGuideOpen(seat, data), (o) => { guideOpen = o; });",
-    "new": "SEAT_PANELS.guide, false, (o) => { guideOpen = o; });",
+    "old": "        const guide = boardFold(\n          el,\n          'notice-panel seat-guide board-guide',\n          SEAT_PANELS.guide,\n          guideOpen ?? seatGuideOpen(seat, data),\n          (o) => {\n            guideOpen = o;\n          },\n        );",
+    "new": "        const guide = boardFold(el, 'notice-panel seat-guide board-guide', SEAT_PANELS.guide, false, (o) => {\n          guideOpen = o;\n        });",
     "tests": [
       "test/ui/audit657_board.test.js"
     ]

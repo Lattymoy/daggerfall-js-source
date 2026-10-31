@@ -263,8 +263,8 @@
   {
     "name": "DAMNED-label-cannot",
     "file": "src/ui/reforgeWindow.js",
-    "old": "  if (why === 'damned') return 'Damned';   // TRUE-CURSE\n",
-    "new": "",
+    "old": "  if (why === 'damned') return 'Damned'; // TRUE-CURSE\n  return 'Cannot';",
+    "new": "  return 'Cannot';",
     "tests": [
       "test/systems/fb1010_truecurse.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "AUDIT-D2-priced",
     "file": "src/ui/reforgeWindow.js",
-    "old": "why === 'damned' ? '-' : `${price} gold`",
-    "new": "`${price} gold`",
+    "old": "      row.append(frameOf(it, picture), text, el('span', 'broker-price', why === 'damned' ? '-' : `${price} gold`), btn); // AUDIT FB1010 D2: no price for what no temple lifts",
+    "new": "      row.append(frameOf(it, picture), text, el('span', 'broker-price', `${price} gold`), btn); // AUDIT FB1010 D2: no price for what no temple lifts",
     "tests": [
       "test/systems/fb1010_truecurse.test.js"
     ]

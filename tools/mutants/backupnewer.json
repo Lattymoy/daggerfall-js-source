@@ -38,8 +38,8 @@
   {
     "name": "BACKUP-NEWER-never-asked",
     "file": "src/ui/saveTile.js",
-    "old": "    if (newerBackup(card, localTime)) return { state: 'newer'",
-    "new": "    if (false) return { state: 'newer'",
+    "old": "    if (newerBackup(card, localTime)) return { state: 'newer', when: agoText(card.updatedAt, nowS), error: null };",
+    "new": "    if (false) return { state: 'newer', when: agoText(card.updatedAt, nowS), error: null };",
     "tests": [
       "test/ui/savetile.test.js",
       "test/server/cloudsaves.test.js"
@@ -48,8 +48,8 @@
   {
     "name": "BACKUP-NEWER-says-backed-up",
     "file": "src/ui/saveTile.js",
-    "old": "      newer: cloud.when ? t('menu.cloud.newerWhen', 'Newer backup · {when}', { when: cloud.when }) : t('menu.cloud.newer', 'Newer backup'),",
-    "new": "      newer: cloud.when ? t('menu.cloud.savedWhen', 'Backed up · {when}', { when: cloud.when }) : t('menu.cloud.saved', 'Backed up'),",
+    "old": "        ? t('menu.cloud.newerWhen', 'Newer backup · {when}', { when: cloud.when })\n        : t('menu.cloud.newer', 'Newer backup'),",
+    "new": "        ? t('menu.cloud.savedWhen', 'Backed up · {when}', { when: cloud.when })\n        : t('menu.cloud.saved', 'Backed up'),",
     "tests": [
       "test/ui/savetile.test.js"
     ]

@@ -128,8 +128,8 @@
   {
     "name": "DOMAIN1-past-the-holding",
     "file": "src/ui/seatWorks.js",
-    "old": "return onGive(c.key, Math.min(c.most, Math.max(1, want)));",
-    "new": "return onGive(c.key, Math.max(1, want));",
+    "old": "      return onGive(c.key, Math.min(c.most, Math.max(1, want)));",
+    "new": "      return onGive(c.key, Math.max(1, want));",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "DOMAIN1-the-bag-never-put-in",
     "file": "src/ui/seatTab.js",
-    "old": "            if (giving.bag(key) > 0) {",
-    "new": "            if (giving.bag(key) > 1e9) {",
+    "old": "              if (giving.bag(key) > 0) {",
+    "new": "              if (giving.bag(key) > 1e9) {",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "DOMAIN1-any-seat",
     "file": "src/ui/seatTab.js",
-    "old": "if (host.giving && gifts?.place && gifts.key === seat.key) {",
-    "new": "if (host.giving && gifts?.place) {",
+    "old": "      if (host.giving && gifts?.place && gifts.key === seat.key) {",
+    "new": "      if (host.giving && gifts?.place) {",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "DOMAIN1-the-camp-unsaid",
     "file": "src/ui/seatWorks.js",
-    "old": "  if (gifts.place === 'camp') {\n    const held",
-    "new": "  if (gifts.place === 'stockpile') {\n    const held",
+    "old": "  if (gifts.place === 'camp') {",
+    "new": "  if (gifts.place === 'stockpile') {",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]

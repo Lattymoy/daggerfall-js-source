@@ -218,8 +218,8 @@
   {
     "name": "PVP-KIT-the-gift-level-unclamped",
     "file": "src/ui/pvpSpellMenu.js",
-    "old": "level: gift ? Math.min(CAST_LEVEL_MAX, level) : level,",
-    "new": "level,",
+    "old": "    level: gift ? Math.min(CAST_LEVEL_MAX, level) : level,",
+    "new": "    level,",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "PVP-KIT-a-refusal-read-as-a-cast",
     "file": "src/ui/pvpSpellMenu.js",
-    "old": "  if (magic.readySpell?.(sp) === false) return 'refused';\n",
-    "new": "",
+    "old": "  if (magic.readySpell?.(sp) === false) return 'refused';\n  if (!magic.spellArmed?.()) return 'cast'; // a CasterOnly spell cast at the ready (DFU's SetReadySpell)",
+    "new": "  if (!magic.spellArmed?.()) return 'cast'; // a CasterOnly spell cast at the ready (DFU's SetReadySpell)",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "PVP-KIT-damage-never-fired",
     "file": "src/ui/pvpSpellMenu.js",
-    "old": "  if (!magic.spellArmed?.()) return 'cast';",
-    "new": "  return 'cast';",
+    "old": "  if (!magic.spellArmed?.()) return 'cast'; // a CasterOnly spell cast at the ready (DFU's SetReadySpell)",
+    "new": "  return 'cast'; // a CasterOnly spell cast at the ready (DFU's SetReadySpell)",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "PVP-KIT-REZ-an-ally-frame-asked",
     "file": "src/ui/pvpSpellMenu.js",
-    "old": "s.id !== 'damage' && s.id !== 'resurrect' && allyAimed",
-    "new": "s.id !== 'damage' && allyAimed",
+    "old": "  const gift = s.id !== 'damage' && s.id !== 'resurrect' && allyAimed(PVP_KIT.reachM); // PVP-KIT-REZ: a body is raised, not given a frame",
+    "new": "  const gift = s.id !== 'damage' && allyAimed(PVP_KIT.reachM); // PVP-KIT-REZ: a body is raised, not given a frame",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]

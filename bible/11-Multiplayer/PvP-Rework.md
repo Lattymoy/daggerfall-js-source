@@ -133,13 +133,13 @@ come next. A departure: DFU has no flag.
 the key and the button do nothing and the button is hidden (`pvpFlagHost.js:"const here = () =>"`);
 a flag carried out comes down once the lock and a villain's meter let it (`pvpFlagHost.js:"const leave = ()"`).
 "left center or right center" (PVP-FLAG-SPOT): the button stands at the screen's right edge, just over its middle, clear of the Decorate button
-centred there ("fix this"), and PVP-HUD's ring and seconds follow it (`pvpHud.js:"export const PVP_FLAG_SPOT = Object.freeze({ lift: 64, size: 36 });"`); flag down,
+centred there ("fix this"), and PVP-HUD's ring and seconds follow it (`pvpHud.js:"export const PVP_FLAG_SPOT"`); flag down,
 it shows a dim skull, never a green ring (PVP-FLAG-LOOK, "The green one looks bad the other r perfect").
 
 ## PVP-SKULL: the mark over a flagged player
 
 "no skull when not", "when you agro skull turns gold", "make the gold and red glow sloightly": a 16-pixel skull
-(`pvpSkull.js:"export const SKULL_ROWS = Object.freeze(["`) over the name (`nameLayer.js:"put(tag, 'skullOf', p.skull ?? '',"`)
+(`pvpSkull.js:"export const SKULL_ROWS"`) over the name (`nameLayer.js:"put(tag, 'skullOf', p.skull ?? '',"`)
 and on the flag button - none unflagged, white flagged, gold in aggro, red a villain. The referee says a flagged fighter's
 aggro to the room on a blow, its ms left in the flag word's `a`, once each ten seconds
 (`wildRef.js:"export function wildAggroWord"`). "overwold should show skulls": the Overworld's player marks
@@ -212,8 +212,8 @@ up (`wildRef.js:"else if (isVillain(x.vi))"`). The referee counts a fall's point
 (`wildRef.js:"const vp = villainKillPoints"`), keeps the meter on the fighter and in its carry, marks the flag word `v`,
 tells the killer its meter (`wref` `vil`) and signs the points into the fall's receipt (`vp`). The top of the pause menu's
 Standing page ("top of standings") shows "Villainy 3,240 / 5,000" on a bar to 10,000 with a red mark at 5,000
-(`pvpVillainBar.js:"export function statsVillainy("`), always: out of the zone the last meter this browser heard, else 0
-(`pvpVillainBar.js:"export function villainyKept(who, heard = null) {"`).
+(`pvpVillainBar.js:"export function statsVillainy"`), always: out of the zone the last meter this browser heard, else 0
+(`pvpVillainBar.js:"export function villainyKept"`).
 
 PVP-VILLAIN-KEEP, below, keeps the meter on the character and lowers it. A departure: DFU has no PvP.
 
@@ -263,7 +263,7 @@ it. All of it is the client's: the relay refs only blows. A departure: DFU has n
 
 "they only get to tool kit we give", "flagged has a seperate hot barr": while my flag is up in the open zone, the
 hotbar's PvP set (PVP-SET, below) holds the toolkit's spells, each pressed the hotbar's way
-(`pvpSpellMenu.js:"export function castKitSlot("`). Every other spell is refused under the flag, and only the toolkit's
+(`pvpSpellMenu.js:"export function castKitSlot"`). Every other spell is refused under the flag, and only the toolkit's
 spells reach a player (`world.js:"if (!wildFair(peerId) || !sp?.pvpKit) return false;"`). The first bar's eight slots
 (`pvpKit.js:"export const PVP_KIT"`) are carried
 into the set. Outside PvP the spell keys work as before.
@@ -271,7 +271,7 @@ into the set. Outside PvP the spell keys work as before.
 PVP-SET (the owner, 2026-10-29: "player should get a whole second hot bar of the one we have", "hot bar need to use
 exsistning one u stack one on top", "need a menu to make spells for thr hot bar small easy"): the hotbar has two sets of
 the same slots (`quickslots.js:"export function useHotbarSet"`). The PvP set is in force while my flag is up in
-the zone or the PvP menu is open (`pvpSpellMenu.js:"const inForce = () => on() || open;"`): the same bar and
+the zone or the PvP menu is open (`pvpSpellMenu.js:"const inForce = ()"`): the same bar and
 place, keys 1 to 0, held up whatever the bar's style (`uiSkin.js:"export function forceHotbar"`). It takes toolkit
 spells and items, never a book spell; the save keeps the normal set alone. It lives in the browser; an old bar
 (`dfo.pvpKitBar.v1`) lands on keys 3 to 0 with the normal set's potions on 1 and 2
@@ -282,7 +282,7 @@ and its icon, and lists it with its cost and where it lands. A row is dragged on
 clicked (`enhancedHotbar.js:"export function hotbarDropKit(i, kit, name = '') {"`); a slot dragged off or right-clicked
 clears.
 
-Each slot shows its key, the cost a cast charges now, armour and all (`pvpSpellMenu.js:"export const kitCastCost = (entity, slot) =>"`),
+Each slot shows its key, the cost a cast charges now, armour and all (`pvpSpellMenu.js:"export const kitCastCost"`),
 a gold edge on the last cast, a shade that drains with the cast clock, grey when magicka is short, and a padlock while
 the PvP combat lock runs (`pvpFlagHost.js:"fightLeft: () =>"`): the set cannot change then
 (`quickslots.js:"if (!kept || frozen())"`). The classic skin has no hotbar: there a key whose slot holds a
@@ -453,13 +453,13 @@ where the save left it. The relay says it, not the account service: no account c
 ## PVP-HUD: the combat lock, shown
 
 "do we show comag timer rong and cooldown flkag rinf?", "was in mock up": the approved mockup, client only
-(`pvpHud.js:"export function createPvpHud("`, wired by `pvpFlagHost.js:"if (doc.body && typeof doc.createElementNS === 'function')"`).
+(`pvpHud.js:"export function createPvpHud"`, wired by `pvpFlagHost.js:"if (doc.body && typeof doc.createElementNS === 'function')"`).
 The lock is PVP_FLAG.lockMs, 60 s for all. A red SVG ring round the flag button empties over it and fills again at each
-PvP blow, its seconds under it; a villain's ring is full (`pvpHud.js:"export function pvpRing("`). While the lock runs
+PvP blow, its seconds under it; a villain's ring is full (`pvpHud.js:"export function pvpRing"`). While the lock runs
 the next frame is asked, so the ring moves smoothly; out of it nothing runs. A small bronze banner top-centre says "In
 combat" and the seconds. There is no "turning off" ring: the flag drops at once outside the lock.
 
-The lock's lines are said mid-screen 3 s (`pvpHud.js:"export const PVP_SAY_S = 3;"`): the flag's own drop, a Portal
+The lock's lines are said mid-screen 3 s (`pvpHud.js:"export const PVP_SAY_S"`): the flag's own drop, a Portal
 Stone (`portalStoneHost.js:"const lockRefused = () => {"` - a hold: in the lock the door and the pick refuse, flagged or
 not, PVP-PORTAL), rest (`pvpRulesHost.js:"const restLock ="`,
 asked before the flag's own line) and the end, "You are out of combat." (`pvpFlagHost.js:"const beat = () =>"`).
@@ -474,11 +474,11 @@ the owner's pick, "Only one attacking me" - never one merely near
 its holds. The guild's teleport, Recall and a party's journey keep the zone's law.
 
 "Last hits", bottom right: my three newest PvP blows, flagged in the zone while the lock runs
-(`pvpHud.js:"export function pvpHitLine("`). The referee's `hp` word carries who, on whom and what was dealt, so a Shield's
+(`pvpHud.js:"export function pvpHitLine"`). The referee's `hp` word carries who, on whom and what was dealt, so a Shield's
 share and a resist are not shown. A name is the one my name layer shows; a stranger's is "a player". My party wears its
 green name and bar, no skull, and a bar under 20% flashes (`nameLayer.js:"export const pvpBarLow = "`).
 
-My kill says "You slew" (`pvpHud.js:"export const pvpSlewText = "`); the fallen's screen heads its lines "Slain by"
+My kill says "You slew" (`pvpHud.js:"export const pvpSlewText"`); the fallen's screen heads its lines "Slain by"
 (`wildZone.js:"export const wildDeathSlain"`). A villain the room says is red is marked on the Overworld where the
 law would hide it, nameless (`travelViewMarks.js:"const villainMark = (id, at, dropped) => {"`); one in no room of mine
 is unknown to this client. The owed level 29 reads "Level 29 · 1 level owed", its button "Go to 30"

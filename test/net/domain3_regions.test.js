@@ -385,6 +385,6 @@ test('DOMAIN3 A HOLDING LIVES UNDER ITS CHARTER: its shops give the Charter hold
   assert.match(tab, /if \(town !== seat\) who\.append\(el\('p', 'seat-holding', holdingTabLine\(town\)\)\);/);
   // AUDIT DOMAINS C1: a Harbour is the Charter's own town's coast - never a holding's (Alik'ra's raised one at inland Berbaaqnia)
   assert.match(tab, /  const port = town === seat && host\.port === true;/);
-  assert.match(tab, /forts, seat, port, busy: ui\.busy\(\),/);
+  assert.match(tab, /forts,\n\s*seat,\n\s*port,\n\s*busy: ui\.busy\(\),/);
   assert.match(tab, /onBegin: \(work\) => act\(\(\) => book\.fortFund\(seat, work, port\)\),/);
 });

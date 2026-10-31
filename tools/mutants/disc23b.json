@@ -164,8 +164,8 @@
   {
     "name": "D23B2-horse-shows-foot",
     "file": "src/ui/skinCard.js",
-    "old": "horse: of(HORSE, 'IdleHorse', (i) => ({ onHorse: i }))",
-    "new": "horse: of(HORSE, 'Idle', (i) => ({ onFoot: i }))",
+    "old": "  return {\n    foot: of(FOOT, 'Idle', (i) => ({ onFoot: i })),\n    horse: of(HORSE, 'IdleHorse', (i) => ({ onHorse: i })),\n    layered,\n  };",
+    "new": "  return { foot: of(FOOT, 'Idle', (i) => ({ onFoot: i })), horse: of(HORSE, 'Idle', (i) => ({ onFoot: i })), layered };",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "D23B2-press-writes-nothing",
     "file": "src/ui/skinCard.js",
-    "old": "      b.onclick = () => { setModSetting(VENDOR, key, s.index); open = null; paint(); };",
-    "new": "      b.onclick = () => { open = null; paint(); };",
+    "old": "        setModSetting(VENDOR, key, s.index);\n        open = null;",
+    "new": "        open = null;",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "D23B2-press-not-shown",
     "file": "src/ui/skinCard.js",
-    "old": "      b.onclick = () => { setModSetting(VENDOR, key, s.index); open = null; paint(); };",
-    "new": "      b.onclick = () => { setModSetting(VENDOR, key, s.index); open = null; };",
+    "old": "        open = null;\n        paint();\n      };\n      g.append(b);",
+    "new": "        open = null;\n      };\n      g.append(b);",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "D23B2-no-hint",
     "file": "src/ui/skinCard.js",
-    "old": "    if (!w.chosen) root.append(",
-    "new": "    if (false) root.append(",
+    "old": "      if (!w.chosen)\n        root.append(el('p', 'meta skinhint', 'Until you choose one, other players see you as your class.'));",
+    "new": "      if (false) root.append(el('p', 'meta skinhint', 'Until you choose one, other players see you as your class.'));",
     "tests": [
       "test/net/disc23b_eotb_sprites.test.js"
     ]

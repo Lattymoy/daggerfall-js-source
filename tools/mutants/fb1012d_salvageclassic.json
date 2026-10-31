@@ -29,8 +29,8 @@
   {
     "name": "SALVAGE-CLASSIC-the-page-drops-it-again",
     "file": "src/ui/reforgeWindow.js",
-    "old": "        ...items.filter((it) => salvageRefusal(it) === 'classic')];",
-    "new": "        ];",
+    "old": "            ...items.filter((it) => salvageRefusal(it) === 'classic'),\n          ]; // FB1012d SALVAGE-CLASSIC: a piece that wears Magic and will never break is listed after them, saying why",
+    "new": "          ]; // FB1012d SALVAGE-CLASSIC: a piece that wears Magic and will never break is listed after them, saying why",
     "tests": [
       "test/systems/fb1012d_salvageclassic.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SALVAGE-CLASSIC-listed-in-pack-order",
     "file": "src/ui/reforgeWindow.js",
-    "old": "      : [...items.filter((it) => salvageShards(it) > 0 && !['aetheric', 'gilded', 'artifact', 'quest', 'off'].includes(salvageRefusal(it) ?? '')),\n        ...items.filter((it) => salvageRefusal(it) === 'classic')];",
-    "new": "      : items.filter((it) => (salvageShards(it) > 0 || salvageRefusal(it) === 'classic') && !['aetheric', 'gilded', 'artifact', 'quest', 'off'].includes(salvageRefusal(it) ?? ''));",
+    "old": "        : [\n            ...items.filter(\n              (it) =>\n                salvageShards(it) > 0 &&\n                !['aetheric', 'gilded', 'artifact', 'quest', 'off'].includes(salvageRefusal(it) ?? ''),\n            ),\n            ...items.filter((it) => salvageRefusal(it) === 'classic'),\n          ]; // FB1012d SALVAGE-CLASSIC: a piece that wears Magic and will never break is listed after them, saying why",
+    "new": "        : items.filter(\n            (it) =>\n              (salvageShards(it) > 0 || salvageRefusal(it) === 'classic') &&\n              !['aetheric', 'gilded', 'artifact', 'quest', 'off'].includes(salvageRefusal(it) ?? ''),\n          ); // FB1012d SALVAGE-CLASSIC: a piece that wears Magic and will never break is listed after them, saying why",
     "tests": [
       "test/systems/fb1012d_salvageclassic.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SALVAGE-CLASSIC-the-press-says-cannot",
     "file": "src/ui/reforgeWindow.js",
-    "old": "why === 'classic' ? 'Classic magic' : 'Cannot'",
-    "new": "'Cannot'",
+    "old": "                  : why === 'classic'\n                    ? 'Classic magic'\n                    : 'Cannot'",
+    "new": "                  : 'Cannot'",
     "tests": [
       "test/systems/fb1012d_salvageclassic.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SALVAGE-CLASSIC-zero-shards-said",
     "file": "src/ui/reforgeWindow.js",
-    "old": "n > 0 ? shardsText(n) : 'No shards'",
-    "new": "shardsText(n)",
+    "old": "        row.append(frameOf(it, picture), text, el('span', 'broker-price', n > 0 ? shardsText(n) : 'No shards'), btn); // FB1012d: a classic piece's",
+    "new": "        row.append(frameOf(it, picture), text, el('span', 'broker-price', shardsText(n)), btn); // FB1012d: a classic piece's",
     "tests": [
       "test/systems/fb1012d_salvageclassic.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SALVAGE-CLASSIC-the-page-says-another-reason",
     "file": "src/ui/reforgeWindow.js",
-    "old": "  classic: \"Classic magic items can't be salvaged. Only pieces with a rarity give shards\",",
-    "new": "  classic: 'Nothing the Reforge can roll',",
+    "old": "  classic: \"Classic magic items can't be salvaged. Only pieces with a rarity give shards\", // FB1012d SALVAGE-CLASSIC",
+    "new": "  classic: 'Nothing the Reforge can roll', // FB1012d SALVAGE-CLASSIC",
     "tests": [
       "test/systems/fb1012d_salvageclassic.test.js"
     ]

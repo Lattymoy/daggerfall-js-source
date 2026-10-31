@@ -335,8 +335,8 @@
   {
     "name": "MENUORDER-reforge-tabs-bare",
     "file": "src/ui/reforgeWindow.js",
-    "old": "    t.setAttribute('data-dficon', REFORGE_PAGE_ICONS[id] ?? 'anvil');   // MENU-ORDER: each page its picture\n",
-    "new": "",
+    "old": "    t.setAttribute('data-dficon', REFORGE_PAGE_ICONS[id] ?? 'anvil'); // MENU-ORDER: each page its picture\n    t.setAttribute('role', 'tab');",
+    "new": "    t.setAttribute('role', 'tab');",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "MENUORDER-shipyard-tabs-bare",
     "file": "src/ui/shipyardWindow.js",
-    "old": "      b.setAttribute('data-dficon', SHIPYARD_TAB_ICONS[t.id] ?? 'ship');   // MENU-ORDER: each page its picture\n",
-    "new": "",
+    "old": "      b.setAttribute('data-dficon', SHIPYARD_TAB_ICONS[t.id] ?? 'ship'); // MENU-ORDER: each page its picture\n      tabs.append(b);",
+    "new": "      tabs.append(b);",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "MENUORDER-shipyard-card-unpictured",
     "file": "src/ui/shipyardWindow.js",
-    "old": "      card.append(pic, el('b', null, t.name),",
-    "new": "      card.append(el('b', null, t.name),",
+    "old": "      card.append(pic, el('b', null, t.name), el('span', 'dfyard-line', t.line), el('span', 'dfyard-figs', t.figs));",
+    "new": "      card.append(el('b', null, t.name), el('span', 'dfyard-line', t.line), el('span', 'dfyard-figs', t.figs));",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -482,8 +482,8 @@
   {
     "name": "MENUORDER-reforge-refusal-unsaid",
     "file": "src/ui/reforgeWindow.js",
-    "old": "  const refused = (reason) => { const ask = asking; asking = null; say(false, reason); if (ask) render(); else drawNote(); };",
-    "new": "  const refused = (reason) => { const ask = asking; asking = null; if (ask) render(); else drawNote(); };",
+    "old": "    say(false, reason);\n    if (ask) render();",
+    "new": "    if (ask) render();",
     "tests": [
       "test/systems/loot9_reforge.test.js",
       "test/systems/loot16_curses.test.js",
@@ -495,8 +495,8 @@
   {
     "name": "MENUORDER-reforge-refusal-undrawn",
     "file": "src/ui/reforgeWindow.js",
-    "old": "  const refused = (reason) => { const ask = asking; asking = null; say(false, reason); if (ask) render(); else drawNote(); };",
-    "new": "  const refused = (reason) => { const ask = asking; asking = null; say(false, reason); if (ask) render(); };",
+    "old": "    else drawNote();\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/loot9_reforge.test.js",
       "test/systems/fb1012d_salvageclassic.test.js"
@@ -505,8 +505,8 @@
   {
     "name": "MENUORDER-reforge-refusal-keeps-ask",
     "file": "src/ui/reforgeWindow.js",
-    "old": "  const refused = (reason) => { const ask = asking; asking = null; say(false, reason); if (ask) render(); else drawNote(); };",
-    "new": "  const refused = (reason) => { const ask = asking; say(false, reason); if (ask) render(); else drawNote(); };",
+    "old": "    asking = null;\n    say(false, reason);",
+    "new": "    say(false, reason);",
     "tests": [
       "test/systems/fb1012d_salvageclassic.test.js"
     ]
@@ -830,8 +830,8 @@
   {
     "name": "MENUORDER-card-ship-unasked",
     "file": "src/ui/shipyardWindow.js",
-    "old": "      shipPicture(pic, s.hull);\n",
-    "new": "",
+    "old": "      shipPicture(pic, s.hull);\n      card.append(pic, el('b', null, t.name), el('span', 'dfyard-line', t.line), el('span', 'dfyard-figs', t.figs));",
+    "new": "      card.append(pic, el('b', null, t.name), el('span', 'dfyard-line', t.line), el('span', 'dfyard-figs', t.figs));",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -839,8 +839,8 @@
   {
     "name": "MENUORDER-card-ship-unkept",
     "file": "src/ui/shipyardWindow.js",
-    "old": "    if (url) { img.setAttribute('src', url); return; }\n",
-    "new": "",
+    "old": "    if (url) {\n      img.setAttribute('src', url);\n      return;\n    }\n    if (!deps.picture) return; // AUDIT MENU-ORDER C4: no host to ask, nothing to wait on - her glyph",
+    "new": "    if (!deps.picture) return; // AUDIT MENU-ORDER C4: no host to ask, nothing to wait on - her glyph",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -848,8 +848,8 @@
   {
     "name": "MENUORDER-card-ship-unset",
     "file": "src/ui/shipyardWindow.js",
-    "old": "      for (const i of imgs) i.setAttribute('src', u);\n",
-    "new": "",
+    "old": "      for (const i of imgs) i.setAttribute('src', u);\n    };",
+    "new": "    };",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -857,7 +857,7 @@
   {
     "name": "MENUORDER-card-ship-none-kept",
     "file": "src/ui/shipyardWindow.js",
-    "old": "      if (!u || !alive) { shipPics.delete(hull); return; }",
+    "old": "      if (!u || !alive) {\n        shipPics.delete(hull);\n        return;\n      }",
     "new": "      if (!u || !alive) return;",
     "tests": [
       "test/systems/shipyards1_host.test.js"
@@ -1055,7 +1055,7 @@
   {
     "name": "AUDITMO-U5-imprint-pressable",
     "file": "src/ui/reforgeWindow.js",
-    "old": "      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why\n      li.append(btn);",
+    "old": "      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused); // MENU-ORDER: pressed, it says why\n      li.append(btn);",
     "new": "      li.append(btn);",
     "tests": [
       "test/systems/loot10_codex.test.js"
@@ -1064,8 +1064,8 @@
   {
     "name": "AUDITMO-U5-extract-pressable",
     "file": "src/ui/reforgeWindow.js",
-    "old": "      if (xwhy) refusePress(x, REFORGE_REFUSALS[xwhy] ?? '', refused);",
-    "new": "",
+    "old": "      if (xwhy) refusePress(x, REFORGE_REFUSALS[xwhy] ?? '', refused); // MENU-ORDER: pressed, it says why",
+    "new": "      // MENU-ORDER: pressed, it says why",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ]
@@ -1073,7 +1073,7 @@
   {
     "name": "AUDITMO-U5-unset-pressable",
     "file": "src/ui/reforgeWindow.js",
-    "old": "      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why\n      li.append(x, btn);",
+    "old": "      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused); // MENU-ORDER: pressed, it says why\n      li.append(x, btn);",
     "new": "      li.append(x, btn);",
     "tests": [
       "test/systems/loot20_sockets.test.js"
@@ -1082,8 +1082,8 @@
   {
     "name": "AUDITMO-U5-set-pressable",
     "file": "src/ui/reforgeWindow.js",
-    "old": "        if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why\n        li.append(btn);\n        ul.append(li);",
-    "new": "        li.append(btn);\n        ul.append(li);",
+    "old": "        };\n        if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused); // MENU-ORDER: pressed, it says why\n        li.append(btn);\n        ul.append(li);",
+    "new": "        };\n        li.append(btn);\n        ul.append(li);",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ]
@@ -1091,8 +1091,8 @@
   {
     "name": "AUDITMO-U5-imprint-unsaid",
     "file": "src/ui/reforgeWindow.js",
-    "old": "      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why\n      li.append(btn);",
-    "new": "      if (why) refusePress(btn, '', refused);\n      li.append(btn);",
+    "old": "      };\n      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused); // MENU-ORDER: pressed, it says why\n      li.append(btn);",
+    "new": "      };\n      if (why) refusePress(btn, '', refused);\n      li.append(btn);",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ]
@@ -1200,8 +1200,8 @@
   {
     "name": "AUDITMO-U5-extract-unsaid",
     "file": "src/ui/reforgeWindow.js",
-    "old": "      if (xwhy) refusePress(x, REFORGE_REFUSALS[xwhy] ?? '', refused);",
-    "new": "      if (xwhy) refusePress(x, '', refused);",
+    "old": "      if (xwhy) refusePress(x, REFORGE_REFUSALS[xwhy] ?? '', refused); // MENU-ORDER: pressed, it says why",
+    "new": "      if (xwhy) refusePress(x, '', refused); // MENU-ORDER: pressed, it says why",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ]
@@ -1209,8 +1209,8 @@
   {
     "name": "AUDITMO-U5-unset-unsaid",
     "file": "src/ui/reforgeWindow.js",
-    "old": "      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why\n      li.append(x, btn);",
-    "new": "      if (why) refusePress(btn, '', refused);\n      li.append(x, btn);",
+    "old": "      };\n      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused); // MENU-ORDER: pressed, it says why\n      li.append(x, btn);",
+    "new": "      };\n      if (why) refusePress(btn, '', refused);\n      li.append(x, btn);",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ]
@@ -1218,8 +1218,8 @@
   {
     "name": "AUDITMO-U5-set-unsaid",
     "file": "src/ui/reforgeWindow.js",
-    "old": "        if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why\n        li.append(btn);\n        ul.append(li);",
-    "new": "        if (why) refusePress(btn, '', refused);\n        li.append(btn);\n        ul.append(li);",
+    "old": "          render();\n        };\n        if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused); // MENU-ORDER: pressed, it says why\n        li.append(btn);\n        ul.append(li);",
+    "new": "          render();\n        };\n        if (why) refusePress(btn, '', refused);\n        li.append(btn);\n        ul.append(li);",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ]

@@ -516,7 +516,7 @@
   {
     "name": "LEGACY7W-no-propose",
     "file": "src/ui/profileWindow.js",
-    "old": "    wed: wed && typeof wed.label === 'string' ? { label: wed.label, enabled: !!wed.enabled, why: wed.enabled ? null : (wed.why ?? null) } : null,",
+    "old": "    wed:\n      wed && typeof wed.label === 'string'\n        ? { label: wed.label, enabled: !!wed.enabled, why: wed.enabled ? null : (wed.why ?? null) }\n        : null,",
     "new": "    wed: null,",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"

@@ -448,8 +448,8 @@
   {
     "name": "SEAT2b2-tab-no-towers",
     "file": "src/ui/seatTab.js",
-    "old": "for (const w of Array.isArray(data?.towers) ? data.towers : []) list.append(",
-    "new": "for (const w of []) list.append(",
+    "old": "    for (const w of Array.isArray(data?.towers) ? data.towers : [])",
+    "new": "    for (const w of [])",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"
     ]

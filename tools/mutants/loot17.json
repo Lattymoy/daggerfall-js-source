@@ -245,8 +245,8 @@
   {
     "name": "LOOT17-a-refused-press-pressable",
     "file": "src/ui/reforgeWindow.js",
-    "old": "        if (why) refusePress(hb, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why\n",
-    "new": "",
+    "old": "        if (why) refusePress(hb, REFORGE_REFUSALS[why] ?? '', refused); // MENU-ORDER: pressed, it says why\n        li.append(hb);",
+    "new": "        li.append(hb);",
     "tests": [
       "test/systems/loot17_hone.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "LOOT17-the-price-unsaid",
     "file": "src/ui/reforgeWindow.js",
-    "old": "    if (hp && hone.length) card.append(el('p', 'boundline hone-note', HONE_NOTE(hp)));   // LOOT17\n",
-    "new": "",
+    "old": "    if (hp && hone.length) card.append(el('p', 'boundline hone-note', HONE_NOTE(hp))); // LOOT17\n    body.append(card);",
+    "new": "    body.append(card);",
     "tests": [
       "test/systems/loot17_hone.test.js"
     ]

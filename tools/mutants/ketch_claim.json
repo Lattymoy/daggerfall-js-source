@@ -128,8 +128,8 @@
   {
     "name": "KTR-the-line-said-at-none",
     "file": "src/ui/profileWindow.js",
-    "old": "  const n = record && typeof record === 'object' ? record.ketch?.sailed : null;\n  return Number.isSafeInteger(n) && n > 0 ?",
-    "new": "  const n = record && typeof record === 'object' ? record.ketch?.sailed : null;\n  return Number.isSafeInteger(n) && n >= 0 ?",
+    "old": "  return Number.isSafeInteger(n) && n > 0 ? t('ketch.card.profile', 'Voyages sailed: {n}', { n }) : null;",
+    "new": "  return Number.isSafeInteger(n) && n >= 0 ? t('ketch.card.profile', 'Voyages sailed: {n}', { n }) : null;",
     "tests": [
       "test/server/ketch_claim.test.js"
     ]

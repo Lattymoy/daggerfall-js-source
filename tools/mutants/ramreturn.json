@@ -509,8 +509,8 @@
   {
     "name": "RR-the-card-says-no-ram",
     "file": "src/ui/shipyardWindow.js",
-    "old": "  if (s.ram) figs.push('a ram');   // RAM-RETURN\n",
-    "new": "",
+    "old": "  if (s.ram) figs.push('a ram'); // RAM-RETURN\n  figs.push(`hull ${s.hullHp}${s.sailHp > 0 ? `, canvas ${s.sailHp}` : ''}`);",
+    "new": "  figs.push(`hull ${s.hullHp}${s.sailHp > 0 ? `, canvas ${s.sailHp}` : ''}`);",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]

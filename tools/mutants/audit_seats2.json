@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-SEATS2-L1-tab",
     "file": "src/ui/seatTab.js",
-    "old": "const cap = seatTitheCap(seat);",
-    "new": "const cap = TITHE_CAP[seat.tier] ?? 0;",
+    "old": "    const cap = seatTitheCap(seat); // AUDIT SEATS-2 L1: the Market Hall's point a tier, as the service's titheCapAt",
+    "new": "    const cap = TITHE_CAP[seat.tier] ?? 0; // AUDIT SEATS-2 L1: the Market Hall's point a tier, as the service's titheCapAt",
     "tests": [
       "test/net/audit_seats2.test.js"
     ]

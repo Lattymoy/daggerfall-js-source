@@ -390,8 +390,8 @@
   {
     "name": "TIDE-tab-line",
     "file": "src/ui/seatTab.js",
-    "old": "      if (tide) week.append(el('p', 'notice-seat-week notice-seat-tide', tide));\n",
-    "new": "",
+    "old": "      if (tide) week.append(el('p', 'notice-seat-week notice-seat-tide', tide));\n      week.append(el('p', 'notice-seat-week', seatWeekLine(data, ui.nowS())));",
+    "new": "      week.append(el('p', 'notice-seat-week', seatWeekLine(data, ui.nowS())));",
     "tests": [
       "test/ui/tide_client.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "TIDE-tab-edict",
     "file": "src/ui/seatTab.js",
-    "old": "edictLine(chosen, seat.tier, data?.tides?.next ?? 'calm', seat);",
-    "new": "edictLine(chosen, seat.tier, undefined, seat);",
+    "old": "    const words = edictLine(chosen, seat.tier, data?.tides?.next ?? 'calm', seat); // SEASON1 part two: the coming week's Tide on its cost; BAY-LEFT-SEA: a Bounty past the Bay its dens'",
+    "new": "    const words = edictLine(chosen, seat.tier, undefined, seat); // SEASON1 part two: the coming week's Tide on its cost; BAY-LEFT-SEA: a Bounty past the Bay its dens'",
     "tests": [
       "test/ui/tide_client.test.js"
     ],

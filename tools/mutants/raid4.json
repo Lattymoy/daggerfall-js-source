@@ -210,8 +210,8 @@
   {
     "name": "RAID4-card-stranger-none",
     "file": "src/ui/profileWindow.js",
-    "old": "return Number.isSafeInteger(n) && n > 0 ? `Towns defended: ${n}` : null;",
-    "new": "return Number.isSafeInteger(n) && n >= 0 ? `Towns defended: ${n}` : null;",
+    "old": "  return Number.isSafeInteger(n) && n > 0 ? `Towns defended: ${n}` : null;",
+    "new": "  return Number.isSafeInteger(n) && n >= 0 ? `Towns defended: ${n}` : null;",
     "tests": [
       "test/net/raid4_rewards.test.js"
     ]

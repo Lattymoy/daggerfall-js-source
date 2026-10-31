@@ -8,8 +8,8 @@
 // either skin). A page with no document answers null. One stands at a time.
 import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';
 import { registerOverlay } from './enhanced/enhancedOverlays.js';
-import { imbuePiece } from '../systems/reforge.js';   // LOOT-GATE: the Imbue, on the payer the host hands in
-import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { imbuePiece } from '../systems/reforge.js'; // LOOT-GATE: the Imbue, on the payer the host hands in
+import { noteFirstUse } from '../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 /** The overlay standing now, or null. */
 let _open = null;
@@ -29,7 +29,7 @@ export function closeReforgeDoor() {
  * @returns {any} the overlay, or null with no document
  */
 export function createReforgeOverlay(deps) {
-  noteFirstUse('reforge');   // TUT1
+  noteFirstUse('reforge'); // TUT1
   if (typeof document === 'undefined') return null;
   _open?.dispose();
   let fired = false;
@@ -45,29 +45,54 @@ export function createReforgeOverlay(deps) {
     view?.unmount();
     view = null;
     host.remove();
-    fired = true;   // last: `done` must not read true while the DOM is up
+    fired = true; // last: `done` must not read true while the DOM is up
     if (_open === overlay) _open = null;
     deps.onClose?.();
   };
   unregister = registerOverlay(close);
   const overlay = {
     isChoiceWindow: true,
-    get done() { return fired; },
-    input() { /* the window's own capture keydown owns the keyboard */ },
-    click() { /* the window is a fixed div over the canvas; pointers never get here */ },
-    wheel() { /* its list scrolls itself */ },
-    hover() { /* its own :hover */ },
-    tick() { /* a press repaints it */ },
-    draw() { /* DOM, not canvas */ },
-    dispose() { close(); },
-    repaint() { view?.repaint(); },
+    get done() {
+      return fired;
+    },
+    input() {
+      /* the window's own capture keydown owns the keyboard */
+    },
+    click() {
+      /* the window is a fixed div over the canvas; pointers never get here */
+    },
+    wheel() {
+      /* its list scrolls itself */
+    },
+    hover() {
+      /* its own :hover */
+    },
+    tick() {
+      /* a press repaints it */
+    },
+    draw() {
+      /* DOM, not canvas */
+    },
+    dispose() {
+      close();
+    },
+    repaint() {
+      view?.repaint();
+    },
   };
   _open = overlay;
   mountEnhancedChunk({
     load: () => import('./reforgeWindow.js'),
     // LOOT-GATE: the Imbue on the host's own payer, unless the host hands its own (the hosts do not grow)
-    mount: ({ mountReforgeWindow }) => { view = mountReforgeWindow(host, { imbue: (it) => imbuePiece(it, deps.payer()), ...deps, onExit: close }); },
-    alive: () => !fired, host, onDismiss: () => { close(); }, label: 'reforge',
+    mount: ({ mountReforgeWindow }) => {
+      view = mountReforgeWindow(host, { imbue: (it) => imbuePiece(it, deps.payer()), ...deps, onExit: close });
+    },
+    alive: () => !fired,
+    host,
+    onDismiss: () => {
+      close();
+    },
+    label: 'reforge',
   });
   return overlay;
 }

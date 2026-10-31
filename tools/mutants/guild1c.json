@@ -530,8 +530,8 @@
   {
     "name": "GUILD1c-the-card-without-its-tag",
     "file": "src/ui/profileWindow.js",
-    "old": "    guild: guildTagText(peer?.gt),",
-    "new": "    guild: null,",
+    "old": "    guild: guildTagText(peer?.gt), // GUILD1c: the tag the relay stamped off their signed token - \"<HND>\", or null",
+    "new": "    guild: null, // GUILD1c: the tag the relay stamped off their signed token - \"<HND>\", or null",
     "tests": [
       "test/net/guild1c.test.js"
     ]

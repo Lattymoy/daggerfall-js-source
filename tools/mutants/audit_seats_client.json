@@ -110,8 +110,8 @@
   {
     "name": "AUDITSEATS-C1-hud-leave-swap",
     "file": "src/ui/siegeHud.js",
-    "old": "parts.leave.style.display = m.card || !onLeave ? 'none' : '';",
-    "new": "parts.leave.style.display = !onLeave ? 'none' : '';",
+    "old": "      parts.leave.style.display = m.card || !onLeave ? 'none' : ''; // AUDIT-SEATS C1: the card's Close stands for it once the battle has ended; INT9: a readout with nothing to leave (the open zone's) has none",
+    "new": "      parts.leave.style.display = !onLeave ? 'none' : ''; // AUDIT-SEATS C1: the card's Close stands for it once the battle has ended; INT9: a readout with nothing to leave (the open zone's) has none",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]
@@ -435,8 +435,8 @@
   {
     "name": "AUDITSEATS-C8-words",
     "file": "src/ui/seatTab.js",
-    "old": "const sideWords = f.kind === 'tourney' ? ['first contender', 'second contender'] : ['attackers', 'defenders'];",
-    "new": "const sideWords = label.map((l) => l.toLowerCase());",
+    "old": "      const sideWords = f.kind === 'tourney' ? ['first contender', 'second contender'] : ['attackers', 'defenders'];",
+    "new": "      const sideWords = label.map((l) => l.toLowerCase());",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]
@@ -444,7 +444,7 @@
   {
     "name": "AUDITSEATS-C9-queue",
     "file": "src/ui/seatTab.js",
-    "old": "    if (loading) { queued = !!(queued || force); return; }",
+    "old": "    if (loading) {\n      queued = !!(queued || force);\n      return;\n    }",
     "new": "    if (loading) return;",
     "tests": [
       "test/net/audit_seats_client.test.js"
@@ -453,8 +453,8 @@
   {
     "name": "AUDITSEATS-C9-queue-force",
     "file": "src/ui/seatTab.js",
-    "old": "queued = !!(queued || force);",
-    "new": "queued = false;",
+    "old": "      queued = !!(queued || force);",
+    "new": "      queued = false;",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]
@@ -462,8 +462,8 @@
   {
     "name": "AUDITSEATS-C9-queue-runs",
     "file": "src/ui/seatTab.js",
-    "old": "    if (queued !== null) { const again = queued; queued = null; load(again); return; }",
-    "new": "    if (queued !== null) { queued = null; }",
+    "old": "      const again = queued;\n      queued = null;\n      load(again);\n      return;",
+    "new": "      queued = null;",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]
@@ -617,7 +617,7 @@
   {
     "name": "AUDITSEATS-C13-timer",
     "file": "src/ui/seatTab.js",
-    "old": "    disarm = setTimeout(() => { disarm = null; if (!ui.alive || ui.alive()) ui.rerender(); }, SEAT_RELINQUISH_ARM_MS);",
+    "old": "    disarm = setTimeout(() => {\n      disarm = null;\n      if (!ui.alive || ui.alive()) ui.rerender();\n    }, SEAT_RELINQUISH_ARM_MS);",
     "new": "    disarm = null;",
     "tests": [
       "test/net/audit_seats_client.test.js"
@@ -626,8 +626,8 @@
   {
     "name": "AUDITSEATS-C13-armed-press",
     "file": "src/ui/seatTab.js",
-    "old": "ui.rerender(); disarmLater(); return null; }",
-    "new": "ui.rerender(); return null; }",
+    "old": "                disarmLater();\n                return null;",
+    "new": "                return null;",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]

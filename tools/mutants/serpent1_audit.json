@@ -587,8 +587,8 @@
   {
     "name": "AUDIT-SERPENT-words-stun-seconds",
     "file": "src/ui/serpentBar.js",
-    "old": "stunned: (s) => `Stunned. Strike its head! ${s}s`,",
-    "new": "stunned: (s) => `Stunned. Strike its head! ${s}`,",
+    "old": "  stunned: (s) => `Stunned. Strike its head! ${s}s`,",
+    "new": "  stunned: (s) => `Stunned. Strike its head! ${s}`,",
     "tests": [
       "test/systems/serpent1_client.test.js",
       "test/net/serpent/serpent1_auditclient.test.js"
@@ -615,8 +615,8 @@
   {
     "name": "AUDIT-SERPENT-D4-profile-line",
     "file": "src/ui/profileWindow.js",
-    "old": "    serpents: profileSerpentLine(record),   // AUDIT SERPENT D4\n",
-    "new": "",
+    "old": "    serpents: profileSerpentLine(record), // AUDIT SERPENT D4\n    dragons: profileDragonLine(record), // AUDIT DRAGON",
+    "new": "    dragons: profileDragonLine(record), // AUDIT DRAGON",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]

@@ -254,8 +254,8 @@
   {
     "name": "PVP-VILLAIN-sheet-line",
     "file": "src/ui/pvpVillainBar.js",
-    "old": "const goal = isVillain(n) ? VILLAIN.max : VILLAIN.red;",
-    "new": "const goal = VILLAIN.max;",
+    "old": "  const goal = isVillain(n) ? VILLAIN.max : VILLAIN.red;",
+    "new": "  const goal = VILLAIN.max;",
     "tests": [
       "test/net/pvpvillain.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "PVP-VILLAIN-sheet-mark",
     "file": "src/ui/pvpVillainBar.js",
-    "old": "left: `${(VILLAIN.red / VILLAIN.max) * 100}%`",
-    "new": "left: '0%'",
+    "old": "  Object.assign(mark.style, { left: `${(VILLAIN.red / VILLAIN.max) * 100}%`, width: '2px', background: '#d42a1e' });",
+    "new": "  Object.assign(mark.style, { left: '0%', width: '2px', background: '#d42a1e' });",
     "tests": [
       "test/net/pvpvillain.test.js"
     ]

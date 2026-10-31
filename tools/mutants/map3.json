@@ -173,8 +173,8 @@
   {
     "name": "matrix3d-row-major",
     "file": "src/ui/quadMap.js",
-    "old": "    a, d, 0, g,\n    b, e, 0, h,",
-    "new": "    a, b, 0, c,\n    d, e, 0, f,",
+    "old": "  const m = [a, d, 0, g, b, e, 0, h, 0, 0, 1, 0, c, f, 0, i];",
+    "new": "  const m = [a, b, 0, c, d, e, 0, f, 0, 0, 1, 0, c, f, 0, i];",
     "tests": [
       "test/combat/map3_heldpose.test.js"
     ]
@@ -193,7 +193,7 @@
   {
     "name": "box-from-first-two",
     "file": "src/ui/quadMap.js",
-    "old": "  const box = { x: Math.min(...xs), y: Math.min(...ys), w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) };",
+    "old": "  const box = {\n    x: Math.min(...xs),\n    y: Math.min(...ys),\n    w: Math.max(...xs) - Math.min(...xs),\n    h: Math.max(...ys) - Math.min(...ys),\n  };",
     "new": "  const box = { x: Math.min(...xs), y: Math.min(...ys), w: xs[1] - xs[0], h: ys[2] - ys[1] };",
     "tests": [
       "test/combat/map3_heldpose.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "sliver-placed",
     "file": "src/ui/quadMap.js",
-    "old": "  if (!(Math.abs(area) / 2 > 0.02 * edge2)) return null;\n",
-    "new": "",
+    "old": "  if (!(Math.abs(area) / 2 > 0.02 * edge2)) return null;\n  // the inverse's divisor is POSITIVE on the sheet's side of the paper",
+    "new": "  // the inverse's divisor is POSITIVE on the sheet's side of the paper",
     "tests": [
       "test/combat/map3_heldpose.test.js"
     ]

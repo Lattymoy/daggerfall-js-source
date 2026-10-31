@@ -973,8 +973,8 @@
   {
     "name": "CROWN2-tab-node",
     "file": "src/ui/seatTab.js",
-    "old": "      if (data.mine?.politics) mine.append(politicsNode(data.mine.politics, SEAT_LEVER_RANKS.includes(data.mine.rank)));   // CROWN2\n",
-    "new": "",
+    "old": "      if (data.mine?.politics) mine.append(politicsNode(data.mine.politics, SEAT_LEVER_RANKS.includes(data.mine.rank))); // CROWN2\n      // THE HOLDER'S ORDERS - its Officers' and Guildmaster's levers: the Tithe and the Edict (SEAT1d), the battle window",
+    "new": "      // THE HOLDER'S ORDERS - its Officers' and Guildmaster's levers: the Tithe and the Edict (SEAT1d), the battle window",
     "tests": [
       "test/net/crown2_client.test.js"
     ]
@@ -982,8 +982,8 @@
   {
     "name": "CROWN2-tab-rank",
     "file": "src/ui/seatTab.js",
-    "old": "politicsNode(data.mine.politics, SEAT_LEVER_RANKS.includes(data.mine.rank))",
-    "new": "politicsNode(data.mine.politics, true)",
+    "old": "      if (data.mine?.politics) mine.append(politicsNode(data.mine.politics, SEAT_LEVER_RANKS.includes(data.mine.rank))); // CROWN2",
+    "new": "      if (data.mine?.politics) mine.append(politicsNode(data.mine.politics, true)); // CROWN2",
     "tests": [
       "test/net/crown2_client.test.js"
     ]
@@ -991,8 +991,8 @@
   {
     "name": "CROWN2-tab-empty",
     "file": "src/ui/seatTab.js",
-    "old": "    if (!rows.length) out.append(el('p', 'notice-seat-mine', 'Your guild has no liege, no vassal and no Pact.'));\n",
-    "new": "",
+    "old": "    if (!rows.length) out.append(el('p', 'notice-seat-mine', 'Your guild has no liege, no vassal and no Pact.'));\n    const acts = {",
+    "new": "    const acts = {",
     "tests": [
       "test/net/crown2_client.test.js"
     ]
@@ -1000,8 +1000,8 @@
   {
     "name": "CROWN2-tab-lever",
     "file": "src/ui/seatTab.js",
-    "old": "for (const k of lever ? [r.act, r.alt] : []) {",
-    "new": "for (const k of [r.act, r.alt]) {",
+    "old": "      for (const k of lever ? [r.act, r.alt] : []) {",
+    "new": "      for (const k of [r.act, r.alt]) {",
     "tests": [
       "test/net/crown2_client.test.js"
     ]
@@ -1009,8 +1009,8 @@
   {
     "name": "CROWN2-tab-tag",
     "file": "src/ui/seatTab.js",
-    "old": "act(() => acts[k](r.tag))",
-    "new": "act(() => acts[k](null))",
+    "old": "        const b = button(`notice-seat-${k}`, POLITICS_ACTS[k], () => act(() => acts[k](r.tag)));",
+    "new": "        const b = button(`notice-seat-${k}`, POLITICS_ACTS[k], () => act(() => acts[k](null)));",
     "tests": [
       "test/net/crown2_client.test.js"
     ]
@@ -1018,8 +1018,8 @@
   {
     "name": "CROWN2-tab-accept",
     "file": "src/ui/seatTab.js",
-    "old": "'fealty-accept': (t) => book.acceptFealty(t),",
-    "new": "'fealty-accept': (t) => book.offerFealty(t, 'vassal'),",
+    "old": "      'fealty-accept': (t) => book.acceptFealty(t),",
+    "new": "      'fealty-accept': (t) => book.offerFealty(t, 'vassal'),",
     "tests": [
       "test/net/crown2_client.test.js"
     ]
@@ -1027,8 +1027,8 @@
   {
     "name": "CROWN2-tab-pact-accept",
     "file": "src/ui/seatTab.js",
-    "old": "'pact-accept': (t) => book.offerPact(t),",
-    "new": "'pact-accept': (t) => book.breakPact(t),",
+    "old": "      'pact-accept': (t) => book.offerPact(t),",
+    "new": "      'pact-accept': (t) => book.breakPact(t),",
     "tests": [
       "test/net/crown2_client.test.js"
     ]
@@ -1036,8 +1036,8 @@
   {
     "name": "CROWN2-tab-offers-lever",
     "file": "src/ui/seatTab.js",
-    "old": "    if (!lever) return out;\n",
-    "new": "",
+    "old": "    if (!lever) return out;\n    const tag = /** @type {HTMLInputElement} */ (el('input', 'notice-input notice-seat-politics-tag'));",
+    "new": "    const tag = /** @type {HTMLInputElement} */ (el('input', 'notice-input notice-seat-politics-tag'));",
     "tests": [
       "test/net/crown2_client.test.js"
     ]
@@ -1045,8 +1045,8 @@
   {
     "name": "CROWN2-tab-notag",
     "file": "src/ui/seatTab.js",
-    "old": "(politicsTag ? act(() => ask(politicsTag)) : null)",
-    "new": "act(() => ask(politicsTag))",
+    "old": "      const b = button(cls, words, () => (politicsTag ? act(() => ask(politicsTag)) : null));",
+    "new": "      const b = button(cls, words, () => act(() => ask(politicsTag)));",
     "tests": [
       "test/net/crown2_client.test.js"
     ]
@@ -1054,8 +1054,8 @@
   {
     "name": "CROWN2-tab-trim",
     "file": "src/ui/seatTab.js",
-    "old": "politicsTag = tag.value.trim();",
-    "new": "politicsTag = tag.value;",
+    "old": "      politicsTag = tag.value.trim();",
+    "new": "      politicsTag = tag.value;",
     "tests": [
       "test/net/crown2_client.test.js"
     ]
@@ -1063,8 +1063,8 @@
   {
     "name": "CROWN2-tab-take",
     "file": "src/ui/seatTab.js",
-    "old": "['notice-seat-take', 'Take as vassal', (t) => book.offerFealty(t, 'liege')],",
-    "new": "['notice-seat-take', 'Take as vassal', (t) => book.offerFealty(t, 'vassal')],",
+    "old": "      ['notice-seat-take', 'Take as vassal', (t) => book.offerFealty(t, 'liege')],",
+    "new": "      ['notice-seat-take', 'Take as vassal', (t) => book.offerFealty(t, 'vassal')],",
     "tests": [
       "test/net/crown2_client.test.js"
     ]

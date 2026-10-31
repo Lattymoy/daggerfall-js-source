@@ -311,8 +311,8 @@
   {
     "name": "REFORGE-REPLACE-the-note-gone",
     "file": "src/ui/reforgeWindow.js",
-    "old": "    if (price && may.length) card.append(el('p', 'boundline reforge-note', REFORGE_NOTE(price)));",
-    "new": "    void REFORGE_NOTE;",
+    "old": "    if (price && may.length) card.append(el('p', 'boundline reforge-note', REFORGE_NOTE(price))); // REFORGE-REPLACE: no line is locked - the price says the count",
+    "new": "    void REFORGE_NOTE; // REFORGE-REPLACE: no line is locked - the price says the count",
     "tests": [
       "test/systems/loot9_reforge.test.js",
       "test/systems/affixlines_reforge.test.js"
@@ -321,8 +321,8 @@
   {
     "name": "REFORGE-REPLACE-the-old-refusal-words",
     "file": "src/ui/reforgeWindow.js",
-    "old": "  get line() { return t('reforge.refusal.line', 'No other kind of line can take its place'); },",
-    "new": "  line: 'Only the line it was reforged on',",
+    "old": "  get line() {\n    return t('reforge.refusal.line', 'No other kind of line can take its place');\n  }, // REFORGE-REPLACE: a record's line, or one nothing else can replace - the one-line lock is gone",
+    "new": "  line: 'Only the line it was reforged on', // REFORGE-REPLACE: a record's line, or one nothing else can replace - the one-line lock is gone",
     "tests": [
       "test/systems/affixlines_reforge.test.js"
     ]

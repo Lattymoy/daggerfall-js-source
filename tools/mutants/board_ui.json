@@ -129,8 +129,8 @@
   {
     "name": "BOARD-UI-the-works-read-after",
     "file": "src/ui/seatTab.js",
-    "old": "    const works = book.forts ? Promise.resolve().then(() => book.forts(seat.key)).catch(() => null) : null;\n    const giving = book.gifts && host.giving ? Promise.resolve().then(() => book.gifts(seat.region)).catch(() => null) : null;   // DOMAIN1: asked at once too\n    let g;\n    try { r = await book.standings(seat.key, { force }); } catch { r = { data: null, error: 'offline' }; }\n",
-    "new": "    const giving = book.gifts && host.giving ? Promise.resolve().then(() => book.gifts(seat.region)).catch(() => null) : null;   // DOMAIN1: asked at once too\n    let g;\n    try { r = await book.standings(seat.key, { force }); } catch { r = { data: null, error: 'offline' }; }\n    const works = book.forts ? Promise.resolve().then(() => book.forts(seat.key)).catch(() => null) : null;\n",
+    "old": "    const works = book.forts\n      ? Promise.resolve()\n          .then(() => book.forts(seat.key))\n          .catch(() => null)\n      : null;\n    const giving =\n      book.gifts && host.giving\n        ? Promise.resolve()\n            .then(() => book.gifts(seat.region))\n            .catch(() => null)\n        : null; // DOMAIN1: asked at once too\n    let g;\n    try {\n      r = await book.standings(seat.key, { force });\n    } catch {\n      r = { data: null, error: 'offline' };\n    }",
+    "new": "    const giving =\n      book.gifts && host.giving\n        ? Promise.resolve()\n            .then(() => book.gifts(seat.region))\n            .catch(() => null)\n        : null; // DOMAIN1: asked at once too\n    let g;\n    try {\n      r = await book.standings(seat.key, { force });\n    } catch {\n      r = { data: null, error: 'offline' };\n    }\n    const works = book.forts\n      ? Promise.resolve()\n          .then(() => book.forts(seat.key))\n          .catch(() => null)\n      : null;",
     "tests": [
       "test/ui/board_ui.test.js"
     ],
@@ -139,8 +139,8 @@
   {
     "name": "BOARD-UI-the-battle-unnamed",
     "file": "src/ui/seatTab.js",
-    "old": "const b = panel(SEAT_PANELS.battle, 'seat-battlepanel');",
-    "new": "const b = panel(null, 'seat-battlepanel');",
+    "old": "        const b = panel(SEAT_PANELS.battle, 'seat-battlepanel');",
+    "new": "        const b = panel(null, 'seat-battlepanel');",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "BOARD-UI-the-strip-on-the-muster",
     "file": "src/ui/seatTab.js",
-    "old": "const li = el('li', data.phase === id ? 'on' : null, name);",
-    "new": "const li = el('li', id === 'muster' ? 'on' : null, name);",
+    "old": "        const li = el('li', data.phase === id ? 'on' : null, name);",
+    "new": "        const li = el('li', id === 'muster' ? 'on' : null, name);",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "BOARD-UI-the-bar-past-the-claim-alone",
     "file": "src/ui/seatTab.js",
-    "old": "return Number.isFinite(data?.defence) ? Math.max(need, data.defence + 1) : need;",
-    "new": "return need;",
+    "old": "    return Number.isFinite(data?.defence) ? Math.max(need, data.defence + 1) : need;",
+    "new": "    return need;",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "BOARD-UI-the-guide-a-palace-always",
     "file": "src/ui/seatTab.js",
-    "old": "whose treasury can pay ${n(CLAIM_FEE[t])} silver.",
-    "new": "whose treasury can pay ${n(CLAIM_FEE.palace)} silver.",
+    "old": "      `At the Turning, Sunday 18:00 UTC, an unheld Charter goes to the strongest guild with at least ${n(CLAIM_THRESHOLD[t])} influence whose treasury can pay ${n(CLAIM_FEE[t])} silver. Two guilds within ${Math.round(CONTESTED_MARGIN * 100)}% of each other meet in a Tourney for it.`,",
+    "new": "      `At the Turning, Sunday 18:00 UTC, an unheld Charter goes to the strongest guild with at least ${n(CLAIM_THRESHOLD[t])} influence whose treasury can pay ${n(CLAIM_FEE.palace)} silver. Two guilds within ${Math.round(CONTESTED_MARGIN * 100)}% of each other meet in a Tourney for it.`,",
     "tests": [
       "test/ui/board_ui.test.js"
     ]

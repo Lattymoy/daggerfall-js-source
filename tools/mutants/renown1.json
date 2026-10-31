@@ -411,8 +411,8 @@
   {
     "name": "RENOWN1-card-plate-after-the-name",
     "file": "src/ui/profileWindow.js",
-    "old": "    if (v.level) { const lv = el('span', 'dfprofile-renown', v.level); if (v.levelTitle) lv.title = v.levelTitle; nm.append(lv); }   // RENOWN1: left of the name\n    nm.append(el('span', 'dfprofile-nametext', v.name));",
-    "new": "    nm.append(el('span', 'dfprofile-nametext', v.name));\n    if (v.level) { const lv = el('span', 'dfprofile-renown', v.level); if (v.levelTitle) lv.title = v.levelTitle; nm.append(lv); }   // RENOWN1: left of the name",
+    "old": "    if (v.level) {\n      const lv = el('span', 'dfprofile-renown', v.level);\n      if (v.levelTitle) lv.title = v.levelTitle;\n      nm.append(lv);\n    } // RENOWN1: left of the name\n    nm.append(el('span', 'dfprofile-nametext', v.name));",
+    "new": "    nm.append(el('span', 'dfprofile-nametext', v.name));\n    if (v.level) {\n      const lv = el('span', 'dfprofile-renown', v.level);\n      if (v.levelTitle) lv.title = v.levelTitle;\n      nm.append(lv);\n    } // RENOWN1: left of the name",
     "tests": [
       "test/net/renown1.test.js"
     ]

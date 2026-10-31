@@ -336,8 +336,8 @@
   {
     "name": "RECORDS-tab-zero",
     "file": "src/ui/seatTab.js",
-    "old": "chronicleLine(r, seat, book.zero ?? null)",
-    "new": "chronicleLine(r, seat)",
+    "old": "      const lines = (data.chronicle ?? []).map((r) => chronicleLine(r, seat, book.zero ?? null)).filter(Boolean); // SEASON1 part three: in its Season's words",
+    "new": "      const lines = (data.chronicle ?? []).map((r) => chronicleLine(r, seat)).filter(Boolean); // SEASON1 part three: in its Season's words",
     "tests": [
       "test/ui/season1_records.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "SKINMODE-toggle-gone",
     "file": "src/ui/skinCard.js",
-    "old": "    lookToggle(layeredOn);\n",
-    "new": "    void lookToggle;\n",
+    "old": "    lookToggle(layeredOn);",
+    "new": "    void lookToggle;",
     "tests": [
       "test/ui/skinmode_toggle.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "SKINMODE-onfoot-in-layered",
     "file": "src/ui/skinCard.js",
-    "old": "    if (layeredOn) {\n      // LAYERED-GEAR: the body",
-    "new": "    if (false) {\n      // LAYERED-GEAR: the body",
+    "old": "    if (layeredOn) {",
+    "new": "    if (false) {",
     "tests": [
       "test/ui/skinmode_toggle.test.js"
     ],
@@ -62,7 +62,7 @@
   {
     "name": "SKINMODE-body-grid-gone",
     "file": "src/ui/skinCard.js",
-    "old": "      root.append(grid(bodyWord, (sets.layered ?? []).filter((s) => s.index === 1 || s.index === 2), LAYERED, worn));",
+    "old": "      root.append(\n        grid(\n          bodyWord,\n          (sets.layered ?? []).filter((s) => s.index === 1 || s.index === 2),\n          LAYERED,\n          worn,\n        ),\n      );",
     "new": "      void grid;",
     "tests": [
       "test/ui/skinmode_toggle.test.js"

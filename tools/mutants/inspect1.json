@@ -315,8 +315,8 @@
   {
     "name": "INS-view-attrs-without-card",
     "file": "src/ui/profileWindow.js",
-    "old": "    attrs: card ? STAT_KEYS_ORDER.map((key, i) => ({ key, short: ATTR_SHORT[i], label: ATTR_LABELS[i], value: card.attrs[i] })) : [],",
-    "new": "    attrs: STAT_KEYS_ORDER.map((key, i) => ({ key, short: ATTR_SHORT[i], label: ATTR_LABELS[i], value: card?.attrs[i] ?? 0 })),",
+    "old": "    attrs: card\n      ? STAT_KEYS_ORDER.map((key, i) => ({ key, short: ATTR_SHORT[i], label: ATTR_LABELS[i], value: card.attrs[i] }))\n      : [],",
+    "new": "    attrs: STAT_KEYS_ORDER.map((key, i) => ({\n      key,\n      short: ATTR_SHORT[i],\n      label: ATTR_LABELS[i],\n      value: card?.attrs[i] ?? 0,\n    })),",
     "tests": [
       "test/ui/inspect1.test.js"
     ],
@@ -325,8 +325,8 @@
   {
     "name": "INS-gear-out-of-order",
     "file": "src/ui/profileWindow.js",
-    "old": "  for (const [slot, label] of GEAR_ROWS) {\n    const it = bySlot.get(slot);\n    if (it) rows.push({ slot: label, name: itemLongName(it), part: gearPartOf(slot, it) });\n  }",
-    "new": "  for (const [slot, it] of bySlot) {\n    const label = GEAR_ROWS.find(([s]) => s === slot)?.[1];\n    if (label) rows.push({ slot: label, name: itemLongName(it), part: gearPartOf(slot, it) });\n  }",
+    "old": "  for (const [slot, label] of GEAR_ROWS) {\n    const it = bySlot.get(slot);\n    if (it) rows.push({ slot: label, name: itemLongName(it), part: gearPartOf(slot, it) });",
+    "new": "  for (const [slot, it] of bySlot) {\n    const label = GEAR_ROWS.find(([s]) => s === slot)?.[1];\n    if (label) rows.push({ slot: label, name: itemLongName(it), part: gearPartOf(slot, it) });",
     "tests": [
       "test/ui/inspect1.test.js"
     ],
@@ -345,7 +345,7 @@
   {
     "name": "INS-window-escape-under-a-surface",
     "file": "src/ui/profileWindow.js",
-    "old": "    if (above()) return;   // a surface over this one owns the key - untouched, unstopped",
+    "old": "    if (above()) return; // a surface over this one owns the key - untouched, unstopped",
     "new": "",
     "tests": [
       "test/ui/inspect1.test.js"
@@ -355,8 +355,8 @@
   {
     "name": "INS-window-pointer-freed-twice",
     "file": "src/ui/profileWindow.js",
-    "old": "    if (!was) onOpen?.();",
-    "new": "    onOpen?.();",
+    "old": "    if (!was) onOpen?.(); // the pointer freed on the OPEN alone - a second peer's card over the first asks for nothing twice",
+    "new": "    onOpen?.(); // the pointer freed on the OPEN alone - a second peer's card over the first asks for nothing twice",
     "tests": [
       "test/ui/inspect1.test.js"
     ],
@@ -365,8 +365,8 @@
   {
     "name": "INS-window-covered-kept",
     "file": "src/ui/profileWindow.js",
-    "old": "      if (covered && open) hide();",
-    "new": "",
+    "old": "      if (covered && open) hide();\n    },",
+    "new": "    },",
     "tests": [
       "test/ui/inspect1.test.js"
     ],
@@ -375,8 +375,8 @@
   {
     "name": "INS-window-name-size-kept",
     "file": "src/ui/profileWindow.js",
-    "old": " .dfprofile-name { font-size: 16px; } }",
-    "new": " }",
+    "old": "@container (max-width: 400px) { .dfprofile-body { grid-template-columns: minmax(0, 1fr); } .dfprofile-name { font-size: 16px; } }",
+    "new": "@container (max-width: 400px) { .dfprofile-body { grid-template-columns: minmax(0, 1fr); } }",
     "tests": [
       "test/ui/inspect1.test.js"
     ],

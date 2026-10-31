@@ -149,8 +149,8 @@
   {
     "name": "S2-panels-open-at-once",
     "file": "src/ui/skinCard.js",
-    "old": "const isOpen = open === key;",
-    "new": "const isOpen = true;",
+    "old": "    const isOpen = open === key;",
+    "new": "    const isOpen = true;",
     "tests": [
       "test/net/skin2_class_skins.test.js",
       "test/net/disc23b_eotb_sprites.test.js"
@@ -159,8 +159,8 @@
   {
     "name": "S2-panel-never-closes",
     "file": "src/ui/skinCard.js",
-    "old": "head.onclick = () => { open = isOpen ? null : key; paint(); };",
-    "new": "head.onclick = () => { open = key; paint(); };",
+    "old": "      open = isOpen ? null : key;",
+    "new": "      open = key;",
     "tests": [
       "test/net/skin2_class_skins.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "S2-choice-leaves-it-open",
     "file": "src/ui/skinCard.js",
-    "old": "b.onclick = () => { setModSetting(VENDOR, key, s.index); open = null; paint(); };",
-    "new": "b.onclick = () => { setModSetting(VENDOR, key, s.index); paint(); };",
+    "old": "        setModSetting(VENDOR, key, s.index);\n        open = null;\n        paint();",
+    "new": "        setModSetting(VENDOR, key, s.index);\n        paint();",
     "tests": [
       "test/net/skin2_class_skins.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "S2-head-without-its-picture",
     "file": "src/ui/skinCard.js",
-    "old": "    if (wearing?.url) head.append(art(wearing));\n",
-    "new": "",
+    "old": "    if (wearing?.url) head.append(art(wearing));\n    const words = el('span', 'skinheadtext');",
+    "new": "    const words = el('span', 'skinheadtext');",
     "tests": [
       "test/net/skin2_class_skins.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "S2-head-names-nothing",
     "file": "src/ui/skinCard.js",
-    "old": "words.append(el('span', 'skinname', wearing?.name ?? ''));",
-    "new": "words.append(el('span', 'skinname', ''));",
+    "old": "    words.append(el('span', 'skinname', wearing?.name ?? ''));",
+    "new": "    words.append(el('span', 'skinname', ''));",
     "tests": [
       "test/net/skin2_class_skins.test.js",
       "test/net/disc23b_eotb_sprites.test.js"
@@ -196,8 +196,8 @@
   {
     "name": "S2-aria-expanded-lies",
     "file": "src/ui/skinCard.js",
-    "old": "head.setAttribute('aria-expanded', isOpen ? 'true' : 'false');",
-    "new": "head.setAttribute('aria-expanded', 'false');",
+    "old": "    head.setAttribute('aria-expanded', isOpen ? 'true' : 'false');",
+    "new": "    head.setAttribute('aria-expanded', 'false');",
     "tests": [
       "test/net/skin2_class_skins.test.js"
     ]
@@ -205,8 +205,8 @@
   {
     "name": "S2-one-shelf-for-all",
     "file": "src/ui/skinCard.js",
-    "old": "const mine = sets.filter((s) => s.index >= g.from && s.index < g.to);",
-    "new": "const mine = g.from ? [] : sets;",
+    "old": "        const mine = sets.filter((s) => s.index >= g.from && s.index < g.to);",
+    "new": "        const mine = g.from ? [] : sets;",
     "tests": [
       "test/net/skin2_class_skins.test.js"
     ]
@@ -214,8 +214,8 @@
   {
     "name": "S2-classes-lose-their-heading",
     "file": "src/ui/skinCard.js",
-    "old": "        if (g.label) body.append(el('span', 'skingroup', g.label));\n",
-    "new": "",
+    "old": "        if (g.label) body.append(el('span', 'skingroup', g.label));\n        body.append(grid(g.label || label, mine, key, worn));",
+    "new": "        body.append(grid(g.label || label, mine, key, worn));",
     "tests": [
       "test/net/skin2_class_skins.test.js"
     ]
@@ -223,8 +223,8 @@
   {
     "name": "S2-chevron-stuck",
     "file": "src/ui/skinCard.js",
-    "old": "isOpen ? '\\u25b4' : '\\u25be'",
-    "new": "'\\u25be'",
+    "old": "    head.append(el('span', 'skinchev', isOpen ? '\\u25b4' : '\\u25be'));",
+    "new": "    head.append(el('span', 'skinchev', '\\u25be'));",
     "tests": [
       "test/net/skin2_class_skins.test.js"
     ]

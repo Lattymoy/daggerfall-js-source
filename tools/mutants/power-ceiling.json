@@ -480,8 +480,8 @@
   {
     "name": "SET-CATCHUP-the-card-unsaid",
     "file": "src/ui/setCard.js",
-    "old": "${v.catchUp ? ` (${catchUpText(v.catchUp, next)})` : ''}",
-    "new": "${''}",
+    "old": "    const piece = v.heldPiece\n      ? `grow your ${nameOf(v.heldPiece)}${v.catchUp ? ` (${catchUpText(v.catchUp, next)})` : ''}`\n      : null; // SET-CATCHUP: the price, and how fast it is paid",
+    "new": "    const piece = v.heldPiece ? `grow your ${nameOf(v.heldPiece)}${''}` : null; // SET-CATCHUP: the price, and how fast it is paid",
     "tests": [
       "test/systems/sigil/setcatchup.test.js",
       "test/systems/set5_ui.test.js"

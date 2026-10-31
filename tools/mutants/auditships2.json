@@ -298,8 +298,8 @@
   {
     "name": "AUDIT2-XC8-bar-old-words",
     "file": "src/ui/serpentBar.js",
-    "old": "ships: (n) => (n === 1 ? '1 ship fighting it' : `${n} ships fighting it`),",
-    "new": "ships: (n) => (n === 1 ? '1 ship in its waters' : `${n} ships in its waters`),",
+    "old": "  ships: (n) => (n === 1 ? '1 ship fighting it' : `${n} ships fighting it`), // AUDIT 2 XC8: the count is the ships fighting it (AUDIT SHIPS C1), not every hull in its waters",
+    "new": "  ships: (n) => (n === 1 ? '1 ship in its waters' : `${n} ships in its waters`), // AUDIT 2 XC8: the count is the ships fighting it (AUDIT SHIPS C1), not every hull in its waters",
     "tests": [
       "test/net/serpent/auditships2.test.js"
     ],

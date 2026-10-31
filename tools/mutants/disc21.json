@@ -146,8 +146,8 @@
   {
     "name": "DISC21-C-the-hand-reads-no-sheath",
     "file": "src/ui/quickslotTags.js",
-    "old": "sheathed: !!pw?.sheathed,",
-    "new": "sheathed: false,",
+    "old": "  return { weapon: pw?.weapon ?? null, sheathed: !!pw?.sheathed, readyKey: tag?.kind === 'key' ? tag.text : null };",
+    "new": "  return { weapon: pw?.weapon ?? null, sheathed: false, readyKey: tag?.kind === 'key' ? tag.text : null };",
     "tests": [
       "test/systems/disc21.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "DISC21-C-the-wrong-action-s-key",
     "file": "src/ui/quickslotTags.js",
-    "old": "  const tag = quickslotTag(CELL_ACTIONS.main, { bindings: store, controller",
-    "new": "  const tag = quickslotTag(CELL_ACTIONS.c2, { bindings: store, controller",
+    "old": "  const tag = quickslotTag(CELL_ACTIONS.main, {",
+    "new": "  const tag = quickslotTag(CELL_ACTIONS.c2, {",
     "tests": [
       "test/systems/disc21.test.js"
     ]

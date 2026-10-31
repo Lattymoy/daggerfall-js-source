@@ -630,8 +630,8 @@
   {
     "name": "SEAT2a-tab-unsign-closed",
     "file": "src/ui/seatTab.js",
-    "old": "      if (f.open) { const b = button('notice-seat-unsign',",
-    "new": "      if (true) { const b = button('notice-seat-unsign',",
+    "old": "      if (f.open) {",
+    "new": "      if (true) {",
     "tests": [
       "test/net/seat2a_client.test.js"
     ]
@@ -639,8 +639,8 @@
   {
     "name": "SEAT2a-tab-fee-uncapped",
     "file": "src/ui/seatTab.js",
-    "old": "          ? act(() => book.hire(seat, hireHandle, Math.min(SELLSWORD_FEE_MAX, hireFee)))",
-    "new": "          ? act(() => book.hire(seat, hireHandle, hireFee))",
+    "old": "            ? act(() => book.hire(seat, hireHandle, Math.min(SELLSWORD_FEE_MAX, hireFee)))",
+    "new": "            ? act(() => book.hire(seat, hireHandle, hireFee))",
     "tests": [
       "test/net/seat2a_client.test.js"
     ]
@@ -657,8 +657,8 @@
   {
     "name": "SEAT2a-tab-window-day-kept",
     "file": "src/ui/seatTab.js",
-    "old": "    day.onchange = () => { windowAsk = { day: Number(day.value), hour: want.hour }; ui.rerender(); };",
-    "new": "    day.onchange = () => { ui.rerender(); };",
+    "old": "      windowAsk = { day: Number(day.value), hour: want.hour };\n      ui.rerender();",
+    "new": "      ui.rerender();",
     "tests": [
       "test/net/seat2a_client.test.js"
     ]
@@ -666,8 +666,8 @@
   {
     "name": "SEAT2a-tab-withdraw-signed",
     "file": "src/ui/seatTab.js",
-    "old": "        if (h.state === 'offered') { const w = button('notice-seat-withdraw',",
-    "new": "        if (h.state !== 'withdrawn') { const w = button('notice-seat-withdraw',",
+    "old": "        if (h.state === 'offered') {",
+    "new": "        if (h.state !== 'withdrawn') {",
     "tests": [
       "test/net/seat2a_client.test.js"
     ]

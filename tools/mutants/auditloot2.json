@@ -194,8 +194,8 @@
   {
     "name": "AUDIT-LOOT-II-B4-the-question-stays",
     "file": "src/ui/reforgeWindow.js",
-    "old": "const dropAsk = () => { if (asking) note = null; asking = null; };",
-    "new": "const dropAsk = () => { asking = null; };",
+    "old": "    if (asking) note = null;\n    asking = null;",
+    "new": "    asking = null;",
     "tests": [
       "test/systems/auditloot2.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "AUDIT-LOOT-II-B4-the-lapse-drawn-late",
     "file": "src/ui/reforgeWindow.js",
-    "old": "if (asking === EVERY_MAGIC) { dropAsk(); drawNote(); } return; }",
-    "new": "if (asking === EVERY_MAGIC) { dropAsk(); } return; }",
+    "old": "        drawNote();\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/auditloot2.test.js",
       "test/systems/loot18_seen.test.js"

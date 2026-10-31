@@ -175,8 +175,8 @@
   {
     "name": "WB5b-a-strangers-nought-said",
     "file": "src/ui/profileWindow.js",
-    "old": "  return Number.isSafeInteger(n) && n > 0 ? `Breaches closed: ${n}` : null;",
-    "new": "  return Number.isSafeInteger(n) && n >= 0 ? `Breaches closed: ${n}` : null;",
+    "old": "  return Number.isSafeInteger(n) && n > 0 ? `Breaches closed: ${n}` : null; // WB12a",
+    "new": "  return Number.isSafeInteger(n) && n >= 0 ? `Breaches closed: ${n}` : null; // WB12a",
     "tests": [
       "test/net/gate/wb5b_gate_claim.test.js"
     ]

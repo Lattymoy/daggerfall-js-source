@@ -52,8 +52,8 @@
   {
     "name": "ONLY-6-only-says-backed-up",
     "file": "src/ui/saveTile.js",
-    "old": "      only: cloud.when ? t('menu.cloud.onlyWhen', 'Only in your backup · {when}', { when: cloud.when }) : t('menu.cloud.only', 'Only in your backup'),",
-    "new": "      only: cloud.when ? t('menu.cloud.savedWhen', 'Backed up · {when}', { when: cloud.when }) : t('menu.cloud.saved', 'Backed up'),",
+    "old": "        ? t('menu.cloud.onlyWhen', 'Only in your backup · {when}', { when: cloud.when })\n        : t('menu.cloud.only', 'Only in your backup'),",
+    "new": "        ? t('menu.cloud.savedWhen', 'Backed up · {when}', { when: cloud.when })\n        : t('menu.cloud.saved', 'Backed up'),",
     "tests": [
       "test/ui/savetile.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "ONLY-8-a-stat-invented-from-a-column",
     "file": "src/ui/saveTile.js",
-    "old": "    name: card?.characterName || t('menu.save.unnamed', 'Unnamed'),",
-    "new": "    name: card?.characterName || t('menu.save.unnamed', 'Unnamed'),\n    level: card?.saveVersion ?? null,",
+    "old": "    when: date && dateText ? dateText(date) : null,",
+    "new": "    level: card?.saveVersion ?? null,\n    when: date && dateText ? dateText(date) : null,",
     "tests": [
       "test/ui/savetile.test.js"
     ],

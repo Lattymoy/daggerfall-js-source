@@ -422,8 +422,8 @@
   {
     "name": "CROWN1-tab-tier",
     "file": "src/ui/seatTab.js",
-    "old": "Object.keys(EDICTS).filter((k) => edictForTier(k, seat.tier) && edictMayFollow(k, h.edict))",
-    "new": "Object.keys(EDICTS).filter((k) => edictMayFollow(k, h.edict))",
+    "old": "    const allowed = Object.keys(EDICTS).filter((k) => edictForTier(k, seat.tier) && edictMayFollow(k, h.edict)); // CROWN1: a crown's own at a crown",
+    "new": "    const allowed = Object.keys(EDICTS).filter((k) => edictMayFollow(k, h.edict)); // CROWN1: a crown's own at a crown",
     "tests": [
       "test/ui/crown1_client.test.js",
       "test/systems/seat1d_client.test.js"
@@ -432,8 +432,8 @@
   {
     "name": "CROWN1-tab-tier-read",
     "file": "src/ui/seatTab.js",
-    "old": "Object.keys(EDICTS).filter((k) => edictForTier(k, seat.tier) && edictMayFollow(k, h.edict))",
-    "new": "Object.keys(EDICTS).filter((k) => edictForTier(k, 'palace') && edictMayFollow(k, h.edict))",
+    "old": "    const allowed = Object.keys(EDICTS).filter((k) => edictForTier(k, seat.tier) && edictMayFollow(k, h.edict)); // CROWN1: a crown's own at a crown",
+    "new": "    const allowed = Object.keys(EDICTS).filter((k) => edictForTier(k, 'palace') && edictMayFollow(k, h.edict)); // CROWN1: a crown's own at a crown",
     "tests": [
       "test/ui/crown1_client.test.js"
     ]

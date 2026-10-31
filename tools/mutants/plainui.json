@@ -2,8 +2,8 @@
   {
     "name": "PLAINUI-next-step-pledge-power",
     "file": "src/ui/seatTab.js",
-    "old": "    return seatMay(mine.rank, 'pledge')\n",
-    "new": "    return seatMay(mine.rank, 'tribute')\n",
+    "old": "    return seatMay(mine.rank, 'pledge')",
+    "new": "    return seatMay(mine.rank, 'tribute')",
     "tests": [
       "test/systems/legacy/plainui.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PLAINUI-next-step-region-as-seat",
     "file": "src/ui/seatTab.js",
-    "old": "  const here = (mine.pledges ?? []).find((/** @type {any} */ p) => p.region === seat.region) ?? null;\n  if (!here) {",
-    "new": "  const here = (mine.pledges ?? []).find((/** @type {any} */ p) => p.key === seat.key) ?? null;\n  if (!here) {",
+    "old": "  const here = (mine.pledges ?? []).find((/** @type {any} */ p) => p.region === seat.region) ?? null;",
+    "new": "  const here = (mine.pledges ?? []).find((/** @type {any} */ p) => p.key === seat.key) ?? null;",
     "tests": [
       "test/systems/legacy/plainui.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PLAINUI-guide-open-backwards",
     "file": "src/ui/seatTab.js",
-    "old": "export const seatGuideOpen = (seat, data) => !(data?.mine",
-    "new": "export const seatGuideOpen = (seat, data) => (data?.mine",
+    "old": "  !(data?.mine?.pledges ?? []).some((/** @type {any} */ p) => p.region === seat.region);",
+    "new": "  (data?.mine?.pledges ?? []).some((/** @type {any} */ p) => p.region === seat.region);",
     "tests": [
       "test/systems/legacy/plainui.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PLAINUI-guide-fold-not-kept",
     "file": "src/ui/seatTab.js",
-    "old": "SEAT_PANELS.guide, guideOpen ?? seatGuideOpen(seat, data), (o) => { guideOpen = o; });",
-    "new": "SEAT_PANELS.guide, seatGuideOpen(seat, data), (o) => { guideOpen = o; });",
+    "old": "          guideOpen ?? seatGuideOpen(seat, data),",
+    "new": "          seatGuideOpen(seat, data),",
     "tests": [
       "test/systems/legacy/plainui.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PLAINUI-words-crown-line",
     "file": "src/ui/seatTab.js",
-    "old": "(and at least ${CLAIM_THRESHOLD[t].toLocaleString('en-US')} influence)",
-    "new": "(and at least ${CLAIM_THRESHOLD.palace.toLocaleString('en-US')} influence)",
+    "old": "      `Won at the Turning by the strongest challenger past the defense (and at least ${CLAIM_THRESHOLD[t].toLocaleString('en-US')} influence): a battle with the holder for the Charter, in the holder's battle window.`,",
+    "new": "      `Won at the Turning by the strongest challenger past the defense (and at least ${CLAIM_THRESHOLD.palace.toLocaleString('en-US')} influence): a battle with the holder for the Charter, in the holder's battle window.`,",
     "tests": [
       "test/systems/legacy/plainui.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PLAINUI-words-unrest-bonus",
     "file": "src/ui/seatTab.js",
-    "old": "challengers earn ${Math.round(UNREST_BONUS * 100)}% more influence",
-    "new": "challengers earn 20% more influence",
+    "old": "      `How the town feels about its holder, from 0 to 100. A new Charter starts at ${STANDING_START}. Under ${STANDING_UNREST} the town is in Unrest and challengers earn ${Math.round(UNREST_BONUS * 100)}% more influence. At 0 it revolts.`,",
+    "new": "      `How the town feels about its holder, from 0 to 100. A new Charter starts at ${STANDING_START}. Under ${STANDING_UNREST} the town is in Unrest and challengers earn 20% more influence. At 0 it revolts.`,",
     "tests": [
       "test/systems/legacy/plainui.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PLAINUI-words-tribute-rate",
     "file": "src/ui/seatTab.js",
-    "old": "1 for every ${TRIBUTE_MARKS_PER_INFLUENCE} silver",
-    "new": "1 for every 7 silver",
+    "old": "      `Silver the Guildmaster pays from the treasury for influence: 1 for every ${TRIBUTE_MARKS_PER_INFLUENCE} silver, at most a fifth of the guild's influence here a week. The silver is spent.`,",
+    "new": "      `Silver the Guildmaster pays from the treasury for influence: 1 for every 7 silver, at most a fifth of the guild's influence here a week. The silver is spent.`,",
     "tests": [
       "test/systems/legacy/plainui.test.js"
     ]

@@ -128,8 +128,8 @@
   {
     "name": "PVP-SET-the-armour-left-out",
     "file": "src/ui/pvpSpellMenu.js",
-    "old": "calculateCastCost(kitSpellFor(entity, slot), entity).sp;",
-    "new": "calculateCastCost(kitSpellFor(entity, slot), entity, { portMods: false }).sp;",
+    "old": "export const kitCastCost = (entity, slot) => calculateCastCost(kitSpellFor(entity, slot), entity).sp;",
+    "new": "export const kitCastCost = (entity, slot) =>\n  calculateCastCost(kitSpellFor(entity, slot), entity, { portMods: false }).sp;",
     "tests": [
       "test/systems/wild/pvpset.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "PVP-SET-the-set-never-swapped-in",
     "file": "src/ui/pvpSpellMenu.js",
-    "old": "    useHotbarSet(want ? 'pvp' : 'main');\n",
-    "new": "    useHotbarSet('main');\n",
+    "old": "    useHotbarSet(want ? 'pvp' : 'main');",
+    "new": "    useHotbarSet('main');",
     "tests": [
       "test/systems/wild/pvpset.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PVP-SET-the-menu-lock-unread",
     "file": "src/ui/pvpSpellMenu.js",
-    "old": "  lockHotbarSet(() => lockLeft() > 0);\n",
-    "new": "",
+    "old": "  lockHotbarSet(() => lockLeft() > 0);\n  setHotbarKitPress(press);",
+    "new": "  setHotbarKitPress(press);",
     "tests": [
       "test/systems/wild/pvpset.test.js"
     ]

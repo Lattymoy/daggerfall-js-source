@@ -617,8 +617,8 @@
   {
     "name": "BLS-tab-seat-unhanded",
     "file": "src/ui/seatTab.js",
-    "old": "    const words = edictLine(chosen, seat.tier, data?.tides?.next ?? 'calm', seat);",
-    "new": "    const words = edictLine(chosen, seat.tier, data?.tides?.next ?? 'calm');",
+    "old": "    const words = edictLine(chosen, seat.tier, data?.tides?.next ?? 'calm', seat); // SEASON1 part two: the coming week's Tide on its cost; BAY-LEFT-SEA: a Bounty past the Bay its dens'",
+    "new": "    const words = edictLine(chosen, seat.tier, data?.tides?.next ?? 'calm'); // SEASON1 part two: the coming week's Tide on its cost; BAY-LEFT-SEA: a Bounty past the Bay its dens'",
     "tests": [
       "test/net/bayleftsea_bounty.test.js"
     ]

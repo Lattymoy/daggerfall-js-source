@@ -133,8 +133,8 @@
   {
     "name": "N8-the-save-shot-unhinted",
     "file": "src/ui/saveWindow.js",
-    "old": "const ctx = c.getContext('2d', { willReadFrequently: true });",
-    "new": "const ctx = c.getContext('2d');",
+    "old": "        const ctx = c.getContext('2d', { willReadFrequently: true }); // FIELD 2026-09-27: read back below (textureReplacement.decodePng's note)",
+    "new": "        const ctx = c.getContext('2d'); // FIELD 2026-09-27: read back below (textureReplacement.decodePng's note)",
     "tests": [
       "test/ai/nav/audit0928_nav.test.js"
     ]

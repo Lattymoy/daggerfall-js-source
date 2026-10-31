@@ -159,8 +159,8 @@
   {
     "name": "ASO-tab-records",
     "file": "src/ui/seatTab.js",
-    "old": "      if (host.readRecords) {\n",
-    "new": "      if (false) {\n",
+    "old": "        if (host.readRecords) {",
+    "new": "        if (false) {",
     "tests": [
       "test/net/seats_finish.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "ASO-tab-alt",
     "file": "src/ui/seatTab.js",
-    "old": "for (const k of lever ? [r.act, r.alt] : []) {",
-    "new": "for (const k of lever ? [r.act] : []) {",
+    "old": "      for (const k of lever ? [r.act, r.alt] : []) {",
+    "new": "      for (const k of lever ? [r.act] : []) {",
     "tests": [
       "test/net/crown2_client.test.js"
     ]

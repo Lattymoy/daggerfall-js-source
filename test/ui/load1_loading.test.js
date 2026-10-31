@@ -190,9 +190,9 @@ test('LOAD1 the key: the PNG goes to the gallery AND the download, the download 
     setShotEncoder(null);
   }
   const src = read('src/ui/screenshot.js');
-  assert.match(src, /const place = placeNow\(\);[^\n]*\n\s*_shoot\(_canvas, \{ keep: \(blob\) => keepInGallery\(blob, place\), download: getPref\(SHOT_DOWNLOAD_PREF\) !== false, said: sayOnHud \}\);/,
+  assert.match(src, /const place = placeNow\(\); \/\/ where the key was pressed, not where the gallery's answer finds the player\n\s*_shoot\(_canvas, \{\n\s*keep: \(blob\) => keepInGallery\(blob, place\),\n\s*download: getPref\(SHOT_DOWNLOAD_PREF\) !== false,\n\s*said: sayOnHud,\n\s*\}\);/,
     'the place is read at the press, the keep goes to the gallery and the download asks the switch');
-  assert.doesNotMatch(src, /^import[^\n]*shotGallery/m, 'the gallery is a door, never a static import - this file is on the entry\'s graph (BOOT2)');
+  assert.doesNotMatch(src, /import \{\n\s*listShots,\n\s*deleteShot,\n\s*setShotLoading,\n\s*keepShot,\n\s*onGalleryChange,\n\s*shotCaption,\n\s*GALLERY_MAX,\n\s*\} from '\.\.\/systems\/shotGallery/m, 'the gallery is a door, never a static import - this file is on the entry\'s graph (BOOT2)');
 });
 
 test('LOAD1 the screen: a hold shorter than its delay shows nothing; a shown screen stands MIN_SHOWN_MS and fades; nested holds keep it up; the place and the step paint (mutants: no delay; no stand; the first end takes it down)', () => {

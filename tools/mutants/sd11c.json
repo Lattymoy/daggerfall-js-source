@@ -244,7 +244,7 @@
   {
     "name": "SD11c-L5F1-unlaid",
     "file": "src/ui/profileWindow.js",
-    "old": "export const profileRecordLines = (record) => ({ gates: profileGateLine(record), raids: profileRaidLine(record), serpents: profileSerpentLine(record), dragons: profileDragonLine(record), hours: profileSdLine(record), stars: profileStarLine(record), voyages: profileKetchLine(record) });",
+    "old": "export const profileRecordLines = (record) => ({\n  gates: profileGateLine(record),\n  raids: profileRaidLine(record),\n  serpents: profileSerpentLine(record),\n  dragons: profileDragonLine(record),\n  hours: profileSdLine(record),\n  stars: profileStarLine(record),\n  voyages: profileKetchLine(record),\n});",
     "new": "export const profileRecordLines = (record) => ({ gates: profileGateLine(record) });",
     "tests": [
       "test/systems/sd11c_page.test.js",

@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-PLAINUI-W5-full-offered",
     "file": "src/ui/seatTab.js",
-    "old": "    if ((mine.pledges ?? []).length >= SEAT_PLEDGE_REGIONS_MAX) return",
-    "new": "    if ((mine.pledges ?? []).length > SEAT_PLEDGE_REGIONS_MAX) return",
+    "old": "    if ((mine.pledges ?? []).length >= SEAT_PLEDGE_REGIONS_MAX)",
+    "new": "    if ((mine.pledges ?? []).length > SEAT_PLEDGE_REGIONS_MAX)",
     "tests": [
       "test/ui/audit_plainui.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-PLAINUI-T4-unbound-sent-elsewhere",
     "file": "src/ui/seatTab.js",
-    "old": "  if (mine.bound && mine.bound !== mine.guild) return",
-    "new": "  if (mine.bound !== mine.guild) return",
+    "old": "  if (mine.bound && mine.bound !== mine.guild)",
+    "new": "  if (mine.bound !== mine.guild)",
     "tests": [
       "test/ui/audit_plainui.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-PLAINUI-C1-words-fold-forgotten",
     "file": "src/ui/seatTab.js",
-    "old": "SEAT_PANELS.words, wordsOpen, (o) => { wordsOpen = o; });",
-    "new": "SEAT_PANELS.words, false, (o) => { wordsOpen = o; });",
+    "old": "        const glossary = boardFold(el, 'notice-panel seat-words board-words', SEAT_PANELS.words, wordsOpen, (o) => {",
+    "new": "        const glossary = boardFold(el, 'notice-panel seat-words board-words', SEAT_PANELS.words, false, (o) => {",
     "tests": [
       "test/ui/audit_plainui.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-PLAINUI-C1-dd-the-word",
     "file": "src/ui/seatTab.js",
-    "old": "dl.append(el('dt', null, word), el('dd', null, meaning));",
-    "new": "dl.append(el('dt', null, word), el('dd', null, word));",
+    "old": "        for (const [word, meaning] of seatWords(seat)) dl.append(el('dt', null, word), el('dd', null, meaning));",
+    "new": "        for (const [word, meaning] of seatWords(seat)) dl.append(el('dt', null, word), el('dd', null, word));",
     "tests": [
       "test/ui/audit_plainui.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-PLAINUI-C4-explained-after-the-answer",
     "file": "src/ui/seatTab.js",
-    "old": "        body.append(p);\n        explain();\n        return body;",
-    "new": "        body.append(p);\n        return body;",
+    "old": "        explain();\n        return body;",
+    "new": "        return body;",
     "tests": [
       "test/ui/audit_plainui.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "AUDIT-PLAINUI-U2-lever-past-the-most",
     "file": "src/ui/seatTab.js",
-    "old": "    && pledges.length < SEAT_PLEDGE_REGIONS_MAX;",
-    "new": "    && pledges.length <= SEAT_PLEDGE_REGIONS_MAX;",
+    "old": "    pledges.length < SEAT_PLEDGE_REGIONS_MAX",
+    "new": "    pledges.length <= SEAT_PLEDGE_REGIONS_MAX",
     "tests": [
       "test/ui/audit_plainui.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "AUDIT-PLAINUI-U2-seat-unnamed",
     "file": "src/ui/seatTab.js",
-    "old": "return `Your guild fights for ${nameOf(here.key) ?? 'another seat of this region'} this week",
-    "new": "return `Your guild fights for ${'another seat of this region'} this week",
+    "old": "    return `Your guild fights for ${nameOf(here.key) ?? 'another seat of this region'} this week, and what you earn counts there.`;",
+    "new": "    return `Your guild fights for ${'another seat of this region'} this week, and what you earn counts there.`;",
     "tests": [
       "test/ui/audit_plainui.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "AUDIT-PLAINUI-U2-clock-dropped",
     "file": "src/ui/seatTab.js",
-    "old": "before Friday 18:00 UTC${left(data?.reckoningAt)}.`\n      : `Ask",
-    "new": "before Friday 18:00 UTC.`\n      : `Ask",
+    "old": "      ? `Pledge your guild to ${seat.name} before Friday 18:00 UTC${left(data?.reckoningAt)}.`",
+    "new": "      ? `Pledge your guild to ${seat.name} before Friday 18:00 UTC.`",
     "tests": [
       "test/ui/audit_plainui.test.js"
     ]

@@ -403,8 +403,8 @@
   {
     "name": "LOOT9-window-breaks-unasked",
     "file": "src/ui/reforgeWindow.js",
-    "old": "          if (asking !== it) { asking = it; say(false, BREAK_ASK(nameOf(it), n)); render(); return; }\n",
-    "new": "\n",
+    "old": "          if (asking !== it) {\n            asking = it;\n            say(false, BREAK_ASK(nameOf(it), n));\n            render();\n            return;\n          }",
+    "new": "",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -412,8 +412,8 @@
   {
     "name": "LOOT9-window-shows-the-unknown",
     "file": "src/ui/reforgeWindow.js",
-    "old": "    if (!itemIsIdentified(it)) {   // its lines",
-    "new": "    if (false) {   // its lines",
+    "old": "    if (!itemIsIdentified(it)) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]

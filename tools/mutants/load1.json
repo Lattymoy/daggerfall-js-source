@@ -272,8 +272,8 @@
   {
     "name": "LOAD1-download-unswitchable",
     "file": "src/ui/screenshot.js",
-    "old": "download: getPref(SHOT_DOWNLOAD_PREF) !== false",
-    "new": "download: true",
+    "old": "  _shoot(_canvas, {\n    keep: (blob) => keepInGallery(blob, place),\n    download: getPref(SHOT_DOWNLOAD_PREF) !== false,\n    said: sayOnHud,\n  });",
+    "new": "  _shoot(_canvas, { keep: (blob) => keepInGallery(blob, place), download: true, said: sayOnHud });",
     "tests": [
       "test/ui/load1_loading.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "LOAD1-place-not-read-at-press",
     "file": "src/ui/screenshot.js",
-    "old": "  const place = placeNow();",
-    "new": "  const place = 'x';",
+    "old": "  const place = placeNow(); // where the key was pressed, not where the gallery's answer finds the player",
+    "new": "  const place = 'x'; // where the key was pressed, not where the gallery's answer finds the player",
     "tests": [
       "test/ui/load1_loading.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "LOAD1-keep-never-called",
     "file": "src/ui/screenshot.js",
-    "old": "Promise.resolve().then(() => keep(blob))",
-    "new": "Promise.resolve().then(() => null)",
+    "old": "            .then(() => keep(blob))",
+    "new": "            .then(() => null)",
     "tests": [
       "test/ui/load1_loading.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "LOAD1-delete-first-press",
     "file": "src/ui/shotsPane.js",
-    "old": "if (armed !== s.id) { armed = s.id; fill(root); return; }",
-    "new": "",
+    "old": "    if (armed !== s.id) {\n      armed = s.id;\n      fill(root);\n      return;\n    }\n    armed = null;",
+    "new": "    armed = null;",
     "tests": [
       "test/ui/load1_loading.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "LOAD1-switch-writes-nothing",
     "file": "src/ui/shotsPane.js",
-    "old": "turn.onclick = () => { armed = null; setShotLoading(s.id, !on); };",
-    "new": "turn.onclick = () => { armed = null; };",
+    "old": "    setShotLoading(s.id, !on);\n  };",
+    "new": "  };",
     "tests": [
       "test/ui/load1_loading.test.js"
     ]
@@ -317,7 +317,7 @@
   {
     "name": "LOAD1-arm-outlives-pane",
     "file": "src/ui/shotsPane.js",
-    "old": "  viewing = null; armed = null; focusNext = null;\n  const root = el('div', 'shots');",
+    "old": "  viewing = null;\n  armed = null;\n  focusNext = null;\n  const root = el('div', 'shots');",
     "new": "  const root = el('div', 'shots');",
     "tests": [
       "test/ui/load1_loading.test.js"
@@ -326,8 +326,8 @@
   {
     "name": "LOAD1-focus-dropped",
     "file": "src/ui/shotsPane.js",
-    "old": "  if (want) [...root.querySelectorAll('button')].find((b) => keyOf(b) === want)?.focus?.();\n",
-    "new": "",
+    "old": "  if (want) [...root.querySelectorAll('button')].find((b) => keyOf(b) === want)?.focus?.();\n}",
+    "new": "}",
     "tests": [
       "test/ui/load1_loading.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "LOAD1-deleted-focus-lost",
     "file": "src/ui/shotsPane.js",
-    "old": "    focusNext = focusAfterDelete;\n",
-    "new": "",
+    "old": "    focusNext = focusAfterDelete;\n    deleteShot(s.id);",
+    "new": "    deleteShot(s.id);",
     "tests": [
       "test/ui/load1_loading.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "LOAD1-unread-silent",
     "file": "src/ui/shotsPane.js",
-    "old": "  if (unread) words.push(",
-    "new": "  if (false) words.push(",
+    "old": "  if (unread) words.push(`${unread === 1 ? 'One picture' : `${unread} pictures`} could not be read.`);",
+    "new": "  if (false) words.push(`${unread === 1 ? 'One picture' : `${unread} pictures`} could not be read.`);",
     "tests": [
       "test/ui/load1_loading.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "LOAD1-file-day-ignored",
     "file": "src/ui/shotsPane.js",
-    "old": "at: Number.isFinite(f?.lastModified) && f.lastModified > 0 ? f.lastModified : Date.now()",
-    "new": "at: Date.now()",
+    "old": "    const r = await keepShot(f, {\n      place: '',\n      at: Number.isFinite(f?.lastModified) && f.lastModified > 0 ? f.lastModified : Date.now(),\n    });",
+    "new": "    const r = await keepShot(f, { place: '', at: Date.now() });",
     "tests": [
       "test/ui/load1_loading.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "LOAD1-classic-words-lost",
     "file": "src/ui/shotsPane.js",
-    "old": "(isEnhanced() ? loadingMode() : 'classic')",
-    "new": "loadingMode()",
+    "old": "export const loadingWordsKey = () => (isEnhanced() ? loadingMode() : 'classic');",
+    "new": "export const loadingWordsKey = () => loadingMode();",
     "tests": [
       "test/ui/load1_loading.test.js"
     ]

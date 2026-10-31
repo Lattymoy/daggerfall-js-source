@@ -380,8 +380,8 @@
   {
     "name": "LOOT20-the-page-unrouted",
     "file": "src/ui/reforgeWindow.js",
-    "old": "    if (page === 'sockets') { renderSockets(items, payer, have, picture); return; }   // LOOT20\n",
-    "new": "",
+    "old": "    if (page === 'sockets') {\n      renderSockets(items, payer, have, picture);\n      return;\n    } // LOOT20\n    if (page === 'imbue') {",
+    "new": "    if (page === 'imbue') {",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "LOOT20-unset-unasked",
     "file": "src/ui/reforgeWindow.js",
-    "old": "        if (!ask) { asking = it; askingAt = at; say(false, UNSET_ASK(gem)); render(); return; }\n",
-    "new": "",
+    "old": "        if (!ask) {\n          asking = it;\n          askingAt = at;\n          say(false, UNSET_ASK(gem));\n          render();\n          return;\n        }\n        asking = null;",
+    "new": "        asking = null;",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ]

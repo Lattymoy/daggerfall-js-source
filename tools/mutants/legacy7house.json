@@ -122,8 +122,8 @@
   {
     "name": "LEGACY7-card-no-house",
     "file": "src/ui/profileWindow.js",
-    "old": "    house: houseLine(peer?.house),",
-    "new": "    house: null,",
+    "old": "    house: houseLine(peer?.house), // LEGACY7: the house the relay stamped - \"☠ Ysolde II of House Hlaalu\", or null",
+    "new": "    house: null, // LEGACY7: the house the relay stamped - \"☠ Ysolde II of House Hlaalu\", or null",
     "tests": [
       "test/net/legacy7_house.test.js"
     ]

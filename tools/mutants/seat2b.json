@@ -638,7 +638,7 @@
   {
     "name": "SEAT2b-works-unread",
     "file": "src/ui/seatTab.js",
-    "old": "    try { f = r.data && works ? await works : null; } catch { f = null; }",
+    "old": "    try {\n      f = r.data && works ? await works : null;\n    } catch {\n      f = null;\n    }",
     "new": "    f = null;",
     "tests": [
       "test/net/seat2b_client.test.js"
@@ -674,8 +674,8 @@
   {
     "name": "SEAT2b-panel-lever-at-last",
     "file": "src/ui/seatWorks.js",
-    "old": "next <= fortMaxTier(w.id) &&",
-    "new": "",
+    "old": "    if (\n      lever &&\n      row.building == null &&\n      next <= fortMaxTier(w.id) &&\n      fortMayRaise(w.id, { tier: seat.tier, coastal: port, walls })\n    ) {",
+    "new": "    if (lever && row.building == null && fortMayRaise(w.id, { tier: seat.tier, coastal: port, walls })) {",
     "tests": [
       "test/net/seat2b_client.test.js"
     ]
@@ -683,8 +683,8 @@
   {
     "name": "SEAT2b-panel-lever-while-building",
     "file": "src/ui/seatWorks.js",
-    "old": "if (lever && row.building == null &&",
-    "new": "if (lever &&",
+    "old": "    if (\n      lever &&\n      row.building == null &&\n      next <= fortMaxTier(w.id) &&\n      fortMayRaise(w.id, { tier: seat.tier, coastal: port, walls })\n    ) {",
+    "new": "    if (lever && next <= fortMaxTier(w.id) && fortMayRaise(w.id, { tier: seat.tier, coastal: port, walls })) {",
     "tests": [
       "test/net/seat2b_client.test.js"
     ]
@@ -692,8 +692,8 @@
   {
     "name": "SEAT2b-panel-every-work",
     "file": "src/ui/seatWorks.js",
-    "old": "    if (!row.tier && row.building == null && !fortMayRaise(w.id, { tier: seat.tier, coastal: port, walls })) continue;\n",
-    "new": "",
+    "old": "    if (!row.tier && row.building == null && !fortMayRaise(w.id, { tier: seat.tier, coastal: port, walls })) continue;\n    const li = el(",
+    "new": "    const li = el(",
     "tests": [
       "test/net/seat2b_client.test.js"
     ]

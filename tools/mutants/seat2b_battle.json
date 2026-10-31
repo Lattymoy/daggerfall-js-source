@@ -520,8 +520,8 @@
   {
     "name": "SEAT2b2b-hud-works-hidden",
     "file": "src/ui/siegeHud.js",
-    "old": "parts.works.style.display = m.works ? '' : 'none';",
-    "new": "parts.works.style.display = 'none';",
+    "old": "      parts.works.style.display = m.works ? '' : 'none'; // SEAT2b part two (b)",
+    "new": "      parts.works.style.display = 'none'; // SEAT2b part two (b)",
     "tests": [
       "test/net/siege/seat2b_battle_client.test.js"
     ]

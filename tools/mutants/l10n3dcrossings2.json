@@ -222,8 +222,8 @@
   {
     "name": "L10N3dX2-profile-words-english",
     "file": "src/ui/profileWindow.js",
-    "old": "const cardWords = (keys) => Object.freeze(keys.reduce((a, k, i) => Object.defineProperty(a, i, { enumerable: true, get: () => CARD_WORDS[k] }), []));",
-    "new": "const cardWords = (keys) => Object.freeze(keys.map((k) => ({ STR: 'STR', INT: 'INT', WIL: 'WIL', AGI: 'AGI', END: 'END', PER: 'PER', SPD: 'SPD', LUC: 'LUC' })[k] ?? k[0].toUpperCase() + k.slice(1)));",
+    "old": "    keys.reduce((a, k, i) => Object.defineProperty(a, i, { enumerable: true, get: () => CARD_WORDS[k] }), []),",
+    "new": "    keys.map(\n      (k) =>\n        ({ STR: 'STR', INT: 'INT', WIL: 'WIL', AGI: 'AGI', END: 'END', PER: 'PER', SPD: 'SPD', LUC: 'LUC' })[k] ??\n        k[0].toUpperCase() + k.slice(1),\n    ),",
     "tests": [
       "test/systems/l10n3d_crossings.test.js",
       "test/systems/l10n3d_sites.test.js"

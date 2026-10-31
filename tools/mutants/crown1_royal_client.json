@@ -499,8 +499,8 @@
   {
     "name": "CROWN1C-tab-node",
     "file": "src/ui/seatTab.js",
-    "old": "        if (data.royal) b.append(royalNode(data.royal));\n",
-    "new": "",
+    "old": "        if (data.royal) b.append(royalNode(data.royal));\n      }",
+    "new": "      }",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -508,8 +508,8 @@
   {
     "name": "CROWN1C-tab-watch",
     "file": "src/ui/seatTab.js",
-    "old": "const doors = [['notice-seat-royal-enter', 'Enter the Royal Tourney', false, 'To the ring.'], ['notice-seat-royal-watch', 'Watch the Royal Tourney', true,",
-    "new": "const doors = [['notice-seat-royal-enter', 'Enter the Royal Tourney', false, 'To the ring.'], ['notice-seat-royal-watch', 'Watch the Royal Tourney', false,",
+    "old": "        ['notice-seat-royal-watch', 'Watch the Royal Tourney', true, 'You take your place to watch.'],",
+    "new": "        ['notice-seat-royal-watch', 'Watch the Royal Tourney', false, 'You take your place to watch.'],",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]

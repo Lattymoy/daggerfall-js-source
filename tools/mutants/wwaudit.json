@@ -382,8 +382,8 @@
   {
     "name": "WWAUDIT-A1-the-card-wide-title",
     "file": "src/ui/profileWindow.js",
-    "old": "  width: fit-content; max-width: 100%; margin-inline: auto; }",
-    "new": "  }",
+    "old": "  width: fit-content; max-width: 100%; margin-inline: auto; }   /* SHADOW-FANG (AUDIT A1): the word's own width - a gradient title's stops span the word, not the card */",
+    "new": "  }   /* SHADOW-FANG (AUDIT A1): the word's own width - a gradient title's stops span the word, not the card */",
     "tests": [
       "test/ui/shadowfang.test.js"
     ],

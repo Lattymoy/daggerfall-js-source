@@ -156,8 +156,8 @@
   {
     "name": "LOOT18-every-magic-for-one",
     "file": "src/ui/reforgeWindow.js",
-    "old": "    if (magics.length < 2) { if (asking === EVERY_MAGIC) { dropAsk(); drawNote(); } return; }",
-    "new": "    if (magics.length < 1) { if (asking === EVERY_MAGIC) { dropAsk(); drawNote(); } return; }",
+    "old": "    if (magics.length < 2) {",
+    "new": "    if (magics.length < 1) {",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ],
@@ -175,8 +175,8 @@
   {
     "name": "LOOT18-every-magic-unasked",
     "file": "src/ui/reforgeWindow.js",
-    "old": "      if (asking !== EVERY_MAGIC) { asking = EVERY_MAGIC; say(false, EVERY_MAGIC_ASK(magics.length, shards)); render(); return; }\n",
-    "new": "",
+    "old": "      if (asking !== EVERY_MAGIC) {\n        asking = EVERY_MAGIC;\n        say(false, EVERY_MAGIC_ASK(magics.length, shards));\n        render();\n        return;\n      }\n      asking = null;",
+    "new": "      asking = null;",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "LOOT18-every-magic-no-keep",
     "file": "src/ui/reforgeWindow.js",
-    "old": "      keep.onclick = (e) => { e.stopPropagation(); asking = null; note = null; render(); };\n      head.append(keep);",
-    "new": "      keep.onclick = (e) => { e.stopPropagation(); };\n      head.append(keep);",
+    "old": "        asking = null;\n        note = null;\n        render();\n      };",
+    "new": "      };",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]

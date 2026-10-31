@@ -1296,7 +1296,7 @@ the shifts' band for every cost an int holds. DFU's `cost` is C#'s int (Daggerfa
 lot that big had wrapped already - TRADE-WRAP's departure at one more site. The Reforge said its purse as
 `Math.max(0, gold | 0)` of the coins and the letters together (`court.js totalGoldAmount`), so two letters of one int's
 worth each read "0 gold". It says the gold whole now
-(`reforgeWindow.js:"const goldSaid = (gold) => Math.max(0, Math.trunc(gold) || 0);"`), the guild's pages and the
+(`reforgeWindow.js:"const goldSaid ="`), the guild's pages and the
 temple's alike.
 
 What PURSE-MEND does not reach. A purse a payment has since set to nothing is no longer below nothing. The service's

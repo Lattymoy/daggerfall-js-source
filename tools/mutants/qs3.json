@@ -196,7 +196,7 @@
   {
     "name": "AUDITQS-F6-a-combo-chip-reads-dots",
     "file": "src/ui/quickslotTags.js",
-    "old": "  if (isCombo(code)) { const [mod, key] = getCombo(code); return `${tagText(mod)}+${tagText(key)}`; }",
+    "old": "  if (isCombo(code)) {\n    const [mod, key] = getCombo(code);\n    return `${tagText(mod)}+${tagText(key)}`;\n  }",
     "new": "",
     "tests": [
       "test/ui/enhanced/qs3_hud.test.js"

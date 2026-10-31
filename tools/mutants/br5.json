@@ -204,8 +204,8 @@
   {
     "name": "BR5-foot-shelf-the-game",
     "file": "src/ui/skinCard.js",
-    "old": "label: 'Original classes'",
-    "new": "label: 'Daggerfall classes'",
+    "old": "  Object.freeze({ label: 'Original classes', from: EOTB_FOOT_SET_COUNT, to: Infinity }),",
+    "new": "  Object.freeze({ label: 'Daggerfall classes', from: EOTB_FOOT_SET_COUNT, to: Infinity }),",
     "tests": [
       "test/ui/brand.test.js"
     ],
@@ -304,8 +304,8 @@
   {
     "name": "BR5-screenshot-old-name",
     "file": "src/ui/screenshot.js",
-    "old": "return `dfo-${d.getFullYear()}",
-    "new": "return `daggerfall-${d.getFullYear()}",
+    "old": "  return `dfo-${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}.png`;",
+    "new": "  return `daggerfall-${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}.png`;",
     "tests": [
       "test/ui/brand.test.js"
     ],
@@ -314,8 +314,8 @@
   {
     "name": "BR5-loading-shot-old-name",
     "file": "src/ui/shotsPane.js",
-    "old": "a.download = `dfo-shot-${s.id}.jpg`;",
-    "new": "a.download = `daggerfall-shot-${s.id}.jpg`;",
+    "old": "  a.download = `dfo-shot-${s.id}.jpg`;",
+    "new": "  a.download = `daggerfall-shot-${s.id}.jpg`;",
     "tests": [
       "test/ui/brand.test.js"
     ],

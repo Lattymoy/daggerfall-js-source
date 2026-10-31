@@ -123,8 +123,8 @@
   {
     "name": "AUDITLOOT-F6-classic-sheet-without",
     "file": "src/ui/reforgeWindow.js",
-    "old": "[[BROKER_SKIN_STYLE_ID, brokerSkinCss], [REFORGE_SKIN_STYLE_ID, () => REFORGE_CSS]]",
-    "new": "[[BROKER_SKIN_STYLE_ID, brokerSkinCss]]",
+    "old": "  const sheets = [\n    [BROKER_SKIN_STYLE_ID, brokerSkinCss],\n    [REFORGE_SKIN_STYLE_ID, () => REFORGE_CSS],\n  ];",
+    "new": "  const sheets = [[BROKER_SKIN_STYLE_ID, brokerSkinCss]];",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -132,8 +132,8 @@
   {
     "name": "AUDITLOOT-F6-the-brokers-sheet-blocks-it",
     "file": "src/ui/reforgeWindow.js",
-    "old": "    if (has(id)) continue;\n",
-    "new": "    if (has(id) || has(BROKER_SKIN_STYLE_ID)) continue;\n",
+    "old": "    if (has(id)) continue;",
+    "new": "    if (has(id) || has(BROKER_SKIN_STYLE_ID)) continue;",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -141,8 +141,8 @@
   {
     "name": "AUDITLOOT-F6-tab-not-brass",
     "file": "src/ui/reforgeWindow.js",
-    "old": " t.classList.toggle('on', id === page); }",
-    "new": " }",
+    "old": "      t.classList.toggle('on', id === page);\n    } // AUDIT LOOT F6: the chosen page the kit's brass",
+    "new": "    } // AUDIT LOOT F6: the chosen page the kit's brass",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -150,8 +150,8 @@
   {
     "name": "AUDITLOOT-F6-imprint-unsaid",
     "file": "src/ui/reforgeWindow.js",
-    "old": "      btn.setAttribute('aria-label', why ? `${p?.name ?? rec.name}: ${REFORGE_REFUSALS[why] ?? ''}` : `Imprint ${p?.name ?? rec.name} on ${nameOf(it)} for ${reforgePriceText(IMPRINT_PRICE)}`);",
-    "new": "      void 0;",
+    "old": "      btn.setAttribute(\n        'aria-label',\n        why\n          ? `${p?.name ?? rec.name}: ${REFORGE_REFUSALS[why] ?? ''}`\n          : `Imprint ${p?.name ?? rec.name} on ${nameOf(it)} for ${reforgePriceText(IMPRINT_PRICE)}`,\n      ); // AUDIT LOOT F6: said, as the Reforge's press is",
+    "new": "      void 0; // AUDIT LOOT F6: said, as the Reforge's press is",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "AUDITLOOT-F6-the-imprint-says-reforge",
     "file": "src/ui/reforgeWindow.js",
-    "old": "reforgeLabel(why, IMPRINT_PRICE, have, 'Imprint')",
-    "new": "reforgeLabel(why, IMPRINT_PRICE, have)",
+    "old": "      const btn = el('button', 'act broker-buy imprint-press', reforgeLabel(why, IMPRINT_PRICE, have, 'Imprint'));",
+    "new": "      const btn = el('button', 'act broker-buy imprint-press', reforgeLabel(why, IMPRINT_PRICE, have));",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "AUDITLOOT-F6-the-imprint-card-headless",
     "file": "src/ui/reforgeWindow.js",
-    "old": "    ul.append(el('li', null, tierLabel(it)));   // AUDIT LOOT F6",
-    "new": "    void 0;   // AUDIT LOOT F6",
+    "old": "    ul.append(el('li', null, tierLabel(it))); // AUDIT LOOT F6: the tier's line first, as the Reforge's card - the first choice wore its header's dress",
+    "new": "    void 0; // AUDIT LOOT F6: the tier's line first, as the Reforge's card - the first choice wore its header's dress",
     "tests": [
       "test/systems/auditloot.test.js"
     ]

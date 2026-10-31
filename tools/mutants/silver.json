@@ -101,8 +101,8 @@
   {
     "name": "SILVER-a-seat-label-old",
     "file": "src/ui/seatTab.js",
-    "old": "'Silver set aside for the Bounty'",
-    "new": "'Drakes set aside for the Bounty'",
+    "old": "      a.setAttribute('aria-label', 'Silver set aside for the Bounty');",
+    "new": "      a.setAttribute('aria-label', 'Drakes set aside for the Bounty');",
     "tests": [
       "test/net/silver.test.js"
     ]

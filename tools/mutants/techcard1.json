@@ -364,7 +364,7 @@
     "name": "FINALAUDIT-the-primary-alone",
     "file": "src/ui/quickslotTags.js",
     "old": "  const tag = quickslotTag(action, { bindings: store, controller, family });",
-    "new": "  const c = getBinding(store, action); const tag = c ? { kind: 'key', text: tagText(c) } : null;",
+    "new": "  const c = getBinding(store, action);\n  const tag = c ? { kind: 'key', text: tagText(c) } : null;",
     "tests": [
       "test/ui/techcard1.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "FINALAUDIT-the-pad-code-for-its-name",
     "file": "src/ui/quickslotTags.js",
-    "old": "tag.kind === 'key' ? tag.text : hdGlyphName(tag.family, tag.code);",
-    "new": "tag.kind === 'key' ? tag.text : tag.code;",
+    "old": "  return !tag ? '' : tag.kind === 'key' ? tag.text : hdGlyphName(tag.family, tag.code);",
+    "new": "  return !tag ? '' : tag.kind === 'key' ? tag.text : tag.code;",
     "tests": [
       "test/ui/techcard1.test.js"
     ]

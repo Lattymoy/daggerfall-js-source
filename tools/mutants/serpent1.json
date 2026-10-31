@@ -366,8 +366,8 @@
   {
     "name": "SERPENT1-bar-countdown-always",
     "file": "src/ui/serpentBar.js",
-    "old": "wrath: !b.fell && soundIn <= SOUND_WARN_MS ?",
-    "new": "wrath: !b.fell ?",
+    "old": "    wrath: !b.fell && soundIn <= SOUND_WARN_MS ? SERPENT_BAR_TEXT.sounds(serpentClock(soundIn)) : null,",
+    "new": "    wrath: !b.fell ? SERPENT_BAR_TEXT.sounds(serpentClock(soundIn)) : null,",
     "tests": [
       "test/systems/serpent1_client.test.js"
     ]

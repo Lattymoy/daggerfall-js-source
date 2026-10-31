@@ -790,8 +790,8 @@
   {
     "name": "SEAT1d-tab-edict-repeat-offered",
     "file": "src/ui/seatTab.js",
-    "old": "    const allowed = Object.keys(EDICTS).filter((k) => edictForTier(k, seat.tier) && edictMayFollow(k, h.edict));",
-    "new": "    const allowed = Object.keys(EDICTS).filter((k) => edictForTier(k, seat.tier));",
+    "old": "    const allowed = Object.keys(EDICTS).filter((k) => edictForTier(k, seat.tier) && edictMayFollow(k, h.edict)); // CROWN1: a crown's own at a crown",
+    "new": "    const allowed = Object.keys(EDICTS).filter((k) => edictForTier(k, seat.tier)); // CROWN1: a crown's own at a crown",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ]

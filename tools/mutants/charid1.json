@@ -119,8 +119,8 @@
   {
     "name": "CHARID1-the-classic-window-finds-by-name",
     "file": "src/ui/saveWindow.js",
-    "old": "    return findSave(this.currentPlayerName, this.nameText, undefined, this.currentCharacterId);",
-    "new": "    return findSave(this.currentPlayerName, this.nameText);",
+    "old": "    return findSave(this.currentPlayerName, this.nameText, undefined, this.currentCharacterId); // CHARID1: by id when the window has one",
+    "new": "    return findSave(this.currentPlayerName, this.nameText); // CHARID1: by id when the window has one",
     "tests": [
       "test/systems/charid1.test.js"
     ]

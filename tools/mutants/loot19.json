@@ -173,8 +173,8 @@
   {
     "name": "LOOT19-the-page-unrouted",
     "file": "src/ui/reforgeWindow.js",
-    "old": "    if (page === 'scry') { renderScry(payer, have); return; }   // LOOT19\n",
-    "new": "",
+    "old": "    if (page === 'scry') {\n      renderScry(payer, have);\n      return;\n    } // LOOT19\n    if (page === 'sockets') {",
+    "new": "    if (page === 'sockets') {",
     "tests": [
       "test/systems/loot19_scry.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "LOOT19-the-guild-without-scryers",
     "file": "src/ui/reforgeWindow.js",
-    "old": "export const REFORGE_GUILD_PAGES = Object.freeze(['reforge', 'imbue', 'salvage', 'imprint', 'codex', 'scry', 'sockets']);",
-    "new": "export const REFORGE_GUILD_PAGES = Object.freeze(['reforge', 'imbue', 'salvage', 'imprint', 'codex', 'sockets']);",
+    "old": "export const REFORGE_GUILD_PAGES = Object.freeze([\n  'reforge',\n  'imbue',\n  'salvage',\n  'imprint',\n  'codex',\n  'scry',\n  'sockets',\n]); // LOOT20: and its sockets; LOOT-GATE: the Imbue",
+    "new": "export const REFORGE_GUILD_PAGES = Object.freeze(['reforge', 'imbue', 'salvage', 'imprint', 'codex', 'sockets']); // LOOT20: and its sockets; LOOT-GATE: the Imbue",
     "tests": [
       "test/systems/loot10_codex.test.js",
       "test/systems/loot19_scry.test.js"
@@ -192,7 +192,7 @@
   {
     "name": "LOOT19-a-refusal-pressable",
     "file": "src/ui/reforgeWindow.js",
-    "old": "      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why\n      row.append(text, el('span', 'broker-price', reforgePriceText(SCRY_PRICE)), btn);",
+    "old": "      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused); // MENU-ORDER: pressed, it says why\n      row.append(text, el('span', 'broker-price', reforgePriceText(SCRY_PRICE)), btn);",
     "new": "      row.append(text, el('span', 'broker-price', reforgePriceText(SCRY_PRICE)), btn);",
     "tests": [
       "test/systems/loot19_scry.test.js"
@@ -210,8 +210,8 @@
   {
     "name": "LOOT19-none-unsaid",
     "file": "src/ui/reforgeWindow.js",
-    "old": "  if (why === 'none') return 'None hidden';   // LOOT19\n",
-    "new": "",
+    "old": "  if (why === 'none') return 'None hidden'; // LOOT19\n  if (why === 'nowhere') return 'No map here';",
+    "new": "  if (why === 'nowhere') return 'No map here';",
     "tests": [
       "test/systems/loot19_scry.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "LOOT19-the-kin-unlit",
     "file": "src/ui/reforgeWindow.js",
-    "old": "      go.onclick = (e) => { e.stopPropagation(); page = 'scry'; scryKin = kin; note = null; render(); };",
-    "new": "      go.onclick = (e) => { e.stopPropagation(); page = 'scry'; note = null; render(); };",
+    "old": "        scryKin = kin;\n        note = null;",
+    "new": "        note = null;",
     "tests": [
       "test/systems/loot19_scry.test.js"
     ]

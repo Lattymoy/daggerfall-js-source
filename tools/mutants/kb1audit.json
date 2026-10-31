@@ -204,8 +204,8 @@
   {
     "name": "AUDIT-KB1-H3-the-blob-revoked-at-once",
     "file": "src/ui/screenshot.js",
-    "old": "        later(() => URL.revokeObjectURL(url), REVOKE_AFTER_MS);",
-    "new": "        later(() => URL.revokeObjectURL(url), 0);",
+    "old": "          later(() => URL.revokeObjectURL(url), REVOKE_AFTER_MS);",
+    "new": "          later(() => URL.revokeObjectURL(url), 0);",
     "tests": [
       "test/ui/kb1_audit.test.js"
     ]

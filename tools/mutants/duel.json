@@ -344,8 +344,8 @@
   {
     "name": "DUEL1-disabled-button-challenges",
     "file": "src/ui/profileWindow.js",
-    "old": "      duel.addEventListener('click', () => { if (v.duel.enabled && shownPeer) onDuel(shownPeer); });",
-    "new": "      duel.addEventListener('click', () => { if (shownPeer) onDuel(shownPeer); });",
+    "old": "          if (v.duel.enabled && shownPeer) onDuel(shownPeer);",
+    "new": "          if (shownPeer) onDuel(shownPeer);",
     "tests": [
       "test/server/duel_record.test.js"
     ]

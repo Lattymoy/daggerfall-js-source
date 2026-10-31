@@ -1030,8 +1030,8 @@
   {
     "name": "TECH1-AUDIT-the-word-left-off",
     "file": "src/ui/reforgeWindow.js",
-    "old": "      if (told) li.append(el('span', 'reforge-detail', told));\n",
-    "new": "",
+    "old": "      if (told) li.append(el('span', 'reforge-detail', told));\n      if (may.includes(i)) {",
+    "new": "      if (may.includes(i)) {",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]

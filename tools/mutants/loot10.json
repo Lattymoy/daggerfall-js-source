@@ -329,8 +329,8 @@
   {
     "name": "LOOT10-tabs-for-one-page",
     "file": "src/ui/reforgeWindow.js",
-    "old": "  if (pages.length < 2) tabs.setAttribute('hidden', '');\n",
-    "new": "\n",
+    "old": "  if (pages.length < 2) tabs.setAttribute('hidden', '');",
+    "new": "",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ]

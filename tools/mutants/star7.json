@@ -443,8 +443,8 @@
   {
     "name": "STAR7-profile-field",
     "file": "src/ui/profileWindow.js",
-    "old": "const n = record && typeof record === 'object' ? record.stars?.held : null;",
-    "new": "const n = record && typeof record === 'object' ? record.stars?.count : null;",
+    "old": "  const n = record && typeof record === 'object' ? record.stars?.held : null;",
+    "new": "  const n = record && typeof record === 'object' ? record.stars?.count : null;",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ]

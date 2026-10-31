@@ -359,8 +359,8 @@
   {
     "name": "SEAT1c-tab-relinquish-unarmed",
     "file": "src/ui/seatTab.js",
-    "old": "          if (!armed()) { armedAt = ui.nowS() * 1000; ui.rerender(); disarmLater(); return null; }",
-    "new": "",
+    "old": "              if (!armed()) {\n                armedAt = ui.nowS() * 1000;\n                ui.rerender();\n                disarmLater();\n                return null;\n              }\n              armedAt = -Infinity;",
+    "new": "              armedAt = -Infinity;",
     "tests": [
       "test/ui/seat1c_client.test.js"
     ]
@@ -377,8 +377,8 @@
   {
     "name": "SEAT1c-tab-no-chronicle",
     "file": "src/ui/seatTab.js",
-    "old": "      const lines = (data.chronicle ?? []).map((r) => chronicleLine(r, seat, book.zero ?? null)).filter(Boolean);",
-    "new": "      const lines = [];",
+    "old": "      const lines = (data.chronicle ?? []).map((r) => chronicleLine(r, seat, book.zero ?? null)).filter(Boolean); // SEASON1 part three: in its Season's words",
+    "new": "      const lines = []; // SEASON1 part three: in its Season's words",
     "tests": [
       "test/ui/seat1c_client.test.js"
     ]

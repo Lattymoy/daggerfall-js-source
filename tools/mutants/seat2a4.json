@@ -362,8 +362,8 @@
   {
     "name": "SEAT2a4-hud-put",
     "file": "src/ui/siegeHud.js",
-    "old": "  const put = (k, text) => { if (said.get(k) !== text) { said.set(k, text); parts[k].textContent = text; } };",
-    "new": "  const put = (k, text) => { if (said.get(k) === text) { said.set(k, text); parts[k].textContent = text; } };",
+    "old": "    if (said.get(k) !== text) {",
+    "new": "    if (said.get(k) === text) {",
     "tests": [
       "test/net/siege/seat2a_siege_play.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "SEAT2a4-hud-hide",
     "file": "src/ui/siegeHud.js",
-    "old": "    hide() { if (root) root.style.display = 'none'; },",
-    "new": "    hide() { root?.remove?.(); },",
+    "old": "      if (root) root.style.display = 'none';",
+    "new": "      root?.remove?.();",
     "tests": [
       "test/net/siege/seat2a_siege_play.test.js"
     ]

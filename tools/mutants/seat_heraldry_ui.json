@@ -380,8 +380,8 @@
   {
     "name": "HS-bar-sides-swapped",
     "file": "src/ui/siegeHud.js",
-    "old": "paintSwatch(parts['arm-defend'], m.arms?.defend); paintSwatch(parts['arm-attack'], m.arms?.attack);",
-    "new": "paintSwatch(parts['arm-defend'], m.arms?.attack); paintSwatch(parts['arm-attack'], m.arms?.defend);",
+    "old": "      paintSwatch(parts['arm-defend'], m.arms?.defend);\n      paintSwatch(parts['arm-attack'], m.arms?.attack); // HERALDRY-SHOWN: painted when it changes",
+    "new": "      paintSwatch(parts['arm-defend'], m.arms?.attack);\n      paintSwatch(parts['arm-attack'], m.arms?.defend); // HERALDRY-SHOWN: painted when it changes",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "HS-bar-unpainted",
     "file": "src/ui/siegeHud.js",
-    "old": "paintSwatch(parts['arm-defend'], m.arms?.defend); paintSwatch(parts['arm-attack'], m.arms?.attack);",
-    "new": "paintSwatch(parts['arm-defend'], m.arms?.defend);",
+    "old": "      paintSwatch(parts['arm-defend'], m.arms?.defend);\n      paintSwatch(parts['arm-attack'], m.arms?.attack); // HERALDRY-SHOWN: painted when it changes",
+    "new": "      paintSwatch(parts['arm-defend'], m.arms?.defend); // HERALDRY-SHOWN: painted when it changes",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "HS-chronicle-no-shield",
     "file": "src/ui/seatTab.js",
-    "old": "          if (shield) li.append(shield);\n",
-    "new": "",
+    "old": "            if (shield) li.append(shield);\n            li.append(el('span', null, l));",
+    "new": "            li.append(el('span', null, l));",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "HS-chronicle-no-list",
     "file": "src/ui/seatTab.js",
-    "old": "const arms = heraldryIndex(data, book.data);",
-    "new": "const arms = heraldryIndex(data);",
+    "old": "          const arms = heraldryIndex(data, book.data);",
+    "new": "          const arms = heraldryIndex(data);",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "HS-chronicle-no-answer",
     "file": "src/ui/seatTab.js",
-    "old": "const arms = heraldryIndex(data, book.data);",
-    "new": "const arms = heraldryIndex(book.data);",
+    "old": "          const arms = heraldryIndex(data, book.data);",
+    "new": "          const arms = heraldryIndex(book.data);",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "HS-chronicle-misaligned",
     "file": "src/ui/seatTab.js",
-    "old": "(data.chronicle ?? []).filter((r) => chronicleLine(r, seat)).map(chronicleGuildOf);",
-    "new": "(data.chronicle ?? []).map(chronicleGuildOf);",
+    "old": "          const about = (data.chronicle ?? []).filter((r) => chronicleLine(r, seat)).map(chronicleGuildOf);",
+    "new": "          const about = (data.chronicle ?? []).map(chronicleGuildOf);",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -595,8 +595,8 @@
   {
     "name": "H3-tab-by-tag",
     "file": "src/ui/seatTab.js",
-    "old": "armsNamed(arms, g.now?.tag ?? g.tag, g.now?.name ?? g.name)",
-    "new": "armsNamed(arms, g.now?.tag ?? g.tag)",
+    "old": "            const shield = g\n              ? heraldrySwatch(document, armsNamed(arms, g.now?.tag ?? g.tag, g.now?.name ?? g.name))\n              : null;",
+    "new": "            const shield = g ? heraldrySwatch(document, armsNamed(arms, g.now?.tag ?? g.tag)) : null;",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ],

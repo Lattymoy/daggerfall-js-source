@@ -538,8 +538,8 @@
   {
     "name": "LOOT16-the-guild-shows-the-temple",
     "file": "src/ui/reforgeWindow.js",
-    "old": "  const pages = (deps.pages ?? REFORGE_GUILD_PAGES).filter((id) => REFORGE_PAGES[id]);",
-    "new": "  const pages = (deps.pages ?? Object.keys(REFORGE_PAGES)).filter((id) => REFORGE_PAGES[id]);",
+    "old": "  const pages = (deps.pages ?? REFORGE_GUILD_PAGES).filter((id) => REFORGE_PAGES[id]); // LOOT16: the guild's four unless the host names its own",
+    "new": "  const pages = (deps.pages ?? Object.keys(REFORGE_PAGES)).filter((id) => REFORGE_PAGES[id]); // LOOT16: the guild's four unless the host names its own",
     "tests": [
       "test/systems/loot10_codex.test.js",
       "test/systems/loot16_curses.test.js"
@@ -548,8 +548,8 @@
   {
     "name": "LOOT16-the-page-unrouted",
     "file": "src/ui/reforgeWindow.js",
-    "old": "    if (page === 'lift') { renderLift(items, payer, have, picture); return; }   // LOOT16\n",
-    "new": "",
+    "old": "    if (page === 'lift') {\n      renderLift(items, payer, have, picture);\n      return;\n    } // LOOT16\n    if (page === 'scry') {",
+    "new": "    if (page === 'scry') {",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]
@@ -557,8 +557,8 @@
   {
     "name": "LOOT16-the-page-lists-all",
     "file": "src/ui/reforgeWindow.js",
-    "old": "    const rows = cursedKnown(items);\n",
-    "new": "    const rows = items;\n",
+    "old": "    const rows = cursedKnown(items);",
+    "new": "    const rows = items;",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]
@@ -566,8 +566,8 @@
   {
     "name": "LOOT16-a-refusal-pressable",
     "file": "src/ui/reforgeWindow.js",
-    "old": "      if (why) refusePress(btn, LIFT_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why\n",
-    "new": "",
+    "old": "      if (why) refusePress(btn, LIFT_REFUSALS[why] ?? '', refused); // MENU-ORDER: pressed, it says why\n      row.append(frameOf(it, picture), text, el('span', 'broker-price', why === 'damned' ? '-' : `${price} gold`), btn); // AUDIT FB1010 D2: no price for what no temple lifts",
+    "new": "      row.append(frameOf(it, picture), text, el('span', 'broker-price', why === 'damned' ? '-' : `${price} gold`), btn); // AUDIT FB1010 D2: no price for what no temple lifts",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]

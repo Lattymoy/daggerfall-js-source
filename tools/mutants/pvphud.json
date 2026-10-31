@@ -2,8 +2,8 @@
   {
     "name": "PVP-HUD-the-share-unread",
     "file": "src/ui/pvpHud.js",
-    "old": "leftMs > 0 ? Math.min(1, leftMs / lockMs)",
-    "new": "leftMs > 0 ? 1",
+    "old": "  const frac = !kind ? 0 : leftMs > 0 ? Math.min(1, leftMs / lockMs) : kind === 'red' ? 1 : 0;",
+    "new": "  const frac = !kind ? 0 : leftMs > 0 ? 1 : kind === 'red' ? 1 : 0;",
     "tests": [
       "test/ui/pvphud.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PVP-HUD-the-villain-ringless",
     "file": "src/ui/pvpHud.js",
-    "old": ": kind === 'red' ? 1 : 0;",
-    "new": ": 0;",
+    "old": "  const frac = !kind ? 0 : leftMs > 0 ? Math.min(1, leftMs / lockMs) : kind === 'red' ? 1 : 0;",
+    "new": "  const frac = !kind ? 0 : leftMs > 0 ? Math.min(1, leftMs / lockMs) : 0;",
     "tests": [
       "test/ui/pvphud.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PVP-HUD-the-seconds-floored",
     "file": "src/ui/pvpHud.js",
-    "old": "Math.ceil(leftMs / 1000)",
-    "new": "Math.floor(leftMs / 1000)",
+    "old": "export const pvpLockSecs = (/** @type {number} */ leftMs) => (leftMs > 0 ? Math.ceil(leftMs / 1000) : 0);",
+    "new": "export const pvpLockSecs = (/** @type {number} */ leftMs) => (leftMs > 0 ? Math.floor(leftMs / 1000) : 0);",
     "tests": [
       "test/ui/pvphud.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PVP-HUD-the-panel-shown-unflagged",
     "file": "src/ui/pvpHud.js",
-    "old": "show(hits, lock && !!s.kind && s.hits.length > 0);",
-    "new": "show(hits, lock && s.hits.length > 0);",
+    "old": "    show(hits, lock && !!s.kind && s.hits.length > 0);",
+    "new": "    show(hits, lock && s.hits.length > 0);",
     "tests": [
       "test/ui/pvphud.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PVP-HUD-the-frame-unasked",
     "file": "src/ui/pvpHud.js",
-    "old": "if (lock && raf && !running) {",
-    "new": "if (lock && raf && !running && false) {",
+    "old": "    if (lock && raf && !running) {",
+    "new": "    if (lock && raf && !running && false) {",
     "tests": [
       "test/ui/pvphud.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PVP-HUD-the-frame-asked-twice",
     "file": "src/ui/pvpHud.js",
-    "old": "if (lock && raf && !running) {",
-    "new": "if (lock && raf) {",
+    "old": "    if (lock && raf && !running) {",
+    "new": "    if (lock && raf) {",
     "tests": [
       "test/ui/pvphud.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PVP-HUD-by-and-to-swapped",
     "file": "src/ui/pvpHud.js",
-    "old": "const mine = g.by === me,",
-    "new": "const mine = g.to === me,",
+    "old": "  const mine = g.by === me,",
+    "new": "  const mine = g.to === me,",
     "tests": [
       "test/ui/pvphud.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PVP-HUD-four-kept",
     "file": "src/ui/pvpHud.js",
-    "old": ".slice(0, PVP_RING.hits);",
-    "new": ".slice(0, PVP_RING.hits + 1);",
+    "old": "  [line, ...list].slice(0, PVP_RING.hits);",
+    "new": "  [line, ...list].slice(0, PVP_RING.hits + 1);",
     "tests": [
       "test/ui/pvphud.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "PVP-HUD-the-list-rebuilt-each-frame",
     "file": "src/ui/pvpHud.js",
-    "old": "if (key && key !== listed) {",
-    "new": "if (key) {",
+    "old": "    if (key && key !== listed) {",
+    "new": "    if (key) {",
     "tests": [
       "test/ui/pvphud.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "PVP-FLAG-SPOT-the-ring-left-at-the-middle",
     "file": "src/ui/pvpHud.js",
-    "old": "top: `calc(50% - ${ringTop}px)`, right:",
-    "new": "top: '50%', right:",
+    "old": "  Object.assign(ring.style, fixed, { top: `calc(50% - ${ringTop}px)`, right: `${8 + 18 - half}px`, zIndex: '41' }); // over the button's corners, clicks pass through",
+    "new": "  Object.assign(ring.style, fixed, { top: '50%', right: `${8 + 18 - half}px`, zIndex: '41' }); // over the button's corners, clicks pass through",
     "tests": [
       "test/ui/pvphud.test.js"
     ]

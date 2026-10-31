@@ -83,8 +83,8 @@
   {
     "name": "WB12a-the-record-counts-gates",
     "file": "src/ui/profileWindow.js",
-    "old": "`Breaches closed: ${n}`",
-    "new": "`Gates closed: ${n}`",
+    "old": "  return Number.isSafeInteger(n) && n > 0 ? `Breaches closed: ${n}` : null; // WB12a",
+    "new": "  return Number.isSafeInteger(n) && n > 0 ? `Gates closed: ${n}` : null; // WB12a",
     "tests": [
       "test/systems/gate/wb12a_breach_words.test.js"
     ]
