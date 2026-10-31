@@ -272,8 +272,8 @@
   {
     "name": "EG15-save-keeps-the-bearing",
     "file": "src/systems/renownLayer.js",
-    "old": "const hp = renownHpOf(entity), mp = onlineMpOf(entity);",
-    "new": "const hp = renownHpOf(entity), mp = renownMpOf(entity);",
+    "old": "    mp = onlineMpOf(entity); // EG15: and the folds' magicka (the Battlemage's Bearing)",
+    "new": "    mp = renownMpOf(entity); // EG15: and the folds' magicka (the Battlemage's Bearing)",
     "why": "a save keeps the Bearing's magicka",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -302,7 +302,7 @@
   {
     "name": "EG15-mana-uncapped",
     "file": "src/systems/playerHeal.js",
-    "old": "  if (whole > 0) entity.magicka = Math.min(Number.isFinite(entity.maxMagicka) ? entity.maxMagicka : entity.magicka + whole, entity.magicka + whole);",
+    "old": "  if (whole > 0)\n    entity.magicka = Math.min(\n      Number.isFinite(entity.maxMagicka) ? entity.maxMagicka : entity.magicka + whole,\n      entity.magicka + whole,\n    );",
     "new": "  if (whole > 0) entity.magicka = entity.magicka + whole;",
     "why": "magicka past the maximum",
     "tests": [
@@ -322,8 +322,8 @@
   {
     "name": "EG15-mana-reset-keeps",
     "file": "src/systems/playerHeal.js",
-    "old": "{ _healOwed = 0; _manaOwed = 0; }",
-    "new": "{ _healOwed = 0; }",
+    "old": "  _manaOwed = 0;\n}",
+    "new": "}",
     "why": "a test's reset keeps the last fraction",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -352,7 +352,7 @@
   {
     "name": "EG15-cast-throw-stops",
     "file": "src/systems/playerCasts.js",
-    "old": "  for (const fn of _listeners.values()) { try { fn(entity, spell, spent); } catch { /* a set is not the cast's problem */ } }",
+    "old": "  for (const fn of _listeners.values()) {\n    try {\n      fn(entity, spell, spent);\n    } catch {\n      /* a set is not the cast's problem */\n    }\n  }",
     "new": "  for (const fn of _listeners.values()) fn(entity, spell, spent);",
     "why": "a throwing listener stops the rest, and the cast",
     "tests": [

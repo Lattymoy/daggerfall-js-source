@@ -48,8 +48,8 @@
   {
     "name": "AUDITLOOT-F2-a-made-piece-breaks",
     "file": "src/systems/reforge.js",
-    "old": "  if (typeof item?.provenance === 'string') return 0;\n",
-    "new": "\n",
+    "old": "  if (typeof item?.provenance === 'string') return 0;\n  const t = item?.rarity;",
+    "new": "  const t = item?.rarity;",
     "tests": [
       "test/systems/auditloot.test.js"
     ]

@@ -113,5 +113,5 @@ lines and gems ride the claws' roll as a fist's, their skill lines and enchantme
 their lines are the claws' (PvP-Rework PVP-GEAR). The loot ladder's blow powers stay off the claws (BAL10).
 
 The pack window stays shut. A press on a pile or a body takes the lot, quick loot on or off
-(`quickLoot.js:"const beast = !!racialSuppressInventory(playerEntity);"`), and a picked item comes into the pack. A
+(`quickLoot.js:"const beast = !!racialSuppressInventory"`), and a picked item comes into the pack. A
 potion on the hotbar is drunk; any other pack item stays refused (`quickslots.js:"if (sup && !isPotion(r?.item))"`).

@@ -193,8 +193,8 @@
   {
     "name": "LOOT18-the-junk-taken",
     "file": "src/systems/quickLoot.js",
-    "old": "  if (isJunk(item)) return true;\n",
-    "new": "",
+    "old": "  if (isJunk(item)) return true;\n  const floor = QUICK_LOOT_FLOORS[getPref(QUICK_LOOT_TIER)] ?? 0;",
+    "new": "  const floor = QUICK_LOOT_FLOORS[getPref(QUICK_LOOT_TIER)] ?? 0;",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "LOOT18-dfu-magic-left",
     "file": "src/systems/quickLoot.js",
-    "old": "  if (!item.rarity && isEnchanted(item)) return false;   // DFU's own magic item: no rung of the ladder, and worth the take\n",
-    "new": "",
+    "old": "  if (!item.rarity && isEnchanted(item)) return false; // DFU's own magic item: no rung of the ladder, and worth the take\n  return rarityRank(item) < floor;",
+    "new": "  return rarityRank(item) < floor;",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "LOOT18-the-take-all-unfiltered",
     "file": "src/systems/quickLoot.js",
-    "old": "      if (takeAllLeaves(it)) { left++; continue; }   // LOOT18: the row's tier and the player's junk stay on the pile\n",
-    "new": "",
+    "old": "      if (takeAllLeaves(it)) {\n        left++;\n        continue;\n      } // LOOT18: the row's tier and the player's junk stay on the pile\n      const got = takeThrough(playerEntity, items, it, getQuest, moved);",
+    "new": "      const got = takeThrough(playerEntity, items, it, getQuest, moved);",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "LOOT18-what-stayed-unsaid",
     "file": "src/systems/quickLoot.js",
-    "old": "    if (left) refusal = { ...(refusal ?? {}), text: [refusal?.text, QUICK_LOOT_LEFT(left)].filter(Boolean).join(' ') };   // LOOT18: said as the rows that stayed are\n",
-    "new": "",
+    "old": "    if (left) refusal = { ...(refusal ?? {}), text: [refusal?.text, QUICK_LOOT_LEFT(left)].filter(Boolean).join(' ') }; // LOOT18: said as the rows that stayed are\n    // AUDIT QL-WEIGHT1: a count with rows LEFT says why they stayed, on the same line - \"You take 2 items.\" over a",
+    "new": "    // AUDIT QL-WEIGHT1: a count with rows LEFT says why they stayed, on the same line - \"You take 2 items.\" over a",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]

@@ -42,19 +42,19 @@
 // arc was split to avoid: a take that lives in a draw, or a systems
 // module reaching into `ui/` to read a highlight. Moving the state to
 // the feature closes both.
-import { setClassicLootFrame } from './classicLootFrame.js';   // DISC22-C: a leaf - the classic panel's frame, cleared with the selection
+import { setClassicLootFrame } from './classicLootFrame.js'; // DISC22-C: a leaf - the classic panel's frame, cleared with the selection
 import { getPref } from './uiPrefs.js';
-import { itemNameParts, itemStatRows } from './item/itemInfo.js';   // RF6: the long name's name part, the same one the plaque's rows wear; QUICK-LOOT-STATS: and the rows the lit one says about itself
-import { nextSelection, selectedRow, hoverItemAt } from './worldHover.js';   // the fold's LAW and the row -> item walk, both driven there
-import { planTake, applyTransfer, sendQuestItemClick, REFUSAL } from './item/itemTransfer.js';   // QL-WEIGHT1: the window's own plan and move - the carry gate, the summoned and quest guards, the split, the gold door
-import { isMap } from './useItem.js';   // the map the window USES rather than takes (F156) - left for the window here
-import { racialSuppressInventory } from './lycanthropy.js';   // DISC10-E L3: the beast takes nothing into a pack it cannot open
-import { audio } from './audio.js';   // SND1: the take's own sound
+import { itemNameParts, itemStatRows } from './item/itemInfo.js'; // RF6: the long name's name part, the same one the plaque's rows wear; QUICK-LOOT-STATS: and the rows the lit one says about itself
+import { nextSelection, selectedRow, hoverItemAt } from './worldHover.js'; // the fold's LAW and the row -> item walk, both driven there
+import { planTake, applyTransfer, sendQuestItemClick, REFUSAL } from './item/itemTransfer.js'; // QL-WEIGHT1: the window's own plan and move - the carry gate, the summoned and quest guards, the split, the gold door
+import { isMap } from './useItem.js'; // the map the window USES rather than takes (F156) - left for the window here
+import { racialSuppressInventory } from './lycanthropy.js'; // DISC10-E L3: the beast takes nothing into a pack it cannot open
+import { audio } from './audio.js'; // SND1: the take's own sound
 import { SOUND } from './soundClips.js';
-import { lootRarityOn, rarityRank, RARITIES } from './loot/lootRarity.js';   // LOOT18: the take-all's tier
-import { isJunk, JUNK_GROUPS } from './item/itemJunk.js';   // LOOT18: and the player's junk; the gear groups
-import { isAmmunition } from './item/itemTemplates.js';   // LOOT18: a quiver is a supply, always taken
-import { isEnchanted } from './inventory.js';   // LOOT18: and DFU's own magic item, whatever its tier reads
+import { lootRarityOn, rarityRank, RARITIES } from './loot/lootRarity.js'; // LOOT18: the take-all's tier
+import { isJunk, JUNK_GROUPS } from './item/itemJunk.js'; // LOOT18: and the player's junk; the gear groups
+import { isAmmunition } from './item/itemTemplates.js'; // LOOT18: a quiver is a supply, always taken
+import { isEnchanted } from './inventory.js'; // LOOT18: and DFU's own magic item, whatever its tier reads
 
 /** The player's own switch (features.js, `quick-loot`). Off is
  *  Daggerfall's loot exactly: the activate key opens the window it has
@@ -75,7 +75,7 @@ export function takeAllLeaves(item) {
   if (isJunk(item)) return true;
   const floor = QUICK_LOOT_FLOORS[getPref(QUICK_LOOT_TIER)] ?? 0;
   if (!(floor > 0) || !lootRarityOn() || !JUNK_GROUPS.includes(item.group) || isAmmunition(item)) return false;
-  if (!item.rarity && isEnchanted(item)) return false;   // DFU's own magic item: no rung of the ladder, and worth the take
+  if (!item.rarity && isEnchanted(item)) return false; // DFU's own magic item: no rung of the ladder, and worth the take
   return rarityRank(item) < floor;
 }
 /** LOOT18: what the take-all's line adds for the pieces it left. */
@@ -139,8 +139,9 @@ function takeThrough(playerEntity, items, item, getQuest, moved = null, wholeSta
   // "cannotCarryAnymore") - quick loot's own take keeps CanCarryAmount's part
   if (wholeStack && plan.amount < (item.stackCount ?? 1)) return { refusal: REFUSAL.cannotCarry };
   if (plan.sound === 'gold' || !_tookSound) _tookSound = plan.sound === 'gold' ? 'gold' : 'click';
-  const got = applyTransfer(item, plan, items, (playerEntity.items ??= []), { entity: playerEntity, toPlayer: true }) ?? item;
-  moved?.push({ item: got, count: plan.amount });   // PICKUP-FEED: the plan's amount, not the record's - gold answers the pile's own row, whose stack is what STAYED
+  const got =
+    applyTransfer(item, plan, items, (playerEntity.items ??= []), { entity: playerEntity, toPlayer: true }) ?? item;
+  moved?.push({ item: got, count: plan.amount }); // PICKUP-FEED: the plan's amount, not the record's - gold answers the pile's own row, whose stack is what STAYED
   return got;
 }
 
@@ -155,7 +156,9 @@ function takeThrough(playerEntity, items, item, getQuest, moved = null, wholeSta
  */
 function shownBy(took, moved, playerEntity) {
   if (typeof took !== 'function' || !moved.length) return false;
-  try { return took(moved, playerEntity) === true; } catch (e) {
+  try {
+    return took(moved, playerEntity) === true;
+  } catch (e) {
     console.warn(`[quick-loot] the pickup face failed; the line is said instead: ${e?.message ?? e}`);
     return false;
   }
@@ -243,7 +246,7 @@ export function foldQuickLoot(frame) {
   // CONTAINER-PEEK: a cupboard's rows are a glance. Lighting one would arm P and J for a take the press does not
   // make (the private-property question, the storage window), and the armed take would land on the next pile.
   const take = frame?.kind === 'items' && !frame.preview;
-  _sel = (verbs || (take && quickLootOn())) ? nextSelection(_sel, frame, _nudge) : null;
+  _sel = verbs || (take && quickLootOn()) ? nextSelection(_sel, frame, _nudge) : null;
   _actionIds = verbs && _sel ? frame.rows.map((r) => r.id) : null;
   _lastKey = _sel ? frame.key : null;
   _nudge = 0;
@@ -268,10 +271,18 @@ const _verbAskers = new Set();
 export function wantPlaqueVerbs(asks) {
   const one = { asks };
   _verbAskers.add(one);
-  return () => { _verbAskers.delete(one); };
+  return () => {
+    _verbAskers.delete(one);
+  };
 }
 export function plaqueVerbsWanted() {
-  for (const one of _verbAskers) { try { if (one.asks()) return true; } catch { /* an asker torn down: no verbs of its */ } }
+  for (const one of _verbAskers) {
+    try {
+      if (one.asks()) return true;
+    } catch {
+      /* an asker torn down: no verbs of its */
+    }
+  }
   return false;
 }
 
@@ -286,14 +297,24 @@ export function plaqueStep(n) {
 /** AUDIT DISC7 A2: F on a player whose list is unlit lights its first row - the keyboard's way onto the list, as the
  *  wheel's first notch is. True when it lit something. */
 export function plaqueLightFirst(key) {
-  if (!_actionIds || !_sel || key == null || _lastKey !== key || _sel.key !== key || _sel.row >= 0 || !_actionIds.length) return false;
+  if (
+    !_actionIds ||
+    !_sel ||
+    key == null ||
+    _lastKey !== key ||
+    _sel.key !== key ||
+    _sel.row >= 0 ||
+    !_actionIds.length
+  )
+    return false;
   _sel = { key, row: 0, id: _actionIds[0] };
   return true;
 }
 
 /** ACT-MENU: the lit verb and whose it is, for a host whose press has no pick of its own (a player: the plaque's
  *  race is the only one that names them). */
-export const plaqueActionSelection = () => (_actionIds && _sel ? { key: _sel.key, id: _sel.row >= 0 ? (_actionIds[_sel.row] ?? null) : null } : null);
+export const plaqueActionSelection = () =>
+  _actionIds && _sel ? { key: _sel.key, id: _sel.row >= 0 ? (_actionIds[_sel.row] ?? null) : null } : null;
 
 /** WHICH row is lit in this frame, or -1. The draw asks; so does the
  *  repaint guard, because a moved highlight leaves the frame identical
@@ -338,8 +359,16 @@ export function quickLootStats(frame) {
 /** Freed with the host that raised it: a selection is ABOUT a key in a
  *  world a teardown is unmaking, and a nudge spent in a dungeon must
  *  not move the highlight in the street. */
-export function resetQuickLoot() { _sel = null; _nudge = 0; _pending = null; _actionIds = null; _lastKey = null; _tookSound = null; setClassicLootFrame(null); }   // DISC22-C: and the classic panel's frame
-   // SND1: and a press's sound, never carried across a teardown
+export function resetQuickLoot() {
+  _sel = null;
+  _nudge = 0;
+  _pending = null;
+  _actionIds = null;
+  _lastKey = null;
+  _tookSound = null;
+  setClassicLootFrame(null);
+} // DISC22-C: and the classic panel's frame
+// SND1: and a press's sound, never carried across a teardown
 
 /**
  * ── THE TAKE, AND THE DOOR IT GOES THROUGH ──────────────────────
@@ -376,11 +405,11 @@ export function resetQuickLoot() { _sel = null; _nudge = 0; _pending = null; _ac
  */
 export function quickLootTake(key, hooks, playerEntity, say = () => {}, { getQuest = null, took = null } = {}) {
   const how = _pending;
-  _pending = null;   // spent on the press it was armed for, whatever that press finds
+  _pending = null; // spent on the press it was armed for, whatever that press finds
   // WERE-LOOT (2026-10-30, the owner: "let them loot ... just dont let them open inventory"): the beast's pack window
   // stays shut (DISC10-E L3), so every press of its takes the lot, quick loot on or off
   const beast = !!racialSuppressInventory(playerEntity);
-  if (how === 'open' && !beast) return null;   // J: the player asked for the window
+  if (how === 'open' && !beast) return null; // J: the player asked for the window
   if ((!quickLootOn() && !beast) || !hooks || !playerEntity) return null;
   const items = hooks.items?.();
   if (!Array.isArray(items)) return null;
@@ -393,29 +422,42 @@ export function quickLootTake(key, hooks, playerEntity, say = () => {}, { getQue
     // QL-WEIGHT1: what fits is taken and counted; the first row that does
     // not is the line said when nothing fitted at all, and the rows left
     // stay on the pile for the window or the next press.
-    let n = 0, refusal = null, left = 0;
-    const moved = [];   // PICKUP-FEED: what this press put in the pack, in the order it went
+    let n = 0,
+      refusal = null,
+      left = 0;
+    const moved = []; // PICKUP-FEED: what this press put in the pack, in the order it went
     _tookSound = null;
     for (const it of [...items]) {
-      if (takeAllLeaves(it)) { left++; continue; }   // LOOT18: the row's tier and the player's junk stay on the pile
+      if (takeAllLeaves(it)) {
+        left++;
+        continue;
+      } // LOOT18: the row's tier and the player's junk stay on the pile
       const got = takeThrough(playerEntity, items, it, getQuest, moved);
-      if (got?.refusal) { refusal ??= got.refusal; continue; }
+      if (got?.refusal) {
+        refusal ??= got.refusal;
+        continue;
+      }
       if (got) n += 1;
     }
-    if (left) refusal = { ...(refusal ?? {}), text: [refusal?.text, QUICK_LOOT_LEFT(left)].filter(Boolean).join(' ') };   // LOOT18: said as the rows that stayed are
+    if (left) refusal = { ...(refusal ?? {}), text: [refusal?.text, QUICK_LOOT_LEFT(left)].filter(Boolean).join(' ') }; // LOOT18: said as the rows that stayed are
     // AUDIT QL-WEIGHT1: a count with rows LEFT says why they stayed, on the same line - "You take 2 items." over a
     // pile that still holds three read as a door that stuck, with the reason unsaid
-    takeSound();   // SND1
+    takeSound(); // SND1
     // PICKUP-FEED: the cards say the count, so the line says only why the rest stayed - and says nothing at all when
     // nothing stayed (an empty say would blank whatever the line was saying)
-    if (n && shownBy(took, moved, playerEntity)) { if (refusal?.text) say(refusal.text); }
-    else if (n) say((n === 1 ? 'You take 1 item.' : `You take ${n} items.`) + (refusal?.text ? ` ${refusal.text}` : ''));   // AUDIT: a refusal with no line (none the loop can meet today) adds nothing
-    else if (refusal) { say(refusal.text); return QUICK_LOOT_REFUSED; }
+    if (n && shownBy(took, moved, playerEntity)) {
+      if (refusal?.text) say(refusal.text);
+    } else if (n)
+      say((n === 1 ? 'You take 1 item.' : `You take ${n} items.`) + (refusal?.text ? ` ${refusal.text}` : '')); // AUDIT: a refusal with no line (none the loop can meet today) adds nothing
+    else if (refusal) {
+      say(refusal.text);
+      return QUICK_LOOT_REFUSED;
+    }
     return n ? items : null;
   }
   const item = quickLootItemAt(key, items);
   if (!item) return null;
-  return takeOneItem(playerEntity, items, item, say, { getQuest, took });   // PI1: the one-item take, one home (below)
+  return takeOneItem(playerEntity, items, item, say, { getQuest, took }); // PI1: the one-item take, one home (below)
 }
 
 /**
@@ -428,13 +470,25 @@ export function quickLootTake(key, hooks, playerEntity, say = () => {}, { getQue
  * `wholeStack` (the press's): the whole stack or nothing - the mod's CanCarryWholeStack, where quick loot takes the part
  * that fits.
  */
-export function takeOneItem(playerEntity, items, item, say = () => {}, { getQuest = null, took = null, wholeStack = false } = {}) {
+export function takeOneItem(
+  playerEntity,
+  items,
+  item,
+  say = () => {},
+  { getQuest = null, took = null, wholeStack = false } = {},
+) {
   if (!playerEntity || !Array.isArray(items) || !items.includes(item)) return null;
   _tookSound = null;
   const moved = [];
   const got = takeThrough(playerEntity, items, item, getQuest, moved, wholeStack);
-  if (got?.refusal) { say(got.refusal.text); return QUICK_LOOT_REFUSED; }
-  if (got) { takeSound(); if (!shownBy(took, moved, playerEntity)) say(tookItemText(got)); }   // SND1; PICKUP-FEED: the card, or the line
+  if (got?.refusal) {
+    say(got.refusal.text);
+    return QUICK_LOOT_REFUSED;
+  }
+  if (got) {
+    takeSound();
+    if (!shownBy(took, moved, playerEntity)) say(tookItemText(got));
+  } // SND1; PICKUP-FEED: the card, or the line
   return got;
 }
 
@@ -454,16 +508,24 @@ export function takeOneItem(playerEntity, items, item, say = () => {}, { getQues
  * to whatever else wants that key.
  */
 export function quickLootArm(action) {
-  if (!quickLootOn() || !_sel || _actionIds) return false;   // ACT-MENU: P and J take from a pile, never from a list of verbs
-  if (action === 'QuickLootAll') { _pending = 'all'; return true; }
-  if (action === 'QuickLootOpen') { _pending = 'open'; return true; }
+  if (!quickLootOn() || !_sel || _actionIds) return false; // ACT-MENU: P and J take from a pile, never from a list of verbs
+  if (action === 'QuickLootAll') {
+    _pending = 'all';
+    return true;
+  }
+  if (action === 'QuickLootOpen') {
+    _pending = 'open';
+    return true;
+  }
   return false;
 }
 
 /** AUDIT WB9 (spoils F2): THE ARMED KEY SPENT by a press that takes through no pile - a piece of the Warden's spoils (the
  *  court's own rung, scenes/worldModes.js): P or J over one armed the mode, the press took the piece and never read it,
  *  and the next E on a pile took all of it (or opened its window). */
-export function quickLootSpend() { _pending = null; }
+export function quickLootSpend() {
+  _pending = null;
+}
 
 /** WHICH item the highlighted row is, out of this container.
  *
@@ -474,5 +536,5 @@ export function quickLootSpend() { _pending = null; }
  *  rows with, so the row seen and the item moved cannot differ. */
 function quickLootItemAt(key, items) {
   if (!_sel || _actionIds || _sel.key !== key) return null;
-  return hoverItemAt(items, _sel.row, Infinity);   // LOOT-SCROLL: the lit row may stand past the first HOVER_MAX
+  return hoverItemAt(items, _sel.row, Infinity); // LOOT-SCROLL: the lit row may stand past the first HOVER_MAX
 }

@@ -527,8 +527,8 @@
   {
     "name": "TOWNECON-AUDIT2-PRICE2-socket-unmarked",
     "file": "src/systems/reforge.js",
-    "old": "  if (stone?.[PATRON_COUNTER_MARK] === true) item.socketBought",
-    "new": "  if (stone?.[PATRON_COUNTER_MARK] === 'never') item.socketBought",
+    "old": "  if (stone?.[PATRON_COUNTER_MARK] === true)",
+    "new": "  if (stone?.[PATRON_COUNTER_MARK] === 'never')",
     "tests": [
       "test/systems/townecon_audit2.test.js"
     ],
@@ -537,8 +537,8 @@
   {
     "name": "TOWNECON-AUDIT2-PRICE2-extract-unmarked",
     "file": "src/systems/reforge.js",
-    "old": "  if (bought) { stone[PATRON_COUNTER_MARK] = true;",
-    "new": "  if (bought && false) { stone[PATRON_COUNTER_MARK] = true;",
+    "old": "  if (bought) {",
+    "new": "  if (bought && false) {",
     "tests": [
       "test/systems/townecon_audit2.test.js"
     ],
@@ -557,8 +557,8 @@
   {
     "name": "TOWNECON-AUDIT2-PRICE2-unset-kept",
     "file": "src/systems/reforge.js",
-    "old": "  unbought(item, i);   // AUDIT TOWN-ECON 2 PRICE-2: the stone shattered, its mark with it\n",
-    "new": "",
+    "old": "  unbought(item, i); // AUDIT TOWN-ECON 2 PRICE-2: the stone shattered, its mark with it\n  refold(item, player);",
+    "new": "  refold(item, player);",
     "tests": [
       "test/systems/townecon_audit2.test.js"
     ],

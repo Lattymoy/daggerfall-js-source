@@ -1389,7 +1389,7 @@ DFU has no hotbar; UI2's is the port's.
 WHAT THE PORT DID. UI2 put every piece a body slot takes on the bar as worn - a press put it on or took it off - so a Cast When
 Used amulet could not be cast from the bar.
 
-FIXED. A piece carrying Cast When Used is USED, the pack's Use (`quickslots.js:"const castsWhenUsed = (item) =>"`); a slot saved
+FIXED. A piece carrying Cast When Used is USED, the pack's Use (`quickslots.js:"const castsWhenUsed"`); a slot saved
 as worn before the change asks the piece at the press. A Cast When Held piece is still worn; a weapon still readies and a
 shield still straps on. Slots-Hotbar-Status.md's UI2 line narrowed.
 

@@ -15,9 +15,18 @@
 const _listeners = new Map();
 /** Register a listener by name: `fn(entity, spell, cost)` - the caster's entity (mine), the spell record that left the
  *  hands, and the magicka its cast spent. A name re-registered replaces; `null` removes. */
-export function registerPlayerCastListener(name, fn) { if (typeof fn === 'function') _listeners.set(name, fn); else _listeners.delete(name); }
+export function registerPlayerCastListener(name, fn) {
+  if (typeof fn === 'function') _listeners.set(name, fn);
+  else _listeners.delete(name);
+}
 /** The cast engine's word: the player's own spell left the hands. Every listener is told; one that throws is skipped. */
 export function tellPlayerCast(entity, spell, cost = 0) {
   const spent = Number.isFinite(cost) && cost > 0 ? cost : 0;
-  for (const fn of _listeners.values()) { try { fn(entity, spell, spent); } catch { /* a set is not the cast's problem */ } }
+  for (const fn of _listeners.values()) {
+    try {
+      fn(entity, spell, spent);
+    } catch {
+      /* a set is not the cast's problem */
+    }
+  }
 }

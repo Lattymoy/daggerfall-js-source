@@ -303,8 +303,8 @@
   {
     "name": "AUDITRESTPARTY-B7-the-first-campfire",
     "file": "src/systems/quickslots.js",
-    "old": "    if (!item || (spentCharges(item) && !spentCharges(it))) item = it;",
-    "new": "    if (!item) item = it;",
+    "old": "    if (!item || (spentCharges(item) && !spentCharges(it))) item = it; // AUDIT REST-PARTY B7: a charged kind (a Campfire, a Bedroll) answers with one that has charges left - an empty Campfire stays in the pack by design, and pressed first it was the one handed to the ground and refused",
+    "new": "    if (!item) item = it; // AUDIT REST-PARTY B7: a charged kind (a Campfire, a Bedroll) answers with one that has charges left - an empty Campfire stays in the pack by design, and pressed first it was the one handed to the ground and refused",
     "tests": [
       "test/systems/survival/auditrestparty_camps.test.js"
     ]

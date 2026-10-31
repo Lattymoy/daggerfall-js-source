@@ -53,8 +53,8 @@
   {
     "name": "AUDIT-UPDATE-L2-the-technique-kept-at-its-Magic-value",
     "file": "src/systems/reforge.js",
-    "old": "  if (item.rarity === tier) for (const a of kept) addTechniqueLine(item, rolls, { id: a.param });",
-    "new": "  if (item.rarity === tier) item.affixes.push(...kept);",
+    "old": "    if (item.rarity === tier) for (const a of kept) addTechniqueLine(item, rolls, { id: a.param });",
+    "new": "    if (item.rarity === tier) item.affixes.push(...kept);",
     "tests": [
       "test/systems/audit_update_loot.test.js"
     ],
@@ -63,8 +63,8 @@
   {
     "name": "AUDIT-UPDATE-L2-the-sigil-under-the-Rares-floor",
     "file": "src/systems/reforge.js",
-    "old": "power: Math.max(item.sigil.power, sigilFloor(tier, item.sigil.party))",
-    "new": "power: item.sigil.power",
+    "old": "      item.sigil = { ...item.sigil, power: Math.max(item.sigil.power, sigilFloor(tier, item.sigil.party)) }; // AUDIT UPDATE II A2: a set's sigil is no blow - it has no power to raise",
+    "new": "      item.sigil = { ...item.sigil, power: item.sigil.power }; // AUDIT UPDATE II A2: a set's sigil is no blow - it has no power to raise",
     "tests": [
       "test/systems/audit_update_loot.test.js"
     ],
@@ -73,8 +73,8 @@
   {
     "name": "AUDIT-UPDATE-L2-the-law-unread",
     "file": "src/systems/reforge.js",
-    "old": "  if (item.rarity !== tier || itemLawFindings(item).some((f) => !lawBefore.has(f))) {",
-    "new": "  if (item.rarity !== tier) {",
+    "old": "    if (item.rarity !== tier || itemLawFindings(item).some((f) => !lawBefore.has(f))) {",
+    "new": "    if (item.rarity !== tier) {",
     "tests": [
       "test/systems/audit_update_loot.test.js"
     ],
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-UPDATE-L3-the-makers-rows-unread",
     "file": "src/systems/reforge.js",
-    "old": "  if (makerRows(item)) return null;",
-    "new": "  if (false) return null;",
+    "old": "  if (makerRows(item)) return null; // AUDIT UPDATE L3: the Item Maker's rows on a found Magic piece - the Rare's flavour would write over them",
+    "new": "  if (false) return null; // AUDIT UPDATE L3: the Item Maker's rows on a found Magic piece - the Rare's flavour would write over them",
     "tests": [
       "test/systems/audit_update_loot.test.js"
     ],
@@ -93,8 +93,8 @@
   {
     "name": "AUDIT-UPDATE-L3-the-curse-a-makers-row",
     "file": "src/systems/reforge.js",
-    "old": "  .some((e) => !(item.cursed && e?.type === item.cursed.type && e?.param === item.cursed.param));",
-    "new": "  .some((e) => !!e);",
+    "old": "const makerRows = (item) =>\n  (Array.isArray(item.enchantments) ? item.enchantments : []).some(\n    (e) => !(item.cursed && e?.type === item.cursed.type && e?.param === item.cursed.param),\n  );",
+    "new": "const makerRows = (item) => (Array.isArray(item.enchantments) ? item.enchantments : []).some((e) => !!e);",
     "tests": [
       "test/systems/audit_update_loot.test.js"
     ],
@@ -113,8 +113,8 @@
   {
     "name": "AUDIT-UPDATE-L5-the-imbues-worth-unrecorded",
     "file": "src/systems/reforge.js",
-    "old": "  item.imbueWorth = (Number.isInteger(was.imbueWorth) ? Math.max(0, was.imbueWorth) : 0) + Math.max(0, Math.round((Number.isFinite(item.value) ? item.value : before) - before));",
-    "new": "    void before;",
+    "old": "    item.imbueWorth =\n      (Number.isInteger(was.imbueWorth) ? Math.max(0, was.imbueWorth) : 0) +\n      Math.max(0, Math.round((Number.isFinite(item.value) ? item.value : before) - before)); // AUDIT UPDATE L5: what a counter takes off (lootRarity.js craftedRarityWorth); AUDIT UPDATE II A7: a second Imbue's added to the first's",
+    "new": "    void before; // AUDIT UPDATE L5: what a counter takes off (lootRarity.js craftedRarityWorth); AUDIT UPDATE II A7: a second Imbue's added to the first's",
     "tests": [
       "test/systems/audit_update_loot.test.js"
     ],
@@ -497,8 +497,8 @@
   {
     "name": "AUDIT-UPDATE-P3-the-old-marks-kept",
     "file": "src/systems/reforge.js",
-    "old": "    for (const k of ['rarity', 'reforged', 'reforges', 'honed']) delete item[k];",
-    "new": "    delete item.rarity;",
+    "old": "    for (const k of ['rarity', 'reforged', 'reforges', 'honed']) delete item[k]; // REFORGE-REPLACE x MAIN: and the reforges it took",
+    "new": "    delete item.rarity; // REFORGE-REPLACE x MAIN: and the reforges it took",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
@@ -507,8 +507,8 @@
   {
     "name": "AUDIT-UPDATE-P3-the-guilds-identify-skipped",
     "file": "src/systems/reforge.js",
-    "old": "  item.isIdentified = true;   // the guild made it - nothing to identify\n",
-    "new": "",
+    "old": "    item.isIdentified = true; // the guild made it - nothing to identify\n    // AUDIT UPDATE L2: a piece the item law would hold (the judge's own reading) is never made - put back, nothing paid",
+    "new": "    // AUDIT UPDATE L2: a piece the item law would hold (the judge's own reading) is never made - put back, nothing paid",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
@@ -527,8 +527,8 @@
   {
     "name": "AUDIT-UPDATE-P3-unknown-unread",
     "file": "src/systems/reforge.js",
-    "old": "  if (item.rarity && !itemIsIdentified(item)) return 'unknown';\n",
-    "new": "",
+    "old": "  if (item.rarity && !itemIsIdentified(item)) return 'unknown';\n  if (isLocked(item)) return 'locked';",
+    "new": "  if (isLocked(item)) return 'locked';",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
@@ -557,8 +557,8 @@
   {
     "name": "AUDIT-UPDATE-P3-set-unread",
     "file": "src/systems/reforge.js",
-    "old": "  if (socketGems(item).length) return 'set';\n  return shortOf(",
-    "new": "  return shortOf(",
+    "old": "  if (socketGems(item).length) return 'set';\n  return shortOf(player, /** @type {{ shards: number, gold: number }} */ (imbuePrice(item)));",
+    "new": "  return shortOf(player, /** @type {{ shards: number, gold: number }} */ (imbuePrice(item)));",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
@@ -567,8 +567,8 @@
   {
     "name": "AUDIT-UPDATE-P3-short-gold-unread",
     "file": "src/systems/reforge.js",
-    "old": "shardsHeld(player?.items) < p.shards ? 'shards' : totalGoldAmount(player) < p.gold ? 'gold' : null",
-    "new": "shardsHeld(player?.items) < p.shards ? 'shards' : null",
+    "old": "const shortOf = (player, p) =>\n  shardsHeld(player?.items) < p.shards ? 'shards' : totalGoldAmount(player) < p.gold ? 'gold' : null;",
+    "new": "const shortOf = (player, p) => (shardsHeld(player?.items) < p.shards ? 'shards' : null);",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
@@ -577,8 +577,8 @@
   {
     "name": "AUDIT-UPDATE-P3-short-shards-unread",
     "file": "src/systems/reforge.js",
-    "old": "shardsHeld(player?.items) < p.shards ? 'shards' : totalGoldAmount(player) < p.gold ? 'gold' : null",
-    "new": "totalGoldAmount(player) < p.gold ? 'gold' : null",
+    "old": "const shortOf = (player, p) =>\n  shardsHeld(player?.items) < p.shards ? 'shards' : totalGoldAmount(player) < p.gold ? 'gold' : null;",
+    "new": "const shortOf = (player, p) => (totalGoldAmount(player) < p.gold ? 'gold' : null);",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
@@ -587,8 +587,8 @@
   {
     "name": "AUDIT-UPDATE-P3-a-made-piece-imbued",
     "file": "src/systems/reforge.js",
-    "old": "if (!item || typeof item.provenance === 'string' || item.questItem || item.artifact || isSummoned(item)) return null;",
-    "new": "if (!item || item.questItem || item.artifact || isSummoned(item)) return null;",
+    "old": "  if (!item || typeof item.provenance === 'string' || item.questItem || item.artifact || isSummoned(item)) return null; // AUDIT UPDATE II A5: nor a conjured piece - it vanishes at its hour, the price with it",
+    "new": "  if (!item || item.questItem || item.artifact || isSummoned(item)) return null; // AUDIT UPDATE II A5: nor a conjured piece - it vanishes at its hour, the price with it",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
@@ -597,8 +597,8 @@
   {
     "name": "AUDIT-UPDATE-P3-a-worn-piece-off-the-page",
     "file": "src/systems/reforge.js",
-    "old": "rarityEligible({ ...item, equipSlot: null }) ? 'magic' : null",
-    "new": "rarityEligible(item) ? 'magic' : null",
+    "old": "  if (item.rarity == null) return rarityEligible({ ...item, equipSlot: null }) ? 'magic' : null; // worn is the refusal's word, not the target's",
+    "new": "  if (item.rarity == null) return rarityEligible(item) ? 'magic' : null; // worn is the refusal's word, not the target's",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
@@ -688,8 +688,8 @@
   {
     "name": "AUDIT-UPDATE-II-A2-a-sets-sigil-raised-to-NaN",
     "file": "src/systems/reforge.js",
-    "old": "if (item.rarity === tier && Number.isFinite(item.sigil?.power)) item.sigil",
-    "new": "if (item.rarity === tier && item.sigil) item.sigil",
+    "old": "    if (item.rarity === tier && Number.isFinite(item.sigil?.power))",
+    "new": "    if (item.rarity === tier && item.sigil)",
     "tests": [
       "test/systems/audit_update_ii.test.js"
     ],
@@ -718,8 +718,8 @@
   {
     "name": "AUDIT-UPDATE-II-A5-the-conjured-unasked",
     "file": "src/systems/reforge.js",
-    "old": "item.questItem || item.artifact || isSummoned(item)) return null;",
-    "new": "item.questItem || item.artifact) return null;",
+    "old": "  if (!item || typeof item.provenance === 'string' || item.questItem || item.artifact || isSummoned(item)) return null; // AUDIT UPDATE II A5: nor a conjured piece - it vanishes at its hour, the price with it",
+    "new": "  if (!item || typeof item.provenance === 'string' || item.questItem || item.artifact) return null; // AUDIT UPDATE II A5: nor a conjured piece - it vanishes at its hour, the price with it",
     "tests": [
       "test/systems/audit_update_ii.test.js"
     ],
@@ -728,8 +728,8 @@
   {
     "name": "AUDIT-UPDATE-II-A7-the-first-imbues-worth-overwritten",
     "file": "src/systems/reforge.js",
-    "old": "  item.imbueWorth = (Number.isInteger(was.imbueWorth) ? Math.max(0, was.imbueWorth) : 0) + ",
-    "new": "  item.imbueWorth = 0 + ",
+    "old": "    item.imbueWorth =\n      (Number.isInteger(was.imbueWorth) ? Math.max(0, was.imbueWorth) : 0) +\n      Math.max(0, Math.round((Number.isFinite(item.value) ? item.value : before) - before)); // AUDIT UPDATE L5: what a counter takes off (lootRarity.js craftedRarityWorth); AUDIT UPDATE II A7: a second Imbue's added to the first's",
+    "new": "    item.imbueWorth = 0 + Math.max(0, Math.round((Number.isFinite(item.value) ? item.value : before) - before)); // AUDIT UPDATE L5: what a counter takes off (lootRarity.js craftedRarityWorth); AUDIT UPDATE II A7: a second Imbue's added to the first's",
     "tests": [
       "test/systems/audit_update_ii.test.js"
     ],
@@ -748,8 +748,8 @@
   {
     "name": "AUDIT-UPDATE-II-A9-the-throw-left-the-piece-rolled",
     "file": "src/systems/reforge.js",
-    "old": "  } catch (err) { putBack(); throw err; }",
-    "new": "  } catch (err) { throw err; }",
+    "old": "    putBack();\n    throw err;",
+    "new": "    throw err;",
     "tests": [
       "test/systems/audit_update_ii.test.js"
     ],

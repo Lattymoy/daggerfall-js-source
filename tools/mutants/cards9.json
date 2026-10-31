@@ -212,8 +212,8 @@
   {
     "name": "CARDS9-customs-order",
     "file": "src/systems/realmCustoms.js",
-    "old": "  held.sort((a, b) => unit(b.rec) - unit(a.rec));",
-    "new": "  held.sort((a, b) => unit(a.rec) - unit(b.rec));",
+    "old": "  held.sort((a, b) => unit(b.rec) - unit(a.rec)); // stable: the decor's, then the lists' own order, within a worth",
+    "new": "  held.sort((a, b) => unit(a.rec) - unit(b.rec)); // stable: the decor's, then the lists' own order, within a worth",
     "tests": [
       "test/systems/cards9_sources.test.js"
     ]

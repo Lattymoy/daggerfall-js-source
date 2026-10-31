@@ -65,8 +65,8 @@
   {
     "name": "PVP-SET-a-made-spell-in-the-normal-set",
     "file": "src/systems/quickslots.js",
-    "old": "return pvp && typeof entry.kit?.id === 'string' ?",
-    "new": "return typeof entry.kit?.id === 'string' ?",
+    "old": "    return pvp && typeof entry.kit?.id === 'string'",
+    "new": "    return typeof entry.kit?.id === 'string'",
     "tests": [
       "test/systems/wild/pvpset.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "PVP-SET-a-book-spell-in-the-pvp-set",
     "file": "src/systems/quickslots.js",
-    "old": "return pvp || !Number.isFinite(entry.index) ? null :",
-    "new": "return !Number.isFinite(entry.index) ? null :",
+    "old": "    return pvp || !Number.isFinite(entry.index)",
+    "new": "    return !Number.isFinite(entry.index)",
     "tests": [
       "test/systems/wild/pvpset.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PVP-SET-the-pvp-set-saved",
     "file": "src/systems/quickslots.js",
-    "old": "out.hotbar = hotbarSets.main.map(",
-    "new": "out.hotbar = hotbar.map(",
+    "old": "  out.hotbar = hotbarSets.main.map((e) => (e ? { ...e } : null)); // PVP-SET: the save keeps the normal set alone",
+    "new": "  out.hotbar = hotbar.map((e) => (e ? { ...e } : null)); // PVP-SET: the save keeps the normal set alone",
     "tests": [
       "test/systems/wild/pvpset.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PVP-SET-the-lock-unread-on-a-fill",
     "file": "src/systems/quickslots.js",
-    "old": "if (!kept || frozen()) return false;",
-    "new": "if (!kept) return false;",
+    "old": "  if (!kept || frozen()) return false; // PVP-SET: and the PvP set none in combat",
+    "new": "  if (!kept) return false; // PVP-SET: and the PvP set none in combat",
     "tests": [
       "test/systems/wild/pvpset.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "PVP-SET-the-lock-unread-on-a-clear",
     "file": "src/systems/quickslots.js",
-    "old": "if (hotbar[i] && !frozen()) {",
-    "new": "if (hotbar[i]) {",
+    "old": "  if (hotbar[i] && !frozen()) {",
+    "new": "  if (hotbar[i]) {",
     "tests": [
       "test/systems/wild/pvpset.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PVP-SET-the-lock-unread-on-a-swap",
     "file": "src/systems/quickslots.js",
-    "old": "if (a === b || frozen()) return;",
-    "new": "if (a === b) return;",
+    "old": "  if (a === b || frozen()) return;",
+    "new": "  if (a === b) return;",
     "tests": [
       "test/systems/wild/pvpset.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PVP-SET-a-refusal-read-as-a-cast",
     "file": "src/systems/quickslots.js",
-    "old": "r === 'refused' ? 'refused' : 'none'",
-    "new": "'none'",
+    "old": "    return { kind: r === 'cast' ? 'spell' : r === 'refused' ? 'refused' : 'none', name: e.name };",
+    "new": "    return { kind: r === 'cast' ? 'spell' : 'none', name: e.name };",
     "tests": [
       "test/systems/wild/pvpset.test.js"
     ]

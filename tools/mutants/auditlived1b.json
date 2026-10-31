@@ -475,8 +475,8 @@
   {
     "name": "AUDITLIVED1B-A3-raids-any-other-day-rolls",
     "file": "src/systems/raidingParties.js",
-    "old": "(sharedClockOn() && _dayFromSave && day !== state.lastSelectedDay)",
-    "new": "(sharedClockOn() && day !== state.lastSelectedDay)",
+    "old": "  if (day > state.lastSelectedDay || (sharedClockOn() && _dayFromSave && day !== state.lastSelectedDay)) {",
+    "new": "  if (day > state.lastSelectedDay || (sharedClockOn() && day !== state.lastSelectedDay)) {",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -484,8 +484,8 @@
   {
     "name": "AUDITLIVED1B-A3-raids-save-flag-never-cleared",
     "file": "src/systems/raidingParties.js",
-    "old": "  if (sharedClockOn()) _dayFromSave = false;   // AUDIT LIVED1b A3: the save's record has met the world's day (an offline frame is not the world's)\n",
-    "new": "",
+    "old": "  if (sharedClockOn()) _dayFromSave = false; // AUDIT LIVED1b A3: the save's record has met the world's day (an offline frame is not the world's)\n  syncLanes(); // WW6: the lanes past the Bay, rolled for the same day off the registry's towns there (the Bay's list untouched)",
+    "new": "  syncLanes(); // WW6: the lanes past the Bay, rolled for the same day off the registry's towns there (the Bay's list untouched)",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -493,8 +493,8 @@
   {
     "name": "AUDITLIVED1B-A3-raids-restore-never-raises-it",
     "file": "src/systems/raidingParties.js",
-    "old": "  _dayFromSave = true;   // AUDIT LIVED1b A3: the one check that may roll another day than a later one\n",
-    "new": "",
+    "old": "  _dayFromSave = true; // AUDIT LIVED1b A3: the one check that may roll another day than a later one\n  _peerWords = new Map();",
+    "new": "  _peerWords = new Map();",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]

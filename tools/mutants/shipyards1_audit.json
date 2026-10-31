@@ -371,7 +371,7 @@
   {
     "name": "AUDIT-SHIPYARDS-the-port-byte-unread",
     "file": "src/systems/portPlaces.js",
-    "old": "export const portTownByData = (loc, hasPort) => !!hasPort?.(loc?.mapTableData?.mapId) || (loc?.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0;",
+    "old": "export const portTownByData = (loc, hasPort) =>\n  !!hasPort?.(loc?.mapTableData?.mapId) || (loc?.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0;",
     "new": "export const portTownByData = (loc, hasPort) => !!hasPort?.(loc?.mapTableData?.mapId);",
     "tests": [
       "test/systems/shipyards1_audit_port.test.js"
@@ -380,7 +380,7 @@
   {
     "name": "AUDIT-SHIPYARDS-the-harbours-list-unread",
     "file": "src/systems/portPlaces.js",
-    "old": "export const portTownByData = (loc, hasPort) => !!hasPort?.(loc?.mapTableData?.mapId) || (loc?.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0;",
+    "old": "export const portTownByData = (loc, hasPort) =>\n  !!hasPort?.(loc?.mapTableData?.mapId) || (loc?.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0;",
     "new": "export const portTownByData = (loc, hasPort) => (loc?.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0;",
     "tests": [
       "test/systems/shipyards1_audit_port.test.js"

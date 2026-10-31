@@ -92,8 +92,8 @@
   {
     "name": "THUNDERLOCK-ART-a-bar-under-the-shot",
     "file": "src/systems/quickslots.js",
-    "old": "const showsWear = (kind, item) => !isAmmunition(item) && (kind === 'weapon'",
-    "new": "const showsWear = (kind, item) => !!item && (kind === 'weapon'",
+    "old": "  !isAmmunition(item) &&\n  (kind === 'weapon' || kind === 'shield' || kind === 'light' || item.group === 'Armor' || isEnchanted(item)); // AUDIT UI B6: anything enchanted - the Sanguine Rose spends its condition as a ring does (the pack's wearPct)",
+    "new": "  !!item && (kind === 'weapon' || kind === 'shield' || kind === 'light' || item.group === 'Armor' || isEnchanted(item)); // AUDIT UI B6: anything enchanted - the Sanguine Rose spends its condition as a ring does (the pack's wearPct)",
     "tests": [
       "test/systems/thunderlockart.test.js"
     ]

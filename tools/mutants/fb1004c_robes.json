@@ -11,8 +11,8 @@
   {
     "name": "ROBES-quickloot-no-click",
     "file": "src/systems/quickLoot.js",
-    "old": "  sendQuestItemClick(item, getQuest);\n",
-    "new": "",
+    "old": "  sendQuestItemClick(item, getQuest);\n  const plan = planTake(item, { bag: playerEntity.items ?? [], entity: playerEntity, getQuest });",
+    "new": "  const plan = planTake(item, { bag: playerEntity.items ?? [], entity: playerEntity, getQuest });",
     "tests": [
       "test/systems/fb1004c_robes.test.js",
       "test/systems/quickloot.test.js"

@@ -109,8 +109,8 @@
   {
     "name": "QS2-the-off-hand-used-as-overflow-so-a-swap-dual-wields",
     "file": "src/systems/quickslots.js",
-    "old": "  const bumped = previous && !leftOnly ? unequipSlot(entity, target) : null;",
-    "new": "  const bumped = null;",
+    "old": "    const bumped = previous && !leftOnly ? unequipSlot(entity, target) : null;",
+    "new": "    const bumped = null;",
     "tests": [
       "test/systems/quickslots.test.js"
     ]
@@ -172,7 +172,7 @@
   {
     "name": "QS2-the-model-reaches-back-up-into-the-window",
     "file": "src/systems/quickslots.js",
-    "old": "import { isPotion, isDrug, isLightSource, useItem, USE_PENDING } from './useItem.js';   // ...and the ladder's own stand-ins for a host that handed no hook",
+    "old": "import { isPotion, isDrug, isLightSource, useItem, USE_PENDING } from './useItem.js'; // ...and the ladder's own stand-ins for a host that handed no hook",
     "new": "import { isPotion, isDrug, isLightSource, useItem } from './useItem.js';\nimport { USE_PENDING } from '../ui/native/nativeInventory.js';",
     "tests": [
       "test/systems/qs2_inputs.test.js",

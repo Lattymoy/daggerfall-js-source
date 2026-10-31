@@ -266,8 +266,8 @@
   {
     "name": "PROFMENU-step-nudge",
     "file": "src/systems/quickLoot.js",
-    "old": "  _nudge += Math.trunc(n);\n",
-    "new": "",
+    "old": "  _nudge += Math.trunc(n);\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/systems/fb0930b_toolsaid.test.js",
       "test/scenes/audit32_client.test.js",

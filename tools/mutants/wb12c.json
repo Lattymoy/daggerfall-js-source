@@ -2,8 +2,8 @@
   {
     "name": "WB12c-the-generator-left-moved",
     "file": "src/systems/portBooks.js",
-    "old": "  } finally { setSeed(seed); }",
-    "new": "  } finally { void seed; }",
+    "old": "    setSeed(seed);",
+    "new": "    void seed;",
     "tests": [
       "test/systems/wb12c_burning_doors.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WB12c-a-centred-row-left",
     "file": "src/systems/portBooks.js",
-    "old": "out.push(row.center ? RSC.JustifyCenter : RSC.JustifyLeft);",
-    "new": "out.push(RSC.JustifyLeft);",
+    "old": "      out.push(row.center ? RSC.JustifyCenter : RSC.JustifyLeft);",
+    "new": "      out.push(RSC.JustifyLeft);",
     "tests": [
       "test/systems/wb12c_burning_doors.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WB12c-a-page-left-open",
     "file": "src/systems/portBooks.js",
-    "old": "    out.push(RSC.EndOfPage);\n",
-    "new": "    void RSC.EndOfPage;\n",
+    "old": "    out.push(RSC.EndOfPage);",
+    "new": "    void RSC.EndOfPage;",
     "tests": [
       "test/systems/wb12c_burning_doors.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WB12c-the-title-in-the-body-s-face",
     "file": "src/systems/portBooks.js",
-    "old": "      if (row.font) out.push(RSC.FontPrefix, row.font);\n",
-    "new": "",
+    "old": "      if (row.font) out.push(RSC.FontPrefix, row.font);\n      textBytes(out, row.text);",
+    "new": "      textBytes(out, row.text);",
     "tests": [
       "test/systems/wb12c_burning_doors.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WB12c-a-word-off-the-bible",
     "file": "src/systems/portBooks.js",
-    "old": "names himself Ruhn.",
-    "new": "names himself Ruin.",
+    "old": "          'No Prince walks through such a wound himself. He sends a lord of his house to hold it, a Dremora of the rank they call valkynaz, and the one who answers most often in our Bay names himself Ruhn. Among the faithful he is the Warden of the Burning Gate. I have spoken with three who stood before him and lived. They agree that he is very large, that he burns, and that he does not tire.',",
+    "new": "          'No Prince walks through such a wound himself. He sends a lord of his house to hold it, a Dremora of the rank they call valkynaz, and the one who answers most often in our Bay names himself Ruin. Among the faithful he is the Warden of the Burning Gate. I have spoken with three who stood before him and lived. They agree that he is very large, that he burns, and that he does not tire.',",
     "tests": [
       "test/systems/wb12c_burning_doors.test.js"
     ]

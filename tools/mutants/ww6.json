@@ -277,8 +277,8 @@
   {
     "name": "WW6-client-lanes-unsynced",
     "file": "src/systems/raidingParties.js",
-    "old": "  syncLanes();   // WW6: the lanes past the Bay, rolled for the same day off the registry's towns there (the Bay's list untouched)\n",
-    "new": "",
+    "old": "  syncLanes(); // WW6: the lanes past the Bay, rolled for the same day off the registry's towns there (the Bay's list untouched)\n  // C. the raids that ran out [IL_0540-IL_05b9]",
+    "new": "  // C. the raids that ran out [IL_0540-IL_05b9]",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -286,8 +286,8 @@
   {
     "name": "WW6-client-held-replaced",
     "file": "src/systems/raidingParties.js",
-    "old": "    if (had) { held.delete(id); lanes.push(had); }",
-    "new": "    if (had) { held.delete(id); lanes.push(r); }",
+    "old": "      lanes.push(had);",
+    "new": "      lanes.push(r);",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -304,8 +304,8 @@
   {
     "name": "WW6-client-sig-day-only",
     "file": "src/systems/raidingParties.js",
-    "old": "  const sig = `${day}|${placesGen()}|${sharedClockOn() ? 1 : 0}`;",
-    "new": "  const sig = `${day}`;",
+    "old": "  const sig = `${day}|${placesGen()}|${sharedClockOn() ? 1 : 0}`; // AUDIT FRONTS B6: the fronts online alone",
+    "new": "  const sig = `${day}`; // AUDIT FRONTS B6: the fronts online alone",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -313,8 +313,8 @@
   {
     "name": "WW6-client-area-unsaved",
     "file": "src/systems/raidingParties.js",
-    "old": "    ...(Number.isInteger(r.area) ? { area: r.area } : {}),   // WW6: a raid past the Bay's area (a Bay raid's record the one it always was)\n",
-    "new": "",
+    "old": "    ...(Number.isInteger(r.area) ? { area: r.area } : {}), // WW6: a raid past the Bay's area (a Bay raid's record the one it always was)\n  })),",
+    "new": "  })),",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -322,8 +322,8 @@
   {
     "name": "WW6-client-area-unrestored",
     "file": "src/systems/raidingParties.js",
-    "old": "      ...(Number.isInteger(r.area) ? { area: r.area } : {}),   // WW6\n",
-    "new": "",
+    "old": "      ...(Number.isInteger(r.area) ? { area: r.area } : {}), // WW6\n    });",
+    "new": "    });",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -340,7 +340,7 @@
   {
     "name": "WW6-client-home-region",
     "file": "src/systems/raidingParties.js",
-    "old": "  return px && Number.isInteger(px.x) && Number.isInteger(px.y) && !inBay(px.x, px.y) ? areaAt(px.x, px.y, () => -1) : region;",
+    "old": "  return px && Number.isInteger(px.x) && Number.isInteger(px.y) && !inBay(px.x, px.y)\n    ? areaAt(px.x, px.y, () => -1)\n    : region;",
     "new": "  return region;",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
@@ -349,8 +349,8 @@
   {
     "name": "WW6-client-home-sea",
     "file": "src/systems/raidingParties.js",
-    "old": "  if (!(region >= 0)) return -1;\n",
-    "new": "",
+    "old": "  if (!(region >= 0)) return -1;\n  const px = host().playerPixel?.();",
+    "new": "  const px = host().playerPixel?.();",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -358,8 +358,8 @@
   {
     "name": "WW6-client-rows-home-unsaid",
     "file": "src/systems/raidingParties.js",
-    "old": "      ...(Number.isInteger(r.area) ? { home: home >= 0 && raidHome(r) === home } : {}),",
-    "new": "      ...(Number.isInteger(r.area) ? {} : {}),",
+    "old": "      ...(Number.isInteger(r.area) ? { home: home >= 0 && raidHome(r) === home } : {}), // WW6: a province's raid is its district's (its region names the whole province), a Bay raid's row the one it was",
+    "new": "      ...(Number.isInteger(r.area) ? {} : {}), // WW6: a province's raid is its district's (its region names the whole province), a Bay raid's row the one it was",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -376,8 +376,8 @@
   {
     "name": "WW6-groups-types-unread",
     "file": "src/systems/raidingParties.js",
-    "old": "    if (!types.has(p?.type) || !Number.isSafeInteger(p.location)",
-    "new": "    if (!Number.isSafeInteger(p.location)",
+    "old": "      !types.has(p?.type) ||\n      !Number.isSafeInteger(p.location) ||",
+    "new": "      !Number.isSafeInteger(p.location) ||",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -385,8 +385,8 @@
   {
     "name": "WW6-groups-street-kept",
     "file": "src/systems/raidingParties.js",
-    "old": " || !Number.isInteger(p.area) || street(p)) continue;",
-    "new": " || !Number.isInteger(p.area)) continue;",
+    "old": "      !Number.isInteger(p.area) ||\n      street(p)",
+    "new": "      !Number.isInteger(p.area)",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -394,8 +394,8 @@
   {
     "name": "WW6-groups-unindexed-kept",
     "file": "src/systems/raidingParties.js",
-    "old": " || !Number.isSafeInteger(p.location) || p.location >= 0 ||",
-    "new": " ||",
+    "old": "    if (\n      !types.has(p?.type) ||\n      !Number.isSafeInteger(p.location) ||\n      p.location >= 0 ||\n      raidLaneOfRegion(p.region) !== lane ||\n      !Number.isInteger(p.area) ||\n      street(p)\n    )\n      continue;",
+    "new": "    if (!types.has(p?.type) || raidLaneOfRegion(p.region) !== lane || !Number.isInteger(p.area) || street(p)) continue;",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -403,8 +403,8 @@
   {
     "name": "WW6-groups-areas-unsorted",
     "file": "src/systems/raidingParties.js",
-    "old": "  return Object.freeze([...byArea.keys()].sort((a, b) => a - b).map((area) => {",
-    "new": "  return Object.freeze([...byArea.keys()].map((area) => {",
+    "old": "    [...byArea.keys()]\n      .sort((a, b) => a - b)\n      .map((area) => {\n        const ps = byArea\n          .get(area)\n          .slice()\n          .sort((a, b) => (a.mapId >>> 0) - (b.mapId >>> 0));\n        return Object.freeze({\n          region: ps[0].region,\n          area,\n          towns: Object.freeze(\n            ps.map((p) => Object.freeze({ index: p.location, name: String(p.name ?? ''), px: p.px, py: p.py })),\n          ),\n        });\n      }),",
+    "new": "    [...byArea.keys()].map((area) => {\n      const ps = byArea\n        .get(area)\n        .slice()\n        .sort((a, b) => (a.mapId >>> 0) - (b.mapId >>> 0));\n      return Object.freeze({\n        region: ps[0].region,\n        area,\n        towns: Object.freeze(\n          ps.map((p) => Object.freeze({ index: p.location, name: String(p.name ?? ''), px: p.px, py: p.py })),\n        ),\n      });\n    }),",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -412,8 +412,8 @@
   {
     "name": "WW6-groups-towns-unsorted",
     "file": "src/systems/raidingParties.js",
-    "old": "    const ps = byArea.get(area).slice().sort((a, b) => (a.mapId >>> 0) - (b.mapId >>> 0));",
-    "new": "    const ps = byArea.get(area).slice();",
+    "old": "        const ps = byArea\n          .get(area)\n          .slice()\n          .sort((a, b) => (a.mapId >>> 0) - (b.mapId >>> 0));",
+    "new": "        const ps = byArea.get(area).slice();",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -531,8 +531,8 @@
   {
     "name": "WW6-client-runout-said",
     "file": "src/systems/raidingParties.js",
-    "old": "if (!r.cleansed && r.announced && home >= 0 && raidHome(r) === home)",
-    "new": "if (!r.cleansed && home >= 0 && raidHome(r) === home)",
+    "old": "    if (!r.cleansed && r.announced && home >= 0 && raidHome(r) === home)",
+    "new": "    if (!r.cleansed && home >= 0 && raidHome(r) === home)",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ],

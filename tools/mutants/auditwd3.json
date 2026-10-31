@@ -47,8 +47,8 @@
   {
     "name": "AWD3-CUSTOMS-LAYOUT-LOST",
     "file": "src/systems/realmCustoms.js",
-    "old": "      if (typeof slot.layout === 'string' && slot.layout) deed.layout = slot.layout;\n",
-    "new": "",
+    "old": "      if (typeof slot.layout === 'string' && slot.layout) deed.layout = slot.layout;\n      const first = houses[region];",
+    "new": "      const first = houses[region];",
     "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/systems/wd3_layoutPins.test.js"

@@ -174,8 +174,8 @@
   {
     "name": "AUDIT-PI1-I2-quick-loot-part",
     "file": "src/systems/quickLoot.js",
-    "old": "if (wholeStack && plan.amount < (item.stackCount ?? 1)) return { refusal: REFUSAL.cannotCarry };",
-    "new": "if (false) return { refusal: REFUSAL.cannotCarry };",
+    "old": "  if (wholeStack && plan.amount < (item.stackCount ?? 1)) return { refusal: REFUSAL.cannotCarry };",
+    "new": "  if (false) return { refusal: REFUSAL.cannotCarry };",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]

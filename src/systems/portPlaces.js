@@ -25,7 +25,16 @@
 // systems/shipyards.js; the recruits systems/crewHall.js. Pure: no DOM, no renderer, no clock. Not a DFU member. Ledger A
 // (SHIPYARDS).
 import { LOCATION_TYPES } from '../formats/mapsFile.js';
-import { YARD_KIND_ORDER, CRAFT_YARD_ORDER, YARD_TALK_GROUPS, YARD_KEY_BASE, YARD_QUALITY, townSeed, townKeeper, namedAfter } from './merchantYards.js';
+import {
+  YARD_KIND_ORDER,
+  CRAFT_YARD_ORDER,
+  YARD_TALK_GROUPS,
+  YARD_KEY_BASE,
+  YARD_QUALITY,
+  townSeed,
+  townKeeper,
+  namedAfter,
+} from './merchantYards.js';
 
 /** The two places a port town's layout stands, in the order they are placed (world/portSites.js). */
 export const PORT_SITE_ORDER = Object.freeze(['shipyard', 'lighthouse']);
@@ -38,19 +47,57 @@ export const PORT_PLACE_ORDER = Object.freeze(['shipyard', 'crewhall', 'lighthou
  * name and face), `group` the Where-is page's group (as DFU's are worded - "General stores", "Taverns").
  */
 export const PORT_PLACES = Object.freeze({
-  shipyard: Object.freeze({ key: 'shipyard', title: 'Shipyard', keeper: 'Shipmaster', trade: 'Ships sold, bought back, mended and refitted', sign: 'SHIPS', seed: 0x5419a7, group: 'Shipyards' }),
-  crewhall: Object.freeze({ key: 'crewhall', title: 'Crew Hall', keeper: 'Crewmaster', trade: 'Hands signed on for any ship', sign: 'CREW', seed: 0x0c4e11, group: 'Crew halls' }),
-  lighthouse: Object.freeze({ key: 'lighthouse', title: 'Lighthouse', keeper: 'Lightkeeper', trade: 'The harbor\'s light', sign: '', seed: 0x011947, group: 'Lighthouses' }),
-  docks: Object.freeze({ key: 'docks', title: 'Docks', keeper: '', trade: 'Ships made fast and cargo landed', sign: '', seed: 0x00d0c5, group: 'Docks' }),
+  shipyard: Object.freeze({
+    key: 'shipyard',
+    title: 'Shipyard',
+    keeper: 'Shipmaster',
+    trade: 'Ships sold, bought back, mended and refitted',
+    sign: 'SHIPS',
+    seed: 0x5419a7,
+    group: 'Shipyards',
+  }),
+  crewhall: Object.freeze({
+    key: 'crewhall',
+    title: 'Crew Hall',
+    keeper: 'Crewmaster',
+    trade: 'Hands signed on for any ship',
+    sign: 'CREW',
+    seed: 0x0c4e11,
+    group: 'Crew halls',
+  }),
+  lighthouse: Object.freeze({
+    key: 'lighthouse',
+    title: 'Lighthouse',
+    keeper: 'Lightkeeper',
+    trade: "The harbor's light",
+    sign: '',
+    seed: 0x011947,
+    group: 'Lighthouses',
+  }),
+  docks: Object.freeze({
+    key: 'docks',
+    title: 'Docks',
+    keeper: '',
+    trade: 'Ships made fast and cargo landed',
+    sign: '',
+    seed: 0x00d0c5,
+    group: 'Docks',
+  }),
 });
 /** A place the law knows, or null. */
-export const validPortPlace = (k) => (typeof k === 'string' && Object.prototype.hasOwnProperty.call(PORT_PLACES, k) ? k : null);
+export const validPortPlace = (k) =>
+  typeof k === 'string' && Object.prototype.hasOwnProperty.call(PORT_PLACES, k) ? k : null;
 /** A place a town's layout stands (PORT_SITE_ORDER's), or null. */
-export const validPortSite = (k) => (PORT_SITE_ORDER.includes(/** @type {any} */ (k)) ? /** @type {string} */ (k) : null);
+export const validPortSite = (k) =>
+  PORT_SITE_ORDER.includes(/** @type {any} */ (k)) ? /** @type {string} */ (k) : null;
 
 /** The towns that stand the port's places: the cities, towns and villages the port's harbour law calls ports (the
  *  host's `isPort` - its map pixel's port). No farm, manor, temple or dungeon stands a shipyard. */
-export const PORT_TOWN_TYPES = Object.freeze([LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage]);
+export const PORT_TOWN_TYPES = Object.freeze([
+  LOCATION_TYPES.TownCity,
+  LOCATION_TYPES.TownHamlet,
+  LOCATION_TYPES.TownVillage,
+]);
 /** Whether a map table's location type is a town's (PORT_TOWN_TYPES) - the half of `isPortTown` a map summary answers
  *  alone (FIELD BUGS 2026-10-13c PORT-TOWNS: the harbour board's ports, scenes/world.js navalPortList). Pure.
  *  @param {number} type */
@@ -62,7 +109,8 @@ export const isPortTown = (loc, isPort) => isPortTownType(loc?.mapTableData?.loc
  *  or Daggerfall's PortTownAndUnknown byte (AUDIT SHIPYARDS L6-10: executed here, not read off world.js's text) - the
  *  data's half of world/portSites.js portTownOnSea. The data alone is no coast (FIELD BUGS 2026-10-14 INLAND-PORTS): the
  *  byte's 0x10 is the region capitals' mark, and the table copied the byte's list. Pure. */
-export const portTownByData = (loc, hasPort) => !!hasPort?.(loc?.mapTableData?.mapId) || (loc?.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0;
+export const portTownByData = (loc, hasPort) =>
+  !!hasPort?.(loc?.mapTableData?.mapId) || (loc?.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0;
 
 /**
  * THE FOUND PLACES' ONE ORDER (YARDS-FOUND's law, widened): the town's yards (systems/merchantYards.js), then the port's
@@ -91,7 +139,8 @@ export const lettersOnMap = (buildingKey) => !UNLETTERED.has(buildingKey);
 
 /** A place's keeper: townKeeper's draw on the town's map id and the place's salt. Pure.
  *  @param {number} mapId @param {string} place @param {number} regionIndex */
-export const portKeeper = (mapId, place, regionIndex, people = undefined) => townKeeper(townSeed(mapId, PORT_PLACES[validPortPlace(place) ?? 'shipyard'].seed), regionIndex, people);
+export const portKeeper = (mapId, place, regionIndex, people = undefined) =>
+  townKeeper(townSeed(mapId, PORT_PLACES[validPortPlace(place) ?? 'shipyard'].seed), regionIndex, people);
 
 /**
  * A place's name: the shipyard and the crew hall after their keepers ("Halbrecht's Shipyard", "Voss's Crew Hall"), the
@@ -123,8 +172,13 @@ export function portDirectoryRows(places) {
     const kind = validPortPlace(s?.kind);
     if (!kind || !Number.isFinite(s.x) || !Number.isFinite(s.z)) continue;
     out.push({
-      name: typeof s.name === 'string' && s.name ? s.name : portPlaceName(kind), buildingType: `port:${kind}`, factionId: 0, quality: YARD_QUALITY,
-      position: [s.x, 0, s.z], buildingKey: foundBuildingKey(kind), yard: kind,
+      name: typeof s.name === 'string' && s.name ? s.name : portPlaceName(kind),
+      buildingType: `port:${kind}`,
+      factionId: 0,
+      quality: YARD_QUALITY,
+      position: [s.x, 0, s.z],
+      buildingKey: foundBuildingKey(kind),
+      yard: kind,
     });
   }
   return out;

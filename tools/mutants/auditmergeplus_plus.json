@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-MERGE-PLUS-B2-the-ghost-refused-only-after-the-shield-came-off",
     "file": "src/systems/quickslots.js",
-    "old": "    if (hotbarView(entity)[i]?.ghost) { say?.(HOTBAR_TEXT.lightGone(e.name)); return { kind: 'refused', name: e.name }; }\n",
-    "new": "",
+    "old": "    if (hotbarView(entity)[i]?.ghost) {\n      say?.(HOTBAR_TEXT.lightGone(e.name));\n      return { kind: 'refused', name: e.name };\n    }\n    const snap = equipDelaySnapshot(entity);",
+    "new": "    const snap = equipDelaySnapshot(entity);",
     "tests": [
       "test/systems/auditmergeplus_plus.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-MERGE-PLUS-B2-the-refusal-leaves-the-pause-billed",
     "file": "src/systems/quickslots.js",
-    "old": "      if (entity) entity.equipCountdown = before;   // AUDIT MERGE-PLUS B2: the shield is back where it was - nothing changed hands\n",
-    "new": "",
+    "old": "      if (entity) entity.equipCountdown = before; // AUDIT MERGE-PLUS B2: the shield is back where it was - nothing changed hands\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/auditmergeplus_plus.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-MERGE-PLUS-B6-a-peers-light-unclamped",
     "file": "src/systems/playerTorch.js",
-    "old": "let range = Math.min(lt >> 1, peerLightRangeMax());",
-    "new": "let range = lt >> 1;",
+    "old": "  let range = Math.min(lt >> 1, peerLightRangeMax()); // AUDIT MERGE-PLUS B6",
+    "new": "  let range = lt >> 1; // AUDIT MERGE-PLUS B6",
     "tests": [
       "test/systems/auditmergeplus_plus.test.js"
     ]

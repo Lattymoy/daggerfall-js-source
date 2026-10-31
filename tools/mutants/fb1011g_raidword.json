@@ -11,8 +11,8 @@
   {
     "name": "RAID-WORD-b-any-raid-on-the-pixel-said",
     "file": "src/systems/raidingParties.js",
-    "old": "r.px === px.x && r.py === px.y && (r.killed > 0 || r.struck)) ?? null;",
-    "new": "r.px === px.x && r.py === px.y) ?? null;",
+    "old": "  return (\n    state.raids.find((r) => raidActive(r, now) && r.px === px.x && r.py === px.y && (r.killed > 0 || r.struck)) ?? null\n  );",
+    "new": "  return state.raids.find((r) => raidActive(r, now) && r.px === px.x && r.py === px.y) ?? null;",
     "tests": [
       "test/systems/fb1011g_raidword.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RAID-WORD-c-the-pixel-unread",
     "file": "src/systems/raidingParties.js",
-    "old": "raidActive(r, now) && r.px === px.x && r.py === px.y && (r.killed > 0 || r.struck)",
-    "new": "raidActive(r, now) && (r.killed > 0 || r.struck)",
+    "old": "  return (\n    state.raids.find((r) => raidActive(r, now) && r.px === px.x && r.py === px.y && (r.killed > 0 || r.struck)) ?? null\n  );",
+    "new": "  return state.raids.find((r) => raidActive(r, now) && (r.killed > 0 || r.struck)) ?? null;",
     "tests": [
       "test/systems/fb1011g_raidword.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RAID-WORD-d-the-sweep-keeps-the-stood",
     "file": "src/systems/raidingParties.js",
-    "old": "  _live = _live.filter((e) => e.kind === 'raider' && e.foe.dead && !e.counted);\n",
-    "new": "",
+    "old": "  _live = _live.filter((e) => e.kind === 'raider' && e.foe.dead && !e.counted);\n}",
+    "new": "}",
     "tests": [
       "test/systems/fb1011g_raidword.test.js"
     ]

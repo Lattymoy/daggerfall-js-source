@@ -169,7 +169,7 @@ the same way, found on the way:
   now runs with a lantern hung (`handheldTorches.js:"|| beltLanternOf"`).
   An unhung lantern with the switch off still asks a hand.
 - The hotbar's lantern slot took the shield off (SHIELD1's torch law) and an off-hand weapon refused it. A lantern at the
-  waist takes no hand, so its slot does neither (`quickslots.js:"const atWaist = lanternAtWaist(hotbarView(entity)[i]?.item);"`);
+  waist takes no hand, so its slot does neither (`quickslots.js:"const atWaist = lanternAtWaist"`);
   a torch's slot still takes the shield off first.
 
 A torch and a candle are held, as Handheld Torches holds them, and stay the hand's row.

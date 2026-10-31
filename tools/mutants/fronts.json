@@ -102,8 +102,8 @@
   {
     "name": "FRONTS-raid-client",
     "file": "src/systems/raidingParties.js",
-    "old": "export const raidsForLane = (day, lane, groups, fronted = true) => (fronted && !raidLaneStands(day, lane) ?",
-    "new": "export const raidsForLane = (day, lane, groups, fronted = true) => (fronted && !raidLaneOpen(lane) ?",
+    "old": "  fronted && !raidLaneStands(day, lane)",
+    "new": "  fronted && !raidLaneOpen(lane)",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],
@@ -273,8 +273,8 @@
   {
     "name": "AUDIT-FRONTS-B6-offline-fronted",
     "file": "src/systems/raidingParties.js",
-    "old": "(fronted && !raidLaneStands(day, lane) ? [] :",
-    "new": "(!raidLaneStands(day, lane) ? [] :",
+    "old": "  fronted && !raidLaneStands(day, lane)",
+    "new": "  !raidLaneStands(day, lane)",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],
@@ -283,8 +283,8 @@
   {
     "name": "AUDIT-FRONTS-B6-host-online",
     "file": "src/systems/raidingParties.js",
-    "old": "raidsForLane(day, lane, laneGroupsNow(lane), sharedClockOn())",
-    "new": "raidsForLane(day, lane, laneGroupsNow(lane), true)",
+    "old": "const lanesForDay = (day) =>\n  RAID_LANES_BEYOND.flatMap((lane) => raidsForLane(day, lane, laneGroupsNow(lane), sharedClockOn()));",
+    "new": "const lanesForDay = (day) => RAID_LANES_BEYOND.flatMap((lane) => raidsForLane(day, lane, laneGroupsNow(lane), true));",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],

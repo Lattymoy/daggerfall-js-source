@@ -15,9 +15,18 @@
 const _listeners = new Map();
 /** Register a listener by name: `fn(entity, { kind })` - the killed foe's entity, and the blow's kind ('melee',
  *  'arrow', 'spell', 'remote' for a puppet's owner's word). A name re-registered replaces; `null` removes. */
-export function registerPlayerKillListener(name, fn) { if (typeof fn === 'function') _listeners.set(name, fn); else _listeners.delete(name); }
+export function registerPlayerKillListener(name, fn) {
+  if (typeof fn === 'function') _listeners.set(name, fn);
+  else _listeners.delete(name);
+}
 /** A pool's word: the player's own blow killed this foe. Every listener is told; one that throws is skipped. */
 export function reportPlayerKill(entity, info = {}) {
   const kind = typeof info?.kind === 'string' ? info.kind : 'melee';
-  for (const fn of _listeners.values()) { try { fn(entity, { kind }); } catch { /* a set is not the death's problem */ } }
+  for (const fn of _listeners.values()) {
+    try {
+      fn(entity, { kind });
+    } catch {
+      /* a set is not the death's problem */
+    }
+  }
 }

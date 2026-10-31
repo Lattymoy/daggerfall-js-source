@@ -18782,7 +18782,7 @@ What the ladder says, every arm driven by a pin:
   roll that has not happened. The rows are a glance: nothing is lit, and
   the wheel and the take keys stay with the camera
   (`worldHover.js:"export const PREVIEW_KEYS = Object.freeze(['container:', 'decor:']);"`,
-  `quickLoot.js:"const take = frame?.kind === 'items' && !frame.preview;"`).
+  `quickLoot.js:"const take = frame?.kind"`).
   The press is unchanged: the private-property question, the storage
   window, and the stocking itself still happen on the click. DFU does
   not list a cupboard. The interior host builds the rung once

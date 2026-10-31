@@ -265,8 +265,8 @@
   {
     "name": "FORAGE1-30-a-refused-press-strikes-gold",
     "file": "src/systems/quickslots.js",
-    "old": "  if (res?.refused) {\n    if (res.text && !res.said) say?.(res.text);\n    return { kind: 'refused', name: r.name, result: res };\n  }\n",
-    "new": "",
+    "old": "  if (res?.refused) {\n    if (res.text && !res.said) say?.(res.text);\n    return { kind: 'refused', name: r.name, result: res };\n  }\n  // UI2: AND WHAT HAS NO USE SAYS SO. UseItem's catch-all does nothing and says nothing (DFU's own - the pack's click",
+    "new": "  // UI2: AND WHAT HAS NO USE SAYS SO. UseItem's catch-all does nothing and says nothing (DFU's own - the pack's click",
     "tests": [
       "test/systems/forage2_tools.test.js"
     ]

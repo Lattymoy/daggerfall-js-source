@@ -245,8 +245,8 @@
   {
     "name": "PVP-KIT-the-kit-press-unread",
     "file": "src/systems/quickslots.js",
-    "old": "const r = kitPress?.(i, { ...e.kit }) ?? 'none';",
-    "new": "const r = 'none';",
+    "old": "    const r = kitPress?.(i, { ...e.kit }) ?? 'none';",
+    "new": "    const r = 'none';",
     "tests": [
       "test/systems/wild/pvpkit.test.js",
       "test/systems/wild/pvpset.test.js"

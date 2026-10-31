@@ -29,8 +29,8 @@
   {
     "name": "MACT-the-torch-record-says-nothing",
     "file": "src/systems/playerTorch.js",
-    "old": "turns it into a per-light mask.\n    carried: true,\n  };",
-    "new": "turns it into a per-light mask.\n    carried: false,\n  };",
+    "old": "    // fact and the three laws read it. The composer (magicCandle.withPlayerLights) turns it into a per-light mask.\n    carried: true,",
+    "new": "    // fact and the three laws read it. The composer (magicCandle.withPlayerLights) turns it into a per-light mask.\n    carried: false,",
     "tests": [
       "test/render/mact_bugs.test.js"
     ]

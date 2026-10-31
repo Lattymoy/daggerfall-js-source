@@ -496,8 +496,8 @@
   {
     "name": "WALLET1-hotbar-silent",
     "file": "src/systems/quickslots.js",
-    "old": "    say?.(walletLines(walletContents(pack, entity)).slice(1).join(' · '));\n",
-    "new": "",
+    "old": "    say?.(walletLines(walletContents(pack, entity)).slice(1).join(' · '));\n    refreshWalletSilver();",
+    "new": "    refreshWalletSilver();",
     "why": "a wallet pressed on the hotbar says nothing",
     "tests": [
       "test/systems/wallet1.test.js"

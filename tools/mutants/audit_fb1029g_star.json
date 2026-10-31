@@ -114,8 +114,8 @@
   {
     "name": "AFB-STAR-F4-boss-unsaid",
     "file": "src/systems/raidingParties.js",
-    "old": "h.standRaider?.(mobileType, o, boss)",
-    "new": "h.standRaider?.(mobileType, o)",
+    "old": "          : h.standRaider?.(mobileType, o, boss); // STAFF-EVENT PACKS: where, for a pack's",
+    "new": "          : h.standRaider?.(mobileType, o); // STAFF-EVENT PACKS: where, for a pack's",
     "tests": [
       "test/systems/staffevent_raid.test.js"
     ],

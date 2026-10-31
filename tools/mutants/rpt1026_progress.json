@@ -198,8 +198,8 @@
   {
     "name": "RPT1026-PROGRESS-hotbar-jewel-worn",
     "file": "src/systems/quickslots.js",
-    "old": "return castsWhenUsed(item) && !wornForMore(item) ? 'use' : 'wear';",
-    "new": "return 'wear';",
+    "old": "  if (getEquipSlot({}, item) !== EQUIP_SLOTS.None) return castsWhenUsed(item) && !wornForMore(item) ? 'use' : 'wear'; // UI2: a throwaway table - the rule is the item's; RPT1026-PROGRESS: a power to use is used; AUDIT RPT1026 F2: unless wearing it is worth something too",
+    "new": "  if (getEquipSlot({}, item) !== EQUIP_SLOTS.None) return 'wear'; // UI2: a throwaway table - the rule is the item's; RPT1026-PROGRESS: a power to use is used; AUDIT RPT1026 F2: unless wearing it is worth something too",
     "tests": [
       "test/systems/rpt1026_progress.test.js"
     ],
@@ -208,8 +208,8 @@
   {
     "name": "RPT1026-PROGRESS-hotbar-saved-slot-worn",
     "file": "src/systems/quickslots.js",
-    "old": "  if (castsWhenUsed(worn) && (!wornForMore(worn) || isEquipped(worn)) && typeof doors.quickUse === 'function') return",
-    "new": "  if (false && castsWhenUsed(worn) && (!wornForMore(worn) || isEquipped(worn)) && typeof doors.quickUse === 'function') return",
+    "old": "  if (castsWhenUsed(worn) && (!wornForMore(worn) || isEquipped(worn)) && typeof doors.quickUse === 'function')",
+    "new": "  if (false && castsWhenUsed(worn) && (!wornForMore(worn) || isEquipped(worn)) && typeof doors.quickUse === 'function')",
     "tests": [
       "test/systems/rpt1026_progress.test.js"
     ],
@@ -218,8 +218,8 @@
   {
     "name": "RPT1026-PROGRESS-hotbar-held-used",
     "file": "src/systems/quickslots.js",
-    "old": "e?.type === ENCHANTMENT_TYPES.CastWhenUsed);",
-    "new": "e?.type === ENCHANTMENT_TYPES.CastWhenUsed || e?.type === ENCHANTMENT_TYPES.CastWhenHeld);",
+    "old": "  Array.isArray(item?.enchantments) && item.enchantments.some((e) => e?.type === ENCHANTMENT_TYPES.CastWhenUsed);",
+    "new": "  Array.isArray(item?.enchantments) &&\n  item.enchantments.some(\n    (e) => e?.type === ENCHANTMENT_TYPES.CastWhenUsed || e?.type === ENCHANTMENT_TYPES.CastWhenHeld,\n  );",
     "tests": [
       "test/systems/rpt1026_progress.test.js",
       "test/scenes/audit_rpt1026_progress.test.js"

@@ -270,7 +270,7 @@ into the set. Outside PvP the spell keys work as before.
 
 PVP-SET (the owner, 2026-10-29: "player should get a whole second hot bar of the one we have", "hot bar need to use
 exsistning one u stack one on top", "need a menu to make spells for thr hot bar small easy"): the hotbar has two sets of
-the same slots (`quickslots.js:"export function useHotbarSet(name) {"`). The PvP set is in force while my flag is up in
+the same slots (`quickslots.js:"export function useHotbarSet"`). The PvP set is in force while my flag is up in
 the zone or the PvP menu is open (`pvpSpellMenu.js:"const inForce = () => on() || open;"`): the same bar and
 place, keys 1 to 0, held up whatever the bar's style (`uiSkin.js:"export function forceHotbar(fn) {"`). It takes toolkit
 spells and items, never a book spell; the save keeps the normal set alone. It lives in the browser; an old bar
@@ -285,7 +285,7 @@ clears.
 Each slot shows its key, the cost a cast charges now, armour and all (`pvpSpellMenu.js:"export const kitCastCost = (entity, slot) =>"`),
 a gold edge on the last cast, a shade that drains with the cast clock, grey when magicka is short, and a padlock while
 the PvP combat lock runs (`pvpFlagHost.js:"fightLeft: () =>"`): the set cannot change then
-(`quickslots.js:"if (!kept || frozen()) return false;"`). The classic skin has no hotbar: there a key whose slot holds a
+(`quickslots.js:"if (!kept || frozen())"`). The classic skin has no hotbar: there a key whose slot holds a
 toolkit spell casts it. A departure: DFU has no PvP.
 
 "They get to pick damage and its a aoe", "Just our damage formula": Damage is the classic Fireball's record at Area at

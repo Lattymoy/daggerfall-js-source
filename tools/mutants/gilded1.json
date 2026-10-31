@@ -74,8 +74,8 @@
   {
     "name": "GILDED1-the-salvage",
     "file": "src/systems/reforge.js",
-    "old": "  if (item.rarity === 'gilded') return 'gilded';",
-    "new": "  if (item.rarity === 'never') return 'gilded';",
+    "old": "  if (item.rarity === 'gilded') return 'gilded'; // GILDED1: a static roll is never broken down",
+    "new": "  if (item.rarity === 'never') return 'gilded'; // GILDED1: a static roll is never broken down",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]

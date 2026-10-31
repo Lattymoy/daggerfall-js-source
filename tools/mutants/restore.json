@@ -166,8 +166,8 @@
   {
     "name": "RESTORE-B-no-evidence-asked",
     "file": "src/systems/realmCustoms.js",
-    "old": "if (!permanent.has(name) || regionDeedsOf(houses, region).length >= HOUSES_PER_REGION) continue;",
-    "new": "if (regionDeedsOf(houses, region).length >= HOUSES_PER_REGION) continue;",
+    "old": "      if (!permanent.has(name) || regionDeedsOf(houses, region).length >= HOUSES_PER_REGION) continue;",
+    "new": "      if (regionDeedsOf(houses, region).length >= HOUSES_PER_REGION) continue;",
     "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/systems/restore.test.js"
@@ -176,8 +176,8 @@
   {
     "name": "RESTORE-B-a-region-overwritten",
     "file": "src/systems/realmCustoms.js",
-    "old": "      if (first?.buildingKey > 0) (first.more ??= []).push(deed);\n      else houses[region] = ",
-    "new": "      houses[region] = ",
+    "old": "      if (first?.buildingKey > 0) (first.more ??= []).push(deed);\n      else houses[region] = { ...deed, ...(Array.isArray(first?.more) ? { more: first.more } : {}) };",
+    "new": "      houses[region] = { ...deed, ...(Array.isArray(first?.more) ? { more: first.more } : {}) };",
     "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/systems/restore.test.js"
@@ -186,8 +186,8 @@
   {
     "name": "RESTORE-B-a-house-uncrossed",
     "file": "src/systems/realmCustoms.js",
-    "old": "mapId: slot.mapId, buildingKey: slot.buildingKey, crossed: true };",
-    "new": "mapId: slot.mapId, buildingKey: slot.buildingKey };",
+    "old": "        crossed: true,\n      };",
+    "new": "      };",
     "tests": [
       "test/systems/restore.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "RESTORE-B-a-ship-without-evidence",
     "file": "src/systems/realmCustoms.js",
-    "old": "    if (permanent.has(name)) {\n      realm.ownedShip = ship;",
-    "new": "    if (true) {\n      realm.ownedShip = ship;",
+    "old": "    if (permanent.has(name)) {",
+    "new": "    if (true) {",
     "tests": [
       "test/systems/restore.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "RESTORE-B-a-ship-over-a-ship",
     "file": "src/systems/realmCustoms.js",
-    "old": "if (ship !== SHIP_TYPES.None && (realm.ownedShip ?? SHIP_TYPES.None) === SHIP_TYPES.None) {",
-    "new": "if (ship !== SHIP_TYPES.None) {",
+    "old": "  if (ship !== SHIP_TYPES.None && (realm.ownedShip ?? SHIP_TYPES.None) === SHIP_TYPES.None) {",
+    "new": "  if (ship !== SHIP_TYPES.None) {",
     "tests": [
       "test/systems/restore.test.js"
     ]
@@ -240,8 +240,8 @@
   {
     "name": "RESTORE-B-a-ship-uncrossed",
     "file": "src/systems/realmCustoms.js",
-    "old": "      realm.shipCrossed = true;\n",
-    "new": "",
+    "old": "      realm.shipCrossed = true;\n      piecesBack(name);",
+    "new": "      piecesBack(name);",
     "tests": [
       "test/systems/restore.test.js"
     ]
@@ -249,8 +249,8 @@
   {
     "name": "RESTORE-B-any-offline-character",
     "file": "src/systems/realmCustoms.js",
-    "old": "find((/** @type {any} */ e) => e?.snap?.characterId === origin)",
-    "new": "find(() => true)",
+    "old": "  const offline = find((/** @type {any} */ e) => e?.snap?.characterId === origin)?.snap ?? null;",
+    "new": "  const offline = find(() => true)?.snap ?? null;",
     "tests": [
       "test/systems/restore.test.js"
     ]
@@ -276,8 +276,8 @@
   {
     "name": "RESTORE-B-said-as-one",
     "file": "src/systems/realmCustoms.js",
-    "old": "${back.houses.length + (back.ship ? 1 : 0) > 1 ? 'They are' : 'It is'}",
-    "new": "${'It is'}",
+    "old": "    `Customs had kept back ${what}. ${back.houses.length + (back.ship ? 1 : 0) > 1 ? 'They are' : 'It is'} yours again, with every piece in ${back.houses.length + (back.ship ? 1 : 0) > 1 ? 'them' : 'it'}. The realm's bank does not buy back what came through customs.`,",
+    "new": "    `Customs had kept back ${what}. ${'It is'} yours again, with every piece in ${back.houses.length + (back.ship ? 1 : 0) > 1 ? 'them' : 'it'}. The realm's bank does not buy back what came through customs.`,",
     "tests": [
       "test/systems/restore.test.js"
     ]

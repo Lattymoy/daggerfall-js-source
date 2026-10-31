@@ -175,8 +175,8 @@
   {
     "name": "HOUSES3-customs-past-the-three",
     "file": "src/systems/realmCustoms.js",
-    "old": "if (!permanent.has(name) || regionDeedsOf(houses, region).length >= HOUSES_PER_REGION) continue;",
-    "new": "if (!permanent.has(name)) continue;",
+    "old": "      if (!permanent.has(name) || regionDeedsOf(houses, region).length >= HOUSES_PER_REGION) continue;",
+    "new": "      if (!permanent.has(name)) continue;",
     "tests": [
       "test/systems/restore.test.js"
     ]

@@ -29,8 +29,8 @@
   {
     "name": "HTWN-bit-for-any-light",
     "file": "src/systems/playerTorch.js",
-    "old": "(lanternAtWaist(light) ? 1 : undefined)",
-    "new": "(light ? 1 : undefined)",
+    "old": "export const waistLanternPoseBit = (light) => (lanternAtWaist(light) ? 1 : undefined);",
+    "new": "export const waistLanternPoseBit = (light) => (light ? 1 : undefined);",
     "tests": [
       "test/net/htwaistnet_peers.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "HTWN-bit-zero-not-absent",
     "file": "src/systems/playerTorch.js",
-    "old": "(lanternAtWaist(light) ? 1 : undefined)",
-    "new": "(lanternAtWaist(light) ? 1 : 0)",
+    "old": "export const waistLanternPoseBit = (light) => (lanternAtWaist(light) ? 1 : undefined);",
+    "new": "export const waistLanternPoseBit = (light) => (lanternAtWaist(light) ? 1 : 0);",
     "tests": [
       "test/net/htwaistnet_peers.test.js"
     ]

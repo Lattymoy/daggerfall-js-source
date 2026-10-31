@@ -326,8 +326,8 @@
   {
     "name": "L10N3e-quest-playerTorch-dies",
     "file": "src/systems/playerTorch.js",
-    "old": "source, nameOf?.(source)));",
-    "new": "source));",
+    "old": "      say?.(expandItemMacro(localizedText('lightDies', LIGHT_DIES_TEXT), source, nameOf?.(source)));",
+    "new": "      say?.(expandItemMacro(localizedText('lightDies', LIGHT_DIES_TEXT), source));",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]

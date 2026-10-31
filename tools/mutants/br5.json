@@ -184,8 +184,8 @@
   {
     "name": "BR5-cross-line-the-game",
     "file": "src/systems/realmCustoms.js",
-    "old": "after: 'Online, this character levels the classic way, by its skills.',",
-    "new": "after: 'Online, this character levels the Daggerfall way, by its skills.',",
+    "old": "  after: 'Online, this character levels the classic way, by its skills.',",
+    "new": "  after: 'Online, this character levels the Daggerfall way, by its skills.',",
     "tests": [
       "test/ui/brand.test.js"
     ],

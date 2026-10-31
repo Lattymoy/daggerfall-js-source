@@ -41,7 +41,7 @@
   {
     "name": "RAID-R1-client-by-key-alone",
     "file": "src/systems/raidingParties.js",
-    "old": "const raidOfWord = (key, g) => { const r = raidByKey(key); return r && raidSigOf(r) === g ? r : null; };",
+    "old": "const raidOfWord = (key, g) => {\n  const r = raidByKey(key);\n  return r && raidSigOf(r) === g ? r : null;\n};",
     "new": "const raidOfWord = (key, g) => raidByKey(key);",
     "tests": [
       "test/net/raid3_raidLedger.test.js",
@@ -51,8 +51,8 @@
   {
     "name": "RAID-R1-cls-by-key-alone",
     "file": "src/systems/raidingParties.js",
-    "old": "    for (const [key, , g] of Array.isArray(f.l) ? f.l : []) { const r = raidOfWord(key, g);",
-    "new": "    for (const [key] of Array.isArray(f.l) ? f.l : []) { const r = raidByKey(key);",
+    "old": "    for (const [key, , g] of Array.isArray(f.l) ? f.l : []) {\n      const r = raidOfWord(key, g);",
+    "new": "    for (const [key] of Array.isArray(f.l) ? f.l : []) {\n      const r = raidByKey(key);",
     "tests": [
       "test/net/raid3_raidLedger.test.js",
       "test/net/auditraid.test.js"

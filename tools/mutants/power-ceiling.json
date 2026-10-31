@@ -2,8 +2,8 @@
   {
     "name": "POWER-CEILING-a-blow-top-raised",
     "file": "src/systems/powerCeiling.js",
-    "old": "export const BLOW_TOPS = Object.freeze({ sigil: 12, sets: 200,",
-    "new": "export const BLOW_TOPS = Object.freeze({ sigil: 12, sets: 210,",
+    "old": "export const BLOW_TOPS = Object.freeze({ sigil: 12, sets: 200, loot: 240, firmament: 50, mastery: 400, martial: 40 }); // WEAPON-GEAR: mastery's top the axe's climb 80 + its gear's 320 (weaponMastery.js), was the climb's +80%",
+    "new": "export const BLOW_TOPS = Object.freeze({ sigil: 12, sets: 210, loot: 240, firmament: 50, mastery: 400, martial: 40 }); // WEAPON-GEAR: mastery's top the axe's climb 80 + its gear's 320 (weaponMastery.js), was the climb's +80%",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "POWER-CEILING-a-guard-top-raised",
     "file": "src/systems/powerCeiling.js",
-    "old": "export const GUARD_TOPS = Object.freeze({ loot: 55,",
-    "new": "export const GUARD_TOPS = Object.freeze({ loot: 60,",
+    "old": "export const GUARD_TOPS = Object.freeze({ loot: 55, sets: 50, firmament: 15, martial: 30, arcane: 20 });",
+    "new": "export const GUARD_TOPS = Object.freeze({ loot: 60, sets: 50, firmament: 15, martial: 30, arcane: 20 });",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "POWER-CEILING-the-product-not-kept",
     "file": "src/systems/powerCeiling.js",
-    "old": "_blow.k = k * (1 + take / 100);",
-    "new": "_blow.k = k;",
+    "old": "    _blow.k = k * (1 + take / 100);",
+    "new": "    _blow.k = k;",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "POWER-CEILING-the-share-not-kept",
     "file": "src/systems/powerCeiling.js",
-    "old": "_guard.k = k * (1 - take / 100);",
-    "new": "_guard.k = k;",
+    "old": "    _guard.k = k * (1 - take / 100);",
+    "new": "    _guard.k = k;",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]
@@ -526,8 +526,8 @@
   {
     "name": "AUDIT-HORIZONTAL-D4-a-registrys-own-product-not-kept",
     "file": "src/systems/powerCeiling.js",
-    "old": " if (registry != null) _blow.per[registry] = own * (1 + take / 100); }",
-    "new": " }",
+    "old": "    if (registry != null) _blow.per[registry] = own * (1 + take / 100);\n  }",
+    "new": "  }",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]
@@ -535,8 +535,8 @@
   {
     "name": "AUDIT-HORIZONTAL-D4-a-guards-own-share-not-kept",
     "file": "src/systems/powerCeiling.js",
-    "old": " if (registry != null) _guard.per[registry] = own * (1 - take / 100); }",
-    "new": " }",
+    "old": "    if (registry != null) _guard.per[registry] = own * (1 - take / 100);\n  }",
+    "new": "  }",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]

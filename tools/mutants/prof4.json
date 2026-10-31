@@ -585,8 +585,8 @@
   {
     "name": "PROF4-plane-press-anywhere",
     "file": "src/systems/planeAct.js",
-    "old": "if (st.done || st.cancelled || st.planing || !(x <= PLANE_ACT.headX)) return false;",
-    "new": "if (st.done || st.cancelled || st.planing) return false;",
+    "old": "      if (st.done || st.cancelled || st.planing || !(x <= PLANE_ACT.headX)) return false;",
+    "new": "      if (st.done || st.cancelled || st.planing) return false;",
     "tests": [
       "test/systems/prof4_client.test.js"
     ]

@@ -242,8 +242,8 @@
   {
     "name": "AUDITREST3-B2-the-decor-unread",
     "file": "src/systems/realmCustoms.js",
-    "old": "for (const id of own ? Object.keys(own) : []) {",
-    "new": "for (const id of []) {",
+    "old": "      for (const id of own ? Object.keys(own) : []) {",
+    "new": "      for (const id of []) {",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -251,8 +251,8 @@
   {
     "name": "AUDITREST3-B2-the-piece-left-standing",
     "file": "src/systems/realmCustoms.js",
-    "old": "        if (Array.isArray(sc.decor)) sc.decor = sc.decor.filter((/** @type {any} */ p) => p?.id !== id);\n",
-    "new": "",
+    "old": "        if (Array.isArray(sc.decor)) sc.decor = sc.decor.filter((/** @type {any} */ p) => p?.id !== id);\n        restKept++;",
+    "new": "        restKept++;",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -260,8 +260,8 @@
   {
     "name": "AUDITREST3-B2-the-decor-unsaid",
     "file": "src/systems/realmCustoms.js",
-    "old": "p?.id !== id);\n        restKept++;",
-    "new": "p?.id !== id);",
+    "old": "        restKept++;\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -269,8 +269,8 @@
   {
     "name": "AUDITREST3-B4-every-list-counted",
     "file": "src/systems/realmCustoms.js",
-    "old": "if (!foreign.has(list)) restKept += n;",
-    "new": "restKept += n;",
+    "old": "      if (!foreign.has(list)) restKept += n;",
+    "new": "      restKept += n;",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -278,8 +278,8 @@
   {
     "name": "AUDITREST3-B4-the-shelf-counted",
     "file": "src/systems/realmCustoms.js",
-    "old": "if (c?.containerType === LOOT_CONTAINER_TYPES.ShopShelves && Array.isArray(c.items)) foreign.add(c.items);",
-    "new": "void c;",
+    "old": "    for (const sc of scenes)\n      for (const c of sc?.lootContainers ?? [])\n        if (c?.containerType === LOOT_CONTAINER_TYPES.ShopShelves && Array.isArray(c.items)) foreign.add(c.items);",
+    "new": "    for (const sc of scenes) for (const c of sc?.lootContainers ?? []) void c;",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -287,8 +287,8 @@
   {
     "name": "AUDITREST3-B4-the-pile-counted",
     "file": "src/systems/realmCustoms.js",
-    "old": "    for (const pile of snap.world?.piles ?? []) if (Array.isArray(pile?.items)) foreign.add(pile.items);\n",
-    "new": "",
+    "old": "    for (const pile of snap.world?.piles ?? []) if (Array.isArray(pile?.items)) foreign.add(pile.items);\n    for (const foe of snap.world?.foes ?? []) if (foe?.dead && Array.isArray(foe.items)) foreign.add(foe.items);",
+    "new": "    for (const foe of snap.world?.foes ?? []) if (foe?.dead && Array.isArray(foe.items)) foreign.add(foe.items);",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -296,8 +296,8 @@
   {
     "name": "AUDITREST3-B4-the-dead-foe-counted",
     "file": "src/systems/realmCustoms.js",
-    "old": "if (foe?.dead && Array.isArray(foe.items)) foreign.add(foe.items);",
-    "new": "void foe;",
+    "old": "    for (const foe of snap.world?.foes ?? []) if (foe?.dead && Array.isArray(foe.items)) foreign.add(foe.items);",
+    "new": "    for (const foe of snap.world?.foes ?? []) void foe;",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -305,8 +305,8 @@
   {
     "name": "AUDITREST3-B4-a-chest-uncounted",
     "file": "src/systems/realmCustoms.js",
-    "old": "for (const sc of scenes) for (const c of sc?.lootContainers ?? []) if (c?.containerType === LOOT_CONTAINER_TYPES.ShopShelves",
-    "new": "for (const sc of scenes) for (const c of sc?.lootContainers ?? []) if (c?.containerType !== LOOT_CONTAINER_TYPES.Nothing",
+    "old": "        if (c?.containerType === LOOT_CONTAINER_TYPES.ShopShelves && Array.isArray(c.items)) foreign.add(c.items);",
+    "new": "        if (c?.containerType !== LOOT_CONTAINER_TYPES.Nothing && Array.isArray(c.items)) foreign.add(c.items);",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]

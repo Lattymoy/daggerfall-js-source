@@ -312,7 +312,7 @@ test('BOSS-SPOT (mob 2026-10-25: "spawn it on the highest lvl player", "or large
   assert.equal(staffBossSpot([P('me', 0, 1), ['x', null, 99]])[0], 'me', 'no feet: left out');
   assert.equal(staffBossSpot([]), null);
   const src = rd('src/systems/raidingParties.js');
-  assert.equal(src.split("spawn(raid, 'boss', raid.staff.b, staffBossPlace(raid)); return 'boss'; }").length - 1, 2, 'the meter\'s boss and a lost one both');
+  assert.equal(src.split("spawn(raid, 'boss', raid.staff.b, staffBossPlace(raid));\n      return 'boss';\n    }").length - 1, 2, 'the meter\'s boss and a lost one both');
   assert.match(src, /return at && at\[0\] !== me \? \{ near: at\[1\] \} : undefined;/);
   assert.ok(rd('src/scenes/raidHost.js').includes("peerFeetInTown: () => [[host.online?.id ?? '', player.feetAt(), playerEntity.level ?? 1], ...(host.peersNear() ?? [])"), 'me first, with my level');   // PIN MOVED (WW6): in scenes/raidHost.js, the host's live names as `host.<name>`
 });
@@ -540,7 +540,7 @@ test('BOSS-RETRY (mob 2026-10-26: "mini boss sometimes doent spawn"): a boss wit
   assert.ok(misses >= STAFF_PACK_LEADER_TRIES, 'tried by the group first');
   assert.equal(boss.o?.near, undefined, 'then about me');
   const src = rd('src/systems/raidingParties.js');
-  assert.match(src, /raid\.bossUp = 1; raid\.bossDown = 0; raid\.clearSince = undefined; raid\.clearWait = undefined; if \(raid\.bossHand != null\) raid\.handSeen = raid\.bossHand; _bossMisses = 0; \}/, 'the field\'s wait and the by-hand word spent once it stands');
+  assert.match(src, /raid\.bossUp = 1;\n\s*raid\.bossDown = 0;\n\s*raid\.clearSince = undefined;\n\s*raid\.clearWait = undefined;\n\s*if \(raid\.bossHand != null\) raid\.handSeen = raid\.bossHand;\n\s*_bossMisses = 0;\n\s*\}/, 'the field\'s wait and the by-hand word spent once it stands');
 });
 
 test('PACK-KEEP (mob 2026-10-26: "if enemy despawn dont count them as well respawn them on another player"): a raid\'s monster stands past the runner\'s cull while any player is near it; one culled or let go is no kill, and its place is stood again in turn', () => {
@@ -548,8 +548,8 @@ test('PACK-KEEP (mob 2026-10-26: "if enemy despawn dont count them as well respa
   assert.ok(src.includes('const _raidKept = !!f.raidKey && playerNearFoe(f, ENCOUNTER_CULL_DISTANCE);') && src.includes('&& !_raidKept && !(_qTag(f) && partyNearFoe(f, _cullAt))'), 'the cull spares it while a player is near');
   assert.match(src, /const playerNearFoe = \(f, r\) => peerCandidates\(\)\.some\(\(c\) => Array\.isArray\(c\.feet\) && Math\.hypot\(/);
   const rp = rd('src/systems/raidingParties.js');
-  assert.ok(rp.includes("if (!e.foe.corpse || !raid || !raidActive(raid, now)) continue;   // removed, not killed"), 'a despawn is never a kill');
-  assert.ok(rp.includes("if (fights) { foe.raidKey = p.key;"), 'its raid tagged on the foe at its stand');
+  assert.ok(rp.includes("if (!e.foe.corpse || !raid || !raidActive(raid, now)) continue; // removed, not killed"), 'a despawn is never a kill');
+  assert.ok(rp.includes("if (fights) {\n        foe.raidKey = p.key;"), 'its raid tagged on the foe at its stand');
 });
 
 test('STAFF-PILOT (mob 2026-10-26: "like play as a boss as attack players", card "Take over the boss", "wouthout a relay update"): Play as boss takes the run off an older runner with the oldest claim the wire carries; the boss that stands is the pilot\'s; the claim age never passes the wire\'s bound', async () => {

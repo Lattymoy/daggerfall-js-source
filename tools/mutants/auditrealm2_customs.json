@@ -228,8 +228,8 @@
   {
     "name": "AUDIT-REALM2-T3-RESTORE-a-crossed-house-unmarked",
     "file": "src/systems/realmCustoms.js",
-    "old": "    if (deed.slot) deed.slot.crossed = true;\n",
-    "new": "    if (deed.slot) void deed.slot;\n",
+    "old": "    if (deed.slot) deed.slot.crossed = true;",
+    "new": "    if (deed.slot) void deed.slot;",
     "tests": [
       "test/systems/auditrealm2_customs.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "AUDIT-REALM2-T3-RESTORE-a-crossed-ship-unmarked",
     "file": "src/systems/realmCustoms.js",
-    "old": "    else snap.shipCrossed = true;\n",
-    "new": "    else void snap;\n",
+    "old": "    else snap.shipCrossed = true;",
+    "new": "    else void snap;",
     "tests": [
       "test/systems/auditrealm2_customs.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "AUDIT-REALM2-T3-RESTORE-the-pieces-still-pay",
     "file": "src/systems/realmCustoms.js",
-    "old": "    crossPieces(deed.room);\n",
-    "new": "",
+    "old": "    crossPieces(deed.room);\n    crossed.push(deed.slot ? 'house' : 'ship');",
+    "new": "    crossed.push(deed.slot ? 'house' : 'ship');",
     "tests": [
       "test/systems/auditrealm2_customs.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "AUDIT-REALM2-T3-the-deeds-unsaid",
     "file": "src/systems/realmCustoms.js",
-    "old": "  if (what) lines.push(",
-    "new": "  if (false) lines.push(",
+    "old": "  if (what)",
+    "new": "  if (false)",
     "tests": [
       "test/systems/auditrealm2_customs.test.js"
     ]
@@ -273,8 +273,8 @@
   {
     "name": "AUDIT-REALM2-T3-many-houses-said-as-one",
     "file": "src/systems/realmCustoms.js",
-    "old": "houses > 1 ? `${houses} houses` : houses ? 'your house' : ''",
-    "new": "houses ? 'your house' : ''",
+    "old": "  const what = [\n    crossed.includes('ship') ? 'your ship' : '',\n    houses > 1 ? `${houses} houses` : houses ? 'your house' : '',\n  ]\n    .filter(Boolean)\n    .join(' and ');",
+    "new": "  const what = [crossed.includes('ship') ? 'your ship' : '', houses ? 'your house' : ''].filter(Boolean).join(' and ');",
     "tests": [
       "test/systems/auditrealm2_customs.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "AUDIT-REALM2-T3-one-deed-said-as-many",
     "file": "src/systems/realmCustoms.js",
-    "old": "every piece in ${crossed.length > 1 ? 'them' : 'it'}",
-    "new": "every piece in ${'them'}",
+    "old": "      `${what[0].toUpperCase()}${what.slice(1)} ${before ? 'will come' : 'came'} with you, every piece in ${crossed.length > 1 ? 'them' : 'it'}; the realm's bank does not buy back what comes through customs.`,",
+    "new": "      `${what[0].toUpperCase()}${what.slice(1)} ${before ? 'will come' : 'came'} with you, every piece in ${'them'}; the realm's bank does not buy back what comes through customs.`,",
     "tests": [
       "test/systems/auditrealm2_customs.test.js",
       "test/server/fb0929_customs.test.js",

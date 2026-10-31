@@ -119,8 +119,8 @@
   {
     "name": "DISC21-C-the-line-never-names-the-key",
     "file": "src/systems/quickslots.js",
-    "old": "  if (!r) { say?.(emptySlotLine(hooks.hand?.() ?? undefined)); return { kind: 'empty' }; }",
-    "new": "  if (!r) { say?.(QUICKSLOT_TEXT.emptySlot); return { kind: 'empty' }; }",
+    "old": "    say?.(emptySlotLine(hooks.hand?.() ?? undefined));",
+    "new": "    say?.(QUICKSLOT_TEXT.emptySlot);",
     "tests": [
       "test/systems/disc21.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "DISC21-C-names-it-with-the-weapon-out",
     "file": "src/systems/quickslots.js",
-    "old": "  return weapon && sheathed && readyKey ?",
-    "new": "  return weapon && readyKey ?",
+    "old": "  return weapon && sheathed && readyKey",
+    "new": "  return weapon && readyKey",
     "tests": [
       "test/systems/disc21.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "DISC21-C-names-it-for-bare-hands",
     "file": "src/systems/quickslots.js",
-    "old": "  return weapon && sheathed && readyKey ?",
-    "new": "  return sheathed && readyKey ?",
+    "old": "  return weapon && sheathed && readyKey",
+    "new": "  return sheathed && readyKey",
     "tests": [
       "test/systems/disc21.test.js"
     ]

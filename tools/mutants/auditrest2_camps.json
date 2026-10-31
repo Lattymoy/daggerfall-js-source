@@ -228,8 +228,8 @@
   {
     "name": "AUDITREST2-H9-the-counter-unread",
     "file": "src/systems/realmCustoms.js",
-    "old": "...carriedItemLists(snap), ...(Array.isArray(snap.otherItems) ? [snap.otherItems] : [])])) {",
-    "new": "...carriedItemLists(snap)])) {",
+    "old": "    for (const list of new Set([\n      ...carriedItemLists(snap),\n      ...(Array.isArray(snap.otherItems) ? [snap.otherItems] : []),\n    ])) {",
+    "new": "    for (const list of new Set([...carriedItemLists(snap)])) {",
     "tests": [
       "test/systems/auditrest2_camps.test.js"
     ],

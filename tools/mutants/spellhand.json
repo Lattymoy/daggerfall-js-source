@@ -119,8 +119,8 @@
   {
     "name": "SPELLHAND-hotbar-unsaid",
     "file": "src/systems/quickslots.js",
-    "old": "magic?.interceptAttack?.(true, CAST_PRESS) === true;",
-    "new": "magic?.interceptAttack?.(true) === true;",
+    "old": "    const fired = armed && magic?.interceptAttack?.(true, CAST_PRESS) === true; // SPELL-HAND: the hotbar's press is a cast's own",
+    "new": "    const fired = armed && magic?.interceptAttack?.(true) === true; // SPELL-HAND: the hotbar's press is a cast's own",
     "tests": [
       "test/combat/spellhand.test.js"
     ]

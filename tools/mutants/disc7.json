@@ -11,8 +11,8 @@
   {
     "name": "ACT-MENU-loot-switch-gates-the-verbs",
     "file": "src/systems/quickLoot.js",
-    "old": "  _sel = (verbs || (take && quickLootOn())) ? nextSelection(_sel, frame, _nudge) : null;",
-    "new": "  _sel = (take && quickLootOn()) ? nextSelection(_sel, frame, _nudge) : null;",
+    "old": "  _sel = verbs || (take && quickLootOn()) ? nextSelection(_sel, frame, _nudge) : null;",
+    "new": "  _sel = take && quickLootOn() ? nextSelection(_sel, frame, _nudge) : null;",
     "tests": [
       "test/systems/disc7.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ACT-MENU-P-arms-on-verbs",
     "file": "src/systems/quickLoot.js",
-    "old": "  if (!quickLootOn() || !_sel || _actionIds) return false;",
-    "new": "  if (!quickLootOn() || !_sel) return false;",
+    "old": "  if (!quickLootOn() || !_sel || _actionIds) return false; // ACT-MENU: P and J take from a pile, never from a list of verbs",
+    "new": "  if (!quickLootOn() || !_sel) return false; // ACT-MENU: P and J take from a pile, never from a list of verbs",
     "tests": [
       "test/systems/disc7.test.js"
     ]

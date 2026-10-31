@@ -74,7 +74,7 @@
   {
     "name": "AUDITFB1029F-D1-toggled",
     "file": "src/systems/quickslots.js",
-    "old": "  if (hand && landed != null) { if (hand.useHand) hand.useHand(landed); else if (landed !== inUse) hand.switchHand?.(); }",
+    "old": "  if (hand && landed != null) {\n    if (hand.useHand) hand.useHand(landed);\n    else if (landed !== inUse) hand.switchHand?.();\n  }",
     "new": "  if (hand && landed != null && landed !== inUse) hand.switchHand?.();",
     "tests": [
       "test/combat/quickslotfollow.test.js"
@@ -83,8 +83,8 @@
   {
     "name": "AUDITFB1029F-D2-bare-follows",
     "file": "src/systems/quickslots.js",
-    "old": "    door?.keepHand?.();   // AUDIT FB1029f D2: bare hands asked are bare hands - the hand in use stays, never follows the other\n",
-    "new": "",
+    "old": "    door?.keepHand?.(); // AUDIT FB1029f D2: bare hands asked are bare hands - the hand in use stays, never follows the other\n    billEquipDelayOnClose(entity, snap);",
+    "new": "    billEquipDelayOnClose(entity, snap);",
     "tests": [
       "test/combat/quickslotfollow.test.js"
     ]

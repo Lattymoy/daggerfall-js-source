@@ -30,7 +30,9 @@
 /** @type {null | { foes: () => any[], feet: () => number[]|null, hurtFoe: (f: any, n: number) => void, castOnPlayer: (b: any, o?: { power?: boolean }) => void, player?: () => any, clear?: (a: number[], b: number[]) => boolean, say?: (line: string) => void, sfx?: (id: number, at: number[]) => void, lairHere?: (at?: { x: number, y: number }) => any, isPuppet?: (f: any) => boolean, fx?: (recipe: string, at: number[], o?: any) => void }} */
 let _door = null;
 /** The running host's word: this is the scene now. `null` takes it down. */
-export function setPlayerDoor(door) { _door = door && typeof door === 'object' ? door : null; }
+export function setPlayerDoor(door) {
+  _door = door && typeof door === 'object' ? door : null;
+}
 /** The scene the player stands in, or null before a host has run a frame. */
 export const playerDoor = () => _door;
 

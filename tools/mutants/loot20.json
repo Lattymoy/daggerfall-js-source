@@ -297,8 +297,8 @@
   {
     "name": "LOOT20-a-locked-gem-spent",
     "file": "src/systems/reforge.js",
-    "old": "!it.questItem && !isLocked(it) && !isEquipped(it) && !isEnchanted(it);",
-    "new": "!it.questItem && !isEquipped(it) && !isEnchanted(it);",
+    "old": "const looseGem = (it, gem) =>\n  gemKindOf(it) === gem && !it.questItem && !isLocked(it) && !isEquipped(it) && !isEnchanted(it); // AUDIT GEM: never one the item maker enchanted (its powers would go into the socket and be lost)",
+    "new": "const looseGem = (it, gem) => gemKindOf(it) === gem && !it.questItem && !isEquipped(it) && !isEnchanted(it); // AUDIT GEM: never one the item maker enchanted (its powers would go into the socket and be lost)",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ],
@@ -307,7 +307,7 @@
   {
     "name": "LOOT20-a-stack-taken-whole",
     "file": "src/systems/reforge.js",
-    "old": "    if ((it.stackCount ?? 1) > 1) it.stackCount -= 1; else items.splice(i, 1);",
+    "old": "    if ((it.stackCount ?? 1) > 1) it.stackCount -= 1;\n    else items.splice(i, 1);",
     "new": "    items.splice(i, 1);",
     "tests": [
       "test/systems/loot20_sockets.test.js"
@@ -316,8 +316,8 @@
   {
     "name": "LOOT20-set-anything",
     "file": "src/systems/reforge.js",
-    "old": "  if (!hasSocket(item)) return 'not';\n  return !itemIsIdentified(item)",
-    "new": "  return !itemIsIdentified(item)",
+    "old": "  if (!hasSocket(item)) return 'not';\n  return !itemIsIdentified(item) ? 'unknown' : null;",
+    "new": "  return !itemIsIdentified(item) ? 'unknown' : null;",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ]
@@ -334,8 +334,8 @@
   {
     "name": "LOOT20-set-over-a-gem",
     "file": "src/systems/reforge.js",
-    "old": "  if (list[at == null ? list.indexOf(SOCKET_EMPTY) : at] !== SOCKET_EMPTY) return 'set';\n",
-    "new": "",
+    "old": "  if (list[at == null ? list.indexOf(SOCKET_EMPTY) : at] !== SOCKET_EMPTY) return 'set';\n  if (!ALL_GEM_IDS.includes(gem) || !(gemsHeld(player?.items)[gem] > 0)) return 'nogem';",
+    "new": "  if (!ALL_GEM_IDS.includes(gem) || !(gemsHeld(player?.items)[gem] > 0)) return 'nogem';",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ]
@@ -343,8 +343,8 @@
   {
     "name": "LOOT20-set-a-gem-not-held",
     "file": "src/systems/reforge.js",
-    "old": "  if (!ALL_GEM_IDS.includes(gem) || !(gemsHeld(player?.items)[gem] > 0)) return 'nogem';\n",
-    "new": "",
+    "old": "  if (!ALL_GEM_IDS.includes(gem) || !(gemsHeld(player?.items)[gem] > 0)) return 'nogem';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ]
@@ -352,8 +352,8 @@
   {
     "name": "LOOT20-the-gem-kept",
     "file": "src/systems/reforge.js",
-    "old": "  const stone = takeGem(player.items, gem, from);   // AUDIT GEM: the pressed stone first\n",
-    "new": "  const stone = null;\n",
+    "old": "  const stone = takeGem(player.items, gem, from); // AUDIT GEM: the pressed stone first",
+    "new": "  const stone = null;",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ],
@@ -371,8 +371,8 @@
   {
     "name": "LOOT20-unset-anywhere",
     "file": "src/systems/reforge.js",
-    "old": "  if (!player || !Array.isArray(player.items) || !player.items.includes(item)) return { ok: false, reason: 'gone' };\n  const why = unsetGemRefusal(item, at);",
-    "new": "  if (!player || !Array.isArray(player.items)) return { ok: false, reason: 'gone' };\n  const why = unsetGemRefusal(item, at);",
+    "old": "export function unsetGemPiece(item, player, at = null) {\n  if (!player || !Array.isArray(player.items) || !player.items.includes(item)) return { ok: false, reason: 'gone' };",
+    "new": "export function unsetGemPiece(item, player, at = null) {\n  if (!player || !Array.isArray(player.items)) return { ok: false, reason: 'gone' };",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ]

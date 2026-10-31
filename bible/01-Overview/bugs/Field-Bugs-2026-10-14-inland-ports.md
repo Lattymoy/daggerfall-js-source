@@ -21,7 +21,7 @@ where its own blocks hold ponds (eight of its forty-nine, the Mages Guild's besi
 
 FOUND. The shipyard law asked whether a town is a port and nothing else (`03-World/Shipyards.md` "Which towns"):
 `isPortTown(dfLocation, portByData(dfLocation))`, the host's `portByData` being `portTownByData` - Travel Options'
-harbours (`travelPorts.js hasPort`) or the byte not nought (`portPlaces.js:"export const portTownByData = (loc, hasPort) =>"`).
+harbours (`travelPorts.js hasPort`) or the byte not nought (`portPlaces.js:"export const portTownByData"`).
 That reads DFU's own port-town data the way DFU reads it - `DaggerfallBankingWindow.cs` sells a ship wherever the byte
 is not nought, the one read of it in DFU (`worldModes.js:"isPortTown: () => (buildingDirectory?.()?.portTownAndUnknown"`,
 left as it is) - but a bank's ship is a deed, and a shipyard is timber on a shore. The byte is two things (FIELD BUGS

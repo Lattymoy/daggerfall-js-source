@@ -518,8 +518,8 @@
   {
     "name": "GEM1-extract-shatters",
     "file": "src/systems/reforge.js",
-    "old": "  addItem(player.items, stone);\n",
-    "new": "",
+    "old": "  addItem(player.items, stone);\n  refold(item, player);",
+    "new": "  refold(item, player);",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ]
@@ -527,8 +527,8 @@
   {
     "name": "GEM1-extract-free",
     "file": "src/systems/reforge.js",
-    "old": "  deductGold(player, price);\n  const stone",
-    "new": "  const stone",
+    "old": "  deductGold(player, price);\n  const stone = /** @type {any} */ (mintGem(gem));",
+    "new": "  const stone = /** @type {any} */ (mintGem(gem));",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ]
@@ -536,7 +536,7 @@
   {
     "name": "GEM1-a-worn-piece-unfolded",
     "file": "src/systems/reforge.js",
-    "old": "const refold = (item, player) => { if (isEquipped(item)) notifyEquipChange(player); };",
+    "old": "const refold = (item, player) => {\n  if (isEquipped(item)) notifyEquipChange(player);\n};",
     "new": "const refold = () => {};",
     "tests": [
       "test/systems/loot20_sockets.test.js"
@@ -609,8 +609,8 @@
   {
     "name": "AUDIT-GEM-salvage-breaks-the-gem",
     "file": "src/systems/reforge.js",
-    "old": "  if (socketGems(item).length) return 'gems';",
-    "new": "  if (false) return 'gems';",
+    "old": "  if (socketGems(item).length) return 'gems'; // AUDIT GEM: a set gem is never broken with its piece - extracted or unset first (a Magic weapon holds one since GEM1, and the bulk salvage swept it)",
+    "new": "  if (false) return 'gems'; // AUDIT GEM: a set gem is never broken with its piece - extracted or unset first (a Magic weapon holds one since GEM1, and the bulk salvage swept it)",
     "tests": [
       "test/systems/gem1_sockets.test.js"
     ]
@@ -693,8 +693,8 @@
   {
     "name": "AUDIT-GEM-an-enchanted-stone",
     "file": "src/systems/reforge.js",
-    "old": " && !isEquipped(it) && !isEnchanted(it);",
-    "new": " && !isEquipped(it);",
+    "old": "const looseGem = (it, gem) =>\n  gemKindOf(it) === gem && !it.questItem && !isLocked(it) && !isEquipped(it) && !isEnchanted(it); // AUDIT GEM: never one the item maker enchanted (its powers would go into the socket and be lost)",
+    "new": "const looseGem = (it, gem) => gemKindOf(it) === gem && !it.questItem && !isLocked(it) && !isEquipped(it); // AUDIT GEM: never one the item maker enchanted (its powers would go into the socket and be lost)",
     "tests": [
       "test/systems/gem1_sockets.test.js"
     ]

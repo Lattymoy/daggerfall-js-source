@@ -57,8 +57,8 @@
   {
     "name": "LOOT9-salvage-magic-two",
     "file": "src/systems/reforge.js",
-    "old": "magic: 1, rare: 3, legendary: 8, exalted: 15",
-    "new": "magic: 2, rare: 3, legendary: 8, exalted: 15",
+    "old": "export const SALVAGE_SHARDS = Object.freeze({ magic: 1, rare: 3, legendary: 8, exalted: 15 });",
+    "new": "export const SALVAGE_SHARDS = Object.freeze({ magic: 2, rare: 3, legendary: 8, exalted: 15 });",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "LOOT9-exalted-as-legendary",
     "file": "src/systems/reforge.js",
-    "old": "return item.exalted === true ? SALVAGE_SHARDS.exalted : SALVAGE_SHARDS.legendary;",
-    "new": "return SALVAGE_SHARDS.legendary;",
+    "old": "  if (t === 'legendary') return item.exalted === true ? SALVAGE_SHARDS.exalted : SALVAGE_SHARDS.legendary;",
+    "new": "  if (t === 'legendary') return SALVAGE_SHARDS.legendary;",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "LOOT9-dfu-magic-salvages",
     "file": "src/systems/reforge.js",
-    "old": "  const t = item?.rarity;\n  if (t === 'legendary')",
-    "new": "  const t = item?.rarity ?? (item?.magic ? 'magic' : undefined);\n  if (t === 'legendary')",
+    "old": "  const t = item?.rarity;",
+    "new": "  const t = item?.rarity ?? (item?.magic ? 'magic' : undefined);",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "LOOT9-aetheric-salvages",
     "file": "src/systems/reforge.js",
-    "old": "  if (item.rarity === 'aetheric') return 'aetheric';\n",
-    "new": "\n",
+    "old": "  if (item.rarity === 'aetheric') return 'aetheric';",
+    "new": "",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "LOOT9-quest-salvages",
     "file": "src/systems/reforge.js",
-    "old": "  if (item.questItem) return 'quest';\n",
-    "new": "\n",
+    "old": "  if (item.questItem) return 'quest';",
+    "new": "",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "LOOT9-bound-salvages",
     "file": "src/systems/reforge.js",
-    "old": "  if (isBound(item)) return 'bound';\n",
-    "new": "\n",
+    "old": "  if (isBound(item)) return 'bound';",
+    "new": "",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "LOOT9-locked-salvages",
     "file": "src/systems/reforge.js",
-    "old": "  if (isEquipped(item)) return 'worn';\n  if (isLocked(item)) return 'locked';",
-    "new": "  if (isEquipped(item)) return 'worn';",
+    "old": "  if (isLocked(item)) return 'locked';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "LOOT9-salvage-gives-nothing",
     "file": "src/systems/reforge.js",
-    "old": "  items.splice(items.indexOf(item), 1);\n  addItem(items, welkyndShards(shards));",
-    "new": "  items.splice(items.indexOf(item), 1);",
+    "old": "  addItem(items, welkyndShards(shards));\n  return { ok: true, shards };",
+    "new": "  return { ok: true, shards };",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "LOOT9-spend-when-short",
     "file": "src/systems/reforge.js",
-    "old": "  if (shardsHeld(items) < n) return false;\n",
-    "new": "\n",
+    "old": "  if (shardsHeld(items) < n) return false;",
+    "new": "",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "LOOT9-emptied-stack-kept",
     "file": "src/systems/reforge.js",
-    "old": "if (have <= owed) { items.splice(i, 1); owed -= have; }",
-    "new": "if (have <= owed) { it.stackCount = 0; owed -= have; }",
+    "old": "      items.splice(i, 1);",
+    "new": "      it.stackCount = 0;",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "LOOT9-any-legendary-priced",
     "file": "src/systems/reforge.js",
-    "old": "    : item?.rarity === 'legendary' && item.exalted === true ? REFORGE_PRICE.exalted : null;",
-    "new": "    : item?.rarity === 'legendary' ? REFORGE_PRICE.exalted : null;",
+    "old": "      ? REFORGE_PRICE[item.rarity]\n      : item?.rarity === 'legendary' && item.exalted === true",
+    "new": "      ? REFORGE_PRICE[item.rarity]\n      : item?.rarity === 'legendary'",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ],
@@ -220,8 +220,8 @@
   {
     "name": "LOOT9-unknown-reforged",
     "file": "src/systems/reforge.js",
-    "old": "  if (!itemIsIdentified(item)) return 'unknown';\n",
-    "new": "\n",
+    "old": "  if (!itemIsIdentified(item)) return 'unknown';",
+    "new": "",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "LOOT9-any-line",
     "file": "src/systems/reforge.js",
-    "old": "  if (!lines.includes(index)) return 'line';\n",
-    "new": "\n",
+    "old": "  if (!lines.includes(index)) return 'line';",
+    "new": "",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "LOOT9-short-of-shards",
     "file": "src/systems/reforge.js",
-    "old": "  if (shardsHeld(player?.items) < price.shards) return 'shards';\n",
-    "new": "\n",
+    "old": "  if (shardsHeld(player?.items) < price.shards) return 'shards';",
+    "new": "",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "LOOT9-short-of-gold",
     "file": "src/systems/reforge.js",
-    "old": "  if (totalGoldAmount(player) < price.gold) return 'gold';\n",
-    "new": "\n",
+    "old": "  if (totalGoldAmount(player) < price.gold) return 'gold';",
+    "new": "",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "LOOT9-no-gold-paid",
     "file": "src/systems/reforge.js",
-    "old": "  spendShards(player.items, price.shards);\n  deductGold(player, price.gold);",
-    "new": "  spendShards(player.items, price.shards);",
+    "old": "  deductGold(player, price.gold);\n  noteAct('piece-reforged'); // QL11: a piece reforged - paid, its line replaced",
+    "new": "  noteAct('piece-reforged'); // QL11: a piece reforged - paid, its line replaced",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]

@@ -117,7 +117,7 @@ Salvage button; `bible/06-Systems/Loot-Arc.md` (SALVAGE-CLASSIC, after LOOT9's P
 FOUND. The "Blazing Holy Dagger of Fireballs" is the MAGIC.DEF row "Blazing %it of Fireballs" (one Cast When Used row,
 spell 14, 1,500 uses) on a Holy Dagger, minted by `systems/loot/loot.js:"export function createRegularMagicItem("`, which writes no
 `rarity`; its card reads "Magic" because the ladder's `lootRarity.js:"export function rarityOf(item) {"` calls any
-enchanted piece Magic. Salvage reads the ladder's own grade (`reforge.js:"export function salvageShards(item) {"`), so
+enchanted piece Magic. Salvage reads the ladder's own grade (`reforge.js:"export function salvageShards"`), so
 the piece is worth no shards, and the Salvage page's filter (shards over 0) and the card's button dropped it without a
 word. That is LOOT9's law, not a slip: DFU's own magic and made pieces are "worth none: shards come from what was found,
 never bought" - `shopStock.js:"export function stockGuildMagicItems("` shelves these pieces every day, a pawn shop sells

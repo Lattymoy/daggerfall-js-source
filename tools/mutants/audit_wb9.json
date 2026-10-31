@@ -265,8 +265,8 @@
   {
     "name": "AUDIT-WB9-the-arm-left-standing",
     "file": "src/systems/quickLoot.js",
-    "old": "export function quickLootSpend() { _pending = null; }",
-    "new": "export function quickLootSpend() { }",
+    "old": "export function quickLootSpend() {\n  _pending = null;\n}",
+    "new": "export function quickLootSpend() {}",
     "tests": [
       "test/net/gate/audit_wb9.test.js"
     ]

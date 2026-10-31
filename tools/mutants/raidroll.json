@@ -209,8 +209,8 @@
   {
     "name": "RR-client-table-any-hash",
     "file": "src/systems/raidingParties.js",
-    "old": "return _townsHash && _townsHash === h ? _townsText : null;",
-    "new": "return _townsText;",
+    "old": "  return _townsHash && _townsHash === h ? _townsText : null;",
+    "new": "  return _townsText;",
     "tests": [
       "test/systems/raidroll.test.js"
     ]

@@ -30,8 +30,8 @@
   {
     "name": "HT-WAIST-predicate-ignores-the-mod-switch",
     "file": "src/systems/playerTorch.js",
-    "old": "return modSetting('handheld-torches', 'Enabled') === true && modSetting('handheld-torches', 'Handling.LanternsAtWaist') === true;",
-    "new": "return modSetting('handheld-torches', 'Handling.LanternsAtWaist') === true;",
+    "old": "  return (\n    modSetting('handheld-torches', 'Enabled') === true &&\n    modSetting('handheld-torches', 'Handling.LanternsAtWaist') === true\n  );",
+    "new": "  return modSetting('handheld-torches', 'Handling.LanternsAtWaist') === true;",
     "tests": [
       "test/systems/htwaist_setting.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "HT-WAIST-predicate-any-light",
     "file": "src/systems/playerTorch.js",
-    "old": "if (!item || item.templateIndex !== LANTERN_TEMPLATE) return false;",
-    "new": "if (!item) return false;",
+    "old": "  if (!item || item.templateIndex !== LANTERN_TEMPLATE) return false;",
+    "new": "  if (!item) return false;",
     "tests": [
       "test/systems/htwaist_setting.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "HT-WAIST-the-light-ignores-the-waist",
     "file": "src/systems/playerTorch.js",
-    "old": "const o = lanternAtWaist(entity?.lightSource) ? (_waistOverride ?? LANTERN_HIP) : (_offsetOverride ?? TORCH_OFFSET);",
-    "new": "const o = _offsetOverride ?? TORCH_OFFSET;",
+    "old": "  const o = lanternAtWaist(entity?.lightSource) ? (_waistOverride ?? LANTERN_HIP) : (_offsetOverride ?? TORCH_OFFSET);",
+    "new": "  const o = _offsetOverride ?? TORCH_OFFSET;",
     "tests": [
       "test/systems/htwaist_handlaw.test.js",
       "test/systems/ht1_handheldtorches.test.js"
@@ -103,8 +103,8 @@
   {
     "name": "HT-WAIST-the-override-beats-the-hip",
     "file": "src/systems/playerTorch.js",
-    "old": "const o = lanternAtWaist(entity?.lightSource) ? (_waistOverride ?? LANTERN_HIP) : (_offsetOverride ?? TORCH_OFFSET);",
-    "new": "const o = _offsetOverride ?? (lanternAtWaist(entity?.lightSource) ? (_waistOverride ?? LANTERN_HIP) : TORCH_OFFSET);",
+    "old": "  const o = lanternAtWaist(entity?.lightSource) ? (_waistOverride ?? LANTERN_HIP) : (_offsetOverride ?? TORCH_OFFSET);",
+    "new": "  const o = _offsetOverride ?? (lanternAtWaist(entity?.lightSource) ? (_waistOverride ?? LANTERN_HIP) : TORCH_OFFSET);",
     "tests": [
       "test/systems/htwaist_handlaw.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "HT-WAIST-the-hip-on-the-left",
     "file": "src/systems/playerTorch.js",
-    "old": "export const LANTERN_HIP = Object.freeze({ left: -0.2,",
-    "new": "export const LANTERN_HIP = Object.freeze({ left: 0.2,",
+    "old": "export const LANTERN_HIP = Object.freeze({ left: -0.2, up: 1.0, forward: 0.1 });",
+    "new": "export const LANTERN_HIP = Object.freeze({ left: 0.2, up: 1.0, forward: 0.1 });",
     "tests": [
       "test/systems/htwaist_handlaw.test.js"
     ]

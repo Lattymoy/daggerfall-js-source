@@ -52,8 +52,8 @@
   {
     "name": "AUDIT-1019-L2-1-health-by-fraction",
     "file": "src/systems/renownLayer.js",
-    "old": "  if (keepHealth && Number.isFinite(health)) entity.health = Math.min(health, entity.maxHealth);\n",
-    "new": "",
+    "old": "  if (keepHealth && Number.isFinite(health)) entity.health = Math.min(health, entity.maxHealth);\n}",
+    "new": "}",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
     ],

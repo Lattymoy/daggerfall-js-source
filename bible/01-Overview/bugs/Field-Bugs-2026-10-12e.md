@@ -57,7 +57,7 @@ FIXED. A defender who is stood down now walks off. He leaves the world only wher
   and sends each man at the threat nearest him (`cityGuards.js:"for (const g of guards) if (!g.dead && g.leaving) {"`).
   A monster on a defender is the town's threat (AUDIT DISC19 W1), so one set upon in town is called back by the
   watch's own countdown. A raid's defender is called back the same way, before one is minted (`standDefender`), and the
-  raid's list holds him once, not twice (`raidingParties.js:"if (!_live.some((e) => e.foe === foe)) _live.push("`). A
+  raid's list holds him once, not twice (`raidingParties.js:"if (!_live.some((e) => e.foe === foe))"`). A
   crime enlists him where he walks (`enlistDefender`).
 - **The living world** (`livingWatch.js` watchStep, unchanged). A turned defender's resident stays lent while he walks
   off. Once he is gone, the resident is back to their day, stood by the census out of the player's sight like any other

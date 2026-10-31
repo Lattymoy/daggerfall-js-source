@@ -52,8 +52,8 @@
   {
     "name": "AUDIT-RPT1026-F2-kind-never-asks-worth",
     "file": "src/systems/quickslots.js",
-    "old": "return castsWhenUsed(item) && !wornForMore(item) ? 'use' : 'wear';",
-    "new": "return castsWhenUsed(item) ? 'use' : 'wear';",
+    "old": "  if (getEquipSlot({}, item) !== EQUIP_SLOTS.None) return castsWhenUsed(item) && !wornForMore(item) ? 'use' : 'wear'; // UI2: a throwaway table - the rule is the item's; RPT1026-PROGRESS: a power to use is used; AUDIT RPT1026 F2: unless wearing it is worth something too",
+    "new": "  if (getEquipSlot({}, item) !== EQUIP_SLOTS.None) return castsWhenUsed(item) ? 'use' : 'wear'; // UI2: a throwaway table - the rule is the item's; RPT1026-PROGRESS: a power to use is used; AUDIT RPT1026 F2: unless wearing it is worth something too",
     "tests": [
       "test/scenes/audit_rpt1026_progress.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "AUDIT-RPT1026-F2-press-never-asks-worth",
     "file": "src/systems/quickslots.js",
-    "old": "(!wornForMore(worn) || isEquipped(worn))",
-    "new": "(true || isEquipped(worn))",
+    "old": "  if (castsWhenUsed(worn) && (!wornForMore(worn) || isEquipped(worn)) && typeof doors.quickUse === 'function')",
+    "new": "  if (castsWhenUsed(worn) && (true || isEquipped(worn)) && typeof doors.quickUse === 'function')",
     "tests": [
       "test/scenes/audit_rpt1026_progress.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "AUDIT-RPT1026-F2-press-never-asks-worn",
     "file": "src/systems/quickslots.js",
-    "old": "(!wornForMore(worn) || isEquipped(worn))",
-    "new": "(!wornForMore(worn) || false)",
+    "old": "  if (castsWhenUsed(worn) && (!wornForMore(worn) || isEquipped(worn)) && typeof doors.quickUse === 'function')",
+    "new": "  if (castsWhenUsed(worn) && (!wornForMore(worn) || false) && typeof doors.quickUse === 'function')",
     "tests": [
       "test/scenes/audit_rpt1026_progress.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "AUDIT-RPT1026-F2-armour-no-worth",
     "file": "src/systems/quickslots.js",
-    "old": "const wornForMore = (item) => item?.group === 'Armor'",
-    "new": "const wornForMore = (item) => false",
+    "old": "  item?.group === 'Armor' ||",
+    "new": "  false ||",
     "tests": [
       "test/scenes/audit_rpt1026_progress.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-RPT1026-F2-side-effect-counted",
     "file": "src/systems/quickslots.js",
-    "old": " && isPower(ENCHANTMENT_NAME[e?.type])));",
-    "new": "));",
+    "old": "      (e) =>\n        e?.type !== ENCHANTMENT_TYPES.CastWhenUsed &&\n        e?.type !== ENCHANTMENT_TYPES.FeatherWeight &&\n        isPower(ENCHANTMENT_NAME[e?.type]),",
+    "new": "      (e) => e?.type !== ENCHANTMENT_TYPES.CastWhenUsed && e?.type !== ENCHANTMENT_TYPES.FeatherWeight,",
     "tests": [
       "test/scenes/audit_rpt1026_progress.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "AUDIT-RPT1026-F2-feather-counted",
     "file": "src/systems/quickslots.js",
-    "old": " && e?.type !== ENCHANTMENT_TYPES.FeatherWeight",
-    "new": "",
+    "old": "    item.enchantments.some(\n      (e) =>\n        e?.type !== ENCHANTMENT_TYPES.CastWhenUsed &&\n        e?.type !== ENCHANTMENT_TYPES.FeatherWeight &&\n        isPower(ENCHANTMENT_NAME[e?.type]),\n    ));",
+    "new": "    item.enchantments.some((e) => e?.type !== ENCHANTMENT_TYPES.CastWhenUsed && isPower(ENCHANTMENT_NAME[e?.type])));",
     "tests": [
       "test/scenes/audit_rpt1026_progress.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "AUDIT-RPT1026-F2-cast-when-used-counted",
     "file": "src/systems/quickslots.js",
-    "old": "e?.type !== ENCHANTMENT_TYPES.CastWhenUsed && e?.type !== ENCHANTMENT_TYPES.FeatherWeight",
-    "new": "e?.type !== ENCHANTMENT_TYPES.FeatherWeight",
+    "old": "    item.enchantments.some(\n      (e) =>\n        e?.type !== ENCHANTMENT_TYPES.CastWhenUsed &&\n        e?.type !== ENCHANTMENT_TYPES.FeatherWeight &&\n        isPower(ENCHANTMENT_NAME[e?.type]),\n    ));",
+    "new": "    item.enchantments.some((e) => e?.type !== ENCHANTMENT_TYPES.FeatherWeight && isPower(ENCHANTMENT_NAME[e?.type])));",
     "tests": [
       "test/scenes/audit_rpt1026_progress.test.js"
     ],

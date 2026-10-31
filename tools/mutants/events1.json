@@ -419,8 +419,8 @@
   {
     "name": "EVENTS1-no-raid-ahead",
     "file": "src/systems/raidingParties.js",
-    "old": "if (aheadMs > 0 && Number.isFinite(next) && turn > now && relayOf(turn) - relayOf(now) <= aheadMs) {",
-    "new": "if (false) {",
+    "old": "  if (aheadMs > 0 && Number.isFinite(next) && turn > now && relayOf(turn) - relayOf(now) <= aheadMs) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -428,8 +428,8 @@
   {
     "name": "EVENTS1-a-roll-before-the-regions",
     "file": "src/systems/raidingParties.js",
-    "old": "if (regions) _ahead = { day: next, gen, on: sharedClockOn(), raids: [...raidsForDay(next, regions)",
-    "new": "_ahead = { day: next, gen, on: sharedClockOn(), raids: !regions ? [] : [...raidsForDay(next, regions)",
+    "old": "      if (regions)\n        _ahead = {\n          day: next,\n          gen,\n          on: sharedClockOn(),\n          raids: [...raidsForDay(next, regions).filter((r) => !isWildRegion(r.regionIndex)), ...lanesForDay(next)],\n        };",
+    "new": "      _ahead = {\n        day: next,\n        gen,\n        on: sharedClockOn(),\n        raids: !regions\n          ? []\n          : [...raidsForDay(next, regions).filter((r) => !isWildRegion(r.regionIndex)), ...lanesForDay(next)],\n      };",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -437,8 +437,8 @@
   {
     "name": "EVENTS1-named-further-ahead",
     "file": "src/systems/raidingParties.js",
-    "old": "relayOf(turn) - relayOf(now) <= aheadMs) {",
-    "new": "relayOf(turn) - relayOf(now) <= 2 * aheadMs) {",
+    "old": "  if (aheadMs > 0 && Number.isFinite(next) && turn > now && relayOf(turn) - relayOf(now) <= aheadMs) {",
+    "new": "  if (aheadMs > 0 && Number.isFinite(next) && turn > now && relayOf(turn) - relayOf(now) <= 2 * aheadMs) {",
     "tests": [
       "test/systems/events1_board.test.js"
     ]
@@ -446,7 +446,7 @@
   {
     "name": "EVENTS1-the-raids-region-the-maps",
     "file": "src/systems/raidingParties.js",
-    "old": "export const raidRegionNow = () => { try { return host().regionIndex?.() ?? -1; } catch { return -1; } };",
+    "old": "export const raidRegionNow = () => {\n  try {\n    return host().regionIndex?.() ?? -1;\n  } catch {\n    return -1;\n  }\n};",
     "new": "export const raidRegionNow = () => -1;",
     "tests": [
       "test/systems/events1_board.test.js"
@@ -887,8 +887,8 @@
   {
     "name": "EVENTS1-a-raid-line-unnamed",
     "file": "src/systems/raidingParties.js",
-    "old": "const id = raid ? `raid:${raidKey(raid)}` : null;",
-    "new": "const id = null;",
+    "old": "  const id = raid ? `raid:${raidKey(raid)}` : null;",
+    "new": "  const id = null;",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]

@@ -11,8 +11,8 @@
   {
     "name": "PROF12-potions-reexport-copy",
     "file": "src/systems/potions.js",
-    "old": "import {\n  POTION_RECIPES, POTION_DEFAULT_TEXTURE_RECORD, potionRecipeKey, potionKeyFromCauldron, setPotionDisplayNames,\n} from './potionRecipes.js';",
-    "new": "import {\n  POTION_RECIPES as LEAF_RECIPES, POTION_DEFAULT_TEXTURE_RECORD, potionRecipeKey, potionKeyFromCauldron, setPotionDisplayNames,\n} from './potionRecipes.js';\nconst POTION_RECIPES = Object.freeze([...LEAF_RECIPES]);",
+    "old": "  POTION_RECIPES,\n  POTION_DEFAULT_TEXTURE_RECORD,\n  potionRecipeKey,\n  potionKeyFromCauldron,\n  setPotionDisplayNames,\n} from './potionRecipes.js';",
+    "new": "  POTION_RECIPES as LEAF_RECIPES,\n  POTION_DEFAULT_TEXTURE_RECORD,\n  potionRecipeKey,\n  potionKeyFromCauldron,\n  setPotionDisplayNames,\n} from './potionRecipes.js';\nconst POTION_RECIPES = Object.freeze([...LEAF_RECIPES]);",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -1567,8 +1567,8 @@
   {
     "name": "PROF12-A2-key-no-potent",
     "file": "src/systems/quickslots.js",
-    "old": "    + (item.potent ? `|p${item.potent}` : '')",
-    "new": "    + ''",
+    "old": "    (item.potent ? `|p${item.potent}` : '') + // AUDIT PROF12 A2: a Potent potion's share (set at the mint - the cache holds), so a slot and its count keep Potent and plain apart; AUDIT PROF-541 Q1: only when set, so a save's plain keys still resolve",
+    "new": "    '' + // AUDIT PROF12 A2: a Potent potion's share (set at the mint - the cache holds), so a slot and its count keep Potent and plain apart; AUDIT PROF-541 Q1: only when set, so a save's plain keys still resolve",
     "tests": [
       "test/systems/prof12_client.test.js",
       "test/systems/quickslots.test.js"

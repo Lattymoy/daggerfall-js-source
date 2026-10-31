@@ -125,8 +125,8 @@
   {
     "name": "L10N3dX-poison-alert-english",
     "file": "src/systems/poisons.js",
-    "old": "  if (onAlert) onAlert(youFeelSomewhatBadText());",
-    "new": "  if (onAlert) onAlert('You feel somewhat bad.');",
+    "old": "  if (onAlert) onAlert(youFeelSomewhatBadText()); // player hosts only (the scene wires it)",
+    "new": "  if (onAlert) onAlert('You feel somewhat bad.'); // player hosts only (the scene wires it)",
     "tests": [
       "test/systems/l10n3d_crossings.test.js",
       "test/systems/l10n3d_sites.test.js"

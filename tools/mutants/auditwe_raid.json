@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-WE-L4-2-a-loss-without-a-body",
     "file": "src/systems/raidingParties.js",
-    "old": "    if (e.foe.dead) { e.done = true; if (e.foe.corpse) raid.lost = (raid.lost | 0) + 1; }",
-    "new": "    if (e.foe.dead) { e.done = true; raid.lost = (raid.lost | 0) + 1; }",
+    "old": "      if (e.foe.corpse) raid.lost = (raid.lost | 0) + 1;",
+    "new": "      raid.lost = (raid.lost | 0) + 1;",
     "tests": [
       "test/systems/auditwe_raid.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-WE-L4-9-all-on-one-point",
     "file": "src/systems/raidingParties.js",
-    "old": "{ at: alongWay(o.way, Math.max(0, o.guide - 2 - i * RAID_REFUGEE_GAP_M)),",
-    "new": "{ at: alongWay(o.way, Math.max(0, o.guide - 2)),",
+    "old": "    spawn(raid, 'refugee', null, {\n      at: alongWay(o.way, Math.max(0, o.guide - 2 - i * RAID_REFUGEE_GAP_M)),\n      follow: refugeeFollow(o, i),\n    }); // AUDIT WORLD-EVENTS L4-9: each a pace behind the one before, never all on one point",
+    "new": "    spawn(raid, 'refugee', null, { at: alongWay(o.way, Math.max(0, o.guide - 2)), follow: refugeeFollow(o, i) }); // AUDIT WORLD-EVENTS L4-9: each a pace behind the one before, never all on one point",
     "tests": [
       "test/systems/auditwe_raid.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-WE-L4-9-mine-kept-standing-by",
     "file": "src/systems/raidingParties.js",
-    "old": "  if (sharedClockOn() && !runsRaid(raid)) { cancelPending(); letGoAllies(raidKey(raid)); return 'standing-by'; }",
-    "new": "  if (sharedClockOn() && !runsRaid(raid)) { cancelPending(); return 'standing-by'; }",
+    "old": "    letGoAllies(raidKey(raid));\n    return 'standing-by';",
+    "new": "    return 'standing-by';",
     "tests": [
       "test/systems/auditwe_raid.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-WE-L3-12-stood-at-dt-0",
     "file": "src/systems/raidingParties.js",
-    "old": "    if (!(dt > 0)) return 'idle';",
-    "new": "    if (!(dt >= 0)) return 'idle';",
+    "old": "    if (!(dt > 0)) return 'idle'; // AUDIT WORLD-EVENTS L3-12: a paused frame stands no bearer, refugee or pack - fix 7's law",
+    "new": "    if (!(dt >= 0)) return 'idle'; // AUDIT WORLD-EVENTS L3-12: a paused frame stands no bearer, refugee or pack - fix 7's law",
     "tests": [
       "test/systems/auditwe_raid.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "AUDIT-WE-L4-6-a-walk-off-a-whole-standard",
     "file": "src/systems/raidingParties.js",
-    "old": "    if (kind === 'bearer' && foe.entity && objOf(raid).share < 1) foe.entity.health",
-    "new": "    if (kind === 'bearer' && foe.entity && objOf(raid).share < -1) foe.entity.health",
+    "old": "      if (kind === 'bearer' && foe.entity && objOf(raid).share < 1)",
+    "new": "      if (kind === 'bearer' && foe.entity && objOf(raid).share < -1)",
     "tests": [
       "test/systems/auditwe_raid.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-WE-L4-7-the-shift-unheard",
     "file": "src/systems/raidingParties.js",
-    "old": "    shift(o.post);\n",
-    "new": "",
+    "old": "    shift(o.post);\n    if (Array.isArray(o.way)) for (const p of o.way) shift(p);",
+    "new": "    if (Array.isArray(o.way)) for (const p of o.way) shift(p);",
     "tests": [
       "test/systems/auditwe_raid.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "AUDIT-WE-L3-7-packs-before-the-ledger",
     "file": "src/systems/raidingParties.js",
-    "old": "  if (raidRelayOn() && !_relay.has(key)) return 'idle';\n",
-    "new": "",
+    "old": "  if (raidRelayOn() && !_relay.has(key)) return 'idle';\n  const kills = townKills(raid),",
+    "new": "  const kills = townKills(raid),",
     "tests": [
       "test/systems/auditwe_raid.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AUDIT-WE-L3-5-the-takeover-a-raider",
     "file": "src/systems/raidingParties.js",
-    "old": "leader: !!f.entity?.raidLeader, routed: false",
-    "new": "routed: false",
+    "old": "      _live.push({\n        foe: f,\n        key: f.raidKey,\n        kind: 'raider',\n        boss: tookStaffBoss(f),\n        leader: !!f.entity?.raidLeader,\n        routed: false,\n        counted: false,\n      }); // AUDIT WORLD-EVENTS L3-5: a leader taken over is the leader",
+    "new": "      _live.push({ foe: f, key: f.raidKey, kind: 'raider', boss: tookStaffBoss(f), routed: false, counted: false }); // AUDIT WORLD-EVENTS L3-5: a leader taken over is the leader",
     "tests": [
       "test/systems/auditwe_raid.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "AUDIT-WE-L3-6-the-reader-wave-unread",
     "file": "src/systems/raidingParties.js",
-    "old": " || (raid.wv ?? -1) >= (raid.plan ??= raidWavePlan(raid.attackAmount)).sizes.length;",
-    "new": ";",
+    "old": "  if (kind === 'waves')\n    return (\n      !!raid.ld ||\n      objOf(raid).leaderFell > -Infinity ||\n      (raid.wv ?? -1) >= (raid.plan ??= raidWavePlan(raid.attackAmount)).sizes.length\n    );",
+    "new": "  if (kind === 'waves') return !!raid.ld || objOf(raid).leaderFell > -Infinity;",
     "tests": [
       "test/systems/auditwe_raid.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "AUDIT-WE-L3-4-the-fold-dropped",
     "file": "src/systems/raidingParties.js",
-    "old": "  if (kind === 'defend') { if (w.b === 1) raid.sacked = true; else raid.stAt = t; }",
-    "new": "  if (kind === 'defend') { if (w.b !== 1) raid.stAt = t; }",
+    "old": "    if (w.b === 1) raid.sacked = true;\n    else raid.stAt = t;",
+    "new": "    if (w.b !== 1) raid.stAt = t;",
     "tests": [
       "test/systems/auditwe_raid.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "AUDIT-WE-L3-8-held-off-the-word-alone",
     "file": "src/systems/raidingParties.js",
-    "old": "b.foe.entity.maxHealth); raid.stAt = localNow(); }",
-    "new": "b.foe.entity.maxHealth); }",
+    "old": "    raid.stAt = localNow();\n  } // AUDIT WORLD-EVENTS L3-8/L4-6: seen standing, and as he stands",
+    "new": "  } // AUDIT WORLD-EVENTS L3-8/L4-6: seen standing, and as he stands",
     "tests": [
       "test/systems/auditwe_raid.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "AUDIT-WE-L3-11-asked-unsaved",
     "file": "src/systems/raidingParties.js",
-    "old": "...(r.asked ? { asked: true } : {}), ...(r.ow ?",
-    "new": "...(r.ow ?",
+    "old": "    ...(r.asked ? { asked: true } : {}),\n    ...(r.ow ? { ow: r.ow.slice() } : {}), // AUDIT WORLD-EVENTS L3-11: its leader's fall, its wave, and what was said of it - once, as RAID1's own lines are",
+    "new": "    ...(r.ow ? { ow: r.ow.slice() } : {}), // AUDIT WORLD-EVENTS L3-11: its leader's fall, its wave, and what was said of it - once, as RAID1's own lines are",
     "tests": [
       "test/systems/auditwe_raid.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AUDIT-WE-L3-14-the-receipt-held-unsent",
     "file": "src/systems/raidingParties.js",
-    "old": "    host().onRaidReceipt?.(f.r, c, raidHeldFor(c.w));",
-    "new": "    host().onRaidReceipt?.(f.r, c);",
+    "old": "    host().onRaidReceipt?.(f.r, c, raidHeldFor(c.w)); // RAID4 carries it to the account service and rolls the spoils off its seed; AUDIT WORLD-EVENTS L3-14: and whether its town was held, for the character that fought",
+    "new": "    host().onRaidReceipt?.(f.r, c); // RAID4 carries it to the account service and rolls the spoils off its seed; AUDIT WORLD-EVENTS L3-14: and whether its town was held, for the character that fought",
     "tests": [
       "test/systems/auditwe_raid.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "AUDIT-WE-L6-5-never-turned",
     "file": "src/systems/raidingParties.js",
-    "old": "    if (!e.foe.raidTurned && !e.foe.dead && (e.foe.entity?.health ?? 1) < (e.foe.entity?.maxHealth ?? 1)) e.foe.raidTurned = true;",
-    "new": "    if (false) e.foe.raidTurned = true;",
+    "old": "    if (!e.foe.raidTurned && !e.foe.dead && (e.foe.entity?.health ?? 1) < (e.foe.entity?.maxHealth ?? 1))\n      e.foe.raidTurned = true; // AUDIT WORLD-EVENTS L6-5: struck, it fights who struck it (enemyTargets.js RAID_GOAL_PRIORITY's turn)",
+    "new": "    if (false) e.foe.raidTurned = true; // AUDIT WORLD-EVENTS L6-5: struck, it fights who struck it (enemyTargets.js RAID_GOAL_PRIORITY's turn)",
     "tests": [
       "test/systems/auditwe_raid.test.js"
     ]

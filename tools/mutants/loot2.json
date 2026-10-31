@@ -167,7 +167,7 @@
   {
     "name": "LOOT2-the-town-never",
     "file": "src/systems/raidSpoils.js",
-    "old": "  lastPass([item], rolls);   // LOOT2: the ladder's last pass, after the set piece - its earlier draws stay its seed's",
+    "old": "  lastPass([item], rolls); // LOOT2: the ladder's last pass, after the set piece - its earlier draws stay its seed's",
     "new": "",
     "tests": [
       "test/systems/loot2_exalted.test.js"

@@ -358,8 +358,8 @@
   {
     "name": "PICKUP-FEED-the-line-said-over-the-card",
     "file": "src/systems/quickLoot.js",
-    "old": "  if (got) { takeSound(); if (!shownBy(took, moved, playerEntity)) say(tookItemText(got)); }",
-    "new": "  if (got) { takeSound(); shownBy(took, moved, playerEntity); say(tookItemText(got)); }",
+    "old": "    if (!shownBy(took, moved, playerEntity)) say(tookItemText(got));",
+    "new": "    shownBy(took, moved, playerEntity);\n    say(tookItemText(got));",
     "tests": [
       "test/systems/pickupfeed.test.js",
       "test/systems/quickloot.test.js"
@@ -368,8 +368,8 @@
   {
     "name": "PICKUP-FEED-the-face-never-asked",
     "file": "src/systems/quickLoot.js",
-    "old": "  if (got) { takeSound(); if (!shownBy(took, moved, playerEntity)) say(tookItemText(got)); }",
-    "new": "  if (got) { takeSound(); say(tookItemText(got)); }",
+    "old": "    if (!shownBy(took, moved, playerEntity)) say(tookItemText(got));",
+    "new": "    say(tookItemText(got));",
     "tests": [
       "test/systems/pickupfeed.test.js",
       "test/systems/quickloot.test.js"
@@ -378,8 +378,8 @@
   {
     "name": "PICKUP-FEED-the-classic-line-lost",
     "file": "src/systems/quickLoot.js",
-    "old": "  try { return took(moved, playerEntity) === true; } catch (e) {",
-    "new": "  try { took(moved, playerEntity); return true; } catch (e) {",
+    "old": "    return took(moved, playerEntity) === true;",
+    "new": "    took(moved, playerEntity);\n    return true;",
     "tests": [
       "test/systems/pickupfeed.test.js",
       "test/systems/quickloot.test.js"
@@ -388,7 +388,7 @@
   {
     "name": "PICKUP-FEED-a-face-that-throws-takes-the-frame",
     "file": "src/systems/quickLoot.js",
-    "old": "  try { return took(moved, playerEntity) === true; } catch (e) {\n    console.warn(`[quick-loot] the pickup face failed; the line is said instead: ${e?.message ?? e}`);\n    return false;\n  }",
+    "old": "  try {\n    return took(moved, playerEntity) === true;\n  } catch (e) {\n    console.warn(`[quick-loot] the pickup face failed; the line is said instead: ${e?.message ?? e}`);\n    return false;\n  }",
     "new": "  return took(moved, playerEntity) === true;",
     "tests": [
       "test/systems/pickupfeed.test.js",
@@ -398,8 +398,8 @@
   {
     "name": "PICKUP-FEED-the-refusal-swallowed-with-the-count",
     "file": "src/systems/quickLoot.js",
-    "old": "    if (n && shownBy(took, moved, playerEntity)) { if (refusal?.text) say(refusal.text); }",
-    "new": "    if (n && shownBy(took, moved, playerEntity)) { }",
+    "old": "      if (refusal?.text) say(refusal.text);\n    } else if (n)",
+    "new": "    } else if (n)",
     "tests": [
       "test/systems/pickupfeed.test.js",
       "test/systems/quickloot.test.js"
@@ -408,8 +408,8 @@
   {
     "name": "PICKUP-FEED-an-empty-say-blanks-the-line",
     "file": "src/systems/quickLoot.js",
-    "old": "    if (n && shownBy(took, moved, playerEntity)) { if (refusal?.text) say(refusal.text); }",
-    "new": "    if (n && shownBy(took, moved, playerEntity)) { say(refusal?.text ?? ''); }",
+    "old": "      if (refusal?.text) say(refusal.text);",
+    "new": "      say(refusal?.text ?? '');",
     "tests": [
       "test/systems/pickupfeed.test.js",
       "test/systems/quickloot.test.js"
@@ -418,8 +418,8 @@
   {
     "name": "PICKUP-FEED-gold-counted-at-what-stayed",
     "file": "src/systems/quickLoot.js",
-    "old": "  moved?.push({ item: got, count: plan.amount });",
-    "new": "  moved?.push({ item: got, count: got.stackCount ?? 1 });",
+    "old": "  moved?.push({ item: got, count: plan.amount }); // PICKUP-FEED: the plan's amount, not the record's - gold answers the pile's own row, whose stack is what STAYED",
+    "new": "  moved?.push({ item: got, count: got.stackCount ?? 1 }); // PICKUP-FEED: the plan's amount, not the record's - gold answers the pile's own row, whose stack is what STAYED",
     "tests": [
       "test/systems/pickupfeed.test.js",
       "test/systems/quickloot.test.js"

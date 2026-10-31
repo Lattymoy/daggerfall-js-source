@@ -270,8 +270,8 @@
   {
     "name": "AUDIT30-A1-the-plane-clocked-from-the-press",
     "file": "src/systems/planeAct.js",
-    "old": "        if (st.t0 == null) st.t0 = t;\n",
-    "new": "",
+    "old": "        if (st.t0 == null) st.t0 = t;\n        const x0 = st.x,",
+    "new": "        const x0 = st.x,",
     "tests": [
       "test/net/audit30_laws.test.js"
     ]
@@ -279,8 +279,8 @@
   {
     "name": "AUDIT30-A1-a-flick-scored-at-its-ends",
     "file": "src/systems/planeAct.js",
-    "old": "const n = Math.max(1, Math.ceil((x1 - x0) / PLANE_ACT.step - 1e-9));",
-    "new": "const n = 1;",
+    "old": "        const n = Math.max(1, Math.ceil((x1 - x0) / PLANE_ACT.step - 1e-9));",
+    "new": "        const n = 1;",
     "tests": [
       "test/net/audit30_laws.test.js"
     ]

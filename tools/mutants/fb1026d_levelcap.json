@@ -152,8 +152,8 @@
   {
     "name": "LEVEL-45-crossing-holds-the-latch",
     "file": "src/systems/realmCustoms.js",
-    "old": "  releaseCapLatch(snap);   // LEVEL-45: an Oblivion character's latch at 45 or past it owes no level online either\n",
-    "new": "",
+    "old": "  releaseCapLatch(snap); // LEVEL-45: an Oblivion character's latch at 45 or past it owes no level online either\n  const target = snap.readyToLevelUp === true ? level + 1 : level;",
+    "new": "  const target = snap.readyToLevelUp === true ? level + 1 : level;",
     "tests": [
       "test/systems/fb1026d_levelcap.test.js"
     ],

@@ -83,8 +83,8 @@
   {
     "name": "LOOT17-rare-cheaper",
     "file": "src/systems/reforge.js",
-    "old": "  rare: Object.freeze({ shards: 2, gold: 150 }),\n  exalted: Object.freeze({ shards: 4, gold: 500 }),",
-    "new": "  rare: Object.freeze({ shards: 2, gold: 100 }),\n  exalted: Object.freeze({ shards: 4, gold: 500 }),",
+    "old": "  rare: Object.freeze({ shards: 2, gold: 150 }),",
+    "new": "  rare: Object.freeze({ shards: 2, gold: 100 }),",
     "tests": [
       "test/systems/loot17_hone.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LOOT17-an-exalted-unpriced",
     "file": "src/systems/reforge.js",
-    "old": "    : item?.rarity === 'legendary' && item.exalted === true ? HONE_PRICE.exalted : null;",
-    "new": "    : null;",
+    "old": "  const base =\n    item?.rarity === 'magic' || item?.rarity === 'rare'\n      ? HONE_PRICE[item.rarity]\n      : item?.rarity === 'legendary' && item.exalted === true\n        ? HONE_PRICE.exalted\n        : null;",
+    "new": "  const base = item?.rarity === 'magic' || item?.rarity === 'rare' ? HONE_PRICE[item.rarity] : null;",
     "tests": [
       "test/systems/loot17_hone.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "LOOT17-honed-unknown",
     "file": "src/systems/reforge.js",
-    "old": "  const known = itemIsIdentified(item);\n  if (!known) return 'unknown';\n",
-    "new": "",
+    "old": "  const known = itemIsIdentified(item);\n  if (!known) return 'unknown';\n  if (isEquipped(item)) return 'worn';",
+    "new": "  if (isEquipped(item)) return 'worn';",
     "tests": [
       "test/systems/loot17_hone.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "LOOT17-honed-worn",
     "file": "src/systems/reforge.js",
-    "old": "  if (isEquipped(item)) return 'worn';\n  if (!honeableLines",
-    "new": "  if (!honeableLines",
+    "old": "  if (isEquipped(item)) return 'worn';\n  if (!honeableLines(item).includes(index)) return affixBand(item, index) ? 'top' : 'line';",
+    "new": "  if (!honeableLines(item).includes(index)) return affixBand(item, index) ? 'top' : 'line';",
     "tests": [
       "test/systems/loot17_hone.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "LOOT17-honed-without-shards",
     "file": "src/systems/reforge.js",
-    "old": "  if (purse.shards < price.shards) return 'shards';\n",
-    "new": "",
+    "old": "  if (purse.shards < price.shards) return 'shards';\n  if (purse.gold < price.gold) return 'gold';",
+    "new": "  if (purse.gold < price.gold) return 'gold';",
     "tests": [
       "test/systems/loot17_hone.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "LOOT17-honed-without-gold",
     "file": "src/systems/reforge.js",
-    "old": "  if (purse.gold < price.gold) return 'gold';\n",
-    "new": "",
+    "old": "  if (purse.gold < price.gold) return 'gold';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/loot17_hone.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "LOOT17-honed-anywhere",
     "file": "src/systems/reforge.js",
-    "old": "  if (!player || !Array.isArray(player.items) || !player.items.includes(item)) return { ok: false, reason: 'gone' };\n  const why = honeRefusal",
-    "new": "  if (!player || !Array.isArray(player.items)) return { ok: false, reason: 'gone' };\n  const why = honeRefusal",
+    "old": "export function honePiece(item, index, player, rolls = Math.random) {\n  if (!player || !Array.isArray(player.items) || !player.items.includes(item)) return { ok: false, reason: 'gone' };",
+    "new": "export function honePiece(item, index, player, rolls = Math.random) {\n  if (!player || !Array.isArray(player.items)) return { ok: false, reason: 'gone' };",
     "tests": [
       "test/systems/loot17_hone.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "LOOT17-paid-at-the-next-price",
     "file": "src/systems/reforge.js",
-    "old": "  const price = /** @type {{ shards: number, gold: number }} */ (honePrice(item));\n  const line = honeAffix(item, index, rolls);\n  if (!line) return { ok: false, reason: 'not' };",
-    "new": "  const line = honeAffix(item, index, rolls);\n  const price = /** @type {{ shards: number, gold: number }} */ (honePrice(item));\n  if (!line) return { ok: false, reason: 'not' };",
+    "old": "  const price = /** @type {{ shards: number, gold: number }} */ (honePrice(item));\n  const line = honeAffix(item, index, rolls);",
+    "new": "  const line = honeAffix(item, index, rolls);\n  const price = /** @type {{ shards: number, gold: number }} */ (honePrice(item));",
     "tests": [
       "test/systems/loot17_hone.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "LOOT17-the-shards-kept",
     "file": "src/systems/reforge.js",
-    "old": "  spendShards(player.items, shards);\n",
-    "new": "",
+    "old": "  spendShards(player.items, shards);\n  deductGold(player, gold);",
+    "new": "  deductGold(player, gold);",
     "tests": [
       "test/systems/loot17_hone.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "LOOT17-the-gold-kept",
     "file": "src/systems/reforge.js",
-    "old": "  deductGold(player, gold);\n",
-    "new": "",
+    "old": "  deductGold(player, gold);\n  return { ok: true, line, price };",
+    "new": "  return { ok: true, line, price };",
     "tests": [
       "test/systems/loot17_hone.test.js"
     ]

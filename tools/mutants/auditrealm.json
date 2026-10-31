@@ -84,8 +84,8 @@
   {
     "name": "AUDIT-REALM-F2-the-stashes-never-taken",
     "file": "src/systems/realmCustoms.js",
-    "old": "  for (const list of stashedItemLists(snap)) takeFrom(list);\n",
-    "new": "",
+    "old": "  for (const list of stashedItemLists(snap)) takeFrom(list);\n  for (const a of [...accounts].sort((x, y) => (y?.accountGold ?? 0) - (x?.accountGold ?? 0))) {",
+    "new": "  for (const a of [...accounts].sort((x, y) => (y?.accountGold ?? 0) - (x?.accountGold ?? 0))) {",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "AUDIT-REALM-F2-the-stashes-after-the-purse",
     "file": "src/systems/realmCustoms.js",
-    "old": "  for (const list of lists(snap.wagonItems, snap.bagItems, snap.items)) takeFrom(list);",
-    "new": "  for (const list of [...stashedItemLists(snap).reverse(), ...lists(snap.wagonItems, snap.bagItems, snap.items)].reverse()) takeFrom(list);",
+    "old": "  for (const list of lists(snap.wagonItems, snap.bagItems, snap.items)) takeFrom(list); // BAG1: the bag's materials too",
+    "new": "  for (const list of [\n    ...stashedItemLists(snap).reverse(),\n    ...lists(snap.wagonItems, snap.bagItems, snap.items),\n  ].reverse())\n    takeFrom(list); // BAG1: the bag's materials too",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]

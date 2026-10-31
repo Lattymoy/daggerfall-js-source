@@ -12,8 +12,8 @@
   {
     "name": "SHIPYARDS-every-town-a-port",
     "file": "src/systems/portPlaces.js",
-    "old": "isPortTownType(loc?.mapTableData?.locationType) && !!isPort;",
-    "new": "isPortTownType(loc?.mapTableData?.locationType);",
+    "old": "export const isPortTown = (loc, isPort) => isPortTownType(loc?.mapTableData?.locationType) && !!isPort;",
+    "new": "export const isPortTown = (loc, isPort) => isPortTownType(loc?.mapTableData?.locationType);",
     "tests": [
       "test/systems/shipyards1.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "SHIPYARDS-the-light-not-the-towns",
     "file": "src/systems/portPlaces.js",
-    "old": "if (k === 'lighthouse') return town ? `The ${town} Light` : 'The Lighthouse';",
-    "new": "if (k === 'lighthouse') return 'The Lighthouse';",
+    "old": "  if (k === 'lighthouse') return town ? `The ${town} Light` : 'The Lighthouse';",
+    "new": "  if (k === 'lighthouse') return 'The Lighthouse';",
     "tests": [
       "test/systems/shipyards1.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "SHIPYARDS-the-crewmaster-the-shipmaster",
     "file": "src/systems/portPlaces.js",
-    "old": "townKeeper(townSeed(mapId, PORT_PLACES[validPortPlace(place) ?? 'shipyard'].seed), regionIndex, people);",
-    "new": "townKeeper(townSeed(mapId, PORT_PLACES.shipyard.seed), regionIndex, people);",
+    "old": "  townKeeper(townSeed(mapId, PORT_PLACES[validPortPlace(place) ?? 'shipyard'].seed), regionIndex, people);",
+    "new": "  townKeeper(townSeed(mapId, PORT_PLACES.shipyard.seed), regionIndex, people);",
     "tests": [
       "test/systems/shipyards1.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "SHIPYARDS-the-rows-middle-unread",
     "file": "src/systems/portPlaces.js",
-    "old": "      position: [s.x, 0, s.z], buildingKey: foundBuildingKey(kind), yard: kind,",
-    "new": "      position: [0, 0, 0], buildingKey: foundBuildingKey(kind), yard: kind,",
+    "old": "      position: [s.x, 0, s.z],",
+    "new": "      position: [0, 0, 0],",
     "tests": [
       "test/systems/shipyards1.test.js",
       "test/systems/shipyards1_found.test.js"

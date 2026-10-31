@@ -182,8 +182,8 @@
   {
     "name": "A7-one-verb-eats-the-wheel",
     "file": "src/systems/quickLoot.js",
-    "old": "  if (_actionIds && _actionIds.length <= 1 && _sel.row >= 0) return false;\n",
-    "new": "",
+    "old": "  if (_actionIds && _actionIds.length <= 1 && _sel.row >= 0) return false;\n  _nudge += clicks;",
+    "new": "  _nudge += clicks;",
     "tests": [
       "test/systems/auditdisc7.test.js"
     ]

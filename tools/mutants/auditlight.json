@@ -20,8 +20,8 @@
   {
     "name": "ql-all-reason-unsaid",
     "file": "src/systems/quickLoot.js",
-    "old": "    else if (n) say((n === 1 ? 'You take 1 item.' : `You take ${n} items.`) + (refusal?.text ? ` ${refusal.text}` : ''));",
-    "new": "    else if (n) say(n === 1 ? 'You take 1 item.' : `You take ${n} items.`);",
+    "old": "      say((n === 1 ? 'You take 1 item.' : `You take ${n} items.`) + (refusal?.text ? ` ${refusal.text}` : '')); // AUDIT: a refusal with no line (none the loop can meet today) adds nothing",
+    "new": "      say(n === 1 ? 'You take 1 item.' : `You take ${n} items.`); // AUDIT: a refusal with no line (none the loop can meet today) adds nothing",
     "tests": [
       "test/systems/quickloot.test.js"
     ]

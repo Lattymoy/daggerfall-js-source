@@ -418,8 +418,8 @@
   {
     "name": "OPEN-HAND-owed-twice-over",
     "file": "src/systems/playerDoor.js",
-    "old": "_owed.set(entity, (_owed.get(entity) ?? 0) + n);",
-    "new": "_owed.set(entity, (_owed.get(entity) ?? 0) + 2 * n);",
+    "old": "  if (entity && typeof entity === 'object' && n > 0) _owed.set(entity, (_owed.get(entity) ?? 0) + n);",
+    "new": "  if (entity && typeof entity === 'object' && n > 0) _owed.set(entity, (_owed.get(entity) ?? 0) + 2 * n);",
     "tests": [
       "test/systems/fb1012g_openhand.test.js"
     ]

@@ -49,8 +49,8 @@
   {
     "name": "AUDIT-LOOT-II-B1-a-quest-gem-loose",
     "file": "src/systems/reforge.js",
-    "old": "gemKindOf(it) === gem && !it.questItem && !isLocked(it)",
-    "new": "gemKindOf(it) === gem && !isLocked(it)",
+    "old": "const looseGem = (it, gem) =>\n  gemKindOf(it) === gem && !it.questItem && !isLocked(it) && !isEquipped(it) && !isEnchanted(it); // AUDIT GEM: never one the item maker enchanted (its powers would go into the socket and be lost)",
+    "new": "const looseGem = (it, gem) => gemKindOf(it) === gem && !isLocked(it) && !isEquipped(it) && !isEnchanted(it); // AUDIT GEM: never one the item maker enchanted (its powers would go into the socket and be lost)",
     "tests": [
       "test/systems/auditloot2.test.js"
     ]

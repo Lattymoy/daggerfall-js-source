@@ -199,8 +199,8 @@
   {
     "name": "AUDIT-ECON-R3-the-slot-silent",
     "file": "src/systems/quickslots.js",
-    "old": "    if (res.text && !res.said) say?.(res.text);\n",
-    "new": "",
+    "old": "    if (res.text && !res.said) say?.(res.text);\n    return { kind: 'refused', name: r.name, result: res };",
+    "new": "    return { kind: 'refused', name: r.name, result: res };",
     "tests": [
       "test/systems/repair_rate.test.js"
     ]

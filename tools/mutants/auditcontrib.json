@@ -128,8 +128,8 @@
   {
     "name": "H1-the-diamond-holds-tap-under-the-hotbar",
     "file": "src/systems/quickslots.js",
-    "old": " || hotbarInForce()) {   // AUDIT CONTRIB H1",
-    "new": ") {   // AUDIT CONTRIB H1",
+    "old": "  if (blocked || gap > QUICK_GAP_MS || typeof isHeld !== 'function' || hotbarInForce()) {",
+    "new": "  if (blocked || gap > QUICK_GAP_MS || typeof isHeld !== 'function') {",
     "tests": [
       "test/systems/auditcontrib.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "H2-the-other-light-of-the-kind",
     "file": "src/systems/quickslots.js",
-    "old": "  if (lit && quickslotKey(lit) === e.key) { item = lit; count = Math.max(count, 1); }\n",
-    "new": "",
+    "old": "  if (lit && quickslotKey(lit) === e.key) {\n    item = lit;\n    count = Math.max(count, 1);\n  }\n  return { key: e.key, name: e.name, item, count };",
+    "new": "  return { key: e.key, name: e.name, item, count };",
     "tests": [
       "test/systems/auditcontrib.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "H3-a-refused-ready-is-a-press",
     "file": "src/systems/quickslots.js",
-    "old": "took === false ? 'refused' : 'pressed'",
-    "new": "'pressed'",
+    "old": "    return { kind: fired ? 'cast' : took === false ? 'refused' : 'pressed', name: r.name, readied: armed };",
+    "new": "    return { kind: fired ? 'cast' : 'pressed', name: r.name, readied: armed };",
     "tests": [
       "test/systems/auditcontrib.test.js"
     ]

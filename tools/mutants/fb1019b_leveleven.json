@@ -63,7 +63,7 @@
     "name": "LEVEL-EVEN-stars-left-out",
     "file": "src/systems/renownLayer.js",
     "old": "  const even = online ? evenHpOf(entity, (entity.stats?.endurance ?? NaN) + (x?.end ?? 0)) : 0;",
-    "new": "  const even = online ? evenHpOf(entity, (entity.stats?.endurance ?? NaN)) : 0;",
+    "new": "  const even = online ? evenHpOf(entity, entity.stats?.endurance ?? NaN) : 0;",
     "tests": [
       "test/systems/fb1019b_leveleven.test.js"
     ],

@@ -506,8 +506,8 @@
   {
     "name": "WERE-POTIONS-the-beast-refused-every-potion",
     "file": "src/systems/quickslots.js",
-    "old": "  if (sup && !isPotion(r?.item)) { say?.(sup.text); return { kind: 'refused' }; }",
-    "new": "  if (sup) { say?.(sup.text); return { kind: 'refused' }; }",
+    "old": "  if (sup && !isPotion(r?.item)) {",
+    "new": "  if (sup) {",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]
@@ -515,7 +515,7 @@
   {
     "name": "WERE-POTIONS-any-pack-item-for-the-beast",
     "file": "src/systems/quickslots.js",
-    "old": "  if (sup && !isPotion(r?.item)) { say?.(sup.text); return { kind: 'refused' }; }",
+    "old": "  if (sup && !isPotion(r?.item)) {\n    say?.(sup.text);\n    return { kind: 'refused' };\n  }",
     "new": "",
     "tests": [
       "test/systems/disc10_lycan.test.js"
@@ -524,8 +524,8 @@
   {
     "name": "DISC10-E-L3-the-quickslot-swap-for-the-beast",
     "file": "src/systems/quickslots.js",
-    "old": "  // sword into the claws MorphSelf had just emptied (:463-467).\n  const sup = racialSuppressInventory(entity);\n  if (sup) { say?.(sup.text); return { kind: 'refused' }; }\n",
-    "new": "  // sword into the claws MorphSelf had just emptied (:463-467).\n",
+    "old": "  const sup = racialSuppressInventory(entity);\n  if (sup) {\n    say?.(sup.text);\n    return { kind: 'refused' };\n  }\n  const r = resolveSwap(entity);",
+    "new": "  const r = resolveSwap(entity);",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "WERE-LOOT-the-beast-takes-nothing",
     "file": "src/systems/quickLoot.js",
-    "old": "  const beast = !!racialSuppressInventory(playerEntity);\n",
-    "new": "  const beast = false;\n",
+    "old": "  const beast = !!racialSuppressInventory(playerEntity);",
+    "new": "  const beast = false;",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]

@@ -159,8 +159,8 @@
   {
     "name": "AUDIT-WE-L6-9-the-extra-piece-rolled-first",
     "file": "src/systems/raidSpoils.js",
-    "old": "  const pieces = [{ item, tier: item.rarity ?? tier }];   // a Legendary",
-    "new": "  if (held) magicOrBetter(rolls, RAID_SPOILS_SOURCE);\n  const pieces = [{ item, tier: item.rarity ?? tier }];   // a Legendary",
+    "old": "  const pieces = [{ item, tier: item.rarity ?? tier }]; // a Legendary with no record for its kind falls to Rare: read back off the item",
+    "new": "  if (held) magicOrBetter(rolls, RAID_SPOILS_SOURCE);\n  const pieces = [{ item, tier: item.rarity ?? tier }]; // a Legendary with no record for its kind falls to Rare: read back off the item",
     "tests": [
       "test/systems/raid5_kinds.test.js"
     ]
