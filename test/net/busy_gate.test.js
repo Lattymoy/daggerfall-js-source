@@ -23,6 +23,7 @@ test('BUSY-GATE the law: the reads that stand back are the fourteen display read
     ['/v1/towns/econ', 'POST'],   // PIN MOVED (AUDIT TOWN-ECON 2 CLI-8): and the towns' shares, an isolate's kept read
     ['/v1/festival/town', 'POST'],   // PIN MOVED (WITCH1): and a town's Hearth Offerings, a replica's read
     ['/v1/hunt/state', 'POST'],   // PIN MOVED (HUNT-LEAN): and a character's hunt, a replica's read (test/server/lode_herd.test.js)
+    ['/v1/prof/ground', 'POST'],   // PIN MOVED (WITNESS-MAP): and the held map's witnessed ground; PIN MOVED (AUDIT FB1031 W3): a day's tiles, a replica's read (test/ui/fb1031_witness.test.js)
   ]);
   for (const [path, method] of BUSY_READS) {
     assert.ok(ROUTES.has(path), `${path}: a route the service serves`);

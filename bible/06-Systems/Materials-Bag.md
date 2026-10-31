@@ -1,9 +1,9 @@
 # The Materials Bag
 
 A bag a gatherer buys at any General Store and carries as DFU carries the wagon: a second list beside the pack, with a
-weight it may not pass. Online, every harvest goes into the bag, then the pack; the Stores are the character's storage,
-reached in any town. The player meets it on General Store shelves, as a pane in the enhanced inventory, on the Stores
-page, and at every crafting station. It is the port's own (DFU has no professions) and online only.
+weight it may not pass. Online, every harvest but a body's meat goes into the bag, then the pack; the Stores are the
+character's storage, reached in any town. The player meets it on General Store shelves, as a pane in the enhanced
+inventory, on the Stores page, and at every crafting station. It is the port's own (DFU has no professions) and online only.
 
 ## How it works
 
@@ -32,12 +32,21 @@ pack past its weight. Every unit the service counted is made and said. With no b
 for one unit refuses before it starts ("No room in your bag or pack"). The first harvest of a session says where goods
 go. A Motherlode's strike is the same.
 
+**A body's meat goes to the Stores.** A skinned body's hide and part are carried, and its meat lands in the Stores. A
+carrying client asks `butcheryStores`, the service writes the meat to the Stores and answers no carried count for it,
+and the client mints only what the answer counts carried (`src/net/bagLaw.js` `extraStored`). The line names the meat
+"to your Stores". A tree's Resin and a haul's second find stay carried. A client that does not ask, or a service that
+does not know the flag, keeps the meat carried, so no unit is minted twice. A harvest the Stores took the meat for,
+asked again by a build that did not ask so, names no meat (`server-account/src/professions.js` `repeatAnswer`).
+
 **The Stores, in town.** Put in and take out in any town, on its streets or in its buildings, never below ground
 (`src/scenes/world.js` `_storesReached`). The town is the client's convention, not the service's law. The Stores page
 (Holdings tab) shows each material's Stores count and what is carried, with **Take out** (into bag, then pack), **Put
 in**, **Put everything in** (one press, naming each material refused), and **Empty your bag into your pack** anywhere.
 A material stores up to `STORES_MAX` (5,000). Units held but not counted by the service (looted, bought at a shop,
-traded) show as "N unstorable" and can be put in as **loose**.
+traded) show as "N unstorable" and can be put in as **loose**. At a station the Crafting page draws **Put everything
+in** and **Your Stores** over the station worked there, and opening a station scrolls them into view
+(`src/ui/professions/profPages.js` `benchStoresBar`).
 
 **The carried count** (`prof_carried`, `server-account/src/professions.js`). Per character and material, by origin
 (own, bought, gold): what the service handed to the save that has not come back. A carried harvest adds to it; a
@@ -94,6 +103,8 @@ Two tabs mint a kept harvest once.
   stations' wall
 - `test/systems/fb1020c_bagcook.test.js`, `test/systems/professions/fb1020c_onesave.test.js` - cooking from the bag,
   one save a batch
+- `test/net/butcherstores.test.js` - a body's meat to the Stores, older clients and services
+- `test/ui/professions/fb1029_benchstores.test.js` - the station's Stores bar
 
 ## Open
 

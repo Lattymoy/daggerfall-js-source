@@ -50,6 +50,7 @@ function supported(collider, ai, feet) {
  *  @param skip     (f, i) => true for a body that neither pushes nor is pushed */
 export function spaceFoes(foes, collider, dt, skip = spacingSkips) {
   const n = foes?.length ?? 0;
+  if (n && dt > 0 && collider?.move) keepFoesOffBodies(foes, collider, skip); // TRUNK-FOES: a lone foe too
   if (n < 2 || !(dt > 0) || !collider?.move) return 0;
   if (_push.length < n * 2) _push = new Float64Array(n * 2);
   if (_live.length < n) _live = new Uint8Array(n);
@@ -118,6 +119,54 @@ export function spaceFoes(foes, collider, dt, skip = spacingSkips) {
       continue;
     } // never off an edge
     moved++;
+  }
+  return moved;
+}
+
+/**
+ * TRUNK-FOES (FIELD FEEDBACK 2026-10-31, #feature-feedback: "Jungle trees need better or more collision, enemies just
+ * hide in them it sucks."): a foe standing in a NATURE body (world/propBodies.js - a trunk, a rock, a landmark) is put
+ * at its edge along the line from its middle as the player's feet are (player/bodyClamp.js), at once, and round it where
+ * its way lies past it (AUDIT FB1031 F4) - through the collider, never off an edge. A made thing's body holds no foe
+ * (AUDIT FB1031 F5): no foe's steering reads a body (no street pool has a navmesh, a room's and a dungeon's know none),
+ * and one pushed off a barrel in a street's corner would stand there. Answers how many moved; `skip` as spaceFoes'.
+ */
+export function keepFoesOffBodies(foes, collider, skip = spacingSkips) {
+  const cover = collider?.cover;
+  if (!cover?.near || !collider.move) return 0;
+  let moved = 0;
+  for (let i = 0; i < foes.length; i++) {
+    const f = foes[i];
+    if (skip(f, i)) continue;
+    const ai = f.ai,
+      feet = ai.feet,
+      rad = ai.radius ?? CAPSULE_RADIUS,
+      tall = ai.height ?? CAPSULE_HEIGHT; // its full height: the duck is the Move's alone
+    cover.near(feet, rad, (it, cx, cy, cz) => {
+      if (!it.nature || cy >= feet[1] + tall || cy + it.h <= feet[1]) return; // over its head, or under its feet
+      const R = it.r + rad,
+        dx = feet[0] - cx,
+        dz = feet[2] - cz,
+        d = Math.hypot(dx, dz);
+      if (d >= R) return;
+      const nx = d > 1e-6 ? dx / d : 1,
+        nz = d > 1e-6 ? dz / d : 0,
+        push = R - d;
+      // AUDIT FB1031 F4: where the push meets the foe's way to its destination head on, as far again along the edge to
+      // the side that lies on (a fixed side dead on the line, as spaceFoes splits two in one spot) - the push alone held
+      // one walking at a trunk's middle on the spot for good
+      const dest = ai.destination,
+        wx = dest ? dest[0] - feet[0] : 0,
+        wz = dest ? dest[2] - feet[2] : 0;
+      const side = wx * nx + wz * nz < 0 ? (wz * nx - wx * nz < 0 ? -push : push) : 0;
+      // AUDIT FB1031 II K3: a side step off the ground (a ledge, a pier, a cliff's lip) is refused, and took the push
+      // with it - the foe stood in the trunk every frame; the push alone then
+      if (
+        nudge(ai, nx * push - nz * side, nz * push + nx * side, R, collider) ||
+        (side !== 0 && nudge(ai, nx * push, nz * push, R, collider))
+      )
+        moved++; // to its edge in one frame
+    });
   }
   return moved;
 }

@@ -29,8 +29,8 @@
   {
     "name": "WALL-SHAFT-dungeon-unwired",
     "file": "src/scenes/dungeonContext.js",
-    "old": "const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, !!m.fromPlayer);",
-    "new": "const _cs = flightStop(collider, m.pos, _unit, reach, step * _len);",
+    "old": "const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, !!m.fromPlayer, dungeonMissileBodies(",
+    "new": "const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, false, dungeonMissileBodies(",
     "tests": [
       "test/combat/wallshaft.test.js"
     ]

@@ -90,7 +90,7 @@ import { lookAt, multiply, perspective, mirrorProjectionX, identity, UP_Y, wrapA
 import { aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // GHOST1: the plane extraction comes through bounds.js's `spherePlanes` now - `_planes` serves the sphere test too
 import { spherePlanes, batchVisible, setFlatLean, batchSphere } from '../render/bounds.js';   // PERF-CROWD: the batch's own bounding sphere, the test the shadow replay already uses   // GHOST1: through its ONE home, on the NORMALISED planes it needs   // EV3: the frustum
 import { withMoonAmbient, lightStreetAt } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient; WL1: the street lit by the clock
-import { FarRingRenderer, ringDisabled, ringGroundAt, RING_HAZE_HOLD, BuiltPixels } from '../render/farRing.js';   // EV8: the province's mountains on the horizon; FAR-SEA1: its haze, the sea's too; OW-HORIZON: the built pixels, counting their changes for the ring's hole
+import { FarRingRenderer, ringDisabled, ringGroundAt, RING_HAZE_HOLD, BuiltPixels, ringFogOf } from '../render/farRing.js';   // EV8: the province's mountains on the horizon; FAR-SEA1: its haze, the sea's too; OW-HORIZON: the built pixels, counting their changes for the ring's hole
 import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js';   // EL1: the Enhanced Lighting lane, installed at mount
 import { collectBlockFlats, billboardSize, mobileBillboardSize, centredBase, classicBillboardSize } from '../world/rmbFlats.js'; // TREES-SEATED: a block's trees on the hills drawn under them; FIELD BUGS 2026-10-13e HILL-SEAT: and the pads under what its author stood on them
 import { flatFieldFor } from '../world/flatFields.js';   // FIELD BUGS 2026-10-04d CROPS: a crop field keeps a metre off the block's solids; AUDIT MERCHANT-YARDS G1: and a yard off the field
@@ -553,7 +553,7 @@ import { farPlaces, farDistanceText, PIXEL_KM, TV_FAR_RANGE } from '../systems/t
 import { nearDungeons, dungeonApproach, pixelBox, lastLegStart, dungeonToFind, dungeonFoundText, NATIVE_PER_M } from '../systems/travel/travelDungeons.js';   // TV6: the dungeons, discovered on approach; AUDIT OW3 D1/D3: off the map rows, and the spawns with them; AUDIT OW4 D4/D6: the far found spawns, the last leg's start
 import { routeGround, joinPoint, routeDrawPoints, TV_MOUNTAIN_CLIMATE, setSeaLegKernel } from '../systems/travel/travelRoute.js';   // OW-MOUNTAINS, OW-ROADSIDE; AUDIT OW3 J4: the drawn route's points; AUDIT OW4 J3: the ground read once
 import { drawRouteRuns, drawOwnRun } from '../systems/travel/roadLine.js';   // ROAD-FOLLOW: the drawn route on the roads' curves past the Bay
-import { bandsNear, wanderAt, bandSight, bandChaseStep, bandMakeSeed, bandSizeOf, bandLevelOf, BAND_LIFE_MS, BAND_CONTACT_M, BAND_CHASE_MPS, BAND_STAND_M, BAND_STAND_MIN_M, BAND_STAND_RETRY_MS, BAND_STAND_TRIES } from '../systems/travel/travelBands.js';   // TV7: the roaming bands; OW6: their number and their level
+import { bandsNear, wanderAt, bandSight, bandChaseStep, bandMakeSeed, bandSizeOf, bandLevelOf, bandStandBearing, BAND_LIFE_MS, BAND_CONTACT_M, BAND_CHASE_MPS, BAND_STAND_M, BAND_STAND_MIN_M, BAND_STAND_RETRY_MS, BAND_STAND_TRIES } from '../systems/travel/travelBands.js';   // TV7: the roaming bands; OW6: their number and their level
 import { bandWordOf, validBandWord, chaseYields, bandLifeOf, bandNearMe, bandPixelOf, BAND_WORD_MS, BANDS_WIRE_MAX } from '../systems/travel/travelBands.js';   // TV7b: the chase, shared
 import { walkBegin, leaderWalkStep, walkHeard, memberAnswer, memberFollowing, memberStopOf, memberWalkStep, walkAskStands, sameWalkDest, NO_WALK_ANSWER, PARTY_WALK_RADIUS_M } from '../systems/party/partyWalk.js';   // TV8: group travel, the leader drives (AUDIT OW3: the whole law, pure)
 import { rollGroupComposition, PACK_SPACING, PACK_ALERT_RADIUS } from '../systems/campEncounters.js';   // TV7: a band is a themed group
@@ -657,6 +657,7 @@ import { brewItems, brewedText } from '../systems/alchemyItems.js';   // PROF12:
 import { COOK_FIRE } from '../net/professionLaw.js';   // PROF9: the fire Cooking is done at - any lit one, no fee
 import { SURVEYOR } from '../net/professionLaw.js';   // MINE-PERKS: Mining 100's Surveyor, whose own word witnesses the ground
 import { lodeMapMarks } from '../ui/lodeMapMark.js';   // MINE-PERKS: a Motherlode Sense's day's Motherlodes, on both maps and the Overworld
+import { witnessMapReader } from '../ui/witnessMapMark.js';   // the witnessed ground of the regions in view, on the held map
 import { seatEventBoard, eventNotice } from '../systems/eventNotices.js';   // EVENTS1: the event board's source, seated where it is made, and the one door an event's line goes through (never the chat)
 import { EVENT_SOON_MS } from '../systems/eventBoard.js';   // AUDIT EVENTS1 A4: the board's horizon, the raids' look ahead
 import { localWhenText, gateEventId as gateLineId } from '../systems/eventTimers.js';   // AUDIT MINE-PERKS: a Motherlode's hour as the timers say a moment - this machine's clock, its weekday where it is not today
@@ -15669,6 +15670,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // MINE-PERKS (Professions-Arc 43): a Motherlode Sense's day's Motherlodes - each on its pixel from the day's start,
       // its ore and its hour (ui/lodeMapMark.js); none without the Sense, nor with the professions shut
       lodes: () => lodeMapMarksNow(),
+      witnessed: profBook ? witnessMapReader(profBook) : null,   // the witnessed tiles in view, online with the professions open; tiles, never a region at a time
       pois: () => poiMapMarks(poiHost?.marks() ?? []),   // POI-2: the approved POIs that ask to be marked
       // HOME-VENDOR: the trader's waypoint - its town's pixel, the house's owner and the town, on both maps (ui/vendor/vendorMapMark.js)
       vendor: () => { const wp = vendorWaypoint(); const t = wp ? _townOfMapId.get(wp.map) : null; return t ? { px: t.px, py: t.py, label: `Trader: ${wp.owner || 'a'}'s house`, town: t.name } : null; },
@@ -29325,12 +29327,12 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (!bandRoom(mk)) return false;
     const fx = player.feetAt();
     // AUDIT OW5b B2: WHERE IT IS - its anchor at the band's own distance, a pack's spacing about it (never nearer than
-    // BAND_STAND_MIN_M). Every band stood at 18-32 m: a band met with the view down at BAND_STAND_M (140 m, Mac's
-    // CAMP-FAR - no pack lands beside the player out of nowhere) was brought a hundred metres nearer and stood beside them
+    // BAND_STAND_MIN_M). Every band stood at 18-32 m: a band met with the view down at BAND_STAND_M (45 m since
+    // BAND-NEAR, inside its members' sight; 140 m before) was brought nearer and stood beside them
     const minDistance = Math.max(BAND_STAND_MIN_M, dist - PACK_SPACING), maxDistance = Math.max(BAND_STAND_MIN_M, dist) + PACK_SPACING;
     for (const turn of [0, Math.PI / 2, -Math.PI / 2, Math.PI]) {
       const stood = _standCampEncounter({ kind: 'band', mobileTypes: mk.mobileTypes, spacing: PACK_SPACING, alertRadius: PACK_ALERT_RADIUS,
-        minDistance, maxDistance, bearingDegrees: 0, yawRad: yaw + turn }, fx);
+        minDistance, maxDistance, ...bandStandBearing(yaw + turn, cam.yaw, fieldOfView() * 180 / Math.PI, !!travelView?.active, largeHudWorldAspect(canvas.clientWidth, canvas.clientHeight), minDistance, PACK_SPACING, Math.hypot(renderer._camPos[0] - fx[0], renderer._camPos[2] - fx[2])) }, fx);   // never stood in the view: the edge widened by the pack's spread and turned out from the eye drawn, behind the feet
       if (!stood) continue;
       // AUDIT-F2: A BAND THAT CAUGHT ME STANDS ON ME - it chased me: each member alerted (never the gate's) and come for me,
       // as a noticed foe comes (exteriorFoes.js noticedPlayer). Stood unaware, the gate held them off me and the keys'
@@ -32170,14 +32172,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     meterFor(renderer.gl)?.markCpu('ring');   // PERF-ZONE2: the far province ring (its rebuild and its hole) and the water, after the sky hands the frame back
     // EV8: the far province ring - the horizon's actual mountains,
     // drawn while the depth buffer is still the sky's (the streamed
-    // world repaints everything nearer). Skipped when exp fog owns
-    // the air (rain, snow, heavy fog); its light state is the frame's
+    // world repaints everything nearer). RED-MOUNTAIN-SEEN: the fog row
+    // says how (farRing.js ringFogOf); its light state is the frame's
     // own, already installed by setLighting/beginFrame above. It
     // shares the EV6 seam mark below - one foreign span, two passes.
     const waterSkyNow = waterOn ? sky.waterSky() : null;   // FAR-SEA1: the sky the water reflects, once a frame - the ring's sea and the water's (AUDIT FAR-SEA1 H2: none with the Enhanced water off - the sea is Daggerfall's tile, and the ring's sea keeps the ground's look beside it)
     const seaYNow = farRing ? tvSeaY() : 0;   // FAR-SEA1: the sea's surface in the scene this frame
     const frameRing = () => {   // PERF-V8
-    if (farRing && fogNow.mode === 'linear') {
+    if (farRing && ringFogOf(fogNow)) {
       if (farRing.needsRebuild(state.current.x, state.current.y)) {
         farRing.build({
           heightBytes: woods.heightMapBuffer, mapWidth: MAP_WIDTH, mapHeight: MAP_HEIGHT,
@@ -32203,7 +32205,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // without it a full-Masser night stepped in brightness at the
         // exact boundary the hole machinery works to hide
         moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonColor: renderer._moonColor,
-        fogColor, fogStart: fogNow.start ?? 0, fogEnd: fogNow.end, exposure: renderer.exposure, adaptTex: renderer.adaptTexture, haze: renderer._haze, hazeEye: jungle?.eye,   // EL1; EL4: the eye; BANTHA1: the jungle's haze over the ring
+        fogColor, fog: fogNow, exposure: renderer.exposure, adaptTex: renderer.adaptTexture, haze: renderer._haze, hazeEye: jungle?.eye,   // EL1; EL4: the eye; BANTHA1: the jungle's haze over the ring
         // E5: the ring draws INTO the world pass's rect, so it takes
         // that pass's aspect - a horizon built on the full-canvas ratio
         // would step against the terrain in front of it under a docked bar.

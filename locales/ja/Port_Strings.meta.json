@@ -5584,6 +5584,21 @@
   "tr": "715dc0a70bc0",
   "by": "claude-in-session"
  },
+ "features.realWindows.light": {
+  "en": "33064adf0f79",
+  "tr": "20048201d851",
+  "by": "claude-in-session"
+ },
+ "features.realWindows.light.day": {
+  "en": "2afe02177426",
+  "tr": "552d5599a9c0",
+  "by": "claude-in-session"
+ },
+ "features.realWindows.light.on": {
+  "en": "e0049a66519c",
+  "tr": "647b72dd9154",
+  "by": "claude-in-session"
+ },
  "features.renderScale.note": {
   "en": "3d225bc9f38b",
   "tr": "e864fba38e48",

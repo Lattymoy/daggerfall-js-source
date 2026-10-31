@@ -11,20 +11,22 @@
   {
     "name": "DECOR2c-a-model-hung",
     "file": "src/net/decorLaw.js",
-    "old": "  if (!it || piece.model != null || !Array.isArray(piece.flat)) return false;",
-    "new": "  if (!it || !Array.isArray(piece.flat)) return false;",
+    "old": "  if (!piece || piece.model != null || !Array.isArray(piece.flat)) return false;",
+    "new": "  if (!piece || !Array.isArray(piece.flat)) return false;",
     "tests": [
       "test/systems/decor/decor2c.test.js"
-    ]
+    ],
+    "note": "Re-aimed (YARD-WALLS, bible/06-Systems/Online-Arc.md): the same law, the line it stands in grown."
   },
   {
     "name": "DECOR2c-no-flat-hung",
     "file": "src/net/decorLaw.js",
-    "old": "  if (!it || piece.model != null || !Array.isArray(piece.flat)) return false;",
-    "new": "  if (!it || piece.model != null) return false;",
+    "old": "  if (!piece || piece.model != null || !Array.isArray(piece.flat)) return false;",
+    "new": "  if (!piece || piece.model != null) return false;",
     "tests": [
       "test/systems/decor/decor2c.test.js"
-    ]
+    ],
+    "note": "Re-aimed (YARD-WALLS, bible/06-Systems/Online-Arc.md): the same law, the line it stands in grown."
   },
   {
     "name": "DECOR2c-the-frame-mirrored",
@@ -156,8 +158,8 @@
   {
     "name": "DECOR2c-the-surfaces-tilt-ignored",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "    const rot = [wrapTurn(round(heading * DEG, 1)), round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1), s.yaw];",
-    "new": "    const rot = [wrapTurn(round(heading * DEG, 1)), 0, s.yaw];",
+    "old": "    const rot = [\n      wrapTurn(round(heading * DEG, 1)),\n      round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1),\n      hung ? s.spin : s.yaw,\n    ];",
+    "new": "    const rot = [wrapTurn(round(heading * DEG, 1)), 0, hung ? s.spin : s.yaw];",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ]
@@ -165,8 +167,8 @@
   {
     "name": "DECOR2c-the-spin-dropped",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "    const rot = [wrapTurn(round(heading * DEG, 1)), round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1), s.yaw];",
-    "new": "    const rot = [wrapTurn(round(heading * DEG, 1)), round(Math.asin(Math.max(-1, Math.min(1, n[1]))) * DEG, 1), 0];",
+    "old": "      hung ? s.spin : s.yaw,",
+    "new": "      hung ? s.spin : 0,",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ]
@@ -212,11 +214,12 @@
   {
     "name": "DECOR2c-a-moved-mount-from-its-heading",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "    yaw: from ? wrapTurn((mount ? from.rot?.[2] : from.rot?.[0]) ?? 0) : 0,",
-    "new": "    yaw: from ? wrapTurn(from.rot?.[0] ?? 0) : 0,",
+    "old": "    yaw: from ? wrapTurn((mount ? from.rot?.[2] : hungFrom ? 0 : from.rot?.[0]) ?? 0) : 0,",
+    "new": "    yaw: from ? wrapTurn((hungFrom ? 0 : from.rot?.[0]) ?? 0) : 0,",
     "tests": [
       "test/systems/decor/decor2c.test.js"
-    ]
+    ],
+    "note": "Re-aimed (YARD-WALLS, bible/06-Systems/Online-Arc.md): the same law, the line it stands in grown."
   },
   {
     "name": "DECOR2c-a-mount-set-as-it-stands",

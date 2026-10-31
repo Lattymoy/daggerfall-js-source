@@ -50,6 +50,7 @@ import { REGALIA, mintAetheric } from '../aetheric.js';
 import { SIGIL_STONE_TEMPLATE, isSigilStone, sigilStone } from '../gate/gateSpoils.js';
 import { registerModSaveData } from '../modSaveData.js';
 import { isLocked } from '../item/itemLock.js';
+import { isRealmLocked } from '../item/itemBound.js';
 import { addItem } from '../inventory.js';
 import { isEquipped } from '../equip.js';   // SS5: a worn ware is taken off before it is dismantled
 import { EG_SINK_EMBERS, EG_PANOPLY_IDS } from '../../net/eliteGates/egPay.js';   // EG-E1: the Panoply sink's price and its pieces
@@ -498,6 +499,7 @@ export function dismantleRefusal(item) {
   if (!dismantleStones(item)) return 'not';
   if (isEquipped(item)) return 'worn';
   if (isLocked(item)) return 'locked';
+  if (isRealmLocked(item)) return 'realm';   // AUDIT FB1031 D5: a copy the realm locked pays no Embers out (AUTO-HOLD shut salvage so)
   return null;
 }
 /**

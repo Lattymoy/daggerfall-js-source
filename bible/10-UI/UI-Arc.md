@@ -41,6 +41,14 @@ draw only the rows on screen (`src/ui/virtualRows.js`). The pause face carries t
 groups, `src/ui/enhanced/enhancedTimers.js`), the mailbox (developer messages and item grants, with private reports,
 `src/ui/enhanced/enhancedPost.js`) and the season laurel (`src/ui/enhanced/enhancedSeason.js`).
 
+**Sort.** One **Sort** press puts the pack in one order: its pages in the spine's order, then rarity high to low, then
+the row's own name, then value high to low (`src/ui/packSort.js` `sortedItems`). Quest items stay first in their own
+order, and a tie keeps the list's order. Horses tie, so the one ridden stays first. The records of one quickslot kind
+keep their order, so a slot still uses the same record. The press sorts `entity.items` in place, so the save, a later
+drag and the classic skin (which draws no control) read the same order. The side window offers it on the player's own
+wagon, Materials Bag and storage (`SORT_STORE_KINDS`), never on a container, a body, the ground or a shared chest
+(`chestActRefusal`, `settlesOwnPieces`). On a touch phone the press moves to the end of the tab strip.
+
 **Text.** The enhanced skin's words can be drawn in a face the player picks (`src/ui/textFont.js` `TEXT_FONTS`: Game,
 Sans, Monospace, Dyslexic, or their own installed font). Player text follows `10-UI/Voice.md` and
 `10-UI/Plain-Words.md`.
@@ -84,7 +92,8 @@ the file's centre, so a centred mark is drawn back by `BRAND_LOGO_OPTICAL_SHIFT`
 
 DFU's `UserInterfaceManager` window stack, `DaggerfallMessageBox`, `GameManager.Update` dispatch, native windows and
 HUD are ported for the classic skin. DFU has no enhanced skin, no notice panel, no HUD editor and no theme kit; those
-are DFO's own. DFU shows a message box in the middle of the screen; on Enhanced Plus it is a side panel.
+are DFO's own. DFU shows a message box in the middle of the screen; on Enhanced Plus it is a side panel. DFU's inventory window lists a
+collection in the order `ItemCollection` holds it and offers no sort; the Sort press is DFO's own.
 
 ## Code and tests
 
@@ -94,9 +103,11 @@ are DFO's own. DFU shows a message box in the middle of the screen; on Enhanced 
 - `src/ui/native/nativePanel.js`, `src/ui/text.js` - classic windows and text
 - `src/ui/enhanced/enhancedMenu.js`, `src/ui/enhanced/enhancedFrame.js` - Enhanced Plus screens and kit
 - `src/ui/hud/hudLayout.js` - HUD pieces and the editor
+- `src/ui/packSort.js` - the Sort press's order
 - `src/ui/brandMark.js` - the brand
 - `test/ui/roadb_window_stack.test.js` - the stack
 - `test/ui/enhancedNotice.test.js` - the notice panel
+- `test/ui/packsort.test.js`, `test/ui/fb1031iii_items.test.js` - the Sort press, the quickslots' records
 - `test/ui/hud/audit39_uicore.test.js`, `test/ui/hud/audit64_hud.test.js` - HUD and native core
 - `test/ui/brand.test.js`, `test/ui/intro.test.js` - the brand and the intro's logo
 - `test/ui/pad1.test.js`, `test/ui/font3_readable.test.js` - the pad pass and readable type

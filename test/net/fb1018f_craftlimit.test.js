@@ -510,7 +510,7 @@ test('AUDIT FB1018f L5-7 the rooms between an act\'s own XP and its first\'s 500
   B.track('outfitting', xpForRank(60));
   for (const [m, n] of [['stone:rough', 9], ['food:meat', 9], ['food:mushroom', 9], ['p1:13', 9], ['p1:16', 9], ['reagent:troll-blood', 9], ['reagent:elixir-vitae', 9], ['metal:mercury', 9]]) B.give(m, n);
   // PIN MOVED (FIRST-BUDGET): the rooms between an act's own XP and its first's - Provisioning's share (Healing's 5 and
-  // 3,155, the Stew's clean 120 and 3,155) - and the works' one short of theirs (Building's 1,823)
+  // 3,171, the Stew's clean 120 and 3,171) - and the works' one short of theirs (Building's 1,832)
   const SO = 'Smithing and Outfitting', works = masonXp(1, 50, { clean: true }) + workFirstXp(law.MASON_RECIPES[0]) - 1;
   for (const room of [300, 3200]) {
     B.track('provisioning', HELD - room);
@@ -521,8 +521,8 @@ test('AUDIT FB1018f L5-7 the rooms between an act\'s own XP and its first\'s 500
       page.press('The Fire', 'Hunter\'s Stew');
       assert.equal(page.box('The Fire')[1].at(-1), LIMIT(room, 'Provisioning', SO), `the fire at room ${room}`);
       page.press('The Alchemy Station', 'Healing');
-      if (room < 5 + 3155) assert.match(page.box('The Alchemy Station')[1].join('|'), new RegExp(`At most ${room} Provisioning experience`), 'Healing\'s first pays');   // PIN MOVED (VOICE2): experience, not XP; no dash aside (the craft-limit lines in the voice)
-      else assert.match(page.box('The Alchemy Station')[1].join('|'), /5 Provisioning experience, plus a 3,155 first-time bonus/);   // PIN MOVED (VOICE2); PIN MOVED (FIRST-BUDGET); PIN MOVED (CRAFT-HALL): still to earn, as the Worker says
+      if (room < 5 + 3171) assert.match(page.box('The Alchemy Station')[1].join('|'), new RegExp(`At most ${room} Provisioning experience`), 'Healing\'s first pays');   // PIN MOVED (VOICE2): experience, not XP; no dash aside (the craft-limit lines in the voice)
+      else assert.match(page.box('The Alchemy Station')[1].join('|'), /5 Provisioning experience, plus a 3,171 first-time bonus/);   // PIN MOVED (VOICE2); PIN MOVED (FIRST-BUDGET); PIN MOVED (CRAFT-HALL): still to earn, as the Worker says
       assert.ok(page.notes('The Mason\'s Bench').includes(LIMIT(works, 'Building', SO)), page.notes('The Mason\'s Bench').join('|'));
     } finally { page.done(); }
   }
@@ -560,13 +560,13 @@ test('AUDIT FB1018f L5-6 the Firmament\'s hand at the fire, the alchemy station 
       page.press('The Fire', 'Hunter\'s Stew');
       assert.match(page.box('The Fire')[1].join('|'), new RegExp(`half as much again as its ${scaleXp(cookXp(30), pP)} Provisioning experience`));   // PIN MOVED (VOICE2)
       page.press('The Alchemy Station', 'Healing');
-      assert.match(page.box('The Alchemy Station')[1].join('|'), new RegExp(`${brew} Provisioning experience, plus a 3,155 first-time bonus`));   // PIN MOVED (CRAFT-HALL): still to earn   // PIN MOVED (VOICE2); PIN MOVED (FIRST-BUDGET): Provisioning's share
+      assert.match(page.box('The Alchemy Station')[1].join('|'), new RegExp(`${brew} Provisioning experience, plus a 3,171 first-time bonus`));   // PIN MOVED (CRAFT-HALL): still to earn   // PIN MOVED (VOICE2); PIN MOVED (FIRST-BUDGET): Provisioning's share
       assert.match(page.text('The Enchanting Station'), new RegExp(`\\+${scaleXp(disenchantXp(ring, 30, 21), pE)} Enchanting experience`));   // PIN MOVED (VOICE2)
     } finally { page.done(); }
     const dish = await A.book.craft('stew:north', { clean: true, name: 'Mac' }, (d) => mintPieces(d));
     assert.deepEqual([dish.data?.xp, dish.data?.first], [clean + firstCraftXp(recipeById('stew:north')), true], 'the Worker\'s clean pan: the percent on it, its first whole');   // PIN MOVED (FIRST-BUDGET)
     const b = await A.book.brew('healing', ['p1:16', 'reagent:troll-blood', 'reagent:elixir-vitae', 'metal:mercury'], {}, () => {});
-    assert.deepEqual([b.ok, b.data?.xp], [true, brew + 3155], JSON.stringify(b));   // PIN MOVED (FIRST-BUDGET): Provisioning's share
+    assert.deepEqual([b.ok, b.data?.xp], [true, brew + 3171], JSON.stringify(b));   // PIN MOVED (FIRST-BUDGET): Provisioning's share
     // the held lines: a room between the unscaled figure and the scaled one says "At most"
     const H = await standBook({ FIRMAMENT_OPEN: 'on' });
     H.track('building', xpForRank(60));

@@ -40,10 +40,12 @@ chooses in the loot window:
 - **Spare**: it rises into a portal and is sworn to the player for good, fighting beside them as a crew companion
   does (`revenantCompanions.js`). Up to six are kept; companions arrive and leave through a violet portal.
 
-**The sworn.** A sworn revenant wears gear the player gives it in ten slots (`revenantGear.js`), may carry one of six
-arts born with it (35% of revenants: mending, warding, warcry, siphon, barrage, nova; `revenantArts.js`), may be sent
-on a timed errand to any of Tamriel's provinces to bring back loot, materials or gold (`revenantErrands.js`), and grows
-its own sky of stars to level 20 (`revenantStars.js`, drawn in the sky window).
+**The sworn.** A sworn revenant wears gear the player gives it in ten slots (`revenantGear.js`). Its weapon is a melee
+one, Dagger to War Axe or Roleplay & Realism: Items' Light Flail and Archer's Axe while that mod registers them
+(`meleeWeapon`), never a bow: a foe's archery is its kind's. It may carry one of six arts born with it (35% of
+revenants: mending, warding, warcry, siphon, barrage, nova; `revenantArts.js`), may be sent on a timed errand to any of
+Tamriel's provinces to bring back loot, materials or gold (`revenantErrands.js`), and grows its own sky of stars to
+level 20 (`revenantStars.js`, drawn in the sky window).
 
 **Keeping.** The record lives in the save's per-mod slot `Revenant` and in app storage `dagger.revenant.<characterId>`
 (an offline death saves nothing, and a death is what makes one), merged per record by revision. The page keeps the
@@ -81,4 +83,5 @@ champion foes it stands on, and the encounter roll it takes a share of. Every ru
 - `src/systems/revenant/revenantGear.js`, `revenantArts.js`, `revenantErrands.js`, `revenantStars.js` - the sworn
 - `src/systems/revenant/revenantFeud.js`, `revenantVoice.js`, `revenantPersonality.js` - memory and voice
 - `test/systems/revenant.test.js` - the record and its deeds
+- `test/systems/revenant/rvngear.test.js`, `test/net/smithrri.test.js` - the sworn's gear, the mod's two weapons in it
 - `test/systems/rvn11c_betray.test.js` - betrayal; the FEUD tests are listed on `12-Enhanced-AI/Feud-Arc.md`

@@ -258,6 +258,8 @@ const REFUSAL_WORDS = {
   'no-piece': () => t('account.refusal.noPiece', 'The account service does not know that piece. The game may need updating.'),
   source: () => t('account.refusal.source', 'The account service does not know that. The game may need updating.'),
   rid: () => t('account.refusal.rid', 'That request could not be read. Try again.'),
+  kind: () => t('account.refusal.source', 'The account service does not know that. The game may need updating.'),   // BOUND-DESTROY: a let-go of neither cakes nor bowls (server-account/src/festival.js discardFestival)
+  count: () => t('festival.refusal.count', 'You hold fewer than that now.'),   // BOUND-DESTROY: a let-go past the count
   ware: () => t('festival.refusal.ware', 'The Wyrd Sister has no such thing.'),
   cakes: () => t('festival.refusal.cakes', 'You need more Soul Cakes.'),
   home: () => t('festival.refusal.home', 'Set it out at your own home.'),
@@ -1104,6 +1106,7 @@ export const D1_BOOKMARK_READS = new Map([
   ['/v1/arena/board', 'POST'],
   ['/v1/festival/town', 'POST'],   // WITCH1: a town's Hearth Offerings
   ['/v1/hunt/state', 'POST'],   // HUNT-LEAN: a character's hunt
+  ['/v1/prof/ground', 'POST'],   // AUDIT FB1031 W3: the held map's witnessed tiles
 ]);
 let _d1Mark = { secret: null, mark: null };
 /** AUDIT SCALE II A-2: how many times the page's bookmark has been forgotten - a read's answer is kept only under the
@@ -2153,8 +2156,8 @@ export function accountEg({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
 /**
  * WITCH1 (bible/06-Systems/Witches-Festival.md): THE WITCHES' FESTIVAL (server-account/src/festival.js) through the one
  * door - the account's cakes and what they bought, a find, a sale by its request id, a town's Hearth Offerings and the
- * four moves on one. Every answer is `call`'s shape, waited for ACCOUNT_ACT_WAIT_MS at most; no session is `no-session`,
- * never a throw.
+ * four moves on one, and cakes or bowls let go (BOUND-DESTROY). Every answer is `call`'s shape, waited for
+ * ACCOUNT_ACT_WAIT_MS at most; no session is `no-session`, never a throw.
  */
 export function accountFestival({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
   const post = waitedPost({ fetch, storage }, waitMs);
@@ -2167,6 +2170,7 @@ export function accountFestival({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }
     fill: ({ mapId, buildingKey, character }) => post('/v1/festival/offering/fill', { mapId, buildingKey, character }),
     takeIn: ({ mapId, buildingKey, character }) => post('/v1/festival/offering/take-in', { mapId, buildingKey, character }),
     take: ({ mapId, buildingKey }) => post('/v1/festival/offering/take', { mapId, buildingKey }),
+    discard: (kind, n, rid) => post('/v1/festival/discard', { kind, n, rid }),   // BOUND-DESTROY: cakes or bowls let go, by the press's request id
     me: () => storedSession(storage)?.id ?? null,
     guest: () => (storedSession(storage)?.kind ?? null) === 'guest',
   };
@@ -2550,6 +2554,7 @@ export function accountProf({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     account: () => storedSession(storage)?.id ?? null,
     state: (character) => post('/v1/prof/state', { character }),
     pixels: (character, pixels, dungeons = []) => post('/v1/prof/pixels', { character, pixels, dungeons }),   // PROF2: the dungeon stood in
+    ground: (character, tiles) => post('/v1/prof/ground', { character, tiles }),   // WITNESS-MAP, AUDIT FB1031 W1: the day's witnessed tiles asked
     harvest: (req) => post('/v1/prof/harvest', req),
     spec: (character, profession, rank, spec, from, rid, trial = false) => post('/v1/prof/spec', { character, profession, rank, spec, from, rid, ...(trial ? { trial: true } : {}) }),   // AUDIT 29 A15: `from`, the choice the client saw standing; PERK-TRIAL: `trial`, asked as the choice's free day
     // BAG1: `carry` - the units counted as carried, into the bag or the pack - with what the client holds of it (`held`)

@@ -42,8 +42,8 @@
   {
     "name": "BOSS-DOT-a-stall-lost",
     "file": "src/scenes/gate/standInSpell.js",
-    "old": "          for (let k = 0; k < due && e.activeEffects.some(carriedOnStandIn); k++)",
-    "new": "          for (let k = 0; k < 1 && e.activeEffects.some(carriedOnStandIn); k++)",
+    "old": "for (let k = 0; k < due && e.activeEffects.some(carriedOnStandIn); k++)",
+    "new": "for (let k = 0; k < 1 && e.activeEffects.some(carriedOnStandIn); k++)",
     "tests": [
       "test/net/gate/fb1019f_bossdot.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "BOSS-DOT-the-wards-round-sent",
     "file": "src/scenes/gate/standInSpell.js",
-    "old": "    return { entity: body.entity, land: (d) => !turned(body) && !!land(body, d, HIT_KINDS.Spell, true) };",
-    "new": "    return { entity: body.entity, land: (d) => !!land(body, d, HIT_KINDS.Spell, true) };",
+    "old": "land: (d) => !turned(body) && !!land(body, d, HIT_KINDS.Spell, true) };",
+    "new": "land: (d) => !!land(body, d, HIT_KINDS.Spell, true) };",
     "tests": [
       "test/net/gate/fb1019f_bossdot.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "BOSS-DOT-a-round-unmarked",
     "file": "src/scenes/gate/standInSpell.js",
-    "old": "    return { entity: body.entity, land: (d) => !turned(body) && !!land(body, d, HIT_KINDS.Spell, true) };",
-    "new": "    return { entity: body.entity, land: (d) => !turned(body) && !!land(body, d, HIT_KINDS.Spell) };",
+    "old": "land: (d) => !turned(body) && !!land(body, d, HIT_KINDS.Spell, true) };",
+    "new": "land: (d) => !turned(body) && !!land(body, d, HIT_KINDS.Spell) };",
     "tests": [
       "test/net/gate/fb1019f_bossdot.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "BOSS-DOT-the-doors-crossed",
     "file": "src/scenes/gate/standInSpell.js",
-    "old": "    const land = key === 'b' ? host.landOnBoss : key[0] === 'h' ? host.landOnHost : host.landOnCrystal;",
-    "new": "    const land = key === 'b' ? host.landOnBoss : key[0] === 'h' ? host.landOnCrystal : host.landOnHost;",
+    "old": "const land = key === 'b' ? host.landOnBoss : key[0] === 'h' ? host.landOnHost : host.landOnCrystal;",
+    "new": "const land = key === 'b' ? host.landOnBoss : key[0] === 'h' ? host.landOnCrystal : host.landOnHost;",
     "tests": [
       "test/net/gate/fb1019f_bossdot.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "BOSS-DOT-the-serpents-riders-told-the-claim",
     "file": "src/scenes/gate/standInSpell.js",
-    "old": "        took: standInShown(dealt, cap()),",
-    "new": "        took: dealt,",
+    "old": "took: standInShown(dealt, cap()),",
+    "new": "took: dealt,",
     "tests": [
       "test/net/gate/fb1019f_bossdot.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "BOSS-DOT-a-breach-round-takes-the-stacks",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "          stacks: !tick && mom.i === i ? mom.n : 0,",
-    "new": "          stacks: mom.i === i ? mom.n : 0,",
+    "old": "stacks: !tick && mom.i === i ? mom.n : 0,",
+    "new": "stacks: mom.i === i ? mom.n : 0,",
     "tests": [
       "test/net/gate/fb1019f_bossdot.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "BOSS-DOT-a-breach-round-is-a-blow",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      if (tick) return true; // FIELD BUGS 2026-10-19f BOSS-DOT: a round of my lasting harm (`tick`) is no blow - it takes no Momentum, builds none and rolls no Echo",
-    "new": "      // FIELD BUGS 2026-10-19f BOSS-DOT: a round of my lasting harm (`tick`) is no blow - it takes no Momentum, builds none and rolls no Echo",
+    "old": "      if (tick) return true;",
+    "new": "",
     "tests": [
       "test/net/gate/fb1019f_bossdot.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "AUDIT-FB1019f-C4-turned-reads-the-record-alone",
     "file": "src/scenes/gate/standInSpell.js",
-    "old": "  const turned = (body) => !!(body.warded || body.entity?.warded);",
-    "new": "  const turned = (body) => !!body.warded;",
+    "old": "const turned = (body) => !!(body.warded || body.entity?.warded);",
+    "new": "const turned = (body) => !!body.warded;",
     "tests": [
       "test/net/gate/fb1019f_bossdot.test.js"
     ],

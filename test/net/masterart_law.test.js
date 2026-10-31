@@ -34,7 +34,7 @@ test('MASTER-ART WHICH PIECES: every recipe of the nine kinds that wear a tier -
   assert.deepEqual(MASTER_KINDS, ['weapon', 'staff', 'bow', 'plate', 'shield', 'chain', 'leather', 'garment', 'jewel']);
   assert.equal(MASTER_RANK, PROF_RANK_MAX);
   const taken = RECIPES.filter(masterRecipe);
-  assert.equal(taken.length, 1054);
+  assert.equal(taken.length, 1076);   // PIN MOVED (SMITH-RRI): the Light Flail and the Archer's Axe at eleven metals
   assert.deepEqual([...new Set(RECIPES.filter((r) => MASTER_KINDS.includes(r.kind) && !masterRecipe(r)).map((r) => r.product))], ['wand'], 'the Wand alone, of the nine kinds');
   assert.deepEqual([...new Set(RECIPES.filter((r) => !MASTER_KINDS.includes(r.kind)).filter(masterRecipe))], []);
   assert.deepEqual(['dagger:iron', 'cuirass:steel', 'staff:pine', 'longbow:pine', 'leather-cuirass:cured', 'garment-141:linen', 'ring:silver'].map((id) => masterGroupOf(recipeById(id))),

@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-HAUL-CARDS-B3-extra-count-unread",
     "file": "src/ui/haulCards.js",
-    "old": "{ held: heldOf(carried ? d.extraCarried : d.extraStore), where }",
-    "new": "{ held: null, where }",
+    "old": "{ held: heldOf(xCarried ? d.extraCarried : d.extraStore), where: xCarried ? 'Carried' : 'Stores' }",
+    "new": "{ held: null, where: xCarried ? 'Carried' : 'Stores' }",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]

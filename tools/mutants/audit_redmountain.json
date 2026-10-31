@@ -66,8 +66,8 @@
   {
     "name": "AUDIT-RED-MOUNTAIN-F4-the-fire's-haze-unheld",
     "file": "src/render/redMountainFire.js",
-    "old": "float hazeAt(float d, float y) { return horizonHaze(d, uHaze.x, uHaze.y, uHaze.z, uHaze.w, summitHoldAt(uHold.x, y - uHold.y, d, uHold.z)); }",
-    "new": "float hazeAt(float d, float y) { return horizonHaze(d, uHaze.x, uHaze.y, uHaze.z, uHaze.w, uHold.x); }",
+    "old": "float hazeAt(float d, float y) { return horizonHazeOf(uFogLaw, d, uHaze.x, uHaze.y, uHaze.z, uHaze.w, summitHoldAt(uHold.x, y - uHold.y, d, uHold.z)); }",
+    "new": "float hazeAt(float d, float y) { return horizonHazeOf(uFogLaw, d, uHaze.x, uHaze.y, uHaze.z, uHaze.w, uHold.x); }",
     "tests": [
       "test/world/audit_redmountain.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "AUDIT-RED-MOUNTAIN-F7-the-rim's-close",
     "file": "src/render/redMountainFire.js",
-    "old": "  a *= max(1.0 - hz, ${f1(FIRE.hazeFloor)}) * (1.0 - smoothstep(uHaze.z, uHaze.w, dist));   // closed by the rim as the land is (F7)",
-    "new": "  a *= max(1.0 - hz, ${f1(FIRE.hazeFloor)});   // closed by the rim as the land is (F7)",
+    "old": "  a *= max(1.0 - hz, clearOr(${f1(FIRE.hazeFloor)}, 0.0)) * (1.0 - smoothstep(uHaze.z, uHaze.w, dist));   // closed by the rim as the land is (F7)",
+    "new": "  a *= max(1.0 - hz, clearOr(${f1(FIRE.hazeFloor)}, 0.0));   // closed by the rim as the land is (F7)",
     "tests": [
       "test/world/audit_redmountain.test.js"
     ]

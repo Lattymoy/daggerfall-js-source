@@ -52,6 +52,7 @@ export const BUSY_READS = new Map([
   ['/v1/towns/econ', 'POST'], // AUDIT TOWN-ECON 2 CLI-8: the towns' shares - a display read every page asks each keeping
   ['/v1/festival/town', 'POST'], // WITCH1: a town's Hearth Offerings, asked a minute while the festival is live (scenes/witchesHost.js)
   ['/v1/hunt/state', 'POST'], // HUNT-LEAN: a character's hunt, asked on the hunt book's clock (net/huntBook.js)
+  ['/v1/prof/ground', 'POST'], // WITNESS-MAP: the held map's witnessed tiles, asked as its view moves (AUDIT FB1031 W3: a replica's read)
 ]);
 
 /** Whether a call is one of the reads that stand back. */

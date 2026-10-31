@@ -2,8 +2,8 @@
   {
     "name": "SEATFACTS-unconfirmed-kept",
     "file": "server-account/src/townSeats.js",
-    "old": "    seats: seats.filter((x) => factConfirmed(x.fact)).map((x) => [x.key, x.fact.state, seatReportText(x.fact.seat)]),",
-    "new": "    seats: seats.map((x) => [x.key, x.fact.state, seatReportText(x.fact.seat)]),",
+    "old": "seats: seats.filter((x) => factConfirmed(x.fact)).map(",
+    "new": "seats: seats.map(",
     "tests": [
       "test/server/seat_facts.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "SEATFACTS-age-unread",
     "file": "server-account/src/townSeats.js",
-    "old": "  const fresh = (/** @type {{ of: number }} */ k) =>\n    k.of > (seatWroteAt.get(root) ?? -Infinity) && nowS - k.of <= SEAT_FACTS_FRESH_S;",
-    "new": "  const fresh = (/** @type {{ of: number }} */ k) => k.of > (seatWroteAt.get(root) ?? -Infinity);",
+    "old": "k.of > (seatWroteAt.get(root) ?? -Infinity) && nowS - k.of <= SEAT_FACTS_FRESH_S",
+    "new": "k.of > (seatWroteAt.get(root) ?? -Infinity)",
     "tests": [
       "test/server/seat_facts.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "SEATFACTS-write-age-unread",
     "file": "server-account/src/townSeats.js",
-    "old": "  const fresh = (/** @type {{ of: number }} */ k) =>\n    k.of > (seatWroteAt.get(root) ?? -Infinity) && nowS - k.of <= SEAT_FACTS_FRESH_S;",
-    "new": "  const fresh = (/** @type {{ of: number }} */ k) => nowS - k.of <= SEAT_FACTS_FRESH_S;",
+    "old": "k.of > (seatWroteAt.get(root) ?? -Infinity) && nowS - k.of <= SEAT_FACTS_FRESH_S",
+    "new": "nowS - k.of <= SEAT_FACTS_FRESH_S",
     "tests": [
       "test/server/seat_facts.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "SEATFACTS-same-second",
     "file": "server-account/src/townSeats.js",
-    "old": "    k.of > (seatWroteAt.get(root) ?? -Infinity) && nowS - k.of <= SEAT_FACTS_FRESH_S;",
-    "new": "    k.of >= (seatWroteAt.get(root) ?? -Infinity) && nowS - k.of <= SEAT_FACTS_FRESH_S;",
+    "old": "k.of > (seatWroteAt.get(root) ?? -Infinity)",
+    "new": "k.of >= (seatWroteAt.get(root) ?? -Infinity)",
     "tests": [
       "test/server/seat_facts.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "SEATFACTS-facts-unkept",
     "file": "server-account/src/townSeats.js",
-    "old": "    seatFactsKept.set(root, { at: nowS, of: row.of, facts: row.facts });\n    return row.facts;",
-    "new": "    return row.facts;",
+    "old": "    seatFactsKept.set(root, { at: nowS, of: row.of, facts: row.facts });\n",
+    "new": "",
     "tests": [
       "test/server/seat_facts.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "SEATFACTS-unfit-asked-again",
     "file": "server-account/src/townSeats.js",
-    "old": "  seatFactsKept.set(root, { at: nowS, of: -Infinity, facts: null }); // none fit to answer: the rows a minute, and asked again after",
-    "new": "  void root; // none fit to answer: the rows a minute, and asked again after",
+    "old": "  seatFactsKept.set(root, { at: nowS, of: -Infinity, facts: null });",
+    "new": "  void root;",
     "tests": [
       "test/server/seat_facts.test.js"
     ],

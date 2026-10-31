@@ -5574,6 +5574,21 @@
   "tr": "af69f2fe6ff6",
   "by": "claude-in-session"
  },
+ "features.realWindows.light": {
+  "en": "33064adf0f79",
+  "tr": "906f14da3d65",
+  "by": "claude-in-session"
+ },
+ "features.realWindows.light.day": {
+  "en": "2afe02177426",
+  "tr": "7511071ca001",
+  "by": "claude-in-session"
+ },
+ "features.realWindows.light.on": {
+  "en": "e0049a66519c",
+  "tr": "1b5a841e514f",
+  "by": "claude-in-session"
+ },
  "features.renderScale.note": {
   "en": "3d225bc9f38b",
   "tr": "59017e350f67",

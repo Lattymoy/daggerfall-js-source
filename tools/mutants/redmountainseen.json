@@ -1,0 +1,86 @@
+[
+  {
+    "name": "RED-MOUNTAIN-SEEN-a-fog-over-the-sky-stands-it",
+    "file": "src/render/farRing.js",
+    "old": "if (!row?.excludeSky || (row.mode !== 'exp' && row.mode !== 'exp2')) return null;",
+    "new": "if (row?.mode !== 'exp' && row?.mode !== 'exp2') return null;",
+    "tests": ["test/world/redmountain_seen.test.js"]
+  },
+  {
+    "name": "RED-MOUNTAIN-SEEN-exp2-unread",
+    "file": "src/render/farRing.js",
+    "old": "(row.mode !== 'exp' && row.mode !== 'exp2')",
+    "new": "(row.mode !== 'exp')",
+    "tests": ["test/world/redmountain_seen.test.js"]
+  },
+  {
+    "name": "RED-MOUNTAIN-SEEN-the-weather-s-hold",
+    "file": "src/render/farRing.js",
+    "old": "const _weatherAir = { start: 0, end: 0, hold: 1, weather: true, law: 1, density: 0 };",
+    "new": "const _weatherAir = { start: 0, end: 0, hold: RING_HAZE_HOLD, weather: true, law: 1, density: 0 };",
+    "tests": ["test/world/redmountain_seen.test.js"]
+  },
+  {
+    "name": "RED-MOUNTAIN-SEEN-its-ramp-open",
+    "file": "src/render/farRing.js",
+    "old": "const _weatherAir = { start: 0, end: 0, hold: 1, weather: true, law: 1, density: 0 };",
+    "new": "const _weatherAir = { start: 0, end: 500000, hold: 1, weather: true, law: 1, density: 0 };",
+    "tests": ["test/world/redmountain_seen.test.js"]
+  },
+  {
+    "name": "RED-MOUNTAIN-SEEN-the-clear-air-s-start-unread",
+    "file": "src/render/farRing.js",
+    "old": "_clearAir.start = row.start ?? 0;",
+    "new": "_clearAir.start = 0;",
+    "tests": ["test/world/redmountain_seen.test.js"]
+  },
+  {
+    "name": "RED-MOUNTAIN-SEEN-no-row-no-return",
+    "file": "src/render/farRing.js",
+    "old": "    if (!rf) return;\n",
+    "new": "",
+    "tests": ["test/world/redmountain_seen.test.js"]
+  },
+  {
+    "name": "RED-MOUNTAIN-SEEN-the-hold",
+    "file": "src/render/farRing.js",
+    "old": "gl.uniform1f(this.u.uHazeHold, rf.hold);",
+    "new": "gl.uniform1f(this.u.uHazeHold, RING_HAZE_HOLD);",
+    "tests": ["test/world/redmountain_seen.test.js"]
+  },
+  {
+    "name": "RED-MOUNTAIN-SEEN-the-summits-through-the-weather",
+    "file": "src/render/farRing.js",
+    "old": "    if (rf.weather) gl.uniform1f(this.u.uSummitFrom, NO_SUMMIT);",
+    "new": "    if (rf.weather) gl.uniform1f(this.u.uSummitFrom, summitFromOf(this._floraRadius));",
+    "tests": ["test/world/redmountain_seen.test.js"]
+  },
+  {
+    "name": "RED-MOUNTAIN-SEEN-the-band-s-hold",
+    "file": "src/render/farRing.js",
+    "old": "fogColor, fogStart, fogEnd, hold: rf.hold, law:",
+    "new": "fogColor, fogStart, fogEnd, hold: RING_HAZE_HOLD, law:",
+    "tests": ["test/world/redmountain_seen.test.js"]
+  },
+  {
+    "name": "RED-MOUNTAIN-SEEN-the-host-s-old-gate",
+    "file": "src/scenes/world.js",
+    "old": "    if (farRing && ringFogOf(fogNow)) {",
+    "new": "    if (farRing && fogNow.mode === 'linear') {",
+    "tests": ["test/world/redmountain_seen.test.js", "test/ui/farring.test.js"]
+  },
+  {
+    "name": "RED-MOUNTAIN-SEEN-the-host-s-row-unhanded",
+    "file": "src/scenes/world.js",
+    "old": "        fogColor, fog: fogNow, exposure: renderer.exposure,",
+    "new": "        fogColor, fogStart: fogNow.start ?? 0, fogEnd: fogNow.end, exposure: renderer.exposure,",
+    "tests": ["test/world/redmountain_seen.test.js"]
+  },
+  {
+    "name": "RED-MOUNTAIN-SEEN-the-ash-thinned",
+    "file": "src/world/weather.js",
+    "old": "  ashfall: { mode: 'exp', density: 0.006,",
+    "new": "  ashfall: { mode: 'exp', density: 0.0012,",
+    "tests": ["test/world/redmountain_seen.test.js"]
+  }
+]

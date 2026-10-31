@@ -142,8 +142,8 @@
   {
     "name": "TV7-wrong-bearing",
     "file": "src/scenes/world.js",
-    "old": "minDistance, maxDistance, bearingDegrees: 0, yawRad: yaw + turn }, fx);",
-    "new": "minDistance, maxDistance, bearingDegrees: 0, yawRad: cam.yaw + turn }, fx);",
+    "old": "minDistance, maxDistance, ...bandStandBearing(yaw + turn, cam.yaw,",
+    "new": "minDistance, maxDistance, ...bandStandBearing(cam.yaw + turn, cam.yaw,",
     "tests": [
       "test/systems/travel/tv7_bands.test.js"
     ],
