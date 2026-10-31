@@ -1,5 +1,5 @@
 // @ts-check
-// STAFF-FOLLOW-UNLOCK (2026-10-24, as the owner asked) and STAFF-HIDE-IN-GAME (as the owner asked) - THE STAFF BAR ON THE GAME'S OWN SCREEN.
+// STAFF-FOLLOW-UNLOCK (2026-10-24) and STAFF-HIDE-IN-GAME - THE STAFF BAR ON THE GAME'S OWN SCREEN.
 // Once a Staff Panel has spoken on the page, a small bar at the top says whether the staff member is hidden, with a Hide
 // me or Show myself button (net/staffHook.js staffHide - the panel's worker says it on the staff session, and every game
 // tab relinks); while a follow is locked it says "Following" too, with an Unlock that lets go at once (net/staffHook.js
@@ -36,7 +36,7 @@ export function createStaffFollowBar({ doc = globalThis.document, onUnlock, onHi
     b.setAttribute('type', 'button');
     b.setAttribute(data, '');
     b.style.cssText = css;
-    // BAR-NO-FOCUS (as the owner asked): a pressed button keeps the
+    // BAR-NO-FOCUS: a pressed button keeps the
     // keyboard, and the space bar - the game's jump - pressed it again; so it is out of the tab order, a press never
     // gives it the focus, and a click lets go of any it had
     b.tabIndex = -1;

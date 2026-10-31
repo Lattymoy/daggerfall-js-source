@@ -167,7 +167,7 @@ test('PVP-HUD THE LOCK\'S DOORS (scenes/pvpFlagHost.js, scenes/portalStoneHost.j
   s.clock = 0;
   s.f.heard({ k: 'hp', by: 'peer-x', to: 'peer-me', d: 10, r: 0, h: [] });
   assert.equal(s.f.on(), false);
-  assert.equal(stone.lockRefused(), true, 'unflagged in the lock: held too (PVP-PORTAL, as the owner asked)');
+  assert.equal(stone.lockRefused(), true, 'unflagged in the lock: held too (PVP-PORTAL)');
   s.clock = L;
   assert.equal(stone.lockRefused(), false, 'the lock over: free');
   const src = rd('src/scenes/portalStoneHost.js');

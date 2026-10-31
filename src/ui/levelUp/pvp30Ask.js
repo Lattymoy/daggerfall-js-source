@@ -1,5 +1,5 @@
 // @ts-check
-// PVP-30 (the PvP rework, 2026-10-29 - as the owner asked): online, the level up from 29 to 30 asks first, because from 30 other
+// PVP-30 (the PvP rework, 2026-10-29 - ): online, the level up from 29 to 30 asks first, because from 30 other
 // players can kill you in the open PvP zones whatever your flag (net/wild/wildRef.js wildBlow, 'young'). Not yet keeps the
 // level owed. A departure: DFU has no PvP.
 import { t } from '../../systems/textManager.js';

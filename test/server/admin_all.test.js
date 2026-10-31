@@ -1,4 +1,4 @@
-// ADMIN-ALL (2026-10-30, as the owner asked: Admins only, every
+// ADMIN-ALL (2026-10-30: Admins only, every
 // cosmetic title and aura, always): AN ADMIN HOLDS EVERY COSMETIC THERE IS, derived from DEVELOPER_HANDLES at every ask
 // (server-account/src/titles.js holdsAll). These pins drive what a one-off grant could not do: a ware added to the
 // vocabulary later is held with no write, a moderator holds nothing more, a handle taken off the list (or an Admin cut

@@ -1810,7 +1810,7 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
     /** AUDIT SAFE CLIENT-2 (2026-10-17): THE HELD TOKEN LET GO - the relay said this account is banned
      *  (scenes/chatSafetyHost.js), and a token minted a moment before the ban opened every room a rejoin asked within
      *  TOKEN_REUSE_MS. The next room mints, and the service refuses it.
-     *  STAFF-HIDE-TOGGLE (2026-10-23, as the owner asked): and Hide me or Show myself pressed
+     *  STAFF-HIDE-TOGGLE (2026-10-23): and Hide me or Show myself pressed
      *  (scenes/staffFollowHost.js relinkGame) - a token signed before the press would open a room as the game was, so it
      *  goes, and so does any mint still on its way (`forgets`): the next room asks the service, which reads the switch as
      *  it stands now. */
@@ -1860,7 +1860,7 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
           // stands. Built field by field, `who` dropped it, so the code's card never stood for anyone: every first line
           // went unread-code. Absent from a service before acct150, which says nothing (heard as yes - chatSafetyHost adopt)
           ...('conduct' in answer.data ? { conduct: answer.data.conduct === true } : {}),
-          // STAFF-CHAT-RED (as the owner asked): the
+          // STAFF-CHAT-RED: the
           // service's word that this token is a hidden staff member's (server-account/src/staffHidden.js hiddenToken,
           // `hidden: 1`), so the chat's switch knows Me says nothing to players (net/chatVoice.js) - absent for everyone else
           ...(answer.data.hidden === 1 ? { hidden: true } : {}) };

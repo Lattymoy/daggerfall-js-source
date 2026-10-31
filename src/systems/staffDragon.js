@@ -50,7 +50,7 @@ export const ridingDragon = () => _ride !== null;
 export function mountDragon(flyWas = false, look = 0) {
   _ride = { flyWas: !!flyWas, firedAt: -Infinity, look: look === 1 ? 1 : 0 };
 }
-/** DRAGON-BLUE (2026-10-29, as the owner asked): the look of the dragon I ride - 1 the Aetherbright
+/** DRAGON-BLUE (2026-10-29): the look of the dragon I ride - 1 the Aetherbright
  *  (Dwarven-Dragon.md section 11, the tame's own palette), 0 the brass or on foot. My saddle and the pose's `rc` read it. */
 export const dragonRideLook = () => (_ride ? _ride.look : 0);
 /** DRAGON-BLUE: the ride's look changed in the saddle. @param {number} look */
@@ -65,7 +65,7 @@ export function landDragon() {
 }
 /** The flight's multiplier now (player/motor.js registerFlySpeedMod). */
 export const dragonFlyMult = () => (_ride ? DRAGON_FLY_MULT : 1);
-/** DRAGON-SHOTS (2026-10-29, as the owner asked): the volleys fired, for the wire. The pose's
+/** DRAGON-SHOTS (2026-10-29): the volleys fired, for the wire. The pose's
  *  cast count (`cn`) was the rig's alone, counted as the hands play a cast, and the cannons play none - so no peer drew a ball. */
 let _volleys = 0;
 /** A volley at `now` (ms): true and the clock set when the cannons are ready. @param {number} now */

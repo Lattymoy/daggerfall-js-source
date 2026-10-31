@@ -1,5 +1,5 @@
 // @ts-check
-// UPDATE-FORCE (2026-10-29, as the owner asked). SRV-N's poll (net/updateNotice.js) finds a new build; this gives a minute's warning, then a
+// UPDATE-FORCE (2026-10-29). SRV-N's poll (net/updateNotice.js) finds a new build; this gives a minute's warning, then a
 // screen that cannot be closed: the character saved, the unload guard stood down, the page reloaded.
 // A death screen or a duel holds the reload (at most UPDATE_HOLD_MAX_MS), so no corpse or duel health is saved.
 import { t } from '../systems/textManager.js';
@@ -26,7 +26,7 @@ export const updateBodyText = () => t('net.update.body', 'Your character is save
 export const updateSavingText = () => t('net.update.saving', 'Saving your character');
 export const updateReloadingText = () => t('net.update.reloading', 'Reloading the game');
 export const updateButtonText = () => t('net.update.button', 'Reload Now');
-// UPDATE-RESTART (2026-10-30, as the owner asked): the
+// UPDATE-RESTART (2026-10-30): the
 // desktop app plays its own copy, so a reload there loads the same version again. In the app the run is started by the
 // app's own update (systems/shellUpdates.js forceShellUpdates) and ends with the app restarting onto it; the words say so.
 export const updateAppNoticeText = () => t('net.update.appBuild', 'A new version of the game is ready. Your character will be saved and the app restarted in one minute.');

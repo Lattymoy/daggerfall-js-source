@@ -1,4 +1,4 @@
-// STAFF-PANEL5-FREEZE (2026-10-22, as the owner asked; design doc "DFO Staff Panel: design", Freeze
+// STAFF-PANEL5-FREEZE (2026-10-22; design doc "DFO Staff Panel: design", Freeze
 // player and Freeze chat) - THE GAME'S HALF: the session's `fv`, its `frozen` and its staff nudges (net/online.js); the
 // Staff tab and its thread (net/staffChat.js, net/chat.js); the Copy button (ui/chatPanel.js); the screen
 // (ui/freezeScreen.js); the motor held and no blow delivered (characters/playerEntity.js), and the host's wiring

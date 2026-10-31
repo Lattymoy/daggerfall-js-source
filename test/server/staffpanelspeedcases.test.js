@@ -1,4 +1,4 @@
-// STAFF-PANEL-SPEED (2026-10-23, as the owner asked) - THE REPORTS' DOORS (server-account/src/staffCases.js) PINNED TO THEIR D1 ROUND TRIPS:
+// STAFF-PANEL-SPEED (2026-10-23) - THE REPORTS' DOORS (server-account/src/staffCases.js) PINNED TO THEIR D1 ROUND TRIPS:
 // what a click waits on is each statement awaited after the last, times the network to D1, so the reads a door makes
 // together share one trip (a batch, a Promise.all) and the audit row lands in the batch of its page's last statements.
 // Each pin counts a door's trips on the real Worker (test/server/staffTrips.mjs countTrips), the staff session's own

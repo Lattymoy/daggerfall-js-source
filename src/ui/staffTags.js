@@ -1,5 +1,5 @@
 // @ts-check
-// STAFF-VIEW1 (2026-10-23, as the owner asked; design doc "DFO Staff
+// STAFF-VIEW1 (2026-10-23; design doc "DFO Staff
 // Panel: design", In game: the staff view - "every player has a name tag, and crowded tags group") - THE STAFF TAGS ON
 // THE GROUND, the screen layer scenes/staffViewHost.js fills. render/partyPingLabels.js's shape: a fixed root at
 // z-index 12 that takes no pointer, so a tag is the same size at any distance and shows through walls; each tag a button
@@ -25,7 +25,7 @@ export const STAFF_TAG_COLORS = Object.freeze({
   review: '#ff5252',
 });
 /** STAFF-FLAG-LINES: a line's kind (a segment's fifth number) - an Admin's monster line, a reported player's waiting on
- *  review. STAFF-LINES-REVIEW (as the owner asked): a watch has no line (its
+ *  review. STAFF-LINES-REVIEW: a watch has no line (its
  *  WATCH stays on the tag), so 1 is no kind. */
 export const STAFF_LINE = Object.freeze({ monster: 0, review: 2 });
 /** Each kind's pen: colour, width, glow, and whether its far end gets a dot. */
@@ -127,7 +127,7 @@ export function createStaffTags({ doc = globalThis.document, onPick }) {
     head.style.display = 'block';
     list.style.cssText = LIST_CSS;
     node.append(head, list);
-    // CROWD-CHIPS (as the owner asked; the card's pick "Merge close boxes, count only"):
+    // CROWD-CHIPS (the card's pick "Merge close boxes, count only"):
     // a crowd is its count alone - its names open while the pointer is over it, and stay open once it is clicked (a
     // second click shuts them)
     const b = { node, crowd, v: {}, head, list, rows: [], hover: false, pinned: false };
@@ -226,7 +226,7 @@ export function createStaffTags({ doc = globalThis.document, onPick }) {
       }
     },
     /** The lines, [[x0, y0, x1, y1, kind?]] in CSS px over a `w` x `h` screen: an Admin's monster lines, each from the
-     *  monster (its dot) to its owner; STAFF-FLAG-LINES (2026-10-24, as the owner asked) each player's with a report waiting on review from the
+     *  monster (its dot) to its owner; STAFF-FLAG-LINES (2026-10-24) each player's with a report waiting on review from the
      *  screen's middle, thick and red (STAFF-LINES-REVIEW: a watch has none). Drawn again only when one moved.
      *  @param {number[][]} segs @param {number} w @param {number} h */
     strokes(segs, w, h) {
@@ -268,7 +268,7 @@ export function createStaffTags({ doc = globalThis.document, onPick }) {
       }
       g.shadowBlur = 0;
     },
-    /** STAFF-TAG-MENU (2026-10-24, as the owner asked): a picked player's menu where the
+    /** STAFF-TAG-MENU (2026-10-24): a picked player's menu where the
      *  pick was pressed - `title` its head, `rows` [{ label, title?, run?, menu? }] (the chat line menu's own rows,
      *  scenes/chatSafetyHost.js playerActions): a row with its own `menu` opens that level in place, any other runs and
      *  closes it. A second menu replaces the first; Close shuts it. Over every staff sheet (the flat map's too), at `where`

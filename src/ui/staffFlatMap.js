@@ -1,6 +1,6 @@
 // @ts-check
-// STAFF-FLATMAP (2026-10-24, as the owner asked; design
-// doc "DFO Staff Panel: design", Flat map - as the owner asked, a third in-game view, top-down per region to save FPS, dots red/grey, the Most urgent list) - THE FLAT MAP'S
+// STAFF-FLATMAP (2026-10-24; design
+// doc "DFO Staff Panel: design", Flat map - a third in-game view, top-down per region to save FPS, dots red/grey, the Most urgent list) - THE FLAT MAP'S
 // SCREEN, which scenes/staffFlatMapHost.js fills. A fixed sheet over the game: a head (the region's name, the previous
 // and next region, Close), the region drawn from above off the politic map (its own map pixels bright, its neighbours
 // dim, the sea dark), a dot a traveller - red, amber or grey by their most urgent flag, the staff member's own in cyan -

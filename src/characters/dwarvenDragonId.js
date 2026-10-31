@@ -10,7 +10,7 @@ export const AETHERBRIGHT_ARCHIVE = 1801;
 /** The archive a dragon of `look` is drawn from: 1 the Aetherbright, anything else the brass - the boss's, a peer's
  *  rider's and the tamed mount's icon alike. @param {number | null | undefined} look */
 export const dragonArchiveOf = (look) => (look === 1 ? AETHERBRIGHT_ARCHIVE : DWARVEN_DRAGON_ARCHIVE);
-/** DRAGON-HOVER (2026-10-29, as the owner asked): at rest in the air it hovers -
+/** DRAGON-HOVER (2026-10-29): at rest in the air it hovers -
  *  records 20-24, eight frames a facing, the wings' beat and the body's bob on the mobile's RangedAttack1 table (it has no
  *  ranged blow of its own). Frames a second of that loop. */
 export const DRAGON_HOVER_FPS = 10;

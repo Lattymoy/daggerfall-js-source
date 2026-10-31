@@ -1,5 +1,5 @@
 // @ts-check
-// PVP-CONE (as the owner asked; then
+// PVP-CONE (then
 // "Yes" to everywhere): another player's name tag - its skull and bars with it - shows only near the crosshair, and
 // fades in and out. My party and my foe of the last minute always show. The law is here; net/remotePlayers.js namePoints
 // hands each point its angle (`off`), scenes/pvpFlagHost.js its `near`, and ui/nameLayer.js wears the answer.

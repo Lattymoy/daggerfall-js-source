@@ -80,7 +80,7 @@ test('PVP-REWARD THE HOST AND THE WORDS: no worn offer at my death; my collect s
   assert.equal(WILD_BODY_MS, WILD_REF.pickMs);
 });
 
-test('PVP-NO-TENTH THE LAST ROLL (wildDropLaw.js takeWildLastRoll; as the owner asked): a tenth of the coin and the letters together, the purse first, the letters in bag order paying only what it cannot, each kept where it lies; a letter the ledger or a policy holds pays nothing; a tab from before the word, the purse alone; no other kill takes coin (mutants: the letters before the purse; the letters left out of the sum; the purse taken at every kill)', () => {
+test('PVP-NO-TENTH THE LAST ROLL (wildDropLaw.js takeWildLastRoll): a tenth of the coin and the letters together, the purse first, the letters in bag order paying only what it cannot, each kept where it lies; a letter the ledger or a policy holds pays nothing; a tab from before the word, the purse alone; no other kill takes coin (mutants: the letters before the purse; the letters left out of the sum; the purse taken at every kill)', () => {
   const letter = (v, uid) => ({ group: 'MiscItems', templateIndex: LETTER_OF_CREDIT_TEMPLATE, value: v, uid });
   const rich = { goldPieces: 5000, items: [letter(20_000, '00000000000000b1')] };
   const a = takeWildLastRoll(rich, () => false, { letters: true });

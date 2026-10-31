@@ -79,7 +79,7 @@ test('CAPE-TOGGLE the look: hidden, my look leaves the cloak out and says `hc` 1
   }
 });
 
-test('CAPE-TOGGLE the auras (AURA-STAYS, 2026-10-30, as the owner asked): the switch never hides an aura - mine stays gathered while my cape is hidden, and a peer whose look says `hc` wears theirs and their Aura Armory pieces; the token still says mine, so nothing is said again (mutants: my aura dropped while hidden; a hidden peer\'s aura dropped)', () => {
+test('CAPE-TOGGLE the auras (AURA-STAYS, 2026-10-30): the switch never hides an aura - mine stays gathered while my cape is hidden, and a peer whose look says `hc` wears theirs and their Aura Armory pieces; the token still says mine, so nothing is said again (mutants: my aura dropped while hidden; a hidden peer\'s aura dropped)', () => {
   const was = globalThis.localStorage;
   const m = new Map(), st = { getItem: (/** @type {string} */ k) => m.get(k) ?? null, setItem: (/** @type {string} */ k, /** @type {string} */ v) => m.set(k, String(v)), removeItem: (/** @type {string} */ k) => m.delete(k) };
   keepSession(st, { id: 'u1', name: 'Me', kind: 'linked', sessionId: 's1', secret: 'x' });

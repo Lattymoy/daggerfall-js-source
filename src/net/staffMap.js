@@ -1,5 +1,5 @@
 // @ts-check
-// STAFF-MAP (2026-10-24, as the owner asked; design doc "DFO Staff Panel: design", Flat map - as the owner asked) - THE STAFF PANEL'S REGION MAP, the game's half. The Staff Panel names one region; the game
+// STAFF-MAP (2026-10-24; design doc "DFO Staff Panel: design", Flat map - ) - THE STAFF PANEL'S REGION MAP, the game's half. The Staff Panel names one region; the game
 // holds one more link, to that region's channel (net/wire.js chatRegionRoom), and hands the panel the travellers' marks
 // the room keeps (TV3: a map pixel, its fraction, the way they go, the relay's name and account beside it).
 //

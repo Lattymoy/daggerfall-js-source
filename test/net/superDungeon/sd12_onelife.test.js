@@ -75,7 +75,7 @@ test('SD-ONELIFE / SD-REZ THE REALM REMEMBERS A DEATH: the dying pose (PCORPSE1\
     await realm.raw(raised, JSON.stringify({ t: 'pose', p: inArena(0, -12, { dd: 1 }) }));
     assert.deepEqual(realm.store.get(SD_REALM_KEY).down.map(([x]) => x), ['acct-peer-ann'], 'down again');
     step(SD_REZ_MS + 1);
-    // PIN MOVED (SD-BACK, 2026-10-28, as the owner asked): past the
+    // PIN MOVED (SD-BACK, 2026-10-28): past the
     // window her own Hour takes her back - a rise, off the lying and the dead (it was SD_NO_FALLEN, one life a Hollow);
     // the hub keeps every other copy shut to her (sdparty_relay.test.js)
     const again = await hello('peer-ann', inArena(0, -12));

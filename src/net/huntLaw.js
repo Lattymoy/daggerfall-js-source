@@ -169,7 +169,7 @@ export const SEA_TITLES = Object.freeze(
     ['deepbane', 40],
   ].map((r) => Object.freeze(r)),
 );
-/** WYRM-RIDER (2026-10-30, as the owner asked): a tamed Dwarven Dragon's -
+/** WYRM-RIDER (2026-10-30): a tamed Dwarven Dragon's -
  *  Wyrm Rider while the account holds a brass one, Aether Rider an Aetherbright (server-account dragon_mounts), and each
  *  First for the earliest tame of its look. The owner: "DONT COUNT ADMINS" - a developer's tame is never a First. */
 export const DRAGON_TITLES = Object.freeze({

@@ -1,4 +1,4 @@
-// MUSIC-BOX (2026-10-31, as the owner asked): the tunes collected (systems/musicBox.js), the station that makes a piece a box (net/decorLaw.js), its
+// MUSIC-BOX (2026-10-31): the tunes collected (systems/musicBox.js), the station that makes a piece a box (net/decorLaw.js), its
 // press (scenes/musicBoxPress.js), its score in the world host's music chain, and the Collections page's Tunes part.
 // Recorded in bible/06-Systems/Online-Arc.md MUSIC-BOX.
 import { test } from 'node:test';

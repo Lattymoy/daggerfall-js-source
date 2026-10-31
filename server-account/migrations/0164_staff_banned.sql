@@ -1,4 +1,4 @@
--- STAFF-BANNED (2026-10-23, as the owner asked): THE BANNED READS ON AN
+-- STAFF-BANNED (2026-10-23): THE BANNED READS ON AN
 -- INDEX OF THEIR OWN (server-account/src/staffCases.js /v1/staff/banned, the Banned tab; server-account/src/staffPlayers.js
 -- /v1/staff/players with `ban: 'banned'`).
 --

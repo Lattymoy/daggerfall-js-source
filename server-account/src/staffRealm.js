@@ -3,10 +3,10 @@
 // STAFF-PANEL3-REALM (2026-10-22, design doc "DFO Staff Panel: design", build step 3 - "Trade freezes", "Built on the save
 // judge", "Remove items", the profile's Roll back and Fix account, the census's Unexplained line; its weak spots "Freeze
 // and trade holds" and "Items, census and economy") - THE PANEL'S TRADE HOLDS, ROLLBACKS, FIXES, GAINS AND REMOVALS.
-// Admins alone (as the owner asked are the Admin's), every door; OFFLINE ONLY until mob tries
+// Admins alone (are the Admin's), every door; offline only, not tried live yet
 // it live.
 //
-// NOTHING NEW IS JUDGED (as the owner asked). The holds, findings, clear, hold,
+// NOTHING NEW IS JUDGED. The holds, findings, clear, hold,
 // rollback, repair, mend and (STAFF-SET-BANK) bank are review.js's own acts (reviewAct, the developers' /v1/mod/realm-*
 // doors a script reached),
 // made as this Admin - a developer, as titles.js isDeveloper reads the same list - so a panel act lands in the character's
@@ -34,7 +34,7 @@
 //   - Every removal names a reason and a note, and Put back undoes it within 30 days - the piece back as exactly what it
 //     was: the ledger row the removal took given back, any other left as it stands, and a copy mark where it was found.
 //
-// EVERY LIST PAGES (as the owner asked): `from` the offset of the next page,
+// EVERY LIST PAGES: `from` the offset of the next page,
 // answered as `next` while more stand.
 import { displayName, mintId } from './accounts.js';
 import { reviewAct, staffFinding, NOTE_MAX } from './review.js';
@@ -982,7 +982,7 @@ export async function staffRealm(ctx, env, path, body, who, audit) {
   }
 
   if (path === '/v1/staff/fix/letter') {
-    // GUILD-LETTER-FIX (2026-10-25, as the owner asked): review.js `letter` - a crime guild's letter sent again or called off,
+    // GUILD-LETTER-FIX (2026-10-25): review.js `letter` - a crime guild's letter sent again or called off,
     // `{ ticket, guild, op, note }`; the playing tab's seat taken as a mend's
     const note = noteOf(body.note);
     const { ticket, guild, op } = body;
@@ -1005,7 +1005,7 @@ export async function staffRealm(ctx, env, path, body, who, audit) {
 
   if (path === '/v1/staff/fix/repair' || path === '/v1/staff/fix/mend' || path === '/v1/staff/fix/bank') {
     // review.js `repair` and `mend`, as buttons with a note instead of scripts (design doc "Fix account"). STAFF-SET-BANK
-    // (2026-10-23, as the owner asked): and `bank` - the bank the profile says (`banks`, the total it was
+    // (2026-10-23): and `bank` - the bank the profile says (`banks`, the total it was
     // read as) set to the gold named, `{ ticket, was, gold, note }` as the mend's; the playing tab's seat taken as a mend's
     const act = path === '/v1/staff/fix/repair' ? 'repair' : path === '/v1/staff/fix/mend' ? 'mend' : 'bank';
     const note = noteOf(body.note);

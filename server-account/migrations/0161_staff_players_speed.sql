@@ -1,4 +1,4 @@
--- STAFF-PANEL-SPEED (2026-10-23, as the owner asked): THE PLAYER
+-- STAFF-PANEL-SPEED (2026-10-23): THE PLAYER
 -- SEARCH'S PREFIX READ ON COVERING INDEXES (server-account/src/staffPlayers.js, /v1/staff/players with `q`).
 --
 --   npx wrangler d1 migrations apply daggerfall-accounts --remote

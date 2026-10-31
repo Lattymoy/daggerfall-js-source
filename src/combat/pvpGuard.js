@@ -24,7 +24,7 @@ export function pvpArmorKept(entity, modules = pcaaoModules()) {
   });
 }
 
-/** PVP-WARD (as the owner asked): what of a player's spell lands on `entity`, per cent, for each
+/** PVP-WARD: what of a player's spell lands on `entity`, per cent, for each
  *  element, on average - its Resist effects' chance first, then its own saving throw (race, Willpower, career, biography,
  *  gear), as a monster's spell meets it (systems/spellcast.js savingThrow). The referee's floor of 15 is "85% resist". */
 export function pvpWardKept(entity) {

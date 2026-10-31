@@ -214,7 +214,7 @@ CELL_MERGE_DWELL_MS = "600000"
 HIDDEN_SEEN_URL = "https://daggerfall-accounts.mackcothran.workers.dev/v1/mod/hidden-seen"
 # ═══ STAFF-PANEL5-FEEDS: THE STAFF PANEL'S NET AND BOT-CHECK FEEDS ═════
 #
-# as the owner asked. Where
+# . Where
 # the relay posts the players over a network limit and each live monster
 # count (STAFF_NET_FEED_URL: the panel's Network bursts and Monster watch)
 # and a natural encounter's reaction episodes (REACTION_FEED_URL: Bot

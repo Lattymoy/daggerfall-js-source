@@ -1,4 +1,4 @@
--- STAFF-EVENT (2026-10-24, as the owner asked): THE STAFF EVENTS, stored before the
+-- STAFF-EVENT (2026-10-24): THE STAFF EVENTS, stored before the
 -- relay is told (server-account/src/staffEvents.js; bible/11-Multiplayer/Staff-Events.md).
 --
 --   npx wrangler d1 migrations apply daggerfall-accounts --remote

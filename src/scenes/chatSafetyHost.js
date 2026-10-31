@@ -150,7 +150,7 @@ const verdictText = (ai) =>
     : '';
 
 /**
- * STAFF-PANEL2-CHATMENU (2026-10-22, as the owner asked): THE ACTS A
+ * STAFF-PANEL2-CHATMENU (2026-10-22): THE ACTS A
  * STAFF MEMBER'S CHAT LINE MENU OFFERS IN PLACE OF REPORT, by their own glyphs as the service last issued them - the
  * design's in-game card. An Admin is a Developer (`dev`): Follow, TP, Message, Mute, Freeze, Ban, Notes, Watch. A
  * Moderator wears the shield (`mod`) or Shadow Fang (`shadowfang`, which moderates - server-account titles.js
@@ -668,7 +668,7 @@ export function createChatSafetyHost({
             ? t('net.staffMenu.seen', 'The player can see this.')
             : t('net.staffMenu.unseen', 'The player does not see this.'),
         };
-        // CHAT-FOLLOW-CARD (2026-10-24, as the owner asked): a follow that took hands the panel
+        // CHAT-FOLLOW-CARD (2026-10-24): a follow that took hands the panel
         // the followed player's card, as a tag's click does (scenes/staffViewHost.js go) - the same act word, no line said
         if (act === 'follow')
           return typeof f === 'function'
@@ -723,7 +723,7 @@ export function createChatSafetyHost({
 
   const host = {
     hears,
-    /** STAFF-CHAT-RED (as the owner asked): the voice an
+    /** STAFF-CHAT-RED: the voice an
      *  Admin's lines go out in (net/chatVoice.js) - made here, beside the glyphs and the mint's word it reads, and handed
      *  to the chat panel (ui/chatPanel.js `voice`) by the host. */
     voice: createChatVoice({ glyphs, say, win }),
@@ -764,7 +764,7 @@ export function createChatSafetyHost({
      *  "remove the report buttons iunch for admin and mods as well", "chat they arnt usefu for us"): an Admin or a
      *  Moderator (`staff`) gets no Report - they act on a player, not report them. STAFF-PANEL2-CHATMENU: and gets the
      *  acts they use on players instead (staffRows), then Block. */
-    /** STAFF-TAG-MENU (2026-10-24, as the owner asked): a player's staff acts by their
+    /** STAFF-TAG-MENU (2026-10-24): a player's staff acts by their
      *  socket (`id`) and account (`sub`) - the chat line menu's own rows (staffRows), for the staff view's tag menu
      *  (scenes/staffViewHost.js); `onFollow` its Follow when the view's own follow (which opens the panel's card) stands
      *  for the chat's. None for a player's page. @param {{ id: string, sub: string, name: string }} p @param {(sub: string) => any} [onFollow] */
@@ -772,7 +772,7 @@ export function createChatSafetyHost({
       if (!staff() || !p) return [];
       return staffRows({ id: p.id, sub: p.sub }, String(p.name ?? ''), onFollow ?? follow(), !onFollow);
     },
-    /** ROSTER-STAFF (2026-10-24, as the owner asked, over the chat's Find a player
+    /** ROSTER-STAFF (2026-10-24, over the chat's Find a player
      *  list): a roster row's staff acts - the line menu's own (staffRows) for the player the row names by socket, their
      *  account as a room here holds it, or the hub's lists (everyone online, the guild's, a search's answer). None for a
      *  player's page, nor for a row no list here names an account for. @param {unknown} id */

@@ -1,4 +1,4 @@
--- STAFF-PANEL-SPEED (2026-10-23, as the owner asked): THE TRADE
+-- STAFF-PANEL-SPEED (2026-10-23): THE TRADE
 -- HOLDS' READ ON AN INDEX OF ITS OWN (server-account/src/staffRealm.js, /v1/staff/trade-holds).
 --
 --   npx wrangler d1 migrations apply daggerfall-accounts --remote

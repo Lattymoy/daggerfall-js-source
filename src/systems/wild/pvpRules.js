@@ -1,5 +1,5 @@
 // @ts-check
-// PVP-RULES (the PvP rework, 2026-10-29 - as the owner asked): A FIGHTER'S LIMITS UNDER THE FLAG in the open zone. While my flag is up there
+// PVP-RULES (the PvP rework, 2026-10-29 - ): A FIGHTER'S LIMITS UNDER THE FLAG in the open zone. While my flag is up there
 // (aggro is a flag up, its skull gold): no Levitate, and the fall it ends costs no health; the PvE buffs end as the flag
 // goes up and are not cast on myself again; no rest; the pace on foot and the jump held to an unbuffed best. Pure but for
 // the one source of "limited" the host registers (scenes/pvpRulesHost.js) and the one fall it spares. A departure: DFU
@@ -100,7 +100,7 @@ export function pvpSpellRefusal(sp, limited = pvpLimited()) {
 export const pvpRestText = () => t('pvp.rules.rest', 'You cannot rest or wait with PvP on.');
 
 /** May this entry stay? `edge` the flag just went up: every PvE buff goes (a potion's too); after it, my own casts and
- *  a party mate's gifts but Shield, and any Levitate. A worn item's buff goes each poll (as the owner asked) and
+ *  a party mate's gifts but Shield, and any Levitate. A worn item's buff goes each poll and
  *  comes back when the flag drops (scenes/pvpRulesHost.js). A curse's, a duel's and the PvP bar's entry stay. */
 const dispelled = (a, edge) =>
   !a.permanent &&
@@ -130,7 +130,7 @@ export const takePvpHeldTaken = () => {
   _heldTaken = false;
   return h;
 };
-/** PVP-RULES (as the owner asked): no saddle or cart under the flag in the open zone. */
+/** PVP-RULES: no saddle or cart under the flag in the open zone. */
 export const pvpRideText = () => t('pvp.rules.ride', 'You cannot ride with PvP on.');
 /** The line said when the flag going up takes buffs. */
 export const pvpDispelText = () => t('pvp.rules.dispel', 'Your buffs end while PvP is on.');

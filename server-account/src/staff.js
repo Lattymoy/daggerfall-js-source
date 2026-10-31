@@ -3,7 +3,7 @@
 // STAFF-PANEL1 (2026-10-22, mob: a staff admin panel, its own browser extension; design doc "DFO Staff Panel: design",
 // build step 1) - THE PANEL'S SIGN-IN, ITS SESSIONS, ITS ROLES AND ITS AUDIT LOG.
 //
-// ═══ THREE LOCKS (as the owner asked) ═══
+// ═══ THREE LOCKS ═══
 //
 // 1. The account's password, checked as the game's sign-in checks it (password.js).
 // 2. A key only the staff member's own copy of the extension holds: an Ed25519 pair it made on their computer. The
@@ -11,8 +11,8 @@
 //    handle and the second it was made (staffWords). A signature works once (`last_ts`) and only within STAFF_SIG_S
 //    of the service's clock.
 // 3. The role lists the service already keeps, asked fresh on every request (titles.js): Admin is DEVELOPER_HANDLES,
-//    Moderator anyone canModerate lets in (as the owner asked). A handle off a list is off
-//    the panel at its next click. An Admin may also add and remove Moderators from the panel (as the owner asked): `players.staff_mod`, bound to the account, beside MODERATOR_HANDLES - the
+//    Moderator anyone canModerate lets in. A handle off a list is off
+//    the panel at its next click. An Admin may also add and remove Moderators from the panel: `players.staff_mod`, bound to the account, beside MODERATOR_HANDLES - the
 //    config's own stay the config's, and the panel removes only the ones it added.
 // A key is bound to the account AND the handle it was registered under, so a rename that hands a listed handle to
 // another account (0134) hands it no way in. A key forgotten or cut is REVOKED, never deleted: its row stays, so it never
@@ -31,7 +31,7 @@
 // An owner (OWNER_HANDLES, mob and Latty) mints a one-time invite (24 h) for a staff member; the member's extension
 // signs in with the password and the invite and registers its key, proving it holds the private half. An owner's own
 // first key is named in the config (OWNER_KEYS) - a public key, safe in a public repository - so the first owner needs
-// nobody to invite them and nobody has to set a secret in Cloudflare (as the owner asked). With OWNER_KEYS empty nobody can sign in at all: unconfigured is shut, never open.
+// nobody to invite them and nobody has to set a secret in Cloudflare. With OWNER_KEYS empty nobody can sign in at all: unconfigured is shut, never open.
 //
 // ═══ WHAT IS REFUSED, AND HOW ══════════════════════════════════════
 //
@@ -91,7 +91,7 @@ export const STAFF_TRY_WINDOW_S = 15 * 60;
 export const STAFF_RATE_MAX = 120;
 /** Audit rows one read returns at most. */
 export const STAFF_AUDIT_PAGE = 100;
-/** How long the audit log keeps a row (as the owner asked) - past it the hourly job deletes it
+/** How long the audit log keeps a row - past it the hourly job deletes it
  *  (cron.js staff-audit); inside it nobody can (migration 0144's trigger, an hour short of this for the two clocks). */
 export const STAFF_AUDIT_KEEP_S = 30 * 24 * 60 * 60;
 /** A read of the audit log, the team or the moderators is written once in this, a member and a view, whatever its page
@@ -352,7 +352,7 @@ export async function staffSession(ctx, env, token, { act = true } = {}) {
   if (typeof token !== 'string' || token.length < 16 || token.length > 128) return null;
   const { db, subtle, nowS } = ctx;
   const hash = await hashSecret(token, { subtle });
-  // STAFF-PANEL-SPEED (as the owner asked): an act's touch rides the lookup's trip. Its guard is the idle and
+  // STAFF-PANEL-SPEED: an act's touch rides the lookup's trip. Its guard is the idle and
   // the life the checks below hold the session to, so either landing first answers the same; one they kill is deleted below
   const [row] = await Promise.all([db.prepare(STAFF_WHO_SQL).bind(hash).first(),
     act && db.prepare('UPDATE staff_sessions SET last_act = ?1 WHERE token_hash = ?2 AND last_act <= ?3 AND last_act > ?4 AND expires_at > ?1')
@@ -434,7 +434,7 @@ export async function staffRoute(ctx, env, path, body, { ip, token }) {
   if (HIDDEN_ROUTES.includes(path)) return staffHidden(ctx, env, path, body, who, audit);   // STAFF-PANEL5-HIDDEN: Hide me and Show myself (staffHidden.js)
   if (FREEZE_ROUTES.includes(path)) return staffFreeze(ctx, env, path, body, who, audit);   // STAFF-PANEL5-FREEZE: freeze (Admins) and the staff chat (both)
 
-  // ═══ THE ADMINS' DOORS: THE PANEL'S MODERATORS (as the owner asked) ═══
+  // ═══ THE ADMINS' DOORS: THE PANEL'S MODERATORS ═══
   // /v1/staff/mods lists them; /v1/staff/mod/add and /mod/remove { handle } - a registered account, not banned, not staff
   // already. One the config names (MODERATOR_HANDLES, a moderating title, an Admin) is the config's to remove, never the
   // panel's. Removed, a member holding no other role loses every key, session and invite, as a cut does.
@@ -494,7 +494,7 @@ export async function staffRoute(ctx, env, path, body, { ip, token }) {
     const lc = handleLc(body.handle);
     const target = lc ? await db.prepare('SELECT * FROM players WHERE handle_lc = ?').bind(lc).first() : null;
     // STAFF-PANEL2-FIX: a member cut off holds no role, but an owner's invite brings them back - lifting the cut with it.
-    // STAFF-PANEL5-CUT-FIX (as the owner asked): and cut again, the relay's orders are pushed again
+    // STAFF-PANEL5-CUT-FIX: and cut again, the relay's orders are pushed again
     const cutOff = staffSuspended(target);
     const restore = path === '/v1/staff/invite' && cutOff;
     const role = staffRole(cutOff ? { ...target, staff_suspended: 0 } : target, env);

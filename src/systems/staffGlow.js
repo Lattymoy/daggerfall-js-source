@@ -1,5 +1,5 @@
 // @ts-check
-// GLOW-SET (2026-10-30, as the owner asked; bible/05-Combat/Weapon-Glow.md law
+// GLOW-SET (2026-10-30; bible/05-Combat/Weapon-Glow.md law
 // 9): THE STAFF'S /glow. It writes a glow word on the weapon or Hand Wraps in my hands (systems/weaponGlow.js
 // GLOW_SET_FIELD), which every hand and my look to peers then wear. Only the wire's thirteen words, so no relay change.
 import { EQUIP_SLOTS, equipTableOf } from './equip.js';

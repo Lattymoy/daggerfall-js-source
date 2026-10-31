@@ -1,4 +1,4 @@
-// PVP-SEEN (as the owner asked): in the open zone every player's name shows in 3D; a concealed or invisible
+// PVP-SEEN: in the open zone every player's name shows in 3D; a concealed or invisible
 // flagged player shows its skull and bar, never its name.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

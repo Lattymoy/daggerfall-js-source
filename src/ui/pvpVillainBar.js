@@ -1,5 +1,5 @@
 // @ts-check
-// PVP-VILLAIN (systems/wild/villainLaw.js): THE VILLAIN BAR at the top of the pause menu's Standing page (as the owner asked) - the meter as the zone's referee last said it, "Villainy 3,240 / 5,000", its bar
+// PVP-VILLAIN (systems/wild/villainLaw.js): THE VILLAIN BAR at the top of the pause menu's Standing page - the meter as the zone's referee last said it, "Villainy 3,240 / 5,000", its bar
 // to VILLAIN.max with a red mark at VILLAIN.red. Always shown: out of the zone, the last word this browser heard for the
 // character, else 0. A departure: DFU has no PvP.
 import { t } from '../systems/textManager.js';

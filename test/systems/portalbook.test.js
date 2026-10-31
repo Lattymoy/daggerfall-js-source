@@ -1,4 +1,4 @@
-// PORTAL-BOOK (2026-10-31, as the owner asked; bible/06-Systems/Portal-Stone.md PORTAL-BOOK):
+// PORTAL-BOOK (2026-10-31; bible/06-Systems/Portal-Stone.md PORTAL-BOOK):
 // the book's row and gift (systems/gate/gateSpoils.js), its law (systems/portalBook.js), the save, the wire's landing
 // (systems/portalStone.js, scenes/portalGates.js), the house read indoors and the window (scenes/portalBookHost.js), and
 // the stone opened on a kept door (scenes/portalStoneHost.js openToSpot).

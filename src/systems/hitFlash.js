@@ -122,7 +122,7 @@ float eliteRim(sampler2D t, vec2 uv) {
 // deeper - from a dim blue at the pulse's low to the outline's full brightness at its peak, and never past it.
 // A corpse's batch is static - nothing writes its pulse each frame - so a NEGATIVE glow carries its phase instead
 // (-0.05..-1) and the shader runs the same pulse off the clock (Mac: "corpses need to pulse too").
-// STAFF-EVENT: a staff event's MINI BOSS glows YELLOW (as the owner asked) - its glow is an elite's past STAFF_BOSS_GLOW (systems/eliteFoes.js), kept through the pulse here
+// STAFF-EVENT: a staff event's MINI BOSS glows YELLOW - its glow is an elite's past STAFF_BOSS_GLOW (systems/eliteFoes.js), kept through the pulse here
 // so the colour reads it: a living one's 2.55..3, a corpse's -2.05..-3.
 const vec3 STAFF_BOSS_RIM = vec3(1.0, 0.82, 0.18);   // the outline: a bright yellow
 float eliteRimK(float g, float secs) {

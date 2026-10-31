@@ -1,4 +1,4 @@
-// STAFF-BANNED (2026-10-23, as the owner asked) - THE PLAYERS
+// STAFF-BANNED (2026-10-23) - THE PLAYERS
 // LIST'S BAN STATUS AND FILTER (server-account/src/staffPlayers.js /v1/staff/players `ban`) and THE BANNED TAB
 // (server-account/src/staffCases.js /v1/staff/banned), driven through the real Worker on the node:sqlite database every
 // account pin stands on (test/accountDb.mjs): a banned account out of the list unless asked for, a lapsed ban none, the

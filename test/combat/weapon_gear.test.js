@@ -1,5 +1,5 @@
-// WEAPON-GEAR (2026-10-27, as the owner asked): online, each point of gear on a weapon
-// skill adds 0.44% to its blow from the first point, added to MARTIAL2's climb (GEAR-ADDS, as the owner asked); the fists are their own, and nothing
+// WEAPON-GEAR (2026-10-27): online, each point of gear on a weapon
+// skill adds 0.44% to its blow from the first point, added to MARTIAL2's climb (GEAR-ADDS); the fists are their own, and nothing
 // of it reaches a player, a refereed fight, a mentor or the beast.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

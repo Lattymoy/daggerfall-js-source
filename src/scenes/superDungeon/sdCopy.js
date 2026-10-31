@@ -1,5 +1,5 @@
 // @ts-check
-// SD-PARTY (2026-10-28, as the owner asked;
+// SD-PARTY (2026-10-28;
 // bible/11-Multiplayer/Super-Dungeons.md SD-PARTY): WHICH PARTY'S HOUR THE RIFT TAKES ME TO. Each party has its own
 // Shattered Hour, `sd:<s>.<owner>` (net/superDungeon/sdLaw.js sdRoomKey), the owner its leader's account digest - the
 // Ketch's crew law (scenes/ketch/ketchClient.js ketchShipChoice). The copy I went into is kept on the device, so a reload
@@ -45,7 +45,7 @@ export function sdCopyChoice(s, mine, leader, kept, members, party = null) {
 export const sdRelayHttp = (url) =>
   typeof url === 'string' && /^wss?:\/\//.test(url) ? url.replace(/^ws/, 'http').replace(/\/+$/, '') : null;
 
-/** SD-SOLO (as the owner asked): the line
+/** SD-SOLO: the line
  *  said on stepping into the Hour owned by `owner`, with `n` players in it, me counted. Null: no owner. */
 export function sdCopyLine(owner, n) {
   if (!owner) return null;

@@ -56,7 +56,7 @@ export const wildRingLoot = (ring) => WILD_RING_LOOT[(ring | 0) - 1] ?? WILD_RIN
 export const wildRingName = (ring) =>
   ['The Borderlands', 'The Wilds', 'The Heartlands', 'The Heart'][(ring | 0) - 1] ?? 'The Heart'; // WW-C2: Cyrodiil's, its border to the Imperial heart (the mountains' Foothills to High Crags retired)
 export const wildRingBonus = (ring) => `+${Math.round((wildRingLoot(ring) - 1) * 100)}% loot`;
-/** PVP-RISE (as the owner asked): the wait an online
+/** PVP-RISE: the wait an online
  *  PvE death has (ui/deathScreen.js ONLINE_RESPAWN_SECONDS), once "has to wait 2mins till respawn" - and a body lies as long. */
 export const WILD_DEATH_HOLD_S = 10; // DEATH-10: "give death a 10 second timer", "for pve and pvp"
 /** A blow from another player this recent at the death names them the killer (a lingering spell, a foe's last swing
@@ -756,7 +756,7 @@ export const WILD_TEXT = Object.freeze({
     );
   },
   mapKey: 'Open PvP zone',
-  // PVP-LINGER-RISE (as the owner asked): my body fell while I was away
+  // PVP-LINGER-RISE: my body fell while I was away
   deathAway: (/** @type {string | null | undefined} */ name) =>
     name
       ? t('wild.death.away', 'Slain by {name} while you were away.', { name })

@@ -157,12 +157,12 @@ ALLOWED_ORIGIN = "*"
 # title, the glyph, the Seraph Wings, /red, /mute and /unmute, the developer's
 # acts and the POI editor's builder door - on their next token and next call.
 # Case-folded as every list is: the account roderic, Roderic or RODERIC.
-# STAFF-PANEL1 (2026-10-22, as the owner asked): SirMcMobdon, with the whole set above - the developer's acts include the relay's live settings (/relay) and
+# STAFF-PANEL1 (2026-10-22): SirMcMobdon, with the whole set above - the developer's acts include the relay's live settings (/relay) and
 # the trade-freeze review's clear and roll back - and the staff panel's Admin role (server-account/src/staff.js), which is
 # this list. SHADOW_FANG_HANDLES still names them: that title, glyph and cloak stay theirs to wear.
-# STAFF-PANEL1 (2026-10-22, as the owner asked): the account kpblca_1, with the same whole set.
+# STAFF-PANEL1 (2026-10-22): the account kpblca_1, with the same whole set.
 DEVELOPER_HANDLES = "Lattymoy,LostMyLeg,Tabby,RookieG,Roderic,SirMcMobdon,kpblca_1"
-# STAFF-PANEL1 (2026-10-22, server-account/src/staff.js): THE STAFF PANEL'S OWNERS (as the owner asked read the audit
+# STAFF-PANEL1 (2026-10-22, server-account/src/staff.js): THE STAFF PANEL'S OWNERS (read the audit
 # log) - staff who may also read the audit log of every staff sign-in and act, invite a staff member to enrol one more
 # extension (a new invite replaces the member's unspent one; keys stay) and cut one off (every key and session ended). A handle here that no role list names is no owner (staff.js isOwner). Comma-separated,
 # case-insensitive, read at every call.

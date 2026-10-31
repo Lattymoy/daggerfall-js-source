@@ -123,7 +123,7 @@ test('STAFF-PANEL1: every door is listed once, beside the game\'s, and none is b
   for (const k of ownerKeys({ OWNER_KEYS: toml.match(/^OWNER_KEYS = "([^"]*)"$/m)?.[1] }).values()) {
     await crypto.subtle.importKey('raw', Buffer.from(k, 'base64url'), { name: 'Ed25519' }, false, ['verify']);
   }
-  // as the owner asked
+  // 
   assert.match(toml, /^DEVELOPER_HANDLES = "[^"]*,SirMcMobdon,kpblca_1"$/m);
   assert.match(toml, /^SHADOW_FANG_HANDLES = "SirMcMobdon"$/m);
 });
@@ -206,7 +206,7 @@ test('STAFF-PANEL1: an owner invites; the invite registers one extension once; M
   assert.equal((await s.login('Asynian', mod.key)).status, 200);
   // a key registered to one account opens no other: Fangy cannot sign in with Asynian's extension
   const fang = await s.invited('Fangy', me);
-  assert.equal(fang.role, 'moderator', 'a Shadow Fang moderates, so is a Moderator here (as the owner asked)');
+  assert.equal(fang.role, 'moderator', 'a Shadow Fang moderates, so is a Moderator here');
   assert.equal((await s.login('Fangy', mod.key)).status, 401);
   // a Moderator is no owner: the team, invites, cuts and the audit log are refused
   for (const path of ['/v1/staff/team', '/v1/staff/invite', '/v1/staff/cut', '/v1/staff/audit']) {
@@ -325,7 +325,7 @@ test('STAFF-PANEL1: the audit log is append-only, read by owners alone, and its 
   assert.throws(() => s.raw.prepare('DELETE FROM staff_audit').run(), /append-only/);
 });
 
-test('STAFF-PANEL1 (as the owner asked; 12:12Z: keep it one month): a read of the log, the team or the moderators is a row once in STAFF_READ_ROW_S a member and a view, whatever its page (the fourth review: a `before` wrote no row at all, and a member\'s window hid every other member\'s read); every row says ok, denied or failed - a key forgotten that was not there, or another member\'s, failed, a role\'s door refused denied, a refused sign-in denied; and the hourly job deletes rows past STAFF_AUDIT_KEEP_S, the trigger every newer (mutants: every read a row; a `before` no row; one member\'s window everyone\'s; one view\'s window every view\'s; another\'s key forgotten done; a failed act ok; a forgotten key\'s outcome turned; the outcome unsaid; a refusal unwritten; a refused sign-in ok; the read\'s outcome unread; the month unkept; the job deleting the month; the trigger\'s month moved; the month a year)', async (t) => {
+test('STAFF-PANEL1 (12:12Z: keep it one month): a read of the log, the team or the moderators is a row once in STAFF_READ_ROW_S a member and a view, whatever its page (the fourth review: a `before` wrote no row at all, and a member\'s window hid every other member\'s read); every row says ok, denied or failed - a key forgotten that was not there, or another member\'s, failed, a role\'s door refused denied, a refused sign-in denied; and the hourly job deletes rows past STAFF_AUDIT_KEEP_S, the trigger every newer (mutants: every read a row; a `before` no row; one member\'s window everyone\'s; one view\'s window every view\'s; another\'s key forgotten done; a failed act ok; a forgotten key\'s outcome turned; the outcome unsaid; a refusal unwritten; a refused sign-in ok; the read\'s outcome unread; the month unkept; the job deleting the month; the trigger\'s month moved; the month a year)', async (t) => {
   const t0 = Date.now();
   let off = 0;
   t.mock.method(Date, 'now', () => t0 + off);
@@ -388,7 +388,7 @@ test('STAFF-PANEL1 (as the owner asked; 12:12Z: keep it one month): a read of th
   assert.ok(s.raw.prepare('SELECT COUNT(*) AS n FROM staff_audit WHERE act != ?').get('old').n > 10, 'today\'s rows all kept');
   // the trigger's number is the month less an hour for the two clocks
   assert.match(src('server-account/migrations/0144_staff_panel.sql'), new RegExp(`WHEN OLD\\.at > CAST\\(strftime\\('%s', 'now'\\) AS INTEGER\\) - ${STAFF_AUDIT_KEEP_S - 3600}\\n`));
-  assert.equal(STAFF_AUDIT_KEEP_S, 30 * 24 * 3600, 'as the owner asked');
+  assert.equal(STAFF_AUDIT_KEEP_S, 30 * 24 * 3600, '');
 });
 
 // ═══ AUDIT STAFF-PANEL1 (the step's flaw review, 2026-10-22): each hole it found, pinned shut ═══
@@ -482,7 +482,7 @@ test('AUDIT STAFF-PANEL1: renamed onto another listed handle, a key opens nothin
   assert.equal((await s.login('Fangy', mod.key)).status, 401, 'Fangy is listed, but this key was registered as Asynian');
 });
 
-test('STAFF-PANEL1: an Admin adds and removes Moderators from the panel (as the owner asked) - the account\'s, so a rename keeps it; the config\'s own stay the config\'s; a Moderator may not; removed is off the panel at once, keys and all; each change written ok (mutants: a mod added read failed; a mod removed read failed)', async () => {
+test('STAFF-PANEL1: an Admin adds and removes Moderators from the panel - the account\'s, so a rename keeps it; the config\'s own stay the config\'s; a Moderator may not; removed is off the panel at once, keys and all; each change written ok (mutants: a mod added read failed; a mod removed read failed)', async () => {
   const s = await stand({ DEVELOPER_HANDLES: 'Lattymoy,SirMcMobdon,Roderic' });
   await s.registered('SirMcMobdon');
   await s.registered('Roderic');

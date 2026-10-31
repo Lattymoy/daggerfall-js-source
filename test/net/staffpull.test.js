@@ -1,4 +1,4 @@
-// STAFF-PULL (2026-10-28, as the owner asked): an Admin or the Shadow Fang brings a player to where they
+// STAFF-PULL (2026-10-28): an Admin or the Shadow Fang brings a player to where they
 // stand - the wire's `pull` and `landed`, the hub's routing (server/src/staffTeleport.js routeStaffPull), the client's
 // landing, the /tpa command and the page's host (scenes/staffPullHost.js).
 import { test } from 'node:test';

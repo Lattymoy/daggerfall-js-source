@@ -1,4 +1,4 @@
-// STAFF-EVENT THE REWARD (2026-10-24, as the owner asked; bible/11-Multiplayer/
+// STAFF-EVENT THE REWARD (2026-10-24; bible/11-Multiplayer/
 // Staff-Events.md section 9) - who earns a reward at the mini boss's first fall and the board of the top fighters
 // (net/staffEvent/staffEventLaw.js), the relay's signed receipt for each (net/staffEvent/staffEventReceipt.js `e1`), and
 // the spoils the game rolls off it (systems/staffEventSpoils.js), straight into the pack once a receipt.

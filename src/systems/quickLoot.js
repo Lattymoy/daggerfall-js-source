@@ -406,7 +406,7 @@ export function resetQuickLoot() {
 export function quickLootTake(key, hooks, playerEntity, say = () => {}, { getQuest = null, took = null } = {}) {
   const how = _pending;
   _pending = null; // spent on the press it was armed for, whatever that press finds
-  // WERE-LOOT (2026-10-30, as the owner asked): the beast's pack window
+  // WERE-LOOT (2026-10-30): the beast's pack window
   // stays shut (DISC10-E L3). WERE-PICK: with quick loot on its press takes one row - the lit one, else the first (AUDIT
   // WERE-PICK P1: a touch screen draws no plaque) - and P the lot; with quick loot off a press takes the lot
   const beast = !!racialSuppressInventory(playerEntity);

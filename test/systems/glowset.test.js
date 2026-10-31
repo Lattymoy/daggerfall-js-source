@@ -1,4 +1,4 @@
-// GLOW-SET (2026-10-30, as the owner asked; bible/05-Combat/Weapon-Glow.md
+// GLOW-SET (2026-10-30; bible/05-Combat/Weapon-Glow.md
 // law 9). Pinned here: /glow's grammar, the word it writes on the weapon or Hand Wraps in hand, that word over every
 // other law in both hands and on the look, the item law's words equal to the wire's, and the host's wiring.
 

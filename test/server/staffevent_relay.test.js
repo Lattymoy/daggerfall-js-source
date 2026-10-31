@@ -1,4 +1,4 @@
-// STAFF-EVENT (2026-10-24, as the owner asked; bible/11-Multiplayer/Staff-Events.md) -
+// STAFF-EVENT (2026-10-24; bible/11-Multiplayer/Staff-Events.md) -
 // THE RELAY'S HALF (server/src/staffEvents.js) on stand-in rooms - the hub's book (start, a replay, a full book, boss,
 // end, look, a lapse, the hello), the place's cell keeping the meter (a word heard only in its own cell, credited only
 // from a pose on the pixel, the boss called at the meter and by hand, the hub told, an event done ended) - and THE ACCOUNT
@@ -235,7 +235,7 @@ test('STAFF-EVENT: THE ACCOUNT DOORS - Admins alone; a start stored, audited and
     assert.equal(JSON.parse(audit[0].detail).health, 25);
     // bad stagings refused before the relay is asked
     const before = s.door.pushed;
-    // EVENT-FAULT (as the owner asked): each refusal names its field
+    // EVENT-FAULT: each refusal names its field
     for (const [bad, field] of [[{ ...STAGE, n: 0 }, 'total'], [{ ...STAGE, m: 31 }, 'meter'], [{ ...STAGE, mt: [146] }, 'monsters'], [{ ...STAGE, bh: 101 }, 'health'], [{ ...STAGE, hp: 1_000_001 }, 'health'],
     // PIN MOVED (AUDIT RELEASE R2-7): a pixel is the world's grid (8192 past it); PIN MOVED (WW6): a town's event stands where
     // its town does - a Bay town's location at a pixel past the Bay, or a town past the Bay's own index at a Bay pixel, is
@@ -278,7 +278,7 @@ test('STAFF-EVENT: THE ACCOUNT DOORS - Admins alone; a start stored, audited and
     r = await s.call('/v1/staff/event', { op: 'start', ev: STAGE }, s.mob.session);
     assert.deepEqual([r.status, r.body.error], [409, 'event-full']);
     assert.equal(s.raw.prepare("SELECT COUNT(*) AS n FROM staff_events WHERE state = 'failed'").get().n, 1);
-    // EVENT-CLEAR (as the owner asked): one over taken off, a live one never, then every one over
+    // EVENT-CLEAR: one over taken off, a live one never, then every one over
     const pushed = s.door.pushed;
     const live = s.raw.prepare("SELECT id FROM staff_events WHERE state = 'live'").all();
     s.raw.prepare("INSERT INTO staff_events (id, at, staff_id, staff_name, ev, state) VALUES ('ee000009', 1, 'x', 'x', '{}', 'live')").run();

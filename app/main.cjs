@@ -792,7 +792,7 @@ async function restartToUpdate() {
   } finally { restartAsking = false; }
 }
 
-/** UPDATE-RESTART (2026-10-30, as the owner asked /
+/** UPDATE-RESTART (2026-10-30 /
  *  "make sure it updates"): the game's update screen, at its end (app/preload.cjs restartForUpdate). The update this
  *  copy holds is put in place by quitting and starting again - never a reload, which can leave the page on the copy it
  *  had: a version the channel brought is played by the next launch (gameStore.startup activates it, and the GPU caches

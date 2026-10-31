@@ -1,5 +1,5 @@
 // @ts-check
-// PVP-KIT (the PvP rework, 2026-10-29 - as the owner asked): THE PVP SPELL BAR'S LAW. While my flag is up in the open zone, the hotbar's PvP set (PVP-SET,
+// PVP-KIT (the PvP rework, 2026-10-29 - ): THE PVP SPELL BAR'S LAW. While my flag is up in the open zone, the hotbar's PvP set (PVP-SET,
 // systems/wild/pvpSet.js) holds this toolkit and nothing else is cast. Each slot is a classic spell record built here, so the cast engine, the ally frame and
 // the referee's path (combat/siegeCombat.js) read it as any spell. Pure. A departure: DFU has no PvP.
 import { t } from '../textManager.js';

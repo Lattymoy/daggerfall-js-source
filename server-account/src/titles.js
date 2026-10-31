@@ -390,7 +390,7 @@ export const MOD_TIERS = Object.freeze(['shadowfang']);
 export const canModerate = (player, env) =>
   isModerator(player, env) || isDeveloper(player, env) || MOD_TIERS.some((t) => holdsTier(t, player, env));
 
-/** ADMIN-ALL (2026-10-30, as the owner asked: Admins only, every
+/** ADMIN-ALL (2026-10-30: Admins only, every
  *  cosmetic title and aura, always): AN ADMIN HOLDS EVERY COSMETIC THERE IS - every title, aura, profile icon, Aura Armory piece
  *  and the glyphs that are paint alone - while the handle is in DEVELOPER_HANDLES, derived at every ask as the developer
  *  title is, so a ware added to the vocabulary later is held the moment it ships and a handle taken off the list holds

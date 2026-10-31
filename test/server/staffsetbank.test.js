@@ -1,4 +1,4 @@
-// STAFF-SET-BANK (2026-10-23, as the owner asked; asked before how to adjust a player's bank, and
+// STAFF-SET-BANK (2026-10-23; asked before how to adjust a player's bank, and
 // nothing could) - THE STAFF PANEL SETS A REALM CHARACTER'S BANK: /v1/staff/fix/bank { id, ticket, was, gold, note }, an
 // Admin's (server-account/src/staffRealm.js), the review's `bank` act (review.js bankAct, the repair's and the mend's
 // machinery - staffMend) over its law (net/repairLaw.js bankSetOf, applyBankSet, bankTotalOf).

@@ -1,4 +1,4 @@
-// STAFF-EVENT (2026-10-24, as the owner asked;
+// STAFF-EVENT (2026-10-24;
 // bible/11-Multiplayer/Staff-Events.md) - THE GAME'S HALF: the hub's book held as raids (systems/staffEvents.js), run by
 // systems/raidingParties.js as a town's raid is - the staff's monsters stood to the event's total, no defenders, the word
 // to the place's cell, the mini boss stood when the cell calls it (promoted: yellow, its size, its health), its fall its
@@ -109,7 +109,7 @@ test('STAFF-EVENT: RUN AS A RAID - its own monsters, mixed, up to its total; no 
   assert.equal(staffLedgerOf(EV.id).bd, 1);
   assert.equal(raidRelayWord({ k: 'sev', sev: { k: 'st', id: EV.id, n: 5, bd: 1, bu: 0, bk: 0, fc: 0 } }, 'social'), false, 'a ledger from the social room is no cell\'s');
   assert.equal(staffBossWanted(raid), 0);
-  // BOSS-CLEAR (as the owner asked; BOSS-CLEAR-CALL: only the mini boss
+  // BOSS-CLEAR (BOSS-CLEAR-CALL: only the mini boss
   // waits for everything to be dead): three still stand - no boss until they are dead
   assert.ok((await run(3)).every((x) => x !== 'boss'));
   assert.ok(!log.said.some((l) => /A mighty/.test(l)), 'not said before it stands');
@@ -158,7 +158,7 @@ test('STAFF-EVENT: RUN AS A RAID - its own monsters, mixed, up to its total; no 
   assert.equal(staffBossWanted(staffRaids()[0]), 2);
 });
 
-test('BOSS-LOST and BOSS-HP (as the owner asked): a boss stand given up on is asked again; a boss gone without falling is stood again; one coming over is waited for; the exact health wins', async () => {
+test('BOSS-LOST and BOSS-HP: a boss stand given up on is asked again; a boss gone without falling is stood again; one coming over is waited for; the exact health wins', async () => {
   const { at, log, h } = rig();
   restoreRaidSaveData({ lastSelectedDay: DAY, raids: [] });
   setSharedClock(() => at.now);
@@ -251,7 +251,7 @@ test('BOSS-CLEAR: Spawn mini boss now is at once, monsters standing or not; the 
   assert.equal(frame(0.1), 'boss');
 });
 
-test('BOSS-UNSHAKEN (as the owner asked): a mini boss\'s wind-up holds under any blow, an overreach too; its kind\'s takes no shove', async () => {
+test('BOSS-UNSHAKEN: a mini boss\'s wind-up holds under any blow, an overreach too; its kind\'s takes no shove', async () => {
   const { windupStruck } = await import('../../src/ai/tactics.js');
   const ai = { _tac: { blow: { guard: 'plain', poise: 1, taken: 0 } } };
   assert.equal(windupStruck(ai, { staffBoss: { size: 2 } }, 1, 999), null, 'no wind-up open: nothing to break, never a stagger');
@@ -259,7 +259,7 @@ test('BOSS-UNSHAKEN (as the owner asked): a mini boss\'s wind-up holds under any
   assert.match(rd('src/scenes/exteriorFoes.js'), /if \(knockDir && !f\.entity\?\.staffBoss && weaponKnockbackApplies\(/, 'no shove, so no Hurt: the boss is never stun-locked');
 });
 
-test('PACK-SPREAD (as the owner asked): each pack led from around the next player in the town in turn - me, then each peer in its rect', async () => {
+test('PACK-SPREAD: each pack led from around the next player in the town in turn - me, then each peer in its rect', async () => {
   const { at, log, h } = rig();
   restoreRaidSaveData({ lastSelectedDay: DAY, raids: [] });
   setSharedClock(() => at.now);
@@ -283,7 +283,7 @@ test('PACK-SPREAD (as the owner asked): each pack led from around the next playe
   assert.ok(rd('src/scenes/raidHost.js').includes('feet: at?.at ?? at?.near ?? enchantFeet()'), 'the host stands a leader around the player it was given');   // PIN MOVED (WW6): the raids' host seams moved verbatim out of bootWorld to scenes/raidHost.js (HOST-SPLIT)
 });
 
-test('PACK-SCALE (as the owner asked, card "Scale with players in town"): one player as ever; each more five more standing to forty, a quarter quicker to twice; the step stands to the scaled cap', async () => {
+test('PACK-SCALE (card "Scale with players in town"): one player as ever; each more five more standing to forty, a quarter quicker to twice; the step stands to the scaled cap', async () => {
   assert.deepEqual([STAFF_PACK_CAP_MAX, STAFF_PACK_CAP_PER], [40, 5]);
   assert.deepEqual(staffPackScale(1), { cap: MAX_RAID_ENEMIES, speed: 1 }, 'alone: as ever');
   assert.deepEqual(staffPackScale(2), { cap: 30, speed: 1.25 });
@@ -302,7 +302,7 @@ test('PACK-SCALE (as the owner asked, card "Scale with players in town"): one pl
   assert.equal(log.raiders.length, 40, 'and no more');
 });
 
-test('BOSS-SPOT (as the owner asked; card "Biggest group, ties by level"): the boss stands beside the biggest group, a tie to the higher level, then the lower id; beside me when it is me', () => {
+test('BOSS-SPOT (card "Biggest group, ties by level"): the boss stands beside the biggest group, a tie to the higher level, then the lower id; beside me when it is me', () => {
   assert.equal(STAFF_BOSS_GROUP_M, 30);
   const P = (id, x, lv) => [id, [x, 0, 0], lv];
   assert.equal(staffBossSpot([P('me', 0, 50), P('a', 200, 5), P('b', 210, 5), P('c', 220, 5)])[0], 'a', 'three together beat one high level alone');
@@ -348,7 +348,7 @@ test('STAFF-EVENT PACKS: monsters stood in packs of 3-5 of any of the kinds pick
     assert.deepEqual([lead.o.min, lead.o.max, lead.o.los], [STAFF_PACK_FAR_MIN, STAFF_PACK_FAR_MAX, false]);
     assert.ok(rest.every((f) => f.o.max === STAFF_PACK_NEAR && f.o.los === false && f.o.at[0] === lead.ai.feet[0]));
   }
-  assert.ok(packs.some((p) => new Set(p.map((f) => f.mobileType)).size > 1), 'a pack of any of the kinds picked (as the owner asked)');
+  assert.ok(packs.some((p) => new Set(p.map((f) => f.mobileType)).size > 1), 'a pack of any of the kinds picked');
   assert.ok(packs.slice(0, -1).every((p) => p.length >= STAFF_PACK_MIN && p.length <= STAFF_PACK_MAX), packs.map((p) => p.length).join(','));
   // the host's placement: a town raid's the mod's just out of view
   assert.deepEqual(raidSpawnRange(undefined), { minDistance: RAID_SPAWN_MIN_DISTANCE, maxDistance: RAID_SPAWN_MAX_DISTANCE, lineOfSightCheck: true, open: true });   // PACK-OPEN
@@ -471,7 +471,7 @@ test('STAFF-EVENT: the client\'s word and the relay\'s frame - a staff word pars
   assert.equal(staffAttackLine({ ...city, staff: { b: 7, ct: 0 } }), 'The area of Gothway Garden is under attack!', 'a named place that is no town (a dungeon, a temple) is an area');
 });
 
-test('PACK-OPEN (as the owner asked): a spot held in a solid or under a roof is refused, and the loose stand tries again', async () => {
+test('PACK-OPEN: a spot held in a solid or under a roof is refused, and the loose stand tries again', async () => {
   const { raidSpotOpen, RAID_SPOT_ROOF_M } = await import('../../src/player/enterExit.js');
   const { standLooseFoe } = await import('../../src/scenes/hostEnchant.js');
   const col = (inside, roof) => ({ insideSolid: () => inside, raycast: (o, d) => (d[1] > 0 && roof ? 5 : Infinity) });
@@ -484,7 +484,7 @@ test('PACK-OPEN (as the owner asked): a spot held in a solid or under a roof is 
   assert.equal(typeof standLooseFoe, 'function');
 });
 
-test('PACK-EVERY (as the owner asked): out of a town (an area event) the players on my map pixel share the packs, the scale and the boss - in a town, its rect as ever', async () => {
+test('PACK-EVERY: out of a town (an area event) the players on my map pixel share the packs, the scale and the boss - in a town, its rect as ever', async () => {
   const { peerInEventPlace } = await import('../../src/systems/raidingParties.js');
   const world = { worldCoords: (p) => ({ x: p[0], z: p[2] }) };
   assert.equal(peerInEventPlace([1, 0, 1], (f) => f.ai.feet[0] === 1, world, null), true, 'in a town: its rect');
@@ -498,7 +498,7 @@ test('PACK-EVERY (as the owner asked): out of a town (an area event) the players
   assert.ok(rd('src/scenes/raidHost.js').includes('.filter((p) => raidPeerInPlace(p.feet, host._musicLoc ? _foeInTownRect : null, state, playerTravelPixel())).map('), 'the host asks it');
 });
 
-test('PACK-STALL (as the owner asked): a leader with no spot about one player goes to the next after STAFF_PACK_LEADER_TRIES - the packs never stall on one', async () => {
+test('PACK-STALL: a leader with no spot about one player goes to the next after STAFF_PACK_LEADER_TRIES - the packs never stall on one', async () => {
   const { STAFF_PACK_LEADER_TRIES } = await import('../../src/systems/raidingParties.js');
   assert.equal(STAFF_PACK_LEADER_TRIES, 3);
   const { at, log, h } = rig();
@@ -518,7 +518,7 @@ test('PACK-STALL (as the owner asked): a leader with no spot about one player go
   assert.ok(leaders.some((f) => f.o.near === ok) && leaders.some((f) => f.o.near == null), 'the others still had their packs');
 });
 
-test('BOSS-RETRY (as the owner asked): a boss with no spot by its group keeps its call and stands about me after STAFF_PACK_LEADER_TRIES misses', async () => {
+test('BOSS-RETRY: a boss with no spot by its group keeps its call and stands about me after STAFF_PACK_LEADER_TRIES misses', async () => {
   const { STAFF_PACK_LEADER_TRIES } = await import('../../src/systems/raidingParties.js');
   const { at, log, h } = rig();
   restoreRaidSaveData({ lastSelectedDay: DAY, raids: [] });
@@ -542,7 +542,7 @@ test('BOSS-RETRY (as the owner asked): a boss with no spot by its group keeps it
   assert.match(src, /raid\.bossUp = 1;\n\s*raid\.bossDown = 0;\n\s*raid\.clearSince = undefined;\n\s*raid\.clearWait = undefined;\n\s*if \(raid\.bossHand != null\) raid\.handSeen = raid\.bossHand;\n\s*_bossMisses = 0;\n\s*\}/, 'the field\'s wait and the by-hand word spent once it stands');
 });
 
-test('PACK-KEEP (as the owner asked): a raid\'s monster stands past the runner\'s cull while any player is near it; one culled or let go is no kill, and its place is stood again in turn', () => {
+test('PACK-KEEP: a raid\'s monster stands past the runner\'s cull while any player is near it; one culled or let go is no kill, and its place is stood again in turn', () => {
   const src = rd('src/scenes/exteriorFoes.js');
   assert.ok(src.includes('const _raidKept = !!f.raidKey && playerNearFoe(f, ENCOUNTER_CULL_DISTANCE);') && src.includes('&& !_raidKept && !(_qTag(f) && partyNearFoe(f, _cullAt))'), 'the cull spares it while a player is near');
   assert.match(src, /const playerNearFoe = \(f, r\) => peerCandidates\(\)\.some\(\(c\) => Array\.isArray\(c\.feet\) && Math\.hypot\(/);
@@ -551,7 +551,7 @@ test('PACK-KEEP (as the owner asked): a raid\'s monster stands past the runner\'
   assert.ok(rp.includes("if (fights) {\n        foe.raidKey = p.key;"), 'its raid tagged on the foe at its stand');
 });
 
-test('STAFF-PILOT (as the owner asked, card "Take over the boss", no relay update): Play as boss takes the run off an older runner with the oldest claim the wire carries; the boss that stands is the pilot\'s; the claim age never passes the wire\'s bound', async () => {
+test('STAFF-PILOT (card "Take over the boss", no relay update): Play as boss takes the run off an older runner with the oldest claim the wire carries; the boss that stands is the pilot\'s; the claim age never passes the wire\'s bound', async () => {
   const { pilotStart, pilotStop, pilotKey, PILOT_CLAIM_AGE, resetPilot } = await import('../../src/systems/staffBossPilot.js');
   const { raidPeerWord, staffPilotBoss } = await import('../../src/systems/raidingParties.js');
   const { raidRunnerOf, RAID_CLAIM_AGE_MAX } = await import('../../src/world/raidShared.js');

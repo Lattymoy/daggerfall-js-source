@@ -691,7 +691,7 @@ export class EnemyAI {
     // AUDIT WORLD3 C3: unarmed - a puppet's bare senses call, an unarmed pool - the senses ARE the local player's, so
     // both latches follow from here (a puppet never reaches _step or the classic block).
     if (!this._armedTargeting) { this._distLocal = this._dist; this.targetIsLocalPlayer = true; }
-    // STAFF-UNSEEN (2026-10-24, as the owner asked; the
+    // STAFF-UNSEEN (2026-10-24; the
     // card's pick "Monsters ignore hidden staff"): a departure from DFU - a staff member hidden from players is no one to
     // a foe either. Never seen, never heard, never stealth-detected, and the blind pursuit given up at once (no
     // giveUpTimer to spend, so no TakeAction); a seer sees no more of them than anyone does

@@ -1,5 +1,5 @@
 // @ts-check
-// PVP-SET (as the owner asked): THE PVP SET'S LAW. While my flag is up in
+// PVP-SET: THE PVP SET'S LAW. While my flag is up in
 // the zone, the hotbar shows and fires a second set of its own slots (systems/quickslots.js useHotbarSet): toolkit
 // spells made in the PvP menu, and items. The set cannot change while the PvP combat lock runs. Pure. A departure: DFU
 // has no PvP.

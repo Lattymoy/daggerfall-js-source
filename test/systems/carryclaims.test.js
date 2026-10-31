@@ -1,4 +1,4 @@
-// CARRY-CLAIMS (2026-10-30, as the owner asked). A take off a shared pile - a room's
+// CARRY-CLAIMS (2026-10-30). A take off a shared pile - a room's
 // chest or body, a peer's foe, a building's cupboard, a fallen player's remains - is lifted back OUT of the pack until the
 // pile's authority grants it. The carry gate (itemTransfer.js planTake) read the pack without it, so every take inside
 // that wait passed, and the grants then landed past the limit. The laws pinned here:

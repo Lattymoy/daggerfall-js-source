@@ -82,9 +82,9 @@ export function weaponClimb(entity, skill, { online = isOnlinePage() } = {}) {
  *  RELAY-SHARE: the one law (combat/healthShare.js) - such a body now reads the relay's own word of its health (its
  *  stand-in's owner's reader), so each half pays its own there too, and the mean only where no word is heard. */
 const shareOf = healthShare;
-/** WEAPON-GEAR (2026-10-27, as the owner asked; Martial-Specialisations.md section 4): the climb above reads the
+/** WEAPON-GEAR (2026-10-27; Martial-Specialisations.md section 4): the climb above reads the
  *  trained skill, so gear bought a weapon no damage while the fists' roll read it whole. So each point of gear on a
- *  weapon skill adds 0.44% to its blow, from the first point (GEAR-ADDS, as the owner asked): the percent here, 0 to 320. Online, mine, never the fists. */
+ *  weapon skill adds 0.44% to its blow, from the first point (GEAR-ADDS): the percent here, 0 to 320. Online, mine, never the fists. */
 export function weaponGearPct(entity, skill, { online = isOnlinePage() } = {}) {
   if (
     !online ||

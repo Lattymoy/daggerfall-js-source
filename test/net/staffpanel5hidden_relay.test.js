@@ -1,4 +1,4 @@
-// STAFF-PANEL5-HIDDEN (2026-10-22, as the owner asked; design doc "DFO Staff Panel: design", Invisible follow): THE
+// STAFF-PANEL5-HIDDEN (2026-10-22; design doc "DFO Staff Panel: design", Invisible follow): THE
 // RELAY'S HALF, OVER THE REAL ROOM (test/fakeRoom.mjs - a real signed token at a real hello, the hub's shards real Rooms on
 // fake objects). The design's own acceptance: a second game and a raw socket that logs every frame stand in the same room,
 // region and hub as a hidden staff socket and receive NOTHING that names it or comes from it, while the staff socket still
@@ -480,7 +480,7 @@ test('STAFF-PANEL5-HIDDEN-FIX a hidden Admin\'s /tp, on its hub shard: its ask i
   });
 });
 
-// STAFF-CHAT-RED (2026-10-23, as the owner asked): the chat box's
+// STAFF-CHAT-RED (2026-10-23): the chat box's
 // Me / Red switch, kept on Red by a hidden Admin - so its /red ask must be heard, and its line must still name nobody.
 test('STAFF-CHAT-RED a hidden Admin speaks as the server: on its hub shard its /red ask (`{t:\'say\', text}`) is heard, and every shard and the bus hear the server\'s line - `{t:\'red\', text, at}` and nothing else, naming nobody; a hidden socket without the dev glyph is ignored in silence, never closed, and its other frames are still dropped (mutants: the ask dropped; the dev glyph unread for a hidden socket; the line naming its speaker)', async () => {
   await world(async ({ link, say }) => {
@@ -569,7 +569,7 @@ test('STAFF-PANEL5-HIDDEN-FIX an asked layer holding only hidden sockets is empt
   } finally { globalThis.WebSocketPair = had; }
 });
 
-test('STAFF-HIDE-TOGGLE (2026-10-23, as the owner asked) the relink\'s order at the relay, with no relay change: Hide me pressed, the game closes its shown socket and says hello hidden on the same id - welcomed, never `id taken`, its leave said once and its hidden join never; Show myself the other way, as ever (scenes/staffFollowHost.js relinkGame)', async () => {
+test('STAFF-HIDE-TOGGLE (2026-10-23) the relink\'s order at the relay, with no relay change: Hide me pressed, the game closes its shown socket and says hello hidden on the same id - welcomed, never `id taken`, its leave said once and its hidden join never; Show myself the other way, as ever (scenes/staffFollowHost.js relinkGame)', async () => {
   await quiet(async () => {
     for (const key of ['world:3,12', SOCIAL_ROOM]) {
       const r = fakeRoom(key);

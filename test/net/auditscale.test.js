@@ -244,7 +244,7 @@ test('AUDIT SCALE D7: on a quiet world the clock is eleven statements a minute a
   // its page short (safetyClock.js safetySweep) - twenty-eight. PIN MOVED (AUDIT SAFE DOC-1, DOC-12): and a resolved
   // case's lines, notes and reviewer's reason swept apart - the case marked first, its card redrawn without them - thirty
   // PIN MOVED (INT17, Integrity-Arc section 7): the progression claims' hours swept past the wealth's keeping - thirty-one
-  // PIN MOVED (STAFF-PANEL1, as the owner asked): the staff audit log's rows past its month
+  // PIN MOVED (STAFF-PANEL1): the staff audit log's rows past its month
   // swept - one statement, its page short (cron.js staff-audit) - thirty-five
   // PIN MOVED (CRAFT-WRITS, Professions-Arc.md section 49): an unfilled crafting writ swept the day after its own - one
   // statement, its page short - thirty-six with STAFF-PANEL1's (renumbered at the merge), and the sea's five (AUDIT SEA VENTURES B5) - forty-one

@@ -5,7 +5,7 @@
 // THE LAW (bible/11-Multiplayer/Wild-Zone.md section 4b). A leaf the account Worker bundles
 // (server-account/src/wildInsure.js writes a policy, server-account/src/wild.js spends it): one law at both ends.
 //
-//  - WHAT MAY BE INSURED (INSURE-ALL, 2026-10-29, as the owner asked): any piece of
+//  - WHAT MAY BE INSURED (INSURE-ALL, 2026-10-29): any piece of
 //    gear - a weapon, armour, a shield, jewellery, clothing - and any piece the ledger follows, that a death in the zone
 //    could take (wildDropLaw.js wildCanLose), carried in the pack or worn. Never a stack, a bound or quest piece, or a
 //    letter of credit: coin, which pays its tenth (LETTERS-TENTH). A policy names its piece by insureKeyOf.

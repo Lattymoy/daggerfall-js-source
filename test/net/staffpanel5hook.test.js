@@ -505,7 +505,7 @@ test('STAFF-VIEW1 hook: peers() is the followed room\'s players as the eye draws
   assert.deepEqual(hook.peers(), [], 'let go');
 });
 
-test('FOLLOW-BODIES (as the owner asked): while a follow is locked the scene draws the players around the target - the eye\'s room less the target, whose eyes the camera is - and the game\'s own room otherwise (mutants: the target kept, the game\'s room while locked)', () => {
+test('FOLLOW-BODIES: while a follow is locked the scene draws the players around the target - the eye\'s room less the target, whose eyes the camera is - and the game\'s own room otherwise (mutants: the target kept, the game\'s room while locked)', () => {
   const { Session, made } = fakeSessions();
   const mine = [{ id: 'peer-mine' }];
   const main = { url: 'wss://relay.test', drawable: () => mine };
@@ -627,7 +627,7 @@ test('STAFF-PANEL5-FOLLOW host: a follow leaves the host\'s room, enters the not
   assert.equal(warned.length, 1);
 });
 
-test('FOLLOW-FRAME host (as the owner asked, on the Daggerfall map): a dungeon pose never lands on the open air - the camera waits at the door, and an enter that failed is tried again, each wait twice the last', async () => {
+test('FOLLOW-FRAME host (on the Daggerfall map): a dungeon pose never lands on the open air - the camera waits at the door, and an enter that failed is tried again, each wait twice the last', async () => {
   let t = 0, fail = true, mode = 'exterior';
   const view = { x: 12, y: 1, z: 30, yaw: 0, pitch: 0 };
   const place = notePlace(validPartyPose(note('dungeon:m1234.m', { in: 1 })));
@@ -773,7 +773,7 @@ test('STAFF-PANEL5-FOLLOW host: outside a party the pose goes on as the where no
   assert.match(worldSource, /if \(socialLink\(\)\) socialLink\(\)\.solo = !social\.party;/, 'sent outside a party, at the note\'s pace');
 });
 
-// ═══ STAFF-HIDE-TOGGLE (2026-10-23, as the owner asked) - Hide me and Show myself take
+// ═══ STAFF-HIDE-TOGGLE (2026-10-23) - Hide me and Show myself take
 // effect at once: the panel's `relink` word (net/staffHook.js), the game's own links remade on a fresh token
 // (scenes/staffFollowHost.js relinkGame), and the minter letting go of a mint on its way (net/accountClient.js `forget`).
 // tools/mutants/staff-hide-toggle.json ═══

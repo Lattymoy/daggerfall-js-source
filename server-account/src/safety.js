@@ -437,7 +437,7 @@ export async function modCase({ db }, actor, env, { target, name, caseId = null 
   return { ok: true, case: caseView(row, c, lines, reports) };
 }
 
-/** STAFF-PANEL-SPEED (as the owner asked): ONE CASE'S
+/** STAFF-PANEL-SPEED: ONE CASE'S
  *  READS - its lines, then its reports - for modCase, or for the staff panel's own batch (staffCases.js), and the case
  *  as a moderator reads it from their rows (caseView). @param {any} db @param {string} caseId */
 export const caseReads = (db, caseId) => [

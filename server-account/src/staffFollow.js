@@ -6,7 +6,7 @@
 // (`hd` 1, the hidden builder's mark) that names the account it follows (`fo`), minted on a live staff session and
 // written to the audit log as it is minted.
 //
-// WHO (as the owner asked): an Admin
+// WHO: an Admin
 // or a Moderator, any registered or guest player but themselves.
 //
 // WHAT IT CARRIES: never the staff member's own account or name - a hidden socket on their own account would break the

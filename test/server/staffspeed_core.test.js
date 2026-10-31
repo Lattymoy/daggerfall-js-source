@@ -1,4 +1,4 @@
-// STAFF-PANEL-SPEED (2026-10-23, as the owner asked) - THE TRIPS EVERY STAFF CLICK WAITS ON, core:
+// STAFF-PANEL-SPEED (2026-10-23) - THE TRIPS EVERY STAFF CLICK WAITS ON, core:
 // staff.js's session (its lookup and its once-a-minute touch, one trip) and the routes staff.js answers itself - /v1/staff/me,
 // /keys, /mods, /team and /audit - each a read and its audit row in one batch. Counted over the real Worker on
 // test/accountDb.mjs with test/server/staffTrips.mjs; before this the touch was a trip of its own and every read page's

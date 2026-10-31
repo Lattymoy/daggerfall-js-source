@@ -1,4 +1,4 @@
--- STAFF-PANEL5-FREEZE (2026-10-22, as the owner asked; design doc "DFO Staff
+-- STAFF-PANEL5-FREEZE (2026-10-22; design doc "DFO Staff
 -- Panel: design", Freeze player, and its weak spots): A STAFF FREEZE AND THE STAFF CHAT - a sanction of its own beside the
 -- mute and the ban, and the private thread between a player and staff that a freeze opens (server-account/src/staffFreeze.js).
 --

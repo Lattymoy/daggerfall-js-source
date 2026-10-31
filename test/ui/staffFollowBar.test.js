@@ -1,4 +1,4 @@
-// STAFF-FOLLOW-UNLOCK (as the owner asked): the follow's bar on the game's screen.
+// STAFF-FOLLOW-UNLOCK: the follow's bar on the game's screen.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createStaffFollowBar } from '../../src/ui/staffFollowBar.js';
@@ -95,7 +95,7 @@ test('STAFF-FOLLOW-UNLOCK + STAFF-HIDE-IN-GAME the page: no bar until a panel sp
   assert.equal(unlockOf(doc).style.display, 'none', 'let go: the Unlock goes, the bar stays');
 });
 
-test('BAR-NO-FOCUS (as the owner asked): the bar\'s buttons never hold the keyboard - out of the tab order, a press takes no focus, a click lets go of any (mutants: each of the three)', () => {
+test('BAR-NO-FOCUS: the bar\'s buttons never hold the keyboard - out of the tab order, a press takes no focus, a click lets go of any (mutants: each of the three)', () => {
   const doc = fakeDoc();
   const bar = createStaffFollowBar({ doc, onUnlock: () => {}, onHide: () => {} });
   bar.show({ hidden: false, following: true });
@@ -114,7 +114,7 @@ test('BAR-NO-FOCUS (as the owner asked): the bar\'s buttons never hold the keybo
   }
 });
 
-test('FOLLOW-INDOORS (as the owner asked): the modes host\'s climb camera carries the follow\'s eye - a dungeon\'s frame puts the camera at the target\'s eyes before the climb\'s frame, the bar stops saying "finding them", and every other read and write is the climb camera\'s own (mutant: the eye left out)', async () => {
+test('FOLLOW-INDOORS: the modes host\'s climb camera carries the follow\'s eye - a dungeon\'s frame puts the camera at the target\'s eyes before the climb\'s frame, the bar stops saying "finding them", and every other read and write is the climb camera\'s own (mutant: the eye left out)', async () => {
   const doc = fakeDoc();
   const win = { document: doc, location: { origin: 'https://game.test' }, addEventListener() {}, removeEventListener() {}, postMessage() {} };
   let mode = 'exterior';

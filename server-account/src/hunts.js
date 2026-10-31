@@ -181,7 +181,7 @@ export async function huntClear(ctx, player, env, body) {
 const CLEARS_READ = HUNT_TITLES[HUNT_TITLES.length - 1][1];
 /** WYRM-RIDER: an account's tamed brass and Aetherbright dragons (dragon_mounts, dragons.js's draw; look 1 the
  *  Aetherbright) and whether it holds the earliest tame of each (by its time, then its id) - a developer's never counted
- *  (as the owner asked; `devs` the parameter holding titles.js developerHandles as a JSON list). */
+ *  (`devs` the parameter holding titles.js developerHandles as a JSON list). */
 const FIRST_OF = (
   /** @type {string} */ look,
   /** @type {string} */ devs,

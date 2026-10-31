@@ -7,7 +7,7 @@
 -- Applied exactly once through the `d1_migrations` ledger, which the deploy runs (ACC1-CI), before the Worker that reads
 -- it.
 --
--- staff_evidence  one row a removal (as the owner asked): every
+-- staff_evidence  one row a removal: every
 --                 removal asks a reason and a note, and the item is kept 30 days so it can be put back.
 --   kind      'player' (taken out of a character's saved record), 'listing' or 'auction' (a Remove from market: the
 --             listing ended and its goods kept here instead of going back to the seller)

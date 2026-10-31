@@ -7,7 +7,7 @@
 // STOREFRONT (2026-10-29, bible/06-Systems/Storefront.md section 6): a plate a style, each its own painter (PLATE_PAINTERS).
 import { TITLE_FLAME } from './playerBadge.js';
 
-/** WYRM-RIDER (as the owner asked): A TITLE ON A METAL PLATE (plateCss, below;
+/** WYRM-RIDER: A TITLE ON A METAL PLATE (plateCss, below;
  *  kept here, not in ui/playerBadge.js, so its sheet is built at this module's load) - a pointed plate, its `rim` and its
  *  `face` (CSS colours, top to bottom, or left to right where `across`), a rivet each end, the letters' dark `ink` edge,
  *  and a `glow` round it where it names one. */

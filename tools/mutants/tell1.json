@@ -254,8 +254,8 @@
   {
     "name": "TELL1-street-no-hold",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "    if (_tell === 'hold') return;\n    if (knockDir && !f.entity?.staffBoss && weaponKnockbackApplies(f.ai.knockbackSpeed, isClass, mobileWeight)) {   // BOSS-UNSHAKEN (as the owner asked): a staff event's mini boss takes no shove and no Hurt",
-    "new": "    if (knockDir && !f.entity?.staffBoss && weaponKnockbackApplies(f.ai.knockbackSpeed, isClass, mobileWeight)) {   // BOSS-UNSHAKEN (as the owner asked): a staff event's mini boss takes no shove and no Hurt",
+    "old": "    if (_tell === 'hold') return;\n    if (knockDir && !f.entity?.staffBoss && weaponKnockbackApplies(f.ai.knockbackSpeed, isClass, mobileWeight)) {   // BOSS-UNSHAKEN: a staff event's mini boss takes no shove and no Hurt",
+    "new": "    if (knockDir && !f.entity?.staffBoss && weaponKnockbackApplies(f.ai.knockbackSpeed, isClass, mobileWeight)) {   // BOSS-UNSHAKEN: a staff event's mini boss takes no shove and no Hurt",
     "tests": [
       "test/systems/tell1_poise.test.js"
     ]

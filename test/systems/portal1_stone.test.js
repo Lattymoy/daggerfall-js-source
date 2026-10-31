@@ -541,7 +541,7 @@ test('PORTAL1 the pool, a peer\'s: believed only near its opener\'s own feet, na
   assert.equal(far.grounded, true);
 });
 
-test('PORTAL1 the door, the pick and the arrival, as world.js runs them (PIN MOVED, PORTAL-BAY: scenes/portalStoneHost.js, the module world.js wires): every refusal at the door in its order and again at the pick, the map in teleport mode with no fee, the black lifted only where the classic box made it, one stone spent on a placed portal, the frame owed full; the arrival black, off the frame, the following team around it, a failure lifting the black; PVP-PORTAL (as the owner asked): the open zone\'s teleport law asked at none of them, and inside the zone only a foe on me holds the stone (mutants: the stone asking the zone again; the zone\'s hold any foe near)', async () => {
+test('PORTAL1 the door, the pick and the arrival, as world.js runs them (PIN MOVED, PORTAL-BAY: scenes/portalStoneHost.js, the module world.js wires): every refusal at the door in its order and again at the pick, the map in teleport mode with no fee, the black lifted only where the classic box made it, one stone spent on a placed portal, the frame owed full; the arrival black, off the frame, the following team around it, a failure lifting the black; PVP-PORTAL: the open zone\'s teleport law asked at none of them, and inside the zone only a foe on me holds the stone (mutants: the stone asking the zone again; the zone\'s hold any foe near)', async () => {
   const w = read('src/scenes/world.js');
   const sh = read('src/scenes/portalStoneHost.js');   // PIN MOVED (PORTAL-BAY): the door, the pick and the step moved out of bootWorld verbatim (HOST-SPLIT) - its live reads are `host.<name>`, this scope
   const fade = new FadeBehaviour();
@@ -679,7 +679,7 @@ test('PORTAL1 the door, the pick and the arrival, as world.js runs them (PIN MOV
   await new Promise((res) => setTimeout(res, 0));
   assert.deepEqual([arrivals.length, fresh.backgroundColor[3]], [2, 0], 'a move already under way: no arrival, no black left');
   scope.busy = false;
-  // PVP-PORTAL (2026-10-30, as the owner asked, held only by the aggro or flag cooldown; AUDIT TESA
+  // PVP-PORTAL (2026-10-30, held only by the aggro or flag cooldown; AUDIT TESA
   // II Z5's zone law retired for the stone): online, a stone opens inside the open zone, picks a place in it, and is
   // stepped through into, out of and inside it. A zone of world pixels x 2000..2099
   const zone = buildWildMask({ width: 100, height: 100, ox: 2000, oy: 600, inZone: () => true });

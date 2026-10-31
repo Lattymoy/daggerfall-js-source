@@ -99,7 +99,7 @@ export function createAuraHost(deps) {
     if (pass?.drawn) renderer.markForeignPass();
   };
 
-  /** FOLLOW-NOW (2026-10-30, as the owner asked):
+  /** FOLLOW-NOW (2026-10-30):
    *  MY OWN COSMETICS WHERE MY BODY IS DRAWN THIS FRAME. The gather (frame) runs with the online frame, BEFORE the motor
    *  steps the player - so a kit and a strip aura placed there stood where I was a frame ago, and on the camera's low-passed
    *  feet: a ghost trailing the body by a step, far behind it flying. At the draw, after the step and the body's own draw,
@@ -161,7 +161,7 @@ export function createAuraHost(deps) {
       const spawned = deps.spawned(), faced = mwViewSpriteFacing();
       const lift = deps.selfLift?.() || 0;   // AURA-ON-DRAGON: on my dragon, worn where its rider sits
       selfLiftNow = lift;
-      // CAPE-TOGGLE (2026-10-30, as the owner asked): hiding the cape hides the cloak alone,
+      // CAPE-TOGGLE (2026-10-30): hiding the cape hides the cloak alone,
       // never the aura - mine here, and (the look's `hc`) a peer's below
       if (mine && spawned) {
         const f = player.feetAt(); f[1] += lift;

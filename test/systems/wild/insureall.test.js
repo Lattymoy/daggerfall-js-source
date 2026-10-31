@@ -1,4 +1,4 @@
-// INSURE-ALL (2026-10-29, as the owner asked - bible/11-Multiplayer/Wild-Zone.md section 4b INSURE-ALL). Every piece of gear a death in
+// INSURE-ALL (2026-10-29 - bible/11-Multiplayer/Wild-Zone.md section 4b INSURE-ALL). Every piece of gear a death in
 // the zone could take is insured at a fifth of its worth: a plain piece by an id of its own, minted when it is insured,
 // which no ledger reads; and a piece the item maker enchanted at its worth and the gold the maker took. Every piece here
 // is its producer's own (createWeapon, applyRarity, the smith's mint, the item maker's own act), and the service is the

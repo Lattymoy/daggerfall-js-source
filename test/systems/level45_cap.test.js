@@ -1,4 +1,4 @@
-// LEVEL-45 (2026-10-27, as the owner asked): online the six-skill climb is shared
+// LEVEL-45 (2026-10-27): online the six-skill climb is shared
 // out so every start lands on exactly 45 at the top (800), every realm character's level is read again from its skills
 // at its join, and online character creation has no biography.
 import { test } from 'node:test';
@@ -16,7 +16,7 @@ import { REALM_LEVEL_CLAIM_MAX, firstSaveRefusal } from '../../server-account/sr
 import { rollSkills, spendPoolLowest } from '../../src/systems/chargen.js';
 import { levelUpSkillSum } from '../../src/systems/skills.js';
 
-test('LEVEL-45: the top is five masteries at 140 and the sixth at 100 - MASTER-THREE\'s sixth slot not counted (LEVEL-TOP, as the owner asked) - and the judge, the claim and the cap at the same 45', () => {
+test('LEVEL-45: the top is five masteries at 140 and the sixth at 100 - MASTER-THREE\'s sixth slot not counted (LEVEL-TOP) - and the judge, the claim and the cap at the same 45', () => {
   assert.equal(LEVEL_SUM_TOP, 800);
   assert.equal(ONLINE_LEVEL_CAP, LEVEL_CAP, 'the one cap (levelCap.js)');
   assert.equal(ONLINE_LEVEL_CAP, 45);
@@ -226,7 +226,7 @@ test('LEVEL-45: online a raise is priced at the level the skills earned - leavin
   assert.equal(raisePriceLevel({ ...on, level: 44 }), 44, 'never below the level taken');
 });
 
-test('LEVEL-BAR: online the level bar reads skill points - each level\'s span is the points between its start and the next, they add to the whole climb, and the bar is full at the cap (as the owner asked)', async () => {
+test('LEVEL-BAR: online the level bar reads skill points - each level\'s span is the points between its start and the next, they add to the whole climb, and the bar is full at the cap', async () => {
   for (const start of [133, 144, 153, 154, 169, 400]) {
     const room = LEVEL_SUM_TOP - start;
     let total = 0;
@@ -251,7 +251,7 @@ test('LEVEL-BAR: online the level bar reads skill points - each level\'s span is
   assert.deepEqual([bar.now, bar.max], [13, 15], 'the window says points, not a percent');
 });
 
-test('LEVEL-TOP: a character maxed under five masteries - five at 200, the sixth counted skill at 100 - is 45, and a sixth mastery adds no level (as the owner asked)', () => {
+test('LEVEL-TOP: a character maxed under five masteries - five at 200, the sixth counted skill at 100 - is 45, and a sixth mastery adds no level', () => {
   for (const start of [144, 154, 169]) {
     assert.equal(onlineLevelFor(start, 5 * 140 + 100), 45, `start ${start}`);
     assert.equal(onlineLevelFor(start, 6 * 140), 45, 'the sixth mastery: no level past it');
