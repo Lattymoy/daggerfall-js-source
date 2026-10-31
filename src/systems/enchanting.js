@@ -152,39 +152,37 @@ export const makerLaid = (e) => e?.enchantCost !== undefined;
  *  row runs once runs (Extra Weight's weight). Answers how many
  *  pieces it mended; a whole piece is left as it is. */
 export function repairSoulSets(list) {
-  let n = 0;
-  const chosen = (r) => makerLaid(r) && !r.parentEnchantment;
-  for (const it of Array.isArray(list) ? list : []) {
-    const rows = Array.isArray(it?.enchantments) ? it.enchantments : [];
+  let mended = 0;
+  const chosen = (row) => makerLaid(row) && !row.parentEnchantment;
+  for (const item of Array.isArray(list) ? list : []) {
+    const rows = Array.isArray(item?.enchantments) ? item.enchantments : [];
     const missing = [];
-    for (const soul of rows.filter((r) => chosen(r) && TYPE_KEY[r.type] === 'SoulBound')) {
+    for (const soul of rows.filter((row) => chosen(row) && TYPE_KEY[row.type] === 'SoulBound')) {
       const set = forcedEnchantments('SoulBound', soul.param);
-      for (const w of set ? [...set.powers, ...set.sideEffects] : []) {
-        if (
-          !rows.some(
-            (r) => r?.parentEnchantment === w.parentEnchantment && TYPE_KEY[r.type] === w.type && r.param === w.param,
-          )
-        )
-          missing.push({ ...w, type: classicEnchantmentType(w.type) });
+      for (const wanted of set ? [...set.powers, ...set.sideEffects] : []) {
+        const laid = rows.some(
+          (row) =>
+            row?.parentEnchantment === wanted.parentEnchantment &&
+            TYPE_KEY[row.type] === wanted.type &&
+            row.param === wanted.param,
+        );
+        if (!laid) missing.push({ ...wanted, type: classicEnchantmentType(wanted.type) });
       }
     }
     if (!missing.length) continue;
     const kept = rows.slice();
-    for (
-      let over = kept.length + missing.length - (MAX_ENCHANTMENTS + 1), i = kept.length - 1;
-      over > 0 && i >= 0;
-      i--
-    ) {
-      if (chosen(kept[i]) && TYPE_KEY[kept[i].type] !== 'SoulBound') {
-        kept.splice(i, 1);
+    let over = kept.length + missing.length - (MAX_ENCHANTMENTS + 1);
+    for (let at = kept.length - 1; over > 0 && at >= 0; at--) {
+      if (chosen(kept[at]) && TYPE_KEY[kept[at].type] !== 'SoulBound') {
+        kept.splice(at, 1);
         over--;
       }
     }
-    it.enchantments = [...kept, ...missing];
-    doEnchantedPayloads(it, missing); // what laying them runs once - Extra Weight's fourfold weight
-    n++;
+    item.enchantments = [...kept, ...missing];
+    doEnchantedPayloads(item, missing); // what laying them runs once - Extra Weight's fourfold weight
+    mended++;
   }
-  return n;
+  return mended;
 }
 /**
  * MAKER-RARE (FIELD BUGS 2026-10-26, the owner: "You cant enchant masterwork/rare armor"): A RARE THE ITEM MAKER TAKES.
