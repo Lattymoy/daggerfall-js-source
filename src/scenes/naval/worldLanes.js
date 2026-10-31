@@ -49,7 +49,7 @@ import { inEther, onBayOrEther } from '../../world/ethericSea.js';
 import { NATIVE_PIXEL } from '../../systems/seaRaiders.js';
 import { rumareSeaPixel } from '../../world/rumareWaters.js'; // RUMARE-WATER: the Imperial City's lake the sea's
 import { squareCornersAll } from '../../world/terrain/terrainSampler.js'; // SEA-SQUARE: a square's water is its four corners'
-import { kernelLine } from '../../world/water/kernelSea.js'; // AUDIT SEA PATHS O3: the ground the game builds
+import { kernelLine } from '../../world/water/kernelSea.js'; // the ground the game builds
 
 /**
  * The Bay's ports as its lanes read them - Travel Options' list (`portIds`, the host's: systems/travel/travelPorts.js
@@ -99,7 +99,7 @@ export function worldLaneWater({ bayOpen, water, climateAt, beyond }) {
   };
 }
 
-/** AUDIT SEA PATHS LN-1: THE BAY'S LANE WATER - a Bay pixel whose square is sea at its four corners (SEA-SQUARE's law,
+/** THE BAY'S LANE WATER - a Bay pixel whose square is sea at its four corners (SEA-SQUARE's law,
  *  squareCornersAll: the kernel lays a byte at its square's south-east corner), a corner sea where the host's byte law
  *  calls it water (`water`) and its climate is the Ocean's (`ocean`: CLIMATE.PAK's own on the Bay, the world's past it).
  *  Read through the boot's coastal dilation (a texture repair) 103 ports, Daggerfall, Sentinel and Wayrest among them,
@@ -121,7 +121,7 @@ export const onWorldSea = (x, y, beyond) => onBayOrEther(x, y) || (beyond && inW
  *  a lane's way past it is no longer than this. */
 export const BEYOND_LANE_MAX_PX = 400;
 export const BEYOND_LANE_PATH_PX = 800;
-/** AUDIT SEA PATHS O2: a port past the Bay with no lane that has a way asks its nearest ports out to this (map pixels), the
+/** a port past the Bay with no lane that has a way asks its nearest ports out to this (map pixels), the
  *  LONE_TRIES nearest, each lane's way allowed twice its ports' distance (Necrom's sea runs round Vvardenfell). */
 export const BEYOND_LONE_PX = 1600;
 export const LONE_TRIES = 6;
@@ -129,7 +129,7 @@ export const LONE_TRIES = 6;
  *  up a canal at either end (world/worldWide/worldPorts.js CANAL_PORT_REACH_PX), as the rest run twice theirs.
  *  @param {{ a: { reach?: number }, b: { reach?: number }, path?: number }} lane */
 export const beyondPathPx = (lane) =>
-  Math.max(BEYOND_LANE_PATH_PX, 2 * Math.max(lane.a.reach ?? 0, lane.b.reach ?? 0), lane.path ?? 0); // AUDIT SEA PATHS O2: a lone port's lane its own (`path`)
+  Math.max(BEYOND_LANE_PATH_PX, 2 * Math.max(lane.a.reach ?? 0, lane.b.reach ?? 0), lane.path ?? 0); // a lone port's lane its own (`path`)
 /** SEA-LANES: a player within this of a lane's water (map pixels) has its packets listed (the host's laneShips). */
 export const LANE_NEAR_PX = 4;
 /** Metres a native unit. */
@@ -140,7 +140,7 @@ const M_PER_NATIVE = 819.2 / NATIVE_PIXEL;
  *  WW7-10: its own export - beyondLaneWay's, and the crossing lanes' mouths read it.
  *  @param {any} trace the picture's trace (world/tamriel/tamrielLand.js tamrielTrace's) @returns {(x: number, y: number) => boolean} */
 export function pictureSeaMask(trace) {
-  // AUDIT SEA PATHS O2: one mask a picture (its lakes' flood and its land's law made once - a way past the Bay paid them each)
+  // one mask a picture (its lakes' flood and its land's law made once - a way past the Bay paid them each)
   const kept = _seaMasks.get(trace);
   if (kept) return kept;
   const mask = seaMaskOf(trace);
@@ -165,7 +165,7 @@ function seaMaskOf(trace) {
     landLabelAt(L, x + 0.5, y + 0.5) === 0 &&
     !lakes[y * w + x] &&
     !(x + 1 > bay.x0 && x < bay.x1 && y + 1 > bay.y0 && y < bay.y1);
-  // AUDIT SEA PATHS C1: a cell's answer kept (0 unasked, 1 sea, 2 not) - a lane's search asks each many times
+  // a cell's answer kept (0 unasked, 1 sea, 2 not) - a lane's search asks each many times
   const kept = new Uint8Array(w * h);
   return (x, y) => {
     if (!(x >= 0 && y >= 0 && x < w && y < h)) return false;
@@ -219,7 +219,7 @@ export function beyondLaneWay(lane, openNative, kernel = null) {
   return s && { pts: s.pts, len: s.len };
 }
 
-/** AUDIT SEA PATHS C1: the length (map pixels) a lane past the Bay's search runs over the picture's whole sea, uncapped,
+/** the length (map pixels) a lane past the Bay's search runs over the picture's whole sea, uncapped,
  *  or null: its water joins its ports not. As the lane's cap, its search finds that chain again.
  *  @param {any} lane @param {(x: number, z: number) => boolean} openNative */
 export function beyondFarPath(lane, openNative, kernel = null) {
@@ -227,13 +227,13 @@ export function beyondFarPath(lane, openNative, kernel = null) {
   return s && Math.ceil(s.chainPx);
 }
 
-/** AUDIT SEA PATHS C1: whether a lane past the Bay has a way under its cap - beyondLaneWay's search alone, no way drawn.
+/** whether a lane past the Bay has a way under its cap - beyondLaneWay's search alone, no way drawn.
  *  @param {any} lane @param {(x: number, z: number) => boolean} openNative */
 export const beyondReaches = (lane, openNative, kernel = null) =>
   !!beyondSearch(lane, openNative, kernel, beyondPathPx(lane), true);
 /** A native point's map pixel point (x east, y south). @param {{ x: number, z: number }} p */
 const pxOf = (p) => ({ x: p.x / NATIVE_PIXEL, y: 500 - p.z / NATIVE_PIXEL });
-/** AUDIT SEA PATHS C1: whether `here` (map pixels) lies within `pad` of a way's legs. @param {{ x: number, z: number }[]} pts @param {{ x: number, y: number }} here @param {number} pad */
+/** whether `here` (map pixels) lies within `pad` of a way's legs. @param {{ x: number, z: number }[]} pts @param {{ x: number, y: number }} here @param {number} pad */
 export function nearWay(pts, here, pad) {
   for (let i = 1; i < pts.length; i++) {
     const a = pxOf(pts[i - 1]),
@@ -267,7 +267,7 @@ function beyondSearch(lane, openNative, kernel, maxPx, chainOnly = false) {
     return { x: mx * NATIVE_PIXEL, z: (500 - my) * NATIVE_PIXEL };
   };
   const holdsNative = (/** @type {{ x: number, z: number }} */ a, /** @type {{ x: number, z: number }} */ b) =>
-    holdsLine(a, b, openNative) && kernelLine(a, b, kernel, true, true) === true; // AUDIT SEA PATHS LN-4: every pixel crossed; O3: the kernel's sea
+    holdsLine(a, b, openNative) && kernelLine(a, b, kernel, true, true) === true; // every pixel crossed; O3: the kernel's sea
   const from = moorCell(ax, ay, sea, native, holdsNative),
     to = moorCell(bx, by, sea, native, holdsNative);
   if (!from || !to) return null;
@@ -343,7 +343,7 @@ function beyondSearch(lane, openNative, kernel, maxPx, chainOnly = false) {
         if (!dx && !dy) continue;
         const nx = x + dx,
           ny = y + dy;
-        // no corner cut past land - AUDIT SEA PATHS O2: but where the Bay's scale holds the step (a channel a cell wide that
+        // no corner cut past land - but where the Bay's scale holds the step (a channel a cell wide that
         // runs on the slant: Vivec's to Ebonheart read walled)
         if (!sea(nx, ny) || (dx && dy && (!sea(x + dx, y) || !sea(x, y + dy)) && !cornerHolds(k, x, y, dx, dy)))
           continue;
@@ -677,7 +677,7 @@ export function createWorldLanes({
     }
     return way;
   };
-  /** AUDIT SEA PATHS O2: each port past the Bay with no port within its reach (BEYOND_LANE_MAX_PX, its own where farther)
+  /** each port past the Bay with no port within its reach (BEYOND_LANE_MAX_PX, its own where farther)
    *  and none of whose lanes has a way on the picture runs to the nearest of its LONE_TRIES nearest within BEYOND_LONE_PX
    *  that one joins it to, LANE_NEIGHBOURS at most - only such a port's lanes asked for their ways here. */
   const loneLanes = (/** @type {any[]} */ list) => {
@@ -711,7 +711,7 @@ export function createWorldLanes({
     }
     return out;
   };
-  /** AUDIT SEA PATHS C1: a lane past the Bay with no way under its cap is sought over the picture's whole sea; found, it
+  /** a lane past the Bay with no way under its cap is sought over the picture's whole sea; found, it
    *  runs at its own length (`path`, `long`: Senchal to Torval, Necrom's two, the Imperial City's to Skyrim round the land). */
   const longLanes = (/** @type {any[]} */ list) => {
     if (!tamrielTrace()) return list;
@@ -734,7 +734,7 @@ export function createWorldLanes({
       beyondList = longLanes(
         loneLanes(laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX)),
       );
-    } // AUDIT TESA II P7: their own reach; SEA-SQUARE: the roomiest roadstead; AUDIT SEA PATHS LN-2: a lone port its way's cap; O2: one with no way farther
+    } // AUDIT TESA II P7: their own reach; SEA-SQUARE: the roomiest roadstead; a lone port its way's cap; O2: one with no way farther
     return beyondList;
   };
   /** WW7-10: the lanes across the Bay's edge - made again when the world's ports or the picture move, none before the
@@ -824,7 +824,7 @@ export function createWorldLanes({
       if (/** @type {any} */ (lane).long) {
         const way = beyondWay(lane);
         return !!way && nearWay(way.pts, here, pad);
-      } // AUDIT SEA PATHS C1: its ellipse the land's whole
+      } // its ellipse the land's whole
       return da + db <= beyondPathPx(lane) + 2 * pad; // NIBEN-SEA: a canal harbour's lane its own
     },
   };

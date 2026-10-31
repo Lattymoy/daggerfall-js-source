@@ -79,8 +79,8 @@ const seedOf = (cx, cy, life) =>
 
 /**
  * THE RAIDER of a cell in a life, or null: the chance rolled, its birth pixel drawn in the cell and its place within
- * that pixel, refused unless `open(px, py)` (the host's open sea: the pixel and all about it water, the ocean's) - AUDIT
- * SEA PATHS O3: and its place `sea(x, z)` where that is handed (the kernel's ground: a place on its land lay to there).
+ * that pixel, refused unless `open(px, py)` (the host's open sea: the pixel and all about it water, the ocean's) and
+ * its place `sea(x, z)` where that is handed (the kernel's ground: a place on its land lay to there).
  * @param {{ cx: number, cy: number, life: number, open: (px: number, py: number) => boolean, sea?: ((x: number, z: number) => boolean) | null }} q
  */
 export function raiderOf({ cx, cy, life, open, sea = null }) {
@@ -164,7 +164,7 @@ export function raidersNear({ at, ms, open, sea, reach = RAIDER_REACH_PX }) {
   const out = [];
   for (let cy = c0y; cy <= c1y; cy++) {
     for (let cx = c0x; cx <= c1x; cx++) {
-      const raider = raiderOf({ cx, cy, life, open, sea }); // AUDIT SEA PATHS O3: born on the sea it sails
+      const raider = raiderOf({ cx, cy, life, open, sea }); // born on the sea it sails
       if (raider) out.push({ ...raider, ...raiderAt(raider, ms, sea) });
     }
   }

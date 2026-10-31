@@ -18,6 +18,7 @@
     "types": "tsc -p tsconfig.json",
     "check": "npm run lint && npm run types && npm test && npm run build",
     "cites": "node tools/citeAnchor.mjs",
+    "gates": "node --test test/bible/manifest.test.js test/tooling/citeanchor.test.js test/scenes/citedrift.test.js test/tooling/mutantdrift.test.js test/bible/audit18_bible_docs.test.js test/tooling/plaintext.test.js test/tooling/tamrielwide.test.js test/tooling/commenttags.test.js",
     "prebuild": "node scripts/buildTag.mjs",
     "postinstall": "node scripts/firstVisitPins.mjs",
     "postbuild": "git checkout -- src/buildTag.js",

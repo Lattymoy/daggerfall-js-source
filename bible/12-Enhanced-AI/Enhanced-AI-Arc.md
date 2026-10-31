@@ -1,532 +1,74 @@
-# Enhanced AI - the arc
+# Enhanced AI: the navmesh
 
-Mac, 2026-09-02: "completely overhauling enemy AI using a custom navmesh
-I built in my other repo project-final ... we need to be as exact as
-possible and do this right. This will be called Enhanced AI and live in
-the enhanced tab."
+With the Enhanced AI switch on, foes in dungeons and buildings route on a navmesh baked from the level's own collision
+triangles, instead of steering straight at their target and sliding along the first wall. The navmesh is Mac's, from
+his project-final repository, ported whole. Everything else a foe does (senses, decisions, attacks, sounds) is the
+classic motor's or `12-Enhanced-AI/Tactics-Arc.md`'s.
 
-## The decisions, locked
+## How it works
 
-1. **The classic motor is untouched.** `characters/enemy/enemyMotor.js` is a
-   verbatim port of DFU's classic path and stays byte-for-byte. Enhanced
-   AI never edits it; it replaces one step - how an enemy MOVES toward
-   its target - behind a switch, and falls back to the classic step
-   whenever it has no answer. Senses, decisions, attacks, sounds: classic.
-2. **Off by default, in the Enhanced tab.** `uiPrefs.enhancedAI`, a row
-   beside Enhanced environments. DFU's own EnhancedCombatAI is the
-   precedent: the port's departure from 1:1 is opt-in.
-   **SUPERSEDED BY BAL4 (2026-10-10, `05-Combat/Balance-Arc.md` section 6;
-   Mac: "Do everything", of "smarter AI and elites offline")**: ON by
-   default offline, as it was always forced on online. The port's game is
-   the one it plays; the classic motor is one press away and All off's.
-   An unstamped shelf's materialised Off adopts it once (`uiPrefs.js`
-   PREF1_ADOPT_NEW_DEFAULT).
-3. **The navmesh is project-final's, ported whole.** `src/ai/nav/navmesh.js`
-   is Mac's file from `// Agent params` to the end; the header differs
-   only by the four-line `surfaceY` inlined verbatim from project-final's
-   terrain.js and a linter global. A change is made in both repos and
-   said in both - the body is pinned by DIGEST (`test/ai/nav/enhancedAI.test.js`,
-   AUDIT 62 F4: the old pin read only the two head lines), re-recorded
-   deliberately with the commit the change was made in. AUDIT 62 F1
-   (2026-09-07) is the first body change, made here first and owed to
-   project-final: the stacked-floor weld and the heights that ride it. AUDIT 68 (the
-   collider index under surfH) and INDOOR-WATCH's AUDIT W2 (2026-10-16: a landed bake's
-   boxes indexed packed, never unpacked on the main thread) are owed the same way. The ground needs no seam: buildNav's own
-   `ground` = { at(x, z), min } is what Daggerfall's Collider.heightAt is.
-4. **Triangles become his colliders, not his code.** Daggerfall's level
-   is a triangle soup; his voxelizer stamps boxes and ramps.
-   `src/ai/triRaster.js` turns triangles into one box per (cell, span) -
-   the cell's footprint, the triangle's y-range within it, the top
-   walkable only within the agent's slope - and lets his addSpan merge
-   them. Recast-faithful: a vertex on a cell boundary spills into that
-   cell, conservatively.
+**The motor** (`src/ai/enhancedMotor.js` `EnhancedEnemyAI extends EnemyAI`). The classic tick asks
+`_getDestination`; the subclass answers with the next corner of a `findPath` route to the classic destination's own
+target, and falls back to the classic answer whenever there is no bake, no route, or the classic detour is running.
+A corner inside the stop distance is projected along its direction, so a foe never halts at a corner; a stopped foe
+on its target faces the target. A route that cannot place its goal asks the host for the nearest mesh point
+(`navGoal`) and walks the last leg straight in.
 
-## ENHANCED AI 1 - the port, the voxelizer, the switch (2026-09-02)
+**The bake** (`src/ai/nav/navBake.js`). The collider's buckets hold every triangle the player collides with; the bake
+reads them back, so the nav's ground and the game's are one source. `src/ai/triRaster.js` turns triangles into one box
+per cell and span, walkable only within the agent's slope; `FLAT_EPS` keeps level floors. A soup bake keeps a 0.25 m
+cell and erodes one ring (`SOUP_AGENT`). Unlocked action doors are left out of the soup (a foe opens them); locked
+ones are walls. The mesh keeps every region holding an anchor: the player's feet and each foe's, landed within
+`ANCHOR_Y_TOLERANCE` (0.6 m). Holes (pillars) are bridged into the outer contour, Recast's way.
 
-Landed: the navmesh whole (pinned by digest since AUDIT 62), the voxelizer (a
-floor walks, a wall stands, a ramp within slope walks and a steeper one
-does not), a room of triangles baked end to end with a path bending
-around a wall, the switch present and off.
+**Off the frame** (`src/ai/nav/navWorker.js`, `src/ai/nav/navClient.js`). The worker bakes; the client fingerprints
+the soup, asks IndexedDB, else the worker, and hydrates the compact heightfield the motor queries every tick on the
+main thread. `NAV_BAKE_VERSION` (4) keys the cache. A worker that dies on a large soup does not fall back to a
+main-thread bake; the classic motor stands.
 
-**The first real finding, from his own code.** `buildPolyMesh` skips
-hole contours - "arena has none; hole-merging into the outer loop is
-future work." A wall that reaches a region's boundary bends a path; a
-pillar standing FREE in a room is a hole and is not cut into the mesh,
-so a path runs straight through it. project-final's arenas never had
-free-standing obstacles. Every Daggerfall dungeon room has pillars.
-Pinned as the known limit, and it is the next slice's first job.
+**Dungeons** (`src/scenes/dungeonContext.js`). The host asks once the player's feet are known and hands the bake to
+the motor as a thunk (`nav: () => enhancedNav.chf`), with `navGoal`. A foe built before the bake lands is classic
+until it does.
 
-**Two calling conventions, learned the hard way:** buildRegions is
-ANCHORED - `{ anchor: { x, z } }`, the component holding the agents'
-home survives and the rest is dropped, so a bake must always be told
-where the enemies live; and findPath's points are `[x, y, z]` arrays.
+**Buildings** (`src/scenes/interiorNav.js` `createInteriorNav`, mounted by `src/scenes/worldModes.js`). Both interior
+pools (the building's foes and the watch called in) get the mesh. The bake is asked on need (the first frame a motor
+reads it), not cached, and asked again when a door's lock changes or the hunted player stands off every island.
+Anchors: the player's arrival, the room's ways in, each watchman's spot, and rings round the player's feet out to
+`GOAL_REACH` (4 m).
 
-## ENHANCED AI 2 - holes (2026-09-02)
+**No route.** A watchman pursuing a crime whose feet stand on another island than the player's for `CUT_OFF_S` (2 s)
+(a locked inner door, a ladder) is stood on the player's island at the nearest spot past what stopped him, never within
+a metre of the player, and walks the rest (`EnhancedEnemyAI.standAt`). The building's own monsters route but are never
+stood.
 
-Made in project-final first (9f5e323) and ported, the body still
-byte-identical from the agent params on. Recast's mergeRegionHoles:
-each hole, leftmost first, bridged to the nearest outer vertex by a
-diagonal that crosses no edge of the outer or of any hole - the
-ear-clip's own O'Rourke intersect, which is why it lives inside
-buildPolyMesh's closure - the hole's vertices spliced in around the
-bridge, walked twice, once each way; a hole that cannot be bridged is
-left out as Recast leaves it. The pillar room: polys 9 -> 27, the path
-two points through the pillar -> four around it. The pin walks every
-segment, because a two-point path through an obstacle has no waypoint
-inside it and that is exactly how AI 1's check was fooled.
-project-final's god-file guard: raised 1041 -> 1075 on purpose, with
-the reason in its own idiom.
+## Rules
 
-## ENHANCED AI 3 - a level bakes from its own collider (2026-09-02)
+- A custom navmesh for enemy AI, done exactly, called Enhanced AI, a Features row (Mac).
+- The classic motor (`src/characters/enemy/enemyMotor.js`) is a verbatim port of DFU's and is never edited; the
+  enhanced motor replaces only how a foe moves toward its target, and falls back to classic.
+- Enhanced AI is on by default offline and forced on online (Mac); the classic motor is one switch away.
+- `src/ai/nav/navmesh.js` is Mac's file, pinned by digest (`test/ai/nav/enhancedAI.test.js`). A body change is made
+  in both repositories and re-recorded deliberately; changes made here first are owed to project-final.
+- Triangles become his colliders, not his code: the voxelizer feeds his `addSpan`.
 
-`src/ai/nav/navBake.js`, pure: the Collider's buckets hold every triangle
-in world space - the ones the player collides with - and the bake
-reads them back, so the nav's ground and the game's ground are one
-source. An anchor is required, always. THE PHANTOM FLOOR: his buildNav
-lays an implicit floor - y = 0 for arenas - and a dungeon has none; the
-ground handed in sits ten metres below the lowest triangle, unreachable
-from any real floor, and the anchored election drops it as an island.
-Found on the way, in his file, fixed there first (8ba9100) and ported:
-the height layer's surfH started at y = 0 and took only tops above it,
-so a floor at -5 answered 0 - buildNav's ground-aware floor had never
-reached the query. The nav now carries its ground to chf and surfH
-falls back to it; arenas answer byte-identically. Pinned on a room at
-y = -5 through the height query, with two mutants dead. The ARENA2-
-gated Privateer's Hold pin is written and skips until the archives are
-here; Mac chose not to upload them, so the first real bake is his to
-see. Not yet: the worker, the cache, the dungeon host's call (3b).
+## Daggerfall Unity
 
-## ENHANCED AI 3b - the worker, the cache, the host (2026-09-02)
+DFU's `EnemyMotor` steers straight at the target with an obstacle probe and a detour; it has no navmesh. Departures:
+routes on a baked mesh, and the cut-off watchman stood past a locked door (DFU's watch is stopped by the same wall).
 
-`navWorker.js` bakes off the frame in navBake's exact order and posts
-bakeNavData's compact form; the compact heightfield the motor queries
-every tick lives on the main thread, because findPath is synchronous by
-his design. `navClient.js` fingerprints the soup (tris, y-range, agent),
-asks IndexedDB, else the worker, else bakes here (node), hydrates on
-this thread by re-cutting the boxes deterministically at the baked cell
-size, and PUTS THE GROUND BACK - his hydrateBakedNav rebuilds a
-heightfield without one, its maps being arenas at zero; the dungeon's
-constant floor rides the cache metadata, so a cached dungeon answers
-the same heights as a fresh bake, with no third change to his file. The
-dungeon host asks once, with the Enhanced tab's switch on, the moment
-the player's feet are known - the anchor is the union of the player's
-feet and every layout foe's, with the unlocked action doors left out of
-the soup (DEGENERATE-BAKE ROOT, below) - and hands the bake to the
-motor through a thunk, `nav: () => enhancedNav.chf` (AUDIT 68 retired
-`api.enhancedNav`, which nothing read).
+## Code and tests
 
-## The slices ahead
-- **ENHANCED AI 4b - doors and the crowd.** Action doors as obstacles;
-  other foes via syncNavObstacles and his RVO avoidHeading.
-- **ENHANCED AI 5 - exteriors and interiors.** The streamed world's
-  pixel-local buckets and the terrain floor. (RMB interiors SHIPPED -
-  `## ENHANCED AI 5 (interiors)` below; the streamed world's half is
-  what stays open: the street's watch and foes walk the classic motor.)
-- **ENHANCED AI 6 - the debug faces.** His navDebugFaces/pathDebugFaces
-  through the port's renderer, behind the test room, so a bake can be
-  LOOKED at.
+- `src/ai/enhancedMotor.js` - the motor
+- `src/ai/nav/navmesh.js`, `src/ai/nav/navBake.js`, `src/ai/triRaster.js` - the mesh and the bake
+- `src/ai/nav/navWorker.js`, `src/ai/nav/navClient.js` - worker and cache
+- `src/scenes/interiorNav.js` - buildings
+- `test/ai/nav/enhancedAI.test.js` - the digest, the voxelizer, holes, the soup bake
+- `test/ai/nav/enhancedAI4.test.js` - the motor, the switch's readers
+- `test/ai/nav/fb1016b_indoorwatch.test.js` - the watch indoors and no-route standing
 
-Moving platforms and action-driven geometry: out of scope until 4 is
-proven.
+## Open
 
-## A standing law, written after three audits were filed as 49 in one day
-
-Audit numbers are taken by CREATING THE FILE, and `cat >` overwrites
-without asking - which is how three lanes each filed an Audit 49 on
-2026-09-02 and two of them silently overwrote a predecessor. Both are
-recovered from history (52 the roads calibration, 53 the road-to-1:1
-campaign; 49 stays with the grass audit that holds the file now). The
-law: before filing an audit, `ls bible/01-Overview/audits/Audit-*.md` and take
-the next free number; never write an audit file that already exists.
-
-## ENHANCED AI 4 - the motor reads the switch (2026-09-02)
-
-`src/ai/enhancedMotor.js`: `EnhancedEnemyAI extends EnemyAI`. Decision
-#1 to the letter - `enemyMotor.js` is byte-for-byte untouched, pinned.
-The classic tick calls `this._getDestination` by dynamic dispatch and
-everything below it keys off `this.destination` (the 5.625° gate, the
-obstacle probe, the fall check, gravity, speed), so the subclass
-answers one question differently: where is this foe walking to right
-now. Its answer is the next corner of a `findPath` to the classic
-destination's own target (`predictedTargetPos`); the classic answer
-whenever there is no bake, no route, or the classic detour is running.
-
-The follow laws are project-final's at 8ba9100 - enemyShared.js
-`repathToward` and `stuckWatch` re-homed on `this`, enemyMelee.js
-htClose's `WP_REACH` advance, main.js:236 `navWalkable`, enemy.js:402
-`PATH_BUDGET_PER_FRAME` - constants and comments verbatim, pinned.
-The host chooses the motor by the pref at both construction sites,
-hands it the bake as a THUNK (a foe built before the bake lands is
-classic until it does) and the host's one `navWorld`, and refills the
-budget each frame (his enemy.js:404).
-
-**Two adaptations, both forced by the port's shape, neither touching how
-a route is chosen or held.** (1) His chase measures its stop against
-the player and steers at the waypoint; the classic tick has ONE
-destination doing both, and out of sight - the common case with a
-route - it measures the stop against the destination. A corner inside
-2.25 m would halt the foe at every corner. The corner is projected
-along its own direction to stopDistance+0.05: the yaw gate reads
-direction alone, so steering is byte-identical, and the stop cannot
-fire on a corner; the goal is never projected, so the foe stops there
-as classic stops at its LKP. (2) His nudge writes e.x/e.z; the port's
-feet move only through the collider, so the nudge is his vector, his
-side, his walkable gate, resolved by `collider.move`.
-
-**Proven on a room, not a claim.** A real Collider room with a divider
-and a gap at one end, baked by AI 3's own `bakeNavFromCollider`: the
-enhanced motor goes round the gap and closes to melee; the classic
-motor, driven through the same room as the control, is stopped by the
-wall; an enhanced motor with no bake walks exactly where the classic
-one walks.
-
-**Found on the way.** V4's TDZ sweep caught the host's first draft
-reading `enhancedNav` seven hundred lines before its declaration - the
-lazy import block runs first - a real ReferenceError. The round-the-
-wall pin passed alone and failed in the suite: the classic control's
-detour hand came off `Math.random`; rolls pinned. Three pins were
-wrong and were rewritten rather than loosened: the fail back-off tested
-an off-map TARGET, but the goal is the foe's belief and it correctly
-paths to where it last saw you; the watchdog pin ran out of steps while
-the foe was still turning in place; the fault pin used a mesh-less chf,
-which `findPath` answers with null - that is never-traps working - and
-needed a Proxy that throws.
-
-Pins: 14 in `test/ai/nav/enhancedAI4.test.js`. Campaign: 20 mutants, 20
-killed against a green baseline; two survived the first pass (a stale
-route steering one tick after the bake vanished; a route surviving
-non-pursuit) and are pinned.
-
-**Not in this slice, stated:** doors as obstacles through the action
-system; other foes via `syncNavObstacles` and his RVO `avoidHeading`;
-cityGuards and exteriorFoes (AI 5). Nothing here has been seen in a
-real dungeon - the ARENA2-gated Privateer's Hold bake is still Mac's
-to run.
-
-### ENHANCED AI 4a - the floating billboards (2026-09-02, Mac's report)
-
-Mac, with the switch on: "the enemies dont move attack or anything.
-They just animate above the ground."
-
-`buildFoeAt` runs in `buildDungeonContext`'s top-level flow at :861 and
-reads `enhancedNav.world` AT CONSTRUCTION - not through a thunk - while
-AI 4's first cut declared `enhancedNav` at :1289. Every foe hit the
-temporal dead zone inside `buildFoeAt`'s own per-foe try, which is
-built to skip a bad foe and keep the dungeon: no motor, so no gravity,
-no landing, no pursuit, no attack - a floating billboard, animating,
-exactly as reported. V4's sweep had caught the SAME class of bug one
-line earlier (the `??=` at :572) and I fixed that one by moving the
-declaration DOWN - past the mint - which is how the second one was
-made. V4 did not catch it because the read sits inside a function it
-cannot date.
-
-The declaration is beside `foes` now, above every mint; the world is
-made in the lazy block. Pinned by ORDER in the source - the only pin
-available, since no node test can run this host without ARENA2. Which
-is also the honest gap: AI 4 shipped with "nothing here has been seen
-in a real dungeon", and the first thing seeing it found was this.
-
-### ENHANCED AI 4b-pre: the bake was not height-invariant (2026-09-03, Mac's playtest)
-
-Mac: foes that disappear, foes that clump, one in a ceiling (that last
-with the switch off too - not this arc's).
-
-Chasing the disappearance found a bake defect that outranks it.
-`buildRegions` elects the kept component by the span NEAREST THE
-ANCHOR'S HEIGHT - his FOUNDRY S3 rule, "an abyss floor 22m down is the
-column's first span" - and defaults the anchor's y to 0 when none is
-given. AI 3 passed `{ x, z }` at all three bake sites. Every bake was
-anchored at y = 0. Our rooms were at 0, so the real floor won by
-accident; a room at y = 25 elected the PHANTOM ground (minY - 10 = 15,
-nearer to 0 than 25), culled every real floor - the walls' included, so
-the walls read as walkable - and the route ran straight through the
-divider. Real dungeons are not at 0. `regionAnchor` builds the anchor
-with its y at all three sites and a pin reads all three; a room at 0,
-25 and -40 now bakes the same mesh and the same corners.
-
-Two more, and the disappearance is most likely the first: the live chf
-is hydrated without colliders (3b, by design), so `findPath` has no
-surface to sample and every waypoint sat at y = 0; a flyer moves along
-`_dir3(destination)` and never comes inside stopDistance of a point
-ten metres above or below it. The route supplies x and z now; a
-corner's y is the foe's own and the goal's is the one classic's own
-clear-path law builds from the predicted target position (`_aimY`; it
-took the predicted position's raw feet until AUDIT 62 F1). And the stuck nudge asks classic's
-`_fallCheck` on its own heading before it moves; a nudge that skipped
-it could side-step a foe off a ledge the nav's cells never saw.
-
-Clumping is expected until 4b: every foe now solves the same optimal
-route, and nothing pushes them apart. That is his `separation` and RVO
-`avoidHeading`, next.
-
-### Reverted, then re-landed (2026-09-03 / 2026-09-04)
-
-Mac reverted the arc whole on 2026-09-03 (e409bfda, beside the 3D
-trees' revert), and asked for it back on 2026-09-04: "can we
-reintegrate the enhanced AI we also reverted." The re-landing is the
-revert reverted onto the Wave F / AUDIT 58 tree - nothing rewritten.
-What that tree had moved underneath it: the dungeon host, the
-Enhanced tab and the pref all merged clean by git's own three-way;
-`enemyMotor.js` had not changed a byte since AUDIT 55, so decision #1's
-pin still holds as written; both suites pass unchanged (27 pins, the
-one ARENA2-gated Privateer's Hold bake still skipping). AUDIT 55's F1
-(the nudge's fall probe) comes back inside the motor, since the revert
-had removed it with the motor. The switch is where it was: OFF by
-default, in the Enhanced tab, the classic motor the 1:1 law. Nothing
-here was seen in a real dungeon on the way back either - the
-container has no ARENA2 - so 4b-pre's own last line still stands: the
-first playtest is Mac's, with the switch on and then off.
-
-### AUDIT 59 - before the merge (2026-09-04)
-
-`01-Overview/audits/Audit-59.md`. The arc read against the production build
-and the host's lifecycle for the first time. THE WORKER NEVER SHIPPED
-(F1): Vite bundles a module worker only from the literal `new
-Worker(new URL(...), { type: 'module' })`, and 3b spelled it through a
-variable - so every real bake, in every playtest so far, ran on the
-main thread: 1.1 s / 3.0 s / 6.9 s at 2k / 10k / 31k triangles,
-measured on synthetic levels. That freeze on dungeon entry is what
-the switch cost until now. Also: the worker was never terminated on
-exit (F2), the row still said "not yet driving the motor" (F3), and
-adaptation 3's premise was wrong while its law was right (F4) - the
-hydrated chf DOES carry colliders, so waypoints carry surfH's y, the
-real floor or the phantom one, and the motor still must not steer at
-either. Two flags with numbers: the main-thread hydrate (0.2-0.7 s,
-avoidable once the 3b pin stops reading hydrated heights) and doors
-baked closed (4b). Nothing ran in a real dungeon.
-
-### AUDIT 62 F1 - the routed final leg aims where classic aims (2026-09-07)
-
-(The enhanced-MOTOR lens's F1; batch 1's F1 was the stacked-floor weld
-in the navmesh.) Adaptation 3 says the route bends x and z and the goal
-takes "the y classic's destination carries". That was true when it was
-written and stopped being true on 2026-09-05, when PR #55/#57 rebuilt
-`GetDestination` in TRANSFORM space: the classic destination is the
-predicted target position lifted to the target's transform, plus
-`targetController.height * 0.5f` for a flyer, a levitator or the
-slaughterfish (EnemyMotor.cs:543-544), minus `(targetController.height -
-originalHeight) / 2` for a grounded foe (:559-564), converted back to
-feet once. The routed leg still took the predicted position's RAW FEET.
-
-Those two are the same number only when a foe's capsule equals its idle
-sprite. The dungeon host spawns `height = enemyControllerHeight(idleH,
-behaviour)` - halved for a flyer, floored at 1.6 - and `centreOffset =
-idleH/2`, so they part for exactly the flyers and the sub-1.6 sprites: a
-bat aimed 0.9 m low, a rat 0.3, an Aquatic 0.2; an orc and a giant were
-unaffected, which is why nothing showed. The 0.9 is not cosmetic - a
-flyer steers along `_dir3(destination)`, and the floor-lift clause only
-arms on a NEGATIVE heading, so a bat that had touched the floor (after a
-knockback, a paralysis or a landing) aimed at the player's feet, read no
-descent to correct, and never left the floor for the rest of the fight
-with the switch on. On the ground it is the out-of-sight stop measure
-(`hypot(dx, destination[1] - feet[1], dz)`) reading 0.2-0.3 m short.
-
-The fix is one law in one place: `EnemyAI._aimY(predictedFeetY)` carries
-the clear-path arm's whole vertical, the classic arm calls it, and the
-routed final leg calls it. Corners are unchanged - they still take the
-foe's own y, which is adaptation 3's actual point. The classic arm's
-behaviour is byte-identical (the search arm keeps its own tail); the
-enhanced lane's only change is that its goal is now classic's goal.
-
-Both pins had to be re-pointed first: `enhancedAI4.test.js` compared the
-goal to `_navGoal`, the port's own expression, and `audit59_enhancedai.
-test.js` asserted the literal 7.5 on a default 1.8-capsule foe - the one
-shape where the two laws agree. They now read a bat and a rat against a
-real classic `EnemyAI` in the same state and against EnemyMotor.cs's own
-numbers, and both fail on the pre-fix line.
-
-### AUDIT 62 F38 - the ARENA2 pin asserted nothing (2026-09-07)
-
-`ENHANCED AI 3 (ARENA2): Privateer's Hold bakes, and a path crosses its
-first hall` had a body of `assert.ok(true)` behind `if
-(!process.env.ARENA2_PATH) return t.skip(...)`. Without the archives it
-skipped honestly; WITH them - or with a merely stale or mistyped path,
-since the gate never checked the directory exists - it reported as a
-PASS under a title claiming a real dungeon bakes, having loaded nothing,
-baked nothing and queried no path. It was green under every mutation of
-`navmesh.js`, `navBake.js`, `navClient.js` and the host, and it was
-loudest on the one machine it was written for. Its body was written with
-the soup bake (DEGENERATE-BAKE ROOT, below): Privateer's Hold and the
-field dungeon laid out through the host's own loader - each model built
-as the pipeline builds it, fed `collider.addMesh('dungeon', ...)` as
-`dungeonContext.js:"collider.addMesh('dungeon', cpu.positions, cpu.indices, matrix)"` feeds it - baked through the host's own call,
-then a route from the entry to a far hall with every waypoint on a
-floor, and the layout's foes on the mesh. It skips without the archives.
-
-## DEGENERATE-BAKE ROOT - the dungeon's soup bakes whole (2026-09-27)
-
-A player's console carried `navmesh bake looks degenerate (11 polys from
-17592 triangles)` in the dungeon of map id 1204685
-(`01-Overview/bugs/Field-Bugs-2026-09-27-field-console.md`). It reproduced
-exactly in node, and it was every classic dungeon's: Privateer's Hold
-baked 130 polys from 9,079 triangles, and 11 of 12 sampled dungeons
-tripped the guard. Four faults in the soup bake compounded, and the
-one-anchor cull finished the job (`src/ai/nav/navBake.js`,
-`src/ai/triRaster.js`, `src/ai/nav/navClient.js`):
-
-- The cell was coarsened. His budget rule (`coarsenAgent`) is for open
-  terrain and sizes by the soup's box; every classic dungeon's box is
-  three blocks or more a side, so all 4,232 baked at 0.54-1.05 m cells,
-  where no 1.25 m doorway survives. A soup bake keeps its 0.25 m cell.
-- Two rings of erosion. AGENT's 0.4 m radius sealed the classic doorway
-  at every grid alignment; `SOUP_AGENT` erodes one ring (radius = cs),
-  and a gap of 0.75 m or less still never links. His AGENT is untouched.
-- Closed doors were walls. The host leaves every unlocked action door
-  out of the soup (openDoorsStep's own test: a foe opens it); a locked or
-  special door stays a wall.
-- Flat floors vanished. A level triangle is a zero-thickness box, and
-  addSpan dropped one whose height lands on a voxel boundary (5,865 m2 of
-  that dungeon's floor). `FLAT_EPS` is Recast's own clamp: one voxel whose
-  top is the surface.
-- The union. The mesh keeps every place agents live - the player's feet
-  and each layout foe's, floor-landed as buildFoeAt lands them - through
-  buildRegions' anchor union. `landAnchors` lands each on a walkable span
-  within `ANCHOR_Y_TOLERANCE` (0.6 m) in its own column, or one of the
-  eight around it when its own is the eroded margin at a wall; a foe's
-  that does not land is dropped. No implicit plane is laid at all: the
-  height layer's ground goes back on the compact field.
-
-After: m1204685 8,819 polys at 0.25 m, 92 of 93 foes on the mesh;
-Privateer's Hold 4,602, 42 of 42. THE COST: a worker bake of a large
-dungeon is 5-11 s and up to ~0.5 GB (Scourg Barrow ~1.3 GB), and the
-hydrated mesh keeps its boxes on the main thread. So a worker that dies
-on a large soup no longer falls back to a main-thread bake - AUDIT 59
-F1's freeze several times over - and the classic motor stands, as it
-did behind a degenerate bake. NAV_BAKE_VERSION is 4: main's
-DUNGEON-SEAMS took 3 for the corners it moved under the same key, this
-bake took 3 on its branch, and the merge renumbered it so each
-invalidates the other's caches. Pinned in `test/ai/nav/enhancedAI.test.js`
-(DEGENERATE-BAKE ROOT) and `tools/mutants/navbake.json`.
-
-### AUDIT PRE-MERGE 0928 - the bake read again before the merge (2026-09-28)
-
-Lens N's findings, each pinned red first in `test/ai/nav/audit0928_nav.test.js`
-and mutation-proven (`tools/mutants/navbake.json`,
-`tools/mutants/audit0928_nav.json`):
-
-- N1: in the browser every bake goes through the worker, and nothing
-  held the union on that road - the client could stop sending `anchors`,
-  or the worker stop reading them, with the suite green. Pinned through
-  the real `navWorker.js`.
-- N2: feet that do not land (a load while swimming or levitating) fell
-  out of the union, and whenever a foe's did land the foes alone were
-  the union: the player's own room was culled. The feet always stand in
-  the union now; unlanded, they take his nearest-span pick.
-- N3: the landing ring, the walkable filter, the tolerance, the cache
-  key's union hash and the 0.7 m gap had no pin between them. Each has
-  one.
-- N4: the worker's own error never reached the console, and a small
-  soup's main-thread fallback was silent. Both lines carry it now.
-- N5: a cache hit with a dead worker re-cut a large soup's boxes on the
-  main thread (2.8 s on 25,344 triangles) - the freeze the bake path
-  refuses. The cache hit takes the same rule: the classic motor stands.
-- N6: the ARENA2 bake built its models from the raw archive while the
-  host builds them through DUNGEON-SEAMS' `patchSeams`; it builds them
-  as the host does.
-
-## ENHANCED AI 5 (interiors) - a building's mesh, and the watch that always comes (FIELD BUGS 2026-10-16b INDOOR-WATCH)
-
-The Discord: "If you just sit near the wall between the shelves, when you
-fail to steal something, the guard will come running, but they simply
-can't reach you because they run into the wall instead of going through
-the door. And you can sit like that for as long as you like"
-(`01-Overview/bugs/Field-Bugs-2026-10-16b.md`, INDOOR-WATCH).
-
-The watch called into a building (`cityGuards.js`'s indoor arm,
-PlayerEntity.SpawnCityGuards) and the building's own foes (`worldModes.js`
-makeInteriorFoes) walked the classic motor: it steers straight at the
-player and slides along the first wall it meets, so a partition between
-the street door and the player held them for the whole crime. The navmesh
-was the dungeon's alone.
-
-`src/scenes/interiorNav.js` is the interior's, wired by the mode machine
-and nothing else: one module (`worldModes.js:"const interiorNav = createInteriorNav();"`),
-mounted with each building at the player's arrival
-(`worldModes.js:"interiorNav.mount(ctx, spot);"`), released at both of its
-teardowns, its frame run before either pool steps, and handed to both
-pools as `nav` - the bake as a thunk and the routes' world, the dungeon's
-own two. `createCityGuards` and `createExteriorFoes` build the enhanced
-motor with the switch on where a host hands them a mesh, as the dungeon's
-construction sites do; the street's pools hand none.
-
-**The bake is the dungeon's** - the same `NavClient`, the room's collider,
-the unlocked action doors out of the soup (`doorsOutOfSoup`, the dungeon's
-own test), anchored on every place an agent lives: the player's arrival,
-the room's ways in, the spot each static door stands the watch at
-(`indoorWatchSpot`), and the player's feet with the rings round them, out
-to GOAL_REACH (4 m), the knee's line reaches (a body between two shelves
-stands where the bake's erosion keeps no floor, and an anchor that does
-not land is dropped with its room). Two departures from the dungeon's call,
-both the room's size: it is ASKED ON NEED, the first frame after a motor in
-the room has read it (a building nobody fights in bakes nothing), and it is
-NOT CACHED (the bake is the worker's, 0.2-0.7 s for the audit's
-936-7,776-triangle halls, and the main thread's share is the soup read at
-the ask and the landing - 15 / 40 / 46 ms CPU for a 12 x 10, a 30 x 20
-two-storey and a 40 x 30 m hall since AUDIT W2, from 26 / 59 / 250;
-thousands of buildings would each leave an IndexedDB entry nothing evicts). It is asked again - one at a time, a request in flight coalesced
-and baked the moment the one in flight lands - when a door's lock changes
-the soup, and when the hunted player stands off every island the mesh kept
-(at most four times a room).
-
-**NO ROUTE - a departure from DFU, named.** A locked inner door or a ladder
-leaves the player's room an island the routes cannot reach. A watchman of
-the crime's pursuit (`huntsThePlayer`: the enhanced motor, hostile, able to
-act, his give-up timer running, after the player or nobody yet; never one
-walking off, running, defending or talked down) whose feet stand on
-another island than the player's for `CUT_OFF_S` (2 s) is stood on the
-player's island (a player on none: the island whose edge they are walked
-in from) at the spot nearest where he stood - the far side of what
-stopped him, drawn a body's width into the floor, never within a metre of
-the player, never within 0.8 m of another watchman, never in or on
-anything set down since the bake - and walks the rest (`EnhancedEnemyAI.standAt`:
-the pursuit kept, the old route, fall anchor and detour dropped).
-EnemyMotor has no such arm; its watch is stopped by the same wall. The
-building's own foes route on the mesh but are never stood: a monster a
-locked door holds is a door that held; the watch is the law's answer. The
-classic lane (the switch off) bakes nothing and stands nobody.
-
-Measured on the reporter's shop (a real Collider, the real pool, the real
-NavClient; `test/ai/nav/fb1016b_indoorwatch.test.js`): the classic watch - five
-watchmen at the street door - spent thirty seconds against the partition,
-nearest 1.41 m through it, never a sight of the player, never a swing; with
-the mesh the room baked 0.53 s after the crime, the first watchman stood in
-melee reach with the player in sight at 4.2 s, and the five swung 37 times
-in the thirty seconds. With a locked door in the doorway all five were
-stood past the partition at 2.7 s and swung 26 times.
-
-THE FOUR HOSTS: `worldModes.js` - WIRED (its two interior pools, the
-building of both `world.js` and `exterior.js`, which mount the mode
-machine); `dungeonContext.js` - its own bake since 3b, unchanged; `world.js`
-and `exterior.js` - their street pools hand no mesh and walk the classic
-motor: the streamed world's half of AI 5, still ahead. Pins:
-`test/ai/nav/fb1016b_indoorwatch.test.js` (13); `tools/mutants/fb1016b_indoorwatch.json`
-(103, all dead). AUDIT 55's reach pin (`test/ai/nav/enhancedAI4.test.js`) now
-counts the module and the two pools among the switch's readers, each pool
-reading it once and only behind a handed mesh, and still holds the street
-and the townspeople out of it.
-
-**AUDIT (2026-10-16) - off the mesh, and the stop that faced a corner.**
-The report survived deep shelves: from 0.8 m the tucked player stood on
-the aisle's island (so NO ROUTE never fired) but past findPath's
-half-metre goal snap, every route failed and the motor walked the classic
-line into the partition; a closet the bake keeps no floor of left the
-player on no island at all. Now a route that cannot place its goal asks
-the host (`navGoal`; the room's `nav.goal`, `meshPointNear` - the poly the
-player stands on, else the nearest the knee's line reaches within
-GOAL_REACH) for the point it ends at, and its last leg is the straight
-walk in (`EnhancedEnemyAI._routeOffMesh`, a departure from his
-repathToward, which answered null); the feet's rings reach GOAL_REACH at
-bearings a body's width apart, and NO ROUTE reads the same two-tier
-island for the player and the watch. And ADAPTATION 1's other half: in
-sight the classic stop is measured to the target, but a stopped foe turns
-to its destination - with a route's corner still ahead it faced the
-corner and the swing's 22.5 degree gate never opened; a foe stopped on its
-target now faces the target, every enhanced foe's, the dungeon's too. The
-landing's hitch went with it: a bake's boxes are indexed packed as the
-worker ships them (`navmesh.js` buildPackedIndex, owed to project-final),
-and the soup is written straight into its arrays. `standAt` is
-`EnemyAI._standAfresh` plus the route - resumeLive's own list; a stand's
-floor may lie 5 cm over its poly, never a stool's top. The dungeon's
-construction sites hand no `navGoal` yet (FLAGGED).
-(`01-Overview/bugs/Field-Bugs-2026-10-16b.md`, INDOOR-WATCH, AUDIT.)
-
+- The streamed world's street pools (`src/scenes/world.js`, `src/scenes/exterior.js`) hand no mesh: the street's watch
+  and foes walk the classic motor.
+- Other foes as obstacles (`syncNavObstacles`) and RVO avoidance (`avoidHeading`) are ported but not called.
+- Debug faces for looking at a bake are not wired.

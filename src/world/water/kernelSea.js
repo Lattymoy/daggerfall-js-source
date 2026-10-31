@@ -1,5 +1,5 @@
 // @ts-check
-// AUDIT SEA PATHS O3 (2026-10-31, bible/01-Overview/audits/Audit-Sea-Paths.md) - THE KERNEL'S SEA AT A POINT. The world's
+// THE KERNEL'S SEA AT A POINT. The world's
 // lanes and raiders are laid on map pixels, and a pixel's square can hold land its four corner bytes never show: the
 // kernel bends its ground through the 4 x 4 window about it (a lane's leg ran 307 m over it, a raider stood 225 m in).
 // This answers the ground the game builds: the pixel's kernel (terrainSampler.js sampleKernel, with the landforms the
@@ -9,7 +9,7 @@
 import { sampleKernel, HEIGHTMAP_DIMENSION, SCALED_OCEAN_ELEVATION } from '../terrain/terrainSampler.js';
 import { isWaterHeight, sampleHeight } from '../terrain/terrainTiles.js';
 import { createLandforms, groundTopOf } from '../landforms.js';
-import { rumareSeaPixel } from '../rumareWaters.js'; // RUMARE-WATER: the Imperial City's lake, the sea's by its own stamp
+import { rumareSeaPixel } from '../rumareWaters.js'; // The Imperial City's lake, the sea's by its own stamp
 
 const NP = 32768;
 /** The pixels whose kernels are kept at once. */
@@ -24,7 +24,7 @@ export function createKernelSea(woodsOf) {
   let woods = null,
     landform = null;
   const kernels = new Map();
-  // AUDIT SEA PATHS C1: the last pixel asked kept to hand - a leg asks one pixel 64 times running (kernelLine)
+  // the last pixel asked kept to hand - a leg asks one pixel 64 times running (kernelLine)
   let lastPx = NaN,
     lastRow = NaN,
     lastK = null;

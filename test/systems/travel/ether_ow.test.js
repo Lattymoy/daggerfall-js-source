@@ -30,7 +30,7 @@ import { WATER_BYTE } from '../../../src/world/roadsProducer.js';
 import { CLIMATES, REGION_NAMES } from '../../../src/formats/mapsTables.js';
 import { LOCATION_TYPES, getWorldClimateSettings } from '../../../src/formats/mapsFile.js';
 import { onWorldSea } from '../../../src/scenes/naval/worldLanes.js';
-import { squareCornersAll } from '../../../src/world/terrain/terrainSampler.js';   // PIN MOVED (AUDIT SEA PATHS LN-3): a raider's sea its square's four corners
+import { squareCornersAll } from '../../../src/world/terrain/terrainSampler.js';
 
 const W = hostText('src/scenes/world.js');   // HOST-SPLIT (OW-DUNGEON-SIZE): the dungeons' models list lives in scenes/travelViewDungeonModels.js
 /** A block of world.js lifted whole: its first line, to the line at its own indent that closes it. */
@@ -252,7 +252,7 @@ test('ETHER-OW, the find and the models: past the Veil an uncharted ruin within 
 const PAST_BAY_OFF = { tamrielLand: false, bandGroundPastBay: () => false, tamrielPlaceName: () => '' };
 const bandOk = run({ onBayOrEther: ES.onBayOrEther, tvWater, _bandPlacePixels: new Set(['5,5']), etherPlaceIsle, ...PAST_BAY_OFF }, `${lift('  const bandOk = (x, z) => {', '\n  };\n')}\nreturn bandOk;`);
 let seaFight = true;   // AUDIT ETHER-OW C2-3: past the Veil a raider is the sea fight's ship alone
-const { tvRaidOpen, tvRaidSea } = run({ onBayOrEther: ES.onBayOrEther, onWorldSea, squareCornersAll, kernelSea: () => true, tamrielLand: false, inEther: ES.inEther,   // PIN MOVED (WW3): the sea's ground the world's, the land past the Bay off
+const { tvRaidOpen, tvRaidSea } = run({ onBayOrEther: ES.onBayOrEther, onWorldSea, squareCornersAll, kernelSea: () => true, tamrielLand: false, inEther: ES.inEther,
   navalRaidersOn: () => seaFight, tvWater, maps, CLIMATES, RAID_NATIVE_PIXEL: NATIVE_PIXEL },
   `${lift('  const tvRaidOpen = (px, py) => {', '\n  };\n')}\n${lift('  const tvRaidSea = (x, z) => {', '\n  };\n')}\nreturn { tvRaidOpen, tvRaidSea };`);
 const native = (px, py) => [(px + 0.5) * NATIVE_PIXEL, (499 - py + 0.5) * NATIVE_PIXEL];

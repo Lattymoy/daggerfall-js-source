@@ -17,7 +17,7 @@
 //   csa() -> runtime | null      Come Sail Away's runtime (isSailing(), state.CurrentBoat, state.velocityCurrent,
 //                                state.windVectorCurrent, StopSailing()) - null with the mod off
 //   seaY() -> number             the sea's height in the scene
-//   isWater(x, z, hull) -> bool  open water deep enough for a hull there (null: ground not yet built - AUDIT SEA PATHS AI-4)
+// isWater(x, z, hull) -> bool open water deep enough for a hull there (null: ground not yet built)
 //   feet() -> [x, y, z]          the player's feet
 //   look() -> { origin, dir }    the view's eye and its forward (the first-person eye, or Eye of the Beholder's)
 //   level() -> number            the player's level
@@ -2413,7 +2413,7 @@ export function createNavalHost(deps) {
     if (r?.kind === 'depart') { s.course = null; return; }
     const p = pursue(l.way, s.pos[0], s.pos[2], LINER_LOOKAHEAD_M);
     const end = l.way[l.way.length - 1];
-    if (p.left > LINER_PORT_M) { s.errand = null; s.course = courseVia(gridOf(s.hull), s, [p.x, p.z]); return; }   // AUDIT SEA PATHS O3: by the water's way where her lane's leg is not   // her way's own remainder: a leg come back by its end across a headland is no arrival
+    if (p.left > LINER_PORT_M) { s.errand = null; s.course = courseVia(gridOf(s.hull), s, [p.x, p.z]); return; }   // by the water's way where her lane's leg is not // her way's own remainder: a leg come back by its end across a headland is no arrival
     // at her port: into a berth of it, else lying off it on her ring
     s.course = null;
     const berth = h?.harbour && s.hull !== HULL.LargeGalley ? openBerth(h) : -1;
@@ -2492,7 +2492,7 @@ export function createNavalHost(deps) {
       if (e.owner || !e.raider || e.raider.spent) continue;
       const r = list.find((x) => x.id === e.raider.id);
       e.ship.sight = sight;
-      e.ship.course = r?.ahead ? courseVia(gridOf(e.ship.hull), e.ship, [r.ahead[0], r.ahead[2]]) : null;   // its life over, it sails on for a waypoint of its own; AUDIT SEA PATHS O3: by the water's way
+      e.ship.course = r?.ahead ? courseVia(gridOf(e.ship.hull), e.ship, [r.ahead[0], r.ahead[2]]) : null;   // its life over, it sails on for a waypoint of its own; by the water's way
     }
   }
   const raiderEntry = (raiderId) => [...sea.values()].find((e) => !e.owner && e.raider?.id === raiderId) ?? null;
@@ -4344,7 +4344,7 @@ export function createNavalHost(deps) {
   /** A hull's water grid, made once for the scene as it stands. */
   function gridOf(hull) {
     let g = grids.get(hull);
-    if (!g) { g = createWaterGrid({ isWater: waterOf(() => deps.isWater), hull }); grids.set(hull, g); }   // AUDIT SEA PATHS O3: the host's reader, its tiles with it
+    if (!g) { g = createWaterGrid({ isWater: waterOf(() => deps.isWater), hull }); grids.set(hull, g); }   // the host's reader, its tiles with it
     return g;
   }
   /** The errands' door for the captains (navalAI.js stepCaptain's `world.life`). */

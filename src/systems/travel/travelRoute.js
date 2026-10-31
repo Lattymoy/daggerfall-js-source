@@ -51,9 +51,9 @@ import { tamrielFit } from '../../world/tamriel/tamrielFrame.js';
 import { apartPastBay, apartExact } from './landPieces.js'; // FAST-REFUSAL: the land's pieces past the Bay; EXACT-PIECES: at the pixel
 import { roadLineLegs } from './roadLine.js'; // ROAD-FOLLOW: a road past the Bay walked and drawn on its curves
 import { ghostfenceShuts } from '../../world/tamriel/ghostfence.js';
-import { inEther, ETHER_BOX } from '../../world/ethericSea.js'; // AUDIT SEA PATHS PL-2: the Veil crossed by the crossing alone
-import { SCALED_OCEAN_ELEVATION, BASE_HEIGHT_SCALE } from '../../world/terrain/terrainSampler.js'; // AUDIT SEA PATHS O4: the sea's own height
-import { mendSeaLegs } from './seaLegsMend.js'; // AUDIT SEA PATHS O4: a sailed leg round the kernel's land   // AUDIT RED-MOUNTAIN G2: the Ghostfence crossed only at Ghostgate
+import { inEther, ETHER_BOX } from '../../world/ethericSea.js'; // the Veil crossed by the crossing alone
+import { SCALED_OCEAN_ELEVATION, BASE_HEIGHT_SCALE } from '../../world/terrain/terrainSampler.js'; // the sea's own height
+import { mendSeaLegs } from './seaLegsMend.js'; // a sailed leg round the kernel's land // AUDIT RED-MOUNTAIN G2: the Ghostfence crossed only at Ghostgate
 
 /** What a step costs, by what it walks on. The open ground's 3.5 makes a road worth a detour of up to three and a half
  *  times its length - Travel Options' reckless (road) and cautious (open) multipliers are 1 and 0.8 by default, so the
@@ -66,11 +66,11 @@ export const ROUTE_COST = Object.freeze({ road: 1, track: 1.6, open: 3.5 });
  *  out of the water to save a step). A sailed step costs little more than a road's: the boat makes its way about as
  *  fast as the road walks, and the heuristic's road cost stays under every step (admissible). */
 export const SEA_COST = Object.freeze({ sea: 1.2, coast: 1.5, shore: 6 });
-/** AUDIT SEA PATHS O4: a byte over this stands over the sea in the ground the game builds (the sea at 3.4, the beach to
+/** a byte over this stands over the sea in the ground the game builds (the sea at 3.4, the beach to
  *  WATER_BYTE): in the Eltheric Ocean the planner reads it as land (routeGround) - an isle stood a pixel past its last land
  *  byte, and every approach to it ran over its beach. */
 export const DEEP_BYTE = Math.floor(SCALED_OCEAN_ELEVATION / BASE_HEIGHT_SCALE);
-/** AUDIT SEA PATHS O4: the kernel's sea and the planner's water at a map pixel the host registers (setSeaLegKernel), with
+/** the kernel's sea and the planner's water at a map pixel the host registers (setSeaLegKernel), with
  *  which routeLegs mends a journey's sailed legs round the kernel's land (seaLegsMend.js); none: the legs as planned. */
 let _legKernel = null,
   _legWater = null;
@@ -173,7 +173,7 @@ export function routeGround(
     let dry = dryBeyond.get(k);
     if (dry === undefined) {
       if (dryBeyond.size >= BEYOND_CACHE_MAX) dryBeyond.clear();
-      dry = !!beyond(x, y) || (inEther(x, y) && heightAt(x, y) > DEEP_BYTE); // AUDIT SEA PATHS O4: an isle's beach its land
+      dry = !!beyond(x, y) || (inEther(x, y) && heightAt(x, y) > DEEP_BYTE); // an isle's beach its land
       dryBeyond.set(k, dry);
     }
     return dry;
@@ -583,11 +583,11 @@ export const PLAN_YIELD_CELLS = 1024;
  * @returns {Generator<void, ReturnType<typeof planRoute>, void>}
  */
 export function* planRouteSteps(from, to, opts = {}) {
-  // AUDIT SEA PATHS PL-2: THE VEIL IS CROSSED BY THE CROSSING ALONE (systems/naval/etherCrossing.js) - a plan with one end in
+  // THE VEIL IS CROSSED BY THE CROSSING ALONE (systems/naval/etherCrossing.js) - a plan with one end in
   // the Eltheric Ocean's box and one out of it is none: Veilhaven's helm to Daggerfall sailed one leg of 3,466 pixels, 2,607
   // of them over sea no ground streams. With both ends in it, its boxes keep to it (`ether`, below).
   if (from && to && inEther(from.x, from.y) !== inEther(to.x, to.y)) return null;
-  // AUDIT SEA PATHS O5: A BOAT TO HAND ASHORE WITH AN END PAST THE BAY'S TABLE also walks to the nearest shore and sails the
+  // A BOAT TO HAND ASHORE WITH AN END PAST THE BAY'S TABLE also walks to the nearest shore and sails the
   // sea lanes from it (shoreLanesSteps) - the lanes were asked from a helm alone, and the box's search with the boat spent
   // its count (Rihad to Woodhearth, Wayrest to Northpoint: no plan). The cheaper of that and the box's plan is the plan.
   const sea0 = opts.sea,
@@ -628,7 +628,7 @@ export function* planRouteSteps(from, to, opts = {}) {
   // FREE, handed none, walks across country there too
   const beyond = roads || tracks ? pathsBeyond : null;
   if (!from || !to) return null;
-  const ether = inEther(from.x, from.y); // AUDIT SEA PATHS PL-2: both ends in the box, or neither (above)
+  const ether = inEther(from.x, from.y); // both ends in the box, or neither (above)
   if (from.x === to.x && from.y === to.y && !(sea && (sea.start === 'sea') !== (sea.goal === 'sea')))
     return { pixels: [{ x: from.x, y: from.y }], cost: 0, kinds: [] };
   // LONG-VOYAGE (START2, bible/06-Systems/Travel-View.md "LONG-VOYAGE"): A CROSSING FROM A HELM WITH AN END PAST THE BAY'S
@@ -821,7 +821,7 @@ export function* planRouteSteps(from, to, opts = {}) {
   return best;
 }
 
-/** AUDIT SEA PATHS PL-2: a plan's box held to the Eltheric Ocean's own when its ends are there (`ether`) - the sea about the
+/** a plan's box held to the Eltheric Ocean's own when its ends are there (`ether`) - the sea about the
  *  box's edges streams no ground. @param {boolean} ether @param {{ x0: number, x1: number, y0: number, y1: number }} b */
 function etherBox(ether, b) {
   return ether
@@ -833,11 +833,11 @@ function etherBox(ether, b) {
       }
     : b;
 }
-/** AUDIT SEA PATHS O5: how far from a traveller ashore (map pixels, the longest axis) the shore a boat is launched at for
+/** how far from a traveller ashore (map pixels, the longest axis) the shore a boat is launched at for
  *  the sea lanes is sought, and how many of its water pixels (nearest first) are tried. */
 export const LAUNCH_PX = 8;
 export const LAUNCH_TRIES = 4;
-/** AUDIT SEA PATHS O5: ashore with a boat to hand - the walk to one of the LAUNCH_TRIES nearest water pixels within
+/** ashore with a boat to hand - the walk to one of the LAUNCH_TRIES nearest water pixels within
  *  LAUNCH_PX (its last step the launch) and a helm's voyage from there (the sea lanes, then the box), one plan; or null. */
 function* shoreLanesSteps(from, to, opts) {
   const water = opts.seaWater ?? opts.isWater ?? (() => false),
@@ -1987,7 +1987,7 @@ function* searchSteps(
   const startLayer = !sea ? 0 : sea.start === 'sea' ? AFLOAT : ASHORE;
   const seaGoal = !!sea && sea.goal === 'sea';
   const goalOk = (layer) => !sea || (seaGoal ? layer === AFLOAT : layer !== AFLOAT);
-  // AUDIT SEA PATHS PL-3: A PLACE STOOD ON WATER WITH NO DRY PIXEL WITHIN VOYAGE_LANDFALL_PX is landed on itself - a landfall
+  // A PLACE STOOD ON WATER WITH NO DRY PIXEL WITHIN VOYAGE_LANDFALL_PX is landed on itself - a landfall
   // was a step onto dry ground, and 631 of the Eltheric Ocean's port isles (Syrisol Landing, Ishomere Landing) read water
   // about their town; one with dry ground in reach lands there (AUDIT STARTS V4)
   const goalIsle = !!sea && !seaGoal && isWater(to.x, to.y) && !nearestDry(to, isWater);
@@ -2230,8 +2230,8 @@ export function routeLegs(
     }
   }
   while (ix.length < legs.length) ix.push(-1);
-  const out = roadLineLegs(legs, ix, pixels, kinds, { byteAt: roadBytes }); // ROAD-FOLLOW: on the curves past the Bay
-  // AUDIT SEA PATHS O4: its sailed legs round the kernel's land, where the host registered it (setSeaLegKernel)
+  const out = roadLineLegs(legs, ix, pixels, kinds, { byteAt: roadBytes }); // On the curves past the Bay
+  // its sailed legs round the kernel's land, where the host registered it (setSeaLegKernel)
   return _legKernel && _legWater && kinds.includes('sea')
     ? mendSeaLegs(
         out,

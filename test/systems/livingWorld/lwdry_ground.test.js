@@ -282,7 +282,4 @@ test('LW-DRY the host: the streaming host hands its trips the height map\'s own 
   const at = w.indexOf('const world = {');
   const end = w.indexOf('};', at);
   assert.ok(at > 0 && w.slice(at, end).includes('dryAt:'), 'in the trips\' world');
-  const bible = readFileSync(new URL('../../../bible/06-Systems/Living-World.md', import.meta.url), 'utf8');
-  const rec = bible.slice(bible.indexOf('## LW-DRY'), bible.indexOf('\n## ', bible.indexOf('## LW-DRY') + 4));
-  for (const host of ['scenes/world.js', 'scenes/exterior.js', 'scenes/worldModes.js', 'scenes/dungeonContext.js']) assert.ok(rec.includes(host), `the record names ${host}`);
 });

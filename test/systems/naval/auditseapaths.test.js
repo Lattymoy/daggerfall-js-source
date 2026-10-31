@@ -1,6 +1,5 @@
-// AUDIT SEA PATHS (2026-10-31, the owner: "Can we audit both player and AI ship pathfinding in the eltheric sea and the
-// open waters of tamriel and ensure its perfect") - bible/01-Overview/audits/Audit-Sea-Paths.md. Each pin fails under its
-// finding's own mutation (tools/mutants/auditseapaths.json).
+// Ship pathfinding at sea, the player's and the AI's, on the Bay, past it and in the Eltheric Ocean. Each pin fails
+// under its finding's own mutation (tools/mutants/auditseapaths.json).
 import '../../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -510,7 +509,6 @@ test('AUDIT SEA PATHS O2 with ARENA2: past the Bay a channel a picture cell wide
   const byName = (a, b) => past.find((l) => (l.a.name === a && l.b.name === b) || (l.a.name === b && l.b.name === a));
   assert.ok(wl.way(byName('Vivec', 'Ebonheart')), 'Vivec to Ebonheart: the channel sailed');
   assert.ok(served.has('Necrom') && served.has('Blacklight') && served.has('Lilmoth') && served.has('Soulrest'), [...served].join(', '));
-  // PIN MOVED (C1): Necrom's own lanes past its reach - the long lanes alone now serve it too
   const lone = past.filter((l) => l.path && !l.long).map((l) => [l.a.name, l.b.name].sort().join(' - ')).sort();
   assert.deepEqual(lone, ['Blacklight - Necrom', 'Necrom - Tear'], 'the lone port\'s nearest that join it');
   const roadsteaded = ports.list().filter((p) => past.some((l) => l.a.id === p.id || l.b.id === p.id)).map((p) => p.name);

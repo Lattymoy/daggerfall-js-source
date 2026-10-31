@@ -92,19 +92,19 @@ export const deepestBerther = () => BERTH_HULLS.reduce((a, h) => (draftOf(h) > d
 export const WATER_CELL = 20;
 export const WATER_CLEAR = 0.6;
 export const PATH_NODES = 6000;
-/** AUDIT SEA PATHS AI-5: a hull's grid asks water at least her half beam and the lookout's margin round a cell's centre
+/** a hull's grid asks water at least her half beam and the lookout's margin round a cell's centre
  *  (navalAI.js lookout: halfWidth + SCAN_MARGIN), so it opens no gap her lookout then refuses (a galley circled one). */
 export const GRID_MARGIN = 4;
 export const gridClearOf = (hull, cell = WATER_CELL) =>
   Math.max(cell * WATER_CLEAR, (hullBuild(hull)?.halfWidth ?? 0) + GRID_MARGIN);
-/** AUDIT SEA PATHS AI-6: a cell sounds each of its eight spokes this often (m) out to its clearance - a tile's spit (6.4
+/** a cell sounds each of its eight spokes this often (m) out to its clearance - a tile's spit (6.4
  *  m) fell between two cells' eight soundings and a step across it was taken; spoke to spoke, the line between two open
  *  cells is sounded every 4.3 m at the most. */
 export const SPOKE_STEP_M = 3;
-/** AUDIT SEA PATHS O1: a way the grid's own search spends PATH_NODES on is sought again over cells this many of its own
+/** a way the grid's own search spends PATH_NODES on is sought again over cells this many of its own
  *  a side (a peninsula of 1.5 km spent them), and each of that way's steps found again in the grid's own cells. */
 export const COARSE_K = 4;
-/** AUDIT SEA PATHS O1: one way's whole spend, in PATH_NODES - the grid's search, the coarse one, every step found again -
+/** one way's whole spend, in PATH_NODES - the grid's search, the coarse one, every step found again -
  *  and how hard the coarse search leans on its goal (a weighted A*: its way at most this much dearer; straightened after). */
 export const PATH_BUDGET_K = 3;
 export const COARSE_GREED = 1.5;
@@ -115,7 +115,7 @@ export const LEG_END_M = 60;
 /** A way's point reached within this (m); a berth's approach this many of her lengths astern of it and APPROACH_OUT
  *  (m) out from the shore - open water to come round in, the last leg a slant along the shore into the berth. */
 export const REACH_M = 35;
-/** AUDIT SEA PATHS AI-2: a hull reaches a point within REACH_M or half her length, the longer - the galley's 93 m was
+/** a hull reaches a point within REACH_M or half her length, the longer - the galley's 93 m was
  *  held to 35 m and circled a mark she lay across. */
 export const reachOf = (hull) => {
   const b = hullBuild(hull);
@@ -147,13 +147,13 @@ export const NIGHT_LURK_K = 0.5;
 export const STALL_WAY = 0.5;
 export const STALL_S = 15;
 export const DETOUR_M = 70;
-/** AUDIT SEA PATHS AI-2: under way and no nearer her mark by PROGRESS_M in PROGRESS_S is a stall too - a ship circling a
+/** under way and no nearer her mark by PROGRESS_M in PROGRESS_S is a stall too - a ship circling a
  *  mark she cannot fetch never fell under STALL_WAY. Within REACH_M of it the clock waits. */
 export const PROGRESS_M = 20;
 export const PROGRESS_S = 60;
 /** A voyage makes for another harbour only this near (m); farther, she sails out of the world. */
 export const VOYAGE_REACH = 6000;
-/** AUDIT SEA PATHS AI-3: the nearest harbours a departing ship asks the grid for a way to; none found, she sails out. */
+/** the nearest harbours a departing ship asks the grid for a way to; none found, she sails out. */
 export const VOYAGE_TRIES = 2;
 /** The errands' own stream's salt on a ship's seed. */
 export const ERRAND_SALT = 0x5b1f;
@@ -492,7 +492,7 @@ export function createWaterGrid({ isWater, hull = 0, cell = WATER_CELL, nodeCap 
     let v = cache.get(kk);
     if (v !== undefined) return v;
     const [x, z] = centre(i, k);
-    // AUDIT SEA PATHS AI-4: a sounding of ground not yet built (null) closes the cell for now and is never kept - the
+    // a sounding of ground not yet built (null) closes the cell for now and is never kept - the
     // grid lives until the origin moves, and kept it stood as land after the ground came in
     let sure = true;
     const at = (px, pz) => {
@@ -513,7 +513,7 @@ export function createWaterGrid({ isWater, hull = 0, cell = WATER_CELL, nodeCap 
     if (sure) cache.set(kk, v);
     return v;
   }
-  /** AUDIT SEA PATHS AI-7: water at `p` and the grid's clearance round it - a point her lookout lets her come to. */
+  /** water at `p` and the grid's clearance round it - a point her lookout lets her come to. */
   function room(p) {
     if (!water(p[0], p[1])) return false;
     for (let a = 0; a < 8; a++) {
@@ -522,7 +522,7 @@ export function createWaterGrid({ isWater, hull = 0, cell = WATER_CELL, nodeCap 
     }
     return true;
   }
-  // AUDIT SEA PATHS O3: the host's tiles where it has them (`isWater.tile()`: { size, x0, z0 }, the built ground's lattice -
+  // the host's tiles where it has them (`isWater.tile()`: { size, x0, z0 }, the built ground's lattice -
   // scenes/world.js navalIsWater) - a line is asked of every tile it crosses, so no leg clips a corner between soundings
   const tileOf = typeof isWater.tile === 'function' ? isWater.tile : null;
   /** Whether the water holds the line a-b: every tile of the host's lattice it crosses (its middle asked; through a corner
@@ -597,7 +597,7 @@ export function createWaterGrid({ isWater, hull = 0, cell = WATER_CELL, nodeCap 
   }
   /** The water straight between two points, no margin (a way's first and last legs, to and from the grid). */
   const wet = (a, b) => holds(a, b, cell * 0.25);
-  /** AUDIT SEA PATHS O3: a step between two cells' centres, asked of the host's tiles once (none: the spokes stand for it). */
+  /** a step between two cells' centres, asked of the host's tiles once (none: the spokes stand for it). */
   const steps = new Map();
   function stepOk(i, k, ni, nk) {
     if (!tileOf) return true;
@@ -609,7 +609,7 @@ export function createWaterGrid({ isWater, hull = 0, cell = WATER_CELL, nodeCap 
     }
     return v;
   }
-  /** AUDIT SEA PATHS AI-1: how far (m, `max` at most) the water carries her straight from `from` on bearing `a`, by the
+  /** how far (m, `max` at most) the water carries her straight from `from` on bearing `a`, by the
    *  law of `clear` (LEG_MARGIN abeam past LEG_END_M) - a voyage's mark is drawn where it ends, never past it. */
   function run(from, a, max) {
     const sx = Math.sin(a),
@@ -661,7 +661,7 @@ export function createWaterGrid({ isWater, hull = 0, cell = WATER_CELL, nodeCap 
       g = nearestOpen(to);
     if (!s || !g) return null;
     let cells = search(s, g, open, stepOk);
-    if (!cells && capped) cells = coarse(s, g); // AUDIT SEA PATHS O1
+    if (!cells && capped) cells = coarse(s, g);
     return cells
       ? straightened(
           from,
@@ -671,7 +671,7 @@ export function createWaterGrid({ isWater, hull = 0, cell = WATER_CELL, nodeCap 
       : null;
   }
   let capped = false;
-  /** AUDIT SEA PATHS O1: THE WAY SOUGHT OVER COARSE CELLS - COARSE_K of the grid's a side, a coarse cell stood for by the
+  /** THE WAY SOUGHT OVER COARSE CELLS - COARSE_K of the grid's a side, a coarse cell stood for by the
    *  grid's cell at its middle and a coarse step by the grid's cells along it - then each coarse step found again over
    *  the grid's own cells (a short search each). The cells [i, k] in order, or null. */
   function coarse(s, g) {
@@ -766,7 +766,7 @@ export function createWaterGrid({ isWater, hull = 0, cell = WATER_CELL, nodeCap 
             nkey = key(ni, nk);
           if (shut.has(nkey) || (nkey !== gk && !isOpen(ni, nk))) continue;
           if (di && dk && !(isOpen(i + di, k) && isOpen(i, k + dk))) continue; // no corner cut past a closed cell
-          if (!stepOk(i, k, ni, nk)) continue; // AUDIT SEA PATHS O3: the host's tiles across the step
+          if (!stepOk(i, k, ni, nk)) continue; // the host's tiles across the step
           const c = c0 + (di && dk ? Math.SQRT2 : 1) * cell * size;
           if (c < (cost.get(nkey) ?? Infinity)) {
             cost.set(nkey, c);
@@ -784,7 +784,7 @@ export function createWaterGrid({ isWater, hull = 0, cell = WATER_CELL, nodeCap 
   function straightened(from, to, cells) {
     const raw = [[from[0], from[1]], ...cells, [to[0], to[1]]];
     // the corners straightened: from each point, the farthest ahead the water between lets her sail straight to
-    // AUDIT SEA PATHS O6: galloped out from each point and halved back (a way's points asked in their logarithm, where a
+    // galloped out from each point and halved back (a way's points asked in their logarithm, where a
     // look back from its end asked them all - 31,000 to 60,000 soundings a way down a channel)
     const out = [raw[0]],
       last = raw.length - 1;
@@ -826,7 +826,7 @@ export function createWaterGrid({ isWater, hull = 0, cell = WATER_CELL, nodeCap 
   };
 }
 
-/** AUDIT SEA PATHS O3: A COURSE SAILED BY THE WATER'S WAY - a ship sailing for a point of her own (a packet's lane ahead, a
+/** A COURSE SAILED BY THE WATER'S WAY - a ship sailing for a point of her own (a packet's lane ahead, a
  *  raider's seeded course) sails straight for it where the water carries her (`clear`), else by the grid's way to it,
  *  kept while the point moves under VIA_KEEP_M and the grid is the one it was planned on (`ship.via`). Her lookout alone
  *  took her at a bulge of land a lane's leg crossed, for good. The point she steers for, [x, z]. */
@@ -846,7 +846,7 @@ export function courseVia(grid, ship, to) {
   return v.path ? follow(ship, v, grid.clear) : to;
 }
 
-/** AUDIT SEA PATHS O3: a host's water reader asked afresh at each sounding (`get()` - a reader swapped later is the one
+/** a host's water reader asked afresh at each sounding (`get()` - a reader swapped later is the one
  *  read), its tiles with it (`tile`). */
 export const waterOf = (get) => Object.assign((x, z, h) => get()(x, z, h), { tile: () => get()?.tile?.() ?? null });
 
@@ -875,7 +875,7 @@ export function errandFor({
   grid = null,
 }) {
   const r = errandRng(seed);
-  clear = grid?.clear ?? clear; // AUDIT SEA PATHS AI-1: the hull's grid, whose `run` a voyage out is drawn by
+  clear = grid?.clear ?? clear; // the hull's grid, whose `run` a voyage out is drawn by
   const here = flat(pos);
   if (hull !== 3 && speed < BERTH_WAY) {
     for (const h of harbours) {
@@ -912,7 +912,7 @@ export function errandFor({
   }
   return null;
 }
-/** Out of the world on her stream's bearing - AUDIT SEA PATHS AI-1: the first of OUTBOUND_TRIES draws the water carries
+/** Out of the world on her stream's bearing - the first of OUTBOUND_TRIES draws the water carries
  *  her VOYAGE_DIST along (the grid's `run`), else the draw it carries her farthest; her mark where that water ends, so
  *  the straight leg she sails is water (a mark 2.6 km out was sounded for its first 800 m, and 531 of the real map's 5,680
  *  departures lay on land). Water for under OUTBOUND_MIN on every draw: no voyage (null) - she keeps her own cruise.
@@ -943,9 +943,9 @@ function outbound(r, here, grid = null) {
   return d >= OUTBOUND_MIN ? { kind: 'voyage', harbour: null, to: end(best.a, d), path: null, i: 0 } : null;
 }
 
-/** AUDIT SEA PATHS AI-2: how often (s) a ship abreast of a point asks whether the water carries her on to the next. */
+/** how often (s) a ship abreast of a point asks whether the water carries her on to the next. */
 export const PASS_ASK_S = 1;
-/** Along a way: its next point unreached, advanced past every one within REACH_M - AUDIT SEA PATHS AI-2: or passed (she
+/** Along a way: its next point unreached, advanced past every one within REACH_M - or passed (she
  *  is abreast of it or beyond, along the leg that comes into it) with the next straight ahead on water (`clear`,
  *  PASS_ASK_S apart): a point missed by more than REACH_M was turned back for and circled. A point made is way made -
  *  her detours counted afresh. */
@@ -973,7 +973,7 @@ function follow(ship, e, clear = null, dt = 0) {
   }
   return e.path[e.i];
 }
-/** AUDIT SEA PATHS AI-2: her way toward her mark kept (`e.prog`: the mark, the nearest she has come, the seconds since
+/** her way toward her mark kept (`e.prog`: the mark, the nearest she has come, the seconds since
  *  she came PROGRESS_M nearer) - a new mark begins it afresh. */
 function progress(e, here, dt, reach = REACH_M) {
   const p = e.prog;
@@ -1018,7 +1018,7 @@ export function stepErrand(ship, dt, ctx) {
     // both shorten it, and a hulk across either held her there for good
     e.stall = ship.speed < STALL_WAY ? (e.stall ?? 0) + dt : 0;
     const held = e.detour ? 0 : progress(e, here, dt, reachOf(ship.hull));
-    // AUDIT SEA PATHS AI-2: under way and getting nowhere - on to the next point of her way where the water carries her
+    // under way and getting nowhere - on to the next point of her way where the water carries her
     // straight to it, else a stall as any other
     if (held >= PROGRESS_S && e.path && e.i < e.path.length - 1 && ctx.grid(ship.hull).clear(here, e.path[e.i + 1])) {
       e.i++;
@@ -1058,7 +1058,7 @@ export function stepErrand(ship, dt, ctx) {
       }
     }
     if (e.detour) {
-      // AUDIT SEA PATHS AI-2: a detour is PROGRESS_S of her time at most - one she could not fetch was chased for good
+      // a detour is PROGRESS_S of her time at most - one she could not fetch was chased for good
       e.detourS = (e.detourS ?? 0) + dt;
       if (dist2(here, e.detour) > reachOf(ship.hull) && e.detourS < PROGRESS_S) return plan(e.detour, 0.6);
       e.detour = null;
@@ -1123,7 +1123,7 @@ export function stepErrand(ship, dt, ctx) {
         if (ship.cls?.faction === 'navy')
           ship.errand = { kind: 'patrol', harbour: e.harbour, since: ship.clock, path: null, i: 0, spin: r() };
         else {
-          // AUDIT SEA PATHS AI-3: another harbour the grid finds her a way to (its way kept), of the VOYAGE_TRIES nearest -
+          // another harbour the grid finds her a way to (its way kept), of the VOYAGE_TRIES nearest -
           // one picked by its distance alone, past the ground streamed or the grid's reach, was given up at the mouth
           const grid = ctx.grid(ship.hull);
           const others = (ctx.harbours?.() ?? [])

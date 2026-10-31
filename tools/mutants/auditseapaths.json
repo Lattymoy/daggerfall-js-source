@@ -194,7 +194,7 @@
   {
     "name": "AUDIT-SEA-PATHS-LN-2-the-far-look-ignored",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "      near = (reached.length ? reached : by.filter((x) => x.d <= farPx)).slice(0, p.neighbours ?? LANE_NEIGHBOURS); // RUMARE-WATER: a canal harbour's own count",
+    "old": "      near = (reached.length ? reached : by.filter((x) => x.d <= farPx)).slice(0, p.neighbours ?? LANE_NEIGHBOURS); // A canal harbour's own count",
     "new": "      near = reached.slice(0, p.neighbours ?? LANE_NEIGHBOURS); // RUMARE-WATER: a canal harbour's own count",
     "tests": [
       "test/systems/naval/auditseapaths.test.js"
@@ -203,7 +203,7 @@
   {
     "name": "AUDIT-SEA-PATHS-LN-2-every-port-looking-far",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "    const reached = by.filter((x) => x.d <= reach),\n      near = (reached.length ? reached : by.filter((x) => x.d <= farPx)).slice(0, p.neighbours ?? LANE_NEIGHBOURS); // RUMARE-WATER: a canal harbour's own count",
+    "old": "    const reached = by.filter((x) => x.d <= reach),\n      near = (reached.length ? reached : by.filter((x) => x.d <= farPx)).slice(0, p.neighbours ?? LANE_NEIGHBOURS); // A canal harbour's own count",
     "new": "    const reached = by.filter((x) => x.d <= Math.max(reach, farPx)),\n      near = reached.slice(0, p.neighbours ?? LANE_NEIGHBOURS); // RUMARE-WATER: a canal harbour's own count",
     "tests": [
       "test/systems/naval/auditseapaths.test.js"
@@ -257,7 +257,7 @@
   {
     "name": "AUDIT-SEA-PATHS-PL-1-the-legs-word-ignored",
     "file": "src/systems/travel/travelAutopilot.js",
-    "old": "    this.edgeArrival = edgeArrival ?? this.edgeBase ?? false; // AUDIT SEA PATHS PL-1: the leg's own, else the autopilot's",
+    "old": "    this.edgeArrival = edgeArrival ?? this.edgeBase ?? false; // the leg's own, else the autopilot's",
     "new": "    this.edgeArrival = this.edgeBase ?? false; // AUDIT SEA PATHS PL-1: the leg's own, else the autopilot's",
     "tests": [
       "test/systems/naval/auditseapaths.test.js"
@@ -266,7 +266,7 @@
   {
     "name": "AUDIT-SEA-PATHS-PL-1-the-base-not-restored",
     "file": "src/systems/travel/travelAutopilot.js",
-    "old": "    this.edgeArrival = edgeArrival ?? this.edgeBase ?? false; // AUDIT SEA PATHS PL-1: the leg's own, else the autopilot's",
+    "old": "    this.edgeArrival = edgeArrival ?? this.edgeBase ?? false; // the leg's own, else the autopilot's",
     "new": "    this.edgeArrival = edgeArrival ?? this.edgeArrival ?? false; // AUDIT SEA PATHS PL-1: the leg's own, else the autopilot's",
     "tests": [
       "test/systems/naval/auditseapaths.test.js"
@@ -356,7 +356,7 @@
   {
     "name": "AUDIT-SEA-PATHS-O1-the-coarse-search-gone",
     "file": "src/systems/naval/shipLife.js",
-    "old": "    if (!cells && capped) cells = coarse(s, g); // AUDIT SEA PATHS O1",
+    "old": "    if (!cells && capped) cells = coarse(s, g);",
     "new": "    // (cut)",
     "tests": [
       "test/systems/naval/auditseapaths.test.js"
@@ -510,7 +510,7 @@
   {
     "name": "AUDIT-SEA-PATHS-O4-the-beach-water",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "      dry = !!beyond(x, y) || (inEther(x, y) && heightAt(x, y) > DEEP_BYTE); // AUDIT SEA PATHS O4: an isle's beach its land",
+    "old": "      dry = !!beyond(x, y) || (inEther(x, y) && heightAt(x, y) > DEEP_BYTE); // an isle's beach its land",
     "new": "      dry = !!beyond(x, y); // AUDIT SEA PATHS O4: an isle's beach its land",
     "tests": [
       "test/systems/naval/auditseapaths.test.js"
@@ -537,7 +537,7 @@
   {
     "name": "AUDIT-SEA-PATHS-O4-a-mended-leg-at-its-window",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      : leg.kind === 'sea' && leg.at ? rectOf(leg.at.x - SEA_LEG_SIZE / 2, leg.at.z - SEA_LEG_SIZE / 2, SEA_LEG_SIZE, SEA_LEG_SIZE)   // AUDIT SEA PATHS O4: a leg round the kernel's land (seaLegsMend.js)\n",
+    "old": "      : leg.kind === 'sea' && leg.at ? rectOf(leg.at.x - SEA_LEG_SIZE / 2, leg.at.z - SEA_LEG_SIZE / 2, SEA_LEG_SIZE, SEA_LEG_SIZE)   // a leg round the kernel's land (seaLegsMend.js)\n",
     "new": "",
     "tests": [
       "test/systems/naval/auditseapaths.test.js"
@@ -600,7 +600,7 @@
   {
     "name": "AUDIT-SEA-PATHS-C1-near-by-the-ellipse",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "      if (/** @type {any} */ (lane).long) {\n        const way = beyondWay(lane);\n        return !!way && nearWay(way.pts, here, pad);\n      } // AUDIT SEA PATHS C1: its ellipse the land's whole",
+    "old": "      if (/** @type {any} */ (lane).long) {\n        const way = beyondWay(lane);\n        return !!way && nearWay(way.pts, here, pad);\n      } // its ellipse the land's whole",
     "new": "      if (!lane) return false; // AUDIT SEA PATHS C1: its ellipse the land's whole",
     "tests": [
       "test/systems/naval/auditseapaths.test.js"

@@ -456,7 +456,6 @@ test('WW7-11 and WW7-12 with ARENA2: every lane past the Bay and every crossing 
     const far = [...wl.beyond(), ...wl.cross()].map((l) => ({ l, way: wl.way(l) })).filter((x) => x.way);
     assert.ok(far.length >= 20, `${far.length} far lanes with a way`);
     assert.ok(BEYOND_LANE_MAX_PX === 400);
-    // PIN MOVED (AUDIT SEA PATHS C1): a lane past the Bay its search ran past its cap for runs longer than any block -
     // seaTrip passes it for a shorter, its packets sail it; every lane within the longest way a lane is let have fits
     const within = far.filter(({ way }) => way.len <= CROSS_LANE_PATH_PX * 819.2);
     assert.ok(within.length >= far.length - 5, `${far.length - within.length} lanes past the longest way`);

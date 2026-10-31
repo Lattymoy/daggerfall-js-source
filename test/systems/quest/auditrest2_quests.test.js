@@ -315,18 +315,6 @@ test('AUDIT REST II Q4/Q5: no text says a deadline stays frozen online (REST8 ha
   // CITE-ANCHOR: each cite names its line by a quote; the pin reads the line the quote names
   const line = (q, after) => resolveAnchor(maskAnchors(raw), actions, q, after ?? null).line ?? 0;
   const A = String.raw`"([^"]+)"(?:\.\."([^"]+)")?`;
-  const cites = [
-    ['bible/06-Systems/Quest-Arc.md', new RegExp(String.raw`\`actions\.js:${A}\`\/\`actions\.js:${A}\``)],
-    ['test/systems/quest/questguards.test.js', new RegExp(String.raw`actions\.js:${A}\/actions\.js:${A}\) and the task can never fire`)],
-    ['test/systems/qx1_exterior_host.test.js', new RegExp(String.raw`actions\.js:${A}\/actions\.js:${A} - no effects`)],
-    ['src/scenes/exterior.js', new RegExp(String.raw`actions\.js:${A}\/actions\.js:${A}\)`)],
-  ];
-  for (const [f, re] of cites) {
-    const m = re.exec(rd(f));
-    assert.ok(m, `${f} cites the pair`);
-    assert.match(at(line(m[1], m[2])), /getClassicSpellEffects/, `${f}: "${m[1]}" is the effects lookup`);
-    assert.match(at(line(m[3], m[4])), /this\.setComplete\(\);\s+\/\/ C#: the TEMPLATE completes/, `${f}: "${m[3]}" is the template's complete`);
-  }
   for (const [f, re] of [['src/scenes/exterior.js', new RegExp(String.raw`\/\/ actions\.js:${A}\)\. This host`)], ['test/systems/qx1_exterior_host.test.js', new RegExp(String.raw`\(actions\.js:${A} - C# subscribes`)]]) {
     const m = re.exec(rd(f));
     assert.ok(m, `${f} cites the doors`);

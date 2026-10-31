@@ -11,7 +11,7 @@
 // within LANE_MAX_PX: so every port has two lanes at least and most have three or four, and a coast is a chain of them,
 // a headland's ports each other's neighbours across the water, the three crowns' capitals linked through the lanes'
 // ports between them. A lane's way is the water's: an A* over the map's water pixels from one roadstead to the other,
-// straightened wherever a line holds to the water (every map pixel it crosses - AUDIT SEA PATHS LN-4), no longer than LANE_PATH_PX.
+// straightened wherever a line holds to the water (every map pixel it crosses), no longer than LANE_PATH_PX.
 //
 // THE PACKET. One ship a lane, of the lane's own seed (the two ports'): a merchantman, or on LANE_NAVY of the lanes a
 // crown's ship keeping the passage. She sails it out and back for ever on the SHARED CLOCK - out at her class's cruise
@@ -30,7 +30,7 @@ import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { classFor, HULL } from './navalShips.js';
 import { nativeOfPixel, NATIVE_PIXEL } from '../seaRaiders.js';
 import { worldPixelKey, worldPixelOfKey, inWorldGrid } from '../../world/worldWide/worldGrid.js'; // WW3: a lane's pixels the world's
-import { kernelLine } from '../../world/water/kernelSea.js'; // AUDIT SEA PATHS O3: the ground the game builds
+import { kernelLine } from '../../world/water/kernelSea.js'; // the ground the game builds
 
 /** How far from its town a port's roadstead may lie (map pixels), and how many ports a port runs packets to, within how
  *  far of it (map pixels between roadsteads: about 25 km). */
@@ -38,7 +38,7 @@ export const ROADSTEAD_PX = 3;
 export const LANE_NEIGHBOURS = 2;
 export const LANE_MAX_PX = 30;
 /** A lane's way: no longer than this over the water (map pixels), its search no more than LANE_SEARCH pixels expanded,
- *  and the soundings a pixel a leg's water was asked at (AUDIT SEA PATHS LN-4: holdsLine walks every pixel now). */
+ * and the soundings a pixel a leg's water was asked at ( holdsLine walks every pixel now). */
 export const LANE_PATH_PX = 60;
 export const LANE_SEARCH = 20000;
 export const LANE_STRAIGHT_STEPS = 4;
@@ -48,7 +48,7 @@ export const LANE_STRAIGHT_STEPS = 4;
 export const LANE_CRUISE = 0.7;
 export const LANE_DWELL_S = 600;
 export const LANE_HEADWAY_S = 1800;
-/** AUDIT SEA PATHS C1: the most packets a lane sails - its headway widened past it (the Imperial City's lanes to Skyrim
+/** the most packets a lane sails - its headway widened past it (the Imperial City's lanes to Skyrim
  *  run round the land, 4,800 km; the longest before ran 303). */
 export const LANE_PACKETS_MAX = 400;
 export const LANE_NAVY = 0.25;
@@ -146,7 +146,7 @@ const centreOf = (p) => {
   const o = nativeOfPixel(p.x, p.y);
   return { x: o.x + NATIVE_PIXEL / 2, z: o.z + NATIVE_PIXEL / 2 };
 };
-/** Whether the line between two native points holds to the water - AUDIT SEA PATHS LN-4: every map pixel it crosses
+/** Whether the line between two native points holds to the water - every map pixel it crosses
  *  between its ends' own (a grid walk; through a corner both pixels beside it), where LANE_STRAIGHT_STEPS soundings a
  *  pixel stepped past a corner of land up to 179 m deep. */
 export function holdsLine(a, b, waterNative) {
@@ -184,7 +184,7 @@ export function holdsLine(a, b, waterNative) {
   }
   return true;
 }
-/** A pixel way straightened: from each point, on to the farthest the water holds a line to - AUDIT SEA PATHS O3: and the
+/** A pixel way straightened: from each point, on to the farthest the water holds a line to - and the
  *  kernel's sea (`kernel`, world/water/kernelSea.js) asked of each leg kept, a leg it refuses straightened again over its
  *  own stretch with the kernel asked of every reach (asked of every reach of the whole way, a book of lanes took 8 s).
  *  Native points. */
@@ -303,10 +303,10 @@ export function laneNetwork(ports, open, maxPx = LANE_MAX_PX, roomy = false, far
       .map((q) => ({ q, d: Math.hypot(q.road.x - p.road.x, q.road.y - p.road.y) }))
       .filter((x) => x.d > 0)
       .sort((x, y) => x.d - y.d || x.q.id - y.q.id);
-    // AUDIT SEA PATHS LN-2: a port with none within its reach runs to its nearest within `farPx` (past the Bay its way's
+    // a port with none within its reach runs to its nearest within `farPx` (past the Bay its way's
     // cap): Blacklight, Lilmoth and Soulrest stood 443 to 604 pixels from every port, and ran no packet at all
     const reached = by.filter((x) => x.d <= reach),
-      near = (reached.length ? reached : by.filter((x) => x.d <= farPx)).slice(0, p.neighbours ?? LANE_NEIGHBOURS); // RUMARE-WATER: a canal harbour's own count
+      near = (reached.length ? reached : by.filter((x) => x.d <= farPx)).slice(0, p.neighbours ?? LANE_NEIGHBOURS); // A canal harbour's own count
     for (const { q } of near) {
       const [a, b] = p.id < q.id ? [p, q] : [q, p];
       const key = `${a.id}-${b.id}`;
@@ -316,13 +316,13 @@ export function laneNetwork(ports, open, maxPx = LANE_MAX_PX, roomy = false, far
   return [...pairs.values()];
 }
 
-/** AUDIT SEA PATHS O3: the times a lane's way is searched again round a pixel the kernel's land stands in; a leg over the
+/** the times a lane's way is searched again round a pixel the kernel's land stands in; a leg over the
  *  kernel's land is first sought through its own pixels' water over cells this share of a pixel (102 m), SUB_REACH pixels
  *  about it at most. */
 export const KERNEL_RETRIES = 12;
 export const SUB_CELL = 1 / 8;
 export const SUB_REACH = 1;
-/** AUDIT SEA PATHS O3: a leg's way through the kernel's sea at SUB_CELL of a pixel - A* over the cells about the leg whose
+/** a leg's way through the kernel's sea at SUB_CELL of a pixel - A* over the cells about the leg whose
  *  middle is the kernel's sea and the lanes' water, each step held by the kernel - straightened over the kernel. Native
  *  points from `a` to `b`, or null. */
 export function subWay(a, b, water, kernel) {
@@ -433,7 +433,7 @@ export function subWay(a, b, water, kernel) {
   for (let i = 1; i < out.length; i++) if (kernelLine(out[i - 1], out[i], kernel, true, true) !== true) return null;
   return out;
 }
-/** AUDIT SEA PATHS O3: the first point of a way the kernel's sea does not hold (its two roadsteads its own), or null. */
+/** the first point of a way the kernel's sea does not hold (its two roadsteads its own), or null. */
 export function wayOffSea(pts, kernel) {
   for (let i = 1; i < pts.length; i++) {
     const r = kernelLine(pts[i - 1], pts[i], kernel, i === 1, i === pts.length - 1);
@@ -442,7 +442,7 @@ export function wayOffSea(pts, kernel) {
   return null;
 }
 /** A lane's way in native points, a to b (straightened), and its length (m) - or null where the water joins them not.
- *  AUDIT SEA PATHS O3: `kernel` the kernel's sea - a way over its land is searched again without the pixel that land
+ * `kernel` the kernel's sea - a way over its land is searched again without the pixel that land
  *  stands in, KERNEL_RETRIES times at most (a square whose four corners are sea can hold land: 307 m of a leg). */
 export function laneWay(lane, water, waterNative, kernel = null) {
   const shut = new Set();

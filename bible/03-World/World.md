@@ -1,26 +1,53 @@
 # World
 
-ACTIVE again - TOWNS. The M1-M9 build queue is COMPLETE, and the arc reopened
-for the T-series (T1 the wandering population, T2 the streaming mount, T3
-talk); see `World-Arc.md` for the live record. All world-assembly state lives
-there (milestones, conventions, queue). Deviations and quirks are ledgered in
-`01-Overview/Port-Ledger.md`.
-(AUDIT 18: this page said "COMPLETE (build queue empty)" while Home.md's arc
-index had the arc ACTIVE again. Home.md is the index; this page must agree
-with it.)
+The index of `03-World/`: how Daggerfall's data becomes a world, the land of all Tamriel, its towns and places, its
+seas and the systems that run across it. Each page says how its system works now.
 
-Shipped: RMB block assembly, full location layout, ground tilemaps, flats,
-building interiors + static doors, RDB dungeons + action records,
-WOODS.WLD terrain heightfields, terrain tile texturing + locations
-placed and leveled on terrain, nature flat scatter, floating-origin
-streaming (?world walks the whole province).
-The World-Arc build queue is COMPLETE. Follow-on work in this section:
-the Player arc (`Player-Arc.md`) - movement, collision, and the door/
-ladder activation that consumes staticDoors.js.
+## The world from Daggerfall's data
 
-**TL1 (2026-09-03, Mac: "you don't remain on the ground after traveling, you spawn in the air and drop").** The arrival's floor ray was a door step's: ten units down from the raw. The raw is the location's flattened height and the edge landing stands ten units OUTSIDE the location, on terrain the blend has not fully flattened - a steep site puts it more than ten units below (the ray missed, the raw stood in the air) or above (the ray started inside the hill). StreamingWorld's FixStanding starts its ray high and reaches far for exactly this; the arrival now passes a lift of 40 and a reach of 240, the first hit still the surface, and a flat site lands exactly as before. Door steps keep their ten. Pinned in enterexit.test.js.
+- `World-Arc.md` - World Assembly: models, town blocks, flats, doors and interiors, dungeons, terrain, streaming,
+  arrival.
+- `Player-Arc.md` - the player body: motor, collider, activation, transitions, swimming, body guards.
+- `Parkour-Arc.md` - enhanced climbing: mantle, hang, free climb, leaps.
+- `Clock-Arc.md` - the sky, weather and day and night on the world clock.
+- `Foundation-Arc.md` - the atlas, the residency clock, property and land as data.
 
-**TL2 (2026-09-03, Mac: "you can spawn inside the building geometry").** I could not find the marker fault statically - the port's misc-flat and sub-record frames are DFU's own lines - so the arrival refuses an obstructed spot regardless of cause: the floor its ray found is checked against the location's flat, and a floor more than three units above it is a roof, which means the point stands in a building's footprint. That landing falls back to the edge landing, which stands outside the blocks by construction; a valid marker's floor is the flat and nothing changes. The refusal logs the marker's position so the underlying fault can still be found. Pinned in enterexit.test.js.
-**TL3 (2026-09-08, Mac, the second report: "when traveling, sometimes you'll spawn inside building geometry").** Found this time, and it was not the marker: THE FAST-TRAVEL ARRIVAL NEVER ASKED FOR THE REPOSITION. DaggerfallTravelPopUp.performTravel teleports with a reposition method (DirectionFromStartMarker, whose facing hint locationEntrance.js records as its own slice; without the hint DFU's arm is the plain random side - RandomStartMarker) and StreamingWorld.PositionPlayerToLocation then stands the player just outside the location's rectangle or at its nearest start marker. `fastTravelTo` passed none, so `landing` was null and the arrival took the teleport core's DEFAULT point - the map pixel's centre, which for every location is the centre of the town, and for many the middle of a building; TL2's roof guard, gated on the landing, never ran on the one path it was written for, which is why TL2 "fixed" it and the spawn stayed. The court release and the ship already took the door; the travel takes it now, and the facing lands with the position. Pinned in travelArrival.test.js (the call, the core's three arms, the record that named the travel an owed caller). Residue: the boot door `?loc=` still stands at the pixel's centre with a ten-unit ray (a dev door); `Collider.findClearFloor` stays unwired (motor-4).
+## The land
 
-**FIX-C (2026-09-08, Mac: "Players on first start either spawn in the ground or the sky").** One race, two symptoms, only on a NEW GAME - and the root was the roads sweep. `loadModRoads()` lands asynchronously, and `rebuildRoadless` tore down every pixel painted without the network and RE-QUEUED NOTHING: `destroyPixel` deletes the terrain, the collider bucket and the `built` entry, and the streamer never re-asks for a key it still holds in `loaded`, so the start pixel could not come back until the player walked four pixels off. The boot walk is the one arrival that never re-inits the streamer (every load, travel, teleport, court release and ship goes through `_teleportToPixel`, which does), so only a first start saw it - and it saw it two ways on one race: the network landing BEFORE the first frame emptied `built` of the start key and the boot's spawn gate never fired, leaving the camera forty units up over a hole with the motor frozen (the sky); landing AFTER the stand, it deleted the ground and the collider from under a standing player with nothing to bring them back (the ground). The season re-skin (`tickSeason`) was the same teardown done right - destroy, re-queue nearest-first, hold the motor on the player's own pixel until it stands again - and the sweep is that shape now, run on the FRAME between builds (a pixel in flight must publish before its key is torn down) rather than in the fetch's `.then`. Two more in the same lane: the first exterior stand was the pixel's CENTRE, which for every location is the middle of the town (a location is centred in its pixel), where DFU's `StartNewCharacter` (StartGameBehaviour.cs:404-409) hands `TeleportToCoordinates` + `SetAutoReposition(RepositionMethods.Origin, Vector3.zero)` and Update applies `RepositionPlayer(MapPixelX, MapPixelY, Vector3.zero)` (StreamingWorld.cs:290-292, :1330-1349) - the terrain's ORIGIN corner at the terrain's height; the gate stands there now, which closes TL3's `?loc=` residue too (TeleportToCoordinates' own default is Origin, :369). And the dungeon start never set `playerSpawned` (nothing in worldModes writes it), so the exterior gate was still armed the first time a new character stepped out of Privateer's Hold and re-snapped the door landing to the terrain under the entrance; the host sets it when the dungeon stood the player. `tools/classicStartProbe.mjs` reads a new `__standing` surface after the exit - spawned, the ground under the feet, the pixel built - so the next machine with ARENA2 sees the stand, not just the mode. Pinned in fixc_firstStart.test.js.
+- `Landforms.md` - the heightmap raised, roads cut in, rivers in the land, rolling hills by climate.
+- `Roads.md` - Basic Roads on the Bay, the port's roads past it, bridges and fords.
+- `Peaks.md` - snow caps, bare rock faces, the massif.
+- `Snowfall.md` - snow that lies, is walked through and keeps tracks.
+- `Windmills.md` - Kamer's windmills.
+- `World-Of-Daggerfall.md` - Kamer's wilderness camps, ruins and rock fields.
+
+## Tamriel
+
+- `Tamriel.md` - the continent: frame, trace, relief, landforms and waters.
+- `Tamriel-Biomes.md` - the forty-four zones and their fauna.
+- `Tamriel-Lands.md` - each zone's ground, flora and landmarks.
+- `Bantha-Jungle.md` - the jungle in four storeys under its haze.
+- `Graht-Oaks.md` - Valenwood's giant trees.
+- `Red-Mountain.md` - the volcano and the Ghostfence.
+- `World-Wide.md` - the world's grid, theatres, areas and regions; every system past the Bay.
+- `Arena-Provinces.md` - the places past the Bay and the capitals.
+
+## Towns
+
+- `Town-Shapes.md` - organic town outlines, walls and gates on roads.
+- `Urban-Fabric.md` - towns past the Bay in their own stone, with streets and yards.
+- `Beautiful-Towns.md` - Beautiful Villages and Beautiful Cities, and the housing promise.
+- `Merchant-Yards.md` - the Stables, Wagon Yards and Joinery.
+- `LeFay-Monument.md` - the monuments to Julian LeFay and Patrick Stewart.
+- `Raiding-Parties.md` - town raids.
+- `Chests.md` - the chest model.
+
+## Dungeons
+
+- `Delve-Arc.md` - the look round, the echo, the way out, guidance tiers, dungeon sizes.
+- `Delve-II.md` - encounters, vaults and curated blocks.
+- `Dungeon-Flora.md` - the seabed in flooded dungeons.
+
+## The sea
+
+- `Sea-Update.md` - the way into the sea's pages, and what each holds.

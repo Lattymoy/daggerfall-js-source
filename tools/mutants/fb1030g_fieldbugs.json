@@ -2,8 +2,8 @@
   {
     "name": "WALL-SHAFT-swept-ignored",
     "file": "src/ai/cover.js",
-    "old": "  if (swept) return coverStep(Math.min(cov, wall), Infinity, reach, radius, stepLen); // WALL-SHAFT: a swept shaft meets a wall by touch too",
-    "new": "  if (false) return coverStep(Math.min(cov, wall), Infinity, reach, radius, stepLen); // WALL-SHAFT: a swept shaft meets a wall by touch too",
+    "old": "  if (swept) return coverStep(Math.min(cov, wall), Infinity, reach, radius, stepLen); // A swept shaft meets a wall by touch too",
+    "new": "  if (false) return coverStep(Math.min(cov, wall), Infinity, reach, radius, stepLen); // A swept shaft meets a wall by touch too",
     "tests": [
       "test/combat/wallshaft.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WALL-SHAFT-the-farther-taken",
     "file": "src/ai/cover.js",
-    "old": "  if (swept) return coverStep(Math.min(cov, wall), Infinity, reach, radius, stepLen); // WALL-SHAFT: a swept shaft meets a wall by touch too",
-    "new": "  if (swept) return coverStep(Math.max(cov, wall), Infinity, reach, radius, stepLen); // WALL-SHAFT: a swept shaft meets a wall by touch too",
+    "old": "  if (swept) return coverStep(Math.min(cov, wall), Infinity, reach, radius, stepLen); // A swept shaft meets a wall by touch too",
+    "new": "  if (swept) return coverStep(Math.max(cov, wall), Infinity, reach, radius, stepLen); // A swept shaft meets a wall by touch too",
     "tests": [
       "test/combat/wallshaft.test.js"
     ]

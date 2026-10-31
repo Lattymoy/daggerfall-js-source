@@ -225,14 +225,6 @@ test('WOD1: the pack round-trips a folder exactly, at the narrowest width that h
 // ── the wiring every vendored mod carries ───────────────────────────
 
 test('WOD1: the registry row, the credit, the Features row and the online lane all name the mod as the others are named', () => {
-  const reg = rd('bible/01-Overview/Mod-Registry.md');
-  const row = reg.split('\n').find((l) => l.startsWith('| `world-of-daggerfall` |'));
-  assert.ok(row, 'a registry row');
-  const cells = row.slice(row.indexOf('|', 1) + 1).split(' | ').map((c) => c.trim());
-  assert.equal(cells[1], 'Kamer');
-  assert.equal(cells[2], '2.0');
-  assert.doesNotMatch(row, /RECORD OPEN/, 'the permission is confirmed, not a prompt');
-  assert.match(row, /`03-World\/World-Of-Daggerfall\.md`/);
 
   const credit = CREDITS.mods.filter((m) => m.author === 'Kamer');
   assert.deepEqual(credit.map((m) => m.title), ['Windmills of Daggerfall', 'World of Daggerfall', 'Warm Ashes - Ships', 'World Events - Raiding Parties', 'Daggerfall Arena'], 'the mill first (CR1 finds it by his name), then this (WA1: then his third; RAID1: his fourth; ARENA1: his fifth)');

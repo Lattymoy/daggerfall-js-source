@@ -97,7 +97,7 @@ export const seaHelmReach = (way) => Math.max(SEA_HELM.avoidM, Math.max(0, way) 
  *  she raised sail and ran back at it). The host probes the water this far (scenes/world.js tvSeaSail). */
 export const seaHelmLook = (st, way) => Math.max(seaHelmReach(way), st?.reach ?? 0);
 
-/** AUDIT SEA PATHS PL-5: THE NO-WAY CLOCK of a sailed leg - game seconds since she came `gainM` nearer her mark (`noWayS`),
+/** THE NO-WAY CLOCK of a sailed leg - game seconds since she came `gainM` nearer her mark (`noWayS`),
  *  and the seconds she has spent steering off land since she last bettered her nearest (`detourS`). While she steers off
  *  land (`st.helm.reach` > 0) the near mark follows her, so the way back counts; the detours' own clock still ends a boat
  *  that rounds and rounds a dead end. The old clock ran against her nearest alone, and a headland a kilometre deep ended

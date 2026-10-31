@@ -143,5 +143,4 @@ test('AUDIT WORLD6a by source: the settle asks the stack (A3), the keyed shop fa
   const w = rd('src/scenes/world.js');
   assert.match(w, /const _actRoom = \(\) => !!\(online && \(isWorldRoom\(online\.room\) \|\| isWorldRoom\(_onlineKey\)\)\);/, 'A7');
   assert.match(w, /online\.onFoes = \(id, data\) => \{\s*if \(isCellRoom\(online\.room\)\) \{[\s\S]*?if \(modes\?\.applyDungeonFoes\?\.\(id, data\) && modes\?\.mode === 'dungeon'\) seatClock\.heard\(performance\.now\(\)\);/, 'B8 (WORLD6b: the cell\'s arm ahead of it)');   // PIN MOVED (FIELD BUGS 2026-10-18d SEAT-LIVE): the seat heard is the seat clock's (net/seatLive.js createSeatClock) - the page's own absence spends none of it
-  assert.match(rd('bible/06-Systems/Online-Arc.md'), /## AUDIT WORLD6a \(2026-09-14\)/, 'the record');
 });

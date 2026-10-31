@@ -868,8 +868,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-client-recuts-hit",
     "file": "src/ai/nav/navClient.js",
-    "old": "    if (m) return m.cols; // INDOOR-WATCH AUDIT W2: packed, as they landed - the height layer indexes them so (navmesh.js buildPackedIndex)",
-    "new": "    if (m) return trianglesToColliders(input.positions, input.indices, { cs, maxSlope: agent.maxSlope }); // INDOOR-WATCH AUDIT W2: packed, as they landed - the height layer indexes them so (navmesh.js buildPackedIndex)",
+    "old": "    if (m) return m.cols; // Packed, as they landed - the height layer indexes them so (navmesh.js buildPackedIndex)",
+    "new": "    if (m) return trianglesToColliders(input.positions, input.indices, { cs, maxSlope: agent.maxSlope }); // Packed, as they landed - the height layer indexes them so (navmesh.js buildPackedIndex)",
     "tests": [
       "test/ai/nav/audit68_enemies.test.js"
     ]

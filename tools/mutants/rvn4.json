@@ -218,7 +218,7 @@
   {
     "name": "RVN4-windup-unread",
     "file": "src/ai/tells.js",
-    "old": "  if (ent?.revenant?.p2?.windup > 0) w *= ent.revenant.p2.windup; // RVN4: phase two's quicker wind-ups\n  if (guard === 'iron') w += TELL.IRON_EXTRA;",
+    "old": "  if (ent?.revenant?.p2?.windup > 0) w *= ent.revenant.p2.windup; // Phase two's quicker wind-ups\n  if (guard === 'iron') w += TELL.IRON_EXTRA;",
     "new": "  if (guard === 'iron') w += TELL.IRON_EXTRA;",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
@@ -227,8 +227,8 @@
   {
     "name": "RVN4-cooldown-unread",
     "file": "src/ai/tells.js",
-    "old": "  return (\n    (lo + (hi - lo) * roll) *\n    (rank > 0 ? 1 - TELL.COOLDOWN_RANK * rank : 1) *\n    (ent?.revenant?.p2?.cooldown > 0 ? ent.revenant.p2.cooldown : 1)\n  ); // RVN4: phase two's x0.7",
-    "new": "  return (lo + (hi - lo) * roll) * (rank > 0 ? 1 - TELL.COOLDOWN_RANK * rank : 1); // RVN4: phase two's x0.7",
+    "old": "  return (\n    (lo + (hi - lo) * roll) *\n    (rank > 0 ? 1 - TELL.COOLDOWN_RANK * rank : 1) *\n    (ent?.revenant?.p2?.cooldown > 0 ? ent.revenant.p2.cooldown : 1)\n  ); // Phase two's x0.7",
+    "new": "  return (lo + (hi - lo) * roll) * (rank > 0 ? 1 - TELL.COOLDOWN_RANK * rank : 1); // Phase two's x0.7",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "RVN4-iron-unread",
     "file": "src/ai/tells.js",
-    "old": "    ent?.revenant?.p2?.iron > 0 ? ent.revenant.p2.iron : 0,\n  ); // RVN4: phase two's half",
-    "new": "  ); // RVN4: phase two's half",
+    "old": "    ent?.revenant?.p2?.iron > 0 ? ent.revenant.p2.iron : 0,\n  ); // Phase two's half",
+    "new": "  ); // Phase two's half",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
     ]

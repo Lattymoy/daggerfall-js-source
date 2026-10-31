@@ -346,5 +346,4 @@ test('SD4b the hosts by source: the dungeon stands them for a Super dungeon alon
   assert.match(w, /const seen = \{ entered: _sdEntered\.has\(s\), fallen: false \};[^\n]*\n\s*return \{ word: sdRiftWord\(rec, s, now, seen\), returns: sdReturnStands\(rec, s, now\), through: sdThroughStands\(rec, s, now\), count: sdRiftCount\(rec, s, now\), look: riftLook\(rec, s, now, seen\), enter: \(\) => sdEnterRealm\(s\) \};/);   // SD5a (PIN MOVED): the realm's door - the step through to the Shattered Hour; SD-ONELIFE (PIN MOVED): and the Hours I died in   // SD-THROUGH (PIN MOVED): and whether one has gone through - the Way Through
   assert.match(w, /const rec = sdHost\.record\(s\), now = Date\.now\(\) \+ _sharedOffsetMs;/, 'the hub\'s record, on the shared clock the Hollow\'s host reads');   // PIN MOVED (WW5): the slot's own lane's record
   assert.match(w, /superRift: \(s\) => sdRiftOf\(s\),/);
-  assert.match(read('bible/11-Multiplayer/Super-Dungeons.md'), /### SD4b - shipped 2026-10-07/);
 });

@@ -11,7 +11,7 @@
  *  lies. Null: keep the plan as it is. */
 export function tvMooredDry(means, plan, replan) {
   if (!means || means.voyage) return null;
-  // AUDIT SEA PATHS PL-4: a boat to hand that finds no plan at all is planned again on foot - the search afloat and ashore
+  // a boat to hand that finds no plan at all is planned again on foot - the search afloat and ashore
   // spent its count where the walk alone finds its way (Wayrest to Markarth, Daggerfall to Farrun, boat parts packed)
   if (!plan) return replan();
   if (means.how !== 'moored' || plan.kinds.includes('sea')) return null;

@@ -418,9 +418,8 @@ function feedOn({ at = { x: 200, y: 200 }, clock = 1.7e12 } = {}) {
   const env = {
     tvWater: (px, py) => { calls.water++; return water(px, py); }, maps: { getClimateIndex: (px, py) => (open(px, py) ? OCEAN : 1), getRegion: (ri) => ({ mapNames: PORTS.map((p) => p.name) }) },
     CLIMATES: { Ocean: OCEAN }, RAID_NATIVE_PIXEL: NATIVE_PIXEL, pixelOfNative,
-    // PIN MOVED (AUDIT SEA PATHS LN-1): the Bay's lane water a square's four corners (worldLanes.js bayLaneWater), its climate
     // CLIMATE.PAK's own - this map dilates nothing, so its own climate is the map's
-    bayLaneWater, inBay, undilatedClimateIndex: (m, px, py) => m.getClimateIndex(px, py), kernelSea: null,   // PIN MOVED (AUDIT SEA PATHS O3): no kernel here
+    bayLaneWater, inBay, undilatedClimateIndex: (m, px, py) => m.getClimateIndex(px, py), kernelSea: null,
     PORT_LOCATION_IDS: [...PORTS.map((p) => p.id), PORTS[0].id, 5],   // a repeat, and an id the map has not
     mapDict: new Map(PORTS.map((p, k) => [p.id & 0xfffff, { id: p.y * 1000 + p.x, regionIndex: 1, mapIndex: k }])),
     getPixelFromPixelID: (id) => ({ x: id % 1000, y: Math.floor(id / 1000) }),
@@ -448,7 +447,6 @@ test('SEA-LANES THE WORLD\'S FEED: before the frame poses the sea\'s ships, ever
   assert.match(readFileSync(new URL('../../../src/systems/naval/harbourBook.js', import.meta.url), 'utf8'), /return \{ key: `port:\$\{t\.id\}`, name: t\.name \?\? null, rect, ready, reach \};/, 'the harbour named, its key a lane port\'s');   // PIN MOVED (AUDIT HOLDINGS O1): and whether its scan's pixels are built
   assert.match(hostText('src/scenes/world.js'), /return \{ \.\.\.h, keep: harbourKeep\(t\.loc, h\.rect\) \};/);   // PIN MOVED (PORT-SHIPS): each town's keep beside its harbour (scenes/harbourHost.js, systems/naval/harbourKeep.js)
   // the clock where the lane's first packet lies at her home port, by the player
-  // PIN MOVED (AUDIT SEA PATHS LN-1): the lanes the host's law stands - a square's four corners (worldLanes.js bayLaneWater)
   const laneLaw = bayLaneWater(water, open), laneLawNative = (x, z) => { const p = pixelOfNative(x, z); return laneLaw(p.x, p.y); };
   const [lane] = laneNetwork(FEED_PORTS.map((p) => ({ id: p.y * 1000 + p.x, name: p.name, px: p.x, py: p.y, region: 1 })), laneLaw);
   const way = laneWay(lane, laneLaw, laneLawNative);

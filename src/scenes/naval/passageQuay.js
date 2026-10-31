@@ -46,7 +46,7 @@ export function beamWater(isWater, hull) {
   const r = hullBuild(hull).halfWidth + TOW_CLEAR_M;
   const beam = (/** @type {number} */ x, /** @type {number} */ z, /** @type {number} */ h) =>
     !!isWater(x, z, h) && RING.every(([sx, sz]) => isWater(x + sx * r, z + sz * r, h));
-  return Object.assign(beam, { tile: isWater.tile }); // AUDIT SEA PATHS O3: the host's tiles, the grid's lines asked of each
+  return Object.assign(beam, { tile: isWater.tile }); // the host's tiles, the grid's lines asked of each
 }
 
 /** @param {any} host */

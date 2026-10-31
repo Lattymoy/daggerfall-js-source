@@ -641,7 +641,6 @@ test('SIB1: the vendor tree carries the manifest and the record, and NO raster -
   const readme = read('vendor/seasons-iliac-bay/README.md');
   assert.match(readme, /permission/i);
   assert.match(readme, /re-shaded sprite|silhouette/i, 'the README says why the textures are not here');
-  assert.ok(existsSync(join(root, 'bible/07-Rendering/Seasons-Iliac-Bay.md')), 'the bible page');
 });
 
 // ---- SIB2 (2026-09-08, Mac: "ensure the seasons mod is 1:1 and working") --

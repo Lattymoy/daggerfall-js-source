@@ -57,8 +57,8 @@
   {
     "name": "TELL6b-run-not-near",
     "file": "src/ai/foeBlows.js",
-    "old": "    if (now >= b.land && !(b.chainUntil > now) && !(b.dashUntil > now)) continue; // TELL5: a landing about to chain is still its foe's one; TELL6: a charge running its lane too",
-    "new": "    if (now >= b.land && !(b.chainUntil > now)) continue; // TELL5: a landing about to chain is still its foe's one; TELL6: a charge running its lane too",
+    "old": "    if (now >= b.land && !(b.chainUntil > now) && !(b.dashUntil > now)) continue; // A landing about to chain is still its foe's one; TELL6: a charge running its lane too",
+    "new": "    if (now >= b.land && !(b.chainUntil > now)) continue; // A landing about to chain is still its foe's one; TELL6: a charge running its lane too",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
     ]
@@ -140,7 +140,7 @@
   {
     "name": "TELL6b-no-run",
     "file": "src/ai/tactics.js",
-    "old": "    if (tf && s.blow.kind === 'charge') {\n      beginDash(ai, s, s.blow, now, cooled);\n      return true;\n    } // TELL6: its landing is its run",
+    "old": "    if (tf && s.blow.kind === 'charge') {\n      beginDash(ai, s, s.blow, now, cooled);\n      return true;\n    } // Its landing is its run",
     "new": "    // TELL6: its landing is its run",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
@@ -187,7 +187,7 @@
   {
     "name": "TELL6b-run-dropped",
     "file": "src/ai/tactics.js",
-    "old": "  if (s.state === 'dash') return dashTurn(ai, s, now, skipped);\n  // TACT4: a wind-up, once begun, is committed - it lands where it was aimed whether or not the target stays in sight",
+    "old": "  if (s.state === 'dash') return dashTurn(ai, s, now, skipped);\n  // A wind-up, once begun, is committed - it lands where it was aimed whether or not the target stays in sight",
     "new": "  // TACT4: a wind-up, once begun, is committed - it lands where it was aimed whether or not the target stays in sight",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"

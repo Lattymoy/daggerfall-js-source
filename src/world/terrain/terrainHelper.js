@@ -42,7 +42,7 @@ export const OCEAN_CLIMATE = 223;
 /** SmoothLocationNeighbourhood's default `int threshold = 20`. */
 export const SMOOTH_GRADIENT_THRESHOLD = 20;
 
-/** AUDIT SEA PATHS LN-1: CLIMATE.PAK's own climate at a Bay pixel - the buffer the dilation kept (`undilated`), else the
+/** CLIMATE.PAK's own climate at a Bay pixel - the buffer the dilation kept (`undilated`), else the
  *  file's as read (MapsFile.getClimateIndex's offset). The dilation is a texture repair: what is sea reads it never. */
 export function undilatedClimateIndex(maps, x, y) {
   const pak = maps.climatePak,

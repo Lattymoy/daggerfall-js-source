@@ -93,7 +93,7 @@ function crossing({ hull, windTo, islet = [5000, 5000, 5001, 5001], handling = '
     tvSeaMark: () => mark, worldTimeScale: () => 1,
     // FERRY-CLEAR: the sea's ships, as the naval host hands them (seaClearance.js createSeaHulls - AUDIT FERRY-CLEAR F4: led by their way)
     naval: { hullAlong: (p, dx, dz, far) => { const now = shipsAt(t), next = shipsAt(t + 1); return hullAlong(p, dx, dz, far, now.flatMap((b, i) => ledHulls(b, [next[i].c[0] - b.c[0], 0, next[i].c[2] - b.c[2]]))); } },
-    seaHelmStep, seaHelmLook, seaNoWay, seaHeadingOf: headingOf, seaSquareOnly: squareOnly,   // PIN MOVED (AUDIT SEA PATHS PL-5): the no-way clock seaHelm.js's
+    seaHelmStep, seaHelmLook, seaNoWay, seaHeadingOf: headingOf, seaSquareOnly: squareOnly,
     csaJourneyHelm: { held: s.held, get row() { return s.deps.input.toggleAutorun; }, set row(v) { s.deps.input.toggleAutorun = !!v; }, press: (a) => presses.push(a) },   // FIELD BUGS 2026-10-21d PASSAGE-HANDS: the journey's taps its own
   };
   const from = WORLD.indexOf('  /** Metres along a flat direction from `p` to the first land');

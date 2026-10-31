@@ -1,5 +1,5 @@
 // @ts-check
-// AUDIT SEA PATHS O4 (2026-10-31, bible/01-Overview/audits/Audit-Sea-Paths.md) - A SAILED LEG ROUND THE KERNEL'S LAND. The
+// A SAILED LEG ROUND THE KERNEL'S LAND. The
 // planner reads one byte a pixel, and the ground the game builds bends a rock's or an isle's land a pixel past its last
 // land byte: Eltheric voyages aimed from one leg's mark to the next ran 350 to 1,210 m over it. Each sailed leg whose line
 // from the leg before (its window's middle, seaMark.js) crosses the kernel's land (world/water/kernelSea.js) has marks of

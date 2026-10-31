@@ -340,8 +340,8 @@
   {
     "name": "RW-WAYS-the-neighbours-the-lanes'",
     "file": "src/systems/naval/seaLanes.js",
-    "old": ".slice(0, p.neighbours ?? LANE_NEIGHBOURS); // RUMARE-WATER: a canal harbour's own count",
-    "new": ".slice(0, LANE_NEIGHBOURS); // RUMARE-WATER: a canal harbour's own count",
+    "old": ".slice(0, p.neighbours ?? LANE_NEIGHBOURS); // A canal harbour's own count",
+    "new": ".slice(0, LANE_NEIGHBOURS); // A canal harbour's own count",
     "tests": [
       "test/world/rumarewater.test.js"
     ]

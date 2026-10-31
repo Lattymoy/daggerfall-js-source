@@ -78,7 +78,7 @@ test('SHIP-LIFE A WAY THROUGH THE WATER: round the headland the grid finds a way
   const lake = (x, z) => coast(x, z) || Math.hypot(x, z - 800) < 60;
   const gl = createWaterGrid({ isWater: lake, hull: 2 });
   assert.equal(gl.path([0, 0], [0, 800]), null);
-  assert.ok(gl.expansions <= PATH_NODES * PATH_BUDGET_K + 1, `bounded: ${gl.expansions}`);   // PIN MOVED (AUDIT SEA PATHS O1): a way spent PATH_NODES on is sought again over coarse cells, its whole spend PATH_BUDGET_K of them
+  assert.ok(gl.expansions <= PATH_NODES * PATH_BUDGET_K + 1, `bounded: ${gl.expansions}`);
 });
 
 test('SHIP-LIFE THE ERRAND DRAWN AGAIN: off her seed and where she is - a ship lying still at a berth is moored there; a merchantman makes for a free berth, never a taken one; a navy patrols the harbour\'s approaches; a pirate lurks LURK_R off its mouth; with no harbour near, a merchantman sails out of the world over open water and a pirate keeps her own cruise; any client draws the same', () => {

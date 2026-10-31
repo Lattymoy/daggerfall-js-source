@@ -43,7 +43,6 @@ test('AUDIT SHIP-LIFE A1: A HULK ACROSS A BERTHING\'S LAST LEG - the stall count
 });
 
 test('AUDIT SHIP-LIFE A2: NO WAY THROUGH THE WATER GIVES THE ERRAND UP - a voyage round a headland the grid cannot plan leaves her to her own cruise; before, a straight line over the land sailed at the shore for good (mutants: the line kept)', () => {
-  // PIN MOVED (AUDIT SEA PATHS O1): a headland past the coarse search's reach too (its 2 km one the coarse search rounds)
   const w = (x, z) => !(x > -100 && x < 100 && z > -60000);
   const harbour = { berths: [], mouth: [600, 1000] };
   const g = createWaterGrid({ isWater: w, hull: 2 });

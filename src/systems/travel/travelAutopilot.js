@@ -214,7 +214,7 @@ export class TravelAutopilot {
     // ROAD-SMOOTH: the body's own walk - where it stood last, how far a whole frame carries it, the share of the force asked
     // - one body's, so handed on from the autopilot of the leg before (`walk`)
     this.walk = walk ?? { at: null, reach: 0, share: 1 };
-    // TRAVEL-NAV1: the arrival buffer across a pixel edge (see update). AUDIT SEA PATHS PL-1: a leg may ask it of its own
+    // The arrival buffer across a pixel edge (see update). a leg may ask it of its own
     // (initTargetRect's `edgeArrival`), and one that does not keeps this
     this.edgeBase = !!edgeArrival;
     this.edgeArrival = this.edgeBase;
@@ -261,7 +261,7 @@ export class TravelAutopilot {
     } = {},
   ) {
     this.destinationMapPixel = { x: targetPixel.x, y: targetPixel.y };
-    this.edgeArrival = edgeArrival ?? this.edgeBase ?? false; // AUDIT SEA PATHS PL-1: the leg's own, else the autopilot's
+    this.edgeArrival = edgeArrival ?? this.edgeBase ?? false; // the leg's own, else the autopilot's
     this.destinationCentre = rectCentre(targetRect);
     this.destinationWorldRect = grow
       ? {

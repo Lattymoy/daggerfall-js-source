@@ -228,7 +228,7 @@ export function stepFishing(ship, dt, ctx, { here, plan, way }) {
         const a = (k / 4) * TAU + (ship.seed % 360) * (Math.PI / 180);
         return [e.at[0] + Math.sin(a) * FISH_RING, e.at[1] + Math.cos(a) * FISH_RING];
       });
-      // AUDIT SEA PATHS AI-7: a point with her grid's room about it the water from her ground reaches, a chord it does not
+      // a point with her grid's room about it the water from her ground reaches, a chord it does not
       // carry her along sailed by the ground itself (shipLife.js ringOver, a patrol's law) - a point ashore held her
       // circling it all day
       const grid = ctx.grid?.(ship.hull);
@@ -243,7 +243,7 @@ export function stepFishing(ship, dt, ctx, { here, plan, way }) {
     }
     if (e.ringing) {
       if (dist2(here, e.path[e.i]) <= REACH_M) e.i = (e.i + 1) % e.path.length;
-      // AUDIT SEA PATHS AI-7: her sweeps out on the ring as on the way out - a smack at FISH_STROKE beat for a point to
+      // her sweeps out on the ring as on the way out - a smack at FISH_STROKE beat for a point to
       // windward and lost it, 300 m off her ground in twenty minutes
       const p = plan(e.path[e.i], FISH_STROKE);
       return ship.hull === 0 ? p : { ...p, sweeps: SWEEP_WAY, sailable: true }; // a skiff pulls her stroke as she is

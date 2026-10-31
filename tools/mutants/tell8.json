@@ -308,8 +308,8 @@
   {
     "name": "TELL8-turn-no-fx",
     "file": "src/ai/puppetBlows.js",
-    "old": "    ai._blowFx = v ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null; // TELL6e: on MY machine, where its damage lands",
-    "new": "    ai._blowFx = null; // TELL6e: on MY machine, where its damage lands",
+    "old": "    ai._blowFx = v ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null; // On MY machine, where its damage lands",
+    "new": "    ai._blowFx = null; // On MY machine, where its damage lands",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]
@@ -483,8 +483,8 @@
   {
     "name": "TELL8-brain-fx-kept",
     "file": "src/ai/tactics.js",
-    "old": "  ai._blowFx = atMe && verdict ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null; // TELL6e: what it does where its damage lands (scenes/hostCombat.js landBlowEffect)",
-    "new": "  ai._blowFx = verdict ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null; // TELL6e: what it does where its damage lands (scenes/hostCombat.js landBlowEffect)",
+    "old": "  ai._blowFx = atMe && verdict ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null; // What it does where its damage lands (scenes/hostCombat.js landBlowEffect)",
+    "new": "  ai._blowFx = verdict ? { kind: b.kind, iron: b.guard === 'iron', at: now } : null; // What it does where its damage lands (scenes/hostCombat.js landBlowEffect)",
     "tests": [
       "test/ai/tell8_online.test.js"
     ]

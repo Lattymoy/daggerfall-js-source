@@ -31,7 +31,7 @@
   {
     "name": "NET-three-neighbours",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "      near = (reached.length ? reached : by.filter((x) => x.d <= farPx)).slice(0, p.neighbours ?? LANE_NEIGHBOURS); // RUMARE-WATER: a canal harbour's own count",
+    "old": "      near = (reached.length ? reached : by.filter((x) => x.d <= farPx)).slice(0, p.neighbours ?? LANE_NEIGHBOURS); // A canal harbour's own count",
     "new": "      near = (reached.length ? reached : by.filter((x) => x.d <= farPx)).slice(\n        0,\n        (p.neighbours ?? LANE_NEIGHBOURS) + 1,\n      ); // RUMARE-WATER: a canal harbour's own count",
     "tests": [
       "test/systems/naval/sealanes.test.js"
