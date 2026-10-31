@@ -353,13 +353,13 @@
   {
     "name": "SILVER-FINDS-harvest-made-unsaid",
     "file": "server-account/src/professions.js",
-    "old": "material: key2, gem, extra, carry }, rid, nowS, { marks: !!find });",
-    "new": "material: key2, gem, extra, carry }, rid, nowS, { marks: false });",
+    "old": "material: key2, gem, extra, carry, extraStores: butcheryStores }, rid, nowS, { marks: !!find });",
+    "new": "material: key2, gem, extra, carry, extraStores: butcheryStores }, rid, nowS, { marks: false });",
     "why": "a harvest's first answer says no find",
     "tests": [
       "test/net/silverfinds_service.test.js"
     ],
-    "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched. AUDIT GATHER-SPEED (PIN MOVED): re-aimed by content."
+    "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched. AUDIT GATHER-SPEED (PIN MOVED): re-aimed by content. BUTCHER-STORES (PIN MOVED): re-aimed by content."
   },
   {
     "name": "SILVER-FINDS-route-unlisted",

@@ -60,22 +60,22 @@
   {
     "name": "AUDIT32-S3-second-find-all-or-nothing",
     "file": "server-account/src/professions.js",
-    "old": "CASE WHEN ${storedExtra} < ?11 THEN ?18 END",
-    "new": "CASE WHEN ${storedExtra} + ?22 <= ?11 THEN ?18 END",
+    "old": "CASE WHEN ${storedExtra} < ?26 THEN ?18 END",
+    "new": "CASE WHEN ${storedExtra} + ?22 <= ?26 THEN ?18 END",
     "tests": [
       "test/net/audit32_service.test.js"
     ],
-    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): ?18 and ?22 now."
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): ?18 and ?22 now. BUTCHER-STORES (PIN MOVED): ?26, the second find's own room, re-aimed by content."
   },
   {
     "name": "AUDIT32-S3-second-find-uncut",
     "file": "server-account/src/professions.js",
-    "old": "CASE WHEN ${storedExtra} < ?11 THEN MIN(?22, ?11 - ${storedExtra}) ELSE 1 END",
+    "old": "CASE WHEN ${storedExtra} < ?26 THEN MIN(?22, ?26 - ${storedExtra}) ELSE 1 END",
     "new": "?22",
     "tests": [
       "test/net/audit32_service.test.js"
     ],
-    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): ?22 now."
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): ?22 now. BUTCHER-STORES (PIN MOVED): ?26, the second find's own room, re-aimed by content."
   },
   {
     "name": "AUDIT32-S4-foe-after-the-hour",

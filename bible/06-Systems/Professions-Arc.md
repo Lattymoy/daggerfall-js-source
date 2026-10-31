@@ -3266,6 +3266,8 @@ Mac: **"Do it"** (2026-09-29, PROF7 after the VEIN-NEED fix: "What was next on t
   FISH_BY_TYPE's Slaughterfish gives **Raw Fish** (`food:fish`, withdrawn as 5.2's Fishing will be: C&C's Raw Fish
   while C&C is on, else Foraging's Fish); the Harpy, the Dreugh and the Dragonling none, as C&C gives their bodies none.
   Raw Meat withdraws as C&C's either way. The butchery rides the day's harvests' `extra` with its count (`extra_qty`).
+- **BUTCHER-STORES** (2026-10-31, section 60): the Materials Bag had carried the butchery into the bag or the pack;
+  it lands in the Stores again, as decided here.
 - **A Butcher's meat "spoils half as fast"** (3.3). DECIDED: the Stores keep no unit's maker, so **meat a Butcher
   withdraws is a Butcher's** - marked `slowRot` (a declared item field, riding the save), which C&C's day of rot rolls
   every other day at half its days (`survival/food.js` rotFoodDay): the same spoiling at half the pace.
@@ -6804,6 +6806,29 @@ Pins: `test/net/smithrri.test.js`, `tools/mutants/smithrri.json`. PIN MOVED on p
 the shares, the pace) and every test that pins a share (`fb1015f_firstcraft`, `fb1018f_craftlimit`, `prof4/9/11/12`,
 `audit32_service`, `clothgems_*`, `potiondoor`). `affixlines_reforge` runs with the mods off, so it leaves the two out.
 The firstbudget mutants were re-aimed by content.
+
+## 60. BUTCHER-STORES - a body's meat into the Stores (BUILT 2026-10-31)
+
+Sammy, Discord #feature-feedback: **"The game should not add meat to your inventory when you skin animals."** FOUND:
+section 29 decided one Raw Meat into the Stores. BAG1 then carried every online harvest (`carry: true`), and the
+service wrote the butchery, the harvest's `extra`, to `prof_carried` with the hide. The client minted it into the
+Materials Bag, else the pack (`profBook.js` mintHarvest). A skip on the client alone was not safe: the service would
+still count the meat carried.
+
+**Built, on the service** (`professions.js` harvestNode): a carried body's butchery goes to `prof_stores`, its room
+the Stores', for a client that asks it so (`butcheryStores: true`). The row says so (`node_harvests.extra_stores`,
+migration 0201), and the answer then names no `extraCarried`, the first time or asked again. Scoped to bodies: a tree's
+Resin and a haul's second find keep the bag. **On the client**: every carried harvest asks `butcheryStores`, and a
+second find is minted only where the answer counts it carried (`bagLaw.js` `extraStored`). The line says "+1 Bear Hide
+and a Big Tooth to your bag, and Raw Meat to your Stores"; the meat's haul card reads Stores.
+
+**Both sides sound.** An older client asks no `butcheryStores`, so its meat is carried and minted as before. A new
+client against an older service gets `extraCarried`, so it mints that meat. A harvest the older service made and the
+new one answers again keeps its row's word. A Butcher's meat still spoils half as fast when it is withdrawn (29).
+
+ACCOUNT_VERSION acct231 (SMITH-RRI's recipes, section 59, in the same release); migration 0201, applied by the deploy
+before the Worker; no relay change. Pins: `test/net/butcherstores.test.js`, `tools/mutants/butcherstores.json`; the
+version pins moved to acct231.
 
 ## Appendix A - a day of a gatherer
 

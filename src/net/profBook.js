@@ -56,7 +56,7 @@
 // the pins drive it without a network.
 // ═══════════════════════════════════════════════════════════════════
 import { HARVEST_LATE_S, HIGH_HIDES_PER_DAY, WITHDRAW_MAX, smeltRecipe, trackOf, craftLimitOf, specTrialShown, workEmbers } from './professionLaw.js';   // PROF7: the day's rare hides (CAP-OFF: no day's cap); BAG1: a work's inputs; CRAFT-LIMIT-SAID: the crafter's limit over a track; DAEDRIC-SMELT: a work's embers
-import { CARRIED_MAX, DEPOSIT_MAX, LOOSE_ORIGIN, carriedUsable, carriedWorkable, carriedTotal, clampCarried } from './bagLaw.js';   // BAG1: what a character carries, counted
+import { CARRIED_MAX, DEPOSIT_MAX, LOOSE_ORIGIN, carriedUsable, carriedWorkable, carriedTotal, clampCarried, extraStored } from './bagLaw.js';   // BAG1: what a character carries, counted; BUTCHER-STORES: a body's meat the Stores'
 import { recipeById, recipeInputs, recipeOpen, counterMade } from './recipeLaw.js';   // BAG1: a craft's inputs, moved in from the bag first; AUDIT CRAFT1: whether the rank opens it
 import { potionById, brewSpends } from './alchemyLaw.js';   // BAG1: a brew's
 import { chainPlan, chainNeeded, storesRoom } from './chainLaw.js';   // CRAFT1: the works a craft's inputs want first
@@ -1225,7 +1225,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
       ...(h.jungle === true ? { jungle: true } : {}),   // AUDIT TESA II J5: its pixel past the Bay a jungle zone's (nodeLaw.js jungleWoods - witnessed)
       ...(h.foe === undefined ? {} : { foe: h.foe }),   // PROF7: the foe a body is (PROF0 6: the client's claim)
       ...(typeof h.watch === 'string' ? { watch: h.watch } : {}),   // PROF2b: a Motherlode's - the relay's Watch receipt for its pixel
-      ...(h.carry === true ? { carry: true, ...heldBody(h) } : {}),   // BAG1: into the bag or the pack
+      ...(h.carry === true ? { carry: true, butcheryStores: true, ...heldBody(h) } : {}),   // BAG1: into the bag or the pack; BUTCHER-STORES: a body's meat to the Stores
     };
     let r;
     sending.add(h.rid);
@@ -1313,7 +1313,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
     };
     add(d.material, Number(d.qty) || 0);
     if (d.gem) add(d.gem, 1);
-    if (d.extra) add(d.extra, Number(d.extraQty) || 1);
+    if (d.extra && !extraStored(d)) add(d.extra, Number(d.extraQty) || 1);   // BUTCHER-STORES: the Stores' meat is never minted
     return out;
   }
   function drop(id, key) {

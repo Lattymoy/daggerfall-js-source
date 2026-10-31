@@ -77,6 +77,8 @@ A carrying client's harvest (`carry: true`) is the bag's and the pack's - never 
   refused before it starts, as the Foraging mod refuses one when fully encumbered; what a started act yields is never
   weighed again.
 - The service keeps the older door: a client that does not say `carry` still harvests into the Stores, as before.
+- **A body's butchery is the Stores'** (BUTCHER-STORES, section 17): the hide and its part are carried, the Raw Meat
+  is not.
 - A Motherlode's strike is the same (`motherlodes.js`).
 
 ## 4. The Stores, in town
@@ -418,3 +420,13 @@ A press now waits on one checkpoint and its asks, however many materials it move
 have one home, the page's `BAG_PAGE_WORDS.kept`. Pinned by `test/systems/professions/fb1020c_onesave.test.js`;
 `tools/mutants/fb1020c_onesave.json`. Pins moved: `bag1_client.test.js` (D3, the refusal's source line, the providers),
 `fb1009c_uncounted.test.js` (Put in and Put everything in, the host's wiring).
+
+## 17. From play - BUTCHER-STORES (FIELD FEEDBACK 2026-10-31)
+
+Sammy: "The game should not add meat to your inventory when you skin animals." Section 3 carried every unit of a
+harvest, so a body's Raw Meat went into the bag or the pack beside its hide, where the Professions arc had decided the
+Stores (its section 29). Now a carrying client asks `butcheryStores`, the service writes the meat to the Stores and
+answers no carried count for it, and the client mints only what the answer counts carried (`bagLaw.js` `extraStored`).
+An older client, or an older service, keeps the carried path whole, so no unit is minted twice or counted for nothing.
+A tree's Resin is still carried. The record is the Professions arc's section 60; pinned by
+`test/net/butcherstores.test.js`, `tools/mutants/butcherstores.json`.

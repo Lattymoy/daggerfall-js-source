@@ -678,12 +678,12 @@
   {
     "name": "PROF4-host-resin-unsaid",
     "file": "src/scenes/gatherHost.js",
-    "old": "  if (d.extra) { const n = Number(d.extraQty) || 1; goods.push(`${n > 1 ? `${n} ` : ''}${materialCountLabel(d.extra, n)}`); }\n",
+    "old": "  if (extra && !stored) goods.push(extra);\n",
     "new": "",
     "tests": [
       "test/systems/prof4_client.test.js"
     ],
-    "note": "GATHER-SAID (PIN MOVED): the Resin said in the goods' one line (gatherHost.js storesLine), re-aimed by content."
+    "note": "GATHER-SAID (PIN MOVED): the Resin said in the goods' one line (gatherHost.js storesLine), re-aimed by content. BUTCHER-STORES (PIN MOVED): re-aimed by content."
   },
   {
     "name": "PROF4-furniture-worth-flat",
