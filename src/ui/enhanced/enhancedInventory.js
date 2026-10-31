@@ -156,7 +156,9 @@ import { validSigil } from '../../systems/sigil/sigil.js';   // SIGIL-UI: the ti
 import { setCard, setStrip, markSetFrame } from '../setCard.js';   // SET5: a set piece's set on its card, the worn sets on the doll's column, a set piece's rune
 import { setIdOf, setById, setLines, setSigilLines } from '../../systems/sigil/sigilSets.js';   // CARD-FIT U4/U10: a set piece and its sigil in a line each
 import { isLocked, toggleLocked, lockRefuses, lockedText, LOCKED_LINE } from '../../systems/item/itemLock.js';   // LOCK1
-import { isJunk, junkable, toggleJunk, lockLiftsJunk, JUNK_LINE } from '../../systems/item/itemJunk.js';   // LOOT18
+import { isJunk, toggleJunk, lockLiftsJunk, JUNK_LINE } from '../../systems/item/itemJunk.js';   // LOOT18
+import { canJunk, isJunkNow, isAlwaysJunk, toggleAlwaysJunk } from '../../systems/item/junkRules.js';   // JUNK-RULES: any piece the pack may let go of, and Always junk
+import { buildJunkBatchPanel } from './junkBatchPanel.js';   // BATCH-JUNK: a category marked in one press
 import { isBound, boundLine, boundRefusesPut, boundText, isPackOnly, packOnlyText } from '../../systems/item/itemBound.js';   // SS1: a bound piece says so on its card   // SS3: and goes nowhere but the wagon and the player's own storage
 import { isStolen, stolenLine } from '../../systems/stolenGoods.js';   // STOLEN-GOODS: a stolen piece says so on its card
 import { letterRefusesPut, letterPutText } from '../../systems/peerWord.js';   // HACKED-GOLD: online a letter of credit goes nowhere a peer's word could hand it on
@@ -2805,7 +2807,7 @@ export function markItemFrame(node, item) {
   if (validSigil(item?.sigil)) node.dataset.sigil = '';   // every frame here is a fresh node per render - nothing to take off
   markSetFrame(node, item);   // SET5: a set piece's rune wears its set's colour (ui/setCard.js)
   if (isLocked(item)) node.dataset.locked = '';   // LOCK1: the padlock in the picture's corner (the sheet's own)
-  if (isJunk(item)) node.dataset.junk = '';   // LOOT18: a junk piece's picture is dimmed (the sheet's own)
+  if (isJunkNow(item)) node.dataset.junk = '';   // LOOT18: a junk piece's picture is dimmed (the sheet's own); JUNK-RULES: and one whose name is Always junk
   markSocketFrame(node, item);   // GEM3: a socket's pip a socket in the top edge; a graded gem's ring (ui/socketWells.js)
   return node;
 }
@@ -3499,7 +3501,7 @@ function infoCard(picked, side, ready = render, { body = false, own = true } = {
   { const sb = sigilCard(picked); if (sb) into.append(sb); }
   { const set = setCard(picked, deps.entity, itemLongName); if (set) into.append(set); }   // SET5: its set - the places worn, the stage, its tiers (ui/setCard.js)
   if (isLocked(picked)) into.append(el('p', 'lockline', LOCKED_LINE));   // LOCK1
-  if (isJunk(picked)) into.append(el('p', 'boundline junkline', JUNK_LINE));   // LOOT18: the lock's line style, without its padlock
+  if (isJunkNow(picked)) into.append(el('p', 'boundline junkline', isAlwaysJunk(picked) ? t('inventory.junkAlways.line', 'Always junk: every one of these you find is junk, and Sell junk puts it on the counter.') : JUNK_LINE));   // LOOT18: the lock's line style, without its padlock; JUNK-RULES: and the always-junk one
   const bline = boundLine(picked);   // AUDIT AUTO-HOLD: a piece the realm locked says so in its own words
   if (bline) into.append(el('p', 'boundline', bline));   // SS1: the lock's line style, without its padlock
   if (isStolen(picked)) into.append(el('p', 'boundline', stolenLine()));   // STOLEN-GOODS: what a counter and a court do with it
@@ -3694,10 +3696,17 @@ function itemActs(picked, side, { qty = true } = {}) {
   }
   // LOOT18 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 10): JUNK, beside the lock - gear in the pack, not
   // worn; a shop's Sell junk puts every such piece on its counter, and quick loot's take-all leaves one where it lies
-  if (side === 'local' && !line.equipped && junkable(picked)) {
-    const j = el('button', 'act', isJunk(picked) ? 'Not junk' : 'Junk');
-    j.onclick = () => { toggleJunk(picked); notice = null; render(); };
-    acts.append(j);
+  // JUNK-RULES: any piece the pack may let go of (not only gear - a book, a potion, an ingredient, a misc item), and ALWAYS JUNK: this
+  // name is junk for every copy, now and when it is looted next. A name that is always junk offers its way out alone
+  if (side === 'local' && !line.equipped && canJunk(picked)) {
+    if (!isAlwaysJunk(picked)) {
+      const j = el('button', 'act', isJunk(picked) ? 'Not junk' : 'Junk');
+      j.onclick = () => { toggleJunk(picked); notice = null; render(); };
+      acts.append(j);
+    }
+    const aj = el('button', 'act', isAlwaysJunk(picked) ? t('inventory.junkAlways.stop', 'Stop always junk') : t('inventory.junkAlways.start', 'Always junk'));
+    aj.onclick = () => { toggleAlwaysJunk(picked); notice = null; render(); };
+    acts.append(aj);
   }
   // SS5 (Mac: "The ability to dismantle in the inventory and recieve back sigil stones", the Broker's wares alone): a
   // ware in the pack is DISMANTLED for a share of its price (systems/sigil/sigilBroker.js), asked first - it is gone for good.
@@ -3999,6 +4008,24 @@ function askSalvageMany() {
     e.preventDefault(); e.stopPropagation();
     if (answer === 'yes') ok.onclick({ detail: 1, stopPropagation() {} }); else closeDismantle();
   };
+  const laid = setTimeout(() => { document.addEventListener('pointerdown', outside, true); document.addEventListener('keydown', keys, true); }, 0);
+  dismantleOff = () => { clearTimeout(laid); document.removeEventListener('pointerdown', outside, true); document.removeEventListener('keydown', keys, true); };
+}
+/** BATCH-JUNK: the panel over the pack (ui/enhanced/junkBatchPanel.js) - the dismantle window's stone and its way out: Close,
+ *  Escape or a press outside leave every mark as it is. */
+function askBatchJunk() {
+  hideTip(); closeMenu(); closeInfo(); closeDismantle();
+  const panel = buildJunkBatchPanel({
+    items: () => deps.items?.() ?? [],
+    rarityOn: lootRarityOn(),
+    onDone: (message) => { closeDismantle(); if (message) { notice = message; refresh(); render(); } },
+  });
+  dismantleEl = panel.el;
+  document.body.append(dismantleEl);
+  panel.focus();
+  const box = dismantleEl;
+  const outside = (e) => { if (e.target === box || !box.contains(e.target)) { e.stopPropagation(); closeDismantle(); } };
+  const keys = (e) => { if (e.key !== 'Escape') return; e.preventDefault(); e.stopPropagation(); closeDismantle(); };
   const laid = setTimeout(() => { document.addEventListener('pointerdown', outside, true); document.addEventListener('keydown', keys, true); }, 0);
   dismantleOff = () => { clearTimeout(laid); document.removeEventListener('pointerdown', outside, true); document.removeEventListener('keydown', keys, true); };
 }
@@ -4339,6 +4366,11 @@ function render() {
         head.append(many);
       }
     }
+    // BATCH-JUNK: a category marked junk in one press - beside Batch salvage, whether or not a piece would break
+    const junkMany = el('button', 'act junkbtn', t('inventory.junkBatch.label', 'Batch junk'));
+    junkMany.type = 'button';
+    junkMany.onclick = () => askBatchJunk();
+    head.append(junkMany);
     const showDoll = getPref('packPhoneDoll') === true;
     if (showDoll) shell.classList.add('showdoll');
     const dollBtn = el('button', 'act dolltoggle', showDoll ? 'Hide body' : 'Body');

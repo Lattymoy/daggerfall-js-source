@@ -74,8 +74,8 @@
   {
     "name": "LOOT18-a-worn-piece-junked",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  if (side === 'local' && !line.equipped && junkable(picked)) {",
-    "new": "  if (side === 'local' && junkable(picked)) {",
+    "old": "  if (side === 'local' && !line.equipped && canJunk(picked)) {",
+    "new": "  if (side === 'local' && canJunk(picked)) {",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]
@@ -83,7 +83,7 @@
   {
     "name": "LOOT18-the-picture-unmarked",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  if (isJunk(item)) node.dataset.junk = '';   // LOOT18: a junk piece's picture is dimmed (the sheet's own)\n",
+    "old": "  if (isJunkNow(item)) node.dataset.junk = '';",
     "new": "",
     "tests": [
       "test/systems/loot18_seen.test.js"
@@ -92,7 +92,7 @@
   {
     "name": "LOOT18-the-card-unsaid",
     "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  if (isJunk(picked)) into.append(el('p', 'boundline junkline', JUNK_LINE));   // LOOT18: the lock's line style, without its padlock\n",
+    "old": "  if (isJunkNow(picked)) into.append(el('p', 'boundline junkline', isAlwaysJunk(picked) ? t('inventory.junkAlways.line', 'Always junk: every one of these you find is junk, and Sell junk puts it on the counter.') : JUNK_LINE));",
     "new": "",
     "tests": [
       "test/systems/loot18_seen.test.js"
@@ -101,8 +101,8 @@
   {
     "name": "LOOT18-the-counter-at-a-buy",
     "file": "src/ui/enhanced/enhancedTrade.js",
-    "old": "  if (!selling()) return [];\n  const equipped = deps.isEquipped ?? (() => false);\n  const held = remoteItems();\n  return (deps.packItems?.() ?? []).filter((it) => isJunk(it)",
-    "new": "  const equipped = deps.isEquipped ?? (() => false);\n  const held = remoteItems();\n  return (deps.packItems?.() ?? []).filter((it) => isJunk(it)",
+    "old": "  if (!selling()) return [];\n  const equipped = deps.isEquipped ?? (() => false);\n  const held = remoteItems();\n  return (deps.packItems?.() ?? []).filter((it) => isJunkNow(it)",
+    "new": "  const equipped = deps.isEquipped ?? (() => false);\n  const held = remoteItems();\n  return (deps.packItems?.() ?? []).filter((it) => isJunkNow(it)",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LOOT18-a-worn-piece-sold",
     "file": "src/ui/enhanced/enhancedTrade.js",
-    "old": "filter((it) => isJunk(it) && !equipped(it) && !held.includes(it) && !saleRefused(it)",
-    "new": "filter((it) => isJunk(it) && !held.includes(it) && !saleRefused(it)",
+    "old": "filter((it) => isJunkNow(it) && !equipped(it) && !held.includes(it) && !saleRefused(it)",
+    "new": "filter((it) => isJunkNow(it) && !held.includes(it) && !saleRefused(it)",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "LOOT18-a-bound-piece-sold",
     "file": "src/ui/enhanced/enhancedTrade.js",
-    "old": "filter((it) => isJunk(it) && !equipped(it) && !held.includes(it) && !saleRefused(it)",
-    "new": "filter((it) => isJunk(it) && !equipped(it) && !held.includes(it)",
+    "old": "filter((it) => isJunkNow(it) && !equipped(it) && !held.includes(it) && !saleRefused(it)",
+    "new": "filter((it) => isJunkNow(it) && !equipped(it) && !held.includes(it)",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "LOOT18-the-part-magic-first",
     "file": "src/systems/features.js",
-    "old": "      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'quickLootTier', initial: 'all', online: 'player' })]),",
-    "new": "      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'quickLootTier', initial: 'magic', online: 'player' })]),",
+    "old": "      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'quickLootTier', initial: 'all', online: 'player' }),",
+    "new": "      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'quickLootTier', initial: 'magic', online: 'player' }),",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]

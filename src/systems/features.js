@@ -819,8 +819,10 @@ export const FEATURES = Object.freeze([
     control: Object.freeze({
       store: 'prefs', key: 'quickLoot', initial: true, online: 'player',   // the player's own: it stands nothing, rolls nothing and is not on the wire - the same category chatHidden is (OL1)
       // LOOT18 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 10): the take-all's tier - a part, the player's own
-      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'quickLootTier', initial: 'all', online: 'player' })]),
-      parts: Object.freeze([Object.freeze({ key: 'quickLootTier', label: 'Take gear', tiers: Object.freeze([['all', 'All'], ['magic', 'Magic+'], ['rare', 'Rare+']]) })]),
+      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'quickLootTier', initial: 'all', online: 'player' }),
+        Object.freeze({ store: 'prefs', key: 'junkAlways', initial: Object.freeze([]), online: 'player' })]),   // JUNK-RULES: the names always junk (systems/item/junkRules.js)
+      parts: Object.freeze([Object.freeze({ key: 'quickLootTier', label: 'Take gear', tiers: Object.freeze([['all', 'All'], ['magic', 'Magic+'], ['rare', 'Rare+']]) }),
+        Object.freeze({ key: 'junkAlways', get label() { return t('features.quickLoot.junkAlways', 'Always junk'); }, get group() { return t('features.quickLoot.junkAlwaysGroup', 'Always junk (set from an item\'s menu)'); }, list: 'names' })]),   // a names list part: entries only - an item's menu adds them
     }),
   }),
   // LR1 (2026-09-14): LOOT RARITY - the port's own item ladder

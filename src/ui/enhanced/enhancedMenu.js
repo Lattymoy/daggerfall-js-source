@@ -139,6 +139,7 @@ import { exportSavesZip, collectSlots, importSlots, entriesFromFiles, slotPathOf
 import { appStorage, tabStorage } from '../../systems/appStorage.js';   // SP1: the store under this build - the browser's on the site, the file store in the app   // SAV4: the slot store; SLOTS1: every slot
 import { uiSkin, SKIN_NAMES, isEnhanced } from '../../systems/uiSkin.js';   // FD1: which boot rail
 import { getPref, setPref, isOpen, setOpen, PREF_DEFAULTS } from '../../systems/uiPrefs.js';
+import { alwaysJunkNames, forgetAlwaysJunk } from '../../systems/item/junkRules.js';   // JUNK-RULES: the always-junk names, in the drawer
 import { EG_DANGER_PALETTES, EG_DANGER_PALETTE_KEYS } from '../eliteGates/egAccess.js';   // EG-G1: the Spire's danger palettes, named once
 import { TOUCH_BUTTON_SLOTS, touchButtonSlots, nextTouchButton, touchButtonChoices } from '../touch/touchButtons.js';   // TOUCH-BUTTONS: the corner's three slots
 import { DEFAULT_SERVER } from '../../net/online.js';   // ONLINE1: the relay this port hosts, the field's placeholder   // R7: the port's own switches; SO1: the folded tiers' memory
@@ -3917,12 +3918,29 @@ function openControls() {
   go('settings');
 }
 
+/** JUNK-RULES: a list of names the player adds from an item's menu - entries and their removes alone (nothing to type here). */
+function namesListPart(pt) {
+  const box = el('div', 'ft-names');
+  if (pt.group) box.append(el('div', 'ft-drawer-label', pt.group));
+  const names = alwaysJunkNames();
+  if (!names.length) box.append(el('div', 'ft-names-entry', t('menu.features.junkNone', 'Nothing yet. Open an item\'s menu in your pack and press Always junk.')));
+  for (const n of names) {
+    const line = el('div', 'ft-names-entry');
+    const rm = el('button', 'ft-mchip', '\u00d7');
+    rm.type = 'button'; rm.title = t('menu.features.namesRemove', 'Remove');
+    rm.onclick = () => { forgetAlwaysJunk(n); render(); };
+    line.append(el('span', 'ft-names-text', n), rm);
+    box.append(line);
+  }
+  return box;
+}
 /** FT18: what a condensed row's tile opens - its switch parts as chips (the modules' shape), its choice parts as
  *  bars (the tile's own shape). Each writes its own pref, as the row it came from did. */
 function featurePartsDrawer(parts) {
   const d = el('div', 'ft-tile-drawer');
   d.onclick = (e) => e.stopPropagation();
-  const chips = parts.filter((pt) => !pt.tiers);
+  for (const pt of parts.filter((x) => x.list === 'names')) d.append(namesListPart(pt));
+  const chips = parts.filter((pt) => !pt.tiers && !pt.list);
   if (chips.length) {
     const box = el('div', 'ft-chipset');
     for (const pt of chips) {

@@ -13899,6 +13899,16 @@
   "tr": "a2f8e4612c39",
   "by": "claude-in-session"
  },
+ "features.quickLoot.junkAlways": {
+  "en": "cc4afd0c76ba",
+  "tr": "b065155793df",
+  "by": "claude-in-session"
+ },
+ "features.quickLoot.junkAlwaysGroup": {
+  "en": "a4658aaa9125",
+  "tr": "2cab225aed26",
+  "by": "claude-in-session"
+ },
  "features.quickLoot.note": {
   "en": "b1f409208ec7",
   "tr": "1df14ace32dd",
@@ -18149,6 +18159,141 @@
   "tr": "a315d2ef9f36",
   "by": "claude-in-session"
  },
+ "inventory.junkAlways.line": {
+  "en": "1a94c5efe3b9",
+  "tr": "14e190a5987d",
+  "by": "claude-in-session"
+ },
+ "inventory.junkAlways.start": {
+  "en": "cc4afd0c76ba",
+  "tr": "b065155793df",
+  "by": "claude-in-session"
+ },
+ "inventory.junkAlways.stop": {
+  "en": "593d39e746a6",
+  "tr": "d7df02725e53",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.all": {
+  "en": "6a72085653e4",
+  "tr": "8807d7ac126e",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.already": {
+  "en": "a7043f60efaa",
+  "tr": "b41cb5753669",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.careful": {
+  "en": "1ef580af8a53",
+  "tr": "c700461282a2",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.clear": {
+  "en": "28ca249b5793",
+  "tr": "79b3e0716394",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.cleared": {
+  "en": "125d898ec458",
+  "tr": "caf80bec3345",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.close": {
+  "en": "bbfa773e5a63",
+  "tr": "ae2883a526af",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.done": {
+  "en": "c19ef5c014cc",
+  "tr": "1c4521b0fef8",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.hint": {
+  "en": "3ea0a5dcb40b",
+  "tr": "a7727bd73daa",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.label": {
+  "en": "0a5d6a3b408b",
+  "tr": "5f1d2a8d0854",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.mark": {
+  "en": "af424a6aff5c",
+  "tr": "e8832365c6a6",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.none": {
+  "en": "6eef6648406c",
+  "tr": "854c34ee7f44",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.nothing": {
+  "en": "1ae9839f0c8d",
+  "tr": "577d476b25cb",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.pages": {
+  "en": "6ccb60071be8",
+  "tr": "358210386a4f",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.passed": {
+  "en": "9940954bb8a2",
+  "tr": "fd25c34c430a",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.rarities": {
+  "en": "5d192e2a8cc0",
+  "tr": "93576f88db3a",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.toMark": {
+  "en": "8cb3a2f7c331",
+  "tr": "151618ad0d3d",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.why.bound": {
+  "en": "1dc3afe88659",
+  "tr": "6a8909571de5",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.why.locked": {
+  "en": "4c817a3eaf07",
+  "tr": "4dfb659d08df",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.why.other": {
+  "en": "51ca1fb979dd",
+  "tr": "ba541c5d03ee",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.why.quest": {
+  "en": "aa8669c4c5e9",
+  "tr": "b9879b3647ae",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.why.worn": {
+  "en": "94c6d9441859",
+  "tr": "c1e7e19524c5",
+  "by": "claude-in-session"
+ },
+ "inventory.junkRules.gold": {
+  "en": "93d604f56a33",
+  "tr": "b2e8ee8771b9",
+  "by": "claude-in-session"
+ },
+ "inventory.junkRules.notItem": {
+  "en": "85e19dd228d3",
+  "tr": "b4eabe2101fb",
+  "by": "claude-in-session"
+ },
+ "inventory.junkRules.spellbook": {
+  "en": "1013fff657b4",
+  "tr": "db5a3eb4c3d0",
+  "by": "claude-in-session"
+ },
  "inventory.quest.item": {
   "en": "18d4da5c6380",
   "tr": "a2dcb9911a4a",
@@ -21974,6 +22119,11 @@
   "tr": "3139c77c23ab",
   "by": "claude-in-session"
  },
+ "menu.features.junkNone": {
+  "en": "aab952cea892",
+  "tr": "1e6ec7656ab2",
+  "by": "claude-in-session"
+ },
  "menu.features.keys": {
   "en": "242c24f91695",
   "tr": "e3f6bc5d65b9",
@@ -22002,6 +22152,11 @@
  "menu.features.modulesLabel": {
   "en": "04e9462c0ff0",
   "tr": "35129bcb2beb",
+  "by": "claude-in-session"
+ },
+ "menu.features.namesRemove": {
+  "en": "e963907dac5c",
+  "tr": "744ed93af119",
   "by": "claude-in-session"
  },
  "menu.features.onlineLock": {
