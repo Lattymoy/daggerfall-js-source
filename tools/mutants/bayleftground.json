@@ -446,8 +446,8 @@
   {
     "name": "BAY-LEFT-GROUND-D1-host-in-flight-book-dropped",
     "file": "src/scenes/landformSitesHost.js",
-    "old": "    for (const k of host.inFlight.keys()) { const [x, y] = k.split(',').map(Number); if (reach.has(worldPixelKey(x, y))) stale.add(k); }\n",
-    "new": "",
+    "old": "    for (const k of host.inFlight.keys()) {\n      const [x, y] = k.split(',').map(Number);\n      if (reach.has(worldPixelKey(x, y))) stale.add(k);\n    }\n    if (again.length) host.swap.rebuild(again);",
+    "new": "    if (again.length) host.swap.rebuild(again);",
     "tests": [
       "test/world/terrain/bayleftground_sites.test.js"
     ]
@@ -455,8 +455,8 @@
   {
     "name": "BAY-LEFT-GROUND-D1-host-owed-built-twice",
     "file": "src/scenes/landformSitesHost.js",
-    "old": "if (reach.has(worldPixelKey(p.px, p.py)) && !host.swap.owes(k)) again.push",
-    "new": "if (reach.has(worldPixelKey(p.px, p.py))) again.push",
+    "old": "    for (const [k, p] of host.built)\n      if (reach.has(worldPixelKey(p.px, p.py)) && !host.swap.owes(k)) again.push({ px: p.px, py: p.py });",
+    "new": "    for (const [k, p] of host.built) if (reach.has(worldPixelKey(p.px, p.py))) again.push({ px: p.px, py: p.py });",
     "tests": [
       "test/world/terrain/bayleftground_sites.test.js"
     ]
@@ -464,8 +464,8 @@
   {
     "name": "BAY-LEFT-GROUND-D1-host-generation-stuck",
     "file": "src/scenes/landformSitesHost.js",
-    "old": "    generation++;\n",
-    "new": "",
+    "old": "    generation++;\n    terrainGen.setLandformBeyond(next);",
+    "new": "    terrainGen.setLandformBeyond(next);",
     "tests": [
       "test/world/terrain/bayleftground_sites.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "BAY-LEFT-GROUND-D1-host-table-not-posted",
     "file": "src/scenes/landformSitesHost.js",
-    "old": "    terrainGen.setLandformBeyond(next);\n",
-    "new": "",
+    "old": "    terrainGen.setLandformBeyond(next);\n    if (first) return true; // as the world mounts: no pixel stands yet (nor its book - the host's stream is made below it)",
+    "new": "    if (first) return true; // as the world mounts: no pixel stands yet (nor its book - the host's stream is made below it)",
     "tests": [
       "test/world/terrain/bayleftground_sites.test.js"
     ]
@@ -482,8 +482,8 @@
   {
     "name": "BAY-LEFT-GROUND-D1-host-the-row-off-ignored",
     "file": "src/scenes/landformSitesHost.js",
-    "old": "    if (!landform) return false;\n",
-    "new": "",
+    "old": "    if (!landform) return false;\n    const s = stampNow();",
+    "new": "    const s = stampNow();",
     "tests": [
       "test/world/terrain/bayleftground_sites.test.js"
     ]

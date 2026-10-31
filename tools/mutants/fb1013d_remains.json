@@ -11,8 +11,8 @@
   {
     "name": "FB1013d-REMAINS-STAND-the-body-not-the-record-s-list",
     "file": "src/scenes/legacyRemainsStand.js",
-    "old": "        const pile = p.seedPile(r.items, feet, icon, null, pixelKeyOf(r.place), { unsaved: true, owner: REMAINS_STAND_OWNER });",
-    "new": "        const pile = p.seedPile([...r.items], feet, icon, null, pixelKeyOf(r.place), { unsaved: true, owner: REMAINS_STAND_OWNER });",
+    "old": "        const pile = p.seedPile(r.items, feet, icon, null, pixelKeyOf(r.place), {",
+    "new": "        const pile = p.seedPile([...r.items], feet, icon, null, pixelKeyOf(r.place), {",
     "tests": [
       "test/systems/fb1013d_remains.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "FB1013d-REMAINS-STAND-saved",
     "file": "src/scenes/legacyRemainsStand.js",
-    "old": "        const pile = p.seedPile(r.items, feet, icon, null, pixelKeyOf(r.place), { unsaved: true, owner: REMAINS_STAND_OWNER });",
+    "old": "        const pile = p.seedPile(r.items, feet, icon, null, pixelKeyOf(r.place), {\n          unsaved: true,\n          owner: REMAINS_STAND_OWNER,\n        });",
     "new": "        const pile = p.seedPile(r.items, feet, icon, null, pixelKeyOf(r.place), { owner: REMAINS_STAND_OWNER });",
     "tests": [
       "test/systems/fb1013d_remains.test.js"
@@ -74,8 +74,8 @@
   {
     "name": "FB1013d-REMAINS-STAND-unnamed",
     "file": "src/scenes/legacyRemainsStand.js",
-    "old": "        pile.label = label(r);",
-    "new": "        pile.label = null;",
+    "old": "        pile.label = label(r); // the plaque's name for it (droppedLoot labelFor)",
+    "new": "        pile.label = null; // the plaque's name for it (droppedLoot labelFor)",
     "tests": [
       "test/systems/fb1013d_remains.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "FB1013d-REMAINS-STAND-no-line",
     "file": "src/scenes/legacyRemainsStand.js",
-    "old": "        pile.mark = REMAINS_MARK;",
-    "new": "        pile.mark = null;",
+    "old": "        pile.mark = REMAINS_MARK; // its line of light (droppedLoot lootFinds)",
+    "new": "        pile.mark = null; // its line of light (droppedLoot lootFinds)",
     "tests": [
       "test/systems/fb1013d_remains.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "FB1013d-REMAINS-STAND-a-find-in-the-remains",
     "file": "src/scenes/legacyRemainsStand.js",
-    "old": "        pile.noFind = true;",
-    "new": "        pile.noFind = false;",
+    "old": "        pile.noFind = true; // no silver find (systems/silverFinds.js)",
+    "new": "        pile.noFind = false; // no silver find (systems/silverFinds.js)",
     "tests": [
       "test/systems/fb1013d_remains.test.js"
     ]

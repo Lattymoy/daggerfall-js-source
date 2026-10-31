@@ -290,8 +290,8 @@
   {
     "name": "BANTHA2-FLOOR-made-far-off",
     "file": "src/scenes/jungleFloorHost.js",
-    "old": "if (!loading && !failed && jungle.depthAt(ex, ez) > -JUNGLE_FLOOR.near) make();",
-    "new": "if (!loading && !failed) make();",
+    "old": "        if (!loading && !failed && jungle.depthAt(ex, ez) > -JUNGLE_FLOOR.near) make();",
+    "new": "        if (!loading && !failed) make();",
     "tests": [
       "test/world/bantha2_floor.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "BANTHA2-FLOOR-the-meadow-not-placed-again",
     "file": "src/scenes/jungleFloorHost.js",
-    "old": "      onArrive();   // the host's meadow field made again",
-    "new": "      void onArrive;   // the host's meadow field made again",
+    "old": "        onArrive(); // the host's meadow field made again, and paired - the floor's field with it (pair)",
+    "new": "        void onArrive; // the host's meadow field made again, and paired - the floor's field with it (pair)",
     "tests": [
       "test/world/bantha2_floor.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "BANTHA2-FLOOR-the-pair-s-invalidate-dropped",
     "file": "src/scenes/jungleFloorHost.js",
-    "old": "meadow.invalidate(x0, z0, x1, z1); field?.invalidate(x0, z0, x1, z1);",
-    "new": "meadow.invalidate(x0, z0, x1, z1);",
+    "old": "          field?.invalidate(x0, z0, x1, z1);\n        },",
+    "new": "        },",
     "tests": [
       "test/world/bantha2_floor.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "BANTHA2-FLOOR-the-pair-s-shift-dropped",
     "file": "src/scenes/jungleFloorHost.js",
-    "old": "meadow.shiftOrigin(offset); field?.shiftOrigin(offset);",
-    "new": "meadow.shiftOrigin(offset);",
+    "old": "          field?.shiftOrigin(offset);\n        },",
+    "new": "        },",
     "tests": [
       "test/world/bantha2_floor.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "BANTHA2-FLOOR-the-claim-not-asked",
     "file": "src/scenes/jungleFloorHost.js",
-    "old": "(x, z) => (jungle.floorClaims(x, z) ? keep(x, z) : null)",
-    "new": "keep",
+    "old": "      field.update(ex, ez, (x, z) => (jungle.floorClaims(x, z) ? keep(x, z) : null), ground, slope);",
+    "new": "      field.update(ex, ez, keep, ground, slope);",
     "tests": [
       "test/world/bantha2_floor.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "BANTHA2-FLOOR-another-style",
     "file": "src/scenes/jungleFloorHost.js",
-    "old": "renderer.draw(...meadow.frame, 'meadow');",
-    "new": "renderer.draw(...meadow.frame, 'pixel');",
+    "old": "      if (field && meadow?.frame) renderer.draw(...meadow.frame, 'meadow');",
+    "new": "      if (field && meadow?.frame) renderer.draw(...meadow.frame, 'pixel');",
     "tests": [
       "test/world/bantha2_floor.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "BANTHA2-FLOOR-a-claim-before-its-field",
     "file": "src/scenes/jungleFloorHost.js",
-    "old": "claims(x, z) { return !!field && jungle.floorClaims(x, z); },",
-    "new": "claims(x, z) { return jungle.floorClaims(x, z); },",
+    "old": "      return !!field && jungle.floorClaims(x, z);",
+    "new": "      return jungle.floorClaims(x, z);",
     "tests": [
       "test/world/bantha2_floor.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "BANTHA2-FLOOR-the-pref-s-share-ignored",
     "file": "src/scenes/jungleFloorHost.js",
-    "old": "density: floorDensity(density), seed: JUNGLE_FLOOR.seed",
-    "new": "density: floorDensity(), seed: JUNGLE_FLOOR.seed",
+    "old": "          density: floorDensity(density),",
+    "new": "          density: floorDensity(),",
     "tests": [
       "test/world/bantha2_floor.test.js"
     ]
@@ -362,7 +362,7 @@
   {
     "name": "BANTHA2-FLOOR-the-meadow-s-seed",
     "file": "src/scenes/jungleFloorHost.js",
-    "old": "  seed: 0x4a464c52,   // 'JFLR'",
+    "old": "  seed: 0x4a464c52, // 'JFLR'",
     "new": "  seed: 0x2f6e2b1,",
     "tests": [
       "test/world/bantha2_floor.test.js"

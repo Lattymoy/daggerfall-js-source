@@ -878,7 +878,7 @@ that was a claim once and is a pointer at a stranger now.
 
 **Recorded by TESA-LANDS (2026-10-27).**
 
-- **`src/scenes/landPropsHost.js:"FLAGGED: none stands the wilderness past the Bay the landmarks stand in."`** - the three
+- **`src/scenes/landPropsHost.js:"FLAGGED: none stands"`** - the three
   hosts that stand no landmark of the lands past the Bay. *`03-World/Tamriel-Lands.md`: the parasols, spires, Hists,
   reeds, vines and groves stand in the streaming host, whose wilderness the lands past the Bay are; the fixed city, the
   interiors and the dungeons stand none of it. The day one stands wilderness past the Bay, the sentence goes.*

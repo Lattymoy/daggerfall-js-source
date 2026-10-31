@@ -489,8 +489,8 @@
   {
     "name": "TL-kind-farthest",
     "file": "src/scenes/landPropsHost.js",
-    "old": "if (dh - R > Math.min(reach, farOf[k])) continue;",
-    "new": "if (dh - R > reach) continue;",
+    "old": "            if (dh - R > Math.min(reach, farOf[k])) continue; // past the fog or its kind's farthest, wholly",
+    "new": "            if (dh - R > reach) continue; // past the fog or its kind's farthest, wholly",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -498,8 +498,8 @@
   {
     "name": "TL-set-box",
     "file": "src/scenes/landPropsHost.js",
-    "old": "return Math.hypot(bx, bz) <= (bodyOf[run.k] ? Math.max(cut, LAND_DRAW.castReach) : cut);",
-    "new": "return true;",
+    "old": "    return Math.hypot(bx, bz) <= (bodyOf[run.k] ? Math.max(cut, LAND_DRAW.castReach) : cut);",
+    "new": "    return true;",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -507,8 +507,8 @@
   {
     "name": "TL-reed-cast",
     "file": "src/scenes/landPropsHost.js",
-    "old": "        if (!bodyOf[k]) continue;\n",
-    "new": "",
+    "old": "        if (!bodyOf[k]) continue;\n        const m = made[landMeshIndex(k, v, 1)],",
+    "new": "        const m = made[landMeshIndex(k, v, 1)],",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -534,8 +534,8 @@
   {
     "name": "TL-probe-ungated",
     "file": "src/scenes/landPropsHost.js",
-    "old": "if (pageHas('shot')) globalThis.__landProps = probe;",
-    "new": "globalThis.__landProps = probe;",
+    "old": "  if (pageHas('shot')) globalThis.__landProps = probe;",
+    "new": "  globalThis.__landProps = probe;",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -977,8 +977,8 @@
   {
     "name": "TL-scratch-every-landmark",
     "file": "src/scenes/landPropsHost.js",
-    "old": "for (const run of runsOf(p.landProps)) if (runNear(run, p._t, ex, ez, reach)) total +=",
-    "new": "for (const run of runsOf(p.landProps)) total +=",
+    "old": "        if (p.landProps && p._t)\n          for (const run of runsOf(p.landProps))\n            if (runNear(run, p._t, ex, ez, reach)) total += (run.to - run.from) / LAND_PROP_FLOATS;",
+    "new": "        if (p.landProps && p._t) for (const run of runsOf(p.landProps)) total += (run.to - run.from) / LAND_PROP_FLOATS;",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -1085,8 +1085,8 @@
   {
     "name": "TL-landmarks-host-blind-to-the-lift",
     "file": "src/scenes/landPropsHost.js",
-    "old": "y = pr[i + 1] + t[1] + (lift ? lift[i / LAND_PROP_FLOATS] : 0)",
-    "new": "y = pr[i + 1] + t[1]",
+    "old": "              y = pr[i + 1] + t[1] + (lift ? lift[i / LAND_PROP_FLOATS] : 0),",
+    "new": "              y = pr[i + 1] + t[1],",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]

@@ -805,6 +805,8 @@
 !/src/scenes/huntersMark.js
 !/src/scenes/iliacTableGame.js
 !/src/scenes/instanceDoor.js
+!/src/scenes/interiorNav.js
+!/src/scenes/jungleFloorHost.js
 !/src/scenes/ketch/
 /src/scenes/ketch/*
 !/src/scenes/ketch/ketchClient.js
@@ -813,6 +815,11 @@
 !/src/scenes/ketch/ketchSky.js
 !/src/scenes/ketch/ketchStanding.js
 !/src/scenes/ketch/ketchStations.js
+!/src/scenes/lairHost.js
+!/src/scenes/landPropsHost.js
+!/src/scenes/landformSitesHost.js
+!/src/scenes/lefayMonumentHost.js
+!/src/scenes/legacyRemainsStand.js
 !/src/scenes/livingWorld/
 /src/scenes/livingWorld/*
 !/src/scenes/livingWorld/livingLanes.js

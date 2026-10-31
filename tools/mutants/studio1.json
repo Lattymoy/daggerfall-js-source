@@ -248,8 +248,8 @@
   {
     "name": "STUDIO1-the-monument-rows-flipped",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "renderer.uploadTexture?.(LEFAY_ARCHIVE, rec, pic); }, { topDown: true });",
-    "new": "renderer.uploadTexture?.(LEFAY_ARCHIVE, rec, pic); });",
+    "old": "          { topDown: true },\n        );",
+    "new": "        );",
     "tests": [
       "test/systems/studioArt/studio1_door.test.js"
     ]

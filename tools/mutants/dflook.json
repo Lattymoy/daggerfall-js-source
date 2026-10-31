@@ -173,8 +173,8 @@
   {
     "name": "DFLOOK-the-monument-painted",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "wearPainted(LEFAY_ARCHIVE, rec, () => dfLook(art, lookSeed(LEFAY_ARCHIVE, rec)),",
-    "new": "wearPainted(LEFAY_ARCHIVE, rec, () => (void dfLook, void lookSeed, art),",
+    "old": "          () => dfLook(art, lookSeed(LEFAY_ARCHIVE, rec)),",
+    "new": "          () => (void dfLook, void lookSeed, art),",
     "tests": [
       "test/world/dflook.test.js"
     ]

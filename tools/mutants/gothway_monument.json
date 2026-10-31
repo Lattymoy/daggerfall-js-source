@@ -173,8 +173,8 @@
   {
     "name": "STEWART-MONUMENT-one-pile",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "keep: (next) => keep(subject.tribute, next),",
-    "new": "keep: (next) => keep('lefayTribute', next),",
+    "old": "      keep: (next) => keep(subject.tribute, next),",
+    "new": "      keep: (next) => keep('lefayTribute', next),",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "STEWART-MONUMENT-lefay's-art",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "      for (const [rec, art] of lefayArt(subject)) wearPainted(",
-    "new": "      for (const [rec, art] of lefayArt()) wearPainted(",
+    "old": "      for (const [rec, art] of lefayArt(subject))",
+    "new": "      for (const [rec, art] of lefayArt())",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -210,7 +210,7 @@
     "name": "STEWART-MONUMENT-lefay's-words",
     "file": "src/scenes/lefayMonumentHost.js",
     "old": "  const { key: KEY, text: TEXT } = subject;",
-    "new": "  const { key: KEY } = subject, TEXT = MONUMENTS.lefay.text;",
+    "new": "  const { key: KEY } = subject,\n    TEXT = MONUMENTS.lefay.text;",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]

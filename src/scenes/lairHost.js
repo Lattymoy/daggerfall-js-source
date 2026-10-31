@@ -31,7 +31,7 @@ import { RUMOR_PX } from '../systems/revenant/revenantFeud.js';
 import { meshHasDungeonEntrance } from '../systems/travel/travelDungeonModels.js';
 import { layoutLocation } from '../world/locationLayout.js';
 import { isEnhanced } from '../systems/uiSkin.js';
-import { worldPixelOk } from '../net/wire.js';   // LAIR-WORLD: a map pixel of the world, the Bay's and past it
+import { worldPixelOk } from '../net/wire.js'; // LAIR-WORLD: a map pixel of the world, the Bay's and past it
 
 /**
  * Whether laid blocks place a dungeon-entrance door: `entranceOf(modelIdNum)` answers true, false, or null where the
@@ -73,9 +73,20 @@ export const LAIR_MEND_PX = RUMOR_PX;
  *   enhanced?: () => boolean, layout?: typeof layoutLocation, pastBay?: { lairAt: (x: number, y: number) => any,
  *   lairCloneAt: (x: number, y: number) => any, regionAt: (x: number, y: number) => number } | null }} deps
  */
-export function createLairDoor({ maps, blocks, arch, locations, dungeons, regions, here, enhanced = isEnhanced, layout = layoutLocation, pastBay = null }) {
-  const locationAt = (x, y) => locations.get(`${x},${y}`) ?? pastBay?.lairCloneAt(x, y) ?? null;   // LAIR-WORLD: a lair past the Bay laid unstood
-  const dungeonAt = (x, y) => dungeons.get(`${x},${y}`) || pastBay?.lairAt(x, y)?.name || null;   // LAIR-WORLD: and the lairs past the Bay
+export function createLairDoor({
+  maps,
+  blocks,
+  arch,
+  locations,
+  dungeons,
+  regions,
+  here,
+  enhanced = isEnhanced,
+  layout = layoutLocation,
+  pastBay = null,
+}) {
+  const locationAt = (x, y) => locations.get(`${x},${y}`) ?? pastBay?.lairCloneAt(x, y) ?? null; // LAIR-WORLD: a lair past the Bay laid unstood
+  const dungeonAt = (x, y) => dungeons.get(`${x},${y}`) || pastBay?.lairAt(x, y)?.name || null; // LAIR-WORLD: and the lairs past the Bay
   const regionAt = (x, y) => regions.get(`${x},${y}`) ?? (pastBay?.lairAt(x, y) ? pastBay.regionAt(x, y) : -1);
   /** @type {Map<number, boolean | null>} a model's door, by id */
   const byModel = new Map();
@@ -84,7 +95,13 @@ export function createLairDoor({ maps, blocks, arch, locations, dungeons, region
   const entranceOf = (id) => {
     if (byModel.has(id)) return /** @type {boolean | null} */ (byModel.get(id));
     let v = null;
-    try { const i = arch.getRecordIndex(id); const mesh = i === -1 ? null : arch.getMesh(i); v = mesh ? meshHasDungeonEntrance(mesh) : null; } catch { v = null; }
+    try {
+      const i = arch.getRecordIndex(id);
+      const mesh = i === -1 ? null : arch.getMesh(i);
+      v = mesh ? meshHasDungeonEntrance(mesh) : null;
+    } catch {
+      v = null;
+    }
     byModel.set(id, v);
     return v;
   };
@@ -97,20 +114,28 @@ export function createLairDoor({ maps, blocks, arch, locations, dungeons, region
     let v = true;
     try {
       const loc = locationAt(px, py);
-      if (loc?.exterior?.exteriorData) v = blocksPlaceEntrance(layout(loc, maps, blocks, { enhanced: en, windmills: false }).blocks, entranceOf, en) !== false;
-    } catch { v = true; }
+      if (loc?.exterior?.exteriorData)
+        v =
+          blocksPlaceEntrance(layout(loc, maps, blocks, { enhanced: en, windmills: false }).blocks, entranceOf, en) !==
+          false;
+    } catch {
+      v = true;
+    }
     byPixel.set(key, v);
     return v;
   };
   const nearest = (px, py) => {
-    let best = null, bestD = Infinity;
+    let best = null,
+      bestD = Infinity;
     for (let dy = -LAIR_MEND_PX; dy <= LAIR_MEND_PX; dy++) {
       for (let dx = -LAIR_MEND_PX; dx <= LAIR_MEND_PX; dx++) {
-        const d = Math.max(Math.abs(dx), Math.abs(dy)), x = px + dx, y = py + dy;
-        if (d === 0 || d >= bestD || !worldPixelOk(x) || !worldPixelOk(y)) continue;   // LAIR-WORLD: the world's pixels, not the Bay's 1000 x 500
+        const d = Math.max(Math.abs(dx), Math.abs(dy)),
+          x = px + dx,
+          y = py + dy;
+        if (d === 0 || d >= bestD || !worldPixelOk(x) || !worldPixelOk(y)) continue; // LAIR-WORLD: the world's pixels, not the Bay's 1000 x 500
         const name = dungeonAt(x, y);
         if (!name || !enterable(x, y)) continue;
-        best = { px: x, py: y, name: String(name).slice(0, 80), region: regionAt(x, y) };   // revenantFeud.js sanitizeLair's shape
+        best = { px: x, py: y, name: String(name).slice(0, 80), region: regionAt(x, y) }; // revenantFeud.js sanitizeLair's shape
         bestD = d;
       }
     }
@@ -121,8 +146,15 @@ export function createLairDoor({ maps, blocks, arch, locations, dungeons, region
     // AUDIT FB1022d B6/E10: the ring laid only when it is read - the mend asks `enterable` and `nearest` alone
     let ring = null;
     return {
-      px: x, py: y, enterable, nearest,
-      get dungeons() { return (ring ??= bountyDungeons(x, y, dungeonAt).filter((d) => enterable(d.px, d.py)).map((d) => ({ ...d, region: regionAt(d.px, d.py) }))); },
+      px: x,
+      py: y,
+      enterable,
+      nearest,
+      get dungeons() {
+        return (ring ??= bountyDungeons(x, y, dungeonAt)
+          .filter((d) => enterable(d.px, d.py))
+          .map((d) => ({ ...d, region: regionAt(d.px, d.py) })));
+      },
     };
   };
 }

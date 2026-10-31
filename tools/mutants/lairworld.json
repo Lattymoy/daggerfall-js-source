@@ -2,8 +2,8 @@
   {
     "name": "LW-door-lairs-past-the-bay-unread",
     "file": "src/scenes/lairHost.js",
-    "old": "  const dungeonAt = (x, y) => dungeons.get(`${x},${y}`) || pastBay?.lairAt(x, y)?.name || null;",
-    "new": "  const dungeonAt = (x, y) => dungeons.get(`${x},${y}`) || null;",
+    "old": "  const dungeonAt = (x, y) => dungeons.get(`${x},${y}`) || pastBay?.lairAt(x, y)?.name || null; // LAIR-WORLD: and the lairs past the Bay",
+    "new": "  const dungeonAt = (x, y) => dungeons.get(`${x},${y}`) || null; // LAIR-WORLD: and the lairs past the Bay",
     "tests": [
       "test/systems/revenant/lairworld.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LW-door-their-plan-unlaid",
     "file": "src/scenes/lairHost.js",
-    "old": "  const locationAt = (x, y) => locations.get(`${x},${y}`) ?? pastBay?.lairCloneAt(x, y) ?? null;",
-    "new": "  const locationAt = (x, y) => locations.get(`${x},${y}`) ?? null;",
+    "old": "  const locationAt = (x, y) => locations.get(`${x},${y}`) ?? pastBay?.lairCloneAt(x, y) ?? null; // LAIR-WORLD: a lair past the Bay laid unstood",
+    "new": "  const locationAt = (x, y) => locations.get(`${x},${y}`) ?? null; // LAIR-WORLD: a lair past the Bay laid unstood",
     "tests": [
       "test/systems/revenant/lairworld.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "LW-door-mend-held-to-the-bay",
     "file": "src/scenes/lairHost.js",
-    "old": "        if (d === 0 || d >= bestD || !worldPixelOk(x) || !worldPixelOk(y)) continue;",
-    "new": "        if (d === 0 || d >= bestD || x < 0 || y < 0 || x >= 1000 || y >= 500) continue;",
+    "old": "        if (d === 0 || d >= bestD || !worldPixelOk(x) || !worldPixelOk(y)) continue; // LAIR-WORLD: the world's pixels, not the Bay's 1000 x 500",
+    "new": "        if (d === 0 || d >= bestD || x < 0 || y < 0 || x >= 1000 || y >= 500) continue; // LAIR-WORLD: the world's pixels, not the Bay's 1000 x 500",
     "tests": [
       "test/systems/revenant/lairworld.test.js"
     ]

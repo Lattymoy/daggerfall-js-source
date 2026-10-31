@@ -40,8 +40,8 @@
   {
     "name": "FB1022D-LAIR-DOOR-unread-read-as-none",
     "file": "src/scenes/lairHost.js",
-    "old": "      if (e == null) unread = true;\n",
-    "new": "",
+    "old": "      if (e == null) unread = true;\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "FB1022D-LAIR-DOOR-enhanced-only-always",
     "file": "src/scenes/lairHost.js",
-    "old": "      if (m.enhancedOnly && !enhanced) continue;\n",
-    "new": "",
+    "old": "      if (m.enhancedOnly && !enhanced) continue;\n      const e = entranceOf(m.modelIdNum);",
+    "new": "      const e = entranceOf(m.modelIdNum);",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "FB1022D-LAIR-DOOR-ring-unfiltered",
     "file": "src/scenes/lairHost.js",
-    "old": ".filter((d) => enterable(d.px, d.py)).map(",
-    "new": ".map(",
+    "old": "        return (ring ??= bountyDungeons(x, y, dungeonAt)\n          .filter((d) => enterable(d.px, d.py))\n          .map((d) => ({ ...d, region: regionAt(d.px, d.py) })));",
+    "new": "        return (ring ??= bountyDungeons(x, y, dungeonAt).map((d) => ({ ...d, region: regionAt(d.px, d.py) })));",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "FB1022D-LAIR-DOOR-region-dropped",
     "file": "src/scenes/lairHost.js",
-    "old": "region: regionAt(d.px, d.py)",
-    "new": "region: -1",
+    "old": "          .map((d) => ({ ...d, region: regionAt(d.px, d.py) })));",
+    "new": "          .map((d) => ({ ...d, region: -1 })));",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "FB1022D-LAIR-DOOR-pixel-not-kept",
     "file": "src/scenes/lairHost.js",
-    "old": "    byPixel.set(key, v);\n",
-    "new": "",
+    "old": "    byPixel.set(key, v);\n    return v;",
+    "new": "    return v;",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "FB1022D-LAIR-DOOR-model-not-kept",
     "file": "src/scenes/lairHost.js",
-    "old": "    byModel.set(id, v);\n",
-    "new": "",
+    "old": "    byModel.set(id, v);\n    return v;",
+    "new": "    return v;",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "FB1022D-LAIR-DOOR-unread-judged-shut",
     "file": "src/scenes/lairHost.js",
-    "old": "entranceOf, en) !== false;",
-    "new": "entranceOf, en) === true;",
+    "old": "          blocksPlaceEntrance(layout(loc, maps, blocks, { enhanced: en, windmills: false }).blocks, entranceOf, en) !==\n          false;",
+    "new": "          blocksPlaceEntrance(layout(loc, maps, blocks, { enhanced: en, windmills: false }).blocks, entranceOf, en) ===\n          true;",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "FB1022D-LAIR-DOOR-nearest-is-itself",
     "file": "src/scenes/lairHost.js",
-    "old": "if (d === 0 || d >= bestD",
-    "new": "if (d >= bestD",
+    "old": "        if (d === 0 || d >= bestD || !worldPixelOk(x) || !worldPixelOk(y)) continue; // LAIR-WORLD: the world's pixels, not the Bay's 1000 x 500",
+    "new": "        if (d >= bestD || !worldPixelOk(x) || !worldPixelOk(y)) continue; // LAIR-WORLD: the world's pixels, not the Bay's 1000 x 500",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "FB1022D-LAIR-DOOR-nearest-the-farthest",
     "file": "src/scenes/lairHost.js",
-    "old": "if (d === 0 || d >= bestD",
-    "new": "if (d === 0 || d <= bestD && bestD !== Infinity",
+    "old": "        if (d === 0 || d >= bestD || !worldPixelOk(x) || !worldPixelOk(y)) continue; // LAIR-WORLD: the world's pixels, not the Bay's 1000 x 500",
+    "new": "        if (d === 0 || (d <= bestD && bestD !== Infinity) || !worldPixelOk(x) || !worldPixelOk(y)) continue; // LAIR-WORLD: the world's pixels, not the Bay's 1000 x 500",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -351,8 +351,8 @@
   {
     "name": "FB1022D-AUDIT-B5-skin-unkeyed",
     "file": "src/scenes/lairHost.js",
-    "old": "const key = `${en ? 1 : 0}:${px},${py}`;",
-    "new": "const key = `${px},${py}`;",
+    "old": "    const key = `${en ? 1 : 0}:${px},${py}`;",
+    "new": "    const key = `${px},${py}`;",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -360,8 +360,8 @@
   {
     "name": "FB1022D-AUDIT-B5-name-uncut",
     "file": "src/scenes/lairHost.js",
-    "old": "name: String(name).slice(0, 80)",
-    "new": "name: String(name)",
+    "old": "        best = { px: x, py: y, name: String(name).slice(0, 80), region: regionAt(x, y) }; // revenantFeud.js sanitizeLair's shape",
+    "new": "        best = { px: x, py: y, name: String(name), region: regionAt(x, y) }; // revenantFeud.js sanitizeLair's shape",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -369,8 +369,8 @@
   {
     "name": "FB1022D-AUDIT-B6-ring-laid-at-once",
     "file": "src/scenes/lairHost.js",
-    "old": "    let ring = null;\n",
-    "new": "    let ring = bountyDungeons(x, y, dungeonAt).filter((d) => enterable(d.px, d.py)).map((d) => ({ ...d, region: regionAt(d.px, d.py) }));\n",
+    "old": "    let ring = null;",
+    "new": "    let ring = bountyDungeons(x, y, dungeonAt)\n      .filter((d) => enterable(d.px, d.py))\n      .map((d) => ({ ...d, region: regionAt(d.px, d.py) }));",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
