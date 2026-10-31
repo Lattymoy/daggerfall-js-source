@@ -301,7 +301,7 @@ test('WW3 the wiring: the world host stands the world\'s ports off the registry 
   assert.match(w, /return worldSerpentSite\(day, worldLanes, serpentLink\.toldAt\);/);   // PIN MOVED (WW7-12): every lane of the world, or the hub's word
   assert.match(w, /portLanes: \(\) => \(_lanesReady && mapDict \? worldLanes\.all\(\) : null\) \}\);/);   // PIN MOVED (WW7-10): the world's lanes, a Bay port's the Bay's (townEconHost.js lanesAt)
   assert.match(w, /if \(!onWorldSea\(px, py, tamrielLand\) \|\| maps\.getClimateIndex\(px, py\) !== CLIMATES\.Ocean\) return false;/);
-  assert.match(w, /return onWorldSea\(px, py, tamrielLand\) && tvWater\(px, py\);/);
+  assert.match(w, /return onWorldSea\(px, py, tamrielLand\) && squareCornersAll\(tvWater, px, py\);/);   // PIN MOVED (AUDIT SEA PATHS LN-3): its square's four corners
   assert.match(w, /classId: p\.cls\.id, region: p\.region, area: lane\.a\.area \?\? -1,/);
   assert.match(src('src/scenes/livingWorld/livingLanes.js'), /const id = portIdOf\(town\);/);   // PIN MOVED (AUDIT WW F7): a town's lanes the living lanes' book's
   assert.equal((w.match(/maskMapId\(/g) ?? []).length, 0, 'no port keyed by a masked id in the host');

@@ -92,8 +92,8 @@
   {
     "name": "RS-the-road-s-corner-unhanded",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "const line = { lane, path, ahead: after ? after.pts?.slice(1) ?? [[after.bx, after.bz]] : null, cornerTurn: LANE_CORNER_TURN };",
-    "new": "const line = { lane, path, ahead: after ? after.pts?.slice(1) ?? [[after.bx, after.bz]] : null };",
+    "old": "const line = { lane, path, ahead: after ? after.pts?.slice(1) ?? [[after.bx, after.bz]] : null, cornerTurn: LANE_CORNER_TURN, edgeArrival: atSea ? true : undefined };",
+    "new": "const line = { lane, path, ahead: after ? after.pts?.slice(1) ?? [[after.bx, after.bz]] : null, edgeArrival: atSea ? true : undefined };",
     "tests": [
       "test/systems/travel/road_smooth.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "RS-the-next-leg-s-line-unhanded",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "const line = { lane, path, ahead: after ? after.pts?.slice(1) ?? [[after.bx, after.bz]] : null, cornerTurn: LANE_CORNER_TURN };",
-    "new": "const line = { lane, path, ahead: null, cornerTurn: LANE_CORNER_TURN };",
+    "old": "const line = { lane, path, ahead: after ? after.pts?.slice(1) ?? [[after.bx, after.bz]] : null, cornerTurn: LANE_CORNER_TURN, edgeArrival: atSea ? true : undefined };",
+    "new": "const line = { lane, path, ahead: null, cornerTurn: LANE_CORNER_TURN, edgeArrival: atSea ? true : undefined };",
     "tests": [
       "test/systems/travel/road_smooth.test.js"
     ],

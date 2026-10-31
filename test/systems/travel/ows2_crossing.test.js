@@ -68,7 +68,12 @@ test('OWS2 route: a boat that packs launches again at the next water; one left w
   const bay = planRoute({ x: 13, y: 5 }, { x: 13, y: 5 }, { ...opts, sea: { start: 'sea', again: false } });
   assert.ok(bay.kinds.includes('landfall') && !bay.kinds.includes('embark'), 'afloat in a land pixel\'s bay, its own pixel asked: the landfall is still made');
   assert.deepEqual(bay.pixels.at(-1), { x: 13, y: 5 });
-  assert.equal(planRoute({ x: 10, y: 5 }, { x: 10, y: 5 }, { ...opts, sea: { start: 'sea', again: false } }), null, 'afloat mid-water, the water asked as a land goal: no shore there');
+  // PIN MOVED (AUDIT SEA PATHS PL-3): a place stood on water with no land beside it is landed on itself - it was "no shore
+  // there", and 631 of the Eltheric Ocean's port isles read water about their town; one with land beside it still lands there
+  const isle = planRoute({ x: 10, y: 5 }, { x: 10, y: 5 }, { ...opts, sea: { start: 'sea', again: false } });
+  assert.equal(isle?.kinds.at(-1), 'landfall', 'afloat mid-water, a place on the water with no land about it: landed on itself');
+  assert.deepEqual(isle.pixels.at(-1), { x: 10, y: 5 });
+  assert.ok(!isle.kinds.includes('embark'));
 });
 
 test('OWS2 route: a spot on the water is reached AFLOAT - even one in a land pixel\'s bay; a boat never sails through a corner of the land; the route keeps off the coast where the sea is wide', () => {

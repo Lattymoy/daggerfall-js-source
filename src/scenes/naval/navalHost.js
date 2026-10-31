@@ -17,7 +17,7 @@
 //   csa() -> runtime | null      Come Sail Away's runtime (isSailing(), state.CurrentBoat, state.velocityCurrent,
 //                                state.windVectorCurrent, StopSailing()) - null with the mod off
 //   seaY() -> number             the sea's height in the scene
-//   isWater(x, z, hull) -> bool  open water deep enough for a hull there
+//   isWater(x, z, hull) -> bool  open water deep enough for a hull there (null: ground not yet built - AUDIT SEA PATHS AI-4)
 //   feet() -> [x, y, z]          the player's feet
 //   look() -> { origin, dir }    the view's eye and its forward (the first-person eye, or Eye of the Beholder's)
 //   level() -> number            the player's level
@@ -4354,7 +4354,7 @@ export function createNavalHost(deps) {
   function errandHere(ship) {
     if (ship.cls.fisher) return fishers.errandOf(ship);   // FISH-BOATS: her day's own errand, off her seed and her harbour
     const hs = knownHarbours();
-    return hs.length ? errandFor({ seed: ship.seed, faction: ship.cls.faction, hull: ship.hull, pos: ship.pos, speed: ship.speed, clock: ship.clock, harbours: hs, clear: gridOf(ship.hull).clear }) : null;
+    return hs.length ? errandFor({ seed: ship.seed, faction: ship.cls.faction, hull: ship.hull, pos: ship.pos, speed: ship.speed, clock: ship.clock, harbours: hs, grid: gridOf(ship.hull) }) : null;
   }
   /** The port near the player: its harbour found once, its moored ships stood while its mouth is near - ashore too;
    *  the stander's alone to launch, as every ship is - and gone past HARBOUR_LEAVE, to be stood again the same on the

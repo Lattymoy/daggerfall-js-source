@@ -8,6 +8,14 @@
 
 Newest first.
 
+**2026-10-31 - AUDIT SEA PATHS.** The owner: *"Can we audit both player and AI ship pathfinding in the eltheric sea and the
+open waters of tamriel and ensure its perfect"*. Three cold lanes, each finding proven on the freeware's map. Paid: ships
+leaving port aimed at land and circled; the stall read speed, not progress; harbour voyages given up at the mouth; the
+Bay's lanes read the coastal dilation, so Daggerfall, Sentinel and Wayrest ran no packet; raiders and lane legs crossed
+land; sea legs past the Bay never arrived; plans crossed the Veil; 631 Eltheric port isles were unreachable; the no-way
+clock ended every detour. All fixed but the six left open with the reason, with 38 mutants (37 dead, one equivalent).
+Record: `01-Overview/audits/Audit-Sea-Paths.md`.
+
 **2026-10-31 - AUDIT PROP-GROUND.** The owner: *"Audit"*, of PROP-GROUND (`3582fe992`, the street laid under a prop past
 the Bay). Three cold lanes on the frozen head, each finding proven on the freeware. Paid: a lamp's own cell (the town
 map's 250 and 251) still stood on old ground; the last step laid lone flags; cobbles notched the pavement and setts met

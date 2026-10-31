@@ -1,0 +1,348 @@
+[
+  {
+    "name": "AUDIT-SEA-PATHS-AI-1-the-mark-2.6-km-out",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "  return d >= OUTBOUND_MIN ? { kind: 'voyage', harbour: null, to: end(best.a, d), path: null, i: 0 } : null;",
+    "new": "  return d >= OUTBOUND_MIN ? { kind: 'voyage', harbour: null, to: end(best.a, VOYAGE_DIST), path: null, i: 0 } : null;",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-AI-1-the-run-past-the-land",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "      if (!water(x, z)) break;\n      if (d > LEG_END_M && !(water(x + sz * LEG_MARGIN, z - sx * LEG_MARGIN) && water(x - sz * LEG_MARGIN, z + sx * LEG_MARGIN))) break;",
+    "new": "      if (d > LEG_END_M && !(water(x + sz * LEG_MARGIN, z - sx * LEG_MARGIN) && water(x - sz * LEG_MARGIN, z + sx * LEG_MARGIN))) break;",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ],
+    "equivalent": true,
+    "why": "The run's own centre sounding saves work, not law: outbound backs the mark off until the grid's clear() holds the leg, so a mark the run let past land is brought back before the islet all the same."
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-AI-1-the-floor-dropped",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "  return d >= OUTBOUND_MIN ? { kind: 'voyage', harbour: null, to: end(best.a, d), path: null, i: 0 } : null;",
+    "new": "  return { kind: 'voyage', harbour: null, to: end(best.a, d), path: null, i: 0 };",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-AI-2-the-pass-rule-gone",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "    if (!made && clear && o && e.passWait <= 0 && (here[0] - p[0]) * (p[0] - o[0]) + (here[1] - p[1]) * (p[1] - o[1]) > 0) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-AI-2-the-pass-on-the-leg-out",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "    if (!made && clear && o && e.passWait <= 0 && (here[0] - p[0]) * (p[0] - o[0]) + (here[1] - p[1]) * (p[1] - o[1]) > 0) {",
+    "new": "    if (!made && clear && o && e.passWait <= 0 && (here[0] - p[0]) * (q[0] - p[0]) + (here[1] - p[1]) * (q[1] - p[1]) > 0) {",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js",
+      "test/systems/naval/auditshiplife.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-AI-2-the-progress-clock-gone",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "    else if (e.stall >= STALL_S || held >= PROGRESS_S) {",
+    "new": "    else if (e.stall >= STALL_S) {",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-AI-2-the-detour-chased-for-good",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "      if (dist2(here, e.detour) > reachOf(ship.hull) && e.detourS < PROGRESS_S) return plan(e.detour, 0.6);",
+    "new": "      if (dist2(here, e.detour) > reachOf(ship.hull)) return plan(e.detour, 0.6);",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-AI-2-the-reach-held-to-35",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "export const reachOf = (hull) => { const b = hullBuild(hull); return Math.max(REACH_M, (b.bowZ - b.aftZ) / 2); };",
+    "new": "export const reachOf = (hull) => REACH_M;",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-AI-2-every-point-clears-the-detours",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "    if (e.i++ > 0) e.detours = 0;",
+    "new": "    e.i++; e.detours = 0;",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-AI-3-the-nearest-by-distance-alone",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "          for (const x of others.slice(0, VOYAGE_TRIES)) { const w = grid.path(here, x.harbour.mouth); if (w) { found = { key: x.key, w }; break; } }",
+    "new": "          for (const x of others.slice(0, 1)) { found = { key: x.key, w: [here, x.harbour.mouth] }; break; }",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-AI-4-every-cell-kept",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "    if (sure) cache.set(kk, v);",
+    "new": "    cache.set(kk, v);",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-AI-5-one-clearance-for-every-hull",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "export const gridClearOf = (hull, cell = WATER_CELL) => Math.max(cell * WATER_CLEAR, (hullBuild(hull)?.halfWidth ?? 0) + GRID_MARGIN);",
+    "new": "export const gridClearOf = (hull, cell = WATER_CELL) => cell * WATER_CLEAR;",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-AI-6-the-clearance-ring-alone",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "      for (let r = Math.min(SPOKE_STEP_M, rc); v; r = Math.min(r + SPOKE_STEP_M, rc)) { v = at(x + sx * r, z + sz * r); if (r >= rc) break; }",
+    "new": "      v = at(x + sx * rc, z + sz * rc);",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-AI-6-the-spokes-too-sparse",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "export const SPOKE_STEP_M = 3;",
+    "new": "export const SPOKE_STEP_M = 8;",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-AI-7-a-point-ashore-kept",
+    "file": "src/systems/naval/fishingBoats.js",
+    "old": "      e.path = grid ? ringOver(ring.filter((q) => grid.room(q) && grid.clear(e.at, q)), [e.at[0], e.at[1]], grid.clear) : ring;",
+    "new": "      e.path = ring;",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-AI-7-the-room-unasked",
+    "file": "src/systems/naval/fishingBoats.js",
+    "old": "      e.path = grid ? ringOver(ring.filter((q) => grid.room(q) && grid.clear(e.at, q)), [e.at[0], e.at[1]], grid.clear) : ring;",
+    "new": "      e.path = grid ? ringOver(ring.filter((q) => grid.clear(e.at, q)), [e.at[0], e.at[1]], grid.clear) : ring;",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-AI-7-the-sweeps-left-in",
+    "file": "src/systems/naval/fishingBoats.js",
+    "old": "      return ship.hull === 0 ? p : { ...p, sweeps: SWEEP_WAY, sailable: true };",
+    "new": "      return p;",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-LN-1-the-own-byte-alone",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "  return (/** @type {number} */ px, /** @type {number} */ py) => inBay(px, py) && squareCornersAll(sea, px, py);",
+    "new": "  return (/** @type {number} */ px, /** @type {number} */ py) => inBay(px, py) && sea(px, py);",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-LN-1-the-bay-bound-dropped",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "  return (/** @type {number} */ px, /** @type {number} */ py) => inBay(px, py) && squareCornersAll(sea, px, py);",
+    "new": "  return (/** @type {number} */ px, /** @type {number} */ py) => squareCornersAll(sea, px, py);",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-LN-1-the-dilated-climate-read",
+    "file": "src/world/terrain/terrainHelper.js",
+    "old": "  const pak = maps.climatePak, raw = pak.undilated ?? pak.buffer;",
+    "new": "  const pak = maps.climatePak, raw = pak.buffer;",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-LN-1-the-host-reads-the-dilation",
+    "file": "src/scenes/world.js",
+    "old": "  const laneOpen = bayLaneWater(tvWater, (px, py) => (inBay(px, py) ? undilatedClimateIndex(maps, px, py) : maps.getClimateIndex(px, py)) === CLIMATES.Ocean);",
+    "new": "  const laneOpen = bayLaneWater(tvWater, (px, py) => maps.getClimateIndex(px, py) === CLIMATES.Ocean);",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-LN-2-the-far-look-ignored",
+    "file": "src/systems/naval/seaLanes.js",
+    "old": "const reached = by.filter((x) => x.d <= reach), near = (reached.length ? reached : by.filter((x) => x.d <= farPx)).slice(0, p.neighbours ?? LANE_NEIGHBOURS);",
+    "new": "const reached = by.filter((x) => x.d <= reach), near = reached.slice(0, p.neighbours ?? LANE_NEIGHBOURS);",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-LN-2-every-port-looking-far",
+    "file": "src/systems/naval/seaLanes.js",
+    "old": "const reached = by.filter((x) => x.d <= reach), near = (reached.length ? reached : by.filter((x) => x.d <= farPx)).slice(0, p.neighbours ?? LANE_NEIGHBOURS);",
+    "new": "const reached = by.filter((x) => x.d <= Math.max(reach, farPx)), near = reached.slice(0, p.neighbours ?? LANE_NEIGHBOURS);",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-LN-2-the-host-asks-no-cap",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX);",
+    "new": "beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true);",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-LN-3-the-raiders-own-byte",
+    "file": "src/scenes/world.js",
+    "old": "    return onWorldSea(px, py, tamrielLand) && squareCornersAll(tvWater, px, py);",
+    "new": "    return onWorldSea(px, py, tamrielLand) && tvWater(px, py);",
+    "tests": [
+      "test/world/worldWide/ww3_sea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-LN-4-four-soundings-a-pixel",
+    "file": "src/systems/naval/seaLanes.js",
+    "old": "export function holdsLine(a, b, waterNative) {\n  const P = NATIVE_PIXEL,",
+    "new": "export function holdsLine(a, b, waterNative) {\n  { const n = Math.max(1, Math.ceil((Math.hypot(b.x - a.x, b.z - a.z) / NATIVE_PIXEL) * 4)); for (let i = 1; i < n; i++) if (!waterNative(a.x + ((b.x - a.x) * i) / n, a.z + ((b.z - a.z) * i) / n)) return false; return true; }\n  const P = NATIVE_PIXEL,",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-LN-4-the-corner-let-through",
+    "file": "src/systems/naval/seaLanes.js",
+    "old": "      if (!at(cx + sx, cz) || !at(cx, cz + sz)) return false;",
+    "new": "",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-LN-4-the-walk-stopped-short",
+    "file": "src/systems/naval/seaLanes.js",
+    "old": "  for (let left = Math.abs(ex - cx) + Math.abs(ez - cz); left > 0 && (cx !== ex || cz !== ez); left--) {",
+    "new": "  for (let left = Math.abs(ex - cx) + Math.abs(ez - cz) - 2; left > 0 && (cx !== ex || cz !== ez); left--) {",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-PL-1-the-legs-word-ignored",
+    "file": "src/systems/travel/travelAutopilot.js",
+    "old": "    this.edgeArrival = edgeArrival ?? this.edgeBase ?? false;",
+    "new": "    this.edgeArrival = this.edgeBase ?? false;",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-PL-1-the-base-not-restored",
+    "file": "src/systems/travel/travelAutopilot.js",
+    "old": "    this.edgeArrival = edgeArrival ?? this.edgeBase ?? false;",
+    "new": "    this.edgeArrival = edgeArrival ?? this.edgeArrival ?? false;",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-PL-1-sea-legs-never-ask",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "edgeArrival: atSea ? true : undefined };",
+    "new": "edgeArrival: undefined };",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-PL-2-the-veil-refusal-gone",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  if (ether !== inEther(to.x, to.y)) return null;",
+    "new": "",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-PL-2-the-box-unheld",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  return ether ? { x0: Math.max(b.x0, ETHER_BOX.x0), x1: Math.min(b.x1, ETHER_BOX.x1 - 1), y0: Math.max(b.y0, ETHER_BOX.y0), y1: Math.min(b.y1, ETHER_BOX.y1 - 1) } : b;",
+    "new": "  return b;",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-PL-3-the-isles-own-landfall-gone",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "        if (wet && !(goalIsle && n === goal)) {",
+    "new": "        if (wet) {",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js",
+      "test/systems/travel/ows2_crossing.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-PL-4-the-moored-boat-alone",
+    "file": "src/systems/travel/seaAsk.js",
+    "old": "  if (!plan) return replan();",
+    "new": "",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-PL-4-the-voyage-replanned",
+    "file": "src/systems/travel/seaAsk.js",
+    "old": "  if (!means || means.voyage) return null;",
+    "new": "  if (!means) return null;",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-PL-5-the-clock-against-her-nearest",
+    "file": "src/systems/seaHelm.js",
+    "old": "  if ((st.helm?.reach ?? 0) > 0) { st.ref = dist; st.detourS = (st.detourS ?? 0) + gs; return st.detourS > SEA_WAY.detourS; }",
+    "new": "",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-PL-5-the-detours-unbounded",
+    "file": "src/systems/seaHelm.js",
+    "old": "  if ((st.helm?.reach ?? 0) > 0) { st.ref = dist; st.detourS = (st.detourS ?? 0) + gs; return st.detourS > SEA_WAY.detourS; }",
+    "new": "  if ((st.helm?.reach ?? 0) > 0) { st.ref = dist; st.detourS = (st.detourS ?? 0) + gs; return false; }",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  }
+]

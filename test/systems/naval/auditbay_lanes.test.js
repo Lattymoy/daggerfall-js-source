@@ -18,7 +18,8 @@ import { RAIDER_DROP_M } from '../../../src/systems/naval/navalRaiders.js';
 import { SHIP_STATES } from '../../../src/systems/naval/navalDamage.js';
 import { findHarbour } from '../../../src/systems/naval/shipLife.js';
 import { NATIVE_PIXEL, nativeOfPixel, pixelOfNative } from '../../../src/systems/seaRaiders.js';
-import { createWorldLanes } from '../../../src/scenes/naval/worldLanes.js';
+import { createWorldLanes, bayLaneWater } from '../../../src/scenes/naval/worldLanes.js';
+import { inBay } from '../../../src/world/tamriel/tamrielFrame.js';
 import { createWorldPorts } from '../../../src/world/worldWide/worldPorts.js';
 import { createWorldPlaces } from '../../../src/world/worldWide/worldPlaces.js';
 
@@ -411,6 +412,7 @@ test('AUDIT BAY A19: THE FEED HANDS EVERY PACKET OF THE LANES ABOUT THE PLAYER -
   const env = {
     tvWater: water, maps: { getClimateIndex: (px, py) => (water(px, py) ? OCEAN : 1), getRegion: () => ({ mapNames: PORTS.map((p) => p.name) }) },
     CLIMATES: { Ocean: OCEAN }, RAID_NATIVE_PIXEL: NATIVE_PIXEL, pixelOfNative,
+    bayLaneWater, inBay, undilatedClimateIndex: (m, px, py) => m.getClimateIndex(px, py),   // PIN MOVED (AUDIT SEA PATHS LN-1): the host's lane law
     PORT_LOCATION_IDS: PORTS.map((p) => p.id),
     mapDict: new Map(PORTS.map((p, k) => [p.id & 0xfffff, { id: p.y * 1000 + p.x, regionIndex: 7 + k, mapIndex: k }])),
     getPixelFromPixelID: (id) => ({ x: id % 1000, y: Math.floor(id / 1000) }),
@@ -437,7 +439,8 @@ test('AUDIT BAY A19: THE FEED HANDS EVERY PACKET OF THE LANES ABOUT THE PLAYER -
   assert.equal(got.at(-1).list.length, 0, '35 pixels off: not');
   env.playerTravelPixel = () => ({ x: 200, y: 200 });
   assert.deepEqual([lane.a.region, lane.b.region], [7, 8], 'each port\'s region');
-  const way = LANES.laneWay(lane, water, (x, z) => { const p = pixelOfNative(x, z); return water(p.x, p.y); });
+  const laneLaw = bayLaneWater(water, water);   // PIN MOVED (AUDIT SEA PATHS LN-1): a square's four corners, the host's law
+  const way = LANES.laneWay(lane, laneLaw, (x, z) => { const p = pixelOfNative(x, z); return laneLaw(p.x, p.y); });
   const want = LANES.packetsAt(lane, way, 1.7e12);
   const { list } = got[0];
   assert.deepEqual(list.map((l) => l.id), want.map((p) => p.id), 'every packet of the lane');

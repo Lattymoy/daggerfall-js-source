@@ -305,8 +305,8 @@
   {
     "name": "P7-reach-the-bays",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true);",
-    "new": "beyondList = laneNetwork(ports.list(), worldOpen, undefined, true);",
+    "old": "beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX);",
+    "new": "beyondList = laneNetwork(ports.list(), worldOpen, undefined, true, BEYOND_LANE_PATH_PX);",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]

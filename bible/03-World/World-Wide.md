@@ -549,6 +549,13 @@ Follow-up, with WW-R: the waters' people's bank moved out of `systems/naval/nava
 harbour board), and an area's people are read off the continent's geography, which is never its
 (`test/server/accountdeploy.test.js` ACC1-CI caught it on WW3's commit). `shipNames` and `handName` take the bank.
 
+### AUDIT SEA PATHS (2026-10-31) - the lanes' reach past the Bay
+
+A port past the Bay with no port within BEYOND_LANE_MAX_PX now runs to its nearest within its way's cap,
+BEYOND_LANE_PATH_PX (`systems/naval/seaLanes.js` laneNetwork's `farPx`): Blacklight, Lilmoth and Soulrest run packets, and
+Vivec through Blacklight. Left out: Necrom and Ebonheart, whose water joins no port's within the cap. The Bay's own lane
+water is now CLIMATE.PAK's undilated climate under the four-corner law. Record: `01-Overview/audits/Audit-Sea-Paths.md`.
+
 ## WW-R - the provinces as regions (BUILT, 2026-10-24)
 
 The owner, asked whether the provinces should be regions of their own: *"Separate regions make sense"*. Each province

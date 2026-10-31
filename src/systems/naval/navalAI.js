@@ -923,7 +923,7 @@ export function stepCaptain(ship, world) {
     } else {
       // SHIP-LIFE: no fight of hers - her errand (shipLife.js), taken up again with a way planned anew after one; a
       // raider's course and a ship with none keep the cruise
-      if (ship.mode !== 'cruise' && ship.errand) ship.errand.path = null;
+      if (ship.mode !== 'cruise' && ship.errand) { ship.errand.path = null; ship.errand.prog = null; }   // AUDIT SEA PATHS AI-2: her way kept afresh too
       ship.mode = 'cruise';
       const life = ship.errand && !ship.course && world.life ? stepErrand(ship, dt, world.life) : null;
       if (life?.hold) return moor(ship, life.hold, dt, out);

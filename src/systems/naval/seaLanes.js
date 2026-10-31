@@ -11,7 +11,7 @@
 // within LANE_MAX_PX: so every port has two lanes at least and most have three or four, and a coast is a chain of them,
 // a headland's ports each other's neighbours across the water, the three crowns' capitals linked through the lanes'
 // ports between them. A lane's way is the water's: an A* over the map's water pixels from one roadstead to the other,
-// straightened wherever a line holds to the water (LANE_STRAIGHT_STEPS of it each pixel), no longer than LANE_PATH_PX.
+// straightened wherever a line holds to the water (every map pixel it crosses - AUDIT SEA PATHS LN-4), no longer than LANE_PATH_PX.
 //
 // THE PACKET. One ship a lane, of the lane's own seed (the two ports'): a merchantman, or on LANE_NAVY of the lanes a
 // crown's ship keeping the passage. She sails it out and back for ever on the SHARED CLOCK - out at her class's cruise
@@ -37,7 +37,7 @@ export const ROADSTEAD_PX = 3;
 export const LANE_NEIGHBOURS = 2;
 export const LANE_MAX_PX = 30;
 /** A lane's way: no longer than this over the water (map pixels), its search no more than LANE_SEARCH pixels expanded,
- *  and a straightened leg's water asked this many times a pixel. */
+ *  and the soundings a pixel a leg's water was asked at (AUDIT SEA PATHS LN-4: holdsLine walks every pixel now). */
 export const LANE_PATH_PX = 60;
 export const LANE_SEARCH = 20000;
 export const LANE_STRAIGHT_STEPS = 4;
@@ -120,12 +120,27 @@ export function lanePixels(from, to, water) {
 
 /** A pixel's centre in native units. */
 const centreOf = (p) => { const o = nativeOfPixel(p.x, p.y); return { x: o.x + NATIVE_PIXEL / 2, z: o.z + NATIVE_PIXEL / 2 }; };
-/** Whether the line between two native points holds to the water (LANE_STRAIGHT_STEPS a pixel of it). */
-function holds(a, b, waterNative) {
-  const n = Math.max(1, Math.ceil((Math.hypot(b.x - a.x, b.z - a.z) / NATIVE_PIXEL) * LANE_STRAIGHT_STEPS));
-  for (let i = 1; i < n; i++) if (!waterNative(a.x + ((b.x - a.x) * i) / n, a.z + ((b.z - a.z) * i) / n)) return false;
+/** Whether the line between two native points holds to the water - AUDIT SEA PATHS LN-4: every map pixel it crosses
+ *  between its ends' own (a grid walk; through a corner both pixels beside it), where LANE_STRAIGHT_STEPS soundings a
+ *  pixel stepped past a corner of land up to 179 m deep. */
+export function holdsLine(a, b, waterNative) {
+  const P = NATIVE_PIXEL, dx = b.x - a.x, dz = b.z - a.z, sx = Math.sign(dx), sz = Math.sign(dz);
+  let cx = Math.floor(a.x / P), cz = Math.floor(a.z / P);
+  const ex = Math.floor(b.x / P), ez = Math.floor(b.z / P);
+  const tdx = sx ? P / Math.abs(dx) : Infinity, tdz = sz ? P / Math.abs(dz) : Infinity;
+  let tx = sx ? (sx > 0 ? (cx + 1) * P - a.x : a.x - cx * P) / Math.abs(dx) : Infinity;
+  let tz = sz ? (sz > 0 ? (cz + 1) * P - a.z : a.z - cz * P) / Math.abs(dz) : Infinity;
+  const at = (/** @type {number} */ i, /** @type {number} */ k) => (i === ex && k === ez) || !!waterNative((i + 0.5) * P, (k + 0.5) * P);
+  for (let left = Math.abs(ex - cx) + Math.abs(ez - cz); left > 0 && (cx !== ex || cz !== ez); left--) {
+    if (Math.abs(tx - tz) < 1e-9) {
+      if (!at(cx + sx, cz) || !at(cx, cz + sz)) return false;
+      cx += sx; cz += sz; tx += tdx; tz += tdz; left--;
+    } else if (tx < tz) { cx += sx; tx += tdx; } else { cz += sz; tz += tdz; }
+    if (!at(cx, cz)) return false;
+  }
   return true;
 }
+const holds = holdsLine;
 /** A pixel way straightened: from each point, on to the farthest the water holds a line to. Native points. */
 export function straighten(pixels, waterNative) {
   const pts = pixels.map(centreOf);
@@ -172,13 +187,15 @@ export function roadsteadOf(port, open, roomy = false) {
  * (scenes/naval/worldLanes.js BEYOND_LANE_MAX_PX: their ports stand hundreds of pixels apart); NIBEN-SEA: a port's own
  * `reach` where it is farther (a harbour up a canal, world/worldWide/worldPorts.js CANAL_PORT_REACH_PX). `roomy` roadsteadOf's.
  */
-export function laneNetwork(ports, open, maxPx = LANE_MAX_PX, roomy = false) {
+export function laneNetwork(ports, open, maxPx = LANE_MAX_PX, roomy = false, farPx = 0) {
   const sea = [...ports].sort((p, q) => p.id - q.id).map((p) => ({ ...p, road: roadsteadOf(p, open, roomy) })).filter((p) => p.road);   // SEA-SQUARE: past the Bay the roomiest roadstead
   const pairs = new Map();
   for (const p of sea) {
     const reach = Math.max(maxPx, p.reach ?? 0);   // NIBEN-SEA: a harbour up a canal reaches farther (world/worldWide/worldPorts.js)
-    const near = sea.filter((q) => q !== p).map((q) => ({ q, d: Math.hypot(q.road.x - p.road.x, q.road.y - p.road.y) }))
-      .filter((x) => x.d > 0 && x.d <= reach).sort((x, y) => x.d - y.d || x.q.id - y.q.id).slice(0, p.neighbours ?? LANE_NEIGHBOURS);   // RUMARE-WATER: a canal harbour's own count
+    const by = sea.filter((q) => q !== p).map((q) => ({ q, d: Math.hypot(q.road.x - p.road.x, q.road.y - p.road.y) })).filter((x) => x.d > 0).sort((x, y) => x.d - y.d || x.q.id - y.q.id);
+    // AUDIT SEA PATHS LN-2: a port with none within its reach runs to its nearest within `farPx` (past the Bay its way's
+    // cap): Blacklight, Lilmoth and Soulrest stood 443 to 604 pixels from every port, and ran no packet at all
+    const reached = by.filter((x) => x.d <= reach), near = (reached.length ? reached : by.filter((x) => x.d <= farPx)).slice(0, p.neighbours ?? LANE_NEIGHBOURS);   // RUMARE-WATER: a canal harbour's own count
     for (const { q } of near) {
       const [a, b] = p.id < q.id ? [p, q] : [q, p];
       const key = `${a.id}-${b.id}`;

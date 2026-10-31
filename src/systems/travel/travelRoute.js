@@ -43,7 +43,8 @@ import { tamrielLandVersion } from '../../world/tamriel/tamrielLand.js';   // AU
 import { tamrielFit } from '../../world/tamriel/tamrielFrame.js';
 import { apartPastBay, apartExact } from './landPieces.js';   // FAST-REFUSAL: the land's pieces past the Bay; EXACT-PIECES: at the pixel
 import { roadLineLegs } from './roadLine.js';   // ROAD-FOLLOW: a road past the Bay walked and drawn on its curves
-import { ghostfenceShuts } from '../../world/tamriel/ghostfence.js';   // AUDIT RED-MOUNTAIN G2: the Ghostfence crossed only at Ghostgate
+import { ghostfenceShuts } from '../../world/tamriel/ghostfence.js';
+import { inEther, ETHER_BOX } from '../../world/ethericSea.js';   // AUDIT SEA PATHS PL-2: the Veil crossed by the crossing alone   // AUDIT RED-MOUNTAIN G2: the Ghostfence crossed only at Ghostgate
 
 /** What a step costs, by what it walks on. The open ground's 3.5 makes a road worth a detour of up to three and a half
  *  times its length - Travel Options' reckless (road) and cautious (open) multipliers are 1 and 0.8 by default, so the
@@ -446,6 +447,11 @@ export function* planRouteSteps(from, to, opts = {}) {
   // FREE, handed none, walks across country there too
   const beyond = roads || tracks ? pathsBeyond : null;
   if (!from || !to) return null;
+  // AUDIT SEA PATHS PL-2: THE VEIL IS CROSSED BY THE CROSSING ALONE (systems/naval/etherCrossing.js) - a plan with one end in
+  // the Eltheric Ocean's box and one out of it is none: Veilhaven's helm to Daggerfall sailed one leg of 3,466 pixels, 2,607
+  // of them over sea no ground streams. With both ends in it, its boxes keep to it (`ether`, below).
+  const ether = inEther(from.x, from.y);
+  if (ether !== inEther(to.x, to.y)) return null;
   if (from.x === to.x && from.y === to.y && !(sea && (sea.start === 'sea') !== (sea.goal === 'sea'))) return { pixels: [{ x: from.x, y: from.y }], cost: 0, kinds: [] };
   // LONG-VOYAGE (START2, bible/06-Systems/Travel-View.md "LONG-VOYAGE"): A CROSSING FROM A HELM WITH AN END PAST THE BAY'S
   // TABLE SAILS THE SEA LANES (planSeaLanes) - the box below never leaves the map and its two ends, and a port past the
@@ -504,7 +510,7 @@ export function* planRouteSteps(from, to, opts = {}) {
     if (byRoad) return byRoad;
   }
   const endLeg = ends?.strict && !tried ? endLegOf(from, to, ends) : null;
-  const reachOf = (margin) => (past ? { x0: Math.min(bounds.x0, offTable(from) ? from.x - margin : Infinity, offTable(to) ? to.x - margin : Infinity), x1: Math.max(bounds.x1, offTable(from) ? from.x + margin : -Infinity, offTable(to) ? to.x + margin : -Infinity),
+  const reachOf = (margin) => etherBox(ether, past ? { x0: Math.min(bounds.x0, offTable(from) ? from.x - margin : Infinity, offTable(to) ? to.x - margin : Infinity), x1: Math.max(bounds.x1, offTable(from) ? from.x + margin : -Infinity, offTable(to) ? to.x + margin : -Infinity),
     y0: Math.min(bounds.y0, offTable(from) ? from.y - margin : Infinity, offTable(to) ? to.y - margin : Infinity), y1: Math.max(bounds.y1, offTable(from) ? from.y + margin : -Infinity, offTable(to) ? to.y + margin : -Infinity) } : bounds);
   const hCost = past && !roads && !tracks && !sea ? ROUTE_COST.open : ROUTE_COST.road;
   let best = byRoad, box = '', asked = false;
@@ -546,6 +552,11 @@ export function* planRouteSteps(from, to, opts = {}) {
   return best;
 }
 
+/** AUDIT SEA PATHS PL-2: a plan's box held to the Eltheric Ocean's own when its ends are there (`ether`) - the sea about the
+ *  box's edges streams no ground. @param {boolean} ether @param {{ x0: number, x1: number, y0: number, y1: number }} b */
+function etherBox(ether, b) {
+  return ether ? { x0: Math.max(b.x0, ETHER_BOX.x0), x1: Math.min(b.x1, ETHER_BOX.x1 - 1), y0: Math.max(b.y0, ETHER_BOX.y0), y1: Math.min(b.y1, ETHER_BOX.y1 - 1) } : b;
+}
 /** ROAD-BEYOND: the ladder's whole spend past the Bay's table, cells expanded over every rung (an op count, never a clock). */
 export const BEYOND_MAX_EXPANSIONS = 100000;
 /** ROAD-BEYOND: the widest rung past the table, pixels about the ends - a box no wider than the ladder's spend walks (the
@@ -1178,6 +1189,9 @@ function* searchSteps(from, to, { roads, tracks, isWater, width, height, bounds,
   const startLayer = !sea ? 0 : sea.start === 'sea' ? AFLOAT : ASHORE;
   const seaGoal = !!sea && sea.goal === 'sea';
   const goalOk = (layer) => !sea || (seaGoal ? layer === AFLOAT : layer !== AFLOAT);
+  // AUDIT SEA PATHS PL-3: A PLACE STOOD ON WATER WITH NO LAND BESIDE IT is landed on itself - a landfall was a step onto a dry
+  // pixel, and 631 of the Eltheric Ocean's port isles (Syrisol Landing, Ishomere Landing) read water about their town
+  const goalIsle = !!sea && !seaGoal && isWater(to.x, to.y) && DIR_DELTA.every(([, dx, dy]) => isWater(to.x + dx, to.y + dy));
   // OWS2: land about a water pixel - a sailed step into it is a coast's
   const nearLand = (x, y) => {
     for (const [, dx, dy] of DIR_DELTA) if (!isWater(x + dx, y + dy)) return true;
@@ -1224,7 +1238,7 @@ function* searchSteps(from, to, { roads, tracks, isWater, width, height, bounds,
       const wet = sea ? isWater(nx, ny) || (seaGoal && n === goal) : false;
       let nl = layer, kindIx, step;
       if (sea && layer === AFLOAT) {
-        if (wet) {
+        if (wet && !(goalIsle && n === goal)) {
           // afloat: a boat never sails through a corner of the land (a diagonal between two land pixels)
           if (dx && dy && !isWater(cx + dx, cy) && !isWater(cx, cy + dy)) continue;
           kindIx = 3; step = diag * (nearLand(nx, ny) ? SEA_COST.coast : SEA_COST.sea);

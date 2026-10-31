@@ -104,7 +104,7 @@
   {
     "name": "OW5-S3-moored-always",
     "file": "src/systems/travel/seaAsk.js",
-    "old": "  if (means?.how !== 'moored' || !plan || plan.kinds.includes('sea')) return null;\n  return replan();",
+    "old": "  if (means.how !== 'moored' || plan.kinds.includes('sea')) return null;\n  return replan();",
     "new": "  return null;",
     "tests": [
       "test/player/eyeOfTheBeholder/ow5_audit.test.js"

@@ -101,8 +101,8 @@
   {
     "name": "SHIPLIFE-outbound-blind",
     "file": "src/systems/naval/shipLife.js",
-    "old": "    if (clear(here, [here[0] + Math.sin(b) * OUTBOUND_OPEN, here[1] + Math.cos(b) * OUTBOUND_OPEN])) { a = b; break; }",
-    "new": "    if (true) { a = b; break; }",
+    "old": "  return d >= OUTBOUND_MIN ? { kind: 'voyage', harbour: null, to: end(best.a, d), path: null, i: 0 } : null;",
+    "new": "  return d >= OUTBOUND_MIN ? { kind: 'voyage', harbour: null, to: end(a, VOYAGE_DIST), path: null, i: 0 } : null;",
     "tests": [
       "test/systems/naval/shiplife.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SHIPLIFE-no-stall-rule",
     "file": "src/systems/naval/shipLife.js",
-    "old": "    if (e.stall >= STALL_S) {",
-    "new": "    if (false) {",
+    "old": "    else if (e.stall >= STALL_S || held >= PROGRESS_S) {",
+    "new": "    else if (false) {",
     "tests": [
       "test/systems/naval/shiplife.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "SHIPLIFE-AI-stale-way",
     "file": "src/systems/naval/navalAI.js",
-    "old": "      if (ship.mode !== 'cruise' && ship.errand) ship.errand.path = null;",
-    "new": "      if (false) ship.errand.path = null;",
+    "old": "      if (ship.mode !== 'cruise' && ship.errand) { ship.errand.path = null; ship.errand.prog = null; }",
+    "new": "      if (false) { ship.errand.path = null; ship.errand.prog = null; }",
     "tests": [
       "test/systems/naval/shiplife.test.js"
     ]

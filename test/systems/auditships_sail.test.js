@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { scene } from '../csaScene.mjs';
 import { WATER_LEVEL, BOAT_ACTIONS } from '../../src/systems/comeSailAway/comeSailAway.js';
 import { HELM_WAY, SAIL_FREE, SAIL_FREE_GAINS, sailFreeGain } from '../../src/systems/helmWay.js';
-import { createSeaHelm, seaHelmStep, seaHelmReach, seaHelmLook, headingOf, squareOnly, SEA_HELM } from '../../src/systems/seaHelm.js';
+import { createSeaHelm, seaHelmStep, seaHelmReach, seaHelmLook, seaNoWay, headingOf, squareOnly, SEA_HELM } from '../../src/systems/seaHelm.js';
 import { haulBrake, GRAPPLE_S } from '../../src/systems/naval/navalBoarding.js';
 import { CSA_BRAKE_MAX } from '../../src/systems/comeSailAway/comeSailAway.js';
 import { HULL } from '../../src/systems/naval/navalShips.js';
@@ -82,7 +82,7 @@ function crossing({ hull, windTo, islet = [5000, 5000, 5001, 5001], handling = '
   let stopped = null, presses = [];
   const num = (name) => Number(new RegExp(`const ${name} = ([\\d.]+);`).exec(WORLD)[1]);
   const scope = {
-    TV_SEA_AHEAD_M: num('TV_SEA_AHEAD_M'), TV_SEA_LANE_M: num('TV_SEA_LANE_M'), TV_SEA_BEACH_M: num('TV_SEA_BEACH_M'), TV_SEA_NO_WAY_S: num('TV_SEA_NO_WAY_S'), TV_SEA_ASHORE_M: 60,
+    TV_SEA_AHEAD_M: num('TV_SEA_AHEAD_M'), TV_SEA_LANE_M: num('TV_SEA_LANE_M'), TV_SEA_BEACH_M: num('TV_SEA_BEACH_M'), TV_SEA_ASHORE_M: 60,
     tvSeaWaterAt: (x, z) => !isLand(x, z),
     tvSea: { helm: createSeaHelm(), best: Infinity, bestS: 0, phase: null, boat: null, means: { start: 'sea' } },
     tvSeaRelease: () => { s.held.clear(); s.deps.input.toggleAutorun = false; },
@@ -93,7 +93,7 @@ function crossing({ hull, windTo, islet = [5000, 5000, 5001, 5001], handling = '
     tvSeaMark: () => mark, worldTimeScale: () => 1,
     // FERRY-CLEAR: the sea's ships, as the naval host hands them (seaClearance.js createSeaHulls - AUDIT FERRY-CLEAR F4: led by their way)
     naval: { hullAlong: (p, dx, dz, far) => { const now = shipsAt(t), next = shipsAt(t + 1); return hullAlong(p, dx, dz, far, now.flatMap((b, i) => ledHulls(b, [next[i].c[0] - b.c[0], 0, next[i].c[2] - b.c[2]]))); } },
-    seaHelmStep, seaHelmLook, seaHeadingOf: headingOf, seaSquareOnly: squareOnly,
+    seaHelmStep, seaHelmLook, seaNoWay, seaHeadingOf: headingOf, seaSquareOnly: squareOnly,   // PIN MOVED (AUDIT SEA PATHS PL-5): the no-way clock seaHelm.js's
     csaJourneyHelm: { held: s.held, get row() { return s.deps.input.toggleAutorun; }, set row(v) { s.deps.input.toggleAutorun = !!v; }, press: (a) => presses.push(a) },   // FIELD BUGS 2026-10-21d PASSAGE-HANDS: the journey's taps its own
   };
   const from = WORLD.indexOf('  /** Metres along a flat direction from `p` to the first land');

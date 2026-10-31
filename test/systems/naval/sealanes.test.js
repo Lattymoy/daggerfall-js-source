@@ -37,7 +37,8 @@ import { findHarbour, alongside } from '../../../src/systems/naval/shipLife.js';
 import { hash32 } from '../../../src/world/spawnedDungeons.js';
 import { mulberry32 } from '../../../src/combat/blood/bloodArt.js';
 import { sea } from '../../navalSea.mjs';
-import { createWorldLanes } from '../../../src/scenes/naval/worldLanes.js';
+import { createWorldLanes, bayLaneWater } from '../../../src/scenes/naval/worldLanes.js';
+import { inBay } from '../../../src/world/tamriel/tamrielFrame.js';
 import { createWorldPorts } from '../../../src/world/worldWide/worldPorts.js';
 import { createWorldPlaces } from '../../../src/world/worldWide/worldPlaces.js';
 
@@ -417,6 +418,9 @@ function feedOn({ at = { x: 200, y: 200 }, clock = 1.7e12 } = {}) {
   const env = {
     tvWater: (px, py) => { calls.water++; return water(px, py); }, maps: { getClimateIndex: (px, py) => (open(px, py) ? OCEAN : 1), getRegion: (ri) => ({ mapNames: PORTS.map((p) => p.name) }) },
     CLIMATES: { Ocean: OCEAN }, RAID_NATIVE_PIXEL: NATIVE_PIXEL, pixelOfNative,
+    // PIN MOVED (AUDIT SEA PATHS LN-1): the Bay's lane water a square's four corners (worldLanes.js bayLaneWater), its climate
+    // CLIMATE.PAK's own - this map dilates nothing, so its own climate is the map's
+    bayLaneWater, inBay, undilatedClimateIndex: (m, px, py) => m.getClimateIndex(px, py),
     PORT_LOCATION_IDS: [...PORTS.map((p) => p.id), PORTS[0].id, 5],   // a repeat, and an id the map has not
     mapDict: new Map(PORTS.map((p, k) => [p.id & 0xfffff, { id: p.y * 1000 + p.x, regionIndex: 1, mapIndex: k }])),
     getPixelFromPixelID: (id) => ({ x: id % 1000, y: Math.floor(id / 1000) }),
@@ -444,8 +448,10 @@ test('SEA-LANES THE WORLD\'S FEED: before the frame poses the sea\'s ships, ever
   assert.match(readFileSync(new URL('../../../src/systems/naval/harbourBook.js', import.meta.url), 'utf8'), /return \{ key: `port:\$\{t\.id\}`, name: t\.name \?\? null, rect, ready, reach \};/, 'the harbour named, its key a lane port\'s');   // PIN MOVED (AUDIT HOLDINGS O1): and whether its scan's pixels are built
   assert.match(hostText('src/scenes/world.js'), /return \{ \.\.\.h, keep: harbourKeep\(t\.loc, h\.rect\) \};/);   // PIN MOVED (PORT-SHIPS): each town's keep beside its harbour (scenes/harbourHost.js, systems/naval/harbourKeep.js)
   // the clock where the lane's first packet lies at her home port, by the player
-  const [lane] = laneNetwork(FEED_PORTS.map((p) => ({ id: p.y * 1000 + p.x, name: p.name, px: p.x, py: p.y, region: 1 })), open);
-  const way = laneWay(lane, water, waterNative);
+  // PIN MOVED (AUDIT SEA PATHS LN-1): the lanes the host's law stands - a square's four corners (worldLanes.js bayLaneWater)
+  const laneLaw = bayLaneWater(water, open), laneLawNative = (x, z) => { const p = pixelOfNative(x, z); return laneLaw(p.x, p.y); };
+  const [lane] = laneNetwork(FEED_PORTS.map((p) => ({ id: p.y * 1000 + p.x, name: p.name, px: p.x, py: p.y, region: 1 })), laneLaw);
+  const way = laneWay(lane, laneLaw, laneLawNative);
   const count = packetsAt(lane, way, 0).length, p0 = packetOf(lane, 0, count);
   const leg = way.len / p0.speed, period = 2 * (leg + LANE_DWELL_S), v = Math.floor(1.7e9 / period);
   const clock = ((v - p0.phase) * period + 2 * leg + LANE_DWELL_S + 10) * 1000;

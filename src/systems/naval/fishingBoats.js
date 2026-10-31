@@ -8,7 +8,7 @@
 import { hash32 } from '../../world/spawnedDungeons.js';
 import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { keyHash } from './quays.js';
-import { footprintClear, berthSize, REACH_M } from './shipLife.js';
+import { footprintClear, berthSize, REACH_M, ringOver } from './shipLife.js';
 import { SWEEP_WAY } from './navalAI.js';   // her sweeps out on the way, as a merchantman's into a harbour
 
 /** A harbour's boats a day (a draw in the range, never more than its anchorages hold). */
@@ -167,12 +167,20 @@ export function stepFishing(ship, dt, ctx, { here, plan, way }) {
     if (e.ringing && !e.path) e.ringing = false;   // a fight took her off it (navalAI.js lets a way go): back by the water's way
     if (!e.ringing && dist2(here, e.at) <= FISH_RING + REACH_M) {
       e.ringing = true;
-      e.path = [0, 1, 2, 3].map((k) => { const a = (k / 4) * TAU + (ship.seed % 360) * (Math.PI / 180); return [e.at[0] + Math.sin(a) * FISH_RING, e.at[1] + Math.cos(a) * FISH_RING]; });
+      const ring = [0, 1, 2, 3].map((k) => { const a = (k / 4) * TAU + (ship.seed % 360) * (Math.PI / 180); return [e.at[0] + Math.sin(a) * FISH_RING, e.at[1] + Math.cos(a) * FISH_RING]; });
+      // AUDIT SEA PATHS AI-7: a point with her grid's room about it the water from her ground reaches, a chord it does not
+      // carry her along sailed by the ground itself (shipLife.js ringOver, a patrol's law) - a point ashore held her
+      // circling it all day
+      const grid = ctx.grid?.(ship.hull);
+      e.path = grid ? ringOver(ring.filter((q) => grid.room(q) && grid.clear(e.at, q)), [e.at[0], e.at[1]], grid.clear) : ring;
       e.i = 0;
     }
     if (e.ringing) {
       if (dist2(here, e.path[e.i]) <= REACH_M) e.i = (e.i + 1) % e.path.length;
-      return plan(e.path[e.i], FISH_STROKE);
+      // AUDIT SEA PATHS AI-7: her sweeps out on the ring as on the way out - a smack at FISH_STROKE beat for a point to
+      // windward and lost it, 300 m off her ground in twenty minutes
+      const p = plan(e.path[e.i], FISH_STROKE);
+      return ship.hull === 0 ? p : { ...p, sweeps: SWEEP_WAY, sailable: true };   // a skiff pulls her stroke as she is
     }
     const p = way(e.at);
     return p ? { ...plan(p, 0.8), sweeps: SWEEP_WAY, sailable: true } : (ship.errand = null);

@@ -23,7 +23,7 @@
 //    world's lane water at the Bay's scale: an A* over the Bay's pixels cost 15 s for the lanes of the freeware's coasts.
 //    Every client walks the same picture: every client's lanes alike.
 // ═══════════════════════════════════════════════════════════════════
-import { laneNetwork, laneWay, roadsteadOf, straighten, LANE_PATH_PX, LANE_STRAIGHT_STEPS, LANE_NEIGHBOURS } from '../../systems/naval/seaLanes.js';
+import { laneNetwork, laneWay, roadsteadOf, straighten, holdsLine, LANE_PATH_PX, LANE_NEIGHBOURS } from '../../systems/naval/seaLanes.js';
 import { getPixelFromPixelID, CLIMATES } from '../../formats/mapsFile.js';
 import { inBay, bayToPicture, pictureToBay, bayPictureRect, tamrielFit, BAY_W, BAY_H } from '../../world/tamriel/tamrielFrame.js';
 import { tamrielTrace, landLaw, landLabelAt } from '../../world/tamriel/tamrielLand.js';   // SMOOTH-LAND: the land's one law
@@ -66,6 +66,17 @@ export function worldLaneWater({ bayOpen, water, climateAt, beyond }) {
   return { open, openNative: (/** @type {number} */ x, /** @type {number} */ z) => open(Math.floor(x / NATIVE_PIXEL), 499 - Math.floor(z / NATIVE_PIXEL)) };
 }
 
+/** AUDIT SEA PATHS LN-1: THE BAY'S LANE WATER - a Bay pixel whose square is sea at its four corners (SEA-SQUARE's law,
+ *  squareCornersAll: the kernel lays a byte at its square's south-east corner), a corner sea where the host's byte law
+ *  calls it water (`water`) and its climate is the Ocean's (`ocean`: CLIMATE.PAK's own on the Bay, the world's past it).
+ *  Read through the boot's coastal dilation (a texture repair) 103 ports, Daggerfall, Sentinel and Wayrest among them,
+ *  stood with no roadstead; read by the pixel's own byte a quarter of a lane's way ran over the kernel's land.
+ *  @param {(x: number, y: number) => boolean} water @param {(x: number, y: number) => boolean} ocean */
+export function bayLaneWater(water, ocean) {
+  const sea = (/** @type {number} */ px, /** @type {number} */ py) => water(px, py) && ocean(px, py);
+  return (/** @type {number} */ px, /** @type {number} */ py) => inBay(px, py) && squareCornersAll(sea, px, py);
+}
+
 /** THE SEA'S GROUND - where the world's seeded things of the sea (the Warm Ashes raiders) are born and sail: the Bay's
  *  map and the Eltheric Ocean's box (ethericSea.js onBayOrEther, ETHER-OW's), and WW3 the world's grid past them where
  *  the land past the Bay stands (`beyond`: its ground streams, its climate and its water the composed continent's -
@@ -104,7 +115,7 @@ export const MOOR_REACH = 2;
 /** SMOOTH-LAND: THE CELL A ROADSTEAD MOORS OFF - its own picture cell when that is the picture's open sea; else (the land's
  *  smooth coast runs between the cell's centre and the roadstead, so the cell's centre is land and its roadstead sea) the
  *  open-sea cell within MOOR_REACH whose centre lies nearest it and is reached straight on the world's lane water at the
- *  Bay's scale (`holds`, LANE_STRAIGHT_STEPS a map pixel); ties to the first in rows. Null: none.
+ *  Bay's scale (`holds`, every map pixel crossed - seaLanes.js holdsLine); ties to the first in rows. Null: none.
  *  @param {number} px @param {number} py the roadstead's picture point
  *  @param {(x: number, y: number) => boolean} sea the picture's open sea (pictureSeaMask's)
  *  @param {(p: number[]) => { x: number, z: number }} native a picture point's native point
@@ -130,7 +141,7 @@ export function moorCell(px, py, sea, native, holds) {
  * BEYOND_LANE_PATH_PX (NIBEN-SEA: beyondPathPx). The picture's open sea is its water its border joins (world/arenaPlaces.js
  * pictureLakes: the lakes left out) outside the Bay's rectangle; a move is one of eight with no corner cut past land; the chain of pixel
  * centres is straightened wherever the picture's sea holds the line (a quarter of a picture pixel at a time), and each
- * straightened leg is asked again of `openNative` (the world's lane water, LANE_STRAIGHT_STEPS a map pixel) - one that
+ * straightened leg is asked again of `openNative` (the world's lane water, every map pixel crossed) - one that
  * fails keeps the chain it stood for.
  * @param {{ a: { road: { x: number, y: number }, reach?: number }, b: { road: { x: number, y: number }, reach?: number } }} lane
  * @param {(x: number, z: number) => boolean} openNative
@@ -142,11 +153,7 @@ export function beyondLaneWay(lane, openNative) {
   const picOf = (/** @type {{ x: number, y: number }} */ r) => bayToPicture(r.x + 0.5, r.y + 0.5);   // a roadstead's centre on the picture
   const [ax, ay] = picOf(lane.a.road), [bx, by] = picOf(lane.b.road);
   const native = (/** @type {number[]} */ p) => { const [mx, my] = pictureToBay(p[0], p[1]); return { x: mx * NATIVE_PIXEL, z: (500 - my) * NATIVE_PIXEL }; };
-  const holdsNative = (/** @type {{ x: number, z: number }} */ a, /** @type {{ x: number, z: number }} */ b) => {
-    const n = Math.max(1, Math.ceil((Math.hypot(b.x - a.x, b.z - a.z) / NATIVE_PIXEL) * LANE_STRAIGHT_STEPS));
-    for (let i = 1; i < n; i++) if (!openNative(a.x + ((b.x - a.x) * i) / n, a.z + ((b.z - a.z) * i) / n)) return false;
-    return true;
-  };
+  const holdsNative = (/** @type {{ x: number, z: number }} */ a, /** @type {{ x: number, z: number }} */ b) => holdsLine(a, b, openNative);   // AUDIT SEA PATHS LN-4: every pixel crossed
   const from = moorCell(ax, ay, sea, native, holdsNative), to = moorCell(bx, by, sea, native, holdsNative);
   if (!from || !to) return null;
   const ppu = fit.ppu, maxG = beyondPathPx(lane) / ppu;   // the A*'s costs in picture pixels (NIBEN-SEA: a canal harbour's lane its own)
@@ -411,7 +418,7 @@ export function createWorldLanes({ mapDict, maps, portIds, ports, bayOpen, bayOp
   };
   const beyondNet = () => {
     const v = ports.version();
-    if (v !== beyondOf) { beyondOf = v; beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true); beyondWays.clear(); }   // AUDIT TESA II P7: their own reach; SEA-SQUARE: the roomiest roadstead
+    if (v !== beyondOf) { beyondOf = v; beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX); beyondWays.clear(); }   // AUDIT TESA II P7: their own reach; SEA-SQUARE: the roomiest roadstead; AUDIT SEA PATHS LN-2: a lone port its way's cap
     return beyondList;
   };
   /** WW7-10: the lanes across the Bay's edge - made again when the world's ports or the picture move, none before the

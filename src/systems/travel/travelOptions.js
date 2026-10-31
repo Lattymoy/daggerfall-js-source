@@ -804,7 +804,10 @@ export function createTravelOptions(deps = {}) {
     const path = lane?.pts ?? null;   // ROAD-FOLLOW: on the curves past the Bay
     // ROAD-SMOOTH: the line the next leg walks, so a leg that ends inside a curve is walked on through it
     const after = lane && r.i + 1 < r.legs.length ? routeLane(r, r.i + 1) : null;
-    const line = { lane, path, ahead: after ? after.pts?.slice(1) ?? [[after.bx, after.bz]] : null, cornerTurn: LANE_CORNER_TURN };
+    // AUDIT SEA PATHS PL-1: a leg sailed or launched arrives anywhere in its window - past the Bay that window is centred on
+    // the pixel's byte, a corner four pixels share, and three quarters of it lay outside the pixel the arrival was asked in
+    const atSea = leg.kind === 'sea' || leg.kind === 'embark';
+    const line = { lane, path, ahead: after ? after.pts?.slice(1) ?? [[after.bx, after.bz]] : null, cornerTurn: LANE_CORNER_TURN, edgeArrival: atSea ? true : undefined };
     if (st.autopilot == null) st.autopilot = new TravelAutopilot(leg, rect, routeLegSpeed(leg.kind), line);
     else st.autopilot.initTargetRect(leg, rect, routeLegSpeed(leg.kind), line);
     st.autopilot.onArrival = () => {

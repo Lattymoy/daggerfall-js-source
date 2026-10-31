@@ -182,8 +182,8 @@
   {
     "name": "WW3-the-beyond-lanes-in-the-bays-water",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true);",
-    "new": "beyondList = laneNetwork(ports.list(), bayOpen, BEYOND_LANE_MAX_PX, true);",
+    "old": "beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX);",
+    "new": "beyondList = laneNetwork(ports.list(), bayOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX);",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
