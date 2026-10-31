@@ -336,7 +336,7 @@ stones to like your houses guild hall friends houses)"*. Not a DFU member (`01-O
 
 - **The book** (`systems/gate/gateSpoils.js`, template 577): bound and pack-only, no weight, the Holy Tome's picture. Every
   character has one: the kit holds it (`startingGear.js`), and a character from before it is given one once as its save is
-  restored (`portalBookGift`, the Wallet's gift). The item law knows it (acct231), so the account service deploys first.
+  restored (`portalBookGift`, the Wallet's gift). The item law knows it (acct232; acct231 on its branch, renumbered past MUSIC-BOX at the fold), so the account service deploys first.
 - **A spot is kept from inside a house** (`scenes/portalBookHost.js` bookHouseOf): my home (online, or a Daggerfall deed), my
   guild's hall, another guild's open hall, or another player's home I was let into. Being inside is the proof I may go in.
   The spot is the landing outside the front door nearest me, facing out - the exit's own landing (`player/enterExit.js`).
