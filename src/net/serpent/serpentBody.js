@@ -41,13 +41,27 @@ export const HEAD_LEN = 9;
 export const SERPENT_GIRTH = 1.6;
 /** Its girth along its length: [s metres behind the snout, radius metres] - the jaws, the skull, a neck, the great
  *  coils a third of the way down, the taper to the tail (its first build's radii, times SERPENT_GIRTH). */
-export const RADII = Object.freeze([[0, 2.2], [4, 3.4], [9, 3.0], [14, 2.9], [40, 3.9], [90, 3.4], [140, 1.9], [BODY_LEN, 0.7]].map(([s, r]) => Object.freeze([s, Math.round(r * SERPENT_GIRTH * 100) / 100])));
+export const RADII = Object.freeze(
+  [
+    [0, 2.2],
+    [4, 3.4],
+    [9, 3.0],
+    [14, 2.9],
+    [40, 3.9],
+    [90, 3.4],
+    [140, 1.9],
+    [BODY_LEN, 0.7],
+  ].map(([s, r]) => Object.freeze([s, Math.round(r * SERPENT_GIRTH * 100) / 100])),
+);
 /** The radius `s` metres behind the snout. */
 export function radiusAt(s) {
   if (!(s > 0)) return RADII[0][1];
   for (let i = 1; i < RADII.length; i++) {
     const [s1, r1] = RADII[i];
-    if (s <= s1) { const [s0, r0] = RADII[i - 1]; return r0 + ((r1 - r0) * (s - s0)) / (s1 - s0); }
+    if (s <= s1) {
+      const [s0, r0] = RADII[i - 1];
+      return r0 + ((r1 - r0) * (s - s0)) / (s1 - s0);
+    }
   }
   return RADII[RADII.length - 1][1];
 }
@@ -70,11 +84,14 @@ export const LEGS_KEPT = 12;
 
 /** The head on leg `L` at `t` (never before the leg began): `{x, z, yw}`. */
 export function legAt(L, t) {
-  const dt = Math.max(0, t - L.at) / 1000, v = Math.max(SWIM_MIN_V, L.v);
+  const dt = Math.max(0, t - L.at) / 1000,
+    v = Math.max(SWIM_MIN_V, L.v);
   if (L.k === LEG.arc && L.r > 0) {
-    const sd = L.sd < 0 ? -1 : 1, yw = L.yw + (sd * v * dt) / L.r;
+    const sd = L.sd < 0 ? -1 : 1,
+      yw = L.yw + (sd * v * dt) / L.r;
     // the centre stands r to the turn's side of the start: right of a heading yw is (cos yw, -sin yw)
-    const cx = L.x + sd * L.r * Math.cos(L.yw), cz = L.z - sd * L.r * Math.sin(L.yw);
+    const cx = L.x + sd * L.r * Math.cos(L.yw),
+      cz = L.z - sd * L.r * Math.sin(L.yw);
     return { x: cx - sd * L.r * Math.cos(yw), z: cz + sd * L.r * Math.sin(yw), yw };
   }
   return { x: L.x + Math.sin(L.yw) * v * dt, z: L.z + Math.cos(L.yw) * v * dt, yw: L.yw };
@@ -90,7 +107,16 @@ export function supersede(list, at) {
   return list;
 }
 /** Two legs alike in every number the wire carries. */
-export const sameLeg = (a, b) => a.at === b.at && a.k === b.k && a.x === b.x && a.z === b.z && a.yw === b.yw && a.v === b.v && (a.r ?? 0) === (b.r ?? 0) && (a.sd ?? 0) === (b.sd ?? 0) && !!a.j === !!b.j;
+export const sameLeg = (a, b) =>
+  a.at === b.at &&
+  a.k === b.k &&
+  a.x === b.x &&
+  a.z === b.z &&
+  a.yw === b.yw &&
+  a.v === b.v &&
+  (a.r ?? 0) === (b.r ?? 0) &&
+  (a.sd ?? 0) === (b.sd ?? 0) &&
+  !!a.j === !!b.j;
 /** A mode already ridden by `b`'s moment (`a` is the track's last, so begun by then). */
 export const sameMode = (a, b) => a.m === b.m && a.at <= b.at;
 /**
@@ -129,16 +155,22 @@ export function headAt(legs, t) {
 export function spinePoint(legs, t, s) {
   if (!legs?.length) return { x: 0, z: -s, yw: 0 };
   let i = legIndexAt(legs, t);
-  if (i < 0) { const L = legs[0]; return { x: L.x - Math.sin(L.yw) * s, z: L.z - Math.cos(L.yw) * s, yw: L.yw }; }
-  let end = t, left = Math.max(0, s), L0 = legs[0];
+  if (i < 0) {
+    const L = legs[0];
+    return { x: L.x - Math.sin(L.yw) * s, z: L.z - Math.cos(L.yw) * s, yw: L.yw };
+  }
+  let end = t,
+    left = Math.max(0, s),
+    L0 = legs[0];
   for (; i >= 0; i--) {
-    const L = legs[i], v = Math.max(SWIM_MIN_V, L.v);
+    const L = legs[i],
+      v = Math.max(SWIM_MIN_V, L.v);
     const run = (v * Math.max(0, end - L.at)) / 1000;
     if (left <= run) return legAt(L, end - (left / v) * 1000);
     left -= run;
     end = L.at;
     L0 = L;
-    if (L.j) break;   // A JUMP: the head was placed there under the sea - the body never reaches back past it
+    if (L.j) break; // A JUMP: the head was placed there under the sea - the body never reaches back past it
   }
   return { x: L0.x - Math.sin(L0.yw) * left, z: L0.z - Math.cos(L0.yw) * left, yw: L0.yw };
 }
@@ -148,7 +180,9 @@ export function spinePoint(legs, t, s) {
  */
 export function legFrom(legs, t, k, v, r = 0, sd = 1) {
   const h = headAt(legs, t);
-  return k === LEG.arc ? { k, at: t, x: h.x, z: h.z, yw: h.yw, v, r, sd: sd < 0 ? -1 : 1 } : { k: LEG.line, at: t, x: h.x, z: h.z, yw: h.yw, v };
+  return k === LEG.arc
+    ? { k, at: t, x: h.x, z: h.z, yw: h.yw, v, r, sd: sd < 0 ? -1 : 1 }
+    : { k: LEG.line, at: t, x: h.x, z: h.z, yw: h.yw, v };
 }
 /** A leg's heading at its end `t` - where a turn has brought the head. */
 export const yawAt = (L, t) => legAt(L, t).yw;
@@ -171,28 +205,43 @@ export const HUMP_UNDER = -3.4;
  *  REAR_Y high over REAR_FALL. */
 export const BREACH_Y = 12;
 export const BREACH_FALL = 26;
-export const REAR_Y = 14;   // AUDIT SERPENT T4: at 24 m the reared head stood over every broadside's arc (long guns 17.6 m at their highest)
+export const REAR_Y = 14; // AUDIT SERPENT T4: at 24 m the reared head stood over every broadside's arc (long guns 17.6 m at their highest)
 export const REAR_FALL = 30;
 /** The head skims at the sea's top while it cruises. */
 export const CRUISE_HEAD_Y = 0.8;
 
-const smooth = (k) => { const x = Math.max(0, Math.min(1, k)); return x * x * (3 - 2 * x); };
+const smooth = (k) => {
+  const x = Math.max(0, Math.min(1, k));
+  return x * x * (3 - 2 * x);
+};
 /** The hump's height `s` behind the snout at `t` (ms). */
-const hump = (s, t) => HUMP_UNDER + (HUMP_TOP - HUMP_UNDER) * Math.max(0, Math.sin((2 * Math.PI * s) / HUMP_L - (HUMP_W * t) / 1000));
+const hump = (s, t) =>
+  HUMP_UNDER + (HUMP_TOP - HUMP_UNDER) * Math.max(0, Math.sin((2 * Math.PI * s) / HUMP_L - (HUMP_W * t) / 1000));
 /** The height (m over the sea) mode `m` holds the point `s` behind the snout at `t`. A coil's own shape is coilPoint's;
  *  as a mode alone it lies sounded - the path's body under the coil, never a second serpent on the surface beside it. */
 export function depthOf(m, s, t, since = t) {
   switch (m) {
-    case MODE.deep: return DEEP_Y;
-    case MODE.coil: return DEEP_Y;   // the path's body under the sea - the coil's own shape is coilPoint's, eased over it
-    case MODE.breach: { const w = Math.exp(-s / BREACH_FALL); return w * BREACH_Y + (1 - w) * hump(s, t); }
-    case MODE.rear: { const w = Math.exp(-s / REAR_FALL); return w * REAR_Y + (1 - w) * hump(s, t) * 0.6; }
+    case MODE.deep:
+      return DEEP_Y;
+    case MODE.coil:
+      return DEEP_Y; // the path's body under the sea - the coil's own shape is coilPoint's, eased over it
+    case MODE.breach: {
+      const w = Math.exp(-s / BREACH_FALL);
+      return w * BREACH_Y + (1 - w) * hump(s, t);
+    }
+    case MODE.rear: {
+      const w = Math.exp(-s / REAR_FALL);
+      return w * REAR_Y + (1 - w) * hump(s, t) * 0.6;
+    }
     case MODE.dying: {
       // DEATH THROES: the body rolls high once, then founders - under DEEP_Y by the dive's end
       const k = Math.max(0, Math.min(1, (t - since) / 15_000));
       return (1 - k) * (2 + 2.5 * Math.sin((2 * Math.PI * s) / 60 - t / 400)) + k * DEEP_Y;
     }
-    default: { const w = Math.exp(-s / 10); return w * CRUISE_HEAD_Y + (1 - w) * hump(s, t); }
+    default: {
+      const w = Math.exp(-s / 10);
+      return w * CRUISE_HEAD_Y + (1 - w) * hump(s, t);
+    }
   }
 }
 /**
@@ -205,7 +254,7 @@ export function depthAt(modes, s, t) {
   let i = modes.length - 1;
   while (i > 0 && modes[i].at > t) i--;
   const cur = modes[i];
-  if (cur.at > t) return depthOf(cur.m, s, t, cur.at);   // before the first word: as the first says
+  if (cur.at > t) return depthOf(cur.m, s, t, cur.at); // before the first word: as the first says
   const prev = i > 0 ? modes[i - 1] : null;
   const k = prev ? smooth((t - cur.at) / MODE_BLEND_MS) : 1;
   const y = depthOf(cur.m, s, t, cur.at);
@@ -252,8 +301,10 @@ export function coilPoint(c, s, th = c.th) {
   const loopLen = COIL_TURN * 2 * Math.PI * COIL_R;
   if (s <= COIL_NECK) {
     const k = s / COIL_NECK;
-    const hx = c.x + Math.sin(th) * COIL_R * COIL_HEAD_IN, hz = c.z + Math.cos(th) * COIL_R * COIL_HEAD_IN;
-    const lx = c.x + Math.sin(th) * COIL_R, lz = c.z + Math.cos(th) * COIL_R;
+    const hx = c.x + Math.sin(th) * COIL_R * COIL_HEAD_IN,
+      hz = c.z + Math.cos(th) * COIL_R * COIL_HEAD_IN;
+    const lx = c.x + Math.sin(th) * COIL_R,
+      lz = c.z + Math.cos(th) * COIL_R;
     return { x: hx + (lx - hx) * k, y: COIL_HEAD_Y + (2.2 - COIL_HEAD_Y) * smooth(k), z: hz + (lz - hz) * k };
   }
   if (s <= COIL_NECK + loopLen) {
@@ -262,8 +313,10 @@ export function coilPoint(c, s, th = c.th) {
     return { x: c.x + Math.sin(a) * COIL_R, y: 2.2 - 3.2 * k, z: c.z + Math.cos(a) * COIL_R };
   }
   // the tail off the loop's end, along its tangent, down into the sea
-  const a = th + loopLen / COIL_R, rest = s - COIL_NECK - loopLen;
-  const ex = c.x + Math.sin(a) * COIL_R, ez = c.z + Math.cos(a) * COIL_R;
+  const a = th + loopLen / COIL_R,
+    rest = s - COIL_NECK - loopLen;
+  const ex = c.x + Math.sin(a) * COIL_R,
+    ez = c.z + Math.cos(a) * COIL_R;
   return { x: ex + Math.cos(a) * rest, y: -1 - rest * 0.4, z: ez - Math.sin(a) * rest };
 }
 /** How much of the body the coil holds at `t` (0..1): wound on from its `at`, off from its `off` (its breaking, its
@@ -287,19 +340,31 @@ export function coilWeight(c, t) {
  */
 export function bodyAt(b, t, out = []) {
   const w = coilWeight(b.coil, t);
-  const th = w > 0 ? coilAngleAt(b.coil, t) : 0;   // AUDIT SHIPS B6: the coil as its head has gone round it
+  const th = w > 0 ? coilAngleAt(b.coil, t) : 0; // AUDIT SHIPS B6: the coil as its head has gone round it
   for (let i = 0; i <= SEG_N; i++) {
     const s = i * SEG_LEN;
     const p = spinePoint(b.legs, t, s);
-    let x = p.x, z = p.z, y = depthAt(b.modes, s, t);
-    if (w > 0) { const c = coilPoint(b.coil, s, th); x += (c.x - x) * w; y += (c.y - y) * w; z += (c.z - z) * w; }
+    let x = p.x,
+      z = p.z,
+      y = depthAt(b.modes, s, t);
+    if (w > 0) {
+      const c = coilPoint(b.coil, s, th);
+      x += (c.x - x) * w;
+      y += (c.y - y) * w;
+      z += (c.z - z) * w;
+    }
     const o = out[i] ?? (out[i] = { x: 0, y: 0, z: 0, yw: 0, r: 0 });
-    o.x = x; o.y = y; o.z = z; o.yw = p.yw; o.r = radiusAt(s);
+    o.x = x;
+    o.y = y;
+    o.z = z;
+    o.yw = p.yw;
+    o.r = radiusAt(s);
   }
   out.length = SEG_N + 1;
   // the facing along the body as it lies (a coil's included) - each point toward the one before it
   for (let i = 0; i <= SEG_N; i++) {
-    const a = out[Math.max(0, i - 1)], c = out[Math.min(SEG_N, i + 1)];
+    const a = out[Math.max(0, i - 1)],
+      c = out[Math.min(SEG_N, i + 1)];
     if (i > 0 || w > 0) out[i].yw = Math.atan2(a.x - c.x, a.z - c.z);
   }
   return out;
@@ -328,8 +393,11 @@ export function nearestExposed(pts, x, z) {
   let best = null;
   for (let i = 0; i < SEG_N; i++) {
     if (!segExposed(pts, i)) continue;
-    const a = pts[i], c = pts[i + 1];
-    const dx = c.x - a.x, dz = c.z - a.z, L2 = dx * dx + dz * dz;
+    const a = pts[i],
+      c = pts[i + 1];
+    const dx = c.x - a.x,
+      dz = c.z - a.z,
+      L2 = dx * dx + dz * dz;
     const k = L2 > 0 ? Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / L2)) : 0;
     const d = Math.hypot(x - (a.x + dx * k), z - (a.z + dz * k)) - Math.max(a.r, c.r);
     if (!best || d < best.d) best = { d: Math.max(0, d), i };
@@ -342,9 +410,14 @@ export function nearestExposed(pts, x, z) {
  * Its long axis along the segment (z), y up through it.
  */
 export function segmentBox(pts, i, seaY = 0, toFrame = (x, z) => [x, z]) {
-  const a = pts[i], c = pts[i + 1];
-  const [ax, az] = toFrame(a.x, a.z), [cx, cz] = toFrame(c.x, c.z);
-  const dx = cx - ax, dy = c.y - a.y, dz = cz - az, len = Math.hypot(dx, dy, dz) || 1e-6;
+  const a = pts[i],
+    c = pts[i + 1];
+  const [ax, az] = toFrame(a.x, a.z),
+    [cx, cz] = toFrame(c.x, c.z);
+  const dx = cx - ax,
+    dy = c.y - a.y,
+    dz = cz - az,
+    len = Math.hypot(dx, dy, dz) || 1e-6;
   const zA = [dx / len, dy / len, dz / len];
   // a y axis square to it, as near up as it can be
   let yA = [-zA[0] * zA[1], 1 - zA[1] * zA[1], -zA[2] * zA[1]];
@@ -352,5 +425,11 @@ export function segmentBox(pts, i, seaY = 0, toFrame = (x, z) => [x, z]) {
   yA = yl > 1e-6 ? [yA[0] / yl, yA[1] / yl, yA[2] / yl] : [1, 0, 0];
   const xA = [yA[1] * zA[2] - yA[2] * zA[1], yA[2] * zA[0] - yA[0] * zA[2], yA[0] * zA[1] - yA[1] * zA[0]];
   const r = Math.max(a.r, c.r);
-  return { c: [(ax + cx) / 2, seaY + (a.y + c.y) / 2, (az + cz) / 2], ax: xA, ay: yA, az: zA, h: [r, r, len / 2 + r * 0.25] };
+  return {
+    c: [(ax + cx) / 2, seaY + (a.y + c.y) / 2, (az + cz) / 2],
+    ax: xA,
+    ay: yA,
+    az: zA,
+    h: [r, r, len / 2 + r * 0.25],
+  };
 }

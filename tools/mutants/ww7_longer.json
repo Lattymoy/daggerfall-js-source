@@ -493,8 +493,8 @@
   {
     "name": "WW7-12-herald-agree",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": "  const a = agreedSerpentSite(rec, d);\n  return a ? { t: 'serpent', k: 'at'",
-    "new": "  const a = rec.c?.[0] ? { sx: rec.c[0][0], sz: rec.c[0][1], place: rec.c[0][2] } : null;\n  return a ? { t: 'serpent', k: 'at'",
+    "old": "  const a = agreedSerpentSite(rec, d);",
+    "new": "  const a = rec.c?.[0] ? { sx: rec.c[0][0], sz: rec.c[0][1], place: rec.c[0][2] } : null;",
     "tests": [
       "test/world/worldWide/ww7_longer.test.js"
     ],
@@ -543,8 +543,8 @@
   {
     "name": "WW7-12-link-older",
     "file": "src/net/serpent/serpentLink.js",
-    "old": "      if (w.k === 'at') { if (!told || w.d >= told.d) told =",
-    "new": "      if (w.k === 'at') { if (true) told =",
+    "old": "        if (!told || w.d >= told.d) told = { d: w.d, sx: w.sx, sz: w.sz, pl: w.pl };",
+    "new": "        if (true) told = { d: w.d, sx: w.sx, sz: w.sz, pl: w.pl };",
     "tests": [
       "test/world/worldWide/ww7_longer.test.js"
     ],

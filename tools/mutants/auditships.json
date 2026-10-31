@@ -461,8 +461,8 @@
   {
     "name": "AUDIT-SHIPS-D2-wound-from-landing",
     "file": "src/net/serpent/serpentBody.js",
-    "old": "const on = smooth((t - (c.w > c.at ? c.w : c.at)) / COIL_BLEND_MS);",
-    "new": "const on = smooth((t - c.at) / COIL_BLEND_MS);",
+    "old": "  const on = smooth((t - (c.w > c.at ? c.w : c.at)) / COIL_BLEND_MS);",
+    "new": "  const on = smooth((t - c.at) / COIL_BLEND_MS);",
     "tests": [
       "test/net/serpent/auditships.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "AUDIT-SHIPS-D2-fold-drops-w",
     "file": "src/net/serpent/serpentLink.js",
-    "old": "...(w.w !== undefined ? { w: w.w } : {}), until: w.until,",
-    "new": "until: w.until,",
+    "old": "          ...(w.w !== undefined ? { w: w.w } : {}),\n          until: w.until,",
+    "new": "          until: w.until,",
     "tests": [
       "test/net/serpent/auditships.test.js"
     ]
@@ -544,8 +544,8 @@
   {
     "name": "AUDIT-SHIPS-B6-drawn-still",
     "file": "src/net/serpent/serpentBody.js",
-    "old": "const th = w > 0 ? coilAngleAt(b.coil, t) : 0;",
-    "new": "const th = w > 0 ? b.coil.th : 0;",
+    "old": "  const th = w > 0 ? coilAngleAt(b.coil, t) : 0; // AUDIT SHIPS B6: the coil as its head has gone round it",
+    "new": "  const th = w > 0 ? b.coil.th : 0; // AUDIT SHIPS B6: the coil as its head has gone round it",
     "tests": [
       "test/net/serpent/auditships.test.js",
       "test/net/serpent/serpent1_law.test.js"
@@ -554,8 +554,8 @@
   {
     "name": "AUDIT-SHIPS-B6-turned-past-off",
     "file": "src/net/serpent/serpentBody.js",
-    "old": "const end = c.off > 0 ? Math.min(t, c.off) : t;",
-    "new": "const end = t;",
+    "old": "  const end = c.off > 0 ? Math.min(t, c.off) : t;",
+    "new": "  const end = t;",
     "tests": [
       "test/net/serpent/auditships.test.js",
       "test/net/serpent/serpent1_law.test.js"

@@ -23,8 +23,8 @@
   {
     "name": "AUDIT-SERPENT-2-F2-client-asks-before-the-rule",
     "file": "src/net/serpent/serpentLink.js",
-    "old": "      if (!onTimeline(modes, { at: w.at, m: w.m }, sameMode)) return s;\n",
-    "new": "      if (s.modes.some((d) => d.at === w.at && d.m === w.m)) return s;\n      if (!onTimeline(modes, { at: w.at, m: w.m }, sameMode)) return s;\n",
+    "old": "      if (!onTimeline(modes, { at: w.at, m: w.m }, sameMode)) return s;",
+    "new": "      if (s.modes.some((d) => d.at === w.at && d.m === w.m)) return s;\n      if (!onTimeline(modes, { at: w.at, m: w.m }, sameMode)) return s;",
     "tests": [
       "test/net/serpent/serpent1_audit2.test.js"
     ],

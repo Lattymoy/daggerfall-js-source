@@ -331,6 +331,15 @@
 /src/net/sea/*/
 !/src/net/seatGiftLaw.js
 !/src/net/seatLive.js
+!/src/net/serpent/
+/src/net/serpent/*
+!/src/net/serpent/serpentBody.js
+!/src/net/serpent/serpentClaims.js
+!/src/net/serpent/serpentHerald.js
+!/src/net/serpent/serpentHoardLaw.js
+!/src/net/serpent/serpentLaw.js
+!/src/net/serpent/serpentLink.js
+!/src/net/serpent/serpentReceipt.js
 !/src/net/serverPost.js
 !/src/net/sessionPassLaw.js
 !/src/net/shopLaw.js

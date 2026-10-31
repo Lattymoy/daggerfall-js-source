@@ -671,8 +671,8 @@
   {
     "name": "INT14-SERPENT-RECEIPT-DROPS-M",
     "file": "src/net/serpent/serpentReceipt.js",
-    "old": "...(m !== undefined ? { m } : {}), i: nowS",
-    "new": "i: nowS",
+    "old": "  const claims = { d, b, s, c, x, h, l, ...(m !== undefined ? { m } : {}), i: nowS, e: nowS + SERPENT_RECEIPT_TTL_S };",
+    "new": "  const claims = { d, b, s, c, x, h, l, i: nowS, e: nowS + SERPENT_RECEIPT_TTL_S };",
     "tests": [
       "test/net/int12_body_relay.test.js"
     ]
@@ -698,8 +698,8 @@
   {
     "name": "INT14-SERPENT-RECEIPT-BAD-M",
     "file": "src/net/serpent/serpentReceipt.js",
-    "old": "  if (c.m !== undefined && !bodyMeasureValid(c.m)) return false;",
-    "new": "",
+    "old": "  if (c.m !== undefined && !bodyMeasureValid(c.m)) return false; // INT14: optional - a receipt minted before it carries none",
+    "new": "  // INT14: optional - a receipt minted before it carries none",
     "tests": [
       "test/net/int12_body_relay.test.js"
     ]

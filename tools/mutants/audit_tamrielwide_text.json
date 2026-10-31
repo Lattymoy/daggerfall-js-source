@@ -139,8 +139,8 @@
   {
     "name": "AUDIT-TW-D6-the-serpents-bay",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "`The sea will remember ${boss.name}'s fall.",
-    "new": "`The Bay will remember ${boss.name}'s fall.",
+    "old": "    `The sea will remember ${boss.name}'s fall. Serpents slain: ${n}.${xp > 0 ? ` +${xp} toward your Renown.` : ''}`, // AUDIT SERPENT B11: the table's name",
+    "new": "    `The Bay will remember ${boss.name}'s fall. Serpents slain: ${n}.${xp > 0 ? ` +${xp} toward your Renown.` : ''}`, // AUDIT SERPENT B11: the table's name",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js",
       "test/net/serpent/serpent1_auditclient.test.js"
@@ -150,8 +150,8 @@
   {
     "name": "AUDIT-TW-D6-the-serpents-title",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "'The sea names you Coilbreaker.'",
-    "new": "'The Bay names you Coilbreaker.'",
+    "old": "  title: () => t('serpent.honour.title', 'The sea names you Coilbreaker.'), // SERPENT5; AUDIT WORLD-REWARDS C2: routed (the lamp's own way)",
+    "new": "  title: () => t('serpent.honour.title', 'The Bay names you Coilbreaker.'), // SERPENT5; AUDIT WORLD-REWARDS C2: routed (the lamp's own way)",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js"
     ],

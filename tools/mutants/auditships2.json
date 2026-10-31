@@ -228,8 +228,8 @@
   {
     "name": "AUDIT2-XC1-n-unfolded",
     "file": "src/net/serpent/serpentLink.js",
-    "old": "case 'hp': return { ...s, hp: w.h, max: w.m, ...(w.n !== undefined ? { n: w.n } : {}), heardAt: now };",
-    "new": "case 'hp': return { ...s, hp: w.h, max: w.m, heardAt: now };",
+    "old": "      return { ...s, hp: w.h, max: w.m, ...(w.n !== undefined ? { n: w.n } : {}), heardAt: now }; // AUDIT 2 XC1: the count with it",
+    "new": "      return { ...s, hp: w.h, max: w.m, heardAt: now }; // AUDIT 2 XC1: the count with it",
     "tests": [
       "test/net/serpent/auditships2.test.js"
     ],

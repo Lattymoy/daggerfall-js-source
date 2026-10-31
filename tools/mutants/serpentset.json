@@ -378,8 +378,8 @@
   {
     "name": "SERPENT-SET-carrier-lines-unsaid",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "          for (const line of Array.isArray(lines) ? lines : [lines]) if (typeof line === 'string' && line) say(line);\n",
-    "new": "",
+    "old": "          for (const line of Array.isArray(lines) ? lines : [lines]) if (typeof line === 'string' && line) say(line);\n          // SERPENT5: THE OLD COIL'S GRANTS - said whenever this kill granted one, popped only when it is new (the Hour's law,",
+    "new": "          // SERPENT5: THE OLD COIL'S GRANTS - said whenever this kill granted one, popped only when it is new (the Hour's law,",
     "why": "the lines handed back and never said",
     "tests": [
       "test/systems/serpentset.test.js"
@@ -388,8 +388,8 @@
   {
     "name": "SERPENT-SET-carrier-throw",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "try { lines = onMarks(answer.data); } catch (err) { console.warn('[serpent] silver lines', err?.message ?? err); }",
-    "new": "lines = onMarks(answer.data);",
+    "old": "          try {\n            lines = onMarks(answer.data);\n          } catch (err) {\n            console.warn('[serpent] silver lines', err?.message ?? err);\n          }",
+    "new": "          lines = onMarks(answer.data);",
     "why": "a host's throw breaks the claim",
     "tests": [
       "test/systems/serpentset.test.js"

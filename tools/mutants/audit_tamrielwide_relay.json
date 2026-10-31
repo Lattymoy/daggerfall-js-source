@@ -132,8 +132,8 @@
   {
     "name": "AUDIT-TW-E3-every-law-folded",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": "m?.sl === SERPENT_SITE_LAW && serpentSiteDayOk(m.d, nowMs)",
-    "new": "serpentSiteDayOk(m.d, nowMs)",
+    "old": "export const serpentSiteWordOk = (m, nowMs) => m?.sl === SERPENT_SITE_LAW && serpentSiteDayOk(m.d, nowMs);",
+    "new": "export const serpentSiteWordOk = (m, nowMs) => serpentSiteDayOk(m.d, nowMs);",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_relay.test.js",
       "test/net/serpent/serpent2_herald.test.js"

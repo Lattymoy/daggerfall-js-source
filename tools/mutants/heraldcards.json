@@ -65,8 +65,8 @@
   {
     "name": "HERALD-CARDS-a-post-left-as-another-family",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": "family: 'serpent', moment: 'Slain',",
-    "new": "family: 'gate', moment: 'Slain',",
+    "old": "  return heraldCard({\n    family: 'serpent',\n    moment: 'Slain',",
+    "new": "  return heraldCard({\n    family: 'gate',\n    moment: 'Slain',",
     "tests": [
       "test/net/herald/heraldcards.test.js"
     ]

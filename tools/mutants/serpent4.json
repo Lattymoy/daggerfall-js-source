@@ -2,8 +2,8 @@
   {
     "name": "SERPENT4-admission-closed-at-the-storm",
     "file": "src/net/serpent/serpentLaw.js",
-    "old": "return isSerpentDay(day) && nowMs >= t.riseAt && nowMs < t.soundAt; };",
-    "new": "return isSerpentDay(day) && nowMs >= t.riseAt && nowMs < t.sealAt; };",
+    "old": "  return isSerpentDay(day) && nowMs >= t.riseAt && nowMs < t.soundAt;",
+    "new": "  return isSerpentDay(day) && nowMs >= t.riseAt && nowMs < t.sealAt;",
     "tests": [
       "test/net/serpent/serpent4.test.js",
       "test/net/serpent/serpent1_law.test.js",
@@ -13,8 +13,8 @@
   {
     "name": "SERPENT4-countdown-to-the-storm",
     "file": "src/net/serpent/serpentLaw.js",
-    "old": "if (phase === 'rising' || phase === 'hunt' || phase === 'late') return { to: 'sound', ms: Math.max(0, t.soundAt - nowMs) };",
-    "new": "if (phase === 'rising' || phase === 'hunt') return { to: 'seal', ms: Math.max(0, t.sealAt - nowMs) };\n  if (phase === 'late') return { to: 'sound', ms: Math.max(0, t.soundAt - nowMs) };",
+    "old": "  if (phase === 'rising' || phase === 'hunt' || phase === 'late')\n    return { to: 'sound', ms: Math.max(0, t.soundAt - nowMs) };",
+    "new": "  if (phase === 'rising' || phase === 'hunt') return { to: 'seal', ms: Math.max(0, t.sealAt - nowMs) };\n  if (phase === 'late') return { to: 'sound', ms: Math.max(0, t.soundAt - nowMs) };",
     "tests": [
       "test/net/serpent/serpent4.test.js"
     ]

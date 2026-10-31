@@ -161,8 +161,8 @@
   {
     "name": "AUDIT-SERPENT-S2-mode-said-away",
     "file": "src/net/serpent/serpentBody.js",
-    "old": "if (last && same(last, entry)) return list.length !== had;",
-    "new": "if (last && same(last, entry)) return false;",
+    "old": "  if (last && same(last, entry)) return list.length !== had;",
+    "new": "  if (last && same(last, entry)) return false;",
     "tests": [
       "test/net/serpent/serpent1_audit.test.js",
       "test/net/serpent/serpent1_audit2.test.js"
@@ -283,8 +283,8 @@
   {
     "name": "AUDIT-SERPENT-S2-supersede-strict",
     "file": "src/net/serpent/serpentBody.js",
-    "old": "if (list[i].at > at) list.splice(i, 1);",
-    "new": "if (list[i].at > at + 1e9) list.splice(i, 1);",
+    "old": "  for (let i = list.length - 1; i >= 0; i--) if (list[i].at > at) list.splice(i, 1);",
+    "new": "  for (let i = list.length - 1; i >= 0; i--) if (list[i].at > at + 1e9) list.splice(i, 1);",
     "tests": [
       "test/net/serpent/serpent1_audit.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "AUDIT-SERPENT-S2-link-legs",
     "file": "src/net/serpent/serpentLink.js",
-    "old": "      if (!onTimeline(f.legs, w.l, sameLeg)) return s;\n",
-    "new": "      f.legs.push(w.l);\n",
+    "old": "      if (!onTimeline(f.legs, w.l, sameLeg)) return s;",
+    "new": "      f.legs.push(w.l);",
     "tests": [
       "test/net/serpent/serpent1_audit.test.js"
     ],
@@ -302,8 +302,8 @@
   {
     "name": "AUDIT-SERPENT-S2-link-modes",
     "file": "src/net/serpent/serpentLink.js",
-    "old": "      if (!onTimeline(modes, { at: w.at, m: w.m }, sameMode)) return s;\n",
-    "new": "      modes.push({ at: w.at, m: w.m });\n",
+    "old": "      if (!onTimeline(modes, { at: w.at, m: w.m }, sameMode)) return s;",
+    "new": "      modes.push({ at: w.at, m: w.m });",
     "tests": [
       "test/net/serpent/serpent1_audit.test.js"
     ],
@@ -312,8 +312,8 @@
   {
     "name": "AUDIT-SERPENT-S4-link-fell-lets-go",
     "file": "src/net/serpent/serpentLink.js",
-    "old": "hp: 0, atk: null, coil: letGo(s.coil, w.at), heardAt: now };",
-    "new": "hp: 0, atk: null, coil: s.coil, heardAt: now };",
+    "old": "        coil: letGo(s.coil, w.at),",
+    "new": "        coil: s.coil,",
     "tests": [
       "test/net/serpent/serpent1_audit.test.js"
     ]
@@ -321,8 +321,8 @@
   {
     "name": "AUDIT-SERPENT-S4-link-gone-lets-go",
     "file": "src/net/serpent/serpentLink.js",
-    "old": "case 'gone': return { ...s, gone: w.at, atk: null, coil: letGo(s.coil, w.at), heardAt: now };",
-    "new": "case 'gone': return { ...s, gone: w.at, atk: null, coil: s.coil, heardAt: now };",
+    "old": "      return { ...s, gone: w.at, atk: null, coil: letGo(s.coil, w.at), heardAt: now };",
+    "new": "      return { ...s, gone: w.at, atk: null, coil: s.coil, heardAt: now };",
     "tests": [
       "test/net/serpent/serpent1_audit.test.js",
       "test/net/serpent/serpent1_auditclient.test.js"
@@ -331,8 +331,8 @@
   {
     "name": "AUDIT-SERPENT-S1-link-state-guard",
     "file": "src/net/serpent/serpentLink.js",
-    "old": "      if (!mine || !sameSerpentSite(mine, w)) return;\n",
-    "new": "",
+    "old": "      if (!mine || !sameSerpentSite(mine, w)) return;\n      state = foldSerpent(state, w, now());",
+    "new": "      state = foldSerpent(state, w, now());",
     "tests": [
       "test/systems/serpent1_client.test.js",
       "test/net/serpent/serpent1_audit2.test.js"
@@ -351,8 +351,8 @@
   {
     "name": "AUDIT-SERPENT-B9-rising-countdown",
     "file": "src/net/serpent/serpentLaw.js",
-    "old": "if (phase === 'omen') return { to: 'rise'",
-    "new": "if (phase === 'omen' || phase === 'rising') return { to: 'rise'",
+    "old": "  if (phase === 'omen') return { to: 'rise', ms: Math.max(0, t.riseAt - nowMs) };",
+    "new": "  if (phase === 'omen' || phase === 'rising') return { to: 'rise', ms: Math.max(0, t.riseAt - nowMs) };",
     "tests": [
       "test/net/serpent/serpent1_law.test.js"
     ]
@@ -360,8 +360,8 @@
   {
     "name": "AUDIT-SERPENT-words-clock",
     "file": "src/net/serpent/serpentLaw.js",
-    "old": "return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s`;",
-    "new": "return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;",
+    "old": "  return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s`;",
+    "new": "  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;",
     "tests": [
       "test/net/serpent/serpent1_law.test.js",
       "test/systems/serpent1_client.test.js"
@@ -370,8 +370,8 @@
   {
     "name": "AUDIT-SERPENT-words-dives",
     "file": "src/net/serpent/serpentLaw.js",
-    "old": ": 'dives'} in ${serpentClock(cd.ms)}",
-    "new": ": 'sounds'} in ${serpentClock(cd.ms)}",
+    "old": "  cd ? `${cd.to === 'rise' ? 'rises' : 'dives'} in ${serpentClock(cd.ms)}` : null;",
+    "new": "  cd ? `${cd.to === 'rise' ? 'rises' : 'sounds'} in ${serpentClock(cd.ms)}` : null;",
     "tests": [
       "test/net/serpent/serpent1_law.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "AUDIT-SERPENT-D6-settle-after-grant",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "if (given && serpentClaimVerdict(answer) === 'done')",
-    "new": "if (serpentClaimVerdict(answer) === 'done')",
+    "old": "        if (given && serpentClaimVerdict(answer) === 'done') {",
+    "new": "        if (serpentClaimVerdict(answer) === 'done') {",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "AUDIT-SERPENT-B11-claim-name",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "recorded: (n, xp, boss) => `The sea will remember ${boss.name}'s fall.",
-    "new": "recorded: (n, xp, boss) => `The sea will remember the Old Coil's fall.",
+    "old": "    `The sea will remember ${boss.name}'s fall. Serpents slain: ${n}.${xp > 0 ? ` +${xp} toward your Renown.` : ''}`, // AUDIT SERPENT B11: the table's name",
+    "new": "    `The sea will remember the Old Coil's fall. Serpents slain: ${n}.${xp > 0 ? ` +${xp} toward your Renown.` : ''}`, // AUDIT SERPENT B11: the table's name",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]
@@ -1104,8 +1104,8 @@
   {
     "name": "AUDIT-SERPENT-D-receipt-future-honoured",
     "file": "src/net/serpent/serpentReceipt.js",
-    "old": "  if (claims.i > nowS + skewS) return { ok: false, why: 'future' };\n",
-    "new": "",
+    "old": "  if (claims.i > nowS + skewS) return { ok: false, why: 'future' };\n  return { ok: true, claims };",
+    "new": "  return { ok: true, claims };",
     "tests": [
       "test/net/serpent/serpent1_law.test.js",
       "test/net/serpent/serpent1_relay.test.js",
@@ -1141,8 +1141,8 @@
   {
     "name": "AUDIT-SERPENT-D-claims-hoard-on-any-answer",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "const given = answer?.ok && answer.data?.spoils === true ? await granted(onSpoils, e, answer.data) : true;",
-    "new": "const given = answer?.ok ? await granted(onSpoils, e, answer.data) : true;",
+    "old": "        const given = answer?.ok && answer.data?.spoils === true ? await granted(onSpoils, e, answer.data) : true; // the hoard, this claim's",
+    "new": "        const given = answer?.ok ? await granted(onSpoils, e, answer.data) : true; // the hoard, this claim's",
     "tests": [
       "test/net/serpent/serpent1_law.test.js",
       "test/net/serpent/serpent1_relay.test.js",
@@ -1153,8 +1153,8 @@
   {
     "name": "AUDIT-SERPENT-D-claims-cid-not-stable",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "try { answer = await claim(e.r, e.ch, e.nm ?? null, e.cid); }",
-    "new": "try { answer = await claim(e.r, e.ch, e.nm ?? null, cid()); }",
+    "old": "          answer = await claim(e.r, e.ch, e.nm ?? null, e.cid);",
+    "new": "          answer = await claim(e.r, e.ch, e.nm ?? null, cid());",
     "tests": [
       "test/net/serpent/serpent1_law.test.js",
       "test/net/serpent/serpent1_relay.test.js",
@@ -1165,8 +1165,8 @@
   {
     "name": "AUDIT-SERPENT-D-claims-other-account-offered",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "if (!mine || live(e.r)?.s !== mine) continue;",
-    "new": "if (!mine) continue;",
+    "old": "        if (!mine || live(e.r)?.s !== mine) continue; // another account's waits for its own sign-in",
+    "new": "        if (!mine) continue; // another account's waits for its own sign-in",
     "tests": [
       "test/net/serpent/serpent1_law.test.js",
       "test/net/serpent/serpent1_relay.test.js",
@@ -1177,8 +1177,8 @@
   {
     "name": "AUDIT-SERPENT-D-claims-unsigned-kept",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "return c && c.signed && (t == null || c.e > t) ? c : null; };",
-    "new": "return c && (t == null || c.e > t) ? c : null; };",
+    "old": "    return c && c.signed && (t == null || c.e > t) ? c : null;",
+    "new": "    return c && (t == null || c.e > t) ? c : null;",
     "tests": [
       "test/net/serpent/serpent1_law.test.js",
       "test/net/serpent/serpent1_relay.test.js",
@@ -1189,8 +1189,8 @@
   {
     "name": "AUDIT-SERPENT-D-claims-expired-offered",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "return c && c.signed && (t == null || c.e > t) ? c : null; };",
-    "new": "return c && c.signed ? c : null; };",
+    "old": "    return c && c.signed && (t == null || c.e > t) ? c : null;",
+    "new": "    return c && c.signed ? c : null;",
     "tests": [
       "test/net/serpent/serpent1_law.test.js",
       "test/net/serpent/serpent1_relay.test.js",
@@ -1201,8 +1201,8 @@
   {
     "name": "AUDIT-SERPENT-D-claims-settled-not-on-device",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "settled.add(e.r); markSettled(live(e.r)); keep(",
-    "new": "settled.add(e.r); keep(",
+    "old": "          markSettled(live(e.r));\n          keep(kept().filter((k) => k.r !== e.r));",
+    "new": "          keep(kept().filter((k) => k.r !== e.r));",
     "tests": [
       "test/net/serpent/serpent1_law.test.js",
       "test/net/serpent/serpent1_relay.test.js",
@@ -1213,8 +1213,8 @@
   {
     "name": "AUDIT-SERPENT-D-claims-renown-character-kept",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "  if (answer?.error === 'renown-character') return 'done';",
-    "new": "  if (answer?.error === 'renown-character') return 'keep';",
+    "old": "  if (answer?.error === 'renown-character') return 'done'; // no character to pay - it never will be",
+    "new": "  if (answer?.error === 'renown-character') return 'keep'; // no character to pay - it never will be",
     "tests": [
       "test/net/serpent/serpent1_law.test.js",
       "test/net/serpent/serpent1_relay.test.js",
@@ -1225,8 +1225,8 @@
   {
     "name": "AUDIT-SERPENT-D-claims-retry-every-frame",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "const t = nowMs(), due = t - lastAt >= SERPENT_CLAIM_RETRY_MS;",
-    "new": "const t = nowMs(), due = t - lastAt >= 0;",
+    "old": "        due = t - lastAt >= SERPENT_CLAIM_RETRY_MS;",
+    "new": "        due = t - lastAt >= 0;",
     "tests": [
       "test/net/serpent/serpent1_law.test.js",
       "test/net/serpent/serpent1_relay.test.js",

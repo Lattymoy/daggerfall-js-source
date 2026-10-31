@@ -2,8 +2,8 @@
   {
     "name": "SERPENT1-law-every-day",
     "file": "src/net/serpent/serpentLaw.js",
-    "old": "day >= 0 && day % SERPENT_EVERY_DAYS === SERPENT_DAY_PHASE;",
-    "new": "day >= 0;",
+    "old": "export const isSerpentDay = (day) =>\n  Number.isSafeInteger(day) && day >= 0 && day % SERPENT_EVERY_DAYS === SERPENT_DAY_PHASE;",
+    "new": "export const isSerpentDay = (day) => Number.isSafeInteger(day) && day >= 0;",
     "tests": [
       "test/net/serpent/serpent1_law.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SERPENT1-law-slain-sounds",
     "file": "src/net/serpent/serpentLaw.js",
-    "old": "const end = slain ? /** @type {number} */ (fellAt) : t.soundAt;",
-    "new": "const end = t.soundAt;",
+    "old": "  const end = slain ? /** @type {number} */ (fellAt) : t.soundAt;",
+    "new": "  const end = t.soundAt;",
     "tests": [
       "test/net/serpent/serpent1_law.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SERPENT1-law-admits-past-dive",
     "file": "src/net/serpent/serpentLaw.js",
-    "old": "return isSerpentDay(day) && nowMs >= t.riseAt && nowMs < t.soundAt; };",
-    "new": "return isSerpentDay(day) && nowMs >= t.riseAt && nowMs < t.soundAt + SERPENT_DIVE_MS; };",
+    "old": "  return isSerpentDay(day) && nowMs >= t.riseAt && nowMs < t.soundAt;",
+    "new": "  return isSerpentDay(day) && nowMs >= t.riseAt && nowMs < t.soundAt + SERPENT_DIVE_MS;",
     "tests": [
       "test/net/serpent/serpent1_law.test.js",
       "test/net/serpent/serpent1_relay.test.js"
@@ -30,8 +30,8 @@
   {
     "name": "SERPENT1-receipt-version-unread",
     "file": "src/net/serpent/serpentReceipt.js",
-    "old": "if (parts.length !== 3 || parts[0] !== SERPENT_RECEIPT_V) return null;",
-    "new": "if (parts.length !== 3) return null;",
+    "old": "  if (parts.length !== 3 || parts[0] !== SERPENT_RECEIPT_V) return null;",
+    "new": "  if (parts.length !== 3) return null;",
     "tests": [
       "test/net/serpent/serpent1_relay.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "SERPENT1-receipt-raid-shape",
     "file": "src/net/serpent/serpentReceipt.js",
-    "old": "|| c.w !== undefined ",
-    "new": "",
+    "old": "    c.w !== undefined ||\n    c.y !== undefined ||",
+    "new": "    c.y !== undefined ||",
     "tests": [
       "test/net/serpent/serpent1_relay.test.js"
     ]
@@ -48,7 +48,7 @@
   {
     "name": "SERPENT1-receipt-unsigned-honoured",
     "file": "src/net/serpent/serpentReceipt.js",
-    "old": "if (!sig64) return { ok: false, why: 'unsigned' };",
+    "old": "  if (!sig64) return { ok: false, why: 'unsigned' };",
     "new": "",
     "tests": [
       "test/net/serpent/serpent1_relay.test.js"
@@ -321,8 +321,8 @@
   {
     "name": "SERPENT1-link-state-kill-lost",
     "file": "src/net/serpent/serpentLink.js",
-    "old": "if (w.k === 'st' && w.fell && Number.isSafeInteger(w.d) && !falls.has(fallKey(w.d, w))) falls.set(",
-    "new": "if (false) falls.set(",
+    "old": "      if (w.k === 'st' && w.fell && Number.isSafeInteger(w.d) && !falls.has(fallKey(w.d, w)))\n        falls.set(fallKey(w.d, w), { at: w.fell.at, top: w.fell.top, n: w.fell.n });",
+    "new": "      if (false) falls.set(fallKey(w.d, w), { at: w.fell.at, top: w.fell.top, n: w.fell.n });",
     "tests": [
       "test/systems/serpent1_client.test.js"
     ]
@@ -330,8 +330,8 @@
   {
     "name": "SERPENT1-link-refusal-every-word",
     "file": "src/net/serpent/serpentLink.js",
-    "old": "if (!refused.has(w.m)) { refused.add(w.m); say(SERPENT_NO_TEXT[w.m] ?? w.m); }",
-    "new": "say(SERPENT_NO_TEXT[w.m] ?? w.m);",
+    "old": "        if (!refused.has(w.m)) {\n          refused.add(w.m);\n          say(SERPENT_NO_TEXT[w.m] ?? w.m);\n        }",
+    "new": "        say(SERPENT_NO_TEXT[w.m] ?? w.m);",
     "tests": [
       "test/systems/serpent1_client.test.js"
     ]

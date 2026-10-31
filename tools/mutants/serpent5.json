@@ -102,8 +102,8 @@
   {
     "name": "SERPENT5-popped-when-held",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "if (answer.data.titleNew === true) hear(announce,",
-    "new": "if (answer.data.title === true) hear(announce,",
+    "old": "          if (answer.data.titleNew === true) hear(announce, 'title', SERPENT_HONOUR_KEYS.title);",
+    "new": "          if (answer.data.title === true) hear(announce, 'title', SERPENT_HONOUR_KEYS.title);",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "SERPENT5-the-keys",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "Object.freeze({ title: 'coilbreaker', aura: 'maelstrom' });",
-    "new": "Object.freeze({ title: 'coilbreaker', aura: 'turninghour' });",
+    "old": "export const SERPENT_HONOUR_KEYS = Object.freeze({ title: 'coilbreaker', aura: 'maelstrom' });",
+    "new": "export const SERPENT_HONOUR_KEYS = Object.freeze({ title: 'coilbreaker', aura: 'turninghour' });",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "SERPENT5-AUDIT-aura-popped-when-held",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "if (answer.data.auraNew === true) hear(announce,",
-    "new": "if (answer.data.aura === true) hear(announce,",
+    "old": "          if (answer.data.auraNew === true) hear(announce, 'aura', SERPENT_HONOUR_KEYS.aura);",
+    "new": "          if (answer.data.aura === true) hear(announce, 'aura', SERPENT_HONOUR_KEYS.aura);",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "SERPENT5-AUDIT-an-older-service-says-the-maelstrom",
     "file": "src/net/serpent/serpentClaims.js",
-    "old": "if (answer.data.aura === true) say(SERPENT_CLAIM_TEXT.aura());",
-    "new": "if (answer.data.aura !== false) say(SERPENT_CLAIM_TEXT.aura());",
+    "old": "          if (answer.data.aura === true) say(SERPENT_CLAIM_TEXT.aura());",
+    "new": "          if (answer.data.aura !== false) say(SERPENT_CLAIM_TEXT.aura());",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]
