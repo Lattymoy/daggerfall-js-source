@@ -146,8 +146,8 @@
   {
     "name": "TOLIVE-map-unrefreshed",
     "file": "src/scenes/travelFareHost.js",
-    "old": "      travelOptions: () => { refreshTravelOptionsSettings(); return host.travelOptions; },",
-    "new": "      travelOptions: () => host.travelOptions,",
+    "old": "      travelOptions: () => {\n        refreshTravelOptionsSettings();\n        return host.travelOptions;\n      }, // TO-LIVE: the live keys as they stand at the map's open",
+    "new": "      travelOptions: () => host.travelOptions, // TO-LIVE: the live keys as they stand at the map's open",
     "tests": [
       "test/systems/to_live.test.js"
     ]

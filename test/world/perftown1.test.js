@@ -132,7 +132,7 @@ test('PERF-TOWN1: both outdoor hosts stopped minting per person per frame', () =
     // freezes on whatever was uploaded first.
     assert.match(s, /const k = \(archive \* 4096 \+ record\) \* 1024 \+ frame;/);
     // the seats are minted once and refilled
-    assert.match(s, /seat\(i\) \{ return seats\[i\] \?\?= \{ person: null, pos: null \}; \},/);
+    assert.match(s, /seat\(i\) \{\n\s*return \(seats\[i\] \?\?= \{ person: null, pos: null \}\);\n\s*\},/);
   }
 });
 

@@ -152,8 +152,8 @@
   {
     "name": "TV2-plate-while-rising",
     "file": "src/scenes/travelView.js",
-    "old": "p.button === 0 && state === 'up' && e.type",
-    "new": "p.button === 0 && e.type",
+    "old": "    if (p && p.id === e.pointerId && !p.moved && p.button === 0 && state === 'up' && e.type !== 'pointercancel') {",
+    "new": "    if (p && p.id === e.pointerId && !p.moved && p.button === 0 && e.type !== 'pointercancel') {",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],

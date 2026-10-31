@@ -128,8 +128,8 @@
   {
     "name": "L10N3e-scenes-M15-bulletin",
     "file": "src/scenes/townPanelHost.js",
-    "old": "return { mapId: mapId >>> 0, px: at.x, py: at.y, name, shown: shownOf(mapId, name) };",
-    "new": "return { mapId: mapId >>> 0, px: at.x, py: at.y, name, shown: name };",
+    "old": "  return { mapId: mapId >>> 0, px: at.x, py: at.y, name, shown: shownOf(mapId, name) };",
+    "new": "  return { mapId: mapId >>> 0, px: at.x, py: at.y, name, shown: name };",
     "tests": [
       "test/scenes/fb1029g_townpanel.test.js",
       "test/systems/l10n3e_scenes.test.js"

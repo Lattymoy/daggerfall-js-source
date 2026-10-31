@@ -380,8 +380,8 @@
   {
     "name": "PVP-SKULL-OW-the-carry-dropped",
     "file": "src/scenes/travelView.js",
-    "old": ", ...(m.skull ? { skull: m.skull } : {}) });",
-    "new": " });",
+    "old": "        ...(m.skull ? { skull: m.skull } : {}),\n      }); // AUDIT NAMES N2-1: and the player's badge - dropped here, every marker was a bare name; AUDIT GATHER-OW: and a group's colour (every diamond was brass); FIELD BUGS 2026-10-04e: OW-KIN's kin, OW-WHO's Renown, OW-NODE-KM's distance, OW-HUBS' wheel and SEAT-TIP's card - each field the readout reads is carried, or it is dropped here; WAYPOINTS: a flag's kind and whether it is followed",
+    "new": "      }); // AUDIT NAMES N2-1: and the player's badge - dropped here, every marker was a bare name; AUDIT GATHER-OW: and a group's colour (every diamond was brass); FIELD BUGS 2026-10-04e: OW-KIN's kin, OW-WHO's Renown, OW-NODE-KM's distance, OW-HUBS' wheel and SEAT-TIP's card - each field the readout reads is carried, or it is dropped here; WAYPOINTS: a flag's kind and whether it is followed",
     "tests": [
       "test/net/pvpflag.test.js"
     ]

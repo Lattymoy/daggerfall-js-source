@@ -86,8 +86,8 @@
   {
     "name": "PERF-TOWN1-10-the-exterior-host-forgets-the-beast-form-term",
     "file": "src/scenes/townScratch.js",
-    "old": "      opts.inBeastForm = inBeastForm;",
-    "new": "      opts.inBeastForm = false;",
+    "old": "      opts.inBeastForm = inBeastForm; // MobilePersonMotor.cs:222,224 - PlayerEntity.IsInBeastForm (PlayerEntity.cs:193)",
+    "new": "      opts.inBeastForm = false; // MobilePersonMotor.cs:222,224 - PlayerEntity.IsInBeastForm (PlayerEntity.cs:193)",
     "tests": [
       "test/world/perftown1.test.js",
       "test/systems/audit63_quests_talk.test.js",
@@ -107,8 +107,8 @@
   {
     "name": "PERF-TOWN1-12-the-memoised-texture-key-loses-its-separator-so-every-frame-misses",
     "file": "src/scenes/townScratch.js",
-    "old": "    if (v === undefined) { v = `${archive}_${record}#${frame}`; keys.set(k, v); }",
-    "new": "    if (v === undefined) { v = `${archive}_${record}_${frame}`; keys.set(k, v); }",
+    "old": "      v = `${archive}_${record}#${frame}`;",
+    "new": "      v = `${archive}_${record}_${frame}`;",
     "tests": [
       "test/world/perftown1.test.js"
     ]
@@ -125,8 +125,8 @@
   {
     "name": "PERF-TOWN1-14-the-activation-rows-are-shared-so-every-person-is-the-last-one",
     "file": "src/scenes/townScratch.js",
-    "old": "    seat(i) { return seats[i] ??= { person: null, pos: null }; },",
-    "new": "    seat() { return seats[0] ??= { person: null, pos: null }; },",
+    "old": "    seat(i) {\n      return (seats[i] ??= { person: null, pos: null });",
+    "new": "    seat() {\n      return (seats[0] ??= { person: null, pos: null });",
     "tests": [
       "test/world/perftown1.test.js"
     ]

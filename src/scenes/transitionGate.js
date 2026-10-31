@@ -15,7 +15,7 @@
 
 export function createTransitionGate() {
   let gen = 0;
-  let inFlight = null;   // { promise, resolve } of the build holding the gate, null when idle
+  let inFlight = null; // { promise, resolve } of the build holding the gate, null when idle
   return {
     /** Wait for any build in flight to unwind, then hold the gate. The
      *  token is taken at the REQUEST, so a request the world moved under
@@ -25,14 +25,20 @@ export function createTransitionGate() {
       while (inFlight) await inFlight.promise;
       if (token !== gen) return null;
       let resolve;
-      const promise = new Promise((r) => { resolve = r; });
+      const promise = new Promise((r) => {
+        resolve = r;
+      });
       inFlight = { promise, resolve };
       return token;
     },
     /** False once the world moved since `token` was taken. */
-    valid(token) { return token === gen; },
+    valid(token) {
+      return token === gen;
+    },
     /** The world moved: every pending build is stale. */
-    abort() { gen++; },
+    abort() {
+      gen++;
+    },
     /** The build holding the gate has unwound. */
     end() {
       const held = inFlight;
@@ -48,7 +54,7 @@ export function createTransitionGate() {
      *  them, and a queued door wrote the context slot over the live one). */
     async run(build) {
       const token = await this.begin();
-      if (token == null) return false;   // the world moved while it waited its turn
+      if (token == null) return false; // the world moved while it waited its turn
       try {
         const published = await build(() => this.valid(token));
         if (published) gen++;

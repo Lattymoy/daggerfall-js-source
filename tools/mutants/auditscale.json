@@ -742,8 +742,8 @@
   {
     "name": "AUDIT-SCALE-B7-stamp-by-dt",
     "file": "src/scenes/townPanelHost.js",
-    "old": "const now = host.now ?? (() => performance.now());",
-    "new": "const now = host.now ?? (() => 0);",
+    "old": "  const now = host.now ?? (() => performance.now());",
+    "new": "  const now = host.now ?? (() => 0);",
     "tests": [
       "test/net/scale4c.test.js"
     ],

@@ -82,8 +82,8 @@
   {
     "name": "PERF-TV-click-never-a-plate",
     "file": "src/scenes/travelView.js",
-    "old": "      if (key) deps.onMark?.(key, e); else deps.onPick?.(e.clientX, e.clientY, e);",
-    "new": "      deps.onPick?.(e.clientX, e.clientY, e);",
+    "old": "      if (key) deps.onMark?.(key, e);\n      else deps.onPick?.(e.clientX, e.clientY, e); // OW-ATTACK: the press with the mark (an enemy's single click is the ground's)",
+    "new": "      deps.onPick?.(e.clientX, e.clientY, e); // OW-ATTACK: the press with the mark (an enemy's single click is the ground's)",
     "tests": [
       "test/ui/travel/tv5_far_places.test.js",
       "test/systems/travel/tv2_click_to_move.test.js"

@@ -29,8 +29,8 @@
   {
     "name": "ICP-pace-the-key",
     "file": "src/scenes/townWalkHost.js",
-    "old": "      if (!town.b.cityGates?.length || pieces.edge.size >= pieces.all) return pace;",
-    "new": "      if (!town.b.cityGates?.length || pieces.edge.size >= pieces.all) return town.key;",
+    "old": "      if (!town.b.cityGates?.length || pieces.edge.size >= pieces.all) return pace; // no walls (or none that close): the grid is the town",
+    "new": "      if (!town.b.cityGates?.length || pieces.edge.size >= pieces.all) return town.key; // no walls (or none that close): the grid is the town",
     "tests": [
       "test/systems/travel/icpace.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ICP-way-pace-unset",
     "file": "src/scenes/townWalkHost.js",
-    "old": "inside: way.inside, shut: false, pace };",
-    "new": "inside: way.inside, shut: false };",
+    "old": "      return { pts: way.cells.map((c) => nativeOf(town, c)), inside: way.inside, shut: false, pace };",
+    "new": "      return { pts: way.cells.map((c) => nativeOf(town, c)), inside: way.inside, shut: false };",
     "tests": [
       "test/systems/travel/icpace.test.js"
     ]

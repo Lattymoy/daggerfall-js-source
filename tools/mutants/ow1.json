@@ -132,8 +132,8 @@
   {
     "name": "OW-BIG-no-step",
     "file": "src/scenes/travelView.js",
-    "old": "      grow: tvOwnGrow(Math.hypot(shown.eye[0] - f[0], shown.eye[1] - f[1], shown.eye[2] - f[2])),",
-    "new": "      grow: 1,",
+    "old": "      grow: tvOwnGrow(Math.hypot(shown.eye[0] - f[0], shown.eye[1] - f[1], shown.eye[2] - f[2])), // OW-BIG: the traveller's sprite, grown with the eye's distance",
+    "new": "      grow: 1, // OW-BIG: the traveller's sprite, grown with the eye's distance",
     "tests": [
       "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ],

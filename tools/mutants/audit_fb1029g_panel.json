@@ -43,8 +43,8 @@
   {
     "name": "AFB-PANEL-P2-a-farm-a-settlement",
     "file": "src/scenes/townPanelHost.js",
-    "old": "new Set([LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage])",
-    "new": "new Set([LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage, LOCATION_TYPES.HomeFarms])",
+    "old": "  new Set([LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage]),",
+    "new": "  new Set([LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage, LOCATION_TYPES.HomeFarms]),",
     "tests": [
       "test/scenes/fb1029g_townpanel.test.js"
     ],
@@ -53,8 +53,8 @@
   {
     "name": "AFB-PANEL-P7-a-slice-its-own-town",
     "file": "src/scenes/townPanelHost.js",
-    "old": "if (cap && centre) {",
-    "new": "if (false) {",
+    "old": "  if (cap && centre) {",
+    "new": "  if (false) {",
     "tests": [
       "test/scenes/fb1029g_townpanel.test.js"
     ],
@@ -63,7 +63,7 @@
   {
     "name": "AFB-PANEL-P3-the-town-unstamped",
     "file": "src/scenes/townPanelHost.js",
-    "old": "if (!stamp || t - stamp.at >= STAMP_MS) stamp = { mapId: town ? town.mapId : null, at: t };",
+    "old": "      if (!stamp || t - stamp.at >= STAMP_MS) stamp = { mapId: town ? town.mapId : null, at: t };",
     "new": "",
     "tests": [
       "test/net/scale4c.test.js"
@@ -153,8 +153,8 @@
   {
     "name": "AFB-PANEL-P8-the-fold-forgotten",
     "file": "src/scenes/townPanelHost.js",
-    "old": "folded: getPref('townPanelFolded') === true,",
-    "new": "folded: false,",
+    "old": "      folded: getPref('townPanelFolded') === true,",
+    "new": "      folded: false,",
     "tests": [
       "test/scenes/fb1029g_townpanel.test.js"
     ],

@@ -83,8 +83,8 @@
   {
     "name": "PLAN-SLICES-the-view-silent",
     "file": "src/scenes/travelView.js",
-    "old": "trip: planning() ? planningLine() : deps.trip?.() ?? ''",
-    "new": "trip: deps.trip?.() ?? ''",
+    "old": "      trip: planning() ? planningLine() : (deps.trip?.() ?? ''),",
+    "new": "      trip: deps.trip?.() ?? '',",
     "tests": [
       "test/systems/travel/plan_slices.test.js"
     ]

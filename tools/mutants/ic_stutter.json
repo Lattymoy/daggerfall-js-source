@@ -342,8 +342,8 @@
   {
     "name": "ICS-host-way-steps-unbounded",
     "file": "src/scenes/townWalkHost.js",
-    "old": "for (let n = 1; !got.done && n < WAY_STEPS_AN_ASK; n++)",
-    "new": "for (let n = 1; !got.done; n++)",
+    "old": "      for (let n = 1; !got.done && n < WAY_STEPS_AN_ASK; n++) got = making.steps.next();",
+    "new": "      for (let n = 1; !got.done; n++) got = making.steps.next();",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],

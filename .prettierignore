@@ -949,6 +949,15 @@
 !/src/scenes/tamrielPortsHost.js
 !/src/scenes/townEconHost.js
 !/src/scenes/townMeetsHost.js
+!/src/scenes/townPanelHost.js
+!/src/scenes/townProbes.js
+!/src/scenes/townScratch.js
+!/src/scenes/townWalkHost.js
+!/src/scenes/transitionGate.js
+!/src/scenes/translationStore.js
+!/src/scenes/travelFareHost.js
+!/src/scenes/travelHorizon.js
+!/src/scenes/travelView.js
 !/src/scenes/wagon/
 /src/scenes/wagon/*/
 !/src/scenes/windowWorld.js

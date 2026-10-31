@@ -426,8 +426,8 @@
   {
     "name": "GATHER-OW-the-view-drops-the-colour",
     "file": "src/scenes/travelView.js",
-    "old": ", ...(m.color ? { color: m.color } : {}), badge:",
-    "new": ", badge:",
+    "old": "        ...(m.color ? { color: m.color } : {}),\n        badge: m.badge ?? null,",
+    "new": "        badge: m.badge ?? null,",
     "tests": [
       "test/scenes/gatherow.test.js"
     ]

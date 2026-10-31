@@ -363,8 +363,8 @@
   {
     "name": "OTWH-shut-gate-carved",
     "file": "src/scenes/townWalkHost.js",
-    "old": "    const passages = gates.filter((g) => g.open && g.local)",
-    "new": "    const passages = gates.filter((g) => g.local)",
+    "old": "      .filter((g) => g.open && g.local)",
+    "new": "      .filter((g) => g.local)",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "OTWH-shut-unsaid",
     "file": "src/scenes/townWalkHost.js",
-    "old": "shut: gates.some((g) => !g.open) };",
-    "new": "shut: false };",
+    "old": "    const made = { base: town.nav, sig, nav: carveNav(town.nav, passages), shut: gates.some((g) => !g.open) };",
+    "new": "    const made = { base: town.nav, sig, nav: carveNav(town.nav, passages), shut: false };",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -390,8 +390,8 @@
   {
     "name": "OTWH-gate-origin-unread",
     "file": "src/scenes/townWalkHost.js",
-    "old": "town.nav.worldToNav(g.local[12] - town.o[0], g.local[14] - town.o[2])",
-    "new": "town.nav.worldToNav(g.local[12], g.local[14])",
+    "old": "      .map((g) => gatePassage(town.nav, town.nav.worldToNav(g.local[12] - town.o[0], g.local[14] - town.o[2])))",
+    "new": "      .map((g) => gatePassage(town.nav, town.nav.worldToNav(g.local[12], g.local[14])))",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]

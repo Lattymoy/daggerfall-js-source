@@ -474,8 +474,8 @@
   {
     "name": "SHIP-SAIL-warning-dropped",
     "file": "src/scenes/travelView.js",
-    "old": "  if (unwell) rows.push('You are diseased or poisoned.');\n  return rows;\n}",
-    "new": "  return rows;\n}",
+    "old": "  if (unwell) rows.push('You are diseased or poisoned.');\n  return rows;",
+    "new": "  return rows;",
     "tests": [
       "test/systems/travel/disc28e_shipport.test.js"
     ]

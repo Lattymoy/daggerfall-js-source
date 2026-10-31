@@ -363,8 +363,8 @@
   {
     "name": "OWS2-trip-sea-silent",
     "file": "src/scenes/travelView.js",
-    "old": "  if (sea) return TRAVEL_VIEW_TEXT.bySea(name);\n",
-    "new": "\n",
+    "old": "  if (sea) return TRAVEL_VIEW_TEXT.bySea(name);",
+    "new": "",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]

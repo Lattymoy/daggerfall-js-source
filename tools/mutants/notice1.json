@@ -191,8 +191,8 @@
   {
     "name": "NOTICE1-22-the-name-row-on-the-card",
     "file": "src/scenes/townPanelHost.js",
-    "old": "rows.map((r) => r.text).filter((t, i) => !(i === 0 && t === town.shown))",
-    "new": "rows.map((r) => r.text)",
+    "old": "        rows.map((r) => r.text).filter((t, i) => !(i === 0 && t === town.shown)),",
+    "new": "        rows.map((r) => r.text),",
     "tests": [
       "test/scenes/fb1029g_townpanel.test.js"
     ]

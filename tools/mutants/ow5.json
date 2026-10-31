@@ -258,8 +258,8 @@
   {
     "name": "OW5-P5-capital-spot",
     "file": "src/scenes/travelView.js",
-    "old": "  theSpot: 'the marked spot',",
-    "new": "  theSpot: 'The marked spot',",
+    "old": "  theSpot: 'the marked spot', // AUDIT OW5 P5: inside a sentence (\"L leads the party to the marked spot.\")",
+    "new": "  theSpot: 'The marked spot', // AUDIT OW5 P5: inside a sentence (\"L leads the party to the marked spot.\")",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],

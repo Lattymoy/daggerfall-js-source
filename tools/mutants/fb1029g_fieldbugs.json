@@ -124,8 +124,8 @@
   {
     "name": "NOTICE-PANEL-shown-under-a-window",
     "file": "src/scenes/townPanelHost.js",
-    "old": "if (!town || host.covered()) { view.hide(); if (!town) shownFor = null; return; }",
-    "new": "if (!town) { view.hide(); shownFor = null; return; }",
+    "old": "      if (!town || host.covered()) {\n        view.hide();\n        if (!town) shownFor = null;",
+    "new": "      if (!town) {\n        view.hide();\n        shownFor = null;",
     "tests": [
       "test/scenes/fb1029g_townpanel.test.js"
     ],
@@ -134,8 +134,8 @@
   {
     "name": "NOTICE-PANEL-read-every-frame",
     "file": "src/scenes/townPanelHost.js",
-    "old": "&& view.shown && t - readAt < TOWN_PANEL_READ_MS) return;",
-    "new": "&& view.shown && false) return;",
+    "old": "      if (\n        shownFor?.mapId === town.mapId &&\n        shownFor.district === town.district &&\n        view.shown &&\n        t - readAt < TOWN_PANEL_READ_MS\n      )\n        return;",
+    "new": "      if (shownFor?.mapId === town.mapId && shownFor.district === town.district && view.shown && false) return;",
     "tests": [
       "test/scenes/fb1029g_townpanel.test.js"
     ],
@@ -144,8 +144,8 @@
   {
     "name": "NOTICE-PANEL-the-count-unsaid",
     "file": "src/scenes/townPanelHost.js",
-    "old": "unseen: host.unseen?.(town.mapId) ?? 0,",
-    "new": "unseen: 0,",
+    "old": "        unseen: host.unseen?.(town.mapId) ?? 0,",
+    "new": "        unseen: 0,",
     "tests": [
       "test/scenes/fb1029g_townpanel.test.js",
       "test/net/notice1.test.js"
@@ -155,8 +155,8 @@
   {
     "name": "NOTICE-PANEL-the-fold-forgotten",
     "file": "src/scenes/townPanelHost.js",
-    "old": "onFold: (f) => setPref('townPanelFolded', f),",
-    "new": "onFold: () => {},",
+    "old": "      onFold: (f) => setPref('townPanelFolded', f),",
+    "new": "      onFold: () => {},",
     "tests": [
       "test/scenes/fb1029g_townpanel.test.js"
     ],
@@ -165,8 +165,8 @@
   {
     "name": "NOTICE-PANEL-the-box-never-shown",
     "file": "src/scenes/townPanelHost.js",
-    "old": "    host.showBox?.(new ChoiceWindow({ lines: rows.map((r) => r.text) }));\n",
-    "new": "",
+    "old": "    host.showBox?.(new ChoiceWindow({ lines: rows.map((r) => r.text) }));\n  }",
+    "new": "  }",
     "tests": [
       "test/scenes/fb1029g_townpanel.test.js"
     ],

@@ -83,8 +83,8 @@
   {
     "name": "L10N3b-installs-anything",
     "file": "src/scenes/translationStore.js",
-    "old": "  if (!isTranslationPack(counts)) throw new Error('no string table, quest or book in it - is this a Daggerfall Unity translation?');\n",
-    "new": "",
+    "old": "  if (!isTranslationPack(counts))\n    throw new Error('no string table, quest or book in it - is this a Daggerfall Unity translation?');\n  const byPath = new Map(list.map((e) => [e.path, e]));",
+    "new": "  const byPath = new Map(list.map((e) => [e.path, e]));",
     "tests": [
       "test/systems/l10n3b.test.js"
     ]
@@ -93,7 +93,7 @@
     "name": "L10N3b-keeps-every-file",
     "file": "src/scenes/translationStore.js",
     "old": "  const { files, counts } = packContents(list.map((e) => e.path));",
-    "new": "  const { files: kept, counts } = packContents(list.map((e) => e.path));\n  const files = [...kept, ...list.filter((e) => !classifyPackFile(e.path)).map((e) => ({ kind: 'other', name: e.path, path: e.path }))];",
+    "new": "  const { files: kept, counts } = packContents(list.map((e) => e.path));\n  const files = [\n    ...kept,\n    ...list.filter((e) => !classifyPackFile(e.path)).map((e) => ({ kind: 'other', name: e.path, path: e.path })),\n  ];",
     "tests": [
       "test/systems/l10n3b.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "L10N3b-font-as-text",
     "file": "src/scenes/translationStore.js",
-    "old": "    const data = TEXT_KINDS.has(f.kind)",
-    "new": "    const data = f.kind !== 'never'",
+    "old": "    const data = TEXT_KINDS.has(f.kind)\n      ? typeof raw === 'string'\n        ? raw\n        : new TextDecoder('utf-8').decode(raw)\n      : typeof raw === 'string'\n        ? new TextEncoder().encode(raw)\n        : new Uint8Array(raw);",
+    "new": "    const data =\n      f.kind !== 'never'\n        ? typeof raw === 'string'\n          ? raw\n          : new TextDecoder('utf-8').decode(raw)\n        : typeof raw === 'string'\n          ? new TextEncoder().encode(raw)\n          : new Uint8Array(raw);",
     "tests": [
       "test/systems/l10n3b.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "L10N3b-remove-keeps-files",
     "file": "src/scenes/translationStore.js",
-    "old": "    for (const k of keys) tx.objectStore(FILES).delete(k);\n",
-    "new": "",
+    "old": "    for (const k of keys) tx.objectStore(FILES).delete(k);\n    tx.objectStore(PACKS).delete(code);",
+    "new": "    tx.objectStore(PACKS).delete(code);",
     "tests": [
       "test/systems/l10n3b.test.js"
     ]

@@ -156,8 +156,8 @@
   {
     "name": "AOWR-L1-4-fields-in-town",
     "file": "src/scenes/townWalkHost.js",
-    "old": "      return at && pieces.edge.has(componentsOf(town.nav)[at[1] * town.nav.width + at[0]]) ? null : pace;",
-    "new": "      return pace;",
+    "old": "      return at && pieces.edge.has(componentsOf(town.nav)[at[1] * town.nav.width + at[0]]) ? null : pace; // the fields' piece (the residents' grid, its gates closed) is no street of the town",
+    "new": "      return pace; // the fields' piece (the residents' grid, its gates closed) is no street of the town",
     "tests": [
       "test/systems/travel/audit_owrevisited_walk.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "AOWR-L1-4-walls-unread",
     "file": "src/scenes/townWalkHost.js",
-    "old": "      if (!town.b.cityGates?.length || pieces.edge.size >= pieces.all) return pace;",
-    "new": "      if (!town.b.cityGates?.length) return pace;",
+    "old": "      if (!town.b.cityGates?.length || pieces.edge.size >= pieces.all) return pace; // no walls (or none that close): the grid is the town",
+    "new": "      if (!town.b.cityGates?.length) return pace; // no walls (or none that close): the grid is the town",
     "tests": [
       "test/systems/travel/audit_owrevisited_walk.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "AOWR-L6-3-every-short-way-the-gates",
     "file": "src/scenes/townWalkHost.js",
-    "old": "      if (!way?.reached && grid.shut && townWayCells(journeyGrid(town, true).nav, town.cell, toCell)?.reached) return",
-    "new": "      if (!way?.reached && grid.shut) return",
+    "old": "      if (!way?.reached && grid.shut && townWayCells(journeyGrid(town, true).nav, town.cell, toCell)?.reached)\n        return { pts: [], inside: !!way?.inside, shut: true, pace };",
+    "new": "      if (!way?.reached && grid.shut) return { pts: [], inside: !!way?.inside, shut: true, pace };",
     "tests": [
       "test/systems/travel/audit_owrevisited_walk.test.js"
     ]
@@ -193,7 +193,7 @@
     "name": "AOWR-L6-3-short-way-unwalked",
     "file": "src/scenes/townWalkHost.js",
     "old": "      return { pts: way.cells.map((c) => nativeOf(town, c)), inside: way.inside, shut: false, pace };",
-    "new": "      return way.reached ? { pts: way.cells.map((c) => nativeOf(town, c)), inside: way.inside, shut: false, pace } : { pts: [], inside: way.inside, shut: false, pace };",
+    "new": "      return way.reached\n        ? { pts: way.cells.map((c) => nativeOf(town, c)), inside: way.inside, shut: false, pace }\n        : { pts: [], inside: way.inside, shut: false, pace };",
     "tests": [
       "test/systems/travel/audit_owrevisited_walk.test.js"
     ]
@@ -219,7 +219,7 @@
   {
     "name": "AOWR-L1-7-unbuilt-kept",
     "file": "src/scenes/townWalkHost.js",
-    "old": "    for (const [k, g] of grids) if (built.get(k.split('|')[0])?.population?.nav !== g.base) grids.delete(k);   // a pixel built again or let go",
+    "old": "    for (const [k, g] of grids) if (built.get(k.split('|')[0])?.population?.nav !== g.base) grids.delete(k); // a pixel built again or let go",
     "new": "",
     "tests": [
       "test/systems/travel/audit_owrevisited_walk.test.js"

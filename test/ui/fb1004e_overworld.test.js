@@ -160,7 +160,7 @@ test('OW-KIN / OW-WHO on the travel map: the rows keep their kin and Renown, a k
   // made only when its plate is under the pointer, one kept a town); SEAT-TIP's seat card is its guild lines
   assert.match(W, /seaRaidPeerChase, townEcon, state, travelViewBands,/, 'a town\'s card, made only when its plate is asked');
   assert.match(rd('src/scenes/gatherHost.js'), /color: nodeMarkCss\(g\.profession\), dist: d \/ 1000 \} \}\);/, 'a group\'s distance, km');
-  assert.match(rd('src/scenes/travelView.js'), /\.\.\.\(m\.kin \? \{ kin: m\.kin \} : \{\}\), \.\.\.\(m\.lv != null \? \{ lv: m\.lv \} : \{\}\), \.\.\.\(Number\.isFinite\(m\.dist\) \? \{ dist: m\.dist \} : \{\}\), \.\.\.\(m\.hub \? \{ hub: true \} : \{\}\), \.\.\.\(m\.tip \? \{ tip: m\.tip \} : \{\}\)/, 'every field the readout reads is carried through the view');
+  assert.match(rd('src/scenes/travelView.js'), /\.\.\.\(m\.kin \? \{ kin: m\.kin \} : \{\}\),\n\s*\.\.\.\(m\.lv != null \? \{ lv: m\.lv \} : \{\}\),\n\s*\.\.\.\(Number\.isFinite\(m\.dist\) \? \{ dist: m\.dist \} : \{\}\),\n\s*\.\.\.\(m\.hub \? \{ hub: true \} : \{\}\),\n\s*\.\.\.\(m\.tip \? \{ tip: m\.tip \} : \{\}\)/, 'every field the readout reads is carried through the view');
 });
 
 test('OW-WHO travel map legend: the legend speaks for the players the sheet draws - a kin the switches hide leaves it, and all hidden, the travellers\' row too; a press re-says it (mutants: the legend the book\'s, not the sheet\'s; the press leaves the legend stale)', async () => {

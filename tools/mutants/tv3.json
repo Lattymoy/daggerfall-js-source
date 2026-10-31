@@ -512,8 +512,8 @@
   {
     "name": "AUDIT-NAMES-N2-1-the-badge-left-behind",
     "file": "src/scenes/travelView.js",
-    "old": ", badge: m.badge ?? null,\n",
-    "new": ",\n",
+    "old": "        badge: m.badge ?? null,\n        ...(m.kin ? { kin: m.kin } : {}),",
+    "new": "        ...(m.kin ? { kin: m.kin } : {}),",
     "tests": [
       "test/scenes/tv3_travellers.test.js",
       "test/systems/travel/tv2_click_to_move.test.js"
