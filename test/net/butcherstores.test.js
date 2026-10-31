@@ -1,7 +1,7 @@
 // BUTCHER-STORES (FIELD FEEDBACK 2026-10-31; Sammy, Discord #feature-feedback: "The game should not add meat to your
 // inventory when you skin animals.") - a carried body's butchery lands in the Stores, never the bag or the pack: the
 // service writes it to prof_stores for a client that asks it so (`butcheryStores`), keeps that on the row
-// (node_harvests.extra_stores, migration 0203) and answers no `extraCarried` for it, and the client mints only the
+// (node_harvests.extra_stores, migration 0205) and answers no `extraCarried` for it, and the client mints only the
 // second finds the answer counts carried (net/bagLaw.js extraStored). An older client is carried as before; a new
 // client against an older service mints what that service counted. A tree's Resin keeps its path. Through the real
 // Worker. bible/06-Systems/Professions-Arc.md section 60.

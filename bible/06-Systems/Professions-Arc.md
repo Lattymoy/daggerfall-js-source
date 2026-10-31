@@ -6817,7 +6817,7 @@ still count the meat carried.
 
 **Built, on the service** (`professions.js` harvestNode): a carried body's butchery goes to `prof_stores`, its room
 the Stores', for a client that asks it so (`butcheryStores: true`). The row says so (`node_harvests.extra_stores`,
-migration 0203), and the answer then names no `extraCarried`, the first time or asked again. Scoped to bodies: a tree's
+migration 0205), and the answer then names no `extraCarried`, the first time or asked again. Scoped to bodies: a tree's
 Resin and a haul's second find keep the bag. **On the client**: every carried harvest asks `butcheryStores`, and a
 second find is minted only where the answer counts it carried (`bagLaw.js` `extraStored`). The line says "+1 Bear Hide
 and a Big Tooth to your bag, and Raw Meat to your Stores"; the meat's haul card reads Stores.
@@ -6828,9 +6828,9 @@ new one answers again keeps its row's word. AUDIT FB1031 C1: a Stores row asked 
 a rollback) names no meat, since that build mints any `extra` it hears; its Stores count comes with the next read. A
 Butcher's meat still spoils half as fast when it is withdrawn (29).
 
-ACCOUNT_VERSION acct234 (acct231 then acct232 on its branch; SMITH-RRI's recipes, section 59, in the same release); migration 0203, applied by the deploy
+ACCOUNT_VERSION acct237 (acct231 then acct232 on its branch; SMITH-RRI's recipes, section 59, in the same release); migration 0205, applied by the deploy
 before the Worker; no relay change. Pins: `test/net/butcherstores.test.js`, `tools/mutants/butcherstores.json`; the
-version pins moved to acct234.
+version pins moved to acct237.
 ## 61. WITNESS-MAP - the witnessed ground on the held map (BUILT 2026-10-31)
 
 Sammy in #feature-feedback: "Display on the world map 'witnessed areas' for stuff like ores and pearls." It is the
@@ -6841,7 +6841,7 @@ UNCONFIRMED_VEIN_TIER, a region's own ore, a gem, Heartwood and a Pearl can appe
 
 **On the service** (AUDIT FB1031 W3, W4): the confirmed ground is laid once a UTC day in tiles of 64 x 64 map pixels,
 keyed by the world pixel (`tx = floor(x / 64)`, `ty = floor(y / 64)`), one row a tile holding any (`witness_tiles`,
-migration 0205). The day's Motherlodes pick already scans every pixel confirmed before the day began
+migration 0207). The day's Motherlodes pick already scans every pixel confirmed before the day began
 (`server-account/src/motherlodes.js:"export async function confirmedGroundBefore"`); its batch lays that ground as
 tiles and drops yesterday's (`server-account/src/witnessTiles.js:"export function witnessTileStatements"`), under the
 day's mark (`witness_tile_days`), so two racing layings keep one. A day picked before the tiles, the deploy's, is laid
@@ -6854,8 +6854,8 @@ true, tiles: [[tx, ty, px]...] }` (a tile asked and not answered holds none), or
 is laid. A pixel is two characters, its row and its column in the tile
 (`src/net/witnessTileLaw.js:"export function packTile"`). The read is two primary-key reads in one round trip and
 never touches `world_witness`. It writes nothing and keeps nothing an isolate shares, so it is a replica route as well
-as a busy read (`busyLaw.js` BUSY_READS). The service is acct238 with migration 0205, and deploys before the site. The
-writ board's kept ground is as it was before acct237.
+as a busy read (`busyLaw.js` BUSY_READS). The service is acct241 with migration 0207, and deploys before the site. The
+writ board's kept ground is as it was before acct240.
 
 **On the client**: the professions' book keeps each tile for its UTC day (`src/net/profBook.js:"async askGround(list)"`):
 64 tiles an ask, one read in flight, and none for PROF_REFRESH_BACKOFF_MS after a read that failed, came before the day
@@ -6897,7 +6897,7 @@ book; a pixel heard; the reader over the Bay, Morrowind and the sea; the kept wa
 switch in the save and the key; ARENA2: the sea and Morrowind as the host's maps read them). Mutants
 `tools/mutants/fb1031_witness.json` (49, all dead). `test/ui/witness_map.test.js` keeps the held map's two pins and
 `tools/mutants/witness_map.json` 14 records (22 retired with the code they named). PIN MOVED: the account version's
-pins and `test/server/auditscale2_acct.test.js`'s history (acct238), `test/net/busy_gate.test.js` and
+pins and `test/server/auditscale2_acct.test.js`'s history (acct241), `test/net/busy_gate.test.js` and
 `test/server/scale4g.test.js` (a replica's read), `test/server/accountworker.test.js` (the two tables),
 `test/ui/mappan.test.js` (the marks' key); twelve version mutant records re-aimed by content. The account deploy's
 paths name `src/net/witnessTileLaw.js`.

@@ -1243,4 +1243,4 @@ good. Not a DFU member: Daggerfall has no bound piece and no destroy.
 The Soul Cakes and Hearth Offerings go through the account service (`06-Systems/Witches-Festival.md` BOUND-DESTROY).
 Four hosts: none edited - the pack is every host's. Pinned by `test/systems/item/bound_destroy.test.js` (13) and
 `test/server/bound_destroy_service.test.js` (6); `tools/mutants/bound_destroy.json` (42, all dead). Re-aimed by content:
-`wallet1.json` and `fb1019f_keyface.json` (the classic pack-only refusal's line), the version records at acct235.
+`wallet1.json` and `fb1019f_keyface.json` (the classic pack-only refusal's line), the version records at acct238.

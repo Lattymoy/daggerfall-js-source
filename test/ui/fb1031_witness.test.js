@@ -106,7 +106,7 @@ test('FB1031 W3 W4 the day\'s laying: the tiles match a scan of the confirmed fa
 test('FB1031 W3 a day picked before the tiles (the deploy\'s): the minute\'s job lays them with a scan of its own, and a laid day costs it one read; two layings racing keep the first (mutants: the deploy\'s day never laid; a laid day scanned again; the laying unguarded; a statement unbounded)', async (t) => {
   const { raw, said, witness, minute, laid } = await stand(t);
   witness(410, 152, CLIMATES.Woodlands, DAGGERFALL);
-  raw.prepare('INSERT INTO motherlode_days (day, picked, n) VALUES (?, 0, ?)').run(DAY, 'acct237');   // an older service's pick
+  raw.prepare('INSERT INTO motherlode_days (day, picked, n) VALUES (?, 0, ?)').run(DAY, 'acct240');   // an older service's pick
   await minute();
   assert.deepEqual(laid(), tilesByHand(raw));
   _resetCronForTests();
@@ -158,7 +158,7 @@ test('FB1031 W3 W4 the map\'s read: the tiles asked that hold ground, by their k
   assert.equal(got.length, 9000, 'every pixel of the province\'s ground, where one answer held 8,192');
 });
 
-test('FB1031 W3 the read\'s door: 1..64 tiles of the world\'s grid, a registered account\'s, the professions open; a replica\'s read, a busy read; acct238 (mutants: the grid unbounded; more than 64 asked; the switch unasked; the route off the replica, on either end)', async (t) => {
+test('FB1031 W3 the read\'s door: 1..64 tiles of the world\'s grid, a registered account\'s, the professions open; a replica\'s read, a busy read; acct241 (mutants: the grid unbounded; more than 64 asked; the switch unasked; the route off the replica, on either end)', async (t) => {
   const { s, ground } = await stand(t);
   for (const bad of [[], [[0]], [[1.5, 2]], [[TILES_SPAN, 0]], [[0, -TILES_SPAN - 1]], ['x'], null, Array.from({ length: WITNESS_TILES_ASK + 1 }, (_, i) => [i % 100, 0])]) {
     assert.deepEqual(await ground(bad), { error: 'bad-pixels' }, JSON.stringify(bad)?.slice(0, 40));
@@ -174,8 +174,8 @@ test('FB1031 W3 the read\'s door: 1..64 tiles of the world\'s grid, a registered
   assert.equal(REPLICA_ROUTES.get('/v1/prof/ground'), 'POST', 'it writes nothing and keeps nothing an isolate shares');
   assert.equal(D1_BOOKMARK_READS.get('/v1/prof/ground'), 'POST');
   assert.equal(busyRead('/v1/prof/ground', 'POST'), true);
-  assert.equal(ACCOUNT_VERSION, 'acct238');
-  assert.match(src('server-account/wrangler.toml'), /^ACCOUNT_VERSION = "acct238"$/m);
+  assert.equal(ACCOUNT_VERSION, 'acct241');
+  assert.match(src('server-account/wrangler.toml'), /^ACCOUNT_VERSION = "acct241"$/m);
   assert.doesNotMatch(src('server-account/src/professions.js'), /profGround|GROUND_PIXELS_MAX|x, y, climate: f\.climate/, 'the writ board\'s kept ground is as it was before WITNESS-MAP');
 });
 

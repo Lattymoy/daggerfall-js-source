@@ -141,8 +141,8 @@ time, under any switch, even after the festival; the bowl and its cakes come bac
 **BOUND-DESTROY (2026-10-31; #feature-feedback: "Soulbound items need to be disposable, certain aetheric sets and hearth
 offerings.").** The pack's Destroy lets cakes or bowls go (`11-Multiplayer/Sigil-Sets.md` BOUND-DESTROY). The pack's
 stacks are the counts' face, so a stack removed on the client alone came back with the next answer. The service lets
-them go: `/v1/festival/discard` (acct235; `festival.js` `discardFestival`) takes `{ kind, n, rid }`. The request id's own row
-(`fest_discards`, migration 0204) is laid only while the count holds n, and the count goes down where it was laid, so
+them go: `/v1/festival/discard` (acct238; `festival.js` `discardFestival`) takes `{ kind, n, rid }`. The request id's own row
+(`fest_discards`, migration 0206) is laid only while the count holds n, and the count goes down where it was laid, so
 an id asked twice is one let-go, answered `repeat`. It works on any day and under any switch, as a take-in does, never
 for a guest. The client (`festivalClient.js` `discardFaces`) keeps an unanswered ask's id until a count heard since
 says whether it landed (AUDIT FB1031 D1, II R2), and restacks the pack from the answer. Pinned by `test/server/bound_destroy_service.test.js` and
@@ -234,7 +234,7 @@ no street (a dungeon's kills and acts find as anywhere).
 ## Files
 
 - Law, both ends: `src/net/festivalLaw.js`; holidays `src/systems/holidayTables.js` (a leaf, out of `holidays.js`).
-- Service: `server-account/src/festival.js`, `server-account/migrations/0140_festival.sql` (and `0204_fest_discards.sql`, BOUND-DESTROY); the wardrobe in
+- Service: `server-account/src/festival.js`, `server-account/migrations/0140_festival.sql` (and `0206_fest_discards.sql`, BOUND-DESTROY); the wardrobe in
   `server-account/src/titles.js`; routes `/v1/festival/*`, `/v1/account/icon`.
 - Client: `src/systems/festival/` (`festivalClient.js` the finds, the sales, the wearing, the moves; `soulCake.js` the two
   items; `festivalWords.js` the shared words - the window's are `ui/wyrdWindow.js`'s, the street's `scenes/witchesHost.js`

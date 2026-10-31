@@ -10911,7 +10911,7 @@ walls better, and balconies." Mac's call (YARD-HEIGHT) was 4 m.
   (test/server/yardsweep.test.js `SWEPT`, `tools/yardReseat.mjs` YARD_RESEAT_HIGH).
 - **The four hosts.** `scenes/world.js` WIRED: its decal pass already draws `yards.drawDecals`. `scenes/exterior.js`,
   `scenes/worldModes.js` and `scenes/dungeonContext.js` stand no yard.
-- **Deploy.** acct233 (acct230 then acct231 on its branch, renumbered past main's at the merges), no migration. The account service
+- **Deploy.** acct236 (acct230 then acct231 on its branch, renumbered past main's at the merges), no migration. The account service
   before the site. A new site on an older service: a piece over 4 m is refused `yard-high`, which the decorator says as
   "at most 8 m" (the new bound's words), and a hung picture is stored unhung. An older site on the new service stands
   no piece over its own 4 m - not a chair on a 6.45 m roof, not a lantern hung at 5.5 m - and draws a hung picture
@@ -10927,12 +10927,12 @@ walls better, and balconies." Mac's call (YARD-HEIGHT) was 4 m.
   `hung` - one copied off a wall facing -z hung at 180. A picture's spin on a wall is its own now, apart from its heading
   as a billboard (createDecorPlacer `spin`, `yaw`); a turn turns the pose shown, and a Duplicate carries `hung`. The
   service stored a crafted hung tree and every client drew it on the decal pass; decorPieceOf refuses a nature archive
-  hung, at both ends (`world/natureArchives.js`, a leaf). acct236, no migration, either order: no site sends one. No
+  hung, at both ends (`world/natureArchives.js`, a leaf). acct239, no migration, either order: no site sends one. No
   host changed.
 - **Pinned (AUDIT FB1031)**: `test/scenes/fb1031_yard.test.js` (7: Newcester's THIEAL00 record 3, ARCH3D 213, and past
   the Bay Solitude's RESIAL03 record 3, ARCH3D 203; ARCH3D 602 and 212; a house built in the test; the placer, the
   decorator's Duplicate, the law and the service); `tools/mutants/fb1031_yard.json` (21, all dead); re-aimed by content:
-  yardwalls, decor1d, decor1e, decor2c, eavefoot, fb1003b_trees and the version records (acct236).
+  yardwalls, decor1d, decor1e, decor2c, eavefoot, fb1003b_trees and the version records (acct239).
 - **Pinned**: `test/scenes/yardwalls.test.js` (7: the law on synthetic houses, ARCH3D 709 and, past the Bay, Solitude's
   house in BANKBL00), and the pins moved on purpose - `test/net/yardheight.test.js` (the bound, a free piece at 4.5 m,
   one past 8 m against a tall house),

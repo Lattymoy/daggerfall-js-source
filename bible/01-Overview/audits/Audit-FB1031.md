@@ -43,7 +43,7 @@ took a free piece to the roof in 4,309 of 6,016 houses. It reads the house's gro
 under a roof or against a face. **Y2.** A Duplicate of a lantern on a -z wall, and a flipped picture moved onto a wall,
 hung upside down. **Y3.** The catalog (with P5). **Y4, OPEN.** The service knows no lots, so a crafted client can
 stand a free piece to 8 m. **Y5.** Imperial City courts keep 4 m: each stands 0.3 m off its house. **Y6.** The service
-stored a crafted hung tree; neither end takes one (acct236). **Y7, Y8.** The record's mixed versions and measures.
+stored a crafted hung tree; neither end takes one (acct239). **Y7, Y8.** The record's mixed versions and measures.
 
 ## FOES
 
@@ -77,7 +77,7 @@ names `itemBound.js` since.
 map's ask was said to cost no scan; past the board's 10-minute keep, and on any empty region, it scanned the witness
 rows on the primary. **W4.** A province is one region past the Bay, and the sea there is region 0, so the 8,192-pixel
 cap cut them north first, unsaid. All three by one change: the day's confirmed ground is laid once as 64-pixel tiles,
-keyed by the world pixel (`witnessTiles.js`, migration 0205, acct238), and the map reads every tile in view by its key
+keyed by the world pixel (`witnessTiles.js`, migration 0207, acct241), and the map reads every tile in view by its key
 from a replica.
 
 **W2.** The wash was painted on every pulse and pan frame (49,152 pixels, 84 ms); it is a kept bitmap,
@@ -136,6 +136,7 @@ Delve vault is another (`../../06-Systems/Unleveled-Loot.md`). Main's Portal Boo
 every branch law soundly.
 
 
-**M1.** The merge's renumbering held in every version line, pin, mutant record and migration; its one slip was W3. The
-acct235 history in `service.js` said main ran to migration 0203; main ends at 0202, and 0203 is BUTCHER-STORES'. Not
-the branch's: `test/world/fb1002_audit.test.js` test 9 fails on main as here, from before the merge.
+**M1.** The merge's renumbering held in every version line, pin, mutant record and migration; its one slip was W3.
+BOUND-DESTROY's history in `service.js` said main ran to migration 0203; main then ended at 0202, and 0203 was
+BUTCHER-STORES'. Not the branch's: `test/world/fb1002_audit.test.js` test 9 fails on main as here, from before the
+merge.

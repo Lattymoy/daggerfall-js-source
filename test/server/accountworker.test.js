@@ -247,9 +247,9 @@ test('ACC1b: the migration is the real schema, and applying it twice changes not
   // AUDIT LANE 5 added one (0201 grown in place, PIN MOVED): `season_mauls` (the Resonant Maul's day an account - seasonClaim.js)
   // AUDIT-STOREFRONT II (lane B 2) added one (0201 grown in place, PIN MOVED): `pass_asks` (a pass find's own id an account -
   // battlePass.js findPass)
-  // BOUND-DESTROY added one (0204 - 0201, then 0202, on its branch, renumbered past main's at the rebases; PIN MOVED):
+  // BOUND-DESTROY added one (0206 - 0201, 0202, then 0204 on its branch, renumbered past main's at the rebases and the merges; PIN MOVED):
   // `fest_discards` (a Soul Cake or Hearth Offering let-go, one a request id - festival.js discardFestival)
-  // AUDIT FB1031 W3 added two (0205, PIN MOVED): `witness_tiles` and `witness_tile_days` (the held map's witnessed ground, a
+  // AUDIT FB1031 W3 added two (0207, PIN MOVED): `witness_tiles` and `witness_tile_days` (the held map's witnessed ground, a
   // day's tiles and the day's mark - witnessTiles.js)
   // GUILD-REQUESTS (0199, PIN MOVED): SQLite's own `sqlite_sequence` - a request's id is never reused (AUTOINCREMENT, AUDIT
   // GUILD-RANKS), so an officer's answer never lands on a later request
