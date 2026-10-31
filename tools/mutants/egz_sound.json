@@ -650,8 +650,8 @@
   {
     "name": "EGZ-grace-hold-ignored",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "if (now < _s.graceReady || lootSpireHeld('grace')) return false;",
-    "new": "if (now < _s.graceReady) return false;",
+    "old": "  if (now < _s.graceReady || lootSpireHeld('grace')) return false; // EG-ZH: and in the Spire, not before its next Redoubt",
+    "new": "  if (now < _s.graceReady) return false; // EG-ZH: and in the Spire, not before its next Redoubt",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -668,8 +668,8 @@
   {
     "name": "EGZ-vigil-hold-ignored",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "if (now < _s.vigilReady || lootSpireHeld('vigil')) return;",
-    "new": "if (now < _s.vigilReady) return;",
+    "old": "  if (now < _s.vigilReady || lootSpireHeld('vigil')) return; // EG-ZH: and in the Spire, not before its next Redoubt",
+    "new": "  if (now < _s.vigilReady) return; // EG-ZH: and in the Spire, not before its next Redoubt",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -686,8 +686,8 @@
   {
     "name": "EGZ-hold-outlives-breach",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "return room !== undefined && room === spireRoomNow(); }",
-    "new": "return room !== undefined; }",
+    "old": "  return room !== undefined && room === spireRoomNow();",
+    "new": "  return room !== undefined;",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -695,8 +695,8 @@
   {
     "name": "EGZ-chip-on-timer",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "const wait = (k, field) => (lootSpireHeld(k) ? 'Redoubt'",
-    "new": "const wait = (k, field) => (false ? 'Redoubt'",
+    "old": "  const wait = (k, field) => (lootSpireHeld(k) ? 'Redoubt' : left(_s[field]) ? time(left(_s[field])) : '');",
+    "new": "  const wait = (k, field) => (false ? 'Redoubt' : left(_s[field]) ? time(left(_s[field])) : '');",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -704,8 +704,8 @@
   {
     "name": "EGZ-round-says-held",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "if (now < r.at() || lootSpireHeld(k)) continue;",
-    "new": "if (now < r.at()) continue;",
+    "old": "    if (now < r.at() || lootSpireHeld(k)) continue; // EG-ZH: a death save the Spire holds is said at its Redoubt",
+    "new": "    if (now < r.at()) continue; // EG-ZH: a death save the Spire holds is said at its Redoubt",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -713,8 +713,8 @@
   {
     "name": "EGZ-redoubt-door-unregistered",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "registerSpireRedoubt(LOOT_POWERS, lootRedoubtTaken);",
-    "new": "void lootRedoubtTaken;",
+    "old": "registerSpireRedoubt(LOOT_POWERS, lootRedoubtTaken); // EG-ZH: Divine Grace and the Vigil recover at a Redoubt in a breach",
+    "new": "void lootRedoubtTaken; // EG-ZH: Divine Grace and the Vigil recover at a Redoubt in a breach",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]

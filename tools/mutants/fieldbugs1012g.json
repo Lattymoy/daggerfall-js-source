@@ -400,8 +400,8 @@
   {
     "name": "OPEN-HAND-the-follow-up-dropped",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  oweFoe(target, n);   // FIELD BUGS 2026-10-12g OPEN-HAND",
-    "new": "  // dropped",
+    "old": "  oweFoe(target, n); // FIELD BUGS 2026-10-12g OPEN-HAND: a body the relay runs (the gate's Warden) - its host's claim carries it",
+    "new": "  // dropped: a body the relay runs (the gate's Warden) - its host's claim carries it",
     "tests": [
       "test/systems/fb1012g_openhand.test.js"
     ]

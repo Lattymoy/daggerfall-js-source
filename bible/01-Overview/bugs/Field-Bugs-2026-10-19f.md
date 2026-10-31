@@ -597,7 +597,7 @@ blow on ANOTHER foe in the file was the same omission: Earthshaker's quake (a qu
 Dragonfire's burst (a third to every other Daedra within 3 m) landed silent, and Dragonfire's own second burn on the struck
 one rose with no name (`again(target, amount)` - the only `again` without its power's word).
 
-THE FIX. One door for a blow's reach on another foe (`lootPowers.js:"function reachOn(door, f, n, word) {"`): its number
+THE FIX. One door for a blow's reach on another foe (`lootPowers.js:"function reachOn"`): its number
 rises through `showFollowUp`, tagged with its power's name, then the foe takes it - Chain Lightning's arc, Earthshaker's
 quake (a number for each foe it reaches) and Dragonfire's burst; Dragonfire's burn on the struck one is tagged as Many
 Endings' echo is. Enhanced only, as HN1 is (the classic skin registers no numbers; the harm lands there as before); none

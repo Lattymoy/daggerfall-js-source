@@ -29,8 +29,8 @@
   {
     "name": "KTG-the-struck-one-rung",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  for (const f of near(door, struck.ai.feet, metres, target)) {\n    const n = Math.floor(amount * elementShare(f.entity, 'shock'));",
-    "new": "  for (const f of near(door, struck.ai.feet, metres, null)) {\n    const n = Math.floor(amount * elementShare(f.entity, 'shock'));",
+    "old": "  if (!struck?.ai?.feet || !(amount > 0)) return;\n  for (const f of near(door, struck.ai.feet, metres, target)) {",
+    "new": "  if (!struck?.ai?.feet || !(amount > 0)) return;\n  for (const f of near(door, struck.ai.feet, metres, null)) {",
     "tests": [
       "test/systems/ketch/ketch_gilded.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "KTG-the-reach-unbounded",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  for (const f of near(door, struck.ai.feet, metres, target)) {\n    const n = Math.floor(amount * elementShare(f.entity, 'shock'));",
-    "new": "  for (const f of near(door, struck.ai.feet, metres * 10, target)) {\n    const n = Math.floor(amount * elementShare(f.entity, 'shock'));",
+    "old": "  if (!struck?.ai?.feet || !(amount > 0)) return;\n  for (const f of near(door, struck.ai.feet, metres, target)) {",
+    "new": "  if (!struck?.ai?.feet || !(amount > 0)) return;\n  for (const f of near(door, struck.ai.feet, metres * 10, target)) {",
     "tests": [
       "test/systems/ketch/ketch_gilded.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "KTG-the-word-answering-itself",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "if (mark && now < mark.until && held !== mark.by) {",
-    "new": "if (mark && now < mark.until) {",
+    "old": "  if (mark && now < mark.until && held !== mark.by) {",
+    "new": "  if (mark && now < mark.until) {",
     "tests": [
       "test/systems/ketch/ketch_gilded.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "KTG-the-mark-never-spent",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "pct += mark.pct; if (!info?.estimate) _broadside.delete(target); }",
-    "new": "pct += mark.pct; if (!info?.estimate && !mark) _broadside.delete(target); }",
+    "old": "    if (!info?.estimate) _broadside.delete(target);",
+    "new": "    if (!info?.estimate && !mark) _broadside.delete(target);",
     "tests": [
       "test/systems/ketch/ketch_gilded.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "KTG-the-mark-everlasting",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "if (mark && now < mark.until && held !== mark.by) {",
-    "new": "if (mark && held !== mark.by) {",
+    "old": "  if (mark && now < mark.until && held !== mark.by) {",
+    "new": "  if (mark && held !== mark.by) {",
     "tests": [
       "test/systems/ketch/ketch_gilded.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "KTG-the-estimate-spending-it",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "pct += mark.pct; if (!info?.estimate) _broadside.delete(target); }",
-    "new": "pct += mark.pct; _broadside.delete(target); }",
+    "old": "    if (!info?.estimate) _broadside.delete(target);",
+    "new": "    _broadside.delete(target);",
     "tests": [
       "test/systems/ketch/ketch_gilded.test.js"
     ]

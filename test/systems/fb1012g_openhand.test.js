@@ -63,5 +63,5 @@ test('OPEN-HAND the dungeon host\'s claims carry what is owed - the Warden\'s, a
   assert.match(dc, /const landOnHost = \(hb, damage, r, tick = false\) => \{ damage = \([^\n]*\) \+ bossStrikeAt\(hb\.entity, takeOwed\(hb\.entity\), 'melee', playerWeapon\.strikingWeapon, null, false, null\); return /);   // PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT): and a round's mark; PIN MOVED (AUDIT WORLD-EVENTS L5-4, L2-2): a lord's traits on the swing, and on the owed blow
   assert.match(dc, /const landOnRival = \(rb, damage, kind\) => \{ takeOwed\(rb\.entity\); return !!opts\.onArenaHit\?\.\(\{ i: rb\.rival, d: damage, kind,/);
   const lp = readFileSync(new URL('../../src/systems/loot/lootPowers.js', import.meta.url), 'utf8');
-  assert.match(lp, /if \(f\) \{ if \(!f\.dead\) door\.hurtFoe\(f, n\); return; \}\n\s*oweFoe\(target, n\);/);
+  assert.match(lp, /if \(f\) \{\n\s*if \(!f\.dead\) door\.hurtFoe\(f, n\);\n\s*return;\n\s*\}\n\s*oweFoe\(target, n\);/);
 });

@@ -95,8 +95,8 @@
   {
     "name": "AUDIT-MAKER-RARE-A1-lift-takes-the-last",
     "file": "src/systems/loot/lootCurse.js",
-    "old": "if (!makerLaid(list[i]) && list[i]?.type === c.type",
-    "new": "if (list[i]?.type === c.type",
+    "old": "    if (!makerLaid(list[i]) && list[i]?.type === c.type && list[i]?.param === c.param) at = i;",
+    "new": "    if (list[i]?.type === c.type && list[i]?.param === c.param) at = i;",
     "tests": [
       "test/systems/fb1026_makerrare.test.js",
       "test/systems/item/int1_itemlaw.test.js"

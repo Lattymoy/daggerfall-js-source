@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-SCHOOLS-L1-H1-the-rise-unread",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "&& rise(f.ai.feet, feet) <= REACH_RISE_M ",
-    "new": "",
+    "old": "        rise(f.ai.feet, feet) <= REACH_RISE_M &&\n        flat2(f.ai.feet, feet) <= metres &&",
+    "new": "        flat2(f.ai.feet, feet) <= metres &&",
     "tests": [
       "test/systems/audit_schools.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-SCHOOLS-L1-H1-the-wall-unread",
     "file": "src/systems/loot/lootPowers.js",
-    "old": " && (!door.clear || door.clear(feet, f.ai.feet)));\n}\nconst recordOf",
-    "new": ");\n}\nconst recordOf",
+    "old": "        flat2(f.ai.feet, feet) <= metres &&\n        (!door.clear || door.clear(feet, f.ai.feet)),",
+    "new": "        flat2(f.ai.feet, feet) <= metres,",
     "tests": [
       "test/systems/audit_schools.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-SCHOOLS-L1-H1-a-friend-reached",
     "file": "src/systems/loot/lootPowers.js",
-    "old": " && !friendlyProtected(f, { protection: true })\n",
-    "new": "\n",
+    "old": "        !friendlyProtected(f, { protection: true }) &&\n        rise(f.ai.feet, feet) <= REACH_RISE_M &&",
+    "new": "        rise(f.ai.feet, feet) <= REACH_RISE_M &&",
     "tests": [
       "test/systems/audit_schools.test.js"
     ]

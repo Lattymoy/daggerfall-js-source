@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-WE-L1-3-the-sap-unheld",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "    { const held = regenShare((entity.maxHealth * (share(entity) < 0.5 ? hist.low : hist.pct)) / 100, 'hist', entity); if (held > 0) healMine(entity, held); }",
-    "new": "    healMine(entity, (entity.maxHealth * (share(entity) < 0.5 ? hist.low : hist.pct)) / 100);",
+    "old": "    {\n      const held = regenShare((entity.maxHealth * (share(entity) < 0.5 ? hist.low : hist.pct)) / 100, 'hist', entity);\n      if (held > 0) healMine(entity, held);\n    } // AUDIT WORLD-EVENTS L1-3: a natural regeneration - held in a made level (systems/courtRules.js)",
+    "new": "    healMine(entity, (entity.maxHealth * (share(entity) < 0.5 ? hist.low : hist.pct)) / 100); // AUDIT WORLD-EVENTS L1-3: a natural regeneration - held in a made level (systems/courtRules.js)",
     "tests": [
       "test/systems/auditwe_rules.test.js"
     ]

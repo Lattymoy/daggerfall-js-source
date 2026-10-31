@@ -20,8 +20,8 @@
   {
     "name": "DW-FA-arrow-skips-the-material",
     "file": "src/systems/loot/loot.js",
-    "old": "  const material = randomMaterial(playerLevel, rolls);\n  if (groupIndex >= 19)",
-    "new": "  if (groupIndex === 18) return createWeapon(ARROW_TEMPLATE, 0, rolls);\n  const material = randomMaterial(playerLevel, rolls);\n  if (groupIndex >= 19)",
+    "old": "  const material = randomMaterial(playerLevel, rolls);",
+    "new": "  if (groupIndex === 18) return createWeapon(ARROW_TEMPLATE, 0, rolls);\n  const material = randomMaterial(playerLevel, rolls);",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]

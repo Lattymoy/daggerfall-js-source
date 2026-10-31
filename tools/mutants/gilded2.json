@@ -74,8 +74,8 @@
   {
     "name": "GILDED2-every-foe-burns",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "for (const f of near(door, struck.ai.feet, metres, target)) if (foeGroup(f.entity) === group) reachOn(door, f,",
-    "new": "for (const f of near(door, struck.ai.feet, metres, target)) reachOn(door, f,",
+    "old": "  for (const f of near(door, struck.ai.feet, metres, target))\n    if (foeGroup(f.entity) === group) reachOn(door, f, Math.max(1, Math.round(amount)), word); // CHAIN-SEEN",
+    "new": "  for (const f of near(door, struck.ai.feet, metres, target)) reachOn(door, f, Math.max(1, Math.round(amount)), word); // CHAIN-SEEN",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "GILDED2-the-struck-one-burns-too",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "for (const f of near(door, struck.ai.feet, metres, target)) if (foeGroup(f.entity) === group)",
-    "new": "for (const f of near(door, struck.ai.feet, metres, null)) if (foeGroup(f.entity) === group)",
+    "old": "  if (!struck?.ai?.feet) return;\n  for (const f of near(door, struck.ai.feet, metres, target))",
+    "new": "  if (!struck?.ai?.feet) return;\n  for (const f of near(door, struck.ai.feet, metres, null))",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "GILDED2-the-elements-share-taken",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "reachOn(door, f, Math.max(1, Math.round(amount)), word);   // CHAIN-SEEN\n}\n/** KETCH: Hammerfall",
-    "new": "reachOn(door, f, Math.max(1, Math.round(amount * elementShare(f.entity, 'fire'))), word);   // CHAIN-SEEN\n}\n/** KETCH: Hammerfall",
+    "old": "    if (foeGroup(f.entity) === group) reachOn(door, f, Math.max(1, Math.round(amount)), word); // CHAIN-SEEN",
+    "new": "    if (foeGroup(f.entity) === group)\n      reachOn(door, f, Math.max(1, Math.round(amount * elementShare(f.entity, 'fire'))), word); // CHAIN-SEEN",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "GILDED2-a-blow-on-any-foe-bursts",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "case 'dragonfire': if (held && foeGroup(target) === p.group)",
-    "new": "case 'dragonfire': if (held)",
+    "old": "        if (held && foeGroup(target) === p.group)\n          dragonfire(target, (damage * p.share) / 100, p.metres, p.group, p.name);",
+    "new": "        if (held) dragonfire(target, (damage * p.share) / 100, p.metres, p.group, p.name);",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "GILDED2-the-undertow-uncapped",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "n: Math.min(p.max, undertowStacks(target, now) + 1)",
-    "new": "n: undertowStacks(target, now) + 1",
+    "old": "          _undertow.set(target, {\n            n: Math.min(p.max, undertowStacks(target, now) + 1),\n            until: now + p.seconds,\n            at: now,\n          });",
+    "new": "          _undertow.set(target, { n: undertowStacks(target, now) + 1, until: now + p.seconds, at: now });",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "GILDED2-one-count-for-every-foe",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "_undertow.set(target, { n: Math.min(p.max, undertowStacks(target, now) + 1)",
-    "new": "_undertow.set(weapon, { n: Math.min(p.max, undertowStacks(target, now) + 1)",
+    "old": "          _undertow.set(target, {",
+    "new": "          _undertow.set(weapon, {",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "GILDED2-no-tide-heal",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "{ healMine(me, (me.maxHealth * p.heal) / 100); _undertow.delete(foe); }",
-    "new": "{ _undertow.delete(foe); }",
+    "old": "          healMine(me, (me.maxHealth * p.heal) / 100);\n          _undertow.delete(foe);",
+    "new": "          _undertow.delete(foe);",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "GILDED2-any-kill-heals",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "{ const u = _undertow.get(foe); if (u && now - u.at <= TOLL_REFUND_S)",
-    "new": "{ const u = { at: now }; if (u && now - u.at <= TOLL_REFUND_S)",
+    "old": "        const u = _undertow.get(foe);",
+    "new": "        const u = { at: now };",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "GILDED2-one-hint-for-all",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "hint: r.hint ?? GILDED_HINT,",
-    "new": "hint: GILDED_HINT,",
+    "old": "      hint: r.hint ?? GILDED_HINT,",
+    "new": "      hint: GILDED_HINT,",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "GILDED2-no-window",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "until: now + p.seconds, at: now",
-    "new": "until: Infinity, at: now",
+    "old": "          _undertow.set(target, {\n            n: Math.min(p.max, undertowStacks(target, now) + 1),\n            until: now + p.seconds,\n            at: now,\n          });",
+    "new": "          _undertow.set(target, { n: Math.min(p.max, undertowStacks(target, now) + 1), until: Infinity, at: now });",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "GILDED2-the-struck-one-spared",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  if (!(amount > 0)) return;\n  again(target, amount, word);   // FIELD BUGS 2026-10-19f CHAIN-SEEN: its number tagged with its name, as Many Endings' is\n",
-    "new": "  if (!(amount > 0)) return;\n",
+    "old": "  again(target, amount, word); // FIELD BUGS 2026-10-19f CHAIN-SEEN: its number tagged with its name, as Many Endings' is\n  const door = playerDoor();",
+    "new": "  const door = playerDoor();",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "GILDED2-the-wards-blow-answered",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "if (!mine(attacker) || !(damage > 0) || !target || target.isPlayer || target.warded) return;",
-    "new": "if (!mine(attacker) || !(damage > 0) || !target || target.isPlayer) return;",
+    "old": "  if (!mine(attacker) || !(damage > 0) || !target || target.isPlayer || target.warded) return;",
+    "new": "  if (!mine(attacker) || !(damage > 0) || !target || target.isPlayer) return;",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "GILDED2-one-heal-a-swing",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "healMine(me, (me.maxHealth * p.heal) / 100); _undertow.delete(foe); }",
-    "new": "healMine(me, (me.maxHealth * p.heal) / 100); _undertow = new WeakMap(); }",
+    "old": "          _undertow.delete(foe);",
+    "new": "          _undertow = new WeakMap();",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "GILDED2-AUDIT-reach-past-3m",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "case 'dragonfire': if (held && foeGroup(target) === p.group) dragonfire(target, (damage * p.share) / 100, p.metres, p.group, p.name);",
-    "new": "case 'dragonfire': if (held && foeGroup(target) === p.group) dragonfire(target, (damage * p.share) / 100, p.metres * 1.13, p.group, p.name);",
+    "old": "          dragonfire(target, (damage * p.share) / 100, p.metres, p.group, p.name);",
+    "new": "          dragonfire(target, (damage * p.share) / 100, p.metres * 1.13, p.group, p.name);",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]

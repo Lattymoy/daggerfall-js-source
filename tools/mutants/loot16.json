@@ -403,8 +403,8 @@
   {
     "name": "LOOT16-the-wire-unchecked",
     "file": "src/systems/loot/loot.js",
-    "old": "  if (!validCurse(out)) return null;   // LOOT16: a curse only as a door's pass makes one\n",
-    "new": "",
+    "old": "  if (!validCurse(out)) return null; // LOOT16: a curse only as a door's pass makes one\n  if (!validSocket(out)) return null; // LOOT20: a socket only as the pass and the Reforge make one",
+    "new": "  if (!validSocket(out)) return null; // LOOT20: a socket only as the pass and the Reforge make one",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]
@@ -439,8 +439,8 @@
   {
     "name": "LOOT16-a-price-for-nothing",
     "file": "src/systems/loot/lootCurse.js",
-    "old": "  if (!isCursed(item)) return null;\n  const value",
-    "new": "  const value",
+    "old": "  if (!isCursed(item)) return null;\n  const value = Number.isFinite(item.value) ? item.value : itemBaseValue(item);",
+    "new": "  const value = Number.isFinite(item.value) ? item.value : itemBaseValue(item);",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]
@@ -448,7 +448,7 @@
   {
     "name": "LOOT16-the-temple-sees-the-unknown",
     "file": "src/systems/loot/lootCurse.js",
-    "old": "export const cursedKnown = (items) => (Array.isArray(items) ? items : []).filter((it) => isCursed(it) && itemIsIdentified(it));",
+    "old": "export const cursedKnown = (items) =>\n  (Array.isArray(items) ? items : []).filter((it) => isCursed(it) && itemIsIdentified(it));",
     "new": "export const cursedKnown = (items) => (Array.isArray(items) ? items : []).filter((it) => isCursed(it));",
     "tests": [
       "test/systems/loot16_curses.test.js"
@@ -484,8 +484,8 @@
   {
     "name": "LOOT16-lift-worn",
     "file": "src/systems/loot/lootCurse.js",
-    "old": "  if (isEquipped(item)) return 'worn';\n",
-    "new": "",
+    "old": "  if (isEquipped(item)) return 'worn';\n  if (totalGoldAmount(player) < /** @type {number} */ (liftPrice(item))) return 'gold';",
+    "new": "  if (totalGoldAmount(player) < /** @type {number} */ (liftPrice(item))) return 'gold';",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]
@@ -493,8 +493,8 @@
   {
     "name": "LOOT16-lift-unpaid-check",
     "file": "src/systems/loot/lootCurse.js",
-    "old": "  if (totalGoldAmount(player) < /** @type {number} */ (liftPrice(item))) return 'gold';\n",
-    "new": "",
+    "old": "  if (totalGoldAmount(player) < /** @type {number} */ (liftPrice(item))) return 'gold';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]
@@ -520,8 +520,8 @@
   {
     "name": "LOOT16-the-mark-stays",
     "file": "src/systems/loot/lootCurse.js",
-    "old": "  delete item.cursed;\n",
-    "new": "",
+    "old": "  delete item.cursed;\n  deductGold(player, price);",
+    "new": "  deductGold(player, price);",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]
@@ -529,8 +529,8 @@
   {
     "name": "LOOT16-lifted-for-free",
     "file": "src/systems/loot/lootCurse.js",
-    "old": "  deductGold(player, price);\n",
-    "new": "",
+    "old": "  deductGold(player, price);\n  return { ok: true, price };",
+    "new": "  return { ok: true, price };",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]

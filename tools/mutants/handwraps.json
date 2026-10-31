@@ -192,8 +192,8 @@
   {
     "name": "HANDWRAPS-lines-unread",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  const held = weapon ?? info?.wraps ?? null;   // HAND-WRAPS: a fist's blow carries its wraps' lines and powers",
-    "new": "  const held = weapon;   // HAND-WRAPS: a fist's blow carries its wraps' lines and powers",
+    "old": "  const held = weapon ?? info?.wraps ?? null; // HAND-WRAPS: a fist's blow carries its wraps' lines and powers (combat/formulas.js)",
+    "new": "  const held = weapon; // HAND-WRAPS: a fist's blow carries its wraps' lines and powers (combat/formulas.js)",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -484,8 +484,8 @@
   {
     "name": "HANDWRAPS-leech",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  const held = weapon ?? info?.wraps ?? null;   // HAND-WRAPS: a fist's blow carries its wraps' leech and powers",
-    "new": "  const held = weapon;   // HAND-WRAPS: a fist's blow carries its wraps' leech and powers",
+    "old": "  const held = weapon ?? info?.wraps ?? null; // HAND-WRAPS: a fist's blow carries its wraps' leech and powers ('fists' stays the bare blow's)",
+    "new": "  const held = weapon; // HAND-WRAPS: a fist's blow carries its wraps' leech and powers ('fists' stays the bare blow's)",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],
@@ -494,8 +494,8 @@
   {
     "name": "HANDWRAPS-quake",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "case 'quake': if (held && !ranged(held))",
-    "new": "case 'quake': if (weapon && !ranged(held))",
+    "old": "        if (held && !ranged(held)) quake(target, (damage * p.share) / 100, p.metres, p.name);",
+    "new": "        if (weapon && !ranged(held)) quake(target, (damage * p.share) / 100, p.metres, p.name);",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],

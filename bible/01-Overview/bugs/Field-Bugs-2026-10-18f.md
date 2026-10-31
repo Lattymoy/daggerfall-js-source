@@ -141,7 +141,7 @@ FOUND, on a body the relay runs. On every other foe the power works and always d
   25, pct: 50`, "Your weapon blows deal +50% damage to a foe under a quarter of its health"; a Rare takes it at the
   Reforge (`lootCodex.js` imprintPiece). It rides every weapon blow of mine, worn in any slot, never a spell, never a
   player (it sleeps in a duel and a refereed bout).
-- **The law** (`lootPowers.js:"      case 'execute': if (share(target) < p.below / 100) pct += p.pct; break;"`): the share
+- **The law** (`lootPowers.js:"case 'execute':"`): the share
   is the struck entity's health of its whole. An orc from makeEnemyEntity takes 8 whole and 12 under a fifth, before and
   after. But every body the relay runs is struck against a stand-in whose health is a placeholder nothing empties
   (`gateBoss.js:"e.maxHealth = e.health"`), and the share read it as whole: the Warden at 200 of 1000 took 8.

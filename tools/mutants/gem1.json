@@ -238,8 +238,8 @@
   {
     "name": "GEM1-law6-the-blow-unheld",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  return readLines(item).filter((a) => a?.id === id && validAffix(a));",
-    "new": "  return item.affixes.filter((a) => a?.id === id && validAffix(a));",
+    "old": "  return readLines(item).filter((a) => a?.id === id && validAffix(a)); // GEM1: a piece's gems as law 6 holds them (bible/06-Systems/Gem-Sockets.md)",
+    "new": "  return item.affixes.filter((a) => a?.id === id && validAffix(a)); // GEM1: a piece's gems as law 6 holds them (bible/06-Systems/Gem-Sockets.md)",
     "tests": [
       "test/systems/gem1_sockets.test.js"
     ]

@@ -120,8 +120,8 @@
   {
     "name": "HACKED-GOLD-the-price-uncapped",
     "file": "src/systems/loot/loot.js",
-    "old": "    it.value = Math.min(it.value, Math.max(_priceCeiling(it), wireFloorOf(it)));",
-    "new": "",
+    "old": "    it.value = Math.min(it.value, Math.max(_priceCeiling(it), wireFloorOf(it)));\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/hackedgold.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "HACKED-GOLD-the-list-uncapped",
     "file": "src/systems/loot/loot.js",
-    "old": "    if (!lawRefuses(it)) out.push(lawPriced(it));",
-    "new": "    if (!lawRefuses(it)) out.push(it);",
+    "old": "    if (!lawRefuses(it)) out.push(lawPriced(it)); // HACKED-GOLD: at no price past the law's ceiling",
+    "new": "    if (!lawRefuses(it)) out.push(it); // HACKED-GOLD: at no price past the law's ceiling",
     "tests": [
       "test/systems/hackedgold.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "HACKED-GOLD-a-letter-priced",
     "file": "src/systems/loot/loot.js",
-    "old": "if (_priceCeiling && !VALUE_IS_IDENTITY_TEMPLATES.includes(it.templateIndex) && !BOAT_TEMPLATES.includes(it.templateIndex)) {",
-    "new": "if (_priceCeiling && !BOAT_TEMPLATES.includes(it.templateIndex)) {",
+    "old": "  if (\n    _priceCeiling &&\n    !VALUE_IS_IDENTITY_TEMPLATES.includes(it.templateIndex) &&\n    !BOAT_TEMPLATES.includes(it.templateIndex)\n  ) {",
+    "new": "  if (_priceCeiling && !BOAT_TEMPLATES.includes(it.templateIndex)) {",
     "tests": [
       "test/systems/hackedgold.test.js"
     ]
@@ -307,8 +307,8 @@
   {
     "name": "HACKED-GOLD-PRICE-CAP-a-deed-capped",
     "file": "src/systems/loot/loot.js",
-    "old": "if (_priceCeiling && !VALUE_IS_IDENTITY_TEMPLATES.includes(it.templateIndex) && !BOAT_TEMPLATES.includes(it.templateIndex)) {",
-    "new": "if (_priceCeiling && !VALUE_IS_IDENTITY_TEMPLATES.includes(it.templateIndex)) {",
+    "old": "  if (\n    _priceCeiling &&\n    !VALUE_IS_IDENTITY_TEMPLATES.includes(it.templateIndex) &&\n    !BOAT_TEMPLATES.includes(it.templateIndex)\n  ) {",
+    "new": "  if (_priceCeiling && !VALUE_IS_IDENTITY_TEMPLATES.includes(it.templateIndex)) {",
     "tests": [
       "test/systems/item/int1_itemlaw.test.js"
     ]

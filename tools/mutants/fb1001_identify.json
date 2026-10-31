@@ -29,8 +29,8 @@
   {
     "name": "TRADE-KNOWN-the-clamp-strips-it",
     "file": "src/systems/loot/loot.js",
-    "old": "for (const k of RECEIVER_MARKS) delete out[k];",
-    "new": "for (const k of RECEIVER_MARKS) delete out[k]; delete out.isIdentified;",
+    "old": "  for (const k of RECEIVER_MARKS) delete out[k];\n  return out;",
+    "new": "  for (const k of RECEIVER_MARKS) delete out[k];\n  delete out.isIdentified;\n  return out;",
     "tests": [
       "test/systems/fb1001_identify.test.js"
     ]

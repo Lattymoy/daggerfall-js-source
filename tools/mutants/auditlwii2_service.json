@@ -383,8 +383,8 @@
   {
     "name": "AUDITLWII2-S9-recipe",
     "file": "src/systems/loot/loot.js",
-    "old": "&& item.potionRecipeKey != null) return potionValue(item.potionRecipeKey, item);",
-    "new": "&& item.potionRecipeKey != null) return itemBaseValue(item);",
+    "old": "    return potionValue(item.potionRecipeKey, item);",
+    "new": "    return itemBaseValue(item);",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "AUDITLWII2-S9-others",
     "file": "src/systems/loot/loot.js",
-    "old": "  return itemBaseValue(item);\n};",
-    "new": "  return 1;\n};",
+    "old": "  return itemBaseValue(item);",
+    "new": "  return 1;",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]

@@ -795,7 +795,7 @@
   {
     "name": "OH-E-pile-event-only-in-window",
     "file": "src/systems/loot/loot.js",
-    "old": "  if (alphabetIndex >= 10 && alphabetIndex <= 15) {   // between keys J and O",
+    "old": "  if (alphabetIndex >= 10 && alphabetIndex <= 15) {\n    // between keys J and O",
     "new": "  if (alphabetIndex < 10 || alphabetIndex > 15) return items;\n  {",
     "tests": [
       "test/scenes/oh_abyss.test.js",
@@ -951,8 +951,8 @@
   {
     "name": "OH-F-B3-pile-untagged",
     "file": "src/systems/loot/loot.js",
-    "old": "raiseTabledLootSpawned({ locationIndex, key: lootTableKey, items, rolls, luck, where, quarters });",
-    "new": "raiseTabledLootSpawned({ locationIndex, key: lootTableKey, items, rolls, luck, quarters });",
+    "old": "  if (lootTableKey !== '-')\n    raiseTabledLootSpawned({ locationIndex, key: lootTableKey, items, rolls, luck, where, quarters });",
+    "new": "  if (lootTableKey !== '-') raiseTabledLootSpawned({ locationIndex, key: lootTableKey, items, rolls, luck, quarters });",
     "tests": [
       "test/scenes/oh_abyss.test.js",
       "test/systems/rri2_realism.test.js"

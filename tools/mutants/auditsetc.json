@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-SET-the-marks-never-asked",
     "file": "src/systems/loot/loot.js",
-    "old": "  if (!validSetMarks(out)) return null;   // AUDIT SET D6: and the marks agree with the item - a set's sigil, a blow, the Aetheric\n",
-    "new": "",
+    "old": "  if (!validSetMarks(out)) return null; // AUDIT SET D6: and the marks agree with the item - a set's sigil, a blow, the Aetheric\n  if (!validGildedMarks(out)) return null; // GILDED1: a Gilded piece as its record mints it - a static roll, one number off is a forgery",
+    "new": "  if (!validGildedMarks(out)) return null; // GILDED1: a Gilded piece as its record mints it - a static roll, one number off is a forgery",
     "tests": [
       "test/systems/auditset_c.test.js"
     ]

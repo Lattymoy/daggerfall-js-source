@@ -168,8 +168,8 @@
   {
     "name": "OUTDOOR-LOOT-lapsed-claim-kept-at-teardown",
     "file": "src/systems/loot/claimLedger.js",
-    "old": "if (c.done || c.lapsed || (now !== null && now - c.at >= lapseMs) || !which(c)) continue;",
-    "new": "if (c.done || !which(c)) continue;",
+    "old": "      if (c.done || c.lapsed || (now !== null && now - c.at >= lapseMs) || !which(c)) continue;",
+    "new": "      if (c.done || !which(c)) continue;",
     "tests": [
       "test/net/bodyloot.test.js",
       "test/net/bodyloot_protocol.test.js"
@@ -178,8 +178,8 @@
   {
     "name": "OUTDOOR-LOOT-duplicate-verdict-lands-twice",
     "file": "src/systems/loot/claimLedger.js",
-    "old": "if (!c || c.done) return null;\n    if (from !== undefined",
-    "new": "if (!c) return null;\n    if (from !== undefined",
+    "old": "    if (!c || c.done) return null;",
+    "new": "    if (!c) return null;",
     "tests": [
       "test/net/bodyloot.test.js",
       "test/net/bodyloot_protocol.test.js"
@@ -188,8 +188,8 @@
   {
     "name": "OUTDOOR-LOOT-claim-never-asked-again",
     "file": "src/systems/loot/claimLedger.js",
-    "old": "if (now >= c.nextAt) { c.wait",
-    "new": "if (false) { c.wait",
+    "old": "      if (now >= c.nextAt) {",
+    "new": "      if (false) {",
     "tests": [
       "test/net/bodyloot.test.js",
       "test/net/bodyloot_protocol.test.js"
@@ -198,8 +198,8 @@
   {
     "name": "OUTDOOR-LOOT-one-ask-lands-two-grants",
     "file": "src/systems/loot/claimLedger.js",
-    "old": "    const had = list.length > 0;\n    if (had) list.shift();",
-    "new": "    const had = list.length > 0;",
+    "old": "    if (had) list.shift();\n    if (!list.length) asks.delete(key);",
+    "new": "    if (!list.length) asks.delete(key);",
     "tests": [
       "test/net/world6biiic.test.js",
       "test/scenes/auditworld6biiic.test.js",

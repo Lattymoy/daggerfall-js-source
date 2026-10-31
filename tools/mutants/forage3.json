@@ -101,8 +101,8 @@
   {
     "name": "FORAGE3-12-the-pile-event-inside-j-o",
     "file": "src/systems/loot/loot.js",
-    "old": "  if (lootTableKey !== '-') raiseTabledLootSpawned(",
-    "new": "  if (alphabetIndex >= 10 && alphabetIndex <= 15) raiseTabledLootSpawned(",
+    "old": "  if (lootTableKey !== '-')",
+    "new": "  if (alphabetIndex >= 10 && alphabetIndex <= 15)",
     "tests": [
       "test/systems/foraging/forage3_loot.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "FORAGE3-13-a-pile-past-the-table-raises",
     "file": "src/systems/loot/loot.js",
-    "old": "  if (lootTableKey !== '-') raiseTabledLootSpawned(",
-    "new": "  if (lootTableKey) raiseTabledLootSpawned(",
+    "old": "  if (lootTableKey !== '-')\n    raiseTabledLootSpawned({ locationIndex, key: lootTableKey, items, rolls, luck, where, quarters });",
+    "new": "  if (lootTableKey) raiseTabledLootSpawned({ locationIndex, key: lootTableKey, items, rolls, luck, where, quarters });",
     "tests": [
       "test/systems/foraging/forage3_loot.test.js"
     ]

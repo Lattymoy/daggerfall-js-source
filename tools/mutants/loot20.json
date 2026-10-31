@@ -38,8 +38,8 @@
   {
     "name": "LOOT20-the-gems-out-of-order",
     "file": "src/systems/loot/gemGrades.js",
-    "old": "export const GEM_IDS = Object.freeze(['ruby', 'emerald', 'sapphire', 'diamond', 'jade', 'turquoise', 'malachite', 'amber']);",
-    "new": "export const GEM_IDS = Object.freeze(['ruby', 'sapphire', 'emerald', 'diamond', 'jade', 'turquoise', 'malachite', 'amber']);",
+    "old": "  'emerald',\n  'sapphire',",
+    "new": "  'sapphire',\n  'emerald',",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ],
@@ -288,8 +288,8 @@
   {
     "name": "LOOT20-the-wire-unchecked",
     "file": "src/systems/loot/loot.js",
-    "old": "  if (!validSocket(out)) return null;   // LOOT20: a socket only as the pass and the Reforge make one\n",
-    "new": "",
+    "old": "  if (!validSocket(out)) return null; // LOOT20: a socket only as the pass and the Reforge make one\n  // AUDIT WORLD6a B1: THE PRICE IS NOT THE WIRE'S. A shelf's list lands on every client (WORLD6a) and calculateCost",
+    "new": "  // AUDIT WORLD6a B1: THE PRICE IS NOT THE WIRE'S. A shelf's list lands on every client (WORLD6a) and calculateCost",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ]

@@ -35,13 +35,29 @@ import { MOBILE_TYPES } from '../../characters/mobile/mobileTypes.js';
 // this file only ever picks a SUBSET of one of those three, never a
 // new index.
 const IDX = Object.freeze({
-  WerewolfsBlood: 33, FairyDragonScales: 35, WraithEssence: 38, Ectoplasm: 39,
-  GhoulsTongue: 40, SpidersVenom: 41, TrollsBlood: 42, SnakeVenom: 43,
-  GorgonSnake: 44, LichDust: 45, GiantsBlood: 50, BasilisksEye: 51,
-  DaedrasHeart: 53, SaintsHair: 54, OrcsBlood: 61,                        // CreatureIngredients1
-  DragonsScales: 46, GiantScorpionStinger: 47, SmallScorpionStinger: 48,
-  MummyWrappings: 49, GryphonsFeather: 52,                                // CreatureIngredients2
-  WereboarsTusk: 34, NymphHair: 36, UnicornHorn: 37,                      // CreatureIngredients3
+  WerewolfsBlood: 33,
+  FairyDragonScales: 35,
+  WraithEssence: 38,
+  Ectoplasm: 39,
+  GhoulsTongue: 40,
+  SpidersVenom: 41,
+  TrollsBlood: 42,
+  SnakeVenom: 43,
+  GorgonSnake: 44,
+  LichDust: 45,
+  GiantsBlood: 50,
+  BasilisksEye: 51,
+  DaedrasHeart: 53,
+  SaintsHair: 54,
+  OrcsBlood: 61, // CreatureIngredients1
+  DragonsScales: 46,
+  GiantScorpionStinger: 47,
+  SmallScorpionStinger: 48,
+  MummyWrappings: 49,
+  GryphonsFeather: 52, // CreatureIngredients2
+  WereboarsTusk: 34,
+  NymphHair: 36,
+  UnicornHorn: 37, // CreatureIngredients3
 });
 
 /** mobileType -> { C1?: [...indices], C2?: [...], C3?: [...] }. A key
@@ -49,22 +65,34 @@ const IDX = Object.freeze({
  *  this monster" - the roll still happens (LOOT_MATRICES' own odds),
  *  it just never has anything to mint. */
 export const CREATURE_INGREDIENT_THEME = Object.freeze({
-  [MOBILE_TYPES.Imp]:           Object.freeze({ C1: Object.freeze([IDX.DaedrasHeart]) }),   // a minor daedra - the one C1 item that is actually daedric
-  [MOBILE_TYPES.Harpy]:         Object.freeze({ C2: Object.freeze([IDX.GryphonsFeather]) }),   // a flying, feathered thing
-  [MOBILE_TYPES.Giant]:         Object.freeze({ C1: Object.freeze([IDX.GiantsBlood]) }),   // named for exactly this
-  [MOBILE_TYPES.Centaur]:       Object.freeze({ C1: Object.freeze([IDX.FairyDragonScales]), C3: Object.freeze([IDX.NymphHair]) }),   // the same mythic-woodland shelf Nymph draws from
-  [MOBILE_TYPES.Nymph]:         Object.freeze({ C1: Object.freeze([IDX.FairyDragonScales]), C3: Object.freeze([IDX.NymphHair]) }),   // Nymph Hair is literally this
-  [MOBILE_TYPES.OrcShaman]:     Object.freeze({ C1: Object.freeze([IDX.OrcsBlood]) }),   // an Orc
-  [MOBILE_TYPES.DaedraSeducer]: Object.freeze({ C1: Object.freeze([IDX.DaedrasHeart]) }),   // a daedra
-  [MOBILE_TYPES.DaedraLord]:    Object.freeze({ C1: Object.freeze([IDX.DaedrasHeart]) }),   // a daedra
-  [MOBILE_TYPES.Lich]:          Object.freeze({ C1: Object.freeze([IDX.LichDust, IDX.WraithEssence, IDX.Ectoplasm, IDX.GhoulsTongue]), C2: Object.freeze([IDX.MummyWrappings]) }),   // undead, and Lich Dust is literally this
-  [MOBILE_TYPES.AncientLich]:   Object.freeze({ C1: Object.freeze([IDX.LichDust, IDX.WraithEssence, IDX.Ectoplasm, IDX.GhoulsTongue]), C2: Object.freeze([IDX.MummyWrappings]) }),
+  [MOBILE_TYPES.Imp]: Object.freeze({ C1: Object.freeze([IDX.DaedrasHeart]) }), // a minor daedra - the one C1 item that is actually daedric
+  [MOBILE_TYPES.Harpy]: Object.freeze({ C2: Object.freeze([IDX.GryphonsFeather]) }), // a flying, feathered thing
+  [MOBILE_TYPES.Giant]: Object.freeze({ C1: Object.freeze([IDX.GiantsBlood]) }), // named for exactly this
+  [MOBILE_TYPES.Centaur]: Object.freeze({
+    C1: Object.freeze([IDX.FairyDragonScales]),
+    C3: Object.freeze([IDX.NymphHair]),
+  }), // the same mythic-woodland shelf Nymph draws from
+  [MOBILE_TYPES.Nymph]: Object.freeze({
+    C1: Object.freeze([IDX.FairyDragonScales]),
+    C3: Object.freeze([IDX.NymphHair]),
+  }), // Nymph Hair is literally this
+  [MOBILE_TYPES.OrcShaman]: Object.freeze({ C1: Object.freeze([IDX.OrcsBlood]) }), // an Orc
+  [MOBILE_TYPES.DaedraSeducer]: Object.freeze({ C1: Object.freeze([IDX.DaedrasHeart]) }), // a daedra
+  [MOBILE_TYPES.DaedraLord]: Object.freeze({ C1: Object.freeze([IDX.DaedrasHeart]) }), // a daedra
+  [MOBILE_TYPES.Lich]: Object.freeze({
+    C1: Object.freeze([IDX.LichDust, IDX.WraithEssence, IDX.Ectoplasm, IDX.GhoulsTongue]),
+    C2: Object.freeze([IDX.MummyWrappings]),
+  }), // undead, and Lich Dust is literally this
+  [MOBILE_TYPES.AncientLich]: Object.freeze({
+    C1: Object.freeze([IDX.LichDust, IDX.WraithEssence, IDX.Ectoplasm, IDX.GhoulsTongue]),
+    C2: Object.freeze([IDX.MummyWrappings]),
+  }),
   // Documented exceptions (see header): nothing in the 23-item pool
   // reads as theirs, so every tier is left out on purpose.
-  [MOBILE_TYPES.Vampire]:        Object.freeze({}),
+  [MOBILE_TYPES.Vampire]: Object.freeze({}),
   [MOBILE_TYPES.VampireAncient]: Object.freeze({}),
-  [MOBILE_TYPES.Dreugh]:         Object.freeze({}),
-  [MOBILE_TYPES.Lamia]:          Object.freeze({}),
+  [MOBILE_TYPES.Dreugh]: Object.freeze({}),
+  [MOBILE_TYPES.Lamia]: Object.freeze({}),
 });
 
 /** The pool a `tier` ('C1'/'C2'/'C3') roll may pick from for

@@ -78,8 +78,8 @@
   {
     "name": "GU-bow-paid-in-pellets",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "isGunTemplate(_lastToll.weapon?.templateIndex) ? createPellets(1) : bowDamageArrow()",
-    "new": "createPellets(1)",
+    "old": "          addItem(me.items, isGunTemplate(_lastToll.weapon?.templateIndex) ? createPellets(1) : bowDamageArrow());",
+    "new": "          addItem(me.items, createPellets(1));",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]
@@ -87,8 +87,8 @@
   {
     "name": "GU-gun-era-paid-in-arrows",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "isGunTemplate(_lastToll.weapon?.templateIndex) ? createPellets(1) : bowDamageArrow()",
-    "new": "bowDamageArrow()",
+    "old": "          addItem(me.items, isGunTemplate(_lastToll.weapon?.templateIndex) ? createPellets(1) : bowDamageArrow());",
+    "new": "          addItem(me.items, bowDamageArrow());",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]
@@ -96,8 +96,8 @@
   {
     "name": "GU-toll-forgets-its-weapon",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "_lastToll = { foe: target, at: now, weapon: held };",
-    "new": "_lastToll = { foe: target, at: now };",
+    "old": "          _lastToll = { foe: target, at: now, weapon: held };",
+    "new": "          _lastToll = { foe: target, at: now };",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]

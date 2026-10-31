@@ -332,8 +332,8 @@
   {
     "name": "AUDIT-MARTIAL-L2F7-the-loot-carries-the-estimate",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "shareOf(held ?? attacker, damage, pct, !info?.estimate)",
-    "new": "shareOf(held ?? attacker, damage, pct, true)",
+    "old": "  if (pct > 0) out += shareOf(held ?? attacker, damage, pct, !info?.estimate);",
+    "new": "  if (pct > 0) out += shareOf(held ?? attacker, damage, pct, true);",
     "tests": [
       "test/systems/loot4_procs.test.js"
     ]

@@ -130,8 +130,8 @@
   {
     "name": "CASTSPEED-loot-anyones",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  if (!mine(entity)) return 0;\n  return Math.min(CAST_SPEED_CAP",
-    "new": "  return Math.min(CAST_SPEED_CAP",
+    "old": "  if (!mine(entity)) return 0;\n  return Math.min(CAST_SPEED_CAP, wornSum(entity, 'castSpeed'));",
+    "new": "  return Math.min(CAST_SPEED_CAP, wornSum(entity, 'castSpeed'));",
     "tests": [
       "test/systems/castspeed.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "CASTSPEED-loot-unregistered",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "registerCastSpeedMod(LOOT_POWERS, lootCastSpeed);   // CAST-SPEED\n",
-    "new": "",
+    "old": "registerCastSpeedMod(LOOT_POWERS, lootCastSpeed); // CAST-SPEED\nregisterSpellPowerMod(LOOT_POWERS, lootSpellPower); // BAL9c",
+    "new": "registerSpellPowerMod(LOOT_POWERS, lootSpellPower); // BAL9c",
     "tests": [
       "test/systems/castspeed.test.js"
     ]

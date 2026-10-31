@@ -2,8 +2,8 @@
   {
     "name": "HELD-BASE-no-redraw",
     "file": "src/systems/loot/loot.js",
-    "old": "  if (powersNeedWearing(enchantments)) {\n    for (let i = 1; i < MAGIC_BASE_DRAWS && !wearableItem(base); i++) base = magicItemBase(magicItem, playerLevel, gender, rolls);\n    if (!wearableItem(base)) base = createRandomArmor(playerLevel, rolls);   // a dead stream: armour, every set's first group, every piece worn\n  }\n",
-    "new": "",
+    "old": "  if (powersNeedWearing(enchantments)) {\n    for (let i = 1; i < MAGIC_BASE_DRAWS && !wearableItem(base); i++)\n      base = magicItemBase(magicItem, playerLevel, gender, rolls);\n    if (!wearableItem(base)) base = createRandomArmor(playerLevel, rolls); // a dead stream: armour, every set's first group, every piece worn\n  }\n  // The regular name is replaced by the magic name; enchantments ride",
+    "new": "  // The regular name is replaced by the magic name; enchantments ride",
     "tests": [
       "test/systems/loot/fb1018f_heldbase.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "HELD-BASE-redraw-on-wearable",
     "file": "src/systems/loot/loot.js",
-    "old": "for (let i = 1; i < MAGIC_BASE_DRAWS && !wearableItem(base); i++)",
-    "new": "for (let i = 1; i < MAGIC_BASE_DRAWS; i++)",
+    "old": "    for (let i = 1; i < MAGIC_BASE_DRAWS && !wearableItem(base); i++)\n      base = magicItemBase(magicItem, playerLevel, gender, rolls);",
+    "new": "    for (let i = 1; i < MAGIC_BASE_DRAWS; i++) base = magicItemBase(magicItem, playerLevel, gender, rolls);",
     "tests": [
       "test/systems/loot/fb1018f_heldbase.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "HELD-BASE-loop-start",
     "file": "src/systems/loot/loot.js",
-    "old": "for (let i = 1; i < MAGIC_BASE_DRAWS",
-    "new": "for (let i = 0; i < MAGIC_BASE_DRAWS",
+    "old": "    for (let i = 1; i < MAGIC_BASE_DRAWS && !wearableItem(base); i++)",
+    "new": "    for (let i = 0; i < MAGIC_BASE_DRAWS && !wearableItem(base); i++)",
     "tests": [
       "test/systems/loot/fb1018f_heldbase.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "HELD-BASE-no-fallback",
     "file": "src/systems/loot/loot.js",
-    "old": "    if (!wearableItem(base)) base = createRandomArmor(playerLevel, rolls);   // a dead stream: armour, every set's first group, every piece worn\n",
-    "new": "",
+    "old": "    if (!wearableItem(base)) base = createRandomArmor(playerLevel, rolls); // a dead stream: armour, every set's first group, every piece worn\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/loot/fb1018f_heldbase.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "HELD-BASE-fallback-unguarded",
     "file": "src/systems/loot/loot.js",
-    "old": "    if (!wearableItem(base)) base = createRandomArmor(playerLevel, rolls);",
-    "new": "    base = createRandomArmor(playerLevel, rolls);",
+    "old": "    if (!wearableItem(base)) base = createRandomArmor(playerLevel, rolls); // a dead stream: armour, every set's first group, every piece worn",
+    "new": "    base = createRandomArmor(playerLevel, rolls); // a dead stream: armour, every set's first group, every piece worn",
     "tests": [
       "test/systems/loot/fb1018f_heldbase.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "HELD-BASE-redraw-gender",
     "file": "src/systems/loot/loot.js",
-    "old": "i++) base = magicItemBase(magicItem, playerLevel, gender, rolls);",
-    "new": "i++) base = magicItemBase(magicItem, playerLevel, gender === 'female' ? 'male' : 'female', rolls);",
+    "old": "      base = magicItemBase(magicItem, playerLevel, gender, rolls);",
+    "new": "      base = magicItemBase(magicItem, playerLevel, gender === 'female' ? 'male' : 'female', rolls);",
     "tests": [
       "test/systems/loot/fb1018f_heldbase.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "HELD-BASE-redraw-level",
     "file": "src/systems/loot/loot.js",
-    "old": "i++) base = magicItemBase(magicItem, playerLevel, gender, rolls);",
-    "new": "i++) base = magicItemBase(magicItem, 1, gender, rolls);",
+    "old": "    for (let i = 1; i < MAGIC_BASE_DRAWS && !wearableItem(base); i++)\n      base = magicItemBase(magicItem, playerLevel, gender, rolls);",
+    "new": "    for (let i = 1; i < MAGIC_BASE_DRAWS && !wearableItem(base); i++) base = magicItemBase(magicItem, 1, gender, rolls);",
     "tests": [
       "test/systems/loot/fb1018f_heldbase.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "HELD-BASE-fallback-level",
     "file": "src/systems/loot/loot.js",
-    "old": "if (!wearableItem(base)) base = createRandomArmor(playerLevel, rolls);",
-    "new": "if (!wearableItem(base)) base = createRandomArmor(1, rolls);",
+    "old": "    if (!wearableItem(base)) base = createRandomArmor(playerLevel, rolls); // a dead stream: armour, every set's first group, every piece worn",
+    "new": "    if (!wearableItem(base)) base = createRandomArmor(1, rolls); // a dead stream: armour, every set's first group, every piece worn",
     "tests": [
       "test/systems/loot/fb1018f_heldbase.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "HELD-BASE-some-every",
     "file": "src/systems/loot/loot.js",
-    "old": "rows.some((r) => !worksUnworn(r));",
-    "new": "rows.length > 0 && !rows.some(worksUnworn);",
+    "old": "export const powersNeedWearing = (rows) => rows.some((r) => !worksUnworn(r));",
+    "new": "export const powersNeedWearing = (rows) => rows.length > 0 && !rows.some(worksUnworn);",
     "tests": [
       "test/systems/loot/fb1018f_heldbase.test.js"
     ],

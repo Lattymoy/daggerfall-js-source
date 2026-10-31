@@ -119,8 +119,8 @@
   {
     "name": "POWER-CEILING-the-loot-not-asking",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  if (pct > 0) pct = blowRoom(pct, 'loot');   // POWER-CEILING: the loot's",
-    "new": "  if (pct > 0) pct = (pct);   // POWER-CEILING: the loot's",
+    "old": "  if (pct > 0) pct = blowRoom(pct, 'loot'); // POWER-CEILING: the loot's room under the blow's one product",
+    "new": "  if (pct > 0) pct = pct; // POWER-CEILING: the loot's room under the blow's one product",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "POWER-CEILING-the-hex-not-asking",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "d *= 1 - guardRoom(hex.less, 'loot') / 100;",
-    "new": "d *= 1 - hex.less / 100;",
+    "old": "  if (blow && hex && hexed(blow.attacker, now)) d *= 1 - guardRoom(hex.less, 'loot') / 100; // POWER-CEILING: each share asks the guards' room",
+    "new": "  if (blow && hex && hexed(blow.attacker, now)) d *= 1 - hex.less / 100; // POWER-CEILING: each share asks the guards' room",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "POWER-CEILING-bedrock-not-asking",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "d *= 1 - guardRoom(bed.less * bedrockStacks(now), 'loot') / 100;",
-    "new": "d *= 1 - (bed.less * bedrockStacks(now)) / 100;",
+    "old": "  if (blow && bed) d *= 1 - guardRoom(bed.less * bedrockStacks(now), 'loot') / 100;",
+    "new": "  if (blow && bed) d *= 1 - (bed.less * bedrockStacks(now)) / 100;",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "POWER-CEILING-the-last-stand-not-asking",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "d *= 1 - guardRoom(last.less, 'loot') / 100;",
-    "new": "d *= 1 - last.less / 100;",
+    "old": "  if (last && share(entity) < last.below / 100) d *= 1 - guardRoom(last.less, 'loot') / 100;",
+    "new": "  if (last && share(entity) < last.below / 100) d *= 1 - last.less / 100;",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]
@@ -544,8 +544,8 @@
   {
     "name": "AUDIT-HORIZONTAL-D4-the-loot-asking-unnamed",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "pct = blowRoom(pct, 'loot');",
-    "new": "pct = blowRoom(pct);",
+    "old": "  if (pct > 0) pct = blowRoom(pct, 'loot'); // POWER-CEILING: the loot's room under the blow's one product",
+    "new": "  if (pct > 0) pct = blowRoom(pct); // POWER-CEILING: the loot's room under the blow's one product",
     "tests": [
       "test/combat/powerceiling.test.js"
     ]

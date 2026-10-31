@@ -60,7 +60,7 @@ export function legendaryGate(level) {
 
 /** AUDIT UPDATE L9: a level the gate reads - a positive finite number (a number's string too), else null: no gate. */
 export function gateLevel(level) {
-  const v = Number(level);   // null and '' read 0: no level
+  const v = Number(level); // null and '' read 0: no level
   return Number.isFinite(v) && v > 0 ? v : null;
 }
 
@@ -71,14 +71,20 @@ let _level = null;
 /** AUDIT UPDATE L1: the scope's level (`{ level }`) while withRollerLevel runs, else null. */
 let _scoped = null;
 /** Register the roller's level (a function answering a number), or clear it with null. */
-export function registerRollerLevel(fn) { _level = typeof fn === 'function' ? fn : null; }
+export function registerRollerLevel(fn) {
+  _level = typeof fn === 'function' ? fn : null;
+}
 /** AUDIT UPDATE L1: run `fn` with the roller's level `level` - every gate under it reads that level, never the
  *  registered player's (null rolls ungated). Nests; answers `fn`'s answer. */
 export function withRollerLevel(level, fn) {
   const was = _scoped;
   _scoped = { level: gateLevel(level) };
   let out;
-  try { out = fn(); } finally { _scoped = was; }
+  try {
+    out = fn();
+  } finally {
+    _scoped = was;
+  }
   // AUDIT UPDATE II A9: the scope is synchronous - an async body would read no scope past its first await
   if (out && typeof out.then === 'function') throw new TypeError('withRollerLevel: the body must be synchronous');
   return out;
@@ -88,5 +94,9 @@ export function withRollerLevel(level, fn) {
 export function rollerLevel() {
   if (_scoped) return _scoped.level;
   if (!_level) return null;
-  try { return gateLevel(_level()); } catch { return null; }
+  try {
+    return gateLevel(_level());
+  } catch {
+    return null;
+  }
 }

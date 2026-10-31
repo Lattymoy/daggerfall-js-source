@@ -83,8 +83,8 @@
   {
     "name": "ACQUIRE1-the-wire-keeps-the-mark",
     "file": "src/systems/loot/loot.js",
-    "old": "  for (const k of RECEIVER_MARKS) delete out[k];\n",
-    "new": "  for (const k of RECEIVER_MARKS) if (k !== 'acquired') delete out[k];\n",
+    "old": "  for (const k of RECEIVER_MARKS) delete out[k];",
+    "new": "  for (const k of RECEIVER_MARKS) if (k !== 'acquired') delete out[k];",
     "tests": [
       "test/systems/lootbanner.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "LOOT-BANNER-the-codex-line-said-twice",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "if (!quiet && !presentCodexFind(item, key.kind)) {",
-    "new": "if (!quiet) {",
+    "old": "  if (!quiet && !presentCodexFind(item, key.kind)) {",
+    "new": "  if (!quiet) {",
     "tests": [
       "test/systems/lootbanner.test.js"
     ]

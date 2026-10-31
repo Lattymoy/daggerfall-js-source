@@ -32,17 +32,42 @@ import { longitudeLatitudeToMapPixel } from '../../formats/mapsFile.js';
 /** What a scrying costs. */
 export const SCRY_PRICE = Object.freeze({ shards: 3, gold: 500 });
 /** A family's dungeon kinds (DFRegion.DungeonTypes indices). */
-export const familyKinds = (/** @type {string} */ family) => DUNGEON_FAMILY.flatMap((f, i) => (f === family ? [i] : []));
+export const familyKinds = (/** @type {string} */ family) =>
+  DUNGEON_FAMILY.flatMap((f, i) => (f === family ? [i] : []));
 /** The families a scrying may name - each with a dungeon kind of its own. */
 export const SCRY_FAMILIES = Object.freeze(FAMILY_IDS.filter((f) => familyKinds(f).length > 0));
 /** The page's words for a family, and for the dungeon kinds (DFRegion.DungeonTypes order, plural). */
 export const SCRY_FAMILY_WORDS = Object.freeze({
-  undead: 'The undead', daedra: 'The daedra', dragon: 'The dragons', beast: 'The beasts of the wild',
-  brute: 'Orcs and giants', caster: 'Mages and witches', rogue: 'Thieves and assassins', warrior: 'Warriors and knights',
+  undead: 'The undead',
+  daedra: 'The daedra',
+  dragon: 'The dragons',
+  beast: 'The beasts of the wild',
+  brute: 'Orcs and giants',
+  caster: 'Mages and witches',
+  rogue: 'Thieves and assassins',
+  warrior: 'Warriors and knights',
 });
-export const DUNGEON_KIND_WORDS = Object.freeze(['crypts', 'orc strongholds', 'human strongholds', 'prisons', 'desecrated temples',
-  'mines', 'natural caves', 'covens', 'vampire haunts', 'laboratories', 'harpy nests', 'ruined castles', 'spider nests',
-  'giant strongholds', 'dragon\'s dens', 'barbarian strongholds', 'volcanic caves', 'scorpion nests', 'cemeteries']);
+export const DUNGEON_KIND_WORDS = Object.freeze([
+  'crypts',
+  'orc strongholds',
+  'human strongholds',
+  'prisons',
+  'desecrated temples',
+  'mines',
+  'natural caves',
+  'covens',
+  'vampire haunts',
+  'laboratories',
+  'harpy nests',
+  'ruined castles',
+  'spider nests',
+  'giant strongholds',
+  "dragon's dens",
+  'barbarian strongholds',
+  'volcanic caves',
+  'scorpion nests',
+  'cemeteries',
+]);
 /** "crypts, vampire haunts, ruined castles and cemeteries". */
 export function familyPlaces(/** @type {string} */ family) {
   const w = familyKinds(family).map((k) => DUNGEON_KIND_WORDS[k]);
@@ -56,8 +81,11 @@ export function familyPlaces(/** @type {string} */ family) {
 export function scryRows(region) {
   if (!region || !Array.isArray(region.mapTable)) return [];
   return region.mapTable.map((row, i) => ({
-    mapId: row.mapId, discovered: !!row.discovered, dungeonType: row.dungeonType,
-    name: region.mapNames?.[i] ?? '', regionName: region.name ?? '',
+    mapId: row.mapId,
+    discovered: !!row.discovered,
+    dungeonType: row.dungeonType,
+    name: region.mapNames?.[i] ?? '',
+    regionName: region.name ?? '',
     ...longitudeLatitudeToMapPixel(row.longitude, row.latitude),
   }));
 }
@@ -66,11 +94,15 @@ export function scryRows(region) {
  *  the lower map id, so the answer is one answer. */
 export function nearestHidden(rows, /** @type {string} */ family, at) {
   const kinds = familyKinds(family);
-  let best = null, bestD = Infinity;
+  let best = null,
+    bestD = Infinity;
   for (const r of Array.isArray(rows) ? rows : []) {
     if (!kinds.includes(r?.dungeonType) || r.discovered || hasDiscoveredLocationId(r.mapId)) continue;
     const d = (r.x - at.x) ** 2 + (r.y - at.y) ** 2;
-    if (d < bestD || (d === bestD && r.mapId < best.mapId)) { best = r; bestD = d; }
+    if (d < bestD || (d === bestD && r.mapId < best.mapId)) {
+      best = r;
+      bestD = d;
+    }
   }
   return best;
 }

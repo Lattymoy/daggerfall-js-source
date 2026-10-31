@@ -29,8 +29,8 @@
   {
     "name": "AUDITLOOT-F1-choices-unfitted",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "&& powerFits(item, powerOf(r.id)))",
-    "new": "&& !!powerOf(r.id))",
+    "old": "    ? allLegendaries().filter(\n        (r) => recordFitsGroup(r, item) && foundDay('legendary', r.id) != null && powerFits(item, powerOf(r.id)),\n      )",
+    "new": "    ? allLegendaries().filter((r) => recordFitsGroup(r, item) && foundDay('legendary', r.id) != null && !!powerOf(r.id))",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -78,8 +78,8 @@
   {
     "name": "AUDITLOOT-F4-a-legendary-hand-alone",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "(!!weapon && powerIds(weapon).includes(p.id))",
-    "new": "(!!weapon && weapon.legendary === p.id)",
+    "old": "  wornPowers(entity).filter(\n    (p) => !isWeapon(p.item) || p.item === weapon || (!!weapon && powerIds(weapon).includes(p.id)),\n  );",
+    "new": "  wornPowers(entity).filter((p) => !isWeapon(p.item) || p.item === weapon || (!!weapon && weapon.legendary === p.id));",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "AUDITLOOT-F8-the-codex-the-thirty",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "  return allLegendaries().map((r) => {",
-    "new": "  return allLegendaries().slice(0, 30).map((r) => {",
+    "old": "  return allLegendaries().map((r) => {\n    const day = foundDay('legendary', r.id);\n    const p = powerOf(r.id);\n    return {\n      id: r.id,\n      kind: 'legendary',\n      name: day != null ? r.name : null,\n      group: r.group,\n      found: day != null,\n      day,\n      hint: FAMILY_HINT[foundAmong(r.id)] ?? r.hint ?? '',\n      power: day != null ? p : null,\n      lore: day != null ? r.lore : null,\n    };\n  });",
+    "new": "  return allLegendaries()\n    .slice(0, 30)\n    .map((r) => {\n      const day = foundDay('legendary', r.id);\n      const p = powerOf(r.id);\n      return {\n        id: r.id,\n        kind: 'legendary',\n        name: day != null ? r.name : null,\n        group: r.group,\n        found: day != null,\n        day,\n        hint: FAMILY_HINT[foundAmong(r.id)] ?? r.hint ?? '',\n        power: day != null ? p : null,\n        lore: day != null ? r.lore : null,\n      };\n    });",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -240,8 +240,8 @@
   {
     "name": "AUDITLOOT-F8-no-hint-of-its-own",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "?? r.hint ?? '',",
-    "new": "?? '',",
+    "old": "      hint: FAMILY_HINT[foundAmong(r.id)] ?? r.hint ?? '',",
+    "new": "      hint: FAMILY_HINT[foundAmong(r.id)] ?? '',",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -249,8 +249,8 @@
   {
     "name": "AUDITLOOT-F8-count-of-thirty",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "legendaries: allLegendaries().length,",
-    "new": "legendaries: 30,",
+    "old": "  legendaries: allLegendaries().length,",
+    "new": "  legendaries: 30,",
     "tests": [
       "test/systems/auditloot.test.js"
     ]
@@ -258,8 +258,8 @@
   {
     "name": "AUDITLOOT-F8-imprint-of-the-thirty",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "  ? allLegendaries().filter((r) => recordFitsGroup(r, item)",
-    "new": "  ? allLegendaries().slice(0, 30).filter((r) => recordFitsGroup(r, item)",
+    "old": "    ? allLegendaries().filter(\n        (r) => recordFitsGroup(r, item) && foundDay('legendary', r.id) != null && powerFits(item, powerOf(r.id)),\n      )",
+    "new": "    ? allLegendaries()\n        .slice(0, 30)\n        .filter(\n          (r) => recordFitsGroup(r, item) && foundDay('legendary', r.id) != null && powerFits(item, powerOf(r.id)),\n        )",
     "tests": [
       "test/systems/auditloot.test.js"
     ],

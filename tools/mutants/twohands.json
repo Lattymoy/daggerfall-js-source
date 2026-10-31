@@ -1274,8 +1274,8 @@
   {
     "name": "TWOHANDS-AUDIT2-conduit-every-blow",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "case 'conduit': if (whole) gainMana(attacker, p.mana); break;",
-    "new": "case 'conduit': gainMana(attacker, p.mana); break;",
+    "old": "        if (whole) gainMana(attacker, p.mana);",
+    "new": "        gainMana(attacker, p.mana);",
     "tests": [
       "test/systems/loot5_powers.test.js"
     ]
@@ -1283,8 +1283,8 @@
   {
     "name": "TWOHANDS-AUDIT2-flow-every-blow",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "case 'flow': if (whole) { _s.flow",
-    "new": "case 'flow': if (true) { _s.flow",
+    "old": "        if (whole) {",
+    "new": "        if (true) {",
     "tests": [
       "test/systems/loot5_powers.test.js"
     ]
@@ -1292,8 +1292,8 @@
   {
     "name": "TWOHANDS-AUDIT2-undertow-every-blow",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "case 'undertow': if (held && whole) _undertow.set(",
-    "new": "case 'undertow': if (held) _undertow.set(",
+    "old": "        if (held && whole)",
+    "new": "        if (held)",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -1301,8 +1301,8 @@
   {
     "name": "TWOHANDS-AUDIT2-loot-reads-no-weight",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "const whole = info?.blow !== false;",
-    "new": "const whole = true;",
+    "old": "  const whole = info?.blow !== false;",
+    "new": "  const whole = true;",
     "tests": [
       "test/systems/loot5_powers.test.js",
       "test/systems/gilded2_world.test.js"

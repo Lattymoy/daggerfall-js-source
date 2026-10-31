@@ -1573,7 +1573,7 @@ WHAT DFU DOES. Nothing to follow: Daggerfall has no shared loot.
 WHAT THE PORT DID. A dungeon pile's or a body's base is every client's own computation from the room's seeded dice
 (PARTY-LOOT). The room's word carries the base's signature (`h`). When a live peer's signature differs from this
 client's (`roomLootHost.js` landRoomWord), the container is marked unreadable. The press then said AUDIT SETS M2's line,
-`systems/loot/loot.js:"export const LOOT_NEWER_TEXT = 'Something in here is from a newer version of the game. Reload to open it.';"`.
+`systems/loot/loot.js:"export const LOOT_NEWER_TEXT"`.
 But a signature differs whenever the two clients run different loot code. That happens with any build apart: a page
 open since the last update, or a desktop copy not restarted. The older build is as often the other player's as the
 reader's, and the line told a current player that their own game was the old one. The host reads a joiner on

@@ -388,8 +388,8 @@
   {
     "name": "INTA-the-chest-lost",
     "file": "src/systems/loot/loot.js",
-    "old": "    if (!lawRefuses(it)) out.push(lawPriced(it));   // HACKED-GOLD: at no price past the law's ceiling\n",
-    "new": "    if (lawRefuses(it)) return null;\n    out.push(lawPriced(it));   // HACKED-GOLD: at no price past the law's ceiling\n",
+    "old": "    if (!lawRefuses(it)) out.push(lawPriced(it)); // HACKED-GOLD: at no price past the law's ceiling",
+    "new": "    if (lawRefuses(it)) return null;\n    out.push(lawPriced(it)); // HACKED-GOLD: at no price past the law's ceiling",
     "tests": [
       "test/systems/item/int1_itemlaw.test.js"
     ]

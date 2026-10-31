@@ -167,8 +167,8 @@
   {
     "name": "AUDIT-LOOT-II-A10-every-shirt-counts",
     "file": "src/systems/loot/lootDrought.js",
-    "old": "  if (isGarment(item) && !legendariesFor(item).length) return false;\n",
-    "new": "",
+    "old": "  if (isGarment(item) && !legendariesFor(item).length) return false;\n  if (droughtHeld(rollerLevel()) && rarityRank(item) < RARITIES.legendary.rank) return false; // LOOT-GATE (lootLevelGate.js): no drought builds under level 10 - the mark still clears; AUDIT UPDATE L6: a Legendary still empties it",
+    "new": "  if (droughtHeld(rollerLevel()) && rarityRank(item) < RARITIES.legendary.rank) return false; // LOOT-GATE (lootLevelGate.js): no drought builds under level 10 - the mark still clears; AUDIT UPDATE L6: a Legendary still empties it",
     "tests": [
       "test/systems/auditloot2.test.js"
     ]

@@ -33,7 +33,7 @@ Materials Bag tells the listeners as if it were new. So the pack is watched, not
   there is an arrival. The mark is a declared item field (`itemFields.js:"acquired: bool()"`), so it rides the save and
   the house's chests: a piece taken back out of the player's own storage, or picked back up off the ground, is not new.
 - **The receiver's mark.** Like `equipSlot` and `questItem`, the mark is stripped off the wire
-  (`systems/loot/loot.js:"for (const k of RECEIVER_MARKS) delete out[k];"`) and off the zone's death record
+  (`systems/loot/loot.js:"for (const k of RECEIVER_MARKS)"`) and off the zone's death record
   (`wildDropLaw.js:"for (const k of RECEIVER_MARKS) delete copy[k];"`). A piece another player hands over - a trade, the
   zone's remains, the market, a room's chest - is new to its taker.
 - **And the realm's trade law reads the same list (MARK-WIRE, FIELD BUGS 2026-10-09b).** The three receiver's marks are
@@ -110,7 +110,7 @@ the Old Coil's (`net/serpent/serpentClaims.js`, Coilbreaker and The Maelstrom, o
   Legendary! It joins your codex." and chimed. On Enhanced Plus the banner announcing the same piece says it instead -
   a "New to your codex" chip and the codex's own chime - through a presenter slot in the watcher, so the HUD never
   imports the codex and the codex never imports a face
-  (`lootCodex.js:"if (!quiet && !presentCodexFind(item, key.kind)) {"`). The banner declines, and the codex says its line
+  (`lootCodex.js:"if (!quiet && !presentCodexFind(item, key.kind))"`). The banner declines, and the codex says its line
   as before, on the classic skin, for a piece already read whose banner has gone, and for one no frame will read.
 
 ## 5. Known limits

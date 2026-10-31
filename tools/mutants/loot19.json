@@ -11,8 +11,8 @@
   {
     "name": "LOOT19-every-kind-but-theirs",
     "file": "src/systems/loot/lootScry.js",
-    "old": "DUNGEON_FAMILY.flatMap((f, i) => (f === family ? [i] : []));",
-    "new": "DUNGEON_FAMILY.flatMap((f, i) => (f !== family ? [i] : []));",
+    "old": "  DUNGEON_FAMILY.flatMap((f, i) => (f === family ? [i] : []));",
+    "new": "  DUNGEON_FAMILY.flatMap((f, i) => (f !== family ? [i] : []));",
     "tests": [
       "test/systems/loot19_scry.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "LOOT19-the-baked-flag-unread",
     "file": "src/systems/loot/lootScry.js",
-    "old": "    mapId: row.mapId, discovered: !!row.discovered, dungeonType: row.dungeonType,",
-    "new": "    mapId: row.mapId, discovered: false, dungeonType: row.dungeonType,",
+    "old": "    discovered: !!row.discovered,",
+    "new": "    discovered: false,",
     "tests": [
       "test/systems/loot19_scry.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LOOT19-no-place-on-the-map",
     "file": "src/systems/loot/lootScry.js",
-    "old": "    ...longitudeLatitudeToMapPixel(row.longitude, row.latitude),\n",
-    "new": "    x: 0, y: 0,\n",
+    "old": "    ...longitudeLatitudeToMapPixel(row.longitude, row.latitude),",
+    "new": "    x: 0,\n    y: 0,",
     "tests": [
       "test/systems/loot19_scry.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "LOOT19-the-farthest",
     "file": "src/systems/loot/lootScry.js",
-    "old": "    if (d < bestD || (d === bestD && r.mapId < best.mapId)) { best = r; bestD = d; }",
-    "new": "    if (best == null || d > bestD) { best = r; bestD = d; }",
+    "old": "    if (d < bestD || (d === bestD && r.mapId < best.mapId)) {",
+    "new": "    if (best == null || d > bestD) {",
     "tests": [
       "test/systems/loot19_scry.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "LOOT19-a-tie-to-the-higher",
     "file": "src/systems/loot/lootScry.js",
-    "old": "    if (d < bestD || (d === bestD && r.mapId < best.mapId)) { best = r; bestD = d; }",
-    "new": "    if (d < bestD || (d === bestD && r.mapId > best.mapId)) { best = r; bestD = d; }",
+    "old": "    if (d < bestD || (d === bestD && r.mapId < best.mapId)) {",
+    "new": "    if (d < bestD || (d === bestD && r.mapId > best.mapId)) {",
     "tests": [
       "test/systems/loot19_scry.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "LOOT19-any-word-a-family",
     "file": "src/systems/loot/lootScry.js",
-    "old": "  if (!SCRY_FAMILIES.includes(family)) return 'family';\n",
-    "new": "",
+    "old": "  if (!SCRY_FAMILIES.includes(family)) return 'family';\n  if (!where?.at || !Array.isArray(where.rows) || !where.rows.length) return 'nowhere';",
+    "new": "  if (!where?.at || !Array.isArray(where.rows) || !where.rows.length) return 'nowhere';",
     "tests": [
       "test/systems/loot19_scry.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "LOOT19-paid-for-nothing",
     "file": "src/systems/loot/lootScry.js",
-    "old": "  if (!nearestHidden(where.rows, family, where.at)) return 'none';\n",
-    "new": "",
+    "old": "  if (!nearestHidden(where.rows, family, where.at)) return 'none';\n  if (shardsHeld(player?.items) < SCRY_PRICE.shards) return 'shards';",
+    "new": "  if (shardsHeld(player?.items) < SCRY_PRICE.shards) return 'shards';",
     "tests": [
       "test/systems/loot19_scry.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "LOOT19-scried-without-shards",
     "file": "src/systems/loot/lootScry.js",
-    "old": "  if (shardsHeld(player?.items) < SCRY_PRICE.shards) return 'shards';\n",
-    "new": "",
+    "old": "  if (shardsHeld(player?.items) < SCRY_PRICE.shards) return 'shards';\n  if (totalGoldAmount(player) < SCRY_PRICE.gold) return 'gold';",
+    "new": "  if (totalGoldAmount(player) < SCRY_PRICE.gold) return 'gold';",
     "tests": [
       "test/systems/loot19_scry.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "LOOT19-scried-without-gold",
     "file": "src/systems/loot/lootScry.js",
-    "old": "  if (totalGoldAmount(player) < SCRY_PRICE.gold) return 'gold';\n",
-    "new": "",
+    "old": "  if (totalGoldAmount(player) < SCRY_PRICE.gold) return 'gold';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/loot19_scry.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "LOOT19-the-shards-kept",
     "file": "src/systems/loot/lootScry.js",
-    "old": "  spendShards(player.items, SCRY_PRICE.shards);\n",
-    "new": "",
+    "old": "  spendShards(player.items, SCRY_PRICE.shards);\n  deductGold(player, SCRY_PRICE.gold);",
+    "new": "  deductGold(player, SCRY_PRICE.gold);",
     "tests": [
       "test/systems/loot19_scry.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "LOOT19-the-gold-kept",
     "file": "src/systems/loot/lootScry.js",
-    "old": "  deductGold(player, SCRY_PRICE.gold);\n",
-    "new": "",
+    "old": "  deductGold(player, SCRY_PRICE.gold);\n  discoverLocation(place.mapId, { regionName: place.regionName, locationName: place.name });",
+    "new": "  discoverLocation(place.mapId, { regionName: place.regionName, locationName: place.name });",
     "tests": [
       "test/systems/loot19_scry.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "LOOT19-named-and-never-mapped",
     "file": "src/systems/loot/lootScry.js",
-    "old": "  discoverLocation(place.mapId, { regionName: place.regionName, locationName: place.name });\n",
-    "new": "",
+    "old": "  discoverLocation(place.mapId, { regionName: place.regionName, locationName: place.name });\n  return { ok: true, place };",
+    "new": "  return { ok: true, place };",
     "tests": [
       "test/systems/loot19_scry.test.js"
     ]

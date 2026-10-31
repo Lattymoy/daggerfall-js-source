@@ -23,8 +23,8 @@
   {
     "name": "AUDIT-UPDATE-L1-the-outer-scope-lost",
     "file": "src/systems/loot/lootLevelGate.js",
-    "old": "  try { out = fn(); } finally { _scoped = was; }",
-    "new": "  try { out = fn(); } finally { _scoped = null; }",
+    "old": "    _scoped = was;",
+    "new": "    _scoped = null;",
     "tests": [
       "test/systems/audit_update_loot.test.js"
     ],
@@ -123,8 +123,8 @@
   {
     "name": "AUDIT-UPDATE-L6-a-Legendary-held-too",
     "file": "src/systems/loot/lootDrought.js",
-    "old": "  if (droughtHeld(rollerLevel()) && rarityRank(item) < RARITIES.legendary.rank) return false;",
-    "new": "  if (droughtHeld(rollerLevel())) return false;",
+    "old": "  if (droughtHeld(rollerLevel()) && rarityRank(item) < RARITIES.legendary.rank) return false; // LOOT-GATE (lootLevelGate.js): no drought builds under level 10 - the mark still clears; AUDIT UPDATE L6: a Legendary still empties it",
+    "new": "  if (droughtHeld(rollerLevel())) return false; // LOOT-GATE (lootLevelGate.js): no drought builds under level 10 - the mark still clears; AUDIT UPDATE L6: a Legendary still empties it",
     "tests": [
       "test/systems/audit_update_loot.test.js"
     ],
@@ -397,8 +397,8 @@
   {
     "name": "AUDIT-UPDATE-P3-the-registry-never-set",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "registerRollerLevel(() => { const me = playerDoor()?.player?.(); return me ? lootGateLevel(me) : null; });",
-    "new": "registerRollerLevel(null);",
+    "old": "registerRollerLevel(() => {\n  const me = playerDoor()?.player?.();\n  return me ? lootGateLevel(me) : null;\n}); // LOOT-GATE: the live player's level holds the top tiers back - none before a host publish; MENTOR2: the real one while mentoringes its door, so a bare roll (a test, a tool) rolls at its source alone",
+    "new": "registerRollerLevel(null); // LOOT-GATE: the live player's level holds the top tiers back - none before a host publish; MENTOR2: the real one while mentoringes its door, so a bare roll (a test, a tool) rolls at its source alone",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],
@@ -407,8 +407,8 @@
   {
     "name": "AUDIT-UPDATE-P3-MENTOR2-the-mentored-level-read",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "return me ? lootGateLevel(me) : null; });",
-    "new": "return me ? (me._mentor?.worldLevel ?? me.level) : null; });",
+    "old": "  return me ? lootGateLevel(me) : null;",
+    "new": "  return me ? (me._mentor?.worldLevel ?? me.level) : null;",
     "tests": [
       "test/systems/audit_update_gate.test.js"
     ],

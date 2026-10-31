@@ -415,7 +415,7 @@ and the book asks the room for what the window moved. Traced end to end on the r
   10,050. The remains said again under a take (a socket's hello) rebuilt the pile and lost the take the same way (the
   room 10,050, the taker 2,000).
 - THE GOLD PAST 65,535 (REMAINS-GOLD). The book minted every record through `validLootList`, the projection for a
-  stranger's word, whose stack bound is the wire's 65,535 (`systems/loot/loot.js:"export const LOOT_STACK_MAX = 65535;"`). The item law
+  stranger's word, whose stack bound is the wire's 65,535 (`systems/loot/loot.js:"export const LOOT_STACK_MAX"`). The item law
   already allows a coin pile to one int (`itemLaw.js:"const stackMax = "`; its comment names "a death in the wild" as a
   pile past the wire's bound), as DFU keeps the count (DaggerfallUnityItem.cs:51; ItemBuilder.CreateGoldPieces,
   ItemBuilder.cs:790-797). So a gold share over 65,535 showed on nobody's pile - not the killer's, not a stranger's, not
@@ -824,7 +824,7 @@ tiles once (`landingTiles.js:"export function landingTiles(draw, { alive = () =>
 
 TRADE-WHOLE (found on the way). The trade between players writes the giver's offer for the wire through validLootList,
 and since AUDIT INT that clamp drops a piece the law refuses and keeps the rest
-(`systems/loot/loot.js:"    if (!lawRefuses(it)) out.push(lawPriced(it));"`) - right for a chest, wrong for a trade: the offer was
+(`systems/loot/loot.js:"if (!lawRefuses(it))"`) - right for a chest, wrong for a trade: the offer was
 never refused (`tradeSession.js:"if (!wired) return"`), so the gem stood
 in the giver's offer while the wire carried nothing. Driven hand to hand on the real sessions: offered alone, the peer
 saw an empty table and its lock answered "Nothing is being traded."

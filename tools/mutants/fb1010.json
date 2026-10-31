@@ -254,8 +254,8 @@
   {
     "name": "DAMNED-liftable",
     "file": "src/systems/loot/lootCurse.js",
-    "old": "  if (isDamned(item)) return 'damned';\n",
-    "new": "",
+    "old": "  if (isDamned(item)) return 'damned';\n  if (isEquipped(item)) return 'worn';",
+    "new": "  if (isEquipped(item)) return 'worn';",
     "tests": [
       "test/systems/fb1010_truecurse.test.js"
     ]

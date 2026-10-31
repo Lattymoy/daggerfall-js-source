@@ -119,8 +119,8 @@
   {
     "name": "LOOT4-a-class-foe-by-its-career",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  if (target.affinity === 'Human') return 'humanoid';\n",
-    "new": "\n",
+    "old": "  if (target.affinity === 'Human') return 'humanoid';",
+    "new": "",
     "tests": [
       "test/systems/loot4_procs.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "LOOT4-the-thorns-unregistered",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "registerPlayerBlowLanded(LOOT_POWERS, lootLanded);\n",
-    "new": "\n",
+    "old": "registerPlayerBlowLanded(LOOT_POWERS, lootLanded);",
+    "new": "",
     "tests": [
       "test/systems/loot4_procs.test.js"
     ]

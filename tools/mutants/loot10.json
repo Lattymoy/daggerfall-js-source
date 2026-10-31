@@ -2,8 +2,8 @@
   {
     "name": "LOOT10-unknown-record-a-find",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "typeof item.legendary === 'string' && legendaryById(item.legendary)) return",
-    "new": "typeof item.legendary === 'string') return",
+    "old": "  if (item?.rarity === 'legendary' && typeof item.legendary === 'string' && legendaryById(item.legendary))",
+    "new": "  if (item?.rarity === 'legendary' && typeof item.legendary === 'string')",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "LOOT10-aetheric-no-find",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "  if (item?.rarity === 'aetheric' && typeof item.aetheric === 'string' && aethericById(item.aetheric)) return { kind: 'aetheric', id: item.aetheric };\n",
-    "new": "\n",
+    "old": "  if (item?.rarity === 'aetheric' && typeof item.aetheric === 'string' && aethericById(item.aetheric))\n    return { kind: 'aetheric', id: item.aetheric };",
+    "new": "",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "LOOT10-unsaid",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "    hudText(CODEX_FIND(rec?.name ?? item.name ?? '', key.kind));\n",
-    "new": "\n",
+    "old": "    hudText(CODEX_FIND(rec?.name ?? item.name ?? '', key.kind));",
+    "new": "",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LOOT10-unheard",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "    audio.playOneShot?.(SOUND.LevelUp, 1);\n",
-    "new": "\n",
+    "old": "    audio.playOneShot?.(SOUND.LevelUp, 1);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "LOOT10-quiet-ignored",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "  if (!quiet && !presentCodexFind(item, key.kind)) {\n",
-    "new": "  if (true && !presentCodexFind(item, key.kind)) {\n",
+    "old": "  if (!quiet && !presentCodexFind(item, key.kind)) {",
+    "new": "  if (true && !presentCodexFind(item, key.kind)) {",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "LOOT10-backfill-never",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "_backfill = !r || typeof r !== 'object' || r.fill === true;",
-    "new": "_backfill = false;",
+    "old": "    _backfill = !r || typeof r !== 'object' || r.fill === true;",
+    "new": "    _backfill = false;",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ]
@@ -101,7 +101,7 @@
   {
     "name": "LOOT10-new-game-keeps",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "  newGame: () => { _codex = empty(); _backfill = false; },",
+    "old": "  newGame: () => {\n    _codex = empty();\n    _backfill = false;\n  },",
     "new": "  newGame: () => {},",
     "tests": [
       "test/systems/loot10_codex.test.js"
@@ -110,8 +110,8 @@
   {
     "name": "LOOT10-record-keeps-the-unknown",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "      if (!RECORD_OF[kind](id)) continue;\n",
-    "new": "\n",
+    "old": "      if (!RECORD_OF[kind](id)) continue;",
+    "new": "",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "LOOT10-record-negative-day",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "if (!ID_RE.test(id) || !Number.isSafeInteger(day) || day < 0) continue;",
-    "new": "if (!ID_RE.test(id) || !Number.isSafeInteger(day)) continue;",
+    "old": "      if (!ID_RE.test(id) || !Number.isSafeInteger(day) || day < 0) continue;",
+    "new": "      if (!ID_RE.test(id) || !Number.isSafeInteger(day)) continue;",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ]
@@ -128,7 +128,7 @@
   {
     "name": "LOOT10-save-forgets",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "  getSaveData: () => ({ legendary: { ..._codex.legendary }, aetheric: { ..._codex.aetheric }, gilded: { ..._codex.gilded } }),",
+    "old": "  getSaveData: () => ({\n    legendary: { ..._codex.legendary },\n    aetheric: { ..._codex.aetheric },\n    gilded: { ..._codex.gilded },\n  }),",
     "new": "  getSaveData: () => empty(),",
     "tests": [
       "test/systems/loot10_codex.test.js"
@@ -137,7 +137,7 @@
   {
     "name": "LOOT10-take-unseen",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "registerTakeListener(CODEX, (item) => { noteFind(item); });",
+    "old": "registerTakeListener(CODEX, (item) => {\n  noteFind(item);\n});",
     "new": "registerTakeListener(CODEX, null);",
     "tests": [
       "test/systems/loot10_codex.test.js"
@@ -146,8 +146,8 @@
   {
     "name": "LOOT10-round-sweeps-anyone",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "(entity) => { if (entity?.isPlayer) sweepCodex(entity); }",
-    "new": "(entity) => { sweepCodex(entity); }",
+    "old": "  if (entity?.isPlayer) sweepCodex(entity);",
+    "new": "  sweepCodex(entity);",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "LOOT10-unfound-named",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "kind: 'legendary', name: day != null ? r.name : null,",
-    "new": "kind: 'legendary', name: r.name,",
+    "old": "      name: day != null ? r.name : null,",
+    "new": "      name: r.name,",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "LOOT10-unfound-power-shown",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "power: day != null ? p : null,",
-    "new": "power: p,",
+    "old": "      power: day != null ? p : null,",
+    "new": "      power: p,",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "LOOT10-no-hint",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "hint: FAMILY_HINT[foundAmong(r.id)] ?? r.hint ?? '',",
-    "new": "hint: '',",
+    "old": "      hint: FAMILY_HINT[foundAmong(r.id)] ?? r.hint ?? '',",
+    "new": "      hint: '',",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "LOOT10-imprint-any-group",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "  ? allLegendaries().filter((r) => recordFitsGroup(r, item) && foundDay('legendary', r.id) != null && powerFits(item, powerOf(r.id)))",
-    "new": "  ? allLegendaries().filter((r) => foundDay('legendary', r.id) != null && powerFits(item, powerOf(r.id)))",
+    "old": "    ? allLegendaries().filter(\n        (r) => recordFitsGroup(r, item) && foundDay('legendary', r.id) != null && powerFits(item, powerOf(r.id)),\n      )",
+    "new": "    ? allLegendaries().filter((r) => foundDay('legendary', r.id) != null && powerFits(item, powerOf(r.id)))",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "LOOT10-imprint-unfound",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "  ? allLegendaries().filter((r) => recordFitsGroup(r, item) && foundDay('legendary', r.id) != null && powerFits(item, powerOf(r.id)))",
-    "new": "  ? allLegendaries().filter((r) => recordFitsGroup(r, item) && powerFits(item, powerOf(r.id)))",
+    "old": "    ? allLegendaries().filter(\n        (r) => recordFitsGroup(r, item) && foundDay('legendary', r.id) != null && powerFits(item, powerOf(r.id)),\n      )",
+    "new": "    ? allLegendaries().filter((r) => recordFitsGroup(r, item) && powerFits(item, powerOf(r.id)))",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "LOOT10-imprint-unknown",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "  if (!itemIsIdentified(item)) return 'unknown';\n  if (isEquipped(item)) return 'worn';\n  if (typeof item.imprint === 'string') return 'imprinted';",
-    "new": "  if (isEquipped(item)) return 'worn';\n  if (typeof item.imprint === 'string') return 'imprinted';",
+    "old": "  if (!itemIsIdentified(item)) return 'unknown';\n  if (isEquipped(item)) return 'worn';",
+    "new": "  if (isEquipped(item)) return 'worn';",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "LOOT10-imprint-twice",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "  if (typeof item.imprint === 'string') return 'imprinted';\n",
-    "new": "\n",
+    "old": "  if (typeof item.imprint === 'string') return 'imprinted';",
+    "new": "",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "LOOT10-imprint-short-of-shards",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "  if (shardsHeld(player?.items) < IMPRINT_PRICE.shards) return 'shards';\n",
-    "new": "\n",
+    "old": "  if (shardsHeld(player?.items) < IMPRINT_PRICE.shards) return 'shards';",
+    "new": "",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "LOOT10-imprint-short-of-gold",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "  if (totalGoldAmount(player) < IMPRINT_PRICE.gold) return 'gold';\n",
-    "new": "\n",
+    "old": "  if (totalGoldAmount(player) < IMPRINT_PRICE.gold) return 'gold';",
+    "new": "",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "LOOT10-imprint-a-magic",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "  if (item?.rarity !== 'rare') return 'not';\n",
-    "new": "\n",
+    "old": "  if (item?.rarity !== 'rare') return 'not';",
+    "new": "",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "LOOT10-wire-unchecked",
     "file": "src/systems/loot/loot.js",
-    "old": "  if (!validImprint(out)) return null;   // LOOT10: an imprint only as the Reforge makes one\n",
-    "new": "\n",
+    "old": "  if (!validImprint(out)) return null; // LOOT10: an imprint only as the Reforge makes one",
+    "new": "",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "LOOT10-power-sleeps",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "it?.rarity === 'rare' ? it.imprint : null, it?.rarity",
-    "new": "null, it?.rarity",
+    "old": "  it?.rarity === 'rare' ? it.imprint : null,",
+    "new": "  null,",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ]

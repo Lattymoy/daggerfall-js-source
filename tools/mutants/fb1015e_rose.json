@@ -2,8 +2,8 @@
   {
     "name": "ROSE-SEEN-no-number",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  if (!f?.dead) showFollowUp(n, word, target);",
-    "new": "  if (false) showFollowUp(n, word, target);",
+    "old": "  if (!f?.dead) showFollowUp(n, word, target); // FIELD BUGS 2026-10-15e ROSE-SEEN: the HUD showed the first blow alone; FIELD BUGS 2026-10-20f LANDED-WORD: never a claim on a body whose room says what lands",
+    "new": "  if (false) showFollowUp(n, word, target); // FIELD BUGS 2026-10-15e ROSE-SEEN: the HUD showed the first blow alone; FIELD BUGS 2026-10-20f LANDED-WORD: never a claim on a body whose room says what lands",
     "tests": [
       "test/systems/fb1015e_rose.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ROSE-SEEN-the-whole-blow",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  if (!f?.dead) showFollowUp(n, word, target);",
-    "new": "  if (!f?.dead) showFollowUp(n * 2, word, target);",
+    "old": "  if (!f?.dead) showFollowUp(n, word, target); // FIELD BUGS 2026-10-15e ROSE-SEEN: the HUD showed the first blow alone; FIELD BUGS 2026-10-20f LANDED-WORD: never a claim on a body whose room says what lands",
+    "new": "  if (!f?.dead) showFollowUp(n * 2, word, target); // FIELD BUGS 2026-10-15e ROSE-SEEN: the HUD showed the first blow alone; FIELD BUGS 2026-10-20f LANDED-WORD: never a claim on a body whose room says what lands",
     "tests": [
       "test/systems/fb1015e_rose.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ROSE-SEEN-untagged",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  if (!f?.dead) showFollowUp(n, word, target);",
-    "new": "  if (!f?.dead) showFollowUp(n, null, target);",
+    "old": "  if (!f?.dead) showFollowUp(n, word, target); // FIELD BUGS 2026-10-15e ROSE-SEEN: the HUD showed the first blow alone; FIELD BUGS 2026-10-20f LANDED-WORD: never a claim on a body whose room says what lands",
+    "new": "  if (!f?.dead) showFollowUp(n, null, target); // FIELD BUGS 2026-10-15e ROSE-SEEN: the HUD showed the first blow alone; FIELD BUGS 2026-10-20f LANDED-WORD: never a claim on a body whose room says what lands",
     "tests": [
       "test/systems/fb1015e_rose.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ROSE-SEEN-a-dead-foe-numbered",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  if (!f?.dead) showFollowUp(n, word, target);",
-    "new": "  showFollowUp(n, word, target);",
+    "old": "  if (!f?.dead) showFollowUp(n, word, target); // FIELD BUGS 2026-10-15e ROSE-SEEN: the HUD showed the first blow alone; FIELD BUGS 2026-10-20f LANDED-WORD: never a claim on a body whose room says what lands",
+    "new": "  showFollowUp(n, word, target); // FIELD BUGS 2026-10-15e ROSE-SEEN: the HUD showed the first blow alone; FIELD BUGS 2026-10-20f LANDED-WORD: never a claim on a body whose room says what lands",
     "tests": [
       "test/systems/fb1015e_rose.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ROSE-SEEN-fists-unnamed",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "again(target, (damage * p.share) / 100, p.name); break;",
-    "new": "again(target, (damage * p.share) / 100); break;",
+    "old": "        if (!weapon) again(target, (damage * p.share) / 100, p.name);",
+    "new": "        if (!weapon) again(target, (damage * p.share) / 100);",
     "tests": [
       "test/systems/fb1015e_rose.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ROSE-SEEN-echo-unnamed",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "again(target, damage, p.name); break;",
-    "new": "again(target, damage); break;",
+    "old": "        if (_rand() * 100 < p.chance) again(target, damage, p.name);",
+    "new": "        if (_rand() * 100 < p.chance) again(target, damage);",
     "tests": [
       "test/systems/fb1015e_rose.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "ROSE-SEEN-a-weapon-numbered",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "case 'fists': if (!weapon) again(",
-    "new": "case 'fists': if (true) again(",
+    "old": "        if (!weapon) again(target, (damage * p.share) / 100, p.name);",
+    "new": "        if (true) again(target, (damage * p.share) / 100, p.name);",
     "tests": [
       "test/systems/fb1015e_rose.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SHIELD-FIST-the-whole-blow-again",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "again(target, (damage * p.share) / 100, p.name); break;",
-    "new": "again(target, damage, p.name); break;",
+    "old": "        if (!weapon) again(target, (damage * p.share) / 100, p.name);",
+    "new": "        if (!weapon) again(target, damage, p.name);",
     "tests": [
       "test/systems/fb1015e_rose.test.js"
     ]

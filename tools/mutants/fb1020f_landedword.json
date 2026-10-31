@@ -142,8 +142,8 @@
   {
     "name": "LANDED-followup-loot-target",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  if (!f?.dead) showFollowUp(n, word, target);",
-    "new": "  if (!f?.dead) showFollowUp(n, word);",
+    "old": "  if (!f?.dead) showFollowUp(n, word, target); // FIELD BUGS 2026-10-15e ROSE-SEEN: the HUD showed the first blow alone; FIELD BUGS 2026-10-20f LANDED-WORD: never a claim on a body whose room says what lands",
+    "new": "  if (!f?.dead) showFollowUp(n, word); // FIELD BUGS 2026-10-15e ROSE-SEEN: the HUD showed the first blow alone; FIELD BUGS 2026-10-20f LANDED-WORD: never a claim on a body whose room says what lands",
     "tests": [
       "test/net/eliteGates/fb1020f_landedword.test.js"
     ],
