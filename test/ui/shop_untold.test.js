@@ -38,7 +38,7 @@ const walk = (n, f) => { f(n); for (const c of n.children ?? []) walk(c, f); };
 const all = (root, cls) => { const out = []; walk(root, (n) => { if (String(n.className).split(' ').includes(cls)) out.push(n); }); return out; };
 const tabIds = (w) => all(w.root, 'sh-tab').map((n) => n.id.slice('sh-tab-'.length));
 
-/** The launch schedule as the report found it: kill effects out, portal skins, a bundle and mount looks still to come. */
+/** A schedule with the bundles limited, so their drops are still to come; OPEN-ALL sells every other ware at once. */
 const ENV = {
   STRIPE_SECRET_KEY: 'sk_test_untold', STRIPE_WEBHOOK_SECRET: 'whsec_untold', AURUM_OPEN: 'on',
   SHOP_ON_SALE: SHOP_WARES.filter((w) => w.alone).map((w) => w.id).join(','),
@@ -51,12 +51,12 @@ const ENV = {
 const cardAt = async (/** @type {string} */ day) => clientCard(await shopCardOf({ id: 'p', handle: 'Aelwyn' }, ENV,
   { subtle: globalThis.crypto.subtle, rand: (b) => globalThis.crypto.getRandomValues(b), nowS: Date.parse(`${day}T12:00:00Z`) / 1000, origin: 'https://a.invalid' }));
 const flowIn = (shop, extra = {}) => ({ stage: 'in', account: { handle: 'Aelwyn', kind: 'linked' }, wardrobe: { titles: [], glyphs: [], auras: [] }, shop, aurum: null, busy: false, ...extra });
-const NOT_YET = ['portals', 'mounts', 'bundles'];
+const NOT_YET = ['bundles'];
 
 test('SHOP-UNTOLD: with no card - reading, offline, signed out - the window lists no ware, only the Folios; the card\'s sections are the drops out, a drop is listed once it lands (mutants: every ware listed with no card)', async () => {
   for (const fl of [null, { stage: 'loading' }, { stage: 'out' }, flowIn(null)]) assert.deepEqual(shopSections(fl), ['pass'], JSON.stringify(fl));
   const oct = await cardAt('2026-10-31');
-  assert.deepEqual(shopSections(flowIn(oct)), ['pass', 'kills', 'names', 'icons', 'auras', 'armory', 'aurum']);
+  assert.deepEqual(shopSections(flowIn(oct)), ['pass', 'kills', 'portals', 'mounts', 'names', 'icons', 'auras', 'armory', 'aurum']);
   const dec = await cardAt('2026-12-26');
   assert.deepEqual(NOT_YET.filter((c) => shopSections(flowIn(dec)).includes(c)), NOT_YET, 'out by Boxing Day');
 });
