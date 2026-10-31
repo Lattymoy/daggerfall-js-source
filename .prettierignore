@@ -1469,11 +1469,7 @@
 !/src/ui/automap/automapMarkers.js
 !/src/ui/automap/automapText.js
 !/src/ui/bounty/
-/src/ui/bounty/*
-!/src/ui/bounty/bountyDoor.js
-!/src/ui/bounty/bountyMapMark.js
-!/src/ui/bounty/bountyWindow.js
-!/src/ui/bounty/huntRank.js
+/src/ui/bounty/*/
 !/src/ui/card/
 /src/ui/card/*/
 !/src/ui/chronicleDoor.js
