@@ -5,7 +5,8 @@ import { SPECIES, SPECIES_BY_KEY, CANDIDATE_SPECIES } from '../../../src/systems
 import { PVE_CATEGORIES, REFERENCE_PLAYER, NORMAL_BLOWS, PLAYER_EDGE, referencePlayer, categoryStats, FOE_BLOW_S } from '../../../src/systems/pve/pveCategories.js';
 import { COMBAT_ROLE_KEYS, roleProblem, roleShares } from '../../../src/systems/pve/pveRoles.js';
 import { ABILITY_KEYS, abilityProblem } from '../../../src/systems/pve/pveAbilities.js';
-import { MOB_TEMPLATES, GROUP_TEMPLATES, TEMPLATE_BY_KEY, templateProblems, groupProblems, templateStats, groupWeight } from '../../../src/systems/pve/pveTemplates.js';
+import { MOB_TEMPLATES, GROUP_TEMPLATES, TEMPLATE_BY_KEY, templateProblems, groupProblems, templateStats, groupWeight, RAID_AREAS, raidBossOf } from '../../../src/systems/pve/pveTemplates.js';
+import { ZONE_STARTS } from '../../../src/systems/pve/pveZones.js';
 import { fixedPveOn } from '../../../src/systems/pve/pveSwitch.js';
 
 test('FIXED-PVE the switch is off: nothing in the game reads a template yet', () => {
@@ -54,6 +55,20 @@ test('FIXED-PVE a Normal foe falls in NORMAL_BLOWS and needs the edge more to fe
     assert.ok(edge >= PLAYER_EDGE.min - 0.02 && edge <= PLAYER_EDGE.max + 0.02, `L${L} edge ${edge}`);
   }
   assert.ok(referencePlayer(45).blow > referencePlayer(30).blow * 2.5, 'gear compounds past the base kit');
+});
+
+test('RAID-AREAS: one raid boss to the Bay and to each province, each on a body the game draws, none both warded and wrathful', () => {
+  assert.deepEqual([...RAID_AREAS].sort(), Object.keys(ZONE_STARTS).sort());
+  const raid = MOB_TEMPLATES.filter((t) => t.category === 'raidBoss');
+  assert.equal(raid.length, RAID_AREAS.length);
+  for (const a of RAID_AREAS) assert.equal(raidBossOf(a)?.area, a, a);
+  assert.equal(raidBossOf('IliacBay')?.key, 'orc-warchief');
+  for (const t of raid) {
+    assert.ok(SPECIES_BY_KEY.has(t.species), t.key);
+    assert.ok(!(t.abilities.includes('warded') && t.abilities.includes('wrathful')), t.key);
+  }
+  assert.match(templateProblems({ ...raid[0], area: null })[0], /area/);
+  assert.match(templateProblems({ ...TEMPLATE_BY_KEY.get('orc-grunt'), area: 'Skyrim' })[0], /area/);
 });
 
 test('FIXED-PVE categories climb in health and in the party they are made for', () => {

@@ -77,4 +77,8 @@ test('STAGE 5: the list is the place\'s alone - no player in it, the same twice,
   const tpl = regionalTemplates(place).map((x) => x.template);
   for (const k of ['orc-grunt', 'orc-merchant', 'orc-shaman', 'orc-stronghold-guard', 'grizzly']) assert.ok(tpl.includes(k), k);
   assert.ok(!tpl.includes('crypt-lich'));
+  const ancient = { province: 'HighRock', climate: null, dungeon: DUNGEON_TYPES.VampireHaunt };
+  assert.ok(!regionalTemplates(ancient).some((x) => x.template === 'night-court-ancient'), 'RAID-AREAS: no area, no raid boss');
+  assert.ok(regionalTemplates({ ...ancient, area: 'HighRock' }).some((x) => x.template === 'night-court-ancient'));
+  assert.ok(!regionalTemplates({ ...ancient, area: 'Skyrim' }).some((x) => x.template === 'night-court-ancient'));
 });

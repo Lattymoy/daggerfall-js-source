@@ -9,6 +9,7 @@ import { PVE_CATEGORIES, LEVEL_MIN, LEVEL_MAX, categoryStats } from './pveCatego
 import { COMBAT_ROLES, NONCOMBAT_ROLES, roleProblem, roleShares } from './pveRoles.js';
 import { abilityProblem } from './pveAbilities.js';
 import { DISPOSITIONS, WILDLIFE, INTERACTIONS } from './pveDisposition.js';
+import { PROVINCES } from '../../world/tamriel/tamrielGeography.js';
 
 /** The metals a foe's kit may be made of (systems/armorMaterials.js names). */
 export const KIT_METALS = Object.freeze(['iron', 'steel', 'silver', 'elven', 'dwarven', 'mithril', 'adamantium',
@@ -16,9 +17,9 @@ export const KIT_METALS = Object.freeze(['iron', 'steel', 'silver', 'elven', 'dw
 
 /** @typedef {{ key: string, name: string, species: string, level: number, category: string, roles: string[],
  *  noncombat?: string[], abilities?: string[], disposition: string, wildlife?: string, interact?: string[],
- *  faction?: string|null, protected?: boolean, kit?: string|null, pack?: { health: number, damage: number } }} MobTemplate */
+ *  faction?: string|null, protected?: boolean, kit?: string|null, pack?: { health: number, damage: number }, area?: string|null }} MobTemplate */
 
-const T = (o) => Object.freeze({ noncombat: [], abilities: [], interact: [], faction: null, protected: false, kit: null, ...o });
+const T = (o) => Object.freeze({ noncombat: [], abilities: [], interact: [], faction: null, protected: false, kit: null, area: null, ...o });
 
 /** @type {ReadonlyArray<MobTemplate>} */
 export const MOB_TEMPLATES = Object.freeze([
@@ -111,8 +112,18 @@ export const MOB_TEMPLATES = Object.freeze([
   T({ key: 'daedroth', name: 'Daedroth', species: 'daedroth', level: 35, category: 'strong', roles: ['berserker'], abilities: ['daedraSpells', 'rage'], disposition: 'hostile' }),
   T({ key: 'daedra-seducer', name: 'Daedra Seducer', species: 'daedra-seducer', level: 37, category: 'normal', roles: ['mage'], abilities: ['daedraSpells'], disposition: 'hostile' }),
   T({ key: 'daedra-lord', name: 'Daedra Lord', species: 'daedra-lord', level: 44, category: 'elite', roles: ['commander', 'mage'], abilities: ['daedraSpells', 'warded', 'callHelp'], disposition: 'hostile' }),
-  // a raid
-  T({ key: 'orc-warchief', name: 'Warchief of the Iron Clan', species: 'orc-warlord', level: 45, category: 'raidBoss', roles: ['commander', 'berserker'], abilities: ['warCry', 'rally', 'callHelp', 'rage', 'curbing', 'warded', 'wrathful'], disposition: 'hostile', faction: 'orc-clans', kit: 'orcish' }),
+  // RAID-AREAS: one raid boss to each area, the Bay's in Wrothgar. A raid boss is warded or wrathful, never both: the two
+  // together beat a party of ten nine times in ten (tools/pveBalance.mjs)
+  T({ key: 'orc-warchief', name: 'Warchief of the Iron Clan', species: 'orc-warlord', level: 45, category: 'raidBoss', roles: ['commander', 'berserker'], abilities: ['warCry', 'rally', 'callHelp', 'rage', 'curbing', 'wrathful'], disposition: 'hostile', faction: 'orc-clans', kit: 'orcish', area: 'IliacBay' }),
+  T({ key: 'night-court-ancient', name: 'Ancient of the Night Court', species: 'ancient-vampire', level: 45, category: 'raidBoss', roles: ['assassin', 'mage'], abilities: ['leap', 'summonKin', 'warded', 'curbing', 'venomproof', 'frostproof'], disposition: 'hostile', area: 'HighRock' }),
+  T({ key: 'scorpion-queen', name: 'Scorpion Queen of the Sands', species: 'giant-scorpion', level: 45, category: 'raidBoss', roles: ['berserker'], abilities: ['charge', 'cleave', 'rage', 'summonKin', 'venomproof', 'wrathful'], disposition: 'hostile', area: 'Hammerfell' }),
+  T({ key: 'frost-giant-king', name: 'Frost Giant King', species: 'giant', level: 45, category: 'raidBoss', roles: ['commander', 'berserker'], abilities: ['warCry', 'cleave', 'rage', 'callHelp', 'frostproof', 'wrathful'], disposition: 'hostile', area: 'Skyrim' }),
+  T({ key: 'ash-tomb-lich', name: 'Lich of the Ash Tombs', species: 'ancient-lich', level: 45, category: 'raidBoss', roles: ['mage', 'summoner'], abilities: ['lichSpells', 'summonKin', 'curbing', 'flameproof', 'wrathful'], disposition: 'hostile', area: 'Morrowind' }),
+  T({ key: 'crystal-archmage', name: 'Archmage of the Crystal Spire', species: 'mage', level: 45, category: 'raidBoss', roles: ['mage', 'summoner'], abilities: ['summonKin', 'curbing', 'stormproof', 'spellproof', 'wrathful'], disposition: 'hostile', kit: 'elven', area: 'Sumurset' }),
+  T({ key: 'heartwood-spriggan', name: 'Heartwood Spriggan', species: 'spriggan', level: 45, category: 'raidBoss', roles: ['berserker'], abilities: ['summonKin', 'stoneskin', 'venomproof', 'curbing', 'wrathful'], disposition: 'hostile', area: 'Valenwood' }),
+  T({ key: 'moon-mad-sabrecat', name: 'Moon-Mad Sabrecat', species: 'sabretooth-tiger', level: 45, category: 'raidBoss', roles: ['berserker'], abilities: ['leap', 'charge', 'cleave', 'rage', 'curbing', 'wrathful'], disposition: 'hostile', area: 'Elsweyr' }),
+  T({ key: 'marsh-wyrm', name: 'Wyrm of the Black Marsh', species: 'dragonling', level: 45, category: 'raidBoss', roles: ['berserker'], abilities: ['charge', 'cleave', 'rage', 'venomproof', 'wrathful'], disposition: 'hostile', area: 'BlackMarsh' }),
+  T({ key: 'oblivion-herald', name: 'Herald of Oblivion', species: 'daedra-lord', level: 45, category: 'raidBoss', roles: ['commander', 'mage'], abilities: ['daedraSpells', 'summonKin', 'callHelp', 'curbing', 'wrathful'], disposition: 'hostile', area: 'Imperial' }),
 ]);
 
 /** @typedef {{ key: string, name: string, members: Array<[string, number]>, leader?: string, community?: boolean }} GroupTemplate */
@@ -135,6 +146,11 @@ export const GROUP_TEMPLATES = Object.freeze(/** @type {GroupTemplate[]} */ ([
 
 export const TEMPLATE_BY_KEY = new Map(MOB_TEMPLATES.map((t) => [t.key, t]));
 
+/** RAID-AREAS (the owner, 2026-10-31: "need a raid boss for each region"): the Bay and the nine provinces, one boss each. */
+export const RAID_AREAS = Object.freeze(['IliacBay', ...PROVINCES.map((p) => p.key)]);
+/** The raid boss of `area`, or null. @param {string} area */
+export const raidBossOf = (area) => MOB_TEMPLATES.find((t) => t.category === 'raidBoss' && t.area === area) ?? null;
+
 /** Every reason `t` cannot stand (empty when it can). @param {MobTemplate} t */
 export function templateProblems(t) {
   const out = [];
@@ -155,6 +171,7 @@ export function templateProblems(t) {
   for (const i of t?.interact ?? []) if (!INTERACTIONS.includes(i)) out.push(`unknown interaction ${i}`);
   if ((t?.interact ?? []).length && t.disposition === 'hostile') out.push('a hostile creature offers no service');
   if (t?.kit != null && !KIT_METALS.includes(t.kit)) out.push(`unknown kit metal ${t.kit}`);
+  if ((t?.category === 'raidBoss') !== RAID_AREAS.includes(t?.area ?? '')) out.push(`a raid boss and only one holds an area (${t?.area})`);
   return out;
 }
 

@@ -297,3 +297,14 @@ rank, stars and devotion grow both, and the weapon the player gave it ("u can gi
 a step of metal and 10% a tier. Both stop at 35% of the blow and the player's whole health, so it always hits for less
 than the player and never outlasts them. Its armour guards it as Daggerfall's does. Daggerfall Unity has no sworn foes. The tests:
 `revenant_companions.test.js`.
+
+## 19. A raid boss for each area (RAID-AREAS, 2026-10-31)
+
+The owner: "need a raid boss for each region". The first pass had one raid boss. Now each area has one, on a body the game already draws (`pve/pveTemplates.js` `RAID_AREAS`,
+`raidBossOf`): the Warchief in the Bay, an Ancient Vampire in High Rock, a Scorpion Queen in
+Hammerfell, a Frost Giant King in Skyrim, an Ancient Lich in Morrowind, an Archmage in the Summerset Isles, a Spriggan
+in Valenwood, a Sabrecat in Elsweyr, a Dragonling in Black Marsh and a Daedra Lord in Cyrodiil. All are level 45. A
+raid boss is held to its area: `regionalTemplates` gives it only where `zoneAreaOf` names that area. It is warded or
+wrathful, never both, because the two together beat a party of ten nine times in ten.
+All ten land within the report's edge. Where a raid stands in the world comes with the spawns. The tests:
+`pve_core.test.js`, `pve_bestiary.test.js`.

@@ -7,7 +7,7 @@
 import { GROUP_TEMPLATES } from './pveTemplates.js';
 import { DISTRIBUTION } from './pveBestiary.js';
 import { encounterPool, bandGroups, meetsHostile } from './pveEncounter.js';
-import { pveZoneAt } from './pveZones.js';
+import { pveZoneAt, zoneAreaOf } from './pveZones.js';
 
 /** The populations a table holds, in the order a cell fills them. */
 export const POPULATIONS = Object.freeze(['settlement', 'ambient', 'farming', 'encounter', 'group', 'patrol', 'rare']);
@@ -33,7 +33,7 @@ export function spawnTable(at) {
   if (!zone) return null;
   const event = at.event ?? null;
   const met = [...(at.night ? ['night'] : []), ...(event === 'incursion' ? ['incursion'] : [])];
-  const p = encounterPool(zone.band, { province: at.province, region: at.region, climate: at.climate ?? null,
+  const p = encounterPool(zone.band, { province: at.province, region: at.region, area: zoneAreaOf(at.region), climate: at.climate ?? null,
     dungeon: at.dungeon ?? null, met, factions: at.factions ?? [] });
   const of = (keep) => byKey(p.pool.filter(keep).map((x) => ({ key: x.t.key, w: x.w })));
   const hostile = (x) => meetsHostile(x.t, event);

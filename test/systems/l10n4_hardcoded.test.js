@@ -871,7 +871,7 @@ const HARDCODED = {
   'src/systems/pve/pveCategories.js': 1,
   'src/systems/pve/pveRoles.js': 4,
   'src/systems/pve/pveSpecies.js': 8,
-  'src/systems/pve/pveTemplates.js': 85,   // ROSTER: 49 more templates' and groups' names - a planner's, behind the switch; t() when the switch turns on   // stage 4: the Orc Stronghold's name and the validator's community line - a planner's, behind the switch
+  'src/systems/pve/pveTemplates.js': 95,   // RAID-AREAS: 9 raid bosses' names and the area line; ROSTER: 49 more templates' and groups' names - a planner's, behind the switch; t() when the switch turns on   // stage 4: the Orc Stronghold's name and the validator's community line - a planner's, behind the switch
 };
 
 test('L10N4 the ratchet: no file holds more hard-coded English than it did - route a new sentence through t(key, en, args); when a count falls, write the map down again', () => {

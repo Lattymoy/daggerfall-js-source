@@ -136,8 +136,10 @@ export function regionalSpecies(at) {
     .sort((a, b) => a.species.localeCompare(b.species));
 }
 
-/** The templates a place may hold: those whose species it holds, at that species' share. @param {Parameters<typeof speciesStandingAt>[1]} at */
+/** The templates a place may hold: those whose species it holds, at that species' share; one held to an area (a raid
+ *  boss, RAID-AREAS) only in that area. @param {Parameters<typeof speciesStandingAt>[1] & { area?: string|null }} at */
 export function regionalTemplates(at) {
   const w = new Map(regionalSpecies(at).map((x) => [x.species, x.weight]));
-  return MOB_TEMPLATES.filter((t) => w.has(t.species)).map((t) => ({ template: t.key, weight: /** @type {number} */ (w.get(t.species)) }));
+  return MOB_TEMPLATES.filter((t) => w.has(t.species) && (!t.area || t.area === at.area))
+    .map((t) => ({ template: t.key, weight: /** @type {number} */ (w.get(t.species)) }));
 }
