@@ -29,8 +29,8 @@
   {
     "name": "PICKUP-FEED-a-bumped-card-stays-where-it-was",
     "file": "src/ui/pickupFeed.js",
-    "old": "          block.push(c);\n          continue;",
-    "new": "          cards.splice(i, 0, c);\n          continue;",
+    "old": "          block.push(c);",
+    "new": "          cards.splice(i, 0, c);",
     "tests": [
       "test/systems/pickupfeed.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PICKUP-FEED-twins-in-a-press-are-two-cards",
     "file": "src/ui/pickupFeed.js",
-    "old": "        if (mine) { mine.count += e.count; merge(mine, e); continue; }",
-    "new": "        if (false) { mine.count += e.count; merge(mine, e); continue; }",
+    "old": "        if (mine) {",
+    "new": "        if (false) {",
     "tests": [
       "test/systems/pickupfeed.test.js"
     ],
@@ -66,8 +66,8 @@
   {
     "name": "PICKUP-FEED-never-fades",
     "file": "src/ui/pickupFeed.js",
-    "old": "    standing(now) { return cards.map((c) => ({ ...c, fading: now - c.at >= holdOf(c) })); },",
-    "new": "    standing(now) { return cards.map((c) => ({ ...c, fading: false })); },",
+    "old": "      return cards.map((c) => ({ ...c, fading: now - c.at >= holdOf(c) }));",
+    "new": "      return cards.map((c) => ({ ...c, fading: false }));",
     "tests": [
       "test/systems/pickupfeed.test.js"
     ],
@@ -95,8 +95,8 @@
   {
     "name": "PICKUP-FEED-one-is-counted",
     "file": "src/ui/pickupFeed.js",
-    "old": "(!line.gold && line.count > 1 ?",
-    "new": "(!line.gold && line.count >= 1 ?",
+    "old": "export const pickupCountText = (line) => (!line.gold && line.count > 1 ? `×${line.count}` : '');",
+    "new": "export const pickupCountText = (line) => (!line.gold && line.count >= 1 ? `×${line.count}` : '');",
     "tests": [
       "test/systems/pickupfeed.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "PICKUP-FEED-gold-is-an-item",
     "file": "src/ui/pickupFeed.js",
-    "old": "  if (isGoldPieces(item)) return { key: 'gold',",
-    "new": "  if (false) return { key: 'gold',",
+    "old": "  if (isGoldPieces(item))",
+    "new": "  if (false)",
     "tests": [
       "test/systems/pickupfeed.test.js"
     ]
@@ -123,8 +123,8 @@
   {
     "name": "PICKUP-FEED-gold-wears-a-second-plus",
     "file": "src/ui/pickupFeed.js",
-    "old": "  if (!l.gold) {\n    const plus = d.createElement('span');",
-    "new": "  if (true) {\n    const plus = d.createElement('span');",
+    "old": "  if (!l.gold) {",
+    "new": "  if (true) {",
     "tests": [
       "test/systems/pickupfeed.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "PICKUP-FEED-every-card-shown-into-the-hud",
     "file": "src/ui/pickupFeed.js",
-    "old": "    while (shown > 1 && top + height(shown) > lower) shown -= 1;\n",
-    "new": "\n",
+    "old": "    while (shown > 1 && top + height(shown) > lower) shown -= 1;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/pickupfeed.test.js"
     ]
@@ -168,7 +168,7 @@
   {
     "name": "PICKUP-FEED-what-stands-above-unread",
     "file": "src/ui/pickupFeed.js",
-    "old": "  for (const sel of PICKUP_KEEP_ABOVE) { const r = rect(d.querySelector?.(sel)); if (r) upper = Math.max(upper, r.bottom + gap); }",
+    "old": "  for (const sel of PICKUP_KEEP_ABOVE) {\n    const r = rect(d.querySelector?.(sel));\n    if (r) upper = Math.max(upper, r.bottom + gap);\n  }",
     "new": "  void PICKUP_KEEP_ABOVE;",
     "tests": [
       "test/systems/pickupfeed.test.js"
@@ -186,7 +186,7 @@
   {
     "name": "PICKUP-FEED-the-mid-line-said-unread",
     "file": "src/ui/pickupFeed.js",
-    "old": "  if (mid && mid.style?.display !== 'none' && mid.textContent) { const r = rect(mid); if (r) upper = Math.max(upper, r.bottom + gap); }",
+    "old": "  if (mid && mid.style?.display !== 'none' && mid.textContent) {\n    const r = rect(mid);\n    if (r) upper = Math.max(upper, r.bottom + gap);\n  }",
     "new": "  void mid;",
     "tests": [
       "test/systems/pickupfeed.test.js"
@@ -204,8 +204,8 @@
   {
     "name": "PICKUP-FEED-the-classic-skin-dressed",
     "file": "src/ui/pickupFeed.js",
-    "old": "    if (!isEnhanced()) return false;\n    const d = doc();\n    if (!d?.body || !d.createElement) return false;\n    // LOOT-BANNER",
-    "new": "    if (false) return false;\n    const d = doc();\n    if (!d?.body || !d.createElement) return false;\n    // LOOT-BANNER",
+    "old": "export function showPickups(moved, identity = undefined) {\n  try {\n    if (!isEnhanced()) return false;\n    const d = doc();",
+    "new": "export function showPickups(moved, identity = undefined) {\n  try {\n    if (false) return false;\n    const d = doc();",
     "tests": [
       "test/systems/pickupfeed.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "PICKUP-FEED-no-ticker",
     "file": "src/ui/pickupFeed.js",
-    "old": "  if (!_ticking) { const gen = _tickGen; _ticking = _raf(() => frame(gen)) != null; }",
-    "new": "  if (false) { const gen = _tickGen; _ticking = _raf(() => frame(gen)) != null; }",
+    "old": "  if (!_ticking) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/pickupfeed.test.js"
     ]
@@ -241,8 +241,8 @@
   {
     "name": "PICKUP-FEED-a-ticker-that-runs-forever",
     "file": "src/ui/pickupFeed.js",
-    "old": "  if (!lines.length) return;\n  place(lines.length);",
-    "new": "  if (!lines.length) { const gen = _tickGen; _ticking = _raf(() => frame(gen)) != null; return; }\n  place(lines.length);",
+    "old": "  if (!lines.length) return;",
+    "new": "  if (!lines.length) {\n    const gen = _tickGen;\n    _ticking = _raf(() => frame(gen)) != null;\n    return;\n  }",
     "tests": [
       "test/systems/pickupfeed.test.js"
     ]
@@ -250,7 +250,7 @@
   {
     "name": "PICKUP-FEED-an-expired-card-left-standing",
     "file": "src/ui/pickupFeed.js",
-    "old": "  for (const [id, c] of drawn) if (!live.has(id)) { try { c.el.remove(); } catch { /* already gone */ } drawn.delete(id); }",
+    "old": "  for (const [id, c] of drawn)\n    if (!live.has(id)) {\n      try {\n        c.el.remove();\n      } catch {\n        /* already gone */\n      }\n      drawn.delete(id);\n    }",
     "new": "  for (const [id] of drawn) if (!live.has(id)) drawn.delete(id);",
     "tests": [
       "test/systems/pickupfeed.test.js"
@@ -259,8 +259,8 @@
   {
     "name": "PICKUP-FEED-the-fade-never-drawn",
     "file": "src/ui/pickupFeed.js",
-    "old": "    if (c.fading !== l.fading) { c.fading = l.fading; c.el.classList.toggle('fading', l.fading); }",
-    "new": "    if (c.fading !== l.fading) { c.fading = l.fading; }",
+    "old": "      c.el.classList.toggle('fading', l.fading);\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/pickupfeed.test.js"
     ]
@@ -268,8 +268,8 @@
   {
     "name": "PICKUP-FEED-a-bumped-count-not-rewritten",
     "file": "src/ui/pickupFeed.js",
-    "old": "      c.num.textContent = pickupCountText(l);\n",
-    "new": "\n",
+    "old": "      c.num.textContent = pickupCountText(l);\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/pickupfeed.test.js"
     ]
@@ -286,8 +286,8 @@
   {
     "name": "PICKUP-FEED-a-late-picture-never-lands",
     "file": "src/ui/pickupFeed.js",
-    "old": "  try { pic = _icon(l, () => { if (drawn.get(l.id) === c) {",
-    "new": "  try { pic = _icon(l, () => { if (false) {",
+    "old": "      if (drawn.get(l.id) === c) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/pickupfeed.test.js"
     ]
@@ -295,8 +295,8 @@
   {
     "name": "PICKUP-FEED-a-frame-with-no-picture",
     "file": "src/ui/pickupFeed.js",
-    "old": "  if (!shown && !l.image) { c.icon.remove(); c.el.classList.add('no-icon'); }",
-    "new": "  if (!shown && !l.image) { c.el.classList.add('no-icon'); }",
+    "old": "    c.icon.remove();\n    c.el.classList.add('no-icon');",
+    "new": "    c.el.classList.add('no-icon');",
     "tests": [
       "test/systems/pickupfeed.test.js"
     ]
@@ -304,7 +304,7 @@
   {
     "name": "PICKUP-FEED-no-watchdog",
     "file": "src/ui/pickupFeed.js",
-    "old": "  _watchdog = armDrawWatchdog(PICKUP_WATCHDOG_MS, () => { _watchdog = null; clearPickupFeed(); }, { schedule: _schedule, cancel: _cancel });",
+    "old": "  _watchdog = armDrawWatchdog(\n    PICKUP_WATCHDOG_MS,\n    () => {\n      _watchdog = null;\n      clearPickupFeed();\n    },\n    { schedule: _schedule, cancel: _cancel },\n  );",
     "new": "  _watchdog = null;",
     "tests": [
       "test/systems/pickupfeed.test.js"
@@ -313,8 +313,8 @@
   {
     "name": "PICKUP-FEED-a-watchdog-that-clears-nothing",
     "file": "src/ui/pickupFeed.js",
-    "old": "  _watchdog = armDrawWatchdog(PICKUP_WATCHDOG_MS, () => { _watchdog = null; clearPickupFeed(); }, { schedule: _schedule, cancel: _cancel });",
-    "new": "  _watchdog = armDrawWatchdog(PICKUP_WATCHDOG_MS, () => { _watchdog = null; }, { schedule: _schedule, cancel: _cancel });",
+    "old": "      clearPickupFeed();\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/pickupfeed.test.js"
     ]
@@ -322,7 +322,7 @@
   {
     "name": "PICKUP-FEED-the-node-left-on-the-body",
     "file": "src/ui/pickupFeed.js",
-    "old": "  try { node?.remove(); } catch { /* already gone */ }\n  node = null;",
+    "old": "  try {\n    node?.remove();\n  } catch {\n    /* already gone */\n  }\n  node = null;",
     "new": "  node = null;",
     "tests": [
       "test/systems/pickupfeed.test.js"
@@ -331,8 +331,8 @@
   {
     "name": "PICKUP-FEED-a-stale-frame-runs-a-second-chain",
     "file": "src/ui/pickupFeed.js",
-    "old": "  if (gen !== _tickGen) return;\n",
-    "new": "\n",
+    "old": "  if (gen !== _tickGen) return;\n  _ticking = false;",
+    "new": "  _ticking = false;",
     "tests": [
       "test/systems/pickupfeed.test.js"
     ]

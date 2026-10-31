@@ -74,8 +74,8 @@
   {
     "name": "ACC3b-8-the-glyph-order-taken-from-the-wire",
     "file": "src/ui/playerBadge.js",
-    "old": "  const out = [];\n  for (const key of GLYPHS) {\n    if (!on.includes(key)) continue;",
-    "new": "  const out = [];\n  for (const key of on) {\n    if (!GLYPHS.includes(key)) continue;",
+    "old": "  for (const key of GLYPHS) {\n    if (!on.includes(key)) continue;",
+    "new": "  for (const key of on) {\n    if (!GLYPHS.includes(key)) continue;",
     "tests": [
       "test/net/acc3badge.test.js"
     ],

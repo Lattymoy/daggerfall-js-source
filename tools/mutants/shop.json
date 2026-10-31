@@ -209,8 +209,8 @@
   {
     "name": "SHOP-origin-moves-for-less-motion",
     "file": "src/ui/playerBadge.js",
-    "old": "  const motion = stillness() ? null : GLYPH_MOTION",
-    "new": "  const motion = GLYPH_MOTION",
+    "old": "  const motion = stillness() ? null : (GLYPH_MOTION[/** @type {keyof typeof GLYPH_MOTION} */ (g.key)] ?? null); // SHOP",
+    "new": "  const motion = GLYPH_MOTION[/** @type {keyof typeof GLYPH_MOTION} */ (g.key)] ?? null; // SHOP",
     "tests": [
       "test/ui/shop_window.test.js"
     ]

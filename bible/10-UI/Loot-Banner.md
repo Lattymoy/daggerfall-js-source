@@ -104,7 +104,7 @@ the Old Coil's (`net/serpent/serpentClaims.js`, Coilbreaker and The Maelstrom, o
 ## 4. The pickup feed and the codex
 
 - **The pickup feed** (`ui/pickupFeed.js`) no longer cards a piece the banner will announce - one new to the player in
-  Rare or better (`pickupFeed.js:"const fresh = (m) =>"`). Its take still says no line for it. A Rare piece of the
+  Rare or better (`pickupFeed.js:"const fresh = (m)"`). Its take still says no line for it. A Rare piece of the
   player's own, picked back up, is carded in its tier as before.
 - **The codex.** LOOT10's first find of a Legendary record (`06-Systems/Loot-Arc.md` section 12) said "<name> - a
   Legendary! It joins your codex." and chimed. On Enhanced Plus the banner announcing the same piece says it instead -

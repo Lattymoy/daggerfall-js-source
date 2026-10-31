@@ -74,8 +74,8 @@
   {
     "name": "POTION-DOOR-window-mints-on-client",
     "file": "src/ui/potionMakerWindow.js",
-    "old": "if (door && !door.classic) { this._throughDoor(door); return; }",
-    "new": "if (false) { this._throughDoor(door); return; }",
+    "old": "    if (door && !door.classic) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/potiondoor.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "POTION-DOOR-window-cauldron-kept",
     "file": "src/ui/potionMakerWindow.js",
-    "old": "if (r?.ok) { this.cauldron = []; audio.playOneShot(SOUND.MakePotion, 1); }",
-    "new": "if (r?.ok) { audio.playOneShot(SOUND.MakePotion, 1); }",
+    "old": "          this.cauldron = [];\n          audio.playOneShot(SOUND.MakePotion, 1);",
+    "new": "          audio.playOneShot(SOUND.MakePotion, 1);",
     "tests": [
       "test/systems/potiondoor.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "POTION-DOOR-window-twice-asked",
     "file": "src/ui/potionMakerWindow.js",
-    "old": "if (this.cauldron.length === 0 || this._brewing) return;",
-    "new": "if (this.cauldron.length === 0) return;",
+    "old": "    if (this.cauldron.length === 0 || this._brewing) return;",
+    "new": "    if (this.cauldron.length === 0) return;",
     "tests": [
       "test/systems/potiondoor.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "POTION-DOOR-window-one-source",
     "file": "src/ui/potionMakerWindow.js",
-    "old": "const at = (it) => `${it.stores ?? ''}|${it.templateIndex}`;",
-    "new": "const at = (it) => `${it.templateIndex}`;",
+    "old": "    const at = (it) => `${it.stores ?? ''}|${it.templateIndex}`;",
+    "new": "    const at = (it) => `${it.templateIndex}`;",
     "tests": [
       "test/systems/potiondoor.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "POTION-DOOR-window-pot-touched-while-brewing",
     "file": "src/ui/potionMakerWindow.js",
-    "old": "if (slot >= this.cauldron.length || this._brewing) return;",
-    "new": "if (slot >= this.cauldron.length) return;",
+    "old": "    if (slot >= this.cauldron.length || this._brewing) return; // POTION-DOOR: nor taken from",
+    "new": "    if (slot >= this.cauldron.length) return; // POTION-DOOR: nor taken from",
     "tests": [
       "test/systems/potiondoor.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "POTION-DOOR-window-classic-word-unsaid",
     "file": "src/ui/potionMakerWindow.js",
-    "old": "this.box = this._mixedBox(door?.word);",
-    "new": "this.box = this._mixedBox();",
+    "old": "      this.box = this._mixedBox(door?.word);",
+    "new": "      this.box = this._mixedBox();",
     "tests": [
       "test/systems/potiondoor.test.js"
     ]

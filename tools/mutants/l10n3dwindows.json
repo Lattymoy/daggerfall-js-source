@@ -392,8 +392,8 @@
   {
     "name": "L10N3d2-ui-potionMakerWindow-255-potionFailed",
     "file": "src/ui/potionMakerWindow.js",
-    "old": "  _failedBox() { return { rows: [{ text: localizedText('potionFailed', POTION_FAILED), center: true }] }; }",
-    "new": "  _failedBox() { return { rows: [{ text: POTION_FAILED, center: true }] }; }",
+    "old": "    return { rows: [{ text: localizedText('potionFailed', POTION_FAILED), center: true }] };",
+    "new": "    return { rows: [{ text: POTION_FAILED, center: true }] };",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/ui/l10n3d_windows.test.js"
@@ -402,8 +402,8 @@
   {
     "name": "L10N3d2-ui-potionMakerWindow-261-potionMixed",
     "file": "src/ui/potionMakerWindow.js",
-    "old": "{ text: localizedText('potionMixed', POTION_MIXED), center: true },",
-    "new": "{ text: POTION_MIXED, center: true },",
+    "old": "    return {\n      rows: [\n        { text: localizedText('potionMixed', POTION_MIXED), center: true },\n        ...(word ? [{ text: word, center: true }] : []),\n      ],\n    };",
+    "new": "    return { rows: [{ text: POTION_MIXED, center: true }, ...(word ? [{ text: word, center: true }] : [])] };",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/ui/l10n3d_windows.test.js"
@@ -412,8 +412,8 @@
   {
     "name": "L10N3d2-ui-potionMakerWindow-281-noRecipes",
     "file": "src/ui/potionMakerWindow.js",
-    "old": "    if (!known.length) { this.box = { rows: [{ text: localizedText('noRecipes', NO_RECIPES), center: true }] }; return; }",
-    "new": "    if (!known.length) { this.box = { rows: [{ text: NO_RECIPES, center: true }] }; return; }",
+    "old": "      this.box = { rows: [{ text: localizedText('noRecipes', NO_RECIPES), center: true }] };",
+    "new": "      this.box = { rows: [{ text: NO_RECIPES, center: true }] };",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/ui/l10n3d_windows.test.js"

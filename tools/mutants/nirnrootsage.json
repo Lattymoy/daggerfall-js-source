@@ -2,8 +2,8 @@
   {
     "name": "NIRNROOT-SAGE-leaf-drifted",
     "file": "src/ui/playerBadge.js",
-    "old": "export const NIRN_LEAF = Object.freeze([0.18, 0.62, 0.341, 1]);",
-    "new": "export const NIRN_LEAF = Object.freeze([0.18, 0.4, 0.157, 1]);",
+    "old": "export const NIRN_LEAF = Object.freeze([0.18, 0.62, 0.341, 1]); // #2e9e57",
+    "new": "export const NIRN_LEAF = Object.freeze([0.18, 0.4, 0.157, 1]); // #2e9e57",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "NIRNROOT-SAGE-gradient-turned",
     "file": "src/ui/playerBadge.js",
-    "old": "  nirnrootsage: Object.freeze([NIRN_LEAF, NIRN_GLOW, NIRN_HAZE]),",
-    "new": "  nirnrootsage: Object.freeze([NIRN_HAZE, NIRN_GLOW, NIRN_LEAF]),",
+    "old": "  nirnrootsage: Object.freeze([NIRN_LEAF, NIRN_GLOW, NIRN_HAZE]), // NIRNROOT-SAGE: \"Nirnroot\" out of the leaf into its glow, \"Sage\" into the smoke's haze",
+    "new": "  nirnrootsage: Object.freeze([NIRN_HAZE, NIRN_GLOW, NIRN_LEAF]), // NIRNROOT-SAGE: \"Nirnroot\" out of the leaf into its glow, \"Sage\" into the smoke's haze",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "NIRNROOT-SAGE-edge-dropped",
     "file": "src/ui/playerBadge.js",
-    "old": "  nirnrootsage: Object.freeze([0, 0, 0, 1]),   // NIRNROOT-SAGE",
-    "new": "  zz_nirnrootsage: Object.freeze([0, 0, 0, 1]),   // NIRNROOT-SAGE",
+    "old": "  nirnrootsage: Object.freeze([0, 0, 0, 1]), // NIRNROOT-SAGE: its haze end is pale - edged in black, as the Witchwarden's",
+    "new": "  zz_nirnrootsage: Object.freeze([0, 0, 0, 1]), // NIRNROOT-SAGE: its haze end is pale - edged in black, as the Witchwarden's",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "NIRNROOT-SAGE-one-colour-leaf",
     "file": "src/ui/playerBadge.js",
-    "old": "  nirnrootsage: NIRN_GLOW,   // NIRNROOT-SAGE",
-    "new": "  nirnrootsage: NIRN_LEAF,   // NIRNROOT-SAGE",
+    "old": "  nirnrootsage: NIRN_GLOW, // NIRNROOT-SAGE: a nirnroot's glow - the colour a face that cannot draw a gradient uses, and the glyph's",
+    "new": "  nirnrootsage: NIRN_LEAF, // NIRNROOT-SAGE: a nirnroot's glow - the colour a face that cannot draw a gradient uses, and the glyph's",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "NIRNROOT-SAGE-glyph-colour-drifted",
     "file": "src/ui/playerBadge.js",
-    "old": "  nirnrootsage: TITLE_RGBA.nirnrootsage,   // NIRNROOT-SAGE",
-    "new": "  nirnrootsage: NIRN_HAZE,   // NIRNROOT-SAGE",
+    "old": "  nirnrootsage: TITLE_RGBA.nirnrootsage, // NIRNROOT-SAGE: the sprig in the title's glow - its veins and the bud's heart are its details, below",
+    "new": "  nirnrootsage: NIRN_HAZE, // NIRNROOT-SAGE: the sprig in the title's glow - its veins and the bud's heart are its details, below",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "NIRNROOT-SAGE-mark-the-wikimaids",
     "file": "src/ui/playerBadge.js",
-    "old": "  nirnrootsage: 'Y',  // NIRNROOT-SAGE",
-    "new": "  nirnrootsage: 'V',  // NIRNROOT-SAGE",
+    "old": "  nirnrootsage: 'Y', // NIRNROOT-SAGE: a sprig - its stem, and a leaf up each side",
+    "new": "  nirnrootsage: 'V', // NIRNROOT-SAGE: a sprig - its stem, and a leaf up each side",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "NIRNROOT-SAGE-stroked",
     "file": "src/ui/playerBadge.js",
-    "old": "nirnrootsage: false,",
-    "new": "nirnrootsage: true,",
+    "old": "  nirnrootsage: false,",
+    "new": "  nirnrootsage: true,",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "NIRNROOT-SAGE-button-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
-    "new": "sagesmoke: 'witchwarden', eternal: 'genesis' });",
+    "old": "  sagesmoke: 'nirnrootsage',",
+    "new": "  sagesmoke: 'witchwarden',",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "NIRNROOT-SAGE-title-word",
     "file": "src/ui/playerBadge.js",
-    "old": "  nirnrootsage: 'Nirnroot Sage',   // NIRNROOT-SAGE",
-    "new": "  nirnrootsage: 'Nirnroot',   // NIRNROOT-SAGE",
+    "old": "  nirnrootsage: 'Nirnroot Sage', // NIRNROOT-SAGE (2026-10-26, for Blob-Marley, an Immortal backer): Blob-Marley's own, the owner's word for it",
+    "new": "  nirnrootsage: 'Nirnroot', // NIRNROOT-SAGE (2026-10-26, for Blob-Marley, an Immortal backer): Blob-Marley's own, the owner's word for it",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "NIRNROOT-SAGE-aura-word",
     "file": "src/ui/playerBadge.js",
-    "old": "  sagesmoke: \"Sage's Smoke\",",
-    "new": "  sagesmoke: 'Sage Smoke',",
+    "old": "  sagesmoke: \"Sage's Smoke\", // NIRNROOT-SAGE: smoke billowing about the Nirnroot Sage, nirnroots circling the waist, green runes round the feet, granted with the title",
+    "new": "  sagesmoke: 'Sage Smoke', // NIRNROOT-SAGE: smoke billowing about the Nirnroot Sage, nirnroots circling the waist, green runes round the feet, granted with the title",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "NIRNROOT-SAGE-veins-deep",
     "file": "src/ui/playerBadge.js",
-    "old": "'M6.41 12.63L3.32 13.39L6.46 12.84ZM6.61 11.6L1.69 9.32L6.51 11.8ZM7.27 10.97L3.5 4.91L7.08 11.09ZM8.11 10.8L8 2.28L7.89 10.8ZM8.92 11.09L12.5 4.91L8.73 10.97ZM9.49 11.8L14.31 9.32L9.39 11.6ZM9.54 12.84L12.68 13.39L9.59 12.63ZM4.62 10.92L3.96 11.02L4.43 10.82ZM4.76 10.65L4.43 10.07L4.56 10.55ZM3.35 10.3L2.69 10.4L3.15 10.2ZM3.48 10.03L3.15 9.45L3.28 9.93ZM5.82 9.07L5.14 8.84L5.71 8.88ZM6.08 8.92L6.2 8.2L5.97 8.73ZM5.07 7.82L4.39 7.59L4.96 7.63ZM5.33 7.67L5.45 6.95L5.22 7.48ZM4.32 6.57L3.64 6.34L4.21 6.38ZM4.58 6.42L4.7 5.7L4.47 6.23ZM7.85 8.27L7.32 7.72L7.85 8.05ZM8.15 8.27L8.68 7.72L8.15 8.05ZM7.85 6.84L7.32 6.29L7.85 6.62ZM8.15 6.84L8.68 6.29L8.15 6.62ZM7.85 5.41L7.32 4.86L7.85 5.19ZM8.15 5.41L8.68 4.86L8.15 5.19ZM7.85 3.97L7.32 3.42L7.85 3.75ZM8.15 3.97L8.68 3.42L8.15 3.75ZM9.92 8.92L9.8 8.2L10.03 8.73ZM10.18 9.07L10.86 8.84L10.29 8.88ZM10.67 7.67L10.55 6.95L10.78 7.48ZM10.93 7.82L11.61 7.59L11.04 7.63ZM11.42 6.42L11.3 5.7L11.53 6.23ZM11.68 6.57L12.36 6.34L11.79 6.38ZM11.24 10.65L11.57 10.07L11.44 10.55ZM11.38 10.92L12.04 11.02L11.57 10.82ZM12.52 10.03L12.85 9.45L12.72 9.93ZM12.65 10.3L13.31 10.4L12.85 10.2Z', rgba: NIRN_HAZE",
-    "new": "'M6.41 12.63L3.32 13.39L6.46 12.84ZM6.61 11.6L1.69 9.32L6.51 11.8ZM7.27 10.97L3.5 4.91L7.08 11.09ZM8.11 10.8L8 2.28L7.89 10.8ZM8.92 11.09L12.5 4.91L8.73 10.97ZM9.49 11.8L14.31 9.32L9.39 11.6ZM9.54 12.84L12.68 13.39L9.59 12.63ZM4.62 10.92L3.96 11.02L4.43 10.82ZM4.76 10.65L4.43 10.07L4.56 10.55ZM3.35 10.3L2.69 10.4L3.15 10.2ZM3.48 10.03L3.15 9.45L3.28 9.93ZM5.82 9.07L5.14 8.84L5.71 8.88ZM6.08 8.92L6.2 8.2L5.97 8.73ZM5.07 7.82L4.39 7.59L4.96 7.63ZM5.33 7.67L5.45 6.95L5.22 7.48ZM4.32 6.57L3.64 6.34L4.21 6.38ZM4.58 6.42L4.7 5.7L4.47 6.23ZM7.85 8.27L7.32 7.72L7.85 8.05ZM8.15 8.27L8.68 7.72L8.15 8.05ZM7.85 6.84L7.32 6.29L7.85 6.62ZM8.15 6.84L8.68 6.29L8.15 6.62ZM7.85 5.41L7.32 4.86L7.85 5.19ZM8.15 5.41L8.68 4.86L8.15 5.19ZM7.85 3.97L7.32 3.42L7.85 3.75ZM8.15 3.97L8.68 3.42L8.15 3.75ZM9.92 8.92L9.8 8.2L10.03 8.73ZM10.18 9.07L10.86 8.84L10.29 8.88ZM10.67 7.67L10.55 6.95L10.78 7.48ZM10.93 7.82L11.61 7.59L11.04 7.63ZM11.42 6.42L11.3 5.7L11.53 6.23ZM11.68 6.57L12.36 6.34L11.79 6.38ZM11.24 10.65L11.57 10.07L11.44 10.55ZM11.38 10.92L12.04 11.02L11.57 10.82ZM12.52 10.03L12.85 9.45L12.72 9.93ZM12.65 10.3L13.31 10.4L12.85 10.2Z', rgba: NIRN_DEEP",
+    "old": "      rgba: NIRN_HAZE,",
+    "new": "      rgba: NIRN_DEEP,",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "NIRNROOT-SAGE-stem-out-of-stem",
     "file": "src/ui/playerBadge.js",
-    "old": "'M7.86 15.45L7.9 12.7L8.1 12.7L8.14 15.45Z'",
-    "new": "'M7.86 11.45L7.9 8.7L8.1 8.7L8.14 11.45Z'",
+    "old": "    Object.freeze({ path: 'M7.86 15.45L7.9 12.7L8.1 12.7L8.14 15.45Z', rgba: NIRN_DEEP }),",
+    "new": "    Object.freeze({ path: 'M7.86 11.45L7.9 8.7L8.1 8.7L8.14 11.45Z', rgba: NIRN_DEEP }),",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "NIRNROOT-SAGE-leaflet-dropped",
     "file": "src/ui/playerBadge.js",
-    "old": "L9 12.51L9.52 12.59L10.62 12.29L10.73 12.62L11.8 12.46L11.89 12.86L12.88 13.08L13.28 13.52L12.73 13.76L11.74 13.56L11.49 13.89L10.58 13.31L10.35 13.56L9.47 12.85L8.96 12.71L8.26 12.9L8.32 15.6Z'",
-    "new": "L8.26 12.9L8.32 15.6Z'",
+    "old": "    'M7.68 15.6L7.74 12.9L7.04 12.71L6.53 12.85L5.65 13.56L5.42 13.31L4.51 13.89L4.26 13.56L3.27 13.76L2.72 13.52L3.12 13.08L4.11 12.86L4.2 12.46L5.27 12.62L5.38 12.29L6.48 12.59L7 12.51L7.11 12.29L7.06 12.05L6.27 11.75L4.92 11.76L4.89 11.35L3.55 11.35L3.57 10.82L2.33 10.62L2.34 10.12L1.26 9.58L0.81 8.89L1.62 8.82L2.71 9.34L3.1 9.02L4.03 9.88L4.43 9.54L5.26 10.59L5.6 10.37L6.42 11.43L7.15 11.87L7.34 11.79L7.4 11.59L6.75 10.73L5.59 9.98L5.79 9.6L4.58 8.88L4.91 8.43L3.79 7.66L4.16 7.18L3.23 6.29L3.53 5.85L2.89 4.79L2.85 3.83L3.68 4.32L4.32 5.38L4.84 5.32L5.19 6.56L5.79 6.45L5.94 7.81L6.49 7.73L6.57 9.13L6.99 9.13L7.11 10.51L7.57 11.49L7.76 11.53L7.9 11.4L7.77 10.13L7.17 8.91L7.54 8.7L6.86 7.48L7.38 7.27L6.71 6.05L7.32 5.83L6.78 4.62L7.37 4.4L7.05 3.19L7.54 2.97L7.52 1.76L8 0.8L8.48 1.76L8.46 2.97L8.95 3.19L8.63 4.4L9.22 4.62L8.68 5.83L9.29 6.05L8.62 7.27L9.14 7.48L8.46 8.7L8.83 8.91L8.23 10.13L8.1 11.4L8.24 11.53L8.43 11.49L8.89 10.51L9.01 9.13L9.43 9.13L9.51 7.73L10.06 7.81L10.21 6.45L10.81 6.56L11.16 5.32L11.68 5.38L12.32 4.32L13.15 3.83L13.11 4.79L12.47 5.85L12.77 6.29L11.84 7.18L12.21 7.66L11.09 8.43L11.42 8.88L10.21 9.6L10.41 9.98L9.25 10.73L8.6 11.59L8.66 11.79L8.85 11.87L9.58 11.43L10.4 10.37L10.74 10.59L11.57 9.54L11.97 9.88L12.9 9.02L13.29 9.34L14.38 8.82L15.19 8.89L14.74 9.58L13.66 10.12L13.67 10.62L12.43 10.82L12.45 11.35L11.11 11.35L11.08 11.76L9.73 11.75L8.94 12.05L8.89 12.29L9 12.51L9.52 12.59L10.62 12.29L10.73 12.62L11.8 12.46L11.89 12.86L12.88 13.08L13.28 13.52L12.73 13.76L11.74 13.56L11.49 13.89L10.58 13.31L10.35 13.56L9.47 12.85L8.96 12.71L8.26 12.9L8.32 15.6Z',",
+    "new": "    'M7.68 15.6L7.74 12.9L7.04 12.71L6.53 12.85L5.65 13.56L5.42 13.31L4.51 13.89L4.26 13.56L3.27 13.76L2.72 13.52L3.12 13.08L4.11 12.86L4.2 12.46L5.27 12.62L5.38 12.29L6.48 12.59L7 12.51L7.11 12.29L7.06 12.05L6.27 11.75L4.92 11.76L4.89 11.35L3.55 11.35L3.57 10.82L2.33 10.62L2.34 10.12L1.26 9.58L0.81 8.89L1.62 8.82L2.71 9.34L3.1 9.02L4.03 9.88L4.43 9.54L5.26 10.59L5.6 10.37L6.42 11.43L7.15 11.87L7.34 11.79L7.4 11.59L6.75 10.73L5.59 9.98L5.79 9.6L4.58 8.88L4.91 8.43L3.79 7.66L4.16 7.18L3.23 6.29L3.53 5.85L2.89 4.79L2.85 3.83L3.68 4.32L4.32 5.38L4.84 5.32L5.19 6.56L5.79 6.45L5.94 7.81L6.49 7.73L6.57 9.13L6.99 9.13L7.11 10.51L7.57 11.49L7.76 11.53L7.9 11.4L7.77 10.13L7.17 8.91L7.54 8.7L6.86 7.48L7.38 7.27L6.71 6.05L7.32 5.83L6.78 4.62L7.37 4.4L7.05 3.19L7.54 2.97L7.52 1.76L8 0.8L8.48 1.76L8.46 2.97L8.95 3.19L8.63 4.4L9.22 4.62L8.68 5.83L9.29 6.05L8.62 7.27L9.14 7.48L8.46 8.7L8.83 8.91L8.23 10.13L8.1 11.4L8.24 11.53L8.43 11.49L8.89 10.51L9.01 9.13L9.43 9.13L9.51 7.73L10.06 7.81L10.21 6.45L10.81 6.56L11.16 5.32L11.68 5.38L12.32 4.32L13.15 3.83L13.11 4.79L12.47 5.85L12.77 6.29L11.84 7.18L12.21 7.66L11.09 8.43L11.42 8.88L10.21 9.6L10.41 9.98L9.25 10.73L8.6 11.59L8.66 11.79L8.85 11.87L9.58 11.43L10.4 10.37L10.74 10.59L11.57 9.54L11.97 9.88L12.9 9.02L13.29 9.34L14.38 8.82L15.19 8.89L14.74 9.58L13.66 10.12L13.67 10.62L12.43 10.82L12.45 11.35L11.11 11.35L11.08 11.76L9.73 11.75L8.94 12.05L8.89 12.29L8.26 12.9L8.32 15.6Z',",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "NIRNROOT-SAGE-outline-crossing",
     "file": "src/ui/playerBadge.js",
-    "old": "L7.52 1.76L8 0.8",
-    "new": "L9.52 1.76L8 0.8",
+    "old": "    'M7.68 15.6L7.74 12.9L7.04 12.71L6.53 12.85L5.65 13.56L5.42 13.31L4.51 13.89L4.26 13.56L3.27 13.76L2.72 13.52L3.12 13.08L4.11 12.86L4.2 12.46L5.27 12.62L5.38 12.29L6.48 12.59L7 12.51L7.11 12.29L7.06 12.05L6.27 11.75L4.92 11.76L4.89 11.35L3.55 11.35L3.57 10.82L2.33 10.62L2.34 10.12L1.26 9.58L0.81 8.89L1.62 8.82L2.71 9.34L3.1 9.02L4.03 9.88L4.43 9.54L5.26 10.59L5.6 10.37L6.42 11.43L7.15 11.87L7.34 11.79L7.4 11.59L6.75 10.73L5.59 9.98L5.79 9.6L4.58 8.88L4.91 8.43L3.79 7.66L4.16 7.18L3.23 6.29L3.53 5.85L2.89 4.79L2.85 3.83L3.68 4.32L4.32 5.38L4.84 5.32L5.19 6.56L5.79 6.45L5.94 7.81L6.49 7.73L6.57 9.13L6.99 9.13L7.11 10.51L7.57 11.49L7.76 11.53L7.9 11.4L7.77 10.13L7.17 8.91L7.54 8.7L6.86 7.48L7.38 7.27L6.71 6.05L7.32 5.83L6.78 4.62L7.37 4.4L7.05 3.19L7.54 2.97L7.52 1.76L8 0.8L8.48 1.76L8.46 2.97L8.95 3.19L8.63 4.4L9.22 4.62L8.68 5.83L9.29 6.05L8.62 7.27L9.14 7.48L8.46 8.7L8.83 8.91L8.23 10.13L8.1 11.4L8.24 11.53L8.43 11.49L8.89 10.51L9.01 9.13L9.43 9.13L9.51 7.73L10.06 7.81L10.21 6.45L10.81 6.56L11.16 5.32L11.68 5.38L12.32 4.32L13.15 3.83L13.11 4.79L12.47 5.85L12.77 6.29L11.84 7.18L12.21 7.66L11.09 8.43L11.42 8.88L10.21 9.6L10.41 9.98L9.25 10.73L8.6 11.59L8.66 11.79L8.85 11.87L9.58 11.43L10.4 10.37L10.74 10.59L11.57 9.54L11.97 9.88L12.9 9.02L13.29 9.34L14.38 8.82L15.19 8.89L14.74 9.58L13.66 10.12L13.67 10.62L12.43 10.82L12.45 11.35L11.11 11.35L11.08 11.76L9.73 11.75L8.94 12.05L8.89 12.29L9 12.51L9.52 12.59L10.62 12.29L10.73 12.62L11.8 12.46L11.89 12.86L12.88 13.08L13.28 13.52L12.73 13.76L11.74 13.56L11.49 13.89L10.58 13.31L10.35 13.56L9.47 12.85L8.96 12.71L8.26 12.9L8.32 15.6Z',",
+    "new": "    'M7.68 15.6L7.74 12.9L7.04 12.71L6.53 12.85L5.65 13.56L5.42 13.31L4.51 13.89L4.26 13.56L3.27 13.76L2.72 13.52L3.12 13.08L4.11 12.86L4.2 12.46L5.27 12.62L5.38 12.29L6.48 12.59L7 12.51L7.11 12.29L7.06 12.05L6.27 11.75L4.92 11.76L4.89 11.35L3.55 11.35L3.57 10.82L2.33 10.62L2.34 10.12L1.26 9.58L0.81 8.89L1.62 8.82L2.71 9.34L3.1 9.02L4.03 9.88L4.43 9.54L5.26 10.59L5.6 10.37L6.42 11.43L7.15 11.87L7.34 11.79L7.4 11.59L6.75 10.73L5.59 9.98L5.79 9.6L4.58 8.88L4.91 8.43L3.79 7.66L4.16 7.18L3.23 6.29L3.53 5.85L2.89 4.79L2.85 3.83L3.68 4.32L4.32 5.38L4.84 5.32L5.19 6.56L5.79 6.45L5.94 7.81L6.49 7.73L6.57 9.13L6.99 9.13L7.11 10.51L7.57 11.49L7.76 11.53L7.9 11.4L7.77 10.13L7.17 8.91L7.54 8.7L6.86 7.48L7.38 7.27L6.71 6.05L7.32 5.83L6.78 4.62L7.37 4.4L7.05 3.19L7.54 2.97L9.52 1.76L8 0.8L8.48 1.76L8.46 2.97L8.95 3.19L8.63 4.4L9.22 4.62L8.68 5.83L9.29 6.05L8.62 7.27L9.14 7.48L8.46 8.7L8.83 8.91L8.23 10.13L8.1 11.4L8.24 11.53L8.43 11.49L8.89 10.51L9.01 9.13L9.43 9.13L9.51 7.73L10.06 7.81L10.21 6.45L10.81 6.56L11.16 5.32L11.68 5.38L12.32 4.32L13.15 3.83L13.11 4.79L12.47 5.85L12.77 6.29L11.84 7.18L12.21 7.66L11.09 8.43L11.42 8.88L10.21 9.6L10.41 9.98L9.25 10.73L8.6 11.59L8.66 11.79L8.85 11.87L9.58 11.43L10.4 10.37L10.74 10.59L11.57 9.54L11.97 9.88L12.9 9.02L13.29 9.34L14.38 8.82L15.19 8.89L14.74 9.58L13.66 10.12L13.67 10.62L12.43 10.82L12.45 11.35L11.11 11.35L11.08 11.76L9.73 11.75L8.94 12.05L8.89 12.29L9 12.51L9.52 12.59L10.62 12.29L10.73 12.62L11.8 12.46L11.89 12.86L12.88 13.08L13.28 13.52L12.73 13.76L11.74 13.56L11.49 13.89L10.58 13.31L10.35 13.56L9.47 12.85L8.96 12.71L8.26 12.9L8.32 15.6Z',",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],

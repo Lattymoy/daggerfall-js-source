@@ -141,8 +141,8 @@
   {
     "name": "CHAP4C-BADGE-ARM",
     "file": "src/ui/playerBadge.js",
-    "old": ": CHAPTER_TITLES.includes(key) ? chapterTitleText(key, peer?.ts) : null) ?? TITLE_TEXT[key];",
-    "new": ": null) ?? TITLE_TEXT[key];",
+    "old": "  const text =\n    (SEAT_TITLES.includes(key)\n      ? seatTitleText(key, peer?.ts, _seatPlace)\n      : CHAPTER_TITLES.includes(key)\n        ? chapterTitleText(key, peer?.ts)\n        : null) ?? TITLE_TEXT[key];",
+    "new": "  const text = (SEAT_TITLES.includes(key) ? seatTitleText(key, peer?.ts, _seatPlace) : null) ?? TITLE_TEXT[key];",
     "tests": [
       "test/net/chap4c_titles.test.js"
     ]
@@ -150,8 +150,8 @@
   {
     "name": "CHAP4C-BADGE-WORD",
     "file": "src/ui/playerBadge.js",
-    "old": "  chapterofficer: 'Chapter Councillor',",
-    "new": "  chapterofficer: 'Councillor',",
+    "old": "  chapterofficer: 'Chapter Councillor', // GUILD3a (bible/11-Multiplayer/Guilds-Made-Plain.md): a chapter's rank 8 sits on its council - \"Officer\" is a player guild's rank",
+    "new": "  chapterofficer: 'Councillor', // GUILD3a (bible/11-Multiplayer/Guilds-Made-Plain.md): a chapter's rank 8 sits on its council - \"Officer\" is a player guild's rank",
     "tests": [
       "test/net/chap4c_titles.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "CHAP4C-BADGE-RGBA",
     "file": "src/ui/playerBadge.js",
-    "old": "  formermaster: Object.freeze([0.604, 0.627, 0.659, 1]),    // #9aa0a8",
-    "new": "  formermaster: Object.freeze([0.851, 0.867, 0.890, 1]),",
+    "old": "  formermaster: Object.freeze([0.604, 0.627, 0.659, 1]), // #9aa0a8",
+    "new": "  formermaster: Object.freeze([0.851, 0.867, 0.89, 1]),",
     "tests": [
       "test/net/chap4c_titles.test.js"
     ]

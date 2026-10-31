@@ -405,8 +405,8 @@
   {
     "name": "INS-glyph-stroke-filled",
     "file": "src/ui/playerBadge.js",
-    "old": "    if (GLYPH_STROKE[g.key]) {\n      path.setAttribute('fill', 'none');",
-    "new": "    if (false) {\n      path.setAttribute('fill', 'none');",
+    "old": "    if (GLYPH_STROKE[g.key]) {",
+    "new": "    if (false) {",
     "tests": [
       "test/ui/inspect1.test.js",
       "test/ui/chatfit.test.js"
@@ -416,8 +416,8 @@
   {
     "name": "INS-glyph-stroke-width-ignored",
     "file": "src/ui/playerBadge.js",
-    "old": "    path.setAttribute('stroke-width', String(strokeWidth));",
-    "new": "    path.setAttribute('stroke-width', '1.8');",
+    "old": "      path.setAttribute('stroke-width', String(strokeWidth));",
+    "new": "      path.setAttribute('stroke-width', '1.8');",
     "tests": [
       "test/ui/inspect1.test.js",
       "test/ui/chatfit.test.js"

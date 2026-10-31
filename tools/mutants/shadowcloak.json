@@ -2,8 +2,8 @@
   {
     "name": "SHADOWCLOAK-the-word",
     "file": "src/ui/playerBadge.js",
-    "old": "  shadowcloak: 'Holo Shadow Cloak',",
-    "new": "  shadowcloak: 'Shadow Cloak',",
+    "old": "  shadowcloak: 'Holo Shadow Cloak', // SHADOW-CLOAK: the Shadow Fang's hooded cloak of shadow and crimson light, granted with the title",
+    "new": "  shadowcloak: 'Shadow Cloak', // SHADOW-CLOAK: the Shadow Fang's hooded cloak of shadow and crimson light, granted with the title",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SHADOWCLOAK-the-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
-    "new": "radiance: 'primarch', shadowcloak: 'aegis', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
+    "old": "  shadowcloak: 'shadowfang',",
+    "new": "  shadowcloak: 'aegis',",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],

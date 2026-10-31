@@ -83,8 +83,8 @@
   {
     "name": "PROFILE-MENU-the-plates-title-colourless",
     "file": "src/ui/playerBadge.js",
-    "old": "  ...TITLES.map((t) => `.card .acctworntitle.${badgeClass('tl', t)} { color: ${cssRgba(TITLE_RGBA[t])}; }`),\n",
-    "new": "  ...[],\n",
+    "old": "    ...TITLES.map((t) => `.card .acctworntitle.${badgeClass('tl', t)} { color: ${cssRgba(TITLE_RGBA[t])}; }`),",
+    "new": "    ...[],",
     "tests": [
       "test/ui/enhanced/plus_menu_site.test.js"
     ]

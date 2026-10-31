@@ -32,8 +32,8 @@
   {
     "name": "HOURSFIRST-another-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
-    "new": "firsthour: 'hourbreaker', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
+    "old": "  firsthour: 'hoursfirst',",
+    "new": "  firsthour: 'hourbreaker',",
     "tests": [
       "test/net/hoursfirst.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "HOURSFIRST-the-gradient-turned",
     "file": "src/ui/playerBadge.js",
-    "old": "hoursfirst: Object.freeze([HOUR_DAWN, HOUR_PEARL, HOUR_SUN]),",
-    "new": "hoursfirst: Object.freeze([HOUR_SUN, HOUR_PEARL, HOUR_DAWN]),",
+    "old": "  hoursfirst: Object.freeze([HOUR_DAWN, HOUR_PEARL, HOUR_SUN]), // HOURS-FIRST: rose gold into pearl into the dawn's white",
+    "new": "  hoursfirst: Object.freeze([HOUR_SUN, HOUR_PEARL, HOUR_DAWN]), // HOURS-FIRST: rose gold into pearl into the dawn's white",
     "tests": [
       "test/net/hoursfirst.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "HOURSFIRST-the-hourbreakers-colour",
     "file": "src/ui/playerBadge.js",
-    "old": "  hoursfirst: HOUR_DAWN,    // HOURS-FIRST",
-    "new": "  hoursfirst: HOUR_GOLD,    // HOURS-FIRST",
+    "old": "  hoursfirst: HOUR_DAWN, // HOURS-FIRST: the first dawn's rose gold",
+    "new": "  hoursfirst: HOUR_GOLD, // HOURS-FIRST: the first dawn's rose gold",
     "tests": [
       "test/net/hoursfirst.test.js"
     ],

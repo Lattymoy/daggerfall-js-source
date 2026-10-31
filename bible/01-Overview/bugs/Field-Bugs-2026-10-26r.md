@@ -2748,7 +2748,7 @@ the turn, a pinch's second finger, a control's press, the pan) to the page: the 
 
 FIXED. A capture is a drag's comfort, never its law: refused, the press still lands where it was pressed. Every capture
 and release in the game's own windows goes through one door that answers a refusal
-(`pointerCapture.js:"export function capturePointer("`, releasePointer): the map's four, the Firmament's sky, the
+(`pointerCapture.js:"export function capturePointer"`, releasePointer): the map's four, the Firmament's sky, the
 charts, the sky window, the work board, the pack's figure, the deck plan, the family tree, the chat's grip (both) and
 the POI editor's. The six that catch their own refusal on their line stand - four captures and two releases, in five files (AUDIT RPT1026 K5: this said four; the door's own line said a missing element answers false, and it answers true - nothing to refuse). The labs under `src/tools` are pages of
 their own, mouse alone. Docs: `10-UI/Held-Map-Arc.md` PAD-CAPTURE; `10-UI/UI.md` counts the module (420).

@@ -140,8 +140,8 @@
     "tests": [
       "test/ui/overhauls.test.js"
     ],
-    "old": "export const playerTradeReady = () => typeof document !== 'undefined';",
-    "new": "export const playerTradeReady = () => false;"
+    "old": "export const playerTradeReady = () => typeof document !== 'undefined'; // OVH3: an online window - it keeps its own face over either skin",
+    "new": "export const playerTradeReady = () => false; // OVH3: an online window - it keeps its own face over either skin"
   },
   {
     "name": "OVH3-chat-gated-back-on-the-skin",

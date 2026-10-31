@@ -12,10 +12,20 @@
 /** Capture pointer `id` on `el`; false where the browser refused it (no such pointer). No element, or one with no capture,
  *  has nothing to refuse: true (AUDIT RPT1026 K5 - this said false). */
 export function capturePointer(/** @type {any} */ el, /** @type {number} */ id) {
-  try { el?.setPointerCapture?.(id); return true; } catch { return false; }
+  try {
+    el?.setPointerCapture?.(id);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** Release pointer `id` from `el`; false where the browser refused it. */
 export function releasePointer(/** @type {any} */ el, /** @type {number} */ id) {
-  try { el?.releasePointerCapture?.(id); return true; } catch { return false; }
+  try {
+    el?.releasePointerCapture?.(id);
+    return true;
+  } catch {
+    return false;
+  }
 }

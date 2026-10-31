@@ -636,7 +636,7 @@
   {
     "name": "EGECO2-colour-shared",
     "file": "src/ui/playerBadge.js",
-    "old": "  spirechampion: Object.freeze([0.275, 0.839, 0.549, 1]),   // #46d68c",
+    "old": "  spirechampion: Object.freeze([0.275, 0.839, 0.549, 1]), // #46d68c",
     "new": "  spirechampion: SPIRE_KYN,",
     "tests": [
       "test/net/eliteGates/egeco_honours.test.js"
@@ -645,8 +645,8 @@
   {
     "name": "EGECO2-aura-in-anothers-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "beaconlight: 'kynbane', burningstair: 'wellheadwalker'",
-    "new": "beaconlight: 'founder', burningstair: 'wellheadwalker'",
+    "old": "  beaconlight: 'kynbane',",
+    "new": "  beaconlight: 'founder',",
     "tests": [
       "test/net/eliteGates/egeco_honours.test.js"
     ]

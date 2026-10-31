@@ -281,8 +281,8 @@
   {
     "name": "LOOT-BANNER-the-feed-cards-the-banners-piece",
     "file": "src/ui/pickupFeed.js",
-    "old": ".filter((m) => !fresh(m)).map(",
-    "new": ".filter(() => true).map(",
+    "old": "      .filter((m) => !fresh(m))",
+    "new": "      .filter(() => true)",
     "tests": [
       "test/systems/pickupfeed.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "LOOT-BANNER-the-take-says-a-line-for-the-banners-piece",
     "file": "src/ui/pickupFeed.js",
-    "old": "    if (!entries.length) return banners;\n",
-    "new": "    if (!entries.length) return false;\n",
+    "old": "    if (!entries.length) return banners;",
+    "new": "    if (!entries.length) return false;",
     "tests": [
       "test/systems/pickupfeed.test.js"
     ]

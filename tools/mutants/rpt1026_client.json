@@ -243,8 +243,8 @@
   {
     "name": "RPT1026-CAPTURE-door-throws",
     "file": "src/ui/pointerCapture.js",
-    "old": "  try { el?.setPointerCapture?.(id); return true; } catch { return false; }",
-    "new": "  el?.setPointerCapture?.(id); return true;",
+    "old": "  try {\n    el?.setPointerCapture?.(id);\n    return true;\n  } catch {\n    return false;\n  }",
+    "new": "  el?.setPointerCapture?.(id);\n  return true;",
     "tests": [
       "test/ui/rpt1026_client_capture.test.js"
     ],
@@ -253,8 +253,8 @@
   {
     "name": "RPT1026-CAPTURE-release-throws",
     "file": "src/ui/pointerCapture.js",
-    "old": "  try { el?.releasePointerCapture?.(id); return true; } catch { return false; }",
-    "new": "  el?.releasePointerCapture?.(id); return true;",
+    "old": "  try {\n    el?.releasePointerCapture?.(id);\n    return true;\n  } catch {\n    return false;\n  }",
+    "new": "  el?.releasePointerCapture?.(id);\n  return true;",
     "tests": [
       "test/ui/rpt1026_client_capture.test.js"
     ],

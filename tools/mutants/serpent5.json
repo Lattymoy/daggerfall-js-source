@@ -83,8 +83,8 @@
   {
     "name": "SERPENT5-the-word",
     "file": "src/ui/playerBadge.js",
-    "old": "  maelstrom: 'The Maelstrom',",
-    "new": "  maelstrom: 'Maelstrom',",
+    "old": "  maelstrom: 'The Maelstrom', // SERPENT5: the Old Coil's whirlpool of tide and foam, one dealing ship's serpent kill in fifty",
+    "new": "  maelstrom: 'Maelstrom', // SERPENT5: the Old Coil's whirlpool of tide and foam, one dealing ship's serpent kill in fifty",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SERPENT5-the-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "maelstrom: 'coilbreaker', beaconlight:",
-    "new": "maelstrom: 'hourbreaker', beaconlight:",
+    "old": "  maelstrom: 'coilbreaker',",
+    "new": "  maelstrom: 'hourbreaker',",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ],

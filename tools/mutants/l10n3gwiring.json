@@ -138,7 +138,7 @@
     "name": "L10N3g-ui-playerHistory-130-grammar",
     "file": "src/ui/playerHistory.js",
     "old": "      shadowText(renderer, font, processGrammar(String(lines[i] ?? '')), m, TEXT_X, y);",
-    "new": "      shadowText(renderer, font, (String(lines[i] ?? '')), m, TEXT_X, y);",
+    "new": "      shadowText(renderer, font, String(lines[i] ?? ''), m, TEXT_X, y);",
     "tests": [
       "test/ui/l10n3g_wiring.test.js"
     ]
@@ -219,7 +219,7 @@
     "name": "L10N3g-prison-days-raw",
     "file": "src/ui/prisonScreen.js",
     "old": "  return processGrammar(t.replace('%d', String(days)));",
-    "new": "  return (t.replace('%d', String(days)));",
+    "new": "  return t.replace('%d', String(days));",
     "tests": [
       "test/ui/l10n3g_wiring.test.js"
     ]

@@ -150,8 +150,8 @@
   {
     "name": "HAUL-CARDS-bump-xp-unsummed",
     "file": "src/ui/pickupFeed.js",
-    "old": "    for (const f of e.adds ?? []) if (f !== 'count') c[f] = (Number(c[f]) || 0) + (Number(e[f]) || 0);\n",
-    "new": "",
+    "old": "    for (const f of e.adds ?? []) if (f !== 'count') c[f] = (Number(c[f]) || 0) + (Number(e[f]) || 0);\n    for (const f of e.latest ?? []) if (e[f] !== undefined) c[f] = e[f];",
+    "new": "    for (const f of e.latest ?? []) if (e[f] !== undefined) c[f] = e[f];",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "HAUL-CARDS-bump-stores-stale",
     "file": "src/ui/pickupFeed.js",
-    "old": "    for (const f of e.latest ?? []) if (e[f] !== undefined) c[f] = e[f];\n",
-    "new": "",
+    "old": "    for (const f of e.latest ?? []) if (e[f] !== undefined) c[f] = e[f];\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "HAUL-CARDS-hold-unread",
     "file": "src/ui/pickupFeed.js",
-    "old": "const holdOf = (c) => (Number.isFinite(c.hold) && c.hold > 0 ? c.hold : hold);",
-    "new": "const holdOf = () => hold;",
+    "old": "  const holdOf = (c) => (Number.isFinite(c.hold) && c.hold > 0 ? c.hold : hold);",
+    "new": "  const holdOf = () => hold;",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "HAUL-CARDS-heights-unread",
     "file": "src/ui/pickupFeed.js",
-    "old": "const hOf = (i) => (Array.isArray(heights) && Number.isFinite(heights[i]) ? heights[i] : cardH);",
-    "new": "const hOf = () => cardH;",
+    "old": "  const hOf = (i) => (Array.isArray(heights) && Number.isFinite(heights[i]) ? heights[i] : cardH);",
+    "new": "  const hOf = () => cardH;",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "HAUL-CARDS-classic-drawn",
     "file": "src/ui/pickupFeed.js",
-    "old": "    if (!isEnhanced()) return false;\n    const d = doc();\n    if (!d?.body || !d.createElement) return false;\n    const list",
-    "new": "    const d = doc();\n    if (!d?.body || !d.createElement) return false;\n    const list",
+    "old": "export function showHaul(entries) {\n  try {\n    if (!isEnhanced()) return false;\n    const d = doc();\n    if (!d?.body || !d.createElement) return false;",
+    "new": "export function showHaul(entries) {\n  try {\n    const d = doc();\n    if (!d?.body || !d.createElement) return false;",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "HAUL-CARDS-bump-unsaid",
     "file": "src/ui/pickupFeed.js",
-    "old": "if (c.bumps !== l.bumps) { c.bumps = l.bumps; c.count = l.count; sayHaul(c, l); pop(c.plus, l.bumps); }",
-    "new": "if (c.bumps !== l.bumps) { c.bumps = l.bumps; c.count = l.count; pop(c.plus, l.bumps); }",
+    "old": "        sayHaul(c, l);\n        pop(c.plus, l.bumps);",
+    "new": "        pop(c.plus, l.bumps);",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -204,8 +204,8 @@
   {
     "name": "HAUL-CARDS-bar-unset",
     "file": "src/ui/pickupFeed.js",
-    "old": "    c.fill.style.width = `${Math.round(w.row.fill * 100)}%`;\n",
-    "new": "",
+    "old": "    c.fill.style.width = `${Math.round(w.row.fill * 100)}%`;\n    c.rowEnd.textContent = w.row.end ?? '';",
+    "new": "    c.rowEnd.textContent = w.row.end ?? '';",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]
@@ -213,8 +213,8 @@
   {
     "name": "HAUL-CARDS-icon-box-a-pickups",
     "file": "src/ui/pickupFeed.js",
-    "old": "const box = line.lode ? LODE_ICON_BOX : line.haul ? HAUL_ICON_BOX : PICKUP_ICON_BOX;",
-    "new": "const box = PICKUP_ICON_BOX;",
+    "old": "  const box = line.lode ? LODE_ICON_BOX : line.haul ? HAUL_ICON_BOX : PICKUP_ICON_BOX; // HAUL-CARDS: fitted to the card's own box",
+    "new": "  const box = PICKUP_ICON_BOX; // HAUL-CARDS: fitted to the card's own box",
     "tests": [
       "test/systems/foraging/haulcards.test.js"
     ]

@@ -20,8 +20,8 @@
   {
     "name": "PENITENT-the-light-a-pale-green",
     "file": "src/ui/playerBadge.js",
-    "old": "const PENITENT_LIGHT = Object.freeze([1, 0.953, 0.839, 1]);",
-    "new": "const PENITENT_LIGHT = Object.freeze([0.8, 0.953, 0.839, 1]);",
+    "old": "const PENITENT_LIGHT = Object.freeze([1, 0.953, 0.839, 1]); // #fff3d6",
+    "new": "const PENITENT_LIGHT = Object.freeze([0.8, 0.953, 0.839, 1]); // #fff3d6",
     "tests": [
       "test/net/penitent.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PENITENT-word",
     "file": "src/ui/playerBadge.js",
-    "old": "  penitent: 'Penitent',              // PENITENT",
-    "new": "  penitent: 'Penance',              // PENITENT",
+    "old": "  penitent: 'Penitent', // PENITENT (2026-09-29, Mac): Diggleborf's own",
+    "new": "  penitent: 'Penance', // PENITENT (2026-09-29, Mac): Diggleborf's own",
     "tests": [
       "test/net/penitent.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PENITENT-edge-its-own-gold",
     "file": "src/ui/playerBadge.js",
-    "old": "export const TITLE_EDGE = Object.freeze({\n  penitent: Object.freeze([0, 0, 0, 1]),\n",
-    "new": "export const TITLE_EDGE = Object.freeze({\n",
+    "old": "  penitent: Object.freeze([0, 0, 0, 1]),\n  gatebreaker: Object.freeze([0, 0, 0, 1]), // WB9g: its ember end is bright - edged in black, as Penitent's",
+    "new": "  gatebreaker: Object.freeze([0, 0, 0, 1]), // WB9g: its ember end is bright - edged in black, as Penitent's",
     "tests": [
       "test/net/penitent.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PENITENT-edge-for-shadow-fang-too",
     "file": "src/ui/playerBadge.js",
-    "old": "  penitent: Object.freeze([0, 0, 0, 1]),\n  gatebreaker:",
-    "new": "  penitent: Object.freeze([0, 0, 0, 1]),\n  shadowfang: Object.freeze([0, 0, 0, 1]),\n  gatebreaker:",
+    "old": "  gatebreaker: Object.freeze([0, 0, 0, 1]), // WB9g: its ember end is bright - edged in black, as Penitent's",
+    "new": "  shadowfang: Object.freeze([0, 0, 0, 1]),\n  gatebreaker: Object.freeze([0, 0, 0, 1]), // WB9g: its ember end is bright - edged in black, as Penitent's",
     "tests": [
       "test/net/penitent.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PENITENT-edge-ignored-by-the-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "    const edge = cssRgba(badge.edge ?? badge.rgba) ?? '';",
-    "new": "    const edge = cssRgba(badge.rgba) ?? '';",
+    "old": "    const edge = cssRgba(badge.edge ?? badge.rgba) ?? ''; // PENITENT: its own edge where TITLE_EDGE names one",
+    "new": "    const edge = cssRgba(badge.rgba) ?? ''; // PENITENT: its own edge where TITLE_EDGE names one",
     "tests": [
       "test/net/penitent.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PENITENT-edge-off-the-badge",
     "file": "src/ui/playerBadge.js",
-    "old": ", edge: TITLE_EDGE[key] ?? null, flame: Object.hasOwn(TITLE_FLAME, key) || Object.hasOwn(TITLE_PLATE, key),",
-    "new": ", flame: Object.hasOwn(TITLE_FLAME, key) || Object.hasOwn(TITLE_PLATE, key),",
+    "old": "    edge: TITLE_EDGE[key] ?? null,\n    flame: Object.hasOwn(TITLE_FLAME, key) || Object.hasOwn(TITLE_PLATE, key),",
+    "new": "    flame: Object.hasOwn(TITLE_FLAME, key) || Object.hasOwn(TITLE_PLATE, key),",
     "tests": [
       "test/net/penitent.test.js"
     ],
@@ -84,8 +84,8 @@
   {
     "name": "PENITENT-lozenge-another-colour",
     "file": "src/ui/playerBadge.js",
-    "old": "  penitent: TITLE_RGBA.penitent,       // PENITENT",
-    "new": "  penitent: TITLE_RGBA.disciple,       // PENITENT",
+    "old": "  penitent: TITLE_RGBA.penitent, // PENITENT: the lozenge in the title's gold - the sword in it is its detail, below",
+    "new": "  penitent: TITLE_RGBA.disciple, // PENITENT: the lozenge in the title's gold - the sword in it is its detail, below",
     "tests": [
       "test/net/penitent.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "PENITENT-sword-in-the-gold",
     "file": "src/ui/playerBadge.js",
-    "old": "L8 14Z', rgba: PENITENT_SKY }),",
-    "new": "L8 14Z', rgba: PENITENT_GOLD }),",
+    "old": "    rgba: PENITENT_SKY,",
+    "new": "    rgba: PENITENT_GOLD,",
     "tests": [
       "test/net/penitent.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "PENITENT-sword-point-up",
     "file": "src/ui/playerBadge.js",
-    "old": "path: 'M8 3.2L8.65 3.85L8 4.5L7.35 3.85ZM7.45 4.5H8.55V6.3H7.45ZM5.9 6.3H10.1V7.3H5.9ZM7.25 7.3H8.75L8 14Z'",
-    "new": "path: 'M8 12.8L8.65 12.15L8 11.5L7.35 12.15ZM7.45 11.5H8.55V9.7H7.45ZM5.9 9.7H10.1V8.7H5.9ZM7.25 8.7H8.75L8 2Z'",
+    "old": "    path: 'M8 3.2L8.65 3.85L8 4.5L7.35 3.85ZM7.45 4.5H8.55V6.3H7.45ZM5.9 6.3H10.1V7.3H5.9ZM7.25 7.3H8.75L8 14Z',",
+    "new": "    path: 'M8 12.8L8.65 12.15L8 11.5L7.35 12.15ZM7.45 11.5H8.55V9.7H7.45ZM5.9 9.7H10.1V8.7H5.9ZM7.25 8.7H8.75L8 2Z',",
     "tests": [
       "test/net/penitent.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "PENITENT-guard-through-the-sides",
     "file": "src/ui/playerBadge.js",
-    "old": "ZM5.9 6.3H10.1V7.3H5.9ZM",
-    "new": "ZM4.6 6.3H11.4V7.3H4.6ZM",
+    "old": "    path: 'M8 3.2L8.65 3.85L8 4.5L7.35 3.85ZM7.45 4.5H8.55V6.3H7.45ZM5.9 6.3H10.1V7.3H5.9ZM7.25 7.3H8.75L8 14Z',",
+    "new": "    path: 'M8 3.2L8.65 3.85L8 4.5L7.35 3.85ZM7.45 4.5H8.55V6.3H7.45ZM4.6 6.3H11.4V7.3H4.6ZM7.25 7.3H8.75L8 14Z',",
     "tests": [
       "test/net/penitent.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "PENITENT-a-cross-not-a-sword",
     "file": "src/ui/playerBadge.js",
-    "old": "ZM7.45 4.5H8.55V6.3H7.45ZM5.9 6.3H10.1V7.3H5.9ZM7.25 7.3H8.75L8 14Z'",
-    "new": "ZM7.45 4.5H8.55V8.3H7.45ZM5.9 8.3H10.1V9.3H5.9ZM7.25 9.3H8.75L8 14Z'",
+    "old": "    path: 'M8 3.2L8.65 3.85L8 4.5L7.35 3.85ZM7.45 4.5H8.55V6.3H7.45ZM5.9 6.3H10.1V7.3H5.9ZM7.25 7.3H8.75L8 14Z',",
+    "new": "    path: 'M8 3.2L8.65 3.85L8 4.5L7.35 3.85ZM7.45 4.5H8.55V8.3H7.45ZM5.9 8.3H10.1V9.3H5.9ZM7.25 9.3H8.75L8 14Z',",
     "tests": [
       "test/net/penitent.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "PENITENT-lozenge-filled",
     "file": "src/ui/playerBadge.js",
-    "old": "shadowfang: false, penitent: true, herald: true, tower: false,",
-    "new": "shadowfang: false, penitent: false, herald: true, tower: false,",
+    "old": "  penitent: true,",
+    "new": "  penitent: false,",
     "tests": [
       "test/net/penitent.test.js"
     ],
@@ -148,8 +148,8 @@
   {
     "name": "PENITENT-mark-another-glyphs",
     "file": "src/ui/playerBadge.js",
-    "old": "  penitent: '|',",
-    "new": "  penitent: '>',",
+    "old": "  penitent: '|', // PENITENT: the sword's blade, one upright stroke",
+    "new": "  penitent: '>', // PENITENT: the sword's blade, one upright stroke",
     "tests": [
       "test/net/penitent.test.js"
     ]

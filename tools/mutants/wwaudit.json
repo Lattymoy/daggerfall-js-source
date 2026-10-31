@@ -402,8 +402,8 @@
   {
     "name": "WWAUDIT-A7-the-nose-cut",
     "file": "src/ui/playerBadge.js",
-    "old": "    svg.setAttribute('overflow', 'visible');",
-    "new": "",
+    "old": "    svg.setAttribute('overflow', 'visible'); // AUDIT A7: the edge round a shape that meets the box's side (the wolf's nose) is drawn, not cut",
+    "new": "    // AUDIT A7: the edge round a shape that meets the box's side (the wolf's nose) is drawn, not cut",
     "tests": [
       "test/ui/shadowfang.test.js"
     ],
@@ -432,8 +432,8 @@
   {
     "name": "WWAUDIT-A4-the-edge-on-the-letters",
     "file": "src/ui/playerBadge.js",
-    "old": "    out.fontWeight = '500';",
-    "new": "    out.fontWeight = '700'; out.webkitTextStroke = `0.5px ${edge}`;",
+    "old": "    out.webkitTextFillColor = 'transparent';\n    out.fontWeight = '500';",
+    "new": "    out.webkitTextFillColor = 'transparent';\n    out.fontWeight = '700';\n    out.webkitTextStroke = `0.5px ${edge}`;",
     "tests": [
       "test/ui/shadowfang.test.js"
     ],

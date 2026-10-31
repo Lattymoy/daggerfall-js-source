@@ -521,8 +521,8 @@
   {
     "name": "SEAT1c-client-plain-word",
     "file": "src/ui/playerBadge.js",
-    "old": "const text = (SEAT_TITLES.includes(key) ? seatTitleText(key, peer?.ts, _seatPlace) : CHAPTER_TITLES.includes(key)",
-    "new": "const text = (SEAT_TITLES.includes(key) ? null : CHAPTER_TITLES.includes(key)",
+    "old": "    (SEAT_TITLES.includes(key)\n      ? seatTitleText(key, peer?.ts, _seatPlace)\n      : CHAPTER_TITLES.includes(key)\n        ? chapterTitleText(key, peer?.ts)\n        : null) ?? TITLE_TEXT[key];",
+    "new": "    (SEAT_TITLES.includes(key) ? null : CHAPTER_TITLES.includes(key) ? chapterTitleText(key, peer?.ts) : null) ??\n    TITLE_TEXT[key];",
     "tests": [
       "test/net/seat1c_titles.test.js"
     ]

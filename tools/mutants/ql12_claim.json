@@ -241,8 +241,8 @@
   {
     "name": "QL12-word",
     "file": "src/ui/playerBadge.js",
-    "old": "satakalwitness: \"Satakal's Witness\",",
-    "new": "satakalwitness: 'Satakal Witness',",
+    "old": "  satakalwitness: \"Satakal's Witness\", // the Old Coil",
+    "new": "  satakalwitness: 'Satakal Witness', // the Old Coil",
     "tests": [
       "test/server/ql12_claim.test.js"
     ]

@@ -327,8 +327,8 @@
   {
     "name": "SERAPHWINGS-the-word",
     "file": "src/ui/playerBadge.js",
-    "old": "  seraphwings: 'Seraph Wings',",
-    "new": "  seraphwings: 'seraphwings',",
+    "old": "  seraphwings: 'Seraph Wings', // SERAPH-WINGS: wings of flowing golden light, the developers' own",
+    "new": "  seraphwings: 'seraphwings', // SERAPH-WINGS: wings of flowing golden light, the developers' own",
     "tests": [
       "test/net/seraphwings.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "SERAPHWINGS-the-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
-    "new": "shadowcloak: 'shadowfang', seraphwings: 'developer', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
+    "old": "  seraphwings: 'founder',",
+    "new": "  seraphwings: 'developer',",
     "tests": [
       "test/net/seraphwings.test.js"
     ],

@@ -263,8 +263,8 @@
   {
     "name": "CHAP6E-BADGE-TEXT-HIGH",
     "file": "src/ui/playerBadge.js",
-    "old": "  highmaster: 'High Master',      // CHAP6e",
-    "new": "  highmaster: 'Master',      // CHAP6e",
+    "old": "  highmaster: 'High Master', // CHAP6e: a Master's in its chapter's Ascendancy - GUILD3e: while its chapter stands Ascendant",
+    "new": "  highmaster: 'Master', // CHAP6e: a Master's in its chapter's Ascendancy - GUILD3e: while its chapter stands Ascendant",
     "tests": [
       "test/net/chap6e_titles.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "CHAP6E-BADGE-TEXT-SEASON",
     "file": "src/ui/playerBadge.js",
-    "old": "  seasonmaster: 'Season Master',  // CHAP6e",
-    "new": "  seasonmaster: 'Master',  // CHAP6e",
+    "old": "  seasonmaster: 'Season Master', // CHAP6e: a Season's Master's, kept for good",
+    "new": "  seasonmaster: 'Master', // CHAP6e: a Season's Master's, kept for good",
     "tests": [
       "test/net/chap6e_titles.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "CHAP6E-BADGE-RGBA-HIGH",
     "file": "src/ui/playerBadge.js",
-    "old": "highmaster: Object.freeze([0.365, 0.612, 0.925, 1]),",
-    "new": "highmaster: Object.freeze([0.365, 0.612, 0.9, 1]),",
+    "old": "  highmaster: Object.freeze([0.365, 0.612, 0.925, 1]), // #5d9cec",
+    "new": "  highmaster: Object.freeze([0.365, 0.612, 0.9, 1]), // #5d9cec",
     "tests": [
       "test/net/chap6e_titles.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "CHAP6E-BADGE-RGBA-SEASON",
     "file": "src/ui/playerBadge.js",
-    "old": "seasonmaster: Object.freeze([0.435, 0.561, 0.722, 1]),",
-    "new": "seasonmaster: Object.freeze([0.435, 0.561, 0.7, 1]),",
+    "old": "  seasonmaster: Object.freeze([0.435, 0.561, 0.722, 1]), // #6f8fb8",
+    "new": "  seasonmaster: Object.freeze([0.435, 0.561, 0.7, 1]), // #6f8fb8",
     "tests": [
       "test/net/chap6e_titles.test.js"
     ]

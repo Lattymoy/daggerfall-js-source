@@ -119,8 +119,8 @@
   {
     "name": "CK-the-player-trade-door-names-no-window",
     "file": "src/ui/playerTradeDoor.js",
-    "old": "owner: overlay } }",
-    "new": "owner: null } }",
+    "old": "      view = mountEnhancedPlayerTrade(host, { session, deps: { ...deps, onExit: close, owner: overlay } });",
+    "new": "      view = mountEnhancedPlayerTrade(host, { session, deps: { ...deps, onExit: close, owner: null } });",
     "tests": [
       "test/ui/coveredkeys.test.js"
     ]

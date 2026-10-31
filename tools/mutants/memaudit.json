@@ -38,8 +38,8 @@
   {
     "name": "MA-the-fog-skipped-inside-its-reach",
     "file": "src/ui/pixelGround.js",
-    "old": "if (dx >= f.r || dx <= -f.r || dy >= f.r || dy <= -f.r) continue;",
-    "new": "if (dx >= f.r * 0.5 || dx <= -f.r || dy >= f.r || dy <= -f.r) continue;",
+    "old": "        if (dx >= f.r || dx <= -f.r || dy >= f.r || dy <= -f.r) continue; // MEM-AUDIT: hypot >= max(|dx|, |dy|) >= r - d >= 1, no fog",
+    "new": "        if (dx >= f.r * 0.5 || dx <= -f.r || dy >= f.r || dy <= -f.r) continue; // MEM-AUDIT: hypot >= max(|dx|, |dy|) >= r - d >= 1, no fog",
     "tests": [
       "test/systems/memaudit.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "MA-the-sky-an-image-a-draw",
     "file": "src/ui/pixelGround.js",
-    "old": "if (!img || img.width !== W || img.height !== H) {",
-    "new": "if (true) {",
+    "old": "  if (!img || img.width !== W || img.height !== H) {",
+    "new": "  if (true) {",
     "tests": [
       "test/systems/memaudit.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "MA-P9-a-one-side-resize-unchecked",
     "file": "src/ui/pixelGround.js",
-    "old": "if (!img || img.width !== W || img.height !== H) {",
-    "new": "if (!img || img.width !== W) {",
+    "old": "  if (!img || img.width !== W || img.height !== H) {",
+    "new": "  if (!img || img.width !== W) {",
     "tests": [
       "test/systems/memaudit.test.js"
     ]
