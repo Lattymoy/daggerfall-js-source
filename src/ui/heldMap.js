@@ -1120,6 +1120,7 @@ export class HeldMapWindow {
     noticeRelease(this._infoOwner);
     this._stopWaypoints?.(); this._stopWaypoints = null;   // WAYPOINTS: no listener outlives the window
     this._marksLayer = null;   // MAP-PAN: the marks' canvas goes with the window
+    this._dropWash();   // AUDIT FB1031 II T1
     closeWaypointMenu('heldmap');   // ...nor its menu
     this._unmountChrome();
     // ownership-checked: a second window minted after this one owns
@@ -1544,6 +1545,7 @@ export class HeldMapWindow {
       },
       unmount: () => {
         this._marksLayer = null;   // MAP-PAN: the bay's marks bitmap does not outlive the sheet
+        this._dropWash();   // AUDIT FB1031 II T1: nor the wash's
         this._showChrome(['search', 'ports', 'legend', 'card', 'key'], false);
         this._closePanel?.();
         if (this._zoneMap) this._closeZoneMap({ quiet: true });   // WILD2: the zone map is the world sheet's
@@ -2657,6 +2659,13 @@ export class HeldMapWindow {
     this._marksDirty = true;
     this._dirty = true;
     this._renderKey();
+  }
+
+  /** AUDIT FB1031 II T1: the wash's bitmap (up to 9 MB at 4K) and its kept image go with the sheet and the window; the
+   *  read is forgotten too, so a sheet mounted again builds its wash afresh. */
+  _dropWash() {
+    if (this._washCanvas) { this._washCanvas.width = 0; this._washCanvas.height = 0; }
+    this._washCanvas = null; this._washLayer = null; this._witnessRead = null; this._witnessKey = '';
   }
 
   /** AUDIT FB1031 W2: THE WITNESSED GROUND ON THE KEPT LAYER, over the sheet's ink and under every ring the overlay

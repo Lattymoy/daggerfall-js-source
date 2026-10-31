@@ -283,7 +283,7 @@ test('AUDIT FB1031 L4: THE GREY EASES IN - each of DFU\'s rows keeps SetSkyFogCo
   assert.equal(outdoorFogColor({ mode: 'exp2', density: 0.004 }, sky), sky, 'an exp2 row (Dynamic Skies\') is not SetSkyFogColor\'s Exponential');
 });
 
-test('AUDIT FB1031 L4: THE PRODUCER - a snow and an ash thickening from a dusting to their whole row (RAIN-SPRINKLE\'s fallTerms), lit as the frame lights its fog (NIGHT-FOG\'s litFog), at noon and at 23:00 under the dome, never step by more than 8 levels in 255 for a hundredth of intensity (it stepped 75); an ash breathing about its peak at 23:00 drifts, never flips (it flipped six times in ten minutes, 53 to 128)', () => {
+test('AUDIT FB1031 L4: THE PRODUCER - a snow and an ash thickening from a dusting to their whole row (RAIN-SPRINKLE\'s fallTerms), lit as the frame lights its fog (NIGHT-FOG\'s litFog), at noon and at 23:00 under the dome, never step by more than 8 levels in 255 for a hundredth of intensity (it stepped 77); an ash breathing about its peak at 23:00 drifts, never flips (it flipped six times in ten minutes, 53 to 128)', () => {
   for (const [weather, row] of [['snow', FOG_SETTINGS.snowy], ['ashfall', FOG_SETTINGS.ashfall]]) {
     for (const m of [720, 1380]) {
       const s = skyState({ minuteOfDay: m, weather, phases: { masser: 4, secunda: 4 } });

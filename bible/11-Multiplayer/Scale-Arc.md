@@ -4740,7 +4740,7 @@ GROUND-KEPT's reading). A province is one region and the sea past the Bay region
 - **The read** (`server-account/src/witnessTiles.js:"export async function profGround"`): up to 64 tiles, two
   primary-key reads in one round trip, on a replica (REPLICA_ROUTES, the client's D1_BOOKMARK_READS) and a busy read.
   It never touches `world_witness`, and before the day is laid it says so (the client asks again later).
-- **Sizes**: a tile row is 8,192 characters at most, a laying statement binds 100,000 at most (TILES_LAID_CHARS), and
+- **Sizes**: a tile row is 8,192 characters at most, a laying statement binds 100,000 characters of pixels at most (TILES_LAID_CHARS; with each row's key, some 150,000 at ten pixels a tile - AUDIT FB1031 II T5), and
   a day holds 65,536 tiles at most (the world's grid). The client asks 64 tiles at a time, one ask in flight.
 
 Pins: `test/ui/fb1031_witness.test.js`; `tools/mutants/fb1031_witness.json` (all dead). The record:

@@ -23,8 +23,8 @@
 // own smoothstep), so nothing pops as the camera leaves the head or comes back to it.
 //
 // WHAT IS NOT CHANGED. An EXPONENTIAL row is weather - rain, snow, a fog, a sandstorm, an ashfall - and stays the traveller's,
-// exactly as TV1 measured it (the far ring stands down under it, as ever). On the ground nothing moves: with no view
-// up every function here hands back what it was given, the same object.
+// exactly as TV1 measured it (the far ring fogs by the row's own law, horizonHazeOf; AUDIT FB1031 II G3). On the ground
+// nothing moves: with no view up every function here hands back what it was given, the same object.
 //
 // THE COST. None of it draws anything new: the haze and the lens are numbers the frame already sends. The far
 // ring's pass (one draw) was drawn under the view before; past the grid it is what the eye now sees.

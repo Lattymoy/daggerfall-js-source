@@ -21,7 +21,7 @@ import { witnessedFact, factConfirmed, pixelOk } from '../../src/net/nodeLaw.js'
 import { WITNESS_TILE, WITNESS_TILES_ASK, TILES_SPAN, tileOf, tileKey, tileOk, packTile, unpackTile, tileRange } from '../../src/net/witnessTileLaw.js';
 import { CLIMATES, REGION_NAMES, regionOfTheatre } from '../../src/formats/mapsTables.js';
 import { utcDay } from '../../src/net/marksLaw.js';
-import { createProfBook, PROF_REFRESH_BACKOFF_MS } from '../../src/net/profBook.js';
+import { createProfBook, PROF_REFRESH_BACKOFF_MS, PROF_GROUND_ASK_GAP_MS } from '../../src/net/profBook.js';
 import {
   witnessMapReader, tilesInView, syncWashLayer, blitWashLayer, paintWitnessedGround, WITNESS_TINT_RGBA, WITNESS_TINT_CSS, WITNESS_WASH_MARGIN,
 } from '../../src/ui/witnessMapMark.js';
@@ -233,11 +233,14 @@ test('FB1031 W1 W4 the book: every tile asked once a UTC day, 64 at a time, one 
   assert.deepEqual(book.groundTile(6, 2), { day: DAY, pixels: [[410, 152]] });
   assert.deepEqual(book.groundTile(0, 2), { day: DAY, pixels: [] }, 'asked, and none');
   assert.equal(book.groundTile(-5, -4), null, 'not yet asked');
+  assert.equal(await book.askGround(many), false, 'AUDIT FB1031 II T2: not inside the gap after a landing');
+  S.now += PROF_GROUND_ASK_GAP_MS;
   assert.equal(await book.askGround(many), true, 'the rest');
   assert.deepEqual(S.asks[1], many.slice(WITNESS_TILES_ASK));
   assert.equal(await book.askGround(many), false, 'heard today: not asked again');
   assert.equal(S.asks.length, 2);
   // unlaid: waited out
+  S.now += PROF_GROUND_ASK_GAP_MS;
   S.laid = false;
   assert.equal(await book.askGround([[-5, -4]]), false);
   assert.equal(await book.askGround([[-5, -4]]), false);
@@ -289,6 +292,7 @@ test('FB1031 W6 a pixel a read hears confirmed - after the harvest that confirme
   await book.askPixels([[411, 153], [412, 153], [-299, -199]]);
   assert.deepEqual(book.groundTile(6, 2).pixels, [[410, 152], [411, 153]], 'the held tile at once; an unconfirmed pixel never');
   assert.notEqual(book.groundKey(), k0, 'the map reads it again');
+  S.now += PROF_GROUND_ASK_GAP_MS;
   await book.askGround([[-5, -4]]);
   assert.deepEqual(book.groundTile(-5, -4).pixels, [[-299, -199]], 'a tile landing after: the heard pixel in it (the day\'s tiles were laid at its start)');
 });
@@ -307,7 +311,7 @@ test('FB1031 W1 the reader: every tile the view touches is asked, nearest the mi
     const reader = witnessMapReader(book);
     const view = { x0, y0, x1: x0 + 620, y1: y0 + 378 };
     let last = reader.read(view);
-    for (let i = 0; i < 6; i++) { await tick(); await tick(); last = reader.read(view); }
+    for (let i = 0; i < 6; i++) { await tick(); await tick(); S.now += PROF_GROUND_ASK_GAP_MS; last = reader.read(view); }
     const asked = new Set(S.asks.flat().map((t) => tileKey(...t)));
     for (let y = y0; y < y0 + 378; y += 7) for (let x = x0; x < x0 + 620; x += 7) assert.ok(asked.has(tileKey(...tileOf(x, y))), `(${x}, ${y}) asked`);
     assert.deepEqual(last.tiles.flatMap((t) => t.pixels).sort(), [[x0 + 5, y0 + 5], [x0 + 610, y0 + 370]].sort(), 'both corners washed');
@@ -491,7 +495,8 @@ test('FB1031 W5 (ARENA2): the sea past the Bay and Morrowind\'s ground as the ho
   await minute();
   const door = { account: () => who.id, state: async () => ({ ok: true, data: { day: DAY, character: who.character, tracks: [] } }),
     ground: async (c, tiles) => { const r = await s.call('/v1/prof/ground', { character: c, tiles }, who.secret); return { ok: r.status === 200, data: r.body }; } };
-  const book = createProfBook({ door, character: () => who.character, now: () => NOON * 1000, sleep: async () => {} });
+  let clock = NOON * 1000;
+  const book = createProfBook({ door, character: () => who.character, now: () => (clock += 250), sleep: async () => {} });
   await book.refresh();
   const reader = witnessMapReader(book);
   for (const [x, y] of [sea, mw]) {
@@ -500,4 +505,72 @@ test('FB1031 W5 (ARENA2): the sea past the Bay and Morrowind\'s ground as the ho
     for (let i = 0; i < 200 && !reader.read(view).tiles.length; i++) await new Promise((r) => setTimeout(r, 5));   // the service's own round trip
     assert.deepEqual(reader.read(view).tiles.flatMap((tl) => tl.pixels), [[x, y]], `(${x}, ${y}) washed`);
   }
+});
+
+// AUDIT FB1031 II T1: the wash's bitmap (up to 9 MB at 4K, doubled by its backing) and its kept image outlived the window
+// and the world sheet's unmount, where the marks' bitmap is let go.
+test('AUDIT FB1031 II T1: the wash\'s bitmap goes with the window and the world sheet - its canvas emptied, its layer and read forgotten (mutants: kept by dispose; kept by the sheet\'s unmount)', () => {
+  resetTravelMapState();
+  try {
+    const read = { key: 'k1', x0: 256, y0: 0, x1: 640, y1: 320, tiles: [{ tx: 6, ty: 2, pixels: [[410, 152]] }] };
+    const built = () => {
+      const { win, canvases } = mapRig(() => read);
+      win._refreshParty();
+      win._paintWash(fakeCtx(), { view: win._view, paperW: 600, paperH: 300, dpr: 1, band: 'near' });
+      const wash = canvases.find((c) => c.ctx.calls.some((k) => k.fn === 'putImageData'));
+      assert.ok(wash && wash.width > 0 && win._washLayer, 'built');
+      return { win, wash };
+    };
+    const a = built();
+    a.win._sheets.get('world').unmount();
+    assert.deepEqual([a.wash.width, a.wash.height, a.win._washCanvas, a.win._washLayer, a.win._witnessRead], [0, 0, null, null, null], 'the sheet unmounted');
+    const b = built();
+    b.win.dispose();
+    assert.deepEqual([b.wash.width, b.wash.height, b.win._washCanvas, b.win._washLayer], [0, 0, null, null], 'the window gone');
+  } finally { resetTravelMapState(); delete globalThis.document; }
+});
+
+// AUDIT FB1031 II T2: a pan asked at the map's 4 Hz poll, a thin strip each time: 235-240 asks a minute, the account's
+// whole door rate (accounts.js ACCOUNT_MAX), so its harvests and saves were refused.
+test('AUDIT FB1031 II T2: a pan across the continent asks at most one ground read a second, each carrying the ring past the view (mutants: no gap after a landing; the view alone asked)', async () => {
+  const { ACCOUNT_WINDOW_S } = await import('../../server-account/src/accounts.js');
+  const DAYMS = 86_400_000, start = 20_000 * DAYMS + 12 * 3600_000;
+  let now = start;
+  const asks = [];
+  const door = { account: () => 'a1', state: async () => ({ ok: true, data: { day: 20_000, character: 'c', tracks: [] } }),
+    ground: async (c, tiles) => { asks.push({ at: now, n: tiles.length }); return { ok: true, data: { day: 20_000, laid: true, tiles: [] } }; } };
+  const book = createProfBook({ door, character: () => 'c', now: () => now, sleep: async () => {} });
+  await book.refresh();
+  const reader = witnessMapReader(book);
+  const vw = 1920 / 2.4, vh = 1080 / 2.4, step = (600 / 2.4) * 0.25;
+  let x = 400, y = 300;
+  for (let t = 0; t < 480; t++) {   // two minutes of a 600 paper px/s drag, eastward
+    now += 250; x += step;
+    reader.read({ x0: x, y0: y, x1: x + vw, y1: y + vh });
+    for (let i = 0; i < 4; i++) await new Promise((r) => setImmediate(r));
+  }
+  let worst = 0;
+  for (const a of asks) worst = Math.max(worst, asks.filter((b) => b.at >= a.at && b.at < a.at + ACCOUNT_WINDOW_S * 1000).length);
+  assert.ok(worst <= 61, `at most one a second: ${worst} in a minute`);
+  assert.ok(asks.slice(2).every((a) => a.n > 13), `each ask carries the ring ahead, not a strip: ${asks.slice(2, 8).map((a) => a.n)}`);
+  // a still view: the ring past it held before any pan reaches it
+  const still = { x0: 4000, y0: 1000, x1: 4000 + vw, y1: 1000 + vh };
+  for (let i = 0; i < 8; i++) { now += 1000; reader.read(still); for (let j = 0; j < 4; j++) await new Promise((r) => setImmediate(r)); }
+  const ahead = tileRange(still, WITNESS_WASH_MARGIN);
+  assert.notEqual(book.groundTile(ahead.tx1, ahead.ty1), null, 'the ring\'s far corner asked ahead of the pan');
+});
+
+// AUDIT FB1031 II T3: the kept image is reused for a read of the same size - the old range's texels must be cleared, and
+// a read of a new size must build a new image.
+test('AUDIT FB1031 II T3: a moved read of the same size clears the old texels; a read of another size builds an image of its size (mutants: the fill dropped; the size unchecked)', () => {
+  const canvas = fakeCanvas();
+  const a = { key: 'k1', x0: 384, y0: 128, x1: 512, y1: 192, tiles: [{ tx: 6, ty: 2, pixels: [[410, 152]] }] };
+  const la = syncWashLayer(null, a, canvas);
+  const b = { key: 'k2', x0: 448, y0: 128, x1: 576, y1: 192, tiles: [{ tx: 8, ty: 2, pixels: [[520, 140]] }] };
+  const lb = syncWashLayer(la, b, canvas);
+  const d = canvas.ctx.calls.filter((c) => c.fn === 'putImageData').at(-1).args[0].data;
+  assert.equal(d.reduce((n, v, i) => n + (i % 4 === 3 && v > 0 ? 1 : 0), 0), 1, 'only the new read\'s texel');
+  const c = { key: 'k3', x0: 384, y0: 128, x1: 576, y1: 256, tiles: [{ tx: 6, ty: 2, pixels: [[410, 152]] }] };
+  const lc = syncWashLayer(lb, c, canvas);
+  assert.deepEqual([lc.w, lc.h, canvas.ctx.calls.filter((k) => k.fn === 'putImageData').at(-1).args[0].width], [192, 128, 192]);
 });

@@ -92,6 +92,8 @@ export const PROF_DUNGEONS_MAX = 4;
  *  read answered for another UTC day than this device's (the two clocks either side of midnight) is not stale again
  *  before it either. */
 export const PROF_REFRESH_BACKOFF_MS = 30_000;
+/** AUDIT FB1031 II T2: the least wait between two ground reads that landed - the map takes at most 60 a minute. */
+export const PROF_GROUND_ASK_GAP_MS = 1000;
 /** AUDIT HORIZONTAL A (the read held across a craft): a state read an act's answer overtook is read again, at most this
  *  many times in all - then applied as it stands. */
 export const PROF_STATE_READS = 3;
@@ -643,6 +645,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
           groundTiles.set(k, { day, pixels });
         }
         groundGen++;
+        _groundWait = now() + PROF_GROUND_ASK_GAP_MS;   // AUDIT FB1031 II T2: a pan asked at the 4 Hz poll, the account's whole door rate
         return true;
       })().finally(() => { _groundBusy = null; });
       return _groundBusy;

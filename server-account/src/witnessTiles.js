@@ -12,7 +12,8 @@ import { utcDay } from '../../src/net/marksLaw.js';
 import { pixelOk } from '../../src/net/nodeLaw.js';
 import { WITNESS_TILES_ASK, tileOk, tileOf, tileKey, packTile } from '../../src/net/witnessTileLaw.js';
 
-/** The characters of tiles one laying statement binds at most - a full tile is 8,192, D1's bound string 2 MB. */
+/** The characters of pixels one laying statement binds at most (each row's key rides beside them - AUDIT FB1031 II T5) - a
+ *  full tile is 8,192, D1's bound string 2 MB. */
 export const TILES_LAID_CHARS = 100_000;
 
 /**

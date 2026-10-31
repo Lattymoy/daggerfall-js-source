@@ -1362,7 +1362,7 @@ An ash breathing about its peak at 23:00 crossed the line six times in ten minut
 **What changed.** Between `RAINY_FOG_DENSITY` and `GRAY_FOG_FULL_DENSITY` (the snow's 0.005,
 WeatherManager.SnowyFogSettings) the colour eases from the sky's to the grey on a smoothstep. Each of DFU's rows answers
 DFU's colour, the same array: the rain the sky's, and the snow, the heavy fog, the ash and the sandstorm the grey. A
-snow or an ash thickening from a dusting now steps at most 8 levels for a hundredth of intensity (it stepped 75), and
+snow or an ash thickening from a dusting now steps at most 8 levels for a hundredth of intensity (it stepped 77 - AUDIT FB1031 II G4), and
 the breathing ash drifts. DEPARTURE (Port-Ledger A): DFU's threshold, eased where DFU has no row. Both lanes take it,
 since the classic panorama's colour is the same law.
 

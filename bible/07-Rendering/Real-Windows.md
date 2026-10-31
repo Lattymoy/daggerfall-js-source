@@ -325,7 +325,7 @@ night ambient (`INTERIOR_NIGHT_AMBIENT`, 0.20 / 0.18 / 0.20), a full Masser's pa
 and the glow at the glass, in luminance - added 4.2 times the ambient on the Enhanced lane and 1.6 times on the
 classic set. The one switch was the Real windows row, and its Off drops the view out too.
 
-**The gains.** The moon's gain is 0.3, a third of the sun's. By night (`_sunLight`'s `day` test) the panes glow at
+**The gains.** The moon's gain is 0.3, a third of the sun's. By night (`wlDayShare` 0, through `wlGlowGain`; AUDIT FB1031 II G2) the panes glow at
 `WL_SKY_NIGHT_GAIN` 0.1, and the day keeps 0.5. The same patch, a full Masser at 21:00 through the pass's own lights
 on each lane's decode, now adds 1.1 times the room's ambient on the Enhanced lane (beam 0.89, glow 0.25) and 0.4 on
 the classic set (0.23, 0.16): a dim patch, the room's dark kept round it. The glow eases between the two gains as the

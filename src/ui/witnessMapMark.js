@@ -58,8 +58,11 @@ export function witnessMapReader(book) {
     open: () => book?.state?.open === true,
     read(box) {
       if (book?.state?.open !== true || !box) return NONE;
-      book.askGround(tilesInView(box)).catch(() => {});
-      const v = tileRange(box);
+      // AUDIT FB1031 II T2: the view first, then the ring the wash holds past it, so an ask fills ahead of a pan
+      const v = tileRange(box), m = WITNESS_WASH_MARGIN * WITNESS_TILE;
+      const inView = (t) => t[0] >= v.tx0 && t[0] <= v.tx1 && t[1] >= v.ty0 && t[1] <= v.ty1;
+      const ring = tilesInView({ x0: box.x0 - m, y0: box.y0 - m, x1: box.x1 + m, y1: box.y1 + m }).filter((t) => !inView(t));
+      book.askGround([...tilesInView(box), ...ring]).catch(() => {});
       if (!range || v.tx0 < range.tx0 || v.ty0 < range.ty0 || v.tx1 > range.tx1 || v.ty1 > range.ty1) range = tileRange(box, WITNESS_WASH_MARGIN);
       const r = range;
       const key = `${book.groundKey()}|${r.tx0},${r.ty0},${r.tx1},${r.ty1}`;

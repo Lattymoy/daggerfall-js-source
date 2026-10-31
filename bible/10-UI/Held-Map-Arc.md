@@ -1361,8 +1361,8 @@ page draws none: its marks overwrite its place dots texel by texel, so a wash wo
 
 AUDIT FB1031 (W1, W2): every tile of the day's ground the view touches is read, and the wash is painted on the kept
 layer from a bitmap of one texel a map pixel, so a pulse frame paints none of it and a pan frame blits it in one
-drawImage. The far band, where the map opens, draws none: a 64-pixel tile is some 95 paper pixels at the Bay's fit, so
-a square a tile would claim ground no one witnessed. Its switch is dimmed there.
+drawImage. The far band, where the map opens, draws none: it reaches the continent's fit, 5,700 tiles and a 104 MB
+bitmap (AUDIT FB1031 II T4). Its switch is dimmed there.
 
 ## MAP-PAN - the world sheet's places move as one layer (2026-10-18)
 

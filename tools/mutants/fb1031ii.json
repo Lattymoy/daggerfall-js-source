@@ -1,0 +1,51 @@
+[
+  {
+    "name": "AUDIT-FB1031-II-T1-the-wash-kept-by-dispose",
+    "file": "src/ui/heldMap.js",
+    "old": "    this._dropWash();   // AUDIT FB1031 II T1\n",
+    "new": "",
+    "tests": ["test/ui/fb1031_witness.test.js"]
+  },
+  {
+    "name": "AUDIT-FB1031-II-T1-the-wash-kept-by-the-sheet",
+    "file": "src/ui/heldMap.js",
+    "old": "        this._dropWash();   // AUDIT FB1031 II T1: nor the wash's\n",
+    "new": "",
+    "tests": ["test/ui/fb1031_witness.test.js"]
+  },
+  {
+    "name": "AUDIT-FB1031-II-T1-the-canvas-unemptied",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (this._washCanvas) { this._washCanvas.width = 0; this._washCanvas.height = 0; }",
+    "new": "",
+    "tests": ["test/ui/fb1031_witness.test.js"]
+  },
+  {
+    "name": "AUDIT-FB1031-II-T2-no-gap-after-a-landing",
+    "file": "src/net/profBook.js",
+    "old": "        _groundWait = now() + PROF_GROUND_ASK_GAP_MS;",
+    "new": "",
+    "tests": ["test/ui/fb1031_witness.test.js"]
+  },
+  {
+    "name": "AUDIT-FB1031-II-T2-the-view-alone-asked",
+    "file": "src/ui/witnessMapMark.js",
+    "old": "      book.askGround([...tilesInView(box), ...ring]).catch(() => {});",
+    "new": "      book.askGround(tilesInView(box)).catch(() => {});",
+    "tests": ["test/ui/fb1031_witness.test.js"]
+  },
+  {
+    "name": "AUDIT-FB1031-II-T3-the-fill-dropped",
+    "file": "src/ui/witnessMapMark.js",
+    "old": "if (img === prev?.img) d.fill(0);",
+    "new": "",
+    "tests": ["test/ui/fb1031_witness.test.js"]
+  },
+  {
+    "name": "AUDIT-FB1031-II-T3-the-size-unchecked",
+    "file": "src/ui/witnessMapMark.js",
+    "old": "prev.w === w && prev.h === h",
+    "new": "true",
+    "tests": ["test/ui/fb1031_witness.test.js"]
+  }
+]

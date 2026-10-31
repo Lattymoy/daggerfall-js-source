@@ -6874,9 +6874,9 @@ holds its one switch, on by default, kept in the travel map's filter store and t
 12's are). The ORE-MAP card still answers a hover. The classic region page draws no wash (`10-UI/Held-Map-Arc.md`
 WITNESS-MAP).
 
-**The far band draws none** (W1). The map opens there. A tile is some 95 paper pixels at the Bay's fit, so a square a
-tile would wash 4,096 times the ground one pixel holds, and the Bay is 16 by 8 tiles: the square would claim ground no
-one witnessed. The key's switch is dimmed there and says to zoom in. Ground confirmed today by other players shows the
+**The far band draws none** (W1). The map opens there. The wash is a texel a pixel at any scale, but the far band
+reaches the continent's fit: 5,700 tiles, 90 asks and a 104 MB bitmap, where the Bay's fit is 128 tiles (AUDIT FB1031
+II T4, correcting a reason given here before). The key's switch is dimmed there and says to zoom in. Ground confirmed today by other players shows the
 next UTC day.
 
 The four hosts: `scenes/world.js` wired, the held map's one construction seam; `scenes/exterior.js`,

@@ -334,8 +334,8 @@
  {
   "name": "FB1031W-tile-unasked",
   "file": "src/ui/witnessMapMark.js",
-  "old": "      book.askGround(tilesInView(box)).catch(() => {});",
-  "new": "      book.askGround(tilesInView(box).slice(0, 6)).catch(() => {});",
+  "old": "      book.askGround([...tilesInView(box), ...ring]).catch(() => {});",
+  "new": "      book.askGround([...tilesInView(box).slice(0, 6), ...ring]).catch(() => {});",
   "tests": [
    "test/ui/fb1031_witness.test.js"
   ],
