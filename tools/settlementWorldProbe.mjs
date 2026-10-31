@@ -26,12 +26,20 @@ const frames = async (n, cap = 60000) => {
   const f0 = await frameNow(), t0 = Date.now();
   while (Date.now() - t0 < cap) { await page.waitForTimeout(200); if (await frameNow() >= f0 + n) break; }
 };
+/** Close what stands over the view - the boot's boxes, a window - and nothing more: an Escape with none up opens the menu. */
+const drain = async () => {
+  for (let i = 0, quiet = 0; i < 30 && quiet < 3; i++) {
+    const up = await page.evaluate(() => { try { return !!JSON.parse(window.__talk()).overlay; } catch { return false; } }).catch(() => false);
+    if (up) { quiet = 0; await page.keyboard.press('Escape'); } else quiet++;
+    await frames(2);
+  }
+};
 const until = async (fn, cap = 240000) => { const t0 = Date.now(); for (;;) { const v = await page.evaluate(fn).catch(() => null); if (v) return v; if (Date.now() - t0 > cap) return null; await frames(1, 10000); } };
 try {
   await page.goto('http://localhost:5241/play/?world&nomenu&class=0&novideo&shot&play&tod=12:00');
   await until(() => (window.__frame ?? 0) > 5 && typeof window.__tesaJump === 'function', 300000);
   await page.mouse.click(640, 400);
-  for (let i = 0; i < 20; i++) { await page.keyboard.press('Escape'); await frames(2); }
+  await drain();
   // the settlement's pixel under the game's own fit (the same modules the game runs, through the dev server)
   const where = await page.evaluate(async (o) => {
     const places = await import('/src/world/settlement/settlementPlaces.js'), frame = await import('/src/world/tamriel/tamrielFrame.js');
@@ -48,6 +56,7 @@ try {
     last = await page.evaluate(() => JSON.stringify({ hook: typeof window.__settlementView, view: window.__settlementView?.() ?? null, at: window.__currentPixel?.() })).catch((e) => e.message);
     throw new Error(`no settlement stood on the pixel: ${last}`);
   }
+  await drain();
   const s = view[0];
   console.log(JSON.stringify({ name: s.name, buildings: s.buildings, meshes: `${s.ready}/${s.meshes}`, mid: s.mid.map((v) => +v.toFixed(1)) }));
   const shoot = async (name, x, y, z, yaw, pitch) => {
@@ -62,6 +71,7 @@ try {
   // to the door, facing it, and press it
   await page.evaluate(([a, b, c, yaw]) => window.__pose(a, b, c, yaw, 0), [d.at[0] + back[0] * 1.6, d.at[1] + 0.1, d.at[2] + back[1] * 1.6, Math.atan2(-back[0], -back[1])]);
   await frames(10);
+  await drain();
   const before = await page.evaluate(() => window.__mode?.() ?? null);
   await page.mouse.click(640, 400); await frames(30);
   for (let i = 0; i < 3; i++) { await page.keyboard.press('Enter'); await frames(10); }
