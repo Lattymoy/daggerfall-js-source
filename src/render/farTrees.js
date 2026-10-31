@@ -296,6 +296,7 @@ uniform float uFogEnd;
 uniform float uRimStart;
 uniform float uRimEnd;
 uniform float uHazeHold;
+uniform vec2 uFogLaw;   // AUDIT FB1031 L2: the weather law and its density (horizonHazeOf)
 ${RING_CLOUD_GLSL}
 ${HORIZON_HAZE_GLSL}
 ${RING_HAZE_GLSL}
@@ -312,7 +313,7 @@ void main() {
   vec4 tex = texture(uTrees, vec3(gl_PointCoord, vLayer));
   if (tex.a < 0.5) discard;   // the flats' own cutout
   vec3 lit = tex.rgb * (${TREE_LIGHT});
-  outColor = vec4(mix(lit, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold))), 1.0);
+  outColor = vec4(mix(lit, uFogColor, ringHaze(horizonHazeOf(uFogLaw, vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold))), 1.0);
 }`;
 
 /** The lighting lane's (render/enhancedLighting.js EL_FAR_RING_FS's law): decoded, lit, through the eye and the
@@ -326,7 +327,7 @@ void main() {
   if (tex.a < 0.5) discard;
   vec3 lit = elDecode(tex.rgb) * (${TREE_LIGHT});
   vec3 shown = elEncode(elTonemapRGB(lit * uELExposure * elAdapt()));
-  vec3 col = mix(shown, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold)));
+  vec3 col = mix(shown, uFogColor, ringHaze(horizonHazeOf(uFogLaw, vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold)));
   outColor = vec4(col + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0, 1.0);
 }`;
 export const TREES_FS = FS;
@@ -353,7 +354,7 @@ export class FarTreesBand {
     this.program = buildProgram(gl, VS, treesFsFor(lane), 'far trees');
     this.u = {};
     for (const name of ['uProj', 'uView', 'uOrigin', 'uSides', 'uBand', 'uBandFrom', 'uHazeFrom', 'uTrees', 'uAmbient', 'uSunScale', 'uSunColor',
-      'uMoonScale', 'uMoonColor', 'uFogColor', 'uFogStart', 'uFogEnd', 'uRimStart', 'uRimEnd', 'uHazeHold', 'uCloudShadowMap', 'uCloudShadowRect',
+      'uMoonScale', 'uMoonColor', 'uFogColor', 'uFogStart', 'uFogEnd', 'uRimStart', 'uRimEnd', 'uHazeHold', 'uFogLaw', 'uCloudShadowMap', 'uCloudShadowRect',
       'uCloudShadowFar', 'uCloudFar', 'uJungleHaze', 'uHazeEye', 'uELExposure', 'uAdapt', 'uBuilt', 'uGround', 'uGroundAt']) this.u[name] = gl.getUniformLocation(this.program, name);
     this.builtBits = new Int32Array(BAND_BUILT_WORDS);   // FLORA-GROUND: the drawn base's built slots
     this._builtKey = '';
@@ -622,6 +623,7 @@ export class FarTreesBand {
     gl.uniform1f(u.uRimStart, s.rimStart);
     gl.uniform1f(u.uRimEnd, s.rimEnd);
     gl.uniform1f(u.uHazeHold, s.hold);
+    gl.uniform2f(u.uFogLaw, s.law ?? 0, s.density ?? 0);   // AUDIT FB1031 L2: a weather's own factor, as the ring's
     const { haze } = s;
     gl.uniform4fv(u.uJungleHaze, haze ?? NO_HAZE);   // BANTHA1: the frame's haze, as the ring's - off when none is handed
     gl.uniform3fv(u.uHazeEye, s.hazeEye);

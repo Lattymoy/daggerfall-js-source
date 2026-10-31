@@ -2,29 +2,29 @@
   {
     "name": "RED-MOUNTAIN-SEEN-a-fog-over-the-sky-stands-it",
     "file": "src/render/farRing.js",
-    "old": "return row?.excludeSky && (row.mode === 'exp' || row.mode === 'exp2') ? WEATHER_FOG : null;",
-    "new": "return (row?.mode === 'exp' || row?.mode === 'exp2') ? WEATHER_FOG : null;",
+    "old": "if (!row?.excludeSky || (row.mode !== 'exp' && row.mode !== 'exp2')) return null;",
+    "new": "if (row?.mode !== 'exp' && row?.mode !== 'exp2') return null;",
     "tests": ["test/world/redmountain_seen.test.js"]
   },
   {
     "name": "RED-MOUNTAIN-SEEN-exp2-unread",
     "file": "src/render/farRing.js",
-    "old": "(row.mode === 'exp' || row.mode === 'exp2') ? WEATHER_FOG",
-    "new": "(row.mode === 'exp') ? WEATHER_FOG",
+    "old": "(row.mode !== 'exp' && row.mode !== 'exp2')",
+    "new": "(row.mode !== 'exp')",
     "tests": ["test/world/redmountain_seen.test.js"]
   },
   {
     "name": "RED-MOUNTAIN-SEEN-the-weather-s-hold",
     "file": "src/render/farRing.js",
-    "old": "const WEATHER_FOG = Object.freeze({ start: 0, end: 0, hold: 1, weather: true });",
-    "new": "const WEATHER_FOG = Object.freeze({ start: 0, end: 0, hold: RING_HAZE_HOLD, weather: true });",
+    "old": "const _weatherAir = { start: 0, end: 0, hold: 1, weather: true, law: 1, density: 0 };",
+    "new": "const _weatherAir = { start: 0, end: 0, hold: RING_HAZE_HOLD, weather: true, law: 1, density: 0 };",
     "tests": ["test/world/redmountain_seen.test.js"]
   },
   {
     "name": "RED-MOUNTAIN-SEEN-its-ramp-open",
     "file": "src/render/farRing.js",
-    "old": "const WEATHER_FOG = Object.freeze({ start: 0, end: 0, hold: 1, weather: true });",
-    "new": "const WEATHER_FOG = Object.freeze({ start: 0, end: 500000, hold: 1, weather: true });",
+    "old": "const _weatherAir = { start: 0, end: 0, hold: 1, weather: true, law: 1, density: 0 };",
+    "new": "const _weatherAir = { start: 0, end: 500000, hold: 1, weather: true, law: 1, density: 0 };",
     "tests": ["test/world/redmountain_seen.test.js"]
   },
   {
@@ -58,8 +58,8 @@
   {
     "name": "RED-MOUNTAIN-SEEN-the-band-s-hold",
     "file": "src/render/farRing.js",
-    "old": "fogColor, fogStart, fogEnd, hold: rf.hold, exposure,",
-    "new": "fogColor, fogStart, fogEnd, hold: RING_HAZE_HOLD, exposure,",
+    "old": "fogColor, fogStart, fogEnd, hold: rf.hold, law:",
+    "new": "fogColor, fogStart, fogEnd, hold: RING_HAZE_HOLD, law:",
     "tests": ["test/world/redmountain_seen.test.js"]
   },
   {

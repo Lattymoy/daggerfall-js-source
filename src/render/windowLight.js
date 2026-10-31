@@ -59,6 +59,16 @@ export const WL_SUN_GAIN = 0.9;
 export const WL_MOON_GAIN = 0.3;
 export const WL_SKY_GAIN = 0.5;
 export const WL_SKY_NIGHT_GAIN = 0.1;
+/** AUDIT FB1031 L1: the day's share of the glass's light eases in over the sun's first WL_DUSK_RISE of height - the
+ *  glow had stepped from the day's gain to the night's in one capture, eleven minutes before the room's own ambient
+ *  turns at 18:00, and Day only had cut all its light in a frame. 0 with the sun down or no outside read. */
+export const WL_DUSK_RISE = 0.15;
+export const wlDayShare = (o) => {
+  const t = o ? Math.min(1, o.sunDir[1] / WL_DUSK_RISE) : 0;
+  return t > 1e-3 ? t * t * (3 - 2 * t) : 0;   // the clock's night sun stands at sin(pi), 1e-16 over the horizon
+};
+/** The panes' glow gain at the day's share `k` (wlDayShare): the night's at 0, the day's at 1. */
+export const wlGlowGain = (k) => WL_SKY_NIGHT_GAIN + (WL_SKY_GAIN - WL_SKY_NIGHT_GAIN) * k;
 /** How far from the eye a lit window is gathered, the share of that where its light begins to fade, and how fast the
  *  cut follows the frame's own (a pool at the cut fades, never pops). */
 export const WL_GATHER = 72;
@@ -100,7 +110,8 @@ export function windowLightOn(search = globalThis.location?.search ?? '') {
 /** Is the sun up for a building's glass in `o` (the outside as setOutside kept it)? By night the moon is the key. */
 export const wlSunUp = (o) => !!o && o.sunScale > 0 && o.sunDir[1] > 0.05;
 /** WINDOW-NIGHT: a frame's kind under the Window light part (`light`: realWindows.js windowLightMode) - Off lights none,
- *  Day only none while the sun is down (`sunUp`), and a street's light is a lit room's by night, so none under it. */
+ *  Day only none while the sun is down (`sunUp`: the renderer hands wlDayShare's above 0 - AUDIT FB1031 L1, the frame
+ *  fades by it), and a street's light is a lit room's by night, so none under it. */
 export function wlKindFor(kind, light, sunUp) {
   if (!kind || light === 'off') return null;
   return light === 'day' && (kind === 'street' || !sunUp) ? null : kind;
@@ -728,9 +739,10 @@ export class WindowLightPass {
    * THE FRAME'S LIGHTS. `kind` 'street' (a lit room's lamp through its glass, by night: `lamp` the rooms' lamp, display
    * colour, or null) or 'inside' (the outside's sun or moon and sky through the building's glass; `shadows` whether the
    * sun map is drawn). `glass(key)` answers what a resolved picture key's glass is ('window' DFU's, 'glass' an interior's
-   * or a hole) or null. Fills the block, the boxes and the grid space; answers the count.
+   * or a hole) or null. `dayOnly` the Window light part's Day only: no moon, the rest faded by the day's share. Fills
+   * the block, the boxes and the grid space; answers the count.
    */
-  frame({ kind, eye, view, proj, now, lamp = null, shadows = false, glass, decode = null }) {
+  frame({ kind, eye, view, proj, now, lamp = null, shadows = false, glass, decode = null, dayOnly = false }) {
     const cand = this._cand;
     cand.length = 0;
     this._used = 0;
@@ -740,7 +752,10 @@ export class WindowLightPass {
     let gathered = 0;
     const o = this.outside;
     const sunDir = wlSunUp(o) ? o.sunDir : null;
-    const moonDir = !sunDir && o && o.moonScale > 0 && o.moonDir[1] > 0.05 ? o.moonDir : null;
+    const moonDir = !sunDir && !dayOnly && o && o.moonScale > 0 && o.moonDir[1] > 0.05 ? o.moonDir : null;
+    // AUDIT FB1031 L1: the glow's gain by the day's share, and Day only's whole light faded by it (never the moon's)
+    const share = wlDayShare(o), dim = dayOnly ? share : 1;
+    const keyGain = (sunDir ? WL_SUN_GAIN : WL_MOON_GAIN) * dim, glowGain = wlGlowGain(share) * dim;
     // the colours as the set lights in: decoded first, then scaled (the lane decodes a colour and multiplies its scale)
     const dec = (c) => (decode ? decode(c) : [c[0], c[1], c[2]]);
     const lampC = lamp ? dec(lamp) : null;
@@ -777,7 +792,7 @@ export class WindowLightPass {
       if (c.d >= cut) break;
       const fade = wlFade(c.d, cut);
       if (!this._resident(c.mask, now)) continue;   // every layer read this frame already
-      const l = kind === 'street' ? this._lampLight(c, lampC, fade) : this._sunLight(c, sunDir ?? moonDir, !!sunDir, keyC, skyC, shadows, fade);
+      const l = kind === 'street' ? this._lampLight(c, lampC, fade) : this._sunLight(c, sunDir ?? moonDir, keyGain, glowGain, keyC, skyC, shadows, fade);
       if (!l) continue;
       writeWindowLight(this.data, w, l);
       windowLightBox(l, l.beam, this.boxes, w * LC_BOX);
@@ -1098,13 +1113,13 @@ export class WindowLightPass {
     return l;
   }
 
-  /** The sun's or the moon's light through a building's glass (`key`, toward `dir`), and the sky's glow off it (`sky`) -
-   *  null when neither reaches. */
-  _sunLight(c, dir, day, key, sky, shadows, fade) {
+  /** The sun's or the moon's light through a building's glass (`key`, toward `dir`, at `keyGain`), and the sky's glow off
+   *  it (`sky`, at `glowGain`) - null when neither reaches. */
+  _sunLight(c, dir, keyGain, glowGain, key, sky, shadows, fade) {
     const l = this._lt;
     if (!this._aperture(c, null, l)) return null;
     const faces = !!dir && !!key && dir[0] * l.nf[0] + dir[1] * l.nf[1] + dir[2] * l.nf[2] < -0.02;
-    const kg = faces ? (day ? WL_SUN_GAIN : WL_MOON_GAIN) * fade : 0, ks = (day ? WL_SKY_GAIN : WL_SKY_NIGHT_GAIN) * fade;
+    const kg = faces ? keyGain * fade : 0, ks = glowGain * fade;
     if (faces) set3(l.gobo, key[0] * kg, key[1] * kg, key[2] * kg); else set3(l.gobo, 0, 0, 0);
     set3(l.spill, sky[0] * ks, sky[1] * ks, sky[2] * ks);
     if (!(l.gobo[0] + l.gobo[1] + l.gobo[2] + l.spill[0] + l.spill[1] + l.spill[2] > 1e-4)) return null;

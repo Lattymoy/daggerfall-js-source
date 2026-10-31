@@ -328,13 +328,13 @@ classic set. The one switch was the Real windows row, and its Off drops the view
 **The gains.** The moon's gain is 0.3, a third of the sun's. By night (`_sunLight`'s `day` test) the panes glow at
 `WL_SKY_NIGHT_GAIN` 0.1, and the day keeps 0.5. The same patch, a full Masser at 21:00 through the pass's own lights
 on each lane's decode, now adds 1.1 times the room's ambient on the Enhanced lane (beam 0.89, glow 0.25) and 0.4 on
-the classic set (0.23, 0.16): a dim patch, the room's dark kept round it. The glow steps at the sun's setting, as the
-beam always has.
+the classic set (0.23, 0.16): a dim patch, the room's dark kept round it. The glow eases between the two gains as the
+sun sets and rises (AUDIT FB1031 L1, below).
 
 **The part.** Window light (the pref `windowLight`, `realWindows.js` windowLightMode): On, the default, Day only and
 Off. The renderer's frame kind reads it (`renderer._wlKindOf`, `windowLight.js` wlKindFor). Off lights no window at
-any hour. Day only lights a building's glass while the sun is up (`wlSunUp`, the frame's own test) and never a street's
-lamp, which is a night's light. Neither drops the view out or the street's rooms: those are the Real windows row's.
+any hour. Day only lights a building's glass while the day has a share (`wlDayShare`, AUDIT FB1031 L1), faded by it,
+and never a street's lamp, which is a night's light. Neither drops the view out or the street's rooms: those are the Real windows row's.
 `?windowlight=off` stays the kill door.
 
 **THE FOUR HOSTS.** No host reads the part. `src/scenes/exterior.js`, `src/scenes/world.js` and
@@ -343,3 +343,20 @@ FLAGGED: none, no window light.
 
 **Pins.** `test/render/windownight.test.js` (WN1-WN6); `tools/mutants/windownight.json` (14, all dead); WL1's
 kind mutant re-aimed by content.
+
+**AUDIT FB1031 L1 (2026-10-31): the dusk eased.** The same player: "not be blasted by the light so it destroys the dark
+and light in the room during day and night". The glow's gain stepped from 0.5 to 0.1 in one capture at 17:49, when the
+sun fell under `wlSunUp`'s 0.05, eleven minutes before the room's own night ambient at 18:00: a pane's glow lost 0.59
+of the room's ambient in a frame on the classic set and 0.84 on the Enhanced lane. Day only cut all its light there. Now
+`wlDayShare` is a smoothstep over the sun's first `WL_DUSK_RISE` (0.15) of height, 0 from 18:00 to 06:00. The glow's
+gain runs from the night's to the day's by it (`wlGlowGain`), and Day only fades its whole light by it and takes no
+moon (`WindowLightPass.frame`'s `dayOnly`, handed by `renderer._wlFrame`).
+
+Measured minute by minute through the renderer's capture of the host's view-out terms, a pane's glow steps at most 0.04
+of the room's ambient on the classic set and 0.09 on the Enhanced lane, from 17:20 to 18:10 and from 05:50 to 06:40.
+
+**Not changed.** The moon's beam keeps its law: it is the key from `wlSunUp` down. The sun's beam still begins at
+`wlSunUp` at the sun's own scale: on a pane facing it, 0.09 of the room's ambient at 06:12 on the classic set and 0.51
+on the Enhanced lane (Day only takes 0.28 of that). THE FOUR HOSTS: as WINDOW-NIGHT, no host reads it. Pins:
+`test/render/fb1031_light.test.js` (L1, four tests) and `tools/mutants/fb1031_light.json`; WINDOW-NIGHT's glow and
+renderer mutants and WL1's moon and kind mutants re-aimed by content.

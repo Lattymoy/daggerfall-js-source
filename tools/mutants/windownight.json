@@ -32,8 +32,8 @@
   {
     "name": "WINDOW-NIGHT-glow-day-gain-by-night",
     "file": "src/render/windowLight.js",
-    "old": "ks = (day ? WL_SKY_GAIN : WL_SKY_NIGHT_GAIN) * fade;",
-    "new": "ks = WL_SKY_GAIN * fade;",
+    "old": "export const wlGlowGain = (k) => WL_SKY_NIGHT_GAIN + (WL_SKY_GAIN - WL_SKY_NIGHT_GAIN) * k;",
+    "new": "export const wlGlowGain = (k) => WL_SKY_GAIN;",
     "tests": [
       "test/render/windownight.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "WINDOW-NIGHT-glow-swapped",
     "file": "src/render/windowLight.js",
-    "old": "ks = (day ? WL_SKY_GAIN : WL_SKY_NIGHT_GAIN) * fade;",
-    "new": "ks = (day ? WL_SKY_NIGHT_GAIN : WL_SKY_GAIN) * fade;",
+    "old": "export const wlGlowGain = (k) => WL_SKY_NIGHT_GAIN + (WL_SKY_GAIN - WL_SKY_NIGHT_GAIN) * k;",
+    "new": "export const wlGlowGain = (k) => WL_SKY_GAIN + (WL_SKY_NIGHT_GAIN - WL_SKY_GAIN) * k;",
     "tests": [
       "test/render/windownight.test.js",
       "test/render/wl1_windowlight.test.js"
@@ -114,7 +114,7 @@
   {
     "name": "WINDOW-NIGHT-renderer-sun-blind",
     "file": "src/render/renderer.js",
-    "old": "'inside', light, wlSunUp(this._wl?.outside));",
+    "old": "'inside', light, wlDayShare(this._wl?.outside) > 0);",
     "new": "'inside', light, true);",
     "tests": [
       "test/render/windownight.test.js"

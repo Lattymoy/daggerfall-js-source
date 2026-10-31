@@ -200,14 +200,34 @@ about 130 m off the far views' smooth ground there. By day it keeps 30% of its n
 - **RED-MOUNTAIN-SEEN** (FIELD FEEDBACK 2026-10-31, #feature-feedback: "Red Mountain doesn't always render, not sure if
   bug or just issue with how distant terrain works. Or an issue with my setup."). Past the streamed grid the cone stands
   in the far views alone, and they were drawn under a linear fog row only. Every exp row has hidden the ground by the
-  grid's edge (4,096 m at the default Land View): the rain 5e-6 of it, the ash 2e-11, Dynamic Skies' overcast 8e-5, a
-  rain sprinkle's thinnest 4.6%. So nothing was lost through the fog, but under a sky drawn clear (`excludeSky`: rain,
-  snow, the ash, and with Dynamic Skies on, its overcast) the land's shape against the sky went too: the cone went with
-  the sun, and came back with it.
-- Now such a row stands the far views wholly in the fog's colour (`render/farRing.js` `ringFogOf`: the ramp closed,
-  the hold 1, no summit in thinner air): the cone's shape stands against the sky, as the streamed ground's own far hills
-  do, and nothing shows through. A fog over the sky (the heavy fog, the sandstorm) stands none - there is no shape to
-  see. The host hands the frame's row (`world.js:"    if (farRing && ringFogOf(fogNow)) {"`).
+  grid's edge at the default Land View (4,096 m): the rain 5e-6 of it, the ash 2e-11, Dynamic Skies' overcast 8e-5, a
+  rain sprinkle's thinnest 4.6%. Under a sky drawn clear (`excludeSky`: rain, snow, the ash, and with Dynamic Skies on,
+  its overcast) the land's shape against the sky went with them: the cone went with the sun, and came back with it.
+- Now such a row stands the far views (`render/farRing.js` `ringFogOf`, no summit in thinner air); a fog over the sky
+  (the heavy fog, the sandstorm) stands none - there is no shape to see. The host hands the frame's row
+  (`world.js:"    if (farRing && ringFogOf(fogNow)) {"`).
+- **AUDIT FB1031 L2.** The far views had stood wholly in the fog's colour, but at a nearer Land View the streamed ground
+  still shows at the grid's edge: a sprinkle 54% of it at Land View 1 and 16% at 3, Dynamic Skies' exp2 rows 69% at 1.
+  So a seam stood there. Now the far views fog by the row's own law and density (`render/horizonHaze.js` horizonHazeOf,
+  the uniform `uFogLaw`: 1 - the world's exp or exp2 factor at their distance) - the ring, the middle ring, the far
+  field and the band's trees alike. At the grid's edge they show what the ground shows at Land View 1, 3, 4 and 5 (the
+  seam 0 in every row), and past it they close to the fog. The law reads no place, so it holds in every province.
+- **What shows by day** (AUDIT FB1031 L3, measured on the port's dome, the enhanced sky without Dynamic Skies). The cone
+  stands against the sky in rain, snow and ash. In the rain the fog is the sky's horizon (157, 171, 185 at noon), paler
+  than the sky behind the cone up to 5 degrees (the dome 139 to 152, the deck 109 to 141). In the snow it is DFU's grey,
+  128, darker than the sky behind (132 to 188); in the ash the same grey, 8 to 24 levels in 255 from it.
+- **What shows at night** (AUDIT FB1031 L3). In the rain the fog is the sky's own horizon (53, 58, 68 at 23:00), 1 to 6
+  levels in 255 from the dome behind the cone: it is not seen, as a mountain 50 km off is not in night rain. In a whole
+  snow or ash the far views stand in DFU's grey over the dark sky (128 against 51 to 55), a grey skyline, as the
+  streamed ground's far hills stand. In a dusting the fog is the sky's colour, as in the rain, and between the two it
+  eases (`07-Rendering/Weather-Arc.md` AUDIT FB1031 L4). Under Dynamic Skies the fog is the mod's own colour, lit at
+  night (NIGHT-FOG): not measured here.
+- **The night's grey, decided** (AUDIT FB1031 L4). DFU fogs Color.gray past the rain's density at every hour
+  (DaggerfallSky.SetSkyFogColor, DaggerfallSky.cs:310-330; WeatherManager.SetFog writes no outdoor colour, and
+  SunlightManager has no fog). The far views do not take the sky's light apart from the ground: they stand in the colour
+  the streamed ground closes into at the grid's edge, and a far view lit apart would put a step there. The grey skyline
+  at night is the world fog's. A darker snow at night would be a change to the world's fog for the whole frame - OPEN,
+  the owner's call.
 - Not changed: after a fast travel past the far field's reach (480 pixels about its base) the ring alone closes the
   horizon at 28 km until the new field is laid - in node a cold field took 1.3 s about Vvardenfell and 0.26 s in the Bay,
   a band at a time between the stream's pixel jobs; a nearer jump keeps the old field standing. On the classic skin, and
@@ -221,7 +241,11 @@ about 130 m off the far views' smooth ground there. By day it keeps 30% of its n
 
 - **`test/world/redmountain_seen.test.js` (3)** and **`tools/mutants/redmountainseen.json` (13, all dead):** the rows
   (the classic and Dynamic Skies'), the reading at the grid's edge, the draw under a GL stub (the ash, clear air, the
-  heavy fog) and the host by source. **PIN MOVED:** `test/ui/farring.test.js` and `test/render/farsea1.test.js` (the
+  heavy fog) and the host by source. **AUDIT FB1031 L2:** `test/render/fb1031_light.test.js` (the law at every Land
+  View's edge on the shader's own text, the draw handing it to the ring and the band's trees) and
+  `tools/mutants/fb1031_light.json`; PIN MOVED: the rows' shapes here (their law and density),
+  `test/render/farsea1.test.js`, `test/render/fartrees.test.js` and `test/systems/dynamicSkies.test.js` (the shaders'
+  call), four of this list's mutants and EL-DISTANCE's far-ring one re-aimed by content. **PIN MOVED:** `test/ui/farring.test.js` and `test/render/farsea1.test.js` (the
   gate), `test/render/tv4_weather_above.test.js` (the reading, the ash added), `test/systems/dynamicSkies.test.js` (the
   row handed whole).
 

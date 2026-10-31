@@ -701,7 +701,7 @@ test('DS1 seam: the controller stands the mod beside the dome on the one lane, a
   assert.match(ring, /_clearAir\.start = row\.start \?\? 0; _clearAir\.end = row\.end;/);
   assert.match(ring, /uniform float uFogStart;/);
   // PIN MOVED (FAR-SEA1): the ramp is the horizon's one law (render/horizonHaze.js), the ring hands it the fog's start
-  assert.match(ring, /horizonHaze\(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold\(uHazeHold, vDist\)\)/);   // PIN MOVED (RED-MOUNTAIN): the hold eased over the summits; PIN MOVED (AUDIT RED-MOUNTAIN F6): and by the eye's distance
+  assert.match(ring, /horizonHazeOf\(uFogLaw, vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold\(uHazeHold, vDist\)\)/);   // PIN MOVED (AUDIT FB1031 L2: under a weather row its own law); PIN MOVED (RED-MOUNTAIN): the hold eased over the summits; PIN MOVED (AUDIT RED-MOUNTAIN F6): and by the eye's distance
   assert.match(read('src/render/horizonHaze.js'), /float ramp = clamp\(\(d - fogStart\) \/ max\(fogEnd - fogStart, 1\.0\), 0\.0, 1\.0\);/);
   // the classic pass knows nothing of it
   assert.doesNotMatch(read('src/render/skyRenderer.js'), /dynamic/i);

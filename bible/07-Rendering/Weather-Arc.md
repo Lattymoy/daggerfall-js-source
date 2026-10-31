@@ -1349,6 +1349,31 @@ case). Valenwood stands the haze under the canopy's 35% dimming.
 the air pass's march) integrates the weather's fog alone, not the jungle's haze. On a clear jungle night a lantern lights
 its haze no more than it lights open air. That would be a slice of its own, in the renderer, if the owner wants it.
 
+## AUDIT FB1031 L4 - DFU's grey eases in (2026-10-31)
+
+A player: "Red Mountain doesn't always render, not sure if bug or just issue with how distant terrain works."
+
+**What was wrong.** `scenes/shared.js` outdoorFogColor (DaggerfallSky.SetSkyFogColor, DaggerfallSky.cs:310-330) fogs
+to Color.gray past the rain's density (0.003) and to the sky's colour at or under it. DFU's rows hold no density
+between the rain's and the snow's, but RAIN-SPRINKLE's fall thins a snow (0.00125 to 0.005) and an ash (0.0015 to 0.006)
+through it. So the frame's fog colour flipped in one frame, and since RED-MOUNTAIN-SEEN every far view flipped with it.
+An ash breathing about its peak at 23:00 crossed the line six times in ten minutes, 53 to 128 of 255 and back.
+
+**What changed.** Between `RAINY_FOG_DENSITY` and `GRAY_FOG_FULL_DENSITY` (the snow's 0.005,
+WeatherManager.SnowyFogSettings) the colour eases from the sky's to the grey on a smoothstep. Each of DFU's rows answers
+DFU's colour, the same array: the rain the sky's, and the snow, the heavy fog, the ash and the sandstorm the grey. A
+snow or an ash thickening from a dusting now steps at most 8 levels for a hundredth of intensity (it stepped 75), and
+the breathing ash drifts. DEPARTURE (Port-Ledger A): DFU's threshold, eased where DFU has no row. Both lanes take it,
+since the classic panorama's colour is the same law.
+
+**The night.** DFU keeps the grey at every hour: SetFog writes no outdoor colour, and SunlightManager has no fog.
+NIGHT-FOG left it, as brighter than the night's air. The far views stand in the world's colour, never lit apart from
+the ground (`03-World/Red-Mountain.md`, The night's grey). A darker snow at night would be a change to the whole
+frame's fog: OPEN, the owner's call.
+
+**Pins.** `test/render/fb1031_light.test.js` (L4, two tests) and `tools/mutants/fb1031_light.json`.
+`test/scenes/audit18_hosts_outer.test.js`'s SetSkyFogColor pin and NIGHT-FOG's pins stand unchanged.
+
 ## BAY-LEFT-SEA - weather born at sea past the Bay is the sea's (2026-10-27)
 
 **What stood.** A weather system is born where the field puts it, and its climate is the map's there

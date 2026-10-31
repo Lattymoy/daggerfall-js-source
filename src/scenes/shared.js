@@ -41,7 +41,7 @@ import { DynamicSkies } from '../systems/dynamicSkies/dynamicSkiesRuntime.js';  
 import { MAX_DELTA_SECONDS } from '../systems/dynamicSkies/dynamicSkies.js';   // Time.maximumDeltaTime, the mod's frame clamp
 import { dynamicSkiesAssets, loadDynamicSkiesTexture, dynamicSkiesTextureUrl, DYNAMIC_SKIES_TEXTURES } from '../systems/dynamicSkies/dynamicSkiesAssets.js';   // DS1: the vendored files
 import { modSetting, modSettingsOf } from '../systems/modSettings.js';   // DS1: the mod's own switches
-import { weatherSunlightScale } from '../world/weather.js';   // DS1: WeatherManager's ScaleFactor, for the skybox's _LightColor0
+import { weatherSunlightScale, FOG_SETTINGS } from '../world/weather.js';   // DS1: WeatherManager's ScaleFactor, for the skybox's _LightColor0; AUDIT FB1031 L4: the snow's density
 import { airLight, airColor, litFog, nightFogOn } from '../systems/weather/nightFog.js';   // NIGHT-FOG: the fog lit by the land's own light
 import { seasonValue, SEASONS, dateFromClassicMinutes } from '../systems/gameDate.js';   // DS1: the winter arm of that scale
 import { hasActiveEffect, isEntityWaterWalking, isBlending, isInvisible, isAShade } from '../systems/effects.js';
@@ -1544,6 +1544,8 @@ export const RAINY_FOG_DENSITY = 0.003;
 
 /** Unity's Color.gray. */
 export const GRAY_FOG_COLOR = Object.freeze([0.5, 0.5, 0.5]);
+/** AUDIT FB1031 L4: the density by which the fog is wholly the grey - WeatherManager.SnowyFogSettings's (0.005). */
+export const GRAY_FOG_FULL_DENSITY = FOG_SETTINGS.snowy.density;
 
 /** DaggerfallSky.SetSkyFogColor (:310-330), verbatim:
  *    if (currentFogSettings.fogMode == FogMode.Exponential &&
@@ -1557,10 +1559,15 @@ export const GRAY_FOG_COLOR = Object.freeze([0.5, 0.5, 0.5]);
  *  hosts passed the sky colour unconditionally, so a blizzard and a
  *  pea-souper fogged to a blue sky tint. */
 export function outdoorFogColor(fogSettings, skyClearColor) {
-  if (fogSettings.mode === 'exp' && fogSettings.density > RAINY_FOG_DENSITY) {
-    return GRAY_FOG_COLOR;
-  }
-  return skyClearColor;
+  if (fogSettings.mode !== 'exp' || !(fogSettings.density > RAINY_FOG_DENSITY)) return skyClearColor;
+  // AUDIT FB1031 L4 (DEPARTURE): DFU's rows hold no density between the rain's and the snow's, but a thinned fall does
+  // (RAIN-SPRINKLE), and the colour - every far view with it (RED-MOUNTAIN-SEEN) - flipped in a frame at the rain's. It
+  // eases to the grey by GRAY_FOG_FULL_DENSITY, so each of DFU's rows keeps DFU's colour.
+  const t = Math.min(1, (fogSettings.density - RAINY_FOG_DENSITY) / (GRAY_FOG_FULL_DENSITY - RAINY_FOG_DENSITY));
+  if (t >= 1) return GRAY_FOG_COLOR;
+  const k = t * t * (3 - 2 * t), out = new Float32Array(3);
+  for (let c = 0; c < 3; c++) out[c] = skyClearColor[c] + (GRAY_FOG_COLOR[c] - skyClearColor[c]) * k;
+  return out;
 }
 
 // --- The player's world clock, for every host (AUDIT 18) --------------

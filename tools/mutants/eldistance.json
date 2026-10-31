@@ -12,13 +12,13 @@
   {
     "name": "EL-DISTANCE-the-far-ring-blends-the-fog-in-linear-again",
     "file": "src/render/enhancedLighting.js",
-    "old": "  vec3 col = mix(shown, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist))));",
-    "new": "  vec3 col = elEncode(mix(elDecode(shown), elDecode(uFogColor), ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist)))));",
+    "old": "  vec3 col = mix(shown, uFogColor, ringHaze(horizonHazeOf(uFogLaw, vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist))));",
+    "new": "  vec3 col = elEncode(mix(elDecode(shown), elDecode(uFogColor), ringHaze(horizonHazeOf(uFogLaw, vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist)))));",
     "tests": [
       "test/render/perffog_uniform.test.js",
       "test/render/el1_enhancedlighting.test.js"
     ],
-    "note": "Re-aimed by content (RED-MOUNTAIN): the hold eased over the summits (summitHold)."
+    "note": "Re-aimed by content (RED-MOUNTAIN): the hold eased over the summits (summitHold); (AUDIT FB1031 L2): under a weather row its own law (horizonHazeOf)."
   },
   {
     "name": "EL-DISTANCE-the-lanterns-glow-in-the-fog-is-dropped",

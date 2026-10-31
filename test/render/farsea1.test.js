@@ -93,12 +93,12 @@ test('FAR-SEA1: every ring shader - classic, the lane, the classic-shadow lane -
   // cover - the ground's alone off the woods (vFlora 0)
   order(classicFs, ['float sun = ringSun();', 'vec3 lit = mix(vColor * (uAmbient + uSunColor * (sun * diff) + uMoonColor * (uMoonScale * mdiff)), vCanopy * floraLight(uAmbient, uSunColor, sun, uMoonColor, uMoonScale) * floraGrain(vWorld.xz), vFlora);',
     'float sea = vSea * uSeaLook;', 'if (sea > 0.0) lit = mix(lit, ringSea(uAmbient, uSunColor, uMoonColor, sun), sea);',
-    'outColor = vec4(mix(lit, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist)))), 1.0);'], 'classic');   // BANTHA1: the jungle's haze over the horizon's; PIN MOVED (RED-MOUNTAIN): the hold eased over the summits
+    'outColor = vec4(mix(lit, uFogColor, ringHaze(horizonHazeOf(uFogLaw, vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist)))), 1.0);'], 'classic');   // BANTHA1: the jungle's haze over the horizon's; PIN MOVED (RED-MOUNTAIN): the hold eased over the summits; PIN MOVED (AUDIT FB1031 L2): under a weather row its own law
   // the lane: its ground through the tonemap into display space, the sea in the water's own space from the light as given
   for (const [name, text] of [['lane', EL_FAR_RING_FS], ['classic shadows', classicShadowLane().farRingFs]]) {
     order(text, ['float sun = ringSun();', 'vec3 shown = elEncode(elTonemapRGB(lit * ex));', 'float sea = vSea * uSeaLook;',
       'if (sea > 0.0) shown = mix(shown, ringSea(uSeaAmbient, uSeaSunColor, uSeaMoonColor, sun), sea);',
-      'vec3 col = mix(shown, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist))));'], name);   // PIN MOVED (RED-MOUNTAIN; AUDIT RED-MOUNTAIN F6: and by the eye's distance)
+      'vec3 col = mix(shown, uFogColor, ringHaze(horizonHazeOf(uFogLaw, vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist))));'], name);   // PIN MOVED (RED-MOUNTAIN; AUDIT RED-MOUNTAIN F6: and by the eye's distance; AUDIT FB1031 L2: a weather's own law)
   }
   for (const text of [classicFs, EL_FAR_RING_FS]) {
     assert.ok(!/uHazeHold \* clamp\(/.test(text), 'the scaled ramp is gone');

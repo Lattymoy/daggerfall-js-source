@@ -290,7 +290,7 @@
   {
     "name": "WL1-no-moon",
     "file": "src/render/windowLight.js",
-    "old": "    const moonDir = !sunDir && o && o.moonScale > 0 && o.moonDir[1] > 0.05 ? o.moonDir : null;",
+    "old": "    const moonDir = !sunDir && !dayOnly && o && o.moonScale > 0 && o.moonDir[1] > 0.05 ? o.moonDir : null;",
     "new": "    const moonDir = null;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
@@ -299,8 +299,8 @@
   {
     "name": "WL1-kind-swapped",
     "file": "src/render/renderer.js",
-    "old": "    return wlKindFor(e && e[0] + e[1] + e[2] > 0 ? 'street' : 'inside', light, wlSunUp(this._wl?.outside));",
-    "new": "    return wlKindFor(e && e[0] + e[1] + e[2] > 0 ? 'inside' : 'street', light, wlSunUp(this._wl?.outside));",
+    "old": "    return wlKindFor(e && e[0] + e[1] + e[2] > 0 ? 'street' : 'inside', light, wlDayShare(this._wl?.outside) > 0);",
+    "new": "    return wlKindFor(e && e[0] + e[1] + e[2] > 0 ? 'inside' : 'street', light, wlDayShare(this._wl?.outside) > 0);",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]

@@ -27,14 +27,14 @@ const WEATHERS = ['sunny', 'cloudy', 'overcast', 'fog', 'rain', 'thunder', 'snow
 
 test('RED-MOUNTAIN-SEEN the rows: a linear row its haze as ever; an exp row under a clear sky - rain, snow, ash, and Dynamic Skies\' overcast, rain and snow - the fog\'s own colour; a fog over the sky - the heavy fog, the sandstorm - none (mutants: a fog over the sky stands it; exp2 unread; the weather\'s hold; its ramp open)', () => {
   const clear = ringFogOf({ mode: 'linear', start: 2000, end: 3600 });
-  assert.deepEqual({ ...clear }, { start: 2000, end: 3600, hold: RING_HAZE_HOLD, weather: false }, 'the draw distance\'s haze, its ramp where the row has it');
+  assert.deepEqual({ ...clear }, { start: 2000, end: 3600, hold: RING_HAZE_HOLD, weather: false, law: 0, density: 0 }, 'the draw distance\'s haze, its ramp where the row has it');   // PIN MOVED (AUDIT FB1031 L2): and no weather law
   assert.equal(ringFogOf({ mode: 'linear', end: 2400 }).start, 0);
   const stood = (row) => (ringFogOf(row) ? (ringFogOf(row).weather ? 'fog' : 'haze') : 'none');
   assert.deepEqual(WEATHERS.map((w) => stood(fogForWeather(w))), ['haze', 'haze', 'haze', 'none', 'fog', 'fog', 'fog', 'none', 'fog'], 'the classic rows');
   const ds = dsRows();
   assert.deepEqual(WEATHERS.map((w) => stood(fogForWeather(w, ds))), ['haze', 'haze', 'fog', 'none', 'fog', 'fog', 'fog', 'none', 'fog'], 'Dynamic Skies\' rows (its overcast is weather)');
   assert.equal(fogForWeather('overcast', ds).mode, 'exp2');
-  assert.deepEqual({ ...ringFogOf(FOG_SETTINGS.ashfall) }, { start: 0, end: 0, hold: 1, weather: true }, 'wholly the fog\'s colour, the summits too');
+  assert.deepEqual({ ...ringFogOf(FOG_SETTINGS.ashfall) }, { start: 0, end: 0, hold: 1, weather: true, law: 1, density: 0.006 }, 'the row\'s own law, the summits too');   // PIN MOVED (AUDIT FB1031 L2): its law and density, not wholly the fog's colour
   assert.equal(ringFogOf(null), null);
   assert.equal(ringFogOf({ mode: 'off' }), null);
 });
