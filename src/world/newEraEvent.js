@@ -561,6 +561,9 @@ export const newEraSpoken = (text) => {
 /** The made sounds' sample rate. */
 export const NEWERA_RATE = 22050;
 
+/** A sine of `freq` hertz at `sec` seconds. */
+const toneAt = (freq, sec) => Math.sin(2 * Math.PI * freq * sec);
+
 /** Scale `samples` so their peak is `peak`. */
 const normalise = (samples, peak) => {
   let top = 0;
@@ -625,8 +628,8 @@ export function newEraEngineSamples() {
     const sec = i / NEWERA_RATE;
     let sum = 0;
     for (const freq of props)
-      for (let harmonic = 1; harmonic <= 8; harmonic++) sum += Math.sin(2 * Math.PI * freq * harmonic * sec) / harmonic;
-    sum += 0.12 * Math.sin(2 * Math.PI * 1150 * sec);
+      for (let harmonic = 1; harmonic <= 8; harmonic++) sum += toneAt(freq * harmonic, sec) / harmonic;
+    sum += 0.12 * toneAt(1150, sec);
     out[i] = sum;
   }
   return normalise(out, 0.8);
@@ -696,10 +699,7 @@ export function newEraDroneSamples() {
   for (let i = 0; i < count; i++) {
     const sec = i / NEWERA_RATE,
       k = i / count;
-    const tone =
-      Math.sin(2 * Math.PI * 43 * sec) +
-      0.5 * Math.sin(2 * Math.PI * 86 * sec) +
-      0.25 * Math.sin(2 * Math.PI * 129 * sec);
+    const tone = toneAt(43, sec) + 0.5 * toneAt(86, sec) + 0.25 * toneAt(129, sec);
     out[i] = tone * Math.min(1, sec / 1.5) * (1 - k) ** 1.5;
   }
   return normalise(out, 0.8);

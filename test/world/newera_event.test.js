@@ -482,10 +482,16 @@ test('NEW ERA voice: the deepest English voice the browser has, as low and slow 
   assert.equal(newEraVoiceOf([{ name: 'Samantha', lang: 'en-US' }, { name: 'Daniel', lang: 'en-GB' }]).name, 'Daniel');
   assert.equal(newEraVoiceOf([{ name: 'Samantha', lang: 'en-US' }]).name, 'Samantha');
   assert.equal(newEraVoiceOf([{ name: 'Thomas', lang: 'fr-FR' }]), null);
+  const voices = [{ name: 'Daniel', lang: 'en-GB' }, { name: 'Anna', lang: 'de-DE' }, { name: 'Luciana', lang: 'pt_BR' }];
+  assert.equal(newEraVoiceOf(voices, 'de').name, 'Anna', 'the player\'s language, not English');
+  assert.equal(newEraVoiceOf(voices, 'pt-BR').name, 'Luciana');
+  assert.equal(newEraVoiceOf(voices, 'ja'), null, 'none for it: the engine\'s own for that language');
   const spoken = [];
   class Utterance { constructor(text) { this.text = text; } }
-  assert.equal(speakDeep('It is done.', { speech: { speak: (u) => spoken.push(u), getVoices: () => [] }, Utterance, volume: 0.4 }), true);
-  assert.deepEqual([spoken[0].text, spoken[0].pitch, spoken[0].rate, spoken[0].volume], ['It is done.', 0, 0.62, 0.4]);
+  assert.equal(speakDeep('It is done.', { speech: { speak: (u) => spoken.push(u), getVoices: () => [] }, Utterance, volume: 0.4, lang: 'en' }), true);
+  assert.deepEqual([spoken[0].text, spoken[0].pitch, spoken[0].rate, spoken[0].volume, spoken[0].lang], ['It is done.', 0, 0.62, 0.4, 'en']);
+  speakDeep('Es ist vollbracht.', { speech: { speak: (u) => spoken.push(u), getVoices: () => voices }, Utterance, volume: 1, lang: 'de' });
+  assert.deepEqual([spoken[1].lang, spoken[1].voice.name], ['de', 'Anna'], 'spoken in the language the line is in');
   assert.equal(speakDeep('It is done.', { speech: undefined, Utterance, volume: 1 }), false);
 });
 

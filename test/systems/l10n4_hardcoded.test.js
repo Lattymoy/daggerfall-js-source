@@ -225,6 +225,7 @@ const HARDCODED = {
   'src/render/lightningBolts.js': 2,
   'src/render/navalRender.js': 2,
   'src/render/nodeGlow.js': 1,
+  'src/render/newEraPass.js': 7,   // the New Era's seven shader sources - GLSL the scan reads as prose (`in vec3`), no word a player reads
   'src/render/npcMarkPass.js': 1,   // NPC-MARKS: its vertex stage's source (GLSL, never a player's words)
   'src/render/nodeGlint.js': 3,   // RESOURCE-HIGHLIGHTS: +1, the ring's program's label ('node outline ring') - a developer's word in a thrown fault
   'src/render/oceanHolesRender.js': 4,

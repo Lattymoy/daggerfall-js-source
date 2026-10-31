@@ -10,6 +10,7 @@ import { SOUND } from '../systems/soundClips.js';
 import { AMBIENT_SOUNDS } from '../systems/ambientEffects.js';
 import { betterAmbience } from '../systems/betterAmbience.js';
 import { getFloat } from '../systems/settings/settings.js';
+import { currentLocale } from '../systems/textManager.js';
 import { NewEraPassRenderer, newEraModel, newEraFrameOf } from '../render/newEraPass.js';
 import { createNewEraCanvas } from '../ui/newEraCanvas.js';
 import {
@@ -71,17 +72,26 @@ export const NEWERA_SPEECH = Object.freeze({ pitch: 0, rate: 0.62 });
 /** A speech engine's voice names that read deep, the first one found is taken. */
 const DEEP_VOICES = /male|daniel|david|fred|george|james|alex|ralph|bruce|arthur|aaron|guy/i;
 
-/** The browser's speech voice that reads deepest, or null for the engine's own. Pure. */
-export function newEraVoiceOf(voices) {
-  const english = (voices ?? []).filter((voice) => /^en/i.test(voice?.lang ?? ''));
-  return english.find((voice) => DEEP_VOICES.test(voice.name ?? '')) ?? english[0] ?? null;
+/** The browser's speech voice for `lang` (the player's language: `pt-BR` takes any `pt` voice) that reads deepest, or
+ *  null for the engine's own voice for that language. Pure. */
+export function newEraVoiceOf(voices, lang = 'en') {
+  const base = String(lang || 'en')
+    .split('-')[0]
+    .toLowerCase();
+  const spoken = (voices ?? []).filter(
+    (voice) =>
+      String(voice?.lang ?? '')
+        .split(/[-_]/)[0]
+        .toLowerCase() === base,
+  );
+  return spoken.find((voice) => DEEP_VOICES.test(voice.name ?? '')) ?? spoken[0] ?? null;
 }
 
 /**
- * Say `text` in the deep voice: the browser's speech, as low and slow as it goes, at the game's Sound Volume. False
- * where there is no speech. `opts` stand in for the browser's under a test.
+ * Say `text` in the deep voice: the browser's speech in the player's language, as low and slow as it goes, at the
+ * game's Sound Volume. False where there is no speech. `opts` stand in for the browser's under a test.
  * @param {string} text
- * @param {{ speech?: any, Utterance?: any, volume?: number }} [opts]
+ * @param {{ speech?: any, Utterance?: any, volume?: number, lang?: string }} [opts]
  */
 export function speakDeep(
   text,
@@ -89,6 +99,7 @@ export function speakDeep(
     speech = globalThis.speechSynthesis,
     Utterance = globalThis.SpeechSynthesisUtterance,
     volume = getFloat('Controls', 'SoundVolume', 0, 1),
+    lang = currentLocale(),
   } = {},
 ) {
   if (!speech || typeof Utterance !== 'function' || !text) return false;
@@ -97,7 +108,8 @@ export function speakDeep(
     said.pitch = NEWERA_SPEECH.pitch;
     said.rate = NEWERA_SPEECH.rate;
     said.volume = Math.max(0, Math.min(1, Number(volume) || 0));
-    const voice = newEraVoiceOf(speech.getVoices?.());
+    said.lang = lang;
+    const voice = newEraVoiceOf(speech.getVoices?.(), lang);
     if (voice) said.voice = voice;
     speech.speak(said);
     return true;
