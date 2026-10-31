@@ -168,7 +168,8 @@ began and pinned (`test/world/dlv56_audit.test.js`, `tools/mutants/dlv56.json`, 
 
 The owner: *"Audit"*, of `cb7def4b6` and `b2b3faf53` (`03-World/Delve-II.md` section 16). One cold lane read the diff
 with the code alone; the session ran the new pins six times, the whole suite and the census for a Litany to probe.
-Each finding below is fixed; I1 to I5 are pinned, and each pin failed on the code it was found in.
+Each finding below is fixed; I1 to I5 are pinned, and each pin failed on the code it was found in. On the audited code the
+probe won The Agryn Prison's Litany again in the real game (83 s, the vault 8 items).
 
 | ID | Sev | Finding | Fix |
 |---|---|---|---|
