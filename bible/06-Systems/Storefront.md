@@ -245,6 +245,13 @@ that gap was shown the older service's card - no Aurum, no Folios ("The Folios a
 gem now reads the account again, as the window's focus does (`enhancedShop.js` shopReread), so a card from a deploy's
 gap mends at the next open. `test/ui/shop_hide.test.js`; `tools/mutants/shop_hide.json`.
 
+**Only the card's wares** (SHOP-UNTOLD, 2026-10-31, a player's report: portal skins, mounts and bundles "vanish after a
+second of opening up the shop"). With no card read - the account still reading, the service out of reach, or no one
+signed in - the window listed every ware, drops not out yet among them, then took them away when the card landed. The
+client cannot see `SHOP_FEATURED`, so it lists only the card's wares (`enhancedShop.js` shopListed). With no card the
+Folios stand alone, and a signed-in window says the shop could not be read. `test/ui/shop_untold.test.js`;
+`tools/mutants/shop_untold.json`.
+
 ## 10. Online
 
 The token's new claim is `fx`, the effects kit: three characters, the kill effect, the portal skin and the mount look,
