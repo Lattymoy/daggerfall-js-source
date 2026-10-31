@@ -53,3 +53,17 @@ A byte read here is uncached (the ground's cache is dropped each call). A pixel'
 about 30 ms to its build on a worker; outside a region the shaper's read costs 36 to 63 ns. The bakes take 13 s and 3 s
 offline. The frame-time budgets of the specification's section 5.3 need a browser probe on representative hardware;
 none ran in this container, and none is claimed.
+
+## In a browser (`node tools/wg2Bench.mjs`, this container, 2026-10-31)
+
+Chromium on SwiftShader (software GL, four cores), the 3 x 3 pixels about (1100, 430), 360 frames an arm:
+
+| Arm | Script a frame, mean / p95 | Gap between frames, mean / p95 | Heap | Pixel build, mean / max | Errors |
+|---|---|---|---|---|---|
+| Without a region | 9.6 / 39.2 ms | 791 / 2,712 ms | 813 MB | 278 / 681 ms | 0 |
+| With `hammerfell-test` | 13.5 / 58.0 ms | 688 / 2,285 ms | 832 MB | 569 / 1,960 ms | 0 |
+
+The gaps are the software renderer's, so only the arms' difference is read here. The region adds about 4 ms of script a
+frame and 20 MB of heap, and doubles a pixel's build. The sampler's own reads for a pixel's nodes take about 16 ms of
+height and 12 ms of climate in node, so most of the build's rise is elsewhere - the region's rougher, wooded ground or
+the seam's reads in the build - and is not yet profiled. Hardware budgets are still not claimed.

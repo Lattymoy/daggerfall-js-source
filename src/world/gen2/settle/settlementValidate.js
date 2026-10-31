@@ -1,17 +1,17 @@
 // @ts-check
 // WG2 SETTLEMENT 2.0 (bible/03-World/World-2-Canon.md, "Settlements"): WHAT A TOWN MUST BE before it is saved or
 // published - every building whole (buildingRecord.js), every door within a step of a street, none floating over its
-// ground or buried in it (its pads laid, its plinth, terrace or stilts accounted for), every street joined to the plaza,
-// no building standing on another or in the water, and all of it within the one map pixel the streamed world stands.
-// Answers the problems as words a designer can act on; none for a sound town.
+// ground or buried in it (its pads laid, its plinth, terrace or stilts accounted for) nor its door under the ground the
+// stream draws, every street joined to the plaza, no building standing on another or in the water, and all of it within
+// the one map pixel the streamed world stands. Answers the problems as words a designer can act on; none for a sound
+// town.
 import { buildingProblems } from './buildingRecord.js';
-import { townRectOf, overlaps, polyDist, spanPoints, PLINTH_M, TERRACE_M } from './settlementGen.js';
+import { townRectOf, overlaps, polyDist, spanPoints, doorPoints, TERRACE_M, FLOAT_M, SILL_EPS } from './settlementGen.js';
 import { TERRAIN_SIZE as PIXEL_M } from '../../terrain/terrainSampler.js';   // a world pixel's metres
-import { padAt } from '../padLaw.js';
+import { padAt, drawnAt } from '../padLaw.js';
 
-/** How far a door may stand from a street's edge (m), and how far a plinth may stand over its lowest corner. */
+/** How far a door may stand from a street's edge (m). */
 export const DOOR_REACH = 6;
-export const FLOAT_M = PLINTH_M + 0.4;
 
 /** @param {import('../regionSampler.js').RegionSampler} S @param {ReturnType<typeof import('./settlementGen.js').generateSettlement>} t
  *  @param {{ minted?: boolean }} [o] minted: the ids given (mintIds), so each building is checked whole */
@@ -46,6 +46,10 @@ export function settlementProblems(S, t, o = {}) {
     if (!stilts && !terrace && level - lo > FLOAT_M) out.push(`${name}: floats ${(level - lo).toFixed(1)} m over its ground`);
     if (!stilts && !terrace && hi - level > 0.3) out.push(`${name}: buried ${(hi - level).toFixed(1)} m`);
     if (terrace && (hi - lo > TERRACE_M * 1.6 + 0.01 || !t.terrainOps.some((op) => op.kind === 'pad' && op.at[0] === b.at.x && op.at[1] === b.at.y))) out.push(`${name}: a terrace without its pad`);
+    if (!stilts && b.doors.length) for (const [x, y] of doorPoints(c, b.at.dir, b.footprint)) {
+      const over = drawnAt(heightAt, cx + x / PIXEL_M, cy + y / PIXEL_M) - level;
+      if (over > SILL_EPS) { out.push(`${name}: its door is buried ${over.toFixed(2)} m in the drawn ground`); break; }
+    }
     if (!stilts && rect.corners.some(([x, y]) => S.waterAt(cx + x / PIXEL_M, cy + y / PIXEL_M))) out.push(`${name}: stands in the water`);
     // its door: on the street side, within reach of a street
     for (const d of b.doors) {

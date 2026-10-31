@@ -18,7 +18,7 @@ import { docPrint } from './edit/revisions.js';
 
 /** The generator's law (the manifest's `generatorVersion` names it). A change that moves any bake's bytes for the same
  *  spec raises it, and the old law is kept beside the new one while a published region was baked by it (WG-5). */
-export const BAKE_GENERATOR = 'wg2-1';
+export const BAKE_GENERATOR = 'wg2-2';
 
 /** The WOODS byte whose far-view height (landforms.js nodeGround) is nearest `m` metres - the byte the kernel and the
  *  far rings read for a pixel of a published region. 0 under the sea. */

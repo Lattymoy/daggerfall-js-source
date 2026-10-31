@@ -430,5 +430,14 @@
     "tests": [
       "test/world/settle2/wg2towns_features.test.js"
     ]
+  },
+  {
+    "name": "WG2TOWNS-band-half-cell",
+    "file": "src/world/settle2/settle2Blocks.js",
+    "old": "band = AUTO * Math.SQRT1_2,",
+    "new": "band = AUTO / 2,",
+    "tests": [
+      "test/world/settle2/wg2towns_features.test.js"
+    ]
   }
 ]

@@ -9,7 +9,7 @@ import { fnv1a } from '../../formats/fnv1a.js';
 import { canonicalJson } from '../../formats/worldData/worldDataJson.js';
 
 /** The generators whose bakes this build can read (the newest last). A published region names one. */
-export const GENERATORS = Object.freeze(['wg2-1']);
+export const GENERATORS = Object.freeze(['wg2-2']);
 /** The band past the Bay's edge whose ground is the Bay's (tamrielGround.js SEAM_PX + BLEND_PX), world pixels. */
 export const BAY_REACH = 14;
 const VERSION = /^[a-z]+\d*-\d+$/;

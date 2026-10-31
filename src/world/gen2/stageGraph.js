@@ -17,7 +17,7 @@ export const STAGE_GRAPH = Object.freeze({
   vegetation: { reads: ['biome', 'soil', 'climate', 'hydrology', 'erosion'], version: 1, reach: 1 },
   resources: { reads: ['geology', 'vegetation', 'hydrology', 'soil'], version: 1, reach: 2 },
   suitability: { reads: ['resources', 'soil', 'hydrology', 'climate', 'erosion', 'biome'], version: 1, reach: 4 },
-  settlements: { reads: ['suitability'], version: 1, reach: 0 },
+  settlements: { reads: ['suitability'], version: 2, reach: 0 },
 });
 /** @type {readonly StageId[]} the order the stages run in - every stage after all it reads */
 export const STAGE_ORDER = Object.freeze(/** @type {StageId[]} */ (Object.keys(STAGE_GRAPH)));

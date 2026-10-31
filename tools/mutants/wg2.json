@@ -415,5 +415,50 @@
     "tests": [
       "test/world/gen2/wg2_bakes.test.js"
     ]
+  },
+  {
+    "name": "WG2-sill-diagonal",
+    "file": "src/world/gen2/padLaw.js",
+    "old": "if (az >= ax) { const h01",
+    "new": "if (az < ax) { const h01",
+    "tests": [
+      "test/world/gen2/wg2_settlements.test.js"
+    ]
+  },
+  {
+    "name": "WG2-sill-fixed-point",
+    "file": "src/world/gen2/settle/settlementGen.js",
+    "old": "if (a < 1 - 1e-6) level = Math.max(level, b / (1 - a));",
+    "new": "if (a < 1 - 1e-6) level = Math.max(level, b);",
+    "tests": [
+      "test/world/gen2/wg2_settlements.test.js"
+    ]
+  },
+  {
+    "name": "WG2-sill-plinth",
+    "file": "src/world/gen2/settle/settlementGen.js",
+    "old": "if (!pad) { level = Math.max(level, drawnAt(groundAt, x, y)); continue; }",
+    "new": "if (!pad) continue;",
+    "tests": [
+      "test/world/gen2/wg2_settlements.test.js"
+    ]
+  },
+  {
+    "name": "WG2-sill-later-pad",
+    "file": "src/world/gen2/settle/settlementGen.js",
+    "old": "drawnAt(on, x, y) > sl.level + SILL_EPS));",
+    "new": "drawnAt(on, x, y) > sl.level + 99));",
+    "tests": [
+      "test/world/gen2/wg2_settlements.test.js"
+    ]
+  },
+  {
+    "name": "WG2-sill-validator",
+    "file": "src/world/gen2/settle/settlementValidate.js",
+    "old": "if (over > SILL_EPS) {",
+    "new": "if (over > 9) {",
+    "tests": [
+      "test/world/gen2/wg2_settlements.test.js"
+    ]
   }
 ]

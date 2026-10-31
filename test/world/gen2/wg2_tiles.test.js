@@ -6,7 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { canonReady, canonTheatre, worldToPicture, pictureToWorld } from '../../../src/world/gen2/canon.js';
 import { provinceTiles } from '../../../src/world/gen2/tiling.js';
-import { bakeRegion } from '../../../src/world/gen2/regionBake.js';
+import { bakeRegion, BAKE_GENERATOR } from '../../../src/world/gen2/regionBake.js';
 import { encodeBake } from '../../../src/world/gen2/bakeCodec.js';
 import { gen2Install, gen2Units, gen2Regions } from '../../../src/world/gen2/gen2Ground.js';
 import { worldManifest, manifestProblems } from '../../../src/world/gen2/manifest.js';
@@ -59,7 +59,7 @@ test('WG2 TILES: two neighbouring tiles baked apart crossfade across their overl
 });
 
 test('WG2 TILES IN THE MANIFEST: tiles of one tiling may overlap in their bands; their cores may not, nor two tilings (mutants: the core test)', () => {
-  const row = (i, tiling = 'hammerfell', dx = 0) => ({ id: `t${i}`, rect: { x: 1100 + i * 128 - 12 + dx, y: 600, w: 152, h: 152 }, bake: `t${i}.wg2`, print: 'abcdef01', generator: 'wg2-1', revision: 1, tiling, core: { x: 1100 + i * 128 + dx, y: 612, w: 128, h: 128 } });
+  const row = (i, tiling = 'hammerfell', dx = 0) => ({ id: `t${i}`, rect: { x: 1100 + i * 128 - 12 + dx, y: 600, w: 152, h: 152 }, bake: `t${i}.wg2`, print: 'abcdef01', generator: BAKE_GENERATOR, revision: 1, tiling, core: { x: 1100 + i * 128 + dx, y: 612, w: 128, h: 128 } });
   assert.deepEqual(manifestProblems({ ...m, published: [row(0), row(1)] }), []);
   assert.deepEqual(manifestProblems({ ...m, published: [row(0), row(1, 'skyrim')] }), ['published t1: overlaps t0']);
   assert.deepEqual(manifestProblems({ ...m, published: [row(0), row(1, 'hammerfell', -20)] }), ['published t1: overlaps t0']);

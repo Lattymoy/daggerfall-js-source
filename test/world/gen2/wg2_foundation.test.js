@@ -65,7 +65,7 @@ test('WG2 MANIFEST: the game\'s manifest is whole, names this build\'s generator
 
 test('WG2 MANIFEST: a published region is refused on the Bay\'s ground without the owner\'s dated word, over another, or by a generator this build cannot read; two clients on different published ground refuse each other (mutants: the Bay test, the overlap, the ground in the refusal)', () => {
   const m = worldManifest();
-  const region = { id: 'r', rect: { x: 1100, y: 600, w: 32, h: 32 }, bake: 'r.wg2', print: 'abcdef01', generator: 'wg2-1', revision: 1 };
+  const region = { id: 'r', rect: { x: 1100, y: 600, w: 32, h: 32 }, bake: 'r.wg2', print: 'abcdef01', generator: BAKE_GENERATOR, revision: 1 };
   assert.deepEqual(manifestProblems({ ...m, published: [region] }), []);
   assert.deepEqual(manifestProblems({ ...m, published: [{ ...region, rect: { x: 990, y: 100, w: 32, h: 32 } }] }), ['published r: bay']);
   assert.deepEqual(manifestProblems({ ...m, published: [{ ...region, rect: { x: 990, y: 100, w: 32, h: 32 }, migration: { by: 'the owner', quote: 'Approve the migration', date: '2026-11-01' } }] }), []);

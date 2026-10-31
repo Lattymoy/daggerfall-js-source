@@ -822,7 +822,7 @@ const HARDCODED = {
   'src/world/gen2/edit/propertyGuard.js': 3,   // WG2: the guard's refusals - a designer's, before a publication
   'src/world/gen2/edit/revisions.js': 4,   // WG2: the publication's gates and a rollback's note - the editor's
   'src/world/gen2/settle/buildingRecord.js': 1,   // WG2: a record's refusal - the generator's, never shown in the game
-  'src/world/gen2/settle/settlementValidate.js': 10,   // WG2: a town's problems - the validator's, read by the bake and the editor
+  'src/world/gen2/settle/settlementValidate.js': 11,   // WG2: a town's problems - the validator's, read by the bake and the editor
   'src/world/gen2/settle/testSettlements.js': 3,   // WG2: the prototype towns' names of two words - proper names, as world/tamrielCapitals.js's
   'src/world/gen2/testRegions.js': 1,   // WG2: the oasis's name (Tava Wells) - a proper name
   'src/world/gen2/vegetation.js': 1,   // WG2: a plant's unmet need - the plants' check, never shown

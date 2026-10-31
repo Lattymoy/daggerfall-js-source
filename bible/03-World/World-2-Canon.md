@@ -105,12 +105,15 @@ field, never past a need (`speciesProblems`); trees keep their spacing. The same
 ## Buildings and settlements (WG-9)
 
 A building (`settle/buildingRecord.js`) has an id, a role and the Daggerfall type the game reads, services, access, a
-place, a footprint, doors on the street side, an interior and, for a house, a home key. Legacy: `rmb:<mapId>:<key>@<layout>`
-from `rmbAdapter.js`, nothing moved. New: `<settlement>/b<seq>`; `mintIds` keeps an id across a regeneration when the
-same plot stands on the same ground, and never gives a retired one again. Each building keeps a block slot
-[bx, by, record] in its pixel's location, and a house's home key is the game's building key for it
-(`talkTopics.js` `makeBuildingKey`). A settlement's map id lane is 0x342. A town stands within one map pixel, and a
-terrace's pad (`padLaw.js`) is one law for the generator and the streamed ground.
+place, a footprint, doors on the street side, an interior and, for a house, a home key. Legacy:
+`rmb:<mapId>:<key>@<layout>` from `rmbAdapter.js`, nothing moved. New: `<settlement>/b<seq>`; `mintIds` keeps an id
+across a regeneration when the same plot stands on the same ground, and never gives a retired one again. Each building
+keeps a block slot [bx, by, record] in its pixel's location, and a house's home key is the game's building key for it
+(`talkTopics.js` `makeBuildingKey`). A settlement's map id lane is 0x342.
+
+A town stands within one map pixel, and a terrace's pad (`padLaw.js`) is one law for the generator and the streamed
+ground. A door is judged on the ground the stream draws (`drawnAt`, the kernel's two triangles over each 6.4 m quad,
+which a pad narrower than one is not): its floor is never under it, and no later pad raises it over an earlier door.
 `settlementGen.js` makes a town in stages A to G; `settlementValidate.js` must answer nothing before it is saved.
 
 In the streamed world (`world/settle2/`, `scenes/settle2Host.js`) a baked town is a location on its pixel: an 8 x 8 grid

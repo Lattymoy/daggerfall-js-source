@@ -46,6 +46,10 @@ The canon every later slice reads is `03-World/World-2-Canon.md`. The audit that
 - **WG-13 (2026-11-01) Publishing ships the lean cut.** Height, biome and lakes are all the ground reads; the authoring
   planes stay with the tools. Cost: a client cannot place plants or sites from a lean bake.
 
+- **WG-14 (2026-10-31) A door is judged on the ground the stream draws.** The kernel draws two triangles over each 6.4 m
+  quad, and most pads are narrower than one, so a floor is never set under its door's drawn ground and no later pad may
+  raise it over an earlier door (`padLaw.js` `drawnAt`). Cost: a terrace's floor may stand over its pad's middle.
+
 ## Phase 0 - the audit and the canon (DONE)
 
 Four reads of the terrain pipeline, the Tamriel geography, the places and buildings, and the tooling, with the baselines
@@ -90,12 +94,16 @@ Built: the services each role carries, the home key lane, the protected-property
 with stable ids, the ground law's binding, and a profile for every province. Since: the continent's inflow, province
 tiles, the two tunings the editor showed (straight rivers on filled flats, streaky ridges), and the baked towns standing
 in the streamed world with their doors, interiors, walls, gates, terraces, stairs, wells, stalls, docks, bridges and
-stilt platforms (`world/settle2/`). Waiting, each its own slice: NPC navigation over a published region, and published
-regions (the owner's call).
+stilt platforms (`world/settle2/`). Waiting, each its own slice: NPC navigation over a published region, a pixel's build
+in a region profiled (twice the Bay's in the browser bench, `Audit-World-2-Phase-0.md`), crops standing on the towns'
+fields, and published regions (the owner's call).
 
 Seen in the game (2026-10-31, `?wg2=hammerfell-test`, headless): the region installs on every thread, the ground's
 bytes at (1100, 430) move from 55-58 to 83-89, and the pixel builds and stands with no error. The editor's close-ups
-showed lake shores straight along cell edges and dune steps up to 5 m; the sampler now reads both between cells.
+showed lake shores straight along cell edges and dune steps up to 5 m; the sampler now reads both between cells. Three
+towns walked in the game (Sentry Hold, Hist Shallows, Tava Wells): arrivals, doors, taverns entered and left, the gate
+walked through and the wall stopping the player. Sentry Hold's terrace doors stood under the drawn ground, 16 of 26 by up
+to 1 m (WG-14).
 
 ## THE FOUR HOSTS (Home.md)
 

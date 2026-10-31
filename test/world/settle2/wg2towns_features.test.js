@@ -147,9 +147,13 @@ test('WG2-TOWNS FIELDS AND WALKERS: Tava Wells\' fields in its pixel read as Dag
   for (const f of hold.town.features.filter((x) => x.kind === 'retaining')) {
     const b = hold.town.buildings.find((x) => x.at.x === f.at[0]), c = local(hold, f.at), n = [f.dir[0], -f.dir[1]], t = [-n[1], n[0]];
     const hw = b.footprint[0] / 2 + 0.5, hd = b.footprint[1] / 2 + 0.5;
-    assert.notEqual(auto(hold, [c[0] + t[0] * (hw + 0.2), c[1] + t[1] * (hw + 0.2)]), 0, `${b.id}: its side shut (its band, or a building beside it)`);
-    assert.notEqual(auto(hold, [c[0] - n[0] * (hd + 0.2), c[1] - n[1] * (hd + 0.2)]), 0, `${b.id}: its back shut`);
-    assert.equal(auto(hold, [c[0] + n[0] * (hd + 0.3), c[1] + n[1] * (hd + 0.3)]), 0, `${b.id}: open at its stair`);
+    // every cell its side's and its back's lines cross is shut - its band, or a building beside it: no diagonal gap
+    for (let k = -1; k <= 1; k += 0.05) {
+      const at = (u, v) => [c[0] + t[0] * u + n[0] * v, c[1] + t[1] * u + n[1] * v];
+      assert.notEqual(auto(hold, at(hw, k * (hd - 1.2))), 0, `${b.id}: its side shut where its line runs`);
+      assert.notEqual(auto(hold, at(k * hw, -hd)), 0, `${b.id}: its back shut where its line runs`);
+    }
+    assert.equal(auto(hold, [c[0] + n[0] * (hd + 0.8), c[1] + n[1] * (hd + 0.8)]), 0, `${b.id}: open at its stair, a cell's half-diagonal past its walls`);
   }
   const well = hold.town.features.find((x) => x.kind === 'well');
   assert.equal(auto(hold, local(hold, well.at)), 0xfe, 'the well shut');

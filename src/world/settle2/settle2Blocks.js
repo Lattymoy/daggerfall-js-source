@@ -132,9 +132,11 @@ function clearSpot(at, p, d, m0) {
   }
   return null;
 }
-/** The walkers' grid shut under a feature (the town map's closed byte): a terrace's ring but its stair's gap, a well, a stall. */
+/** The walkers' grid shut under a feature (the town map's closed byte): a terrace's ring but its stair's gap, a well, a stall.
+ *  A ring's band is a cell's half-diagonal either side of its line, so every cell the line crosses is shut (a cell is read
+ *  at its middle) and no walker slips a diagonal gap. */
 function closedAt(f, b) {
-  const n = [f.dir[0], -f.dir[1]], t = [-n[1], n[0]], C = CAPITAL_CLOSED_BYTE, band = 0.8, r = (c, hw, hd) => ({ c, n, t, hw, hd, byte: C });
+  const n = [f.dir[0], -f.dir[1]], t = [-n[1], n[0]], C = CAPITAL_CLOSED_BYTE, band = AUTO * Math.SQRT1_2, r = (c, hw, hd) => ({ c, n, t, hw, hd, byte: C });
   const off = (c, a, k) => [c[0] + a[0] * k, c[1] + a[1] * k];
   if (f.kind === 'well') return [r(f.c, 1.3, 1.3)];
   if (f.kind === 'stall') return [r(off(f.c, n, -0.4), 1.4, 1.2)];

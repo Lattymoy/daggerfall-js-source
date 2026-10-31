@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { readBake, BAKE_DIR } from '../../../tools/wg2Bake.mjs';
 import { decodeBake } from '../../../src/world/gen2/bakeCodec.js';
 import { regionSampler } from '../../../src/world/gen2/regionSampler.js';
-import { generateSettlement } from '../../../src/world/gen2/settle/settlementGen.js';
+import { generateSettlement, doorSillLevel, padBuriesSill } from '../../../src/world/gen2/settle/settlementGen.js';
 import { settlementProblems } from '../../../src/world/gen2/settle/settlementValidate.js';
 import { siteNeeds } from '../../../src/world/gen2/settle/siteSelect.js';
 import { TEST_SETTLEMENTS } from '../../../src/world/gen2/settle/testSettlements.js';
@@ -19,6 +19,9 @@ import { buildingSummaries } from '../../../src/world/buildingSummaries.js';
 import { isMadePlaceId } from '../../../src/world/placeIds.js';
 import { homeBuildingKeyOk, homeMapIdOk } from '../../../src/net/homeLaw.js';
 import { CAPITAL_LANE } from '../../../src/world/capitalLane.js';
+import { drawnAt, padAt, DRAWN_NODES } from '../../../src/world/gen2/padLaw.js';
+import { surfaceHeightAt } from '../../../src/world/terrain/terrainSurface.js';
+import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE } from '../../../src/world/terrain/terrainSampler.js';
 import { makeBuildingKey } from '../../../src/systems/talk/talkTopics.js';
 
 const S = {}, BAKED = {};
@@ -112,4 +115,37 @@ test('WG2 LEGACY: a Daggerfall town\'s buildings read as records - the key and t
   assert.equal(parseBuildingId('rmb:1:2'), null, 'no layout, no legacy id');
   assert.equal(settlementMapId(1) >>> 20, WG2_SETTLEMENT_LANE);
   assert.ok(WG2_SETTLEMENT_LANE !== CAPITAL_LANE && isMadePlaceId(settlementMapId(1)), 'its own lane, past every Bay pixel id');
+});
+
+test('WG2 SILL: a door is judged on the ground the stream draws - drawnAt is the kernel\'s own two triangles over its nodes (terrainSurface.js surfaceHeightAt), and every shipped door stands on or over it, though most pads are narrower than a quad (mutants: the diagonal, the sill\'s fixed point, the plinth\'s sill)', () => {
+  const R = BAKED['hammerfell-test'], spec = TEST_SETTLEMENTS[2], px = Math.floor(spec.x), py = Math.floor(spec.y), D = HEIGHTMAP_DIMENSION;
+  const scale = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE, nodes = new Float64Array(D * D), h = (x, y) => R.heightAt(x, y);
+  assert.equal(DRAWN_NODES, D - 1);
+  for (let i = 0; i < D; i++) for (let j = 0; j < D; j++) nodes[i * D + j] = h(px + i / DRAWN_NODES, py + 1 - j / DRAWN_NODES) / scale;
+  let worst = 0;
+  for (let k = 0; k < 4000; k++) {
+    const x = px + ((k * 0.6180339887) % 1), y = py + ((k * 0.7548776662) % 1);
+    worst = Math.max(worst, Math.abs(drawnAt(h, x, y) - surfaceHeightAt(nodes, (x - px) * TERRAIN_SIZE, (py + 1 - y) * TERRAIN_SIZE)));
+  }
+  assert.ok(worst < 1e-6, `drawnAt is the drawn surface (${worst} m)`);
+  const narrow = R.towns.flatMap((t) => t.terrainOps).filter((o) => o.kind === 'pad' && Math.min(...o.size) < TERRAIN_SIZE / DRAWN_NODES * 2);
+  assert.ok(narrow.length > 10, 'most pads are narrower than the stream can draw whole');
+  for (const t of R.towns) assert.deepEqual(settlementProblems(S['hammerfell-test'], t, { minted: true }).filter((p) => /buried/.test(p)), [], t.name);
+});
+
+test('WG2 SILL LAW: a plinth\'s floor is lifted to the drawn ground at its sill and never lowered; a terrace\'s to the fixed point where its own pad\'s drawn sill meets it; a pad over a node of an earlier door\'s quad that raises its sill is caught; the validator names a buried door (mutants: the plinth\'s sill, the fixed point, the later pad, the validator)', () => {
+  const n = DRAWN_NODES, M = TERRAIN_SIZE, slope = (x) => 100 + (x - 1000) * M * 0.1;   // a 10% slope up to the east
+  const sill = [1000 + 64.5 / n, 400 + 64.25 / n];
+  assert.equal(doorSillLevel(slope, [sill], null, 0), drawnAt(slope, ...sill), 'a plinth stands on the drawn ground at its sill');
+  assert.equal(doorSillLevel(slope, [sill], null, 1e4), 1e4, 'and never lower than it stood');
+  const pad = { kind: 'pad', at: [sill[0] - 1.8 / M, sill[1]], dir: [1, 0], size: [4, 4] };   // a door facing the rise, its sill on the pad
+  const L = doorSillLevel(slope, [sill], pad, 0), on = (x, y) => padAt({ ...pad, level: L }, x, y, slope(x));
+  assert.ok(L > drawnAt(slope, pad.at[0], pad.at[1]) && Math.abs(drawnAt(on, ...sill) - L) < 1e-9, `the terrace's sill on its own pad is its floor (${L})`);
+  const flat = () => 100, node = [1000 + 64 / n, 400 + 64 / n], sq = { kind: 'pad', at: node, dir: [0, -1], size: [3, 3] };
+  assert.ok(padBuriesSill({ ...sq, level: 103 }, [{ pts: [sill], level: 100 }], flat), 'a pad raising a node of the quad buries the sill');
+  assert.ok(!padBuriesSill({ ...sq, level: 100 }, [{ pts: [sill], level: 100 }], flat) && !padBuriesSill({ ...sq, at: [node[0] - 0.1, node[1]], level: 103 }, [{ pts: [sill], level: 100 }], flat));
+  const hold = baked(TEST_SETTLEMENTS[2]), b = hold.buildings.find((x) => x.ground.kind === 'terrace' && x.doors.length), down = 1.5;
+  const sunk = { ...hold, buildings: hold.buildings.map((x) => (x === b ? { ...x, at: { ...x.at, z: x.at.z - down }, doors: x.doors.map((d) => ({ ...d, z: d.z - down })) } : x)),
+    terrainOps: hold.terrainOps.map((o) => (o.kind === 'pad' && o.at[0] === b.at.x && o.at[1] === b.at.y ? { ...o, level: o.level - down } : o)) };
+  assert.ok(settlementProblems(S['hammerfell-test'], sunk).some((p) => p.startsWith(`${b.id} (${b.role}): its door is buried`)), 'a door sunk under the drawn ground is refused');
 });

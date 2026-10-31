@@ -14,7 +14,7 @@ import { WATER_KIND } from '../hydrology.js';
 import { BUILDING_ROLES } from './buildingRecord.js';
 import { TERRAIN_SIZE as PIXEL_M } from '../../terrain/terrainSampler.js';   // a world pixel's metres
 import { worldPixelKey } from '../../worldWide/worldGrid.js';
-import { padAt, PAD_MARGIN_M } from '../padLaw.js';
+import { padAt, padReach, drawnAt, DRAWN_NODES, PAD_MARGIN_M } from '../padLaw.js';
 
 export const STYLES = Object.freeze(STYLES_JSON.styles);
 export const SETTLEMENT_KINDS = Object.freeze(TYPES_JSON.types);
@@ -42,6 +42,10 @@ export const TERRACED_SLOPE = 0.38;
 export const PLINTH_M = 1.2;
 export const TERRACE_M = 5;
 export const STILTS_M = 2.5;
+/** How far a plinth may stand over its lowest corner (m). */
+export const FLOAT_M = PLINTH_M + 0.4;
+/** A door's sill is read across its width (half of it, m) just outside it, and may stand that much under the drawn ground. */
+export const DOOR_HALF_M = 1, DOOR_OUT_M = 0.3, SILL_EPS = 0.02;
 
 /** @typedef {{ id: string, name: string, type: string, style: string, x: number, y: number, seed: number, mapId?: number,
  *   regenerate?: string[], keep?: any }} SettlementSpec x, y: the centre, world pixels; regenerate: districts to make again */
@@ -59,7 +63,11 @@ export function generateSettlement(S, spec) {
   const W = (lx, ly) => [cx + lx / PIXEL_M, cy + ly / PIXEL_M];
   // the ground with every pad laid so far: a later building stands on what the earlier ones left (padLaw.js)
   const pads = [];
-  const ground = (lx, ly) => { const [x, y] = W(lx, ly); let h = S.heightAt(x, y); for (const p of pads) h = padAt(p, x, y, h); return h; };
+  const groundW = (x, y) => { let h = S.heightAt(x, y); for (const p of pads) h = padAt(p, x, y, h); return h; };
+  const ground = (lx, ly) => groundW(...W(lx, ly));
+  // each door's sill (doorSillLevel): no later pad may raise the drawn ground over one
+  /** @type {{ pts: number[][], level: number }[]} */
+  const sills = [];
   const wetAt = (lx, ly) => { const e = /** @type {any} */ (S.env(...W(lx, ly))); return !!(e.water & WATER_KIND.wetland); };
   const waterAt = (lx, ly) => !!S.waterAt(...W(lx, ly));
   /** Water, or a channel's bank (a ray's step must not jump a narrow river). */
@@ -214,6 +222,7 @@ export function generateSettlement(S, spec) {
   const features = keep ? keep.features.filter((f) => !regen.has(f.district)) : [];
   const ops = keep ? keep.terrainOps.filter((o) => !regen.has(o.district)) : [];
   pads.push(...ops.filter((o) => o.kind === 'pad'));
+  for (const b of placed) if (b.doors.length && b.ground?.kind !== 'stilts') sills.push({ pts: doorPoints(b.rect.c, b.at.dir, b.footprint).map((p) => W(...p)), level: b.at.z });
   const made = [];
   const plotOk = (r) => !placed.some((b) => overlaps(b.rect, r)) && !made.some((b) => overlaps(b.rect, r));
   const [pw0, pw1] = style.plot[0], [pd0, pd1] = style.plot[1];
@@ -282,11 +291,17 @@ export function generateSettlement(S, spec) {
     if (!prefab) return;
     const fp = /** @type {[number, number]} */ ([prefab.footprint[0], prefab.footprint[1]]);
     // the building stands on its own ground, sampled as the validator samples it (spanPoints)
-    const stand = standOn(townRectOf(m.c, m.dir, fp, 0));
-    if (!stand) return;
+    const found = standOn(townRectOf(m.c, m.dir, fp, 0));
+    if (!found) return;
+    const [x, y] = W(...m.c), front = [m.c[0] + m.dir[0] * fp[1] / 2, m.c[1] + m.dir[1] * fp[1] / 2], [fx, fy] = W(...front);
+    const pts = prefab.doors.length && found.kind !== 'stilts' ? doorPoints(m.c, m.dir, fp).map((p) => W(...p)) : [];
+    const sized = { kind: 'pad', district: m.district.key, at: [x, y], dir: m.dir, size: [fp[0] + 2 * PAD_MARGIN_M, fp[1] + 2 * PAD_MARGIN_M] };
+    const stand = { ...found, level: doorSillLevel(groundW, pts, found.kind === 'terrace' ? sized : null, found.level) };
+    if (stand.kind === 'plinth' && stand.level - stand.lo > FLOAT_M) return;
+    if (stand.kind === 'terrace' && stand.level - stand.lo > TERRACE_M * 1.6) return;
+    if (stand.kind === 'terrace' && padBuriesSill({ ...sized, level: stand.level }, sills, groundW)) return;
     m.stand = stand;
-    const level = stand.level, front = [m.c[0] + m.dir[0] * fp[1] / 2, m.c[1] + m.dir[1] * fp[1] / 2];
-    const [x, y] = W(...m.c), [fx, fy] = W(...front);
+    const level = stand.level;
     buildings.push({
       settlement: spec.id, district: m.district.key, genKey: m.genKey, role: prefab.role === 'house' && role !== 'house' ? role : prefab.role,
       type: BUILDING_ROLES[role].type, prefab: prefab.id, at: { x, y, z: level, dir: m.dir }, footprint: fp,
@@ -295,14 +310,15 @@ export function generateSettlement(S, spec) {
       interior: { kind: role === 'well' ? 'none' : 'generated', ref: { prefab: prefab.id, seed: rand01(seed, 23, i) } },
       ground: { kind: m.stand.kind, level },
     });
+    if (pts.length) sills.push({ pts, level });
     if (m.stand.kind === 'terrace') {
-      const pad = { kind: 'pad', district: m.district.key, at: [x, y], dir: m.dir, size: [fp[0] + 2 * PAD_MARGIN_M, fp[1] + 2 * PAD_MARGIN_M], level };
+      const pad = { ...sized, level };
       ops.push(pad);
       pads.push(pad);
       if (level - m.stand.lo > PLINTH_M) features.push({ kind: 'retaining', district: m.district.key, at: [x, y], dir: m.dir, height: level - m.stand.lo });
     }
     if (m.stand.kind === 'stilts') features.push({ kind: 'platform', district: m.district.key, at: [x, y], size: fp, level, stilts: level - m.stand.lo });
-    const street = ground(...front.map((v, k) => v + m.dir[k] * (style.setback + 1)));
+    const street = drawnAt(groundW, ...W(...front.map((v, k) => v + m.dir[k] * (style.setback + 1))));
     if (Math.abs(level - street) > 0.6 && m.stand.kind !== 'stilts') features.push({ kind: 'stairs', district: m.district.key, at: [fx, fy], dir: m.dir, rise: level - street });
   });
 
@@ -374,6 +390,29 @@ export function spanPoints(r) {
     out.push([r.c[0] + a0[0] * u + a1[0] * v, r.c[1] + a0[1] * u + a1[1] * v]);
   }
   return out;
+}
+/** THE LOWEST FLOOR at or over `level` whose door sill (`pts`, world pixels) no ground the stream draws buries (padLaw.js
+ *  drawnAt): a plinth's (no `pad`) the drawn ground there; a terrace's drawn sill is affine in its pad's level (the nodes
+ *  on the pad are it), so its fixed point is exact. @param {(x: number, y: number) => number} groundAt before the pad
+ *  @param {number[][]} pts @param {any} pad @param {number} level */
+export function doorSillLevel(groundAt, pts, pad, level) {
+  for (const [x, y] of pts) {
+    if (!pad) { level = Math.max(level, drawnAt(groundAt, x, y)); continue; }
+    const d = (L) => drawnAt((u, v) => padAt({ ...pad, level: L }, u, v, groundAt(u, v)), x, y), b = d(0), a = d(1) - b;
+    if (a < 1 - 1e-6) level = Math.max(level, b / (1 - a));
+  }
+  return level;
+}
+/** Does a pad laid on `groundAt` raise the drawn ground over any sill (its points and its floor)?
+ *  @param {any} pad @param {{ pts: number[][], level: number }[]} sills @param {(x: number, y: number) => number} groundAt */
+export function padBuriesSill(pad, sills, groundAt) {
+  const r = padReach(pad) + 2 / DRAWN_NODES, on = (x, y) => padAt(pad, x, y, groundAt(x, y));
+  return sills.some((sl) => sl.pts.some(([x, y]) => Math.abs(x - pad.at[0]) <= r && Math.abs(y - pad.at[1]) <= r && drawnAt(on, x, y) > sl.level + SILL_EPS));
+}
+/** A door's sill points, town-local metres: across its width just outside its building's front. */
+export function doorPoints(c, dir, fp) {
+  const t = [-dir[1], dir[0]], f = fp[1] / 2 + DOOR_OUT_M;
+  return [-1, 0, 1].map((s) => [c[0] + dir[0] * f + t[0] * s * DOOR_HALF_M, c[1] + dir[1] * f + t[1] * s * DOOR_HALF_M]);
 }
 /** A rectangle's corners, the middles of its sides and its centre. */
 export const edgePoints = (r) => [...r.corners, ...r.corners.map(([x, y], i) => [(x + r.corners[(i + 1) % 4][0]) / 2, (y + r.corners[(i + 1) % 4][1]) / 2]), r.c];
