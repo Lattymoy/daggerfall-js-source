@@ -2,8 +2,8 @@
   {
     "name": "SLOWSHED-floor",
     "file": "server-account/src/service.js",
-    "old": "  if (slowWaits.length < SLOW_SHED_MIN || waited / trips < SLOW_SHED_WAIT_MS) return;   // a quick request keeps nothing open",
-    "new": "  if (slowWaits.length < SLOW_SHED_MIN - 1 || waited / trips < SLOW_SHED_WAIT_MS) return;   // a quick request keeps nothing open",
+    "old": "  if (slowWaits.length < SLOW_SHED_MIN || waited / trips < SLOW_SHED_WAIT_MS) return; // a quick request keeps nothing open",
+    "new": "  if (slowWaits.length < SLOW_SHED_MIN - 1 || waited / trips < SLOW_SHED_WAIT_MS) return; // a quick request keeps nothing open",
     "tests": [
       "test/net/slow_shed.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "SLOWSHED-quick-keeps-open",
     "file": "server-account/src/service.js",
-    "old": "  if (slowWaits.length < SLOW_SHED_MIN || waited / trips < SLOW_SHED_WAIT_MS) return;   // a quick request keeps nothing open",
-    "new": "  if (slowWaits.length < SLOW_SHED_MIN) return;   // a quick request keeps nothing open",
+    "old": "  if (slowWaits.length < SLOW_SHED_MIN || waited / trips < SLOW_SHED_WAIT_MS) return; // a quick request keeps nothing open",
+    "new": "  if (slowWaits.length < SLOW_SHED_MIN) return; // a quick request keeps nothing open",
     "tests": [
       "test/net/slow_shed.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "SLOWSHED-uncapped",
     "file": "server-account/src/service.js",
-    "old": "  const waited = Math.min(ms, trips * SLOW_SHED_TRIP_CAP_MS);",
-    "new": "  const waited = ms;",
+    "old": "  const waited = Math.min(ms, trips * SLOW_SHED_TRIP_CAP_MS); // metrics.js caps each trip; a caller that hands the whole is held to the same bound",
+    "new": "  const waited = ms; // metrics.js caps each trip; a caller that hands the whole is held to the same bound",
     "tests": [
       "test/net/slow_shed.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "SLOWSHED-unsaid",
     "file": "server-account/src/service.js",
-    "old": "  if (nowMs >= busyShedUntil) console.warn(`[busy] slow: the shed opened",
-    "new": "  if (false) console.warn(`[busy] slow: the shed opened",
+    "old": "  if (nowMs >= busyShedUntil)",
+    "new": "  if (false)",
     "tests": [
       "test/net/slow_shed.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "SLOWSHED-said-each",
     "file": "server-account/src/service.js",
-    "old": "  if (nowMs >= busyShedUntil) console.warn(`[busy] slow: the shed opened",
-    "new": "  if (true) console.warn(`[busy] slow: the shed opened",
+    "old": "  if (nowMs >= busyShedUntil)",
+    "new": "  if (true)",
     "tests": [
       "test/net/slow_shed.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "SLOWSHED-sums-keep-the-gone",
     "file": "server-account/src/service.js",
-    "old": "    slowSum.ms -= gone.ms;\n",
-    "new": "",
+    "old": "    slowSum.ms -= gone.ms;\n    slowSum.trips -= gone.trips;",
+    "new": "    slowSum.trips -= gone.trips;",
     "tests": [
       "test/net/slow_shed.test.js"
     ],

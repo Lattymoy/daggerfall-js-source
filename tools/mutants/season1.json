@@ -470,8 +470,8 @@
   {
     "name": "SEASON1-roy-kept-season",
     "file": "server-account/src/seatRoyal.js",
-    "old": "seasonOf(Number(r.week), zero)?.n ?? 0] } : null;",
-    "new": "0] } : null;",
+    "old": "  return r ? { ts: [Number(r.key), seasonOf(Number(r.week), zero)?.n ?? 0] } : null;",
+    "new": "  return r ? { ts: [Number(r.key), 0] } : null;",
     "tests": [
       "test/net/season1_service.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "SEASON1-roy-kept-title",
     "file": "server-account/src/seatRoyal.js",
-    "old": "WHERE account = ? AND title = ? ORDER BY week DESC, key LIMIT 1').bind(playerId, title)",
-    "new": "WHERE account = ? ORDER BY week DESC, key LIMIT 1').bind(playerId)",
+    "old": "    .prepare('SELECT key, week FROM town_seat_titles WHERE account = ? AND title = ? ORDER BY week DESC, key LIMIT 1')\n    .bind(playerId, title)",
+    "new": "    .prepare('SELECT key, week FROM town_seat_titles WHERE account = ? ORDER BY week DESC, key LIMIT 1')\n    .bind(playerId)",
     "tests": [
       "test/net/season1_service.test.js",
       "test/net/crown1_royal_service.test.js"

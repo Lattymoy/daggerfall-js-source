@@ -2,8 +2,8 @@
   {
     "name": "STAFF-PANEL1-mods-any-staff",
     "file": "server-account/src/staff.js",
-    "old": "    if (who.role !== 'admin') return denied('staff-admin');\n",
-    "new": "",
+    "old": "    if (who.role !== 'admin') return denied('staff-admin');\n    if (path === '/v1/staff/mods') {",
+    "new": "    if (path === '/v1/staff/mods') {",
     "why": "a Moderator adds and removes Moderators",
     "tests": [
       "test/server/staffpanel1.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "STAFF-PANEL1-mod-add-staff-again",
     "file": "server-account/src/staff.js",
-    "old": "      if (staffRole(target, env)) return { error: 'staff-already' };\n",
-    "new": "",
+    "old": "      if (staffRole(target, env)) return { error: 'staff-already' };\n      if (staffSuspended(target)) return { error: 'staff-suspended' }; // STAFF-PANEL2-FIX: an owner's cut, an owner's invite to lift",
+    "new": "      if (staffSuspended(target)) return { error: 'staff-suspended' }; // STAFF-PANEL2-FIX: an owner's cut, an owner's invite to lift",
     "why": "an Admin or a listed Moderator flagged again",
     "tests": [
       "test/server/staffpanel1.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "STAFF-PANEL1-mod-add-banned",
     "file": "server-account/src/staff.js",
-    "old": "      if (isBanned(target, nowS)) return { error: 'staff-banned' };\n",
-    "new": "",
+    "old": "      if (isBanned(target, nowS)) return { error: 'staff-banned' };\n      const [, set] = await db.batch([",
+    "new": "      const [, set] = await db.batch([",
     "why": "a banned account made a Moderator",
     "tests": [
       "test/server/staffpanel1.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "STAFF-PANEL1-mod-remove-config",
     "file": "server-account/src/staff.js",
-    "old": "    if (staffRole({ ...target, staff_mod: 0 }, env)) return { error: 'staff-config' };   // the config holds them still\n",
-    "new": "",
+    "old": "    if (staffRole({ ...target, staff_mod: 0 }, env)) return { error: 'staff-config' }; // the config holds them still\n    const hashes = await sessionHashes(db, target.id);",
+    "new": "    const hashes = await sessionHashes(db, target.id);",
     "why": "a listed Moderator's keys revoked by the panel while the config keeps them",
     "tests": [
       "test/server/staffpanel1.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "STAFF-PANEL1-mod-remove-keys-kept",
     "file": "server-account/src/staff.js",
-    "old": "      db.prepare('UPDATE staff_keys SET revoked_at = ? WHERE player_id = ? AND revoked_at IS NULL').bind(nowS, target.id),\n      ...['staff_sessions', 'staff_invites'].map((t) => db.prepare(`DELETE FROM ${t} WHERE player_id = ?`).bind(target.id)),\n    ]);\n    // STAFF-PANEL5-HIDDEN: their hidden sockets closed",
-    "new": "    ]);\n    // STAFF-PANEL5-HIDDEN: their hidden sockets closed",
+    "old": "      db\n        .prepare('UPDATE staff_keys SET revoked_at = ? WHERE player_id = ? AND revoked_at IS NULL')\n        .bind(nowS, target.id),\n      ...['staff_sessions', 'staff_invites'].map((t) =>\n        db.prepare(`DELETE FROM ${t} WHERE player_id = ?`).bind(target.id),\n      ),\n    ]);",
+    "new": "    ]);",
     "why": "a removed Moderator keeps their keys and sessions",
     "tests": [
       "test/server/staffpanel1.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "STAFF-PANEL1-team-misses-panel-mods",
     "file": "server-account/src/staff.js",
-    "old": "FROM players p WHERE p.staff_mod = 1 OR p.handle_lc IN",
-    "new": "FROM players p WHERE p.handle_lc IN",
+    "old": "      FROM players p WHERE p.staff_mod = 1 OR p.handle_lc IN (${['NULL', ...handles.map((_, i) => `?${i + 3}`)].join(', ')})`,",
+    "new": "      FROM players p WHERE p.handle_lc IN (${['NULL', ...handles.map((_, i) => `?${i + 3}`)].join(', ')})`,",
     "why": "the owners' team never shows an Admin's Moderators",
     "tests": [
       "test/server/staffpanel1.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "STAFF-PANEL1-a-before-no-row",
     "file": "server-account/src/staff.js",
-    "old": "    .bind(view.actor, view.target, view.act, before, limit), audit('audit-read', view.target, view, { onceIn: STAFF_READ_ROW_S })]);",
-    "new": "    .bind(view.actor, view.target, view.act, before, limit), ...(before ? [] : [audit('audit-read', view.target, view, { onceIn: STAFF_READ_ROW_S })])]);",
+    "old": "    audit('audit-read', view.target, view, { onceIn: STAFF_READ_ROW_S }),",
+    "new": "    ...(before ? [] : [audit('audit-read', view.target, view, { onceIn: STAFF_READ_ROW_S })]),",
     "why": "a read naming a `before` leaves no row, and any `before` past the newest row is the first page",
     "tests": [
       "test/server/staffpanel1.test.js"
@@ -113,8 +113,8 @@
   {
     "name": "STAFF-PANEL1-one-members-window-everyones",
     "file": "server-account/src/staff.js",
-    "old": "WHERE actor = ? AND act = ?",
-    "new": "WHERE ? IS NOT NULL AND act = ?",
+    "old": "      `INSERT INTO staff_audit (at, actor, actor_name, role, act, target, detail, key_id, outcome) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ${okIf ? `CASE WHEN ${okIf.sql} THEN 'ok' ELSE 'failed' END` : '?'}${onceIn ? ' WHERE NOT EXISTS (SELECT 1 FROM staff_audit WHERE actor = ? AND act = ? AND target IS ? AND detail IS ? AND at > ?)' : ''}`,",
+    "new": "      `INSERT INTO staff_audit (at, actor, actor_name, role, act, target, detail, key_id, outcome) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ${okIf ? `CASE WHEN ${okIf.sql} THEN 'ok' ELSE 'failed' END` : '?'}${onceIn ? ' WHERE NOT EXISTS (SELECT 1 FROM staff_audit WHERE ? IS NOT NULL AND act = ? AND target IS ? AND detail IS ? AND at > ?)' : ''}`,",
     "why": "one member's read hides every other member's for STAFF_READ_ROW_S",
     "tests": [
       "test/server/staffpanel1.test.js"
@@ -123,8 +123,8 @@
   {
     "name": "STAFF-PANEL1-one-views-window-every-views",
     "file": "server-account/src/staff.js",
-    "old": "AND target IS ? AND detail IS ?",
-    "new": "AND (? IS NULL OR 1) AND (? IS NULL OR 1)",
+    "old": "      `INSERT INTO staff_audit (at, actor, actor_name, role, act, target, detail, key_id, outcome) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ${okIf ? `CASE WHEN ${okIf.sql} THEN 'ok' ELSE 'failed' END` : '?'}${onceIn ? ' WHERE NOT EXISTS (SELECT 1 FROM staff_audit WHERE actor = ? AND act = ? AND target IS ? AND detail IS ? AND at > ?)' : ''}`,",
+    "new": "      `INSERT INTO staff_audit (at, actor, actor_name, role, act, target, detail, key_id, outcome) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ${okIf ? `CASE WHEN ${okIf.sql} THEN 'ok' ELSE 'failed' END` : '?'}${onceIn ? ' WHERE NOT EXISTS (SELECT 1 FROM staff_audit WHERE actor = ? AND act = ? AND (? IS NULL OR 1) AND (? IS NULL OR 1) AND at > ?)' : ''}`,",
     "why": "a look at another player's rows, inside the window, leaves no trace",
     "tests": [
       "test/server/staffpanel1.test.js"
@@ -133,8 +133,8 @@
   {
     "name": "STAFF-PANEL1-a-failed-act-ok",
     "file": "server-account/src/staff.js",
-    "old": "THEN 'ok' ELSE 'failed' END",
-    "new": "THEN 'ok' ELSE 'ok' END",
+    "old": "      `INSERT INTO staff_audit (at, actor, actor_name, role, act, target, detail, key_id, outcome) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ${okIf ? `CASE WHEN ${okIf.sql} THEN 'ok' ELSE 'failed' END` : '?'}${onceIn ? ' WHERE NOT EXISTS (SELECT 1 FROM staff_audit WHERE actor = ? AND act = ? AND target IS ? AND detail IS ? AND at > ?)' : ''}`,",
+    "new": "      `INSERT INTO staff_audit (at, actor, actor_name, role, act, target, detail, key_id, outcome) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ${okIf ? `CASE WHEN ${okIf.sql} THEN 'ok' ELSE 'ok' END` : '?'}${onceIn ? ' WHERE NOT EXISTS (SELECT 1 FROM staff_audit WHERE actor = ? AND act = ? AND target IS ? AND detail IS ? AND at > ?)' : ''}`,",
     "why": "an act that changed nothing read as done",
     "tests": [
       "test/server/staffpanel1.test.js"
@@ -143,8 +143,8 @@
   {
     "name": "STAFF-PANEL1-a-forgotten-keys-outcome-turned",
     "file": "server-account/src/staff.js",
-    "old": "revoked_at IS NULL)', args: [body.id, me.id]",
-    "new": "revoked_at IS NOT NULL)', args: [body.id, me.id]",
+    "old": "            sql: 'EXISTS (SELECT 1 FROM staff_keys WHERE id = ? AND player_id = ? AND revoked_at IS NULL)',",
+    "new": "            sql: 'EXISTS (SELECT 1 FROM staff_keys WHERE id = ? AND player_id = ? AND revoked_at IS NOT NULL)',",
     "why": "a key forgotten read failed, one not there read done",
     "tests": [
       "test/server/staffpanel1.test.js"
@@ -153,8 +153,8 @@
   {
     "name": "STAFF-PANEL1-anothers-key-forgotten-done",
     "file": "server-account/src/staff.js",
-    "old": "WHERE id = ? AND player_id = ? AND revoked_at IS NULL)', args: [body.id, me.id]",
-    "new": "WHERE id = ? AND ? IS NOT NULL AND revoked_at IS NULL)', args: [body.id, me.id]",
+    "old": "            sql: 'EXISTS (SELECT 1 FROM staff_keys WHERE id = ? AND player_id = ? AND revoked_at IS NULL)',",
+    "new": "            sql: 'EXISTS (SELECT 1 FROM staff_keys WHERE id = ? AND ? IS NOT NULL AND revoked_at IS NULL)',",
     "why": "a Moderator forgetting another member's key is written done, and nothing was forgotten",
     "tests": [
       "test/server/staffpanel1.test.js"
@@ -163,8 +163,8 @@
   {
     "name": "STAFF-PANEL1-the-outcome-unsaid",
     "file": "server-account/src/staff.js",
-    "old": "{ outcome: 'denied' }).run(); return { error }; };",
-    "new": "{}).run(); return { error }; };",
+    "old": "    await audit(\n      'refused',\n      null,\n      { path, need: error === 'staff-admin' ? 'admin' : 'owner' },\n      { outcome: 'denied' },\n    ).run();",
+    "new": "    await audit('refused', null, { path, need: error === 'staff-admin' ? 'admin' : 'owner' }, {}).run();",
     "why": "a refused door read as done",
     "tests": [
       "test/server/staffpanel1.test.js"
@@ -183,8 +183,8 @@
   {
     "name": "STAFF-PANEL1-a-refused-sign-in-ok",
     "file": "server-account/src/staff.js",
-    "old": "detail: { why }, outcome: 'denied' }",
-    "new": "detail: { why } }",
+    "old": "      outcome: 'denied',\n    }).run();",
+    "new": "    }).run();",
     "why": "a refused sign-in read as done",
     "tests": [
       "test/server/staffpanel1.test.js"
@@ -193,8 +193,8 @@
   {
     "name": "STAFF-PANEL1-the-reads-outcome-unread",
     "file": "server-account/src/staff.js",
-    "old": "keyId: a.key_id, outcome: a.outcome };",
-    "new": "keyId: a.key_id };",
+    "old": "        outcome: a.outcome,\n      };",
+    "new": "      };",
     "why": "the panel never shows what was done",
     "tests": [
       "test/server/staffpanel1.test.js"
@@ -203,8 +203,8 @@
   {
     "name": "STAFF-PANEL1-a-mod-added-read-failed",
     "file": "server-account/src/staff.js",
-    "old": "EXISTS (SELECT 1 FROM players WHERE id = ? AND staff_mod = 0)",
-    "new": "EXISTS (SELECT 1 FROM players WHERE id = ? AND staff_mod = 1)",
+    "old": "          { okIf: { sql: 'EXISTS (SELECT 1 FROM players WHERE id = ? AND staff_mod = 0)', args: [target.id] } },",
+    "new": "          { okIf: { sql: 'EXISTS (SELECT 1 FROM players WHERE id = ? AND staff_mod = 1)', args: [target.id] } },",
     "why": "a Moderator added, written failed",
     "tests": [
       "test/server/staffpanel1.test.js"
@@ -213,8 +213,8 @@
   {
     "name": "STAFF-PANEL1-a-mod-removed-read-failed",
     "file": "server-account/src/staff.js",
-    "old": "EXISTS (SELECT 1 FROM players WHERE id = ? AND staff_mod = 1)",
-    "new": "EXISTS (SELECT 1 FROM players WHERE id = ? AND staff_mod = 2)",
+    "old": "        { okIf: { sql: 'EXISTS (SELECT 1 FROM players WHERE id = ? AND staff_mod = 1)', args: [target.id] } },",
+    "new": "        { okIf: { sql: 'EXISTS (SELECT 1 FROM players WHERE id = ? AND staff_mod = 2)', args: [target.id] } },",
     "why": "a Moderator removed, written failed",
     "tests": [
       "test/server/staffpanel1.test.js"

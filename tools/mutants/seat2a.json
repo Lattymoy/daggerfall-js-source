@@ -351,8 +351,8 @@
   {
     "name": "SEAT2a-svc-window-anyone",
     "file": "server-account/src/seatBattles.js",
-    "old": "  if (!SEAT_LEVER_RANKS.includes(Number(a.me.rank))) return { error: 'guild-rank' };\n  // AUDIT-SEATS S10",
-    "new": "  // AUDIT-SEATS S10",
+    "old": "  if (!SEAT_LEVER_RANKS.includes(Number(a.me.rank))) return { error: 'guild-rank' };\n  // AUDIT-SEATS S10 (5.1: \"Muster ... windows may move (6.3)\"; 6.3: \"a change made in the Muster applies from the next",
+    "new": "  // AUDIT-SEATS S10 (5.1: \"Muster ... windows may move (6.3)\"; 6.3: \"a change made in the Muster applies from the next",
     "tests": [
       "test/net/seat2a_service.test.js"
     ]
@@ -360,8 +360,8 @@
   {
     "name": "SEAT2a-svc-window-any-seat",
     "file": "server-account/src/seatBattles.js",
-    "old": "    SELECT ?1, ?2, ?3, ?4, ?5, ?6 WHERE EXISTS (SELECT 1 FROM town_seat_holds WHERE key = ?1 AND guild_id = ?2)\n      AND EXISTS",
-    "new": "    SELECT ?1, ?2, ?3, ?4, ?5, ?6 WHERE 1\n      AND EXISTS",
+    "old": "    SELECT ?1, ?2, ?3, ?4, ?5, ?6 WHERE EXISTS (SELECT 1 FROM town_seat_holds WHERE key = ?1 AND guild_id = ?2)",
+    "new": "    SELECT ?1, ?2, ?3, ?4, ?5, ?6 WHERE 1",
     "tests": [
       "test/net/seat2a_service.test.js"
     ]
@@ -369,8 +369,8 @@
   {
     "name": "SEAT2a-svc-window-unchecked",
     "file": "server-account/src/seatBattles.js",
-    "old": "  if (!siegeWindowOk(day, hour)) return { error: 'bad-window' };\n",
-    "new": "",
+    "old": "  if (!siegeWindowOk(day, hour)) return { error: 'bad-window' };\n  const a = await guildActorOf(db, player, character);",
+    "new": "  const a = await guildActorOf(db, player, character);",
     "tests": [
       "test/net/seat2a_service.test.js"
     ]
@@ -378,8 +378,8 @@
   {
     "name": "SEAT2a-svc-old-holders-window",
     "file": "server-account/src/seatBattles.js",
-    "old": "  const w = await db.prepare('SELECT day, hour FROM town_seat_windows WHERE key = ? AND guild_id = ?').bind(key, guildId).first();",
-    "new": "  const w = await db.prepare('SELECT day, hour FROM town_seat_windows WHERE key = ? AND ? IS NOT NULL').bind(key, guildId).first();",
+    "old": "    .prepare('SELECT day, hour FROM town_seat_windows WHERE key = ? AND guild_id = ?')",
+    "new": "    .prepare('SELECT day, hour FROM town_seat_windows WHERE key = ? AND ? IS NOT NULL')",
     "tests": [
       "test/net/seat2a_service.test.js"
     ]
@@ -387,8 +387,8 @@
   {
     "name": "SEAT2a-svc-new-member",
     "file": "server-account/src/seatBattles.js",
-    "old": "    if (Number(me.joined_at) > turningS - SEAT_MEMBER_WAIT_S) return { error: 'sign-new-member' };\n",
-    "new": "",
+    "old": "    if (Number(me.joined_at) > turningS - SEAT_MEMBER_WAIT_S) return { error: 'sign-new-member' };\n    const then =",
+    "new": "    const then =",
     "tests": [
       "test/net/seat2a_service.test.js"
     ]
@@ -396,8 +396,8 @@
   {
     "name": "SEAT2a-svc-unbound",
     "file": "server-account/src/seatBattles.js",
-    "old": "    if (then !== me.guild_id && b.kind !== 'revolt') return { error: 'sign-unbound' };",
-    "new": "    if (false) return { error: 'sign-unbound' };",
+    "old": "    if (then !== me.guild_id && b.kind !== 'revolt') return { error: 'sign-unbound' }; // AUDIT SEATS-2 L2: a revolt won no Right - its week asks no bind (7.7)",
+    "new": "    if (false) return { error: 'sign-unbound' }; // AUDIT SEATS-2 L2: a revolt won no Right - its week asks no bind (7.7)",
     "tests": [
       "test/net/seat2a_service.test.js"
     ]
@@ -405,8 +405,8 @@
   {
     "name": "SEAT2a-svc-bound-elsewhere",
     "file": "server-account/src/seatBattles.js",
-    "old": "    if (bound != null && bound !== me.guild_id) return { error: 'sign-bound-elsewhere' };\n    const r = await",
-    "new": "    const r = await",
+    "old": "    if (bound != null && bound !== me.guild_id) return { error: 'sign-bound-elsewhere' };\n    const r = await db",
+    "new": "    const r = await db",
     "tests": [
       "test/net/seat2a_service.test.js"
     ]
@@ -414,8 +414,8 @@
   {
     "name": "SEAT2a-svc-side-room",
     "file": "server-account/src/seatBattles.js",
-    "old": "      WHERE ${openSql('?1', '?2', '?7')} AND ${roomSql('?1', '?2', '?6')}\n        AND EXISTS (SELECT 1 FROM guild_members WHERE player = ?3 AND char_id = ?4",
-    "new": "      WHERE ${openSql('?1', '?2', '?7')}\n        AND EXISTS (SELECT 1 FROM guild_members WHERE player = ?3 AND char_id = ?4",
+    "old": "      WHERE ${openSql('?1', '?2', '?7')} AND ${roomSql('?1', '?2', '?6')}",
+    "new": "      WHERE ${openSql('?1', '?2', '?7')}",
     "tests": [
       "test/net/seat2a_service.test.js"
     ]
@@ -423,8 +423,8 @@
   {
     "name": "SEAT2a-svc-close-early",
     "file": "server-account/src/seatBattles.js",
-    "old": "  if (nowS >= b.starts_at - SIGN_CLOSES_MS / 1000) return { error: 'sign-closed' };\n  if (await db.prepare('SELECT 1 FROM town_seat_rosters WHERE week = ? AND key = ? AND account = ?')",
-    "new": "  if (await db.prepare('SELECT 1 FROM town_seat_rosters WHERE week = ? AND key = ? AND account = ?')",
+    "old": "  if (nowS >= b.starts_at - SIGN_CLOSES_MS / 1000) return { error: 'sign-closed' };\n  if (",
+    "new": "  if (",
     "tests": [
       "test/net/seat2a_service.test.js"
     ]
@@ -432,8 +432,8 @@
   {
     "name": "SEAT2a-svc-twice",
     "file": "server-account/src/seatBattles.js",
-    "old": "  if (await db.prepare('SELECT 1 FROM town_seat_rosters WHERE week = ? AND key = ? AND account = ?').bind(week, key, player.id).first()) return { error: 'sign-twice' };\n",
-    "new": "",
+    "old": "  if (\n    await db\n      .prepare('SELECT 1 FROM town_seat_rosters WHERE week = ? AND key = ? AND account = ?')\n      .bind(week, key, player.id)\n      .first()\n  )\n    return { error: 'sign-twice' };\n  if (await overRate({ db, nowS }, `seat-sign:${player.id}`, SEAT_EDICTS_HOUR, 3600)) return { error: 'seats-rate' };",
+    "new": "  if (await overRate({ db, nowS }, `seat-sign:${player.id}`, SEAT_EDICTS_HOUR, 3600)) return { error: 'seats-rate' };",
     "tests": [
       "test/net/seat2a_service.test.js"
     ]
@@ -441,7 +441,7 @@
   {
     "name": "SEAT2a-svc-unbinding",
     "file": "server-account/src/seatBattles.js",
-    "old": "    await db.prepare('INSERT OR IGNORE INTO town_seat_binds (week, account, guild_id, char_id, at) VALUES (?, ?, ?, ?, ?)').bind(week, player.id, me.guild_id, character, nowS).run();\n    return { ok: true, side, sellsword: false };",
+    "old": "    await db\n      .prepare('INSERT OR IGNORE INTO town_seat_binds (week, account, guild_id, char_id, at) VALUES (?, ?, ?, ?, ?)')\n      .bind(week, player.id, me.guild_id, character, nowS)\n      .run();\n    return { ok: true, side, sellsword: false };",
     "new": "    return { ok: true, side, sellsword: false };",
     "tests": [
       "test/net/seat2a_service.test.js"
@@ -450,8 +450,8 @@
   {
     "name": "SEAT2a-svc-sword-member",
     "file": "server-account/src/seatBattles.js",
-    "old": "  if (await db.prepare('SELECT 1 FROM guild_members WHERE player = ? AND guild_id IN (?, ?)').bind(player.id, b.attacker, b.defender).first()) return { error: 'sellsword-member' };\n  if (bound != null && bound !== hire.guild_id)",
-    "new": "  if (bound != null && bound !== hire.guild_id)",
+    "old": "  if (\n    await db\n      .prepare('SELECT 1 FROM guild_members WHERE player = ? AND guild_id IN (?, ?)')\n      .bind(player.id, b.attacker, b.defender)\n      .first()\n  )\n    return { error: 'sellsword-member' };\n  if (bound != null && bound !== hire.guild_id) return { error: 'sign-bound-elsewhere' };",
+    "new": "  if (bound != null && bound !== hire.guild_id) return { error: 'sign-bound-elsewhere' };",
     "tests": [
       "test/net/seat2a_service.test.js"
     ]
@@ -459,8 +459,8 @@
   {
     "name": "SEAT2a-svc-cooling",
     "file": "server-account/src/seatBattles.js",
-    "old": "  if (await db.prepare('SELECT 1 FROM town_seat_rosters WHERE account = ? AND guild_id = ? AND week >= ? AND week < ?').bind(player.id, other, week - SELLSWORD_COOL_WEEKS, week).first()) return { error: 'sellsword-cooling' };\n",
-    "new": "",
+    "old": "  if (\n    await db\n      .prepare('SELECT 1 FROM town_seat_rosters WHERE account = ? AND guild_id = ? AND week >= ? AND week < ?')\n      .bind(player.id, other, week - SELLSWORD_COOL_WEEKS, week)\n      .first()\n  )\n    return { error: 'sellsword-cooling' };\n  const [r] = await db.batch([",
+    "new": "  const [r] = await db.batch([",
     "tests": [
       "test/net/seat2a_service.test.js"
     ]
@@ -477,8 +477,8 @@
   {
     "name": "SEAT2a-svc-hire-unsigned",
     "file": "server-account/src/seatBattles.js",
-    "old": "    db.prepare(\"UPDATE town_seat_hires SET state = 'signed' WHERE week = ? AND key = ? AND account = ? AND state = 'offered' AND changes() > 0\").bind(week, key, player.id),\n  ]);\n  if (!r?.meta?.changes) return { error: nowS >= b.starts_at - SIGN_CLOSES_MS / 1000 ? 'sign-closed' : 'sellswords-full' };",
-    "new": "  ]);\n  if (!r?.meta?.changes) return { error: nowS >= b.starts_at - SIGN_CLOSES_MS / 1000 ? 'sign-closed' : 'sellswords-full' };",
+    "old": "    db\n      .prepare(\n        \"UPDATE town_seat_hires SET state = 'signed' WHERE week = ? AND key = ? AND account = ? AND state = 'offered' AND changes() > 0\",\n      )\n      .bind(week, key, player.id),\n  ]);",
+    "new": "  ]);",
     "tests": [
       "test/net/seat2a_service.test.js"
     ]
@@ -486,8 +486,8 @@
   {
     "name": "SEAT2a-svc-unsign-any-time",
     "file": "server-account/src/seatBattles.js",
-    "old": "    db.prepare(`DELETE FROM town_seat_rosters WHERE week = ?1 AND key = ?2 AND account = ?3 AND ${openSql('?1', '?2', '?4')}`).bind(week, key, player.id, nowS),",
-    "new": "    db.prepare(`DELETE FROM town_seat_rosters WHERE week = ?1 AND key = ?2 AND account = ?3 AND ?4 IS NOT NULL`).bind(week, key, player.id, nowS),",
+    "old": "      .prepare(\n        `DELETE FROM town_seat_rosters WHERE week = ?1 AND key = ?2 AND account = ?3 AND ${openSql('?1', '?2', '?4')}`,\n      )",
+    "new": "      .prepare(`DELETE FROM town_seat_rosters WHERE week = ?1 AND key = ?2 AND account = ?3 AND ?4 IS NOT NULL`)",
     "tests": [
       "test/net/seat2a_service.test.js"
     ]
@@ -504,8 +504,8 @@
   {
     "name": "SEAT2a-svc-hire-member",
     "file": "server-account/src/seatBattles.js",
-    "old": "  if (await db.prepare('SELECT 1 FROM guild_members WHERE player = ? AND guild_id IN (?, ?)').bind(who.id, m.b.attacker, m.b.defender).first()) return { error: 'sellsword-member' };\n",
-    "new": "",
+    "old": "  if (\n    await db\n      .prepare('SELECT 1 FROM guild_members WHERE player = ? AND guild_id IN (?, ?)')\n      .bind(who.id, m.b.attacker, m.b.defender)\n      .first()\n  )\n    return { error: 'sellsword-member' };\n  const week = m.b.week;",
+    "new": "  const week = m.b.week;",
     "tests": [
       "test/net/seat2a_service.test.js"
     ]
@@ -513,8 +513,8 @@
   {
     "name": "SEAT2a-svc-hire-fee",
     "file": "server-account/src/seatBattles.js",
-    "old": "  if (!sellswordFeeOk(fee)) return { error: 'bad-fee' };\n",
-    "new": "",
+    "old": "  if (!sellswordFeeOk(fee)) return { error: 'bad-fee' };\n  if (typeof handle !== 'string' || !handle) return { error: 'bad-handle' };",
+    "new": "  if (typeof handle !== 'string' || !handle) return { error: 'bad-handle' };",
     "tests": [
       "test/net/seat2a_service.test.js"
     ]
@@ -531,8 +531,8 @@
   {
     "name": "SEAT2a-svc-hire-twice",
     "file": "server-account/src/seatBattles.js",
-    "old": "  if (await db.prepare(\"SELECT 1 FROM town_seat_hires WHERE week = ? AND key = ? AND account = ? AND state <> 'withdrawn'\").bind(week, key, who.id).first()) return { error: 'hire-twice' };\n",
-    "new": "",
+    "old": "  if (\n    await db\n      .prepare(\"SELECT 1 FROM town_seat_hires WHERE week = ? AND key = ? AND account = ? AND state <> 'withdrawn'\")\n      .bind(week, key, who.id)\n      .first()\n  )\n    return { error: 'hire-twice' };\n  if (await overRate({ db, nowS }, `seat-lever:${player.id}`, SEAT_EDICTS_HOUR, 3600)) return { error: 'seats-rate' };",
+    "new": "  if (await overRate({ db, nowS }, `seat-lever:${player.id}`, SEAT_EDICTS_HOUR, 3600)) return { error: 'seats-rate' };",
     "tests": [
       "test/net/seat2a_service.test.js"
     ]
@@ -540,8 +540,8 @@
   {
     "name": "SEAT2a-svc-no-escrow",
     "file": "server-account/src/seatBattles.js",
-    "old": "  if (fee > 0) {\n    stmts.push(db.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)\n      SELECT 'guild', ?1, 'escrow'",
-    "new": "  if (fee < 0) {\n    stmts.push(db.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)\n      SELECT 'guild', ?1, 'escrow'",
+    "old": "  if (fee > 0) {",
+    "new": "  if (fee < 0) {",
     "tests": [
       "test/net/seat2a_service.test.js"
     ]
@@ -549,8 +549,8 @@
   {
     "name": "SEAT2a-svc-no-return",
     "file": "server-account/src/seatBattles.js",
-    "old": "  if (Number(h.fee) > 0) {\n    stmts.push(db.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)\n      VALUES ('escrow'",
-    "new": "  if (Number(h.fee) < 0) {\n    stmts.push(db.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)\n      VALUES ('escrow'",
+    "old": "  if (Number(h.fee) > 0) {",
+    "new": "  if (Number(h.fee) < 0) {",
     "tests": [
       "test/net/seat2a_service.test.js"
     ]
@@ -558,8 +558,8 @@
   {
     "name": "SEAT2a-svc-view-swords",
     "file": "server-account/src/seatBattles.js",
-    "old": "  for (const r of rows) { const s = sides[r.side]; if (!s) continue; s.n += Number(r.n); if (Number(r.sellsword)) s.swords += Number(r.n); }",
-    "new": "  for (const r of rows) { const s = sides[r.side]; if (!s) continue; s.n += Number(r.n); }",
+    "old": "    if (Number(r.sellsword)) s.swords += Number(r.n);\n  }",
+    "new": "  }",
     "tests": [
       "test/net/seat2a_service.test.js"
     ]
@@ -585,8 +585,8 @@
   {
     "name": "SEAT2a-svc-live-past-end",
     "file": "server-account/src/seatBattles.js",
-    "old": "starts_at - ? <= ? AND ends_at > ?\")",
-    "new": "starts_at - ? <= ? AND ends_at >= ?\")",
+    "old": "      \"SELECT COUNT(*) AS n, MAX(ends_at) AS until FROM town_seat_battles WHERE state = 'scheduled' AND starts_at - ? <= ? AND ends_at > ?\",",
+    "new": "      \"SELECT COUNT(*) AS n, MAX(ends_at) AS until FROM town_seat_battles WHERE state = 'scheduled' AND starts_at - ? <= ? AND ends_at >= ?\",",
     "tests": [
       "test/net/seat2a_service.test.js"
     ]

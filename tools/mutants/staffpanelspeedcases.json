@@ -2,8 +2,8 @@
   {
     "name": "STAFF-PANEL-SPEED-cases-list-apart",
     "file": "server-account/src/staffCases.js",
-    "old": "const read = await db.batch([",
-    "new": "const read = await (async (l) => { const o = []; for (const st of l) o.push((await db.batch([st]))[0]); return o; })([",
+    "old": "    const read = await db.batch([",
+    "new": "    const read = await (async (l) => {\n      const o = [];\n      for (const st of l) o.push((await db.batch([st]))[0]);\n      return o;\n    })([",
     "why": "the open cases' reads and audit row awaited one after another (a trip each) instead of in one batch",
     "tests": [
       "test/server/staffpanelspeedcases.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "STAFF-PANEL-SPEED-cases-account-then-case",
     "file": "server-account/src/staffCases.js",
-    "old": "const byId = typeof body.target === 'string' && ID_RE.test(body.target);",
-    "new": "const byId = false;",
+    "old": "  const byId = typeof body.target === 'string' && ID_RE.test(body.target);",
+    "new": "  const byId = false;",
     "why": "an account named by its id found first, its open case read after (a trip more on every case door)",
     "tests": [
       "test/server/staffpanelspeedcases.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "STAFF-PANEL-SPEED-cases-case-row-again",
     "file": "server-account/src/staffCases.js",
-    "old": "Promise.all([strikesLook(ctx, me, env, { target: row.id, row }),",
-    "new": "Promise.all([strikesLook(ctx, me, env, { target: row.id }),",
+    "old": "      strikesLook(ctx, me, env, { target: row.id, row }),",
+    "new": "      strikesLook(ctx, me, env, { target: row.id }),",
     "why": "a case read finds its account again inside strikesLook (a trip more)",
     "tests": [
       "test/server/staffpanelspeedcases.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "STAFF-PANEL-SPEED-cases-case-batch-apart",
     "file": "server-account/src/staffCases.js",
-    "old": "      db.batch([...(one ? caseReads(db, open.id) : []),",
-    "new": "      (async (l) => { const o = []; for (const st of l) o.push((await db.batch([st]))[0]); return o; })([...(one ? caseReads(db, open.id) : []),",
+    "old": "      db.batch([",
+    "new": "      (async (l) => {\n        const o = [];\n        for (const st of l) o.push((await db.batch([st]))[0]);\n        return o;\n      })([",
     "why": "a case's lines, reports, kept claim, audit row and claim read back awaited one after another",
     "tests": [
       "test/server/staffpanelspeedcases.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "STAFF-PANEL-SPEED-cases-look-then-batch",
     "file": "server-account/src/staffCases.js",
-    "old": "const [look, out] = await Promise.all([strikesLook(",
-    "new": "const [look, out] = await Promise.all([await strikesLook(",
+    "old": "      strikesLook(ctx, me, env, { target: row.id, row }),",
+    "new": "      await strikesLook(ctx, me, env, { target: row.id, row }),",
     "why": "a case's or strikes' record (strikesLook) read first, its batch sent after (a trip more on both doors)",
     "tests": [
       "test/server/staffpanelspeedcases.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "STAFF-PANEL-SPEED-cases-look-refusal-first",
     "file": "server-account/src/staffCases.js",
-    "old": "    if (!canModerate(me, env)) return { error: 'not-moderator' };   // strikesLook's own refusal",
-    "new": "    if (false) return { error: 'not-moderator' };   // strikesLook's own refusal",
+    "old": "    if (!canModerate(me, env)) return { error: 'not-moderator' }; // strikesLook's own refusal, asked before the batch below writes",
+    "new": "    if (false) return { error: 'not-moderator' }; // strikesLook's own refusal, asked before the batch below writes",
     "why": "a staff session's member always moderates (staff.js staffRole: Admin or Moderator, both canModerate), so strikesLook never refuses here today; the check is kept so a change to staffRole can never write a look's claim keep and audit row before the refusal",
     "tests": [
       "test/server/staffpanelspeedcases.test.js"
@@ -63,8 +63,8 @@
   {
     "name": "STAFF-PANEL-SPEED-cases-no-case-read",
     "file": "server-account/src/staffCases.js",
-    "old": "    if (one && !open) return { error: 'no-case' };",
-    "new": "    if (false) return { error: 'no-case' };",
+    "old": "    if (one && !open) return { error: 'no-case' }; // safety.js modCase's answer: the account has no open case this member may read",
+    "new": "    if (false) return { error: 'no-case' }; // safety.js modCase's answer: the account has no open case this member may read",
     "why": "an account with no open case read as one (the case door throws instead of answering no-case)",
     "tests": [
       "test/server/staffpanelspeedcases.test.js"
@@ -73,8 +73,8 @@
   {
     "name": "STAFF-PANEL-SPEED-cases-act-row-again",
     "file": "server-account/src/staffCases.js",
-    "old": "target: row.id, row, caseId: body.case ?? null,",
-    "new": "target: row.id, caseId: body.case ?? null,",
+    "old": "      row,\n      caseId: body.case ?? null,",
+    "new": "      caseId: body.case ?? null,",
     "why": "an act finds its account again inside modAct (a trip more)",
     "tests": [
       "test/server/staffpanelspeedcases.test.js"
@@ -93,8 +93,8 @@
   {
     "name": "STAFF-PANEL-SPEED-cases-same-account-guard",
     "file": "server-account/src/staffCases.js",
-    "old": "const open = byId && row.id === body.target ? early : await openOf(row.id);",
-    "new": "const open = byId ? early : await openOf(row.id);",
+    "old": "  const open = byId && row.id === body.target ? early : await openOf(row.id);",
+    "new": "  const open = byId ? early : await openOf(row.id);",
     "why": "findAccount by id answers that id's own row (players.id compares exactly), so the guard never fires today; it is kept so a change to findAccount's rule can never pair an account with another account's case",
     "tests": [
       "test/server/staffpanelspeedcases.test.js"

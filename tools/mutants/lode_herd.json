@@ -52,8 +52,8 @@
   {
     "name": "HUNTLEAN-replica-dropped",
     "file": "server-account/src/service.js",
-    "old": "  ['/v1/hunt/state', 'POST'],   // HUNT-LEAN",
-    "new": "  // HUNT-LEAN",
+    "old": "  ['/v1/hunt/state', 'POST'], // HUNT-LEAN: a character's hunt - reads and nothing else (hunts.js huntState)",
+    "new": "  // HUNT-LEAN: a character's hunt - reads and nothing else (hunts.js huntState)",
     "tests": [
       "test/server/lode_herd.test.js"
     ],

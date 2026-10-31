@@ -613,8 +613,8 @@
   {
     "name": "AUDIT625-P4-the-bound",
     "file": "server-account/src/serpents.js",
-    "old": "? Math.min(stones, SERPENT_EMBERS) : 0;",
-    "new": "? stones : 0;",
+    "old": "  const embers = Number.isSafeInteger(stones) && stones > 0 ? Math.min(stones, SERPENT_EMBERS) : 0;",
+    "new": "  const embers = Number.isSafeInteger(stones) && stones > 0 ? stones : 0;",
     "why": "a claim's embers past the law",
     "tests": [
       "test/net/serpent/serpentset_service.test.js"
@@ -623,8 +623,8 @@
   {
     "name": "AUDIT625-P4-the-answer-silent",
     "file": "server-account/src/serpents.js",
-    "old": "    recorded: true, slain, spoils, stones: embers, day: c.d,",
-    "new": "    recorded: true, slain, spoils, day: c.d,",
+    "old": "    stones: embers,\n    day: c.d,",
+    "new": "    day: c.d,",
     "why": "the answer silent on the row's embers",
     "tests": [
       "test/net/serpent/serpentset_service.test.js"
@@ -633,7 +633,7 @@
   {
     "name": "AUDIT625-P4-the-repeat-silent",
     "file": "server-account/src/serpents.js",
-    "old": "    return { recorded: false, why: 'claimed', slain, spoils, ...(Number.isSafeInteger(kept?.stones) ? { stones: kept.stones } : {}) };",
+    "old": "    return {\n      recorded: false,\n      why: 'claimed',\n      slain,\n      spoils,\n      ...(Number.isSafeInteger(kept?.stones) ? { stones: kept.stones } : {}),\n    };",
     "new": "    return { recorded: false, why: 'claimed', slain, spoils };",
     "why": "a repeat silent on the row's embers",
     "tests": [
@@ -673,8 +673,8 @@
   {
     "name": "AUDIT625-P5-the-silver-read-wrong",
     "file": "server-account/src/serpents.js",
-    "old": "Number(res[res.length - 1]?.meta?.changes ?? 0) > 0;",
-    "new": "Number(res[res.length - 2]?.meta?.changes ?? 0) > 0;",
+    "old": "  const struck = !!stmt && Number(res[res.length - 1]?.meta?.changes ?? 0) > 0;",
+    "new": "  const struck = !!stmt && Number(res[res.length - 2]?.meta?.changes ?? 0) > 0;",
     "why": "the silver read off the hoard's statement",
     "tests": [
       "test/net/serpent/serpentset_service.test.js"

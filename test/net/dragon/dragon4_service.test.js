@@ -99,6 +99,6 @@ test('DRAGON4 THE ROUTE: /v1/dragon/claim behind a session, the session\'s accou
   assert.equal((await S.call('/v1/dragon/claim', { receipt: r, character: who.character }, null)).status, 401);
   const other = await S.registered('Coilhand');
   assert.equal((await S.call('/v1/dragon/claim', { receipt: r, character: other.character }, other.secret)).status, 403, 'not the receipt\'s account');
-  assert.match(src('server-account/src/service.js'), /'\/v1\/dragon\/claim',   \/\/ DRAGON4/);
+  assert.match(src('server-account/src/service.js'), /'\/v1\/dragon\/claim', \/\/ DRAGON4/);
   assert.match(src('server-account/migrations/0194_dragon.sql'), /UNIQUE \(account, char_id\)/);
 });

@@ -591,8 +591,8 @@
   {
     "name": "AUDIT-SEATS-S10-phase",
     "file": "server-account/src/seatBattles.js",
-    "old": "  if (seatPhaseOf(nowS * 1000) !== 'muster') return { error: 'window-reckoning' };\n",
-    "new": "",
+    "old": "  if (seatPhaseOf(nowS * 1000) !== 'muster') return { error: 'window-reckoning' };\n  if (await overRate({ db, nowS }, `seat-window:${player.id}`, SEAT_EDICTS_HOUR, 3600)) return { error: 'seats-rate' }; // AUDIT SEATS-2 L6 (Appendix B: \"windows 5, edicts 5\"): the window's own five",
+    "new": "  if (await overRate({ db, nowS }, `seat-window:${player.id}`, SEAT_EDICTS_HOUR, 3600)) return { error: 'seats-rate' }; // AUDIT SEATS-2 L6 (Appendix B: \"windows 5, edicts 5\"): the window's own five",
     "tests": [
       "test/net/audit_seats_service.test.js"
     ]

@@ -56,18 +56,30 @@ export const privateRoomOf = (room) => !!privateInteriorOf(room);
 export async function staffFollow(ctx, env, path, body, who, audit) {
   const { db, subtle, nowS } = ctx;
   if (path !== '/v1/staff/follow') return { error: 'body' };
-  if (!FOLLOW_ROLES.includes(who.role)) { await audit('refused', null, { path, need: 'moderator' }, { outcome: 'denied' }).run(); return { error: 'staff-admin' }; }
-  const sub = body?.sub, room = body?.room ?? null;
-  if (typeof sub !== 'string' || !ID_RE.test(sub) || (room !== null && (typeof room !== 'string' || !ROOM_RE.test(room)))) return { error: 'body' };
+  if (!FOLLOW_ROLES.includes(who.role)) {
+    await audit('refused', null, { path, need: 'moderator' }, { outcome: 'denied' }).run();
+    return { error: 'staff-admin' };
+  }
+  const sub = body?.sub,
+    room = body?.room ?? null;
+  if (
+    typeof sub !== 'string' ||
+    !ID_RE.test(sub) ||
+    (room !== null && (typeof room !== 'string' || !ROOM_RE.test(room)))
+  )
+    return { error: 'body' };
   if (sub === who.player.id) return { error: 'staff-self' };
   const target = await db.prepare('SELECT * FROM players WHERE id = ?').bind(sub).first();
   if (!target) return { error: 'no-player' };
   const home = room !== null && privateRoomOf(room);
   const act = home ? 'follow-home' : 'follow';
   const eye = await followSubject(who.hash, subtle);
-  const detail = home ? { room, sub: eye } : { sub: eye };   // STAFF-PANEL5-HIDDEN-FIX: the subject, so a home the relay saw it enter is this row's member's
+  const detail = home ? { room, sub: eye } : { sub: eye }; // STAFF-PANEL5-HIDDEN-FIX: the subject, so a home the relay saw it enter is this row's member's
   const key = await signingKey(env, subtle);
-  if (!key) { await audit(act, sub, detail, { outcome: 'failed' }).run(); return { error: 'no-signing-key' }; }
+  if (!key) {
+    await audit(act, sub, detail, { outcome: 'failed' }).run();
+    return { error: 'no-signing-key' };
+  }
   const token = await mintToken({ s: eye, n: SPECTATOR_NAME, k: 'guest', hd: 1, fo: sub }, key, { subtle, nowS });
   await audit(act, sub, detail, { onceIn: FOLLOW_AUDIT_S }).run();
   return { token, sub, name: displayName(target), expiresAt: nowS + MAX_TTL_S };

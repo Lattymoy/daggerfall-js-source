@@ -353,8 +353,8 @@
   {
     "name": "SEA-SEASON-steps-held",
     "file": "server-account/src/seaSeason.js",
-    "old": " WHERE NOT EXISTS (SELECT 1 FROM realm_characters WHERE id = ?2 AND held IS NOT NULL)",
-    "new": " WHERE 1",
+    "old": "    SELECT ?1, ?2, ?3, ?4, ?6, ?5, ?6, ?6 WHERE NOT EXISTS (SELECT 1 FROM realm_characters WHERE id = ?2 AND held IS NOT NULL)",
+    "new": "    SELECT ?1, ?2, ?3, ?4, ?6, ?5, ?6, ?6 WHERE 1",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "SEA-SEASON-board-held-shown",
     "file": "server-account/src/seaSeason.js",
-    "old": "    FROM sea_season s JOIN realm_characters rc ON rc.id = s.char_id AND rc.held IS NULL\n    WHERE s.season = ?1 AND s.${n} > 0 ORDER BY",
-    "new": "    FROM sea_season s JOIN realm_characters rc ON rc.id = s.char_id\n    WHERE s.season = ?1 AND s.${n} > 0 ORDER BY",
+    "old": "        `SELECT rc.name AS name, s.${n} AS n\n    FROM sea_season s JOIN realm_characters rc ON rc.id = s.char_id AND rc.held IS NULL",
+    "new": "        `SELECT rc.name AS name, s.${n} AS n\n    FROM sea_season s JOIN realm_characters rc ON rc.id = s.char_id",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "SEA-SEASON-board-least-first",
     "file": "server-account/src/seaSeason.js",
-    "old": "ORDER BY s.${n} DESC, s.${at}, rc.name LIMIT ?2",
-    "new": "ORDER BY s.${n} ASC, s.${at}, rc.name LIMIT ?2",
+    "old": "    WHERE s.season = ?1 AND s.${n} > 0 ORDER BY s.${n} DESC, s.${at}, rc.name LIMIT ?2`,",
+    "new": "    WHERE s.season = ?1 AND s.${n} > 0 ORDER BY s.${n} ASC, s.${at}, rc.name LIMIT ?2`,",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "SEA-SEASON-board-by-name",
     "file": "server-account/src/seaSeason.js",
-    "old": "ORDER BY s.${n} DESC, s.${at}, rc.name LIMIT ?2",
-    "new": "ORDER BY s.${n} DESC, rc.name LIMIT ?2",
+    "old": "    WHERE s.season = ?1 AND s.${n} > 0 ORDER BY s.${n} DESC, s.${at}, rc.name LIMIT ?2`,",
+    "new": "    WHERE s.season = ?1 AND s.${n} > 0 ORDER BY s.${n} DESC, rc.name LIMIT ?2`,",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "SEA-SEASON-board-zero-shown",
     "file": "server-account/src/seaSeason.js",
-    "old": "    WHERE s.season = ?1 AND s.${n} > 0 ORDER BY",
-    "new": "    WHERE s.season = ?1 ORDER BY",
+    "old": "    WHERE s.season = ?1 AND s.${n} > 0 ORDER BY s.${n} DESC, s.${at}, rc.name LIMIT ?2`,",
+    "new": "    WHERE s.season = ?1 ORDER BY s.${n} DESC, s.${at}, rc.name LIMIT ?2`,",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "SEA-SEASON-rank-moment-blind",
     "file": "server-account/src/seaSeason.js",
-    "old": "(o.${n} = s.${n} AND (o.${at} < s.${at} OR (o.${at} = s.${at} AND orc.name < rc.name)))",
-    "new": "(o.${n} = s.${n} AND orc.name < rc.name)",
+    "old": "      WHERE o.season = s.season AND o.${n} > 0 AND (o.${n} > s.${n} OR (o.${n} = s.${n} AND (o.${at} < s.${at} OR (o.${at} = s.${at} AND orc.name < rc.name))))) AS rank",
+    "new": "      WHERE o.season = s.season AND o.${n} > 0 AND (o.${n} > s.${n} OR (o.${n} = s.${n} AND orc.name < rc.name))) AS rank",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "SEA-SEASON-rank-ties-ahead",
     "file": "server-account/src/seaSeason.js",
-    "old": "WHERE o.season = s.season AND o.${n} > 0 AND (o.${n} > s.${n} OR",
-    "new": "WHERE o.season = s.season AND o.${n} > 0 AND (o.${n} >= s.${n} OR",
+    "old": "      WHERE o.season = s.season AND o.${n} > 0 AND (o.${n} > s.${n} OR (o.${n} = s.${n} AND (o.${at} < s.${at} OR (o.${at} = s.${at} AND orc.name < rc.name))))) AS rank",
+    "new": "      WHERE o.season = s.season AND o.${n} > 0 AND (o.${n} >= s.${n} OR (o.${n} = s.${n} AND (o.${at} < s.${at} OR (o.${at} = s.${at} AND orc.name < rc.name))))) AS rank",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "SEA-SEASON-rank-anyones",
     "file": "server-account/src/seaSeason.js",
-    "old": "    WHERE s.season = ?1 AND s.char_id = ?2 AND s.player = ?3 AND s.${n} > 0`).bind(season, character, player.id);",
-    "new": "    WHERE s.season = ?1 AND s.char_id = ?2 AND s.${n} > 0`).bind(season, character, player.id);",
+    "old": "    WHERE s.season = ?1 AND s.char_id = ?2 AND s.player = ?3 AND s.${n} > 0`,",
+    "new": "    WHERE s.season = ?1 AND s.char_id = ?2 AND s.${n} > 0`,",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "SEA-SEASON-rank-held-placed",
     "file": "server-account/src/seaSeason.js",
-    "old": "    FROM sea_season s JOIN realm_characters rc ON rc.id = s.char_id AND rc.held IS NULL\n    WHERE s.season = ?1 AND s.char_id = ?2",
-    "new": "    FROM sea_season s JOIN realm_characters rc ON rc.id = s.char_id\n    WHERE s.season = ?1 AND s.char_id = ?2",
+    "old": "      WHERE o.season = s.season AND o.${n} > 0 AND (o.${n} > s.${n} OR (o.${n} = s.${n} AND (o.${at} < s.${at} OR (o.${at} = s.${at} AND orc.name < rc.name))))) AS rank\n    FROM sea_season s JOIN realm_characters rc ON rc.id = s.char_id AND rc.held IS NULL",
+    "new": "      WHERE o.season = s.season AND o.${n} > 0 AND (o.${n} > s.${n} OR (o.${n} = s.${n} AND (o.${at} < s.${at} OR (o.${at} = s.${at} AND orc.name < rc.name))))) AS rank\n    FROM sea_season s JOIN realm_characters rc ON rc.id = s.char_id",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "SEA-SEASON-last-this",
     "file": "server-account/src/seaSeason.js",
-    "old": "    top(WAYS.deep, season - 1, SEA_SEASON_LAST_ROWS), top(WAYS.legends, season - 1, SEA_SEASON_LAST_ROWS),",
-    "new": "    top(WAYS.deep, season, SEA_SEASON_LAST_ROWS), top(WAYS.legends, season, SEA_SEASON_LAST_ROWS),",
+    "old": "    top(WAYS.deep, season - 1, SEA_SEASON_LAST_ROWS),\n    top(WAYS.legends, season - 1, SEA_SEASON_LAST_ROWS),",
+    "new": "    top(WAYS.deep, season, SEA_SEASON_LAST_ROWS),\n    top(WAYS.legends, season, SEA_SEASON_LAST_ROWS),",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "SEA-SEASON-board-ends",
     "file": "server-account/src/seaSeason.js",
-    "old": "    season, ends: arenaSeasonEndsS(season),",
-    "new": "    season, ends: arenaSeasonEndsS(season) - 1,",
+    "old": "    ends: arenaSeasonEndsS(season),",
+    "new": "    ends: arenaSeasonEndsS(season) - 1,",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]

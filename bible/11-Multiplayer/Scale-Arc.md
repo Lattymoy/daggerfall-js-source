@@ -2262,7 +2262,7 @@ people"): "1, 2 and 3" - the display reads on the replicas the first of them to 
 
 ### Built
 
-- **The display reads are replica routes.** `server-account/src/service.js:"export const REPLICA_ROUTES = new Map(["`
+- **The display reads are replica routes.** `server-account/src/service.js:"export const REPLICA_ROUTES"`
   names them beside the mint and the heartbeat: a town's homes, the caller's homes, a home's rooms and pieces, a
   pixel's nodes, a region's traders, the Marks held, the invitations waiting, the lineages, the unions, the saves' list
   and the arena's board. Each writes nothing (BUSY-GATE checked them statement by statement; the board's #1 is stored

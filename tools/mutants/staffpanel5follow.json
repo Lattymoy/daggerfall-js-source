@@ -2,8 +2,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-acct-role-door-open",
     "file": "server-account/src/staffFollow.js",
-    "old": "if (!FOLLOW_ROLES.includes(who.role)) {",
-    "new": "if (false) {",
+    "old": "  if (!FOLLOW_ROLES.includes(who.role)) {",
+    "new": "  if (false) {",
     "why": "any role mints a follow token",
     "tests": [
       "test/server/staffpanel5follow.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-acct-role-refusal-unwritten",
     "file": "server-account/src/staffFollow.js",
-    "old": "{ path, need: 'moderator' }, { outcome: 'denied' }",
-    "new": "{ path, need: 'moderator' }, { outcome: 'ok' }",
+    "old": "    await audit('refused', null, { path, need: 'moderator' }, { outcome: 'denied' }).run();",
+    "new": "    await audit('refused', null, { path, need: 'moderator' }, { outcome: 'ok' }).run();",
     "why": "a refused role written as done",
     "tests": [
       "test/server/staffpanel5follow.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-acct-self-follow",
     "file": "server-account/src/staffFollow.js",
-    "old": "if (sub === who.player.id) return { error: 'staff-self' };",
-    "new": "if (false) return { error: 'staff-self' };",
+    "old": "  if (sub === who.player.id) return { error: 'staff-self' };",
+    "new": "  if (false) return { error: 'staff-self' };",
     "why": "staff follow themselves",
     "tests": [
       "test/server/staffpanel5follow.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-acct-no-player",
     "file": "server-account/src/staffFollow.js",
-    "old": "if (!target) return { error: 'no-player' };",
-    "new": "if (false) return { error: 'no-player' };",
+    "old": "  if (!target) return { error: 'no-player' };",
+    "new": "  if (false) return { error: 'no-player' };",
     "why": "a token for an account that does not exist",
     "tests": [
       "test/server/staffpanel5follow.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-acct-sub-shape",
     "file": "server-account/src/staffFollow.js",
-    "old": "typeof sub !== 'string' || !ID_RE.test(sub) ||",
-    "new": "typeof sub !== 'string' ||",
+    "old": "  if (\n    typeof sub !== 'string' ||\n    !ID_RE.test(sub) ||\n    (room !== null && (typeof room !== 'string' || !ROOM_RE.test(room)))\n  )",
+    "new": "  if (typeof sub !== 'string' || (room !== null && (typeof room !== 'string' || !ROOM_RE.test(room))))",
     "why": "any string a target",
     "tests": [
       "test/server/staffpanel5follow.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-acct-home-unseen",
     "file": "server-account/src/staffFollow.js",
-    "old": "const home = room !== null && privateRoomOf(room);",
-    "new": "const home = false;",
+    "old": "  const home = room !== null && privateRoomOf(room);",
+    "new": "  const home = false;",
     "why": "entering a home folded into the minute",
     "tests": [
       "test/server/staffpanel5follow.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-acct-audit-every-mint",
     "file": "server-account/src/staffFollow.js",
-    "old": "await audit(act, sub, detail, { onceIn: FOLLOW_AUDIT_S }).run();",
-    "new": "await audit(act, sub, detail, {}).run();",
+    "old": "  await audit(act, sub, detail, { onceIn: FOLLOW_AUDIT_S }).run();",
+    "new": "  await audit(act, sub, detail, {}).run();",
     "why": "a row per room",
     "tests": [
       "test/server/staffpanel5follow.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-acct-audit-unwritten",
     "file": "server-account/src/staffFollow.js",
-    "old": "await audit(act, sub, detail, { onceIn: FOLLOW_AUDIT_S }).run();",
-    "new": "void 0;",
+    "old": "  await audit(act, sub, detail, { onceIn: FOLLOW_AUDIT_S }).run();",
+    "new": "  void 0;",
     "why": "a mint never written down",
     "tests": [
       "test/server/staffpanel5follow.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-acct-no-key-ok",
     "file": "server-account/src/staffFollow.js",
-    "old": "await audit(act, sub, detail, { outcome: 'failed' }).run(); return { error: 'no-signing-key' };",
-    "new": "await audit(act, sub, detail, { outcome: 'ok' }).run(); return { error: 'no-signing-key' };",
+    "old": "    await audit(act, sub, detail, { outcome: 'failed' }).run();",
+    "new": "    await audit(act, sub, detail, { outcome: 'ok' }).run();",
     "why": "a failed mint written as done",
     "tests": [
       "test/server/staffpanel5follow.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-acct-not-hidden",
     "file": "server-account/src/staffFollow.js",
-    "old": "n: SPECTATOR_NAME, k: 'guest', hd: 1, fo: sub }",
-    "new": "n: SPECTATOR_NAME, k: 'guest', fo: sub }",
+    "old": "  const token = await mintToken({ s: eye, n: SPECTATOR_NAME, k: 'guest', hd: 1, fo: sub }, key, { subtle, nowS });",
+    "new": "  const token = await mintToken({ s: eye, n: SPECTATOR_NAME, k: 'guest', fo: sub }, key, { subtle, nowS });",
     "why": "a follow token with no hidden mark",
     "tests": [
       "test/server/staffpanel5follow.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-acct-wrong-target",
     "file": "server-account/src/staffFollow.js",
-    "old": "n: SPECTATOR_NAME, k: 'guest', hd: 1, fo: sub }",
-    "new": "n: SPECTATOR_NAME, k: 'guest', hd: 1, fo: target.id === sub ? 'acct-someone' : sub }",
+    "old": "  const token = await mintToken({ s: eye, n: SPECTATOR_NAME, k: 'guest', hd: 1, fo: sub }, key, { subtle, nowS });",
+    "new": "  const token = await mintToken(\n    { s: eye, n: SPECTATOR_NAME, k: 'guest', hd: 1, fo: target.id === sub ? 'acct-someone' : sub },\n    key,\n    { subtle, nowS },\n  );",
     "why": "the token names another",
     "tests": [
       "test/server/staffpanel5follow.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-acct-own-subject",
     "file": "server-account/src/staffFollow.js",
-    "old": "const eye = await followSubject(who.hash, subtle);",
-    "new": "const eye = who.player.id;",
+    "old": "  const eye = await followSubject(who.hash, subtle);",
+    "new": "  const eye = who.player.id;",
     "why": "the staff member's own account on a hidden socket",
     "tests": [
       "test/server/staffpanel5follow.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-acct-subject-short",
     "file": "server-account/src/staffFollow.js",
-    "old": "[...d.slice(0, 12)]",
-    "new": "[...d.slice(0, 11)]",
+    "old": "  return FOLLOW_SUBJECT_PREFIX + [...d.slice(0, 12)].map((b) => b.toString(16).padStart(2, '0')).join('');",
+    "new": "  return FOLLOW_SUBJECT_PREFIX + [...d.slice(0, 11)].map((b) => b.toString(16).padStart(2, '0')).join('');",
     "why": "a hidden subject a player id's length",
     "tests": [
       "test/server/staffpanel5follow.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-acct-status-word",
     "file": "server-account/src/staff.js",
-    "old": "'no-signing-key': 503,",
-    "new": "'no-signing-key': 500,",
+    "old": "  'no-signing-key': 503, // STAFF-PANEL5-FOLLOW (staffFollow.js): a service with no key mints no follow token",
+    "new": "  'no-signing-key': 500, // STAFF-PANEL5-FOLLOW (staffFollow.js): a service with no key mints no follow token",
     "why": "the no-key refusal answered as a crash",
     "tests": [
       "test/server/staffpanel5follow.test.js"

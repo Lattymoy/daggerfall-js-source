@@ -5,13 +5,24 @@
 // its own hosted page, so no card number ever reaches this service, and Stripe's signed word on a payment is the one
 // thing that grants: the ware's bit on the row and a receipt in the mailbox, in one batch.
 // Off until the deploy puts both Stripe secrets (shopOn) - the window then shows the wares with nothing to buy.
-import { SHOP_WARES, SHOP_CURRENCY, SHOP_WARE_NAME, SHOP_KIND_NAME, SHOP_ORDER_ID_RE, shopWareById, shopOwns, shopOnSaleOf, shopPriceText, shopReceiptBatch } from '../../src/net/shopLaw.js';
+import {
+  SHOP_WARES,
+  SHOP_CURRENCY,
+  SHOP_WARE_NAME,
+  SHOP_KIND_NAME,
+  SHOP_ORDER_ID_RE,
+  shopWareById,
+  shopOwns,
+  shopOnSaleOf,
+  shopPriceText,
+  shopReceiptBatch,
+} from '../../src/net/shopLaw.js';
 import { POST_SENDER } from '../../src/net/postLaw.js';
 import { sealKey, sealUnder, openWith } from './sealed.js';
 import { patreonPage, patreonHtml } from './patreon.js';
 import { mustChange } from './realm.js';
 import { timingSafeEqual } from './password.js';
-import { holdsAll } from './titles.js';   // ADMIN-ALL: an admin holds every ware, so is sold none
+import { holdsAll } from './titles.js'; // ADMIN-ALL: an admin holds every ware, so is sold none
 
 /** The paths this file answers, none with a session: each is proven by what it carries (a sealed ticket, an order, or
  *  Stripe's signature). */
@@ -20,7 +31,13 @@ export const SHOP_CHECKOUT_PATH = '/v1/shop/checkout';
 export const SHOP_WEBHOOK_PATH = '/v1/shop/webhook';
 export const SHOP_DONE_PATH = '/v1/shop/done';
 export const SHOP_CANCEL_PATH = '/v1/shop/cancel';
-export const SHOP_OPEN_ROUTES = new Set([SHOP_BUY_PATH, SHOP_CHECKOUT_PATH, SHOP_WEBHOOK_PATH, SHOP_DONE_PATH, SHOP_CANCEL_PATH]);
+export const SHOP_OPEN_ROUTES = new Set([
+  SHOP_BUY_PATH,
+  SHOP_CHECKOUT_PATH,
+  SHOP_WEBHOOK_PATH,
+  SHOP_DONE_PATH,
+  SHOP_CANCEL_PATH,
+]);
 
 /** THE DISCLAIMER, in English: the service's pages, Stripe's product line and the receipt say it in these words, and
  *  the window says the same through the text core (a pin holds the two equal). */
@@ -43,7 +60,16 @@ export const STRIPE_CHECKOUT_ORIGIN = 'https://checkout.stripe.com';
  *  default configuration has on; the account deploy turns these on there (tools/stripeMethods.mjs). Each needs the
  *  buyer's own currency, which Adaptive Pricing shows (checkoutFields). One taken off the list stays as the Dashboard
  *  has it. */
-export const SHOP_PAY_METHODS = Object.freeze(['ideal', 'wero', 'bancontact', 'eps', 'blik', 'p24', 'paypal', 'revolut_pay']);
+export const SHOP_PAY_METHODS = Object.freeze([
+  'ideal',
+  'wero',
+  'bancontact',
+  'eps',
+  'blik',
+  'p24',
+  'paypal',
+  'revolut_pay',
+]);
 export const STRIPE_PMC_API = 'https://api.stripe.com/v1/payment_method_configurations';
 const SEAL_SALT = 'daggerfall-accounts shop';
 const enc = new TextEncoder();
@@ -51,7 +77,10 @@ const dec = new TextDecoder();
 
 /** The shop takes payments while both Stripe secrets are on the Worker (the deploy puts them, account-deploy.yml). */
 export const shopOn = (/** @type {any} */ env) =>
-  typeof env?.STRIPE_SECRET_KEY === 'string' && !!env.STRIPE_SECRET_KEY && typeof env?.STRIPE_WEBHOOK_SECRET === 'string' && !!env.STRIPE_WEBHOOK_SECRET;
+  typeof env?.STRIPE_SECRET_KEY === 'string' &&
+  !!env.STRIPE_SECRET_KEY &&
+  typeof env?.STRIPE_WEBHOOK_SECRET === 'string' &&
+  !!env.STRIPE_WEBHOOK_SECRET;
 /** The wares on sale now (SHOP_ON_SALE in wrangler.toml - the owner ends a sale by taking an id off). */
 export const shopOnSale = (/** @type {any} */ env) => shopOnSaleOf(env?.SHOP_ON_SALE);
 const registered = (/** @type {any} */ p) => typeof p?.handle === 'string' && !!p.handle;
@@ -60,7 +89,8 @@ const hex = (/** @type {Uint8Array} */ b) => Array.from(b, (v) => v.toString(16)
 export const mintOrderId = (/** @type {(b: Uint8Array) => Uint8Array} */ rand) => hex(rand(new Uint8Array(12)));
 
 /** A ware's line as a person reads it: "Genesis (title)". */
-export const wareLine = (/** @type {any} */ w) => `${SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (w.id)] ?? w.key} (${SHOP_KIND_NAME[/** @type {keyof typeof SHOP_KIND_NAME} */ (w.kind)] ?? w.kind})`;
+export const wareLine = (/** @type {any} */ w) =>
+  `${SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (w.id)] ?? w.key} (${SHOP_KIND_NAME[/** @type {keyof typeof SHOP_KIND_NAME} */ (w.kind)] ?? w.kind})`;
 
 /**
  * THE SHOP'S CARD in the account read: `{ on, wares }`, each ware `{ id, sale, held, buy }` - `buy` a link to this
@@ -72,13 +102,16 @@ export async function shopCardOf(/** @type {any} */ player, /** @type {any} */ e
   const on = shopOn(env);
   const sale = shopOnSale(env);
   const wares = [];
-  let key = null;   // derived once a read, at its first Buy link - every account read asks this
+  let key = null; // derived once a read, at its first Buy link - every account read asks this
   for (const w of SHOP_WARES) {
-    const isHeld = registered(player) && (shopOwns(player?.shop_wares, w.id) || holdsAll(player, env)), onSale = sale.includes(w.id);   // ARMORY: a set's pieces, or the set's through its pieces
-    if (on && onSale && !isHeld && registered(player)) key ??= await sealKey(subtle, String(env.STRIPE_SECRET_KEY), SEAL_SALT, 'buy');
-    const buy = key && onSale && !isHeld
-      ? `${origin}${SHOP_BUY_PATH}?t=${await sealUnder(key, { p: player.id, w: w.id, x: nowS + SHOP_TICKET_S }, { subtle, rand })}`
-      : null;
+    const isHeld = registered(player) && (shopOwns(player?.shop_wares, w.id) || holdsAll(player, env)),
+      onSale = sale.includes(w.id); // ARMORY: a set's pieces, or the set's through its pieces
+    if (on && onSale && !isHeld && registered(player))
+      key ??= await sealKey(subtle, String(env.STRIPE_SECRET_KEY), SEAL_SALT, 'buy');
+    const buy =
+      key && onSale && !isHeld
+        ? `${origin}${SHOP_BUY_PATH}?t=${await sealUnder(key, { p: player.id, w: w.id, x: nowS + SHOP_TICKET_S }, { subtle, rand })}`
+        : null;
     wares.push({ id: w.id, sale: onSale, held: isHeld, buy });
   }
   return { on, wares };
@@ -97,15 +130,22 @@ export async function openShopTicket(/** @type {any} */ sealed, /** @type {any} 
 export const SHOP_PAGES = Object.freeze({
   off: { heading: 'The shop is closed', lines: ['It does not take payments yet. Ask the developers on the Discord.'] },
   expired: { heading: 'This link has expired', lines: ['Open the shop in the game and press Buy again.'] },
-  account: { heading: 'This account needs a username', lines: ['Give your game account a username and a password, then buy from the shop.'] },
+  account: {
+    heading: 'This account needs a username',
+    lines: ['Give your game account a username and a password, then buy from the shop.'],
+  },
   sold: { heading: 'Not on sale', lines: ['This item is no longer sold. Nothing was charged.'] },
   held: { heading: 'Already yours', lines: ['Your account holds this item already. Nothing was charged.'] },
-  down: { heading: 'The payment page did not open', lines: ['Nothing was charged. Wait a minute, then press Buy in the game again.'] },
+  down: {
+    heading: 'The payment page did not open',
+    lines: ['Nothing was charged. Wait a minute, then press Buy in the game again.'],
+  },
   rate: { heading: 'Too many tries', lines: ['Wait a few minutes, then press Buy in the game again.'] },
   cancel: { heading: 'Nothing was bought', lines: ['Nothing was charged. You can close this page.'] },
 });
 /** A page as a Response, its one form allowed on to Stripe's page. */
-export const shopHtml = (/** @type {any} */ page, status = 200) => patreonHtml(patreonPage(page), status, STRIPE_CHECKOUT_ORIGIN);
+export const shopHtml = (/** @type {any} */ page, status = 200) =>
+  patreonHtml(patreonPage(page), status, STRIPE_CHECKOUT_ORIGIN);
 
 /** THE CONFIRM PAGE: which ware, its price, onto which game account - and the disclaimer - with the one button that goes
  *  on to pay. The account is named so a link somebody else sent is read before anything is paid (Patreon's law). */
@@ -115,7 +155,7 @@ export function shopConfirmPage({ handle, ware, ticket }) {
     lines: [
       `Game account: ${handle}`,
       `Price: ${shopPriceText(ware.cents)} (USD), paid once.`,
-      'Stripe can show the price in your own currency, with your country\'s ways to pay.',
+      "Stripe can show the price in your own currency, with your country's ways to pay.",
       'A pre-alpha item: it is sold only during the pre-alpha.',
       SHOP_COSMETIC,
       SHOP_PROCEEDS,
@@ -128,21 +168,50 @@ export function shopConfirmPage({ handle, ware, ticket }) {
 export function shopDonePage(/** @type {any} */ order) {
   const w = shopWareById(order?.ware);
   if (!w) return { heading: 'Thank you', lines: ['Go back to the game. Your mailbox says what arrived.'] };
-  if (order.status === 'paid') return { heading: 'Thank you', lines: [`${wareLine(w)} is on your account now.`, 'Go back to the game: wear it from your profile. A receipt is in your mailbox.', SHOP_PROCEEDS] };
-  if (order.status === 'open') return { heading: 'Thank you', lines: ['Your payment is being confirmed.', `${wareLine(w)} arrives on your account in a minute or two, with a receipt in your mailbox.`, SHOP_PROCEEDS] };
-  if (order.status === 'expired') return { heading: 'Not paid', lines: ['This checkout ended without a payment. Nothing was charged.', 'Buy it again from the shop in the game.'] };
-  return { heading: 'Order closed', lines: [`The payment for ${wareLine(w)} was ${order.status === 'disputed' ? 'disputed' : 'refunded'}. Your mailbox says more.`] };
+  if (order.status === 'paid')
+    return {
+      heading: 'Thank you',
+      lines: [
+        `${wareLine(w)} is on your account now.`,
+        'Go back to the game: wear it from your profile. A receipt is in your mailbox.',
+        SHOP_PROCEEDS,
+      ],
+    };
+  if (order.status === 'open')
+    return {
+      heading: 'Thank you',
+      lines: [
+        'Your payment is being confirmed.',
+        `${wareLine(w)} arrives on your account in a minute or two, with a receipt in your mailbox.`,
+        SHOP_PROCEEDS,
+      ],
+    };
+  if (order.status === 'expired')
+    return {
+      heading: 'Not paid',
+      lines: ['This checkout ended without a payment. Nothing was charged.', 'Buy it again from the shop in the game.'],
+    };
+  return {
+    heading: 'Order closed',
+    lines: [
+      `The payment for ${wareLine(w)} was ${order.status === 'disputed' ? 'disputed' : 'refunded'}. Your mailbox says more.`,
+    ],
+  };
 }
 
 // ── STRIPE ──────────────────────────────────────────────────────────
 
 /** Stripe's form encoding of a session's fields (its bracketed keys). Pure. */
 export function stripeForm(/** @type {Record<string, string|number>} */ fields) {
-  return Object.entries(fields).map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`).join('&');
+  return Object.entries(fields)
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
+    .join('&');
 }
 /** THE CHECKOUT SESSION's fields for an order: one line, priced by this service (never the client), the order on its
  *  metadata and the payment's, and the disclaimer on the line the buyer reads. Pure. */
-export function checkoutFields(/** @type {{ id: string, player: string, handle: string, ware: any, origin: string, expiresAt: number }} */ o) {
+export function checkoutFields(
+  /** @type {{ id: string, player: string, handle: string, ware: any, origin: string, expiresAt: number }} */ o,
+) {
   return {
     mode: 'payment',
     'line_items[0][quantity]': 1,
@@ -158,28 +227,44 @@ export function checkoutFields(/** @type {{ id: string, player: string, handle: 
     success_url: `${o.origin}${SHOP_DONE_PATH}?o=${o.id}`,
     cancel_url: `${o.origin}${SHOP_CANCEL_PATH}?o=${o.id}`,
     expires_at: o.expiresAt,
-    'adaptive_pricing[enabled]': 'true',   // SHOP-LOCAL: the buyer's own currency where Stripe can - the session and its events still read USD
+    'adaptive_pricing[enabled]': 'true', // SHOP-LOCAL: the buyer's own currency where Stripe can - the session and its events still read USD
   };
 }
 /** Ask Stripe for the session: `{ id, url }`, or `{ error: 'stripe-down' }`. The order is the idempotency key, so a call
  *  asked twice is one page. SHOP-LOCAL: a session Stripe refuses (400) for its Adaptive Pricing is asked again without
  *  it, in dollars, under a key of its own - an account Stripe will not localise still sells. */
-export async function stripeCheckout(/** @type {typeof fetch} */ fetch, /** @type {any} */ env, /** @type {Record<string, string|number>} */ fields) {
-  const ask = (/** @type {Record<string, string|number>} */ f, /** @type {string} */ key) => fetch(STRIPE_API, {
-    method: 'POST',
-    headers: { authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, 'content-type': 'application/x-www-form-urlencoded', 'idempotency-key': key },
-    body: stripeForm(f),
-  });
+export async function stripeCheckout(
+  /** @type {typeof fetch} */ fetch,
+  /** @type {any} */ env,
+  /** @type {Record<string, string|number>} */ fields,
+) {
+  const ask = (/** @type {Record<string, string|number>} */ f, /** @type {string} */ key) =>
+    fetch(STRIPE_API, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
+        'content-type': 'application/x-www-form-urlencoded',
+        'idempotency-key': key,
+      },
+      body: stripeForm(f),
+    });
   try {
     let res = await ask(fields, `shop-${fields.client_reference_id}`);
     if (res.status === 400 && 'adaptive_pricing[enabled]' in fields) {
-      console.error('[shop] Stripe refused the session; asked again in dollars:', (await res.json().catch(() => null))?.error?.message);
+      console.error(
+        '[shop] Stripe refused the session; asked again in dollars:',
+        (await res.json().catch(() => null))?.error?.message,
+      );
       const plain = { ...fields };
       delete plain['adaptive_pricing[enabled]'];
       res = await ask(plain, `shop-${fields.client_reference_id}-usd`);
     }
     const data = res.ok ? await res.json() : null;
-    return typeof data?.id === 'string' && typeof data?.url === 'string' && data.url.startsWith(`${STRIPE_CHECKOUT_ORIGIN}/`) ? { id: data.id, url: data.url } : { error: 'stripe-down' };
+    return typeof data?.id === 'string' &&
+      typeof data?.url === 'string' &&
+      data.url.startsWith(`${STRIPE_CHECKOUT_ORIGIN}/`)
+      ? { id: data.id, url: data.url }
+      : { error: 'stripe-down' };
   } catch {
     return { error: 'stripe-down' };
   }
@@ -198,21 +283,43 @@ export async function shopCheckout(ctx, env, claims, { fetch, origin }) {
   const ware = shopWareById(claims?.w);
   if (!ware) return { page: 'expired' };
   if (!shopOnSale(env).includes(ware.id)) return { page: 'sold' };
-  const player = await db.prepare('SELECT id, handle, shop_wares, staff_suspended FROM players WHERE id = ?1').bind(claims.p).first();
+  const player = await db
+    .prepare('SELECT id, handle, shop_wares, staff_suspended FROM players WHERE id = ?1')
+    .bind(claims.p)
+    .first();
   if (!registered(player)) return { page: 'account' };
-  if (shopOwns(player.shop_wares, ware.id) || holdsAll(player, env)) return { page: 'held' };   // ADMIN-ALL
-  const open = await db.prepare("SELECT stripe_url FROM shop_orders WHERE player = ?1 AND ware = ?2 AND status = 'open' AND expires_at > ?3 AND stripe_url IS NOT NULL ORDER BY created_at DESC LIMIT 1")
-    .bind(player.id, ware.id, nowS + 60).first();
+  if (shopOwns(player.shop_wares, ware.id) || holdsAll(player, env)) return { page: 'held' }; // ADMIN-ALL
+  const open = await db
+    .prepare(
+      "SELECT stripe_url FROM shop_orders WHERE player = ?1 AND ware = ?2 AND status = 'open' AND expires_at > ?3 AND stripe_url IS NOT NULL ORDER BY created_at DESC LIMIT 1",
+    )
+    .bind(player.id, ware.id, nowS + 60)
+    .first();
   if (open?.stripe_url) return { url: open.stripe_url };
-  const id = mintOrderId(rand), expiresAt = nowS + SHOP_CHECKOUT_S;
-  await db.prepare("INSERT INTO shop_orders (id, player, ware, cents, currency, status, created_at, expires_at) VALUES (?1, ?2, ?3, ?4, ?5, 'open', ?6, ?7)")
-    .bind(id, player.id, ware.id, ware.cents, SHOP_CURRENCY, nowS, expiresAt).run();
-  const s = await stripeCheckout(fetch, env, checkoutFields({ id, player: player.id, handle: player.handle, ware, origin, expiresAt }));
+  const id = mintOrderId(rand),
+    expiresAt = nowS + SHOP_CHECKOUT_S;
+  await db
+    .prepare(
+      "INSERT INTO shop_orders (id, player, ware, cents, currency, status, created_at, expires_at) VALUES (?1, ?2, ?3, ?4, ?5, 'open', ?6, ?7)",
+    )
+    .bind(id, player.id, ware.id, ware.cents, SHOP_CURRENCY, nowS, expiresAt)
+    .run();
+  const s = await stripeCheckout(
+    fetch,
+    env,
+    checkoutFields({ id, player: player.id, handle: player.handle, ware, origin, expiresAt }),
+  );
   if ('error' in s) {
-    await db.prepare("UPDATE shop_orders SET status = 'expired', ended_at = ?2 WHERE id = ?1 AND status = 'open'").bind(id, nowS).run();
+    await db
+      .prepare("UPDATE shop_orders SET status = 'expired', ended_at = ?2 WHERE id = ?1 AND status = 'open'")
+      .bind(id, nowS)
+      .run();
     return { page: 'down' };
   }
-  await db.prepare('UPDATE shop_orders SET stripe_session = ?2, stripe_url = ?3 WHERE id = ?1').bind(id, s.id, s.url).run();
+  await db
+    .prepare('UPDATE shop_orders SET stripe_session = ?2, stripe_url = ?3 WHERE id = ?1')
+    .bind(id, s.id, s.url)
+    .run();
   return { url: s.url };
 }
 
@@ -231,7 +338,12 @@ export function stripeSignatureOf(/** @type {unknown} */ header) {
   return t !== null && v1.length ? { t, v1 } : null;
 }
 /** Is the body Stripe's, signed with the endpoint's secret within SHOP_HOOK_TOLERANCE_S? HMAC-SHA256 over `t.body`. */
-export async function stripeSignatureOk(/** @type {string} */ secret, /** @type {Uint8Array} */ body, /** @type {unknown} */ header, { subtle, nowS }) {
+export async function stripeSignatureOk(
+  /** @type {string} */ secret,
+  /** @type {Uint8Array} */ body,
+  /** @type {unknown} */ header,
+  { subtle, nowS },
+) {
   const sig = stripeSignatureOf(header);
   if (!sig || Math.abs(nowS - sig.t) > SHOP_HOOK_TOLERANCE_S) return false;
   const key = await subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
@@ -263,10 +375,12 @@ export function receiptPost(/** @type {any} */ order, /** @type {number} */ nowS
 export function revokePost(/** @type {any} */ order, /** @type {string} */ why) {
   const w = /** @type {any} */ (shopWareById(order.ware));
   return {
-    batch: `${shopReceiptBatch(order.id)}-${why === 'disputed' ? 'disputed' : 'refunded'}`,   // a letter a reason: a dispute, then a refund, both said
+    batch: `${shopReceiptBatch(order.id)}-${why === 'disputed' ? 'disputed' : 'refunded'}`, // a letter a reason: a dispute, then a refund, both said
     subject: `${why === 'disputed' ? 'Payment disputed' : 'Refunded'}: ${SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (w.id)]}`,
     body: [
-      why === 'disputed' ? `The payment for ${wareLine(w)} was disputed, so it is off your account while the dispute stands.` : `The payment for ${wareLine(w)} was refunded, so it is off your account.`,
+      why === 'disputed'
+        ? `The payment for ${wareLine(w)} was disputed, so it is off your account while the dispute stands.`
+        : `The payment for ${wareLine(w)} was refunded, so it is off your account.`,
       '',
       `Order ${order.id}. Questions: ask the developers on the Discord.`,
       '',
@@ -280,12 +394,28 @@ export function restorePost(/** @type {any} */ order) {
   return {
     batch: `${shopReceiptBatch(order.id)}-restored`,
     subject: `Back on your account: ${SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (w.id)]}`,
-    body: [`The dispute over ${wareLine(w)} is closed, and it is back on your account.`, '', `Order ${order.id}.`, '', `- ${POST_SENDER}`].join('\n'),
+    body: [
+      `The dispute over ${wareLine(w)} is closed, and it is back on your account.`,
+      '',
+      `Order ${order.id}.`,
+      '',
+      `- ${POST_SENDER}`,
+    ].join('\n'),
   };
 }
-const postStatement = (/** @type {any} */ db, /** @type {string} */ to, /** @type {{ batch: string, subject: string, body: string }} */ p, /** @type {string|null} */ ware, /** @type {number} */ nowS) =>
-  db.prepare(`INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at, ware)
-    VALUES (lower(hex(randomblob(12))), ?1, ?2, ?3, ?4, ?5, NULL, ?6, ?7)`).bind(to, p.batch, POST_SENDER, p.subject, p.body, nowS, ware);
+const postStatement = (
+  /** @type {any} */ db,
+  /** @type {string} */ to,
+  /** @type {{ batch: string, subject: string, body: string }} */ p,
+  /** @type {string|null} */ ware,
+  /** @type {number} */ nowS,
+) =>
+  db
+    .prepare(
+      `INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at, ware)
+    VALUES (lower(hex(randomblob(12))), ?1, ?2, ?3, ?4, ?5, NULL, ?6, ?7)`,
+    )
+    .bind(to, p.batch, POST_SENDER, p.subject, p.body, nowS, ware);
 
 /**
  * A PAYMENT TAKEN: the order paid, the ware's bit on the row and the receipt in the mailbox - one batch, guarded on the
@@ -295,23 +425,30 @@ const postStatement = (/** @type {any} */ db, /** @type {string} */ to, /** @typ
  */
 export async function fulfilOrder({ db, nowS }, orderId, { intent = null, amount, currency }) {
   if (typeof orderId !== 'string' || !SHOP_ORDER_ID_RE.test(orderId)) return { ok: true, applied: 0 };
-  const order = await db.prepare('SELECT id, player, ware, cents, currency, status FROM shop_orders WHERE id = ?1').bind(orderId).first();
+  const order = await db
+    .prepare('SELECT id, player, ware, cents, currency, status FROM shop_orders WHERE id = ?1')
+    .bind(orderId)
+    .first();
   const w = shopWareById(order?.ware);
   if (!order?.player || !w || !['open', 'expired'].includes(order.status)) return { ok: true, applied: 0 };
   if (Number(amount) !== order.cents || String(currency).toLowerCase() !== order.currency) {
-    console.error('[shop] paid amount is not the order\'s', order.id, amount, currency, order.cents);   // charged, not granted: an owner's refund or grant
+    console.error("[shop] paid amount is not the order's", order.id, amount, currency, order.cents); // charged, not granted: an owner's refund or grant
     return { ok: true, applied: 0, mismatch: true };
   }
   try {
     await db.batch([
-      db.prepare("UPDATE shop_orders SET status = 'paid', paid_at = ?2, payment_intent = ?3 WHERE id = ?1 AND status IN ('open', 'expired')").bind(order.id, nowS, typeof intent === 'string' ? intent.slice(0, 255) : null),
+      db
+        .prepare(
+          "UPDATE shop_orders SET status = 'paid', paid_at = ?2, payment_intent = ?3 WHERE id = ?1 AND status IN ('open', 'expired')",
+        )
+        .bind(order.id, nowS, typeof intent === 'string' ? intent.slice(0, 255) : null),
       mustChange(db),
       db.prepare('UPDATE players SET shop_wares = shop_wares | ?2 WHERE id = ?1').bind(order.player, w.bit),
       postStatement(db, order.player, receiptPost(order, nowS), w.id, nowS),
     ]);
   } catch (e) {
-    if (await moved(db, order.id, ['open', 'expired'])) return { ok: true, applied: 0 };   // paid meanwhile by Stripe's other word on it - the guard held
-    throw e;   // the grant never written: a 5xx, and Stripe tells it again
+    if (await moved(db, order.id, ['open', 'expired'])) return { ok: true, applied: 0 }; // paid meanwhile by Stripe's other word on it - the guard held
+    throw e; // the grant never written: a 5xx, and Stripe tells it again
   }
   return { ok: true, applied: 1 };
 }
@@ -327,16 +464,25 @@ const moved = async (/** @type {any} */ db, /** @type {string} */ id, /** @type 
  */
 export async function revokeOrder({ db, nowS }, intent, why) {
   if (typeof intent !== 'string' || !intent) return { ok: true, applied: 0 };
-  const order = await db.prepare("SELECT id, player, ware FROM shop_orders WHERE payment_intent = ?1 AND status = 'paid'").bind(intent).first();
+  const order = await db
+    .prepare("SELECT id, player, ware FROM shop_orders WHERE payment_intent = ?1 AND status = 'paid'")
+    .bind(intent)
+    .first();
   const w = shopWareById(order?.ware);
   if (!order || !w) return { ok: true, applied: 0 };
   try {
     await db.batch([
-      db.prepare("UPDATE shop_orders SET status = ?2, ended_at = ?3 WHERE id = ?1 AND status = 'paid'").bind(order.id, why, nowS),
+      db
+        .prepare("UPDATE shop_orders SET status = ?2, ended_at = ?3 WHERE id = ?1 AND status = 'paid'")
+        .bind(order.id, why, nowS),
       mustChange(db),
-      db.prepare(`UPDATE players SET shop_wares = shop_wares & ~?2 WHERE id = ?1
-        AND NOT EXISTS (SELECT 1 FROM shop_orders WHERE player = ?1 AND ware = ?3 AND status = 'paid' AND id <> ?4)`).bind(order.player, w.bit, w.id, order.id),
-      ...(order.player ? [postStatement(db, order.player, revokePost(order, why), null, nowS)] : []),   // no ware: a letter with nothing on the account
+      db
+        .prepare(
+          `UPDATE players SET shop_wares = shop_wares & ~?2 WHERE id = ?1
+        AND NOT EXISTS (SELECT 1 FROM shop_orders WHERE player = ?1 AND ware = ?3 AND status = 'paid' AND id <> ?4)`,
+        )
+        .bind(order.player, w.bit, w.id, order.id),
+      ...(order.player ? [postStatement(db, order.player, revokePost(order, why), null, nowS)] : []), // no ware: a letter with nothing on the account
     ]);
   } catch (e) {
     if (await moved(db, order.id, ['paid'])) return { ok: true, applied: 0 };
@@ -349,12 +495,17 @@ export async function revokeOrder({ db, nowS }, intent, why) {
  *  letter saying so. `{ ok, applied }`. */
 export async function restoreOrder({ db, nowS }, /** @type {unknown} */ intent) {
   if (typeof intent !== 'string' || !intent) return { ok: true, applied: 0 };
-  const order = await db.prepare("SELECT id, player, ware FROM shop_orders WHERE payment_intent = ?1 AND status = 'disputed'").bind(intent).first();
+  const order = await db
+    .prepare("SELECT id, player, ware FROM shop_orders WHERE payment_intent = ?1 AND status = 'disputed'")
+    .bind(intent)
+    .first();
   const w = shopWareById(order?.ware);
   if (!order?.player || !w) return { ok: true, applied: 0 };
   try {
     await db.batch([
-      db.prepare("UPDATE shop_orders SET status = 'paid', ended_at = NULL WHERE id = ?1 AND status = 'disputed'").bind(order.id),
+      db
+        .prepare("UPDATE shop_orders SET status = 'paid', ended_at = NULL WHERE id = ?1 AND status = 'disputed'")
+        .bind(order.id),
       mustChange(db),
       db.prepare('UPDATE players SET shop_wares = shop_wares | ?2 WHERE id = ?1').bind(order.player, w.bit),
       postStatement(db, order.player, restorePost(order), w.id, nowS),
@@ -374,31 +525,49 @@ export async function restoreOrder({ db, nowS }, /** @type {unknown} */ intent) 
  */
 export async function shopWebhook(ctx, env, body, signature) {
   if (!shopOn(env)) return { error: 'shop-closed' };
-  if (!(await stripeSignatureOk(String(env.STRIPE_WEBHOOK_SECRET), body, signature, ctx))) return { error: 'signature' };
+  if (!(await stripeSignatureOk(String(env.STRIPE_WEBHOOK_SECRET), body, signature, ctx)))
+    return { error: 'signature' };
   let ev;
-  try { ev = JSON.parse(dec.decode(body)); } catch { return { error: 'body' }; }
+  try {
+    ev = JSON.parse(dec.decode(body));
+  } catch {
+    return { error: 'body' };
+  }
   const o = ev?.data?.object;
   if (!o || typeof o !== 'object') return { ok: true, applied: 0 };
   const orderOf = () => (typeof o.metadata?.order === 'string' ? o.metadata.order : o.client_reference_id);
   switch (ev.type) {
     case 'checkout.session.completed':
-      if (o.payment_status !== 'paid') return { ok: true, applied: 0 };   // a delayed method: its own event follows
-      return fulfilOrder(ctx, orderOf(), { intent: o.payment_intent, amount: o.amount_subtotal ?? o.amount_total, currency: o.currency });   // the price before any tax Stripe adds
+      if (o.payment_status !== 'paid') return { ok: true, applied: 0 }; // a delayed method: its own event follows
+      return fulfilOrder(ctx, orderOf(), {
+        intent: o.payment_intent,
+        amount: o.amount_subtotal ?? o.amount_total,
+        currency: o.currency,
+      }); // the price before any tax Stripe adds
     case 'checkout.session.async_payment_succeeded':
-      return fulfilOrder(ctx, orderOf(), { intent: o.payment_intent, amount: o.amount_subtotal ?? o.amount_total, currency: o.currency });
+      return fulfilOrder(ctx, orderOf(), {
+        intent: o.payment_intent,
+        amount: o.amount_subtotal ?? o.amount_total,
+        currency: o.currency,
+      });
     case 'checkout.session.expired':
     case 'checkout.session.async_payment_failed': {
       const id = orderOf();
       if (typeof id !== 'string' || !SHOP_ORDER_ID_RE.test(id)) return { ok: true, applied: 0 };
-      const r = await ctx.db.prepare("UPDATE shop_orders SET status = 'expired', ended_at = ?2 WHERE id = ?1 AND status = 'open'").bind(id, ctx.nowS).run();
+      const r = await ctx.db
+        .prepare("UPDATE shop_orders SET status = 'expired', ended_at = ?2 WHERE id = ?1 AND status = 'open'")
+        .bind(id, ctx.nowS)
+        .run();
       return { ok: true, applied: Number(r?.meta?.changes ?? 0) };
     }
     case 'charge.refunded':
-      return o.refunded === true ? revokeOrder(ctx, o.payment_intent, 'refunded') : { ok: true, applied: 0 };   // a part refund keeps the ware
+      return o.refunded === true ? revokeOrder(ctx, o.payment_intent, 'refunded') : { ok: true, applied: 0 }; // a part refund keeps the ware
     case 'charge.dispute.created':
       return revokeOrder(ctx, o.payment_intent, 'disputed');
     case 'charge.dispute.closed':
-      return o.status === 'won' || o.status === 'warning_closed' ? restoreOrder(ctx, o.payment_intent) : { ok: true, applied: 0 };   // an inquiry closed: no chargeback
+      return o.status === 'won' || o.status === 'warning_closed'
+        ? restoreOrder(ctx, o.payment_intent)
+        : { ok: true, applied: 0 }; // an inquiry closed: no chargeback
     default:
       return { ok: true, applied: 0 };
   }
@@ -417,12 +586,16 @@ export async function shopDoor(ctx, env, path, { method, url, bytes, signature, 
     if (method !== 'POST') return { json: { error: 'method' }, status: 405 };
     if (!bytes) return { json: { error: 'too-large' }, status: 413 };
     const r = await shopWebhook(ctx, env, bytes, signature);
-    return 'error' in r ? { json: r, status: r.error === 'shop-closed' ? 503 : r.error === 'signature' ? 401 : 400 } : { json: r, status: 200 };
+    return 'error' in r
+      ? { json: r, status: r.error === 'shop-closed' ? 503 : r.error === 'signature' ? 401 : 400 }
+      : { json: r, status: 200 };
   }
   if (path === SHOP_CANCEL_PATH) return shopHtml(SHOP_PAGES.cancel);
   if (path === SHOP_DONE_PATH) {
     const id = url.searchParams.get('o') ?? '';
-    const order = SHOP_ORDER_ID_RE.test(id) ? await ctx.db.prepare('SELECT ware, status FROM shop_orders WHERE id = ?1').bind(id).first() : null;
+    const order = SHOP_ORDER_ID_RE.test(id)
+      ? await ctx.db.prepare('SELECT ware, status FROM shop_orders WHERE id = ?1').bind(id).first()
+      : null;
     return shopHtml(shopDonePage(order));
   }
   if (!shopOn(env)) return shopHtml(SHOP_PAGES.off, 503);
@@ -434,15 +607,22 @@ export async function shopDoor(ctx, env, path, { method, url, bytes, signature, 
     if (!claims) return shopHtml(SHOP_PAGES.expired, 400);
     const ware = /** @type {any} */ (shopWareById(claims.w));
     if (!shopOnSale(env).includes(ware.id)) return shopHtml(SHOP_PAGES.sold, 410);
-    const player = await ctx.db.prepare('SELECT id, handle, shop_wares, staff_suspended FROM players WHERE id = ?1').bind(claims.p).first();
+    const player = await ctx.db
+      .prepare('SELECT id, handle, shop_wares, staff_suspended FROM players WHERE id = ?1')
+      .bind(claims.p)
+      .first();
     if (!registered(player)) return shopHtml(SHOP_PAGES.account, 403);
-    if (shopOwns(player.shop_wares, ware.id) || holdsAll(player, env)) return shopHtml(SHOP_PAGES.held, 409);   // ADMIN-ALL
-    return shopHtml(shopConfirmPage({ handle: player.handle, ware, ticket }));   // NOTHING IS WRITTEN on a GET
+    if (shopOwns(player.shop_wares, ware.id) || holdsAll(player, env)) return shopHtml(SHOP_PAGES.held, 409); // ADMIN-ALL
+    return shopHtml(shopConfirmPage({ handle: player.handle, ware, ticket })); // NOTHING IS WRITTEN on a GET
   }
   if (method !== 'POST') return { json: { error: 'method' }, status: 405 };
   const claims = await openShopTicket(new URLSearchParams(bytes ? dec.decode(bytes) : '').get('ticket'), env, ctx);
   if (!claims) return shopHtml(SHOP_PAGES.expired, 400);
   const r = await shopCheckout(ctx, env, claims, { fetch, origin: url.origin });
-  if ('url' in r) return new Response(null, { status: 303, headers: { location: r.url, 'cache-control': 'no-store', 'referrer-policy': 'no-referrer' } });
+  if ('url' in r)
+    return new Response(null, {
+      status: 303,
+      headers: { location: r.url, 'cache-control': 'no-store', 'referrer-policy': 'no-referrer' },
+    });
   return shopHtml(SHOP_PAGES[/** @type {keyof typeof SHOP_PAGES} */ (r.page)], r.page === 'down' ? 502 : 400);
 }

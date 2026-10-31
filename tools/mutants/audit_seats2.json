@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-SEATS2-L2-revolt-bind",
     "file": "server-account/src/seatBattles.js",
-    "old": "if (then !== me.guild_id && b.kind !== 'revolt') return",
-    "new": "if (then !== me.guild_id) return",
+    "old": "    if (then !== me.guild_id && b.kind !== 'revolt') return { error: 'sign-unbound' }; // AUDIT SEATS-2 L2: a revolt won no Right - its week asks no bind (7.7)",
+    "new": "    if (then !== me.guild_id) return { error: 'sign-unbound' }; // AUDIT SEATS-2 L2: a revolt won no Right - its week asks no bind (7.7)",
     "tests": [
       "test/net/seat2b_revolt_service.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-SEATS2-L6-window-bucket",
     "file": "server-account/src/seatBattles.js",
-    "old": "`seat-window:${player.id}`",
-    "new": "`seat-lever:${player.id}`",
+    "old": "  if (await overRate({ db, nowS }, `seat-window:${player.id}`, SEAT_EDICTS_HOUR, 3600)) return { error: 'seats-rate' }; // AUDIT SEATS-2 L6 (Appendix B: \"windows 5, edicts 5\"): the window's own five",
+    "new": "  if (await overRate({ db, nowS }, `seat-lever:${player.id}`, SEAT_EDICTS_HOUR, 3600)) return { error: 'seats-rate' }; // AUDIT SEATS-2 L6 (Appendix B: \"windows 5, edicts 5\"): the window's own five",
     "tests": [
       "test/net/audit_seats2.test.js"
     ]

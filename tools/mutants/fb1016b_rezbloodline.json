@@ -712,8 +712,8 @@
   {
     "name": "REZ-BLOODLINE-svc-the-raise-route-unlisted",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/realm/raise',\n",
-    "new": "",
+    "old": "  '/v1/realm/raise',\n  // LEGACY7 part three: a half of one wedding between two players' characters, and the account's unions",
+    "new": "  // LEGACY7 part three: a half of one wedding between two players' characters, and the account's unions",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]

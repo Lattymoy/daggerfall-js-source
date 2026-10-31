@@ -563,8 +563,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-feed-behind-session",
     "file": "server-account/src/service.js",
-    "old": " && r !== '/v1/staff/net-feed'",
-    "new": "",
+    "old": "export const STAFF_ROUTES = new Set(\n  [...ROUTES].filter((r) => r.startsWith('/v1/staff/') && r !== '/v1/staff/net-feed'),\n); // STAFF-PANEL5-FEEDS: the relay's feed, by its signature, takes no session",
+    "new": "export const STAFF_ROUTES = new Set([...ROUTES].filter((r) => r.startsWith('/v1/staff/'))); // STAFF-PANEL5-FEEDS: the relay's feed, by its signature, takes no session",
     "why": "the relay's feed listed as a staff session's door",
     "tests": [
       "test/server/staffpanel5feeds.test.js"

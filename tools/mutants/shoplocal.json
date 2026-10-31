@@ -2,8 +2,8 @@
   {
     "name": "SL-the-ask-dropped",
     "file": "server-account/src/shop.js",
-    "old": "    'adaptive_pricing[enabled]': 'true',   // SHOP-LOCAL",
-    "new": "    // SHOP-LOCAL",
+    "old": "    'adaptive_pricing[enabled]': 'true', // SHOP-LOCAL: the buyer's own currency where Stripe can - the session and its events still read USD",
+    "new": "    // SHOP-LOCAL: the buyer's own currency where Stripe can - the session and its events still read USD",
     "tests": [
       "test/server/shoplocal.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SL-the-line-dropped",
     "file": "server-account/src/shop.js",
-    "old": "      'Stripe can show the price in your own currency, with your country\\'s ways to pay.',\n",
-    "new": "",
+    "old": "      \"Stripe can show the price in your own currency, with your country's ways to pay.\",\n      'A pre-alpha item: it is sold only during the pre-alpha.',",
+    "new": "      'A pre-alpha item: it is sold only during the pre-alpha.',",
     "tests": [
       "test/server/shoplocal.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SL-no-second-ask",
     "file": "server-account/src/shop.js",
-    "old": "if (res.status === 400 && 'adaptive_pricing[enabled]' in fields) {",
-    "new": "if (false) {",
+    "old": "    if (res.status === 400 && 'adaptive_pricing[enabled]' in fields) {",
+    "new": "    if (false) {",
     "tests": [
       "test/server/shoplocal.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SL-second-ask-still-localised",
     "file": "server-account/src/shop.js",
-    "old": "      delete plain['adaptive_pricing[enabled]'];\n",
-    "new": "",
+    "old": "      delete plain['adaptive_pricing[enabled]'];\n      res = await ask(plain, `shop-${fields.client_reference_id}-usd`);",
+    "new": "      res = await ask(plain, `shop-${fields.client_reference_id}-usd`);",
     "tests": [
       "test/server/shoplocal.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SL-the-same-key",
     "file": "server-account/src/shop.js",
-    "old": "res = await ask(plain, `shop-${fields.client_reference_id}-usd`);",
-    "new": "res = await ask(plain, `shop-${fields.client_reference_id}`);",
+    "old": "      res = await ask(plain, `shop-${fields.client_reference_id}-usd`);",
+    "new": "      res = await ask(plain, `shop-${fields.client_reference_id}`);",
     "tests": [
       "test/server/shoplocal.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SL-the-presentment-read",
     "file": "server-account/src/shop.js",
-    "old": "{ intent: o.payment_intent, amount: o.amount_subtotal ?? o.amount_total, currency: o.currency });   // the price before any tax Stripe adds",
-    "new": "{ intent: o.payment_intent, amount: o.presentment_details?.presentment_amount ?? o.amount_subtotal ?? o.amount_total, currency: o.presentment_details?.presentment_currency ?? o.currency });   // the price before any tax Stripe adds",
+    "old": "        intent: o.payment_intent,\n        amount: o.amount_subtotal ?? o.amount_total,\n        currency: o.currency,\n      }); // the price before any tax Stripe adds",
+    "new": "        intent: o.payment_intent,\n        amount: o.presentment_details?.presentment_amount ?? o.amount_subtotal ?? o.amount_total,\n        currency: o.presentment_details?.presentment_currency ?? o.currency,\n      }); // the price before any tax Stripe adds",
     "tests": [
       "test/server/shoplocal.test.js"
     ]

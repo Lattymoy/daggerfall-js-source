@@ -40,7 +40,7 @@
     "name": "WB5b-the-route-open",
     "file": "server-account/src/service.js",
     "old": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover']);",
-    "new": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover', '/v1/gate/claim']);",
+    "new": "export const OPEN_ROUTES = new Set([\n  '/v1/health',\n  '/v1/auth/guest',\n  '/v1/auth/login',\n  '/v1/auth/recover',\n  '/v1/gate/claim',\n]);",
     "tests": [
       "test/net/gate/wb5b_gate_claim.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "WB5b-the-key-read-per-request",
     "file": "server-account/src/signing.js",
-    "old": "  if (_gateKey !== undefined) return _gateKey;\n",
-    "new": "",
+    "old": "  if (_gateKey !== undefined) return _gateKey;\n  const raw = String(env.GATE_PUBLIC_KEY ?? '');",
+    "new": "  const raw = String(env.GATE_PUBLIC_KEY ?? '');",
     "tests": [
       "test/net/gate/wb5b_gate_claim.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "PRIVREP-a-route-open",
     "file": "server-account/src/service.js",
-    "old": "export const OPEN_ROUTES = new Set(['/v1/health',",
-    "new": "export const OPEN_ROUTES = new Set(['/v1/report/mine', '/v1/health',",
+    "old": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover']);",
+    "new": "export const OPEN_ROUTES = new Set([\n  '/v1/report/mine',\n  '/v1/health',\n  '/v1/auth/guest',\n  '/v1/auth/login',\n  '/v1/auth/recover',\n]);",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],

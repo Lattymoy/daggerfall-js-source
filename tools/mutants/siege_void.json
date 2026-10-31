@@ -290,8 +290,8 @@
   {
     "name": "SIEGE-VOID-route",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/seats/siege/void',\n",
-    "new": "",
+    "old": "  '/v1/seats/siege/void',\n  // CROWN1 part two (seatRoyal.js): a Royal Tourney's pass, a bout's receipt claimed",
+    "new": "  // CROWN1 part two (seatRoyal.js): a Royal Tourney's pass, a bout's receipt claimed",
     "tests": [
       "test/net/siege_void.test.js"
     ]

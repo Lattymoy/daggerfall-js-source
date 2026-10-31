@@ -725,8 +725,8 @@
   {
     "name": "INT14-SERPENT-CLAIM-DROPS-BODY",
     "file": "server-account/src/serpents.js",
-    "old": "nowS, embers, c.m ? JSON.stringify(c.m) : null, title ? 1 : 0, aura ? 1 : 0),",
-    "new": "nowS, embers, null, title ? 1 : 0, aura ? 1 : 0),",
+    "old": "      .bind(\n        c.d,\n        player.id,\n        c.b,\n        c.h,\n        character,\n        xp,\n        nonce,\n        nowS,\n        embers,\n        c.m ? JSON.stringify(c.m) : null,\n        title ? 1 : 0,\n        aura ? 1 : 0,\n      ), // INT14: the relay's count, kept; SERPENT5: its grants",
+    "new": "      .bind(c.d, player.id, c.b, c.h, character, xp, nonce, nowS, embers, null, title ? 1 : 0, aura ? 1 : 0), // INT14: the relay's count, kept; SERPENT5: its grants",
     "tests": [
       "test/net/int12_body_relay.test.js"
     ]

@@ -324,8 +324,8 @@
   {
     "name": "STAFF-SET-BANK-the-service-route-unlisted",
     "file": "server-account/src/service.js",
-    "old": "'/v1/staff/fix/mend', '/v1/staff/fix/bank', '/v1/staff/fix/letter', '/v1/staff/gains',",
-    "new": "'/v1/staff/fix/mend', '/v1/staff/fix/letter', '/v1/staff/gains',",
+    "old": "  '/v1/staff/fix/bank',\n  '/v1/staff/fix/letter',",
+    "new": "  '/v1/staff/fix/letter',",
     "why": "the service routes the bank door",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -334,8 +334,8 @@
   {
     "name": "STAFF-SET-BANK-moved-said-as-a-body",
     "file": "server-account/src/staff.js",
-    "old": "  'bank-none': 409, 'bank-moved': 409,\n",
-    "new": "  'bank-none': 409,\n",
+    "old": "  'bank-moved': 409,\n  // GUILD-LETTER-FIX (net/repairLaw.js applyGuildLetter): a member already, the initiation quest still held, a letter on",
+    "new": "  // GUILD-LETTER-FIX (net/repairLaw.js applyGuildLetter): a member already, the initiation quest still held, a letter on",
     "why": "a bank not the one read is a conflict (409), never a bad body",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -344,8 +344,8 @@
   {
     "name": "STAFF-SET-BANK-none-said-as-a-body",
     "file": "server-account/src/staff.js",
-    "old": "  'bank-none': 409, 'bank-moved': 409,\n",
-    "new": "  'bank-moved': 409,\n",
+    "old": "  'bank-none': 409,\n  'bank-moved': 409,",
+    "new": "  'bank-moved': 409,",
     "why": "a record with no Empire account is a conflict (409), never a bad body",
     "tests": [
       "test/server/staffsetbank.test.js"

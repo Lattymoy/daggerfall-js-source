@@ -257,8 +257,8 @@
   {
     "name": "PERMADEATH-HOUSES-route-unlisted",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/homes/inherit',\n",
-    "new": "",
+    "old": "  '/v1/homes/inherit',\n  // GUILD1: the guilds (guilds.js) - a character's own guild and the account's invitations read by any session (a",
+    "new": "  // GUILD1: the guilds (guilds.js) - a character's own guild and the account's invitations read by any session (a",
     "tests": [
       "test/systems/legacy/permadeath_houses.test.js"
     ]

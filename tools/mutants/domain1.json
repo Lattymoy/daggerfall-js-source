@@ -38,8 +38,8 @@
   {
     "name": "DOMAIN1-the-hold-a-camp",
     "file": "server-account/src/seatGifts.js",
-    "old": "if (held) return { place: 'stockpile', key: Number(held.key) };",
-    "new": "if (held) return { place: 'camp', key: Number(held.key) };",
+    "old": "  if (held) return { place: 'stockpile', key: Number(held.key) };",
+    "new": "  if (held) return { place: 'camp', key: Number(held.key) };",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "DOMAIN1-last-weeks-pledge",
     "file": "server-account/src/seatGifts.js",
-    "old": "'SELECT key FROM town_seat_pledges WHERE week = ?1 AND guild_id = ?2 AND region = ?3 LIMIT 1'",
-    "new": "'SELECT key FROM town_seat_pledges WHERE week <= ?1 AND guild_id = ?2 AND region = ?3 LIMIT 1'",
+    "old": "    .prepare('SELECT key FROM town_seat_pledges WHERE week = ?1 AND guild_id = ?2 AND region = ?3 LIMIT 1')",
+    "new": "    .prepare('SELECT key FROM town_seat_pledges WHERE week <= ?1 AND guild_id = ?2 AND region = ?3 LIMIT 1')",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DOMAIN1-any-origin-spent",
     "file": "server-account/src/seatGifts.js",
-    "old": "AND ${spendableSql('?1', '?3', '?9')} >= ?10",
-    "new": "AND COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?3 AND material = ?9), 0) >= ?10",
+    "old": "        AND ${spendableSql('?1', '?3', '?9')} >= ?10   -- GOLD-MARKET: never gold's units; BAG-CRAFT: never loose`,",
+    "new": "        AND COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?3 AND material = ?9), 0) >= ?10   -- GOLD-MARKET: never gold's units; BAG-CRAFT: never loose`,",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "DOMAIN1-own-first",
     "file": "server-account/src/seatGifts.js",
-    "old": "material = ?9 AND origin = 'bought'), 0)), ?11, ?12, ?13",
-    "new": "material = ?9 AND origin = 'own'), 0)), ?11, ?12, ?13",
+    "old": "        MAX(0, ?10 - COALESCE((SELECT qty FROM prof_stores WHERE player = ?1 AND char_id = ?3 AND material = ?9 AND origin = 'bought'), 0)), ?11, ?12, ?13",
+    "new": "        MAX(0, ?10 - COALESCE((SELECT qty FROM prof_stores WHERE player = ?1 AND char_id = ?3 AND material = ?9 AND origin = 'own'), 0)), ?11, ?12, ?13",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "DOMAIN1-a-flat-influence",
     "file": "server-account/src/seatGifts.js",
-    "old": "value: material(key)?.value ?? 0, ref: `gift:${me}:${rid}` });",
-    "new": "value: 1, ref: `gift:${me}:${rid}` });",
+    "old": "      value: material(key)?.value ?? 0,",
+    "new": "      value: 1,",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "DOMAIN1-no-bought-row",
     "file": "server-account/src/seatGifts.js",
-    "old": "own, bought: units - own,",
-    "new": "own, bought: 0,",
+    "old": "      bought: units - own,",
+    "new": "      bought: 0,",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "DOMAIN1-the-camp-the-stockpile",
     "file": "server-account/src/seatGifts.js",
-    "old": "    camp === 1\n      ? db.prepare(`INSERT INTO town_seat_camps",
-    "new": "    camp === 0\n      ? db.prepare(`INSERT INTO town_seat_camps",
+    "old": "    camp === 1",
+    "new": "    camp === 0",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "DOMAIN1-the-stores-switch",
     "file": "server-account/src/seatGifts.js",
-    "old": "  if (!profOpenFor(player, env)) return { error: 'prof-closed' };\n",
-    "new": "",
+    "old": "  if (!profOpenFor(player, env)) return { error: 'prof-closed' };\n  if (!charOk(character)) return { error: 'prof-character' };",
+    "new": "  if (!charOk(character)) return { error: 'prof-character' };",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]

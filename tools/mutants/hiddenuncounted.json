@@ -119,8 +119,8 @@
   {
     "name": "HU-AUDIT-C1-the-runs-start-unread",
     "file": "server-account/src/staffHidden.js",
-    "old": "`SELECT (SELECT MIN(r.at) FROM staff_audit r",
-    "new": "`SELECT (SELECT MAX(r.at) FROM staff_audit r",
+    "old": "  () => `SELECT (SELECT MIN(r.at) FROM staff_audit r WHERE r.actor = ?1 AND r.act = 'hidden-token'",
+    "new": "  () => `SELECT (SELECT MAX(r.at) FROM staff_audit r WHERE r.actor = ?1 AND r.act = 'hidden-token'",
     "tests": [
       "test/server/hiddenuncounted_guild.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "HU-AUDIT-C1-show-myself-ends-no-run",
     "file": "server-account/src/staffHidden.js",
-    "old": "AND json_extract(r.detail, '$.sub') = h.sub AND r.id > COALESCE(",
-    "new": "AND json_extract(r.detail, '$.sub') = h.sub AND 0 < COALESCE(",
+    "old": "    AND json_extract(r.detail, '$.sub') = h.sub AND r.id > COALESCE((SELECT MAX(o.id) FROM staff_audit o WHERE o.actor = ?1 AND o.act = 'hide'",
+    "new": "    AND json_extract(r.detail, '$.sub') = h.sub AND 0 < COALESCE((SELECT MAX(o.id) FROM staff_audit o WHERE o.actor = ?1 AND o.act = 'hide'",
     "tests": [
       "test/server/hiddenuncounted_guild.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "HU-AUDIT-C1-any-session-one-run",
     "file": "server-account/src/staffHidden.js",
-    "old": "AND json_extract(r.detail, '$.sub') = h.sub AND r.id >",
-    "new": "AND r.id >",
+    "old": "    AND json_extract(r.detail, '$.sub') = h.sub AND r.id > COALESCE((SELECT MAX(o.id) FROM staff_audit o WHERE o.actor = ?1 AND o.act = 'hide'",
+    "new": "    AND r.id > COALESCE((SELECT MAX(o.id) FROM staff_audit o WHERE o.actor = ?1 AND o.act = 'hide'",
     "tests": [
       "test/server/hiddenuncounted_guild.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "HU-AUDIT-C1-the-role-unasked",
     "file": "server-account/src/staffHidden.js",
-    "old": "  if (!player || !staffRole(player, env)) return null;\n  const r = await db.prepare(HIDDEN_SINCE_SQL)",
-    "new": "  if (!player) return null;\n  const r = await db.prepare(HIDDEN_SINCE_SQL)",
+    "old": "  if (!player || !staffRole(player, env)) return null;",
+    "new": "  if (!player) return null;",
     "tests": [
       "test/server/hiddenuncounted_guild.test.js"
     ]

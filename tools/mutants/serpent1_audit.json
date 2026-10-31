@@ -606,8 +606,8 @@
   {
     "name": "AUDIT-SERPENT-stood-half-renown",
     "file": "server-account/src/serpents.js",
-    "old": "* (c.x === 'stood' ? SERPENT_STOOD_RENOWN : 1));",
-    "new": ");",
+    "old": "  const xp = Math.floor(renownSerpentXp(before?.level ?? 1) * (c.x === 'stood' ? SERPENT_STOOD_RENOWN : 1));",
+    "new": "  const xp = Math.floor(renownSerpentXp(before?.level ?? 1));",
     "tests": [
       "test/net/serpent/serpent1_relay.test.js"
     ]
@@ -1032,8 +1032,8 @@
   {
     "name": "AUDIT-SERPENT-D-books-credit-not-by-own-row",
     "file": "server-account/src/serpents.js",
-    "old": "const mine = 'EXISTS (SELECT 1 FROM serpent_kills WHERE day = ?3 AND account = ?1 AND nonce = ?4)';",
-    "new": "const mine = 'EXISTS (SELECT 1 FROM serpent_kills WHERE day = ?3 AND account = ?1)';",
+    "old": "  const mine = 'EXISTS (SELECT 1 FROM serpent_kills WHERE day = ?3 AND account = ?1 AND nonce = ?4)';",
+    "new": "  const mine = 'EXISTS (SELECT 1 FROM serpent_kills WHERE day = ?3 AND account = ?1)';",
     "tests": [
       "test/net/serpent/serpent1_law.test.js",
       "test/net/serpent/serpent1_relay.test.js",
@@ -1044,8 +1044,8 @@
   {
     "name": "AUDIT-SERPENT-D-books-hour-ignored",
     "file": "server-account/src/serpents.js",
-    "old": "const room = 'CASE WHEN renown_hour >= ?8 THEN MAX(0, ?7 - renown_hour_xp) ELSE ?7 END';",
-    "new": "const room = '?7';",
+    "old": "  const room = 'CASE WHEN renown_hour >= ?8 THEN MAX(0, ?7 - renown_hour_xp) ELSE ?7 END';",
+    "new": "  const room = '?7';",
     "tests": [
       "test/net/serpent/serpent1_law.test.js",
       "test/net/serpent/serpent1_relay.test.js",
@@ -1056,8 +1056,8 @@
   {
     "name": "AUDIT-SERPENT-D-books-track-cap-ignored",
     "file": "server-account/src/serpents.js",
-    "old": "`UPDATE renown_tracks SET xp = MIN(?5, xp + (SELECT renown_last_credit FROM players WHERE id = ?1)), name",
-    "new": "`UPDATE renown_tracks SET xp = MAX(?5, xp + (SELECT renown_last_credit FROM players WHERE id = ?1)), name",
+    "old": "        `UPDATE renown_tracks SET xp = MIN(?5, xp + (SELECT renown_last_credit FROM players WHERE id = ?1)), name = COALESCE(?6, name), updated_at = ?7",
+    "new": "        `UPDATE renown_tracks SET xp = MAX(?5, xp + (SELECT renown_last_credit FROM players WHERE id = ?1)), name = COALESCE(?6, name), updated_at = ?7",
     "tests": [
       "test/net/serpent/serpent1_law.test.js",
       "test/net/serpent/serpent1_relay.test.js",
@@ -1068,8 +1068,8 @@
   {
     "name": "AUDIT-SERPENT-D-books-row-not-what-paid",
     "file": "server-account/src/serpents.js",
-    "old": "db.prepare(`UPDATE serpent_kills SET xp = (SELECT renown_last_credit FROM players WHERE id = ?1) WHERE",
-    "new": "db.prepare(`UPDATE serpent_kills SET xp = xp WHERE",
+    "old": "      .prepare(\n        `UPDATE serpent_kills SET xp = (SELECT renown_last_credit FROM players WHERE id = ?1) WHERE day = ?3 AND account = ?1 AND nonce = ?4`,\n      )",
+    "new": "      .prepare(`UPDATE serpent_kills SET xp = xp WHERE day = ?3 AND account = ?1 AND nonce = ?4`)",
     "tests": [
       "test/net/serpent/serpent1_law.test.js",
       "test/net/serpent/serpent1_relay.test.js",
@@ -1080,8 +1080,8 @@
   {
     "name": "AUDIT-SERPENT-D-books-cid-unchecked",
     "file": "server-account/src/serpents.js",
-    "old": "const hoard = typeof cid === 'string' && SERPENT_CID_RE.test(cid);",
-    "new": "const hoard = typeof cid === 'string' && cid.length > 0;",
+    "old": "  const hoard = typeof cid === 'string' && SERPENT_CID_RE.test(cid);",
+    "new": "  const hoard = typeof cid === 'string' && cid.length > 0;",
     "tests": [
       "test/net/serpent/serpent1_law.test.js",
       "test/net/serpent/serpent1_relay.test.js",

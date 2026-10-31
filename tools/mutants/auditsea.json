@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-SEA-B2-no-copies",
     "file": "server-account/src/seaWreck.js",
-    "old": "    ...knownCopySteps(ctx.db, c.c, [...escrow], ctx.nowS),\n",
-    "new": "",
+    "old": "    ...knownCopySteps(ctx.db, c.c, [...escrow], ctx.nowS),\n    ctx.db",
+    "new": "    ctx.db",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-SEA-E3-grace-on-a-standing-wreck",
     "file": "server-account/src/seaWreck.js",
-    "old": "if (!had && seize && ctx.nowS < c.i + SEA_WRECK_GRACE_S)",
-    "new": "if (seize && ctx.nowS < c.i + SEA_WRECK_GRACE_S)",
+    "old": "  if (!had && seize && ctx.nowS < c.i + SEA_WRECK_GRACE_S) return { error: 'grace' };",
+    "new": "  if (seize && ctx.nowS < c.i + SEA_WRECK_GRACE_S) return { error: 'grace' };",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-SEA-B7-race-a-500",
     "file": "server-account/src/seaWreck.js",
-    "old": "else if (moved && taken.length) return { error: 'seq' };",
-    "new": "",
+    "old": "    } else if (moved && taken.length) return { error: 'seq' }; // AUDIT SEA VENTURES B7: her record moved under the seize (her own checkpoint first) - asked again, it lands",
+    "new": "    }\n    // AUDIT SEA VENTURES B7: her record moved under the seize (her own checkpoint first) - asked again, it lands",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]

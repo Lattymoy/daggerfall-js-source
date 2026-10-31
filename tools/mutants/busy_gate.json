@@ -132,8 +132,8 @@
   {
     "name": "BUSYGATE-shed-forever",
     "file": "server-account/src/service.js",
-    "old": "busyRead(path, method) && nowMs < busyShedUntil",
-    "new": "busyRead(path, method) && busyShedUntil > 0",
+    "old": "  busyRead(path, method) && nowMs < busyShedUntil;",
+    "new": "  busyRead(path, method) && busyShedUntil > 0;",
     "tests": [
       "test/net/busy_gate.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "BUSYGATE-every-route-shed",
     "file": "server-account/src/service.js",
-    "old": "busyRead(path, method) && nowMs < busyShedUntil",
-    "new": "nowMs < busyShedUntil",
+    "old": "  busyRead(path, method) && nowMs < busyShedUntil;",
+    "new": "  nowMs < busyShedUntil;",
     "tests": [
       "test/net/busy_gate.test.js"
     ],

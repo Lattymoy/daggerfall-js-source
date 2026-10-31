@@ -364,8 +364,8 @@
   {
     "name": "SILVER-FINDS-route-unlisted",
     "file": "server-account/src/service.js",
-    "old": "'/v1/marks/find', ",
-    "new": "",
+    "old": "  '/v1/marks/find',\n  '/v1/marks/guild/deposit',",
+    "new": "  '/v1/marks/guild/deposit',",
     "why": "the route unlisted",
     "tests": [
       "test/net/silverfinds_service.test.js"

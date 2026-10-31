@@ -74,8 +74,8 @@
   {
     "name": "DRAGON4-the-route-unlisted",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/dragon/claim',   // DRAGON4: a Dwarven Dragon's receipt - its hoard and its tame\n",
-    "new": "",
+    "old": "  '/v1/dragon/claim', // DRAGON4: a Dwarven Dragon's receipt - its hoard and its tame\n  '/v1/dragon/tames', // AUDIT DRAGON: the tames the service drew, read back",
+    "new": "  '/v1/dragon/tames', // AUDIT DRAGON: the tames the service drew, read back",
     "tests": [
       "test/net/dragon/dragon4_service.test.js"
     ]

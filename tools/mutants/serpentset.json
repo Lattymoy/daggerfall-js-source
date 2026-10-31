@@ -398,8 +398,8 @@
   {
     "name": "SERPENT-SET-embers-unwritten",
     "file": "server-account/src/serpents.js",
-    "old": ".bind(c.d, player.id, c.b, c.h, character, xp, nonce, nowS, embers, c.m",
-    "new": ".bind(c.d, player.id, c.b, c.h, character, xp, nonce, nowS, 0, c.m",
+    "old": "        embers,",
+    "new": "        0,",
     "why": "a serpent's row with no embers",
     "tests": [
       "test/net/serpent/serpentset_service.test.js"

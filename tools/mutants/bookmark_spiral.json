@@ -3,7 +3,7 @@
     "name": "SHEDLONG-route-back-in-set",
     "file": "server-account/src/service.js",
     "old": "export const ANY_REPLICA_ROUTES = new Map();",
-    "new": "export const ANY_REPLICA_ROUTES = new Map([['/v1/heartbeat', 'POST'], ['/v1/homes/town', 'POST']]);",
+    "new": "export const ANY_REPLICA_ROUTES = new Map([\n  ['/v1/heartbeat', 'POST'],\n  ['/v1/homes/town', 'POST'],\n]);",
     "tests": [
       "test/server/bookmark_spiral.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "BOOKMARKSPIRAL-flag-unread",
     "file": "server-account/src/service.js",
-    "old": "      if (key === DB_ANY) return constraint === REPLICA_ANY;",
-    "new": "      if (key === DB_ANY) return false;",
+    "old": "      if (key === DB_ANY) return constraint === REPLICA_ANY; // BOOKMARK-SPIRAL: its lookup's miss asks the primary",
+    "new": "      if (key === DB_ANY) return false; // BOOKMARK-SPIRAL: its lookup's miss asks the primary",
     "tests": [
       "test/server/bookmark_spiral.test.js"
     ],

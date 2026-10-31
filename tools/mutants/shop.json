@@ -56,8 +56,8 @@
   {
     "name": "SHOP-one-secret-enough",
     "file": "server-account/src/shop.js",
-    "old": "typeof env?.STRIPE_SECRET_KEY === 'string' && !!env.STRIPE_SECRET_KEY && typeof env?.STRIPE_WEBHOOK_SECRET === 'string' && !!env.STRIPE_WEBHOOK_SECRET;",
-    "new": "typeof env?.STRIPE_SECRET_KEY === 'string' && !!env.STRIPE_SECRET_KEY;",
+    "old": "export const shopOn = (/** @type {any} */ env) =>\n  typeof env?.STRIPE_SECRET_KEY === 'string' &&\n  !!env.STRIPE_SECRET_KEY &&\n  typeof env?.STRIPE_WEBHOOK_SECRET === 'string' &&\n  !!env.STRIPE_WEBHOOK_SECRET;",
+    "new": "export const shopOn = (/** @type {any} */ env) => typeof env?.STRIPE_SECRET_KEY === 'string' && !!env.STRIPE_SECRET_KEY;",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SHOP-time-unchecked",
     "file": "server-account/src/shop.js",
-    "old": "if (!sig || Math.abs(nowS - sig.t) > SHOP_HOOK_TOLERANCE_S) return false;",
-    "new": "if (!sig) return false;",
+    "old": "  if (!sig || Math.abs(nowS - sig.t) > SHOP_HOOK_TOLERANCE_S) return false;",
+    "new": "  if (!sig) return false;",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SHOP-sale-unchecked-at-press",
     "file": "server-account/src/shop.js",
-    "old": "  if (!shopOnSale(env).includes(ware.id)) return { page: 'sold' };\n",
-    "new": "",
+    "old": "  if (!shopOnSale(env).includes(ware.id)) return { page: 'sold' };\n  const player = await db",
+    "new": "  const player = await db",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SHOP-held-unchecked-at-press",
     "file": "server-account/src/shop.js",
-    "old": "  if (shopOwns(player.shop_wares, ware.id) || holdsAll(player, env)) return { page: 'held' };   // ADMIN-ALL\n",
-    "new": "",
+    "old": "  if (shopOwns(player.shop_wares, ware.id) || holdsAll(player, env)) return { page: 'held' }; // ADMIN-ALL\n  const open = await db",
+    "new": "  const open = await db",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SHOP-second-order",
     "file": "server-account/src/shop.js",
-    "old": "  if (open?.stripe_url) return { url: open.stripe_url };\n",
-    "new": "",
+    "old": "  if (open?.stripe_url) return { url: open.stripe_url };\n  const id = mintOrderId(rand),",
+    "new": "  const id = mintOrderId(rand),",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SHOP-grant-guard-dropped",
     "file": "server-account/src/shop.js",
-    "old": "      db.prepare(\"UPDATE shop_orders SET status = 'paid', paid_at = ?2, payment_intent = ?3 WHERE id = ?1 AND status IN ('open', 'expired')\").bind(order.id, nowS, typeof intent === 'string' ? intent.slice(0, 255) : null),\n      mustChange(db),\n",
-    "new": "      db.prepare(\"UPDATE shop_orders SET status = 'paid', paid_at = ?2, payment_intent = ?3 WHERE id = ?1\").bind(order.id, nowS, typeof intent === 'string' ? intent.slice(0, 255) : null),\n",
+    "old": "        .prepare(\n          \"UPDATE shop_orders SET status = 'paid', paid_at = ?2, payment_intent = ?3 WHERE id = ?1 AND status IN ('open', 'expired')\",\n        )\n        .bind(order.id, nowS, typeof intent === 'string' ? intent.slice(0, 255) : null),\n      mustChange(db),",
+    "new": "        .prepare(\"UPDATE shop_orders SET status = 'paid', paid_at = ?2, payment_intent = ?3 WHERE id = ?1\")\n        .bind(order.id, nowS, typeof intent === 'string' ? intent.slice(0, 255) : null),",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SHOP-delayed-payment-granted",
     "file": "server-account/src/shop.js",
-    "old": "      if (o.payment_status !== 'paid') return { ok: true, applied: 0 };",
-    "new": "      if (o.payment_status === 'refused') return { ok: true, applied: 0 };",
+    "old": "      if (o.payment_status !== 'paid') return { ok: true, applied: 0 }; // a delayed method: its own event follows",
+    "new": "      if (o.payment_status === 'refused') return { ok: true, applied: 0 }; // a delayed method: its own event follows",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SHOP-part-refund-revokes",
     "file": "server-account/src/shop.js",
-    "old": "return o.refunded === true ? revokeOrder(",
-    "new": "return o.amount_refunded > 0 ? revokeOrder(",
+    "old": "      return o.refunded === true ? revokeOrder(ctx, o.payment_intent, 'refunded') : { ok: true, applied: 0 }; // a part refund keeps the ware",
+    "new": "      return o.amount_refunded > 0 ? revokeOrder(ctx, o.payment_intent, 'refunded') : { ok: true, applied: 0 }; // a part refund keeps the ware",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SHOP-other-order-ware-taken",
     "file": "server-account/src/shop.js",
-    "old": "        AND NOT EXISTS (SELECT 1 FROM shop_orders WHERE player = ?1 AND ware = ?3 AND status = 'paid' AND id <> ?4)`).bind(order.player, w.bit, w.id, order.id),",
-    "new": "        AND ?3 = ?3 AND ?4 = ?4`).bind(order.player, w.bit, w.id, order.id),",
+    "old": "        AND NOT EXISTS (SELECT 1 FROM shop_orders WHERE player = ?1 AND ware = ?3 AND status = 'paid' AND id <> ?4)`,",
+    "new": "        AND ?3 = ?3 AND ?4 = ?4`,",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SHOP-dispute-lost-restores",
     "file": "server-account/src/shop.js",
-    "old": "return o.status === 'won' || o.status === 'warning_closed' ? restoreOrder(",
-    "new": "return o.status ? restoreOrder(",
+    "old": "      return o.status === 'won' || o.status === 'warning_closed'\n        ? restoreOrder(ctx, o.payment_intent)\n        : { ok: true, applied: 0 }; // an inquiry closed: no chargeback",
+    "new": "      return o.status ? restoreOrder(ctx, o.payment_intent) : { ok: true, applied: 0 }; // an inquiry closed: no chargeback",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -272,7 +272,7 @@
   {
     "name": "SHOP-failed-grant-told-done",
     "file": "server-account/src/shop.js",
-    "old": "    throw e;   // the grant never written: a 5xx, and Stripe tells it again",
+    "old": "    throw e; // the grant never written: a 5xx, and Stripe tells it again",
     "new": "    return { ok: true, applied: 0 };",
     "tests": [
       "test/server/shop_service.test.js"
@@ -281,8 +281,8 @@
   {
     "name": "SHOP-revoke-letter-draws-the-ware",
     "file": "server-account/src/shop.js",
-    "old": "revokePost(order, why), null, nowS)",
-    "new": "revokePost(order, why), w.id, nowS)",
+    "old": "      ...(order.player ? [postStatement(db, order.player, revokePost(order, why), null, nowS)] : []), // no ware: a letter with nothing on the account",
+    "new": "      ...(order.player ? [postStatement(db, order.player, revokePost(order, why), w.id, nowS)] : []), // no ware: a letter with nothing on the account",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "SHOP-one-letter-for-every-reason",
     "file": "server-account/src/shop.js",
-    "old": "batch: `${shopReceiptBatch(order.id)}-${why === 'disputed' ? 'disputed' : 'refunded'}`,",
-    "new": "batch: `${shopReceiptBatch(order.id)}-r`,",
+    "old": "    batch: `${shopReceiptBatch(order.id)}-${why === 'disputed' ? 'disputed' : 'refunded'}`, // a letter a reason: a dispute, then a refund, both said",
+    "new": "    batch: `${shopReceiptBatch(order.id)}-r`, // a letter a reason: a dispute, then a refund, both said",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "SHOP-restore-unsaid",
     "file": "server-account/src/shop.js",
-    "old": "      postStatement(db, order.player, restorePost(order), w.id, nowS),\n",
-    "new": "",
+    "old": "      postStatement(db, order.player, restorePost(order), w.id, nowS),\n    ]);",
+    "new": "    ]);",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "SHOP-inquiry-closed-keeps-the-ware",
     "file": "server-account/src/shop.js",
-    "old": "o.status === 'won' || o.status === 'warning_closed' ? restoreOrder(",
-    "new": "o.status === 'won' ? restoreOrder(",
+    "old": "      return o.status === 'won' || o.status === 'warning_closed'\n        ? restoreOrder(ctx, o.payment_intent)\n        : { ok: true, applied: 0 }; // an inquiry closed: no chargeback",
+    "new": "      return o.status === 'won' ? restoreOrder(ctx, o.payment_intent) : { ok: true, applied: 0 }; // an inquiry closed: no chargeback",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "SHOP-tax-read-as-the-price",
     "file": "server-account/src/shop.js",
-    "old": "    case 'checkout.session.completed':\n      if (o.payment_status !== 'paid') return { ok: true, applied: 0 };   // a delayed method: its own event follows\n      return fulfilOrder(ctx, orderOf(), { intent: o.payment_intent, amount: o.amount_subtotal ?? o.amount_total,",
-    "new": "    case 'checkout.session.completed':\n      if (o.payment_status !== 'paid') return { ok: true, applied: 0 };   // a delayed method: its own event follows\n      return fulfilOrder(ctx, orderOf(), { intent: o.payment_intent, amount: o.amount_total,",
+    "old": "      return fulfilOrder(ctx, orderOf(), {\n        intent: o.payment_intent,\n        amount: o.amount_subtotal ?? o.amount_total,\n        currency: o.currency,\n      }); // the price before any tax Stripe adds",
+    "new": "      return fulfilOrder(ctx, orderOf(), { intent: o.payment_intent, amount: o.amount_total, currency: o.currency }); // the price before any tax Stripe adds",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "SHOP-every-order-being-confirmed",
     "file": "server-account/src/shop.js",
-    "old": "  if (order.status === 'open') return { heading: 'Thank you', lines: ['Your payment is being confirmed.',",
-    "new": "  return { heading: 'Thank you', lines: ['Your payment is being confirmed.',",
+    "old": "  if (order.status === 'open')\n    return {\n      heading: 'Thank you',\n      lines: [\n        'Your payment is being confirmed.',\n        `${wareLine(w)} arrives on your account in a minute or two, with a receipt in your mailbox.`,\n        SHOP_PROCEEDS,\n      ],\n    };",
+    "new": "  return {\n    heading: 'Thank you',\n    lines: [\n      'Your payment is being confirmed.',\n      `${wareLine(w)} arrives on your account in a minute or two, with a receipt in your mailbox.`,\n      SHOP_PROCEEDS,\n    ],\n  };",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "SHOP-a-key-a-ticket",
     "file": "server-account/src/shop.js",
-    "old": "key ??= await sealKey(subtle, String(env.STRIPE_SECRET_KEY), SEAL_SALT, 'buy');",
-    "new": "key = await sealKey(subtle, String(env.STRIPE_SECRET_KEY), SEAL_SALT, 'buy');",
+    "old": "      key ??= await sealKey(subtle, String(env.STRIPE_SECRET_KEY), SEAL_SALT, 'buy');",
+    "new": "      key = await sealKey(subtle, String(env.STRIPE_SECRET_KEY), SEAL_SALT, 'buy');",
     "tests": [
       "test/server/shop_service.test.js"
     ]

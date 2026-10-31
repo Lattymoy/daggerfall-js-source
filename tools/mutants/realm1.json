@@ -159,8 +159,8 @@
   {
     "name": "REALM1-any-id-path",
     "file": "server-account/src/service.js",
-    "old": "/^\\/v1\\/realm\\/(r[0-9a-f]{20})\\/data$/",
-    "new": "/^\\/v1\\/realm\\/([A-Za-z0-9_-]{4,64})\\/data$/",
+    "old": "  const m = typeof path === 'string' ? /^\\/v1\\/realm\\/(r[0-9a-f]{20})\\/data$/.exec(path) : null;",
+    "new": "  const m = typeof path === 'string' ? /^\\/v1\\/realm\\/([A-Za-z0-9_-]{4,64})\\/data$/.exec(path) : null;",
     "tests": [
       "test/server/realm1.test.js"
     ]

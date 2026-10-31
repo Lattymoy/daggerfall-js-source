@@ -821,8 +821,8 @@
   {
     "name": "SHIP-PVP-svc-anyone",
     "file": "server-account/src/seaWreck.js",
-    "old": "  if (player.id !== c.f && player.id !== c.k) return { error: 'not-yours' };\n",
-    "new": "",
+    "old": "  if (player.id !== c.f && player.id !== c.k) return { error: 'not-yours' };\n  const seize = player.id === c.k;",
+    "new": "  const seize = player.id === c.k;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -830,8 +830,8 @@
   {
     "name": "SHIP-PVP-svc-no-grace",
     "file": "server-account/src/seaWreck.js",
-    "old": "  if (!had && seize && ctx.nowS < c.i + SEA_WRECK_GRACE_S) return { error: 'grace' };\n",
-    "new": "",
+    "old": "  if (!had && seize && ctx.nowS < c.i + SEA_WRECK_GRACE_S) return { error: 'grace' };\n  if (had) {",
+    "new": "  if (had) {",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -839,8 +839,8 @@
   {
     "name": "SHIP-PVP-svc-any-record",
     "file": "server-account/src/seaWreck.js",
-    "old": "  if (!seize && (!at || at.id !== c.c)) return { error: at ? 'not-yours' : 'no-realm-character' };\n",
-    "new": "",
+    "old": "  if (!seize && (!at || at.id !== c.c)) return { error: at ? 'not-yours' : 'no-realm-character' };\n  // once a wreck: a second asking is the first's answer - her killer's too, within her grace (AUDIT SEA VENTURES E3: his",
+    "new": "  // once a wreck: a second asking is the first's answer - her killer's too, within her grace (AUDIT SEA VENTURES E3: his",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -848,8 +848,8 @@
   {
     "name": "SHIP-PVP-svc-twice",
     "file": "server-account/src/seaWreck.js",
-    "old": "  if (had) {\n    const took",
-    "new": "  if (false) {\n    const took",
+    "old": "  if (had) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -857,7 +857,7 @@
   {
     "name": "SHIP-PVP-svc-again-unplaced",
     "file": "server-account/src/seaWreck.js",
-    "old": "    return { r: c.r, b: had.boarded, took: before ? took : [], n: took.length, again: true, ...(now && now.lease === at?.lease ? { realm: { seq: now.seq } } : {}) };",
+    "old": "    return {\n      r: c.r,\n      b: had.boarded,\n      took: before ? took : [],\n      n: took.length,\n      again: true,\n      ...(now && now.lease === at?.lease ? { realm: { seq: now.seq } } : {}),\n    };",
     "new": "    return { r: c.r, b: had.boarded, took: before ? took : [], n: took.length, again: true };",
     "tests": [
       "test/systems/sea/shippvp.test.js"
@@ -866,8 +866,8 @@
   {
     "name": "SHIP-PVP-svc-again-told-all",
     "file": "server-account/src/seaWreck.js",
-    "old": "took: before ? took : [], n: took.length, again: true,",
-    "new": "took, n: took.length, again: true,",
+    "old": "      took: before ? took : [],",
+    "new": "      took,",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -875,8 +875,8 @@
   {
     "name": "SHIP-PVP-svc-again-told-none",
     "file": "server-account/src/seaWreck.js",
-    "old": "took: before ? took : [], n: took.length, again: true,",
-    "new": "took: [], n: took.length, again: true,",
+    "old": "      took: before ? took : [],",
+    "new": "      took: [],",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -884,8 +884,8 @@
   {
     "name": "SHIP-PVP-svc-again-at-the-take",
     "file": "server-account/src/seaWreck.js",
-    "old": "&& at.seq < had.seq;",
-    "new": "&& at.seq <= had.seq;",
+    "old": "    const before = !!at && took.length > 0 && Number.isSafeInteger(had.seq) && at.seq < had.seq; // her tab, from before the take",
+    "new": "    const before = !!at && took.length > 0 && Number.isSafeInteger(had.seq) && at.seq <= had.seq; // her tab, from before the take",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -893,8 +893,8 @@
   {
     "name": "SHIP-PVP-svc-take-seq-unkept",
     "file": "server-account/src/seaWreck.js",
-    "old": "JSON.stringify(took), moved && taken.length ? moved.seq : null, ctx.nowS)",
-    "new": "JSON.stringify(took), null, ctx.nowS)",
+    "old": "      .bind(\n        c.r,\n        c.f,\n        c.c,\n        c.k,\n        c.kc,\n        c.u,\n        c.b,\n        JSON.stringify(took),\n        moved && taken.length ? moved.seq : null,\n        ctx.nowS,\n      ),",
+    "new": "      .bind(c.r, c.f, c.c, c.k, c.kc, c.u, c.b, JSON.stringify(took), null, ctx.nowS),",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -902,8 +902,8 @@
   {
     "name": "SHIP-PVP-svc-unmade-record-kept",
     "file": "server-account/src/seaWreck.js",
-    "old": "  if (moved && !taken.length) await dropIfUnnamed(ctx.db, ctx.bucket, c.f, c.c, moved.key);   // nothing to take: the move is never made - nor its object kept\n",
-    "new": "",
+    "old": "  if (moved && !taken.length) await dropIfUnnamed(ctx.db, ctx.bucket, c.f, c.c, moved.key); // nothing to take: the move is never made - nor its object kept\n  const took = seaPrizeTook(taken);",
+    "new": "  const took = seaPrizeTook(taken);",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -929,8 +929,8 @@
   {
     "name": "SHIP-PVP-svc-barred-unread",
     "file": "server-account/src/seaWreck.js",
-    "old": "    barred = await piecesBarred(ctx.db, c.c, (seaHoldOf(stored, c.u) ?? []).map(ledgerKeyOf).filter((k) => k != null));\n",
-    "new": "",
+    "old": "    barred = await piecesBarred(\n      ctx.db,\n      c.c,\n      (seaHoldOf(stored, c.u) ?? []).map(ledgerKeyOf).filter((k) => k != null),\n    );\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -938,8 +938,8 @@
   {
     "name": "SHIP-PVP-svc-no-escrow",
     "file": "server-account/src/seaWreck.js",
-    "old": "    for (const it of taken) { const k = ledgerKeyOf(it); if (k != null) escrow.add(k); }\n",
-    "new": "",
+    "old": "    for (const it of taken) {\n      const k = ledgerKeyOf(it);\n      if (k != null) escrow.add(k);\n    }\n    return null;",
+    "new": "    return null;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -947,8 +947,8 @@
   {
     "name": "SHIP-PVP-svc-prize-unheld",
     "file": "server-account/src/seaWreck.js",
-    "old": "    ...taken.map((it, i) => ctx.db.prepare(\"INSERT INTO sea_prizes",
-    "new": "    ...taken.slice(1).map((it, i) => ctx.db.prepare(\"INSERT INTO sea_prizes",
+    "old": "    ...taken.map((it, i) =>\n      ctx.db\n        .prepare(\n          \"INSERT INTO sea_prizes (r, i, victim, victim_char, killer, killer_char, rec, at, until_s, state) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, 'held')\",\n        )\n        .bind(c.r, i, c.f, c.c, c.k, c.kc, JSON.stringify(it), ctx.nowS, ctx.nowS + SEA_PRIZE_HOLD_S),\n    ),",
+    "new": "    ...taken\n      .slice(1)\n      .map((it, i) =>\n        ctx.db\n          .prepare(\n            \"INSERT INTO sea_prizes (r, i, victim, victim_char, killer, killer_char, rec, at, until_s, state) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, 'held')\",\n          )\n          .bind(c.r, i, c.f, c.c, c.k, c.kc, JSON.stringify(it), ctx.nowS, ctx.nowS + SEA_PRIZE_HOLD_S),\n      ),",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -956,8 +956,8 @@
   {
     "name": "SHIP-PVP-svc-no-kill",
     "file": "server-account/src/seaWreck.js",
-    "old": "    ...seaKillSteps(ctx.db, { r: c.r, f: c.f, c: c.c, k: c.k, kc: c.kc, m: c.m }, ctx.nowS),\n",
-    "new": "",
+    "old": "    ...seaKillSteps(ctx.db, { r: c.r, f: c.f, c: c.c, k: c.k, kc: c.kc, m: c.m }, ctx.nowS),\n  ];",
+    "new": "  ];",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -965,8 +965,8 @@
   {
     "name": "SHIP-PVP-svc-seize-leased",
     "file": "server-account/src/seaWreck.js",
-    "old": "...(moved && taken.length && !seize ? { realm: { seq: moved.seq } } : {})",
-    "new": "...(moved && taken.length ? { realm: { seq: moved.seq } } : {})",
+    "old": "  return {\n    r: c.r,\n    b: c.b,\n    took,\n    n: taken.length,\n    ...(moved && taken.length && !seize ? { realm: { seq: moved.seq } } : {}),\n  };",
+    "new": "  return { r: c.r, b: c.b, took, n: taken.length, ...(moved && taken.length ? { realm: { seq: moved.seq } } : {}) };",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -974,8 +974,8 @@
   {
     "name": "SHIP-PVP-collect-anyones",
     "file": "server-account/src/seaWreck.js",
-    "old": "WHERE killer = ?1 AND killer_char = ?2 AND state = 'held' AND until_s > ?3 ORDER BY at, r, i LIMIT ?4\")",
-    "new": "WHERE killer = ?1 AND state = 'held' AND until_s > ?3 ORDER BY at, r, i LIMIT ?4\")",
+    "old": "          \"SELECT r, i, rec FROM sea_prizes WHERE killer = ?1 AND killer_char = ?2 AND state = 'held' AND until_s > ?3 ORDER BY at, r, i LIMIT ?4\",",
+    "new": "          \"SELECT r, i, rec FROM sea_prizes WHERE killer = ?1 AND state = 'held' AND until_s > ?3 ORDER BY at, r, i LIMIT ?4\",",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -983,8 +983,8 @@
   {
     "name": "SHIP-PVP-collect-late",
     "file": "server-account/src/seaWreck.js",
-    "old": "WHERE killer = ?1 AND killer_char = ?2 AND state = 'held' AND until_s > ?3 ORDER BY at, r, i LIMIT ?4\")",
-    "new": "WHERE killer = ?1 AND killer_char = ?2 AND state = 'held' ORDER BY at, r, i LIMIT ?4\")",
+    "old": "          \"SELECT r, i, rec FROM sea_prizes WHERE killer = ?1 AND killer_char = ?2 AND state = 'held' AND until_s > ?3 ORDER BY at, r, i LIMIT ?4\",",
+    "new": "          \"SELECT r, i, rec FROM sea_prizes WHERE killer = ?1 AND killer_char = ?2 AND state = 'held' ORDER BY at, r, i LIMIT ?4\",",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -992,8 +992,8 @@
   {
     "name": "SHIP-PVP-collect-twice",
     "file": "server-account/src/seaWreck.js",
-    "old": "WHERE killer = ?1 AND killer_char = ?2 AND state = 'held' AND until_s > ?3",
-    "new": "WHERE killer = ?1 AND killer_char = ?2 AND until_s > ?3",
+    "old": "          \"SELECT r, i, rec FROM sea_prizes WHERE killer = ?1 AND killer_char = ?2 AND state = 'held' AND until_s > ?3 ORDER BY at, r, i LIMIT ?4\",",
+    "new": "          'SELECT r, i, rec FROM sea_prizes WHERE killer = ?1 AND killer_char = ?2 AND until_s > ?3 ORDER BY at, r, i LIMIT ?4',",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1001,8 +1001,8 @@
   {
     "name": "SHIP-PVP-reclaim-early",
     "file": "server-account/src/seaWreck.js",
-    "old": "WHERE victim = ?1 AND victim_char = ?2 AND state = 'held' AND until_s <= ?3",
-    "new": "WHERE victim = ?1 AND victim_char = ?2 AND state = 'held'",
+    "old": "          \"SELECT r, i, rec FROM sea_prizes WHERE victim = ?1 AND victim_char = ?2 AND state = 'held' AND until_s <= ?3 ORDER BY at, r, i LIMIT ?4\",",
+    "new": "          \"SELECT r, i, rec FROM sea_prizes WHERE victim = ?1 AND victim_char = ?2 AND state = 'held' ORDER BY at, r, i LIMIT ?4\",",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1010,7 +1010,7 @@
   {
     "name": "SHIP-PVP-end-ungiven",
     "file": "server-account/src/seaWreck.js",
-    "old": "  const prep = await prepareRealmRecord(ctx, playerId, at, (save) => { giveTradeGoods(save, items, 0); return null; });",
+    "old": "  const prep = await prepareRealmRecord(ctx, playerId, at, (save) => {\n    giveTradeGoods(save, items, 0);\n    return null;\n  });",
     "new": "  const prep = await prepareRealmRecord(ctx, playerId, at, () => null);",
     "tests": [
       "test/systems/sea/shippvp.test.js"
@@ -1019,8 +1019,8 @@
   {
     "name": "SHIP-PVP-end-unsettled",
     "file": "server-account/src/seaWreck.js",
-    "old": "    await ctx.db.batch([...prep.steps, settle, mustChange(ctx.db, rows.length)]);",
-    "new": "    await ctx.db.batch([...prep.steps]);",
+    "old": "    await ctx.db.batch([...prep.steps, settle, mustChange(ctx.db, rows.length)]); // every row read, once - another end that landed first fails it whole",
+    "new": "    await ctx.db.batch([...prep.steps]); // every row read, once - another end that landed first fails it whole",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]

@@ -1083,8 +1083,8 @@
   {
     "name": "PROF12-route-brew-unlisted",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/prof/brew', '/v1/prof/disenchant',\n",
-    "new": "  '/v1/prof/disenchant',\n",
+    "old": "  '/v1/prof/brew',\n  '/v1/prof/disenchant',",
+    "new": "  '/v1/prof/disenchant',",
     "tests": [
       "test/net/prof12_service.test.js",
       "test/systems/prof12_client.test.js"
@@ -1093,8 +1093,8 @@
   {
     "name": "PROF12-route-dis-unlisted",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/prof/brew', '/v1/prof/disenchant',\n",
-    "new": "  '/v1/prof/brew',\n",
+    "old": "  '/v1/prof/disenchant',\n  // CRAFT4: a temper (professions.js) and an Enchanter's Reforge with Essence (alchemy.js) - the same doors",
+    "new": "  // CRAFT4: a temper (professions.js) and an Enchanter's Reforge with Essence (alchemy.js) - the same doors",
     "tests": [
       "test/net/prof12_service.test.js",
       "test/systems/prof12_client.test.js"

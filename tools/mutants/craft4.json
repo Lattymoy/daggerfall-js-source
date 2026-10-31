@@ -445,8 +445,8 @@
   {
     "name": "CRAFT4-svc-routes",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/prof/temper', '/v1/prof/reforge',\n",
-    "new": "",
+    "old": "  '/v1/prof/temper',\n  '/v1/prof/reforge',\n  // MASTER-ART: a Master's work (masterWork.js) - the same doors",
+    "new": "  // MASTER-ART: a Master's work (masterWork.js) - the same doors",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]

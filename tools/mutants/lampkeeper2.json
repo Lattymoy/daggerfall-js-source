@@ -155,8 +155,8 @@
   {
     "name": "LAMP-KEEPER-II-the-route-shut",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/lamp/claim',   // LAMP-KEEPER II",
-    "new": "  // LAMP-KEEPER II",
+    "old": "  '/v1/lamp/claim', // LAMP-KEEPER II: a lamp keeper spoken to - I Love Lamp laid on the row once (AUDIT FIVE-ASKS A1: it was never listed, so every claim was a 404)",
+    "new": "  // LAMP-KEEPER II: a lamp keeper spoken to - I Love Lamp laid on the row once (AUDIT FIVE-ASKS A1: it was never listed, so every claim was a 404)",
     "tests": [
       "test/server/lampkeeper2.test.js"
     ]

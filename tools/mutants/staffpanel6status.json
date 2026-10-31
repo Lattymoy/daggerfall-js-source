@@ -242,8 +242,8 @@
   {
     "name": "STAFF-PANEL6-STATUS-cache-window-inclusive",
     "file": "server-account/src/staffKept.js",
-    "old": "if (here && nowS >= here.at && nowS - here.at < freshS) return here.value;",
-    "new": "if (here && nowS >= here.at && nowS - here.at <= freshS) return here.value;",
+    "old": "  if (here && nowS >= here.at && nowS - here.at < freshS) return here.value;",
+    "new": "  if (here && nowS >= here.at && nowS - here.at <= freshS) return here.value;",
     "why": "a part kept a second past its window (STAFF-SPEED-2: the kept answer's own check, staffKept.js)",
     "tests": [
       "test/server/staffpanel6status.test.js"
@@ -482,8 +482,8 @@
   {
     "name": "STAFF-PANEL6-STATUS-reports-high-medium",
     "file": "server-account/src/staffCases.js",
-    "old": "high: ranked.filter((c) => c.level === 'high').length",
-    "new": "high: ranked.filter((c) => c.level === 'medium').length",
+    "old": "      high: ranked.filter((c) => c.level === 'high').length,",
+    "new": "      high: ranked.filter((c) => c.level === 'medium').length,",
     "why": "the Reports' N high miscounted",
     "tests": [
       "test/server/staffpanel6status.test.js"
@@ -492,8 +492,8 @@
   {
     "name": "STAFF-PANEL6-STATUS-reports-watch-admins",
     "file": "server-account/src/staffCases.js",
-    "old": "  id: 'reports', label: 'Reports', role: 'moderator',",
-    "new": "  id: 'reports', label: 'Reports', role: 'admin',",
+    "old": "  role: 'moderator',",
+    "new": "  role: 'admin',",
     "why": "Moderators lose their Reports on Home",
     "tests": [
       "test/server/staffpanel6status.test.js"
@@ -502,8 +502,8 @@
   {
     "name": "STAFF-PANEL6-STATUS-reports-why-unjoined",
     "file": "server-account/src/staffCases.js",
-    "old": "why: c.why.join(' · ')",
-    "new": "why: c.why.join(', ')",
+    "old": "        .map((/** @type {any} */ c) => ({ level: c.level, why: c.why.join(' · '), sub: c.target, name: c.name })),",
+    "new": "        .map((/** @type {any} */ c) => ({ level: c.level, why: c.why.join(', '), sub: c.target, name: c.name })),",
     "why": "the why not one line as the design draws it",
     "tests": [
       "test/server/staffpanel6status.test.js"

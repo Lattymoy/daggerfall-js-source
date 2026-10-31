@@ -173,8 +173,8 @@
   {
     "name": "RS-the-route-unnamed",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/account/recovery-codes',\n",
-    "new": "",
+    "old": "  '/v1/account/recovery-codes',\n  // ACC3: the one WRITE in the wardrobe. Holding a title is derived",
+    "new": "  // ACC3: the one WRITE in the wardrobe. Holding a title is derived",
     "tests": [
       "test/server/recoveryset.test.js"
     ]

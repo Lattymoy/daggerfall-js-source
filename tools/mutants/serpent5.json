@@ -29,8 +29,8 @@
   {
     "name": "SERPENT5-grants-to-a-ship-that-stood",
     "file": "server-account/src/serpents.js",
-    "old": "const draw = c.x === 'stood' ? null : rand(new Uint8Array(4));",
-    "new": "const draw = rand(new Uint8Array(4));",
+    "old": "  const draw = c.x === 'stood' ? null : rand(new Uint8Array(4));",
+    "new": "  const draw = rand(new Uint8Array(4));",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SERPENT5-laid-by-any-claim",
     "file": "server-account/src/serpents.js",
-    "old": "serpent_honours = CASE WHEN ${mine} THEN serpent_honours | ?10 ELSE serpent_honours END",
-    "new": "serpent_honours = serpent_honours | ?10",
+    "old": "         serpent_honours = CASE WHEN ${mine} THEN serpent_honours | ?10 ELSE serpent_honours END",
+    "new": "         serpent_honours = serpent_honours | ?10",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SERPENT5-new-when-held",
     "file": "server-account/src/serpents.js",
-    "old": "titleNew: title && !(prior & SERPENT_HONOUR_TITLE),",
-    "new": "titleNew: title,",
+    "old": "    titleNew: title && !(prior & SERPENT_HONOUR_TITLE),",
+    "new": "    titleNew: title,",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SERPENT5-the-kills-row-unwritten",
     "file": "server-account/src/serpents.js",
-    "old": "title ? 1 : 0, aura ? 1 : 0),",
-    "new": "0, 0),",
+    "old": "      .bind(\n        c.d,\n        player.id,\n        c.b,\n        c.h,\n        character,\n        xp,\n        nonce,\n        nowS,\n        embers,\n        c.m ? JSON.stringify(c.m) : null,\n        title ? 1 : 0,\n        aura ? 1 : 0,\n      ), // INT14: the relay's count, kept; SERPENT5: its grants",
+    "new": "      .bind(c.d, player.id, c.b, c.h, character, xp, nonce, nowS, embers, c.m ? JSON.stringify(c.m) : null, 0, 0), // INT14: the relay's count, kept; SERPENT5: its grants",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "SERPENT5-AUDIT-aura-new-when-held",
     "file": "server-account/src/serpents.js",
-    "old": "auraNew: aura && !(prior & SERPENT_HONOUR_AURA),",
-    "new": "auraNew: aura,",
+    "old": "    auraNew: aura && !(prior & SERPENT_HONOUR_AURA), // SERPENT5",
+    "new": "    auraNew: aura, // SERPENT5",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "SERPENT5-AUDIT-the-kills-row-aura-is-the-title",
     "file": "server-account/src/serpents.js",
-    "old": "title ? 1 : 0, aura ? 1 : 0),",
-    "new": "title ? 1 : 0, title ? 1 : 0),",
+    "old": "        aura ? 1 : 0,",
+    "new": "        title ? 1 : 0,",
     "tests": [
       "test/net/serpent/serpent5_honours.test.js"
     ]

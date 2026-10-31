@@ -176,8 +176,8 @@
   {
     "name": "SERPENT1-books-guest-counted",
     "file": "server-account/src/serpents.js",
-    "old": "if (!player.handle) {",
-    "new": "if (false) {",
+    "old": "  if (!player.handle) {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/serpent/serpent1_relay.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "SERPENT1-books-hoard-twice",
     "file": "server-account/src/serpents.js",
-    "old": "db.prepare('INSERT OR IGNORE INTO serpent_spoils",
-    "new": "db.prepare('INSERT OR REPLACE INTO serpent_spoils",
+    "old": "    .prepare('INSERT OR IGNORE INTO serpent_spoils (day, account, cid, at) VALUES (?1, ?2, ?3, ?4)')",
+    "new": "    .prepare('INSERT OR REPLACE INTO serpent_spoils (day, account, cid, at) VALUES (?1, ?2, ?3, ?4)')",
     "tests": [
       "test/net/serpent/serpent1_relay.test.js"
     ]

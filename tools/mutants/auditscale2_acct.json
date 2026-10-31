@@ -392,8 +392,8 @@
   {
     "name": "AUDIT-SCALE-II-N1-docblock-gone",
     "file": "server-account/src/service.js",
-    "old": "/** SCALE4d: the binding as one D1 session (`withSession`) - every statement counted where the binding's are\n *  (metrics.js countedDb opens the session through itself), and DB_ROOT the binding the session came from, so what an\n *  isolate keeps beside its database stays one store for every request. A binding with no sessions (an older runtime, a\n *  harness's fake) is answered as it stands: the primary, as before. A write in a session goes to the primary - a\n *  replica takes none - and the session's later reads see it. Until the database's read replication is turned on\n *  (account-deploy.yml) every statement of a session is the primary's anyway. */\n",
-    "new": "",
+    "old": "/** SCALE4d: the binding as one D1 session (`withSession`) - every statement counted where the binding's are\n *  (metrics.js countedDb opens the session through itself), and DB_ROOT the binding the session came from, so what an\n *  isolate keeps beside its database stays one store for every request. A binding with no sessions (an older runtime, a\n *  harness's fake) is answered as it stands: the primary, as before. A write in a session goes to the primary - a\n *  replica takes none - and the session's later reads see it. Until the database's read replication is turned on\n *  (account-deploy.yml) every statement of a session is the primary's anyway. */\nexport function replicaDb(/** @type {any} */ db, constraint = REPLICA_CONSTRAINT) {",
+    "new": "export function replicaDb(/** @type {any} */ db, constraint = REPLICA_CONSTRAINT) {",
     "tests": [
       "test/server/auditscale2_acct.test.js"
     ],

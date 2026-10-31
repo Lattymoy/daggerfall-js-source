@@ -262,8 +262,8 @@
   {
     "name": "STAFF-PANEL5-MESSAGE-rate-status",
     "file": "server-account/src/staff.js",
-    "old": "'staff-message-rate': 429,",
-    "new": "'staff-message-rate': 400,",
+    "old": "  'staff-message-rate': 429,",
+    "new": "  'staff-message-rate': 400,",
     "why": "a held message answered as a bad body",
     "tests": [
       "test/server/staffpanel5message.test.js"

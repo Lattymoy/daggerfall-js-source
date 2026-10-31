@@ -62,8 +62,8 @@
   {
     "name": "STAFF-PANEL-SPEED-realm-stream-flags-then-prices",
     "file": "server-account/src/staffEconomy.js",
-    "old": "const [[who, pairs], marks, gold] = await Promise.all([accounts.size ? readAll(db, [",
-    "new": "const [[who, pairs], marks, gold] = await Promise.all([accounts.size ? await readAll(db, [",
+    "old": "      ? readAll(db, [",
+    "new": "      ? await readAll(db, [",
     "why": "the stream's usual prices asked only once the accounts and the pairs answered",
     "tests": [
       "test/server/staffpanelspeedrealm.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "STAFF-PANEL-SPEED-realm-stream-marks-then-gold",
     "file": "server-account/src/staffEconomy.js",
-    "old": "]) : [[], []], usualOf('marks'), usualOf('gold')]);",
-    "new": "]) : [[], []], await usualOf('marks'), usualOf('gold')]);",
+    "old": "    usualOf('marks'),",
+    "new": "    await usualOf('marks'),",
     "why": "gold's usual prices asked only once the Drakes' answered",
     "tests": [
       "test/server/staffpanelspeedrealm.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "STAFF-PANEL-SPEED-realm-stream-audit-after",
     "file": "server-account/src/staffEconomy.js",
-    "old": "const [page] = await Promise.all([streamPage(db, v, nowS), audit('market-read'",
-    "new": "const [page] = await Promise.all([await streamPage(db, v, nowS), audit('market-read'",
+    "old": "      streamPage(db, v, nowS),",
+    "new": "      await streamPage(db, v, nowS),",
     "why": "the stream's audit row a trip of its own after the page",
     "tests": [
       "test/server/staffpanelspeedrealm.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "STAFF-PANEL-SPEED-realm-economy-guilds-after",
     "file": "server-account/src/staffEconomy.js",
-    "old": "rich, worth], ranked] = await Promise.all([readAll(db, [",
-    "new": "rich, worth], ranked] = await Promise.all([await readAll(db, [",
+    "old": "      readAll(db, [",
+    "new": "      await readAll(db, [",
     "why": "the richest guilds' list read only after the economy's batch",
     "tests": [
       "test/server/staffpanelspeedrealm.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "STAFF-PANEL-SPEED-realm-economy-audit-after",
     "file": "server-account/src/staffEconomy.js",
-    "old": "Promise.all([staffKept(ctx, `econ:economy:${days}`",
-    "new": "Promise.all([await staffKept(ctx, `econ:economy:${days}`",
+    "old": "      staffKept(ctx, `econ:economy:${days}`, ECON_KEEP_S, ECON_STALE_S, () => economy(db, nowS, days)),",
+    "new": "      await staffKept(ctx, `econ:economy:${days}`, ECON_KEEP_S, ECON_STALE_S, () => economy(db, nowS, days)),",
     "why": "the economy's audit row a trip of its own after the reads",
     "tests": [
       "test/server/staffpanelspeedrealm.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "STAFF-PANEL-SPEED-realm-census-then-trend",
     "file": "server-account/src/staffCensus.js",
-    "old": "Promise.all([keptRead(`census:${kind}`, nowS, () => censusNow(db, kind)), trendOf(",
-    "new": "Promise.all([await keptRead(`census:${kind}`, nowS, () => censusNow(db, kind)), trendOf(",
+    "old": "      keptRead(`census:${kind}`, nowS, () => censusNow(db, kind)),",
+    "new": "      await keptRead(`census:${kind}`, nowS, () => censusNow(db, kind)),",
     "why": "the census's trend and audit row asked only once its totals answered",
     "tests": [
       "test/server/staffpanelspeedrealm.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "STAFF-PANEL-SPEED-realm-census-audit-after",
     "file": "server-account/src/staffCensus.js",
-    "old": "trendOf(db, kind, utcDay(nowS) - days + 1),\n      audit('census-read'",
-    "new": "await trendOf(db, kind, utcDay(nowS) - days + 1),\n      audit('census-read'",
+    "old": "      trendOf(db, kind, utcDay(nowS) - days + 1),",
+    "new": "      await trendOf(db, kind, utcDay(nowS) - days + 1),",
     "why": "the census's audit row a trip of its own after the trend",
     "tests": [
       "test/server/staffpanelspeedrealm.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "STAFF-PANEL-SPEED-realm-census-jumps-audit-after",
     "file": "server-account/src/staffCensus.js",
-    "old": "Promise.all([keptRead(`jumps:",
-    "new": "Promise.all([await keptRead(`jumps:",
+    "old": "        keptRead(`jumps:${kind}:${hours}`, nowS, () => jumpsOf(db, kind, nowS, hours)),",
+    "new": "        await keptRead(`jumps:${kind}:${hours}`, nowS, () => jumpsOf(db, kind, nowS, hours)),",
     "why": "the jumps' audit row a trip of its own after the read",
     "tests": [
       "test/server/staffpanelspeedrealm.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "STAFF-PANEL-SPEED-realm-contested-audit-after",
     "file": "server-account/src/staffCensus.js",
-    "old": "Promise.all([contestedPage(db, { sort, before, char, open: body.open === true }), audit(",
-    "new": "Promise.all([await contestedPage(db, { sort, before, char, open: body.open === true }), audit(",
+    "old": "      contestedPage(db, { sort, before, char, open: body.open === true }),",
+    "new": "      await contestedPage(db, { sort, before, char, open: body.open === true }),",
     "why": "the contested pieces' audit row a trip of its own after the page",
     "tests": [
       "test/server/staffpanelspeedrealm.test.js"

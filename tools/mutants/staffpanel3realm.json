@@ -342,8 +342,8 @@
   {
     "name": "STAFF-PANEL3-REALM-wiring-dropped",
     "file": "server-account/src/staff.js",
-    "old": "if (REALM_ROUTES.includes(path)) return staffRealm(ctx, env, path, body, who, audit);",
-    "new": "if (false) return staffRealm(ctx, env, path, body, who, audit);",
+    "old": "  if (REALM_ROUTES.includes(path)) return staffRealm(ctx, env, path, body, who, audit); // STAFF-PANEL3-REALM: trade holds, rollbacks, fixes, gains, removals - Admins'",
+    "new": "  if (false) return staffRealm(ctx, env, path, body, who, audit); // STAFF-PANEL3-REALM: trade holds, rollbacks, fixes, gains, removals - Admins'",
     "why": "the doors not wired",
     "tests": [
       "test/server/staffpanel3realm.test.js"
