@@ -1162,7 +1162,7 @@
   {
     "name": "AUDIT-loose-bow-unglowed",
     "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-    "old": "  if (!pieces?.weapon && Math.floor(Number(rf.split('-')[0]) / 5) === 4) res.held = artBowPx(res);",
+    "old": "  if (!pieces?.weapon && loose) res.held = artBowPx(res);",
     "new": "",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
@@ -1328,5 +1328,145 @@
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
     "why": "the art's own speck floats in the air"
+  },
+  {
+    "name": "SHEETS-thrust-second-blade",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "side: fr.side };   // no second line",
+    "new": "side: fr.side, off: [gx, gy, ex, ey, 'b'] };   // no second line",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a thrust fans a second blade off the first fist"
+  },
+  {
+    "name": "SHEETS-bow-ghosted",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  if (clean) {\n",
+    "new": "  if (false) {\n",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the leather chest's ghost limbs stay"
+  },
+  {
+    "name": "SHEETS-bow-air-narrow",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "const LOOSE_AIR_N = 20;",
+    "new": "const LOOSE_AIR_N = 12;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a 2-px limb skipped: the bow broken"
+  },
+  {
+    "name": "SHEETS-bow-ghost-kept",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    if (mine) d.fill(0, i, i + 4);",
+    "new": "    if (mine) void 0;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the ghost px stay"
+  },
+  {
+    "name": "SHEETS-bow-limb-missing",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    else { const k = (y * rw + x) * 4; d.set(rd.subarray(k, k + 4), i); }",
+    "new": "    else void 0;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the clean limb's px never come"
+  },
+  {
+    "name": "SHEETS-provisional-never",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "heldPictureExpected(pieces.offhand, body)))) provisional = true;",
+    "new": "heldPictureExpected(pieces.offhand, body)))) provisional = false;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a frame drawn before its picture stands for good"
+  },
+  {
+    "name": "SHEETS-provisional-any",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "(!weapon.pic && pieces.weapon !== '0' && heldPictureExpected(pieces.weapon, body))",
+    "new": "(!weapon.pic && pieces.weapon !== '0')",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a weapon with no picture to wait for decoded again and again"
+  },
+  {
+    "name": "SHEETS-provisional-unseen",
+    "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
+    "old": ", ...(image.provisional ? { provisional: true } : {}) };",
+    "new": " };",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the stores never hear it was provisional"
+  },
+  {
+    "name": "SHEETS-body-retry-never",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "have.retryAt != null && clock() >= have.retryAt) { tex.delete(cacheKey(s));",
+    "new": "have.retryAt != null && false) { tex.delete(cacheKey(s));",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "my body keeps the shape for good"
+  },
+  {
+    "name": "SHEETS-peer-retry-never",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "have.retryAt != null && clock() >= have.retryAt) { tex.delete(k);",
+    "new": "have.retryAt != null && false) { tex.delete(k);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a walker keeps the shape for good"
+  },
+  {
+    "name": "SHEETS-tool-unheld",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "    ...layeredTool(),   // AUDIT",
+    "new": "    // AUDIT",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "my body's hands keep the weapon at a gathering act"
+  },
+  {
+    "name": "SHEETS-tool-sheathed",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "sheathed: last.sheathed && !last.toolInHand, readyStance",
+    "new": "sheathed: last.sheathed, readyStance",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the tool held in a sheathed stance: not drawn"
+  },
+  {
+    "name": "SHEETS-tool-glows",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "!last.sheathed && !last.toolInHand && !last.riding",
+    "new": "!last.sheathed && !last.riding",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the weapon's glow round the tool"
+  },
+  {
+    "name": "SHEETS-cast-evicted",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "held = cast?.replace(/!\\d$/, '')",
+    "new": "held = cast",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a cast's frames go with every other outfit's"
   }
 ]

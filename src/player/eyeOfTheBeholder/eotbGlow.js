@@ -47,6 +47,9 @@ export function setSpriteGlow(g, archive, record, glow, origin, right, up, w, h,
  *  did this but for the whole body)"): the renderer record suffix of a worn-armour sprite's weapon picture; a pair's
  *  second weapon's its own (OFF_SUFFIX), glowing its own hand's colours. */
 export const HELD_SUFFIX = '#w', OFF_SUFFIX = '#o';
+/** AUDIT: how long a worn-armour frame drawn before its weapon's paper-doll picture came stands before it is decoded
+ *  again (eotbBody's and the walkers' stores; layeredArmor.js decodeLayered `provisional`). */
+export const PICTURE_RETRY_MS = 5000;
 
 /** LAYERED-GLOW: a worn-armour picture's weapon px as uploaded - `held` the compose's mask (top row first; `part` 1 the
  *  line's weapon, 2 a pair's second), `colors` the upload (row 0 the bottom, mirrored as `mirror` says): { idx, col }, or

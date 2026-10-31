@@ -70,8 +70,7 @@ const _thrust = new WeakMap();
 /** SWING-CUTS: a thrust's strike (the swing's frame 2, arms out) points its blade the way the body faces, along the
  *  arms - the art's hammer line there is the chop's, at the camera: from aside the whole blade forward, from three
  *  quarters shortened, from the front a stub at the camera, from behind hidden past the fists. A frame's rig as
- *  drawWeapon reads one (`len` the body's hammer, px), its `off` fanned from it as the rig fans its own; null for any
- *  other frame or weapon. */
+ *  drawWeapon reads one (`len` the body's hammer, px); null for any other frame or weapon. */
 export function thrustRigOf(fr, code, view, frame, len = rig.male.len) {
   if (frame !== 2 || !fr || !THRUSTS.has(String(code ?? '').slice(0, 2))) return null;
   let o = _thrust.get(fr);
@@ -80,15 +79,12 @@ export function thrustRigOf(fr, code, view, frame, len = rig.male.len) {
     const fx = FACING_X[v], [ux, uy] = fx ? [Math.sign(fx), 0.12] : [(ax - gx) / D, (ay - gy) / D];
     const k = fx ? Math.abs(fx) : 0.35, n = Math.hypot(ux, uy), L = len * k, [lo, hi] = rig.span;
     const blade = v === 4 ? 'x' : v === 3 ? 'b' : 'f', c = blade === 'x' ? 'b' : blade;
-    const ex = gx + (ux / n) * L, ey = gy + (uy / n) * L, cs = Math.cos(OFF_FAN_RAD), sn = Math.sin(OFF_FAN_RAD);
-    const off = [gx, gy, gx + ((ux * cs - uy * sn) / n) * L, gy + ((ux * sn + uy * cs) / n) * L, 'b'];
-    o = { w: [gx, gy, ex, ey], d: c.repeat(-lo - 3) + 'bbb' + blade.repeat(hi + 1), side: fr.side, off };
+    const ex = gx + (ux / n) * L, ey = gy + (uy / n) * L;
+    o = { w: [gx, gy, ex, ey], d: c.repeat(-lo - 3) + 'bbb' + blade.repeat(hi + 1), side: fr.side };   // no second line: the swing's
     _thrust.set(fr, o);
   }
   return o;
 }
-/** LAYERED-DUAL: the rig's fan of a pair's second weapon off the first (build_weapon_rig.py OFF_FAN), radians. */
-const OFF_FAN_RAD = (22 * Math.PI) / 180;
 
 /** The cut a weapon code swings - a short blade's and a bare fist's thrust, a long blade's slash, else the chop; `back`
  *  (a pair's left hand) plays it the other way round, a rising backhand. */
@@ -230,6 +226,13 @@ export async function loadHeldPicture(code, body) {
   const item = { group: 'Weapons', templateIndex: t, material: Number(String(code).slice(2)) || 0 };
   const identity = { gender: body === 'female' ? 'female' : 'male' }, image = heldImage(item, identity);
   return image ? itemIconColor32(item, { identity, image }) : null;
+}
+/** AUDIT: does `code` have a paper-doll picture to wait for (one not had yet makes the frame drawn meanwhile provisional)? */
+export function heldPictureExpected(code, body) {
+  const shape = String(code ?? '').slice(0, 2), t = TEMPLATE_OF[shape];
+  if (!PICTURED(shape) || !Number.isInteger(t)) return false;
+  const item = { group: 'Weapons', templateIndex: t, material: Number(String(code).slice(2)) || 0 };
+  return !!heldImage(item, { gender: body === 'female' ? 'female' : 'male' });
 }
 /** The picture the hand holds: the pack's, but a katana's flat one (the pack takes the record after it, the doll's
  *  right-hand picture, foreshortened - ItemHelper.cs:418-420). */
@@ -656,6 +659,28 @@ export function artBowPx(img) {
   return out;
 }
 const BOW_THIN_R = 3, BOW_THIN_N = 16, BOW_PIECE = 6;
+
+/** The loose's bow is drawn again behind a ghost of itself where the female wears a leather chest (2026-10-31, the
+ *  owner, of a sheet: "Fix all the minor issues and the attached innormalities"); the same frame in a chain chest is
+ *  clean. The chest whose render a body's loose takes its bow from, by the chest it wears. */
+export const LOOSE_BOW_FROM = Object.freeze({ female: Object.freeze({ leather: 'chain' }) });
+/** The loose's bow as `ref` (the same frame in a clean chest) draws it, in place: in open air - where `ref` has at most
+ *  LOOSE_AIR_N px within 3 - a px only `img` draws goes, and one only `ref` draws comes. `ref` may be a wider strip. */
+export function bowFrom(img, ref) {
+  const { width: w, height: h, data: d } = img, rw = ref.width, rd = ref.data;
+  const rOn = (x, y) => x >= 0 && y >= 0 && x < w && y < h && rd[(y * rw + x) * 4 + 3] > 0;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = (y * w + x) * 4, mine = d[i + 3] > 0, theirs = rOn(x, y);
+    if (mine === theirs) continue;
+    let n = 0;
+    for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) if (rOn(x + dx, y + dy)) n++;
+    if (n > LOOSE_AIR_N) continue;
+    if (mine) d.fill(0, i, i + 4);
+    else { const k = (y * rw + x) * 4; d.set(rd.subarray(k, k + 4), i); }
+  }
+  return img;
+}
+const LOOSE_AIR_N = 20;
 
 /** AUDIT: a px of a held picture alone in the air - none of the picture beside it, nor the body - is a speck its
  *  sampling left off a guard's tip or an axe's edge, and is put back as it `was`. A px between the fingers stays. */

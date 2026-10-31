@@ -263,8 +263,8 @@
   {
     "name": "GLOW-B-a-beast-glows",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "!last.sheathed && !last.riding && !last.transformed && !died",
-    "new": "!last.sheathed && !last.riding && !died",
+    "old": "!last.toolInHand && !last.riding && !last.transformed && !died",
+    "new": "!last.toolInHand && !last.riding && !died",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "GLOW-B-a-rider-glows",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "!last.sheathed && !last.riding && !last.transformed",
-    "new": "!last.sheathed && !last.transformed",
+    "old": "!last.toolInHand && !last.riding && !last.transformed",
+    "new": "!last.toolInHand && !last.transformed",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]

@@ -29,7 +29,7 @@ import manifest from '../../../vendor/layered-armor/manifest.json' with { type: 
 import cloakManifest from '../../../vendor/layered-armor/cloak/manifest.json' with { type: 'json' };
 import { drawnPiece } from '../../net/appearanceLaw.js';   // APPEARANCES: a worn piece's look
 import { drawSpellBurst } from './layeredSpell.js';   // SPELL-BURST: the cast's spell in its hands
-import { artBowPx, weaponShownFor, weaponRigOf, offRigOf, thrustRigOf, removeWeapon, drawWeapon, recolourHammer, maskTile, fillFrom, weaponLen, bowLen, weaponCm, heldPictureOf, loadHeldPicture, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode, isBowCode, SWING_CUTS, swingCutOf } from './layeredWeapon.js';   // LAYERED-WEAPONS: the weapon in the hands
+import { artBowPx, bowFrom, LOOSE_BOW_FROM, heldPictureExpected, weaponShownFor, weaponRigOf, offRigOf, thrustRigOf, removeWeapon, drawWeapon, recolourHammer, maskTile, fillFrom, weaponLen, bowLen, weaponCm, heldPictureOf, loadHeldPicture, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode, isBowCode, SWING_CUTS, swingCutOf } from './layeredWeapon.js';   // LAYERED-WEAPONS: the weapon in the hands
 
 /** The texture archives the composed pictures are uploaded under - one per body, clear of every vendored archive. */
 export const LAYERED_ARCHIVE = Object.freeze({ male: 1700, female: 1701 });
@@ -396,7 +396,7 @@ export function composeStrip(strip, code, cloak = null, weapon = null) {
   const h = strip.height, sw = strip.width, src = strip.data;
   const out = new Uint8Array(w * h * 4);
   for (let y = 0; y < h; y++) out.set(src.subarray(y * sw * 4, (y * sw + w) * 4), y * w * 4);
-  const res = /** @type {{width:number,height:number,data:Uint8Array,held?:Uint8Array}} */ ({ width: w, height: h, data: out });
+  const res = /** @type {{width:number,height:number,data:Uint8Array,held?:Uint8Array,provisional?:boolean}} */ ({ width: w, height: h, data: out });
   const held = pieces?.weapon ?? null, hand = weapon && held && weapon.mask.length === w * h ? weapon : null;
   if (held) dropLoneArt(res);   // AUDIT: the art's own specks (female 9-2, male 8-4) - not the loose's dotted string
   const takeOut = held === '0' || (held && held.slice(0, 2) !== 'wh');   // the art's hammer goes
@@ -514,7 +514,7 @@ export async function decodeLayered(key, decodePng, { fetchUrl = (u) => fetch(u)
   }
   // LAYERED-WEAPONS: the frame's rig, for a code that changes what the hands hold; without it the art draws as it is
   const pieces = outfitPieces(code), fr = pieces?.weapon ? weaponRigOf(body, rf, pieces.top[0]) : null;
-  let weapon = null;
+  let weapon = null, provisional = false;
   if (fr) {
     const wu = weaponUrlOf(`weapon/${body}/${rf}`);
     try {
@@ -524,8 +524,17 @@ export async function decodeLayered(key, decodePng, { fetchUrl = (u) => fetch(u)
     // the weapon as its paper-doll picture, held; the drawn shape where it has none
     if (weapon && pieces.weapon !== '0') weapon.pic = await heldPictureOf(pieces.weapon, body, heldArt);
     if (weapon && pieces.offhand) weapon.offPic = await heldPictureOf(pieces.offhand, body, heldArt);   // LAYERED-DUAL
+    // AUDIT: a picture not had yet (its load timed out) draws the shape meanwhile - the stores decode the frame again
+    if (weapon && ((!weapon.pic && pieces.weapon !== '0' && heldPictureExpected(pieces.weapon, body)) || (!weapon.offPic && pieces.offhand && heldPictureExpected(pieces.offhand, body)))) provisional = true;
   }
-  const res = composeStrip(strip, code, cloak, weapon);
-  if (!pieces?.weapon && Math.floor(Number(rf.split('-')[0]) / 5) === 4) res.held = artBowPx(res);   // AUDIT: the loose's own bow
+  const res = composeStrip(strip, code, cloak, weapon), loose = Math.floor(Number(rf.split('-')[0]) / 5) === 4;
+  // the loose's bow as a clean chest draws it, where this chest's render ghosts it (LOOSE_BOW_FROM)
+  const fams = combo.split('_'), clean = loose ? LOOSE_BOW_FROM[body]?.[fams[1]] : null;
+  if (clean) {
+    const ru = urlOf(`${body}/${[fams[0], clean, fams[2]].join('_')}/${rf}`);
+    try { if (ru) bowFrom(res, await pictureOf(ru)); } catch { /* the bow as drawn */ }
+  }
+  if (!pieces?.weapon && loose) res.held = artBowPx(res);   // AUDIT: the loose's own bow
+  if (provisional) res.provisional = true;
   return res;
 }

@@ -84,7 +84,7 @@ EXTRA = {('male', '1-0'): [(36, 64, 41, 66)], ('male', '1-1'): [(33, 60, 41, 62)
 # light px in the `lit` boxes, every px but skin in the `all` boxes (x0, y0, x1, y1 inclusive) and in the `seg` shaft
 # segments (x0, y0, x1, y1, half-width), round a grip and head read by eye.
 HAND = {
-    ('male', '3-0'): dict(q=(49, 61), t=(55.5, 64), lit=[(43, 59, 52, 69)], all=[(52, 60, 59, 68)]),
+    ('male', '3-0'): dict(q=(49, 61), t=(55.5, 64), lit=[(43, 59, 52, 69)], all=[(52, 60, 59, 68), (7, 49, 14, 54)]),   # and a metal tip at the free wrist (2026-10-31)
     ('male', '3-1'): dict(q=(52.5, 59), t=(57.5, 61.5), lit=[(47, 56, 55, 60)], all=[(54, 58, 61, 65)]),
     ('male', '3-2'): dict(q=(62.5, 64), t=(67, 65), lit=[], all=[(63, 63, 71, 68)]),
     ('male', '3-3'): dict(q=(57.5, 60), t=(62, 62.5), lit=[], all=[(58, 59, 67, 66)]),
@@ -99,7 +99,7 @@ HAND = {
     ('female', '5-2'): dict(q=(61, 63), t=(31, 54), lit=[], all=[(20, 44, 42, 63)], seg=[(41, 57, 60, 63.5, 1.6)]),
     ('male', '8-4'): dict(q=(44.5, 74), t=(52, 52.5), lit=[(46, 44, 58, 61)], all=[], seg=[(45.5, 71, 50, 60, 1.2)]),
     ('female', '3-0'): dict(q=(90, 94.5), t=(94, 96), lit=[(86, 93, 91, 97)], all=[(91, 93, 98, 100), (86, 96, 90, 96)]),
-    ('female', '3-1'): dict(q=(86.5, 90.5), t=(89.5, 93), lit=[], all=[(85, 89, 94, 97)]),
+    ('female', '3-1'): dict(q=(86.5, 90.5), t=(89.5, 93), lit=[], all=[(85, 89, 94, 97), (50, 76, 56, 81)]),   # and the wrist's tip
     ('female', '3-3'): dict(q=(86, 90), t=(88.5, 93), lit=[], all=[(85, 88, 92, 97)]),
     ('female', '4-0'): dict(q=(81.5, 91), t=(86, 86.5), lit=[(73, 93, 80, 97), (82, 88, 83, 93)],
                             all=[(81, 80, 91, 87), (83, 87, 91, 93), (74, 94, 89, 101)]),
@@ -155,8 +155,10 @@ BOW_NEAR = {(b, rf) for b in ('male', 'female') for rf in ('2-0', '2-1', '2-2', 
 # Records 1-3 and 16-18 are also drawn flipped (eotbBillboard.js MIRRORED), and the flip swaps the hands: there the left
 # hand is the art's other one, the hammer's fist, on the far side - the bow at that fist (`bowM`), behind the body, which
 # may hide it (the owner, 2026-10-30: "Its okay if the body hides it"), turned to that hand's side.
-# LAYERED-DUAL: where both fists hold the haft, a pair's second weapon fans this far off the first (radians).
-OFF_FAN = math.radians(22)
+# LAYERED-DUAL: a pair's second weapon is in the free hand where the art draws it. Where both fists hold the haft (a
+# swing, a flinch) or the body hides the free hand (aside), the hand that holds it is not in the art, so neither is it:
+# fanned off the first fist it read as two blades in one hand, and behind the body it stuck out past the head (the owner,
+# 2026-10-31, of the sheets: "Fix all the minor issues and the attached innormalities").
 # The body's own bow (the loose's art, records 20-24), tip to tip, px: the long bow; the short bow is three quarters.
 BOW_PX = {'male': 75, 'female': 78}
 # Front views whose hole is the body's other side, mirrored: the fill copies it, alpha and all.
@@ -501,6 +503,9 @@ def main(only=None):
                 if (body, rf) in BOW_NEAR: p['bow'] = fist + [1]
                 rec = int(rf.split('-')[0])
                 if rec in (1, 2, 3, 16, 17, 18) and 'bow' in p: p['bowM'] = fist + [0, -1]
+                if 10 <= rec <= 14:   # a flinch: the art's free hand is flung out of reach - the bow in the hammer's fist
+                    front = 1 if p.get('d', '')[-LO:-LO + 1] == 'f' else 0
+                    p['bow'] = fist + [front, -1]; p['bowM'] = fist + [front, -1]
         for rf, per in frames.items():   # LAYERED-DUAL: a pair's other weapon (`off`: grip, the head's place, the blade's side)
             rec = int(rf.split('-')[0])
             for p in per:
@@ -512,9 +517,6 @@ def main(only=None):
                     hx, hy, front = free; vx, vy = (-ux, uy) if rec % 5 in (0, 4) else (ux, uy)
                     blade = 'x' if rec % 5 == 4 else 'f' if front else 'b'
                     p['off'] = [hx, hy, round(hx + vx * D, 1), round(hy + vy * D, 1), blade]
-                else:   # both fists on the haft (a swing, a flinch), or the far hand hidden: fanned off the first, behind it
-                    c, sn = math.cos(OFF_FAN), math.sin(OFF_FAN); vx, vy = ux * c - uy * sn, ux * sn + uy * c
-                    p['off'] = [round(gx, 1), round(gy, 1), round(gx + vx * D, 1), round(gy + vy * D, 1), 'b']
         for rf, per in frames.items():   # a flail's chain lags the hand: the head's move since the frame before (`cv`, px)
             rec, i = map(int, rf.split('-')); n = sum(1 for k in frames if k.startswith(f'{rec}-'))
             prev = f'{rec}-{(i - 1) % n}' if rec <= 4 else f'{rec}-{i - 1}' if i > 0 else None   # a walk loops, a swing starts at rest

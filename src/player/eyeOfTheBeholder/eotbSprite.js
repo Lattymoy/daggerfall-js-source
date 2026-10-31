@@ -222,7 +222,7 @@ export function worldOrderColors(image, { owned = false } = {}) {
  *  first - eotbGlow.js heldOf). */
 export function worldOrderLayered(image) {
   const held = image.held ?? null;
-  return { ...worldOrderColors(image, { owned: true }), held };
+  return { ...worldOrderColors(image, { owned: true }), held, ...(image.provisional ? { provisional: true } : {}) };   // AUDIT: drawn before its weapon's picture came
 }
 
 /**

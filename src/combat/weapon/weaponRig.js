@@ -788,6 +788,15 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   });
   // SPELL-BURST: the cast's element, drawn in the layered body's hands, and a weapon kept in hand beside the spell
   const layeredCast = () => ({ castElement: castPlaying() ? cast.element : null, spellHand: !!spellHandNow() });
+  // AUDIT (2026-10-31): a gathering act's tool in the body's hands, as the walkers draw mine (peerRiders walkerHands,
+  // WALK_GATHER_STROKES): held ready, each blow the swing's second stroke - odd counts, one a blow
+  let toolBlows = 0, toolStriking = false;
+  const layeredTool = () => {
+    const tool = actTool(), strike = !!tool && !!tool.state && tool.state !== 'Idle';
+    if (strike && !toolStriking) toolBlows++;
+    toolStriking = strike;
+    return tool ? { heldWeapon: tool, toolInHand: true, usingBow: false, spellcasting: false, attacking: strike, swingN: -(2 * toolBlows + 1), pairRight: null, pairLeft: null, pairStrike: null } : {};
+  };
   // EOTB5: THE OTHER BODY, attached in the same breath as the arm it
   // stands in for. THE FOUR HOSTS named: exterior.js, world.js,
   // worldModes.js and dungeonContext.js - none of them carries a call,
@@ -855,6 +864,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     hipLantern: !!entity && lanternAtWaist(entity.lightSource),   // HT-WAIST: the lit lantern hangs at the sprite's hip, and swings as it walks
     handItem: playerWeapon.handItem(playerWeapon.leadHand),   // BACK-HOLSTER: the weapon of the hand in use - on the sprite's back sheathed, its glow round the sprite drawn
     handWraps: playerWeapon.wrapsOf(playerWeapon.leadHand),   // BACK-HOLSTER GLOW: and a bare fist's Hand Wraps, as handGlowOf asks them
+    ...layeredTool(),   // AUDIT: a gathering act's tool over the weapon's hands
   });
   const bindBody = () => eotbBody.attach(renderer, eotbState);
   bindBody();

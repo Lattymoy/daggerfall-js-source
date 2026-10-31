@@ -192,7 +192,9 @@ blow in flight, a walker's `ah`).
 **The second line** is the rig's `off`. In the walk and the idle it is the free hand (the bow's), held as the first is,
 mirrored from the front and behind, its blade hidden from behind; the hand is open in the art, so the handle and guard
 pass behind its fingers. Daggerfall's swing is two-handed - both fists meet on the haft - so in a swing, a flinch, or
-where the art hides that hand, the second is fanned 22 degrees off the first, behind the body. The glow counts both.
+where the art hides that hand (aside), the hand that holds the second is not in the art, and neither is it (2026-10-31,
+the owner, of the sheets: fanned off the first fist it read as two blades in one hand, and stuck out past the head). Each
+weapon glows its own hand's colours.
 
 **Its own cut of the swing** (SWING-CUTS, the owner, 2026-10-30: "Is there anyway to switch up the animation?"). The
 art has one swing, six frames: up (0, 1), the strike (2, arms out), low through (3), back at the chest (4), up again (5).
@@ -233,12 +235,18 @@ two of it can stay, and a fill can borrow a patch of another piece's colour. Mal
 shaft. The female's back-view flinch (14-0) keeps its raised hand two pixels off the wrist,
 and with empty hands her back-3/4 swing (8-2) its hand, whose arm is behind the body.
 
-**Known limits of the hands.** A flinch at the loose shows empty
-hands: the hurt frames have no free hand for the bow. Where the art hides a pair's free hand (aside), the second weapon
-fans off the first. A weapon's glow stands round the
+**The sheets** (2026-10-31, the owner: "Fix all the minor issues and the attached innormalities"). The back-3/4 walk's
+metal tip at the free wrist (male 3-0, female 3-1) goes with the hammer (the rig's HAND boxes). The female's leather
+chest ghosts the loose's bow, two and three limbs; the same frame in a chain chest is clean, so the loose takes its bow
+from that render in open air (`LOOSE_BOW_FROM`, `bowFrom`). A flinch holds the bow in the hammer's fist (the hurt
+frames' `bow`), as the art's free hand is flung out of reach. A frame drawn before its weapon's paper-doll picture came is
+`provisional`, and the stores decode it again after `PICTURE_RETRY_MS`. My own body holds a gathering act's tool ready
+(`layeredTool`), a blow a stroke, as the walkers draw it; and keeps a cast's frames with its outfit's.
+
+**Known limits of the hands.** A pair shows one weapon where the art has no free hand. A weapon's glow stands round the
 weapon alone (LAYERED-GLOW, `05-Combat/Weapon-Glow.md` "Round the weapon"). Verified by
 `test/player/eyeOfTheBeholder/layered_weapons.test.js`, `spriteglow.test.js` and `tools/mutants/layered_weapons.json`
-(133 mutants, all dead); the peer-art pins moved to the new codes (`test/net/peer/fb1022d_peerart.test.js`).
+(147 mutants, all dead); the peer-art pins moved to the new codes (`test/net/peer/fb1022d_peerart.test.js`).
 
 ## The art - the doctrine's third exception
 
