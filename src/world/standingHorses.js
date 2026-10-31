@@ -25,7 +25,7 @@
 //    (`standingHorseYaw` - a billboard has none, and a town of horses all facing one way reads as a sprite's lie).
 //
 // Not a DFU member: Daggerfall's horse is a sprite. Ledger A (COATS3D).
-import { poseWhereSeen } from './horseView.js';   // HORSE-VIEW II: the pool's law
+import { poseWhereSeen } from './horseView.js'; // HORSE-VIEW II: the pool's law
 import { lensOf } from '../net/peer/peerBodies.js';
 import { ANIMALS_ARCHIVE, ANIMAL_SOUND_BY_RECORD, SOUND } from '../systems/soundClips.js';
 
@@ -38,13 +38,17 @@ export const STANDING_HORSE_HOLD = 1.15;
 
 /** Is this flat one of Daggerfall's town horses - TEXTURE.201 by the records RMBLayout's animal sound names a horse
  *  (AddAnimalAudioSource's table, soundClips.js ANIMAL_SOUND_BY_RECORD)? */
-export const isStandingHorseFlat = (archive, record) => archive === ANIMALS_ARCHIVE && ANIMAL_SOUND_BY_RECORD[record] === SOUND.AnimalHorse;
+export const isStandingHorseFlat = (archive, record) =>
+  archive === ANIMALS_ARCHIVE && ANIMAL_SOUND_BY_RECORD[record] === SOUND.AnimalHorse;
 
 /** FNV-1a over a key's text, as an unsigned 32-bit number. */
 function hashOf(key) {
   let h = 0x811c9dc5;
   const s = String(key ?? '');
-  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
   return h >>> 0;
 }
 /** A standing horse's heading (radians, the motor's yaw: 0 down +Z) off its key - the same on every machine and every
@@ -56,7 +60,11 @@ export const standingHorseSeed = (key) => 1 + (hashOf(`seed:${key}`) % 65535);
 /**
  * @param {{ renderer?: any, max?: number, range?: number }} [opts] - `renderer` the host's (its character-sprite bind)
  */
-export function createStandingHorses({ renderer = null, max = STANDING_HORSES_MAX, range = STANDING_HORSE_RANGE } = {}) {
+export function createStandingHorses({
+  renderer = null,
+  max = STANDING_HORSES_MAX,
+  range = STANDING_HORSE_RANGE,
+} = {}) {
   /** @type {Map<any, { horse: any, rig: any, batch: any, frame: number, phase: number, out: boolean, fresh: boolean }>} */
   const stood = new Map();
   /** This frame's offers (pooled - no object a horse a frame). */
@@ -65,7 +73,10 @@ export function createStandingHorses({ renderer = null, max = STANDING_HORSES_MA
   /** The offers sorted, reused. */
   /** @type {typeof offers} */
   const live = [];
-  let n = 0, rig = null, frameNo = 0, phases = 0;
+  let n = 0,
+    rig = null,
+    frameNo = 0,
+    phases = 0;
   const eye = [0, 0, 0];
   /** HORSE-VIEW II: `end`'s camera as the law reads it (its view, its eye - `begin`'s - and its lens). */
   const pass = { view: null, proj: null, eye, lens: 1 };
@@ -79,27 +90,50 @@ export function createStandingHorses({ renderer = null, max = STANDING_HORSES_MA
     begin(r, eyeAt) {
       frameNo++;
       n = 0;
-      if (eyeAt) { eye[0] = eyeAt[0]; eye[1] = eyeAt[1]; eye[2] = eyeAt[2]; }
-      if (r !== rig) { for (const [k, e] of stood) letGo(k, e); rig = r ?? null; }
+      if (eyeAt) {
+        eye[0] = eyeAt[0];
+        eye[1] = eyeAt[1];
+        eye[2] = eyeAt[2];
+      }
+      if (r !== rig) {
+        for (const [k, e] of stood) letGo(k, e);
+        rig = r ?? null;
+      }
     },
     /** One standing horse: `key` an object (or text) of its host's that is the horse, `feet` its billboard's base,
      *  `yaw` its heading, `look` its look's code (systems/horse/horseCoats.js), `batch` the billboard it stands for, `seed` its
      *  idle phase. */
     offer(key, feet, yaw, look, batch, seed = 1) {
-      const o = offers[n] ??= { key: null, feet: [0, 0, 0], yaw: 0, look: 0, batch: null, seed: 1, d2: 0 };
+      const o = (offers[n] ??= { key: null, feet: [0, 0, 0], yaw: 0, look: 0, batch: null, seed: 1, d2: 0 });
       n++;
-      o.key = key; o.feet[0] = feet[0]; o.feet[1] = feet[1]; o.feet[2] = feet[2]; o.yaw = yaw; o.look = look | 0; o.batch = batch ?? null; o.seed = seed;
-      const dx = feet[0] - eye[0], dy = feet[1] - eye[1], dz = feet[2] - eye[2];
+      o.key = key;
+      o.feet[0] = feet[0];
+      o.feet[1] = feet[1];
+      o.feet[2] = feet[2];
+      o.yaw = yaw;
+      o.look = look | 0;
+      o.batch = batch ?? null;
+      o.seed = seed;
+      const dx = feet[0] - eye[0],
+        dy = feet[1] - eye[1],
+        dz = feet[2] - eye[2];
       o.d2 = (dx * dx + dy * dy + dz * dz) / (stood.has(key) ? STANDING_HORSE_HOLD * STANDING_HORSE_HOLD : 1);
     },
     /** The cut made and the chosen stepped - HORSE-VIEW II: each posed in the view (`cam`'s, when given: the camera the
      *  frame draws through), on its cadence (world/horseView.js) - and the rest of the offered drawn as their
      *  billboards; a horse not offered this frame let go. Answers how many stand. */
     end(dt, cam = null) {
-      if (cam) { pass.view = cam.view; pass.proj = cam.proj; pass.lens = lensOf(cam.proj); }
+      if (cam) {
+        pass.view = cam.view;
+        pass.proj = cam.proj;
+        pass.lens = lensOf(cam.proj);
+      }
       live.length = 0;
       for (let i = 0; i < n; i++) live.push(offers[i]);
-      for (let i = n; i < offers.length; i++) { offers[i].key = null; offers[i].batch = null; }   // no stale hold on a horse gone
+      for (let i = n; i < offers.length; i++) {
+        offers[i].key = null;
+        offers[i].batch = null;
+      } // no stale hold on a horse gone
       live.sort((a, b) => a.d2 - b.d2);
       let standing = 0;
       for (const o of live) {
@@ -107,18 +141,25 @@ export function createStandingHorses({ renderer = null, max = STANDING_HORSES_MA
         let e = stood.get(o.key);
         if (want && !e) {
           const horse = rig.horse(o.seed);
-          if (horse) { e = { horse, rig, batch: o.batch, frame: 0, phase: phases++, out: false, fresh: false }; stood.set(o.key, e); }
+          if (horse) {
+            e = { horse, rig, batch: o.batch, frame: 0, phase: phases++, out: false, fresh: false };
+            stood.set(o.key, e);
+          }
         }
-        if (!want || !e) { if (o.batch) o.batch.castOnly = false; continue; }
-        if (e.batch && e.batch !== o.batch) e.batch.castOnly = false;   // a billboard rebuilt under the horse
-        e.batch = o.batch; e.frame = frameNo;
+        if (!want || !e) {
+          if (o.batch) o.batch.castOnly = false;
+          continue;
+        }
+        if (e.batch && e.batch !== o.batch) e.batch.castOnly = false; // a billboard rebuilt under the horse
+        e.batch = o.batch;
+        e.frame = frameNo;
         standing++;
         if (o.batch) o.batch.castOnly = true;
-        rig.step(e.horse, { feet: o.feet, yaw: o.yaw, speed: 0, dt, look: o.look, pose: false });   // HORSE-VIEW II: its idle's clock every frame
-        e.fresh = e.out;   // out of the view when last judged: the draw catches it up as it comes into this one
+        rig.step(e.horse, { feet: o.feet, yaw: o.yaw, speed: 0, dt, look: o.look, pose: false }); // HORSE-VIEW II: its idle's clock every frame
+        e.fresh = e.out; // out of the view when last judged: the draw catches it up as it comes into this one
         e.out = poseWhereSeen(rig, e.horse, o.feet, cam ? pass : null, eye, frameNo, e.phase);
       }
-      for (const [k, e] of stood) if (e.frame !== frameNo) letGo(k, e);   // a Map deletes the entry it is on safely
+      for (const [k, e] of stood) if (e.frame !== frameNo) letGo(k, e); // a Map deletes the entry it is on safely
       return standing;
     },
     /** The horses standing this frame in the view (`end`'s), in a character-sprite bind of their own (none opened for
@@ -126,21 +167,34 @@ export function createStandingHorses({ renderer = null, max = STANDING_HORSES_MA
      *  (`fresh`). Answers how many drew. */
     draw(canvas, { proj, view, eye: eyeAt, up = null }) {
       if (!rig) return 0;
-      let drawn = 0, open = false;
+      let drawn = 0,
+        open = false;
       try {
         for (const e of stood.values()) {
           if (e.frame !== frameNo || e.out) continue;
-          if (!open) { renderer?.beginCharacterSpriteBatch?.(); open = true; }
+          if (!open) {
+            renderer?.beginCharacterSpriteBatch?.();
+            open = true;
+          }
           if (rig.draw(e.horse, canvas, { proj, view, eye: eyeAt, up, fresh: e.fresh })) drawn++;
         }
-      } finally { if (open) renderer?.flushCharacterSpriteBatch?.(); }
+      } finally {
+        if (open) renderer?.flushCharacterSpriteBatch?.();
+      }
       return drawn;
     },
     /** Does this horse stand in 3D? */
-    has(key) { return stood.has(key); },
+    has(key) {
+      return stood.has(key);
+    },
     /** How many stand. */
-    get size() { return stood.size; },
+    get size() {
+      return stood.size;
+    },
     /** Let every horse go (the street left, the host gone). */
-    destroy() { for (const [k, e] of stood) letGo(k, e); n = 0; },
+    destroy() {
+      for (const [k, e] of stood) letGo(k, e);
+      n = 0;
+    },
   };
 }

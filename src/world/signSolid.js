@@ -25,8 +25,8 @@
 // collider's resolve passes it (player/collider.js addMesh's `sight`). Nothing hangs from a sign that a body could
 // stand on.
 
-import { isShopSignModel } from './houseSigns.js';   // AUDIT FB1025i G3 (ONE MEMBER, ONE EXPORT): the range is HOUSE-SIGN's
-import { flatTriangles } from './capitalShapes.js';   // CAPITAL-TREES: a capital tree's flats
+import { isShopSignModel } from './houseSigns.js'; // AUDIT FB1025i G3 (ONE MEMBER, ONE EXPORT): the range is HOUSE-SIGN's
+import { flatTriangles } from './capitalShapes.js'; // CAPITAL-TREES: a capital tree's flats
 
 /** How far (metres, in the model's own frame) over its foot a sign's triangle must stand, every corner of it, to hang. */
 export const SIGN_HANG_M = 1;
@@ -44,7 +44,9 @@ export function signHungMarks(positions, indices) {
   const hang = foot + SIGN_HANG_M;
   const marks = new Uint8Array(Math.floor(indices.length / 3));
   for (let t = 0; t < marks.length; t++) {
-    const a = indices[t * 3], b = indices[t * 3 + 1], c = indices[t * 3 + 2];
+    const a = indices[t * 3],
+      b = indices[t * 3 + 1],
+      c = indices[t * 3 + 2];
     marks[t] = Math.min(positions[a * 3 + 1], positions[b * 3 + 1], positions[c * 3 + 1]) < hang ? 0 : 1;
   }
   return marks;
@@ -65,7 +67,7 @@ const FLATS = new WeakMap();
  * @returns {Uint8Array | null}
  */
 export function sightMarksOf(modelIdNum, model) {
-  if (model && !FLATS.has(model)) FLATS.set(model, flatTriangles(model));   // CAPITAL-TREES: a capital tree's leaf sprays and lianas pass a body, as a sign's board
+  if (model && !FLATS.has(model)) FLATS.set(model, flatTriangles(model)); // CAPITAL-TREES: a capital tree's leaf sprays and lianas pass a body, as a sign's board
   const flats = model ? FLATS.get(model) : null;
   if (flats) return flats;
   if (!isShopSignModel(modelIdNum)) return null;

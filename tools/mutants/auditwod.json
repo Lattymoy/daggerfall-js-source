@@ -111,8 +111,8 @@
   {
     "name": "AUDIT-WOD-L1-3-collect-before-place",
     "file": "src/world/streamingWorld.js",
-    "old": "    const out = { reactivated: [], recycled: [], pooled: [] };\n    for (let y = cy - distance; y <= cy + distance; y++) {",
-    "new": "    const out = { reactivated: [], recycled: [], pooled: [] };\n    for (const s of this.slots) { if (s.active && !inRange(s.px, s.py)) { s.active = false; out.pooled.push(`${s.px},${s.py}`); } }\n    for (let y = cy - distance; y <= cy + distance; y++) {",
+    "old": "    for (let y = cy - distance; y <= cy + distance; y++) {",
+    "new": "    for (const s of this.slots) {\n      if (s.active && !inRange(s.px, s.py)) {\n        s.active = false;\n        out.pooled.push(`${s.px},${s.py}`);\n      }\n    }\n    for (let y = cy - distance; y <= cy + distance; y++) {",
     "tests": [
       "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
     ]

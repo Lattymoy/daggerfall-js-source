@@ -470,8 +470,8 @@
   {
     "name": "SD20C-V14-the-sun-babys-horns-reversed",
     "file": "src/world/sunbabySky.js",
-    "old": "(0.8 + 0.5 * (1.0 - smoothstep(-0.05, 0.05, h.x - hc)))",
-    "new": "(0.8 + 0.5 * smoothstep(0.05, -0.05, h.x - hc))",
+    "old": "      col = mix(col, ${v3(SUNBABY_WRATH_HORN)} * (0.8 + 0.5 * (1.0 - smoothstep(-0.05, 0.05, h.x - hc))), evil * sbFill(horn, px));",
+    "new": "      col = mix(col, ${v3(SUNBABY_WRATH_HORN)} * (0.8 + 0.5 * smoothstep(0.05, -0.05, h.x - hc)), evil * sbFill(horn, px));",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]

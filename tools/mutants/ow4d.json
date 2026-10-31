@@ -222,8 +222,8 @@
   {
     "name": "OW4D4-stand-at-sea",
     "file": "src/world/spawnGroundPlace.js",
-    "old": "    if (maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;\n",
-    "new": "",
+    "old": "    if (maps.getClimateIndex(px, py) === CLIMATES.Ocean) return null;\n    if (!plateauDry(px, py)) return null;",
+    "new": "    if (!plateauDry(px, py)) return null;",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "OW4D4-stand-expired",
     "file": "src/world/spawnGroundPlace.js",
-    "old": "    if (clocks && spawnGone(px, py)) return null;\n",
-    "new": "",
+    "old": "    if (clocks && spawnGone(px, py)) return null;\n    const roads = terrainGen.roads();",
+    "new": "    const roads = terrainGen.roads();",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "OW4D4-stand-on-a-road",
     "file": "src/world/spawnGroundPlace.js",
-    "old": "    if (roads && !pathFreePixel(roads, px, py)) return null;\n",
-    "new": "",
+    "old": "    if (roads && !pathFreePixel(roads, px, py)) return null;\n    if (!inBay(px, py) && placeAt(px, py)) return null;",
+    "new": "    if (!inBay(px, py) && placeAt(px, py)) return null;",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "OW4D4-stand-before-roads",
     "file": "src/world/spawnGroundPlace.js",
-    "old": "if (roads && !pathFreePixel(roads, px, py)) return null;",
-    "new": "if (!roads || !pathFreePixel(roads, px, py)) return null;",
+    "old": "    if (roads && !pathFreePixel(roads, px, py)) return null;",
+    "new": "    if (!roads || !pathFreePixel(roads, px, py)) return null;",
     "tests": [
       "test/systems/travel/tv6_dungeons.test.js"
     ],

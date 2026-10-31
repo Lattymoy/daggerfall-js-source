@@ -1276,7 +1276,7 @@ Cryodil will be home to all abundent resources and everything else from the wrot
   a press on the zone and the zone map's legend say so (M5, `heldMap.js:"_zoneLaws() {"`); and the legend's travel law is
   Cyrodiil's - no fast travel or carriage reaches it or runs inside it - where the Wrothgarian zone's said its carriages
   ran every ten minutes and its journeys went from the zone map (`wildZoneMap.js:"export function zoneRules"`).
-- THE PIXEL PAST THE BAY: a world point's map pixel is FLOORED (`streamingWorld.js:"x: Math.floor(worldX / NATIVE_PIXEL),"`,
+- THE PIXEL PAST THE BAY: a world point's map pixel is FLOORED (`streamingWorld.js:"x: Math.floor(worldX / NATIVE_PIXEL)"`,
   `mapsFile.js` worldCoordToMapPixel, the wire's `mapPixelOfWire` and `cellRoomOfWire`, the serpent's
   `sitePixelOfNative`) - DFU's truncation to the bit on the Bay, where every coordinate is non-negative; past the
   Bay's west and south edges truncation named the next pixel toward the Bay, and a player standing on one of Cyrodiil's

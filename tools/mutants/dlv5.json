@@ -371,8 +371,8 @@
   {
     "name": "DLV5-splice-unasked",
     "file": "src/world/smallerDungeons.js",
-    "old": "return deps.whole ? built : curatedLocation(built);",
-    "new": "return built;",
+    "old": "  return deps.whole ? built : curatedLocation(built);",
+    "new": "  return built;",
     "tests": [
       "test/world/dlv5_curated.test.js",
       "test/world/dlv56_audit.test.js"

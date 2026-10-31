@@ -280,7 +280,7 @@ and the Shipyard. Separately, PH1's one-way floor set a body on a split-rail fen
 side: a walker from behind ON the lower rail's back edge (0.39 m, wedged under the upper rail - 130 of 130 stations), a
 runner from the street on its under slope in a 0.28 m band a panel.
 
-FIXED. A sign's triangle whose every corner stands `signSolid.js:"export const SIGN_HANG_M = 1;"` over the sign's foot
+FIXED. A sign's triangle whose every corner stands `signSolid.js:"export const SIGN_HANG_M"` over the sign's foot
 hangs: it stays in the collider as a ray's (addMesh's `sight`), met by every ray and sweep - an arrow, a spell, a foe's
 look, the camera, a click, a walker's eye - and by no body (the resolve, the overlap, the contact, the parity and a
 body's own rays, `BODY_RAY`, pass it). The posts stand. The range is HOUSE-SIGN's one export (`houseSigns.js`

@@ -36,7 +36,8 @@ import { ROAD_DIALS } from './road/roadNetwork.js';
  *  content the bake reads, and no other key term can see it. */
 export const GENERATOR_VERSION = 20;
 
-const DB = 'daggerfall-roads', STORE = 'networks';
+const DB = 'daggerfall-roads',
+  STORE = 'networks';
 
 export function roadsCacheKey({ settlements, woodsLength, dials = {} }) {
   let sum = 0;
@@ -53,39 +54,63 @@ export function roadsCacheKey({ settlements, woodsLength, dials = {} }) {
  *  it is not), and lets go of every key in each `evict` range ([lower, upper],
  *  both in) in the same transaction - a store keeps one entry where a caller's
  *  keys say only the newest is read again. `keyRange` is IDBKeyRange's door. */
-export function idbStore(indexedDBRef = globalThis.indexedDB, { db: dbName = DB, store: storeName = STORE, keyRange = globalThis.IDBKeyRange } = {}) {
+export function idbStore(
+  indexedDBRef = globalThis.indexedDB,
+  { db: dbName = DB, store: storeName = STORE, keyRange = globalThis.IDBKeyRange } = {},
+) {
   if (!indexedDBRef) return null;
-  const open = () => new Promise((resolve) => {
-    try {
-      const req = indexedDBRef.open(dbName, 1);
-      req.onupgradeneeded = () => { try { req.result.createObjectStore(storeName); } catch { /* exists */ } };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => resolve(null);
-      req.onblocked = () => resolve(null);
-    } catch { resolve(null); }
-  });
-  const tx = (db, mode, fn) => new Promise((resolve) => {
-    try {
-      const t = db.transaction(storeName, mode);
-      const req = fn(t.objectStore(storeName));
-      req.onsuccess = () => resolve(req.result ?? null);
-      req.onerror = () => resolve(null);
-    } catch { resolve(null); }
-  });
+  const open = () =>
+    new Promise((resolve) => {
+      try {
+        const req = indexedDBRef.open(dbName, 1);
+        req.onupgradeneeded = () => {
+          try {
+            req.result.createObjectStore(storeName);
+          } catch {
+            /* exists */
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+        req.onblocked = () => resolve(null);
+      } catch {
+        resolve(null);
+      }
+    });
+  const tx = (db, mode, fn) =>
+    new Promise((resolve) => {
+      try {
+        const t = db.transaction(storeName, mode);
+        const req = fn(t.objectStore(storeName));
+        req.onsuccess = () => resolve(req.result ?? null);
+        req.onerror = () => resolve(null);
+      } catch {
+        resolve(null);
+      }
+    });
   return {
-    async get(key) { const db = await open(); if (!db) return null; const v = await tx(db, 'readonly', (s) => s.get(key)); db.close(); return v; },
+    async get(key) {
+      const db = await open();
+      if (!db) return null;
+      const v = await tx(db, 'readonly', (s) => s.get(key));
+      db.close();
+      return v;
+    },
     async set(key, value, { evict = [] } = {}) {
       const db = await open();
       if (!db) return null;
       const v = await new Promise((resolve) => {
         try {
-          const t = db.transaction(storeName, 'readwrite'), s = t.objectStore(storeName);
+          const t = db.transaction(storeName, 'readwrite'),
+            s = t.objectStore(storeName);
           for (const [lower, upper] of evict) s.delete(keyRange.bound(lower, upper));
           s.put(value, key);
           t.oncomplete = () => resolve(key);
           t.onerror = () => resolve(null);
           t.onabort = () => resolve(null);
-        } catch { resolve(null); }
+        } catch {
+          resolve(null);
+        }
       });
       db.close();
       return v;

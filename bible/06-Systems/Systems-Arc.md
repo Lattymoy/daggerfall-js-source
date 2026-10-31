@@ -8417,7 +8417,7 @@ party walk's far spawn (`tvLocationAt`, through `spawnAt`) threw the same way, w
 What stood then: `spawnAt` answered none past the Bay (its first gate `inBay`), so the clone was never asked there; the
 Bay to the byte. It was the first commit of the fix, a guard SPAWN-WORLD (below) replaced with the spawn's own law past the
 Bay - the spawner's id in the world's spawn lane, and past the Bay a place first
-(`world/spawnGroundPlace.js:"if (!inBay(px, py) && placeAt(px, py)) return null;"`). Pins: `test/world/spawnhole.test.js` (the host's clone over the real
+(`world/spawnGroundPlace.js:"if (!inBay(px, py) && placeAt(px, py))"`). Pins: `test/world/spawnhole.test.js` (the host's clone over the real
 producer, and with ARENA2 the audit's own box: 0 threw, the Bay's 14 spawns as they stood). Mutants:
 `tools/mutants/spawnhole.json`. PIN MOVED: `test/scenes/fb1024_groundagree.test.js` (the Eltheric box with no Eltheric
 Ocean is past the Bay).

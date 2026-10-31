@@ -3,7 +3,7 @@
     "name": "CANAL-ARM-the-arrays-as-they-ship",
     "file": "src/world/roadsProducer.js",
     "old": "    return waterOffPaths({ ...out, source: 'basic-roads', stats: { source: 'basic-roads', roadPixels: n } });",
-    "new": "    return ({ ...out, source: 'basic-roads', stats: { source: 'basic-roads', roadPixels: n } });",
+    "new": "    return { ...out, source: 'basic-roads', stats: { source: 'basic-roads', roadPixels: n } };",
     "tests": [
       "test/world/road/fb1009b_canalarm.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CANAL-ARM-the-river-keeps-the-arm",
     "file": "src/world/roadsProducer.js",
-    "old": "    if (net.rivers) net.rivers[i] &= ~path;\n",
-    "new": "",
+    "old": "    if (net.rivers) net.rivers[i] &= ~path;\n    if (net.streams) net.streams[i] &= ~path;",
+    "new": "    if (net.streams) net.streams[i] &= ~path;",
     "tests": [
       "test/world/road/fb1009b_canalarm.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CANAL-ARM-the-stream-keeps-the-arm",
     "file": "src/world/roadsProducer.js",
-    "old": "    if (net.streams) net.streams[i] &= ~path;\n",
-    "new": "",
+    "old": "    if (net.streams) net.streams[i] &= ~path;\n  }",
+    "new": "  }",
     "tests": [
       "test/world/road/fb1009b_canalarm.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CANAL-ARM-the-path-under-the-water-too",
     "file": "src/world/roadsProducer.js",
-    "old": "    const path = net.roads[i] | net.tracks[i];\n    if (!path) continue;",
-    "new": "    const path = net.roads[i] | net.tracks[i] | net.rivers[i] | net.streams[i];\n    if (!path) continue;",
+    "old": "    const path = net.roads[i] | net.tracks[i];",
+    "new": "    const path = net.roads[i] | net.tracks[i] | net.rivers[i] | net.streams[i];",
     "tests": [
       "test/world/road/fb1009b_canalarm.test.js"
     ]

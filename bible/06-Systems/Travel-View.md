@@ -2223,7 +2223,7 @@ cached-rejection shape AUDIT VE R12 took out of the tile sets:
 
 **THE RETRY LAW.** Those failures are transient - the next read would not have them - so the stream asks for a failed
 pixel again by its own law, not at the next crossing alone. The pump's catch lets the pixel go through `state.fail`
-(streamingWorld.js:"fail(px, py, now) {") where it called `release`, and the frame asks
+(streamingWorld.js:"fail(px, py, now)") where it called `release`, and the frame asks
 (world.js:"queue.push(...state.retryDue(performance.now()))") for the pixels whose wait is over
 (streamingWorld.js:"retryDue(now) {"): still in the grid, not listed again by a crossing meanwhile, taken back on the
 stream's books and queued nearest first. The waits are BUILD_RETRY_MS (streamingWorld.js:"export const BUILD_RETRY_MS"):

@@ -123,7 +123,7 @@ THE LAW is pure (instancePlaces.js):
   ancestor died in another player's instance, and the inheritance never appeared at the spot): the line's remains still
   lying (`scenes/legacyHost.js` remainsWhere) whose dungeon was built whole, at a dungeon the world builds smaller in
   public (`dungeonSite`'s `relaid`), by its map id. `relaid` is the size BUILT (AUDIT FB1019f B1,
-  `smallerDungeons.js:"export function builtSizeFor(dfLocation, deps = {}) {"`): it read the size the world draws, and a
+  `smallerDungeons.js:"export function builtSizeFor"`): it read the size the world draws, and a
   dungeon at or under its size's threshold - the five-block plus, the eight-block shape - is never laid anew, so its
   public room is the dungeon whole. Online the world draws 3,133 of MAPS.BSA's 4,232 dungeons smaller and builds 2,005
   of them smaller; at the other 1,128 a death in the public room was offered an instance, under a line that said the

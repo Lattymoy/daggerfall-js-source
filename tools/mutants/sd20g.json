@@ -192,8 +192,8 @@
   {
     "name": "SD20G-D6-a-links-stamp-online",
     "file": "src/world/smallerDungeons.js",
-    "old": "  if (online) return null;\n",
-    "new": "",
+    "old": "  if (online) return null;\n  const known = [",
+    "new": "  const known = [",
     "tests": [
       "test/systems/quest/sd20g_delve.test.js"
     ]

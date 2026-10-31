@@ -2,8 +2,8 @@
   {
     "name": "SHIP-REFIT-units",
     "file": "src/world/shipRefit.js",
-    "old": "    XPos: Math.round(p.x / U), YPos: Math.round((storey.floor + p.lift) / U), ZPos: Math.round(p.z / U),",
-    "new": "    XPos: Math.round(p.x / U) + 1, YPos: Math.round((storey.floor + p.lift) / U), ZPos: Math.round(p.z / U),",
+    "old": "    ObjectType: PROP,\n    XPos: Math.round(p.x / U),",
+    "new": "    ObjectType: PROP,\n    XPos: Math.round(p.x / U) + 1,",
     "tests": [
       "test/world/shipRefit.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SHIP-REFIT-lift-dropped",
     "file": "src/world/shipRefit.js",
-    "old": "    XPos: Math.round(p.x / U), YPos: Math.round((storey.floor + p.lift) / U), ZPos: Math.round(p.z / U),",
-    "new": "    XPos: Math.round(p.x / U), YPos: Math.round(storey.floor / U), ZPos: Math.round(p.z / U),",
+    "old": "    YPos: Math.round((storey.floor + p.lift) / U),",
+    "new": "    YPos: Math.round(storey.floor / U),",
     "tests": [
       "test/world/shipRefit.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SHIP-REFIT-turn",
     "file": "src/world/shipRefit.js",
-    "old": "const yRotation = (face) => 0 - Math.round(face * ROTATION_DIVISOR);   // never -0",
-    "new": "const yRotation = (face) => Math.round(face * ROTATION_DIVISOR);   // never -0",
+    "old": "const yRotation = (face) => 0 - Math.round(face * ROTATION_DIVISOR); // never -0",
+    "new": "const yRotation = (face) => Math.round(face * ROTATION_DIVISOR); // never -0",
     "tests": [
       "test/world/shipRefit.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SHIP-REFIT-foot",
     "file": "src/world/shipRefit.js",
-    "old": "      XPos: Math.round(p.x / U), YPos: Math.round(-(deck.floor + p.lift + foot) / U), ZPos: Math.round(p.z / U),",
-    "new": "      XPos: Math.round(p.x / U), YPos: Math.round(-(deck.floor + p.lift) / U), ZPos: Math.round(p.z / U),",
+    "old": "      YPos: Math.round(-(deck.floor + p.lift + foot) / U),",
+    "new": "      YPos: Math.round(-(deck.floor + p.lift) / U),",
     "tests": [
       "test/world/shipRefit.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SHIP-REFIT-header",
     "file": "src/world/shipRefit.js",
-    "old": "  interior.Header.Num3dObjectRecords = interior.Block3dObjectRecords.length;\n",
-    "new": "",
+    "old": "  interior.Header.Num3dObjectRecords = interior.Block3dObjectRecords.length;\n  interior.Header.NumFlatObjectRecords = interior.BlockFlatObjectRecords.length;",
+    "new": "  interior.Header.NumFlatObjectRecords = interior.BlockFlatObjectRecords.length;",
     "tests": [
       "test/world/shipRefit.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SHIP-REFIT-deck-header",
     "file": "src/world/shipRefit.js",
-    "old": "  exterior.Header.Num3dObjectRecords = exterior.Block3dObjectRecords.length;\n",
-    "new": "",
+    "old": "  exterior.Header.Num3dObjectRecords = exterior.Block3dObjectRecords.length;\n  return json;",
+    "new": "  return json;",
     "tests": [
       "test/world/shipRefit.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SHIP-REFIT-any-block",
     "file": "src/world/shipRefit.js",
-    "old": "  if (got !== ship.block) throw new Error(",
-    "new": "  if (false) throw new Error(",
+    "old": "  if (got !== ship.block)\n    throw new Error(`ship refit: wants ${ship.block} at block ${ship.index}, BLOCKS.BSA has ${got}`);",
+    "new": "  if (false) throw new Error(`ship refit: wants ${ship.block} at block ${ship.index}, BLOCKS.BSA has ${got}`);",
     "tests": [
       "test/world/shipRefit.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SHIP-REFIT-shell-dropped",
     "file": "src/world/shipRefit.js",
-    "old": "  const interior = json.RmbSubRecord.Interior;\n",
-    "new": "  const interior = json.RmbSubRecord.Interior;\n  interior.Block3dObjectRecords.length = 0;\n",
+    "old": "  for (const storey of Object.values(ship.storeys)) {",
+    "new": "  interior.Block3dObjectRecords.length = 0;\n  for (const storey of Object.values(ship.storeys)) {",
     "tests": [
       "test/world/shipRefit.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SHIP-REFIT-deck-lift-sign",
     "file": "src/world/shipRefit.js",
-    "old": "      XPos: Math.round(p.x / U), YPos: Math.round(-(deck.floor + p.lift + foot) / U), ZPos: Math.round(p.z / U),",
-    "new": "      XPos: Math.round(p.x / U), YPos: Math.round(-(deck.floor - p.lift + foot) / U), ZPos: Math.round(p.z / U),",
+    "old": "      YPos: Math.round(-(deck.floor + p.lift + foot) / U),",
+    "new": "      YPos: Math.round(-(deck.floor - p.lift + foot) / U),",
     "tests": [
       "test/world/shipRefit.test.js"
     ]

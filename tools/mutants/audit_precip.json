@@ -718,8 +718,8 @@
   {
     "name": "AUDIT-PRECIP-HOST-7-the-skin-outlives-its-rebuild",
     "file": "src/world/seasonReskin.js",
-    "old": "      for (const k of out) skins.delete(k);",
-    "new": "",
+    "old": "      for (const k of out) skins.delete(k); // AUDIT PRECIP HOST-7: rebuilt, it reads the snow - its skin is spent",
+    "new": "      // AUDIT PRECIP HOST-7: rebuilt, it reads the snow - its skin is spent",
     "tests": [
       "test/scenes/audit_precip_host7.test.js"
     ]
@@ -727,8 +727,8 @@
   {
     "name": "AUDIT-PRECIP-HOST-7-the-farthest-first",
     "file": "src/world/seasonReskin.js",
-    "old": "        if (d < bestD) { bestD = d; best = k; }",
-    "new": "        if (best === null) { bestD = d; best = k; }",
+    "old": "        if (d < bestD) {",
+    "new": "        if (best === null) {",
     "tests": [
       "test/scenes/audit_precip_host7.test.js"
     ]

@@ -372,8 +372,8 @@
   {
     "name": "AUDIT-TESA-II-C10-solitude-gate-on-the-tavern",
     "file": "src/world/solitudeRelief.js",
-    "old": "export const SOLITUDE_MAIN_GATE = Object.freeze({ x: 318.4,",
-    "new": "export const SOLITUDE_MAIN_GATE = Object.freeze({ x: 300,",
+    "old": "export const SOLITUDE_MAIN_GATE = Object.freeze({ x: 318.4, z: 416 });",
+    "new": "export const SOLITUDE_MAIN_GATE = Object.freeze({ x: 300, z: 416 });",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]

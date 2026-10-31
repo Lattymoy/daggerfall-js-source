@@ -11,8 +11,8 @@
   {
     "name": "SR-TIER-the-lane-upper",
     "file": "src/world/solitudeRelief.js",
-    "old": "  if (x >= N.x0 && x < N.x1 && z >= N.stairFoot) return true;\n",
-    "new": "",
+    "old": "  if (x >= N.x0 && x < N.x1 && z >= N.stairFoot) return true;\n  const [c, r] = tierCell(x, z);",
+    "new": "  const [c, r] = tierCell(x, z);",
     "tests": [
       "test/world/solitude_relief.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SR-TIER-the-lane's-stair-none",
     "file": "src/world/solitudeRelief.js",
-    "old": "  if (x >= N.x0 && x < N.x1 && z >= N.stairTop && z < N.stairFoot) return L.upper",
-    "new": "  if (false && x >= N.x0 && x < N.x1 && z >= N.stairTop && z < N.stairFoot) return L.upper",
+    "old": "  if (x >= N.x0 && x < N.x1 && z >= N.stairTop && z < N.stairFoot)",
+    "new": "  if (false && x >= N.x0 && x < N.x1 && z >= N.stairTop && z < N.stairFoot)",
     "tests": [
       "test/world/solitude_relief.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SR-TIER-the-castle's-ramp-none",
     "file": "src/world/solitudeRelief.js",
-    "old": "    if (Math.abs(dz) <= C.rampW / 2 && dx < -C.inner + C.ramp) return",
-    "new": "    if (false && Math.abs(dz) <= C.rampW / 2 && dx < -C.inner + C.ramp) return",
+    "old": "    if (Math.abs(dz) <= C.rampW / 2 && dx < -C.inner + C.ramp)",
+    "new": "    if (false && Math.abs(dz) <= C.rampW / 2 && dx < -C.inner + C.ramp)",
     "tests": [
       "test/world/solitude_relief.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SR-DOCKS-unlaid",
     "file": "src/world/solitudeRelief.js",
-    "old": "  if (d != null) return d;\n",
-    "new": "",
+    "old": "  if (d != null) return d;\n  const C = SOLITUDE_CLIFFS,",
+    "new": "  const C = SOLITUDE_CLIFFS,",
     "tests": [
       "test/world/solitude_relief.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SR-WALK-the-wall-open",
     "file": "src/world/solitudeRelief.js",
-    "old": "  if (x >= L.x0 - 1 && x <= L.x1 && z >= L.z - L.depth - 1 && z <= L.z + 1) return true;\n",
-    "new": "",
+    "old": "  if (x >= L.x0 - 1 && x <= L.x1 && z >= L.z - L.depth - 1 && z <= L.z + 1) return true;\n  if (z >= L.z && z <= L.z + T.stairW + 1 && T.stairs.some(([a, b]) => x >= a - 1 && x <= b + T.stairW + 1))",
+    "new": "  if (z >= L.z && z <= L.z + T.stairW + 1 && T.stairs.some(([a, b]) => x >= a - 1 && x <= b + T.stairW + 1))",
     "tests": [
       "test/world/solitude_relief.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SR-WALK-the-lane's-stair-open",
     "file": "src/world/solitudeRelief.js",
-    "old": "  if (x >= N.x0 && x <= N.x1 && z >= N.stairTop - 3 && z <= N.stairFoot + 1) return true;\n",
-    "new": "",
+    "old": "  if (x >= N.x0 && x <= N.x1 && z >= N.stairTop - 3 && z <= N.stairFoot + 1) return true;\n  return Math.abs(x - S.x) <= S.half + 1 && z >= S.z0 - 1 && z <= S.z1;",
+    "new": "  return Math.abs(x - S.x) <= S.half + 1 && z >= S.z0 - 1 && z <= S.z1;",
     "tests": [
       "test/world/solitude_relief.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "SR-ROAD-steeper-than-a-road",
     "file": "src/world/solitudeRelief.js",
-    "old": "Math.min(city, Math.max(h, southSlope(x, z)), h + G.grade * Math.hypot(x - L[i - 1][0], z - L[i - 1][1]))",
-    "new": "Math.min(city, Math.max(h, southSlope(x, z)))",
+    "old": "      if (i)\n        h =\n          i === L.length - 1\n            ? city\n            : Math.min(city, Math.max(h, southSlope(x, z)), h + G.grade * Math.hypot(x - L[i - 1][0], z - L[i - 1][1]));",
+    "new": "      if (i) h = i === L.length - 1 ? city : Math.min(city, Math.max(h, southSlope(x, z)));",
     "tests": [
       "test/world/solitude_relief.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "SR-ROAD-into-the-gate-aslant",
     "file": "src/world/solitudeRelief.js",
-    "old": "[SOLITUDE_MAIN_GATE.x, 444], [SOLITUDE_MAIN_GATE.x, SOLITUDE_MAIN_GATE.z - 3]]",
-    "new": "[SOLITUDE_MAIN_GATE.x + 8, 444], [SOLITUDE_MAIN_GATE.x, SOLITUDE_MAIN_GATE.z - 3]]",
+    "old": "      [SOLITUDE_MAIN_GATE.x, 444],",
+    "new": "      [SOLITUDE_MAIN_GATE.x + 8, 444],",
     "tests": [
       "test/world/solitude_relief.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "SR-ROAD-off-the-country's-road",
     "file": "src/world/solitudeRelief.js",
-    "old": "corners: Object.freeze([[204.8, 512], [204.8, 480],",
-    "new": "corners: Object.freeze([[204.8, 512], [214.8, 480],",
+    "old": "      [204.8, 480],",
+    "new": "      [214.8, 480],",
     "tests": [
       "test/world/solitude_relief.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "SR-ROAD-a-bend-a-corner",
     "file": "src/world/solitudeRelief.js",
-    "old": "n = Math.max(1, Math.ceil(Math.abs(turn) / (Math.PI / 12)));",
-    "new": "n = 1;",
+    "old": "      n = Math.max(1, Math.ceil(Math.abs(turn) / (Math.PI / 12)));",
+    "new": "      n = 1;",
     "tests": [
       "test/world/solitude_relief.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "SR-ROAD-narrower-than-the-gate",
     "file": "src/world/solitudeRelief.js",
-    "old": "  bend: 10, half: 5, shoulder: 12, grade: 0.16,",
-    "new": "  bend: 10, half: 4, shoulder: 12, grade: 0.16,",
+    "old": "  half: 5,",
+    "new": "  half: 4,",
     "tests": [
       "test/world/solitude_relief.test.js"
     ]

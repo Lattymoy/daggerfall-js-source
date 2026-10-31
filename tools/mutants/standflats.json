@@ -2,8 +2,8 @@
   {
     "name": "STAND-HORSE-any-animal",
     "file": "src/world/standingHorses.js",
-    "old": "archive === ANIMALS_ARCHIVE && ANIMAL_SOUND_BY_RECORD[record] === SOUND.AnimalHorse;",
-    "new": "archive === ANIMALS_ARCHIVE && ANIMAL_SOUND_BY_RECORD[record] != null;",
+    "old": "  archive === ANIMALS_ARCHIVE && ANIMAL_SOUND_BY_RECORD[record] === SOUND.AnimalHorse;",
+    "new": "  archive === ANIMALS_ARCHIVE && ANIMAL_SOUND_BY_RECORD[record] != null;",
     "tests": [
       "test/world/standflats.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "STAND-HORSE-no-cap",
     "file": "src/world/standingHorses.js",
-    "old": "const want = !!rig && standing < max && o.d2 <= range * range;",
-    "new": "const want = !!rig && o.d2 <= range * range;",
+    "old": "        const want = !!rig && standing < max && o.d2 <= range * range;",
+    "new": "        const want = !!rig && o.d2 <= range * range;",
     "tests": [
       "test/world/standflats.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "STAND-HORSE-no-range",
     "file": "src/world/standingHorses.js",
-    "old": "const want = !!rig && standing < max && o.d2 <= range * range;",
-    "new": "const want = !!rig && standing < max;",
+    "old": "        const want = !!rig && standing < max && o.d2 <= range * range;",
+    "new": "        const want = !!rig && standing < max;",
     "tests": [
       "test/world/standflats.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "STAND-HORSE-no-hold",
     "file": "src/world/standingHorses.js",
-    "old": "(stood.has(key) ? STANDING_HORSE_HOLD * STANDING_HORSE_HOLD : 1)",
-    "new": "1",
+    "old": "      o.d2 = (dx * dx + dy * dy + dz * dz) / (stood.has(key) ? STANDING_HORSE_HOLD * STANDING_HORSE_HOLD : 1);",
+    "new": "      o.d2 = (dx * dx + dy * dy + dz * dz) / 1;",
     "tests": [
       "test/world/standflats.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "STAND-HORSE-billboard-drawn",
     "file": "src/world/standingHorses.js",
-    "old": "        if (o.batch) o.batch.castOnly = true;\n",
-    "new": "",
+    "old": "        if (o.batch) o.batch.castOnly = true;\n        rig.step(e.horse, { feet: o.feet, yaw: o.yaw, speed: 0, dt, look: o.look, pose: false }); // HORSE-VIEW II: its idle's clock every frame",
+    "new": "        rig.step(e.horse, { feet: o.feet, yaw: o.yaw, speed: 0, dt, look: o.look, pose: false }); // HORSE-VIEW II: its idle's clock every frame",
     "tests": [
       "test/world/standflats.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "STAND-HORSE-let-go-hidden",
     "file": "src/world/standingHorses.js",
-    "old": "    e.rig?.release(e.horse);\n    if (e.batch) e.batch.castOnly = false;\n",
-    "new": "    e.rig?.release(e.horse);\n",
+    "old": "    if (e.batch) e.batch.castOnly = false;\n    stood.delete(key);",
+    "new": "    stood.delete(key);",
     "tests": [
       "test/world/standflats.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "STAND-HORSE-new-rig-kept",
     "file": "src/world/standingHorses.js",
-    "old": "if (r !== rig) { for (const [k, e] of stood) letGo(k, e); rig = r ?? null; }",
-    "new": "if (r !== rig) { rig = r ?? null; }",
+    "old": "        for (const [k, e] of stood) letGo(k, e);\n        rig = r ?? null;",
+    "new": "        rig = r ?? null;",
     "tests": [
       "test/world/standflats.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "STAND-HORSE-unseen-stepped",
     "file": "src/world/standingHorses.js",
-    "old": "e.out = poseWhereSeen(rig, e.horse, o.feet, cam ? pass : null, eye, frameNo, e.phase);",
-    "new": "e.out = poseWhereSeen(rig, e.horse, o.feet, null, eye, frameNo, e.phase);",
+    "old": "        e.out = poseWhereSeen(rig, e.horse, o.feet, cam ? pass : null, eye, frameNo, e.phase);",
+    "new": "        e.out = poseWhereSeen(rig, e.horse, o.feet, null, eye, frameNo, e.phase);",
     "tests": [
       "test/world/standflats.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "STAND-HORSE-bind-unflushed",
     "file": "src/world/standingHorses.js",
-    "old": "      } finally { if (open) renderer?.flushCharacterSpriteBatch?.(); }",
-    "new": "      } finally { /* unflushed */ }",
+    "old": "        if (open) renderer?.flushCharacterSpriteBatch?.();",
+    "new": "        /* unflushed */",
     "tests": [
       "test/world/standflats.test.js"
     ]

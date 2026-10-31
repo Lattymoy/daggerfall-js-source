@@ -37,7 +37,13 @@ export function settlementsOf(maps) {
       const p = longitudeLatitudeToMapPixel(row.longitude, row.latitude);
       // ROADS 8: the name rides the row so a stranded town can be NAMED
       // in the log rather than pointed at by pixel.
-      out.push({ x: p.x, y: p.y, type: row.locationType, region: r, name: region.mapNames?.[out.length - regionStart] ?? null });
+      out.push({
+        x: p.x,
+        y: p.y,
+        type: row.locationType,
+        region: r,
+        name: region.mapNames?.[out.length - regionStart] ?? null,
+      });
     }
   }
   if (before >= 0 && maps.loadRegion) maps.loadRegion(before);
@@ -135,7 +141,11 @@ export function waterOffPaths(net) {
  *  session - offline the port's own network never stood in, and online C3's retry never asked again. */
 export const MOD_ROADS_FETCH_TIMEOUT_MS = 30000;
 
-export async function loadModRoads(fetchFn = globalThis.fetch, urls = MOD_ROADS, timeoutMs = MOD_ROADS_FETCH_TIMEOUT_MS) {
+export async function loadModRoads(
+  fetchFn = globalThis.fetch,
+  urls = MOD_ROADS,
+  timeoutMs = MOD_ROADS_FETCH_TIMEOUT_MS,
+) {
   if (!fetchFn) return null;
   try {
     const out = {};
@@ -143,18 +153,28 @@ export async function loadModRoads(fetchFn = globalThis.fetch, urls = MOD_ROADS,
       // raced, so a fetch that ignores its signal times out too; the file's body inside the same span
       const ac = typeof globalThis.AbortController === 'function' ? new globalThis.AbortController() : null;
       let timer = null;
-      const late = new Promise((_, no) => { timer = setTimeout(() => { ac?.abort(); no(new Error(`${url}: no answer in ${timeoutMs} ms`)); }, timeoutMs); });
+      const late = new Promise((_, no) => {
+        timer = setTimeout(() => {
+          ac?.abort();
+          no(new Error(`${url}: no answer in ${timeoutMs} ms`));
+        }, timeoutMs);
+      });
       try {
         const r = await Promise.race([fetchFn(url, ac ? { signal: ac.signal } : undefined), late]);
         if (!r || !r.ok) return null;
         const b = new Uint8Array(await Promise.race([r.arrayBuffer(), late]));
-        if (b.length !== MAP_WIDTH * MAP_HEIGHT) return null;   // the wrong file, or a truncated one, is no file
+        if (b.length !== MAP_WIDTH * MAP_HEIGHT) return null; // the wrong file, or a truncated one, is no file
         out[k] = b;
-      } finally { clearTimeout(timer); }
+      } finally {
+        clearTimeout(timer);
+      }
     }
-    let n = 0; for (const v of out.roads) if (v) n++;
+    let n = 0;
+    for (const v of out.roads) if (v) n++;
     return waterOffPaths({ ...out, source: 'basic-roads', stats: { source: 'basic-roads', roadPixels: n } });
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 /** AUDIT LANDFORMS C3: how many more times an online page asks for Basic Roads' arrays after the first ask failed. */
@@ -169,7 +189,13 @@ export const MOD_ROADS_RETRY_MAX = 12;
  * @param {(tries: number, ms: number) => void} [o.onTry] - told before each pause
  * @returns {Promise<?object>} his arrays (loadModRoads' shape), or null once every try failed
  */
-export async function retryModRoads({ fetchFn = globalThis.fetch, urls = MOD_ROADS, wait = (ms) => new Promise((r) => setTimeout(r, ms)), max = MOD_ROADS_RETRY_MAX, onTry = null } = {}) {
+export async function retryModRoads({
+  fetchFn = globalThis.fetch,
+  urls = MOD_ROADS,
+  wait = (ms) => new Promise((r) => setTimeout(r, ms)),
+  max = MOD_ROADS_RETRY_MAX,
+  onTry = null,
+} = {}) {
   for (let tries = 0; tries < max; tries++) {
     const ms = Math.min(60000, 5000 * 2 ** tries);
     onTry?.(tries, ms);

@@ -20,8 +20,8 @@
   {
     "name": "SUNBABY3-photo-not-drawn",
     "file": "src/world/sunbabySky.js",
-    "old": "    col = mix(col, ph, todd * photoOn * sbFill(",
-    "new": "    col = mix(col, ph, 0.0 * sbFill(",
+    "old": "    col = mix(col, ph, todd * photoOn * sbFill(r - ${f(SUNBABY_TODD_PHOTO_FIT)}, px));",
+    "new": "    col = mix(col, ph, 0.0 * sbFill(r - ${f(SUNBABY_TODD_PHOTO_FIT)}, px));",
     "tests": [
       "test/world/sunbaby3_todd_photo.test.js"
     ]

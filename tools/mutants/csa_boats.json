@@ -360,8 +360,8 @@
   {
     "name": "CSA-B-bake-timer-at-interval",
     "file": "src/world/skinnedBake.js",
-    "old": "if (Math.fround(script.timer) > interval) { script.timer = 0; return true; }",
-    "new": "if (Math.fround(script.timer) >= interval) { script.timer = 0; return true; }",
+    "old": "  if (Math.fround(script.timer) > interval) {",
+    "new": "  if (Math.fround(script.timer) >= interval) {",
     "tests": [
       "test/world/csa_sails.test.js"
     ]
@@ -369,8 +369,8 @@
   {
     "name": "CSA-B-bake-timer-never-reset",
     "file": "src/world/skinnedBake.js",
-    "old": "if (Math.fround(script.timer) > interval) { script.timer = 0; return true; }",
-    "new": "if (Math.fround(script.timer) > interval) { return true; }",
+    "old": "    script.timer = 0;\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/world/csa_sails.test.js",
       "test/systems/comeSailAway/csa_pool.test.js"
@@ -379,8 +379,8 @@
   {
     "name": "CSA-B-bake-in-world",
     "file": "src/world/skinnedBake.js",
-    "old": "const toLocal = invertRigid(mat4FromQuatPos(renderer.rotation, renderer.position));",
-    "new": "const toLocal = mat4FromQuatPos([0, 0, 0, 1], [0, 0, 0]);",
+    "old": "  const toLocal = invertRigid(mat4FromQuatPos(renderer.rotation, renderer.position));",
+    "new": "  const toLocal = mat4FromQuatPos([0, 0, 0, 1], [0, 0, 0]);",
     "tests": [
       "test/world/csa_sails.test.js"
     ]
@@ -388,8 +388,8 @@
   {
     "name": "CSA-B-normal-cross-reversed",
     "file": "src/world/skinnedBake.js",
-    "old": "const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;",
-    "new": "const nx = uz * vy - uy * vz, ny = ux * vz - uz * vx, nz = uy * vx - ux * vy;",
+    "old": "      const nx = uy * vz - uz * vy,\n        ny = uz * vx - ux * vz,\n        nz = ux * vy - uy * vx; // Vector3.Cross(b - a, c - a)",
+    "new": "      const nx = uz * vy - uy * vz,\n        ny = ux * vz - uz * vx,\n        nz = uy * vx - ux * vy; // Vector3.Cross(b - a, c - a)",
     "tests": [
       "test/world/csa_sails.test.js"
     ]
@@ -397,8 +397,8 @@
   {
     "name": "CSA-B-normals-unweighted",
     "file": "src/world/skinnedBake.js",
-    "old": "for (const i of [i0, i1, i2]) { acc[i * 3] += nx; acc[i * 3 + 1] += ny; acc[i * 3 + 2] += nz; }",
-    "new": "const fl = Math.hypot(nx, ny, nz) || 1; for (const i of [i0, i1, i2]) { acc[i * 3] += nx / fl; acc[i * 3 + 1] += ny / fl; acc[i * 3 + 2] += nz / fl; }",
+    "old": "      for (const i of [i0, i1, i2]) {\n        acc[i * 3] += nx;\n        acc[i * 3 + 1] += ny;\n        acc[i * 3 + 2] += nz;",
+    "new": "      const fl = Math.hypot(nx, ny, nz) || 1;\n      for (const i of [i0, i1, i2]) {\n        acc[i * 3] += nx / fl;\n        acc[i * 3 + 1] += ny / fl;\n        acc[i * 3 + 2] += nz / fl;",
     "tests": [
       "test/world/csa_sails.test.js"
     ]

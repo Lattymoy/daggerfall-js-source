@@ -2,8 +2,8 @@
   {
     "name": "MD-the-repeat-kept",
     "file": "src/world/smallerDungeons.js",
-    "old": "    if (laid.has(b.blockName)) {\n",
-    "new": "    if (false) {\n",
+    "old": "    if (laid.has(b.blockName)) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/quest/mediumdistinct.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "MD-a-second-draw",
     "file": "src/world/smallerDungeons.js",
-    "old": "      const at = pool.findIndex((p) => p.blockName === b.blockName);\n",
-    "new": "      const at = randomRange(0, pool.length);\n",
+    "old": "      const at = pool.findIndex((p) => p.blockName === b.blockName);",
+    "new": "      const at = randomRange(0, pool.length);",
     "tests": [
       "test/systems/quest/mediumdistinct.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "MD-the-walk-backwards",
     "file": "src/world/smallerDungeons.js",
-    "old": "        const other = pool[(at + k) % pool.length];\n",
-    "new": "        const other = pool[(at + pool.length - k) % pool.length];\n",
+    "old": "        const other = pool[(at + k) % pool.length];",
+    "new": "        const other = pool[(at + pool.length - k) % pool.length];",
     "tests": [
       "test/systems/quest/mediumdistinct.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "MD-the-ring-touched",
     "file": "src/world/smallerDungeons.js",
-    "old": "    if (/^b/i.test(b.blockName)) continue;\n    if (laid.has(b.blockName)) {\n",
-    "new": "    if (laid.has(b.blockName)) {\n",
+    "old": "    if (/^b/i.test(b.blockName)) continue;\n    if (laid.has(b.blockName)) {",
+    "new": "    if (laid.has(b.blockName)) {",
     "tests": [
       "test/systems/quest/mediumdistinct.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "MD-a-laid-block-taken",
     "file": "src/world/smallerDungeons.js",
-    "old": "        if (laid.has(other.blockName)) continue;\n",
-    "new": "",
+    "old": "        if (laid.has(other.blockName)) continue;\n        layout[i] = { ...other, x: b.x, z: b.z, isStartingBlock: b.isStartingBlock };",
+    "new": "        layout[i] = { ...other, x: b.x, z: b.z, isStartingBlock: b.isStartingBlock };",
     "tests": [
       "test/systems/quest/mediumdistinct.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "MD-the-clone-unmarked",
     "file": "src/world/smallerDungeons.js",
-    "old": "...(distinct ? { distinct: true } : {})",
-    "new": "...({})",
+    "old": "  return {\n    ...dfLocation,\n    dungeon: { ...dfLocation.dungeon, blocks: layout, [mark]: true, ...(distinct ? { distinct: true } : {}) },\n  };",
+    "new": "  return { ...dfLocation, dungeon: { ...dfLocation.dungeon, blocks: layout, [mark]: true, ...{} } };",
     "tests": [
       "test/systems/quest/mediumdistinct.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "MD-the-stamp-unsplit",
     "file": "src/world/smallerDungeons.js",
-    "old": "if (isMediumDungeon(dfLocation)) return dfLocation.dungeon.distinct === true ? MEDIUM_DISTINCT_STAMP : MEDIUM_DUNGEONS_STATE;",
-    "new": "if (isMediumDungeon(dfLocation)) return MEDIUM_DUNGEONS_STATE;",
+    "old": "  if (isMediumDungeon(dfLocation))\n    return dfLocation.dungeon.distinct === true ? MEDIUM_DISTINCT_STAMP : MEDIUM_DUNGEONS_STATE;",
+    "new": "  if (isMediumDungeon(dfLocation)) return MEDIUM_DUNGEONS_STATE;",
     "tests": [
       "test/systems/quest/mediumdistinct.test.js"
     ]

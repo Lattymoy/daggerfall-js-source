@@ -1334,7 +1334,7 @@ instance door, the build an entry makes off worldModes.js's own text, the world 
 a death records the size its dungeon was BUILT at (`world.js:"dungeon: dl ? { regionIndex: dl.regionIndex,"`'s
 `builtDungeonSize`, AUDIT FB1013d B1), and the remains stand and open only in a build of that size
 (`world.js:"const legacyInDungeonOf = (h, place) =>"` - another size is another layout). An instance is always the dungeon
-whole (`smallerDungeons.js:"if (online) return whole ? 'full' : onlineDungeonSize(dfLocation);"`), and the online world
+whole (`smallerDungeons.js:"if (online) return whole"`), and the online world
 draws three dungeons in four small or medium in public (SD-ONLINE), and builds 2,005 of the 4,232 smaller. The fallen died in another player's instance, so the
 row said `size: 'full'`; the heir's door offered an instance only where a quest of theirs named the place
 (`instanceOffer`'s `questHere`), and none did, so every visit was the public room - for a ruin laid medium, the door
@@ -1372,7 +1372,7 @@ dungeon at or under its size's threshold is never laid anew, so its public room 
 'full'`, the door offered the heir a private instance under "The shared dungeon is smaller and has none of it", and
 `entryFor` took them into it, while the public room stood the remains; QUEST-ELSEWHERE's line was false there too (the
 mount stood the quest's things). `relaid` is now the size built
-(`smallerDungeons.js:"export function builtSizeFor(dfLocation, deps = {}) {"`: no build and no DFRandom draw, off the
+(`smallerDungeons.js:"export function builtSizeFor"`: no build and no DFRandom draw, off the
 build's own `laidAnew` test), so every one of the 4,232 sites agrees with its build.
 
 - **Pinned**: `test/systems/legacy/fb1019f_heirwhole.test.js` (7: the report - the death in another player's instance of

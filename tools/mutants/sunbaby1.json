@@ -47,8 +47,8 @@
   {
     "name": "SUNBABY1-fade-live-snapped",
     "file": "src/world/sunbabySky.js",
-    "old": "      target = ev?.kind === SUNBABY_EVENT ? 1 : 0;\n      if (!live) weight = target;",
-    "new": "      target = ev?.kind === SUNBABY_EVENT ? 1 : 0;\n      weight = target;",
+    "old": "      if (!live) weight = target;",
+    "new": "      weight = target;",
     "tests": [
       "test/net/sunbaby1_event.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SUNBABY1-sun-never-rises",
     "file": "src/world/sunbabySky.js",
-    "old": "  const k = clamp01(w), e = 1 - (1 - k) ** 3;",
-    "new": "  const k = clamp01(w), e = 1;",
+    "old": "    e = 1 - (1 - k) ** 3;",
+    "new": "    e = 1;",
     "tests": [
       "test/net/sunbaby1_event.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SUNBABY1-light-darkens",
     "file": "src/world/sunbabySky.js",
-    "old": "rgb[i] + Math.max(0, SUNBABY_AMBIENT[i] - rgb[i]) * k",
-    "new": "rgb[i] + (SUNBABY_AMBIENT[i] - rgb[i]) * k",
+    "old": "    [0, 1, 2].map(\n      (i) => (rgb[i] + Math.max(0, SUNBABY_AMBIENT[i] - rgb[i]) * k) * (1 + (SUNBABY_WRATH_TINT[i] - 1) * e),\n    ),",
+    "new": "    [0, 1, 2].map((i) => (rgb[i] + (SUNBABY_AMBIENT[i] - rgb[i]) * k) * (1 + (SUNBABY_WRATH_TINT[i] - 1) * e)),",
     "tests": [
       "test/net/sunbaby1_event.test.js"
     ]

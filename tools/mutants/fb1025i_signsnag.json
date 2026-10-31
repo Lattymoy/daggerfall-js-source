@@ -32,8 +32,8 @@
   {
     "name": "SIGN-PASS-every-triangle-stands",
     "file": "src/world/signSolid.js",
-    "old": "< hang ? 0 : 1;",
-    "new": "< hang ? 0 : 0;",
+    "old": "    marks[t] = Math.min(positions[a * 3 + 1], positions[b * 3 + 1], positions[c * 3 + 1]) < hang ? 0 : 1;",
+    "new": "    marks[t] = Math.min(positions[a * 3 + 1], positions[b * 3 + 1], positions[c * 3 + 1]) < hang ? 0 : 0;",
     "tests": [
       "test/world/fb1025i_signsnag.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "SIGN-PASS-the-highest-corner-read",
     "file": "src/world/signSolid.js",
-    "old": "    marks[t] = Math.min(positions[a * 3 + 1]",
-    "new": "    marks[t] = Math.max(positions[a * 3 + 1]",
+    "old": "    marks[t] = Math.min(positions[a * 3 + 1], positions[b * 3 + 1], positions[c * 3 + 1]) < hang ? 0 : 1;",
+    "new": "    marks[t] = Math.max(positions[a * 3 + 1], positions[b * 3 + 1], positions[c * 3 + 1]) < hang ? 0 : 1;",
     "tests": [
       "test/world/fb1025i_signsnag.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "SIGN-PASS-the-line-itself-stands",
     "file": "src/world/signSolid.js",
-    "old": "< hang ? 0 : 1;",
-    "new": "<= hang ? 0 : 1;",
+    "old": "    marks[t] = Math.min(positions[a * 3 + 1], positions[b * 3 + 1], positions[c * 3 + 1]) < hang ? 0 : 1;",
+    "new": "    marks[t] = Math.min(positions[a * 3 + 1], positions[b * 3 + 1], positions[c * 3 + 1]) <= hang ? 0 : 1;",
     "tests": [
       "test/world/fb1025i_signsnag.test.js"
     ],
@@ -294,8 +294,8 @@
   {
     "name": "SIGN-PASS-the-crew-board-laid-a-bodys",
     "file": "src/world/shipyardModel.js",
-    "old": "  f.hang(true);   // FIELD BUGS 2026-10-25i SIGN-PASS",
-    "new": "  f.hang(false);   // FIELD BUGS 2026-10-25i SIGN-PASS",
+    "old": "  f.hang(true); // FIELD BUGS 2026-10-25i SIGN-PASS: a board hung from the eaves is drawn, never solid, as the gate's (signboard)",
+    "new": "  f.hang(false); // FIELD BUGS 2026-10-25i SIGN-PASS: a board hung from the eaves is drawn, never solid, as the gate's (signboard)",
     "tests": [
       "test/world/fb1025i_signsnag.test.js"
     ]

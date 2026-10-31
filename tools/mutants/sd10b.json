@@ -308,8 +308,8 @@
   {
     "name": "AUDIT-SD-C9-the-hollow-re-laid",
     "file": "src/world/smallerDungeons.js",
-    "old": "  if (dungeonTier(dfLocation) === 'super') return 'full';\n",
-    "new": "",
+    "old": "  if (dungeonTier(dfLocation) === 'super') return 'full';\n  // AUDIT WORLD34 B2: ONLINE, ONE LAYOUT. The room's stream, its acts and its memory address foes, doors and piles by",
+    "new": "  // AUDIT WORLD34 B2: ONLINE, ONE LAYOUT. The room's stream, its acts and its memory address foes, doors and piles by",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]

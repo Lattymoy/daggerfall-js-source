@@ -468,9 +468,9 @@ auditworld6b (`seatClock` for `_foesInAt`), and slam11 (the host poses through i
 The quest is N0B20Y05; its target `Foe _monster_ is Mage`, placed by `place foe _monster_ at _mondung_` on a random
 quest marker of `remote dungeon9`. Every link from the door to the foe standing answers yes in the instance:
 - the popup's "Your instance" enters the dungeon whole (`instanceDoor.js:"if (row.kind === 'public') return PUBLIC;"`,
-  `smallerDungeons.js:"if (online) return whole ? 'full' : onlineDungeonSize(dfLocation);"`), and the mount's gate
+  `smallerDungeons.js:"if (online) return whole"`), and the mount's gate
   lets it through (`instancePlaces.js:"export const questMountsHere = ({ online, builtSize }) => !online || builtSize === 'full';"`);
-- a quest taken online is stamped whole (`smallerDungeons.js:"if (online) return SMALLER_DUNGEONS_STATE.Disabled;"`),
+- a quest taken online is stamped whole (`smallerDungeons.js:"if (online) return SMALLER_DUNGEONS_STATE.Disabled"`),
   and an older stamp is re-laid onto the whole dungeon at the next online load (`questRepair.js` relayQuestOnline).
 Reproduced in Node with the real QuestMachine, Place, sceneMount, questRepair and smallerDungeons over N0B20Y05's own
 lines - taken online, entered public, saved and reloaded, the instance twice, copied offline and entered: the instance

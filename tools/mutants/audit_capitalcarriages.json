@@ -30,8 +30,8 @@
   {
     "name": "AUDIT-CC-L4-the-stand-off-the-lines",
     "file": "src/world/solitudeRelief.js",
-    "old": "x0: 262.4, x1: 294.4,",
-    "new": "x0: 262, x1: 294.4,",
+    "old": "  x0: 262.4,",
+    "new": "  x0: 262,",
     "tests": [
       "test/world/capitalcarriages.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "AUDIT-CC-L5-the-bank-on-the-shoulder",
     "file": "src/world/solitudeRelief.js",
-    "old": "z1: 435.2, bank: 6.4 }",
-    "new": "z1: 435.2, bank: 8 }",
+    "old": "  bank: 6.4,",
+    "new": "  bank: 8,",
     "tests": [
       "test/world/capitalcarriages.test.js"
     ]
@@ -276,8 +276,8 @@
   {
     "name": "AUDIT-CC-T-stand-narrow",
     "file": "src/world/solitudeRelief.js",
-    "old": "x0: 262.4, x1: 294.4, z0: SOLITUDE_CLIFFS.south, z1: 435.2",
-    "new": "x0: 274.4, x1: 294.4, z0: SOLITUDE_CLIFFS.south, z1: 428.8",
+    "old": "  x0: 262.4,\n  x1: 294.4,\n  z0: SOLITUDE_CLIFFS.south,\n  z1: 435.2,",
+    "new": "  x0: 274.4,\n  x1: 294.4,\n  z0: SOLITUDE_CLIFFS.south,\n  z1: 428.8,",
     "tests": [
       "test/world/capitalcarriages.test.js"
     ]
@@ -285,8 +285,8 @@
   {
     "name": "AUDIT-CC-T-bank-linear",
     "file": "src/world/solitudeRelief.js",
-    "old": "SOLITUDE_LEVELS.city + (h - SOLITUDE_LEVELS.city) * smooth(d / S.bank);",
-    "new": "SOLITUDE_LEVELS.city + (h - SOLITUDE_LEVELS.city) * (d / S.bank);",
+    "old": "  return d >= S.bank ? h : SOLITUDE_LEVELS.city + (h - SOLITUDE_LEVELS.city) * smooth(d / S.bank);",
+    "new": "  return d >= S.bank ? h : SOLITUDE_LEVELS.city + (h - SOLITUDE_LEVELS.city) * (d / S.bank);",
     "tests": [
       "test/world/capitalcarriages.test.js"
     ]

@@ -941,8 +941,8 @@
   {
     "name": "AUDIT-LANDFORMS-C3-retry-never-backs-off",
     "file": "src/world/roadsProducer.js",
-    "old": "const ms = Math.min(60000, 5000 * 2 ** tries);",
-    "new": "const ms = 5000;",
+    "old": "    const ms = Math.min(60000, 5000 * 2 ** tries);",
+    "new": "    const ms = 5000;",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -1360,8 +1360,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-G3-fetch-unraced",
     "file": "src/world/roadsProducer.js",
-    "old": "const r = await Promise.race([fetchFn(url, ac ? { signal: ac.signal } : undefined), late]);",
-    "new": "const r = await fetchFn(url, ac ? { signal: ac.signal } : undefined);",
+    "old": "        const r = await Promise.race([fetchFn(url, ac ? { signal: ac.signal } : undefined), late]);",
+    "new": "        const r = await fetchFn(url, ac ? { signal: ac.signal } : undefined);",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -1369,8 +1369,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-G3-body-unraced",
     "file": "src/world/roadsProducer.js",
-    "old": "const b = new Uint8Array(await Promise.race([r.arrayBuffer(), late]));",
-    "new": "const b = new Uint8Array(await r.arrayBuffer());",
+    "old": "        const b = new Uint8Array(await Promise.race([r.arrayBuffer(), late]));",
+    "new": "        const b = new Uint8Array(await r.arrayBuffer());",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -1378,8 +1378,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-G3-never-aborted",
     "file": "src/world/roadsProducer.js",
-    "old": "timer = setTimeout(() => { ac?.abort(); no(",
-    "new": "timer = setTimeout(() => { no(",
+    "old": "          ac?.abort();\n          no(new Error(`${url}: no answer in ${timeoutMs} ms`));",
+    "new": "          no(new Error(`${url}: no answer in ${timeoutMs} ms`));",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -1496,8 +1496,8 @@
   {
     "name": "GROUND-AGREE-roll-transposed",
     "file": "src/world/spawnGroundPlace.js",
-    "old": "if (!spawnsDungeon(WORLD_SALT, px, py)) return null;",
-    "new": "if (!spawnsDungeon(WORLD_SALT, py, px)) return null;",
+    "old": "    if (!spawnsDungeon(WORLD_SALT, px, py)) return null;",
+    "new": "    if (!spawnsDungeon(WORLD_SALT, py, px)) return null;",
     "note": "GROUND-AGREE (Field-Bugs-2026-10-24b): re-aimed - the lift asks no tvSpawnGone of its own now; the ground's roll is asked of the pixel transposed.",
     "tests": [
       "test/world/terrain/auditlandforms.test.js",
@@ -1547,8 +1547,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-J7-no-fetch",
     "file": "src/world/roadsProducer.js",
-    "old": "export async function retryModRoads({ fetchFn = globalThis.fetch,",
-    "new": "export async function retryModRoads({ fetchFn = null,",
+    "old": "export async function retryModRoads({\n  fetchFn = globalThis.fetch,",
+    "new": "export async function retryModRoads({\n  fetchFn = null,",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -1556,8 +1556,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-J7-no-wait",
     "file": "src/world/roadsProducer.js",
-    "old": "wait = (ms) => new Promise((r) => setTimeout(r, ms)), max = MOD_ROADS_RETRY_MAX",
-    "new": "wait = (ms) => new Promise((r) => setTimeout(r, 0)), max = MOD_ROADS_RETRY_MAX",
+    "old": "  wait = (ms) => new Promise((r) => setTimeout(r, ms)),",
+    "new": "  wait = (ms) => new Promise((r) => setTimeout(r, 0)),",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]

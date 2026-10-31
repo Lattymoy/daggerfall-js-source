@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-SHIPYARDS-the-office-gable-in-its-roof",
     "file": "src/world/shipyardModel.js",
-    "old": "[a, O.ridge - t, zm - 0.01], [b, O.ridge - t, zm - 0.01]",
-    "new": "[a, O.ridge, zm - 0.01], [b, O.ridge, zm - 0.01]",
+    "old": "      [a, O.ridge - t, zm - 0.01],\n      [b, O.ridge - t, zm - 0.01],",
+    "new": "      [a, O.ridge, zm - 0.01],\n      [b, O.ridge, zm - 0.01],",
     "tests": [
       "test/systems/shipyards1_audit_port.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-SHIPYARDS-the-hall-beam-flush",
     "file": "src/world/shipyardModel.js",
-    "old": "  box(f, R.wood, A.x0, A.frontH - 0.22, A.z0 + W, A.x0 + 0.2,",
-    "new": "  box(f, R.wood, A.x0, A.frontH - 0.22, A.z0, A.x0 + 0.2,",
+    "old": "  box(f, R.wood, A.x0, A.frontH - 0.22, A.z0 + W, A.x0 + 0.2, A.frontH, A.z1, { under: true }); // its eaves beam, butting the far side (flush with its end, a z-fight)",
+    "new": "  box(f, R.wood, A.x0, A.frontH - 0.22, A.z0, A.x0 + 0.2, A.frontH, A.z1, { under: true }); // its eaves beam, butting the far side (flush with its end, a z-fight)",
     "tests": [
       "test/systems/shipyards1_audit_port.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-SHIPYARDS-the-inner-posts-through-the-walk",
     "file": "src/world/shipyardModel.js",
-    "old": "post(f, sx - 0.35, z, walkY - 0.06, 0.13, R.wood);",
-    "new": "post(f, sx - 0.35, z, walkY, 0.13, R.wood);",
+    "old": "  for (const z of posts) post(f, sx - 0.35, z, walkY - 0.06, 0.13, R.wood); // under the walk (their tops were in its top's plane)",
+    "new": "  for (const z of posts) post(f, sx - 0.35, z, walkY, 0.13, R.wood); // under the walk (their tops were in its top's plane)",
     "tests": [
       "test/systems/shipyards1_audit_port.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-SHIPYARDS-the-shipwright-in-the-fire",
     "file": "src/world/shipyardModel.js",
-    "old": "Object.freeze([-8.3, 3.55, 0])",
-    "new": "Object.freeze([-8.3, 2.8, 0])",
+    "old": "    workers: Object.freeze([Object.freeze([-2.2, 1.6, 2.25]), Object.freeze([-8.3, 3.55, 0])]), // the second at the firebox's front, clear of it",
+    "new": "    workers: Object.freeze([Object.freeze([-2.2, 1.6, 2.25]), Object.freeze([-8.3, 2.8, 0])]), // the second at the firebox's front, clear of it",
     "tests": [
       "test/systems/shipyards1_audit_port.test.js"
     ]

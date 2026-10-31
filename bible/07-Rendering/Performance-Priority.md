@@ -2090,7 +2090,7 @@ horse would stand.
 - **The standing horses.** Every horse that stands steps its idle's clock every frame. `end` judges the view by the
   camera the frame draws through - both hosts hand it the `{ proj, view }` they hand the draw - and the cadence by the
   distance from `begin`'s eye (world.js `mwv.eye`, exterior.js `eye`) over that camera's lens
-  (`standingHorses.js:"e.out = poseWhereSeen(rig, e.horse, o.feet, cam ? pass : null, eye, frameNo, e.phase);"`); `draw`
+  (`standingHorses.js:"e.out = poseWhereSeen"`); `draw`
   draws the ones in the view and catches up one come into it since its last pose (`fresh`) - judged by the camera it
   is drawn through, however it came into the view, so it hands the law no `wasOut`. The view test is the rig's
   own (`seen`, the draw's box), where it was a ball at the feet of its own (`VIEW_LIFT`, `VIEW_REACH`, gone): a horse

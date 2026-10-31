@@ -201,8 +201,8 @@
   {
     "name": "WW7-4-the-castle-shrunk",
     "file": "src/world/smallerDungeons.js",
-    "old": "  if (dfLocation.capital) return 'full';\n",
-    "new": "",
+    "old": "  if (dfLocation.capital) return 'full';\n  // AUDIT SD (Super-Dungeons.md section 5): A HOLLOW IS LAID WHOLE - its feat is the longest walk its template has, the",
+    "new": "  // AUDIT SD (Super-Dungeons.md section 5): A HOLLOW IS LAID WHOLE - its feat is the longest walk its template has, the",
     "tests": [
       "test/world/worldWide/ww7_castles.test.js"
     ]

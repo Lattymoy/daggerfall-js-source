@@ -47,8 +47,8 @@
   {
     "name": "RW-LAW-the-canal-unasked",
     "file": "src/world/rumareWaters.js",
-    "old": "  const c = waterfrontCanal();\n  return c ? { cx: c.cx, cy: c.cy } : null;",
-    "new": "  const c = waterfrontCanal() ?? { cx: 2069, cy: 658 };\n  return c ? { cx: c.cx, cy: c.cy } : null;",
+    "old": "  const c = waterfrontCanal();",
+    "new": "  const c = waterfrontCanal() ?? { cx: 2069, cy: 658 };",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RW-GROUND-its-ramp-unbounded",
     "file": "src/world/rumareWaters.js",
-    "old": "  if (ex > ramp || ey > ramp) return 0;\n  const d = (ex ** p + ey ** p) ** (1 / p);   // past the span's square, its corners rounded\n  return d >= ramp ? 0 : 1 - smooth(d / ramp);",
-    "new": "  const d = (ex ** p + ey ** p) ** (1 / p);   // past the span's square, its corners rounded\n  return 1 - smooth(d / (ramp * 4));",
+    "old": "  if (ex > ramp || ey > ramp) return 0;\n  const d = (ex ** p + ey ** p) ** (1 / p); // past the span's square, its corners rounded\n  return d >= ramp ? 0 : 1 - smooth(d / ramp);",
+    "new": "  const d = (ex ** p + ey ** p) ** (1 / p); // past the span's square, its corners rounded\n  return 1 - smooth(d / (ramp * 4));",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "RW-GROUND-the-basin's-corners-square",
     "file": "src/world/rumareWaters.js",
-    "old": "  const d = (ex ** p + ey ** p) ** (1 / p);   // past the span's square, its corners rounded",
-    "new": "  const d = Math.min(ex, ey);   // past the span's square, its corners rounded",
+    "old": "  const d = (ex ** p + ey ** p) ** (1 / p); // past the span's square, its corners rounded",
+    "new": "  const d = Math.min(ex, ey); // past the span's square, its corners rounded",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "RW-LAND-the-ramp-past-the-edge",
     "file": "src/world/rumareWaters.js",
-    "old": "smooth(s / (s + e))",
-    "new": "smooth(s / (s + e + 1000))",
+    "old": "  const rise = land + Math.max(0, natural - land) * smooth(s / (s + e)),",
+    "new": "  const rise = land + Math.max(0, natural - land) * smooth(s / (s + e + 1000)),",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "RW-LAND-the-rim-on-an-inner-side",
     "file": "src/world/rumareWaters.js",
-    "old": "xMin: W ? rim : -clear",
-    "new": "xMin: rim",
+    "old": "  return {\n    xMin: W ? rim : -clear,\n    xMax: E ? D - rim : D - 1 + clear,\n    yMin: S ? rim : -clear,\n    yMax: N ? D - rim : D - 1 + clear,\n  };",
+    "new": "  return { xMin: rim, xMax: E ? D - rim : D - 1 + clear, yMin: S ? rim : -clear, yMax: N ? D - rim : D - 1 + clear };",
     "tests": [
       "test/world/rumarewater.test.js"
     ]

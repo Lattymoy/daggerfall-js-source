@@ -275,8 +275,8 @@
   {
     "name": "AUDITTESA2R-R10-the-store-evicts-nothing",
     "file": "src/world/roadsCache.js",
-    "old": "          for (const [lower, upper] of evict) s.delete(keyRange.bound(lower, upper));\n",
-    "new": "",
+    "old": "          for (const [lower, upper] of evict) s.delete(keyRange.bound(lower, upper));\n          s.put(value, key);",
+    "new": "          s.put(value, key);",
     "tests": [
       "test/world/audittesa2r_roads.test.js"
     ]
