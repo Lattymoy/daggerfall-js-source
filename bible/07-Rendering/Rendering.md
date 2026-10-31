@@ -136,8 +136,9 @@ Effects and events: `src/render/spellImpactFx.js`, `src/render/vfxGpu.js`, `src/
 `src/render/foeTelegraph.js`, `src/render/telegraphStyle.js`, `src/render/weaponGlowGlsl.js`, `src/render/auraRing.js`,
 `src/render/armoryPass.js`; the gate (`src/render/gate/`), the Elite Gates (`src/render/eliteGates/`), the Super
 dungeon (`src/render/superDungeon/`), the Starfall (`src/render/starfall/`), the dragon (`src/render/dragon/`), the
-Sky-Ketch (`src/render/ketch/`), and the event passes (`src/render/rocketPass.js`, `src/render/riteSmoke.js`,
-`src/render/serpentRender.js`, `src/render/deadlands.js`, `src/render/courtCrystals.js`, `src/render/spoilsGlow.js`).
+Sky-Ketch (`src/render/ketch/`), and the event passes (`src/render/rocketPass.js`, `src/render/newEraPass.js`,
+`src/render/riteSmoke.js`, `src/render/serpentRender.js`, `src/render/deadlands.js`, `src/render/courtCrystals.js`,
+`src/render/spoilsGlow.js`).
 
 World pieces: `src/render/labGrass.js`, `src/render/grassPixelArt.js`, `src/render/grassMeadow.js`,
 `src/render/lowPolyTreesRender.js`, `src/render/realWindows.js`, `src/render/windowLight.js`, `src/render/bannerPass.js`,
