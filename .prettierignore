@@ -1131,15 +1131,7 @@
 !/src/systems/oblivionLeveling.js
 !/src/systems/offlineCopy.js
 !/src/systems/online/
-/src/systems/online/*
-!/src/systems/online/homeMute.js
-!/src/systems/online/onlineCheckpoint.js
-!/src/systems/online/onlineCheckpointClock.js
-!/src/systems/online/onlineHomes.js
-!/src/systems/online/onlineLane.js
-!/src/systems/online/onlineSync.js
-!/src/systems/online/realmUnsavedNotice.js
-!/src/systems/online/strandedCopy.js
+/src/systems/online/*/
 !/src/systems/overhauls.js
 !/src/systems/ownGlyphs.js
 !/src/systems/ownMwAssets.js
