@@ -793,6 +793,7 @@
 !/src/scenes/grahtHost.js
 !/src/scenes/grantHost.js
 !/src/scenes/groundFrameHost.js
+!/src/scenes/guildHallPress.js
 !/src/scenes/ketch/
 /src/scenes/ketch/*
 !/src/scenes/ketch/ketchClient.js
