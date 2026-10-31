@@ -212,8 +212,8 @@
   {
     "name": "AUDIT-SEA-PATHS-LN-2-the-host-asks-no-cap",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "beyondList = loneLanes(laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX));",
-    "new": "beyondList = loneLanes(laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true));",
+    "old": "beyondList = longLanes(loneLanes(laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX)));",
+    "new": "beyondList = longLanes(loneLanes(laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true)));",
     "tests": [
       "test/systems/naval/auditseapaths.test.js"
     ]
@@ -464,7 +464,7 @@
   {
     "name": "AUDIT-SEA-PATHS-O3-the-kernel-sea-bound-alone",
     "file": "src/world/water/kernelSea.js",
-    "old": "      k = groundTopOf(w, px, py, null) <= SCALED_OCEAN_ELEVATION ? true : sampleKernel(w, px, py, HEIGHTMAP_DIMENSION, true, landform);",
+    "old": "      k = groundTopOf(woods, px, py, null) <= SCALED_OCEAN_ELEVATION ? true : sampleKernel(woods, px, py, HEIGHTMAP_DIMENSION, true, landform);",
     "new": "      k = true;",
     "tests": [
       "test/systems/naval/auditseapaths.test.js"
@@ -491,7 +491,7 @@
   {
     "name": "AUDIT-SEA-PATHS-O2-the-corner-unasked-at-the-bays-scale",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "      if (!sea(nx, ny) || (dx && dy && (!sea(x + dx, y) || !sea(x, y + dy)) && !holdsLine(native([x + 0.5, y + 0.5]), native([nx + 0.5, ny + 0.5]), openNative))) continue;",
+    "old": "      if (!sea(nx, ny) || (dx && dy && (!sea(x + dx, y) || !sea(x, y + dy)) && !cornerHolds(k, x, y, dx, dy))) continue;",
     "new": "      if (!sea(nx, ny) || (dx && dy && (!sea(x + dx, y) || !sea(x, y + dy)))) continue;",
     "tests": [
       "test/systems/naval/auditseapaths.test.js",
@@ -566,6 +566,96 @@
     "file": "src/systems/naval/shipLife.js",
     "old": "      let ok = at + 1, step = 1;\n      while (ok + step < last && clear(raw[at], raw[ok + step])) { ok += step; step *= 2; }\n      let hi = Math.min(ok + step, last);\n      if (hi > ok && clear(raw[at], raw[hi])) ok = hi;\n      else while (hi - ok > 1) { const mid = (ok + hi) >> 1; if (clear(raw[at], raw[mid])) ok = mid; else hi = mid; }",
     "new": "      let ok = at + 1;\n      for (let q = last - 1; q > at + 1; q--) if (clear(raw[at], raw[q])) { ok = q; break; }",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-C1-the-long-search-gone",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "      const path = beyondFarPath(lane, worldOpenNative, kernel);",
+    "new": "      const path = null;",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-C1-every-lane-long",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "      if (beyondWays.has(lane.key) ? beyondWays.get(lane.key) : beyondReaches(lane, worldOpenNative, kernel)) return lane;",
+    "new": "      if (beyondWays.has(lane.key) ? beyondWays.get(lane.key) : false) return lane;",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-C1-a-lone-port-capped-null-kept",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "      beyondWays.delete(lane.key);   // a lone port's ask under the old cap",
+    "new": "      void beyondWays;",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-C1-near-by-the-ellipse",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "      if (/** @type {any} */ (lane).long) { const way = beyondWay(lane); return !!way && nearWay(way.pts, here, pad); }",
+    "new": "      if (!lane) return false;",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-C1-a-leg-end-alone-asked",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "    const t = L2 ? Math.max(0, Math.min(1, ((here.x - a.x) * dx + (here.y - a.y) * dy) / L2)) : 0;",
+    "new": "    const t = 0;",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-C1-the-corner-kept-without-its-bearing",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "    const c = k * 8 + (dy + 1) * 2 + (dx + 1) / 2;",
+    "new": "    const c = k * 8;",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-C1-the-mask-kept-sea",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "    if (!kept[k]) kept[k] = at(x, y) ? 1 : 2;",
+    "new": "    if (!kept[k]) kept[k] = 1;",
+    "tests": [
+      "test/world/smoothland.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-C1-the-mask-past-the-picture-sea",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "    if (!(x >= 0 && y >= 0 && x < w && y < h)) return false;",
+    "new": "    if (!(x >= 0 && y >= 0 && x < w && y < h)) return true;",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-C1-the-packets-uncapped",
+    "file": "src/systems/naval/seaLanes.js",
+    "old": "  const count = Math.min(LANE_PACKETS_MAX, Math.max(1, Math.round((2 * (leg + LANE_DWELL_S)) / LANE_HEADWAY_S)));",
+    "new": "  const count = Math.max(1, Math.round((2 * (leg + LANE_DWELL_S)) / LANE_HEADWAY_S));",
+    "tests": [
+      "test/systems/naval/auditseapaths.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SEA-PATHS-C1-the-kernel-last-pixel-by-its-column",
+    "file": "src/world/water/kernelSea.js",
+    "old": "    let k = px === lastPx && row === lastRow ? lastK : null;",
+    "new": "    let k = px === lastPx ? lastK : null;",
     "tests": [
       "test/systems/naval/auditseapaths.test.js"
     ]

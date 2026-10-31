@@ -121,8 +121,16 @@ function seaMaskOf(trace) {
   const { w, h } = trace, lakes = pictureLakes(trace), bay = bayPictureRect(), L = landLaw(trace);
   // SMOOTH-LAND: a cell's water by the land's one law at its centre (world/tamriel/tamrielLand.js landLabelAt - a centre
   // keeps the picture's own side, so the cells stand as they stood)
-  return (x, y) => x >= 0 && y >= 0 && x < w && y < h && landLabelAt(L, x + 0.5, y + 0.5) === 0 && !lakes[y * w + x]
+  const at = (/** @type {number} */ x, /** @type {number} */ y) => x >= 0 && y >= 0 && x < w && y < h && landLabelAt(L, x + 0.5, y + 0.5) === 0 && !lakes[y * w + x]
     && !(x + 1 > bay.x0 && x < bay.x1 && y + 1 > bay.y0 && y < bay.y1);
+  // AUDIT SEA PATHS C1: a cell's answer kept (0 unasked, 1 sea, 2 not) - a lane's search asks each many times
+  const kept = new Uint8Array(w * h);
+  return (x, y) => {
+    if (!(x >= 0 && y >= 0 && x < w && y < h)) return false;
+    const k = y * w + x;
+    if (!kept[k]) kept[k] = at(x, y) ? 1 : 2;
+    return kept[k] === 1;
+  };
 }
 
 /** SMOOTH-LAND (bible/03-World/Tamriel.md): how far (picture cells) a roadstead looks for the cell its lane leaves from. */
@@ -163,6 +171,40 @@ export function moorCell(px, py, sea, native, holds) {
  * @param {(x: number, z: number) => boolean} openNative
  */
 export function beyondLaneWay(lane, openNative, kernel = null) {
+  const s = beyondSearch(lane, openNative, kernel, beyondPathPx(lane));
+  return s && { pts: s.pts, len: s.len };
+}
+
+/** AUDIT SEA PATHS C1: the length (map pixels) a lane past the Bay's search runs over the picture's whole sea, uncapped,
+ *  or null: its water joins its ports not. As the lane's cap, its search finds that chain again.
+ *  @param {any} lane @param {(x: number, z: number) => boolean} openNative */
+export function beyondFarPath(lane, openNative, kernel = null) {
+  const s = beyondSearch(lane, openNative, kernel, Infinity, true);
+  return s && Math.ceil(s.chainPx);
+}
+
+/** AUDIT SEA PATHS C1: whether a lane past the Bay has a way under its cap - beyondLaneWay's search alone, no way drawn.
+ *  @param {any} lane @param {(x: number, z: number) => boolean} openNative */
+export const beyondReaches = (lane, openNative, kernel = null) => !!beyondSearch(lane, openNative, kernel, beyondPathPx(lane), true);
+/** A native point's map pixel point (x east, y south). @param {{ x: number, z: number }} p */
+const pxOf = (p) => ({ x: p.x / NATIVE_PIXEL, y: 500 - p.z / NATIVE_PIXEL });
+/** AUDIT SEA PATHS C1: whether `here` (map pixels) lies within `pad` of a way's legs. @param {{ x: number, z: number }[]} pts @param {{ x: number, y: number }} here @param {number} pad */
+export function nearWay(pts, here, pad) {
+  for (let i = 1; i < pts.length; i++) {
+    const a = pxOf(pts[i - 1]), b = pxOf(pts[i]), dx = b.x - a.x, dy = b.y - a.y, L2 = dx * dx + dy * dy;
+    const t = L2 ? Math.max(0, Math.min(1, ((here.x - a.x) * dx + (here.y - a.y) * dy) / L2)) : 0;
+    if (Math.hypot(a.x + t * dx - here.x, a.y + t * dy - here.y) <= pad) return true;
+  }
+  return false;
+}
+
+/** The diagonal steps past a picture cell's corner the Bay's scale holds, kept a lane water and a picture: cell * 8 + its
+ *  step's bearing. @type {WeakMap<Function, { trace: any, fit: any, held: Map<number, boolean> }>} */
+const _corners = new WeakMap();
+
+/** beyondLaneWay's search under the cap `maxPx` (map pixels): its way and its chain's cost (map pixels); `chainOnly` the
+ *  search alone. */
+function beyondSearch(lane, openNative, kernel, maxPx, chainOnly = false) {
   const trace = tamrielTrace(), fit = tamrielFit();
   if (!trace || !fit) return null;
   const { w, h } = trace, sea = pictureSeaMask(trace);
@@ -172,7 +214,7 @@ export function beyondLaneWay(lane, openNative, kernel = null) {
   const holdsNative = (/** @type {{ x: number, z: number }} */ a, /** @type {{ x: number, z: number }} */ b) => holdsLine(a, b, openNative) && kernelLine(a, b, kernel, true, true) === true;   // AUDIT SEA PATHS LN-4: every pixel crossed; O3: the kernel's sea
   const from = moorCell(ax, ay, sea, native, holdsNative), to = moorCell(bx, by, sea, native, holdsNative);
   if (!from || !to) return null;
-  const ppu = fit.ppu, maxG = beyondPathPx(lane) / ppu;   // the A*'s costs in picture pixels (NIBEN-SEA: a canal harbour's lane its own)
+  const ppu = fit.ppu, maxG = maxPx / ppu;   // the A*'s costs in picture pixels (NIBEN-SEA: a canal harbour's lane its own)
   const key = (/** @type {number} */ x, /** @type {number} */ y) => y * w + x;
   const g = new Float64Array(w * h).fill(Infinity), came = new Int32Array(w * h).fill(-1), shut = new Uint8Array(w * h);
   const hEst = (/** @type {number} */ x, /** @type {number} */ y) => Math.hypot(x - to[0], y - to[1]);
@@ -195,6 +237,15 @@ export function beyondLaneWay(lane, openNative, kernel = null) {
     }
     return top;
   };
+  let corners = _corners.get(openNative);
+  if (corners?.trace !== trace || corners.fit !== fit) _corners.set(openNative, corners = { trace, fit, held: new Map() });
+  const held = corners.held;
+  const cornerHolds = (/** @type {number} */ k, /** @type {number} */ x, /** @type {number} */ y, /** @type {number} */ dx, /** @type {number} */ dy) => {
+    const c = k * 8 + (dy + 1) * 2 + (dx + 1) / 2;   // the four diagonals: 0..3
+    let v = held.get(c);
+    if (v === undefined) { v = holdsLine(native([x + 0.5, y + 0.5]), native([x + dx + 0.5, y + dy + 0.5]), openNative); held.set(c, v); }
+    return v;
+  };
   let found = false;
   while (heap.length) {
     const [, x, y] = pop(), k = key(x, y);
@@ -206,7 +257,7 @@ export function beyondLaneWay(lane, openNative, kernel = null) {
       const nx = x + dx, ny = y + dy;
       // no corner cut past land - AUDIT SEA PATHS O2: but where the Bay's scale holds the step (a channel a cell wide that
       // runs on the slant: Vivec's to Ebonheart read walled)
-      if (!sea(nx, ny) || (dx && dy && (!sea(x + dx, y) || !sea(x, y + dy)) && !holdsLine(native([x + 0.5, y + 0.5]), native([nx + 0.5, ny + 0.5]), openNative))) continue;
+      if (!sea(nx, ny) || (dx && dy && (!sea(x + dx, y) || !sea(x, y + dy)) && !cornerHolds(k, x, y, dx, dy))) continue;
       const ng = g[k] + (dx && dy ? Math.SQRT2 : 1), nk = key(nx, ny);
       if (ng >= g[nk] || ng > maxG) continue;
       g[nk] = ng; came[nk] = k;
@@ -214,6 +265,8 @@ export function beyondLaneWay(lane, openNative, kernel = null) {
     }
   }
   if (!found) return null;
+  const chainPx = g[key(to[0], to[1])] * ppu;
+  if (chainOnly) return { pts: [], len: 0, chainPx };
   // the chain in picture points: the roadstead, the pixels' centres between, the far roadstead
   const cells = [];
   for (let k = key(to[0], to[1]); k >= 0; k = came[k]) cells.push([(k % w) + 0.5, Math.floor(k / w) + 0.5]);
@@ -238,7 +291,7 @@ export function beyondLaneWay(lane, openNative, kernel = null) {
   }
   let len = 0;
   for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z) * M_PER_NATIVE;
-  return { pts, len };
+  return { pts, len, chainPx };
 }
 
 // ── WW7-10 (bible/03-World/World-Wide.md WW7-10): THE LANES ACROSS THE BAY'S EDGE ─────────────────────────────────────
@@ -465,9 +518,21 @@ export function createWorldLanes({ mapDict, maps, portIds, ports, bayOpen, bayOp
     }
     return out;
   };
+  /** AUDIT SEA PATHS C1: a lane past the Bay with no way under its cap is sought over the picture's whole sea; found, it
+   *  runs at its own length (`path`, `long`: Senchal to Torval, Necrom's two, the Imperial City's to Skyrim round the land). */
+  const longLanes = (/** @type {any[]} */ list) => {
+    if (!tamrielTrace()) return list;
+    return list.map((lane) => {
+      if (beyondWays.has(lane.key) ? beyondWays.get(lane.key) : beyondReaches(lane, worldOpenNative, kernel)) return lane;
+      const path = beyondFarPath(lane, worldOpenNative, kernel);
+      if (path === null) return lane;
+      beyondWays.delete(lane.key);   // a lone port's ask under the old cap
+      return { ...lane, path, long: true };
+    });
+  };
   const beyondNet = () => {
     const v = ports.version(), t = tamrielTrace();
-    if (v !== beyondOf || t !== beyondTrace) { beyondOf = v; beyondTrace = t; beyondWays.clear(); beyondList = loneLanes(laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX)); }   // AUDIT TESA II P7: their own reach; SEA-SQUARE: the roomiest roadstead; AUDIT SEA PATHS LN-2: a lone port its way's cap; O2: one with no way farther
+    if (v !== beyondOf || t !== beyondTrace) { beyondOf = v; beyondTrace = t; beyondWays.clear(); beyondList = longLanes(loneLanes(laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX))); }   // AUDIT TESA II P7: their own reach; SEA-SQUARE: the roomiest roadstead; AUDIT SEA PATHS LN-2: a lone port its way's cap; O2: one with no way farther
     return beyondList;
   };
   /** WW7-10: the lanes across the Bay's edge - made again when the world's ports or the picture move, none before the
@@ -528,6 +593,7 @@ export function createWorldLanes({ mapDict, maps, portIds, ports, bayOpen, bayOp
       const da = Math.hypot(lane.a.road.x - here.x, lane.a.road.y - here.y), db = Math.hypot(lane.b.road.x - here.x, lane.b.road.y - here.y);
       if (lane.cross) return da + db <= CROSS_LANE_PATH_PX + 2 * pad;
       if (inBay(lane.a.px, lane.a.py)) return Math.min(da, db) <= LANE_PATH_PX / 2 + pad;
+      if (/** @type {any} */ (lane).long) { const way = beyondWay(lane); return !!way && nearWay(way.pts, here, pad); }   // AUDIT SEA PATHS C1: its ellipse the land's whole
       return da + db <= beyondPathPx(lane) + 2 * pad;   // NIBEN-SEA: a canal harbour's lane its own
     },
   };

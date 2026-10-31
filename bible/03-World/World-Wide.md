@@ -554,8 +554,9 @@ harbour board), and an area's people are read off the continent's geography, whi
 A port past the Bay with no port within BEYOND_LANE_MAX_PX now runs to its nearest within its way's cap,
 BEYOND_LANE_PATH_PX (`systems/naval/seaLanes.js` laneNetwork's `farPx`), and one with no lane that has a way looks out to
 BEYOND_LONE_PX (`scenes/naval/worldLanes.js` loneLanes): every port past the Bay a lane holds is served, Necrom among them,
-and Vivec to Ebonheart by their channel. Five lanes whose ports' waters do not join carry no packet (Necrom to Vivec and
-to Ebonheart, Winterhold and Windhelm to the Imperial City, Senchal to Torval). The Bay's own lane water is CLIMATE.PAK's
+and Vivec to Ebonheart by their channel. A lane with no way under its cap is sought over the picture's whole sea and runs
+at its own length (C1): Necrom to Vivec and to Ebonheart, Winterhold and Windhelm to the Imperial City, Senchal to
+Torval. The Bay's own lane water is CLIMATE.PAK's
 undilated climate under the four-corner law, and every way holds on the kernel's own ground. Record:
 `01-Overview/audits/Audit-Sea-Paths.md`.
 
@@ -1992,7 +1993,8 @@ Bay's own lanes keep a cycle a passage.
   world is let have, a crossing lane's CROSS_LANE_PATH_PX of 996 km, out and back at SEA_PACE_X with the longest stay and
   the turn-round) over its cycle at the clock's pace - a merchant's or an adventurer's 11 cycles, a pilgrim's 4, a
   courier's 15, a pedlar's 13. Each place's blocks begin at a cycle its own seed picks. Anywhere else, and with the land
-  off, every cycle is its own block.
+  off, every cycle is its own block. A lane run past its cap (AUDIT SEA PATHS C1) is longer than any block: `seaTrip`
+  passes it for a shorter, and only its packets sail it.
 - **The passage** (seaTrip): a far lane's takes the whole cycles its span needs (`sea.cycles`), set out inside its own cycle
   (its offset over the cycles' room less its span, under a cycle's) and home inside its last; one that does not fit its
   ROOM is passed over for the next shorter lane, as a lane too long for a cycle always was. A far lane that fits a cycle

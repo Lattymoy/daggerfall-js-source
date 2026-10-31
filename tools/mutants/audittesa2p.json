@@ -305,8 +305,8 @@
   {
     "name": "P7-reach-the-bays",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "beyondList = loneLanes(laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX));",
-    "new": "beyondList = loneLanes(laneNetwork(ports.list(), worldOpen, undefined, true, BEYOND_LANE_PATH_PX));",
+    "old": "beyondList = longLanes(loneLanes(laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX)));",
+    "new": "beyondList = longLanes(loneLanes(laneNetwork(ports.list(), worldOpen, undefined, true, BEYOND_LANE_PATH_PX)));",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -332,7 +332,7 @@
   {
     "name": "P7-corner-cut",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "      if (!sea(nx, ny) || (dx && dy && (!sea(x + dx, y) || !sea(x, y + dy)) && !holdsLine(native([x + 0.5, y + 0.5]), native([nx + 0.5, ny + 0.5]), openNative))) continue;",
+    "old": "      if (!sea(nx, ny) || (dx && dy && (!sea(x + dx, y) || !sea(x, y + dy)) && !cornerHolds(k, x, y, dx, dy))) continue;",
     "new": "      if (!sea(nx, ny)) continue;",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"

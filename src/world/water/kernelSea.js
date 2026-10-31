@@ -23,24 +23,34 @@ export const KERNEL_SEA_PIXELS = 4096;
 export function createKernelSea(woodsOf) {
   let woods = null, landform = null;
   const kernels = new Map();
+  // AUDIT SEA PATHS C1: the last pixel asked kept to hand - a leg asks one pixel 64 times running (kernelLine)
+  let lastPx = NaN, lastRow = NaN, lastK = null;
   return (/** @type {number} */ x, /** @type {number} */ z) => {
     const w = woodsOf();
     if (!w) return true;
-    if (w !== woods) { woods = w; landform = createLandforms({ woods: w }); kernels.clear(); }
-    const px = Math.floor(x / NP), row = Math.floor(z / NP), py = 499 - row, key = `${px},${py}`;
+    if (w !== woods) { woods = w; landform = createLandforms({ woods: w }); kernels.clear(); lastPx = NaN; }
+    const px = Math.floor(x / NP), row = Math.floor(z / NP);
+    let k = px === lastPx && row === lastRow ? lastK : null;
+    if (!k) k = lastK = kernelOf(px, row);
+    lastPx = px; lastRow = row;
+    if (k === true) return true;
+    const c = Math.round(((HEIGHTMAP_DIMENSION - 1) * (x - px * NP)) / NP), r = Math.round(((HEIGHTMAP_DIMENSION - 1) * (z - row * NP)) / NP);
+    return isWaterHeight(sampleHeight(Math.fround(k(c, r))));
+  };
+  /** A pixel's kernel, or true: the sea whole. @param {number} px @param {number} row */
+  function kernelOf(px, row) {
+    const py = 499 - row, key = `${px},${py}`;
     if (rumareSeaPixel(px, py)) return true;   // its ground stamped the sea's (world/rumareWaters.js), past the kernel's word
     let k = kernels.get(key);
     if (!k) {
       if (kernels.size >= KERNEL_SEA_PIXELS) kernels.clear();
       // a pixel whose DFU ground is bounded at the sea (landforms.js groundTopOf) is the sea whole - the landforms lift no
       // ground that low (reliefLift's zero; none of 12,658 such pixels held land, sampled under them)
-      k = groundTopOf(w, px, py, null) <= SCALED_OCEAN_ELEVATION ? true : sampleKernel(w, px, py, HEIGHTMAP_DIMENSION, true, landform);
+      k = groundTopOf(woods, px, py, null) <= SCALED_OCEAN_ELEVATION ? true : sampleKernel(woods, px, py, HEIGHTMAP_DIMENSION, true, landform);
       kernels.set(key, k);
     }
-    if (k === true) return true;
-    const c = Math.round(((HEIGHTMAP_DIMENSION - 1) * (x - px * NP)) / NP), r = Math.round(((HEIGHTMAP_DIMENSION - 1) * (z - row * NP)) / NP);
-    return isWaterHeight(sampleHeight(Math.fround(k(c, r))));
-  };
+    return k;
+  }
 }
 
 /** How often (native units) a leg is asked of the kernel's sea: a sixty-fourth of a pixel, 12.8 m. */

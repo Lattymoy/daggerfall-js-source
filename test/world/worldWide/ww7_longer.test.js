@@ -456,6 +456,10 @@ test('WW7-11 and WW7-12 with ARENA2: every lane past the Bay and every crossing 
     const far = [...wl.beyond(), ...wl.cross()].map((l) => ({ l, way: wl.way(l) })).filter((x) => x.way);
     assert.ok(far.length >= 20, `${far.length} far lanes with a way`);
     assert.ok(BEYOND_LANE_MAX_PX === 400);
+    // PIN MOVED (AUDIT SEA PATHS C1): a lane past the Bay its search ran past its cap for runs longer than any block -
+    // seaTrip passes it for a shorter, its packets sail it; every lane within the longest way a lane is let have fits
+    const within = far.filter(({ way }) => way.len <= CROSS_LANE_PATH_PX * 819.2);
+    assert.ok(within.length >= far.length - 5, `${far.length - within.length} lanes past the longest way`);
     // THE FIT: a passage of each sailing kind on each far lane, at a block's first cycle, the longest stay
     const town = { mapId: 1, px: -10, py: 10, port: true, blocks: 30 };
     const fit = {}, cycle = {};
@@ -463,12 +467,12 @@ test('WW7-11 and WW7-12 with ARENA2: every lane past the Bay and every crossing 
       const res = { id: `L1.t0`, town: 1, slot: 0, job };
       const len = cycleOf(res, 0, 1).len;
       const room = voyageBlock(res, town, 0, { longPassages: true }, 1).m;
-      fit[job] = far.filter(({ way }) => seaTrip(res, town, 0, { lanesFrom: () => [{ to: { mapId: 2 }, len: way.len, key: 'x', far: true }], templeTown: () => true }, { start: 0, len, mpm: CALENDAR_MPM, pace: 1, rng: () => 0.99, room })?.sea).length;
+      fit[job] = within.filter(({ way }) => seaTrip(res, town, 0, { lanesFrom: () => [{ to: { mapId: 2 }, len: way.len, key: 'x', far: true }], templeTown: () => true }, { start: 0, len, mpm: CALENDAR_MPM, pace: 1, rng: () => 0.99, room })?.sea).length;
       cycle[job] = far.filter(({ way }) => spanOf(way.len, STAY_DAYS[job][1]) <= len).length;
     }
     const km = far.map(({ way }) => Math.round(way.len / 1000)).sort((a, b) => a - b);
     console.log(`[ww7-11] far lanes ${far.length} (${wl.beyond().length} past the Bay, ${wl.cross().length} across), ${km[0]}..${km.at(-1)} km; fit a block ${JSON.stringify(fit)}; a cycle alone ${JSON.stringify(cycle)}`);
-    for (const job of SEA_JOBS) assert.equal(fit[job], far.length, `every far lane a ${job}'s`);
+    for (const job of SEA_JOBS) assert.equal(fit[job], within.length, `every far lane a ${job}'s`);
     // THE SERPENT over the world's lanes: a run of its days, each site's lane counted by its kind
     const all = wl.all(), kinds = { bay: 0, past: 0, cross: 0, none: 0 };
     const kindOf = new Map(all.map((l) => [l.key, l.cross ? 'cross' : inBay(l.a.px, l.a.py) ? 'bay' : 'past']));

@@ -1856,11 +1856,12 @@ tags and card, SHIP-LIFE's harbours and NAV-R's shared clock.
   whatever order the ports are read in - a coast a chain, every port two lanes at least. A lane's way is the water's:
   an A* over the map's water pixels, eight neighbours with no corner cut past land, the shortest, no longer than
   LANE_PATH_PX (60), straightened wherever a line holds to the water (LANE_STRAIGHT_STEPS a pixel). THE PACKETS: a
-  lane sails one every LANE_HEADWAY_S (30 min) each way, each a merchantman or on LANE_NAVY (a quarter) of them a
-  crown's ship, at LANE_LEVEL for every player and never a galley, her cruise LANE_CRUISE of her class's best; she sails
+  lane sails one every LANE_HEADWAY_S (30 min) each way, LANE_PACKETS_MAX (400) at most (AUDIT SEA PATHS C1), each a
+  merchantman or on LANE_NAVY (a quarter) a crown's ship, at LANE_LEVEL, never a galley, her cruise LANE_CRUISE of her
+  class's best; she sails
   out, lies LANE_DWELL_S (10 min) at the far port, sails home and lies LANE_DWELL_S at hers, for ever, on the SHARED
-  CLOCK (`raidNowMs`, NAV-R's) - so where she is is the clock's alone: every player meets her in the same water, a port
-  left and come back to finds her further on, and the ship watched out of one port is the one that berths at the next.
+  CLOCK (`raidNowMs`, NAV-R's) - so where she is is the clock's alone: every player meets her in the same water, and
+  the ship watched out of one port is the one that berths at the next.
   Her VOYAGE is her cycle: her id names her lane, her place and her voyage, and the next voyage is another ship -
   AUDIT BAY A17: unless she is on the water as it turns: her `seeds` are her place's last LANE_LINEAGE (24) voyages',
   hers first, and any of them afloat is her place's packet - she sails the next voyage as herself (she faded out at her

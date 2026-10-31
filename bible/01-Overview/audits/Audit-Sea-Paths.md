@@ -13,7 +13,7 @@ composes them):
 
 Every finding below was reproduced before a line changed, and each fix carries an `AUDIT SEA PATHS <ID>` comment. The
 pins are `test/systems/naval/auditseapaths.test.js`, beside the pins they moved (`PIN MOVED` where each stands). The
-mutants are `tools/mutants/auditseapaths.json`: 63, 62 dead, one equivalent as recorded. Thirty-four records of earlier
+mutants are `tools/mutants/auditseapaths.json`: 73, 72 dead, one equivalent as recorded. Thirty-five records of earlier
 lists aimed at lines these fixes moved; each was re-aimed by content and dies again, but `P7-corner-cut`, now equivalent
 as recorded (O2).
 
@@ -105,9 +105,25 @@ The owner, of the six the first pass left open: *"Take care of all the open item
 - **O6, the straightening's cost.** Galloped out from each point and halved back, the end asked first: a zigzag
   channel's way in 21,962 soundings, where the look back from each end asked 43,777.
 
-Left as they are, by the water itself: five lanes past the Bay whose ports' waters do not join (Necrom to Vivec and to
-Ebonheart, Winterhold and Windhelm to the Imperial City, Senchal to Torval) carry no packet; each of those ports is
-served by another lane.
+## Connected - the five lanes with no way (C1)
+
+The owner, of the five lanes this record left with no packet: *"Connect them all"*. The record said their ports' waters
+do not join. They do - one sea on the picture joins every port past the Bay - but each way ran past its lane's cap:
+Senchal to Torval 829 pixels against 800, Necrom to Vivec and to Ebonheart 1,129 and 1,363, the Imperial City to
+Winterhold and to Windhelm 5,900, round the land and up the Niben.
+
+- **C1, a lane past its cap.** A lane past the Bay whose search finds no way under its cap is sought over the picture's
+  whole sea, its own length its cap (`worldLanes.js` longLanes). The cap is tested by the search alone (`beyondReaches`),
+  so a way is still drawn when it is first asked. Every lane past the Bay sails; every other lane's way is unchanged.
+- **Near.** A long lane's ellipse would hold the whole land: a player is near one within `pad` of its way (`nearWay`).
+- **Packets.** A lane sails LANE_PACKETS_MAX (400) at most, its headway widened past it: the Imperial City's to Skyrim,
+  4,800 km, would sail 1,900. The longest before sailed 303.
+- **Cost.** The book past the Bay builds in 0.35 s (0.2 s before): a picture cell's sea and each step past a cell's corner
+  are kept, the kernel's last pixel kept to hand.
+- **The living world.** A long lane is longer than any block of passages (WW7-11): `seaTrip` passes it for a shorter.
+
+Sixteen of the Bay's lanes still have no way: one end's roadstead lies in a lake or a pocket of one to sixteen pixels,
+and 20 of those 21 ports have no sea within ROADSTEAD_PX. No water joins them.
 
 The lanes change where a packet sails and where the serpent rises (its site is rolled over the lanes): every client of
 one version agrees, and a client of the last version disagrees until it updates, as with every lane change before.

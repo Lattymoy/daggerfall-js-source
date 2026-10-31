@@ -222,8 +222,8 @@
   {
     "name": "CLOCK-count-ceil",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "  const count = Math.max(1, Math.round((2 * (leg + LANE_DWELL_S)) / LANE_HEADWAY_S));",
-    "new": "  const count = Math.max(1, Math.ceil((2 * (leg + LANE_DWELL_S)) / LANE_HEADWAY_S));",
+    "old": "  const count = Math.min(LANE_PACKETS_MAX, Math.max(1, Math.round((2 * (leg + LANE_DWELL_S)) / LANE_HEADWAY_S)));",
+    "new": "  const count = Math.min(LANE_PACKETS_MAX, Math.max(1, Math.ceil((2 * (leg + LANE_DWELL_S)) / LANE_HEADWAY_S)));",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]

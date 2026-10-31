@@ -48,6 +48,9 @@ export const LANE_STRAIGHT_STEPS = 4;
 export const LANE_CRUISE = 0.7;
 export const LANE_DWELL_S = 600;
 export const LANE_HEADWAY_S = 1800;
+/** AUDIT SEA PATHS C1: the most packets a lane sails - its headway widened past it (the Imperial City's lanes to Skyrim
+ *  run round the land, 4,800 km; the longest before ran 303). */
+export const LANE_PACKETS_MAX = 400;
 export const LANE_NAVY = 0.25;
 /** The level a packet's class is drawn at (navalShips.js classFor): the same for every player. */
 export const LANE_LEVEL = 10;
@@ -361,7 +364,7 @@ function along(pts, s) {
 export function packetsAt(lane, way, ms) {
   const first = packetOf(lane);
   const leg = way.len / Math.max(0.1, first.speed);
-  const count = Math.max(1, Math.round((2 * (leg + LANE_DWELL_S)) / LANE_HEADWAY_S));
+  const count = Math.min(LANE_PACKETS_MAX, Math.max(1, Math.round((2 * (leg + LANE_DWELL_S)) / LANE_HEADWAY_S)));
   const out = [];
   for (let k = 0; k < count; k++) out.push(packetAt(lane, way, ms, k, count));
   return out;

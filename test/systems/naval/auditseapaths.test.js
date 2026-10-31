@@ -12,11 +12,12 @@ import {
 } from '../../../src/systems/naval/shipLife.js';
 import { hullBuild } from '../../../src/systems/naval/navalShips.js';
 import { SWEEP_WAY } from '../../../src/systems/naval/navalAI.js';
-import { holdsLine, laneNetwork, laneWay, wayOffSea, subWay } from '../../../src/systems/naval/seaLanes.js';
+import { holdsLine, laneNetwork, laneWay, wayOffSea, subWay, packetsAt, LANE_PACKETS_MAX } from '../../../src/systems/naval/seaLanes.js';
 import { kernelLine, createKernelSea } from '../../../src/world/water/kernelSea.js';
 import { mendSeaLegs } from '../../../src/systems/travel/seaLegsMend.js';
 import { raiderOf } from '../../../src/systems/seaRaiders.js';
-import { bayLaneWater, bayLanePorts } from '../../../src/scenes/naval/worldLanes.js';
+import { bayLaneWater, bayLanePorts, nearWay, beyondPathPx, worldLaneWater, beyondLaneWay } from '../../../src/scenes/naval/worldLanes.js';
+import { setTamrielTrace, tamrielTrace } from '../../../src/world/tamriel/tamrielLand.js';
 import { undilatedClimateIndex } from '../../../src/world/terrain/terrainHelper.js';
 import { NATIVE_PIXEL, pixelOfNative } from '../../../src/systems/seaRaiders.js';
 import { TravelAutopilot } from '../../../src/systems/travel/travelAutopilot.js';
@@ -25,7 +26,7 @@ import { planRoute, routeGround, routeLegs, setSeaLegKernel, DEEP_BYTE } from '.
 import { tvMooredDry } from '../../../src/systems/travel/seaAsk.js';
 import { seaNoWay, SEA_WAY, createSeaHelm } from '../../../src/systems/seaHelm.js';
 import { inEther, ETHER_BOX } from '../../../src/world/ethericSea.js';
-import { inBay } from '../../../src/world/tamriel/tamrielFrame.js';
+import { inBay, setTamrielFit, tamrielFit } from '../../../src/world/tamriel/tamrielFrame.js';
 
 const ARENA2 = process.env.ARENA2_PATH ?? '';
 const HAVE = !!ARENA2 && existsSync(join(ARENA2, 'MAPS.BSA'));
@@ -459,7 +460,9 @@ test('AUDIT SEA PATHS O3 with ARENA2: the kernel\'s sea answers the ground the g
   assert.ok(born > 0 && ashore === 0, `${born} raiders born, ${ashore} ashore`);
 });
 
-test('AUDIT SEA PATHS O2 with ARENA2: past the Bay a channel a picture cell wide on the slant is sailed where the Bay\'s scale holds the step (Vivec to Ebonheart), and a port with none in its reach and no way runs farther to one that has (Necrom); every port past the Bay with a roadstead is served (mutants: the corner unasked at the Bay\'s scale; the lone search gone)', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
+/** The world's lanes on the freeware's map past the Bay (the picture, its ports, the kernel's sea), made once. */
+let _pastBay = null;
+const pastBayWorld = () => (_pastBay ??= (async () => {
   const bytes = (n) => new Uint8Array(readFileSync(join(ARENA2, n)));
   const { DFPalette } = await import('../../../src/formats/dfPalette.js');
   const { preloadTamrielTrace } = await import('../../../src/ui/tamrielTrace.js');
@@ -495,7 +498,13 @@ test('AUDIT SEA PATHS O2 with ARENA2: past the Bay a channel a picture cell wide
   const places = createWorldPlaces();
   places.register('tesa', pastBayPlaceRows({ pixels: arenaPixels(), templateOf: () => ({ exterior: { exteriorData: { width: 1, height: 1 } } }), capitals: true }));
   const ports = createWorldPorts({ places, openSea, regionAt: (x, y) => maps.getRegionIndexAt(x, y) });
-  const wl = createWorldLanes({ mapDict: () => buildMapDict(maps), maps, portIds: PORT_LOCATION_IDS, ports, bayOpen: laneOpen, bayOpenNative: laneOpenNative, water: tvWater, beyond: () => true, kernel: createKernelSea(() => woods) });
+  const kernel = createKernelSea(() => woods);
+  const wl = createWorldLanes({ mapDict: () => buildMapDict(maps), maps, portIds: PORT_LOCATION_IDS, ports, bayOpen: laneOpen, bayOpenNative: laneOpenNative, water: tvWater, beyond: () => true, kernel });
+  return { wl, ports, woods, kernel, laneOpen, tvWater, maps };
+})());
+
+test('AUDIT SEA PATHS O2 with ARENA2: past the Bay a channel a picture cell wide on the slant is sailed where the Bay\'s scale holds the step (Vivec to Ebonheart), and a port with none in its reach and no way runs farther to one that has (Necrom); every port past the Bay with a roadstead is served (mutants: the corner unasked at the Bay\'s scale; the lone search gone)', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
+  const { wl, ports } = await pastBayWorld();
   const past = wl.beyond(), served = new Set();
   for (const l of past) if (wl.way(l)) { served.add(l.a.name); served.add(l.b.name); }
   const byName = (a, b) => past.find((l) => (l.a.name === a && l.b.name === b) || (l.a.name === b && l.b.name === a));
@@ -548,4 +557,58 @@ test('AUDIT SEA PATHS O6: a way\'s straightening galloped out and halved back - 
   const p = g.path([0, 0], [x, z]);
   assert.ok(p && p.length <= 30, `a way of ${p?.length} points`);
   assert.ok(n < 30000, `${n} soundings`);
+});
+
+test('AUDIT SEA PATHS C1: a lane sails a packet every LANE_HEADWAY_S each way, LANE_PACKETS_MAX at most (its headway widened past it); a long lane is near within its pad of any leg of its way (mutants: the packets uncapped; a leg\'s end alone asked)', () => {
+  const lane = { key: '10-20', a: { id: 10, region: 1 }, b: { id: 20, region: 1 } };
+  const NP = NATIVE_PIXEL, at = (x, y) => ({ x: x * NP, z: (500 - y) * NP });
+  const short = packetsAt(lane, { pts: [at(0, 0), at(300, 0)], len: 300 * 819.2 }, 0).length;
+  assert.ok(short > 1 && short < LANE_PACKETS_MAX, `${short} packets on 246 km`);
+  assert.equal(packetsAt(lane, { pts: [at(0, 0), at(6000, 0)], len: 6000 * 819.2 }, 0).length, LANE_PACKETS_MAX, 'round the land: the most');
+  const pts = [at(0, 0), at(100, 0), at(100, 80)];
+  assert.equal(nearWay(pts, { x: 50, y: 3 }, 4), true, 'abreast a leg\'s middle');
+  assert.equal(nearWay(pts, { x: 97, y: 40 }, 4), true, 'abreast the second');
+  assert.equal(nearWay(pts, { x: 50, y: 5 }, 4), false);
+  assert.equal(nearWay(pts, { x: -3, y: 0 }, 4), true, 'off its end');
+  assert.equal(nearWay(pts, { x: 50, y: 40 }, 4), false, 'inside the bend');
+});
+
+test('AUDIT SEA PATHS C1 with ARENA2: a lane past the Bay whose search finds no way under its cap is sought over the picture\'s whole sea and runs at its own length - Senchal to Torval, Necrom to Vivec and to Ebonheart, Winterhold and Windhelm to the Imperial City round the land; every lane past the Bay sails, each leg on the lane water and the kernel\'s sea; near within its pad of its way (mutants: the long search gone; every lane long; a lone port\'s capped null kept; near by the ellipse; the kernel\'s last pixel kept by its column alone)', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
+  const { wl, kernel, woods, laneOpen, tvWater, maps } = await pastBayWorld();
+  const past = wl.beyond(), name = (l) => [l.a.name, l.b.name].sort().join(' - ');
+  assert.deepEqual(past.filter((l) => !wl.way(l)).map(name), [], 'every lane past the Bay sails');
+  const long = past.filter((l) => l.long);
+  assert.deepEqual(long.map(name).sort(), ['Ebonheart - Necrom', 'Imperial City - Windhelm', 'Imperial City - Winterhold', 'Necrom - Vivec', 'Senchal - Torval']);
+  const { openNative } = worldLaneWater({ bayOpen: laneOpen, water: tvWater, climateAt: (x, y) => maps.getClimateIndex(x, y), beyond: () => true });
+  for (const l of long) {
+    const way = wl.way(l), n = way.pts.length;
+    assert.ok(l.path > beyondPathPx({ ...l, path: undefined }), `${name(l)}: past its cap`);
+    for (let i = 1; i < n; i++) {
+      assert.ok(holdsLine(way.pts[i - 1], way.pts[i], openNative), `${name(l)} leg ${i}: the lane water`);
+      assert.equal(kernelLine(way.pts[i - 1], way.pts[i], kernel, i === 1, i === n - 1), true, `${name(l)} leg ${i}: the kernel's sea`);
+    }
+    const mid = way.pts[n >> 1], here = { x: Math.round(mid.x / NATIVE_PIXEL), y: Math.round(500 - mid.z / NATIVE_PIXEL) };
+    assert.equal(wl.near(l, here), true, `${name(l)}: near its way`);
+    assert.equal(wl.near(l, { x: here.x + 40, y: here.y + 40 }), false, `${name(l)}: 56 px off it`);
+  }
+  assert.ok(Math.max(...long.map((l) => wl.way(l).len)) > 4.5e6, 'the Imperial City\'s to Skyrim round the land');
+  // the kernel's last pixel kept: a sweep up a column across a coast answers as a reader asked afresh each time
+  const sweep = (sea, reset) => { let s = ''; for (let z = 463 * NATIVE_PIXEL; z < 467 * NATIVE_PIXEL; z += NATIVE_PIXEL / 8) { if (reset) sea(0, 0); s += sea(162.5 * NATIVE_PIXEL, z) ? 1 : 0; } return s; };
+  const fresh = sweep(createKernelSea(() => woods), true);
+  assert.ok(fresh.includes('0') && fresh.includes('1'), fresh);
+  assert.equal(sweep(createKernelSea(() => woods), false), fresh);
+});
+
+test('AUDIT SEA PATHS C1: the diagonal steps past a picture cell\'s corner are kept each by its own bearing - a wall\'s one gap on the slant the Bay\'s scale refuses stays shut though the cell\'s other slants are open (mutants: the steps kept by their cell alone)', () => {
+  const was = [tamrielTrace(), tamrielFit()];
+  try {
+    const w = 320, h = 200, land = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) land[y * w + 60] = land[y * w + 61] = 1;   // a wall two cells thick, the picture's height
+    land[100 * w + 60] = 0; land[101 * w + 61] = 0;   // its one gap: (60, 100) to (61, 101), past two land corners
+    setTamrielFit({ ox: 4000, oy: 0, ppu: 4 }); setTamrielTrace({ w, h, land, province: new Uint8Array(w * h) });
+    const lane = { a: { road: { x: -3920, y: 400 } }, b: { road: { x: -3600, y: 404 } } };   // picture (20, 100) and (100, 101)
+    assert.ok(beyondLaneWay(lane, () => true), 'the gap sailed where the Bay\'s scale holds it');
+    const shut = (x, z) => { const mx = Math.floor(x / NATIVE_PIXEL), my = 499 - Math.floor(z / NATIVE_PIXEL); return !(mx >= -3757 && mx <= -3755 && my >= 403 && my <= 405); };
+    assert.equal(beyondLaneWay(lane, shut), null, 'the gap\'s corner refused: no way');
+  } finally { setTamrielTrace(was[0]); setTamrielFit(was[1]); }
 });
