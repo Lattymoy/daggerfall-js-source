@@ -42,7 +42,7 @@
   {
     "name": "QUEST-FIRST-hold-public",
     "file": "src/systems/instancePlaces.js",
-    "old": "lastPublic = !isHold && publicLast;",
+    "old": "lastPublic = !noPublic && publicLast;",
     "new": "lastPublic = publicLast;",
     "tests": [
       "test/systems/quest/instances3_door.test.js"

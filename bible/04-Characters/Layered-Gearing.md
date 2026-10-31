@@ -54,7 +54,7 @@ switch is gone).
 
 - **The weapon on the back** (BACK-HOLSTER, 2026-10-30): a sheathed long blade, axe, blunt weapon, staff or bow rides
   the back, on this look and on the skins (`06-Systems/Eye-Of-The-Beholder.md` BACK-HOLSTER). The art holds its mace in
-  every frame, so a sheathed layered body shows both.
+  every frame, so a sheathed layered body shows both. A bow carries its quiver, sheathed or drawn (QUIVER).
 
 ## Online
 

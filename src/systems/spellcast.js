@@ -353,8 +353,58 @@ export const PLAYER_BODY_RADIUS = CAPSULE_RADIUS;
  *  diameter: under 2r the two centres coincide and it is a sphere,
  *  which is what min(r, h/2) gives.
  */
-export function missileHitsCapsule(pos, feet, height, bodyRadius = BODY_CAPSULE_RADIUS) {
-  return sphereOverlapsCapsule(pos, MISSILE_COLLIDER_RADIUS, feet, height, bodyRadius);
+export function missileHitsCapsule(pos, feet, height, bodyRadius = BODY_CAPSULE_RADIUS, from = null) {
+  return from ? sweptSphereOverlapsCapsule(from, pos, MISSILE_COLLIDER_RADIUS, feet, height, bodyRadius)
+    : sphereOverlapsCapsule(pos, MISSILE_COLLIDER_RADIUS, feet, height, bodyRadius);
+}
+
+/**
+ * SHAFT-SWEEP (2026-10-30, #feature-feedback: "the arrows literally go through the enemies at least 50% of the time"):
+ * THE SPHERE MOVED FROM `a` TO `b` THIS STEP meets the capsule anywhere along the way. DaggerfallMissile.cs:337-339
+ * casts the sphere over the whole displacement; the port tested only where it ended up, so a shaft at
+ * ARROW_FLIGHT_SPEED (1.1 m a step at 30 fps, 1.7 m at 20) stepped clean over the 1.8 m chord of a foe it flew
+ * through the middle of, and over any flown through off-centre. The closest approach of the step's segment to the
+ * capsule's inner axis (vertical, feet + r to feet + height - r - sphereOverlapsCapsule's own shape).
+ */
+export function sweptSphereOverlapsCapsule(a, b, radius, feet, height, bodyRadius = BODY_CAPSULE_RADIUS) {
+  if (!feet || !a) return false;
+  const h = height ?? 1.8;
+  const half = Math.min(bodyRadius, h / 2);
+  const y0 = feet[1] + half, y1 = feet[1] + h - half;
+  // closest points of segment a->b and the axis segment (x, y0..y1, z) - Ericson, Real-Time Collision Detection 5.1.9
+  const d1 = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], d2y = y1 - y0;
+  const r = [a[0] - feet[0], a[1] - y0, a[2] - feet[2]];
+  const A = d1[0] * d1[0] + d1[1] * d1[1] + d1[2] * d1[2], E = d2y * d2y, F = d2y * r[1];
+  let s = 0, t = 0;
+  if (A <= 1e-12) { t = E > 1e-12 ? Math.min(1, Math.max(0, F / E)) : 0; }
+  else {
+    const C = d1[0] * r[0] + d1[1] * r[1] + d1[2] * r[2];
+    if (E <= 1e-12) s = Math.min(1, Math.max(0, -C / A));
+    else {
+      const B = d1[1] * d2y, den = A * E - B * B;
+      s = den > 1e-12 ? Math.min(1, Math.max(0, (B * F - C * E) / den)) : 0;
+      t = (B * s + F) / E;
+      if (t < 0) { t = 0; s = Math.min(1, Math.max(0, -C / A)); }
+      else if (t > 1) { t = 1; s = Math.min(1, Math.max(0, (B - C) / A)); }
+    }
+  }
+  const px = a[0] + d1[0] * s, py = a[1] + d1[1] * s, pz = a[2] + d1[2] * s, qy = y0 + d2y * t;
+  const d = Math.hypot(px - feet[0], py - qy, pz - feet[2]);
+  return d <= radius + bodyRadius && !walledOff(/** @type {any} */ (a).collider, [px, py, pz], [feet[0], qy, feet[2]], d);
+}
+
+/** AUDIT WALL-SHAFT W1: a step's start for the sweep, carrying the collider a contact must not reach through - the shaft
+ *  stops a radius short of a wall, and its radius and the body's together reached a foe behind a door. */
+export function sweepFrom(pos, collider = null) {
+  return Object.assign([pos[0], pos[1], pos[2]], collider?.raycast ? { collider } : {});
+}
+/** Geometry between the shaft's nearest point `p` and the body's axis `q`, `reach` apart: the axis, not the hit surface,
+ *  which stands 0.45 m out where a foe walks 0.35 m off a wall (CAPSULE_RADIUS) and so pokes through a door. */
+function walledOff(collider, p, q, reach) {
+  if (!collider || !(reach > 1e-3)) return false;
+  const l = Math.hypot(q[0] - p[0], q[1] - p[1], q[2] - p[2]) || 1;
+  const hit = collider.raycast(p, [(q[0] - p[0]) / l, (q[1] - p[1]) / l, (q[2] - p[2]) / l], reach);
+  return Number.isFinite(hit) && hit < reach;
 }
 
 /**
@@ -397,8 +447,8 @@ export function missileReach(dir, step) {
 }
 
 /** The same test against a foe's controller (enemyAnchor's height). */
-export function missileHitsFoe(pos, foe) {
-  return missileHitsCapsule(pos, foe?.ai?.feet, foe?.ai?.height, foe?.ai?.radius);   // WB4b: a body's own radius, where it states one
+export function missileHitsFoe(pos, foe, from = null) {   // SHAFT-SWEEP: `from`, the step's start - the whole step tested
+  return missileHitsCapsule(pos, foe?.ai?.feet, foe?.ai?.height, foe?.ai?.radius, from);   // WB4b: a body's own radius, where it states one
 }
 
 /** ROAD-H H1c: GetAimPosition's PLAYER ARROW offsets

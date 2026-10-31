@@ -70,6 +70,8 @@ import {
 } from './eotbHolster.js';   // BACK-HOLSTER: the sheathed weapon on the sprite's back, one home - this body's and the peers'
 import { equipTableOf } from '../../systems/equip.js';   // BACK-HOLSTER: the weapon in the hand
 import { myWeaponGlow, createSpriteGlow, setSpriteGlow, heldOf, heldGlowRecord, evictHeld, OFF_SUFFIX, PICTURE_RETRY_MS } from './eotbGlow.js';   // BACK-HOLSTER GLOW: its glow, on its back and in the hand
+import { createQuiverArt, loadQuiverArrow, quiverRidesWith, BACK_QUIVER } from './eotbQuiver.js';   // QUIVER: a bow's quiver on the back
+import { ammoCountFor } from '../../systems/inventory.js';   // QUIVER: arrows in it, with no rig to say
 
 /** PlayerHeightChanger's controllerStandingHeight, the capsule the
  *  billboard's parent sits at the centre of - the fallback when a
@@ -217,6 +219,7 @@ export function bodyState(s = {}) {
     hipLantern: !!s.hipLantern,   // HT-WAIST: a lit lantern hangs at the waist (weaponRig's eotbState)
     handItem: s.handItem,   // BACK-HOLSTER: the weapon in the hand in use (weaponRig's eotbState), null for a bare fist - unsaid, the equip table's
     handWraps: s.handWraps ?? null,   // BACK-HOLSTER GLOW: a bare fist's Hand Wraps
+    hasAmmo: s.hasAmmo,   // QUIVER: arrows for the hand's bow (weaponRig's eotbState) - unsaid, the pack's
   };
 }
 
@@ -226,7 +229,7 @@ const norm2 = (v) => { const l = Math.hypot(v[0], v[2]); return l > 0 ? [v[0] / 
 
 const handWeapon = () => { try { return equipTableOf(playerEntity)?.[HOLSTER_HAND_SLOT] ?? null; } catch { return null; } };
 
-export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, decode = decodeSprite, loadLantern = loadLanternArt, loadHolster = loadHolsterPicture, holsterItem = null, glowOn = undefined, clock = () => Date.now() } = {}) {
+export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, decode = decodeSprite, loadLantern = loadLanternArt, loadHolster = loadHolsterPicture, loadQuiver = loadQuiverArrow, holsterItem = null, glowOn = undefined, clock = () => Date.now() } = {}) {
   let renderer = null;
   /** the per-frame state thunk of the rig that owns the body (see attach) */
   let attachedState = null;
@@ -315,8 +318,15 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   const holster = createSpriteHolster(SELF_OWNER);
   const holsterArt = createHolsterArt(() => renderer, loadHolster);
   let holsterDrawn = false;
-  const holsterList = [holster], noHolsters = Object.freeze([]);
-  const dropHolster = () => { dropSpriteHolster(holster, renderer); holsterDrawn = false; glowList.length = 0; };
+  const backList = [];   // OVER THE AURA: what hangs on the back this frame - the weapon, the quiver
+  const unlist = (l) => { const i = backList.indexOf(l); if (i >= 0) backList.splice(i, 1); };
+  const dropHolster = () => { dropSpriteHolster(holster, renderer); holsterDrawn = false; glowList.length = 0; unlist(holster); };
+  // ── QUIVER: a bow's quiver on the back, sheathed or drawn (eotbQuiver.js) ─
+  const quiver = createSpriteHolster(SELF_OWNER);
+  const quiverArt = createQuiverArt(() => renderer, loadQuiver);
+  const dropQuiver = () => { dropSpriteHolster(quiver, renderer); unlist(quiver); };
+  /** Arrows for `item`: the rig's word, else the pack's. */
+  const arrowsNow = (item) => (last.hasAmmo !== undefined ? !!last.hasAmmo : ammoCountFor(playerEntity?.items, item) > 0);
   /** The weapon in the hand in use - the rig's, else the equip table's right hand (the pins hand theirs in). */
   const handItemNow = () => (holsterItem ? holsterItem() : last.handItem !== undefined ? last.handItem : handWeapon());
   // BACK-HOLSTER GLOW: the glows this body drew this frame - its back's weapon and, drawn, the whole sprite (eotbGlow.js)
@@ -332,8 +342,20 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     mintSpriteHolster(holster, renderer).conceal = material();
     renderer.drawBillboards(holster.list, holster.right, holster.up);
     holsterDrawn = true;
+    backList.push(holster);
     const look = material() ? null : glowNow(item);   // a concealed body's weapon glows for nobody
     if (look) glowList.push(setSpriteGlow(backGlow, holster.archive, holster.mirror ? 1 : 0, look, holster.origin, holster.right, holster.up, holster.w, holster.h, holster.cellW, holster.cellH));
+    return true;
+  }
+  /** QUIVER: a bow's quiver on the back - by drawHolster's gates but the sheath (it stays while the bow is drawn), with
+   *  arrows while there are arrows. */
+  function drawQuiver(camRight) {
+    const item = activeFlag && !died && !last.died && !last.transformed ? handItemNow() : null;
+    const art = quiverRidesWith(item) ? quiverArt.ensure(arrowsNow(item)) : null;
+    if (!art || !shown || !hangSpriteHolster(quiver, figure, shown.orientation, cam.feet, cam.pos, camRight, art, BACK_QUIVER)) { dropQuiver(); return false; }
+    mintSpriteHolster(quiver, renderer).conceal = material();
+    renderer.drawBillboards(quiver.list, quiver.right, quiver.up);
+    backList.push(quiver);
     return true;
   }
   /** Does the lantern hang this frame: lit at the waist, third person, on foot, alive, in your own form. */
@@ -940,7 +962,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
      *  has not got (render/auraRing.js auraSpriteBones). */
     figure() { return figure; },
     /** BACK-HOLSTER, OVER THE AURA: the weapon on the back drawn this frame, as a list (eotbHolster.js redrawHolstersOver). */
-    holstersDrawn() { return holsterDrawn ? holsterList : noHolsters; },
+    holstersDrawn() { return backList; },
     /** BACK-HOLSTER GLOW: the glows drawn on this sprite this frame (eotbGlow.js drawSpriteGlows, the aura host's last). */
     glowsDrawn() { return glowList; },
     /** SPRITE-FACE (2026-10-05): THE WAY THE FRAME LAST DRAWN FACES - { yaw, turn }: `yaw` the facing its picture shows
@@ -990,7 +1012,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     toggle(active, fp = false) {
       FP = !!fp;
       activeFlag = !!active;
-      if (!activeFlag) { torchDefault(); pending.length = 0; dropLantern(); dropHolster(); }   // HT-WAIST: the lantern and its light leave with the body; BACK-HOLSTER: and the weapon on its back
+      if (!activeFlag) { torchDefault(); pending.length = 0; dropLantern(); dropHolster(); dropQuiver(); }   // HT-WAIST: the lantern and its light leave with the body; BACK-HOLSTER: and the weapon on its back
       if (activeFlag) initialize();
       return activeFlag;
     },
@@ -999,7 +1021,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     torchDefault,
     /** HT-WAIST: another body has the frame (mwView's Morrowind lane) - the sprite's lantern, its batch and the
      *  light point it wrote, stand down, so the Morrowind body's hip is lit from its own hook. */
-    standDown() { dropLantern(); dropHolster(); },   // BACK-HOLSTER: the Morrowind body hangs its own (WS1)
+    standDown() { dropLantern(); dropHolster(); dropQuiver(); },   // BACK-HOLSTER: the Morrowind body hangs its own (WS1)
     /** HORSE-FACE: the floating origin moved the world under the feet - they move with it, so the shift is no placing. */
     rebase(delta) {
       if (!delta || !cam.feet) return;
@@ -1060,9 +1082,9 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
 
     draw(canvas, { eye, feet, yaw, face: faceNow = null } = {}) {
       face = faceNow && Number.isFinite(faceNow.yaw) ? faceNow : null;
-      figure = null; facingDrawn = null; holsterDrawn = false; glowList.length = 0;
+      figure = null; facingDrawn = null; holsterDrawn = false; glowList.length = 0; backList.length = 0;
       if (!renderer || !activeFlag || !shown) return false;
-      if (!cfg.graphic) { dropLantern(); dropHolster(); return false; }   // HT-WAIST: no body drawn, no lantern on it - BACK-HOLSTER: nor a weapon
+      if (!cfg.graphic) { dropLantern(); dropHolster(); dropQuiver(); return false; }   // HT-WAIST: no body drawn, no lantern on it - BACK-HOLSTER: nor a weapon
       if (feet) cam.feet = feet;
       if (Number.isFinite(yaw)) cam.yaw = yaw;
       if (eye && !FP) cam.pos = eye;
@@ -1120,6 +1142,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       else if (cfg.visibility === 1) renderer.recordShadowBillboards?.([batch], camRight, bbUp);
       if (grow === 1) drawLantern();   // HT-WAIST: the lantern at the waist, its own billboard, after the body - OW-BIG: a grown body's waist is not where the lantern hangs
       if (grow === 1) drawHolster(camRight); else dropHolster();   // BACK-HOLSTER: the weapon on the back, after the body (OW-BIG's rule too)
+      if (grow === 1) drawQuiver(camRight); else dropQuiver();   // QUIVER: and a bow's quiver
       // BACK-HOLSTER GLOW: drawn, the weapon's glow - in third person, on foot, alive, in your own form; LAYERED-GLOW:
       // round a worn-armour body's weapon alone, else the whole sprite
       const drawn = grow === 1 && !FP && !last.sheathed && !last.toolInHand && !last.riding && !last.transformed && !died && !last.died && !material();
@@ -1162,6 +1185,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       material: material(), placed: place(),
       lantern: { hangs: lanternHangs(), shown: lanternShown(), swing: { fore: lantern.swing.fore, side: lantern.swing.side }, batch: !!lantern.batch },   // HT-WAIST; HT-WAIST-BACK: hangs, and drawn
       holster: { drawn: holsterDrawn, batch: !!holster.batch, mirror: holster.mirror, h: holster.h, w: holster.w, up: [...holster.up], mid: [...holster.mid] },   // BACK-HOLSTER
+      quiver: { drawn: backList.includes(quiver), archive: quiver.archive, mirror: quiver.mirror, h: quiver.h, w: quiver.w, up: [...quiver.up], mid: [...quiver.mid], origin: [...quiver.origin] },   // QUIVER
       glows: glowList.map((g) => ({ key: g.key, look: g.glow?.look ?? null, level: g.glow?.level ?? null, w: g.w, h: g.h, art: [...g.art], origin: [...g.origin], right: [...g.right], up: [...g.up] })),   // BACK-HOLSTER GLOW
     }),
     settings: () => cfg,

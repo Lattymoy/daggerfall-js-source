@@ -230,23 +230,25 @@ export function createSpriteHolster(owner = null) {
 
 /**
  * Where the weapon hangs this frame, written into `l`: `fig` the sprite as drawn (eotbBody figure() / peerRiders
- * figureOf: its quad's foot over the feet `base`, its metres a pixel `mpp`, its `marks` and its offset along the
- * view's right `shift`), `view` the eight-way view it is painted in, `feet` and `eye` in the world, `camRight` the
- * view's right, `art` the picture's quad in metres on a figure the sets' size. Answers `l`, or null when it cannot hang
- * (no figure, no line of sight). Pure but for `l`.
- */
-export function hangSpriteHolster(l, fig, view, feet, eye, camRight, art) {
+ * figureOf: its quad's foot over the feet `base`, its metres a pixel `mpp`, its `marks`, its offset along the view's
+ * right `shift`), `view` its eight-way view, `feet` and `eye` in the world, `camRight` the view's right, `art` the
+ * picture's quad in metres on a figure the sets' size, `B` the hang (BACK_HOLSTER; eotbQuiver.js BACK_QUIVER). Answers
+ * `l`, or null when it cannot hang (no figure, no line of sight). Pure but for `l`.
+ * @param {any} l @param {any} fig @param {number} view @param {any} feet @param {any} eye @param {any} camRight @param {any} art
+ * @param {{ tilt: number, back: number, clear: number, over: number, nudge: number, side?: number }} [B] */
+export function hangSpriteHolster(l, fig, view, feet, eye, camRight, art, B = BACK_HOLSTER) {
   if (!fig || !(fig.mpp > 0) || !Number.isInteger(view) || !eye || !art) return null;
   const toEye = [eye[0] - feet[0], 0, eye[2] - feet[2]];
   const yaw = portrayedYaw(view, toEye);
   if (yaw === null) return null;
-  const B = BACK_HOLSTER, m = fig.mpp * (fig.marks?.art > 0 ? fig.marks.art : 1), k = m / EOTB_FIGURE.mpp;
+  const m = fig.mpp * (fig.marks?.art > 0 ? fig.marks.art : 1), k = m / EOTB_FIGURE.mpp;
   const fx = Math.sin(yaw), fz = Math.cos(yaw), rx = fz, rz = -fx;   // the picture's forward, and its right
   const L = art.h * k, st = Math.sin(B.tilt), ct = Math.cos(B.tilt);
   const rec = RECORD_OFFSETS[((view % ORIENTATIONS) + ORIENTATIONS) % ORIENTATIONS];
   // the line's middle: on the painted body's middle across the card (the cape's law), behind the body - from the side
-  // just past its painted back, as deep as the picture draws it - its upper end over the shoulders
-  const across = auraSpriteAcross(fig), half = fig.marks?.chestHalf;
+  // just past its painted back, as deep as the picture draws it - its upper end over the shoulders; QUIVER: `side` toward
+  // the body's right, as the view sees it (its depth unmoved, so the card still covers it from the side)
+  const across = auraSpriteAcross(fig) + (B.side ?? 0) * k * (rx * camRight[0] + rz * camRight[2]), half = fig.marks?.chestHalf;
   const back = rec === 2 && Number.isFinite(half) ? half * fig.mpp + B.clear * k : B.back * k;
   const nudge = (rec >= 3 ? B.nudge : -B.nudge) * k;
   const top = fig.base + EOTB_FIGURE.shoulder * m + B.over * L * ct;

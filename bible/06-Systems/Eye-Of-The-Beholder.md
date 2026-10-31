@@ -1223,6 +1223,18 @@ mirrors and hides with the weapon, and the aura host draws it over its own cape 
 are the rig's hand in use (`weaponRig.js` `eotbState` `handItem`), a walker's by its pose's `lh`. Full strength, as in
 the hand: one law.
 
+**The quiver** (QUIVER, 2026-10-30; Mac: "For the bow, lets add a quiver to the holster"). A bow - the short and the long
+bow, not the Thunderlock - carries a quiver on the back by the Morrowind body's law (`06-Systems/Weapon-Sheathing.md`
+WS1): it hangs with the bow, stays while the bow is drawn, and holds arrows while its wearer has them (my rig's
+`hasAmmo`, a walker's pose `am`). The departure: WS1 counts the arrows into its slots; a sprite's quiver is full or
+empty, since the wire says only `am`, so mine looks the same to me as to others.
+
+**Its picture and hang.** Daggerfall draws no quiver, so `eotbQuiver.js` paints a leather tube (lit as a cylinder, a
+lighter rim, a strap band) and stands three of the Arrow's own picture (TEXTURE.207 record 16) out of its mouth,
+fletching up. It hangs by `hangSpriteHolster` with `BACK_QUIVER`: steeper than the bow, its arrows over the shoulders,
+nearer the body so the bow lies over it, and `side` toward the body's right as the view sees it - never in depth, so
+the card covers it from the side. It is redrawn with the bow over its own aura; it has no glow.
+
 **Where.** `player/eyeOfTheBeholder/eotbHolster.js` (the law, the picture, the store, the hang, the batch);
 `eotbBody.js` draws mine after the body (`drawHolster`); `net/peer/peerRiders.js` hangs each walker's (`slingHolster`)
 and draws it in `drawLanterns`, beside the bodies; `scenes/auraHost.js` draws each again over its own aura
@@ -1236,7 +1248,8 @@ picture; the store; my body's gates in the rig's own words; the walkers'; the re
 across law and the capes moved for the pass; the audit's A1-A6); `tools/mutants/backholster.json`; three records in
 `htwaist.json` and `seraphwings.json` re-aimed by content. The glow: `test/player/eyeOfTheBeholder/spriteglow.test.js`
 (the law, the lists, the renderer's primitive call by call, the shaders' rows, the wiring; A5, A7, A8) and
-`tools/mutants/spriteglow.json`.
+`tools/mutants/spriteglow.json`. The quiver: `test/player/eyeOfTheBeholder/backquiver.test.js` (the bows, the picture,
+the hang and its `side`, the store, mine and the walkers', the redraw) and `tools/mutants/backquiver.json`.
 
 **The probe.** `tools/backHolsterProbe.mjs` draws it in the real renderer
 (the game's mirrored lens) on a skin and on Layered Gearing, five weapons from ARENA2, eight views each, and the
@@ -1245,6 +1258,10 @@ right shoulder from behind, hides in front, shows past the back from the side wi
 mass is behind the painted body from the side, and after the redraw no weapon pixel is tinted (up to 468 were). And
 the glow: a shock and the Brand on the back from behind, none over the body from the front, alive as its clock runs,
 over the cape, and round the whole sprite drawn from every side - 46 checks.
+
+The quiver's probe draws the long bow and its quiver with ARENA2's arrow, 64 checks in all. From behind, its arrows
+stand over the shoulder row, off the bow's middle toward the right shoulder and under the bow. From the front and the
+side it is hidden behind the body, and empty it shows no arrows over its mouth.
 
 ## AUDIT BACK-HOLSTER (2026-10-30): the holster and its glow, read cold
 

@@ -64,8 +64,8 @@
   {
     "name": "the-row-is-hidden-under-the-online-heading",
     "file": "src/systems/inputActions.js",
-    "old": "  g('Online', [\n    ['SocialInteract', 'Interact with player'],\n  ]),",
-    "new": "  g('Online', [\n    ['SocialInteract', 'Interact with player'], ['FreeMouse', 'Free the mouse (press again to look)'],\n  ]),",
+    "old": "  g('Online', [\n    ['SocialInteract', 'Interact with player'],\n",
+    "new": "  g('Online', [\n    ['SocialInteract', 'Interact with player'], ['FreeMouse', 'Free the mouse (press again to look)'],\n",
     "tests": [
       "test/systems/freemouse.test.js",
       "test/systems/qs2_inputs.test.js",
