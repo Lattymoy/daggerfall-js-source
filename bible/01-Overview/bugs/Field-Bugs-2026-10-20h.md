@@ -790,7 +790,7 @@ the host, because the classic boot's own window held every key through the probe
 FOUND. The "freeze" was the realm's trade hold, not a hang. The Ogre is not one of DFU's MobileTypes: it is Daggerfall
 Enemy Expansion's 282, a line of the mod's own MonsterBase table. DEX1 merged as #1067 on the day of the report and is on
 by default (`modSettings.js:"'daggerfall-enemy-expansion':"`); its fifty enemies are 256-290 (monsters)
-and 384-398 (people), joined to the bestiary at the game's load (`dexInstall.js:"  registerEnemyRows(rows);"`). The soul
+and 384-398 (people), joined to the bestiary at the game's load (`dexInstall.js:"registerEnemyRows(rows)"`). The soul
 trap's kill door hands the foe's own mobile id to the trap
 (`exteriorFoes.js:"const trap = _peerTrap ? { allowDeath: true } : attemptSoulTrap(f.entity, f.mobileType, playerEntity.items, Math.random());"`,
 `dungeonContext.js:"const trap = _peerTrap ? { allowDeath: true } : attemptSoulTrap(foe.entity, foe.mobileType, playerEntity.items, Math.random());"`),
@@ -839,7 +839,7 @@ and the hold refused the trade first; and `unwire` showed a peer's lot less the 
 FIXED.
 - LAW 9 (`itemLaw.js:"const MOD_SOULS = new Set(DEX_ENEMY_IDS);"`): a Soul Gem or Azura's Star may hold the soul of any
   of the mod's fifty. The service installs no mod, so the ids are read headless from the mod's own tables
-  (`dexIds.js:"export const DEX_ENEMY_IDS = Object.freeze((() => {"`): every `.mdb.csv` line's ID that is not one of DFU's
+  (`dexIds.js:"export const DEX_ENEMY_IDS"`): every `.mdb.csv` line's ID that is not one of DFU's
   MobileTypes (`enemyBasics.js:"export const isClassicEnemyId = "`), with MUDEX's tables read after the mod's - the same
   reading the install registers, and a pin holds the two equal. A soul no creature has is still a finding.
 - THE SERVICE. acct166 carries law 9 (`service.js`'s ACCOUNT_VERSION, `'acct166'` at `1feee3838` - FIELD BUGS 2026-10-21b

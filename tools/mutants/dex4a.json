@@ -92,8 +92,8 @@
   {
     "name": "DEX4a-a-name-by-its-case",
     "file": "src/systems/enemyExpansion/dexSpells.js",
-    "old": "    return name ? tables.get(name.toLowerCase()) ?? null : null;",
-    "new": "    return name ? tables.get(name) ?? null : null;",
+    "old": "    return name ? (tables.get(name.toLowerCase()) ?? null) : null;",
+    "new": "    return name ? (tables.get(name) ?? null) : null;",
     "why": "a table named in another case is no one's (OrdinalIgnoreCase)",
     "tests": [
       "test/systems/enemyExpansion/dex4a_spells.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "DEX4a-an-unknown-table-unsaid",
     "file": "src/systems/enemyExpansion/dexSpells.js",
-    "old": "  for (const id of ids) if (propsOf(id)?.spellbookTable && !tableOf(id)) log(",
-    "new": "  for (const id of ids) if (false) log(",
+    "old": "  for (const id of ids)\n    if (propsOf(id)?.spellbookTable && !tableOf(id))\n      log('error', `[DEX] Unknown enemy spell table '${propsOf(id).spellbookTable}'`);",
+    "new": "  for (const id of ids) if (false) log('error', `[DEX] Unknown enemy spell table '${propsOf(id).spellbookTable}'`);",
     "why": "a row naming no table says nothing",
     "tests": [
       "test/systems/enemyExpansion/dex4a_spells.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "DEX4a-the-ladder-moved",
     "file": "src/systems/enemyExpansion/dexSpells.js",
-    "old": "book(MONSTER_SPELL_LISTS[27], 3)",
-    "new": "book(MONSTER_SPELL_LISTS[27], 4)",
+    "old": "        book(MONSTER_SPELL_LISTS[27], 3),",
+    "new": "        book(MONSTER_SPELL_LISTS[27], 4),",
     "why": "the Class ladder's second book a level late",
     "tests": [
       "test/systems/enemyExpansion/dex4a_spells.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "DEX4a-the-install-merges-nothing",
     "file": "src/systems/enemyExpansion/dexInstall.js",
-    "old": "    registerSpellRecordsAsset(DEX_VENDOR, JSON.parse(DEX_TABLE_TEXT['SpellRecords.json']));\n",
-    "new": "",
+    "old": "    registerSpellRecordsAsset(DEX_VENDOR, JSON.parse(DEX_TABLE_TEXT['SpellRecords.json']));\n    registerEnemySpellbook(",
+    "new": "    registerEnemySpellbook(",
     "why": "loaded, the mod's four spells are in no list - Lysandus casts nothing",
     "tests": [
       "test/systems/enemyExpansion/dex4a_spells.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "DEX4a-the-install-casts-DFUs",
     "file": "src/systems/enemyExpansion/dexInstall.js",
-    "old": "    registerEnemySpellbook(createDexSpellbooks(",
-    "new": "    void (createDexSpellbooks(",
+    "old": "    registerEnemySpellbook(\n      createDexSpellbooks(read.spellbooks, dexProperties, {\n        ids: [...read.enemies.keys(), ...read.classic.keys()],\n        log,\n      }).spellbook,\n    );",
+    "new": "    void createDexSpellbooks(read.spellbooks, dexProperties, {\n      ids: [...read.enemies.keys(), ...read.classic.keys()],\n      log,\n    }).spellbook;",
     "why": "loaded, every foe casts DFU's list",
     "tests": [
       "test/systems/enemyExpansion/dex4a_spells.test.js"

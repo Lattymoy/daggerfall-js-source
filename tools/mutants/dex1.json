@@ -12,8 +12,8 @@
   {
     "name": "AUDIT-DEX-A5-the-caster-shoots-no-more",
     "file": "src/systems/enemyExpansion/dexTables.js",
-    "old": "    if (props.hasRangedAttack) { mobile.hasRangedAttack1 = true; mobile.hasRangedAttack2 = true; }   // both ranged and casting",
-    "new": "    if (props.hasRangedAttack) { mobile.hasRangedAttack1 = true; mobile.hasRangedAttack2 = false; }   // both ranged and casting",
+    "old": "      mobile.hasRangedAttack2 = true;",
+    "new": "      mobile.hasRangedAttack2 = false;",
     "why": "a caster that also shoots keeps one ranged attack: the Necromancer Assassin (394) never draws its bow",
     "tests": [
       "test/systems/enemyExpansion/dex1_registry.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-DEX-A5-the-monk-no-ranged",
     "file": "src/systems/enemyExpansion/dexTables.js",
-    "old": "'Assassin', 'Monk', 'Archer'",
-    "new": "'Assassin', 'Archer'",
+    "old": "    'Monk',\n    'Archer',",
+    "new": "    'Archer',",
     "why": "HasClassicRangedAttack forgets the Monk: under the mod it loses its ranged attack",
     "tests": [
       "test/systems/enemyExpansion/dex1_registry.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "AUDIT-DEX-A10-a-short-line-reads-empty",
     "file": "src/systems/enemyExpansion/dexTables.js",
-    "old": "      const cell = (c) => { if (c >= tokens.length) throw new RangeError('Index was outside the bounds of the array.'); return tokens[c]; };\n      const careerName = cell(nameIndex);",
-    "new": "      const cell = (c) => tokens[c];\n      const careerName = cell(nameIndex);",
+    "old": "      const cell = (c) => {\n        if (c >= tokens.length) throw new RangeError('Index was outside the bounds of the array.');\n        return tokens[c];\n      };",
+    "new": "      const cell = (c) => tokens[c];",
     "why": "a cell past a short career line is read as empty: the line writes the cells it has where the C# throws on the first it lacks",
     "tests": [
       "test/systems/enemyExpansion/dex1_registry.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-DEX-A10-the-replacement-on-a-copy",
     "file": "src/systems/enemyExpansion/dexTables.js",
-    "old": "      const spec = existing ?? { name: careerName, base: null, edits: [] };\n      let dropped = false;",
-    "new": "      const spec0 = existing ?? { name: careerName, base: null, edits: [] };\n      const spec = { ...spec0, edits: [] };\n      let dropped = false;",
+    "old": "      const spec = existing ?? { name: careerName, base: null, edits: [] };",
+    "new": "      const spec0 = existing ?? { name: careerName, base: null, edits: [] };\n      const spec = { ...spec0, edits: [] };",
     "why": "a replacement's writes land on a copy, not the career already read: what the C# writes in place, before a throw or not, is lost",
     "tests": [
       "test/systems/enemyExpansion/dex1_registry.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "AUDIT-DEX-A6-the-names-unregistered",
     "file": "src/systems/enemyExpansion/dexInstall.js",
-    "old": "  _dropNameText = registerCustomEnemyNameText(dexEnemyNameText);",
-    "new": "  _dropNameText = null;",
+    "old": "  _dropNameText = registerCustomEnemyNameText(dexEnemyNameText); // AUDIT DEX A6: and in the player's language (the port's own door)",
+    "new": "  _dropNameText = null; // AUDIT DEX A6: and in the player's language (the port's own door)",
     "why": "the install hands the text manager no name of the fifty: every language reads the mod's English",
     "tests": [
       "test/systems/enemyExpansion/dex1_registry.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "AUDIT-DEX-A6-the-door-kept-after-reset",
     "file": "src/systems/enemyExpansion/dexInstall.js",
-    "old": "  _dropNameText?.();\n",
-    "new": "",
+    "old": "  _dropNameText?.();\n  _dropNameText = null;",
+    "new": "  _dropNameText = null;",
     "why": "the mod's reset lets its names' door stand: a reset game still names the fifty",
     "tests": [
       "test/systems/enemyExpansion/dex1_registry.test.js"

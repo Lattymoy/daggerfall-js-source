@@ -165,8 +165,8 @@
   {
     "name": "DEX-CORPSE-the-rows-corpse-left-unread",
     "file": "src/systems/enemyExpansion/dexTables.js",
-    "old": "  if (has('CorpseTextureArchive') && has('CorpseTextureRecord')) mobile.corpseTexture = { archive: int('CorpseTextureArchive'), record: int('CorpseTextureRecord') };",
-    "new": "  if (false) mobile.corpseTexture = { archive: int('CorpseTextureArchive'), record: int('CorpseTextureRecord') };",
+    "old": "  if (has('CorpseTextureArchive') && has('CorpseTextureRecord'))",
+    "new": "  if (false)",
     "tests": [
       "test/systems/enemyExpansion/rpt1026_items_dexcorpse.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "DEX-CORPSE-no-morrowind-body",
     "file": "src/systems/enemyExpansion/dexBodies.js",
-    "old": "  285: { creature: ['dremora'] },",
-    "new": "  285: { miss: 'none' },",
+    "old": "  285: { creature: ['dremora'] }, // Dremora Churl",
+    "new": "  285: { miss: 'none' }, // Dremora Churl",
     "tests": [
       "test/systems/enemyExpansion/rpt1026_items_dexcorpse.test.js"
     ]

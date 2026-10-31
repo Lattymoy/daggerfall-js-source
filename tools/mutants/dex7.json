@@ -112,8 +112,8 @@
   {
     "name": "DEX7-installed-twice",
     "file": "src/systems/enemyExpansion/dexBodies.js",
-    "old": "  if (_installed) return false;\n",
-    "new": "",
+    "old": "  if (_installed) return false;\n  _installed = true;",
+    "new": "  _installed = true;",
     "why": "a second install names every mobile twice",
     "tests": [
       "test/systems/enemyExpansion/dex7_bodies.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "DEX7-never-installed",
     "file": "src/systems/enemyExpansion/dexInstall.js",
-    "old": "  installDexBodies();   // DEX7: their Morrowind bodies - a creature's, a person's, or the sprite's\n",
-    "new": "",
+    "old": "  installDexBodies(); // DEX7: their Morrowind bodies - a creature's, a person's, or the sprite's\n  const loaded = latchModLoaded(DEX_VENDOR, on);",
+    "new": "  const loaded = latchModLoaded(DEX_VENDOR, on);",
     "why": "the fifty stand in no body - the table is never registered",
     "tests": [
       "test/systems/enemyExpansion/dex7_bodies.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "DEX7-the-wraith-unveiled",
     "file": "src/systems/enemyExpansion/dexBodies.js",
-    "old": "  273: { creature: ['ancestor_ghost'], veil: true },",
-    "new": "  273: { creature: ['ancestor_ghost'] },",
+    "old": "  273: { creature: ['ancestor_ghost'], veil: true }, // Gloom Wraith (Spectral): the classic wraith's",
+    "new": "  273: { creature: ['ancestor_ghost'] }, // Gloom Wraith (Spectral): the classic wraith's",
     "why": "the Gloom Wraith's ghost drawn solid, where the classic wraith's is seen through",
     "tests": [
       "test/systems/enemyExpansion/dex7_bodies.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "DEX7-the-troll-misnamed",
     "file": "src/systems/enemyExpansion/dexBodies.js",
-    "old": "  272: { creature: ['bm_ice_troll'] },",
-    "new": "  272: { creature: ['bm_troll'] },",
+    "old": "  272: { creature: ['bm_ice_troll'] }, // Troll: Bloodmoon's grahl, Morrowind's only troll",
+    "new": "  272: { creature: ['bm_troll'] }, // Troll: Bloodmoon's grahl, Morrowind's only troll",
     "why": "an id from memory - no master carries it, and the troll never stands",
     "tests": [
       "test/systems/enemyExpansion/dex7_bodies.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "DEX7-the-archer-rides-nothing",
     "file": "src/systems/enemyExpansion/dexBodies.js",
-    "old": "  398: { sprite: NO_RIDE },    // Archer Rider\n",
-    "new": "",
+    "old": "  398: { sprite: NO_RIDE }, // Archer Rider\n});",
+    "new": "});",
     "why": "one rider stands on foot",
     "tests": [
       "test/systems/enemyExpansion/dex7_bodies.test.js"

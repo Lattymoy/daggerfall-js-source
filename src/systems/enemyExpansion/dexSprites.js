@@ -27,7 +27,8 @@ import { APP_ROOT } from '../appRoot.js';
 
 export const DEX_OWN_ART = 'art/daggerfall-enemy-expansion/';
 export const DEX_REPAINTED_ART = 'art/daggerfall-enemy-expansion-repainted/';
-const artUrl = (dir, name) => new URL(`${dir}${name}.png`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
+const artUrl = (dir, name) =>
+  new URL(`${dir}${name}.png`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
 async function fetchPng(url) {
   const r = await fetch(url);
   if (!r.ok) throw new Error(`[DEX] ${url}: ${r.status}`);
@@ -42,17 +43,51 @@ async function fetchPng(url) {
 export function dexSpriteEntries({ fetchBytes = fetchPng } = {}) {
   const out = [];
   for (const [a, art] of Object.entries(DEX_ART)) {
-    const archive = Number(a), dir = art.from === 'repainted' ? DEX_REPAINTED_ART : DEX_OWN_ART;
+    const archive = Number(a),
+      dir = art.from === 'repainted' ? DEX_REPAINTED_ART : DEX_OWN_ART;
     /** The picture `name` from its one place: rebuilt where derived.json names it, else the file. */
-    const source = (name) => (DERIVED[name] ? { build: (ctx) => buildDerivedPicture(DERIVED[name], ctx.classicRgba) } : { load: () => fetchBytes(artUrl(dir, name)) });
-    art.frames.forEach((n, record) => {   // as DFU imports them: frame 0 to the first one missing
+    const source = (name) =>
+      DERIVED[name]
+        ? { build: (ctx) => buildDerivedPicture(DERIVED[name], ctx.classicRgba) }
+        : { load: () => fetchBytes(artUrl(dir, name)) };
+    art.frames.forEach((n, record) => {
+      // as DFU imports them: frame 0 to the first one missing
       const maps = new Set(art.emissive?.[record] ?? []);
       for (let frame = 0; frame < n; frame++) {
         const name = `${archive}_${record}-${frame}`;
-        out.push({ archive, record, frame, map: 'Albedo', standIn: true, readOnly: true, fileName: name, ...source(name) });
+        out.push({
+          archive,
+          record,
+          frame,
+          map: 'Albedo',
+          standIn: true,
+          readOnly: true,
+          fileName: name,
+          ...source(name),
+        });
         // the emission: the frame's own map, or - the archive's xml asking for emission - its albedo, lit
-        if (maps.has(frame)) out.push({ archive, record, frame, map: 'Emission', standIn: true, readOnly: true, fileName: `${name}_Emission`, ...source(`${name}_Emission`) });
-        else if (art.emission) out.push({ archive, record, frame, map: 'Emission', standIn: true, readOnly: true, fileName: `${name}_Emission`, ...source(name) });
+        if (maps.has(frame))
+          out.push({
+            archive,
+            record,
+            frame,
+            map: 'Emission',
+            standIn: true,
+            readOnly: true,
+            fileName: `${name}_Emission`,
+            ...source(`${name}_Emission`),
+          });
+        else if (art.emission)
+          out.push({
+            archive,
+            record,
+            frame,
+            map: 'Emission',
+            standIn: true,
+            readOnly: true,
+            fileName: `${name}_Emission`,
+            ...source(name),
+          });
       }
     });
   }
@@ -75,4 +110,6 @@ export function installDexSprites(opts = {}) {
   return addVendorTextures(dexSpriteEntries(opts));
 }
 /** The test seam: the next install registers again. */
-export function _resetDexSprites() { _installed = false; }
+export function _resetDexSprites() {
+  _installed = false;
+}

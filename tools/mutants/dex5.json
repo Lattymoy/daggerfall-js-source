@@ -42,8 +42,8 @@
   {
     "name": "DEX5-the-loot-kept",
     "file": "src/systems/enemyExpansion/dexTroll.js",
-    "old": "  f.corpseDisabled = true;   // PostParentedSetup",
-    "new": "  // f.corpseDisabled = true;   // PostParentedSetup",
+    "old": "  f.corpseDisabled = true; // PostParentedSetup: no loot - every host's loot readers refuse a disabled body",
+    "new": "  // f.corpseDisabled = true;   // PostParentedSetup: no loot - every host's loot readers refuse a disabled body",
     "why": "the troll's body is searched, where PostParentedSetup destroyed its loot",
     "tests": [
       "test/systems/enemyExpansion/dex5_troll.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "DEX5-the-cheat-ignored",
     "file": "src/systems/enemyExpansion/dexTroll.js",
-    "old": "if (ended || rising || !host.runs(f) || cheat()) return;",
-    "new": "if (ended || rising || !host.runs(f)) return;",
+    "old": "      if (ended || rising || !host.runs(f) || cheat()) return;",
+    "new": "      if (ended || rising || !host.runs(f)) return;",
     "why": "Cheat.DisableTrollRespawn changes nothing",
     "tests": [
       "test/systems/enemyExpansion/dex5_troll.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "DEX5-every-machine-counts",
     "file": "src/systems/enemyExpansion/dexTroll.js",
-    "old": "if (ended || rising || !host.runs(f) || cheat()) return;",
-    "new": "if (ended || rising || cheat()) return;",
+    "old": "      if (ended || rising || !host.runs(f) || cheat()) return;",
+    "new": "      if (ended || rising || cheat()) return;",
     "why": "a copy of another machine's body rises here too - two trolls",
     "tests": [
       "test/systems/enemyExpansion/dex5_troll.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "DEX5-rises-in-silence",
     "file": "src/systems/enemyExpansion/dexTroll.js",
-    "old": "      host.say(t('dex.troll.recovered',",
-    "new": "      void (t('dex.troll.recovered',",
+    "old": "        host.say(\n          t('dex.troll.recovered', 'The {name} has recovered from its injuries.', {\n            name: getLocalizedEnemyName(f.mobileType, enemyDisplayName(f.mobileType)),\n          }),\n        );",
+    "new": "        void t('dex.troll.recovered', 'The {name} has recovered from its injuries.', {\n          name: getLocalizedEnemyName(f.mobileType, enemyDisplayName(f.mobileType)),\n        });",
     "why": "the HUD never says the troll recovered",
     "tests": [
       "test/systems/enemyExpansion/dex5_troll.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "DEX5-never-burns",
     "file": "src/systems/enemyExpansion/dexTroll.js",
-    "old": "      const r = applySpell(spell, casterLevel, entity, sinks, Math.random, caster);\n      if (entity.health <= 0) burn();",
-    "new": "      const r = applySpell(spell, casterLevel, entity, sinks, Math.random, caster);",
+    "old": "      if (entity.health <= 0) burn();\n      return r;",
+    "new": "      return r;",
     "why": "a spell that brings the body to 0 leaves it lying",
     "tests": [
       "test/systems/enemyExpansion/dex5_troll.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "DEX5-a-copy-burns",
     "file": "src/systems/enemyExpansion/dexTroll.js",
-    "old": "if (!host.runs(f)) { host.send(f, spell, casterLevel); return null; }",
-    "new": "if (!host.runs(f)) { host.send(f, spell, casterLevel); }",
+    "old": "        return null;\n      } // DEX5b: a copy's - the bundle goes to the body its runner holds",
+    "new": "      } // DEX5b: a copy's - the bundle goes to the body its runner holds",
     "why": "a body another machine runs burns here too - beside the bundle sent to its runner",
     "tests": [
       "test/systems/enemyExpansion/dex5_troll.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "DEX5-hurt-unfelt",
     "file": "src/systems/enemyExpansion/dexTroll.js",
-    "old": "if (n > 0) entity.health = Math.max(0, entity.health - n);",
-    "new": "if (n > 0) entity.health = Math.max(0, entity.health);",
+    "old": "      if (n > 0) entity.health = Math.max(0, entity.health - n);",
+    "new": "      if (n > 0) entity.health = Math.max(0, entity.health);",
     "why": "the corpse's entity takes no damage",
     "tests": [
       "test/systems/enemyExpansion/dex5_troll.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "DEX5-a-tougher-body",
     "file": "src/systems/enemyExpansion/dexTroll.js",
-    "old": "isPlayer: false, isClass: false, level: 0, maxHealth: 1, health: 1,",
-    "new": "isPlayer: false, isClass: false, level: 0, maxHealth: 100, health: 100,",
+    "old": "    maxHealth: 1,\n    health: 1,",
+    "new": "    maxHealth: 100,\n    health: 100,",
     "why": "the corpse's entity is not BestiaryTrollCorpseEntity's 1 of 1",
     "tests": [
       "test/systems/enemyExpansion/dex5_troll.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "DEX5-no-later-round",
     "file": "src/systems/enemyExpansion/dexTroll.js",
-    "old": "      runMagicRoundsFor(entity, from, to, { sinks });\n",
-    "new": "",
+    "old": "      runMagicRoundsFor(entity, from, to, { sinks });\n      if (entity.health <= 0) burn();",
+    "new": "      if (entity.health <= 0) burn();",
     "why": "a lasting effect's later rounds never reach the body",
     "tests": [
       "test/systems/enemyExpansion/dex5_troll.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "DEX5-the-champion-named",
     "file": "src/systems/enemyExpansion/dexTroll.js",
-    "old": "    sayEnemyDied(host.say, f.mobileType);",
-    "new": "    sayEnemyDied(host.say, f.mobileType, f.entity);",
+    "old": "    sayEnemyDied(host.say, f.mobileType); // the corpse's entity knows its MobileID alone (GetLocalizedEnemyName(MobileID)) - no champion's name",
+    "new": "    sayEnemyDied(host.say, f.mobileType, f.entity); // the corpse's entity knows its MobileID alone (GetLocalizedEnemyName(MobileID)) - no champion's name",
     "why": "the burn names the dead troll's champion title, where the corpse knows its MobileID alone",
     "tests": [
       "test/systems/enemyExpansion/dex5_troll.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "DEX5-a-quickload-forgets",
     "file": "src/systems/enemyExpansion/dexTroll.js",
-    "old": "    else _pending.set(key, respawnBuffer);",
-    "new": "",
+    "old": "    else _pending.set(key, respawnBuffer);\n  }",
+    "new": "  }",
     "why": "a body stood after its record (a quickload's order) starts its ten seconds over",
     "tests": [
       "test/systems/enemyExpansion/dex5_troll.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "DEX5-no-time-restored",
     "file": "src/systems/enemyExpansion/dexTroll.js",
-    "old": "!Number.isFinite(respawnBuffer) || respawnBuffer <= 0) continue;",
-    "new": "!Number.isFinite(respawnBuffer) || respawnBuffer < 0) continue;",
+    "old": "    if (typeof key !== 'string' || !Number.isFinite(respawnBuffer) || respawnBuffer <= 0) continue;",
+    "new": "    if (typeof key !== 'string' || !Number.isFinite(respawnBuffer) || respawnBuffer < 0) continue;",
     "why": "a body saved with no time left is set again, where RestoreSaveData skips it",
     "tests": [
       "test/systems/enemyExpansion/dex5_troll.test.js"
@@ -172,8 +172,8 @@
   {
     "name": "DEX5-never-installed",
     "file": "src/systems/enemyExpansion/dexInstall.js",
-    "old": "    installDexTroll(DEX_VENDOR);\n",
-    "new": "",
+    "old": "    installDexTroll(DEX_VENDOR);\n    // DEX3: the encounter tables, picked on the dungeon's transition and PlayerGPS's events (BestiaryMod.cs:1728-1871)",
+    "new": "    // DEX3: the encounter tables, picked on the dungeon's transition and PlayerGPS's events (BestiaryMod.cs:1728-1871)",
     "why": "the prefab is never on the door - the troll's body is a plain corpse",
     "tests": [
       "test/systems/enemyExpansion/dex5_troll.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "DEX5b-a-copy-sends-nothing",
     "file": "src/systems/enemyExpansion/dexTroll.js",
-    "old": "if (!host.runs(f)) { host.send(f, spell, casterLevel); return null; }",
-    "new": "if (!host.runs(f)) { return null; }",
+    "old": "        host.send(f, spell, casterLevel);\n        return null;",
+    "new": "        return null;",
     "why": "a peer's missile on the body reaches nobody",
     "tests": [
       "test/systems/enemyExpansion/dex5_troll.test.js"
@@ -428,8 +428,8 @@
   {
     "name": "AUDIT-DEX-LD-pending-never-cleared",
     "file": "src/systems/enemyExpansion/dexTroll.js",
-    "old": "export function restoreTrollSaveData(rec) {\n  _pending.clear();",
-    "new": "export function restoreTrollSaveData(rec) {",
+    "old": "  _pending.clear();\n  for (const { key, respawnBuffer } of Array.isArray(rec?.activeCorpses) ? rec.activeCorpses : []) {",
+    "new": "  for (const { key, respawnBuffer } of Array.isArray(rec?.activeCorpses) ? rec.activeCorpses : []) {",
     "why": "a load's pending times outlive it and land on a later body",
     "tests": [
       "test/systems/enemyExpansion/dex5_audit.test.js",
@@ -461,8 +461,8 @@
   {
     "name": "AUDIT-DEX-D8-refused-ends",
     "file": "src/systems/enemyExpansion/dexTroll.js",
-    "old": "if (!stood) { c.respawnBuffer = TROLL_CORPSE.respawnTime; return; }",
-    "new": "if (!stood) { end(); return; }",
+    "old": "          c.respawnBuffer = TROLL_CORPSE.respawnTime;",
+    "new": "          end();",
     "why": "a refused stand ends the body's countdown for good",
     "tests": [
       "test/systems/enemyExpansion/dex5_audit.test.js",

@@ -32,8 +32,8 @@
   {
     "name": "DEX2-the-albedo-never-the-emission",
     "file": "src/systems/enemyExpansion/dexSprites.js",
-    "old": "        else if (art.emission) out.push(",
-    "new": "        else if (false) out.push(",
+    "old": "        else if (art.emission)",
+    "new": "        else if (false)",
     "why": "an emissive archive's frame with no map of its own goes unlit",
     "tests": [
       "test/systems/enemyExpansion/dex2_sprites.test.js"

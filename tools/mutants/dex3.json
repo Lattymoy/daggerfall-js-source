@@ -22,7 +22,7 @@
   {
     "name": "DEX3-the-seed-uncast",
     "file": "src/systems/enemyExpansion/dexEncounters.js",
-    "old": "    srand((unknown2 & 0xffff) ^ ((region & 0xff) << 8));   // (ushort)Unknown2 ^ ((byte)region << 8)",
+    "old": "    srand((unknown2 & 0xffff) ^ ((region & 0xff) << 8)); // (ushort)Unknown2 ^ ((byte)region << 8)",
     "new": "    srand(unknown2 ^ (region << 8));",
     "why": "the C#'s ushort and byte casts dropped: a dungeon's seed past them picks another table",
     "tests": [
@@ -32,8 +32,8 @@
   {
     "name": "DEX3-the-generator-left-moved",
     "file": "src/systems/enemyExpansion/dexEncounters.js",
-    "old": "    setSeed(was);\n",
-    "new": "",
+    "old": "    setSeed(was);\n    write(index, tables[pick]);",
+    "new": "    write(index, tables[pick]);",
     "why": "the dungeon's pick leaves the shared stream moved, inside the population",
     "tests": [
       "test/systems/enemyExpansion/dex3_encounters.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "DEX3-the-exit-picks-nothing",
     "file": "src/systems/enemyExpansion/dexEncounters.js",
-    "old": "      exitLocationRect: selectClimateTables,",
-    "new": "      exitLocationRect: () => {},",
+    "old": "      exitLocationRect: selectClimateTables, // PlayerGPS_OnExitLocationRect (:1831-1834), at CurrentClimateIndex",
+    "new": "      exitLocationRect: () => {}, // PlayerGPS_OnExitLocationRect (:1831-1834), at CurrentClimateIndex",
     "why": "leaving a town re-picks no day or night (PlayerGPS_OnExitLocationRect)",
     "tests": [
       "test/systems/enemyExpansion/dex3_encounters.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "DEX3-the-entry-picks-the-day",
     "file": "src/systems/enemyExpansion/dexEncounters.js",
-    "old": "if (band) selectTable(band[0]); },",
-    "new": "if (band) selectTable(band[1]); },",
+    "old": "        if (band) selectTable(band[0]);",
+    "new": "        if (band) selectTable(band[1]);",
     "why": "entering a town picks the day's table, not its city night",
     "tests": [
       "test/systems/enemyExpansion/dex3_encounters.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "DEX3-a-broken-table-written",
     "file": "src/systems/enemyExpansion/dexEncounters.js",
-    "old": "  const write = (index, table) => { if (table.enemyIds) written.set(index, table.enemyIds); };",
-    "new": "  const write = (index, table) => { written.set(index, table.enemyIds); };",
+    "old": "    if (table.enemyIds) written.set(index, table.enemyIds);",
+    "new": "    written.set(index, table.enemyIds);",
     "why": "a pick on a table whose ids did not parse overwrites the last write - the C#'s throw writes nothing",
     "tests": [
       "test/systems/enemyExpansion/dex3_encounters.test.js"
@@ -72,7 +72,7 @@
   {
     "name": "DEX3-a-broken-table-a-choice",
     "file": "src/systems/enemyExpansion/dexEncounters.js",
-    "old": "      const ids = tablesAt(index).map((t) => t.enemyIds).filter(Boolean);",
+    "old": "      const ids = tablesAt(index)\n        .map((t) => t.enemyIds)\n        .filter(Boolean);",
     "new": "      const ids = tablesAt(index).map((t) => t.enemyIds);",
     "why": "a table no pick can write offered to a roll every machine agrees on",
     "tests": [
@@ -212,8 +212,8 @@
   {
     "name": "DEX3-the-install-deaf-to-the-gps",
     "file": "src/systems/enemyExpansion/dexInstall.js",
-    "old": "    onPlayerGpsEvents(encounters.gps);\n",
-    "new": "",
+    "old": "    onPlayerGpsEvents(encounters.gps);\n    // QuestMachine.FoesTable.AddIntoTable (:1344): the new names the Foes table lacks, when it loads",
+    "new": "    // QuestMachine.FoesTable.AddIntoTable (:1344): the new names the Foes table lacks, when it loads",
     "why": "loaded, the climate tables are never picked",
     "tests": [
       "test/systems/enemyExpansion/dex3_encounters.test.js"
@@ -232,7 +232,7 @@
   {
     "name": "DEX3-a-default-unsaid",
     "file": "src/systems/enemyExpansion/dexTables.js",
-    "old": "      if (!(read.byIndex.get(index)?.length)) log('error', `[DEX] Encounter index '${name}' has no tables`);",
+    "old": "      if (!read.byIndex.get(index)?.length) log('error', `[DEX] Encounter index '${name}' has no tables`);",
     "new": "      if (false) log('error', `[DEX] Encounter index '${name}' has no tables`);",
     "why": "a default moved off its index leaves it empty in silence",
     "tests": [
@@ -332,8 +332,8 @@
   {
     "name": "AUDIT-DEX-C8-the-names-ordinal",
     "file": "src/systems/enemyExpansion/dexTables.js",
-    "old": "  const tables = new IgnoreCaseMap(), byIndex = new Map();",
-    "new": "  const tables = new Map(), byIndex = new Map();",
+    "old": "  const tables = new IgnoreCaseMap(),",
+    "new": "  const tables = new Map(),",
     "why": "a table's name matched case for case: a line in another case adds a second table where the C#'s OrdinalIgnoreCase dictionary replaces the first",
     "tests": [
       "test/systems/enemyExpansion/dex3_encounters.test.js"
@@ -342,8 +342,8 @@
   {
     "name": "AUDIT-DEX-C8-the-header-case-sensitive",
     "file": "src/systems/enemyExpansion/dexTables.js",
-    "old": "    const hasTableIndices = fields[1].toLowerCase() === 'table indices';",
-    "new": "    const hasTableIndices = fields[1] === 'Table Indices';",
+    "old": "    const hasTableIndices = fields[1].toLowerCase() === 'table indices'; // Equals(..., InvariantCultureIgnoreCase)",
+    "new": "    const hasTableIndices = fields[1] === 'Table Indices'; // Equals(..., InvariantCultureIgnoreCase)",
     "why": "the header's column read case for case: a file whose header says TABLE INDICES reads its indices as ids and refuses every new table",
     "tests": [
       "test/systems/enemyExpansion/dex3_encounters.test.js"

@@ -2,8 +2,8 @@
   {
     "name": "MUDEX1-its-tables-never-read",
     "file": "src/systems/enemyExpansion/dexInstall.js",
-    "old": "const dbAssets = (extension, mudex) => [...Object.entries(DEX_TABLE_TEXT), ...(mudex ? Object.entries(MUDEX_TABLE_TEXT) : [])]",
-    "new": "const dbAssets = (extension, mudex) => [...Object.entries(DEX_TABLE_TEXT), ...([])]",
+    "old": "  [...Object.entries(DEX_TABLE_TEXT), ...(mudex ? Object.entries(MUDEX_TABLE_TEXT) : [])]",
+    "new": "  [...Object.entries(DEX_TABLE_TEXT), ...[]]",
     "why": "MUDEX loaded and never read: the bear, the Goblin and the crypt are DEX's alone",
     "tests": [
       "test/systems/enemyExpansion/mudex1.test.js",
@@ -13,8 +13,8 @@
   {
     "name": "MUDEX1-its-tables-before-DEX-s",
     "file": "src/systems/enemyExpansion/dexInstall.js",
-    "old": "const dbAssets = (extension, mudex) => [...Object.entries(DEX_TABLE_TEXT), ...(mudex ? Object.entries(MUDEX_TABLE_TEXT) : [])]",
-    "new": "const dbAssets = (extension, mudex) => [...(mudex ? Object.entries(MUDEX_TABLE_TEXT) : []), ...Object.entries(DEX_TABLE_TEXT)]",
+    "old": "  [...Object.entries(DEX_TABLE_TEXT), ...(mudex ? Object.entries(MUDEX_TABLE_TEXT) : [])]",
+    "new": "  [...(mudex ? Object.entries(MUDEX_TABLE_TEXT) : []), ...Object.entries(DEX_TABLE_TEXT)]",
     "why": "MUDEX read before the mod it depends on: DEX's lines land over MUDEX's, and its restated defaults are DEX's again",
     "tests": [
       "test/systems/enemyExpansion/mudex1.test.js"
@@ -23,8 +23,8 @@
   {
     "name": "MUDEX1-loaded-without-Meaner-Monsters",
     "file": "src/systems/enemyExpansion/dexInstall.js",
-    "old": "latchModLoaded(MUDEX_VENDOR, !!on && !!meaner)",
-    "new": "latchModLoaded(MUDEX_VENDOR, !!on)",
+    "old": "  const mudex = latchModLoaded(MUDEX_VENDOR, !!on && !!meaner); // MUDEX1: loaded for the game with the mod it depends on",
+    "new": "  const mudex = latchModLoaded(MUDEX_VENDOR, !!on); // MUDEX1: loaded for the game with the mod it depends on",
     "why": "MUDEX loads with Meaner Monsters off: a player who never chose the meaner monsters gets them",
     "tests": [
       "test/systems/enemyExpansion/mudex1.test.js"
@@ -33,8 +33,8 @@
   {
     "name": "MUDEX1-loaded-without-DEX",
     "file": "src/systems/enemyExpansion/dexInstall.js",
-    "old": "latchModLoaded(MUDEX_VENDOR, !!on && !!meaner)",
-    "new": "latchModLoaded(MUDEX_VENDOR, !!meaner)",
+    "old": "  const mudex = latchModLoaded(MUDEX_VENDOR, !!on && !!meaner); // MUDEX1: loaded for the game with the mod it depends on",
+    "new": "  const mudex = latchModLoaded(MUDEX_VENDOR, !!meaner); // MUDEX1: loaded for the game with the mod it depends on",
     "why": "MUDEX loads with DEX off - a mod without the one it requires",
     "tests": [
       "test/systems/enemyExpansion/mudex1.test.js"
@@ -54,8 +54,8 @@
   {
     "name": "MUDEX1-reset-keeps-the-latch",
     "file": "src/systems/enemyExpansion/dexInstall.js",
-    "old": "  latchModLoaded(MUDEX_VENDOR, false);\n",
-    "new": "",
+    "old": "  latchModLoaded(MUDEX_VENDOR, false);\n  _installed = false;",
+    "new": "  _installed = false;",
     "why": "a reset leaves MUDEX loaded: the next read is MUDEX's whatever was installed",
     "tests": [
       "test/systems/enemyExpansion/mudex1.test.js"

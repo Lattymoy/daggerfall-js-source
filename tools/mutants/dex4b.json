@@ -42,8 +42,8 @@
   {
     "name": "DEX4b-the-effect-last",
     "file": "src/systems/enemyExpansion/dexCombat.js",
-    "old": "      if (classicArm === arm || customEffect === arm) { runMonsterHitArm(arm, attacker, target, damage, deps); return; }",
-    "new": "      if (classicArm === arm) { runMonsterHitArm(arm, attacker, target, damage, deps); return; }",
+    "old": "      if (classicArm === arm || customEffect === arm) {",
+    "new": "      if (classicArm === arm) {",
     "why": "a row's OnHit 1-9 never read - the Lizard Man touches with nothing",
     "tests": [
       "test/systems/enemyExpansion/dex4b_combat.test.js"
@@ -53,7 +53,7 @@
     "name": "DEX4b-the-classic-wins",
     "file": "src/systems/enemyExpansion/dexCombat.js",
     "old": "    for (let arm = 1; arm <= MONSTER_HIT_ARMS; arm++) {",
-    "new": "    if (classicArm) { runMonsterHitArm(classicArm, attacker, target, damage, deps); return; }\n    for (let arm = 1; arm <= MONSTER_HIT_ARMS; arm++) {",
+    "new": "    if (classicArm) {\n      runMonsterHitArm(classicArm, attacker, target, damage, deps);\n      return;\n    }\n    for (let arm = 1; arm <= MONSTER_HIT_ARMS; arm++) {",
     "why": "the classic arm before the chain - a GiantBat whose row names 1 keeps its own, where the C#'s chain gives it the Rat's",
     "tests": [
       "test/systems/enemyExpansion/dex4b_combat.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "DEX4b-the-spells-shifted",
     "file": "src/systems/enemyExpansion/dexCombat.js",
-    "old": "export const DEX_HIT_SPELLS = Object.freeze(new Map([[10, 500], [11, 23], [12, 501], [13, 502]]));",
-    "new": "export const DEX_HIT_SPELLS = Object.freeze(new Map([[10, 500], [11, 501], [12, 502], [13, 503]]));",
+    "old": "    [11, 23],\n    [12, 501],\n    [13, 502],",
+    "new": "    [11, 501],\n    [12, 502],\n    [13, 503],",
     "why": "the Gloom Wraith readies Daemon Touch, not Silence",
     "tests": [
       "test/systems/enemyExpansion/dex4b_combat.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "DEX4b-the-install-registers-no-hit",
     "file": "src/systems/enemyExpansion/dexInstall.js",
-    "old": "    registerFormulaOverride('onMonsterHit', combat.monsterHit);\n",
-    "new": "",
+    "old": "    registerFormulaOverride('onMonsterHit', combat.monsterHit);\n    registerSkeletalTarget(combat.skeletal);",
+    "new": "    registerSkeletalTarget(combat.skeletal);",
     "why": "loaded, the Blood Spider bites with nothing",
     "tests": [
       "test/systems/enemyExpansion/dex4b_combat.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "DEX4b-the-install-forces-no-gender",
     "file": "src/systems/enemyExpansion/dexInstall.js",
-    "old": "    registerForcedGender(combat.gender);\n",
-    "new": "",
+    "old": "    registerForcedGender(combat.gender);\n    // DEX6: EnemyEntity.AssignEnemyEquipment (:194) - its copy of RRI's class arm while realisticEnemyEquipment is on,",
+    "new": "    // DEX6: EnemyEntity.AssignEnemyEquipment (:194) - its copy of RRI's class arm while realisticEnemyEquipment is on,",
     "why": "loaded, the Druid groans as the roll says",
     "tests": [
       "test/systems/enemyExpansion/dex4b_combat.test.js"
@@ -194,8 +194,8 @@
   {
     "name": "AUDIT-DEX-C2-the-mod-asks-the-career",
     "file": "src/systems/enemyExpansion/dexCombat.js",
-    "old": "    skeletal: (target) => target?.mobileType === SKELETAL_WARRIOR_INDEX || propsOf(target?.mobileType)?.isSkeletal === true,",
-    "new": "    skeletal: (target) => target?.careerIndex === SKELETAL_WARRIOR_INDEX || propsOf(target?.mobileType)?.isSkeletal === true,",
+    "old": "      target?.mobileType === SKELETAL_WARRIOR_INDEX || propsOf(target?.mobileType)?.isSkeletal === true,",
+    "new": "      target?.careerIndex === SKELETAL_WARRIOR_INDEX || propsOf(target?.mobileType)?.isSkeletal === true,",
     "why": "the mod's override asks the career where it asks the ID: the Barbarian rides the Skeletal Warrior's slot under it",
     "tests": [
       "test/systems/enemyExpansion/dex4b_combat.test.js"

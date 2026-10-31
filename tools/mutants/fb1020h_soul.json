@@ -44,8 +44,8 @@
   {
     "name": "SOUL-LAW-ids-classic-kept",
     "file": "src/systems/enemyExpansion/dexIds.js",
-    "old": "if (!isClassicEnemyId(id)) ids.add(id);",
-    "new": "ids.add(id);",
+    "old": "        if (!isClassicEnemyId(id)) ids.add(id);",
+    "new": "        ids.add(id);",
     "tests": [
       "test/systems/item/fb1020h_soul.test.js"
     ],
@@ -54,8 +54,8 @@
   {
     "name": "SOUL-LAW-ids-monsters-only",
     "file": "src/systems/enemyExpansion/dexIds.js",
-    "old": "if (!name.endsWith('.mdb.csv')) continue;",
-    "new": "if (!name.startsWith('MonsterBase')) continue;",
+    "old": "      if (!name.endsWith('.mdb.csv')) continue;",
+    "new": "      if (!name.startsWith('MonsterBase')) continue;",
     "tests": [
       "test/systems/item/fb1020h_soul.test.js"
     ],
@@ -64,8 +64,8 @@
   {
     "name": "SOUL-LAW-ids-column",
     "file": "src/systems/enemyExpansion/dexIds.js",
-    "old": "const col = table.column('ID');",
-    "new": "const col = table.column('Level');",
+    "old": "      const col = table.column('ID');",
+    "new": "      const col = table.column('Level');",
     "tests": [
       "test/systems/item/fb1020h_soul.test.js"
     ],

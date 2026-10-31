@@ -2,8 +2,8 @@
   {
     "name": "DEX6-guard-unread",
     "file": "src/systems/enemyExpansion/dexEquipment.js",
-    "old": "  if (name === 'guard') return M.Knight_CityWatch;\n",
-    "new": "",
+    "old": "  if (name === 'guard') return M.Knight_CityWatch;\n  return CLASS_BY_NAME.get(name) ?? null;",
+    "new": "  return CLASS_BY_NAME.get(name) ?? null;",
     "why": "the Guard's table names no class - the mod's guard kitted as a class the arm does not know",
     "tests": [
       "test/systems/enemyExpansion/dex6_equipment.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "DEX6-no-table-unknown",
     "file": "src/systems/enemyExpansion/dexEquipment.js",
-    "old": "  if (!table) return mobileId;",
-    "new": "  if (!table) return null;",
+    "old": "  if (!table) return mobileId; // `return mobileId == (int)classType`",
+    "new": "  if (!table) return null; // `return mobileId == (int)classType`",
     "why": "a row with no table is no class - every classic class kitted as the unknown",
     "tests": [
       "test/systems/enemyExpansion/dex6_equipment.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "DEX6-citywatch-by-name",
     "file": "src/systems/enemyExpansion/dexEquipment.js",
-    "old": "id >= M.Mage && id <= M.Knight && name !== 'Knight_CityWatch'",
-    "new": "id >= M.Mage && id <= M.Knight_CityWatch",
+    "old": "    .filter(([name, id]) => id >= M.Mage && id <= M.Knight && name !== 'Knight_CityWatch')",
+    "new": "    .filter(([name, id]) => id >= M.Mage && id <= M.Knight_CityWatch)",
     "why": "the City Watch answers to its own name - HasClassTable asks it by \"Guard\" alone",
     "tests": [
       "test/systems/enemyExpansion/dex6_equipment.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "DEX6-coin-for-plate",
     "file": "src/systems/enemyExpansion/dexEquipment.js",
-    "old": "if (!rriModule('newArmor') || (forbidden & ARMOR_FLAG.Plate) === 0 || coinFlip(rolls)) return",
-    "new": "if (!rriModule('newArmor') || coinFlip(rolls)) return",
+    "old": "  if (!rriModule('newArmor') || (forbidden & ARMOR_FLAG.Plate) === 0 || coinFlip(rolls))\n    return CLASSIC_PIECE[slot] ?? -1;",
+    "new": "  if (!rriModule('newArmor') || coinFlip(rolls)) return CLASSIC_PIECE[slot] ?? -1;",
     "why": "a career that allows plate throws the coin and wears chain",
     "tests": [
       "test/systems/enemyExpansion/dex6_equipment.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "DEX6-newarmor-unread",
     "file": "src/systems/enemyExpansion/dexEquipment.js",
-    "old": "if (!rriModule('newArmor') || (forbidden",
-    "new": "if ((forbidden",
+    "old": "  if (!rriModule('newArmor') || (forbidden & ARMOR_FLAG.Plate) === 0 || coinFlip(rolls))\n    return CLASSIC_PIECE[slot] ?? -1;",
+    "new": "  if ((forbidden & ARMOR_FLAG.Plate) === 0 || coinFlip(rolls)) return CLASSIC_PIECE[slot] ?? -1;",
     "why": "the custom sets worn with newArmor off",
     "tests": [
       "test/systems/enemyExpansion/dex6_equipment.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "DEX6-none-is-classic",
     "file": "src/systems/enemyExpansion/dexEquipment.js",
-    "old": "  if ((forbidden & ARMOR_FLAG.Leather) === 0) return LEATHER_PIECE[slot] ?? -1;\n  return -1;",
-    "new": "  if ((forbidden & ARMOR_FLAG.Leather) === 0) return LEATHER_PIECE[slot] ?? -1;\n  return CLASSIC_PIECE[slot] ?? -1;",
+    "old": "  return -1;",
+    "new": "  return CLASSIC_PIECE[slot] ?? -1;",
     "why": "a career that forbids all three wears the classic piece where the mod mints none",
     "tests": [
       "test/systems/enemyExpansion/dex6_equipment.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "DEX6-career-unread",
     "file": "src/systems/enemyExpansion/dexEquipment.js",
-    "old": "dexArmorTemplateIndex(slot, career, rolls),",
-    "new": "dexArmorTemplateIndex(slot, null, rolls),",
+    "old": "    armorTemplate: (slot, { career }, rolls) => dexArmorTemplateIndex(slot, career, rolls),",
+    "new": "    armorTemplate: (slot, { career }, rolls) => dexArmorTemplateIndex(slot, null, rolls),",
     "why": "the kit's armor reads no career - a class that forbids plate wears it",
     "tests": [
       "test/systems/enemyExpansion/dex6_equipment.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "DEX6-delegate-untaken",
     "file": "src/systems/enemyExpansion/dexInstall.js",
-    "old": "    setEnemyEquipmentAssigner(createDexEquipmentAssigner(dexProperties));\n",
-    "new": "",
+    "old": "    setEnemyEquipmentAssigner(createDexEquipmentAssigner(dexProperties));\n    // DEX5: the troll's corpse prefab (1618_20 - AssetInjection reads a loaded mod's bundle alone) and the record DFU's",
+    "new": "    // DEX5: the troll's corpse prefab (1618_20 - AssetInjection reads a loaded mod's bundle alone) and the record DFU's",
     "why": "the mod loaded and RRI's own arm still kits its classes",
     "tests": [
       "test/systems/enemyExpansion/dex6_equipment.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "DEX6-seam-keeps-it",
     "file": "src/systems/enemyExpansion/dexInstall.js",
-    "old": "  if (_replacedAssigner !== undefined) setEnemyEquipmentAssigner(_replacedAssigner);\n",
-    "new": "",
+    "old": "  if (_replacedAssigner !== undefined) setEnemyEquipmentAssigner(_replacedAssigner);\n  _replacedAssigner = undefined;",
+    "new": "  _replacedAssigner = undefined;",
     "why": "the test seam leaves the mod's delegate standing",
     "tests": [
       "test/systems/enemyExpansion/dex6_equipment.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "AUDIT-DEX-E1-secondary-carried",
     "file": "src/systems/enemyExpansion/dexEquipment.js",
-    "old": "  equipsSecondary: true,",
-    "new": "  equipsSecondary: false,",
+    "old": "    equipsSecondary: true,",
+    "new": "    equipsSecondary: false,",
     "why": "the copy carries its second weapon as RRI's arm does - DEX_RRICompat.cs:333/:385 put it on",
     "tests": [
       "test/systems/enemyExpansion/dex6_equipment.test.js"
