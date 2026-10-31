@@ -488,8 +488,8 @@
   {
     "name": "QA3A-JOKE-the-context",
     "file": "src/systems/quest/questMacros.js",
-    "old": "      const v = getMacroValue(tok, mcp, hooks);\n      if (typeof v",
-    "new": "      const v = getMacroValue(tok, null, hooks);\n      if (typeof v",
+    "old": "      const v = getMacroValue(tok, mcp, hooks);",
+    "new": "      const v = getMacroValue(tok, null, hooks);",
     "tests": [
       "test/systems/quest/questaudit3_acts.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "QA3A-JOKE-the-miss",
     "file": "src/systems/quest/questMacros.js",
-    "old": "    if (typeof joke !== 'string') return null;\n    return joke.replace(",
-    "new": "    return joke.replace(",
+    "old": "    if (typeof joke !== 'string') return null;\n    return joke.replace(/%[a-zA-Z][a-zA-Z0-9]*/g, (tok, at) => {",
+    "new": "    return joke.replace(/%[a-zA-Z][a-zA-Z0-9]*/g, (tok, at) => {",
     "tests": [
       "test/systems/quest/questaudit3_acts.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "QA3A-DI-the-fallback",
     "file": "src/systems/quest/questMacros.js",
-    "old": "      if (!place) {\n        for (const r of quest.resources?.values?.() ?? []) {",
-    "new": "      if (false) {\n        for (const r of quest.resources?.values?.() ?? []) {",
+    "old": "      if (!place) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/quest/questaudit3_acts.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "QA3A-DI-the-referenced-first",
     "file": "src/systems/quest/questMacros.js",
-    "old": "      let place = quest.lastPlaceReferenced;\n      if (!place) {",
-    "new": "      let place = quest.lastPlaceReferenced;\n      if (true) {",
+    "old": "      if (!place) {",
+    "new": "      if (true) {",
     "tests": [
       "test/systems/quest/questaudit3_acts.test.js"
     ]

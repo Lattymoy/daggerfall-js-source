@@ -11,8 +11,8 @@
   {
     "name": "MACRO-ONE-the-row-walk-forgets-the-world",
     "file": "src/systems/quest/questMacros.js",
-    "old": "  if (!hasValues && !questLike && !macroWorld()) return rows;",
-    "new": "  if (!hasValues && !questLike) return rows;",
+    "old": "  if (!hasValues && !questLike && !macroWorld()) return rows; // MACRO-ONE: the world's context is a source too",
+    "new": "  if (!hasValues && !questLike) return rows; // MACRO-ONE: the world's context is a source too",
     "tests": [
       "test/systems/quest/macroone.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "MACRO-ONE-the-fallback-prints-error-shapes",
     "file": "src/systems/quest/questMacros.js",
-    "old": "      if ((!questLike || declared) && isErrorShape(v, token)) return token;\n",
-    "new": "",
+    "old": "      if ((!questLike || declared) && isErrorShape(v, token)) return token;\n      return v;",
+    "new": "      return v;",
     "tests": [
       "test/systems/quest/macroone.test.js"
     ]
@@ -29,7 +29,7 @@
   {
     "name": "MACRO-ONE-a-throwing-handler-takes-the-box-down",
     "file": "src/systems/quest/questMacros.js",
-    "old": "      else { try { v = getMacroValue(token, null, ctx.hooks, null); } catch { return token; } }",
+    "old": "      else {\n        try {\n          v = getMacroValue(token, null, ctx.hooks, null);\n        } catch {\n          return token;\n        }\n      }",
     "new": "      else v = getMacroValue(token, null, ctx.hooks, null);",
     "tests": [
       "test/systems/quest/macroone.test.js"
@@ -38,7 +38,7 @@
   {
     "name": "MACRO-ONE-a-throwing-provider-crashes-the-walk",
     "file": "src/systems/quest/questMacros.js",
-    "old": "  try { return _macroWorld?.() ?? null; } catch { return null; }",
+    "old": "  try {\n    return _macroWorld?.() ?? null;\n  } catch {\n    return null;\n  }",
     "new": "  return _macroWorld?.() ?? null;",
     "tests": [
       "test/systems/quest/macroone.test.js"
@@ -65,8 +65,8 @@
   {
     "name": "MACRO-ONE-the-world-plays-a-quest-and-invents-a-speaker",
     "file": "src/systems/quest/questMacros.js",
-    "old": "      else { try { v = getMacroValue(token, null, ctx.hooks, null); } catch { return token; } }",
-    "new": "      else { try { v = getContextValue(token, ctx, ctx.hooks); } catch { return token; } }",
+    "old": "          v = getMacroValue(token, null, ctx.hooks, null);",
+    "new": "          v = getContextValue(token, ctx, ctx.hooks);",
     "tests": [
       "test/systems/quest/macroone.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "MACRO-2-a-null-is-a-wall-again",
     "file": "src/systems/quest/questMacros.js",
-    "old": "      if (v != null) return String(v);\n    }",
-    "new": "      if (v == null) return token;\n      return String(v);\n    }",
+    "old": "      if (v != null) return String(v);",
+    "new": "      if (v == null) return token;\n      return String(v);",
     "tests": [
       "test/systems/quest/macroone.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "MACRO-2-a-declared-symbol-prints-its-error-shape",
     "file": "src/systems/quest/questMacros.js",
-    "old": "if ((!questLike || declared) && isErrorShape(v, token)) return token;",
-    "new": "if (!questLike && isErrorShape(v, token)) return token;",
+    "old": "      if ((!questLike || declared) && isErrorShape(v, token)) return token;",
+    "new": "      if (!questLike && isErrorShape(v, token)) return token;",
     "tests": [
       "test/systems/quest/macroone.test.js",
       "test/systems/daedrasummoning.test.js"

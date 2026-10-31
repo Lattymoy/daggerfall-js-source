@@ -92,8 +92,8 @@
   {
     "name": "L10N3e-quest-kno-lookup",
     "file": "src/systems/quest/questMacros.js",
-    "old": "const name = getLocalizedFactionName(quest.factionId, record.name);",
-    "new": "const name = record.name;",
+    "old": "      const name = getLocalizedFactionName(quest.factionId, record.name);",
+    "new": "      const name = record.name;",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "L10N3e-quest-kno-order",
     "file": "src/systems/quest/questMacros.js",
-    "old": "const name = getLocalizedFactionName(quest.factionId, record.name);\n      return name.startsWith('The ') ? name.slice(4) : name;",
-    "new": "const t = record.name.startsWith('The ') ? record.name.slice(4) : record.name;\n      return getLocalizedFactionName(quest.factionId, t);",
+    "old": "      const name = getLocalizedFactionName(quest.factionId, record.name);\n      return name.startsWith('The ') ? name.slice(4) : name;",
+    "new": "      const t = record.name.startsWith('The ') ? record.name.slice(4) : record.name;\n      return getLocalizedFactionName(quest.factionId, t);",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "L10N3e-quest-vcn",
     "file": "src/systems/quest/questMacros.js",
-    "old": "getLocalizedFactionName(person.factionData.id, person.factionData.name)",
-    "new": "person.factionData.name",
+    "old": "      return (\n        world()?.regionVampireClanName?.(regionIndex) ??\n        getLocalizedFactionName(person.factionData.id, person.factionData.name)\n      );",
+    "new": "      return world()?.regionVampireClanName?.(regionIndex) ?? person.factionData.name;",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "L10N3e-quest-rn",
     "file": "src/systems/quest/questMacros.js",
-    "old": "return getLocalizedFactionName(childID, child.name);",
-    "new": "return child.name;",
+    "old": "        if (child?.type === 4) return getLocalizedFactionName(childID, child.name); // Individual",
+    "new": "        if (child?.type === 4) return child.name; // Individual",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "L10N3e-quest-nrn",
     "file": "src/systems/quest/questMacros.js",
-    "old": "return getLocalizedFactionName(fd.children[0], firstChild.name);",
-    "new": "return firstChild.name;",
+    "old": "      if (firstChild?.type === 4) return getLocalizedFactionName(fd.children[0], firstChild.name);",
+    "new": "      if (firstChild?.type === 4) return firstChild.name;",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "L10N3e-quest-shownFactionName-helper",
     "file": "src/systems/quest/questMacros.js",
-    "old": "return fd?.name != null ? getLocalizedFactionName(id, fd.name) : null;",
-    "new": "return fd?.name ?? null;",
+    "old": "  return fd?.name != null ? getLocalizedFactionName(id, fd.name) : null;",
+    "new": "  return fd?.name ?? null;",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "L10N3e-quest-fx1",
     "file": "src/systems/quest/questMacros.js",
-    "old": "shownFactionName(hooks?.world, idFaction1)",
-    "new": "hooks?.world?.getFactionData?.(idFaction1)?.name ?? null",
+    "old": "  '%fx1': (mcp, hooks) => (idFaction1 !== -1 ? shownFactionName(hooks?.world, idFaction1) : null),",
+    "new": "  '%fx1': (mcp, hooks) => (idFaction1 !== -1 ? (hooks?.world?.getFactionData?.(idFaction1)?.name ?? null) : null),",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "L10N3e-quest-fx2",
     "file": "src/systems/quest/questMacros.js",
-    "old": "shownFactionName(hooks?.world, idFaction2)",
-    "new": "hooks?.world?.getFactionData?.(idFaction2)?.name ?? null",
+    "old": "  '%fx2': (mcp, hooks) => (idFaction2 !== -1 ? shownFactionName(hooks?.world, idFaction2) : null),",
+    "new": "  '%fx2': (mcp, hooks) => (idFaction2 !== -1 ? (hooks?.world?.getFactionData?.(idFaction2)?.name ?? null) : null),",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "L10N3e-quest-grammar-pass",
     "file": "src/systems/quest/questMacros.js",
-    "old": "token.text = processGrammar(words.join(' '));",
-    "new": "token.text = words.join(' ');",
+    "old": "    token.text = processGrammar(words.join(' '));",
+    "new": "    token.text = words.join(' ');",
     "tests": [
       "test/systems/quest/l10n3e_quest.test.js"
     ]

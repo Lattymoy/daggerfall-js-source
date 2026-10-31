@@ -2,8 +2,8 @@
   {
     "name": "DAEDRA1-the-walk-refuses-a-context-alone",
     "file": "src/systems/quest/questMacros.js",
-    "old": "  if (!hasValues && !questLike && !macroWorld()) return rows;",
-    "new": "  if (!hasValues) return rows;",
+    "old": "  if (!hasValues && !questLike && !macroWorld()) return rows; // MACRO-ONE: the world's context is a source too",
+    "new": "  if (!hasValues) return rows; // MACRO-ONE: the world's context is a source too",
     "tests": [
       "test/systems/daedrasummoning.test.js"
     ]

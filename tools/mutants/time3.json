@@ -199,8 +199,8 @@
   {
     "name": "TIME3-the-journal-date-on-the-event-calendar",
     "file": "src/systems/quest/questMacros.js",
-    "old": "return dateString(dateFromSeconds(skySecondsOfEvent(quest.getCurrentLogMessageTime())));",
-    "new": "return dateString(dateFromSeconds(quest.getCurrentLogMessageTime()));",
+    "old": "      return dateString(dateFromSeconds(skySecondsOfEvent(quest.getCurrentLogMessageTime())));",
+    "new": "      return dateString(dateFromSeconds(quest.getCurrentLogMessageTime()));",
     "tests": [
       "test/systems/quest/time3_quests.test.js"
     ]

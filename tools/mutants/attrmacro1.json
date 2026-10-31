@@ -38,7 +38,7 @@
   {
     "name": "ATTRMACRO1-the-stat-read-stops-latching-for-the-rating",
     "file": "src/systems/quest/questMacros.js",
-    "old": "  const read = (key) => { lastStat = key; lastStatValue = liveStat(entity, key); return String(lastStatValue); };",
+    "old": "  const read = (key) => {\n    lastStat = key;\n    lastStatValue = liveStat(entity, key);\n    return String(lastStatValue);\n  };",
     "new": "  const read = (key) => String(liveStat(entity, key));",
     "tests": [
       "test/systems/quest/macrocoverage.test.js"
@@ -74,8 +74,8 @@
   {
     "name": "ATTRMACRO1-the-willpower-ratings-are-tidied-to-match-the-others",
     "file": "src/systems/quest/questMacros.js",
-    "old": "  willpower: ['inane', 'submissive', 'passive', 'distracted', 'unassertive',",
-    "new": "  willpower: ['inane', 'submissive', 'passive', 'distracted', 'about average',",
+    "old": "    'unassertive',",
+    "new": "    'about average',",
     "tests": [
       "test/systems/quest/macrocoverage.test.js"
     ]

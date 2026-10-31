@@ -380,8 +380,8 @@
   {
     "name": "BAY-LEFT-B-B7-lp",
     "file": "src/systems/quest/questMacros.js",
-    "old": "    if (isProvinceRegion(r)) return getLocalizedRegionName(r, () => REGION_NAMES[r]);\n",
-    "new": "",
+    "old": "    if (isProvinceRegion(r)) return getLocalizedRegionName(r, () => REGION_NAMES[r]);\n    const race = hooks?.world?.currentRegionRace?.();",
+    "new": "    const race = hooks?.world?.currentRegionRace?.();",
     "tests": [
       "test/systems/quest/bayleftb_quest.test.js"
     ]

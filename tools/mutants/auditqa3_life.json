@@ -164,8 +164,8 @@
   {
     "name": "QA3L2-C2-dialog-place-unread",
     "file": "src/systems/quest/questMacros.js",
-    "old": "const at = r?.isPerson && !r.isQuestor ? r.getDialogPlace?.() : null;",
-    "new": "const at = r?.isPerson && !r.isQuestor && r.assignedPlaceSymbol ? quest.getPlace?.(r.assignedPlaceSymbol) : null;",
+    "old": "          const at = r?.isPerson && !r.isQuestor ? r.getDialogPlace?.() : null;",
+    "new": "          const at =\n            r?.isPerson && !r.isQuestor && r.assignedPlaceSymbol ? quest.getPlace?.(r.assignedPlaceSymbol) : null;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "QA3L2-C2-questor-read",
     "file": "src/systems/quest/questMacros.js",
-    "old": "const at = r?.isPerson && !r.isQuestor ? r.getDialogPlace?.() : null;",
-    "new": "const at = r?.isPerson ? r.getDialogPlace?.() : null;",
+    "old": "          const at = r?.isPerson && !r.isQuestor ? r.getDialogPlace?.() : null;",
+    "new": "          const at = r?.isPerson ? r.getDialogPlace?.() : null;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "QA3L2-C4-article-case",
     "file": "src/systems/quest/questMacros.js",
-    "old": "v.replace(/^the /i, '')",
-    "new": "v.replace(/^the /, '')",
+    "old": "      return /(^|[^a-z])the $/i.test(joke.slice(0, at)) ? v.replace(/^the /i, '') : v;",
+    "new": "      return /(^|[^a-z])the $/i.test(joke.slice(0, at)) ? v.replace(/^the /, '') : v;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "QA3L2-C4-article-whole-word",
     "file": "src/systems/quest/questMacros.js",
-    "old": "v.replace(/^the /i, '')",
-    "new": "v.replace(/^the/i, '')",
+    "old": "      return /(^|[^a-z])the $/i.test(joke.slice(0, at)) ? v.replace(/^the /i, '') : v;",
+    "new": "      return /(^|[^a-z])the $/i.test(joke.slice(0, at)) ? v.replace(/^the/i, '') : v;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "QA3L2-C4-joke-case",
     "file": "src/systems/quest/questMacros.js",
-    "old": "/(^|[^a-z])the $/i.test(joke.slice(",
-    "new": "/(^|[^a-z])the $/.test(joke.slice(",
+    "old": "      return /(^|[^a-z])the $/i.test(joke.slice(0, at)) ? v.replace(/^the /i, '') : v;",
+    "new": "      return /(^|[^a-z])the $/.test(joke.slice(0, at)) ? v.replace(/^the /i, '') : v;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "QA3L2-C4-the-window",
     "file": "src/systems/quest/questMacros.js",
-    "old": "joke.slice(0, at)",
-    "new": "joke.slice(Math.max(0, at - 4), at)",
+    "old": "      return /(^|[^a-z])the $/i.test(joke.slice(0, at)) ? v.replace(/^the /i, '') : v;",
+    "new": "      return /(^|[^a-z])the $/i.test(joke.slice(Math.max(0, at - 4), at)) ? v.replace(/^the /i, '') : v;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "QA3L2-C4-any-place",
     "file": "src/systems/quest/questMacros.js",
-    "old": "/(^|[^a-z])the $/i.test(joke.slice(0, at)) ? v.replace(",
-    "new": "true ? v.replace(",
+    "old": "      return /(^|[^a-z])the $/i.test(joke.slice(0, at)) ? v.replace(/^the /i, '') : v;",
+    "new": "      return true ? v.replace(/^the /i, '') : v;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "QA3L2-C4-the-word-unbounded",
     "file": "src/systems/quest/questMacros.js",
-    "old": "(^|[^a-z])the $",
-    "new": "the $",
+    "old": "      return /(^|[^a-z])the $/i.test(joke.slice(0, at)) ? v.replace(/^the /i, '') : v;",
+    "new": "      return /the $/i.test(joke.slice(0, at)) ? v.replace(/^the /i, '') : v;",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]

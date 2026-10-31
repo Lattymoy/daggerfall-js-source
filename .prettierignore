@@ -1422,10 +1422,12 @@
 !/src/systems/quest/questFoeLine.js
 !/src/systems/quest/questGuidance.js
 !/src/systems/quest/questLists.js
+!/src/systems/quest/questMacros.js
 !/src/systems/quest/questPatches.js
 !/src/systems/quest/questReach.js
 !/src/systems/quest/questRepair.js
 !/src/systems/quest/questRepute.js
+!/src/systems/quest/questResource.js
 !/src/systems/quest/questShare.js
 !/src/systems/quest/questStamps.js
 !/src/systems/quest/resourceBehaviour.js

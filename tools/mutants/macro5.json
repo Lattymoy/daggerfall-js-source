@@ -65,7 +65,7 @@
   {
     "name": "MACRO-5-sourceValues-throw-escapes",
     "file": "src/systems/quest/questMacros.js",
-    "old": "      try { v = getMacroValue(token, mcp, null, null); } catch { return null; }",
+    "old": "      try {\n        v = getMacroValue(token, mcp, null, null);\n      } catch {\n        return null;\n      }",
     "new": "      v = getMacroValue(token, mcp, null, null);",
     "tests": [
       "test/systems/spell/macro5_effects.test.js"

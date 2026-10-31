@@ -582,7 +582,7 @@
   {
     "name": "L10N3d2-systems-quest-questMacros-716-highRock",
     "file": "src/systems/quest/questMacros.js",
-    "old": "    return race === LOCAL_PROVINCE_BRETON ? localizedText('highRock', 'High Rock') : localizedText('hammerfell', 'Hammerfell');",
+    "old": "    return race === LOCAL_PROVINCE_BRETON\n      ? localizedText('highRock', 'High Rock')\n      : localizedText('hammerfell', 'Hammerfell');",
     "new": "    return race === LOCAL_PROVINCE_BRETON ? 'High Rock' : localizedText('hammerfell', 'Hammerfell');",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
@@ -592,7 +592,7 @@
   {
     "name": "L10N3d2-systems-quest-questMacros-716-hammerfell",
     "file": "src/systems/quest/questMacros.js",
-    "old": "    return race === LOCAL_PROVINCE_BRETON ? localizedText('highRock', 'High Rock') : localizedText('hammerfell', 'Hammerfell');",
+    "old": "    return race === LOCAL_PROVINCE_BRETON\n      ? localizedText('highRock', 'High Rock')\n      : localizedText('hammerfell', 'Hammerfell');",
     "new": "    return race === LOCAL_PROVINCE_BRETON ? localizedText('highRock', 'High Rock') : 'Hammerfell';",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
@@ -602,7 +602,7 @@
   {
     "name": "L10N3d2-systems-quest-questMacros-732-daggerfall",
     "file": "src/systems/quest/questMacros.js",
-    "old": "        return getLocalizedLocationName(region.mapTable[i].mapId, region.mapNames?.[i] ?? localizedText('daggerfall', CITY_NAME2_FALLBACK));",
+    "old": "        return getLocalizedLocationName(\n          region.mapTable[i].mapId,\n          region.mapNames?.[i] ?? localizedText('daggerfall', CITY_NAME2_FALLBACK),\n        );",
     "new": "        return getLocalizedLocationName(region.mapTable[i].mapId, region.mapNames?.[i] ?? CITY_NAME2_FALLBACK);",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
