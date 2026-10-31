@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-PM-C2-an-older-relay-told",
     "file": "src/net/wire.js",
-    "old": "export const EG_POT_RELAY_MIN = 299;",
-    "new": "export const EG_POT_RELAY_MIN = 298;",
+    "old": "export const EG_POT_RELAY_MIN = 300;",
+    "new": "export const EG_POT_RELAY_MIN = 299;",
     "tests": [
       "test/net/eliteGates/auditpotionmight.test.js"
     ]

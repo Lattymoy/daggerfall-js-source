@@ -738,7 +738,7 @@ signed bow; a fist is every fighter's own. A token with no `wa` (a character not
 look's weapon alone, the law before it.
 
 EG-MIGHT (2026-10-31, `11-Multiplayer/Elite-Gates.md` section 21.1): the same verdict reads the kit's might off the judged
-pack (`net/kitMight.js`), kept on the row (`might`, migration 0203) and signed as `mg` beside `rc` 1, grown by the Renown's
+pack (`net/kitMight.js`), kept on the row (`might`, migration 0204) and signed as `mg` beside `rc` 1, grown by the Renown's
 sky. An Elite Breach's purse grows by it; no referee between players reads it.
 
 ### INT8 - the duel refereed (`net/duel/duelRef.js`, `net/duel/duelReceipt.js`)

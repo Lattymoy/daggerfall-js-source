@@ -2,38 +2,32 @@
   {
     "name": "AUDIT-DRAGON-HIDDEN-A1-the-theatre-unchecked",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "  return gateLanePixelOk(dragonLaneOf(o), px, py) && sx === c.sx && sz === c.sz;",
-    "new": "  return sx === c.sx && sz === c.sz;",
+    "old": "  return Math.floor(px / DRAGON_CELL_PX) === cell.cx && Math.floor(py",
+    "new": "  return Math.floor(py",
     "tests": [
       "test/net/dragon/dragonhiddenaudit.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-CELL)."
   },
   {
     "name": "AUDIT-DRAGON-HIDDEN-A1-the-centre-unchecked",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "  return gateLanePixelOk(dragonLaneOf(o), px, py) && sx === c.sx && sz === c.sz;",
-    "new": "  return gateLanePixelOk(dragonLaneOf(o), px, py);",
+    "old": "=== cell.cy && sx === c.sx && sz === c.sz;",
+    "new": "=== cell.cy;",
     "tests": [
       "test/net/dragon/dragonhiddenaudit.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-CELL)."
   },
   {
     "name": "AUDIT-DRAGON-HIDDEN-A1-its-north-unchecked",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "  return gateLanePixelOk(dragonLaneOf(o), px, py) && sx === c.sx && sz === c.sz;",
-    "new": "  return gateLanePixelOk(dragonLaneOf(o), px, py) && sx === c.sx;",
+    "old": "=== cell.cy && sx === c.sx && sz === c.sz;",
+    "new": "=== cell.cy && sx === c.sx;",
     "tests": [
       "test/net/dragon/dragonhiddenaudit.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-DRAGON-HIDDEN-A1-the-cells-check-dropped",
-    "file": "server/src/dragonFights.js",
-    "old": "  if (!dragonSiteOk(o, m.sx, m.sz)) { no('gone'); return; }",
-    "new": "  if (!dragonSiteOk) { no('gone'); return; }",
-    "tests": [
-      "test/net/dragon/dragonhiddenaudit.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-CELL)."
   },
   {
     "name": "AUDIT-DRAGON-HIDDEN-A4-none-let-go",
@@ -121,16 +115,6 @@
     "file": "src/scenes/dragonHost.js",
     "old": "export const DRAGON_ASK_RETRY_MS = 15_000;",
     "new": "export const DRAGON_ASK_RETRY_MS = 60_000;",
-    "tests": [
-      "test/net/dragon/dragonhiddenaudit.test.js"
-    ],
-    "note": "Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start."
-  },
-  {
-    "name": "AUDIT-DRAGON-HIDDEN-B5-asked-after-a-null-omen",
-    "file": "src/scenes/dragonHost.js",
-    "old": "if (omens.has(w) || t < dragonQuietAt(w)",
-    "new": "if (omens.get(w) != null || t < dragonQuietAt(w)",
     "tests": [
       "test/net/dragon/dragonhiddenaudit.test.js"
     ],

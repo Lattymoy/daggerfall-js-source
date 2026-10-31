@@ -2692,7 +2692,7 @@ effect alone and is that effect's kind.
   stand no Spire hall: flagged, nothing to wire.
 
 **The room believes it** (AUDIT POTION-MIGHT C2). A health bottle drunk in a breach is told to its room (`pot`, relays
-from world299 - `net/wire.js` relaySupportsEgPot). The room believes the most a Heal True heals at the member's level
+from world300 - `net/wire.js` relaySupportsEgPot). The room believes the most a Heal True heals at the member's level
 (`net/wild/pvpVitals.js` potionHealAt, a share of `healRef`) once in its own 15 s, outside the member's budget
 (`egBrain.js:"export function egPotion("`). Before, a Heal True every 15 s outran the count's line (`net/bossBody.js`
 BODY_DEFAULT, a body every 20 s), and the relay felled members whose screens said they stood.
@@ -3328,7 +3328,7 @@ number. The reference was set on Daggerfall's damage (a level-20 Daedric dai-kat
 **The might.** The judge (`server-account/src/judge.js`) reads each judged checkpoint's kit might (`net/kitMight.js`
 kitMightOf), in whole per cent, 100 to 1000: what the lawful kit WORN AT ONCE can add to one blow or one spell, read at
 its best moment. One piece a place (the equip table's own classes), a ledger key's copies and a Legendary's record once,
-one weapon in hand (AUDIT POTION-MIGHT A1). The row keeps it (`realm_characters.might`, migration 0203).
+one weapon in hand (AUDIT POTION-MIGHT A1). The row keeps it (`realm_characters.might`, migration 0204).
 
 - **The blow.** The held weapon's damage lines, heirloom generations, slayer lines of one foe's kind, power and blow
   sigil. Every worn power by what it adds (`systems/powerBlows.js` POWER_BLOW): a guard power none, a Rare's imprint its
@@ -3366,9 +3366,9 @@ at any level; the climb is read only for a skill the save mastered. A character 
 until its next checkpoint, and lands as before. Section 18's table is a company of no might; the Depths board now ranks
 gear and play together.
 
-**Deploy.** The account service (acct233, migration 0203) and the relay (world299) in either order: an older relay
+**Deploy.** The account service (acct234, migration 0204) and the relay (world300) in either order: an older relay
 ignores `mg`, an older service signs none, and an older relay never hears `pot`. The account deploy waits for the relay
-to serve world299 (`account-deploy.yml`, "Wait for the relay to serve this push's version"), up to 5.5 h. Then the site.
+to serve world300 (`account-deploy.yml`, "Wait for the relay to serve this push's version"), up to 5.5 h. Then the site.
 Pinned by `test/net/eliteGates/egmight.test.js` and `auditpotionmight.test.js`; mutants `tools/mutants/egmight.json` and
 `auditpotionmight.json`. The audit: `bible/01-Overview/audits/Audit-Potion-Might.md`.
 
