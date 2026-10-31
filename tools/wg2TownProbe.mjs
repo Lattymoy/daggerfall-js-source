@@ -138,10 +138,10 @@ try {
         window.__player.warp(scene(g.at[0], g.at[1])[0], scene(g.at[0], g.at[1], 1)[1], scene(g.at[0], g.at[1])[2]);
         const through = JSON.parse(window.__standing());
         look(scene(g.at[0] + g.dir[0] * out + g.dir[1] * 8 / P, g.at[1] + g.dir[1] * out - g.dir[0] * 8 / P, 9), at2);
-        return { ground: through.ground, y: through.y };`), tw);
+        return { ground: through.ground - scene(g.at[0], g.at[1])[1], y: through.y };`), tw);   // the drawn ground less the region's
       await frames(8);
       await shot(`${town.id}-gate`);
-      console.log(`${town.name}: its gate photographed; the ground in its opening ${seen.ground?.toFixed?.(2)}`);
+      console.log(`${town.name}: its gate photographed; the drawn ground in its opening ${seen.ground?.toFixed?.(2)} m off the region's`);
       // a body walks through the gate on its road, and is held by the wall a run along from it
       for (const [what, along, through] of [['the gate', 0, true], ['the wall', 2, false]]) {
         const run = await ev(inTown(`
