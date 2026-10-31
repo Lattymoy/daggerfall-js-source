@@ -2663,3 +2663,13 @@
 !/tools/wire2Bench.mjs
 !/tools/wispStreakProbe.mjs
 !/tools/worldDataPackBuild.mjs
+!/tools/worldDataPackNames.mjs
+!/tools/worldDataPatch.mjs
+!/tools/worldOfDaggerfallAssets.mjs
+!/tools/worldTooltipsAssets.mjs
+!/tools/worldTownProbe.mjs
+!/tools/worldWhereIsProbe.mjs
+!/tools/wsDrainProbe.mjs
+!/tools/x11Probe.mjs
+!/tools/x23Probe.mjs
+!/tools/yardReseat.mjs
