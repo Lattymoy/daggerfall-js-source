@@ -142,8 +142,8 @@
   {
     "name": "N8-the-paperdoll-skin-unhinted",
     "file": "src/tools/paperdoll/skin.js",
-    "old": "const g2 = c.getContext('2d', { willReadFrequently: true });",
-    "new": "const g2 = c.getContext('2d');",
+    "old": "      const g2 = c.getContext('2d', { willReadFrequently: true });",
+    "new": "      const g2 = c.getContext('2d');",
     "tests": [
       "test/ai/nav/audit0928_nav.test.js"
     ]
@@ -151,8 +151,8 @@
   {
     "name": "N8-the-paperdoll-beast-skin-unhinted",
     "file": "src/tools/paperdoll/skin.js",
-    "old": "bc.getContext('2d', { willReadFrequently: true }).drawImage(bi, 0, 0);",
-    "new": "bc.getContext('2d').drawImage(bi, 0, 0);",
+    "old": "        bc.getContext('2d', { willReadFrequently: true }).drawImage(bi, 0, 0);",
+    "new": "        bc.getContext('2d').drawImage(bi, 0, 0);",
     "tests": [
       "test/ai/nav/audit0928_nav.test.js"
     ]
