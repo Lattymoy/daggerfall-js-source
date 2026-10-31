@@ -81,7 +81,7 @@ export function parseStaffCommand(text, now = {}) {
     }
     return { cmd: 'tp', place: rest.slice(0, 64) };
   }
-  // STAFF-PULL (2026-10-28, as the owner asked): /tpa <player> brings that player to me - an Admin's
+  // STAFF-PULL (2026-10-28, the owner: "tpa player so tp them to us"): /tpa <player> brings that player to me - an Admin's
   // or the Shadow Fang's alone (the relay asks), the one command that moves another player
   if (name === 'tpa') {
     const player = rest.replace(/^@/, '').trim().slice(0, 64);

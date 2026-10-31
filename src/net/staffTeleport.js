@@ -20,7 +20,7 @@ export const STAFF_TP_ERRORS = Object.freeze([
   'frozen',
 ]);
 export const staffTeleportSupported = (v) => Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= STAFF_TP_RELAY_MIN;
-/** STAFF-PULL (2026-10-28, as the owner asked): the first relay that carries a pull. An older one
+/** STAFF-PULL (2026-10-28, the owner: "tpa player so tp them to us"): the first relay that carries a pull. An older one
  *  closes a socket on a `stp` kind it does not know, so a pull is never sent to it. */
 export const STAFF_PULL_RELAY_MIN = 281; // world281: the PvP release carries it (world276 on its own branch, #1360)
 export const staffPullSupported = (v) => Number(/^world(\d+)$/.exec(String(v ?? ''))?.[1]) >= STAFF_PULL_RELAY_MIN;

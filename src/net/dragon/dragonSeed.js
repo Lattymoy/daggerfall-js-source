@@ -1,5 +1,5 @@
 // @ts-check
-// DRAGON-HIDDEN (2026-10-29, as the owner asked;
+// DRAGON-HIDDEN (2026-10-29, the owner: "people are able to predict the dragon spawn by looking at source code";
 // bible/11-Multiplayer/Dwarven-Dragon.md section 2): AN OMEN'S SEED, THE RELAY'S SECRET. The law's rolls
 // (net/dragon/dragonLaw.js) take an omen `{w, s}`; `s` is HMAC-SHA-256 of the watch and the omen's number under a key HKDF
 // draws from the relay's GATE_SIGNING_KEY (the room lease's way, net/roomLease.js leaseKeyOf), so nobody without the relay's

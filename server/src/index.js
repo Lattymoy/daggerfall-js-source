@@ -9131,8 +9131,9 @@ export class Room {
     this._sdKey = key;
     const realm = await this._sdRealmOf(s);
     const f = await this._sdFightOf();
-    // SD-BACK (2026-10-28, as the owner asked): a death in this copy
-    // bars no return to it - a hello is a rise, a new life on the count. SD-WON (as the owner asked): once its kill's collapse has run, the copy takes nobody back
+    // SD-BACK (2026-10-28, the owner: "let them go back in if they die to that partys instance"): a death in this copy
+    // bars no return to it - a hello is a rise, a new life on the count. SD-WON (the owner: "the party after killing the
+    // boss closes for them"): once its kill's collapse has run, the copy takes nobody back
     const lies = sub ? sdDownWord(realm, sub, now) : null;
     const back = !!sub && (lies != null || realm.dead.includes(sub) || (realm.dead.length >= SD_FIGHTERS_MAX && (await this.state.storage.get(sdDeadKey(sub))) != null));
     if (sub && realm.in.includes(sub)) { if (f?.fell && now - f.fell.at > SD_COLLAPSE_MS) return SD_NO_CLOSED; if (back) await this._sdRose(realm, sub, now); this._sdTellIn(s, rec, now); return null; }   // SD-THROUGH; AUDIT WORLD-EVENTS L1-8: a rise once it is let in, never before a refusal
