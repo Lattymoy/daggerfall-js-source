@@ -1,7 +1,8 @@
 // WG2 THE BUDGETS (bible/01-Overview/audits/Audit-World-2-Phase-0.md, "Browser budgets"): the streamed world past the Bay
 // with a World 2.0 region and without - boot to a pixel of the Dragontails prototype, then the frames' script time and
 // gaps over a window, the main thread's heap, and each of the 3 x 3 pixels' build time. `node tools/wg2Bench.mjs`
-// (`AT=x,y`, `FRAMES=n`). Judged: the region must stand in its arm and not in the other, every pixel must build.
+// (`AT=x,y`, `FRAMES=n`, `CHROMIUM=<browser>`). Judged: the region must stand in its arm and not in the other, every
+// pixel must build.
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import { fileURLToPath } from 'node:url';
@@ -63,7 +64,7 @@ export async function bench() {
   const server = await createServer({ root: ROOT, configFile: `${ROOT}/vite.config.js`, plugins: [editsPlugin('wg2-bench', FRAME_PROBE_EDITS)], server: { port: PORT, strictPort: true, hmr: false, watch: null }, logLevel: 'error' });
   await server.listen();
   process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
-  const browser = await chromium.launch({ args: [...SWIFTSHADER_ARGS, '--disable-renderer-backgrounding', '--disable-background-timer-throttling'] });
+  const browser = await chromium.launch({ ...(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {}), args: [...SWIFTSHADER_ARGS, '--disable-renderer-backgrounding', '--disable-background-timer-throttling'] });
   try { return [await arm(browser, false), await arm(browser, true)]; } finally { await browser.close(); await server.close(); }
 }
 
