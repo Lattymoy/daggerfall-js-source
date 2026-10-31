@@ -22,8 +22,8 @@
   {
     "name": "CRYPTSALE-door-unstamped",
     "file": "src/systems/talk/talkTopics.js",
-    "old": ", modelIdNum: model?.modelIdNum ?? null, hasInterior: hasInteriorModels(sub), ...footprintOf(sub) };",
-    "new": ", modelIdNum: model?.modelIdNum ?? null, ...footprintOf(sub) };",
+    "old": "    hasInterior: hasInteriorModels(sub),\n    ...footprintOf(sub),",
+    "new": "    ...footprintOf(sub),",
     "tests": [
       "test/systems/talk/fb1005_cryptsale.test.js"
     ],
@@ -32,7 +32,7 @@
   {
     "name": "CRYPTSALE-list-unstamped",
     "file": "src/systems/talk/talkTopics.js",
-    "old": "        hasInterior: hasInteriorModels(sub),   // FIELD BUGS 2026-10-05 CRYPT-SALE",
+    "old": "        hasInterior: hasInteriorModels(sub), // FIELD BUGS 2026-10-05 CRYPT-SALE",
     "new": "",
     "tests": [
       "test/systems/talk/fb1005_cryptsale.test.js"

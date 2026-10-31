@@ -642,7 +642,7 @@
   {
     "name": "L10N3d2-systems-talkSession-65-Sir",
     "file": "src/systems/talk/talkSession.js",
-    "old": "export const honorificOf = (gender) => (gender === 'male' ? localizedText('Sir', 'Sir') : localizedText(\"Ma'am\", \"Ma'am\"));",
+    "old": "export const honorificOf = (gender) =>\n  gender === 'male' ? localizedText('Sir', 'Sir') : localizedText(\"Ma'am\", \"Ma'am\");",
     "new": "export const honorificOf = (gender) => (gender === 'male' ? 'Sir' : localizedText(\"Ma'am\", \"Ma'am\"));",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
@@ -652,7 +652,7 @@
   {
     "name": "L10N3d2-systems-talkSession-65-Ma'am",
     "file": "src/systems/talk/talkSession.js",
-    "old": "export const honorificOf = (gender) => (gender === 'male' ? localizedText('Sir', 'Sir') : localizedText(\"Ma'am\", \"Ma'am\"));",
+    "old": "export const honorificOf = (gender) =>\n  gender === 'male' ? localizedText('Sir', 'Sir') : localizedText(\"Ma'am\", \"Ma'am\");",
     "new": "export const honorificOf = (gender) => (gender === 'male' ? localizedText('Sir', 'Sir') : \"Ma'am\");",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
@@ -663,7 +663,7 @@
     "name": "L10N3d2-systems-talkSession-71-table",
     "file": "src/systems/talk/talkSession.js",
     "old": "export const RACE_DISPLAY_NAME = localizedTable({",
-    "new": "export const RACE_DISPLAY_NAME = ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({",
+    "new": "export const RACE_DISPLAY_NAME = ((t) =>\n  Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_talk.test.js"

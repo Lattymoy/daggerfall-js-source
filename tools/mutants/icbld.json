@@ -239,8 +239,8 @@
   {
     "name": "BLD-fabric-draws-the-pool",
     "file": "src/systems/talk/talkTopics.js",
-    "old": "if (b.dfBlock.ownNamedBuildings) { out.set(b, list); continue; }",
-    "new": "if (b.dfBlock.ownNamedBuildingsX) { out.set(b, list); continue; }",
+    "old": "    if (b.dfBlock.ownNamedBuildings) {",
+    "new": "    if (b.dfBlock.ownNamedBuildingsX) {",
     "tests": [
       "test/world/icbld_buildings.test.js"
     ]

@@ -85,7 +85,7 @@ and its line in `06-Systems/Talk-Arc.md` (QUESTOR-HELD). The one new Ledger row 
 change (`:975`, A MOD'S MATERIALS, and `:976`, AN ENEMY'S GLOW), and are aimed at their rows now.
 
 QUESTOR-SHE (found on the way). The four pronouns of the Work answer are the questor's
-(`talkMacros.js:"  const female = () => ctx.questorGender?.() === GENDERS.Female;"`). That helper compared the string
+(`talkMacros.js:"const female = ()"`). That helper compared the string
 `'female'`, but the pool's NPCData carries the Genders enum
 (`staticNpc.js:"gender: ((pn.flags ?? 0) & 32)"`), and the world host hands
 it on unchanged (`world.js:"      return npcSession.getQuestorGender();"`). So every woman with work, 44.8% of questors,

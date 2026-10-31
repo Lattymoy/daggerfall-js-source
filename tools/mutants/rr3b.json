@@ -164,8 +164,8 @@
   {
     "name": "RR3b-19-the-merge-keeps-the-pool-draw",
     "file": "src/systems/talk/talkTopics.js",
-    "old": "          if (drawn) drawn.used = false;\n",
-    "new": "",
+    "old": "          if (drawn) drawn.used = false;\n          list[i].factionId = replacement.factionId;",
+    "new": "          list[i].factionId = replacement.factionId;",
     "tests": [
       "test/systems/talk/rr3b_worlddata.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "RR3b-21-the-merge-takes-the-type-only-with-a-faction",
     "file": "src/systems/talk/talkTopics.js",
-    "old": "        list[i].buildingType = replacement.buildingType;\n      }\n      // RMBLayout.cs:677-683",
-    "new": "      }\n      // RMBLayout.cs:677-683",
+    "old": "        list[i].buildingType = replacement.buildingType;\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/talk/rr3b_worlddata.test.js"
     ]

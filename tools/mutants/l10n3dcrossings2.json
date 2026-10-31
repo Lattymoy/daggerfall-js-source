@@ -232,8 +232,8 @@
   {
     "name": "L10N3dX2-race-name-unnormalized",
     "file": "src/systems/talk/talkSession.js",
-    "old": "export const raceDisplayName = (race) => RACE_DISPLAY_NAME[String(race ?? '').replace(/\\s+/g, '')] ?? race ?? '';",
-    "new": "export const raceDisplayName = (race) => RACE_DISPLAY_NAME[race] ?? race ?? '';",
+    "old": "export const raceDisplayName = (race) => RACE_DISPLAY_NAME[String(race ?? '').replace(/\\s+/g, '')] ?? race ?? ''; // a key, or a stored name ('Dark Elf')",
+    "new": "export const raceDisplayName = (race) => RACE_DISPLAY_NAME[race] ?? race ?? ''; // a key, or a stored name ('Dark Elf')",
     "tests": [
       "test/systems/l10n3d_crossings.test.js",
       "test/systems/l10n3d_sites.test.js"

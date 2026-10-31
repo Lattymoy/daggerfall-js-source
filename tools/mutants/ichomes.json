@@ -11,8 +11,8 @@
   {
     "name": "ICH-the-door-record-unread",
     "file": "src/systems/talk/talkTopics.js",
-    "old": "hasInterior: hasInteriorModels(sub), ...footprintOf(sub) };",
-    "new": "hasInterior: hasInteriorModels(sub) };",
+    "old": "    ...footprintOf(sub),\n  };",
+    "new": "  };",
     "tests": [
       "test/world/icbld_buildings.test.js"
     ]

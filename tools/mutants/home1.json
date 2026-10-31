@@ -507,8 +507,8 @@
   {
     "name": "HOME1-the-model-unread-at-the-door",
     "file": "src/systems/talk/talkTopics.js",
-    "old": ", modelIdNum: model?.modelIdNum ?? null, hasInterior",
-    "new": ", hasInterior",
+    "old": "    modelIdNum: model?.modelIdNum ?? null,\n    hasInterior: hasInteriorModels(sub),",
+    "new": "    hasInterior: hasInteriorModels(sub),",
     "tests": [
       "test/server/home1.test.js"
     ]

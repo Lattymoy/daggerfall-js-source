@@ -102,8 +102,8 @@
   {
     "name": "MACRO-2-the-talk-map-prints-a-blank-name",
     "file": "src/systems/talk/talkSession.js",
-    "old": "    pcf: known(playerName) && firstName(playerName), pcn: known(playerName), cn: known(cityName), oth: oath,\n  });\n}",
-    "new": "    pcf: firstName(playerName), pcn: known(playerName), cn: known(cityName), oth: oath,\n  });\n}",
+    "old": "  return expandMacroValues(text, {\n    pcf: known(playerName) && firstName(playerName),",
+    "new": "  return expandMacroValues(text, {\n    pcf: firstName(playerName),",
     "tests": [
       "test/systems/quest/macroone.test.js"
     ]

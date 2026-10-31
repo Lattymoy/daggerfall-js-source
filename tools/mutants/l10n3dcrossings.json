@@ -52,8 +52,8 @@
   {
     "name": "L10N3d2-systems-talk-340-youPinchedGoldPiece",
     "file": "src/systems/talk/talk.js",
-    "old": "      return { success: true, gold, modal: true, message: gold === 1 ? localizedText('youPinchedGoldPiece', 'You pinched 1 gold piece.')",
-    "new": "      return { success: true, gold, modal: true, message: gold === 1 ? 'You pinched 1 gold piece.'",
+    "old": "            ? localizedText('youPinchedGoldPiece', 'You pinched 1 gold piece.')",
+    "new": "            ? 'You pinched 1 gold piece.'",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_crossings.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "L10N3d2-systems-talk-341-youPinchedGoldPieces",
     "file": "src/systems/talk/talk.js",
-    "old": "        : localizedText('youPinchedGoldPieces', 'You pinched %d gold pieces.').replace('%d', String(gold)) };   // PlayerActivate.cs:1633/1637",
-    "new": "        : 'You pinched %d gold pieces.'.replace('%d', String(gold)) };   // PlayerActivate.cs:1633/1637",
+    "old": "            : localizedText('youPinchedGoldPieces', 'You pinched %d gold pieces.').replace('%d', String(gold)),",
+    "new": "            : 'You pinched %d gold pieces.'.replace('%d', String(gold)),",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_crossings.test.js"

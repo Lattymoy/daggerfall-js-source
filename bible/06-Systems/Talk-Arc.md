@@ -483,7 +483,7 @@ the selection that stood before the ask, and the pick follows it.
 Pinned: `fb1020h_questor.test.js`.
 
 **QUESTOR-SHE** (FIELD BUGS 2026-10-20h). The four pronouns fork on
-`talkMacros.js:"  const female = () => ctx.questorGender?.() === GENDERS.Female;"`.
+`talkMacros.js:"const female = ()"`.
 It compared the string `'female'`, but the pool's NPCData carries the
 Genders enum staticNpcData mints, and the world host hands that on
 unchanged. So every woman with work was "him", while the pins handed

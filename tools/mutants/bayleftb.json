@@ -227,8 +227,8 @@
   {
     "name": "BAY-LEFT-B-B3-bound",
     "file": "src/systems/talk/talk.js",
-    "old": "if (region < 0 || region >= REGION_NAMES.length) region = -1;",
-    "new": "if (region < 0 || region >= (maps?.regionCount ?? 0)) region = -1;",
+    "old": "  if (region < 0 || region >= REGION_NAMES.length) region = -1;",
+    "new": "  if (region < 0 || region >= (maps?.regionCount ?? 0)) region = -1;",
     "tests": [
       "test/systems/quest/bayleftb_quest.test.js"
     ]

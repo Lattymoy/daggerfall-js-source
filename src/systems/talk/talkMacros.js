@@ -43,16 +43,18 @@
 import { tokensToString } from '../rumorMill.js';
 import { QUESTION_TYPE } from '../topicTree.js';
 import { TALK_STRINGS } from '../answerPipeline.js';
-import { getMacroValue, macroTableCoverage, statsMacroSource } from '../quest/questMacros.js';   // ATTRMACRO1: the stats MCP the attribute boxes expand against
-import { GENDERS } from '../../characters/nameHelper.js';   // QUESTOR-SHE: the potential questor's gender is the Genders enum
+import { getMacroValue, macroTableCoverage, statsMacroSource } from '../quest/questMacros.js'; // ATTRMACRO1: the stats MCP the attribute boxes expand against
+import { GENDERS } from '../../characters/nameHelper.js'; // QUESTOR-SHE: the potential questor's gender is the Genders enum
 
 /** Every symbol MacroHelper's dictionary carries, handled rows and
  *  C#-null rows alike - the set ExpandMacros can resolve. Read off
  *  the ONE table so the two can never drift. */
-export const MACRO_SYMBOLS = Object.freeze((() => {
-  const { handled, nulls } = macroTableCoverage();
-  return [...handled, ...nulls];
-})());
+export const MACRO_SYMBOLS = Object.freeze(
+  (() => {
+    const { handled, nulls } = macroTableCoverage();
+    return [...handled, ...nulls];
+  })(),
+);
 
 /** The symbols a TALK record resolves through the MCP's own data
  *  source - the thirteen overrides, and the rows C# points at them.
@@ -62,19 +64,47 @@ export const MACRO_SYMBOLS = Object.freeze((() => {
  *  table is either a global or a source method the talk MCP does not
  *  override. */
 export const TALK_MACROS = Object.freeze([
-  '%n', '%nam', '%bn',
-  '%fn', '%fn2', '%mn', '%mn2',
-  '%di', '%hnt', '%hnt2', '%oth',
-  '%g', '%g1', '%G', '%G1', '%g2', '%G2', '%g3', '%G3', '%g4', '%G4',
-  '%pqn', '%pqp',
+  '%n',
+  '%nam',
+  '%bn',
+  '%fn',
+  '%fn2',
+  '%mn',
+  '%mn2',
+  '%di',
+  '%hnt',
+  '%hnt2',
+  '%oth',
+  '%g',
+  '%g1',
+  '%G',
+  '%G1',
+  '%g2',
+  '%G2',
+  '%g3',
+  '%G3',
+  '%g4',
+  '%G4',
+  '%pqn',
+  '%pqp',
 ]);
 
 /** The thirteen method names TalkManagerDataSource overrides
  *  (TalkManagerMCP.cs:49-199), in file order. */
 export const TALK_SOURCE_METHODS = Object.freeze([
-  'name', 'femaleName', 'maleName', 'direction', 'dialogHint',
-  'dialogHint2', 'oath', 'pronoun', 'pronoun2', 'pronoun3', 'pronoun4',
-  'potentialQuestorName', 'potentialQuestorLocation',
+  'name',
+  'femaleName',
+  'maleName',
+  'direction',
+  'dialogHint',
+  'dialogHint2',
+  'oath',
+  'pronoun',
+  'pronoun2',
+  'pronoun3',
+  'pronoun4',
+  'potentialQuestorName',
+  'potentialQuestorLocation',
 ]);
 
 /** MacroHelper's oath base (:201 + the faction race id), the same
@@ -126,7 +156,9 @@ export function talkMacroSource(ctx) {
     },
 
     /** FemaleName (:58-62): a full name from the region's name bank. */
-    femaleName() { return ctx.fullName?.('female') ?? null; },
+    femaleName() {
+      return ctx.fullName?.('female') ?? null;
+    },
 
     /** MaleName (:64-71). THE SEED NUDGE: C# adds 3547 to DFRandom's
      *  seed before drawing and subtracts it after, so a male name and
@@ -192,18 +224,30 @@ export function talkMacroSource(ctx) {
      *  shares the Male case, so anything that is not Female is he.
      *  Pronoun2self is NOT overridden here, which is why %g2self in a
      *  talk record answers [srcDataUnknown]. */
-    pronoun() { return text(female() ? 'pronounShe' : 'pronounHe'); },
-    pronoun2() { return text(female() ? 'pronounHer' : 'pronounHim'); },
-    pronoun3() { return text(female() ? 'pronounHer2' : 'pronounHis'); },
-    pronoun4() { return text(female() ? 'pronounHers' : 'pronounHis2'); },
+    pronoun() {
+      return text(female() ? 'pronounShe' : 'pronounHe');
+    },
+    pronoun2() {
+      return text(female() ? 'pronounHer' : 'pronounHim');
+    },
+    pronoun3() {
+      return text(female() ? 'pronounHer2' : 'pronounHis');
+    },
+    pronoun4() {
+      return text(female() ? 'pronounHers' : 'pronounHis2');
+    },
 
     /** PotentialQuestorName / PotentialQuestorLocation (:189-197).
      *  The location's key is **%pqp** - MacroHelper.cs:163, "Potential
      *  Quest Giver's Location". Not %pql, which is not a macro at all
      *  and would have left every record carrying the real one
      *  unresolved. */
-    potentialQuestorName() { return ctx.session?.getQuestorName() ?? null; },
-    potentialQuestorLocation() { return ctx.session?.getQuestorLocation() ?? null; },
+    potentialQuestorName() {
+      return ctx.session?.getQuestorName() ?? null;
+    },
+    potentialQuestorLocation() {
+      return ctx.session?.getQuestorLocation() ?? null;
+    },
   };
 }
 
@@ -244,11 +288,12 @@ export function talkMacroHooks(ctx) {
       // live fields with no arguments at all: the current talk tone,
       // the reaction (the greeting addresses the NPC by name only
       // above 0, else by 7221+tone) and nameNPC.
-      talkPCGreetingOrFollowUpText: () => p.getPCGreetingOrFollowUpText(
-        ctx.toneIndex?.() ?? 1,
-        ctx.session?.reactionToPlayer ?? 0,
-        ctx.session?.nameNPC ?? '',
-      ),
+      talkPCGreetingOrFollowUpText: () =>
+        p.getPCGreetingOrFollowUpText(
+          ctx.toneIndex?.() ?? 1,
+          ctx.session?.reactionToPlayer ?? 0,
+          ctx.session?.nameNPC ?? '',
+        ),
     },
   };
 }
@@ -320,7 +365,24 @@ export function expandMessageBoxTokens(tokens, ctx) {
  *  `%hnt2` from `%hnt` and `%g4` from `%g` WITHOUT any longest-first
  *  ordering: the scan simply runs to the next terminator. */
 export const MACRO_TERMINATORS = Object.freeze([
-  ' ', '%', '.', ',', "'", '?', '!', '/', '(', ')', '{', '}', '[', ']', '"', ';', ':', '|',
+  ' ',
+  '%',
+  '.',
+  ',',
+  "'",
+  '?',
+  '!',
+  '/',
+  '(',
+  ')',
+  '{',
+  '}',
+  '[',
+  ']',
+  '"',
+  ';',
+  ':',
+  '|',
 ]);
 
 /** MacroHelper.ExpandMacros (:419-494) over the talk MCP, verbatim.
@@ -428,16 +490,22 @@ export function expandRandomTextRecord(recordIndex, ctx) {
 const UNKNOWN_MACRO = /(\s*)(%[^[\s]*)\[undefined\](\s*)/g;
 const seenUnknownMacros = new Set();
 /** Every `[undefined]` symbol this session has met, in first-seen order. */
-export function unknownTalkMacros() { return [...seenUnknownMacros]; }
+export function unknownTalkMacros() {
+  return [...seenUnknownMacros];
+}
 /** Test seam: the set is a session log, and a pin needs a clean one. */
-export function resetUnknownTalkMacros() { seenUnknownMacros.clear(); }
+export function resetUnknownTalkMacros() {
+  seenUnknownMacros.clear();
+}
 /** The one step between an expanded talk record and the player. */
 export function speakable(text) {
   if (typeof text !== 'string' || !text.includes('[undefined]')) return text;
   return text.replace(UNKNOWN_MACRO, (_, pre, symbol, post) => {
     if (!seenUnknownMacros.has(symbol)) {
       seenUnknownMacros.add(symbol);
-      console.warn(`talk: ${symbol} is a classic macro Daggerfall Unity never implemented (MacroHelper.cs has no row) - rendering nothing`);
+      console.warn(
+        `talk: ${symbol} is a classic macro Daggerfall Unity never implemented (MacroHelper.cs has no row) - rendering nothing`,
+      );
     }
     return pre && post ? ' ' : '';
   });

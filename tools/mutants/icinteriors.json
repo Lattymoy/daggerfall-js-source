@@ -200,8 +200,8 @@
   {
     "name": "IC-INTERIORS-questor-pool-makes-every-room",
     "file": "src/systems/talk/talkTopics.js",
-    "old": "const cast = interiorCast(sub);",
-    "new": "const cast = sub?.interior;",
+    "old": "      const cast = interiorCast(sub);",
+    "new": "      const cast = sub?.interior;",
     "tests": [
       "test/world/icinteriors.test.js"
     ]

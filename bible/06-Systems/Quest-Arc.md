@@ -7242,7 +7242,7 @@ same table the talk's regional "Where is" reads (`06-Systems/Talk-Arc.md` BAY-LE
 - **%di's remote arm** (GetLocationCompassDirection, TalkManager.cs:1238-1281) said "...never mind..." for every site past
   the Bay (28 of DFU's quests use it): `questWorld.js` handed it the raw `maps`, and `systems/talk/talk.js` bounded the
   politic region by MapFileReader.RegionCount (62). It reads `questWorld.maps`, the region bounded by the world's regions
-  (`talk.js:"if (region < 0 || region >= REGION_NAMES.length) region = -1;"`). On the freeware Solitude's Fighters Guild
+  (`talk.js:"if (region < 0 || region >= REGION_NAMES.length)"`). On the freeware Solitude's Fighters Guild
   sends the player to Fenrarik Manor, "northeast", and to the Citadel of Alarne, "east"; the Bay's directions are as they
   were (Daggerfall's: Uplech and Greenfield's Hold, "northwest").
 - **The map item's and the guilds' reveals** (DiscoverRandomLocation, PlayerGPS.cs:892-910: the map item, the Thieves
