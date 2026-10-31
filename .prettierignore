@@ -1265,6 +1265,10 @@
 !/src/systems/roomLoot.js
 !/src/systems/rumorMill.js
 !/src/systems/sailingCabin.js
+!/src/systems/save/
+/src/systems/save/*
+!/src/systems/save/base64Bytes.js
+!/src/systems/save/saveTransfer.js
 !/src/systems/sceneCache.js
 !/src/systems/sea/
 /src/systems/sea/*/
