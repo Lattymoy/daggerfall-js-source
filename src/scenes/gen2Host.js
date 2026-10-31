@@ -6,6 +6,11 @@
 // stands there.
 import { worldManifest } from '../world/gen2/manifest.js';
 import { testRegion } from '../world/gen2/testRegions.js';
+import { APP_ROOT } from '../systems/appRoot.js';
+
+/** A bake's address under the app's root (systems/appRoot.js): the page is /play/, the bakes are served from the root.
+ *  @param {string} file */
+export const bakeUrl = (file) => new URL(`worldgen2/${file}.gz`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
 
 /** @type {Promise<Uint8Array[]>|null} */
 let _bakes = null;
@@ -26,8 +31,8 @@ async function loadAll(search) {
   const out = [];
   for (const file of gen2Files(search)) {
     try {
-      const res = await fetch(`./worldgen2/${file}.gz`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const res = await fetch(bakeUrl(file)), type = res.headers.get('content-type') ?? '';
+      if (!res.ok || type.includes('text/html')) throw new Error(`HTTP ${res.status} ${type}`);   // an SPA fallback's page is no bake
       out.push(await gunzipped(new Uint8Array(await res.arrayBuffer())));
     } catch (e) { console.warn(`[wg2] ${file} did not load; the world's own ground stands there:`, /** @type {Error} */ (e)?.message ?? e); }
   }

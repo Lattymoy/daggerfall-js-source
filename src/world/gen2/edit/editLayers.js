@@ -7,10 +7,11 @@ import { worldPixelKey } from '../../worldWide/worldGrid.js';
 import { smoothstep, fbm, seedOf } from '../exact.js';
 import { staleAfter } from '../stageGraph.js';
 import { PIXEL_M } from '../regionSampler.js';
+import { nearCourse, ROAD_SHOULDER_M } from '../riverLaw.js';
 
 export const TILE_PX = 16;
 /** The operations and the stage each changes. */
-export const OP_STAGE = Object.freeze({ raise: 'erosion', lower: 'erosion', smooth: 'erosion', flatten: 'erosion', noise: 'erosion', biome: 'biome', material: 'biome', road: 'settlements', settlement: 'settlements', building: 'settlements', exclude: 'suitability' });
+export const OP_STAGE = Object.freeze({ raise: 'erosion', lower: 'erosion', smooth: 'erosion', flatten: 'erosion', noise: 'erosion', river: 'erosion', biome: 'biome', material: 'biome', road: 'settlements', settlement: 'settlements', building: 'settlements', exclude: 'suitability' });
 const BRUSHES = new Set(['raise', 'lower', 'smooth', 'flatten', 'noise']);
 const sq = (v) => v * v;
 
@@ -34,7 +35,9 @@ export function opProblems(op) {
     if (op.kind === 'flatten' && !Number.isFinite(op.level)) out.push('level');
     if (op.falloff && !['smooth', 'linear', 'flat'].includes(op.falloff)) out.push('falloff');
   }
-  if (op.kind === 'road' && !(Array.isArray(op.pts) && op.pts.length >= 2 && op.width > 0)) out.push('road');
+  if ((op.kind === 'road' || op.kind === 'river') && !(Array.isArray(op.pts) && op.pts.length >= 2 && op.pts.every((p) => Number.isFinite(p[0]) && Number.isFinite(p[1])))) out.push('course');
+  if (op.kind === 'road' && !(op.width > 0 && op.width <= 30)) out.push('width');
+  if (op.kind === 'river' && !(op.width > 0 && op.width <= 200 && op.depth > 0 && op.depth <= 30)) out.push('width or depth');
   if (op.kind === 'settlement' && !(op.spec && typeof op.spec.id === 'string')) out.push('settlement');
   if (op.kind === 'building' && typeof op.id !== 'string') out.push('building');
   return out;
@@ -134,9 +137,14 @@ export function editedSampler(S, doc) {
     return a + (b - a) * ty;
   };
   const paints = doc.layers.filter((L) => L.visible).flatMap((L) => L.ops.filter((o) => o.kind === 'biome'));
+  const ground = (x, y) => S.heightAt(x, y) + deltaAt(x, y), ways = authoredCourses(doc, ground);
   return {
-    ...S, patches,
-    heightAt: (x, y) => S.heightAt(x, y) + deltaAt(x, y),
+    ...S, patches, ways,
+    heightAt: (x, y) => onCourses(ways, x, y, ground(x, y)),
+    waterAt(x, y) {
+      for (const rv of ways.rivers) { const n = nearM(rv.pts, x, y); if (n && n.d < rv.width / 2) return { kind: 'river', surface: n.z, river: 'authored' }; }
+      return S.waterAt(x, y);
+    },
     env(x, y) {
       const out = /** @type {any} */ (S.env(x, y));
       for (const p of paints) if (Math.sqrt(sq(x - /** @type {number} */ (p.x)) + sq(y - /** @type {number} */ (p.y))) * PIXEL_M < /** @type {number} */ (p.r)) out.biome = p.biome;
@@ -146,16 +154,75 @@ export function editedSampler(S, doc) {
   };
 }
 
-/** What a document makes stale against its bake: each stage and the rectangle to bake again (the hydrology over the
- *  region, since a brush may turn a river). @param {EditDoc} doc @param {{ x: number, y: number, w: number, h: number }} bounds */
-export function docStale(doc, bounds) {
+/** What a document makes stale against its bake: each stage and the rectangle to bake again - the hydrology over the
+ *  change's water downstream when `basinOf` is given (continent.js downstreamOf), over the region else.
+ *  @param {EditDoc} doc @param {{ x: number, y: number, w: number, h: number }} bounds @param {(r: any) => any} [basinOf] */
+export function docStale(doc, bounds, basinOf = undefined) {
   /** @type {Map<string, any>} */
   const out = new Map();
   for (const L of doc.layers) if (L.visible) for (const op of L.ops) {
-    for (const [s, r] of staleAfter(/** @type {any} */ (OP_STAGE[op.kind]), opRect(op), bounds, { self: true })) {
+    for (const [s, r] of staleAfter(/** @type {any} */ (OP_STAGE[op.kind]), opRect(op), bounds, { self: true, basinOf })) {
       const was = out.get(s);
       out.set(s, was ? { x: Math.min(was.x, r.x), y: Math.min(was.y, r.y), w: Math.max(was.x + was.w, r.x + r.w) - Math.min(was.x, r.x), h: Math.max(was.y + was.h, r.y + r.h) - Math.min(was.y, r.y) } : r);
     }
   }
   return out;
+}
+
+/** A hand river's banks past its channel, metres (a road's shoulder is riverLaw.js ROAD_SHOULDER_M). */
+export const BANK_M = 10;
+/** A course's points every this many metres, for its level. */
+const COURSE_STEP_M = 8;
+
+/**
+ * The visible layers' roads and hand-drawn rivers as courses over the ground `heightAt`: a road's level the ground along
+ * it smoothed (five points about each), a river's surface the ground along it, held so it never rises downstream (the
+ * drawing's first point is its source). Each point [x, y, z] in world pixels and metres.
+ * @param {EditDoc} doc @param {(x: number, y: number) => number} heightAt
+ */
+export function authoredCourses(doc, heightAt) {
+  const roads = [], rivers = [];
+  for (const L of doc.layers) {
+    if (!L.visible) continue;
+    for (const op of L.ops) {
+      if (op.kind !== 'road' && op.kind !== 'river') continue;
+      const pts = densify(/** @type {number[][]} */ (op.pts), COURSE_STEP_M / PIXEL_M), zs = pts.map(([x, y]) => heightAt(x, y));
+      if (op.kind === 'road') {
+        const z = zs.map((_, i) => { let sum = 0, n = 0; for (let k = Math.max(0, i - 2); k <= Math.min(zs.length - 1, i + 2); k++) { sum += zs[k]; n++; } return sum / n; });
+        roads.push({ width: /** @type {number} */ (op.width), pts: pts.map(([x, y], i) => [x, y, z[i]]) });
+      } else {
+        let s = Infinity;
+        rivers.push({ width: /** @type {number} */ (op.width), depth: /** @type {number} */ (op.depth), pts: pts.map(([x, y], i) => { s = Math.min(s, zs[i] - 0.5); return [x, y, s]; }) });
+      }
+    }
+  }
+  return { roads, rivers };
+}
+/** A polyline with a point at least every `step` (world pixels). */
+function densify(pts, step) {
+  const out = [pts[0]];
+  for (let i = 1; i < pts.length; i++) {
+    const [ax, ay] = pts[i - 1], [bx, by] = pts[i], n = Math.max(1, Math.ceil(Math.sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay)) / step));
+    for (let k = 1; k <= n; k++) out.push([ax + ((bx - ax) * k) / n, ay + ((by - ay) * k) / n]);
+  }
+  return out;
+}
+/** The nearest point of a course in metres (riverLaw.js nearCourse, its distance in world pixels). @param {number[][]} pts */
+const nearM = (pts, x, y) => { const n = nearCourse(pts, x, y); return n ? { d: n.d * PIXEL_M, z: n.z } : null; };
+/** The ground at a point with the courses on it: a river's channel cut under its surface with banks over it, a road's
+ *  bed eased to its level across its width and shoulder. @param {ReturnType<typeof authoredCourses>} ways */
+export function onCourses(ways, x, y, h) {
+  for (const rv of ways.rivers) {
+    const n = nearM(rv.pts, x, y), half = rv.width / 2;
+    if (!n || n.d >= half + BANK_M) continue;
+    if (n.d < half) { const u = n.d / half; return Math.min(h, n.z - rv.depth * (1 - u * u)); }
+    const top = Math.max(h, n.z + 0.4);
+    return n.z + 0.4 + (top - n.z - 0.4) * smoothstep(half, half + BANK_M, n.d);
+  }
+  for (const rd of ways.roads) {
+    const n = nearM(rd.pts, x, y), half = rd.width / 2;
+    if (!n || n.d >= half + ROAD_SHOULDER_M) continue;
+    return n.z + (h - n.z) * smoothstep(half, half + ROAD_SHOULDER_M, n.d);
+  }
+  return h;
 }

@@ -44,7 +44,8 @@ export function encodeBake(bake) {
     rivers: bake.rivers.map((r) => ({ id: r.id, order: r.order, into: r.into, raw: r.raw.map((p) => [q(p.x, 1024), q(p.y, 1024), q(p.q, 1000), q(p.s, 100)]) })),
     lakes: bake.lakes.map((l) => ({ id: l.id, kind: l.kind, level: q(l.level, 100), cells: l.cells, x: q(l.x, 64), y: q(l.y, 64), inflow: q(l.inflow, 1000) })),
     falls: bake.falls.map((f) => ({ x: q(f.x, 64), y: q(f.y, 64), drop: q(f.drop, 10), kind: f.kind })),
-    springs: bake.springs, resources: bake.resources,
+    springs: bake.springs, resources: bake.resources, edits: bake.edits ?? null,
+    roads: (bake.roads ?? []).map((r) => ({ width: r.width, pts: r.pts.map((p) => [q(p[0], 1024), q(p[1], 1024), q(p[2], 100)]) })),
   };
   const text = new TextEncoder().encode(JSON.stringify(header)), pad = (4 - ((8 + text.length) % 4)) % 4;
   const sizes = PLANES.map((p) => w * h * ARRAY[p.type].BYTES_PER_ELEMENT);

@@ -15,30 +15,32 @@ import { exportPackage, importPackage } from '../world/gen2/edit/contentPackage.
 import { generateSettlement, STYLES, SETTLEMENT_TYPES } from '../world/gen2/settle/settlementGen.js';
 import { settlementProblems } from '../world/gen2/settle/settlementValidate.js';
 import { mintIds, settlementMapId } from '../world/gen2/settle/buildingRecord.js';
-import { gunzipped } from '../scenes/gen2Host.js';
+import { gunzipped, bakeUrl } from '../scenes/gen2Host.js';
+import { canonReady } from '../world/gen2/canon.js';
+import { downstreamOf } from '../world/gen2/continent.js';
 import { Renderer } from '../render/renderer.js';
 import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrain/terrainSurface.js';
 import { generateTileData, assignTiles } from '../world/terrain/terrainTiles.js';
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, STREAMING_TERRAIN_SCALE } from '../world/terrain/terrainSampler.js';
 import { perspective, lookAt, identity, mirrorProjectionX } from '../world/mat4.js';
 
-const TOOLS = ['look', 'raise', 'lower', 'smooth', 'flatten', 'biome', 'settlement', 'district', 'remove'];
+const TOOLS = ['look', 'raise', 'lower', 'smooth', 'flatten', 'biome', 'road', 'river', 'settlement', 'district', 'remove'];
 
 /** Boot the editor on a document (the page's own). @param {Document} doc */
 export async function bootWorldEditor(doc) {
   const $ = (id) => /** @type {any} */ (doc.getElementById(id));
-  const st = { bakes: new Map(), region: null, S: null, E: null, hist: null, revs: newHistory(), layer: 0, tool: 'look', towns: new Map(), books: new Map(), pick: null };
+  const st = { bakes: new Map(), region: null, S: null, E: null, hist: null, revs: newHistory(), layer: 0, tool: 'look', towns: new Map(), books: new Map(), pick: null, course: [] };
   for (const r of TEST_REGIONS) $('region').append(new globalThis.Option(r.id, r.id));
   for (const b of BIOMES) $('biome').append(new globalThis.Option(b.name, String(b.id)));
   for (const t of SETTLEMENT_TYPES) $('stype').append(new globalThis.Option(t.name, t.key));
   for (const s of STYLES) $('sstyle').append(new globalThis.Option(s.name, s.key));
   for (const t of TOOLS) { const b = doc.createElement('button'); b.textContent = t; b.onclick = () => { st.tool = t; drawTools(); }; $('tools').append(b); }
-  const drawTools = () => [...$('tools').children].forEach((b) => b.classList.toggle('on', b.textContent === st.tool));
+  const drawTools = () => { st.course = []; [...$('tools').children].forEach((b) => b.classList.toggle('on', b.textContent === st.tool)); };
   drawTools();
 
   async function load(id) {
     if (!st.bakes.has(id)) {
-      const res = await fetch(`./worldgen2/${id}.wg2.gz`);
+      const res = await fetch(bakeUrl(`${id}.wg2`));
       st.bakes.set(id, decodeBake(await gunzipped(new Uint8Array(await res.arrayBuffer()))));
     }
     const d = st.bakes.get(id);
@@ -81,6 +83,11 @@ export async function bootWorldEditor(doc) {
     const P = (x, y) => [v.ox + (x - v.r.x) * v.sc, v.oy + (y - v.r.y) * v.sc];
     ctx.strokeStyle = '#5aa0e0'; ctx.lineWidth = 1.5;
     for (const rv of st.region.header.rivers) { ctx.beginPath(); rv.pts.forEach((p, n) => ctx[n ? 'lineTo' : 'moveTo'](...P(p[0], p[1]))); ctx.stroke(); }
+    for (const [list, colour] of [[st.E.ways.roads, '#c8b48a'], [st.E.ways.rivers, '#3f7fd0']]) {
+      ctx.strokeStyle = colour; ctx.lineWidth = 2.5;
+      for (const c of list) { ctx.beginPath(); c.pts.forEach((p, n) => ctx[n ? 'lineTo' : 'moveTo'](...P(p[0], p[1]))); ctx.stroke(); }
+    }
+    if (st.course.length) { ctx.strokeStyle = '#ffffff'; ctx.setLineDash([4, 3]); ctx.beginPath(); st.course.forEach((p, n) => ctx[n ? 'lineTo' : 'moveTo'](...P(p[0], p[1]))); ctx.stroke(); ctx.setLineDash([]); }
     for (const t of towns()) {
       ctx.strokeStyle = '#e0c080'; ctx.lineWidth = 1;
       for (const r of t.roads) { ctx.beginPath(); r.pts.forEach((p, n) => ctx[n ? 'lineTo' : 'moveTo'](...P(p[0], p[1]))); ctx.stroke(); }
@@ -115,6 +122,7 @@ export async function bootWorldEditor(doc) {
       if (['raise', 'lower', 'smooth'].includes(st.tool)) change(addOp(docNow(), st.layer, { kind: st.tool, x, y, r, strength: s, falloff: 'smooth' }));
       else if (st.tool === 'flatten') change(addOp(docNow(), st.layer, { kind: 'flatten', x, y, r, level: Number($('level').value), falloff: 'smooth' }));
       else if (st.tool === 'biome') change(addOp(docNow(), st.layer, { kind: 'biome', x, y, r, biome: Number($('biome').value) }));
+      else if (st.tool === 'road' || st.tool === 'river') { st.course.push([x, y]); drawMap(); }
       else if (st.tool === 'settlement') {
         const n = towns().length + 1, id = `set-ed-${st.region.header.id}-${n}`;
         change(addOp(docNow(), st.layer, { kind: 'settlement', spec: { id, name: `Settlement ${n}`, type: $('stype').value, style: $('sstyle').value, x, y, seed: Number($('seed').value) } }));
@@ -147,6 +155,20 @@ export async function bootWorldEditor(doc) {
   $('addLayer').onclick = () => change(addLayer(docNow(), `Layer ${docNow().layers.length + 1}`));
   $('undo').onclick = () => { st.hist = undo(st.hist); refresh(); };
   $('redo').onclick = () => { st.hist = redo(st.hist); refresh(); };
+  // a road or a river: clicks lay its points, Enter (or a double click) finishes it, Escape drops it
+  const finishCourse = () => {
+    if (st.course.length < 2) { st.course = []; return; }
+    const width = Number($('width').value), pts = st.course;
+    st.course = [];
+    try {
+      change(addOp(docNow(), st.layer, st.tool === 'road' ? { kind: 'road', pts, width } : { kind: 'river', pts, width, depth: Number($('depth').value) }));
+    } catch (e) { $('out').textContent = String(/** @type {Error} */ (e).message); }
+  };
+  map.addEventListener('dblclick', () => finishCourse());
+  doc.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter') finishCourse();
+    if (ev.key === 'Escape') { st.course = []; drawMap(); }
+  });
   doc.addEventListener('keydown', (ev) => {
     if (!(ev.ctrlKey || ev.metaKey)) return;
     if (ev.key === 'z') { st.hist = undo(st.hist); refresh(); } else if (ev.key === 'y') { st.hist = redo(st.hist); refresh(); }
@@ -164,7 +186,7 @@ export async function bootWorldEditor(doc) {
 
   // ── the checks and the publishing
   function check() {
-    const lines = [], stale = docStale(docNow(), st.region.header.rect);
+    const lines = [], stale = docStale(docNow(), st.region.header.rect, (r) => downstreamOf(st.region.header.fit, r));
     lines.push(`Stale for a re-bake: ${[...stale.keys()].join(', ') || 'nothing'}`);
     for (const t of towns()) {
       const p = settlementProblems(st.E, t, { minted: true });
@@ -230,6 +252,7 @@ export async function bootWorldEditor(doc) {
   $('region').onchange = () => load($('region').value);
   $('show').onchange = () => drawMap();
   globalThis.addEventListener('resize', () => drawMap());
+  await canonReady();   // the continent's drainage (the stale stages' basin) reads the relief
   await load(TEST_REGIONS[0].id);
 }
 

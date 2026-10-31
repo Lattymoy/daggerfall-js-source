@@ -72,3 +72,10 @@ test('WG2 SEAM: the region\'s lakes are water to the marching squares, a locatio
   const none = new Uint8Array(D * D).fill(1);
   assert.equal(paintGen2Waters(none, px[0], px[1], null, D, null, 0), 0);
 });
+
+test('WG2 SEAM: a bake is fetched under the app\'s root, never under the page\'s /play/ (an SPA fallback answers that with a page, not a bake) (mutants: the root)', async () => {
+  const { bakeUrl } = await import('../../../src/scenes/gen2Host.js');
+  const { APP_ROOT } = await import('../../../src/systems/appRoot.js');
+  assert.equal(bakeUrl('hammerfell-test.wg2'), new URL('worldgen2/hammerfell-test.wg2.gz', APP_ROOT).href);
+  assert.doesNotMatch(bakeUrl('hammerfell-test.wg2'), /\/play\/worldgen2\//);
+});

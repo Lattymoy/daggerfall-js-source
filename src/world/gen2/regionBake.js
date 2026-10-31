@@ -13,6 +13,8 @@ import { provinceProfile } from './tables.js';
 import { STAGES } from './stageGraph.js';
 import { canonPrint } from './canon.js';
 import { regionInflow } from './continent.js';
+import { groundPatches, authoredCourses, TILE_PX } from './edit/editLayers.js';
+import { docPrint } from './edit/revisions.js';
 
 /** The generator's law (the manifest's `generatorVersion` names it). A change that moves any bake's bytes for the same
  *  spec raises it, and the old law is kept beside the new one while a published region was baked by it (WG-5). */
@@ -31,9 +33,11 @@ export function byteOfMetres(m) {
 /**
  * Bake a region. Answers every field on the region's grid, the vector water, the resource sites, and per world pixel
  * the byte and the climate the game's own readers take.
- * @param {import('./geology.js').RegionSpec} spec
+ * `doc`: an editor document (edit/editLayers.js) applied as the authored overrides - its brushes and hand rivers on the
+ * worked land before the water is found, its biome paint after the biomes, its roads kept for the sampler to ease.
+ * @param {import('./geology.js').RegionSpec} spec @param {{ doc?: any }} [o]
  */
-export function bakeRegion(spec) {
+export function bakeRegion(spec, o = {}) {
   const g = regionGrid(spec);
   const canon = canonGrid(spec);
   const geo = geology(spec, canon);
@@ -45,12 +49,14 @@ export function bakeRegion(spec) {
   // (a dry land's great basins kept), and the wet lowlands' pools laid after
   infillCanon(spec, canon, worked.elev);
   wetHollows(spec, canon, worked.elev);
+  const authored = o.doc ? applyGroundEdits(spec, o.doc, worked.elev) : null;
   const air = climate(spec, canon, worked.elev);
   const wet = worked.elev.like();
   for (let k = 0; k < wet.data.length; k++) wet.data[k] = provinceProfile(canon.theatre.data[k]).wet;
-  const hyd = hydrology(spec, worked.elev, air, g.cellM, { isSea, wet, inflow });
+  const hyd = hydrology(spec, worked.elev, air, g.cellM, { isSea, wet, inflow, forced: authored?.forced });
   const soil = soils(spec, hyd.elev, geo.rock, air, hyd, worked.deposit, g.cellM);
   const bio = biomes(spec, hyd.elev, geo.rock, canon.theatre, air, soil, hyd);
+  if (o.doc) applyBiomePaint(o.doc, bio.biome);
   const elev = bio.elev;
   // the game's own readers' half: a byte and a climate a world pixel. A pixel's byte stands at its node, its south-east
   // corner (landforms.js byteBeyond: the kernel's (x + 1) * 128, (MAP_H - y) * 128), so it is the land there
@@ -71,6 +77,40 @@ export function bakeRegion(spec) {
       humidity: air.humidity, exposure: air.exposure, solar: air.solar, season: air.season, theatre: canon.theatre, deposit: worked.deposit,
     },
     rivers: hyd.rivers, lakes: hyd.lakes, falls: hyd.falls, springs: hyd.springs.map(({ cell, ...s }) => s), resources, bytes, climates,
+    edits: o.doc ? docPrint(o.doc) : null, roads: authored?.roads ?? [],
     before: geo.elev,
   };
+}
+
+/**
+ * THE AUTHORED OVERRIDES ON THE WORKED LAND (the toolchain's step 8): a document's brushes added cell by cell, then its
+ * hand-drawn rivers cut along their courses (each cell under a course stood at its surface less its depth, the surface
+ * never rising) and marked to be rivers whatever they carry. Answers the forced cells and the roads' courses.
+ * @param {import('./geology.js').RegionSpec} spec @param {any} doc @param {import('./field.js').Field} elev
+ */
+export function applyGroundEdits(spec, doc, elev) {
+  const res = elev.res, side = TILE_PX * res, patches = groundPatches(doc, /** @type {any} */ ({ fields: { elev }, header: { seed: spec.seed } }));
+  for (const p of patches.values()) for (let j = 0; j < side; j++) for (let i = 0; i < side; i++) {
+    const ci = p.tx * side + i, cj = p.ty * side + j;
+    if (ci < elev.w && cj < elev.h) elev.data[cj * elev.w + ci] += p.data[j * side + i];
+  }
+  const ways = authoredCourses(doc, (x, y) => elev.at(x, y)), forced = new Uint8Array(elev.data.length);
+  for (const rv of ways.rivers) for (const [x, y, s] of rv.pts) {
+    if (!elev.covers(x, y)) continue;
+    const [i, j] = elev.cellOf(x, y), k = j * elev.w + i;
+    elev.data[k] = Math.min(elev.data[k], s - rv.depth);
+    forced[k] = 1;
+  }
+  return { forced, roads: ways.roads.map((r) => ({ width: r.width, pts: r.pts })) };
+}
+
+/** A document's biome paint on the bake's biomes (a cell whose centre a stroke reaches takes its biome). */
+export function applyBiomePaint(doc, biome) {
+  for (const L of doc.layers) if (L.visible) for (const op of L.ops) {
+    if (op.kind !== 'biome') continue;
+    for (let j = 0; j < biome.h; j++) for (let i = 0; i < biome.w; i++) {
+      const x = biome.x0 + (i + 0.5) / biome.res, y = biome.y0 + (j + 0.5) / biome.res, dx = (x - op.x) * 819.2, dy = (y - op.y) * 819.2;
+      if (dx * dx + dy * dy < op.r * op.r) biome.data[j * biome.w + i] = op.biome;
+    }
+  }
 }

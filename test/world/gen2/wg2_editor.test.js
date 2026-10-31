@@ -89,3 +89,43 @@ test('WG2 PACKAGES AND PREFABS: a package round-trips, and is refused changed on
   assert.deepEqual(gltfProblems(gltf(1200, true), PREFABS.find((p) => p.id === 'house-small')), []);
   assert.deepEqual(gltfProblems(gltf(9000, false), PREFABS.find((p) => p.id === 'house-small')), ['9000 triangles, over 6000', 'no licence in asset.extras']);
 });
+
+test('WG2 ROADS AND RIVERS: a road eases the ground to its level across its width and shoulder; a hand-drawn river cuts a channel under a surface that never rises and is water; nothing past their reach moves (mutants: the ease, the surface\'s hold, the channel)', () => {
+  const a = [P[0] - 3, P[1]], b = [P[0] + 3, P[1] + 1];
+  const road = editedSampler(S, addOp(newDoc('r', 'p'), 0, { kind: 'road', pts: [a, b], width: 6 }));
+  const n = road.ways.roads[0], mid = n.pts[Math.floor(n.pts.length / 2)];
+  assert.ok(Math.abs(road.heightAt(mid[0], mid[1]) - mid[2]) < 1e-9, 'on its level at the centre line');
+  assert.equal(road.heightAt(P[0], P[1] + 5), S.heightAt(P[0], P[1] + 5), 'untouched past the shoulder');
+  const river = editedSampler(S, addOp(newDoc('r', 'p'), 0, { kind: 'river', pts: [a, b], width: 12, depth: 2 }));
+  const rv = river.ways.rivers[0];
+  for (let i = 1; i < rv.pts.length; i++) assert.ok(rv.pts[i][2] <= rv.pts[i - 1][2], 'its surface never rises');
+  const at = rv.pts[Math.floor(rv.pts.length / 2)];
+  assert.equal(river.waterAt(at[0], at[1])?.kind, 'river');
+  assert.ok(river.heightAt(at[0], at[1]) <= at[2] - 1.99, 'its bed under its surface by its depth');
+  assert.deepEqual(opProblems({ kind: 'river', pts: [a, b], width: 12 }), ['width or depth']);
+});
+
+test('WG2 AUTHORED OVERRIDES: a bake made with a document stands its hand river as a river, its paint as the biome, its roads in the file, its document\'s print in its header - and the same document bakes the same bytes (mutants: the forced cells, the paint, the brushes unapplied)', async () => {
+  const { canonReady } = await import('../../../src/world/gen2/canon.js');
+  const { bakeRegion } = await import('../../../src/world/gen2/regionBake.js');
+  const { encodeBake, decodeBake: decode, bakePrint } = await import('../../../src/world/gen2/bakeCodec.js');
+  const { docPrint } = await import('../../../src/world/gen2/edit/revisions.js');
+  await canonReady();
+  const spec = { id: 'law-edits', rect: { x: R.x + 20, y: R.y + 20, w: 32, h: 32 }, res: 1, seed: D.header.seed, fit: D.header.fit, springs: [], erosion: { steps: 10 } };
+  let doc = newDoc('law-edits', 'base');
+  doc = addOp(doc, 0, { kind: 'river', pts: [[R.x + 24.5, R.y + 30.5], [R.x + 44.5, R.y + 34.5]], width: 10, depth: 2 });
+  doc = addOp(doc, 0, { kind: 'biome', x: R.x + 30, y: R.y + 46, r: 1500, biome: 12 });
+  doc = addOp(doc, 0, { kind: 'raise', x: R.x + 40, y: R.y + 45, r: 2000, strength: 40 });
+  doc = addOp(doc, 0, { kind: 'road', pts: [[R.x + 26, R.y + 40], [R.x + 46, R.y + 41]], width: 6 });
+  const plain = bakeRegion(spec), edited = bakeRegion(spec, { doc });
+  const cellAt = (x, y) => (Math.floor(y - spec.rect.y)) * 32 + Math.floor(x - spec.rect.x);
+  assert.ok(edited.fields.water.data[cellAt(R.x + 34.5, R.y + 32.5)] & 1, 'the hand river is a river');
+  assert.equal(edited.fields.biome.data[cellAt(R.x + 30.5, R.y + 46.5)], 12, 'the paint stands');
+  assert.ok(edited.fields.elev.data[cellAt(R.x + 40.5, R.y + 45.5)] > plain.fields.elev.data[cellAt(R.x + 40.5, R.y + 45.5)] + 20, 'the brush raised the worked land');
+  const bytes = encodeBake(edited), back = decode(bytes);
+  assert.equal(back.header.edits, docPrint(doc));
+  assert.equal(back.header.roads.length, 1);
+  assert.equal(bakePrint(bytes), bakePrint(encodeBake(bakeRegion(spec, { doc }))));
+  const S2 = regionSampler(back), rd = back.header.roads[0].pts[3];
+  assert.ok(Math.abs(S2.heightAt(rd[0], rd[1]) - rd[2]) < 0.5, 'the sampler eases the ground to the road');
+});

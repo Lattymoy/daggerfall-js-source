@@ -40,8 +40,9 @@ export const runoff = (p, e) => (p * p * p) / (p * p + e * e);
 
 /**
  * @param {import('./geology.js').RegionSpec} spec @param {Field} elev worked land, metres @param {ReturnType<import('./climate.js').climate>} air
- * @param {number} cellM @param {{ isSea?: (k: number) => boolean, inflow?: Float64Array, wet?: Field }} [o]
- *   inflow: m3/s entering each cell from upstream past the region; wet: the province's share of flat land that holds water
+ * @param {number} cellM @param {{ isSea?: (k: number) => boolean, inflow?: Float64Array, wet?: Field, forced?: Uint8Array }} [o]
+ *   inflow: m3/s entering each cell from upstream past the region; wet: the province's share of flat land that holds water;
+ *   forced: cells a designer drew a river through (a river whatever it carries)
  */
 export function hydrology(spec, elev, air, cellM, o = {}) {
   const { w, h: H } = elev, n = w * H, area = cellM * cellM, isSea = o.isSea ?? (() => false);
@@ -94,7 +95,8 @@ export function hydrology(spec, elev, air, cellM, o = {}) {
   const water = new Field(w, H, elev.frame, Uint8Array), S = new Float64Array(m).fill(Infinity), order = new Uint8Array(m);
   const cellsKm2 = area / 1e6, drained = new Float64Array(m).fill(cellsKm2);
   for (const k of up) { const r = net.rcv[k]; if (r >= 0) drained[r] += drained[k]; }
-  const isRiver = (k) => k < n && Q[k] >= RIVER_Q && drained[k] >= RIVER_KM2 && !lakeId.data[k];
+  const forced = o.forced ?? null;
+  const isRiver = (k) => k < n && !lakeId.data[k] && ((Q[k] >= RIVER_Q && drained[k] >= RIVER_KM2) || (!!forced && forced[k] === 1 && Q[k] > 0));
   for (const k of up) {
     if (k >= n) continue;
     if (lakeId.data[k]) water.data[k] |= lakes[lakeId.data[k] - 1].kind === 'playa' ? WATER.playa : WATER.lake;

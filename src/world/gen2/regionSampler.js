@@ -6,6 +6,7 @@
 import { fbm, ridged, seedOf, smoothstep } from './exact.js';
 import { Field } from './field.js';
 import { worldPixelKey } from '../worldWide/worldGrid.js';
+import { nearCourse, ROAD_SHOULDER_M } from './riverLaw.js';
 import { SCALED_OCEAN_ELEVATION, STREAMING_TERRAIN_SCALE } from '../terrain/terrainSampler.js';
 
 /** Metres a world pixel. */
@@ -87,6 +88,15 @@ export function regionSampler(bake) {
     if (biome.get(...elev.cellOf(x, y)) === DUNES) h += 5 * ridged(seed + 1, x * 6, y * 1.5, 2);
     return h;
   };
+  // the authored roads (an editor document baked in): the ground eased to their level across width and shoulder
+  const roads = header.roads ?? [];
+  const eased = (x, y, h) => {
+    for (const rd of roads) {
+      const n = nearCourse(rd.pts, x, y), half = rd.width / 2, d = n ? n.d * PIXEL_M : Infinity;
+      if (n && d < half + ROAD_SHOULDER_M) return n.z + (h - n.z) * smoothstep(half, half + ROAD_SHOULDER_M, d);
+    }
+    return h;
+  };
   const api = {
     id: header.id, rect, print: bake.print, header, fields,
     /** Is a world point in the region? */
@@ -101,7 +111,7 @@ export function regionSampler(bake) {
     heightAt(x, y) {
       const pool = poolAt(x, y);
       if (pool) return Math.min(land(x, y), pool.p.level - 1.8 * (1 - pool.u * pool.u) + 0.5 * pool.u * pool.u);
-      const h = land(x, y), c = channel(x, y);
+      const h = roads.length ? eased(x, y, land(x, y)) : land(x, y), c = channel(x, y);
       if (!c) return h;
       if (c.d < c.half) { const u = c.d / c.half; return Math.min(h, c.surface - c.depth * (1 - u * u)); }
       const bankTop = Math.max(h, c.surface + 0.4);
