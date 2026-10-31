@@ -326,8 +326,8 @@
   {
     "name": "SC-wire-key-blind",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "rec.n ?? null, rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null]",
-    "new": "rec.n ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null]",
+    "old": "rec.n ?? null, rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null, rec.h ?? null]",
+    "new": "rec.n ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null, rec.h ?? null]",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]

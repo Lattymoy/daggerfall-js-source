@@ -113,7 +113,7 @@
   {
     "name": "GUILD1d-entry-rank-unasked",
     "file": "server-account/src/halls.js",
-    "old": "  if (!hallMay(a.me.rank, 'hallEntry')) return { error: 'guild-rank' };\n",
+    "old": "  if (!guildMay(a.me.rank, 'hallEntry', a.powers)) return { error: 'guild-rank' };   // GUILD-RANKS: as the guild set it\n",
     "new": "",
     "tests": [
       "test/net/guild1d_service.test.js",
@@ -190,7 +190,7 @@
   {
     "name": "GUILD1d-every-member-a-keeper",
     "file": "server-account/src/homes.js",
-    "old": "...(hallMay(rank, 'decorate') && h.me_realm === 1 ? { keeper: true } : {})",
+    "old": "...(guildMay(rank, 'decorate', powers) && h.me_realm === 1 ? { keeper: true } : {})",
     "new": "...({ keeper: true })",
     "tests": [
       "test/net/guild1d_service.test.js"
@@ -209,7 +209,7 @@
   {
     "name": "GUILD1d-owns-any-member",
     "file": "server-account/src/decor.js",
-    "old": "AND g.char_id = k.c\n      AND g.rank IN (${HALL_POWERS.decorate.join(', ')})\n      AND EXISTS (SELECT 1 FROM realm_characters rc",
+    "old": "AND g.char_id = k.c\n      AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}\n      AND EXISTS (SELECT 1 FROM realm_characters rc",
     "new": "AND g.char_id = k.c\n      AND EXISTS (SELECT 1 FROM realm_characters rc",
     "tests": [
       "test/net/guild1d_service.test.js"
@@ -322,7 +322,7 @@
   {
     "name": "GUILD1d-banners-version-unread",
     "file": "src/scenes/hallBanners.js",
-    "old": "      if (v !== seen || now() - at >= BANNER_REFRESH_MS)",
+    "old": "      if (lv !== seen || now() - at >= BANNER_REFRESH_MS)",
     "new": "      if (now() - at >= BANNER_REFRESH_MS)",
     "tests": [
       "test/net/guild1d_client.test.js"

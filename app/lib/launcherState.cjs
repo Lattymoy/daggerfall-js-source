@@ -153,10 +153,13 @@ const cmpV = (a, b) => { for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return a
  *   failed   it did not (the cached one stays)
  *   off      the update check is off, and this request is its own (the cached one shows)
  * launch: null, 'requested' (Play), 'started' (the game's window is coming up)
+ * backend: GPU-BACKEND-LAUNCHER, Windows only (null elsewhere) - { chosen: 'default' | 'vulkan', held: a failure on
+ *   record holds Vulkan off, running: this launch took Vulkan's switches, once: the guard held this launch alone on the
+ *   default, refused: the last choice could not be written } (app/lib/graphicsBackend.cjs backendOption)
  */
 function initialState({
   current, transport, platform = 'win32', checkEnabled, checkOnLaunch = checkEnabled, arena2Dir = null, savedDir = null,
-  inGamePicker = false, savedArena2 = null, news = [], lastPlayed = null, returning = false, installFailedFor = null,
+  inGamePicker = false, savedArena2 = null, news = [], lastPlayed = null, returning = false, installFailedFor = null, backend = null,
 }) {
   const checking = !arena2Dir && typeof savedDir === 'string' && savedDir !== '';
   return {
@@ -185,6 +188,9 @@ function initialState({
     },
     news: { status: checkEnabled ? 'loading' : 'off', items: Array.isArray(news) ? news : [] },
     launch: null,
+    backend: backend && typeof backend === 'object'
+      ? { chosen: backend.chosen === 'vulkan' ? 'vulkan' : 'default', held: !!backend.held, running: !!backend.running, once: !!backend.once, refused: false }
+      : null,
   };
 }
 
@@ -201,6 +207,8 @@ const clampPercent = (p) => Math.max(0, Math.min(100, Number(p) || 0));
 /** Play can be pressed: nothing is being decided for the player, and the
  *  game has files - a configured folder, or the in-page picker. */
 const canPlay = (s) => !s.launch && SETUP_DONE.has(s.setup.status) && !UPDATE_HOLDS.has(s.update.status);
+/** GPU-BACKEND-LAUNCHER: the launcher may restart the app - not after Play, nor over a download or an install. */
+const canRestart = (s) => !s.launch && s.update.status !== 'downloading' && s.update.status !== 'installing';
 
 /** The launcher's state after one event. Events that do not apply to the
  *  state they arrive in change nothing - an update found after Play, say,
@@ -347,6 +355,17 @@ function reduce(state, ev) {
       break;
     case 'check-on-launch':
       s.checkOnLaunch = !!ev.on;
+      break;
+    case 'backend-chosen':
+      // Vulkan chosen here cleared the failure record (graphicsBackend.cjs chooseBackend)
+      if (s.backend) s.backend = { ...s.backend, chosen: ev.backend === 'vulkan' ? 'vulkan' : 'default', held: ev.backend === 'vulkan' ? false : s.backend.held, refused: false };
+      break;
+    case 'backend-refused':
+      if (s.backend) s.backend = { ...s.backend, refused: true };
+      break;
+    case 'backend-cleared':
+      // the guard cleared the record: another GPU, driver or Chromium, so the next start tries Vulkan again
+      if (s.backend) s.backend = { ...s.backend, held: false };
       break;
     default:
       break;
@@ -569,6 +588,22 @@ function setupView(st, platform) {
   };
 }
 
+/** GPU-BACKEND-LAUNCHER: the Graphics option - `on` is the backend the next start uses. While that differs from this
+ *  launch, Restart is offered, or the note says when it starts. A launch the guard held alone on the default offers no
+ *  Restart: the player changed nothing. One line at most under the box: the column is full. */
+function graphicsView(s) {
+  const b = s.backend;
+  if (!b) return null;
+  const on = b.chosen === 'vulkan' && !b.held;
+  const pending = on !== b.running && !b.once;
+  const restart = pending && canRestart(s);
+  const note = b.refused ? 'The setting could not be saved.'
+    : b.chosen === 'vulkan' && b.held ? 'Vulkan did not work on this graphics card.'
+      : b.once && on ? 'Direct3D 11 for this start only.'
+        : pending && !restart ? 'From the next start.' : '';
+  return { on, enabled: !s.launch, note, restart };
+}
+
 /** The launcher window's whole content, from the state. */
 function viewOf(s) {
   const u = s.update, st = s.setup;
@@ -589,6 +624,7 @@ function viewOf(s) {
         : st.status === 'skipped' ? { path: '', note: 'Chosen in the game', label: 'Choose folder' }
           : { path: '', note: 'Not set yet', label: 'Choose folder' },
       checkOnLaunch: s.checkOnLaunch,
+      graphics: graphicsView(s),
     },
   };
   if (v.panel === 'setup') v.setup = setupView(st, s.platform);
@@ -667,6 +703,6 @@ function directPlay(argv, cfg) {
 module.exports = {
   CHECK_TIMEOUT_MS, RECHECK_MS, NEWS_MAX, INSTALL_NOTICE_MS, INSTALL_GIVEUP_MS, DOWNLOAD_STALL_MS, DETECT_DEADLINE_MS, JUDGE_DEADLINE_MS,
   PICK_DEADLINE_MS, SOURCE_LABEL, PLAY_SWITCH, installAttemptFor, directPlay,
-  initialState, reduce, nextStep, viewOf, canPlay, justUpdated, dateLabel, playerNotes, newsFrom, cachedNews, notArena2Detail,
+  initialState, reduce, nextStep, viewOf, canPlay, canRestart, justUpdated, dateLabel, playerNotes, newsFrom, cachedNews, notArena2Detail,
   UPDATE_NAME_RE, updateOfName,
 };

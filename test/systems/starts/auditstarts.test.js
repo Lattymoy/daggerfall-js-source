@@ -441,6 +441,22 @@ test('AUDIT STARTS W3 a load at a running province start\'s own dungeon, its com
   assert.match(W, /modes\?\.startInDungeon\?\.\(\{ locationKey: extras\.locationKey, fromLoad: true, recorded: starts\.resumesAt\(pixel\) \? undefined : extras\.dungeon \?\? \{\} \}\)/);
 });
 
+test('START-INSTANCE (FIELD BUGS 2026-10-30g) the door asks whether a dungeon is a running province start\'s own, its commission still in it - by its map id, as resumesAt asks by its pixel (mutants: the commission found still counted; any map id)', () => {
+  const p = played();
+  const h = startsHost({ machine: p.m });
+  assert.equal(h.lairOpen(LAIR_MAP_ID), false, 'no start running');
+  const q = p.m.startQuestByName(STARTS[1].quest);
+  p.tick(2);
+  assert.equal(h.lairOpen(LAIR_MAP_ID), true, 'its dungeon, the commission in it');
+  assert.equal(h.lairOpen(LAIR_MAP_ID - 2 ** 32), true, 'the map id read unsigned (AUDIT S4: its signed spelling)');
+  assert.equal(h.lairOpen(LAIR_MAP_ID + 1), false, 'another dungeon');
+  assert.equal(h.lairOpen(undefined), false);
+  q.getItem({ name: 'commission' }).setPlayerClicked();
+  p.tick(1);
+  assert.equal(h.lairOpen(LAIR_MAP_ID), false, 'the commission found');
+  assert.match(rd('src/scenes/world.js'), /\n {4}startLair: \(mapId\) => starts\.lairOpen\(mapId\),/, 'the world host hands it to the door');
+});
+
 test('AUDIT STARTS W5 a save from before the story began - no start, no curse, no main quest - loads with the commission handed over and the curse beside it; a story begun, a start running, or a save from before the story was kept is left alone; both load doors ask (mutants: the healing, the begun story\'s check)', () => {
   const machine = (o = {}) => ({ storyLegacy: false, storyStarted: new Set(), quests: new Map(), begun: [], startQuestByName(n) { this.begun.push(n); }, ...o });
   let m = machine();

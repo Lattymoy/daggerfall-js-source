@@ -239,7 +239,8 @@ test('EV4: the wiring - fog seam, far ring, restride, and the per-set index buff
   // and a surviving pixel re-strides when the walk reclassifies it
   assert.ok(world.includes('TERRAIN_INDICES_LOD'), 'the strided index set exists');
   assert.ok(world.includes('const lodOn = isEnhanced()'), 'the 1:1 lane keeps full resolution');
-  assert.ok(world.includes('restrideTerrain(p, want)'), 'ring-class changes swap the surface in place');
+  // PIN MOVED (OW-DEMOTE): a demotion's grid the worker's where one is up, the swap the same restrideTerrain
+  assert.ok(world.includes('(terrainGen.threaded ? restrideOffThread : restrideTerrain)(p, want)'), 'ring-class changes swap the surface in place');
   // EV7 moved buildPixel's kernel call into terrainGen.js whole; the
   // ghost-row law lives there, and since PERF-EXT26 the RESTRIDE reads
   // it too (terrainGen.js restrideGrid) - on the terrain worker when one

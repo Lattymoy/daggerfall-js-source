@@ -280,8 +280,9 @@ test('GUILD1b the officer\'s view: members and recruits promoted and demoted wit
   assert.equal(button(panel.root, 'Withdraw').disabled, true, 'but only the guildmaster withdraws');
   assert.ok(texts(button(panel.root, 'Withdraw')).includes('the guildmaster\'s alone'));
   assert.ok(texts(panel.root).includes('Cass put in 500'));
+  panel.openGuild('ranks'); await frame();   // PIN MOVED (GUILD-RANKS): the rank names are the Ranks page's, saved by Save ranks
+  assert.equal(buttons(panel.root, 'Save ranks').length, 0);
   panel.openGuild('settings'); await frame();
-  assert.equal(buttons(panel.root, 'Rename ranks').length, 0);
   assert.equal(buttons(panel.root, 'Disband').length, 0);
 });
 
@@ -302,7 +303,8 @@ test('GUILD1b the guildmaster\'s view: alone with gold in the treasury, Leave an
   const led = await tabRig({ guild: view({ members }) });
   led.panel.openGuild('settings'); await led.frame();
   assert.ok(texts(button(led.panel.root, 'Leave')).includes('hand the guild on first'));
-  assert.equal(buttons(led.panel.root, 'Rename ranks').length, 1);
+  led.panel.openGuild('ranks'); await led.frame();   // PIN MOVED (GUILD-RANKS): the rank names are the Ranks page's
+  assert.equal(buttons(led.panel.root, 'Save ranks').length, 1);
   led.panel.openGuild('members'); await led.frame();
   assert.equal(buttons(led.panel.root, 'Make guildmaster').length, 1);
 });

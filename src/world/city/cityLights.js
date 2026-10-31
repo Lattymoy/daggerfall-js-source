@@ -20,9 +20,29 @@
 import { RMB_DIMENSION } from '../../formats/blocksFile.js';
 import { GLOBAL_SCALE } from '../meshReader.js';
 import { lightList, packLight, adoptLight } from '../../render/lightId.js';   // LIGHT-ID: a light into the frame's list through the one seam, its identity beside it
+import { CityLightAnimator } from '../worldClock.js';
 
 export const LIGHTS_ARCHIVE = 210;
 export const CITY_LIGHT_RANGE = 18;
+/** LIGHT-REACH (the owner, 2026-10-29: "Increase distance for street and window lighting in overworld without killing
+ *  performance"): on the Enhanced Lighting lane a town's lantern reaches this share past the [City] prefab's 18. The
+ *  lamps stand 70 to 130 m apart in Daggerfall, and DFU's reach lit a pool of about 9 m round each. A departure from
+ *  the prefab's range; the classic set keeps DFU's. */
+export const STREET_LIGHT_REACH = 1.5;
+/** LIGHT-REACH: the share of its classic reach a lantern takes on the lane (`lane` true) - the town's, and (AUDIT
+ *  LIGHT-REACH S5) the harbour's lamps lit beside them in the same hours and colour, so each keeps its size to its
+ *  neighbours: the quays' lanterns, the shipyard's office lantern and the lighthouse's lamp. */
+export const streetLightReach = (lane) => (lane ? STREET_LIGHT_REACH : 1);
+/** LIGHT-REACH: a town lantern's range on the lane (`lane` true) or the classic set. */
+export const streetLightRange = (lane) => CITY_LIGHT_RANGE * streetLightReach(lane);
+/** LIGHT-REACH: the town's lantern flicker (DaggerfallLight's Animate) for a host - its range, variance and step all
+ *  scaled by the lane's reach, so a lantern flickers by the same share of its range on either set. */
+export function streetLanternAnimator(count, lane) {
+  const k = streetLightRange(lane) / CITY_LIGHT_RANGE;
+  const a = new CityLightAnimator(count, CITY_LIGHT_RANGE * k);
+  a.variance *= k; a.speed *= k;
+  return a;
+}
 /**
  * LA-LIGHTS2 (2026-09-27, Mac: "look for flickering issues"): THE CAP FADES, IT DOES NOT CUT. The lane lights the
  * nearest EL_MAX_LIGHTS (48) of a town's lanterns, and a town at night holds more (the probe's night street: all 48

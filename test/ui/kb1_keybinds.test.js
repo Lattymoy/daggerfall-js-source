@@ -347,6 +347,7 @@ test('KB1 law 5, swept: no gameplay code reads a key the registry binds by its r
     'src/scenes/dungeon.js': { AltLeft: 'preventDefault only' },
     'src/scenes/townTalk.js': { KeyE: 'an open talk window\'s confirm alias - the window\'s key, while it is up' },
     'src/scenes/decor/decorTool.js': { Escape: 'the press that just closed the decorator\'s panel, not heard a second time as the pause', Tab: 'the decorator\'s own catalogue key while a piece is being placed - the window\'s key, while it is up (DECOR-ACCESS)' },
+    'src/scenes/pvpFlagHost.js': { CapsLock: 'the keyboard\'s own Caps Lock light, noted so chat types no capitals under it (PVP-FLAG-CAPS) - the flag itself is read through the registry (PVP-KEY)' },
     'src/player/pointerLock.js': { Escape: 'the BROWSER\'s unlock key, not the pause action: a real press is noted so the one the browser swallowed is not delivered twice (ESC-LOCK) - the pause itself is read through the registry' },
   };
   const files = [];

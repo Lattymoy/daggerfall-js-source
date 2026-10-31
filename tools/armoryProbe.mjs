@@ -99,7 +99,7 @@ const look = (e, c) => { const u = [0, 1, 0]; const z = [e[0] - c[0], e[1] - c[1
 const mul = (a, b) => { const o = new Float32Array(16); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) o[c * 4 + r] += a[k * 4 + r] * b[c * 4 + k]; return o; };
 /** Draw a body - 'mw' (retail's Morrowind skeleton, a mannequin on its bones), 'rig' (the stand-in, at rest) or 'sprite' (its picture on a card, 'front' or 'back') - wearing \`kit\` from
  *  \`eye\` at \`t\`, kindled \`kindle\`; read back \`pts\` (world) and the frame's brightest pixels in \`box\` rows. */
-window.draw = ({ body = 'rig', kit, eye, t = 5.3, kindle = 1, pts = [], yaw = 0, side = 'front', at = [0, 1.0, 0], torn = -1, walk = 0, plain = false }) => {
+window.draw = ({ body = 'rig', kit, eye, t = 5.3, kindle = 1, pts = [], yaw = 0, side = 'front', at = [0, 1.0, 0], torn = -1, walk = 0, plain = false, arms = undefined }) => {
   const proj = persp(0.8, W / H, 0.05, 100), view = look(eye, at), vp = mul(proj, view);
   gl.viewport(0, 0, W, H); gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE);
   gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -122,7 +122,7 @@ window.draw = ({ body = 'rig', kit, eye, t = 5.3, kindle = 1, pts = [], yaw = 0,
     poseFromFigure({ base: 0, mpp, beast: false, marks: sp.marks, shift: 0 }, pose);
   }
   gl.bindVertexArray(null);
-  const w = { at: [0, 0, 0], yaw, kit, pose, seed: 0.37, kindle, torn, mounted: false, _d: Math.hypot(...eye) };
+  const w = { at: [0, 0, 0], yaw, kit, pose, seed: 0.37, kindle, torn, mounted: false, _d: Math.hypot(...eye), ...(arms !== undefined ? { arms } : {}) };   // GUILD-SHOP: the armlet's guild's arms
   for (let i = 0; i <= 8; i++) { w.at[2] = walk * i * 0.1; armoryMotionStep(w, t - 0.8 + i * 0.1); }
   w.at[2] = walk * 0.8; w.at[2] = 0;
   pass.draw([w], proj, view, new Float32Array(eye), t, null, true);
@@ -241,6 +241,22 @@ try {
   await shot('sprite_dagonfire_threequarter');
   await draw({ body: 'sprite', kit: 'bbbb0', eye: [1.9, 1.3, 1.9], pts: [], plain: true });
   await shot('sprite_eternal_threequarter');
+  // GUILD-SHOP: THE INSIGNIA ARMLET - the wearer's left upper arm alone, its crest the guild's arms
+  const ARMS = { heraldry: { field: 'crimson', border: 'gold', device: 'dragon', division: 'quarterly', field2: 'sable' }, logo: null };
+  const armL = [at('shL')[0] - 0.02, at('shL')[1] - 0.1, 0.06], armR = [at('shR')[0] + 0.02, at('shR')[1] - 0.1, 0.06];
+  const armBare = await draw({ kit: '00000', eye: FRONT, pts: [armL, armR] });
+  const arm = await draw({ kit: '00c00', eye: FRONT, arms: ARMS, pts: [armL, armR] });
+  await shot('rig_armlet_front');
+  check('the Insignia Armlet: drawn without a GL error', arm.error === 0 && arm.drawn === 1, `error ${arm.error}, drawn ${arm.drawn}`);
+  check('the Insignia Armlet on the left upper arm, never the right', arm.px[0] > armBare.px[0] + 90 && arm.px[1] <= armBare.px[1] + 12, `${arm.px} against ${armBare.px}`);
+  await draw({ kit: '00c00', eye: [-1.2, 1.35, 1.1], at: [-0.22, 1.25, 0], arms: ARMS, pts: [] });
+  await shot('rig_armlet_close');
+  await draw({ kit: '00c00', eye: [-1.2, 1.35, 1.1], at: [-0.22, 1.25, 0], arms: null, pts: [] });
+  await shot('rig_armlet_plain_close');
+  await draw({ body: 'sprite', kit: '00c00', eye: FRONT, arms: ARMS, pts: [], plain: true });
+  await shot('sprite_armlet_front');
+  await draw({ body: 'sprite', kit: '00c00', eye: [0, 1.45, 1.2], at: [0, 1.3, 0], arms: ARMS, pts: [], plain: true });
+  await shot('sprite_armlet_close');
   // THE MORROWIND BODY: the pieces on retail's skeleton as the game reads it
   const mw = (n) => { const i = POSE_AT[n]; return [MW_POSE.pts[i], MW_POSE.pts[i + 1], MW_POSE.pts[i + 2]]; };
   const mwBare = await draw({ body: 'mw', kit: '00000', eye: FRONT, at: [0, 1.0, 0], pts: [[0, mw('crown')[1] - 0.04, 0.02], mw('chest'), [mw('ftR')[0], mw('ftR')[1] + 0.12, mw('ftR')[2] + 0.08]] });
@@ -255,6 +271,8 @@ try {
   check('the Eternal Sigil burns on the Morrowind body\'s back, clear of its torso (AUDIT ARMORY)', mwBack.px[0] > mwBackBare.px[0] + 60, `${mwBack.px[0]} against ${mwBackBare.px[0]}`);
   await shot('mw_eternal_front');
   check('the Morrowind body in Eternal: drawn', mwE.error === 0 && mwE.drawn === 4 && mwE.lit > 300, `${mwE.lit}`);
+  await draw({ body: 'mw', kit: '00c00', eye: [-1.4, 1.45, 1.4], at: [-0.2, 1.3, 0], arms: ARMS, pts: [] });
+  await shot('mw_armlet_close');
   for (const [kit, name] of [['aaaa0', 'dagonfire'], ['bbbb0', 'eternal']]) {
     await draw({ body: 'mw', kit, eye: [0, 1.3, 3.1], at: [0, 1.1, 0], pts: [] }); await shot(`mw_${name}_framed`);
     await draw({ body: 'mw', kit, eye: [2.2, 1.4, 2.2], at: [0, 1.1, 0], pts: [] }); await shot(`mw_${name}_threequarter`);

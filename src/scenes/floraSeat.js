@@ -23,11 +23,12 @@ import { GRAHT_TREE_FLOATS } from '../world/jungle/grahtOaks.js';
 import { LAND_PROP_FLOATS } from '../world/lands/landProps.js';   // TESA-LANDS: the lands' landmarks, seated as the graht-oaks are
 
 /** The centres stood on the ground by its law (the kernel's woods and scatter, the jungle's trees and roadside pairs, a
- *  town's nature flats on its ground) - the flat's own base array, as FELLED knows a felled tree's (ai/cover.js). */
-const ON_GROUND = new WeakSet();
+ *  town's nature flats on its ground) - a mark on the flat's own base array. OW-SEAT: a mark, not a WeakSet - every wild
+ *  flat standing was its entry, and the set's growth rehashed them all in one add (484 ms in a pixel's build past the Bay). */
+const ON_GROUND = Symbol('onGround');
 /** A flat's centre stands on the ground (walkGroundAt, less its slope's sink): drawn on its pixel's ring.
  *  @param {number[]} c */
-export const standsOnGround = (c) => { ON_GROUND.add(c); };
+export const standsOnGround = (c) => { c[ON_GROUND] = true; };
 
 /** What the ground a pixel draws (`stride`, `carve`) stands over the walk ground at (x, z), m - 0 in the near ring
  *  with no bed under it. */
@@ -43,7 +44,7 @@ export function ringLifts(samples, centers, stride, carve) {
   let lift = null;
   for (let i = 0; i < centers.length; i++) {
     const c = centers[i];
-    if (!ON_GROUND.has(c)) continue;
+    if (c[ON_GROUND] !== true) continue;
     const d = liftAt(samples, c[0], c[2], stride, carve);
     if (d !== 0) (lift ??= new Float32Array(centers.length))[i] = d;
   }

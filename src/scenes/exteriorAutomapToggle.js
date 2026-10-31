@@ -9,6 +9,7 @@ import { discoveredBuildings, restampQuestNames, townBookOf } from '../systems/d
 import { getLocalizedLocationName, getLocalizedRegionName } from '../systems/textManager.js';
 import { hasCustomLocationPosition } from '../world/locationLayout.js';
 import { isVendorWaypoint, vendorWaypointLabel, vendorWaypointVersion } from '../systems/vendorWaypoint.js';
+import { ensureVendorHouses, isVendorHouse, vendorHousesVersion } from '../systems/vendorHouses.js';   // VENDOR-HOUSES
 import { mwViewFirstPerson } from '../player/mwView.js';
 import { playerEntity } from '../characters/playerEntity.js';
 import { questTracker } from '../ui/quest/questTracker.js';
@@ -70,7 +71,7 @@ export function createExteriorAutomapToggle(host) {
       getQuest: (questID) => host.questBridge?.machine.getQuest(questID) ?? null,
       isBuildingQuestResource: (mapID, key) => host.topicTree.isBuildingQuestResource(mapID, key),
     }, dfLoc.mapTableData?.mapId ?? 0);
-    return { mapId: dfLoc.mapTableData?.mapId, deps: {
+    return { mapId: dfLoc.mapTableData?.mapId, region: dfLoc.regionIndex, deps: {
       holder: sheetHolderOf(() => weaponRig),   // MW-MAP1: the Morrowind hands lane on the M key, as on V
       locationName: shownLocation,   // L10N3e: the title, as shown - the key is locationId
       locationId: locId,
@@ -123,11 +124,12 @@ export function createExteriorAutomapToggle(host) {
         buildings: summaries, mapId: dfLoc.mapTableData?.mapId, regionIndex: dfLoc.regionIndex, houses: playerEntity.houses ?? null,
         homeAt: onlineHomes ? (mapId, buildingKey) => {
           const h = onlineHomes.homeAt(mapId, buildingKey);
-          // HOME-VENDOR: the trader's waypoint names its house on the town map
-          return h && isVendorWaypoint(mapId, buildingKey) ? { ...h, own: false, owner: vendorWaypointLabel(h.owner) } : h;
+          // HOME-VENDOR: the trader's waypoint names its house on the town map; VENDOR-HOUSES: a trader's house is inked blue
+          if (h && isVendorWaypoint(mapId, buildingKey)) return { ...h, own: false, vendor: true, waypoint: true, owner: vendorWaypointLabel(h.owner) };
+          return h && !h.own && isVendorHouse(mapId, buildingKey) ? { ...h, vendor: true } : h;
         } : null,
       }),
-      townHomesVersion: () => (onlineHomes?.version() ?? 0) + vendorWaypointVersion() * 100_000,   // HOME-VENDOR: a waypoint moved repaints
+      townHomesVersion: () => (onlineHomes?.version() ?? 0) + vendorWaypointVersion() * 100_000 + vendorHousesVersion() * 1e10,   // HOME-VENDOR: a waypoint moved repaints, and VENDOR-HOUSES a trader read (a number: asked a frame)
     } };
   };
   // A2: the exterior automap's own dispatch half (DaggerfallUI.cs
@@ -142,6 +144,7 @@ export function createExteriorAutomapToggle(host) {
     mwViewFirstPerson();   // MW-MAP1: MAP-POV's law for this sheet too - the town plan is read in the head, and the arm must be first-person before the window's first tick asks
     townTalk.showOverlay(createTownMapWindow(here.deps));
     onlineHomes?.ensure(here.mapId);   // TOWN-MARKS: a town heard from long ago is asked again, and its homes mark when it answers
+    if (onlineHomes) ensureVendorHouses(here.region);   // VENDOR-HOUSES: and its traders
   };
   /** FB1020c STREETS-TAB: what the travel key's window adds while the player stands in a town - the M key's streets
    *  (ui/town/townMapDoor.js townSheetBag over townHere's bag, the same building summaries and discovery record, so a
@@ -155,6 +158,7 @@ export function createExteriorAutomapToggle(host) {
     const here = townHere();
     if (!here) return {};
     onlineHomes?.ensure(here.mapId);   // TOWN-MARKS: as at the town key
+    if (onlineHomes) ensureVendorHouses(here.region);   // VENDOR-HOUSES: as at the town key
     return { town: townSheetBag(here.deps), where: here.deps.where, openOnSheet: 'world' };
   };
   return { toggleExteriorAutomap, travelTown };

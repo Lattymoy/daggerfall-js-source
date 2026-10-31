@@ -77,7 +77,7 @@ test('INVIS-LOOK executed: the doll and the body - a concealed peer\'s doll carr
   const src = rd('src/net/remotePlayers.js');
   assert.equal((src.match(/entry\.batch\.conceal = veil;/g) ?? []).length, 2, 'the doll and the class sprite');
   assert.equal((src.match(/if \(!veil \|\| (?:\/\*\* @type \{any\} \*\/ \(veil\)|veil)\.named\) this\._shown\.push\(\{ peer, height: (?:bodyH|entry\.doll\.h \* g - sink|entry\.height - sink) \}\);/g) ?? []).length, 3, 'no name: the body, the doll and the class sprite');   // PIN MOVED (AUDIT EG V, h): a veil that keeps the name (an ally drawn at 60% in the Spire, section 8.2) shows it - a concealed peer's look never does   // PIN MOVED (OW-PEERS): the doll's height grown under the Overworld; PIN MOVED (CARDS2c): a seated sprite's sink taken off it
-  assert.match(src, /this\._syncMobilePeer\(peer, bundle, toScene, dt, eye, veil\); continue; \}/);
+  assert.match(src, /this\._syncMobilePeer\(peer, bundle, toScene, dt, view \?\? eye, veil\); continue; \}/);   // AUDIT CAPE-CARD A1 (PIN MOVED): turned to the camera that draws it
 });
 
 test('INVIS-LOOK executed: the walker and the rider - the chosen set and the saddle carry the look, a sprite made later keeps it, and a concealed walker\'s lantern is not drawn', async () => {
@@ -258,7 +258,7 @@ test('INVIS-LOOK by source: the host - the look read once a frame and handed to 
   assert.ok(flats > 0 && grass > flats && late > grass && wall > late, 'the exterior: after the flats and the grass, before the foreign passes that follow');
   const m = rd('src/scenes/worldModes.js');
   assert.match(m, /lateWorldDraw: \(\) => \{ host\.drawVeiledPeerBodies\?\.\(\); [^\n]*\},/, 'the dungeon: through its context');   // PIN MOVED (AUDIT SD IV R1): the Hour's light after them, in the same slot
-  assert.match(m, /for \(const d of interiorCtx\.charDraws\) renderer\.drawCharacter\(d\.mesh, d\.matrix\);\n\s*host\.drawVeiledPeerBodies\?\.\(\);/, 'the building: after its last opaque draw');
+  assert.match(m, /for \(const d of interiorCtx\.charDraws\) renderer\.drawCharacter\(d\.mesh, d\.matrix\);\n\s*magic\?\.drawFx\?\.\(\);[^\n]*\n\s*host\.drawVeiledPeerBodies\?\.\(\);/, 'the building: after its last opaque draw');   // PIN MOVED (AUDIT STOREFRONT RENDER L3): the bursts between, no depth written - the dungeon's order
   const d = rd('src/scenes/dungeonContext.js');
   const foes = d.indexOf('renderer.drawBillboards([..._mobileBatches, ..._dropBatches, ..._spellBatches],');
   const hook = d.indexOf('opts.lateWorldDraw?.();');

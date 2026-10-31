@@ -2566,8 +2566,8 @@
   {
     "name": "AUDIT-WB12d-T-wod-rite-site-refused",
     "file": "src/world/worldOfDaggerfall/wodShared.js",
-    "old": "|hold|rite\\.\\d{1,9}|star\\.\\d{1,10}\\.[0-2](?:\\.[mc])?)$/;",
-    "new": "|hold|star\\.\\d{1,10}\\.[0-2](?:\\.[mc])?)$/;",
+    "old": "|hold|rite\\.\\d{1,9}|star\\.\\d{1,10}\\.[0-2](?:\\.[mc])?|brass\\.[0-2]\\.\\d(?:\\.h)?)$/;",
+    "new": "|hold|star\\.\\d{1,10}\\.[0-2](?:\\.[mc])?|brass\\.[0-2]\\.\\d(?:\\.h)?)$/;",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js",
       "test/scenes/wod7_sharedcamps.test.js",

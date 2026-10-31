@@ -84,8 +84,8 @@
   {
     "name": "CSAK-wire-key-no-way",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "rec.p ? [rec.b, rec.m ?? null, rec.u ?? null, rec.cabin ?? null, rec.n ?? null, rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null] : rec.m ? [rec.b, rec.m] : rec.b)",
-    "new": "rec.p ? [rec.b, null, rec.u ?? null, rec.cabin ?? null, rec.n ?? null, rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null] : rec.b)",
+    "old": "rec.p || rec.h ? [rec.b, rec.m ?? null, rec.u ?? null, rec.cabin ?? null, rec.n ?? null, rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null, rec.h ?? null] : rec.m ? [rec.b, rec.m] : rec.b)",
+    "new": "rec.p || rec.h ? [rec.b, null, rec.u ?? null, rec.cabin ?? null, rec.n ?? null, rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null, rec.h ?? null] : rec.b)",
     "tests": [
       "test/systems/csa_together.test.js",
       "test/systems/comeSailAway/csa_online.test.js"

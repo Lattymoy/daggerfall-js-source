@@ -58,6 +58,7 @@ and in `01-Overview/Port-Ledger.md` section A.
 | SEA-COLOURS | 13 | every ship of the sea in her own paint and under her own flag of cloth - a navy's crown, a merchant house, a pirate crew, a legend's own; a pirate under false colours painted and flagged as the house she passes for; her colours down once struck - the same on every screen, off who she is | `systems/naval/seaColours.js`, `scenes/naval/navalHost.js` (`seaWho`, `buildOne`'s paint, `seaFlags`), `scenes/shipFlagHost.js` (`seaFlags`), `render/shipFlagPass.js` (FLAGS_MAX), `scenes/world.js` (the flag host's `seaFlags`) |
 | TIME-DILATION | 14 | the sea's AI never on the Overworld's clock against a traveller who cannot answer it: a journey held at x1 inside a hostile ship's reach (NAV-H's law, the helm's already), the Overworld brought down for her, and online a sea another player shares kept at real time | `systems/travel/travelThreat.js` (`foeRate`, `threatCap`'s `held`), `systems/naval/seaClock.js`, `scenes/naval/navalHost.js` (`threats`' `holds`, `frame`'s seconds), `scenes/world.js` (the governor's two paths, the view's `danger`, `tvJourneyUp`, `travelViewCanGo`) |
 | SHIP-IT | 15 | the game's words call a ship "the ship", "this ship" or "it" - never "her" or "she" - and say it plainly: every refusal, notice, button, card and hint of the sea, the Fleet, the shipyard, the crew hall, the captain's stars, the tutorials and the crew's chatter; the thirteen drafted languages drafted again for the 104 keys whose English moved | the words of `scenes/fleetHost.js`, `ui/fleetPage.js`, `scenes/naval/navalHost.js`, `ui/naval/navalHud.js`, `ui/naval/navalPlunderWindow.js`, `ui/naval/navalYardWindow.js`, `ui/shipyardWindow.js`, `ui/captainTreeWindow.js`, `ui/captainPage.js`, `ui/deckPlanWindow.js`, `systems/shipyards.js`, `systems/crewHall.js`, `systems/naval/*` and `systems/comeSailAway/*` among others; `locales/*/Port_Strings.csv` |
+| FIGUREHEAD | 16 | a carving at her stem, chosen on the Fleet page for nothing - Akatosh's dragon, the Maormer's sea serpent, the Covenant's lion, the Dominion's eagle, Skyrim's wolf, a crowned maiden, the Steed's horse or the Bay's dreugh, or none - in her trim paint (gilt as built), fitted under her bowsprit on every hull with a stem for one, seen by every player | `systems/naval/figurehead.js`, `world/ships/figureheadModels.js`, `world/ships/figureheadArt.js`, `scenes/comeSailAway/shipFigurehead.js`, `scenes/comeSailAway/comeSailAwayPool.js` (`carvingOf`, the draw's carving), `systems/fleet.js` (`figurehead`, `setShipFigurehead`, `shipFigureheadOf`), `scenes/fleetHost.js` (`figurehead`), `ui/fleetPage.js`, `ui/figureheadPanel.js`, `systems/comeSailAway/comeSailAwayWire.js` (`h`), `scenes/comeSailAway/comeSailAwayPeers.js`, `world/eliteGates/pseudoArchives.js` (FIGUREHEAD_ARCHIVE), `scenes/world.js` |
 
 ## ISLE-TRADE - a living past the Veil (item 7)
 
@@ -1056,6 +1057,55 @@ LEFT, and why:
   way's memory holds a sample, and a ram may be missed - never a ram that should not land. And my way is the world's
   metres a second where a shared sea runs on real time, as every reading of my way against the sea's ships already is.
 
+## FIGUREHEAD - a carving at her stem (16)
+
+The owner, 2026-10-30: *"Ship figurehead customizations"*.
+
+FOUND. Every ship's stem was bare. Her name could stand on her bows (SHIP-PLAQUE) and her trim take a paint (SHIP-LIVERY),
+but nothing stood at her stem. Come Sail Away's boats carry none, and Daggerfall and Daggerfall Unity have no sea.
+
+- **The carvings** (`systems/naval/figurehead.js`, pure): eight of Tamriel's - Akatosh's dragon, the Maormer's sea
+  serpent, the Daggerfall Covenant's lion, the Aldmeri Dominion's eagle, Skyrim's wolf, a crowned maiden, the Steed's
+  horse and the Iliac Bay's own dreugh - or none (0). A carving's place in FIGUREHEADS is its number on the word and in
+  the save. Its door (`figureheadOf`) takes a carving's number and refuses anything else whole; a hull with no stem for
+  one takes none.
+- **The hulls**: the port's three (the Large Boat, the Small Ship, the Carrack) and the Large Galley, whose tall stem post
+  ends her prow. Not the Rowboat: its stem stands 0.78 m over the water, and a carving there would trail in it. The mod's
+  own Large Boat and Carrack, where the port ships' models fall back, take one as the port's do.
+- **Built in code** (`world/ships/figureheadModels.js`): each a low-poly mesh on the yards' face kit (YARD_MESH_KIT) and
+  four shapes of its own - a tube along a path, a blob, a spike and a fin - flat-shaded, 338 to 712 faces, on an oak
+  bracket with a gilt scroll. Each stands in its own frame: its root on the stem's face, forward out of her bow, leaning
+  as a figurehead leans, inside CARVING_BOX. None recreates another game's model.
+- **Painted by role** (`world/ships/figureheadArt.js`, FIGUREHEAD_ARCHIVE 38194, beside her paint's, cabin's and name
+  boards' archives): as built its body and trim are beaten gilt; under her livery's accent paint (Trim and gilding) its
+  body takes the paint and its trim stays gilt. Its bracket is oak, an eye pitch, a tooth ivory. The galley's livery takes
+  no accent, so her carving is gilt.
+
+- **Her stem read where she is drawn** (`scenes/comeSailAway/shipFigurehead.js stemOf`): SHIP-PLAQUE's planking
+  (`plankingOf`), met by rays cast aft along her middle at each height up to her stem's head, refined there. A hit aft of
+  her bows (STEM_SHARE, 0.3 of her length) is no stem, so the galley's high stern is never read as one.
+- **Fitted under what stands over her stem** (`fitCarving`): a unit of FIGURE_SHARE (5%) of her length, 0.5 to 2.8 m. It
+  crosses nothing solid of hers (her bowsprit, a chaser, a lantern pole), and only its root (faces nearer her stem than
+  FIGURE_ROOT_Z) leans on her planking. A rope's faces (narrower than ROPE_M, 8 cm) are no obstacle: the carrack's
+  bobstay runs a hand off her stem for its whole height. The highest place that fits wins, the largest size first, then a
+  lean of 8 or 16 degrees. One mount a hull serves every carving, found while the world loads (20-100 ms a hull).
+- **Where it stands**: the galleon's at full size under her bowsprit; the carrack's 3 m down her stem, under the bowsprit
+  that runs through its head; the large boat's under its bowsprit, leant 8 degrees more; the galley's atop her stem post.
+- **Drawn with her** by the boats' one pool (`comeSailAwayPool.js draw`): in her hull's frame through the mount's matrix,
+  her heel and pitch with it, in her dissolve, only where she is drawn. A mesh a carving and a paint, its pictures up
+  while one is drawn, each let go after FIGURE_IDLE_DRAWS (1800) undrawn.
+- **Her captain chooses** (the Fleet page's Figurehead, `ui/figureheadPanel.js`): the carving drawn as it will stand -
+  its own mesh, seen from her starboard bow, in her trim paint - a button a carving and None, then Carve, Remove or Close.
+  Free, wherever she lies (`scenes/fleetHost.js figurehead`, `systems/fleet.js setShipFigurehead`, kept in the save). The
+  panel keeps its own open card, so it never touches the page's one: a panel the page opens shuts it.
+- **Every player sees it** (`comeSailAwayWire.js` `h`): each boat's carving's number beside `b`, only while one is carved.
+  A reader takes each through the door (`figureheadOfCode`); a refused one, or a list not one a boat, reads as none and
+  never drops the word. `validCsaRecord` reads no key it does not know, so an older build keeps the boats and draws her
+  stem bare. A peer's boat wears it from her first word (`comeSailAwayPeers.js`); a sea ship carries none.
+
+DEPARTURE from nothing: Daggerfall has no sea, nor Daggerfall Unity; Come Sail Away's boats carry no figurehead. Every
+province: the carving reads no place, so a ship carries it wherever she sails in Tamriel.
+
 ## THE FOUR HOSTS RULE
 
 
@@ -1084,6 +1134,10 @@ LEFT, and why:
   word's `plaque`, are wired there); the boards are drawn by the boats' one pool, so `worldModes.js` (interiors - a
   dungeon's water) and `dungeonContext.js` (a dungeon's water) show them as the street does; `exterior.js` (the bench) -
   FLAGGED: no Come Sail Away runtime, no Fleet.
+- FIGUREHEAD: the Fleet ledger and its page are the world host's (the pool's `figureheadOf` and the boats' word's
+  `figurehead` are wired there); the carving is drawn by the boats' one pool, so `worldModes.js` (interiors - a dungeon's
+  water) and `dungeonContext.js` (a dungeon's water) show it as the street does; `exterior.js` (the bench) - FLAGGED: no
+  Come Sail Away runtime, no Fleet.
 - SEA-COLOURS: the sea's ships are the naval host's, stood and stepped in the world host's exterior frame alone; their
   paint is drawn by the boats' one pool wherever they stand, and their cloth by the exterior's flag pass (the world host's
   `seaFlags`). `worldModes.js` (interiors) and `dungeonContext.js` (a dungeon's water) - FLAGGED: no sea ship sails there;
@@ -1196,6 +1250,15 @@ LEFT, and why:
   ledger's record (`fleet`: `plaque`), the world's pool line (`shiplivery`: `plaqueOf` follows it), the pseudo-archives'
   free number (`eglook_registry`: 38193 taken), the hard-coded strings' map (`l10n4`: the pool's fallback line, the
   registry's row); the record re-aimed by content in `shiplivery` (the word's `d`, all dead).
+- FIGUREHEAD: `test/systems/naval/figurehead.test.js` (11: the law; the carvings, inside their box, wound outward, worn
+  by role; the pictures; every port ship's stem, the galley's and the mod's own - the carving on its face, facing forward,
+  crossing nothing solid of hers by the test's own crossing; the fit by its parts; the meshes; the real pool - mine, a
+  peer's, no sea ship's; the ledger, the word and an older reader; the Fleet's act, page and panel; the wiring) and
+  `tools/mutants/figurehead.json` (58, all dead). Every carving on the four hulls and the mod's two also seen in headless
+  Chromium (`tools/figureheadProbe.mjs`, 146 checks). The pins it moved: the ledger's record (`fleet`), the
+  pseudo-archives' free number (`eglook_registry`: 38194 taken), the hard-coded strings' map (`l10n4`); nine records
+  re-aimed by content in `audit0928_online`, `auditrefit2`, `csa_together`, `shipcolours`, `shiplivery` and `shipplaque`
+  (all dead).
 - TIME-DILATION: `test/systems/naval/timedilation.test.js` (3: the law - x1 inside a hold whatever the dial, the floor
   outside it, a land foe none; the real naval host's threats each her hold and a pirate at 160 m holding the journey at
   x1, the world's wiring of both paths and the view's three refusals; the shared sea at real time and alone at the

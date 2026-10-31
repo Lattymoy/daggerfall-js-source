@@ -11,19 +11,36 @@
 // acts seat one (`seatRealm`), and name where its record stands (`at()`, read off the row at each call).
 import assert from 'node:assert/strict';
 import worker from '../server-account/src/index.js';
+import { ROLLED_START_MIN } from '../src/systems/levelClimb.js';   // LEVEL-45: a birth's skill start the realm takes
 
-/** A first save the realm takes: a character as chargen makes one - level 1, the starting purse. */
-export const freshSave = (extra = {}) => ({ level: 1, goldPieces: 100, items: [], ...extra });
+const BIRTH_CAREER = Object.freeze({
+  primarySkills: Object.freeze([0, 1, 2]), majorSkills: Object.freeze([3, 4, 5]),
+  minorSkills: Object.freeze([6, 7, 8, 9, 10, 11]),
+});
+const birthSkills = () => {
+  const skills = new Array(35).fill(3);
+  for (const id of BIRTH_CAREER.primarySkills) skills[id] = 30;
+  for (const id of BIRTH_CAREER.majorSkills) skills[id] = 20;
+  for (const id of BIRTH_CAREER.minorSkills) skills[id] = 14;
+  return skills;
+};
+
+/** A first save the realm takes: level 1, the starting purse and the minimum real creation (six points spent a group). */
+export const freshSave = (extra = {}) => ({
+  level: 1, goldPieces: 100, items: [],
+  career: { primarySkills: [...BIRTH_CAREER.primarySkills], majorSkills: [...BIRTH_CAREER.majorSkills], minorSkills: [...BIRTH_CAREER.minorSkills] },
+  skills: birthSkills(), startingLevelUpSkillSum: ROLLED_START_MIN, currentLevelUpSkillSum: ROLLED_START_MIN, ...extra,
+});
 
 /** R2's calls, over a Map (the realm pins' own face): `get` answers the body and a text reader. */
 export function r2() {
   const m = new Map();
   return {
     _map: m,
-    async put(key, body) { m.set(key, new Uint8Array(body instanceof ArrayBuffer ? body : new TextEncoder().encode(String(body)))); return { key }; },
+    async put(key, body) { m.set(key, new Uint8Array(body instanceof ArrayBuffer ? body : ArrayBuffer.isView(body) ? body.slice().buffer : new TextEncoder().encode(String(body)))); return { key }; },   // GUILD-LOGO: a picture's bytes, as R2 takes them
     async get(key) {
       const v = m.get(key);
-      return v === undefined ? null : { key, size: v.byteLength, body: v, async text() { return new TextDecoder().decode(v); } };
+      return v === undefined ? null : { key, size: v.byteLength, body: v, async text() { return new TextDecoder().decode(v); }, async arrayBuffer() { return v.slice().buffer; } };
     },
     async delete(key) { m.delete(key); },
     async list({ prefix = '' } = {}) { return { objects: [...m.keys()].filter((k) => k.startsWith(prefix)).map((key) => ({ key })) }; },

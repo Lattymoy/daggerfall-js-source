@@ -333,8 +333,8 @@
   {
     "name": "TAMRIEL-POST-a-guest-sent-it",
     "file": "tools/sendServerPost.mjs",
-    "old": "${record ? sqlText(record) : 'NULL'}, CAST(strftime('%s', 'now') AS INTEGER)\nFROM players p WHERE p.handle IS NOT NULL;`;",
-    "new": "${record ? sqlText(record) : 'NULL'}, CAST(strftime('%s', 'now') AS INTEGER)\nFROM players p;`;",
+    "old": "${record ? sqlText(record) : 'NULL'}, CAST(strftime('%s', 'now') AS INTEGER)${gift ? `, ${sqlText(gift)}` : ''}\nFROM players p WHERE p.handle IS NOT NULL;`;",
+    "new": "${record ? sqlText(record) : 'NULL'}, CAST(strftime('%s', 'now') AS INTEGER)${gift ? `, ${sqlText(gift)}` : ''}\nFROM players p;`;",
     "tests": [
       "test/tooling/serverpost_send.test.js"
     ],
@@ -353,8 +353,8 @@
   {
     "name": "TAMRIEL-POST-the-send-not-once",
     "file": "tools/sendServerPost.mjs",
-    "old": "  return `INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)\nSELECT lower(hex(randomblob(12))), p.id, ${sqlText(b)}, ${sqlText(sender)}, ${sqlText(words.subject)}, ${sqlText(words.body)}, ${record ? sqlText(record) : 'NULL'}",
-    "new": "  return `INSERT INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)\nSELECT lower(hex(randomblob(12))), p.id, ${sqlText(b)}, ${sqlText(sender)}, ${sqlText(words.subject)}, ${sqlText(words.body)}, ${record ? sqlText(record) : 'NULL'}",
+    "old": "  return `INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at${gift ? ', gift' : ''})\nSELECT lower(hex(randomblob(12))), p.id, ${sqlText(b)}, ${sqlText(sender)}, ${sqlText(words.subject)}, ${sqlText(words.body)}, ${record ? sqlText(record) : 'NULL'}",
+    "new": "  return `INSERT INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at${gift ? ', gift' : ''})\nSELECT lower(hex(randomblob(12))), p.id, ${sqlText(b)}, ${sqlText(sender)}, ${sqlText(words.subject)}, ${sqlText(words.body)}, ${record ? sqlText(record) : 'NULL'}",
     "tests": [
       "test/tooling/serverpost_send.test.js"
     ],

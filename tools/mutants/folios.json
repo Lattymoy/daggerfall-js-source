@@ -1,0 +1,182 @@
+[
+  {
+    "name": "FOLIOS-the-gilded-cover-open-while-locked",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "shut = track === 'premium' && !premium;\n      const stateWord",
+    "new": "shut = false;\n      const stateWord",
+    "tests": [
+      "test/ui/folios_window.test.js"
+    ]
+  },
+  {
+    "name": "FOLIOS-the-cover-label-without-its-state",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "c.face.setAttribute('aria-label', W.coverLabel(passFolioName(sid, track), stateWord, has, c.n));",
+    "new": "c.face.setAttribute('aria-label', passFolioName(sid, track));",
+    "tests": [
+      "test/ui/folios_window.test.js"
+    ]
+  },
+  {
+    "name": "FOLIOS-the-landing-page-always-the-first",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "  Math.max(0, passPanelsOf(season, track).findIndex((p) => p.items.some((it) => !bought.includes(it.grant))));",
+    "new": "  0;",
+    "tests": [
+      "test/ui/folios_window.test.js"
+    ]
+  },
+  {
+    "name": "FOLIOS-back-to-nowhere",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "const back = o.button('sh-fback', W.back(), () => showCovers(track));",
+    "new": "const back = o.button('sh-fback', W.back(), () => {});",
+    "tests": [
+      "test/ui/folios_window.test.js"
+    ]
+  },
+  {
+    "name": "FOLIOS-back-leaves-the-focus-behind",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "    if (focusOn) covers[focusOn]?.face.focus?.({ preventScroll: true });\n",
+    "new": "",
+    "tests": [
+      "test/ui/folios_window.test.js"
+    ]
+  },
+  {
+    "name": "FOLIOS-the-next-arrow-turning-back",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "next = o.button('sh-pagenext', '', () => turnPage(1, false));",
+    "new": "next = o.button('sh-pagenext', '', () => turnPage(-1, false));",
+    "tests": [
+      "test/ui/folios_window.test.js"
+    ]
+  },
+  {
+    "name": "FOLIOS-the-keys-unheard",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "e.key === 'ArrowLeft' ? spread.page - 1 :",
+    "new": "e.key === 'ArrowLeft' ? null :",
+    "tests": [
+      "test/ui/folios_window.test.js"
+    ]
+  },
+  {
+    "name": "FOLIOS-a-shut-page-says-nothing",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "    if (!passPanelOpen(sid, track, p, bought)) return { locked: true, words: W.pageLocked(panel.open - passSpentOn(sid, track, bought)) };\n",
+    "new": "",
+    "tests": [
+      "test/ui/folios_window.test.js"
+    ]
+  },
+  {
+    "name": "FOLIOS-a-shut-page-items-shown-open",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "const shut = st.state !== 'held' && ((at.track === 'premium' && !premium) || !passPanelOpen(sid, at.track, at.panel, bought));",
+    "new": "const shut = st.state !== 'held' && at.track === 'premium' && !premium;",
+    "tests": [
+      "test/ui/folios_window.test.js"
+    ]
+  },
+  {
+    "name": "FOLIOS-a-locked-gilded-page-open",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "    if (track === 'premium' && !premium) return { locked: true, words: W.pageFolio() };\n",
+    "new": "",
+    "tests": [
+      "test/ui/folios_window.test.js"
+    ]
+  },
+  {
+    "name": "FOLIOS-one-press-spends",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "    if (!o.armed(id)) { o.arm(id); return; }\n",
+    "new": "",
+    "tests": [
+      "test/ui/folios_window.test.js"
+    ]
+  },
+  {
+    "name": "FOLIOS-a-refusal-unsaid",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "asked.then((r) => { if (!r?.ok) refused(String(r?.error ?? 'server')); }",
+    "new": "asked.then(() => {}",
+    "tests": [
+      "test/ui/folios_window.test.js"
+    ]
+  },
+  {
+    "name": "FOLIOS-no-get-aurum-for-an-item-short",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "(f) => f.passBuy?.(sid, grant), fl);\n      return getA ? o.button('sh-getaurum', W.getAurum(), () => o.toAurum()) : null;",
+    "new": "(f) => f.passBuy?.(sid, grant), fl);\n      return null;",
+    "tests": [
+      "test/ui/folios_window.test.js"
+    ]
+  },
+  {
+    "name": "FOLIOS-no-get-aurum-for-the-unlock-short",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "(f) => f.passUnlock?.(sid), fl);\n      return getA ? o.button('sh-getaurum', W.getAurum(), () => o.toAurum()) : null;",
+    "new": "(f) => f.passUnlock?.(sid), fl);\n      return null;",
+    "tests": [
+      "test/ui/folios_window.test.js"
+    ]
+  },
+  {
+    "name": "FOLIOS-the-cover-turns-for-less-motion",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "${turn && !o.reduced ? ' sh-turnin' : ''}",
+    "new": "${turn ? ' sh-turnin' : ''}",
+    "tests": [
+      "test/ui/folios_window.test.js"
+    ]
+  },
+  {
+    "name": "FOLIOS-the-page-flips-for-less-motion",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "${dir && !o.reduced ? (dir > 0",
+    "new": "${dir ? (dir > 0",
+    "tests": [
+      "test/ui/folios_window.test.js"
+    ]
+  },
+  {
+    "name": "FOLIOS-the-day-unbounded",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "const tx = W.found(card.today, card.dayMax);",
+    "new": "const tx = W.found(card.today, 0);",
+    "tests": [
+      "test/ui/shop_window.test.js"
+    ]
+  },
+  {
+    "name": "FOLIOS-get-aurum-a-bare-word-under-the-grimoire",
+    "file": "src/ui/enhanced/enhancedFrame.js",
+    "old": "  primary: ['.px-shopwin .sh-buy', '.px-shopwin .sh-getaurum',",
+    "new": "  primary: ['.px-shopwin .sh-buy',",
+    "tests": [
+      "test/ui/storefront_audit2_window.test.js"
+    ]
+  },
+  {
+    "name": "FOLIOS-an-item-retired-with-its-season",
+    "file": "src/ui/collections/wardrobeCatalogue.js",
+    "old": "return !s ? 'retired' : passTracksOpen(s, nowMs) ? 'pass' : 'dormant';",
+    "new": "return !s || nowMs >= s.toMs ? 'retired' : passTracksOpen(s, nowMs) ? 'pass' : 'dormant';",
+    "tests": [
+      "test/ui/folios_window.test.js"
+    ]
+  },
+  {
+    "name": "FOLIOS-the-page-arrow-back-to-a-glyph",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": ".px-shopwin .sh-pagenext::before { transform: translateX(-2px) rotate(-135deg); }",
+    "new": ".px-shopwin .sh-pagenext::before { content: '\\\\203A'; }",
+    "tests": [
+      "test/ui/folios_window.test.js"
+    ]
+  }
+]

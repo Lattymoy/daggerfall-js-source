@@ -1,0 +1,1472 @@
+[
+  {
+    "name": "LAYERED-WEAPONS-sheathed-shows-weapon",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    default: return '0';\n  }",
+    "new": "    default: return held ?? '0';\n  }",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a sheathed body walks with its sword out"
+  },
+  {
+    "name": "LAYERED-WEAPONS-bow-in-melee",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "return held && !isBowCode(held) ? held : '0';",
+    "new": "return held ?? '0';",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a bow swung as a club"
+  },
+  {
+    "name": "LAYERED-WEAPONS-loose-loses-bow",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    case 'AttackRanged': return null;",
+    "new": "    case 'AttackRanged': return '0';",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the loose drawn without its bow"
+  },
+  {
+    "name": "LAYERED-WEAPONS-ranged-no-bow",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    case 'IdleRanged': case 'MoveRanged': return isBowCode(held) ? held : '0';",
+    "new": "    case 'IdleRanged': case 'MoveRanged': return '0';",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the bow drawn and nothing in the hand"
+  },
+  {
+    "name": "LAYERED-WEAPONS-material-dropped",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  return `${shape}${m}`;",
+    "new": "  return `${shape}0`;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "every weapon iron"
+  },
+  {
+    "name": "LAYERED-WEAPONS-look-unread",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  const it = item ? drawnPiece(item) : null;",
+    "new": "  const it = item ?? null;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a weapon wearing a look drawn as itself"
+  },
+  {
+    "name": "LAYERED-WEAPONS-wraps-a-weapon",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  if (!it || it.group != null && it.group !== 'Weapons') return null;",
+    "new": "  if (!it) return null;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a cuirass held as a mace"
+  },
+  {
+    "name": "LAYERED-WEAPONS-iron-hammer-redrawn",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const takeOut = held === '0' || (held && held.slice(0, 2) !== 'wh');",
+    "new": "  const takeOut = held === '0' || !!held;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the art's own iron hammer composed again under its own key"
+  },
+  {
+    "name": "LAYERED-WEAPONS-cast-is-bow",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "    case 'AttackSpell': return 5;",
+    "new": "    case 'AttackSpell': return hasRanged ? 20 : 15;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the cast drawn as the bow's loose"
+  },
+  {
+    "name": "LAYERED-WEAPONS-cast-frames-spread",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "    : table === 'AttackSpell' ? Math.min(fc, n - 1) : Math.floor((fc * n) / t);",
+    "new": "    : Math.floor((fc * n) / t);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the cast skips the throw's frames"
+  },
+  {
+    "name": "LAYERED-WEAPONS-twin-armed",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const twin = (weapon === '0' ? BARE_TWINS : weapon && weapon !== 'wh0' ? ARMED_TWINS : {})[body]?.[`${record}-${f}`] ?? null;",
+    "new": "  const twin = BARE_TWINS[body]?.[`${record}-${f}`] ?? null;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the sword jumps to the other hand every other step"
+  },
+  {
+    "name": "LAYERED-WEAPONS-twin-unflipped",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const flip = left && square ? !mirror : twin && weapon === '0' ? !mirror : mirror;",
+    "new": "  const flip = left && square ? !mirror : mirror;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the twin frame drawn the wrong way round, the same leg forward twice"
+  },
+  {
+    "name": "LAYERED-WEAPONS-hammer-kept",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "    if (hand && takeOut) removeWeapon(res, hand.mask, hand.fr.fill, hand.from ?? null);",
+    "new": "    if (false) removeWeapon(res, hand.mask, hand.fr.fill, hand.from ?? null);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "empty hands still hold the hammer"
+  },
+  {
+    "name": "LAYERED-WEAPONS-weapon-undrawn",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "      drawWeapon(res, thrust ?? hand.fr, held, hand.len, hand.view, hand);",
+    "new": "      if (false) drawWeapon(res, thrust ?? hand.fr, held, hand.len, hand.view, hand);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the hammer gone and nothing in its place"
+  },
+  {
+    "name": "LAYERED-WEAPONS-family-unread",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  return f ? f[Math.max(0, rig.families.indexOf({ l: 'leather', c: 'chain', p: 'plate' }[top] ?? 'leather'))] : null;",
+    "new": "  return f ? f[0] : null;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a plate chest's hammer cut where the leather's is"
+  },
+  {
+    "name": "LAYERED-WEAPONS-air-filled",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    if (side[i] !== 1 || own === -2) { d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = d[i * 4 + 3] = 0; continue; }",
+    "new": "    if (side[i] !== 1) continue;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the hammer's px in open air kept"
+  },
+  {
+    "name": "LAYERED-WEAPONS-walker-hand",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "export const walkerWeapon = (look, pose) => layeredWeaponOf(gatherActOf(pose) ? peerGatherTool(pose) : peerWeaponOf(look, pose));",
+    "new": "export const walkerWeapon = (look, pose) => layeredWeaponOf(peerWeaponOf(look, pose));",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a woodcutter swings the sword in hand at the tree"
+  },
+  {
+    "name": "LAYERED-WEAPONS-body-unread",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "    heldWeapon: s.heldWeapon ?? null,",
+    "new": "    heldWeapon: null,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "my body never holds what I hold"
+  },
+  {
+    "name": "LAYERED-WEAPONS-armed-twin-flipped",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const flip = left && square ? !mirror : twin && weapon === '0' ? !mirror : mirror;",
+    "new": "  const flip = left && square ? !mirror : twin ? !mirror : mirror;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the armed twin drawn mirrored, the sword in the other hand"
+  },
+  {
+    "name": "LAYERED-WEAPONS-gun-swung",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "gun = table === 'AttackMelee' && isGunCode(striking);",
+    "new": "gun = false;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a thunderlock swung like a club through the whole swing"
+  },
+  {
+    "name": "LAYERED-WEAPONS-flinch-drops",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const hands = table === 'Death' && look?.armedTable ? (look.armedTable === 'AttackRanged' ? 'IdleRanged' : look.armedTable) : table;",
+    "new": "  const hands = table;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a struck walker's sword blinks out for the flinch"
+  },
+  {
+    "name": "LAYERED-WEAPONS-mirror-islands-kept",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  for (let i = 0; i < w * h; i++) if (mask[i] && !held[i]) d[i * 4 + 3] = 0;\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a front view's mirror fill leaves the other forearm floating by the hip"
+  },
+  {
+    "name": "LAYERED-WEAPONS-edge-first-neighbour",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    if (body + air) { side[i] = body > air ? 1 : 0; queue[qt++] = i; }",
+    "new": "    if (body + air) { side[i] = body ? 1 : 0; queue[qt++] = i; }",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a butt sticking out past the fist refilled as a brown stick of body"
+  },
+  {
+    "name": "LAYERED-WEAPONS-own-source-unread",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    const own = from ? from[i] : -1;",
+    "new": "    const own = from && from[i] === -2 ? -2 : -1;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a chest the hammer crossed refilled as a smooth blur"
+  },
+  {
+    "name": "LAYERED-WEAPONS-source-tile-unread",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "from: fillFrom(pic, pieces.top[0]), ",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the game never reads the rig's per-pixel sources"
+  },
+  {
+    "name": "LAYERED-WEAPONS-shaft-unread",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  const [qx, qy, tx, ty] = Array.isArray(fr.w) ? fr.w : [...fr.q, ...fr.t];",
+    "new": "  const [qx, qy, tx, ty] = [...fr.q, ...fr.t];",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a front walk's sword drawn off the hammer's head block, a back walk's toward its butt"
+  },
+  {
+    "name": "LAYERED-WEAPONS-bow-in-weapon-hand",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "return pic ? drawBowPicture(out, bow, pic, view, (art.bow ?? 70) * (BOW_DIMS[shape] ?? BOW_DIMS.sb)[0]) : drawBow(out, bow, shape, metal, view, art.bow ?? 70);",
+    "new": "return pic ? drawBowPicture(out, [...fr.q, 1], pic, view, (art.bow ?? 70) * (BOW_DIMS[shape] ?? BOW_DIMS.sb)[0]) : drawBow(out, [...fr.q, 1], shape, metal, view, art.bow ?? 70);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the bow back in the hammer's hand, over the body"
+  },
+  {
+    "name": "LAYERED-WEAPONS-bow-fist-open",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "alpha > 0 && (!before || dx * dx + dy * dy <= 4.4)",
+    "new": "alpha > 0 && !before",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the bow's grip drawn over the fist that holds it"
+  },
+  {
+    "name": "LAYERED-WEAPONS-bow-behind-drawn-over",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "alpha > 0 && (!before || dx * dx + dy * dy <= 4.4)",
+    "new": "alpha > 0 && dx * dx + dy * dy <= 4.4",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a bow in the far hand drawn across the body"
+  },
+  {
+    "name": "LAYERED-WEAPONS-bow-one-size",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "const [lr, br] = BOW_DIMS[shape] ?? BOW_DIMS.sb",
+    "new": "const [lr, br] = BOW_DIMS.lb",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a short bow as long as a long bow"
+  },
+  {
+    "name": "LAYERED-WEAPONS-bow-body-unread",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "drawBow(out, bow, shape, metal, view, art.bow ?? 70)",
+    "new": "drawBow(out, bow, shape, metal, view, 70)",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "each body's bow not the size of its own loose's bow"
+  },
+  {
+    "name": "LAYERED-WEAPONS-picture-unread",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "pic = art.cm > 0 ? art.pic ?? null : null;",
+    "new": "pic = null;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the drawn shapes again, never the paper doll's own picture"
+  },
+  {
+    "name": "LAYERED-WEAPONS-picture-unloaded",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "    if (weapon && pieces.weapon !== '0') weapon.pic = await heldPictureOf(pieces.weapon, body, heldArt);\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the picture never asked for"
+  },
+  {
+    "name": "LAYERED-WEAPONS-grip-wrong-end",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "const up = n - gap[1] >= gap[0], sg",
+    "new": "const up = true, sg",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a picture whose blade lies the other way held by its blade"
+  },
+  {
+    "name": "LAYERED-WEAPONS-no-guard-grip",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  if (!gap || gap[1] - gap[0] < 2) gap = guardEnd(img, ax, lx, ly, n);   // a handle the picture cuts off: at the guard\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a tanto, whose picture cuts its handle off, falls back to the drawn shape"
+  },
+  {
+    "name": "LAYERED-WEAPONS-bow-short-limb",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "sl = Math.abs(s) * P.long;",
+    "new": "sl = s;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the doll's bow, its lower limb cut short, held lopsided"
+  },
+  {
+    "name": "LAYERED-WEAPONS-flail-stands",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "const face = shape === 'fl' || shape === 'lf' ? (ny >= 0 ? 1 : -1) : side;",
+    "new": "const face = side;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a flail's chain standing up off its handle"
+  },
+  {
+    "name": "LAYERED-WEAPONS-katana-foreshortened",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "{ ...img, record: img.record - 1 }",
+    "new": "img",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the katana held as the doll's short right-hand picture"
+  },
+  {
+    "name": "LAYERED-WEAPONS-hidden-blade-shown",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "return k !== 'x' && (!alpha || k === 'f');",
+    "new": "return !alpha || k === 'f';",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a back view's blade pokes out between the arm and the body"
+  },
+  {
+    "name": "LAYERED-WEAPONS-bow-picture-own-size",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "cm = tips / (2 * P.reach);",
+    "new": "cm = 0.6;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the doll's long bow, completed, taller than the loose's bow it turns into"
+  },
+  {
+    "name": "LAYERED-WEAPONS-bow-limb-as-string",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  if (lineIsThick(img, ax)) ax = weaponPictureAxis(offLine(img, ax)) ?? ax;\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the short bow's thick limb read as its string: the bow held backwards"
+  },
+  {
+    "name": "LAYERED-WEAPONS-chain-hangs-in-swing",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "chainWay(fr.cv, L, !!art.swing, art.frame ?? null)",
+    "new": "chainWay(fr.cv, L, false, art.frame ?? null)",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a swing's chain lags as a walk's, never flung"
+  },
+  {
+    "name": "LAYERED-WEAPONS-chain-rigid",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    dropSpecks(drawPicture(out, pic, L, shown, pic.chain ? pic.handle : pic.img), was);",
+    "new": "    dropSpecks(drawPicture(out, pic, L, shown, pic.img), was);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the chain lies stiff along the picture"
+  },
+  {
+    "name": "LAYERED-WEAPONS-chain-hangs-up",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    const c = ((x - hx) * gx + (y - hy) * gy) / ka, v = ((x - hx) * gy - (y - hy) * gx) / k;",
+    "new": "    const c = -((x - hx) * gx + (y - hy) * gy) / ka, v = ((x - hx) * gy - (y - hy) * gx) / k;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the chain stands up from the handle"
+  },
+  {
+    "name": "LAYERED-WEAPONS-chain-thin",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    const c = samplePicture(C.img, x, y, n, at, 0.3);",
+    "new": "    const c = samplePicture(C.img, x, y, n, at);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a thin chain vanishes between px"
+  },
+  {
+    "name": "LAYERED-WEAPONS-flail-no-chain",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "/^(fl|lf)/.test(code)",
+    "new": "/^(lf)/.test(code)",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the flail is not split"
+  },
+  {
+    "name": "LAYERED-WEAPONS-no-spread",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  const offs = spread > 0 ? [0, -spread, spread, -spread / 2, spread / 2] : [0];",
+    "new": "  const offs = [0];",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "an edge-on bow and a thin handle break into dashes"
+  },
+  {
+    "name": "LAYERED-WEAPONS-bow-edge-dashes",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  const spread = Math.max(0.3, cm * Math.sqrt(1 - bx * bx));",
+    "new": "  const spread = 0;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a bow seen edge on is dashes"
+  },
+  {
+    "name": "LAYERED-WEAPONS-no-bridge",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    if (pic.bridge) drawPicture(out, pic, L, (a, proj) => !a && shown(a, proj), pic.bridge);",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the pommel floats off the guard where the art lost the fist"
+  },
+  {
+    "name": "LAYERED-WEAPONS-bridge-over-body",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    if (pic.bridge) drawPicture(out, pic, L, (a, proj) => !a && shown(a, proj), pic.bridge);",
+    "new": "    if (pic.bridge) drawPicture(out, pic, L, () => true, pic.bridge);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the handle painted over the fist"
+  },
+  {
+    "name": "LAYERED-WEAPONS-bridge-head-side",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  const e = ax.s0 + (up ? gap[0] - 1 : gap[1]),",
+    "new": "  const e = ax.s0 + (up ? gap[1] : gap[0] - 1),",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the bridge is the guard's colour and breadth"
+  },
+  {
+    "name": "LAYERED-WEAPONS-open-air-ignored",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    if (side[i] !== 1 || own === -2) { d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = d[i * 4 + 3] = 0; continue; }",
+    "new": "    if (side[i] !== 1) { d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = d[i * 4 + 3] = 0; continue; }",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the hammer head past the hand filled with the lining"
+  },
+  {
+    "name": "LAYERED-WEAPONS-open-air-unread",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    if (d[i + 2] < 128) { if (d[i + 2]) from[y * w + x] = -2; continue; }",
+    "new": "    if (d[i + 2] < 128) continue;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the rig's open air read as no source"
+  },
+  {
+    "name": "LAYERED-GLOW-compose-no-held",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "      res.held = heldPx(out, was);",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the weapon's px never kept"
+  },
+  {
+    "name": "LAYERED-GLOW-held-everything",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "    m[i] = mask ? (mask[i] && now[k + 3] && same ? 1 : 0) : (same ? 0 : 1);",
+    "new": "    m[i] = mask ? (mask[i] && now[k + 3] && same ? 1 : 0) : 1;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the whole picture counted the weapon's"
+  },
+  {
+    "name": "LAYERED-GLOW-rows-top-down",
+    "file": "src/player/eyeOfTheBeholder/eotbGlow.js",
+    "old": "idx.push((h - 1 - y) * w + (mirror ? w - 1 - x : x));",
+    "new": "idx.push(y * w + (mirror ? w - 1 - x : x));",
+    "tests": [
+      "test/player/eyeOfTheBeholder/spriteglow.test.js"
+    ],
+    "why": "the weapon's px read upside down"
+  },
+  {
+    "name": "LAYERED-GLOW-mirror-ignored",
+    "file": "src/player/eyeOfTheBeholder/eotbGlow.js",
+    "old": "idx.push((h - 1 - y) * w + (mirror ? w - 1 - x : x));",
+    "new": "idx.push((h - 1 - y) * w + x);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/spriteglow.test.js"
+    ],
+    "why": "a mirrored body's weapon px on the wrong side"
+  },
+  {
+    "name": "LAYERED-GLOW-empty-glows",
+    "file": "src/player/eyeOfTheBeholder/eotbGlow.js",
+    "old": "  if (!held.idx.length) return '';\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/spriteglow.test.js"
+    ],
+    "why": "a frame that hides the weapon glows round nothing"
+  },
+  {
+    "name": "LAYERED-GLOW-upload-each-frame",
+    "file": "src/player/eyeOfTheBeholder/eotbGlow.js",
+    "old": "  if (renderer?.uploadTexture && !renderer.textures?.has?.(held.key)) {",
+    "new": "  if (renderer?.uploadTexture) {",
+    "tests": [
+      "test/player/eyeOfTheBeholder/spriteglow.test.js"
+    ],
+    "why": "the weapon picture uploaded every frame"
+  },
+  {
+    "name": "LAYERED-GLOW-mine-whole-sprite",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "      if (look && held !== '') glowList.push(setSpriteGlow(handGlow, batch.archive, held ?? batch.record,",
+    "new": "      if (look && held !== '') glowList.push(setSpriteGlow(handGlow, batch.archive, batch.record,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/spriteglow.test.js"
+    ],
+    "why": "my glow round the whole body still"
+  },
+  {
+    "name": "LAYERED-GLOW-mine-empty-glows",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "      if (look && held !== '') glowList.push(",
+    "new": "      if (look) glowList.push(",
+    "tests": [
+      "test/player/eyeOfTheBeholder/spriteglow.test.js"
+    ],
+    "why": "my glow drawn on a frame that hides the weapon"
+  },
+  {
+    "name": "LAYERED-GLOW-peer-whole-sprite",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "r.batch.archive, held ?? r.batch.record, look,",
+    "new": "r.batch.archive, r.batch.record, look,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/spriteglow.test.js"
+    ],
+    "why": "a walker's glow round the whole body still"
+  },
+  {
+    "name": "LAYERED-GLOW-peer-no-held",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "r.held = up.held ?? null;",
+    "new": "r.held = null;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/spriteglow.test.js"
+    ],
+    "why": "a walker's weapon px never handed on"
+  },
+  {
+    "name": "LAYERED-GLOW-evict-unasked",
+    "file": "src/player/eyeOfTheBeholder/eotbGlow.js",
+    "old": "`${key}${OFF_SUFFIX}`]) if (renderer?.textures?.has?.(k)) renderer.evictTexture?.(k);",
+    "new": "`${key}${OFF_SUFFIX}`]) renderer.evictTexture?.(k);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/spriteglow.test.js"
+    ],
+    "why": "a weapon picture never uploaded is let go each sweep"
+  },
+  {
+    "name": "LAYERED-GLOW-mine-kept",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "      evictHeld(renderer, k.replace(':', '_'));   // LAYERED-GLOW: and its weapon's picture\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/spriteglow.test.js"
+    ],
+    "why": "my last outfit's weapon pictures stay in the renderer"
+  },
+  {
+    "name": "LAYERED-GLOW-peers-kept",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "; evictHeld(renderer, key.replace(':', '_')); }",
+    "new": " }",
+    "tests": [
+      "test/player/eyeOfTheBeholder/spriteglow.test.js"
+    ],
+    "why": "a walker's weapon pictures outlive its look"
+  },
+  {
+    "name": "LAYERED-WEAPONS-flip-same-hand",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    const bow = art.mirror ? fr.bowM : fr.bow;",
+    "new": "    const bow = fr.bow;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a flipped picture holds the bow in the right hand, on the near side"
+  },
+  {
+    "name": "LAYERED-WEAPONS-flip-hand-side-ignored",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  const bx = Math.cos(BOW_TURN) * FACING_X[v] + Math.sin(BOW_TURN) * BOW_SIDE_X[v] * hand;\n",
+    "new": "  const bx = Math.cos(BOW_TURN) * FACING_X[v] + Math.sin(BOW_TURN) * BOW_SIDE_X[v];\n",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the far hand's bow turned as the near hand's"
+  },
+  {
+    "name": "LAYERED-WEAPONS-flip-no-own-picture",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const hand = flip && isBowCode(weapon) && weaponRigOf(body, `${rec}-${fr}`)?.bowM ? ':m' : '';",
+    "new": "  const hand = '';",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a flipped bow frame drawn from the unflipped picture"
+  },
+  {
+    "name": "LAYERED-WEAPONS-flip-unread",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "mirror: hand === 'm', throwFr:",
+    "new": "mirror: false, throwFr:",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the decode never told the picture is flipped"
+  },
+  {
+    "name": "LAYERED-WEAPONS-flip-own-look",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "`${p[0]}:${p[1]}:${p[2]}:${p[4].replace(/!\\d$/, '')}`",
+    "new": "`${p[0]}:${p[1]}:${p[2]}:${p.slice(4).join(':').replace(/!\\d$/, '')}`",
+    "tests": [
+      "test/net/peer/fb1022d_peerart.test.js"
+    ],
+    "why": "a flipped bow counted a look of its own"
+  },
+  {
+    "name": "LAYERED-WEAPONS-chain-still",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    return pic.chain ? drawChain(out, pic, L, shown, chainWay(fr.cv, L, !!art.swing, art.frame ?? null)) : out;",
+    "new": "    return pic.chain ? drawChain(out, pic, L, shown) : out;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the chain hangs plumb whatever the hand does"
+  },
+  {
+    "name": "LAYERED-WEAPONS-chain-leads",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "Math.atan2(-vx * CHAIN_LAG,",
+    "new": "Math.atan2(vx * CHAIN_LAG,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the chain swings ahead of the hand"
+  },
+  {
+    "name": "LAYERED-WEAPONS-chain-no-tilt-cap",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  const a = Math.max(-CHAIN_TILT, Math.min(CHAIN_TILT, Math.atan2(-vx * CHAIN_LAG, 1 + vy * CHAIN_LAG * 0.5)));",
+    "new": "  const a = Math.atan2(-vx * CHAIN_LAG, 1 + vy * CHAIN_LAG * 0.5);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a fast step swings the chain level"
+  },
+  {
+    "name": "LAYERED-WEAPONS-chain-leads-blow",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    const x = L.ux * CHAIN_FLING - vx / sp,",
+    "new": "    const x = L.ux * CHAIN_FLING + vx / sp,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a swing's chain ahead of the blow"
+  },
+  {
+    "name": "LAYERED-WEAPONS-ball-off-picture",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  for (let t = 0; t < 8 && (hx + gx * reach < wide",
+    "new": "  for (let t = 0; t < 0 && (hx + gx * reach < wide",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the ball swung off the picture's edge"
+  },
+  {
+    "name": "LAYERED-WEAPONS-ranged-art-bow",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const table = tableAsked === 'AttackRanged' && look && 'weapon' in look && !isBowCode(look.weapon) ? 'IdleRanged' : tableAsked;",
+    "new": "  const table = tableAsked;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the art's bow in hands that hold no bow"
+  },
+  {
+    "name": "LAYERED-DUAL-no-second",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "      if (off) drawWeapon(res, off, /** @type {string} */ (pieces?.offhand), hand.len, hand.view, { ...hand, pic: hand.offPic ?? null, mirror: false });\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the pair's other weapon never drawn"
+  },
+  {
+    "name": "LAYERED-DUAL-no-flip-swap",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const swap = pair && (hands === 'AttackMelee' ? look?.strike === 'L' : flip);",
+    "new": "  const swap = pair && (hands === 'AttackMelee' ? look?.strike === 'L' : false);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a flipped body holds the right weapon in its left hand"
+  },
+  {
+    "name": "LAYERED-DUAL-strike-ignored",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const swap = pair && (hands === 'AttackMelee' ? look?.strike === 'L' : flip);",
+    "new": "  const swap = pair && (hands === 'AttackMelee' ? false : flip);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the left hand's blow struck with the right weapon"
+  },
+  {
+    "name": "LAYERED-DUAL-off-blade-side",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    o = { w: fr.off.slice(0, 4), d: 'b'.repeat(-lo + OFF_GUARD) + blade.repeat(hi + 1 - OFF_GUARD), side: fr.side, cv: fr.cv };",
+    "new": "    o = { w: fr.off.slice(0, 4), d: 'b'.repeat(-lo + OFF_GUARD) + 'b'.repeat(hi + 1 - OFF_GUARD), side: fr.side, cv: fr.cv };",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the second blade shown from behind"
+  },
+  {
+    "name": "LAYERED-DUAL-rig-pair-lost",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "    ...layeredPair(),   // LAYERED-DUAL: a pair's two weapons and the hand striking\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "my pair never reaches the body"
+  },
+  {
+    "name": "LAYERED-DUAL-peer-one-hand",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "  const held = h?.dual ? layeredHands(",
+    "new": "  const held = false ? layeredHands(",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a walker's pair drawn as one weapon"
+  },
+  {
+    "name": "LAYERED-DUAL-release-pair",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "(b === undefined ? hands.has(held) : pair.has(a) && pair.has(b))",
+    "new": "hands.has(held)",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a pair's pictures let go every time the outfit is looked at again"
+  },
+  {
+    "name": "SWING-CUTS-none",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const cut = table === 'AttackMelee' && !gun && n === SWING_CUTS.chop.length ? swingCutOf(striking, left && !square) : null;",
+    "new": "  const cut = null;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "every weapon chops as the hammer"
+  },
+  {
+    "name": "SWING-CUTS-all-chop",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  const cut = THRUSTS.has(head) || head === '0' ? SWING_CUTS.thrust : SLASHES.has(head) ? SWING_CUTS.slash : SWING_CUTS.chop;",
+    "new": "  const cut = SWING_CUTS.chop;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a dagger chops overhead"
+  },
+  {
+    "name": "SWING-CUTS-no-backhand",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  return back ? [...cut].reverse() : cut;",
+    "new": "  return cut;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the left hand's blow the same as the right's from aside"
+  },
+  {
+    "name": "SWING-CUTS-left-unflipped",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const flip = left && square ? !mirror : twin && weapon === '0' ? !mirror : mirror;",
+    "new": "  const flip = twin && weapon === '0' ? !mirror : mirror;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the left hand's blow from the front swung from the right"
+  },
+  {
+    "name": "SWING-CUTS-left-own-cut",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "striking = left ? look.offhand : look?.weapon,",
+    "new": "striking = look?.weapon,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the left hand swings the right's weapon's cut"
+  },
+  {
+    "name": "SWING-CUTS-thrust-chop-line",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "      const thrust = hand.swing ? thrustRigOf(hand.fr, held, hand.view, hand.frame, hand.len) : null;",
+    "new": "      const thrust = null;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a thrust's blade points at the camera, a stub"
+  },
+  {
+    "name": "SWING-CUTS-thrust-not-hidden",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    const blade = v === 4 ? 'x' : v === 3 ? 'b' : 'f', c = blade === 'x' ? 'b' : blade;",
+    "new": "    const blade = v === 3 ? 'b' : 'f', c = blade;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a thrust from behind drawn through the body"
+  },
+  {
+    "name": "LAYERED-DUAL-guard-over-palm",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    _depth.set(o, o.d);   // as written: settleDepth's fist rule would bring the guard out over the fingers\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the second weapon's guard painted over the open hand"
+  },
+  {
+    "name": "LAYERED-DUAL-handle-over-palm",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "d: 'b'.repeat(-lo + OFF_GUARD) + blade",
+    "new": "d: 'f'.repeat(-lo + OFF_GUARD) + blade",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the handle and guard over the fingers"
+  },
+  {
+    "name": "SPELL-BURST-spell-hand-sheathed",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "case 'MoveSpell': return spellHand && held",
+    "new": "case 'MoveSpell': return held",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a weapon sheathed beside the cast comes out"
+  },
+  {
+    "name": "SPELL-BURST-spell-hand-dropped",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "case 'MoveSpell': return spellHand && held",
+    "new": "case 'MoveSpell': return false && held",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the spell hand's weapon leaves the hand"
+  },
+  {
+    "name": "SPELL-BURST-cast-unread",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "...(Number.isInteger(s?.castElement) ? { cast: s.castElement } : {})",
+    "new": "...{}",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the rig's element never reaches the look"
+  },
+  {
+    "name": "SPELL-BURST-any-table",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "const spell = table === 'AttackSpell' && held",
+    "new": "const spell = held",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a blow carries the spell"
+  },
+  {
+    "name": "SPELL-BURST-unnamed-element",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "Number.isInteger(look?.cast) && look.cast >= 0",
+    "new": "look.cast !== null && look.cast >= 0",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "no element named draws one anyway"
+  },
+  {
+    "name": "SPELL-BURST-five-elements",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "(?:!([0-4]))?$/",
+    "new": "(?:!([0-9]))?$/",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "an element past the five reads"
+  },
+  {
+    "name": "SPELL-BURST-never-drawn",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "if (hand && pieces?.spell != null) drawSpellBurst",
+    "new": "if (false) drawSpellBurst",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the spell is never drawn"
+  },
+  {
+    "name": "SPELL-BURST-colour-one",
+    "file": "src/player/eyeOfTheBeholder/layeredSpell.js",
+    "old": "const C = SPELL_COLOURS[element] ?? SPELL_COLOURS[4]",
+    "new": "const C = SPELL_COLOURS[4]",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "every element the same colour"
+  },
+  {
+    "name": "SPELL-BURST-not-thrown",
+    "file": "src/player/eyeOfTheBeholder/layeredSpell.js",
+    "old": "const thrown = stage >= 2,",
+    "new": "const thrown = false,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the burst stays at the fists"
+  },
+  {
+    "name": "SPELL-BURST-thrown-back",
+    "file": "src/player/eyeOfTheBeholder/layeredSpell.js",
+    "old": "[Math.sign(fx), 0]",
+    "new": "[-Math.sign(fx), 0]",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "thrown backward"
+  },
+  {
+    "name": "SPELL-BURST-not-grown",
+    "file": "src/player/eyeOfTheBeholder/layeredSpell.js",
+    "old": "r0 = S.r * k,",
+    "new": "r0 = 4 * k,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "it does not gather, burst and scatter"
+  },
+  {
+    "name": "SPELL-BURST-no-scatter",
+    "file": "src/player/eyeOfTheBeholder/layeredSpell.js",
+    "old": "(S.keep < 1 && hash(",
+    "new": "(false && hash(",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the last frame does not scatter"
+  },
+  {
+    "name": "SPELL-BURST-over-back",
+    "file": "src/player/eyeOfTheBeholder/layeredSpell.js",
+    "old": "if (behind && d[i + 3]) return;",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "thrown from behind, drawn over the back"
+  },
+  {
+    "name": "SPELL-BURST-lost-behind",
+    "file": "src/player/eyeOfTheBeholder/layeredSpell.js",
+    "old": "behind && along < most && hidden(along)",
+    "new": "false && along < most && hidden(along)",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "lost behind the back"
+  },
+  {
+    "name": "SPELL-BURST-walker-element",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "cast: Number.isInteger(pose?.ce) ? pose.ce : 4",
+    "new": "cast: 4",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a walker's element never read"
+  },
+  {
+    "name": "AUDIT-spell-stance-empty",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "case 'AttackSpell': case 'IdleSpell': case 'MoveSpell': return",
+    "new": "case 'AttackSpell': return",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a weapon beside a readied spell leaves the hand"
+  },
+  {
+    "name": "AUDIT-gun-right-hand",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "gun = table === 'AttackMelee' && isGunCode(striking);",
+    "new": "gun = table === 'AttackMelee' && isGunCode(look?.weapon);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a left blade beside a right gun freezes in the shot"
+  },
+  {
+    "name": "AUDIT-flinch-loose-hammer",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "(look.armedTable === 'AttackRanged' ? 'IdleRanged' : look.armedTable)",
+    "new": "look.armedTable",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a flinch at the loose shows the art's hammer"
+  },
+  {
+    "name": "AUDIT-iron-hammer-unnamed",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const weapon = shown;   // AUDIT",
+    "new": "  const weapon = shown === 'wh0' ? null : shown;   // AUDIT",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the iron warhammer's code dropped: its glow the whole body"
+  },
+  {
+    "name": "AUDIT-iron-hammer-twinned",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "weapon && weapon !== 'wh0' ? ARMED_TWINS",
+    "new": "weapon ? ARMED_TWINS",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the iron warhammer takes an armed twin's frame"
+  },
+  {
+    "name": "AUDIT-left-flip-fixed",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const flip = left && square ? !mirror :",
+    "new": "  const flip = left && square ? true :",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a left blow ignores the picture's own flip"
+  },
+  {
+    "name": "AUDIT-pair-line-right",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "pair: pair ? (swap ? 'L' : 'R') : null,",
+    "new": "pair: pair ? 'R' : null,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the line's glow always the right hand's"
+  },
+  {
+    "name": "AUDIT-empty-glow-whole",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "    else if (hand) res.held = new Uint8Array(w * h);",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "empty hands glow the whole body"
+  },
+  {
+    "name": "AUDIT-loose-bow-unglowed",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  if (!pieces?.weapon && loose) res.held = artBowPx(res);",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the loose's bow glows the whole body"
+  },
+  {
+    "name": "AUDIT-pair-one-glow",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "      if (two) markOff(res.held, out, two);",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a pair's two weapons glow as one"
+  },
+  {
+    "name": "AUDIT-bow-specks",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "if (piece.length >= BOW_PIECE)",
+    "new": "if (piece.length >= 1)",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a toe's corner glows as the bow"
+  },
+  {
+    "name": "AUDIT-heldOf-whole",
+    "file": "src/player/eyeOfTheBeholder/eotbGlow.js",
+    "old": "if (held[y * w + x] === part)",
+    "new": "if (held[y * w + x])",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the line's glow takes the second weapon too"
+  },
+  {
+    "name": "AUDIT-off-unevicted",
+    "file": "src/player/eyeOfTheBeholder/eotbGlow.js",
+    "old": "for (const k of [`${key}${HELD_SUFFIX}`, `${key}${OFF_SUFFIX}`])",
+    "new": "for (const k of [`${key}${HELD_SUFFIX}`])",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the second weapon's picture outlives the sprite"
+  },
+  {
+    "name": "AUDIT-cast-own-look",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "${p[4].replace(/!\\d$/, '')}",
+    "new": "${p[4]}",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a walker's cast is a look of its own: its stance's pictures evicted"
+  },
+  {
+    "name": "AUDIT-body-hands-live",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "hands: cfg.wornArmour ? layeredHands(last) : null",
+    "new": "hands: null",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the cast's spell and the pair's blow read live mid-clip"
+  },
+  {
+    "name": "AUDIT-peer-hands-live",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "...(r.shot?.hands ?? walkerHeld(peer.look, pose))",
+    "new": "...walkerHeld(peer.look, pose)",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a walker's blow reads the next one's hand"
+  },
+  {
+    "name": "AUDIT-notch-open",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "if (g[1] - g[0] > HAFT_NOTCH ||",
+    "new": "if (true ||",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the war axe's head off its haft"
+  },
+  {
+    "name": "AUDIT-notch-hand",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "(up ? g[0] < gap[1] : g[1] > gap[0])) continue;",
+    "new": "false) continue;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the hand's gap filled"
+  },
+  {
+    "name": "AUDIT-speck-kept",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    if (!near) { const k = (y * w + x) * 4; d.set(was.subarray(k, k + 4), k); }",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "specks left in the air"
+  },
+  {
+    "name": "AUDIT-speck-fingers",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "(put[j] || was[j * 4 + 3])",
+    "new": "put[j]",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a px between the fingers dropped"
+  },
+  {
+    "name": "AUDIT-chain-trails-blow",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  if (swing && frame != null && frame >= 2 && frame <= 4) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the ball trails the blow: up over the head after it"
+  },
+  {
+    "name": "AUDIT-chain-strike-long",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "return n ? [x / n, y / n, frame === 2 ? 1 : 0] : [0, 1];",
+    "new": "return n ? [x / n, y / n, 0] : [0, 1];",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the strike's chain unshortened"
+  },
+  {
+    "name": "AUDIT-glow-lead-only",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "const lineItem = batchPair === 'L' ? last.pairLeft : batchPair === 'R' ? last.pairRight : handItemNow();",
+    "new": "const lineItem = handItemNow();",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a pair's line glows the lead's colours"
+  },
+  {
+    "name": "AUDIT-peer-glow-lead-only",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "peerWeaponGlow(h ? (r.pair === 'L' ? h.left : h.right) :",
+    "new": "peerWeaponGlow(false ? null :",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a walker's pair's line glows the lead's colours"
+  },
+  {
+    "name": "AUDIT-art-speck-kept",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  if (held) dropLoneArt(res);",
+    "new": "  if (false) dropLoneArt(res);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the art's own speck floats in the air"
+  },
+  {
+    "name": "SHEETS-thrust-second-blade",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "side: fr.side };   // no second line",
+    "new": "side: fr.side, off: [gx, gy, ex, ey, 'b'] };   // no second line",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a thrust fans a second blade off the first fist"
+  },
+  {
+    "name": "SHEETS-bow-ghosted",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  if (clean) {\n",
+    "new": "  if (false) {\n",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the leather chest's ghost limbs stay"
+  },
+  {
+    "name": "SHEETS-bow-air-narrow",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "const LOOSE_AIR_N = 20;",
+    "new": "const LOOSE_AIR_N = 12;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a 2-px limb skipped: the bow broken"
+  },
+  {
+    "name": "SHEETS-bow-ghost-kept",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    if (mine) d.fill(0, i, i + 4);",
+    "new": "    if (mine) void 0;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the ghost px stay"
+  },
+  {
+    "name": "SHEETS-bow-limb-missing",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    else { const k = (y * rw + x) * 4; d.set(rd.subarray(k, k + 4), i); }",
+    "new": "    else void 0;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the clean limb's px never come"
+  },
+  {
+    "name": "SHEETS-provisional-never",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "heldPictureExpected(pieces.offhand, body)))) provisional = true;",
+    "new": "heldPictureExpected(pieces.offhand, body)))) provisional = false;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a frame drawn before its picture stands for good"
+  },
+  {
+    "name": "SHEETS-provisional-any",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "(!weapon.pic && pieces.weapon !== '0' && heldPictureExpected(pieces.weapon, body))",
+    "new": "(!weapon.pic && pieces.weapon !== '0')",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a weapon with no picture to wait for decoded again and again"
+  },
+  {
+    "name": "SHEETS-provisional-unseen",
+    "file": "src/player/eyeOfTheBeholder/eotbSprite.js",
+    "old": ", ...(image.provisional ? { provisional: true } : {}) };",
+    "new": " };",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the stores never hear it was provisional"
+  },
+  {
+    "name": "SHEETS-body-retry-never",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "have.retryAt != null && clock() >= have.retryAt) { tex.delete(cacheKey(s));",
+    "new": "have.retryAt != null && false) { tex.delete(cacheKey(s));",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "my body keeps the shape for good"
+  },
+  {
+    "name": "SHEETS-peer-retry-never",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "have.retryAt != null && clock() >= have.retryAt) { tex.delete(k);",
+    "new": "have.retryAt != null && false) { tex.delete(k);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a walker keeps the shape for good"
+  },
+  {
+    "name": "SHEETS-tool-unheld",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "    ...layeredTool(),   // AUDIT",
+    "new": "    // AUDIT",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "my body's hands keep the weapon at a gathering act"
+  },
+  {
+    "name": "SHEETS-tool-sheathed",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "sheathed: last.sheathed && !last.toolInHand, readyStance",
+    "new": "sheathed: last.sheathed, readyStance",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the tool held in a sheathed stance: not drawn"
+  },
+  {
+    "name": "SHEETS-tool-glows",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "!last.sheathed && !last.toolInHand && !last.riding",
+    "new": "!last.sheathed && !last.riding",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the weapon's glow round the tool"
+  },
+  {
+    "name": "SHEETS-cast-evicted",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "held = cast?.replace(/!\\d$/, '')",
+    "new": "held = cast",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a cast's frames go with every other outfit's"
+  }
+]

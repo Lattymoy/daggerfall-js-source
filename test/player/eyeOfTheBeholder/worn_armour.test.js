@@ -59,7 +59,7 @@ test('every outfit, table, view and frame has its strip, for both bodies', () =>
 test('the option routes spriteFor to the worn armour, and leaves it alone when off or mounted', () => {
   const look = { onFoot: 3, wornArmour: true, outfit: 'p6cl', gender: 'female' };
   const s = spriteFor('AttackMelee', 2, 3, look);
-  assert.equal(s.key, 'LA:female:plate_chain_leather:7-3:p6cl');
+  assert.equal(s.key, 'LA:female:plate_chain_leather:7-2:p6cl@0');   // LAYERED-WEAPONS: nothing in the hands; PIN MOVED (SWING-CUTS): a bare fist jabs - its fourth frame the arms out
   assert.ok(isLayeredKey(s.key) && eotbSpriteUrl(s.key) === s.key);   // the decoders compose it (decodeLayered)
   assert.ok(!isLayeredKey(spriteFor('AttackMelee', 2, 3, { ...look, wornArmour: false }).key));
   assert.ok(!isLayeredKey(spriteFor('IdleHorse', 0, 0, { onHorse: 0, wornArmour: true, outfit: 'p6cl' }).key));
@@ -71,10 +71,11 @@ test('the option routes spriteFor to the worn armour, and leaves it alone when o
   // the flinch: the hurt pose (records 10-14) on both bodies now
   assert.equal(spriteFor('Death', 0, 0, look).record, 10);
   assert.equal(spriteFor('Death', 0, 0, { ...look, gender: 'male' }).record, 10);
-  // and the bow / cast: records 20-24 on both - the female has her own bow now, not her idle stance
-  for (const gender of ['female', 'male']) for (const table of ['AttackRanged', 'AttackSpell']) {
+  // and the bow: records 20-24 on both - the female has her own bow now, not her idle stance; LAYERED-WEAPONS: the cast is
+  // the swing's throw (records 5-9), the bow no longer
+  for (const gender of ['female', 'male']) for (const [table, record] of [['AttackRanged', 22], ['AttackSpell', 7]]) {
     const b = spriteFor(table, 2, 1, { ...look, gender });
-    assert.equal(b.record, 22, `${gender} ${table}`);
+    assert.equal(b.record, record, `${gender} ${table}`);
     assert.ok(existsSync(strip(b.key)), b.key);
   }
 });
@@ -101,21 +102,21 @@ test('a worn cloak: its slot and dye read from the equip table and from a peer, 
   slots[EQUIP_SLOTS.Cloak2] = { templateIndex: 5, dye: 4 };                           // not a cloak
   assert.equal(cloakOfSlots(slots), null);
   assert.equal(outfitOfItems([{ equipSlot: EQUIP_SLOTS.Cloak1, templateIndex: 155, dye: 2, group: 'MensClothing' }]), 'lll~2');
-  assert.deepEqual(outfitPieces('p6cl~9'), { head: 'p6', top: 'c', legs: 'l', cloak: 9 });
+  assert.deepEqual(outfitPieces('p6cl~9'), { head: 'p6', top: 'c', legs: 'l', cloak: 9, weapon: null, offhand: null, spell: null });   // PIN MOVED (LAYERED-DUAL): a pair's second
   assert.equal(outfitPieces('lll').cloak, null);
   assert.equal(outfitPieces('lll~10'), null);
   // every on-foot frame carries it, both bodies: walk / attack / hurt / idle and the bow / cast
   const look = { gender: 'male', outfit: 'ccc~2' };
-  assert.ok(layeredSprite('Move', 1, 0, 4, look, false).key.endsWith(':ccc~2'));
-  assert.ok(layeredSprite('AttackMelee', 2, 3, 6, look, false).key.endsWith(':ccc~2'));
-  assert.ok(layeredSprite('Death', 4, 0, 1, look, false).key.endsWith(':ccc~2'));
-  assert.ok(layeredSprite('Idle', 0, 0, 1, look, false).key.endsWith(':ccc~2'));
+  assert.ok(layeredSprite('Move', 1, 0, 4, look, false).key.endsWith(':ccc~2@0'));   // LAYERED-WEAPONS: the hands empty
+  assert.ok(layeredSprite('AttackMelee', 2, 3, 6, look, false).key.endsWith(':ccc~2@0'));
+  assert.ok(layeredSprite('Death', 4, 0, 1, look, false).key.endsWith(':ccc~2@0'));
+  assert.ok(layeredSprite('Idle', 0, 0, 1, look, false).key.endsWith(':ccc~2@0'));
   assert.ok(layeredSprite('AttackRanged', 0, 0, 4, look, false).key.endsWith(':ccc~2'));
   // the worn helmet stays under the hood, both bodies; the bow / cast frames (records 20-24) carry the cloak too
-  assert.equal(layeredSprite('Move', 1, 0, 4, { gender: 'female', outfit: 'p6cl~2' }, false).key, 'LA:female:plate_chain_leather:1-0:p6cl~2');
+  assert.equal(layeredSprite('Move', 1, 0, 4, { gender: 'female', outfit: 'p6cl~2' }, false).key, 'LA:female:plate_chain_leather:1-0:p6cl~2@0');
   assert.equal(layeredSprite('AttackRanged', 0, 0, 4, { gender: 'female', outfit: 'p6cl~2' }, false).key, 'LA:female:plate_chain_leather:20-0:p6cl~2');
-  assert.equal(layeredSprite('AttackSpell', 2, 1, 4, { gender: 'male', outfit: 'ccc~5' }, false).key, 'LA:male:chain_chain_chain:22-1:ccc~5');
-  assert.equal(layeredSprite('Move', 1, 0, 4, { gender: 'male', outfit: 'p6cl~2' }, false).key, 'LA:male:plate_chain_leather:1-0:p6cl~2');
+  assert.equal(layeredSprite('AttackSpell', 2, 1, 4, { gender: 'male', outfit: 'ccc~5' }, false).key, 'LA:male:chain_chain_chain:7-1:ccc~5@0');
+  assert.equal(layeredSprite('Move', 1, 0, 4, { gender: 'male', outfit: 'p6cl~2' }, false).key, 'LA:male:plate_chain_leather:1-0:p6cl~2@0');
 });
 
 test('the dye is the clothing band, step for step: the green ramp maps onto the dye\'s sixteen colours', () => {

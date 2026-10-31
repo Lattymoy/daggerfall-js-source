@@ -62,6 +62,8 @@ export const PLUS_BIND_ROWS = Object.freeze([
   // CARGO-ANYWHERE (AUDIT 2): the ship's hold from anywhere - no pad button ships on it; a pad player had the helm's Hold
   // and the Fleet page's alone
   { id: 'hold', label: 'Ship\'s hold', sec: 'ShipHold' },
+  // TECH-KEY2: the held martial path's signature, whatever line the weapon carries - no pad button ships on it
+  { id: 'technique2', label: 'Martial technique (hold to aim)', sec: 'SignatureTechnique' },
 ]);
 
 /** The pad button a row is on, or null. */

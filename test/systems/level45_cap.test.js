@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  ONLINE_LEVEL_CAP, LEVEL_SUM_TOP, ROLLED_START_MIN, ROLLED_START_AVERAGE,
+  ONLINE_LEVEL_CAP, LEVEL_SUM_TOP, ROLLED_START_MIN, ROLLED_START_AVERAGE, ROLLED_START_MAX, LEGACY_START_MAX, birthSkillOk,
   onlineLevelFor, onlineLevelFraction, onlineLevelConvert, onlineLevelPoints, onlineLevelRawPoints, RAW_PER_POINT_PAST,
 } from '../../src/systems/levelClimb.js';
 import { calculatePlayerLevel, checkForLevelUp, applyLevelUp } from '../../src/systems/advancement.js';
@@ -13,7 +13,7 @@ import { evenHpFloor } from '../../src/systems/levelEven.js';
 import { LEVEL_CAP } from '../../src/systems/levelCap.js';
 import { crossLeveling } from '../../src/systems/realmCustoms.js';
 import { JUDGE_LEVEL_MAX, characterFindings } from '../../server-account/src/judge.js';
-import { REALM_LEVEL_CLAIM_MAX } from '../../server-account/src/realm.js';
+import { REALM_LEVEL_CLAIM_MAX, firstSaveRefusal } from '../../server-account/src/realm.js';
 import { rollSkills, spendPoolLowest } from '../../src/systems/chargen.js';
 import { levelUpSkillSum } from '../../src/systems/skills.js';
 
@@ -69,6 +69,36 @@ test('LEVEL-45: the creation\'s starts - 144 the least any roll gives, 154 the a
   }
   assert.ok(low >= ROLLED_START_MIN);
   assert.equal(Math.round(total / n), ROLLED_START_AVERAGE);
+});
+
+test('LEVEL-45 BIRTH-SKILL: a birth is one bounded 3/3/6 creation whose start, current and live sums agree; Legacy alone gets Hearth\'s ceiling; the judge holds a start below the floor', () => {
+  assert.deepEqual([ROLLED_START_MAX, LEGACY_START_MAX], [169, 184]);
+  const career = { primarySkills: [0, 1, 2], majorSkills: [3, 4, 5], minorSkills: [6, 7, 8, 9, 10, 11] };
+  const skills = new Array(35).fill(5);
+  for (const id of [0, 1, 2]) skills[id] = 30;
+  for (const id of [3, 4, 5]) skills[id] = 20;
+  for (const id of [6, 7, 8, 9, 10, 11]) skills[id] = 15;
+  const live = levelUpSkillSum({ career, skills });
+  assert.ok(live >= ROLLED_START_MIN);
+  const born = { level: 1, goldPieces: 100, items: [], career, skills, startingLevelUpSkillSum: live, currentLevelUpSkillSum: live };
+  assert.equal(birthSkillOk(born), true);
+  assert.equal(firstSaveRefusal(JSON.stringify(born), { origin_id: null }), null);
+  assert.equal(birthSkillOk({ ...born, startingLevelUpSkillSum: 0, currentLevelUpSkillSum: 0 }), false, 'start zeroed');
+  assert.equal(birthSkillOk({ ...born, skills: new Array(35).fill(0), startingLevelUpSkillSum: live, currentLevelUpSkillSum: live }), false, 'skills zeroed, start forged');
+  assert.equal(birthSkillOk({ level: 1, startingLevelUpSkillSum: live, currentLevelUpSkillSum: live }), false, 'career and skills cannot be omitted');
+  assert.equal(birthSkillOk({ ...born, career: { ...career, primarySkills: [0, 0, 0] } }), false, 'the twelve career skills are unique');
+  const maxed = { ...born, skills: [...skills], startingLevelUpSkillSum: ROLLED_START_MAX, currentLevelUpSkillSum: ROLLED_START_MAX };
+  maxed.skills[0] += ROLLED_START_MAX - live;
+  assert.equal(birthSkillOk(maxed), true, 'normal ceiling');
+  maxed.skills[0] += 1; maxed.startingLevelUpSkillSum += 1; maxed.currentLevelUpSkillSum += 1;
+  assert.equal(birthSkillOk(maxed), false, 'normal birth above its ceiling');
+  assert.equal(birthSkillOk(maxed, { legacy: true }), true, 'Legacy Hearth ceiling');
+  assert.deepEqual(firstSaveRefusal(JSON.stringify(maxed), { origin_id: null, lineage_id: 'line' }), null);
+  assert.deepEqual(firstSaveRefusal(JSON.stringify({ ...born, startingLevelUpSkillSum: 0, currentLevelUpSkillSum: 0 }), { origin_id: null }), { error: 'realm-birth' });
+  assert.deepEqual(firstSaveRefusal(JSON.stringify({ ...born, skills: new Array(35).fill(0) }), { origin_id: null }), { error: 'realm-birth' });
+  assert.deepEqual(characterFindings({ level: 1, startingLevelUpSkillSum: 0 }, null).filter((f) => f.code === 'skill-start'), [{ code: 'skill-start' }]);
+  assert.deepEqual(characterFindings({ level: 1, startingLevelUpSkillSum: '0' }, null).filter((f) => f.code === 'skill-start'), [{ code: 'skill-start' }]);
+  assert.deepEqual(characterFindings({ level: 1, startingLevelUpSkillSum: ROLLED_START_MIN }, null).filter((f) => f.code === 'skill-start'), []);
 });
 
 test('LEVEL-45: online the level-up check reads the shared climb; offline Daggerfall\'s 15 stands, stopped at the cap', () => {

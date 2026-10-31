@@ -36,6 +36,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { reviewLines, modAiOn, modAiModeOf, flagActs, FLAG_SEVERITY, AI_WAITS } from './modAi.js';
+import { postLogoCards } from './guildLogos.js';   // GUILD-LOGO: the logo reviews' cards
 import { discordOn, sendCard, cardOf } from './discord.js';
 import { openCaseFor, keepCaseLines } from './safety.js';
 import { autoMute, autoMutable, lawOrder, pushLaw } from './sanctions.js';
@@ -251,7 +252,7 @@ async function postCards(ctx, env, fetchFn) {
 export async function safetyMinute(ctx, env, { fetchFn = (u, i) => globalThis.fetch(u, i) } = {}) {
   let n = 0;
   if (modAiOn(env)) n += (await triageCases(ctx, env, fetchFn)) + (await readFeed(ctx, env, fetchFn));
-  if (discordOn(env)) n += await postCards(ctx, env, fetchFn);
+  if (discordOn(env)) n += (await postCards(ctx, env, fetchFn)) + (await postLogoCards(ctx, env, fetchFn));   // GUILD-LOGO: a guild's logo for review
   return n;
 }
 

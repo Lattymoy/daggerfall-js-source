@@ -1369,11 +1369,6 @@
   "tr": "1ba5c00a0f89",
   "by": "claude-in-session"
  },
- "account.refusal.guildRenameGold": {
-  "en": "a91541390908",
-  "tr": "defbc4c5bb9a",
-  "by": "claude-in-session"
- },
  "account.refusal.guildRenameMoved": {
   "en": "114d8b59f29d",
   "tr": "b9386e33119d",
@@ -1617,6 +1612,11 @@
  "account.refusal.homeTowns": {
   "en": "e8303b3d7726",
   "tr": "43572eaed60e",
+  "by": "claude-in-session"
+ },
+ "account.refusal.homeUnlisted": {
+  "en": "8845fe7a3a8a",
+  "tr": "611b0c475e87",
   "by": "claude-in-session"
  },
  "account.refusal.homeUpdate": {
@@ -2052,6 +2052,11 @@
  "account.refusal.noLineage": {
   "en": "1720f337da24",
   "tr": "291184ea04a7",
+  "by": "claude-in-session"
+ },
+ "account.refusal.noLogo": {
+  "en": "ea92e7a4ca08",
+  "tr": "f32d1b2b9f8a",
   "by": "claude-in-session"
  },
  "account.refusal.noMember": {
@@ -6079,6 +6084,11 @@
   "tr": "f9f4733cea55",
   "by": "claude-in-session"
  },
+ "input.action.pvpFlag": {
+  "en": "1452b34a6cd2",
+  "tr": "79cc30c5b8e0",
+  "by": "claude-in-session"
+ },
  "interior.setDown.buried": {
   "en": "8159ee0fda03",
   "tr": "08141cdc6657",
@@ -7407,6 +7417,16 @@
  "menu.act.begin": {
   "en": "c3651ab2341e",
   "tr": "2ad3eddc09d1",
+  "by": "claude-in-session"
+ },
+ "menu.autoUpdates.name": {
+  "en": "1e138bf814eb",
+  "tr": "1ffee09c6fde",
+  "by": "claude-in-session"
+ },
+ "menu.autoUpdates.note": {
+  "en": "4541de510f7f",
+  "tr": "5d419aa401e8",
   "by": "claude-in-session"
  },
  "menu.begin.blurb": {
@@ -12154,6 +12174,11 @@
   "tr": "6202ffde4d2e",
   "by": "claude-in-session"
  },
+ "net.update.buildReady": {
+  "en": "b489ad1935f5",
+  "tr": "ad19e43985ee",
+  "by": "claude-in-session"
+ },
  "net.update.button": {
   "en": "b50ba5528eed",
   "tr": "d58f6973161a",
@@ -15149,14 +15174,19 @@
   "tr": "803868c8832d",
   "by": "claude-in-session"
  },
+ "pvp.flag.noKey": {
+  "en": "31eb2159f79d",
+  "tr": "6f8c643a0783",
+  "by": "claude-in-session"
+ },
  "pvp.flag.off": {
   "en": "4fc64767da48",
   "tr": "b788a6449d0b",
   "by": "claude-in-session"
  },
  "pvp.flag.offTitle": {
-  "en": "9644167313cd",
-  "tr": "b68a1636190e",
+  "en": "401f5d098ff9",
+  "tr": "31420c5abab7",
   "by": "claude-in-session"
  },
  "pvp.flag.on": {
@@ -15165,8 +15195,8 @@
   "by": "claude-in-session"
  },
  "pvp.flag.onTitle": {
-  "en": "ab2d677be3ee",
-  "tr": "dfbabb007d7f",
+  "en": "e34a21eef0e1",
+  "tr": "55b365a5d5c2",
   "by": "claude-in-session"
  },
  "pvp.flag.villain": {
@@ -16474,6 +16504,11 @@
   "tr": "16f01a33bb84",
   "by": "claude-in-session"
  },
+ "technique.noSignature": {
+  "en": "512147f4746c",
+  "tr": "b3ba421c6661",
+  "by": "claude-in-session"
+ },
  "town.econ.area.crownHeld": {
   "en": "d931fe766a2a",
   "tr": "1dffea6c1121",
@@ -16619,6 +16654,11 @@
   "tr": "c106fc654e60",
   "by": "claude-in-session"
  },
+ "town.home.trader": {
+  "en": "e4224318b32c",
+  "tr": "3f80ebbf8e7a",
+  "by": "claude-in-session"
+ },
  "town.panel.new": {
   "en": "c06b33d8318f",
   "tr": "f47ec61a19d5",
@@ -16702,6 +16742,11 @@
  "wagon.upkeep.boons.rickety": {
   "en": "8dcc1fe1e4b7",
   "tr": "d4c5d44a8d75",
+  "by": "claude-in-session"
+ },
+ "wild.bank.shut": {
+  "en": "838ae35da1d4",
+  "tr": "046389b67b4c",
   "by": "claude-in-session"
  },
  "wild.death.away": {

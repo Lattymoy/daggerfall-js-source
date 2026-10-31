@@ -1,0 +1,470 @@
+[
+  {
+    "name": "BACK-HOLSTER-no-widest-end-up",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "  if (widest < BINS / 2) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-a-flip-not-a-turn",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "if (widest < BINS / 2) { ux = -ux; uy = -uy;",
+    "new": "if (widest < BINS / 2) { ux = -ux;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-the-weapon-at-paper-doll-size",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "const step = EOTB_FIGURE.mpp / PAPERDOLL_MPP;",
+    "new": "const step = 1;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-the-slant-turned-round",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "const dx = (rx * st) * camRight[0]",
+    "new": "const dx = -(rx * st) * camRight[0]",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-not-behind-the-back-x",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": " - fx * back + ",
+    "new": " + 0 * fx + ",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-not-behind-the-back-z",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": " - fz * back + ",
+    "new": " + 0 * fz + ",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-the-bias-away-from-the-eye",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "(toEye[0] / el) * nudge",
+    "new": "(toEye[0] / el) * -nudge",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-mirrored-from-the-front-alone",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "  l.mirror = rec < 2;",
+    "new": "  l.mirror = rec < 1;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-the-painted-body-ignored",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "const across = auraSpriteAcross(fig) + (B.side",
+    "new": "const across = 0 + (B.side",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-every-picture-kept",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "if (art.size <= HOLSTER_ART_KEPT || now - slot.at < HOLSTER_ART_HOLD_MS) return;",
+    "new": "return;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-a-dagger-on-the-back",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "BACK_SKILLS = new Set(/** @type {number[]} */ ([SKILLS.LongBlade,",
+    "new": "BACK_SKILLS = new Set(/** @type {number[]} */ ([SKILLS.ShortBlade, SKILLS.LongBlade,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-empty-samples-counted",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "if (src[q + 3] <= 127) continue;\n      k++;",
+    "new": "k++;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-the-walk-facing-not-the-picture",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "const yaw = portrayedYaw(view, toEye);",
+    "new": "const yaw = Math.atan2(toEye[0], toEye[2]) - view * 0.7;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-a-let-go-picture-never-back",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "if (renderer.textures?.has && !renderer.textures.has(`${v.archive}_0`)) upload(renderer, v);",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-on-the-back-while-drawn",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "!last.transformed && last.sheathed ? handItemNow()",
+    "new": "!last.transformed ? handItemNow()",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-a-giant-carries-it",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "if (grow === 1) drawHolster(camRight); else dropHolster();",
+    "new": "drawHolster(camRight);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-a-walker-wd-ignored",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "const item = pose && !pose.wd ?",
+    "new": "const item = pose ?",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-the-walkers-never-drawn",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "    for (let i = 0; i < slung.length; i++) rr.drawBillboards(slung[i].list, slung[i].right, slung[i].up);",
+    "new": "    void slung;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-a-walker-gone-its-batch-kept",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "    if (r?.holster) dropSpriteHolster(r.holster, renderer);",
+    "new": "    void r;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-the-origin-shift-misses-it",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "r.lantern?.batch?.origin, r.holster?.batch?.origin, r.quiver?.batch?.origin, r.paceFeet]",
+    "new": "r.lantern?.batch?.origin, r.quiver?.batch?.origin, r.paceFeet]",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-OVER-the-redraw-at-LESS",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "  gl.depthFunc(gl.LEQUAL);\n  try {",
+    "new": "  gl.depthFunc(gl.LESS);\n  try {",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-OVER-a-second-shadow",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "        b.noShadow = true;\n",
+    "new": "\n",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-OVER-its-shadow-lost",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "        b.noShadow = false;\n",
+    "new": "\n",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-OVER-a-freed-one-redrawn",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "        if (!b || b._dead || (keep && !keep(l.owner))) continue;",
+    "new": "        if (b._dead || (keep && !keep(l.owner))) continue;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-OVER-the-host-never-asks",
+    "file": "src/scenes/auraHost.js",
+    "old": "(w) => backs.draw(w.id), auraRun);",
+    "new": "() => {}, auraRun);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-OVER-the-host-forgets-the-walkers",
+    "file": "src/scenes/auraHost.js",
+    "old": "for (const l of deps.sprites() ?? []) backSources.push(l); ",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-OVER-my-own-never-said",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "    backList.push(holster);\n",
+    "new": "\n",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-OVER-the-walkers-never-say",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "    holstersDrawn: () => slung,",
+    "new": "    holstersDrawn: () => [],",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-SIDE-the-picture-depth-ignored",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "const back = rec === 2 && Number.isFinite(half) ? half * fig.mpp + B.clear * k : B.back * k;",
+    "new": "const back = B.back * k;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-SIDE-the-nudge-one-way",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "const nudge = (rec >= 3 ? B.nudge : -B.nudge) * k;",
+    "new": "const nudge = B.nudge * k;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-SIDE-the-half-a-whole",
+    "file": "src/render/armoryPose.js",
+    "old": "if (run) { sum += run.wd / 2; n++; }",
+    "new": "if (run) { sum += run.wd; n++; }",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-CAPE-the-shift-ignored",
+    "file": "src/render/auraRing.js",
+    "old": "  ? (Number.isFinite(fig.shift) ? fig.shift : 0) + (fig.marks?.chest ?? fig.marks?.head ?? 0) * fig.mpp : 0);",
+    "new": "  ? (fig.marks?.chest ?? fig.marks?.head ?? 0) * fig.mpp : 0);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-CAPE-a-mark-scaled-by-the-art",
+    "file": "src/render/auraRing.js",
+    "old": "(fig.marks?.chest ?? fig.marks?.head ?? 0) * fig.mpp : 0);",
+    "new": "(fig.marks?.chest ?? fig.marks?.head ?? 0) * fig.mpp * (fig.marks?.art ?? 1) : 0);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-CAPE-never-back",
+    "file": "src/render/auraRing.js",
+    "old": "const a = Number.isFinite(w?.across) ? w.across * sign : 0;",
+    "new": "const a = Number.isFinite(w?.across) ? w.across : 0;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-CAPE-the-host-never-moves-it",
+    "file": "src/scenes/auraHost.js",
+    "old": "        auraShiftAcross(auraDraw, acrossRight, 1);\n",
+    "new": "\n",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-CAPE-the-host-never-moves-it-back",
+    "file": "src/scenes/auraHost.js",
+    "old": "} finally { auraShiftAcross(auraDraw, acrossRight, -1); }",
+    "new": "} finally { }",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-CAPE-a-ring-moved-too",
+    "file": "src/scenes/auraHost.js",
+    "old": "w.across = auraLookOf(w.aura).mesh ? auraSpriteAcross(",
+    "new": "w.across = true ? auraSpriteAcross(",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A1-a-picture-on-screen-let-go",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "if (art.size <= HOLSTER_ART_KEPT || now - slot.at < HOLSTER_ART_HOLD_MS) return;",
+    "new": "if (art.size <= HOLSTER_ART_KEPT) return;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A1-asked-never-restamped",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "art.delete(key); art.set(key, slot); slot.at = now;",
+    "new": "art.delete(key); art.set(key, slot);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A3-never-asked-again",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "if (v instanceof Promise || now - v.failedAt < HOLSTER_RETRY_MS) return null;",
+    "new": "if (v instanceof Promise || !v.archive) return null;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A3-asked-again-at-once",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "if (v instanceof Promise || now - v.failedAt < HOLSTER_RETRY_MS) return null;",
+    "new": "if (v instanceof Promise) return null;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A3-a-throw-never-asked-again",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "      }, failed);",
+    "new": "      }, () => {});",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A2-one-pass-for-all",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "    if (i > 0 && !hasBacks(wearers[i])) continue;",
+    "new": "    if (i > 0) continue;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A2-a-back-before-its-aura",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "    drawn += drawAuras(run);\n    if (hasBacks(wearers[i])) drawBacks(wearers[i]);",
+    "new": "    if (hasBacks(wearers[i])) drawBacks(wearers[i]);\n    drawn += drawAuras(run);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A2-a-run-turned",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "    for (let j = i; j <= hi; j++) run.push(wearers[j]);",
+    "new": "    for (let j = hi; j >= i; j--) run.push(wearers[j]);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A2-every-owner-redrawn",
+    "file": "src/player/eyeOfTheBeholder/eotbGlow.js",
+    "old": "const own = (o) => o === id, bare",
+    "new": "const own = () => true, bare",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A2-a-bare-glow-every-owner",
+    "file": "src/player/eyeOfTheBeholder/eotbGlow.js",
+    "old": "bare = (o) => !worn.has(o);",
+    "new": "bare = () => true;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A2-the-holster-never-redrawn",
+    "file": "src/player/eyeOfTheBeholder/eotbGlow.js",
+    "old": "{ redrawHolstersOver(renderer, own, s?.holstersDrawn?.()); drawSpriteGlows",
+    "new": "{ drawSpriteGlows",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A2-a-keep-ignored",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "        if (!b || b._dead || (keep && !keep(l.owner))) continue;",
+    "new": "        if (!b || b._dead) continue;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A2-my-aura-under-another-name",
+    "file": "src/scenes/auraHost.js",
+    "old": "  const self = { id: SELF_OWNER,",
+    "new": "  const self = { id: 'me',",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A4-the-upright-sphere",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "  if (b.bounds) b.bounds[3] = ",
+    "new": "  if (false) b.bounds[3] = ",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A6-made-every-frame",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "const l = fig ? r.holster ?? createSpriteHolster(peer.id) : null;",
+    "new": "const l = r.holster ?? createSpriteHolster(peer.id);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  }
+]

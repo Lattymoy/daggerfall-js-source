@@ -562,14 +562,15 @@ export function createPortHost({
       if (!open(s, page)) midText(PORT_TEXT.shut);
       return true;
     },
-    /** THE LAMP and the office lantern, in the lanterns' hours: scene lights `{ x, y, z, range }`. */
-    lights() {
+    /** THE LAMP and the office lantern, in the lanterns' hours: scene lights `{ x, y, z, range }` - their ranges times
+     *  `reach` (AUDIT LIGHT-REACH S5: the lane's share for a lantern, `streetLightReach`). */
+    lights(reach = 1) {
       let n = 0;
       if (lit()) for (const pl of places.values()) {
         if (!pl.at) continue;
         const L = (pl.light ??= { x: 0, y: 0, z: 0, range: 0, color: null }), at = pl.lamp;
-        if (pl.site.kind === 'lighthouse') { lampOf(pl); L.range = LAMP_RANGE; }
-        else { const o = SHIPYARD.lantern; yardToScene(pl.at, pl.site.yaw, o[0], o[1], o[2], at); L.range = OFFICE_LAMP_RANGE; }
+        if (pl.site.kind === 'lighthouse') { lampOf(pl); L.range = LAMP_RANGE * reach; }
+        else { const o = SHIPYARD.lantern; yardToScene(pl.at, pl.site.yaw, o[0], o[1], o[2], at); L.range = OFFICE_LAMP_RANGE * reach; }
         L.x = at[0]; L.y = at[1]; L.z = at[2];
         _lights[n++] = L;
       }

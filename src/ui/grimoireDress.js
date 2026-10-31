@@ -145,6 +145,10 @@ export const snapSize = (px) => (px <= 20 ? 16 : px <= 40 ? 32 : 48);
 /** How light a colour reads, 0..1 (Rec. 601 luma). */
 const luma = ([r, g, b]) => (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 
+/** AUDIT-STOREFRONT III C6: the pack's red as a word's ink - at 29% it stood at 4.48:1 on the pages' darkest tan, under
+ *  INK-READ's own 4.5:1; at 26% it reads at 5:1 there. */
+export const INK_RED = 'hsl(5 80% 26%)';
+const RED_L = 0.26;
 /** A WORD's colour on the page: light words become ink, darker the brighter they were; gold and yellow (Plus's
  *  "chosen", "worth reading") the pack's red; a hue keeps its hue as a darker ink. A word already dark stands. */
 export function inkColour(c) {
@@ -157,10 +161,20 @@ export function inkColour(c) {
   const t = Math.min(1, (L - 0.42) / 0.5);
   if (chroma(v) < 0.16) return hsla(26, 0.6, 0.21 - 0.13 * t, a);                       // bone and parchment: the pack's brown ink, dark enough to read on any of its pages
   if (h >= 50 && h <= 72 && chroma(v) > 0.5) return a >= 1 ? GRIM_YELLOW : `rgba(244, 224, 76, ${r3(a)})`;   // Daggerfall's yellow stays its yellow, as the pack writes a value on its page
-  if (h >= 38 && h <= 72) return hsla(5, 0.8, 0.29, a);                        // gold and brass: the pack's red
+  if (h >= 38 && h <= 72) return hsla(5, 0.8, RED_L, a);                       // gold and brass: the pack's red
   if (h >= 18 && h < 38) return hsla(h, 0.72, readableL(h, 0.72, 0.24), a);    // brass and amber: a dark amber
   const sat = Math.max(0.55, Math.min(0.85, s));
   return hsla(h, sat, readableL(h, sat, 0.25), a);                              // a hue (a rarity, a gain, a loss): its ink
+}
+/** A WORD PAINTED ON ITSELF (ui/playerBadge.js paintTitle - a title's, an aura's), inked for the page when the dress is
+ *  worn: the ink sheet never reaches a paint written on the word. One home for every face that paints a word - the
+ *  Collections page's and (AUDIT-STOREFRONT II, lane E 3) the shop's. The word, for chaining. */
+export function inkPaintedWord(/** @type {any} */ word, doc = globalThis.document) {
+  if (doc?.documentElement?.dataset?.plusDress !== GRIMOIRE_DRESS || !word?.style) return word;
+  // AUDIT-STOREFRONT III C6: a browser reads a colour back as rgb(...), never as the hex it was given - every token is inked
+  const ink = (/** @type {string} */ s) => String(s).replace(COLOUR_TOKEN, (h) => inkColour(h) ?? h);
+  for (const k of ['color', 'backgroundImage', 'filter']) if (word.style[k]) word.style[k] = ink(word.style[k]);
+  return word;
 }
 /** INK-READ (2026-10-12, Mac: "make sure the fonts are readable the grey ones arent"): the lightness a hue's ink may have
  *  and still read at 4.5:1 on the pages' darkest tan (relative luminance 0.43): `want` or darker, a hundredth at a time
@@ -594,7 +608,7 @@ export function sayRule(block, { state = false } = {}) {
     } else if (prop === 'color' || prop === '-webkit-text-fill-color' || prop === 'caret-color') {
       // a CHOSEN or pointed-at word (a rail's open row, a hovered line) is the pack's red, as its talk window marks
       // "Where is..." and the line you picked; a VALUE keeps Daggerfall's yellow, as its sheet writes "Gold: 7579"
-      const n = mapColours(v, (t) => { const c = inkColour(t); return state && c && /#f4e04c|rgba\(244, 224, 76/.test(c) ? hsla(5, 0.8, 0.29, parseColour(t)[3]) : c; });
+      const n = mapColours(v, (t) => { const c = inkColour(t); return state && c && /#f4e04c|rgba\(244, 224, 76/.test(c) ? hsla(5, 0.8, RED_L, parseColour(t)[3]) : c; });
       if (n) ink.push(`${prop}: ${n}${imp}`);
       if (prop === 'color' && n && /#f4e04c|rgba\(244, 224, 76/.test(n)) yellowEdge = `text-shadow: ${YELLOW_EDGE}${imp}`;
       const w = mapColours(v, woodColour); if (w) wood.push(`${prop}: ${w}${imp}`);
@@ -671,6 +685,9 @@ const pxs = (n) => px(n, 'gs');
 const tile = (name, fallback) => `${v(name)} 0 0 / ${px(nativeSize(name)[0])} auto repeat, ${fallback}`;
 const PAGE = tile('page', T.page);
 const SCROLL = tile('scroll', T.scroll);
+/** AUDIT-STOREFRONT III C6: the shop's panels (FRAME_ROLES.panel's own) and the wash that lightens their scroll. */
+const SHOP_PANELS = R.panel.filter((s) => s.startsWith('.px-shopwin'));
+const SHOP_WASH = 'rgba(242,226,188,0.5)';
 const WOOD = (dim = 0.18) => `linear-gradient(rgba(0,0,0,${dim}), rgba(0,0,0,${dim})), ${tile('wood', T.wood)}`;
 /** The pack's leather press (the Options window's Save Game / Continue plates): its wood under a red-brown stain. */
 const PLATE = `linear-gradient(180deg, rgba(255,196,120,0.22) 0 2px, transparent 2px calc(100% - 3px), rgba(0,0,0,0.38) calc(100% - 3px)), linear-gradient(rgba(120,44,18,0.66), rgba(78,26,10,0.74)), ${tile('wood', '#6a2a14')}`;
@@ -771,11 +788,11 @@ const TAB_EDGE = `border-style: solid !important; border-width: ${PLATE_W} !impo
   box-shadow: ${px(1, 'gk')} ${px(2, 'gk')} 0 rgba(0,0,0,0.45) !important; outline: none;`;
 const TAB_CSS = `background: #8e7048 !important; ${TAB_EDGE}
   border-image: ${v('plate')} ${PT} ${PS} ${PB} ${PS} fill / ${PLATE_W} stretch !important;
-  color: #2a1a0a !important; text-shadow: 0 1px 0 rgba(255,232,180,0.32) !important; opacity: 1;`;
+  color: #0c0602 !important; text-shadow: 0 1px 0 rgba(255,232,180,0.32) !important; opacity: 1;`;   /* AUDIT-STOREFRONT III C6: #2a1a0a read 3.9:1 on the plate */
 const TAB_ON_CSS = `background: #c8a874 !important; ${TAB_EDGE}
   border-image: ${v('plateOn')} ${PT} ${PS} ${PB} ${PS} fill / ${PLATE_W} stretch !important;
-  color: ${T.red} !important; text-shadow: 0 1px 0 rgba(255,244,210,0.45) !important;
-  text-decoration: underline solid ${T.red} !important; text-decoration-thickness: ${px(1, 'gk')} !important; text-underline-offset: 0.22em !important;`;
+  color: ${INK_RED} !important; text-shadow: 0 1px 0 rgba(255,244,210,0.45) !important;
+  text-decoration: underline solid ${INK_RED} !important; text-decoration-thickness: ${px(1, 'gk')} !important; text-underline-offset: 0.22em !important;`;
 /** A closed tab under the pointer lifts a shade - its name stays ink: red is the open tab's alone. */
 const TAB_HOVER = `color: #120a04 !important; filter: brightness(1.14);`;
 /** GRIM3: THE SCROLLBAR - quiet (Dudey: "the scrollbar looks out of place and needs to be less appearing"): three of the
@@ -853,6 +870,10 @@ ${at(R.panel)} { background: ${SCROLL}; color: ${T.ink};
   box-shadow: inset 0 0 14px rgba(96,54,16,0.32), 1px 2px 0 rgba(48,26,10,0.28); outline: none; }
 ${G}[data-grim-pages="scroll"] :is(${list(R.panel)}) { background: ${PAGE}; }
 ${at(R.panelAccent)} { border-left-color: ${T.red}; }
+/* AUDIT-STOREFRONT III C6: THE SHOP'S PANELS hold its small words - a price, a page's heading, what an item needs, a
+   challenge's Aurum - and the tan scroll under them (luminance ~0.25) held its inks at 3:1. There the scroll is washed
+   toward the page, its grain kept, and every word reads at 4.5:1 or better (measured). */
+${G}:not([data-grim-pages="scroll"]) :is(${list(SHOP_PANELS)}) { background: linear-gradient(${SHOP_WASH}, ${SHOP_WASH}), ${SCROLL}; }
 
 /* RAILS - the left-hand page of the talk window: the same page, ruled off from the right-hand one */
 ${at([...R.railRight, '.shell > .side', 'aside.side'])} { background: linear-gradient(rgba(120,70,20,0.07), rgba(120,70,20,0.07)), ${PAGE}; border-right-color: rgba(60,34,14,0.75); color: ${T.ink}; }
@@ -876,7 +897,7 @@ ${at(PRESS_ROOTS, '[data-grim-on="page"].on:not(:hover):not(:focus-visible)')} {
 ${G} [data-grim-on="page"]:hover, ${G} [data-grim-on="page"]:focus-visible { color: ${T.redHi} !important; background: none !important;
   text-decoration: underline solid ${T.red}; text-underline-offset: 0.2em; outline: none; }
 /* CANCEL - the way back out of a question: the pack's red word over its red rule */
-${G} [data-grim-cancel][data-grim-on="page"] { color: ${T.red} !important; padding-left: 18px !important; padding-right: 18px !important;
+${G} [data-grim-cancel][data-grim-on="page"] { color: ${INK_RED} !important; padding-left: 18px !important; padding-right: 18px !important;
   background: linear-gradient(${T.red}, ${T.red}) center bottom / calc(100% - 24px) 3px no-repeat,
     radial-gradient(circle, ${T.red} 1px, transparent 1.6px) left bottom / 6px 3px repeat-x !important; }
 ${G} [data-grim-on="wood"] { background: none !important; border-color: transparent !important; box-shadow: none !important; border-radius: 0;

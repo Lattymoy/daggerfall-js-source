@@ -19,7 +19,7 @@
 // DOMAIN2, its castles).
 // ═══════════════════════════════════════════════════════════════════
 import { seatHallOf, seatBannerOf } from '../net/townSeatLaw.js';
-import { hallMay } from '../net/hallLaw.js';   // SEAT-HALL: a palace's keepers are a hall's
+import { guildMay } from '../net/guild/guildLaw.js';   // SEAT-HALL: a palace's keepers are a hall's; GUILD-RANKS: as the guild set them
 
 /** @param {{ seatHere: (mapId: number) => any, guild: () => any }} deps */
 export function createSeatHallHost({ seatHere, guild }) {
@@ -37,7 +37,7 @@ export function createSeatHallHost({ seatHere, guild }) {
       if (!g?.id) return null;
       const mine = guild();
       const member = seatHallOf(seat, mine?.id ?? null);
-      return { key: seat.key, name: g.name ?? '', member, keeper: member && hallMay(Number(mine?.rank), 'decorate') };
+      return { key: seat.key, name: g.name ?? '', member, keeper: member && guildMay(Number(mine?.rank), 'decorate', mine?.powers ?? null) };
     },
     /**
      * CROWN-HALL (7.2: "Crown: the castle is the hall"): a crown seat's castle, as its visitor stands in it - `{ key, name,

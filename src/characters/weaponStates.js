@@ -277,6 +277,24 @@ export function machineAttack(m, strikeState) {
   return true;
 }
 
+/** A gun's machine (ranged, no bow - the Thunderlock) mid-shot or reloading: a technique waits for it (AUDIT PISTOL-PORT
+ *  C1), so the key refuses it as the busy hands it is (AUDIT TECH-FEEDBACK II F2). */
+export const machineGunBusy = (m) => !!m && m.ranged && !m.isBow && (m.state !== 'Idle' || m.now < m.cooldownUntil);
+
+/** TECH-CANCEL (Mac, 2026-10-30, forwarding #feature-feedback: "Make them independent of your regular attack cooldown /
+ *  animation cancel"): a weapon technique cuts the swing in flight - its hit not yet landed is lost - and waives the
+ *  attack's cooldown (a bow's reload with it), so the technique's strike starts now. Answers the machine as it was, to
+ *  put back if the strike cannot begin, or null when there was nothing to cut. */
+export function machineCut(m) {
+  if (m.state === 'Idle' && !(m.now < m.cooldownUntil)) return null;
+  if (m.ranged && !m.isBow) return null;   // a gun's shot and its reload stand (AUDIT PISTOL-PORT C1: a technique waits for them)
+  const was = { ...m };
+  m.state = 'Idle'; m.frame = m.isBow && m.bowIdleDrawn ? BOW_DRAWN_HOLD_FRAME : 0; m.ticks = 0; m.acc = 0; m.hold = 0;   // AUDIT TECH-FEEDBACK F1: a bow rests drawn (ARROW2)
+  m.animIndex = 0; m.damageDone = false;
+  m.cooldownUntil = m.now;
+  return was;
+}
+
 /** ActivateCenterObject / the hold cap: un-draw WITHOUT releasing an
  *  arrow (WeaponManager.cs:355-357). AUDIT 24 combat: the un-draw
  *  leaves isAttacking TRUE, so the very next Update takes the
@@ -331,14 +349,19 @@ export function blowSchedule(m, liveSpeed, animCtx = null, dt = 0) {
  *  "shoot release" comes with the classic loose and a shot repeats as fast on both looks. Null for anything but a bow's
  *  release not yet loosed. */
 export function shotSchedule(m, dt = 0) {
-  if (!m || !m.isBow || m.state !== 'StrikeDown') return null;
+  if (!m || !m.isBow || (m.state !== 'StrikeDown' && m.state !== 'StrikeUp')) return null;
   const tick = m.tick ?? CLASSIC_UPDATE_INTERVAL;
   if (!(tick > 0) || !Number.isFinite(tick)) return null;
   const at = m.frame > 0 ? m.frame | 0 : 0;
+  const drawUp = m.state === 'StrikeUp';
+  // MW-DRAW-PACE (mob, 2026-10-30: "Long bow shoot same speed in Morrowind as short"): Bow Drawback's draw, timed to
+  // the hold frame the classic bow stops on, so the arm's long bow comes to full draw as soon as the sprite's
+  if (drawUp && at >= BOW_DRAWN_HOLD_FRAME) return null;
   const hitFrame = m.hitFrame ?? HIT_FRAME_BOW;
   if (at >= hitFrame) return null;
   const frames = (m.frames ?? BOW_NUM_FRAMES).StrikeDown ?? BOW_NUM_FRAMES.StrikeDown;
   const step = dt > 0 ? dt * Math.max(1, Math.ceil(tick / dt - 1e-9)) : tick;
+  if (drawUp) return { seconds: (BOW_DRAWN_HOLD_FRAME - at) * step, hitAt: (BOW_DRAWN_HOLD_FRAME - at) * step, step, draw: true };
   return { seconds: (frames - at) * step, hitAt: (hitFrame - at) * step, step };
 }
 

@@ -1,0 +1,524 @@
+[
+  {
+    "name": "FH-order",
+    "file": "src/systems/naval/figurehead.js",
+    "old": "'dragon', 'serpent', 'lion'",
+    "new": "'dragon', 'lion', 'serpent'",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "FH-rowboat-stem",
+    "file": "src/systems/naval/figurehead.js",
+    "old": "export const figureheadHull = (hull) => hull === 1 || hull === 2 || hull === 3 || hull === 4;",
+    "new": "export const figureheadHull = (hull) => hull >= 0 && hull <= 4;",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "FH-galley-no-stem",
+    "file": "src/systems/naval/figurehead.js",
+    "old": "hull === 1 || hull === 2 || hull === 3 || hull === 4;",
+    "new": "hull === 1 || hull === 2 || hull === 4;",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "FH-door-past-last",
+    "file": "src/systems/naval/figurehead.js",
+    "old": "(raw) > FIGUREHEAD_MAX) return null;",
+    "new": "(raw) > FIGUREHEAD_MAX + 1) return null;",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "FH-door-fraction",
+    "file": "src/systems/naval/figurehead.js",
+    "old": "if (!Number.isInteger(raw) ||",
+    "new": "if (typeof raw !== 'number' ||",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "FH-door-any-hull",
+    "file": "src/systems/naval/figurehead.js",
+    "old": "return hull != null && !figureheadHull(hull) ? 0 : /** @type {number} */ (raw);",
+    "new": "return /** @type {number} */ (raw);",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "FH-code-refused-one",
+    "file": "src/systems/naval/figurehead.js",
+    "old": "export const figureheadOfCode = (n) => figureheadOf(n) ?? 0;",
+    "new": "export const figureheadOfCode = (n) => figureheadOf(n) ?? 1;",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "FH-accent-sail",
+    "file": "src/systems/naval/figurehead.js",
+    "old": "const accent = ((liveryCode | 0) >> 4) & 15;",
+    "new": "const accent = ((liveryCode | 0) >> 8) & 15;",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "FH-accent-any-hull",
+    "file": "src/systems/naval/figurehead.js",
+    "old": "if (!liveryPartsOf(hull).includes('accent')) return 0;",
+    "new": "if (!liveryPartsOf(hull).length) return 0;",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "FH-livery-paint",
+    "file": "src/systems/naval/figurehead.js",
+    "old": "carvingPaint(hull, ((livery?.accent | 0) & 15) << 4)",
+    "new": "carvingPaint(hull, ((livery?.accent | 0) & 15) << 8)",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "FA-trim-oak",
+    "file": "src/world/ships/figureheadArt.js",
+    "old": "[ROLE.trim]: CARVING_REC.gilt",
+    "new": "[ROLE.trim]: CARVING_REC.oak",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "FA-built-oak",
+    "file": "src/world/ships/figureheadArt.js",
+    "old": "[ROLE.body]: p || CARVING_REC.gilt",
+    "new": "[ROLE.body]: p || CARVING_REC.oak",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "FA-paint-past-last",
+    "file": "src/world/ships/figureheadArt.js",
+    "old": "paint > 0 && paint <= PAINT_MAX ? paint : 0",
+    "new": "paint > 0 && paint <= PAINT_MAX + 1 ? paint : 0",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "FA-paint-shifted",
+    "file": "src/world/ships/figureheadArt.js",
+    "old": "out.push([i, paintedArt(SHIP_PAINTS[i].rgb",
+    "new": "out.push([i, paintedArt(SHIP_PAINTS[Math.max(1, i - 1)].rgb",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "FA-archive",
+    "file": "src/world/ships/figureheadArt.js",
+    "old": "export const FIGUREHEAD_ARCHIVE = 38194;",
+    "new": "export const FIGUREHEAD_ARCHIVE = 38195;",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "FM-wound-inward",
+    "file": "src/world/ships/figureheadModels.js",
+    "old": "if (dot(n, out) >= 0) f.tri(rec, a, b, c",
+    "new": "if (dot(n, out) < 0) f.tri(rec, a, b, c",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "FM-box-narrow",
+    "file": "src/world/ships/figureheadModels.js",
+    "old": "export const CARVING_BOX = Object.freeze([-0.5, -0.36, -0.16, 0.5, 1.02, 1.08]);",
+    "new": "export const CARVING_BOX = Object.freeze([-0.42, -0.36, -0.16, 0.42, 1.02, 1.08]);",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "FM-roles-unworn",
+    "file": "src/world/ships/figureheadModels.js",
+    "old": "textureRecord: recs[s.textureRecord] }",
+    "new": "textureRecord: s.textureRecord }",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "SF-stem-whole-ship",
+    "file": "src/scenes/comeSailAway/shipFigurehead.js",
+    "old": "aftMost = build.bowZ - STEM_SHARE * (build.bowZ - build.aftZ);",
+    "new": "aftMost = build.aftZ - 10;",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "SF-stem-unrefined",
+    "file": "src/scenes/comeSailAway/shipFigurehead.js",
+    "old": "if (miss != null) for (let k = 0; k < 8; k++)",
+    "new": "if (miss != null) for (let k = 0; k < 0; k++)",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "SF-no-ropes",
+    "file": "src/scenes/comeSailAway/shipFigurehead.js",
+    "old": "return edge > 0 && area2 / edge < ROPE_M;",
+    "new": "return false;",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "SF-rope-wide",
+    "file": "src/scenes/comeSailAway/shipFigurehead.js",
+    "old": "export const ROPE_M = 0.08;",
+    "new": "export const ROPE_M = 0.2;",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "SF-root-anywhere",
+    "file": "src/scenes/comeSailAway/shipFigurehead.js",
+    "old": "root[i] = B[i * 6 + 2] < FIGURE_ROOT_Z ? 1 : 0;",
+    "new": "root[i] = 1;",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "SF-root-none",
+    "file": "src/scenes/comeSailAway/shipFigurehead.js",
+    "old": "if (U.stamp[i] === mark || (planking && U.root[i])) continue;",
+    "new": "if (U.stamp[i] === mark) continue;",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "SF-water",
+    "file": "src/scenes/comeSailAway/shipFigurehead.js",
+    "old": "if (lo[1] < FIGURE_WATER) return false;",
+    "new": "if (lo[1] < -100) return false;",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "SF-sizes-smaller",
+    "file": "src/scenes/comeSailAway/shipFigurehead.js",
+    "old": "export const FIGURE_SIZES = Object.freeze([1, 0.9,",
+    "new": "export const FIGURE_SIZES = Object.freeze([0.9,",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "SF-others-unread",
+    "file": "src/scenes/comeSailAway/shipFigurehead.js",
+    "old": "for (const planking of [false, true]) {",
+    "new": "for (const planking of [true]) {",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "SF-lean-back",
+    "file": "src/scenes/comeSailAway/shipFigurehead.js",
+    "old": "return new Float32Array([s, 0, 0, 0, 0, c, n, 0, 0, -n, c, 0,",
+    "new": "return new Float32Array([s, 0, 0, 0, 0, c, -n, 0, 0, n, c, 0,",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "SF-mesh-every-time",
+    "file": "src/scenes/comeSailAway/shipFigurehead.js",
+    "old": "if (!had) meshes.set(key, (had =",
+    "new": "if (true) meshes.set(key, (had =",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "SF-art-every-time",
+    "file": "src/scenes/comeSailAway/shipFigurehead.js",
+    "old": "if (!art) { art = [];",
+    "new": "if (true) { art = [];",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "SF-sweep-late",
+    "file": "src/scenes/comeSailAway/shipFigurehead.js",
+    "old": "if (draws - c.seen > FIGURE_IDLE_DRAWS) {",
+    "new": "if (draws - c.seen > FIGURE_IDLE_DRAWS * 2) {",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "SF-art-kept",
+    "file": "src/scenes/comeSailAway/shipFigurehead.js",
+    "old": "if (art && !meshes.size) {",
+    "new": "if (art && meshes.size < 0) {",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "CP-sea-carved",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "peerBoats.includes(boat) ? boat.figurehead : 0)",
+    "new": "boat.figurehead)",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "CP-frame-swapped",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "multiply(frame ?? worldOf(boat.MeshObject), carved.matrix, boat._figureM",
+    "new": "multiply(carved.matrix, frame ?? worldOf(boat.MeshObject), boat._figureM",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "CP-paint-unread",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "carvingPaint(boat.hull, liveryCodeOf(boat))",
+    "new": "carvingPaint(boat.hull, 0)",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "CP-hidden-drawn",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "const carved = boat.GameObject?.activeSelf && boat.MeshObject?.activeSelf ? figureheads.drawFor(",
+    "new": "const carved = boat.MeshObject?.activeSelf ? figureheads.drawFor(",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "CP-mine-unread",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "figureheadOfCode(mineBoats.has(boat) ? figureheadOf?.(boat) :",
+    "new": "figureheadOfCode(mineBoats.has(boat) ? 0 :",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "FL-door-stemless",
+    "file": "src/systems/fleet.js",
+    "old": "if (!r || n == null || n !== raw) return false;",
+    "new": "if (!r || n == null) return false;",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "FL-save-always",
+    "file": "src/systems/fleet.js",
+    "old": "...(r.figurehead ? { figurehead: r.figurehead } : {})",
+    "new": "...({ figurehead: r.figurehead })",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "FL-restore-unread",
+    "file": "src/systems/fleet.js",
+    "old": "r.figurehead = figureheadOf(s.figurehead, r.hull) ?? 0;",
+    "new": "r.figurehead = s.figurehead | 0;",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "FL-of-stranger",
+    "file": "src/systems/fleet.js",
+    "old": "fleetShip(boat.uid)?.figurehead ?? 0 : 0);",
+    "new": "fleetShip(boat.uid)?.figurehead ?? 0 : 1);",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "W-said-always",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "...(carved ? { h } : {})",
+    "new": "...({ h })",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "W-writer-undoored",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "const carving = figureheadOfCode(v.figurehead);",
+    "new": "const carving = v.figurehead | 0;",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "W-reader-any-length",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "Array.isArray(raw.h) && raw.h.length === raw.b.length ? figureheadOfCode",
+    "new": "Array.isArray(raw.h) ? figureheadOfCode",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "W-reader-undoored",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "? figureheadOfCode(raw.h[boats.length]) : 0;",
+    "new": "? raw.h[boats.length] : 0;",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "W-key-unsaid",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "rec.p || rec.h ? [",
+    "new": "rec.p ? [",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "H-act-any-hull",
+    "file": "src/scenes/fleetHost.js",
+    "old": "if (!figureheadHull(rec.hull)) return said(false, t('naval.figurehead.noStem'",
+    "new": "if (false) return said(false, t('naval.figurehead.noStem'",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "H-act-unsaid",
+    "file": "src/scenes/fleetHost.js",
+    "old": "      if (!setShipFigurehead(uid, arg)) return said(false, t('naval.figurehead.bad', 'Unknown figurehead.'));\n      deps.changed?.();",
+    "new": "      if (!setShipFigurehead(uid, arg)) return said(false, t('naval.figurehead.bad', 'Unknown figurehead.'));",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "H-row-paint",
+    "file": "src/scenes/fleetHost.js",
+    "old": "carvingPaint: liveryCarvingPaint(rec.hull, rec.livery)",
+    "new": "carvingPaint: 0",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "H-row-stem",
+    "file": "src/scenes/fleetHost.js",
+    "old": "carvable: figureheadHull(rec.hull), figurehead:",
+    "new": "carvable: true, figurehead:",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "PG-button-every-hull",
+    "file": "src/ui/fleetPage.js",
+    "old": "if (s.carvable) acts.append(button(el, t('naval.figurehead.open'",
+    "new": "if (true) acts.append(button(el, t('naval.figurehead.open'",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "PG-never-shut",
+    "file": "src/ui/fleetPage.js",
+    "old": "if (_open) carvingShut();",
+    "new": "if (false) carvingShut();",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "PG-reset-kept",
+    "file": "src/ui/fleetPage.js",
+    "old": "_flag = null; carvingShut(); }",
+    "new": "_flag = null; }",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "PN-svg-gilt",
+    "file": "src/ui/figureheadPanel.js",
+    "old": "const m = paintedCarving(id, paint | 0);",
+    "new": "const m = paintedCarving(id, 0);",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "PN-carve-none",
+    "file": "src/ui/figureheadPanel.js",
+    "old": "const n = chosen; carvingShut(); act('figurehead', n);",
+    "new": "const n = chosen; carvingShut(); act('figurehead', 0);",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "PE-word-unread",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
+    "old": "      s.boat.figurehead = w.figurehead ?? 0;",
+    "new": "      s.boat.figurehead = 0;",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "WD-pool-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    figureheadOf: shipFigureheadOf,   // FIGUREHEAD: her carving at her stem",
+    "new": "    figureheadOf: null,   // FIGUREHEAD: her carving at her stem",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  },
+  {
+    "name": "WD-word-unsaid",
+    "file": "src/scenes/world.js",
+    "old": "      figurehead: b.uid ? fleetShip(b.uid)?.figurehead ?? 0 : 0,",
+    "new": "      figurehead: 0,",
+    "tests": [
+      "test/systems/naval/figurehead.test.js"
+    ]
+  }
+]

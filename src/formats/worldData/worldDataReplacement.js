@@ -487,6 +487,11 @@ function addNewDFLocationVariant(locationIndex, locationVariantKey, variantLocat
 // ---- the new block indices (:312-340, :531-573) ----
 export const getNewDFBlockIndex = (blockName) => _portBlocks.get(blockName)?.index ?? (familyIndex(blockName) >= 0 ? familyIndex(blockName) : null) ?? newBlockIndices.get(blockName) ?? -1;   // ARENA1: a port block first; IC-GRAND: or a family's
 export const getNewDFBlockName = (block) => portBlockByIndex(block) ?? newBlockNames.get(block) ?? null;
+/** FOUNDATION F1 (world/atlas/atlasServed.js): whether the door serves a block's content under a name - the port's own, a
+ *  family's, or a live mod's file (its plain name; a variant a location picks is not asked). A name a location gave an
+ *  index to (assignBlockIndices) and nothing serves reads as null at its layout. AUDIT FOUNDATION II A3: asked as at a
+ *  town no save pinned (assetOn, its pins aside) - never under the pin of the town read last. @param {string} blockName */
+export const worldDataServesBlock = (blockName) => _portBlocks.has(blockName) || familyIndex(blockName) >= 0 || (worldDataOn() && (_assets.get(blockReplacementFilename(blockName)) ?? []).some((a) => a.isOn?.() ?? true));
 function assignBlockIndices(dfLocation) {
   if (!_blocksFile) return false;   // ContentReader/BlockFileReader null: nothing assigned, and the region is not cached
   if (nextBlockIndex === 0) nextBlockIndex = _blocksFile.count;

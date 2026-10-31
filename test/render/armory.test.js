@@ -35,9 +35,11 @@ const rd = (/** @type {string} */ p) => readFileSync(new URL(`../../${p}`, impor
 
 test('ARMORY the kit: five slot letters, each a piece of its slot or empty, never all empty - and the pieces it names, the kit of a wardrobe, a slot changed, the held left (mutants: a piece in the wrong slot passed; an empty kit a claim; a slot changed beside the one asked)', () => {
   assert.deepEqual(ARMORY_SLOTS, ['head', 'torso', 'arms', 'legs', 'weapon']);
-  assert.equal(ARMORY_PIECES.length, 10, 'two lines of five');
-  assert.equal(new Set(ARMORY_KEYS).size, 10, 'a key each');
-  for (const s of ARMORY_SLOTS) assert.equal(new Set(ARMORY_PIECES.filter((p) => p.slot === s).map((p) => p.code)).size, 2, `${s}: its codes its own`);
+  // PIN MOVED: GUILD-SHOP - the guild's line, one piece: the Insignia Armlet in the arms slot, the guild shop's
+  assert.equal(ARMORY_PIECES.length, 12, 'two lines of five, the guild\'s armlet and the Crystal Spurs');   // PIN MOVED (THANKS-POST): the update's gift
+  assert.equal(new Set(ARMORY_KEYS).size, 12, 'a key each');
+  for (const s of ARMORY_SLOTS) assert.equal(new Set(ARMORY_PIECES.filter((p) => p.slot === s).map((p) => p.code)).size, s === 'arms' ? 4 : 2, `${s}: its codes its own`);   // PIN MOVED (THANKS-POST): the Crystal Spurs, the arms slot's fourth
+  assert.deepEqual(armoryLinePieces('guild').map((p) => [p.key, p.slot, p.code, p.source]), [['insigniaarmlet', 'arms', 'c', 'guild']]);
   assert.deepEqual(armoryLinePieces('dagonfire').map((p) => [p.key, p.source]), [['burningcrown', 'broker'], ['emberheart', 'broker'], ['ashbound', 'broker'], ['cinderstride', 'broker'], ['breachbrand', 'broker']], 'the Dagonfire line, the Sigil Broker\'s');
   assert.ok(armoryLinePieces('eternal').every((p) => p.source === 'shop'), 'the Eternal line, the shop\'s');
   assert.deepEqual([armoryLineKit('eternal'), armoryLineKit('dagonfire'), armoryLineKit('none')], ['bbbbb', 'aaaaa', null]);
@@ -62,12 +64,13 @@ test('ARMORY the kit: five slot letters, each a piece of its slot or empty, neve
   assert.equal(armoryKitHeld('aa000', []), null);
 });
 
-test('ARMORY the economy (the owner: "The dagon breach set should be very expensive from the dagon breach shop dealer", "The store set should be $20"): the Sigil Broker sells each Dagonfire piece for 75 of the account\'s embers; the shop sells each Eternal piece for $6 and the five together for $20, the set held whole when its five are and its five held when it is (mutants: the Broker\'s price; a set\'s pieces never given; the set sold over five singles)', () => {
+test('ARMORY the economy (the owner: "The dagon breach set should be very expensive from the dagon breach shop dealer", "The store set should be $20"): the Sigil Broker sells each Dagonfire piece for 75 of the account\'s embers; the shop sells each Eternal piece for 600 Aurum and the five together for 2,000 (PIN MOVED, AURUM-ONLY: $6 and $20), the set held whole when its five are and its five held when it is (mutants: the Broker\'s price; a set\'s pieces never given; the set sold over five singles)', () => {
   assert.equal(ARMORY_BROKER_PRICE, 75);
   assert.deepEqual(INSIGNIA.filter((o) => o.kind === 'armory').map((o) => [o.id, o.price]), armoryLinePieces('dagonfire').map((p) => [`armory:${p.key}`, 75]));
   const set = SHOP_WARES.find((w) => w.id === 'armory:eternalset');
-  assert.deepEqual([set?.cents, set?.category], [2000, 'armory']);
-  assert.deepEqual(SHOP_WARES.filter((w) => w.kind === 'armory' && w.key !== 'eternalset').map((w) => w.cents), [600, 600, 600, 600, 600]);
+  // PIN MOVED (AURUM-ONLY): the set's $20 and a piece's $6 are 2,000 and 600 Aurum - the owner's "$1 = 100 Aurum"
+  assert.deepEqual([set?.price, set?.cents, set?.category], [2000, 0, 'armory']);
+  assert.deepEqual(SHOP_WARES.filter((w) => w.kind === 'armory' && w.key !== 'eternalset').map((w) => w.price), [600, 600, 600, 600, 600]);
   assert.deepEqual(shopKeysOf(set?.bit, 'armory'), armoryWarePieces('eternalset'), 'the set gives its five');
   const singles = SHOP_WARES.filter((w) => w.kind === 'armory' && w.key !== 'eternalset').reduce((a, w) => a | w.bit, 0);
   assert.equal(shopOwns(singles, 'armory:eternalset'), true, 'five singles: the set is not sold again');
@@ -423,7 +426,7 @@ test('ARMORY the world host: my kit gathered at my feet and a peer\'s off the re
       renderer: { gl: null }, online: () => online, travelActive: () => false, quiet: () => false, camYaw: () => 0,
       player: () => ({ feetAt: () => [1, 0, 2], bodyYawFor: () => 0, height: 1.8, riding: false }),
       spawned: () => true, beast: () => false, veiled: (id) => id === 'p3', toScene: (s) => s.at,
-      walkers: () => null, riders: () => null, bodies: () => ({ bonesOf: (/** @type {string} */ id) => (id === 'p2' ? { feet: [5.1, 0, 5.2], yaw: 1, bones: mwBones } : null) })
+      sprites: () => [], bodies: () => ({ bonesOf: (/** @type {string} */ id) => (id === 'p2' ? { feet: [5.1, 0, 5.2], yaw: 1, bones: mwBones } : null) })
     });
     host.issued({ armory: null });
     host.frame([{ id: 'p2', shown: { at: [5, 0, 5] } }, { id: 'p3', shown: { at: [6, 0, 6] } }, { id: 'p4', shown: { at: [7, 0, 7] } }]);
@@ -475,7 +478,7 @@ test('ARMORY-SEEN the world host lays my pieces under my Eternal cape where the 
       renderer, online: () => online, travelActive: () => false, quiet: () => false, camYaw: () => 0,
       player: () => ({ feetAt: () => [0, 0, 0], bodyFeetAt: () => [0, 0, 0], bodyYawFor: () => 0, height: 1.8, riding: false }),
       spawned: () => true, beast: () => false, veiled: () => false, toScene: (/** @type {any} */ s) => s.at,
-      walkers: () => null, riders: () => null, bodies: () => null,
+      sprites: () => [], bodies: () => null,
     });
     const order = (/** @type {number[]} */ eye) => {
       renderer._camPos = eye;
@@ -504,9 +507,9 @@ test('ARMORY HOST-SPLIT: the world host wires the module and keeps none of it (m
   assert.match(w, /const insigniaRows = \(\) => INSIGNIA\.map\(\(o\) => insigniaRowOf\(o, _insignia\)\);/, 'the Broker\'s rows, every kind\'s, the module\'s too');
   assert.ok(!/new ArmoryRenderer|armoryWearers\(/.test(w), 'the armory\'s pass is the module\'s alone');
   const h = rd('src/scenes/auraHost.js');
-  assert.match(h, /const vw = renderer\._view, right = vw \? \[vw\[0\], vw\[4\], vw\[8\]\] : null;/, 'the view\'s right, the draw\'s (ArmoryRenderer.draw)');
-  assert.match(h, /selfPose\(selfKit\.pose, player, selfLiftNow > 0\); armoryMotionStep\(selfKit, now, vw \? \[vw\[0\], vw\[4\], vw\[8\]\] : null\);/, 'FOLLOW-NOW (PIN MOVED): mine posed and stepped at the draw, where my body is drawn');
-  assert.match(h, /peerPose\(d\.id, w\); armoryMotionStep\(w, t, right\);/, 'a sprite\'s embers off its feet, mine and a peer\'s');
+  assert.match(h, /const vw = renderer\._view, right = vw \? cardRightOf\(renderer\._proj, vw\) : null;/, 'ARMORY-MIRROR (PIN MOVED): the card\'s right, the draw\'s (ArmoryRenderer.draw) - the view\'s first row is the screen\'s left');
+  assert.match(h, /selfPose\(selfKit\.pose, player, selfLiftNow > 0\); armoryMotionStep\(selfKit, now, vw \? cardRightOf\(renderer\._proj, vw\) : null\);/, 'FOLLOW-NOW (PIN MOVED): mine posed and stepped at the draw, where my body is drawn; ARMORY-MIRROR (PIN MOVED): along the card\'s right');
+  assert.match(h, /peerPose\(d\.id, w, layers\); armoryMotionStep\(w, t, right\);/, 'a sprite\'s embers off its feet, mine and a peer\'s');   // CAPE-CARD (PIN MOVED): posed off the sprite layers' list
 });
 
 test('ARMORY a record drawn at another scale (eotbSprite.js spriteArtScale - ACRO-SHORT\'s Acrobat seen three-quarter on, 81 px where the sets draw 110): its marks read at the sets\' rows scaled by it, and its pose stands at the body\'s own heights (mutants: the art unread; the pose\'s rows the picture\'s pixels)', () => {

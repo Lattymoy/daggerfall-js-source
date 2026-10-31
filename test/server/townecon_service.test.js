@@ -244,7 +244,7 @@ test('TOWN-ECON TE2 the read (POST /v1/towns/econ): every town whose players\' s
   _now = T0;
   const s = await stand();
   const g = await s.guest();
-  assert.deepEqual((await s.econ(g)).body, { ok: true, towns: [] });
+  assert.deepEqual((await s.econ(g)).body, { ok: true, towns: [], regions: [] });   // FOUNDATION F2: the regions' prosperity beside them
   const t = today();
   s.raw.prepare('INSERT INTO town_econ_days (map, day, src, n) VALUES (?, ?, ?, ?)').run(MAP, t, 'watch', 60);
   s.raw.prepare('INSERT INTO town_econ_days (map, day, src, n) VALUES (?, ?, ?, ?)').run(MAP, t - 2, 'trade', 10);
@@ -254,7 +254,7 @@ test('TOWN-ECON TE2 the read (POST /v1/towns/econ): every town whose players\' s
   const r = (await s.econ(g)).body;
   const share = townShareShown(townPlayersShare(townActivity([{ day: t, src: 'watch', n: 60 }, { day: t - 2, src: 'trade', n: 10 }], t)));
   assert.ok(share > 10 && share < 20, `${share}`);
-  assert.deepEqual(r, { ok: true, towns: [[MAP, share]] }, 'the law\'s share; the old day and the small town left out');
+  assert.deepEqual(r, { ok: true, towns: [[MAP, share]], regions: [] }, 'the law\'s share; the old day and the small town left out');
   s.raw.prepare('INSERT INTO town_econ_days (map, day, src, n) VALUES (?, ?, ?, ?)').run(3003, t, 'raid', 30);
   assert.deepEqual((await s.econ(g)).body.towns.map(([m]) => m), [MAP], 'kept');
   _now += TOWN_ECON_KEPT_S;

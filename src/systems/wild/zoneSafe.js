@@ -75,6 +75,11 @@ export function landsSettled(p, locAt) {
   const loc = locAt(px.x, px.y);
   return isSettlement(loc) && isInLocationRect(p[0], p[2], locationWorldRect(loc, px.x, px.y));
 }
+/** ZONE-BANK (FIELD BUGS 2026-10-30b; the owner: banks "Work in settlements"): does a bank serve here - outside the open
+ *  zone, or in a building of a settlement (the place `locAt` stands on `px`, its door's pixel). PVPDUNGEONS shut them
+ *  all, the Imperial City's too. @param {boolean} inZone @param {{ x: number, y: number }} px
+ *  @param {(px: number, py: number) => any} locAt */
+export const zoneBankOpen = (inZone, px, locAt) => !inZone || isSettlement(locAt(px.x, px.y));
 /** A Recall anchor's landing (teleportAnchor.js makeAnchor: natives on x and z), or a leader's feet - settledAt's frame. */
 export const teleportLanding = (a) => (a && Number.isFinite(a.nativeX) ? [a.nativeX, 0, a.nativeZ] : a && Number.isFinite(a.x) ? [a.x, a.y ?? 0, a.z] : undefined);
 
@@ -106,5 +111,6 @@ export const ZONE_SAFE_TEXT = Object.freeze({
   get chip() { return t('wild.safe.chip', 'Safe zone'); },
   get enter() { return t('wild.safe.enter', 'You are in the streets of a city, town or village: a safe zone. Other players cannot attack you here. You can attack a villain.'); },
   get leave() { return t('wild.safe.leave', 'You leave the safe streets. Other players may attack you again.'); },
+  get bank() { return t('wild.bank.shut', 'In the open zone, banks serve only cities, towns and villages.'); },   // ZONE-BANK
   get rule() { return t('wild.safe.rule', 'Cities, towns and villages are safe zones: no player can attack another in their streets. A villain is never safe, and you can attack one from the streets.'); },
 });

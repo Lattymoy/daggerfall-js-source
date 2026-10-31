@@ -57,7 +57,7 @@ test('APPEARANCES THE PEERS DRAW IT: the stand-in\'s item wears the look as its 
   assert.deepEqual([drawnPiece(held).templateIndex, drawnPiece(held).material], [121, 7], 'drawn as the look');
   const worn = dfWornEquipment(stub.equip.slots, EQUIP_SLOTS, ARMOR_ENUM);
   assert.deepEqual(worn.find((p) => p.templateIndex === 102), { templateIndex: 102, material: ARMOR_MATERIAL.Leather, kind: 'armor' }, 'the Morrowind body dressed as the look');
-  assert.deepEqual(outfitPieces(outfitOfItems(look.items)), { head: 'p1', top: 'l', legs: 'l', cloak: null }, 'Layered Gearing: a Steel helm in its own look, a leather top');
+  assert.deepEqual(outfitPieces(outfitOfItems(look.items)), { head: 'p1', top: 'l', legs: 'l', cloak: null, weapon: null, offhand: null, spell: null }, 'Layered Gearing: a Steel helm in its own look, a leather top');
   const bare = { ...look, items: look.items.map(({ ap, ...rest }) => { void ap; return rest; }) };
   const oldKey = (l) => `${l?.race ?? 'Breton'}|${l?.gender ?? 'male'}|${l?.faceIndex ?? 0}|${JSON.stringify((l?.items ?? []).map((it) => LOOK_ITEM_FIELDS.map((k) => it[k] ?? null)))}`;
   assert.equal(lookKey(bare), oldKey(bare), 'a look without one keeps the key it had');
