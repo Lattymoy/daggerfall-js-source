@@ -84,7 +84,7 @@ test('RVN-ERRAND THE LAW: every number; the three ventures\' leans; the nine pla
     for (const g of p.goods) { assert.ok(keys.has(g), `${g} is a material`); assert.ok(withdrawable(g), `${g} has a pack form`); }
   }
   assert.deepEqual(E.ERRAND_PLACES.map((p) => p.name), E.ERRAND_PLACES.map((p) => PROVINCES.find((x) => x.key === p.key).name), 'AUDIT RVN D6: the map\'s English, through the text core');
-  assert.match(read('src/systems/revenant/revenantErrands.js'), /get BlackMarsh\(\) \{ return t\('rvn\.errand\.place\.blackMarsh', 'Black Marsh'\); \}/);
+  assert.match(read('src/systems/revenant/revenantErrands.js'), /get BlackMarsh\(\) \{\n\s*return t\('rvn\.errand\.place\.blackMarsh', 'Black Marsh'\);\n\s*\}/);
 });
 
 test('RVN-ERRAND ITS ODDS: BASE + PER a point of its strength (rank and kit) over the danger, within MIN..MAX, a Devoted one more; the words (mutants: the kit unread; a clamp gone; Devoted unread; a word\'s line moved)', () => {

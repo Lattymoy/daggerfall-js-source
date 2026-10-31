@@ -2,8 +2,8 @@
   {
     "name": "RVN9-days-moved",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "export const FESTER = Object.freeze({ DAYS: 3, EVERY: 3,",
-    "new": "export const FESTER = Object.freeze({ DAYS: 2, EVERY: 3,",
+    "old": "export const FESTER = Object.freeze({ DAYS: 3, EVERY: 3, CATCHUP: 7, HEALTH: 0.1, BLOWS: 0.05 });",
+    "new": "export const FESTER = Object.freeze({ DAYS: 2, EVERY: 3, CATCHUP: 7, HEALTH: 0.1, BLOWS: 0.05 });",
     "tests": [
       "test/systems/rvn9_fester.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RVN9-every-moved",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "export const FESTER = Object.freeze({ DAYS: 3, EVERY: 3,",
-    "new": "export const FESTER = Object.freeze({ DAYS: 3, EVERY: 2,",
+    "old": "export const FESTER = Object.freeze({ DAYS: 3, EVERY: 3, CATCHUP: 7, HEALTH: 0.1, BLOWS: 0.05 });",
+    "new": "export const FESTER = Object.freeze({ DAYS: 3, EVERY: 2, CATCHUP: 7, HEALTH: 0.1, BLOWS: 0.05 });",
     "tests": [
       "test/systems/rvn9_fester.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RVN9-catchup-moved",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "CATCHUP: 7, HEALTH: 0.10, BLOWS: 0.05 });",
-    "new": "CATCHUP: 10, HEALTH: 0.10, BLOWS: 0.05 });",
+    "old": "export const FESTER = Object.freeze({ DAYS: 3, EVERY: 3, CATCHUP: 7, HEALTH: 0.1, BLOWS: 0.05 });",
+    "new": "export const FESTER = Object.freeze({ DAYS: 3, EVERY: 3, CATCHUP: 10, HEALTH: 0.1, BLOWS: 0.05 });",
     "tests": [
       "test/systems/rvn9_fester.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RVN9-health-moved",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "CATCHUP: 7, HEALTH: 0.10, BLOWS: 0.05 });",
-    "new": "CATCHUP: 7, HEALTH: 0.15, BLOWS: 0.05 });",
+    "old": "export const FESTER = Object.freeze({ DAYS: 3, EVERY: 3, CATCHUP: 7, HEALTH: 0.1, BLOWS: 0.05 });",
+    "new": "export const FESTER = Object.freeze({ DAYS: 3, EVERY: 3, CATCHUP: 7, HEALTH: 0.15, BLOWS: 0.05 });",
     "tests": [
       "test/systems/rvn9_fester.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RVN9-blows-moved",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "CATCHUP: 7, HEALTH: 0.10, BLOWS: 0.05 });",
-    "new": "CATCHUP: 7, HEALTH: 0.10, BLOWS: 0.1 });",
+    "old": "export const FESTER = Object.freeze({ DAYS: 3, EVERY: 3, CATCHUP: 7, HEALTH: 0.1, BLOWS: 0.05 });",
+    "new": "export const FESTER = Object.freeze({ DAYS: 3, EVERY: 3, CATCHUP: 7, HEALTH: 0.1, BLOWS: 0.1 });",
     "tests": [
       "test/systems/rvn9_fester.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "RVN9-law-early",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "return past >= 0 && past % FESTER.EVERY === 0; };",
-    "new": "return past >= -3 && past % FESTER.EVERY === 0; };",
+    "old": "  return past >= 0 && past % FESTER.EVERY === 0;",
+    "new": "  return past >= -3 && past % FESTER.EVERY === 0;",
     "tests": [
       "test/systems/rvn9_fester.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RVN9-law-every-day",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "return past >= 0 && past % FESTER.EVERY === 0; };",
-    "new": "return past >= 0; };",
+    "old": "  return past >= 0 && past % FESTER.EVERY === 0;",
+    "new": "  return past >= 0;",
     "tests": [
       "test/systems/rvn9_fester.test.js"
     ]

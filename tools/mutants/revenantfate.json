@@ -57,8 +57,8 @@
   {
     "name": "REVENANT-FATE-the-record-open",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "  revenantExecuted(player, f.entity);\n",
-    "new": "",
+    "old": "  revenantExecuted(player, f.entity);\n  swornWitness(f.mobileType ?? f.entity?.mobileType); // RVN11 (Feud-Arc.md 22.1): one of its own kind executed in a sworn one's sight, -15",
+    "new": "  swornWitness(f.mobileType ?? f.entity?.mobileType); // RVN11 (Feud-Arc.md 22.1): one of its own kind executed in a sworn one's sight, -15",
     "tests": [
       "test/systems/revenant/revenant_fate.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "REVENANT-FATE-spare-past-the-retinue",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "  if (!retinueHasRoom()) return null;\n  setRetinuePlayer(player);\n  const state = swornPlace();",
-    "new": "  setRetinuePlayer(player);\n  const state = swornPlace();",
+    "old": "  if (!retinueHasRoom()) return null;\n  setRetinuePlayer(player);",
+    "new": "  setRetinuePlayer(player);",
     "tests": [
       "test/systems/revenant/revenant_fate.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "REVENANT-TROPHY-the-carried-blade-ignored",
     "file": "src/systems/revenant/revenantTrophy.js",
-    "old": "  if (carried != null) return carried;\n",
-    "new": "",
+    "old": "  if (carried != null) return carried;\n  const pool = TROPHY_KIND_WEAPONS[r?.mobileType] ?? [W.Longsword];",
+    "new": "  const pool = TROPHY_KIND_WEAPONS[r?.mobileType] ?? [W.Longsword];",
     "tests": [
       "test/systems/revenant/revenant_fate.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "REVENANT-COMPANION-a-call-past-the-slots",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  if (companionsWithYou() >= COMPANION_SLOTS) return `Your companions are full (${COMPANION_SLOTS}).`;\n",
-    "new": "",
+    "old": "  if (companionsWithYou() >= COMPANION_SLOTS) return `Your companions are full (${COMPANION_SLOTS}).`;\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "REVENANT-COMPANION-health-boosted-at-every-door",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  if (fresh) {\n    entity.maxHealth",
-    "new": "  if (true) {\n    entity.maxHealth",
+    "old": "  if (fresh) {",
+    "new": "  if (true) {",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]

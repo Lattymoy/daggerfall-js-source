@@ -38,8 +38,8 @@
   {
     "name": "RVN7a-nearest-alone",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "    if (a < bestA - 1e-9 || (Math.abs(a - bestA) <= 1e-9 && r < bestR)) { best = d; bestA = a; bestR = r; }",
-    "new": "    if (r < bestR) { best = d; bestA = a; bestR = r; }",
+    "old": "    if (a < bestA - 1e-9 || (Math.abs(a - bestA) <= 1e-9 && r < bestR)) {",
+    "new": "    if (r < bestR) {",
     "tests": [
       "test/systems/revenant/rvn7a_lair.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "RVN7a-tie-the-farther",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "(Math.abs(a - bestA) <= 1e-9 && r < bestR)",
-    "new": "(Math.abs(a - bestA) <= 1e-9 && r > bestR)",
+    "old": "    if (a < bestA - 1e-9 || (Math.abs(a - bestA) <= 1e-9 && r < bestR)) {",
+    "new": "    if (a < bestA - 1e-9 || (Math.abs(a - bestA) <= 1e-9 && r > bestR)) {",
     "tests": [
       "test/systems/revenant/rvn7a_lair.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "RVN7a-unwrapped",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "    if (a > Math.PI) a = Math.PI * 2 - a;\n",
-    "new": "",
+    "old": "    if (a > Math.PI) a = Math.PI * 2 - a;\n    const r = Math.hypot(dx, dy);",
+    "new": "    const r = Math.hypot(dx, dy);",
     "tests": [
       "test/systems/revenant/rvn7a_lair.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RVN7a-underground-ignored",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  if (here.underground) return sanitizeLair(here.underground) ?? kept;\n",
-    "new": "",
+    "old": "  if (here.underground) return sanitizeLair(here.underground) ?? kept;\n  return (kept && lairEnterable(kept, here) ? kept : null) ?? pickLair(r?.id, here.px, here.py, here.dungeons);",
+    "new": "  return (kept && lairEnterable(kept, here) ? kept : null) ?? pickLair(r?.id, here.px, here.py, here.dungeons);",
     "tests": [
       "test/systems/revenant/rvn7a_lair.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "RVN7a-same-by-x-alone",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "(!!a && !!b && a.px === b.px && a.py === b.py)",
-    "new": "(!!a && !!b && a.px === b.px)",
+    "old": "export const sameLair = (a, b) => (!a && !b) || (!!a && !!b && a.px === b.px && a.py === b.py);",
+    "new": "export const sameLair = (a, b) => (!a && !b) || (!!a && !!b && a.px === b.px);",
     "tests": [
       "test/systems/revenant/rvn7a_lair.test.js"
     ]

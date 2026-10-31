@@ -56,8 +56,8 @@
   {
     "name": "APF-A1-the-party-without-it",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "m.folk = r.race ?? null;",
-    "new": "m.folk = null;",
+    "old": "  m.folk = r.race ?? null; // AUDIT PROVINCE-FOLK A1: and the race it was born in",
+    "new": "  m.folk = null; // AUDIT PROVINCE-FOLK A1: and the race it was born in",
     "tests": [
       "test/scenes/audit_provincefolk.test.js"
     ]

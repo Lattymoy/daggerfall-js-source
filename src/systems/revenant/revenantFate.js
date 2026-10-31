@@ -21,18 +21,47 @@
 //
 // PURE but for the clock and the records it is handed - the pools (scenes/exteriorFoes.js, scenes/dungeonContext.js)
 // call in, and draw what it answers.
-import { takenName, revenantHandBack, revenantById, revenantOn, revenantYielded, revenantExecuted, revenantSpared, revenantMomentEvent, revenantPortrait, revenantRankNumeral, revenantLastStand, revenantLastStandEvent, revenantEscapeTail } from './revenant.js';
+import {
+  takenName,
+  revenantHandBack,
+  revenantById,
+  revenantOn,
+  revenantYielded,
+  revenantExecuted,
+  revenantSpared,
+  revenantMomentEvent,
+  revenantPortrait,
+  revenantRankNumeral,
+  revenantLastStand,
+  revenantLastStandEvent,
+  revenantEscapeTail,
+} from './revenant.js';
 import { revenantTrophy, trophyKindWords } from './revenantTrophy.js';
 import { PERSONALITIES } from './revenantPersonality.js';
-import { retinueHasRoom, swornPlace, REVENANT_RETINUE_MAX, setRetinuePlayer, holdSworn, swornWitness } from './revenantCompanions.js';
+import {
+  retinueHasRoom,
+  swornPlace,
+  REVENANT_RETINUE_MAX,
+  setRetinuePlayer,
+  holdSworn,
+  swornWitness,
+} from './revenantCompanions.js';
 import { companionsWithYou, COMPANION_SLOTS } from '../companionSlots.js';
 import { enemyDisplayName } from '../../characters/enemy/enemyBasics.js';
 import { DISSOLVE_EMBER, DISSOLVE_ARCANE } from '../dissolve.js';
-import { clearPlayerHarm } from '../harmMark.js';   // AUDIT (2026-10-02): a beaten one's harm is no one's death
-import { willMatters, willBroken, LAST_STAND_RANK, LAST_STAND_ROAR, PHASE_TWO, lastStandHealth, phaseTwo } from './revenantFeud.js';   // RVN3: the will (bible/12-Enhanced-AI/Feud-Arc.md 14.2); RVN4: the last stand (15)
-import { endCraft, DREAD, dreadStandHealth } from './revenantUnquiet.js';   // UNQUIET (Revenants.md section 46): a flight's craft put down; the Dread's two stands
-import { t } from '../textManager.js';   // AUDIT UNQUIET: the slip's words through the text core
-import { noteAct } from '../questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
+import { clearPlayerHarm } from '../harmMark.js'; // AUDIT (2026-10-02): a beaten one's harm is no one's death
+import {
+  willMatters,
+  willBroken,
+  LAST_STAND_RANK,
+  LAST_STAND_ROAR,
+  PHASE_TWO,
+  lastStandHealth,
+  phaseTwo,
+} from './revenantFeud.js'; // RVN3: the will (bible/12-Enhanced-AI/Feud-Arc.md 14.2); RVN4: the last stand (15)
+import { endCraft, DREAD, dreadStandHealth } from './revenantUnquiet.js'; // UNQUIET (Revenants.md section 46): a flight's craft put down; the Dread's two stands
+import { t } from '../textManager.js'; // AUDIT UNQUIET: the slip's words through the text core
+import { noteAct } from '../questlines/qlActs.js'; // QL11: the features' acts, heard by the running quests
 
 /** How long a beaten revenant kneels before it slips away (ms). */
 export const REVENANT_YIELD_MS = 90000;
@@ -83,16 +112,26 @@ export function revenantLastStandDue(f) {
 export function beginLastStand(player, f, { now = Date.now(), clock = 0, roar = null, rolls = Math.random } = {}) {
   const e = f.entity;
   const r = revenantById(e?.revenant?.id);
-  endCraft(f);   // UNQUIET: risen mid-sink it stands whole
-  f._stands = (f._stands | 0) + 1;   // UNQUIET: the Dread stands twice
+  endCraft(f); // UNQUIET: risen mid-sink it stands whole
+  f._stands = (f._stands | 0) + 1; // UNQUIET: the Dread stands twice
   f._lastStood = !(r?.dread && f._stands < DREAD.STANDS);
   f.fleeing = false;
-  if (f.ai) f.ai.fleeLeft = 0;   // FEUD HARNESS: its run over too, as a kneel's - risen mid-flight it ran on untargeted, never cornered nor escaped
-  e.health = Math.max(1, Math.round((e.maxHealth || 1) * (r?.dread ? dreadStandHealth(f._stands, lastStandHealth(r.rank)) : lastStandHealth(r?.rank))));
+  if (f.ai) f.ai.fleeLeft = 0; // FEUD HARNESS: its run over too, as a kneel's - risen mid-flight it ran on untargeted, never cornered nor escaped
+  e.health = Math.max(
+    1,
+    Math.round(
+      (e.maxHealth || 1) * (r?.dread ? dreadStandHealth(f._stands, lastStandHealth(r.rank)) : lastStandHealth(r?.rank)),
+    ),
+  );
   f.roaring = { at: now, until: now + LAST_STAND_ROAR * 1000 };
   // no brain to roar with (the switch off): its motor held and its swing raised for the roar (the pool lets it go)
-  if (!(typeof roar === 'function' && roar(LAST_STAND_ROAR)) && f.ai) { f.ai.roarUntil = clock + LAST_STAND_ROAR; f.ai._blowHold = true; f._roarHeld = true; }
-  if (!e.revenant?.p2) {   // UNQUIET: phase two once - the Dread's second stand rises in the fury it already has
+  if (!(typeof roar === 'function' && roar(LAST_STAND_ROAR)) && f.ai) {
+    f.ai.roarUntil = clock + LAST_STAND_ROAR;
+    f.ai._blowHold = true;
+    f._roarHeld = true;
+  }
+  if (!e.revenant?.p2) {
+    // UNQUIET: phase two once - the Dread's second stand rises in the fury it already has
     e.revenant = { ...e.revenant, p2: phaseTwo() };
     e.damageScale = (Number.isFinite(e.damageScale) && e.damageScale > 0 ? e.damageScale : 1) * PHASE_TWO.BLOWS;
     if (e.stats) e.stats.speed = (e.stats.speed ?? 0) + PHASE_TWO.SPEED;
@@ -104,7 +143,10 @@ export function beginLastStand(player, f, { now = Date.now(), clock = 0, roar = 
 export function roarStep(f, now = Date.now()) {
   if (f?.roaring && now >= f.roaring.until) {
     f.roaring = null;
-    if (f._roarHeld) { f._roarHeld = false; if (f.ai) f.ai._blowHold = 'cancel'; }   // its raised swing let go, striking nothing
+    if (f._roarHeld) {
+      f._roarHeld = false;
+      if (f.ai) f.ai._blowHold = 'cancel';
+    } // its raised swing let go, striking nothing
   }
   return !!f?.roaring;
 }
@@ -116,35 +158,47 @@ export const TEAR_MS = Object.freeze({ delay: 120, ms: 720 });
  *  kneel. */
 export function revenantWillHolds(f) {
   const r = revenantById(f?.entity?.revenant?.id);
-  return !!r && !r.dread && willMatters(r.rank) && !willBroken(f.entity._feud);   // UNQUIET: the Dread, at home, has nowhere to tear away to - it kneels
+  return !!r && !r.dread && willMatters(r.rank) && !willBroken(f.entity._feud); // UNQUIET: the Dread, at home, has nowhere to tear away to - it kneels
 }
 /** RVN3 (14.2): UNBROKEN, IT TEARS AWAY - held at 1, its fight and its run over, its body ashing out on the ember lane;
  *  the pool's leaving hold (`f.leaving`, `done` the pool's escape - the `fled` deed: it ranks up and learns) takes it
  *  out. Held by its fate (`leaving`) meanwhile: no blow, no spell, nobody's target. */
 export function beginTearAway(f, done, { now = Date.now() } = {}) {
-  endCraft(f);   // UNQUIET: its own ash-out, not a craft's
+  endCraft(f); // UNQUIET: its own ash-out, not a craft's
   f.fleeing = false;
   f._fleeRolled = true;
   if (f.entity) f.entity.health = 1;
-  if (f.ai) { f.ai.target = null; f.ai.fleeLeft = 0; f.ai.velX = 0; f.ai.velZ = 0; }
+  if (f.ai) {
+    f.ai.target = null;
+    f.ai.fleeLeft = 0;
+    f.ai.velX = 0;
+    f.ai.velZ = 0;
+  }
   f.portalFx = { dir: 'out', at: now, delay: TEAR_MS.delay, ms: TEAR_MS.ms, tint: DISSOLVE_EMBER };
   f.leaving = { at: now, done };
 }
 /** IT YIELDS: held at 1, its fight and its run over, its trophy rolled; answers the event its plea is said by. */
 export function beginYield(player, f, { now = Date.now(), rolls = Math.random } = {}) {
-  endCraft(f);   // UNQUIET: knelt mid-sink, it kneels whole
+  endCraft(f); // UNQUIET: knelt mid-sink, it kneels whole
   f.yielded = { at: now };
   f.fleeing = false;
   f._fleeRolled = true;
   if (f.entity) f.entity.health = 1;
-  if (f.ai) { f.ai.target = null; f.ai.fleeLeft = 0; }
-  clearPlayerHarm(f.entity);   // its poison still ticking in the player names no one when it kills now
+  if (f.ai) {
+    f.ai.target = null;
+    f.ai.fleeLeft = 0;
+  }
+  clearPlayerHarm(f.entity); // its poison still ticking in the player names no one when it kills now
   setRetinuePlayer(player);
   const r = revenantYielded(player, f.entity);
   if (!r) return null;
-  noteAct('revenant-knelt');   // QL11: a revenant made to kneel - one of mine, beaten (revenantMayYield: never a puppet, never twice)
+  noteAct('revenant-knelt'); // QL11: a revenant made to kneel - one of mine, beaten (revenantMayYield: never a puppet, never twice)
   f.trophy = revenantTrophy(r, { entity: f.entity, level: player?.level ?? 1, rolls });
-  const ev = revenantMomentEvent('yield', r, player?.name, { body: 'Beaten, it awaits your judgment. Go to it to kill it or spare it.', archive: f.archive, rolls });
+  const ev = revenantMomentEvent('yield', r, player?.name, {
+    body: 'Beaten, it awaits your judgment. Go to it to kill it or spare it.',
+    archive: f.archive,
+    rolls,
+  });
   f.yieldEvent = ev;
   return ev;
 }
@@ -158,18 +212,23 @@ export function yieldStep(f, feet, dtMs = 0) {
   if (typeof j === 'function' ? j() : j) return null;
   f.yielded.held = (f.yielded.held ?? 0) + Math.max(0, Number(dtMs) || 0);
   if (f.yielded.held > REVENANT_YIELD_MS) return 'slip';
-  if (feet && f.ai?.feet && Math.hypot(feet[0] - f.ai.feet[0], feet[2] - f.ai.feet[2]) > REVENANT_YIELD_REACH) return 'slip';
+  if (feet && f.ai?.feet && Math.hypot(feet[0] - f.ai.feet[0], feet[2] - f.ai.feet[2]) > REVENANT_YIELD_REACH)
+    return 'slip';
   return null;
 }
 /** Its words as it slips away (the escape the pool makes of it). AUDIT UNQUIET (Revenants.md section 49): ended as every
  *  getting-away's card is - the wound it got away with, where its trail leads (revenant.js revenantEscapeTail). */
 export function slipEvent(player, r, { archive = null, rolls = Math.random } = {}) {
-  return revenantMomentEvent('slip', r, player?.name, { body: `${t('rvn.unq.slip', 'You hesitated. {given} got away, and it will remember.', { given: r.given })}${revenantEscapeTail(r)}`, archive, rolls });
+  return revenantMomentEvent('slip', r, player?.name, {
+    body: `${t('rvn.unq.slip', 'You hesitated. {given} got away, and it will remember.', { given: r.given })}${revenantEscapeTail(r)}`,
+    archive,
+    rolls,
+  });
 }
 /** THE KNEEL: its hurt's last frame held (a breath every so often - the frame before it), facing the eye as ever. */
 export function kneelPose(f, eye, now = Date.now()) {
   if (!f?.mobile?.heldPose || !f.ai) return f?._mout ?? null;
-  const breath = ((now - (f.yielded?.at ?? f.executing?.at ?? 0)) % 1700) < 320;
+  const breath = (now - (f.yielded?.at ?? f.executing?.at ?? 0)) % 1700 < 320;
   return f.mobile.heldPose('hurt', breath ? -2 : -1, f.ai.yaw, f.ai.feet, eye ?? f.ai.feet);
 }
 
@@ -180,7 +239,11 @@ export function beginExecution(player, f, { now = Date.now(), rolls = Math.rando
   f.executing = { at: now, burst: false, done: false };
   if (!r) return null;
   const drops = f.trophy ? `It drops ${f.trophy.name}.` : null;
-  return revenantMomentEvent('executed', r, player?.name, { body: ['Executed.', drops].filter(Boolean).join(' '), archive: f.archive, rolls });
+  return revenantMomentEvent('executed', r, player?.name, {
+    body: ['Executed.', drops].filter(Boolean).join(' '),
+    archive: f.archive,
+    rolls,
+  });
 }
 /** One frame of an execution: 'burst' once (the blood and the flash), 'done' once (burnt away - take it out, drop its
  *  pile), else null. */
@@ -188,18 +251,24 @@ export function executionStep(f, now = Date.now()) {
   const x = f?.executing;
   if (!x) return null;
   const t = now - x.at;
-  if (!x.burst && t >= EXECUTION_MS.burst) { x.burst = true; return 'burst'; }
-  if (!x.done && t >= EXECUTION_MS.end) { x.done = true; return 'done'; }
+  if (!x.burst && t >= EXECUTION_MS.burst) {
+    x.burst = true;
+    return 'burst';
+  }
+  if (!x.done && t >= EXECUTION_MS.end) {
+    x.done = true;
+    return 'done';
+  }
   return null;
 }
 /** The execution ended: its record closed (executed); answers what falls where it stood - all it carried, and its
  *  trophy. */
 export function finishExecution(player, f) {
   revenantExecuted(player, f.entity);
-  swornWitness(f.mobileType ?? f.entity?.mobileType);   // RVN11 (Feud-Arc.md 22.1): one of its own kind executed in a sworn one's sight, -15
+  swornWitness(f.mobileType ?? f.entity?.mobileType); // RVN11 (Feud-Arc.md 22.1): one of its own kind executed in a sworn one's sight, -15
   const items = [...(Array.isArray(f.entity?.items) ? f.entity.items : []), ...(f.trophy ? [f.trophy] : [])];
   f.trophy = null;
-  if (f.entity) f.entity.items = [];   // AUDIT (2026-10-02): handed to the pile - never a save's dead record's to carry twice
+  if (f.entity) f.entity.items = []; // AUDIT (2026-10-02): handed to the pile - never a save's dead record's to carry twice
   return items;
 }
 /** AUDIT (2026-10-02): HELD BY ITS FATE - kneeling, burning, gathering into its portal, or a companion stepping out
@@ -219,14 +288,17 @@ export function beginSpare(player, f, { now = Date.now(), rolls = Math.random } 
   const state = swornPlace();
   const r = revenantSpared(player, f.entity, { state });
   if (!r) return null;
-  const back = revenantHandBack(player, r, f.entity);   // RVN8 (Feud-Arc.md 19): what it took of mine, handed back at the oath
+  const back = revenantHandBack(player, r, f.entity); // RVN8 (Feud-Arc.md 19): what it took of mine, handed back at the oath
   f.yielded = null;
   f.sparing = { at: now };
-  if (state === 'with') holdSworn(r.id, SPARING_MS);   // AUDIT (2026-10-02): its companion steps out once the kneeling one is through
-  const body = (state === 'with'
-    ? `Sworn to you. ${r.given} walks at your side now.`
-    : `Sworn to you. Your companions are full, so ${r.given} waits until you call it.`)
-    + (back.length ? ` It hands back your ${back.map((it) => takenName(it)).join(' and ')}: "It's yours. It always was."` : '');   // AUDIT FEUD 2: its article gone after "your"
+  if (state === 'with') holdSworn(r.id, SPARING_MS); // AUDIT (2026-10-02): its companion steps out once the kneeling one is through
+  const body =
+    (state === 'with'
+      ? `Sworn to you. ${r.given} walks at your side now.`
+      : `Sworn to you. Your companions are full, so ${r.given} waits until you call it.`) +
+    (back.length
+      ? ` It hands back your ${back.map((it) => takenName(it)).join(' and ')}: "It's yours. It always was."`
+      : ''); // AUDIT FEUD 2: its article gone after "your"
   return { r, state, event: revenantMomentEvent('spared', r, player?.name, { body, archive: f.archive, rolls }) };
 }
 /** The sworn one has stepped through its portal - take its kneeling body out. */
@@ -247,7 +319,7 @@ export function fateDissolve(f, now = Date.now()) {
   const p = f?.portalFx;
   if (p) {
     const t = (now - p.at - p.delay) / p.ms;
-    const tint = p.tint ?? DISSOLVE_ARCANE;   // RVN3: a tear-away's ember; a portal's arcane
+    const tint = p.tint ?? DISSOLVE_ARCANE; // RVN3: a tear-away's ember; a portal's arcane
     if (p.dir === 'in') return t >= 1 ? null : [Math.max(0.001, 1 - Math.max(0, t)), ...tint];
     return t > 0 ? [Math.min(1, t), ...tint] : null;
   }
@@ -278,25 +350,37 @@ export function fateModel(player, f, { choose } = /** @type {any} */ ({})) {
     sub: [`Rank ${revenantRankNumeral(r.rank)}`, kind, trait, r.elite ? 'Elite' : null].filter(Boolean).join(' · '),
     mood: P?.label ?? null,
     blurb: P?.blurb ?? null,
-    plea: { speech: ev?.speech ?? null, body: ev?.speech ? null : ev?.body ?? null },
+    plea: { speech: ev?.speech ?? null, body: ev?.speech ? null : (ev?.body ?? null) },
     portrait: revenantPortrait(r),
     trophy,
     slots: { used, max: COMPANION_SLOTS, free, room, retinueMax: REVENANT_RETINUE_MAX },
     options: [
       {
-        id: 'kill', key: 'K', label: 'Kill', verb: 'Execute', tone: 'warn',
+        id: 'kill',
+        key: 'K',
+        label: 'Kill',
+        verb: 'Execute',
+        tone: 'warn',
         title: `Kill ${r.given}`,
         detail: trophy ? `It drops ${trophy.name} - ${trophyKindWords(trophy)}` : 'It drops what it carried',
         confirm: `Destroy ${r.name}? It is gone for good${trophy ? `, and ${trophy.name} is yours` : ''}.`,
         disabled: false,
       },
       {
-        id: 'spare', key: 'S', label: 'Spare', verb: 'Spare', tone: 'primary',
+        id: 'spare',
+        key: 'S',
+        label: 'Spare',
+        verb: 'Spare',
+        tone: 'primary',
         title: `Spare ${r.given}`,
-        detail: !room ? `You already have ${REVENANT_RETINUE_MAX} sworn. Release one first`
-          : free ? `It joins you as a companion (${used + 1} of ${COMPANION_SLOTS})`
+        detail: !room
+          ? `You already have ${REVENANT_RETINUE_MAX} sworn. Release one first`
+          : free
+            ? `It joins you as a companion (${used + 1} of ${COMPANION_SLOTS})`
             : `It is sworn to you, and waits until you call it (your ${COMPANION_SLOTS} companion slots are full)`,
-        confirm: free ? `Spare ${r.name}? It will walk at your side.` : `Spare ${r.name}? It will wait, sent away, until you call it.`,
+        confirm: free
+          ? `Spare ${r.name}? It will walk at your side.`
+          : `Spare ${r.name}? It will wait, sent away, until you call it.`,
         disabled: !room,
       },
     ],

@@ -32,8 +32,8 @@
   {
     "name": "STAR-MASTER-FLED-mark",
     "file": "src/systems/revenant/unquietMark.js",
-    "old": "!entity.wildGiant && !entity.bout && !isEventFoe(entity);",
-    "new": "!entity.wildGiant && !entity.bout;",
+    "old": "export const isUnquiet = (entity) =>\n  entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && !isEventFoe(entity);",
+    "new": "export const isUnquiet = (entity) => entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout;",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ],

@@ -47,8 +47,8 @@
   {
     "name": "AF2-R5-spare-article",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "back.map((it) => takenName(it)).join(' and ')",
-    "new": "back.map((it) => `The ${takenName(it)}`).join(' and ')",
+    "old": "      ? ` It hands back your ${back.map((it) => takenName(it)).join(' and ')}: \"It's yours. It always was.\"`",
+    "new": "      ? ` It hands back your ${back.map((it) => `The ${takenName(it)}`).join(' and ')}: \"It's yours. It always was.\"`",
     "tests": [
       "test/systems/auditfeud2.test.js"
     ]

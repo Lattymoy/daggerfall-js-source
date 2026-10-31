@@ -65,8 +65,8 @@
   {
     "name": "RVN5-bank-noun-dropped",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "'Bonebreaker', 'Mountainfall']",
-    "new": "'Bonebreaker']",
+    "old": "  slam: Object.freeze(['Skullsplitter', 'Gravefall', 'Anvil', 'Hammerfall', 'Bonebreaker', 'Mountainfall']),",
+    "new": "  slam: Object.freeze(['Skullsplitter', 'Gravefall', 'Anvil', 'Hammerfall', 'Bonebreaker']),",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RVN5-pyre-nouns-swapped",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "['Pyre', 'Rimefall', 'Blight', 'Stormcall', 'Unmaking']",
-    "new": "['Pyre', 'Rimefall', 'Stormcall', 'Blight', 'Unmaking']",
+    "old": "export const PYRE_NOUNS = Object.freeze(['Pyre', 'Rimefall', 'Blight', 'Stormcall', 'Unmaking']); // fire, frost, poison, shock, magic",
+    "new": "export const PYRE_NOUNS = Object.freeze(['Pyre', 'Rimefall', 'Stormcall', 'Blight', 'Unmaking']); // fire, frost, poison, shock, magic",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "RVN5-imp-not-fire",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "[M.FireAtronach, 0], [M.Imp, 0],",
-    "new": "[M.FireAtronach, 0],",
+    "old": "  [M.Imp, 0],\n  [M.IceAtronach, 1],",
+    "new": "  [M.IceAtronach, 1],",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RVN5-lich-not-frost",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "[M.IceAtronach, 1], [M.Lich, 1], [M.AncientLich, 1],",
-    "new": "[M.IceAtronach, 1], [M.AncientLich, 1],",
+    "old": "  [M.Lich, 1],\n  [M.AncientLich, 1],",
+    "new": "  [M.AncientLich, 1],",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RVN5-rat-not-poison",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "[M.Rat, 2], [M.GiantBat, 2],",
-    "new": "[M.GiantBat, 2],",
+    "old": "  [M.Rat, 2],\n  [M.GiantBat, 2],",
+    "new": "  [M.GiantBat, 2],",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "RVN5-harpy-not-shock",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  [M.Harpy, 3],\n",
-    "new": "",
+    "old": "  [M.Harpy, 3],\n]);",
+    "new": "]);",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "RVN5-default-fire",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "PYRE_ELEMENT.get(mobileType) ?? 4;",
-    "new": "PYRE_ELEMENT.get(mobileType) ?? 0;",
+    "old": "export const pyreElement = (mobileType) => PYRE_ELEMENT.get(mobileType) ?? 4;",
+    "new": "export const pyreElement = (mobileType) => PYRE_ELEMENT.get(mobileType) ?? 0;",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "RVN5-draw-off-id",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "idStream(r.id, 'signame')",
-    "new": "idStream('rvn5', 'signame')",
+    "old": "  return bank[Math.min(bank.length - 1, Math.floor(idStream(r.id, 'signame')() * bank.length))];",
+    "new": "  return bank[Math.min(bank.length - 1, Math.floor(idStream('rvn5', 'signame')() * bank.length))];",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "RVN5-last-noun-unreachable",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "Math.floor(idStream(r.id, 'signame')() * bank.length)",
-    "new": "Math.floor(idStream(r.id, 'signame')() * (bank.length - 1))",
+    "old": "  return bank[Math.min(bank.length - 1, Math.floor(idStream(r.id, 'signame')() * bank.length))];",
+    "new": "  return bank[Math.min(bank.length - 1, Math.floor(idStream(r.id, 'signame')() * (bank.length - 1)))];",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "RVN5-no-possessive",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "return r.given ? `${possessive(r.given)} ${noun}` : noun;",
-    "new": "return r.given ? `${r.given} ${noun}` : noun;",
+    "old": "  return r.given ? `${possessive(r.given)} ${noun}` : noun; // a record has its given name; none, the noun alone",
+    "new": "  return r.given ? `${r.given} ${noun}` : noun; // a record has its given name; none, the noun alone",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "RVN5-stamp-rank-floor",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "if (!r || (r.rank | 0) < SIG_RANK || !isSignature(r.sig)) return null;",
-    "new": "if (!r || (r.rank | 0) < 1 || !isSignature(r.sig)) return null;",
+    "old": "  if (!r || (r.rank | 0) < SIG_RANK || !isSignature(r.sig)) return null;",
+    "new": "  if (!r || (r.rank | 0) < 1 || !isSignature(r.sig)) return null;",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "RVN5-stamp-any-shape",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "if (!r || (r.rank | 0) < SIG_RANK || !isSignature(r.sig)) return null;",
-    "new": "if (!r || (r.rank | 0) < SIG_RANK || !r.sig) return null;",
+    "old": "  if (!r || (r.rank | 0) < SIG_RANK || !isSignature(r.sig)) return null;",
+    "new": "  if (!r || (r.rank | 0) < SIG_RANK || !r.sig) return null;",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "RVN5-stamp-iron-off-by-one",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "iron: (r.rank | 0) >= SIG.IRON_RANK,",
-    "new": "iron: (r.rank | 0) > SIG.IRON_RANK,",
+    "old": "    iron: (r.rank | 0) >= SIG.IRON_RANK,",
+    "new": "    iron: (r.rank | 0) > SIG.IRON_RANK,",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "RVN5-stamp-unfrozen",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  return Object.freeze({ kind: r.sig, iron:",
-    "new": "  return ({ kind: r.sig, iron:",
+    "old": "  return Object.freeze({\n    kind: r.sig,\n    iron: (r.rank | 0) >= SIG.IRON_RANK,\n    mult: SIG.MULT,\n    cooldown: SIG.COOLDOWN,\n    color: SIG.COLOR,\n    windPitch: SIG.WIND_PITCH,\n    name: signatureName(r),\n    noun: signatureNoun(r),\n    element: pyreElement(r.mobileType),\n  });",
+    "new": "  return {\n    kind: r.sig,\n    iron: (r.rank | 0) >= SIG.IRON_RANK,\n    mult: SIG.MULT,\n    cooldown: SIG.COOLDOWN,\n    color: SIG.COLOR,\n    windPitch: SIG.WIND_PITCH,\n    name: signatureName(r),\n    noun: signatureNoun(r),\n    element: pyreElement(r.mobileType),\n  };",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "RVN5-stamp-name-dropped",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "windPitch: SIG.WIND_PITCH, name: signatureName(r), noun: signatureNoun(r), element:",
-    "new": "windPitch: SIG.WIND_PITCH, name: null, noun: signatureNoun(r), element:",
+    "old": "    name: signatureName(r),",
+    "new": "    name: null,",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "RVN5-stamp-noun-dropped",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "name: signatureName(r), noun: signatureNoun(r), element:",
-    "new": "name: signatureName(r), noun: null, element:",
+    "old": "    noun: signatureNoun(r),",
+    "new": "    noun: null,",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "RVN5-spell-caster-only",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "element: Number.isInteger(element) ? element : 4, rangeType: 2, icon: 0,",
-    "new": "element: Number.isInteger(element) ? element : 4, rangeType: 0, icon: 0,",
+    "old": "    rangeType: 2,",
+    "new": "    rangeType: 0,",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "RVN5-spell-continuous",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "effects: [e(4, 0, {",
-    "new": "effects: [e(1, 0, {",
+    "old": "      e(4, 0, {",
+    "new": "      e(1, 0, {",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "RVN5-spell-element-default",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "element: Number.isInteger(element) ? element : 4, rangeType",
-    "new": "element: Number.isInteger(element) ? element : 0, rangeType",
+    "old": "    element: Number.isInteger(element) ? element : 4,",
+    "new": "    element: Number.isInteger(element) ? element : 0,",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]

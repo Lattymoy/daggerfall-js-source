@@ -344,8 +344,8 @@
   {
     "name": "AUDIT-PVP-EASE-L2-1-the-kit-unlocked",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "gearRefusal(r, item, { kindName }) ?? wildStoreRefusal();",
-    "new": "gearRefusal(r, item, { kindName });",
+    "old": "  const why = gearRefusal(r, item, { kindName }) ?? wildStoreRefusal(); // AUDIT PVP-EASE L2-1: a sworn one's kit is storage no zone death takes - the combat lock",
+    "new": "  const why = gearRefusal(r, item, { kindName }); // AUDIT PVP-EASE L2-1: a sworn one's kit is storage no zone death takes - the combat lock",
     "tests": [
       "test/systems/wild/combatlock.test.js"
     ]

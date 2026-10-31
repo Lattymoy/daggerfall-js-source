@@ -101,8 +101,8 @@
   {
     "name": "FB1012d-the-sworn-member-without-its-person",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  m.person = revenantPerson(r);",
-    "new": "  m.person = undefined;",
+    "old": "  m.person = revenantPerson(r); // FB1012d ALLY-RACE: the one person it was born as - the layer stands every body of it so (crewAshore.js companionPerson)",
+    "new": "  m.person = undefined; // FB1012d ALLY-RACE: the one person it was born as - the layer stands every body of it so (crewAshore.js companionPerson)",
     "tests": [
       "test/scenes/fb1012d_allyrace.test.js"
     ]

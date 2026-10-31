@@ -11,8 +11,8 @@
   {
     "name": "FB-perfect-uncounted",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "(ledger.staggers | 0) + (ledger.perfect | 0) >= WILL_STAGGERS",
-    "new": "(ledger.staggers | 0) >= WILL_STAGGERS",
+    "old": "export const willBroken = (ledger) =>\n  !!ledger && ((ledger.weak | 0) > 0 || (ledger.staggers | 0) + (ledger.perfect | 0) >= WILL_STAGGERS);",
+    "new": "export const willBroken = (ledger) => !!ledger && ((ledger.weak | 0) > 0 || (ledger.staggers | 0) >= WILL_STAGGERS);",
     "tests": [
       "test/systems/revenant/feudbalance.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "FB-stand-rank3",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "LAST_STAND_HEALTH = Object.freeze({ 3: 0.3,",
-    "new": "LAST_STAND_HEALTH = Object.freeze({ 3: 0.35,",
+    "old": "export const LAST_STAND_HEALTH = Object.freeze({ 3: 0.3, 4: 0.35, 5: 0.4 }); // FEUD BALANCE (OPEN 23, Mac, 2026-10-05): from 35 / 45 / 55% - a rank 5 about 2.5 times a rank 1's fight",
+    "new": "export const LAST_STAND_HEALTH = Object.freeze({ 3: 0.35, 4: 0.35, 5: 0.4 }); // FEUD BALANCE (OPEN 23, Mac, 2026-10-05): from 35 / 45 / 55% - a rank 5 about 2.5 times a rank 1's fight",
     "tests": [
       "test/systems/revenant/feudbalance.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "FB-stand-rank5",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "4: 0.35, 5: 0.4 });",
-    "new": "4: 0.35, 5: 0.55 });",
+    "old": "export const LAST_STAND_HEALTH = Object.freeze({ 3: 0.3, 4: 0.35, 5: 0.4 }); // FEUD BALANCE (OPEN 23, Mac, 2026-10-05): from 35 / 45 / 55% - a rank 5 about 2.5 times a rank 1's fight",
+    "new": "export const LAST_STAND_HEALTH = Object.freeze({ 3: 0.3, 4: 0.35, 5: 0.55 }); // FEUD BALANCE (OPEN 23, Mac, 2026-10-05): from 35 / 45 / 55% - a rank 5 about 2.5 times a rank 1's fight",
     "tests": [
       "test/systems/revenant/feudbalance.test.js"
     ]

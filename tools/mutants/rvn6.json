@@ -11,8 +11,8 @@
   {
     "name": "RVN6-count-unclamped",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "RETINUE[Math.max(0, Math.min(5, rank | 0))];",
-    "new": "RETINUE[Math.max(0, rank | 0)];",
+    "old": "export const retinueCount = (rank) => RETINUE[Math.max(0, Math.min(5, rank | 0))];",
+    "new": "export const retinueCount = (rank) => RETINUE[Math.max(0, rank | 0)];",
     "tests": [
       "test/systems/rvn6_band.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "RVN6-orcs-a-pack",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "Object.freeze({ ORC: 'Warband', BEASTPACK:",
-    "new": "Object.freeze({ ORC: 'Pack', BEASTPACK:",
+    "old": "  ORC: 'Warband',",
+    "new": "  ORC: 'Pack',",
     "tests": [
       "test/systems/rvn6_band.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RVN6-werebeasts-a-host",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "BEASTPACK: 'Pack', WEREBEAST: 'Pack',",
-    "new": "BEASTPACK: 'Pack', WEREBEAST: 'Host',",
+    "old": "  WEREBEAST: 'Pack',",
+    "new": "  WEREBEAST: 'Host',",
     "tests": [
       "test/systems/rvn6_band.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "RVN6-fae-a-brood",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "UNDEAD: 'Host', FAE: 'Host',",
-    "new": "UNDEAD: 'Host', FAE: 'Brood',",
+    "old": "  FAE: 'Host',",
+    "new": "  FAE: 'Brood',",
     "tests": [
       "test/systems/rvn6_band.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RVN6-fish-a-pack",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "VERMIN: 'Brood', AQUATIC: 'Brood' });",
-    "new": "VERMIN: 'Brood', AQUATIC: 'Pack' });",
+    "old": "  AQUATIC: 'Brood',",
+    "new": "  AQUATIC: 'Pack',",
     "tests": [
       "test/systems/rvn6_band.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "RVN6-person-level-moved",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "level: isClassEnemyId(t) ? Math.max(1, (playerLevel | 0) - 2) : null",
-    "new": "level: isClassEnemyId(t) ? Math.max(1, (playerLevel | 0) - 1) : null",
+    "old": "    .map((t) => ({ mobileType: t, level: isClassEnemyId(t) ? Math.max(1, (playerLevel | 0) - 2) : null }));",
+    "new": "    .map((t) => ({ mobileType: t, level: isClassEnemyId(t) ? Math.max(1, (playerLevel | 0) - 1) : null }));",
     "tests": [
       "test/systems/rvn6_band.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "RVN6-person-level-unfloored",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "level: isClassEnemyId(t) ? Math.max(1, (playerLevel | 0) - 2) : null",
-    "new": "level: isClassEnemyId(t) ? (playerLevel | 0) - 2 : null",
+    "old": "    .map((t) => ({ mobileType: t, level: isClassEnemyId(t) ? Math.max(1, (playerLevel | 0) - 2) : null }));",
+    "new": "    .map((t) => ({ mobileType: t, level: isClassEnemyId(t) ? (playerLevel | 0) - 2 : null }));",
     "tests": [
       "test/systems/rvn6_band.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "RVN6-monster-at-my-level",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "level: isClassEnemyId(t) ? Math.max(1, (playerLevel | 0) - 2) : null",
-    "new": "level: isClassEnemyId(t) ? Math.max(1, (playerLevel | 0) - 2) : playerLevel",
+    "old": "    .map((t) => ({ mobileType: t, level: isClassEnemyId(t) ? Math.max(1, (playerLevel | 0) - 2) : null }));",
+    "new": "    .map((t) => ({ mobileType: t, level: isClassEnemyId(t) ? Math.max(1, (playerLevel | 0) - 2) : playerLevel }));",
     "tests": [
       "test/systems/rvn6_band.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "RVN6-members-uncounted",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  return kin.slice(0, Math.max(0, n)).map(",
-    "new": "  return kin.map(",
+    "old": "  return kin\n    .slice(0, Math.max(0, n))\n    .map((t) => ({ mobileType: t, level: isClassEnemyId(t) ? Math.max(1, (playerLevel | 0) - 2) : null }));",
+    "new": "  return kin.map((t) => ({ mobileType: t, level: isClassEnemyId(t) ? Math.max(1, (playerLevel | 0) - 2) : null }));",
     "tests": [
       "test/systems/rvn6_band.test.js"
     ]

@@ -101,8 +101,8 @@
   {
     "name": "AF-V2-line-restored",
     "file": "src/systems/revenant/revenantPersonality.js",
-    "old": "'I still hold your {item}.'",
-    "new": "'Your {item} remains with me.'",
+    "old": "    stole: ['I still hold your {item}.', 'I have kept your {item}, {p}. To good use.'],",
+    "new": "    stole: ['Your {item} remains with me.', 'I have kept your {item}, {p}. To good use.'],",
     "tests": [
       "test/systems/auditfeud.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AF-V2-cold-learned-restored",
     "file": "src/systems/revenant/revenantPersonality.js",
-    "old": "'I have measured your {how}. Nothing remains.'",
-    "new": "'Your {how} is known to me now.'",
+    "old": "    learned: ['I have measured your {how}. Nothing remains.', 'I have adapted to your {how}, {p}.'],",
+    "new": "    learned: ['Your {how} is known to me now.', 'I have adapted to your {how}, {p}.'],",
     "tests": [
       "test/systems/auditfeud.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "AF-D3-dead-a-win",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  const won = !(last.entity?.health > 0);",
-    "new": "  const won = !!(last.dead || !(last.entity?.health > 0));",
+    "old": "  const won = !(last.entity?.health > 0); // AUDIT FEUD: killed - a foe that escaped, was culled or scattered is `dead` with its health",
+    "new": "  const won = !!(last.dead || !(last.entity?.health > 0)); // AUDIT FEUD: killed - a foe that escaped, was culled or scattered is `dead` with its health",
     "tests": [
       "test/systems/auditfeud.test.js"
     ]

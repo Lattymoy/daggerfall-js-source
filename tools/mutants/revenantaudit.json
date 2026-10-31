@@ -38,7 +38,7 @@
   {
     "name": "AUDIT-A5-the-pack-destroyed",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  for (const it of items) { if (isGoldPieces(it)) addGoldPieces(_player, it.stackCount ?? 1); else addItem(_player.items, it); }",
+    "old": "  for (const it of items) {\n    if (isGoldPieces(it)) addGoldPieces(_player, it.stackCount ?? 1);\n    else addItem(_player.items, it);\n  }",
     "new": "  void items;",
     "tests": [
       "test/systems/revenant/revenant_audit.test.js"
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-A10-a-skeleton-a-wit",
     "file": "src/systems/revenant/revenantPersonality.js",
-    "old": "BEASTS.has(mobileType) || MUTE_KINDS.has(mobileType) ? 'beast'",
-    "new": "BEASTS.has(mobileType) ? 'beast'",
+    "old": "    : BEASTS.has(mobileType) || MUTE_KINDS.has(mobileType)",
+    "new": "    : BEASTS.has(mobileType)",
     "tests": [
       "test/systems/revenant/revenant_audit.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-A11-a-dollar-a-pattern",
     "file": "src/systems/revenant/revenantPersonality.js",
-    "old": "const fill = (s, vars) => s.replace(PLACEHOLDER, (_, k) => String(vars[k]));",
-    "new": "const fill = (s, vars) => s.replace(/\\{p\\}/g, vars.p).replace(PLACEHOLDER, (_, k) => String(vars[k]));",
+    "old": "const fill = (s, vars) => s.replace(PLACEHOLDER, (_, k) => String(vars[k])); // AUDIT (2026-10-02): a `$` in a typed name is a letter, never a pattern",
+    "new": "const fill = (s, vars) => s.replace(/\\{p\\}/g, vars.p).replace(PLACEHOLDER, (_, k) => String(vars[k])); // AUDIT (2026-10-02): a `$` in a typed name is a letter, never a pattern",
     "tests": [
       "test/systems/revenant/revenant_audit.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-B1-the-wait-runs-under-the-window",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "  if (typeof j === 'function' ? j() : j) return null;\n",
-    "new": "",
+    "old": "  if (typeof j === 'function' ? j() : j) return null;\n  f.yielded.held = (f.yielded.held ?? 0) + Math.max(0, Number(dtMs) || 0);",
+    "new": "  f.yielded.held = (f.yielded.held ?? 0) + Math.max(0, Number(dtMs) || 0);",
     "tests": [
       "test/systems/revenant/revenant_audit.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-B6-the-pack-copied",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "  if (f.entity) f.entity.items = [];",
-    "new": "",
+    "old": "  if (f.entity) f.entity.items = []; // AUDIT (2026-10-02): handed to the pile - never a save's dead record's to carry twice",
+    "new": "  // AUDIT (2026-10-02): handed to the pile - never a save's dead record's to carry twice",
     "tests": [
       "test/systems/revenant/revenant_audit.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-C6-two-of-it",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "get party() { const list = revenantsWithYou().filter((r) => !held(r.id));",
-    "new": "get party() { const list = revenantsWithYou();",
+    "old": "      const list = revenantsWithYou().filter((r) => !held(r.id));",
+    "new": "      const list = revenantsWithYou();",
     "tests": [
       "test/systems/revenant/revenant_audit.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-C5-the-member-kept",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "its rest and its loss as its sky bears them\n      forgetSwornMember(id);\n      return true;",
-    "new": "its rest and its loss as its sky bears them\n      return true;",
+    "old": "      forgetSwornMember(id);\n      return true;",
+    "new": "      return true;",
     "tests": [
       "test/systems/revenant/revenant_audit.test.js"
     ]

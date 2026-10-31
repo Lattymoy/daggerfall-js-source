@@ -2,8 +2,8 @@
   {
     "name": "UNQUIET2-trail-minutes",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "export const HUNT = Object.freeze({ MINUTES: 720,",
-    "new": "export const HUNT = Object.freeze({ MINUTES: 1440,",
+    "old": "export const HUNT = Object.freeze({ MINUTES: 720, HEALTH: 0.6 });",
+    "new": "export const HUNT = Object.freeze({ MINUTES: 1440, HEALTH: 0.6 });",
     "tests": [
       "test/systems/revenant/unquiet2_hunt.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "UNQUIET2-trail-health",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "MINUTES: 720, HEALTH: 0.6 });",
-    "new": "MINUTES: 720, HEALTH: 0.5 });",
+    "old": "export const HUNT = Object.freeze({ MINUTES: 720, HEALTH: 0.6 });",
+    "new": "export const HUNT = Object.freeze({ MINUTES: 720, HEALTH: 0.5 });",
     "tests": [
       "test/systems/revenant/unquiet2_hunt.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "UNQUIET2-trail-dread-warm",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "=> !!r && !r.dread && Number.isFinite(r.trail) && r.trail > 0 && r.trail > now;",
-    "new": "=> !!r && Number.isFinite(r.trail) && r.trail > 0 && r.trail > now;",
+    "old": "export const trailWarm = (r, now) => !!r && !r.dread && Number.isFinite(r.trail) && r.trail > 0 && r.trail > now;",
+    "new": "export const trailWarm = (r, now) => !!r && Number.isFinite(r.trail) && r.trail > 0 && r.trail > now;",
     "tests": [
       "test/systems/revenant/unquiet2_hunt.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "UNQUIET2-trail-none-warm",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "&& r.trail > 0 && r.trail > now;",
-    "new": "&& r.trail > now;",
+    "old": "export const trailWarm = (r, now) => !!r && !r.dread && Number.isFinite(r.trail) && r.trail > 0 && r.trail > now;",
+    "new": "export const trailWarm = (r, now) => !!r && !r.dread && Number.isFinite(r.trail) && r.trail > now;",
     "tests": [
       "test/systems/revenant/unquiet2_hunt.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "UNQUIET2-trail-hours-down",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "Math.ceil(Math.min(HUNT.MINUTES, r.trail - now) / 60)",
-    "new": "Math.floor(Math.min(HUNT.MINUTES, r.trail - now) / 60)",
+    "old": "export const trailHours = (r, now) => (trailWarm(r, now) ? Math.ceil(Math.min(HUNT.MINUTES, r.trail - now) / 60) : 0);",
+    "new": "export const trailHours = (r, now) => (trailWarm(r, now) ? Math.floor(Math.min(HUNT.MINUTES, r.trail - now) / 60) : 0);",
     "tests": [
       "test/systems/revenant/unquiet2_hunt.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "UNQUIET2-trophy-dread-unread",
     "file": "src/systems/revenant/revenantTrophy.js",
-    "old": "applyRarity(item, r?.dread ? 'legendary' : tier, rolls);",
-    "new": "applyRarity(item, tier, rolls);",
+    "old": "  applyRarity(item, r?.dread ? 'legendary' : tier, rolls); // UNQUIET II (Revenants.md section 47): the Dread's, Legendary always (its tier's roll drawn first all the same)",
+    "new": "  applyRarity(item, tier, rolls); // UNQUIET II (Revenants.md section 47): the Dread's, Legendary always (its tier's roll drawn first all the same)",
     "tests": [
       "test/systems/revenant/unquiet2_hunt.test.js"
     ]

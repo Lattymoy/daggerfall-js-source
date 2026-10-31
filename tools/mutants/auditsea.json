@@ -753,8 +753,8 @@
   {
     "name": "AUDIT-SEA-C7-revenant-the-hills",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "return zoneWord('revenantOne');",
-    "new": "return WILD_TEXT.revenantOne;",
+    "old": "  if (wildHere() && revenantsWithYou().length >= WILD_REVENANTS_MAX) return zoneWord('revenantOne'); // PVPDUNGEONS - AUDIT SEA VENTURES C7: the ground's own words",
+    "new": "  if (wildHere() && revenantsWithYou().length >= WILD_REVENANTS_MAX) return WILD_TEXT.revenantOne; // PVPDUNGEONS - AUDIT SEA VENTURES C7: the ground's own words",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]

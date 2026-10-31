@@ -72,8 +72,8 @@
   {
     "name": "AUDIT-DEX-A2-a-monsters-body-a-persons-hands",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  return attacker?.isPlayer || isClassEnemyId(attacker?.mobileType ?? 0) ? 'h2h' : 'other';",
-    "new": "  return attacker?.isPlayer || (attacker?.mobileType ?? -1) >= 128 ? 'h2h' : 'other';",
+    "old": "  return attacker?.isPlayer || isClassEnemyId(attacker?.mobileType ?? 0) ? 'h2h' : 'other'; // AUDIT DEX A2: the class bit - a mod's monster past 255 has no person's hands",
+    "new": "  return attacker?.isPlayer || (attacker?.mobileType ?? -1) >= 128 ? 'h2h' : 'other'; // AUDIT DEX A2: the class bit - a mod's monster past 255 has no person's hands",
     "why": "a mod's monster's unarmed blow reads as a person's bare hands to a revenant's adaptation",
     "tests": [
       "test/systems/enemyExpansion/dex1_registry.test.js"

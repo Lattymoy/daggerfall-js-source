@@ -236,8 +236,8 @@
   {
     "name": "AUDIT-QL-ACTS-M15-revenantFate-noted-before-the-record-answers",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "  if (!r) return null;\n  noteAct('revenant-knelt');",
-    "new": "  noteAct('revenant-knelt');\n  if (!r) return null;",
+    "old": "  if (!r) return null;\n  noteAct('revenant-knelt'); // QL11: a revenant made to kneel - one of mine, beaten (revenantMayYield: never a puppet, never twice)",
+    "new": "  noteAct('revenant-knelt');\n  if (!r) return null; // QL11: a revenant made to kneel - one of mine, beaten (revenantMayYield: never a puppet, never twice)",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ]

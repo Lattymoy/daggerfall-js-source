@@ -121,8 +121,8 @@
   {
     "name": "FB1022D-LAIR-DOOR-kept-never-asked",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "(kept && lairEnterable(kept, here) ? kept : null) ?? pickLair",
-    "new": "kept ?? pickLair",
+    "old": "  return (kept && lairEnterable(kept, here) ? kept : null) ?? pickLair(r?.id, here.px, here.py, here.dungeons);",
+    "new": "  return kept ?? pickLair(r?.id, here.px, here.py, here.dungeons);",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "FB1022D-LAIR-DOOR-host-word-ignored",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "here.enterable(lair.px, lair.py) !== false;",
-    "new": "true;",
+    "old": "export const lairEnterable = (lair, here) =>\n  typeof here?.enterable !== 'function' || here.enterable(lair.px, lair.py) !== false;",
+    "new": "export const lairEnterable = (lair, here) => typeof here?.enterable !== 'function' || true;",
     "tests": [
       "test/systems/revenant/fb1022d_lairdoor.test.js"
     ]

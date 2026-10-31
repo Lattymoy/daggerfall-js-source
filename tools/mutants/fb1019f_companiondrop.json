@@ -121,8 +121,8 @@
   {
     "name": "COMPANION-DROP-the-party-off-the-law",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "return swornAtYourSide().filter((r) => list.includes(r)).map(memberOf);",
-    "new": "return list.map(memberOf);",
+    "old": "      return swornAtYourSide()\n        .filter((r) => list.includes(r))\n        .map(memberOf);",
+    "new": "      return list.map(memberOf);",
     "tests": [
       "test/systems/fb1019f_companiondrop.test.js",
       "test/systems/revenant/revenant_audit.test.js"
@@ -131,7 +131,7 @@
   {
     "name": "COMPANION-DROP-the-hand-back-destroys",
     "file": "src/systems/revenant/revenantCompanions.js",
-    "old": "  for (const it of items) { if (isGoldPieces(it)) addGoldPieces(_player, it.stackCount ?? 1); else addItem(_player.items, it); }",
+    "old": "  for (const it of items) {\n    if (isGoldPieces(it)) addGoldPieces(_player, it.stackCount ?? 1);\n    else addItem(_player.items, it);\n  }",
     "new": "  void items;",
     "tests": [
       "test/systems/fb1019f_companiondrop.test.js",

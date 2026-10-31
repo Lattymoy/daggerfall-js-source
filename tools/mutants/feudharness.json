@@ -2,8 +2,8 @@
   {
     "name": "FH-stand-run-left",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "  if (f.ai) f.ai.fleeLeft = 0;   // FEUD HARNESS: its run over too",
-    "new": "  // FEUD HARNESS: its run over too",
+    "old": "  if (f.ai) f.ai.fleeLeft = 0; // FEUD HARNESS: its run over too, as a kneel's - risen mid-flight it ran on untargeted, never cornered nor escaped",
+    "new": "  // FEUD HARNESS: its run over too, as a kneel's - risen mid-flight it ran on untargeted, never cornered nor escaped",
     "tests": [
       "test/systems/revenant/feudharness.test.js"
     ]
