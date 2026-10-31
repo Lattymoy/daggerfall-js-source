@@ -1318,12 +1318,6 @@
    "why": "a game day's start as relay ms - the fronts' rows' clocks (FRONTS)"
   },
   {
-   "file": "src/scenes/aurumCacheHost.js",
-   "has": "const nowMs = deps.nowMs ?? (() => (sharedClockOn() ? wallMsForClassicMinutes(worldMinutes()) : Date.now()));",
-   "clock": "event",
-   "why": "today's Aurum caches (AURUM-CACHES) - the UTC day whose coffers the page stands, on the relay's instant, so every client stands the ones the service takes"
-  },
-  {
    "file": "src/ui/enhanced/enhancedShop.js",
    "has": "export const shopNow = () => (sharedClockOn() ? wallMsForClassicMinutes(worldMinutes()) : Date.now());",
    "clock": "event",

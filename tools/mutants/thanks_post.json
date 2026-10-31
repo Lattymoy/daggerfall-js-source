@@ -184,8 +184,8 @@
   {
     "name": "AUDIT-LANE3-F5-the-locked-look-two-lines-alone",
     "file": "src/ui/enhanced/enhancedStyle.js",
-    "old": ".card button.actarmory.locked { opacity: 0.4; border-style: dashed; }",
-    "new": ".card button.actarmory.locked.aura-dagonfire, .card button.actarmory.locked.aura-eternal { opacity: 0.4; border-style: dashed; }",
+    "old": ".card button.actarmory.locked.aura-dagonfire, .card button.actarmory.locked.aura-eternal, .card button.actarmory.locked.aura-guild, .card button.actarmory.locked.aura-crystal {",
+    "new": ".card button.actarmory.locked.aura-dagonfire, .card button.actarmory.locked.aura-eternal {",
     "tests": [
       "test/server/thanks_post.test.js"
     ]

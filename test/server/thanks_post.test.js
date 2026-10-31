@@ -10,7 +10,7 @@ import { webcrypto } from 'node:crypto';
 
 import { standService } from '../accountDb.mjs';
 import { GIFTS, giftsOf, giftPiecesOf, giftOf } from '../../src/net/giftLaw.js';
-import { armoryPieceOf, ARMORY_NAME, armoryKitOk } from '../../src/net/armoryLaw.js';
+import { armoryPieceOf, ARMORY_NAME, armoryKitOk, ARMORY_LINES } from '../../src/net/armoryLaw.js';
 import { armoryHeld } from '../../server-account/src/titles.js';
 import { THANKS_POST, thanksPostSql } from '../../tools/sendServerPost.mjs';
 import { postHead } from '../../src/net/postLaw.js';
@@ -142,7 +142,8 @@ test('AUDIT lane 3 F5, F7: the Crystal Spurs in their prism off the world too - 
   const css = badgeCss();
   assert.match(css, /\.card button\.acttitle\.actaura\.aura-crystal \{ color: #8c52ff; \}/);
   assert.match(css, /\.aura-crystal \.actauraword \{ background-image: linear-gradient\(90deg, #8c52ff, #38d9f2, #ff61b8\);/);
-  assert.match(src('src/ui/enhanced/enhancedStyle.js'), /^\.card button\.actarmory\.locked \{ opacity: 0\.4; border-style: dashed; \}/m, 'every line\'s locked piece');
+  const locked = /^(.*\.card button\.actarmory\.locked\.aura-[^{]*)\{ opacity: 0\.4; border-style: dashed; \}/m.exec(src('src/ui/enhanced/enhancedStyle.js'))?.[1] ?? '';
+  assert.deepEqual(ARMORY_LINES.filter((l) => !locked.includes(`.card button.actarmory.locked.aura-${l}`)), [], 'every line\'s locked piece dimmed');
   const node = (tag) => ({ tag, attrs: {}, kids: [], setAttribute(k, v) { this.attrs[k] = v; }, append(...c) { this.kids.push(...c); } });
   const svg = auraRingNode({ createElementNS: (_, tag) => node(tag) }, 'crystal');
   const stops = svg.kids[0].kids[0].kids.map((k) => k.attrs['stop-color']);

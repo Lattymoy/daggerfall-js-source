@@ -1249,7 +1249,7 @@ img.fit { image-rendering: pixelated; }   /* AUDIT UI A1: a fitted picture drawn
 .card button.acttitle.actnone { color: var(--dim); }
 /* a piece not held: tried on when pointed at, its way of being had said under the row - never worn from here */
 .card button.acttitle.actaura .actauraword { display: inline-block; }   /* an aura's or a piece's word, painted as its title's (badgeCss) */
-.card button.actarmory.locked { opacity: 0.4; border-style: dashed; }   /* AUDIT lane 3 F5: every line's, the Crystal Spurs' included */
+.card button.actarmory.locked.aura-dagonfire, .card button.actarmory.locked.aura-eternal, .card button.actarmory.locked.aura-guild, .card button.actarmory.locked.aura-crystal { opacity: 0.4; border-style: dashed; }   /* AUDIT lane 3 F5: every line's (net/armoryLaw.js ARMORY_LINES) */
 .card .slots-look { margin: 4px 0 0; min-height: 2.6em; }
 /* STOREFRONT (2026-10-29): the effects under the stage - the kill effect, the portals, the mount - three tiles, each in
    its effect's own colour; the Mount slot's horse over its choices (ui/mountPreview.js). */
