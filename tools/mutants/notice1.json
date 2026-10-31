@@ -29,8 +29,8 @@
   {
     "name": "NOTICE1-4-the-reporter-still-sees-it",
     "file": "server-account/src/board.js",
-    "old": "WHERE r.note_id = n.id AND r.reporter = ?4)",
-    "new": "WHERE r.note_id = n.id AND r.reporter = ?4 AND 1 = 0)",
+    "old": "      AND NOT EXISTS (SELECT 1 FROM board_reports r WHERE r.note_id = n.id AND r.reporter = ?4)",
+    "new": "      AND NOT EXISTS (SELECT 1 FROM board_reports r WHERE r.note_id = n.id AND r.reporter = ?4 AND 1 = 0)",
     "tests": [
       "test/net/notice1.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "NOTICE1-5-a-fourth-live-note",
     "file": "server-account/src/board.js",
-    "old": "WHERE (SELECT COUNT(*) FROM board_notes WHERE author = ? AND expires_at > ?) < ?`)",
-    "new": "WHERE (SELECT COUNT(*) FROM board_notes WHERE author = ? AND expires_at > ?) <= ?`)",
+    "old": "      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM board_notes WHERE author = ? AND expires_at > ?) < ?`,",
+    "new": "      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM board_notes WHERE author = ? AND expires_at > ?) <= ?`,",
     "tests": [
       "test/net/notice1.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "NOTICE1-6-a-guest-pins",
     "file": "server-account/src/board.js",
-    "old": "  if (accountKind(player) !== 'linked') return { error: 'board-need-account' };\n  if (!boardOpenFor(player, env)) return { error: 'board-closed' };\n  if (isMuted(player, nowS)) return { error: 'muted' };",
-    "new": "  if (!boardOpenFor(player, env)) return { error: 'board-closed' };\n  if (isMuted(player, nowS)) return { error: 'muted' };",
+    "old": "  if (accountKind(player) !== 'linked') return { error: 'board-need-account' };\n  if (!boardOpenFor(player, env)) return { error: 'board-closed' };",
+    "new": "  if (!boardOpenFor(player, env)) return { error: 'board-closed' };",
     "tests": [
       "test/net/notice1.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "NOTICE1-9-the-third-report-does-not-hide",
     "file": "server-account/src/board.js",
-    "old": "AND p.created_at <= ?2 - ?4) >= ?3`)",
-    "new": "AND p.created_at <= ?2 - ?4) > ?3`)",
+    "old": "      WHERE r.note_id = ?1 AND COALESCE(p.muted_until, 0) <= ?2 AND p.created_at <= ?2 - ?4) >= ?3`,",
+    "new": "      WHERE r.note_id = ?1 AND COALESCE(p.muted_until, 0) <= ?2 AND p.created_at <= ?2 - ?4) > ?3`,",
     "tests": [
       "test/net/notice1.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "NOTICE1-10-a-restored-note-hides-again",
     "file": "server-account/src/board.js",
-    "old": "  await db.prepare(`UPDATE board_notes SET hidden = 1 WHERE id = ?1 AND hidden = 0",
-    "new": "  await db.prepare(`UPDATE board_notes SET hidden = 1 WHERE id = ?1 AND hidden <> 1",
+    "old": "      `UPDATE board_notes SET hidden = 1 WHERE id = ?1 AND hidden = 0",
+    "new": "      `UPDATE board_notes SET hidden = 1 WHERE id = ?1 AND hidden <> 1",
     "tests": [
       "test/net/notice1.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "NOTICE1-12-anyone-takes-a-note-down",
     "file": "server-account/src/board.js",
-    "old": "'DELETE FROM board_notes WHERE id = ? AND author = ?'",
-    "new": "'DELETE FROM board_notes WHERE id = ? AND author <> ?'",
+    "old": "  const r = await db.prepare('DELETE FROM board_notes WHERE id = ? AND author = ?').bind(id, author.id).run();",
+    "new": "  const r = await db.prepare('DELETE FROM board_notes WHERE id = ? AND author <> ?').bind(id, author.id).run();",
     "tests": [
       "test/net/notice1.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "NOTICE1-15-an-expired-row-kept",
     "file": "server-account/src/board.js",
-    "old": "'DELETE FROM board_notes WHERE id IN (SELECT id FROM board_notes WHERE expires_at <= ? LIMIT ?)'",
-    "new": "'DELETE FROM board_notes WHERE id IN (SELECT id FROM board_notes WHERE expires_at < ? LIMIT ?)'",
+    "old": "    .prepare('DELETE FROM board_notes WHERE id IN (SELECT id FROM board_notes WHERE expires_at <= ? LIMIT ?)')",
+    "new": "    .prepare('DELETE FROM board_notes WHERE id IN (SELECT id FROM board_notes WHERE expires_at < ? LIMIT ?)')",
     "tests": [
       "test/net/notice1.test.js"
     ]

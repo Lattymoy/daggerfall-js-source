@@ -148,8 +148,8 @@
   {
     "name": "NAMEAS-the-notes-account-dropped",
     "file": "server-account/src/board.js",
-    "old": "from: n.author_name, by: n.author, ",
-    "new": "from: n.author_name, ",
+    "old": "    by: n.author,\n    ...badgeOf(row, env, nowS),",
+    "new": "    ...badgeOf(row, env, nowS),",
     "tests": [
       "test/net/nameas_service.test.js"
     ]

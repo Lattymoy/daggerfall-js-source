@@ -292,7 +292,7 @@
   {
     "name": "SEAT2b-fund-any-rank",
     "file": "server-account/src/seatForts.js",
-    "old": "if (!SEAT_LEVER_RANKS.includes(Number(a.me.rank))) return { error: 'guild-rank' };",
+    "old": "  if (!SEAT_LEVER_RANKS.includes(Number(a.me.rank))) return { error: 'guild-rank' };",
     "new": "",
     "tests": [
       "test/server/seat2b_service.test.js"
@@ -301,8 +301,8 @@
   {
     "name": "SEAT2b-fund-any-guild",
     "file": "server-account/src/seatForts.js",
-    "old": "if (!hold || hold.guild_id !== a.me.guild_id) return { error: 'seat-not-held' };",
-    "new": "if (!hold) return { error: 'seat-not-held' };",
+    "old": "  if (!hold || hold.guild_id !== a.me.guild_id) return { error: 'seat-not-held' };",
+    "new": "  if (!hold) return { error: 'seat-not-held' };",
     "tests": [
       "test/server/seat2b_service.test.js"
     ]
@@ -310,7 +310,7 @@
   {
     "name": "SEAT2b-fund-twice",
     "file": "server-account/src/seatForts.js",
-    "old": "if (cur?.building != null) return { error: 'fort-building' };",
+    "old": "  if (cur?.building != null) return { error: 'fort-building' };",
     "new": "",
     "tests": [
       "test/server/seat2b_service.test.js"
@@ -319,7 +319,7 @@
   {
     "name": "SEAT2b-fund-past-max",
     "file": "server-account/src/seatForts.js",
-    "old": "if (t > fortMaxTier(work)) return { error: 'fort-max' };",
+    "old": "  if (t > fortMaxTier(work)) return { error: 'fort-max' };",
     "new": "",
     "tests": [
       "test/server/seat2b_service.test.js"
@@ -328,7 +328,7 @@
   {
     "name": "SEAT2b-fund-any-place",
     "file": "server-account/src/seatForts.js",
-    "old": "if (!fortMayRaise(work, { tier: hold.tier, coastal: port === true, walls: tiers.walls ?? 0 })) return { error: 'fort-not-here' };",
+    "old": "  if (!fortMayRaise(work, { tier: hold.tier, coastal: port === true, walls: tiers.walls ?? 0 }))\n    return { error: 'fort-not-here' };",
     "new": "",
     "tests": [
       "test/server/seat2b_service.test.js"
@@ -337,8 +337,8 @@
   {
     "name": "SEAT2b-fund-free",
     "file": "server-account/src/seatForts.js",
-    "old": "WHERE COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?1), 0) >= ?2\n          AND EXISTS (SELECT 1 FROM town_seat_holds WHERE key = ?8 AND guild_id = ?1)",
-    "new": "WHERE EXISTS (SELECT 1 FROM town_seat_holds WHERE key = ?8 AND guild_id = ?1)",
+    "old": "        WHERE COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?1), 0) >= ?2\n          AND EXISTS (SELECT 1 FROM town_seat_holds WHERE key = ?8 AND guild_id = ?1)",
+    "new": "        WHERE EXISTS (SELECT 1 FROM town_seat_holds WHERE key = ?8 AND guild_id = ?1)",
     "tests": [
       "test/server/seat2b_service.test.js"
     ]
@@ -346,7 +346,7 @@
   {
     "name": "SEAT2b-fund-repeat-burns",
     "file": "server-account/src/seatForts.js",
-    "old": "if (prior) return { ok: true, repeat: true, work, forts: await fortsOf(db, key, nowS) };",
+    "old": "  if (prior) return { ok: true, repeat: true, work, forts: await fortsOf(db, key, nowS) };",
     "new": "",
     "tests": [
       "test/server/seat2b_service.test.js"
@@ -355,8 +355,8 @@
   {
     "name": "SEAT2b-fund-builder-ignored",
     "file": "server-account/src/seatForts.js",
-    "old": "const builder = await isBuilder(db, player.id, character, nowS);",
-    "new": "const builder = false;",
+    "old": "  const builder = await isBuilder(db, player.id, character, nowS);",
+    "new": "  const builder = false;",
     "tests": [
       "test/server/seat2b_service.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "SEAT2b-rise-early",
     "file": "server-account/src/seatForts.js",
-    "old": "if (r.building == null || r.standsAt == null || r.standsAt > nowS) continue;",
-    "new": "if (r.building == null || r.standsAt == null) continue;",
+    "old": "    if (r.building == null || r.standsAt == null || r.standsAt > nowS) continue;",
+    "new": "    if (r.building == null || r.standsAt == null) continue;",
     "tests": [
       "test/server/seat2b_service.test.js"
     ],
@@ -375,8 +375,8 @@
   {
     "name": "SEAT2b-rise-keeps-held",
     "file": "server-account/src/seatForts.js",
-    "old": "        db.prepare('DELETE FROM town_seat_fort_held WHERE key = ? AND work = ?').bind(key, r.work),\n",
-    "new": "",
+    "old": "        db.prepare('DELETE FROM town_seat_fort_held WHERE key = ? AND work = ?').bind(key, r.work),\n        historyRow(db, key, nowS, 'fort-raised', { work: r.work, tier: r.building }),",
+    "new": "        historyRow(db, key, nowS, 'fort-raised', { work: r.work, tier: r.building }),",
     "tests": [
       "test/server/seat2b_service.test.js"
     ]
@@ -393,8 +393,8 @@
   {
     "name": "SEAT2b-supply-overtakes",
     "file": "server-account/src/seatForts.js",
-    "old": "const take = Math.min(want, left.get(k) ?? 0);",
-    "new": "const take = left.get(k) ?? 0;",
+    "old": "      const take = Math.min(want, left.get(k) ?? 0);",
+    "new": "      const take = left.get(k) ?? 0;",
     "tests": [
       "test/server/seat2b_service.test.js"
     ]
@@ -402,8 +402,8 @@
   {
     "name": "SEAT2b-capture-keeps-held",
     "file": "server-account/src/seatForts.js",
-    "old": "    db.prepare('DELETE FROM town_seat_fort_held WHERE key = ?').bind(key),\n",
-    "new": "",
+    "old": "    db.prepare('DELETE FROM town_seat_fort_held WHERE key = ?').bind(key),\n    db",
+    "new": "    db",
     "tests": [
       "test/server/seat2b_service.test.js"
     ]
@@ -411,8 +411,8 @@
   {
     "name": "SEAT2b-capture-no-drop",
     "file": "server-account/src/seatForts.js",
-    "old": "THEN tier ELSE MAX(0, tier - 1) END,",
-    "new": "THEN tier ELSE tier END,",
+    "old": "        `UPDATE town_seat_forts SET tier = CASE WHEN ?2 = 1 AND work = 'walls' THEN tier ELSE MAX(0, tier - 1) END,",
+    "new": "        `UPDATE town_seat_forts SET tier = CASE WHEN ?2 = 1 AND work = 'walls' THEN tier ELSE tier END,",
     "tests": [
       "test/server/seat2b_service.test.js"
     ]
@@ -420,8 +420,8 @@
   {
     "name": "SEAT2b-capture-project-stands",
     "file": "server-account/src/seatForts.js",
-    "old": "      building = NULL, stands_at = NULL, builder = 0, siegewright = 0, guild_id = NULL WHERE key = ?1`",
-    "new": "      builder = 0, siegewright = 0, guild_id = NULL WHERE key = ?1`",
+    "old": "      building = NULL, stands_at = NULL, builder = 0, siegewright = 0, guild_id = NULL WHERE key = ?1`,",
+    "new": "      builder = 0, siegewright = 0, guild_id = NULL WHERE key = ?1`,",
     "tests": [
       "test/server/seat2b_service.test.js"
     ]
@@ -429,8 +429,8 @@
   {
     "name": "SEAT2b-fortifier-any-side",
     "file": "server-account/src/seatForts.js",
-    "old": "WHERE r.week = ? AND r.key = ? AND r.side = 'defend' ORDER BY r.at, r.account",
-    "new": "WHERE r.week = ? AND r.key = ? ORDER BY r.at, r.account",
+    "old": "    WHERE r.week = ? AND r.key = ? AND r.side = 'defend' ORDER BY r.at, r.account`,",
+    "new": "    WHERE r.week = ? AND r.key = ? ORDER BY r.at, r.account`,",
     "tests": [
       "test/server/seat2b_service.test.js"
     ]
@@ -438,8 +438,8 @@
   {
     "name": "SEAT2b-fortifier-every-capture",
     "file": "server-account/src/seatForts.js",
-    "old": "  if (await db.prepare('SELECT 1 FROM town_seat_fortifier WHERE season = ? AND key = ?').bind(seasonWeek, key).first()) return null;\n",
-    "new": "",
+    "old": "  if (await db.prepare('SELECT 1 FROM town_seat_fortifier WHERE season = ? AND key = ?').bind(seasonWeek, key).first())\n    return null;\n  const { results = [] } = await db",
+    "new": "  const { results = [] } = await db",
     "tests": [
       "test/server/seat2b_service.test.js"
     ]
@@ -447,8 +447,8 @@
   {
     "name": "SEAT2b-fortifier-bare-walls",
     "file": "server-account/src/seatForts.js",
-    "old": "  if (walls <= 0) return null;\n",
-    "new": "",
+    "old": "  if (walls <= 0) return null;\n  if (await db.prepare('SELECT 1 FROM town_seat_fortifier WHERE season = ? AND key = ?').bind(seasonWeek, key).first())",
+    "new": "  if (await db.prepare('SELECT 1 FROM town_seat_fortifier WHERE season = ? AND key = ?').bind(seasonWeek, key).first())",
     "tests": [
       "test/server/seat2b_service.test.js"
     ]
@@ -456,8 +456,8 @@
   {
     "name": "SEAT2b-camps-not-emptied",
     "file": "server-account/src/seatForts.js",
-    "old": "  out.push(db.prepare('DELETE FROM town_seat_camps WHERE week = ?').bind(week));\n",
-    "new": "",
+    "old": "  out.push(db.prepare('DELETE FROM town_seat_camps WHERE week = ?').bind(week));\n  return out;",
+    "new": "  return out;",
     "tests": [
       "test/server/seat2b_service.test.js"
     ]
@@ -465,8 +465,8 @@
   {
     "name": "SEAT2b-camps-palace-gated",
     "file": "server-account/src/seatForts.js",
-    "old": "gated: tierOf(c.key) === 'crown' || gate >= 1",
-    "new": "gated: true",
+    "old": "    const { rams } = campSpent(c.items, { won, gated: tierOf(c.key) === 'crown' || gate >= 1 });",
+    "new": "    const { rams } = campSpent(c.items, { won, gated: true });",
     "tests": [
       "test/server/seat2b_service.test.js"
     ]
@@ -474,8 +474,8 @@
   {
     "name": "SEAT2b-season-forts-kept",
     "file": "server-account/src/seatForts.js",
-    "old": "[db.prepare('UPDATE town_seat_forts SET tier = MAX(0, tier - 1) WHERE tier > 0')]",
-    "new": "[]",
+    "old": "  const wear = [db.prepare('UPDATE town_seat_forts SET tier = MAX(0, tier - 1) WHERE tier > 0')]; // SEAT2b's wear, after its projects are lowered",
+    "new": "  const wear = []; // SEAT2b's wear, after its projects are lowered",
     "tests": [
       "test/server/seat2b_service.test.js"
     ]
@@ -483,8 +483,8 @@
   {
     "name": "SEAT2b-listings-any-board",
     "file": "server-account/src/seatForts.js",
-    "old": "x.pixel?.[0] === board[0] && x.pixel?.[1] === board[1]",
-    "new": "x.pixel?.[0] === board[0]",
+    "old": "  const seat = [...(await confirmedSeats(db, nowS)).values()].find(\n    (x) => x.pixel?.[0] === board[0] && x.pixel?.[1] === board[1],\n  );",
+    "new": "  const seat = [...(await confirmedSeats(db, nowS)).values()].find((x) => x.pixel?.[0] === board[0]);",
     "tests": [
       "test/server/seat2b_service.test.js"
     ]
@@ -492,7 +492,7 @@
   {
     "name": "SEAT2b-tithe-cap-flat",
     "file": "server-account/src/seatForts.js",
-    "old": "export const titheCapAt = async (db, key, tier, nowS) => marketHallTitheCap(TITHE_CAP[tier] ?? 0, await marketTierOf(db, key, nowS));",
+    "old": "export const titheCapAt = async (db, key, tier, nowS) =>\n  marketHallTitheCap(TITHE_CAP[tier] ?? 0, await marketTierOf(db, key, nowS));",
     "new": "export const titheCapAt = async (db, key, tier, nowS) => TITHE_CAP[tier] ?? 0;",
     "tests": [
       "test/server/seat2b_service.test.js"

@@ -158,8 +158,8 @@
   {
     "name": "AUDIT-SCALE-LANED-guild-sweep-boundary",
     "file": "server-account/src/guildBoard.js",
-    "old": "'DELETE FROM guild_notes WHERE id IN (SELECT id FROM guild_notes WHERE expires_at <= ? LIMIT ?)'",
-    "new": "'DELETE FROM guild_notes WHERE id IN (SELECT id FROM guild_notes WHERE expires_at < ? LIMIT ?)'",
+    "old": "    .prepare('DELETE FROM guild_notes WHERE id IN (SELECT id FROM guild_notes WHERE expires_at <= ? LIMIT ?)')",
+    "new": "    .prepare('DELETE FROM guild_notes WHERE id IN (SELECT id FROM guild_notes WHERE expires_at < ? LIMIT ?)')",
     "tests": [
       "test/net/auditscale.test.js",
       "test/server/scale4b.test.js"
@@ -169,8 +169,8 @@
   {
     "name": "AUDIT-SCALE-LANED-notices-sweep-boundary",
     "file": "server-account/src/board.js",
-    "old": "'DELETE FROM board_notices WHERE id IN (SELECT id FROM board_notices WHERE expires_at <= ? LIMIT ?)'",
-    "new": "'DELETE FROM board_notices WHERE id IN (SELECT id FROM board_notices WHERE expires_at < ? LIMIT ?)'",
+    "old": "    .prepare('DELETE FROM board_notices WHERE id IN (SELECT id FROM board_notices WHERE expires_at <= ? LIMIT ?)')",
+    "new": "    .prepare('DELETE FROM board_notices WHERE id IN (SELECT id FROM board_notices WHERE expires_at < ? LIMIT ?)')",
     "tests": [
       "test/net/auditscale.test.js",
       "test/server/scale4b.test.js",

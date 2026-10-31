@@ -92,8 +92,8 @@
   {
     "name": "MARKET-SPEED-hall-unkept",
     "file": "server-account/src/seatForts.js",
-    "old": "  const seat = [...(await confirmedSeats(db, nowS)).values()]",
-    "new": "  const seat = [...(await confirmedSeats(db, nowS, { fresh: true })).values()]",
+    "old": "  const seat = [...(await confirmedSeats(db, nowS)).values()].find(",
+    "new": "  const seat = [...(await confirmedSeats(db, nowS, { fresh: true })).values()].find(",
     "tests": [
       "test/net/gatherspeed.test.js"
     ],

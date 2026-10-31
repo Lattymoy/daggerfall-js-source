@@ -175,8 +175,8 @@
   {
     "name": "SEAT2b2-supply-day-unshortened",
     "file": "server-account/src/seatForts.js",
-    "old": "fortStandsAt(nowS, r.building, { siegewright: r.siegewright })",
-    "new": "fortStandsAt(nowS, r.building)",
+    "old": "          .bind(fortStandsAt(nowS, r.building, { siegewright: r.siegewright }), key, r.work, r.building),",
+    "new": "          .bind(fortStandsAt(nowS, r.building), key, r.work, r.building),",
     "tests": [
       "test/net/seat2b_peace_service.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "SEAT2b2-rise-keeps-siegewright",
     "file": "server-account/src/seatForts.js",
-    "old": "stands_at = NULL, builder = 0, siegewright = 0 WHERE key = ? AND work = ?",
-    "new": "stands_at = NULL, builder = 0 WHERE key = ? AND work = ?",
+    "old": "            'UPDATE town_seat_forts SET tier = building, building = NULL, stands_at = NULL, builder = 0, siegewright = 0 WHERE key = ? AND work = ? AND building = ? AND stands_at <= ?',",
+    "new": "            'UPDATE town_seat_forts SET tier = building, building = NULL, stands_at = NULL, builder = 0 WHERE key = ? AND work = ? AND building = ? AND stands_at <= ?',",
     "tests": [
       "test/net/seat2b_peace_service.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "SEAT2b2-capture-keeps-siegewright",
     "file": "server-account/src/seatForts.js",
-    "old": "builder = 0, siegewright = 0, guild_id = NULL WHERE key = ?1",
-    "new": "builder = 0, guild_id = NULL WHERE key = ?1",
+    "old": "      building = NULL, stands_at = NULL, builder = 0, siegewright = 0, guild_id = NULL WHERE key = ?1`,",
+    "new": "      building = NULL, stands_at = NULL, builder = 0, guild_id = NULL WHERE key = ?1`,",
     "tests": [
       "test/net/seat2b_peace_service.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "SEAT2b2-fund-siegewright-unkept",
     "file": "server-account/src/seatForts.js",
-    "old": "nowS, siegewright ? 1 : 0),",
-    "new": "nowS, 0),",
+    "old": "        .bind(key, work, t - 1, t, g, builder ? 1 : 0, nowS, siegewright ? 1 : 0),",
+    "new": "        .bind(key, work, t - 1, t, g, builder ? 1 : 0, nowS, 0),",
     "tests": [
       "test/net/seat2b_peace_service.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "SEAT2b2-tier-at-day-unread",
     "file": "server-account/src/seatForts.js",
-    "old": "return r.building != null && r.stands_at != null && Number(r.stands_at) <= nowS ? Number(r.building) : Number(r.tier);",
-    "new": "return Number(r.tier);",
+    "old": "  return r.building != null && r.stands_at != null && Number(r.stands_at) <= nowS ? Number(r.building) : Number(r.tier);",
+    "new": "  return Number(r.tier);",
     "tests": [
       "test/net/seat2b_peace_service.test.js"
     ]

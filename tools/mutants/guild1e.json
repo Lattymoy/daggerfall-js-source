@@ -2,8 +2,8 @@
   {
     "name": "GUILD1e-pin-not-a-member-still",
     "file": "server-account/src/guildBoard.js",
-    "old": "      WHERE EXISTS (SELECT 1 FROM guild_members WHERE player = ?3 AND char_id = ?4 AND guild_id = ?2)\n",
-    "new": "      WHERE 1 = 1\n",
+    "old": "      WHERE EXISTS (SELECT 1 FROM guild_members WHERE player = ?3 AND char_id = ?4 AND guild_id = ?2)",
+    "new": "      WHERE 1 = 1",
     "tests": [
       "test/net/guild1e_service.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "GUILD1e-live-bound-one-over",
     "file": "server-account/src/guildBoard.js",
-    "old": "AND expires_at > ?8) < ?11`)",
-    "new": "AND expires_at > ?8) <= ?11`)",
+    "old": "        AND (SELECT COUNT(*) FROM guild_notes WHERE guild_id = ?2 AND author = ?3 AND expires_at > ?8) < ?11`,",
+    "new": "        AND (SELECT COUNT(*) FROM guild_notes WHERE guild_id = ?2 AND author = ?3 AND expires_at > ?8) <= ?11`,",
     "tests": [
       "test/net/guild1e_service.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "GUILD1e-read-muted-shown",
     "file": "server-account/src/guildBoard.js",
-    "old": "AND (COALESCE(p.muted_until, 0) <= ?2 OR n.author = ?3)",
-    "new": "AND (1 = 1 OR n.author = ?3)",
+    "old": "    WHERE n.guild_id = ?1 AND n.expires_at > ?2 AND (COALESCE(p.muted_until, 0) <= ?2 OR n.author = ?3)",
+    "new": "    WHERE n.guild_id = ?1 AND n.expires_at > ?2 AND (1 = 1 OR n.author = ?3)",
     "tests": [
       "test/net/guild1e_service.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "GUILD1e-read-any-guild",
     "file": "server-account/src/guildBoard.js",
-    "old": "    WHERE n.guild_id = ?1 AND n.expires_at > ?2",
-    "new": "    WHERE n.guild_id IS NOT NULL AND n.expires_at > ?2",
+    "old": "    WHERE n.guild_id = ?1 AND n.expires_at > ?2 AND (COALESCE(p.muted_until, 0) <= ?2 OR n.author = ?3)",
+    "new": "    WHERE n.guild_id IS NOT NULL AND n.expires_at > ?2 AND (COALESCE(p.muted_until, 0) <= ?2 OR n.author = ?3)",
     "tests": [
       "test/net/guild1e_service.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "GUILD1e-read-one-more",
     "file": "server-account/src/guildBoard.js",
-    "old": ".bind(me.guild_id, nowS, player.id, GUILD_NOTES_SHOWN).all();",
-    "new": ".bind(me.guild_id, nowS, player.id, GUILD_NOTES_SHOWN + 1).all();",
+    "old": "    .bind(me.guild_id, nowS, player.id, GUILD_NOTES_SHOWN)",
+    "new": "    .bind(me.guild_id, nowS, player.id, GUILD_NOTES_SHOWN + 1)",
     "tests": [
       "test/net/guild1e_service.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "GUILD1e-down-a-members-rank",
     "file": "server-account/src/guildBoard.js",
-    "old": "AND ${guildPowerSql('notes', 'rank', '?2')}))`)",
-    "new": "AND rank IN (0, 1, 2)))`)",
+    "old": "    AND (author = ?3 OR EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?4 AND guild_id = ?2 AND ${guildPowerSql('notes', 'rank', '?2')}))`,",
+    "new": "    AND (author = ?3 OR EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?4 AND guild_id = ?2 AND rank IN (0, 1, 2)))`,",
     "tests": [
       "test/net/guild1e_service.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "GUILD1e-down-another-guilds",
     "file": "server-account/src/guildBoard.js",
-    "old": "DELETE FROM guild_notes WHERE id = ?1 AND guild_id = ?2\n",
-    "new": "DELETE FROM guild_notes WHERE id = ?1 AND ?2 IS NOT NULL\n",
+    "old": "      `DELETE FROM guild_notes WHERE id = ?1 AND guild_id = ?2",
+    "new": "      `DELETE FROM guild_notes WHERE id = ?1 AND ?2 IS NOT NULL",
     "tests": [
       "test/net/guild1e_service.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "GUILD1e-down-author-not-own",
     "file": "server-account/src/guildBoard.js",
-    "old": "    AND (author = ?3 OR EXISTS",
-    "new": "    AND (0 = 1 OR EXISTS",
+    "old": "    AND (author = ?3 OR EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?4 AND guild_id = ?2 AND ${guildPowerSql('notes', 'rank', '?2')}))`,",
+    "new": "    AND (0 = 1 OR EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?4 AND guild_id = ?2 AND ${guildPowerSql('notes', 'rank', '?2')}))`,",
     "tests": [
       "test/net/guild1e_service.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "GUILD1e-switch-unasked",
     "file": "server-account/src/guildBoard.js",
-    "old": "  if (!boardOpenFor(player, env)) return { error: 'board-closed' };\n",
-    "new": "",
+    "old": "  if (!boardOpenFor(player, env)) return { error: 'board-closed' };\n  const a = await guildActorOf(db, player, character);",
+    "new": "  const a = await guildActorOf(db, player, character);",
     "tests": [
       "test/net/guild1e_service.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "GUILD1e-muted-pins",
     "file": "server-account/src/guildBoard.js",
-    "old": "  if (isMuted(player, nowS)) return { error: 'muted' };\n",
-    "new": "",
+    "old": "  if (isMuted(player, nowS)) return { error: 'muted' };\n  if (typeof rid !== 'string' || !BOARD_RID_RE.test(rid)) return { error: 'board-rid' };",
+    "new": "  if (typeof rid !== 'string' || !BOARD_RID_RE.test(rid)) return { error: 'board-rid' };",
     "tests": [
       "test/net/guild1e_service.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "GUILD1e-account-in-the-answer",
     "file": "server-account/src/guildBoard.js",
-    "old": "  id: n.id, from: n.author_name, subject: maskText(n.subject),",
-    "new": "  id: n.id, from: n.author_name, author: n.author, subject: maskText(n.subject),",
+    "old": "  subject: maskText(n.subject),",
+    "new": "  author: n.author,\n  subject: maskText(n.subject),",
     "tests": [
       "test/net/guild1e_service.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "GUILD1e-keeper-unsaid",
     "file": "server-account/src/guildBoard.js",
-    "old": "      keeper: guildMay(me.rank, 'notes', powers),",
-    "new": "      keeper: false,",
+    "old": "      keeper: guildMay(me.rank, 'notes', powers), // GUILD-RANKS: as the guild set it",
+    "new": "      keeper: false, // GUILD-RANKS: as the guild set it",
     "tests": [
       "test/net/guild1e_service.test.js",
       "test/net/guild1e_client.test.js"
@@ -120,8 +120,8 @@
   {
     "name": "GUILD1e-poster-without-a-banner",
     "file": "server-account/src/board.js",
-    "old": "heraldry: heraldryOfRow(n.guild_heraldry) } } : {}),",
-    "new": "heraldry: null } } : {}),",
+    "old": "    ...(guildOk ? { guild: { name: n.guild_name, tag: n.guild_tag, heraldry: heraldryOfRow(n.guild_heraldry) } } : {}),",
+    "new": "    ...(guildOk ? { guild: { name: n.guild_name, tag: n.guild_tag, heraldry: null } } : {}),",
     "tests": [
       "test/net/guild1e_service.test.js",
       "test/net/guild1e_client.test.js"

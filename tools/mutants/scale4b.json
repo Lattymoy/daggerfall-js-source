@@ -2,8 +2,8 @@
   {
     "name": "SCALE4b-board-swept-on-read",
     "file": "server-account/src/board.js",
-    "old": "  if (!boardKeyOk(mapId)) return { error: 'bad-board' };\n  const mod = canModerate(reader, env);",
-    "new": "  if (!boardKeyOk(mapId)) return { error: 'bad-board' };\n  await sweepBoard(db, nowS);\n  const mod = canModerate(reader, env);",
+    "old": "  const mod = canModerate(reader, env);",
+    "new": "  await sweepBoard(db, nowS);\n  const mod = canModerate(reader, env);",
     "tests": [
       "test/server/scale4b.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "SCALE4b-guild-board-swept-on-read",
     "file": "server-account/src/guildBoard.js",
-    "old": "  const { me, powers } = a;\n  const g = await db.prepare('SELECT id, name, tag, heraldry FROM guilds WHERE id = ?').bind(me.guild_id).first();",
-    "new": "  const { me, powers } = a;\n  await sweepGuildNotes(db, nowS);\n  const g = await db.prepare('SELECT id, name, tag, heraldry FROM guilds WHERE id = ?').bind(me.guild_id).first();",
+    "old": "  const g = await db.prepare('SELECT id, name, tag, heraldry FROM guilds WHERE id = ?').bind(me.guild_id).first();",
+    "new": "  await sweepGuildNotes(db, nowS);\n  const g = await db.prepare('SELECT id, name, tag, heraldry FROM guilds WHERE id = ?').bind(me.guild_id).first();",
     "tests": [
       "test/server/scale4b.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "SCALE4b-sweep-takes-the-live",
     "file": "server-account/src/board.js",
-    "old": "DELETE FROM board_notes WHERE id IN (SELECT id FROM board_notes WHERE expires_at <= ? LIMIT ?)').bind(nowS, limit)",
-    "new": "DELETE FROM board_notes WHERE id IN (SELECT id FROM board_notes WHERE expires_at <= ? LIMIT ?)').bind(nowS + 2 * 86400, limit)",
+    "old": "    .prepare('DELETE FROM board_notes WHERE id IN (SELECT id FROM board_notes WHERE expires_at <= ? LIMIT ?)')\n    .bind(nowS, limit)",
+    "new": "    .prepare('DELETE FROM board_notes WHERE id IN (SELECT id FROM board_notes WHERE expires_at <= ? LIMIT ?)')\n    .bind(nowS + 2 * 86400, limit)",
     "tests": [
       "test/server/scale4b.test.js"
     ],

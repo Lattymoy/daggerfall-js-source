@@ -734,8 +734,8 @@
   {
     "name": "AUDIT-F5-note-marks-unread",
     "file": "server-account/src/board.js",
-    "old": "    for (const p of await withMasteryMarksAll({ db }, [...rows.values()], env)) rows.set(p.id, p);   // AUDIT HORIZONTAL F5: a worn Mark of Mastery (reads alone)\n",
-    "new": "",
+    "old": "    for (const p of await withMasteryMarksAll({ db }, [...rows.values()], env)) rows.set(p.id, p); // AUDIT HORIZONTAL F5: a worn Mark of Mastery (reads alone)\n  }",
+    "new": "  }",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]

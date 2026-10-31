@@ -174,5 +174,5 @@ test('NAME-AS a board note names its author\'s account beside the name it was si
   const note = read.body.notes.find((n) => n.subject === 'A duel');
   assert.ok(note, 'the note is on the board');
   assert.deepEqual([note.from, note.by], ['Pinner', author.id], 'the name it was signed with, and the account behind it');
-  assert.match(src('server-account/src/board.js'), /from: n\.author_name, by: n\.author,/);
+  assert.match(src('server-account/src/board.js'), /from: n\.author_name,\n\s*by: n\.author,/);
 });

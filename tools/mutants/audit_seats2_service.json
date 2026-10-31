@@ -2,8 +2,8 @@
   {
     "name": "AS2-S1-capture-due",
     "file": "server-account/src/seatForts.js",
-    "old": "    ...fortsCapturedStatements(db, key, { fortifier: !!fortifier, nowS }),",
-    "new": "    ...fortsCapturedStatements(db, key, { fortifier: !!fortifier }),",
+    "old": "    ...fortsCapturedStatements(db, key, { fortifier: !!fortifier, nowS }), // AUDIT SEATS-2 S1: the due raised first",
+    "new": "    ...fortsCapturedStatements(db, key, { fortifier: !!fortifier }), // AUDIT SEATS-2 S1: the due raised first",
     "tests": [
       "test/net/audit_seats2_service.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AS2-S1-due-rule",
     "file": "server-account/src/seatForts.js",
-    "old": "stands_at <= ?1 AND (?3 IS NULL OR key = ?3)",
-    "new": "stands_at > ?1 AND (?3 IS NULL OR key = ?3)",
+    "old": "  const due = 'building IS NOT NULL AND stands_at IS NOT NULL AND stands_at <= ?1 AND (?3 IS NULL OR key = ?3)';",
+    "new": "  const due = 'building IS NOT NULL AND stands_at IS NOT NULL AND stands_at > ?1 AND (?3 IS NULL OR key = ?3)';",
     "tests": [
       "test/net/audit_seats2_service.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AS2-S1-due-key",
     "file": "server-account/src/seatForts.js",
-    "old": "stands_at <= ?1 AND (?3 IS NULL OR key = ?3)",
-    "new": "stands_at <= ?1 AND (?3 IS NULL OR key <> ?3)",
+    "old": "  const due = 'building IS NOT NULL AND stands_at IS NOT NULL AND stands_at <= ?1 AND (?3 IS NULL OR key = ?3)';",
+    "new": "  const due = 'building IS NOT NULL AND stands_at IS NOT NULL AND stands_at <= ?1 AND (?3 IS NULL OR key <> ?3)';",
     "tests": [
       "test/net/audit_seats2_service.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AS2-S1-held-spent",
     "file": "server-account/src/seatForts.js",
-    "old": "DELETE FROM town_seat_fort_held WHERE EXISTS (SELECT 1 FROM town_seat_forts",
-    "new": "DELETE FROM town_seat_fort_held WHERE 0 AND EXISTS (SELECT 1 FROM town_seat_forts",
+    "old": "        `DELETE FROM town_seat_fort_held WHERE EXISTS (SELECT 1 FROM town_seat_forts",
+    "new": "        `DELETE FROM town_seat_fort_held WHERE 0 AND EXISTS (SELECT 1 FROM town_seat_forts",
     "tests": [
       "test/net/audit_seats2_service.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AS2-S1-due-rise",
     "file": "server-account/src/seatForts.js",
-    "old": "siegewright = 0 WHERE ${due}`)",
-    "new": "siegewright = 0 WHERE 0 AND ${due}`)",
+    "old": "        `UPDATE town_seat_forts SET tier = building, building = NULL, stands_at = NULL, builder = 0, siegewright = 0 WHERE ${due}`,",
+    "new": "        `UPDATE town_seat_forts SET tier = building, building = NULL, stands_at = NULL, builder = 0, siegewright = 0 WHERE 0 AND ${due}`,",
     "tests": [
       "test/net/audit_seats2_service.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AS2-S1-raised-row",
     "file": "server-account/src/seatForts.js",
-    "old": "json_object('work', work, 'tier', building)",
-    "new": "json_object('work', work, 'tier', tier)",
+    "old": "        `INSERT INTO town_seat_history (key, week, kind, data, at) SELECT key, ?2, 'fort-raised', json_object('work', work, 'tier', building), ?1",
+    "new": "        `INSERT INTO town_seat_history (key, week, kind, data, at) SELECT key, ?2, 'fort-raised', json_object('work', work, 'tier', tier), ?1",
     "tests": [
       "test/net/audit_seats2_service.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AS2-S4-building-lowered",
     "file": "server-account/src/seatForts.js",
-    "old": "SET building = building - 1, stands_at = NULL WHERE tier > 0 AND building IS NOT NULL",
-    "new": "SET stands_at = NULL WHERE tier > 0 AND building IS NOT NULL",
+    "old": "    db.prepare(\n      'UPDATE town_seat_forts SET building = building - 1, stands_at = NULL WHERE tier > 0 AND building IS NOT NULL',\n    ),",
+    "new": "    db.prepare('UPDATE town_seat_forts SET stands_at = NULL WHERE tier > 0 AND building IS NOT NULL'),",
     "tests": [
       "test/net/audit_seats2_service.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AS2-S4-reckoned",
     "file": "server-account/src/seatForts.js",
-    "old": "SET building = building - 1, stands_at = NULL WHERE tier > 0 AND building IS NOT NULL",
-    "new": "SET building = building - 1 WHERE tier > 0 AND building IS NOT NULL",
+    "old": "    db.prepare(\n      'UPDATE town_seat_forts SET building = building - 1, stands_at = NULL WHERE tier > 0 AND building IS NOT NULL',\n    ),",
+    "new": "    db.prepare('UPDATE town_seat_forts SET building = building - 1 WHERE tier > 0 AND building IS NOT NULL'),",
     "tests": [
       "test/net/audit_seats2_service.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AS2-S4-held-home",
     "file": "server-account/src/seatForts.js",
-    "old": "FROM town_seat_fort_held WHERE qty > 0 AND ${lowered}",
-    "new": "FROM town_seat_fort_held WHERE 0 AND qty > 0 AND ${lowered}",
+    "old": "    db.prepare(`INSERT INTO town_seat_stockpile (key, material, qty) SELECT key, material, qty FROM town_seat_fort_held WHERE qty > 0 AND ${lowered}",
+    "new": "    db.prepare(`INSERT INTO town_seat_stockpile (key, material, qty) SELECT key, material, qty FROM town_seat_fort_held WHERE 0 AND qty > 0 AND ${lowered}",
     "tests": [
       "test/net/audit_seats2_service.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AS2-S4-held-out",
     "file": "server-account/src/seatForts.js",
-    "old": "DELETE FROM town_seat_fort_held WHERE ${lowered}",
-    "new": "DELETE FROM town_seat_fort_held WHERE 0 AND ${lowered}",
+    "old": "    db.prepare(`DELETE FROM town_seat_fort_held WHERE ${lowered}`),",
+    "new": "    db.prepare(`DELETE FROM town_seat_fort_held WHERE 0 AND ${lowered}`),",
     "tests": [
       "test/net/audit_seats2_service.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AS2-S4-work-at-nought",
     "file": "server-account/src/seatForts.js",
-    "old": "f.tier > 0 AND f.building IS NOT NULL)",
-    "new": "f.tier >= 0 AND f.building IS NOT NULL)",
+    "old": "    'EXISTS (SELECT 1 FROM town_seat_forts f WHERE f.key = town_seat_fort_held.key AND f.work = town_seat_fort_held.work AND f.tier > 0 AND f.building IS NOT NULL)';",
+    "new": "    'EXISTS (SELECT 1 FROM town_seat_forts f WHERE f.key = town_seat_fort_held.key AND f.work = town_seat_fort_held.work AND f.tier >= 0 AND f.building IS NOT NULL)';",
     "tests": [
       "test/net/audit_seats2_service.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AS2-S4-crown-gate",
     "file": "server-account/src/seatForts.js",
-    "old": "rams > 0 AND tier <> 'crown'",
-    "new": "rams > 0",
+    "old": "      `UPDATE town_seat_battles SET rams = 0 WHERE week = ? AND rams > 0 AND tier <> 'crown'",
+    "new": "      `UPDATE town_seat_battles SET rams = 0 WHERE week = ? AND rams > 0",
     "tests": [
       "test/net/audit_seats2_service.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "AS2-S4-standing-gate",
     "file": "server-account/src/seatForts.js",
-    "old": "f.work = 'gatehouse' AND f.tier >= 1)",
-    "new": "f.work = 'gatehouse' AND f.tier >= 0)",
+    "old": "  AND NOT EXISTS (SELECT 1 FROM town_seat_forts f WHERE f.key = town_seat_battles.key AND f.work = 'gatehouse' AND f.tier >= 1)`,",
+    "new": "  AND NOT EXISTS (SELECT 1 FROM town_seat_forts f WHERE f.key = town_seat_battles.key AND f.work = 'gatehouse' AND f.tier >= 0)`,",
     "tests": [
       "test/net/audit_seats2_service.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "AS2-S5-unheld-guard",
     "file": "server-account/src/seatForts.js",
-    "old": "const unheld = 'NOT EXISTS (SELECT 1 FROM town_seat_holds WHERE key = ?1)';",
-    "new": "const unheld = '1';",
+    "old": "  const unheld = 'NOT EXISTS (SELECT 1 FROM town_seat_holds WHERE key = ?1)';",
+    "new": "  const unheld = '1';",
     "tests": [
       "test/net/audit_seats2_service.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "AS2-S5-due-first",
     "file": "server-account/src/seatForts.js",
-    "old": "    ...fortsDueStatements(db, nowS, key),\n",
-    "new": "",
+    "old": "    ...fortsDueStatements(db, nowS, key),\n    db",
+    "new": "    db",
     "tests": [
       "test/net/audit_seats2_service.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AS2-S5-project-cleared",
     "file": "server-account/src/seatForts.js",
-    "old": "WHERE key = ?1 AND building IS NOT NULL AND ${unheld}",
-    "new": "WHERE 0 AND key = ?1 AND building IS NOT NULL AND ${unheld}",
+    "old": "      WHERE key = ?1 AND building IS NOT NULL AND ${unheld}`,",
+    "new": "      WHERE 0 AND key = ?1 AND building IS NOT NULL AND ${unheld}`,",
     "tests": [
       "test/net/audit_seats2_service.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "AS2-S5-held-home",
     "file": "server-account/src/seatForts.js",
-    "old": "FROM town_seat_fort_held WHERE key = ?1 AND qty > 0 AND ${unheld}",
-    "new": "FROM town_seat_fort_held WHERE 0 AND key = ?1 AND qty > 0 AND ${unheld}",
+    "old": "        `INSERT INTO town_seat_stockpile (key, material, qty) SELECT key, material, qty FROM town_seat_fort_held WHERE key = ?1 AND qty > 0 AND ${unheld}",
+    "new": "        `INSERT INTO town_seat_stockpile (key, material, qty) SELECT key, material, qty FROM town_seat_fort_held WHERE 0 AND key = ?1 AND qty > 0 AND ${unheld}",
     "tests": [
       "test/net/audit_seats2_service.test.js"
     ]

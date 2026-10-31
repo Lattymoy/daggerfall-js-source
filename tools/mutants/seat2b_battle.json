@@ -466,8 +466,8 @@
   {
     "name": "SEAT2b2b-service-siegewright-side",
     "file": "server-account/src/seatForts.js",
-    "old": "WHERE r.week = ? AND r.key = ? AND r.side = 'attack' ORDER BY r.at, r.account",
-    "new": "WHERE r.week = ? AND r.key = ? AND r.side = 'defend' ORDER BY r.at, r.account",
+    "old": "    WHERE r.week = ? AND r.key = ? AND r.side = 'attack' ORDER BY r.at, r.account`,",
+    "new": "    WHERE r.week = ? AND r.key = ? AND r.side = 'defend' ORDER BY r.at, r.account`,",
     "tests": [
       "test/net/seat2b_battle_service.test.js"
     ]

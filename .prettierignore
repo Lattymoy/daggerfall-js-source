@@ -9,6 +9,7 @@
 !/server-account/src/accessOrphans.js
 !/server-account/src/accounts.js
 !/server-account/src/admit.js
+!/server-account/src/board.js
 !/server-account/src/boardNames.js
 !/server-account/src/brokerSales.js
 !/server-account/src/budget.js
@@ -37,6 +38,7 @@
 !/server-account/src/gambit.js
 !/server-account/src/grants.js
 !/server-account/src/guestName.js
+!/server-account/src/guildBoard.js
 !/server-account/src/guildFurniture.js
 !/server-account/src/guildLogos.js
 !/server-account/src/guildPowerSql.js
@@ -91,6 +93,7 @@
 !/server-account/src/seaWreck.js
 !/server-account/src/sealed.js
 !/server-account/src/seatBattles.js
+!/server-account/src/seatForts.js
 !/server-account/src/seatGifts.js
 !/server-account/src/seatIncursion.js
 !/server-account/src/seatRibbons.js

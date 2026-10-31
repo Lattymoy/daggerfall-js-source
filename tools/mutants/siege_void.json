@@ -434,8 +434,8 @@
   {
     "name": "AUDIT529-V2-stockpile-kept",
     "file": "server-account/src/seatForts.js",
-    "old": "        db.prepare(`UPDATE town_seat_stockpile SET qty = qty - MIN(?6, qty) WHERE key = ?1 AND material = ?5 AND ${again}`).bind(key, work, building, guild, material, n),\n",
-    "new": "",
+    "old": "        db\n          .prepare(\n            `UPDATE town_seat_stockpile SET qty = qty - MIN(?6, qty) WHERE key = ?1 AND material = ?5 AND ${again}`,\n          )\n          .bind(key, work, building, guild, material, n),\n      );",
+    "new": "      );",
     "tests": [
       "test/net/siege_void.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "AUDIT529-V2-held-unreturned",
     "file": "server-account/src/seatForts.js",
-    "old": "SELECT ?1, ?2, ?5, MIN(?6, qty) FROM town_seat_stockpile",
-    "new": "SELECT ?1, ?2, ?5, 0 FROM town_seat_stockpile",
+    "old": "            `INSERT INTO town_seat_fort_held (key, work, material, qty) SELECT ?1, ?2, ?5, MIN(?6, qty) FROM town_seat_stockpile",
+    "new": "            `INSERT INTO town_seat_fort_held (key, work, material, qty) SELECT ?1, ?2, ?5, 0 FROM town_seat_stockpile",
     "tests": [
       "test/net/siege_void.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "AUDIT529-V2-day-never-short",
     "file": "server-account/src/seatForts.js",
-    "old": "h.material = json_extract(j.value, '$[0]')), 0) < json_extract(j.value, '$[1]'))",
-    "new": "h.material = json_extract(j.value, '$[0]')), 0) < 0)",
+    "old": "        WHERE h.key = ?1 AND h.work = ?2 AND h.material = json_extract(j.value, '$[0]')), 0) < json_extract(j.value, '$[1]'))`,",
+    "new": "        WHERE h.key = ?1 AND h.work = ?2 AND h.material = json_extract(j.value, '$[0]')), 0) < 0)`,",
     "tests": [
       "test/net/siege_void.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "AUDIT529-V2-day-forgotten",
     "file": "server-account/src/seatForts.js",
-    "old": "UPDATE town_seat_forts SET stands_at = ?5 WHERE",
-    "new": "UPDATE town_seat_forts SET stands_at = NULL WHERE",
+    "old": "          `UPDATE town_seat_forts SET stands_at = ?5 WHERE key = ?1 AND work = ?2 AND building = ?3 AND guild_id = ?4 AND stands_at IS NULL AND ?5 IS NOT NULL",
+    "new": "          `UPDATE town_seat_forts SET stands_at = NULL WHERE key = ?1 AND work = ?2 AND building = ?3 AND guild_id = ?4 AND stands_at IS NULL AND ?5 IS NOT NULL",
     "tests": [
       "test/net/siege_void.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "AUDIT529-V2-tier-unasked",
     "file": "server-account/src/seatForts.js",
-    "old": "      WHERE key = ?1 AND work = ?2 AND building IS NULL AND tier = ?3 - 1`)",
-    "new": "      WHERE key = ?1 AND work = ?2 AND building IS NULL`)",
+    "old": "      WHERE key = ?1 AND work = ?2 AND building IS NULL AND tier = ?3 - 1`,",
+    "new": "      WHERE key = ?1 AND work = ?2 AND building IS NULL`,",
     "tests": [
       "test/net/siege_void.test.js"
     ]
