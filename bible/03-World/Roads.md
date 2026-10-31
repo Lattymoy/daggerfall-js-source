@@ -4,6 +4,8 @@ Mac, 2026-09-01, on Hazelnut's Basic Roads for Daggerfall Unity:
 "recreate it using it as a resource and avoiding the legal stuff
 altogether... be as faithful as possible without crossing the line."
 
+**OWN-WORK2 (2026-10-31, the owner).** vendor/roads-hazelnut is retired: Hazelnut's four arrays and their README left the tree, and the Bay's network is the port's own. `world/roadsProducer.js` builds it from the player's MAPS.BSA and WOODS.WLD in the terrain worker, cached as ROADS 19 says: the rivers and streams by the land's drainage (`world/road/riverNetwork.js`), then the roads and tracks by the law the roads past the Bay take - VOYAGER1's land, a river crossed once as a ford is priced, a place on its own pixel's land, ROAD-GAPS' links - with a tree a land and a road out each 100 pixels of an edge, where TESA5's crossings meet the provinces' roads. His painter stays, ported (MIT, `LICENSE`). On the freeware: 14,965 road, 28,059 track, 1,549 river and 3,036 stream pixels, no road on the sea, every land's towns one network but five standing on the sea's own pixels. Pins: `test/world/road/ownwork2_bayroads.test.js`.
+
 ## The line - and then permission
 
 The line below was the law from ROADS 1 to ROADS 21: the design learned

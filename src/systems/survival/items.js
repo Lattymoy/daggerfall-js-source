@@ -15,9 +15,6 @@
 // `water` (kg), which the weight law adds and the name reads. Camping
 // equipment and the campfire carry their condition as USES.
 import { registerCustomTemplates, templateByIndex, mintCondition, setItemFields, ITEM_TEMPLATES } from '../item/itemTemplates.js';
-import { addVendorTextures, vendorTextureCount } from '../textureReplacement.js';
-import { rebuiltPicture } from '../rebuiltPicture.js';   // NO-BETHESDA2: a picture that is Daggerfall's own, built from the player's files
-import DERIVED_ICONS from '../../../vendor/climates-calories/derived.json' with { type: 'json' };
 import { DYE_COLORS } from '../../characters/dyes.js';   // AUDIT C&C I7: the start's clothes, in CreateMensClothing's default dye
 const dice100 = (chance, roll01) => Math.floor(roll01 * 100) < chance;   // Dice100's line; no combat import (the formulas -> equip cycle)
 import {
@@ -61,42 +58,6 @@ export const SURVIVAL_TEMPLATES = Object.freeze([
 ]);
 registerCustomTemplates(SURVIVAL_TEMPLATES);
 
-/** SURV-TENT: the mod's TENT RESKINS, which are a different KIND of
- *  vendored file from the icons (food.js VENDOR_ICON_FILES, the picture
- *  law's own list). The camp stands the mod's own
- *  model (41606, `camp.js` TENT_MODEL) and the mod dresses it by
- *  overriding two records of REAL ARENA2 archives - a 32x32 tan canvas
- *  at 50_7-0 and a 64x8 dark pole at 67_10-0 - the way a texture pack
- *  overrides one. TEXTURE.050 and TEXTURE.067 are real files carrying
- *  dozens of other records, so these register WITHOUT `standIn`: the
- *  pipeline must still load the archive and swap only these two
- *  records. Without them the tent wore whatever the base game put on
- *  that model. */
-export const VENDOR_TENT_FILES = Object.freeze(['50_7-0', '67_10-0']);
-export const vendorIconUrl = (name) => new URL(`../../../vendor/climates-calories/Textures/${name}.png`, import.meta.url).href;
-/** NO-BETHESDA2 (2026-10-31): the mod's pictures that are Daggerfall's own - the tent's two (TEXTURE.050 record 7,
- *  TEXTURE.067 record 10), the mouldy bread over TEXTURE.211 record 31 and the mouldy cooked fish, record 10 itself
- *  (vendor/climates-calories/derived.json). The spec for `name`, or null where the picture is the author's own file. */
-export const derivedIconSpec = (name) => (Object.hasOwn(DERIVED_ICONS, name) ? DERIVED_ICONS[name] : null);
-let _iconsInstalled = false;
-/** A picture rebuilt is built through the session's classic reader (its spec's own palette - the texture door's
- *  `build(ctx)` context reads ART_PAL alone), every other one fetched. */
-const vendorEntry = (f, load, standIn, art) => {
-  const m = /^(\d+)_(\d+)-(\d+)$/.exec(f), spec = derivedIconSpec(f);
-  return { archive: Number(m[1]), record: Number(m[2]), frame: Number(m[3]), fileName: f, standIn, ...(spec ? { build: () => rebuiltPicture(spec, art) } : { load: () => load(f) }) };
-};
-/** Register the mod's own art with the texture pipeline (once; a test
- *  may pass its own fetch, and `art`, its own classic reader). The icons are archives that exist ONLY as
- *  this art (`standIn`); the tent's two are records of real archives. */
-export function installSurvivalIcons({ fetchBytes = null, art = undefined } = {}) {
-  if (_iconsInstalled && vendorTextureCount() > 0) return 0;   // once - unless the registry was cleared under it (a test's reset)
-  _iconsInstalled = true;
-  const load = fetchBytes ?? (async (name) => { const r = await fetch(vendorIconUrl(name)); if (!r.ok) throw new Error(`${name}: ${r.status}`); return new Uint8Array(await r.arrayBuffer()); });
-  return addVendorTextures([
-    ...VENDOR_ICON_FILES.map((f) => vendorEntry(f, load, true, art)),
-    ...VENDOR_TENT_FILES.map((f) => vendorEntry(f, load, false, art)),
-  ]);
-}
 
 export const isSurvivalItem = (item) => !!item && item.templateIndex >= TEMPLATE.CampingEquipment && item.templateIndex <= TEMPLATE.Campfire && (item.group == null || item.group === SURVIVAL_GROUP);
 export const isCampingEquipment = (item) => !!item && item.templateIndex === TEMPLATE.CampingEquipment;

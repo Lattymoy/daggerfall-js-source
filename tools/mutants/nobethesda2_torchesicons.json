@@ -4,27 +4,36 @@
     "file": "src/systems/rebuiltPicture.js",
     "old": "  for (let i = 3; i < d.length; i += 4) if (d[i] === 0) { d[i - 3] = 0; d[i - 2] = 0; d[i - 1] = 0; }",
     "new": "",
-    "tests": ["test/systems/nobethesda2_torchesicons.test.js"]
+    "tests": [
+      "test/systems/nobethesda2_torchesicons.test.js"
+    ]
   },
   {
     "name": "NB2-a-derived-torch-picture-is-fetched",
     "file": "src/systems/handheldTorches.js",
     "old": "  if (spec) return rebuiltPicture(spec, art);",
     "new": "",
-    "tests": ["test/systems/nobethesda2_torchesicons.test.js"]
+    "tests": [
+      "test/systems/nobethesda2_torchesicons.test.js"
+    ]
   },
   {
     "name": "NB2-the-torch-probe-admits-no-spec",
     "file": "src/systems/handheldTorches.js",
     "old": "export const inTorchSet = (table, file) => derivedTorchSpec(file.replace(/\\.png$/, '')) != null || inVendoredSet(table, file);",
     "new": "export const inTorchSet = (table, file) => inVendoredSet(table, file);",
-    "tests": ["test/systems/nobethesda2_torchesicons.test.js", "test/ai/nav/audit0928_nav.test.js"]
+    "tests": [
+      "test/systems/nobethesda2_torchesicons.test.js",
+      "test/ai/nav/audit0928_nav.test.js"
+    ]
   },
   {
     "name": "NB2-a-derived-cc-picture-is-fetched",
-    "file": "src/systems/survival/items.js",
-    "old": "...(spec ? { build: () => rebuiltPicture(spec, art) } : { load: () => load(f) })",
+    "file": "src/systems/survival/itemIcons.js",
+    "old": "...(spec ? { build: () => rebuiltPicture(spec, art), selfBuilt: true } : { load: () => load(f) })",
     "new": "load: () => load(f)",
-    "tests": ["test/systems/nobethesda2_torchesicons.test.js"]
+    "tests": [
+      "test/systems/nobethesda2_torchesicons.test.js"
+    ]
   }
 ]

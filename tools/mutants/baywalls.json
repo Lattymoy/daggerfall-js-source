@@ -264,8 +264,8 @@
  {
   "name": "TB-the-carriage-switch-unread",
   "file": "src/world/immersiveTravelGates.js",
-  "old": "  if (!_carriages?.isOn()) return null;",
-  "new": "  if (!_carriages) return null;",
+  "old": "  if (!_isOn?.()) return null;",
+  "new": "  if (!_isOn) return null;",
   "tests": [
    "test/world/baywalls.test.js"
   ]

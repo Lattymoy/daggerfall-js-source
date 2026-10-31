@@ -1,0 +1,135 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\M0B20Y02.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 20
+-- QuestId: 2
+Messages: 81
+Quest: M0B20Y02
+DisplayName: Pack of Giants
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> I have work I would not give to just
+<ce> anyone, but you are good at this. A
+<ce> family of giants needs killing. The
+<ce> usual pay, _reward_ gold. Will you?
+
+RefuseQuest:  [1001]
+<ce> Suit yourself. I thought
+<ce> it was your kind of work.
+
+AcceptQuest:  [1002]
+<ce> Good, %pcf. The client says six
+<ce> giants hold ___mondung_. He pays
+<ce> only if all six are dead, and
+<ce> within =1stparton_ days. Clear?
+
+QuestFail:  [1003]
+<ce> Six giants, still breathing.
+<ce> Come back when they are not.
+
+QuestComplete:  [1004]
+<ce> %oth! Six giants, %pcf. I would not have
+<ce> bet on it. Here is your _reward_ gold.
+
+RumorsDuringQuest:  [1005]
+Giants live out at ___mondung_, but they keep to themselves.
+<--->
+Word is the %t has had enough of the giants at ___mondung_.
+
+RumorsPostfailure:  [1006]
+Something frightened the giants
+away. I would like to know what.
+<--->
+If I were a giant, I would have left
+too. Too many people with swords.
+
+RumorsPostsuccess:  [1007]
+___mondung_ is empty now. Give it a
+year and something worse will move in.
+<--->
+Six giants dead. They never came near the town, you know.
+
+QuestorPostsuccess:  [1008]
+<ce> Six giants, %pcf. They talk
+<ce> about you in the guild hall now.
+
+QuestorPostfailure:  [1009]
+<ce> The giants won. Next time, pick a
+<ce> fight with something your own size.
+
+QuestLogEntry:  [1010]
+<ce> The last of the giants is dead.
+
+Message:  1020
+<ce> Little %ra, this is giant land! Go home!
+<--->
+<ce> You smell like %ra. Giant likes %ra.
+<--->
+<ce> Squash you like bug!
+
+Message:  1030
+%qdt:
+ The Fighters Guild of ___questgiver_
+ wants six giants dead in their hold at
+ ___mondung_. I must finish and be back
+ within =1stparton_ days to be paid.
+
+Message:  1080
+<ce> If it is killing you want, %pct, this
+<ce> map to ___newdung_ will keep you busy.
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ group Questor
+
+Place _mondung_ remote dungeon13
+Place _newdung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _monster_ is Giant
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _mondung_ 
+	log 1030 step 0 
+	pick one of _map_ _nomap_ _nomap_ _nomap_ 
+	pc at _mondung_ set _S.01_ 
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_ 
+	give pc _reward_ 
+	end quest 
+
+_S.01_ task:
+	create foe _monster_ every 15 minutes 15 times with 50% success 
+
+_mondead_ task:
+	killed 6 _monster_ 
+	say 1010 
+
+_qgclicked_ task:
+	clicked npc _questgiver_ 
+
+_1stparton_ task:
+	end quest 
+
+_S.05_ task:
+	injured _monster_ saying 1020 
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_ 
+	clear _qgclicked_ _clearclick_ 
+
+variable _map_
+variable _nomap_
+_S.09_ task:
+	when _map_ and _pcgetsgold_ 
+	reveal _newdung_ readmap
+    say 1080

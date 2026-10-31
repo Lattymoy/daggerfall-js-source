@@ -370,12 +370,27 @@ The preset itself defaults **on** from here. DISC14-B turned it off for
 a day, and DISC16-B turned it on again (above). The shift law above is unchanged: without
 TrueTextureSize, a `w_` hit takes the doubled box and its shift.
 
+## NO-BETHESDA3 (2026-10-31) - the magic dagger's hand is the player's
+
+The owner: "Rebuild DW's 7 daggers". The magic dagger's sprites draw Daggerfall's own first-person hand from
+`WEAPON02.CIF`. Measured against every CIF frame in PAL.PAL and ART_PAL, 687 of the 12,624 sprites draw 10% or more of
+one exactly, and twelve draw 60% or more: record 2 frame 1 in five metals, record 6 frame 2 in three and frame 3 in
+four, up to 84.5%. NO-BETHESDA2's scan had named seven. Under DEX0's law the twelve left the tree.
+
+`tools/classicDerive.mjs --cif` wrote each one's spec into `vendor/diverse-weapons/derived-art.json`: `file:
+'WEAPON02.CIF'`, `from: [record, frame]`, PAL.PAL, and the author's blade pixels as edits. The door builds the sprite
+from the player's own file through `systems/rebuiltPicture.js` and never fetches it (`diverseWeaponsImage`). The
+generated index names the twelve (`DIVERSE_WEAPONS_DERIVED`), so the 425 kB of specs load on the first build alone.
+The extractor no longer writes them. Pins: `nobethesda3_dwdaggers.test.js` (a file or a spec, never both, never
+neither; the build with ARENA2) and `dw2_shipped.test.js`'s folder pin.
+
 ## Record
 
 `vendor/diverse-weapons/` - the script verbatim, the manifest verbatim
 (12,937 files), the preset verbatim, the zip's readme. Campaign
 `tools/mutants/dw1.json` (21: 20 dead, 1 equivalent as recorded). Suites
 `test/combat/weapon/dw1_diverseweapons.test.js`, `test/formats/unitybundleworker.test.js`,
-`test/tooling/dw2_shipped.test.js`, `test/systems/dw3_icons.test.js`, `test/combat/weapon/auditdw.test.js`. The shipped set: `public/art/diverse-weapons/`
-(12,624 PNGs), `src/combat/diverseWeapons/diverseWeaponsIndex.js` (generated), the two
-tools.
+`test/tooling/dw2_shipped.test.js`, `test/systems/dw3_icons.test.js`, `test/combat/weapon/auditdw.test.js`,
+`test/combat/weapon/nobethesda3_dwdaggers.test.js`. The shipped set: `public/art/diverse-weapons/`
+(12,612 PNGs since NO-BETHESDA3; the twelve others are specs in `vendor/diverse-weapons/derived-art.json`),
+`src/combat/diverseWeapons/diverseWeaponsIndex.js` (generated), the two tools.

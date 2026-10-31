@@ -1,0 +1,134 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\M0B30Y04.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 30
+-- QuestId: 4
+Messages: 81
+Quest: M0B30Y04
+DisplayName: Fighters Lich
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcf, if you had not done so much for us
+<ce> already, I would not mention this. A lich
+<ce> in ___mondung_. It pays only _reward_
+<ce> gold. You do not want it, do you?
+
+RefuseQuest:  [1001]
+<ce> %god be thanked, you have some
+<ce> sense. Let the lich do as it likes.
+
+AcceptQuest:  [1002]
+<ce> I should have kept my mouth shut. If you
+<ce> are going, take the best gear you can
+<ce> find, enchanted if possible. The lich
+<ce> must be dead within =1stparton_ days,
+<ce> and you back here. You are mad, %pcf.
+
+QuestFail:  [1003]
+<ce> The lich has all the time in
+<ce> the world, %pcf. You do not.
+
+QuestComplete:  [1004]
+<ce> I had already sold your boots,
+<ce> %pcf. %god keeps odd company.
+<ce> Here, your _reward_ gold.
+
+RumorsDuringQuest:  [1005]
+Some %ra thinks they can kill the
+lich in ___mondung_. Brave or stupid.
+<--->
+The whole tavern is betting on that %ra and
+the lich in ___mondung_. The odds are long.
+
+RumorsPostfailure:  [1006]
+The lich lives on, if you can call
+it that, and now it is angry.
+<--->
+They should have left the lich
+alone. Now it knows we are here.
+
+RumorsPostsuccess:  [1007]
+The lich is dust. Who knew they could die twice?
+<--->
+That %ra cost me a week's pay. I bet on the lich.
+
+QuestorPostsuccess:  [1008]
+<ce> Every member here wants to hear about
+<ce> the lich. Go on, tell it again.
+
+QuestorPostfailure:  [1009]
+<ce> A lich job was always going to end
+<ce> badly. Next time, ask me first.
+
+Message:  1020
+<ce> Little %ra, you meddle with the dead.
+<ce> Now you will join them, and serve me.
+
+Message:  1030
+%qdt:
+ The Fighters Guild of
+ ___questgiver_ wants a lich
+ destroyed within =1stparton_
+ days. It lairs in ___mondung_.
+
+Message:  1080
+<ce> A map to ___newdung_. After a
+<ce> lich, it will feel like a stroll.
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ group Questor
+
+Place _mondung_ remote dungeon
+Place _newdung_ remote dungeon14
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _monster_ is Lich
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _mondung_ 
+	log 1030 step 0 
+	pick one of _map_ _nomap_ _nomap_ _map_ 
+	place foe _monster_ at _mondung_ 
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_ 
+	give pc _reward_ 
+
+_S.01_ task:
+	injured _monster_ 
+	say 1020 
+
+_mondead_ task:
+	killed 1 _monster_ 
+
+_qgclicked_ task:
+	clicked npc _questgiver_ 
+
+_1stparton_ task:
+	end quest 
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_
+	say 1003 
+	clear _qgclicked_ _clearclick_ 
+
+variable _map_
+variable _nomap_
+_S.07_ task:
+	when _map_ and _pcgetsgold_ 
+	reveal _newdung_ readmap
+    say 1080 
+	end quest
+
+_S.08_ task:
+	when _nomap_ and _pcgetsgold_ 
+	end quest

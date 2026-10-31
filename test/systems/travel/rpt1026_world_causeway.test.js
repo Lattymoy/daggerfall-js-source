@@ -6,6 +6,8 @@
 // by (73, 131), across the inlet's east arm. Through the real planner (systems/travel/travelRoute.js planRoute) on his
 // vendored bytes, the ground the host hands it (world.js tvRouteGround: routeGround over the player's WOODS.WLD and
 // MAPS.BSA), and the tiles the terrain kernel paints there (world/terrain/terrainGen.js generatePixelTerrain).
+// OWN-WORK2 (2026-10-31): his arrays are retired and the Bay's own network lays no road on the sea. The law stands - a
+// road over the water is the road's - and is pinned on a road of the test's own over the same inlet.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
@@ -18,11 +20,13 @@ import { generatePixelTerrain } from '../../../src/world/terrain/terrainGen.js';
 import { waterCorners } from '../../../src/world/water/waterCorners.js';
 import { convertTile } from '../../../src/world/terrain/terrainSurface.js';
 import { DIR_DELTA } from '../../../src/world/road/roadNetwork.js';
+import { bayRoads, bayArchives, BAY_SKIP } from '../../bayRoads.mjs';
 
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !existsSync(ARENA2) ? 'ARENA2_PATH not set or missing' : false;
-const his = (n) => new Uint8Array(readFileSync(new URL(`../../../vendor/roads-hazelnut/${n}`, import.meta.url)));
-const NET = { roads: his('roadData.bytes'), tracks: his('trackData.bytes') };
+/** A road of the test's own, as his ran: Grayidge (72, 133) north over the inlet's pixel to Westwall (72, 130). */
+const NET = { roads: new Uint8Array(1000 * 500), tracks: new Uint8Array(1000 * 500) };
+for (let y = 130; y <= 133; y++) NET.roads[y * 1000 + 72] = (y > 130 ? DIR_DELTA[0][0] : 0) | (y < 133 ? DIR_DELTA[4][0] : 0);
 let _real = null;
 function real() {
   if (_real) return _real;
@@ -36,7 +40,7 @@ function real() {
 const GRAYIDGE = { x: 72, y: 133 }, WESTWALL = { x: 72, y: 130 }, INLET = { x: 72, y: 131 };
 const at = (p) => (q) => q.x === p.x && q.y === p.y;
 
-test('CAUSEWAY: Grayidge to Westwall walks Hazelnut\'s road over the inlet - (72, 131) on the route, every step a road\'s; the route by (73, 131) across the inlet\'s east arm is gone; with a boat to hand the road is walked, not sailed (mutants: the sea refused under the road; the corner refused; the boat\'s search launches)', { skip: skipReal }, () => {
+test('CAUSEWAY: Grayidge to Westwall walks a road over the inlet - (72, 131) on the route, every step a road\'s; the route by (73, 131) across the inlet\'s east arm is gone; with a boat to hand the road is walked, not sailed (mutants: the sea refused under the road; the corner refused; the boat\'s search launches)', { skip: skipReal }, () => {
   const { ground } = real();
   assert.ok(ground.isWater(INLET.x, INLET.y), 'the inlet\'s pixel is water by the route law\'s byte');
   assert.ok(!ground.isWater(73, 131), 'the pixel beside it is dry');
@@ -44,30 +48,26 @@ test('CAUSEWAY: Grayidge to Westwall walks Hazelnut\'s road over the inlet - (72
   assert.ok(plan, 'a route');
   assert.ok(plan.pixels.some(at(INLET)), `over the causeway: ${JSON.stringify(plan.pixels)}`);
   assert.ok(!plan.pixels.some(at({ x: 73, y: 131 })), 'never round by the open pixel beside it');
-  assert.deepEqual(plan.kinds, ['road', 'road', 'road'], 'his road the whole way');
+  assert.deepEqual(plan.kinds, ['road', 'road', 'road'], 'the road the whole way');
   // OWS2's search, a boat to hand ashore: the causeway is the road's there too, no launch, no landfall
   const boat = planRoute(GRAYIDGE, WESTWALL, { ...NET, ...ground, sea: { start: 'land', again: true, goal: 'land' } });
   assert.deepEqual(boat?.kinds, ['road', 'road', 'road'], `walked, not sailed: ${JSON.stringify(boat?.kinds)}`);
 });
 
-test('CAUSEWAY on the whole map: the forty-pixel coast road in the sea at (515-559, 296-316) is walked end to end on his road - its diagonals through the sea\'s corners too (mutants: the sea refused under the road; the corner refused)', { skip: skipReal }, () => {
-  const { ground } = real();
-  // his road pixels the byte calls water: 42, every one of them joined to a road neighbour by his own edges
-  const wet = [];
-  for (let y = 0; y < 500; y++) for (let x = 0; x < 1000; x++) if (NET.roads[y * 1000 + x] && ground.isWater(x, y)) wet.push({ x, y });
-  assert.equal(wet.length, 42, 'his road\'s wet pixels');
-  const chain = wet.filter((p) => p.x >= 515 && p.x <= 559 && p.y >= 296 && p.y <= 316);
-  assert.equal(chain.length, 40);
-  const plan = planRoute({ x: 515, y: 316 }, { x: 558, y: 296 }, { ...NET, ...ground });
-  assert.ok(plan, 'a route over the causeway');
-  assert.ok(plan.kinds.every((k) => k === 'road'), `his road the whole way: ${[...new Set(plan.kinds)]}`);
-  // the coast road in the sea from (515, 316) to (558, 296), its one branch tip (559, 297) aside
-  for (const p of chain.filter((q) => !(q.x === 559 && q.y === 297))) assert.ok(plan.pixels.some(at(p)), `on the route: ${p.x},${p.y}`);
-  assert.ok(plan.pixels.some((p, i) => i && p.x !== plan.pixels[i - 1].x && p.y !== plan.pixels[i - 1].y
-    && ground.isWater(p.x, plan.pixels[i - 1].y) && ground.isWater(plan.pixels[i - 1].x, p.y)), 'a diagonal of his through a corner of the sea');
+test('CAUSEWAY on the whole map, OWN-WORK2: the Bay\'s own network needs no causeway - no road or track on a pixel the route law calls water, and no step of it through a corner of the sea', { skip: BAY_SKIP }, () => {
+  const bay = bayRoads(), { maps, woods } = bayArchives();   // the heights as the world host smooths them, the network's own
+  const ground = routeGround((x, y) => maps.getClimateIndex(x, y), (x, y) => woods.getHeightMapValue(x, y), WATER_BYTE, 1000, 500, null);
+  let wet = 0, corners = 0;
+  for (let y = 0; y < 500; y++) for (let x = 0; x < 1000; x++) {
+    const b = bay.roads[y * 1000 + x] | bay.tracks[y * 1000 + x];
+    if (!b) continue;
+    if (ground.isWater(x, y)) wet++;
+    for (const [bit, dx, dy] of DIR_DELTA) if (dx && dy && (b & bit) && ground.isWater(x + dx, y) && ground.isWater(x, y + dy)) corners++;
+  }
+  assert.deepEqual([wet, corners], [0, 0], 'his arrays had 42 road pixels on the sea, forty of them a coast road at (515-559, 296-316)');
 });
 
-test('CAUSEWAY: the inlet\'s pixel and Sentinel\'s coast road as the terrain kernel builds them with his roads - a strip of road tiles, none with a water corner, the water either side; ROAD-DRY: every corner of his paving at CAPITAL_LAND, and Deep Waters (its bake, its carve, its water test) leaves the road whole - the sea round it still the sea\'s (what the route walks is ground the feet stand on) (mutants: the lift unwired; the edges unread)', { skip: skipReal, timeout: 600_000 }, async () => {
+test('CAUSEWAY: the inlet\'s pixel as the terrain kernel builds it with a road over it - a strip of road tiles, none with a water corner, the water either side; ROAD-DRY: every corner of his paving at CAPITAL_LAND, and Deep Waters (its bake, its carve, its water test) leaves the road whole - the sea round it still the sea\'s (what the route walks is ground the feet stand on) (mutants: the lift unwired; the edges unread)', { skip: skipReal, timeout: 600_000 }, async () => {
   const { woods } = real();
   const { buildGlobal, DeepWatersBake } = await import('../../../src/world/deepWater/deepWatersBake.js');
   const { buildDeepWatersPixel } = await import('../../../src/world/deepWater/deepWatersPixel.js');
@@ -78,7 +78,7 @@ test('CAUSEWAY: the inlet\'s pixel and Sentinel\'s coast road as the terrain ker
   const { MapsFile: Maps } = await import('../../../src/formats/mapsFile.js');
   const maps = new Maps(); maps.load(...['MAPS.BSA', 'CLIMATE.PAK', 'POLITIC.PAK'].map((f) => new Uint8Array(readFileSync(join(ARENA2, f)))));
   const bake = new DeepWatersBake({ woods, global: buildGlobal(woods) }), n = HOLES_RESOLUTION, H = 129;
-  for (const [px, py, wide] of [[INLET.x, INLET.y, 256], [421, 374, 0]]) {
+  for (const [px, py, wide] of [[INLET.x, INLET.y, 256]]) {   // OWN-WORK2: Sentinel's coast road (421, 374) was his arrays' alone
     const tilemap = new Uint8Array(128 * 128);
     const out = generatePixelTerrain({ woods, px, py, tilemap, climateType: 0, roads: { ...NET, smooth: true } });
     let road = 0, water = 0, paving = 0;

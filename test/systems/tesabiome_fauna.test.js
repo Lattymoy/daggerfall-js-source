@@ -28,7 +28,7 @@ const DEX_CLASSES = new Map(csv('vendor/daggerfall-enemy-expansion/ClassBase.mdb
 const isClassic = (id) => (id >= 0 && id <= 42) || (id >= 128 && id <= 145);
 const allEntries = () => [...Object.values(ROSTERS).flatMap((r) => [...r.day, ...r.night]), ...Object.values(TOWN_ROSTERS).flat()];
 const pixelOf = (name) => pictureToBay(...CITIES.find((c) => c.name === name).at).map(Math.floor);
-const tablesOf = (key, dex) => BIOME_BANDS.get(key).map((i) => biomeTable(i, dex, dex));
+const tablesOf = (key, dex) => BIOME_BANDS.get(key).map((i) => biomeTable(i, dex));
 /** The odds a player of `level` meets each id of `table` - the real chooseRandomEnemy over its two dice, enumerated. */
 function oddsOf(table, level) {
   const out = new Map();
@@ -69,7 +69,7 @@ test('TESA-BIOME fauna: a table is twenty slots in the order of their levels - a
   assert.deepEqual(RARITY, { C: 4, U: 2, R: 1, V: 0.5 });
   for (const b of BIOMES) {
     for (const dex of [true, false]) {
-      const levelOf = (id) => faunaLevelIn(id, dex, dex);
+      const levelOf = (id) => faunaLevelIn(id, dex);
       const [town, day, night] = tablesOf(b.key, dex);
       for (const [t, entries] of [[day, ROSTERS[b.key].day], [night, ROSTERS[b.key].night], [town, TOWN_ROSTERS[b.province]]]) {
         const roster = faunaRoster(entries, dex);
@@ -104,7 +104,7 @@ test('TESA-BIOME fauna: a table is twenty slots in the order of their levels - a
 test('TESA-BIOME fauna: every table within DFU\'s own band through the real roll - no one creature past 42% of a level\'s meetings, a level-1 player\'s monsters of level 9 and up at most 30%, a level-20 player\'s of level 8 and under at most 5% (AUDIT TESA-BIOME F3/F4)', () => {
   // DFU's worst wild tables: a creature's 40% (#21's sabre cat at level 1), 29% hard at level 1 (#37), 2% trivial at 20 (#28)
   for (const dex of [false, true]) {
-    const levelOf = (id) => faunaLevelIn(id, dex, dex);
+    const levelOf = (id) => faunaLevelIn(id, dex);
     for (const b of BIOMES) {
       for (const t of tablesOf(b.key, dex).slice(1)) {
         for (const L of [1, 5, 10, 15, 20, 25]) {
@@ -124,22 +124,22 @@ test('TESA-BIOME fauna: every table within DFU\'s own band through the real roll
   }
 });
 
-test('TESA-BIOME fauna: a creature\'s level is the game\'s as it loaded - off the frozen vanilla table and the mod\'s own read, the same before an install and after it (AUDIT TESA-BIOME F5)', () => {
-  assert.equal(faunaLevelIn(41, false, false), VANILLA_ENEMY_BASICS[41].level);
+test('TESA-BIOME fauna: a creature\'s level is the game\'s as it loaded - off the frozen vanilla table and the mod\'s own read, the same before an install and after it (AUDIT TESA-BIOME F5); our meaner monsters beside DEX move no level, so the provinces\' tables are DEX\'s with them on (OWN-WORK2)', () => {
+  assert.equal(faunaLevelIn(41, false), VANILLA_ENEMY_BASICS[41].level);
   for (const id of [16, 19, 41, 42]) {
-    assert.equal(faunaLevelIn(id, true, false), dexClassicRow(id, VANILLA_ENEMY_BASICS[id], { mudex: false }).level ?? VANILLA_ENEMY_BASICS[id].level, `${id} DEX`);
-    assert.equal(faunaLevelIn(id, true, true), dexClassicRow(id, VANILLA_ENEMY_BASICS[id], { mudex: true }).level ?? VANILLA_ENEMY_BASICS[id].level, `${id} DEX + MUDEX`);
+    assert.equal(faunaLevelIn(id, true), dexClassicRow(id, VANILLA_ENEMY_BASICS[id]).level ?? VANILLA_ENEMY_BASICS[id].level, `${id} DEX`);
+    assert.equal(faunaLevelIn(id, true), dexClassicRow(id, VANILLA_ENEMY_BASICS[id], { meaner: true }).level ?? VANILLA_ENEMY_BASICS[id].level, `${id} DEX and ours: one level`);
   }
-  assert.equal(faunaLevelIn(262, true, true), DEX_LEVELS[262]);
-  assert.equal(faunaLevelIn(143, true, true), null, 'a person: the player\'s own level');
+  assert.equal(faunaLevelIn(262, true), DEX_LEVELS[262]);
+  assert.equal(faunaLevelIn(143, true), null, 'a person: the player\'s own level');
   assert.equal(faunaLevel(19), VANILLA_ENEMY_BASICS[19].level);
-  // the cache keys both switches: three variants, each its own
+  // the cache keys DEX's switch: two variants, each its own
   const i = BIOME_BANDS.get('skyrimFrozenCoast')[1];
-  const want = (dex, mudex) => faunaTable(faunaRoster(ROSTERS.skyrimFrozenCoast.day, dex), 'skyrimFrozenCoast/1', (id) => faunaLevelIn(id, dex, mudex));
-  assert.deepEqual(biomeTable(i, false, false), want(false, false));
-  assert.deepEqual(biomeTable(i, true, false), want(true, false));
-  assert.deepEqual(biomeTable(i, true, true), want(true, true));
-  assert.match(read('src/systems/tamrielFauna.js'), /const key = `\$\{index\}:\$\{dex \? 1 : 0\}:\$\{mudex \? 1 : 0\}`;/);
+  const want = (dex) => faunaTable(faunaRoster(ROSTERS.skyrimFrozenCoast.day, dex), 'skyrimFrozenCoast/1', (id) => faunaLevelIn(id, dex));
+  assert.deepEqual(biomeTable(i, false), want(false));
+  assert.deepEqual(biomeTable(i, true), want(true));
+  assert.notDeepEqual(want(true), want(false), 'the two variants differ, so a shared key would be seen');
+  assert.match(read('src/systems/tamrielFauna.js'), /const key = `\$\{index\}:\$\{dex \? 1 : 0\}`;/);
 });
 
 test('TESA-BIOME fauna: a table golden - the Nibenay Valley\'s wild by day, as the game builds it in either variant (AUDIT TESA-BIOME P7: the weights, the hash, the window and the cover fixed together)', () => {

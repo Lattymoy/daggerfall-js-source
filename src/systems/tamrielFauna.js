@@ -22,8 +22,8 @@
 //     creature stands more than WINDOW_MAX times in any WINDOW_SLOTS slots running, and THE COVER seats each common and
 //     uncommon beast the draw left out;
 //   - a creature's level is the game's as it loaded (faunaLevelIn): Daggerfall's own, or as Daggerfall Enemy Expansion
-//     (and Meaner Monsters beside it) edits it - read off the frozen vanilla table, never the live one an install
-//     rewrites, so a table is its roster and the two switches, and nothing else (AUDIT TESA-BIOME F5);
+//     edits it (our meaner monsters beside it move no level, OWN-WORK2) - read off the frozen vanilla table, never the
+//     live one an install rewrites, so a table is its roster and DEX's switch, and nothing else (AUDIT TESA-BIOME F5);
 //   - the TOWN table (the band's first) is its province's: rats, dogs, its own thieves and its night things.
 // The tables are ours (SCOPE1: DFO is its own game - Port-Doctrine's Scope), on DFU's door (characters/
 // encounterTableDoor.js): one selector answers the biome tables' indices (BIOME_TABLE_BASE up), DEX's or the classic
@@ -31,7 +31,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { VANILLA_ENEMY_BASICS, isClassEnemyId } from '../characters/enemy/enemyBasics.js';
 import { registerEncounterTableSelector, hasEncounterTableSelector } from '../characters/encounterTableDoor.js';
-import { dexLoaded, mudexLoaded } from './enemyExpansion/dexSwitches.js';
+import { dexLoaded } from './enemyExpansion/dexSwitches.js';
 import { dexClassicRow } from './enemyExpansion/dexInstall.js';
 import { BIOMES, tamrielBiomeAt } from '../world/tamriel/tamrielBiomes.js';
 import { tamrielTrace } from '../world/tamriel/tamrielLand.js';   // AUDIT TESA II F6: a band past the Bay once the land is the trace's
@@ -55,21 +55,21 @@ export const WINDOW_SLOTS = 6;
 export const WINDOW_MAX = 2;
 
 /** Daggerfall Enemy Expansion's creatures' levels, as its MonsterBase.mdb.csv has them (the install appends them to
- *  ENEMY_BASICS; MUDEX leaves them) - held to the vendored file by the pins. */
+ *  ENEMY_BASICS; our meaner monsters leave them) - held to the vendored file by the pins. */
 export const DEX_LEVELS = Object.freeze({
   256: 2, 257: 12, 258: 4, 259: 8, 260: 1, 261: 16, 262: 5, 263: 10, 264: 15, 265: 6, 266: 3, 267: 3, 268: 6, 269: 15,
   270: 10, 271: 7, 272: 11, 273: 19, 274: 7, 276: 22, 277: 5, 278: 6, 279: 9, 280: 8, 281: 2, 282: 13, 283: 9, 284: 9,
   285: 6, 286: 8, 287: 13, 288: 5, 289: 5, 290: 10,
 });
 /** A mobile's level for the table's order as the game loaded it - Daggerfall's (`dex` false), or as Daggerfall Enemy
- *  Expansion's ClassicMonsterReplacement (and MUDEX's lines, `mudex`) edits a classic row (enemyExpansion/dexInstall.js
- *  dexClassicRow, the install's own read) - off the frozen vanilla table, so an install has nothing to move; null for a
- *  class enemy (the player's level). Pure. */
-export function faunaLevelIn(id, dex = false, mudex = false) {
+ *  Expansion's ClassicMonsterReplacement edits a classic row (enemyExpansion/dexInstall.js dexClassicRow, the install's
+ *  own read; our meaner monsters' lines move no level) - off the frozen vanilla table, so an install has nothing to
+ *  move; null for a class enemy (the player's level). Pure. */
+export function faunaLevelIn(id, dex = false) {
   if (isClassEnemyId(id)) return null;
   const v = VANILLA_ENEMY_BASICS[id];
   if (!v) return DEX_LEVELS[id] ?? null;
-  return dex ? dexClassicRow(id, v, { mudex }).level ?? v.level : v.level;
+  return dex ? dexClassicRow(id, v).level ?? v.level : v.level;
 }
 /** Daggerfall's own level of a mobile (the classic variant's). */
 export const faunaLevel = (id) => faunaLevelIn(id);
@@ -536,17 +536,17 @@ const BIOME_OF_INDEX = new Map();
 BIOMES.forEach((b, i) => { for (let k = 0; k < 3; k++) BIOME_OF_INDEX.set(BIOME_TABLE_BASE + 3 * i + k, [b, k]); });
 
 const _tables = new Map();
-/** THE TABLE AT A BIOME INDEX, DEX's or the classic variant (and with Meaner Monsters beside DEX, `mudex`: its levels) -
- *  null for an index that is no biome's. A pure function of the roster and the two switches; kept. */
-export function biomeTable(index, dex = dexLoaded(), mudex = dex && mudexLoaded()) {
+/** THE TABLE AT A BIOME INDEX, DEX's or the classic variant (our meaner monsters beside DEX move no level, so none of
+ *  theirs) - null for an index that is no biome's. A pure function of the roster and DEX's switch; kept. */
+export function biomeTable(index, dex = dexLoaded()) {
   const at = BIOME_OF_INDEX.get(index);
   if (!at) return null;
-  const key = `${index}:${dex ? 1 : 0}:${mudex ? 1 : 0}`;
+  const key = `${index}:${dex ? 1 : 0}`;
   let t = _tables.get(key);
   if (!t) {
     const [b, k] = at;
     const entries = k === 0 ? TOWN_ROSTERS[b.province] : ROSTERS[b.key][k === 1 ? 'day' : 'night'];
-    t = faunaTable(faunaRoster(entries, dex), `${b.key}/${k}`, (id) => faunaLevelIn(id, dex, mudex));
+    t = faunaTable(faunaRoster(entries, dex), `${b.key}/${k}`, (id) => faunaLevelIn(id, dex));
     _tables.set(key, t);
   }
   return t;

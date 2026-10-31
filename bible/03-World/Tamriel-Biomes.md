@@ -295,7 +295,7 @@ as the Imp, the Will-o'-wisp and the Faded Ghost as the Ghost, the Sphere as the
 their classes - and none for the Wolf, the Troll, the Ogre, the Goblin, the Minotaur, the Boar, the Dog, the Mudcrab, the
 Lizard Men or the Land Dreugh (the classic Dreugh is aquatic). A roster may name its own: Skyrim's wolves stand as the
 sabre cat it also hunts, its trolls as its giants. Both variants are made; the selector answers the one the game loaded
-(`dexLoaded`, `mudexLoaded`), the same on every machine of a game.
+(`dexLoaded` alone), the same on every machine of a game.
 
 **The door.** One selector on DFU's encounter-table door (`characters/encounterTableDoor.js`) answers the zone indices
 (`FAUNA_SELECTOR`, stood once by `installTamrielFauna`). The encounter law's ctx carries the pixel's band as `fauna`
@@ -504,7 +504,7 @@ jungle's host (whole deep in it, the fog dimmed and the leaves lit by it, taken 
 under them and one over them under the sky, the haze off and the canopy standing, the field made again when the stamp
 moves); the wiring of the water's sky (no ceiling drawn) and the world host's light. GRAHT1 retired the ceiling's two
 tests - its GLSL and its pass - with it; the graht-oaks' own are `test/world/graht1_oaks.test.js` (`03-World/Graht-Oaks.md`).
-Mutants: `tools/mutants/tesabiome.json` - 84, all dead; `tools/mutants/valenwoodcanopy.json` - 31, all dead (45 until
+Mutants: `tools/mutants/tesabiome.json` - 83, all dead; `tools/mutants/valenwoodcanopy.json` - 31, all dead (45 until
 GRAHT1, which retired the ceiling's ten, its uniforms' two and the sky controller's two with them, and re-aimed three by
 content).
 

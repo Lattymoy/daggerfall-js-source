@@ -19,7 +19,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { modSetting, modSettingIfDeclared } from '../systems/modSettings.js';
-import { meanerMonstersAlone } from '../systems/enemyExpansion/dexSwitches.js';   // MUDEX1: beside DEX, Meaner Monsters is MUDEX
+import { meanerMonstersAlone } from '../systems/enemyExpansion/dexSwitches.js';   // beside DEX, our meaner monsters stand in
 
 /** EnemyBasics.Enemies[i] <- {...}, exactly as InitMod writes them. */
 export const MEANER_MONSTERS = Object.freeze({
@@ -71,7 +71,7 @@ export const MEANER_MONSTERS = Object.freeze({
  *  `ModManager.Instance.GetMod("Meaner Monsters") != null` (Awake),
  *  read off that mod's own `Enabled` (MM1: no compatibility switch;
  *  `other` is the cross-mod read, a test hands in its own) - as itself:
- *  beside DEX that mod is MUDEX (MUDEX1), which the lookup does not find. */
+ *  beside DEX ours stand in for that mod (OWN-WORK2), and this edit of it stands aside. */
 export const meanerMonstersOn = (read = (k) => modSetting('pcaao', k), other = modSettingIfDeclared) =>
   !!read('Enabled') && meanerMonstersAlone(!!other('meanerMonsters', 'Enabled'));
 

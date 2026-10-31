@@ -1,0 +1,128 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\M0B30Y08.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 30
+-- QuestId: 8
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 81
+Quest: M0B30Y08
+DisplayName: Domestic Squabble
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> An odd one, %pcf. A widow in __house_
+<ce> wants her husband out of the house.
+<ce> He died some time ago, and did not
+<ce> stay down. Will you take it?
+
+RefuseQuest:  [1001]
+<ce> Fine, %pcn. I will send for a
+<ce> priest instead. They charge more.
+
+AcceptQuest:  [1002]
+<ce> He is a zombie now. By day he hides
+<ce> somewhere in _house_. At night he walks
+<ce> the halls. Put him to rest within
+<ce> =2dung_ days and earn _gold_ gold.
+
+QuestComplete:  [1004]
+<ce> Does he smell as bad as they
+<ce> say? Never mind. Your pay, %pcn.
+
+RumorsDuringQuest:  [1005]
+<ce> A widow on our street swears
+<ce> her husband still comes home at
+<ce> night. He has been dead a year.
+
+RumorsPostfailure:  [1006]
+<ce> The widow is dead. Whatever came home
+<ce> to her came home one night too many.
+
+RumorsPostsuccess:  [1007]
+<ce> The dead husband stays dead now.
+<ce> The Fighters Guild saw to it.
+
+QuestorPostsuccess:  [1008]
+<ce> The widow sends her thanks, %pcn. Our
+<ce> hall smells better since you washed.
+
+QuestorPostfailure:  [1009]
+<ce> A zombie. A slow, rotting
+<ce> zombie. And you lost.
+
+QuestLogEntry:  [1010]
+On %qdt,
+ ___qgiver_'s Fighters Guild
+ gave me a zombie to put down
+ in _house_ in __house_,
+ within =2dung_ days.
+
+Message:  1011
+<ce> The _monster_ will not walk again.
+
+Message:  1080
+<ce> Here, %pcf. A map to ___newdung_. Worse
+<ce> things than zombies live there, which
+<ce> should make a %ra like you happy.
+
+
+QBN:
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _house_ remote random
+Place _newdung_ remote dungeon
+
+Clock _2dung_ 00:00 0 flag 17 range 0 2
+
+Foe _monster_ is Zombie
+
+--	Quest start-up:
+	start timer _2dung_ 
+	reveal _house_ 
+	log 1010 step 0 
+	pick one of _map_ _map_ _nomap_ _nomap_ 
+	pc at _house_ set _S.04_ 
+	create npc at _house_ 
+
+_2dung_ task:
+	end quest 
+
+_mondead_ task:
+	killed 1 _monster_ saying 1011 
+
+_S.02_ task:
+	when _qgclicked_ and _mondead_ and _nomap_
+	give pc _gold_ 
+	end quest 
+
+_mapvict_ task:
+	when _qgclicked_ and _mondead_ and _map_
+	give pc _gold_ 
+	reveal _newdung_ readmap
+    say 1080
+	end quest 
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_ 
+	clear _qgclicked_ _clearclick_ 
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+variable _S.04_
+_S.05_ task:
+	daily from 05:00 to 19:00 
+
+_S.06_ task:
+	when _S.04_ and not _S.05_ 
+	place foe _monster_ at _house_ 
+
+variable _map_
+variable _nomap_
+_S.09_ task:
+	when _map_ and _S.02_

@@ -33,8 +33,8 @@ record was merged into the other; they are two different audits that
 briefly shared a name.
 
 **Why the findings are numbered from F3.** The tree cites `AUDIT 58 F3`,
-`F4` and `F5` by number **37 times across 14 files** - `src/world/terrain/terrainGenClient.js:"rides his data too."`,
-`src/world/terrain/terrainGenWorker.js:"rides his data on"`, `src/world/terrain/terrainHelper.js:"AUDIT 58 F4 — TERRAINHELPER'S"`,
+`F4` and `F5` by number **37 times across 14 files** - `src/world/terrain/terrainGenClient.js:"rides the data too."`,
+`src/world/terrain/terrainGenWorker.js:"rides it on this arm too"`, `src/world/terrain/terrainHelper.js:"AUDIT 58 F4 — TERRAINHELPER'S"`,
 `src/world/roadsCache.js:"for the height CONTENT"`, `src/scenes/world.js:"import { buildMapDict"`,
 `src/formats/woodsFile.js:"AUDIT 58 F4: write"`, `test/world/terrain/modsettings.test.js`,
 `test/formats/audit58_terrainhelper.test.js`, `test/systems/ledger.test.js:"Ledger cites the gamepad note at inputActions.js:${cite"`,

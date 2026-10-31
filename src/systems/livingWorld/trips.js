@@ -2,7 +2,7 @@
 // LW3 (2026-10-04, bible/06-Systems/Living-World.md): THE ROADS - where a town's travellers go, when, by which way, and
 // where on it they are at any minute of the sky's clock. Pure, like the rest of the living world (LW0 decision 2): the
 // towns near (the MAPS rows the host hands, the game's own rows alone so every client reads the same), the way (the
-// Travel Options planner's on Hazelnut's roads - `systems/travel/travelRoute.js planRoute` - asked through the host, cached
+// Travel Options planner's on the Bay's roads - `systems/travel/travelRoute.js planRoute` - asked through the host, cached
 // there), a seed and the clock in; a party's place out.
 //
 // A TRAVELLER'S CYCLES. Each traveller (census.js travellerRoster: merchants, adventurers, pilgrims, couriers, the

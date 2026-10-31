@@ -34,8 +34,8 @@ export async function bayPortGround(arena2, readFileSync, name, { packs = false 
   const { BUILDING_TYPES } = await R('world/buildingNames.js');
   const { isWaterPixel } = await R('ui/overworldModel.js');
   const bytes = (f) => new Uint8Array(readFileSync(join(arena2, f)));
-  const vendor = (f) => new Uint8Array(readFileSync(new URL(`../vendor/roads-hazelnut/${f}`, import.meta.url)));
-  const roadsB = vendor('roadData.bytes'), tracksB = vendor('trackData.bytes');
+  const { bayRoads } = await import('./bayRoads.mjs');   // OWN-WORK2: the Bay's own network, off the same ARENA2
+  const { roads: roadsB, tracks: tracksB } = bayRoads();
   walls.setTownWallPaths(walls.townWallPathsReader({ bay: () => ({ roads: roadsB, tracks: tracksB }) }));
   const blocks = new BlocksFile(); blocks.load(bytes('BLOCKS.BSA'));
   W.installWorldDataReplacement(); W.bindWorldDataBlocks(blocks);

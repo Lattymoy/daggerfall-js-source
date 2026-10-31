@@ -6,9 +6,10 @@ import { fileURLToPath } from 'node:url';
 
 import {
   SURVIVAL_TEMPLATES, createSurvivalItem, spoilFood, dressFood, useSurvivalItem, drinkAtSource, provisionsStock, startingProvisions,
-  isSurvivalItem, VENDOR_ICON_FILES, VENDOR_TENT_FILES, installSurvivalIcons, WATER_SOURCE_FLATS, WATER_SOURCE_MODELS, isWaterSourceFlat, isDrySourceFlat,
-  CAMPFIRE_USES, CAMPING_USES, SURVIVAL_USE_TEXT, derivedIconSpec,
+  isSurvivalItem, VENDOR_ICON_FILES, WATER_SOURCE_FLATS, WATER_SOURCE_MODELS, isWaterSourceFlat, isDrySourceFlat,
+  CAMPFIRE_USES, CAMPING_USES, SURVIVAL_USE_TEXT,
 } from '../../src/systems/survival/items.js';
+import { VENDOR_TENT_FILES, installSurvivalIcons, derivedIconSpec, ownIconSpec } from '../../src/systems/survival/itemIcons.js';   // the pictures, apart from the rules the account Worker bundles
 import { TEMPLATE, FOOD_STAGE, waterIn } from '../../src/systems/survival/food.js';
 import { corpseFood, humanoidFood, MEAT_BY_TYPE, isAnimal, isHumanoid } from '../../src/systems/survival/loot.js';
 import { survivalOf, hungerStage } from '../../src/systems/survival/needs.js';
@@ -238,9 +239,10 @@ test('SURV2: the mod\'s sixteen icons are vendored or rebuilt (NO-BETHESDA2), al
   // PIN MOVED (NO-BETHESDA2, 2026-10-31): a picture that is Daggerfall's own is a spec rebuilt from the player's files
   // (derived.json), never a file - each of the eighteen is one or the other, and every file carried has its row
   const doctrine = read('test/tooling/doctrine.test.js');
+  // PIN MOVED (NO-BETHESDA3, 2026-10-31): or ours - the rotten cooked fish is our rot over the player's record
   for (const f of [...VENDOR_ICON_FILES, ...VENDOR_TENT_FILES]) {
     const file = existsSync(join(root, `vendor/climates-calories/Textures/${f}.png`));
-    assert.notEqual(file, derivedIconSpec(f) != null, `${f}: a file or a spec, never both and never neither`);
+    assert.equal([file, derivedIconSpec(f) != null, ownIconSpec(f) != null].filter(Boolean).length, 1, `${f}: a file, a spec or ours - exactly one`);
     if (file) assert.ok(doctrine.includes(`'vendor/climates-calories/Textures/${f}.png'`), `${f} has its allow-list row`);
   }
   clearVendorTextures();

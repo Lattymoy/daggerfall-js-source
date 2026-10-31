@@ -3,8 +3,8 @@
 // LW3 (2026-10-04, bible/06-Systems/Living-World.md): THE LIVING WORLD'S ROADS - THE TRIPS' WORLD. The trips are pure
 // (systems/livingWorld/trips.js); their world is the world host's: the towns - the game's OWN rows (a mod's addition stands
 // on one client and not another), the populated types, each as its MAPS row says it (its blocks, its climate's people, its
-// region, its port) - and the way between two, the Travel Options planner's on Hazelnut's roads (the follow key's and the
-// static's own: his bytes or none), asked once a pair in ONE direction (the lower map id first, the other its reverse) so
+// region, its port) - and the way between two, the Travel Options planner's on the Bay's roads (the follow key's and the
+// static's own: the Basic Roads switch's network or none), asked once a pair in ONE direction (the lower map id first, the other its reverse) so
 // every client walks the same way, a few a frame. A traveller's trip of a cycle never changes, so the book keeps every one
 // it has made. WW1: the towns and the dungeons are the world's registry's (scenes/livingWorld/livingIndex.js) - the Bay's
 // rows, and whatever a provider past the Bay stands - filed by the world's own key, grouped by AREA (the region on the Bay).

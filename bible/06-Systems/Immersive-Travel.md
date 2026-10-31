@@ -14,6 +14,21 @@ the fare paid, and the gate edits are built now and checked against a
 The vendored record is `vendor/immersive-travel/README.md` (the permission line
 is open: `01-Overview/Mod-Registry.md`).
 
+**OWN-WORK2 (2026-10-31, the owner).** vendor/immersive-travel is retired: the
+manifest, the settings file, `ImmersiveTravel.dll`, its IL dump, the README and
+the author's edit of the four gate blocks left the tree, with
+`tools/immersiveTravelPatches.mjs` (RETIRED). No gate block is edited now. A gate needs one
+thing for Fast Travel: a driver in faction 8642 outside it, on open ground and
+off its way out. Our own stand (`world/immersiveTravelGates.js` CARRIAGE_STAND)
+puts a carriage, two horses, hay, a signpost and the driver 26 m along each
+gate's wall. TS7, TS4 and the capitals carry it to their gates; on a town mod's
+gate file the layer moves it the least step clear of that file's houses, props,
+roads and lane. `systems/immersiveTravel.js` stays the law and
+`systems/immersiveTravelTables.js` its tables, which
+`test/systems/guild/it1_immersivetravel.test.js` holds by literal digests. Git
+history holds the vendored copy (commit `c2fbbbbfa`); the provenance is
+`01-Overview/Own-Work.md`'s.
+
 ## What it is
 
 A carriage, its team or a cart, the horses, a hay bale or a crate and a
@@ -49,7 +64,7 @@ ships them and named where they stand.
 | `src/systems/immersiveTravel.js` | the mod: Init (the two factions, the two services), the settings, the carriage's laws (IsDestinationValid, BorderingRegionIndex, isCapital, the map's refusals, its calculator), the captain's (HasDock, NearDock, IsPlayerInTown, the refusals, the captain's calculator), the popups' OnPush and their toggle overrides, the trip each popup bills |
 | `src/systems/immersiveTravelTables.js` | the three tables the static constructors fill out of field data: 40 capitals, 15 large docks, 382 dock pixels |
 | `src/world/immersiveTravelGates.js` | the gate records as a layer on whichever gate block is served (below) |
-| `tools/immersiveTravelPatches.mjs` | the four gate patches out of the shipped bundle |
+| `tools/immersiveTravelPatches.mjs` | RETIRED (OWN-WORK2): the four gate patches out of the shipped bundle |
 | `src/ui/travel/travelMapWindow.js`, `src/ui/travel/travelPopUp.js` | the classic skin: the CarriageMap's five-texel page, its refusal box, the mod's three popups |
 | `src/ui/heldMap.js` | the enhanced sheet: the same maps and popups as the sheet's card |
 | `src/scenes/world.js` | `openImmersiveMap` (the services' push, and online the sun's refusal), PlayerGPS for the laws (`itHere`) |

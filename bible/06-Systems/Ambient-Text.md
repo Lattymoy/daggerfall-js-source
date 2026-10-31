@@ -16,14 +16,27 @@ goes quiet for longer.
 
 | | |
 |---|---|
-| Vendored | `vendor/ambient-text/` - manifest, `modsettings.json`, `ambientTexts.json` |
+| Lines | `src/systems/ambientTextLines.json` - DFO's own (OWN-WORK2); the vendored copy is retired |
 | Port | `src/systems/ambientText.js` |
 | Hosts | `src/scenes/world.js`, `src/scenes/exterior.js`, `src/scenes/dungeon.js` |
 | Settings | `MOD_SETTINGS['ambient-text']` (`src/systems/modSettings.js`) |
 | Row | `mod-ambient-text`, group "The world" (`src/systems/features.js`) |
 | Credit | `CREDITS.mods` (`src/ui/credits.js`), About pane |
 | Pins | `test/systems/ambienttext.test.js` (26) |
-| Registry | `01-Overview/Mod-Registry.md` |
+| Registry | `01-Overview/Own-Work.md` (retired from vendor/) |
+
+**OWN-WORK2 (2026-10-31, the owner).** The lines are now DFO's own.
+`src/systems/ambientTextLines.json` holds 918 lines written for this game, one
+for each of the mod's 918 keys, so the key law, the sparseness and the
+frequency curve below are unchanged. No line rewords one of Regnier's, and none
+names one place, since a key can speak anywhere in Tamriel (TAMRIEL-WIDE).
+vendor/ambient-text is retired: the manifest, `modsettings.json`, the author's
+`ambientTexts.json` and the README left the tree. The rules stay the mod's,
+ported from its 1.8 assembly in `src/systems/ambientText.js`, with its settings
+in `src/systems/modSettings.js`. `test/systems/ambienttext.test.js` holds the
+shipped settings as a literal table, and our table by its count, a sha256 of
+its keys and the plain-text limits. Git history holds the vendored copy (commit
+`1b97b3a8f`); the provenance is `01-Overview/Own-Work.md`'s.
 
 ## AT1 - what the mod actually is
 
@@ -432,6 +445,7 @@ extraction only pays once something else reads it.
 
 ## Open
 
-- **The permission line** in `vendor/ambient-text/README.md` is the
-  placeholder, and the registry row says `RECORD OPEN`. Regnier's
-  contact per the manifest is `forums.dfworkshop.net`.
+- **The permission record** is still open for the rules, which stay the
+  mod's (OWN-WORK2): the retired README carried the placeholder, and the
+  row in `01-Overview/Own-Work.md` keeps `RECORD OPEN`. Regnier's contact
+  per the manifest is `forums.dfworkshop.net`.

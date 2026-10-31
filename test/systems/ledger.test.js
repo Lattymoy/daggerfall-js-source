@@ -17,7 +17,7 @@
 import { test } from 'node:test';
 import { indexText } from '../bibleIndex.mjs';   // HARD5: a doesNotMatch aimed at one page goes vacuous when its subject moves
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SPELL_MAKER_EFFECTS } from '../../src/systems/spell/spellEffects.js';
@@ -292,8 +292,8 @@ test('AUDIT 58 F5 ledger: the RE-INTEGRATED road system has its own section A ro
   const row = A.split('\n').find((l) => l.startsWith('| **ROADS 22-25'));
   assert.ok(row, 'section A carries no approved-departure row for the re-integrated road system');
   assert.match(row, /Supersedes the struck row above/, 'the new row cites the removal row it supersedes');
-  assert.match(row, /vendor\/roads-hazelnut\//, 'it names the vendored data');
-  assert.match(row, /FALLBACK/, 'and says the port’s own network is what falls back');
+  assert.match(row, /vendor\/roads-hazelnut\//, 'it names the vendored data it carried');
+  assert.match(row, /OWN-WORK2 \(2026-10-31, `01-Overview\/Own-Work\.md`\) retired them/, 'and that OWN-WORK2 retired it - the port\u2019s own network the Bay\u2019s only one');
   assert.match(row, /ALWAYS ON, IN BOTH LANES/, 'it states which lane ships what');
   assert.match(row, /Roads\.md:197/, 'and cites Mac’s always-on call');
   assert.match(row, /`systems\/travel\/travel\.js` stays the verbatim port/, 'and what stayed removed');
@@ -305,72 +305,34 @@ test('AUDIT 58 F5 ledger: the RE-INTEGRATED road system has its own section A ro
 
   // The tree half: the row's claims are true of this checkout.
   const rootFile = (p) => readFileSync(join(ROOT, p), 'utf8');
-  for (const f of ['roadData.bytes', 'trackData.bytes', 'riverData.bytes', 'streamData.bytes']) {
-    assert.equal(readFileSync(join(ROOT, 'vendor/roads-hazelnut', f)).length, 500000, `${f} is his 500,000-byte array`);
-  }
-  for (const m of ['road/roadNetwork.js', 'road/roadPainter.js', 'roadsProducer.js', 'roadsCache.js']) {   // TIDY2: the road's own two in its folder
+  assert.ok(!existsSync(join(ROOT, 'vendor/roads-hazelnut')), 'OWN-WORK2: his arrays are no longer in the tree');
+  for (const m of ['road/roadNetwork.js', 'road/roadPainter.js', 'road/riverNetwork.js', 'roadsProducer.js', 'roadsCache.js']) {   // TIDY2: the road's own in its folder
     assert.ok(rootFile(`src/world/${m}`).length > 0, `src/world/${m} ships`);
   }
   const host = rootFile('src/scenes/world.js');
-  // AUDIT 58 R1 (b): THE GATE IS THE STATEMENT ABOVE, NOT THE CALL LINE.
-  // This read the two `terrainGen.setRoads*` LINES and rejected
-  // `isEnhanced` inside them, which is not how a gate is written: wrapping
-  // the whole block (`if (isEnhanced()) loadModRoads().then(...)`, or an
-  // `if (isEnhanced()) { ... }` around it) left the 1:1 lane with no roads
-  // at all - not his arrays, not ours, no rebuildRoadless - with this pin
-  // and the whole suite green. So the wiring's ENCLOSING SCOPE is what is
-  // pinned: it must be a bare statement in bootWorld's own body, at
-  // brace depth one, with nothing conditional between.
-  // BR3: the wiring is gated on the mod's own Enabled now, so the literal
-  // moved. The LAW did not: it is still one bare statement in bootWorld's
-  // body, and the ternary is inside the expression rather than an `if`
-  // around the block for exactly the reason this pin exists - a lane or a
-  // mode must never be able to take the whole road system with it.
-  const start = host.indexOf('\n  (basicRoadsOn ? loadModRoads() : Promise.resolve(null)).then((his) => {\n');
+  // AUDIT 58 R1 (b): THE GATE IS THE STATEMENT, NOT THE CALL LINE. Wrapping
+  // the wiring in a lane's `if` left the 1:1 lane with no roads at all, with
+  // the old pin green. So the wire's ENCLOSING SCOPE is pinned: a bare
+  // statement in bootWorld's own body, at brace depth one, with nothing
+  // conditional between - a lane or a mode must never be able to take the
+  // whole road system with it. OWN-WORK2: one wire, the Bay's own network.
+  const start = host.indexOf('\n  terrainGen.setRoads(settlementsOf(maps), logRoads, ');
   assert.ok(start > 0, 'the road wiring is not a bare two-space statement - something prefixes or re-indents it');
   const scopes = enclosingBraces(host, start);
   assert.equal(scopes.length, 1, `the road wiring sits inside ${scopes.length} blocks, not just the scene builder\u2019s body`);
   assert.match(lineAt(host, scopes[0]), /^export async function bootWorld\(/,
     'the road wiring\u2019s only enclosing scope is no longer bootWorld itself');
-  const block = host.slice(start, host.indexOf('\n  });', start));
-  assert.ok(!/isEnhanced/.test(block), `the road wiring is ungated: ${block.trim().slice(0, 80)}`);
-  const wiring = block.split('\n').filter((l) => /terrainGen\.setRoads(Data)?\(/.test(l));
-  // BR3: THREE arms now, and all three are still inside this one ungated
-  // block, which is the whole point of the pin. His data (setRoadsData),
-  // ours when his will not load, and ours when the player has turned the
-  // mod off - every path ends at a network, none of them at no roads.
-  // PIN MOVED (AUDIT LANDFORMS C3): FIVE, the same law. Online his arrays are
-  // asked again before ours stands in (retryModRoads), so his land late on a
-  // second wire, and ours stands in on a third once every try has failed -
-  // still inside this block, still every path ending at a network.
-  assert.equal(wiring.length, 5, 'all five road wires are in that block');
-  assert.equal(wiring.filter((l) => /setRoadsData\(/.test(l)).length, 2, 'two of them are his - at once, and late online');
-  assert.equal(wiring.filter((l) => /setRoads\(settlementsOf\(maps\)/.test(l)).length, 3,
-    'and three fall to the port\u2019s own network - the mod off, the mod unloadable, and online once every try failed');
-  assert.equal(host.split('\n').filter((l) => /terrainGen\.setRoads(Data)?\(/.test(l)).length, wiring.length,
-    'and world.js holds no road wire OUTSIDE that block - every one of them is in the ungated statement above');
+  const statement = lineAt(host, start + 1);
+  assert.ok(!/isEnhanced/.test(statement), `the road wiring is ungated: ${statement.trim().slice(0, 80)}`);
+  assert.equal(host.split('\n').filter((l) => /terrainGen\.setRoads(Data)?\(/.test(l)).length, 1,
+    'and world.js holds no road wire but that one');
 
-  // AUDIT 58 R1 (a): the row's own line cite RESOLVES. It read
-  // `world.js:"${dilated} coastal"` - four lines of the ROADS 3/22 comment block - from
-  // the day it was written, and the pin above re-derived the no-gate fact
-  // without ever reading the number, so the one pointer a reader is sent to
-  // could name anything. The cite is now sliced and checked.
-  // CITE-ANCHOR: the cite names the block by its first line's words; the block is that line through its close
+  // AUDIT 58 R1 (a): the row's own line cite RESOLVES, and to the wire itself.
   const cite = new RegExp(String.raw`\`src\/scenes\/world\.js:"([^"]+)"(?:\.\."([^"]+)")?\``).exec(row);
   assert.ok(cite, 'the row no longer cites the wiring by line');
   const hostLines = host.split('\n');
   const first = resolveAnchor(maskAnchors(host), hostLines, cite[1], cite[2] ?? null).line ?? 0;
-  const close = hostLines.findIndex((l, i) => i >= first && l === '  });') + 1;
-  const citedLines = hostLines.slice(first - 1, close);
-  const cited = citedLines.join('\n');
-  assert.match(cited, /terrainGen\.setRoadsData\(/, 'the cited range misses his-data wire');
-  assert.match(cited, /terrainGen\.setRoads\(settlementsOf/, 'the cited range misses the fallback wire');
-  assert.ok(!/isEnhanced/.test(cited), 'the cited range carries a gate');
-  // ...and it is the WHOLE block, first line to last: a range that merely
-  // happens to still contain the wires is how the old number stayed
-  // plausible for a whole wave.
-  assert.equal(citedLines.at(0), '  (basicRoadsOn ? loadModRoads() : Promise.resolve(null)).then((his) => {', 'the cite does not start at the wiring statement');
-  assert.equal(citedLines.at(-1), '  });', 'the cite does not end at the block\u2019s close');
+  assert.equal(hostLines[first - 1], statement, 'the cite names the wiring statement');
   assert.match(rootFile('src/world/terrain/terrainGen.js'), /paintRoads\(tileData, tilemap/, 'the paint is in the shared kernel');
   const travel = rootFile('src/systems/travel/travel.js');
   assert.ok(!/roadAt\(|path\.roadAt|byRoad/.test(travel), 'travel.js is still the verbatim port - the road term and its two deps stayed gone');

@@ -77,7 +77,7 @@ test('FT9: when each switch lands, as the port knows it', () => {
   const effect = (v) => featureForControl('mods', 'Enabled', v).effect;
   assert.equal(effect('seasons-iliac-bay'), 'Takes effect when the world next loads.', 'read at the world host\'s mount');
   assert.equal(effect('roads-hazelnut'), 'Takes effect when the world next loads.', 'the network is built at mount (ROADS 24 / BR3)');
-  assert.equal(effect('meanerMonsters'), 'Takes effect on monsters that appear after the change. With Daggerfall Enemy Expansion on, it takes effect when the game next loads.');   // PIN MOVED: MUDEX1 - beside DEX the switch is MUDEX's, latched at the load
+  assert.equal(effect('meanerMonsters'), 'Takes effect on monsters that appear after the change. With Daggerfall Enemy Expansion on, it takes effect when the game next loads.');   // PIN MOVED: MUDEX1 - beside DEX the switch loads the meaner monsters made for it (ours since OWN-WORK2), latched at the load
   assert.ok(!/Takes effect/.test(MOD_SETTINGS.meanerMonsters.keys.Enabled.description), 'the effect line left the description - one sentence, one place');
   assert.equal(effect('pcaao'), 'Takes effect at once.', 'the registered arms read the switches live (pcaao.js)');
   assert.equal(effect('unleveledLoot'), 'Takes effect on the next drop or shop restock.');

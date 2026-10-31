@@ -1,0 +1,121 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\M0B00Y07.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 0
+-- QuestId: 7
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 81
+Quest: M0B00Y07
+DisplayName: Unwanted Houseguest
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> A client of ours forgot to bar his
+<ce> door, and now an animal has the run
+<ce> of his house. Bear or tiger, he
+<ce> cannot say. It wanted to eat him.
+<ce> The fee is _gold_ gold. Yours, %pcn?
+
+RefuseQuest:  [1001]
+<ce> Fine. Let the tiger have him.
+<ce> He did open the door for it.
+
+AcceptQuest:  [1002]
+<ce> Good. Head to _house_ in __house_. Kill
+<ce> it and be back within =2dung_ days.
+
+QuestComplete:  [1004]
+<ce> No trouble, I expect.
+<ce> Here is your _gold_ gold.
+
+RumorsDuringQuest:  [1005]
+<ce> There is a tiger trapped in
+<ce> _house_. The owner will have
+<ce> to pay someone to kill it.
+
+RumorsPostfailure:  [1006]
+A tiger killed a man in his own house. A terrible way to go.
+
+RumorsPostsuccess:  [1007]
+You killed that tiger in _house_, did you not?
+
+QuestorPostsuccess:  [1008]
+Nice work with that tiger.
+
+QuestorPostfailure:  [1009]
+Beaten by a cat. A big one, I grant you.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ of ___qgiver_ wants a tiger
+ or a bear killed in _house_ in
+ __house_. The pay is _gold_ gold, if
+ I am back within =2dung_ days.
+
+Message:  1011
+<ce> You have killed the _monster_.
+
+Message:  1012
+<ce> You have killed the _bear_.
+
+Message:  1080
+<ce> Oh, I nearly forgot. One of our
+<ce> members turned up this map to
+<ce> ___newdung_. It is yours. Leave
+<ce> something alive for the rest of us.
+
+
+QBN:
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _house_ remote random
+Place _newdung_ remote dungeon
+
+Clock _2dung_ 1.00:00 0 flag 17 range 0 2
+
+Foe _monster_ is Sabretooth_tiger
+Foe _bear_ is Grizzley_bear
+
+--	Quest start-up:
+	start timer _2dung_ 
+	log 1010 step 0 
+	pick one of _map_ _nomap_ _nomap_ 
+	pick one of _monster1_ _monster2_ 
+	create npc at _house_ 
+
+_2dung_ task:
+	end quest 
+
+_mondead_ task:
+	killed 1 _monster_ saying 1011 
+	killed 1 _bear_ saying 1012 
+
+_S.02_ task:
+	when _qgclicked_ and _mondead_ 
+	give pc _gold_ 
+	end quest 
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_ 
+	clear _qgclicked_ _clearclick_ 
+
+_qgclicked_ task:
+	clicked npc _qgiver_ 
+
+variable _map_
+variable _nomap_
+_S.06_ task:
+	when _map_ and _S.02_ 
+	reveal _newdung_ readmap
+    say 1080 
+
+_monster1_ task:
+	place foe _bear_ at _house_ 
+
+_monster2_ task:
+	place foe _monster_ at _house_

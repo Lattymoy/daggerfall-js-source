@@ -7,10 +7,10 @@
 // WOODS.WLD's height bytes under the ONE water law the streamed
 // terrain uses (ui/overworldModel.js isWaterPixel); the province
 // borders are where the politic bytes change hands between two land
-// pixels; the roads and tracks are Hazelnut's vendored arrays traced
-// into chains (traceChains - the port's own generated network on the Bay
-// is never drawn on a map, bible/03-World/Roads.md, and the `source` field
-// TO1 put on the network object is what tells them apart; TESA13: past the
+// pixels; the roads and tracks are the Bay's network traced into chains
+// (traceChains - drawn while the Basic Roads switch is on, which the
+// `source` field TO1 put on the network object says (OWN-WORK2: the
+// network is the port's own either way); TESA13: past the
 // Bay Arena's network is the only road, and ui/tamrielInk.js draws it
 // through pathChains and strokePaths here); the marks are
 // MAPS.BSA through the classic window's discovery and bucket laws
@@ -515,11 +515,10 @@ export function borderChains({ width, height, regionAt, isLand }) {
   return linkSegments(segs).map((c) => inkChain(c, 0.9));
 }
 /**
- * The roads and tracks - ONLY the mod's arrays. The network object the
- * host hands carries `source: 'basic-roads'` when it was read off
- * vendor/roads-hazelnut (world/roadsProducer.js loadModRoads); the
- * port's own generated network on the Bay carries no such word and is
- * never inked (bible/03-World/Roads.md). Chains are pixel CENTRES, so a
+ * The roads and tracks - ONLY while the Basic Roads switch is on: the
+ * network object the host hands carries `source: 'basic-roads'` then
+ * (world/roadsProducer.js, OWN-WORK2), 'generated' with it off, and is
+ * not inked (bible/03-World/Roads.md). Chains are pixel CENTRES, so a
  * road meets a town's mark rather than its corner.
  */
 export function roadChains(net, width, height) {

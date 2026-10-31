@@ -1,0 +1,101 @@
+[
+  {
+    "name": "OWN-WORK2-no-relief",
+    "file": "src/world/road/riverNetwork.js",
+    "old": "e[i] = heights[i] + d.relief * reliefNoise(i % W, Math.floor(i / W), d.reliefPx);",
+    "new": "e[i] = heights[i];",
+    "tests": [
+      "test/world/road/ownwork2_bayroads.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK2-the-area-law",
+    "file": "src/world/road/riverNetwork.js",
+    "old": "const mask = area[i] >= d.riverArea ? rivers : area[i] >= d.streamArea ? streams : null;",
+    "new": "const mask = area[i] >= d.streamArea ? rivers : null;",
+    "tests": [
+      "test/world/road/ownwork2_bayroads.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK2-the-outlets",
+    "file": "src/world/road/riverNetwork.js",
+    "old": "    if (sea(i)) { seen[i] = 1; level[i] = -1; push(-1, i); } else if (x === 0 || y === 0 || x === W - 1 || y === H - 1) { seen[i] = 1; level[i] = e[i]; push(e[i], i); }",
+    "new": "    if (x === 0 || y === 0 || x === W - 1 || y === H - 1) { seen[i] = 1; level[i] = e[i]; push(e[i], i); }",
+    "tests": [
+      "test/world/road/ownwork2_bayroads.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK2-the-ponds-kept-wet",
+    "file": "src/world/road/riverNetwork.js",
+    "old": "  for (let i = 0; i < out.length; i++) if (water[i] && sizes[comp[i]] < pond) out[i] = 1;",
+    "new": "",
+    "tests": [
+      "test/world/road/ownwork2_bayroads.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK2-the-price-unread",
+    "file": "src/world/roadsProducer.js",
+    "old": "    land.river = riverPrices(rivers, streams, RIVER_FORD);\n",
+    "new": "",
+    "tests": [
+      "test/world/road/ownwork2_bayroads.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK2-the-place-pixel-wet",
+    "file": "src/world/roadsProducer.js",
+    "old": "&& l.x >= 0 && l.y >= 0 && l.x < W && l.y < H) dry[l.y * W + l.x] = 0;",
+    "new": "&& l.x >= 0 && l.y >= 0 && l.x < W && l.y < H) dry[l.y * W + l.x] = dry[l.y * W + l.x];",
+    "tests": [
+      "test/world/road/ownwork2_bayroads.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK2-the-network-unwatered",
+    "file": "src/world/roadsProducer.js",
+    "old": "    waterOffPaths(Object.assign(net, { rivers, streams }));",
+    "new": "    Object.assign(net, { rivers, streams });",
+    "tests": [
+      "test/world/road/ownwork2_bayroads.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK2-the-depth-unread",
+    "file": "src/world/roadsProducer.js",
+    "old": "        if (![0, 1, 2, 3].every((k) => { const [x, y] = at(u, k); return water[y * W + x] === 0; })) continue;",
+    "new": "        if (![0].every((k) => { const [x, y] = at(u, k); return water[y * W + x] === 0; })) continue;",
+    "tests": [
+      "test/world/road/ownwork2_bayroads.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK2-the-middle-unsought",
+    "file": "src/world/roadsProducer.js",
+    "old": "        const u = d % 2 ? mid + ((d + 1) >> 1) : mid - (d >> 1);",
+    "new": "        const u = s0 + d;",
+    "tests": [
+      "test/world/road/ownwork2_bayroads.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK2-the-rivers-uncached",
+    "file": "src/world/roadsCache.js",
+    "old": "rivers: { ...RIVER_DIALS, ...(dials.rivers ?? {}) } };",
+    "new": "};",
+    "tests": [
+      "test/world/road/ownwork2_bayroads.test.js"
+    ]
+  },
+  {
+    "name": "OWN-WORK2-the-bay-tree-across-the-sea",
+    "file": "src/world/road/roadNetwork.js",
+    "old": "if (together(nodes[i], nodes[j])) all.push(",
+    "new": "all.push(",
+    "tests": [
+      "test/world/road/ownwork2_bayroads.test.js"
+    ]
+  }
+]

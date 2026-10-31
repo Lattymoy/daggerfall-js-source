@@ -19,7 +19,7 @@ export function eventKinds() {
     if (STAFF_EVENT_KINDS_BARRED.includes(id)) return;
     groups[id >= 128 ? 'People' : 'Monsters'].push([id, id === 40 ? 'Dragonling (alternate)' : name]);   // MobileTypes' second Dragonling
   });
-  for (const [id, e] of dexRead({ log: () => {}, mudex: false }).enemies) groups[id >= 384 ? 'Expansion people' : 'Expansion monsters'].push([id, e.props.name]);
+  for (const [id, e] of dexRead({ log: () => {}, meaner: false }).enemies) groups[id >= 384 ? 'Expansion people' : 'Expansion monsters'].push([id, e.props.name]);
   groups.Monsters.push([DWARVEN_DRAGON_ID, DWARVEN_DRAGON_NAME]);   // DWARVEN-DRAGON: the game's own, for staff
   return Object.entries(groups).map(([group, kinds]) => ({ group, kinds }));
 }

@@ -174,7 +174,7 @@ test('DEX1 the install: the fifty in the table, a career each, DFU\'s entity typ
   t.after(() => { _resetEnemyExpansion(); clearCustomEnemies(); _resetMintRowEditors(); _resetExtraQuestRows(); });
   const bearBefore = structuredClone(ENEMY_BASICS[4]);
   const r = installEnemyExpansion({ on: false, log: silent });
-  assert.deepEqual(r, { loaded: false, mudex: false, enemies: 50 }, 'off: no MUDEX either (it depends on the mod)');
+  assert.deepEqual(r, { loaded: false, meaner: false, enemies: 50 }, 'off: none of our meaner monsters either (they ride the mod)');
   assert.equal(ENEMY_BASICS[256].maleTexture, 1600, 'the Goblin stands in the table, loaded or not');
   assert.deepEqual(ENEMY_BASICS[4], bearBefore, 'not loaded: no classic row is the mod\'s');
   assert.equal(dexProperties(4), null, 'nor its props');
@@ -228,15 +228,15 @@ test('AUDIT DEX A5 the hosts\' arms by SetupDemoEnemy\'s entity type: a dungeon\
   assert.match(xf, /const isClass = enemyEntityType\(f\.mobileType\) === 'class';/, 'the street\'s knockback weight');
 });
 
-test('DEX1 loaded: the classic rows written in the table, and at a foe\'s mint - Meaner Monsters standing aside beside it, its author\'s form of it for this mod being MUDEX (MUDEX1, mudex1.test.js)', (t) => {
+test('DEX1 loaded: the classic rows written in the table, and at a foe\'s mint - Meaner Monsters standing aside beside it, our own meaner monsters for this mod in its place (OWN-WORK2, dexmeaner.test.js)', (t) => {
   t.after(() => { _resetEnemyExpansion(); clearCustomEnemies(); _resetMintRowEditors(); });
   const before = structuredClone(ENEMY_BASICS[9]);
-  installEnemyExpansion({ on: true, meaner: false, log: silent });   // the mod's own lines alone: no MUDEX
+  installEnemyExpansion({ on: true, meaner: false, log: silent });   // the mod's own lines alone: none of ours
   assert.deepEqual([ENEMY_BASICS[4].maleTexture, ENEMY_BASICS[143].maleTexture, ENEMY_BASICS[140].femaleTexture], [457, 1507, 1520]);
   assert.equal(ENEMY_BASICS[9].maxDamage, 16, 'the werewolf as the mod restats it');
   assert.equal(ENEMY_BASICS[9].maxHealth, before.maxHealth, 'a field the line leaves is the row\'s');
   // Meaner Monsters writes the werewolf too (MM1), and the two disagree; beside the mod its rows stand aside, switch on or
-  // not (MUDEX1: Meaner Monsters' own Init asks the player to swap it for MUDEX here, and the port makes the swap)
+  // not (Meaner Monsters' own Init asks the player to swap it here, and the port makes the swap - OWN-WORK2: for ours)
   assert.ok(MEANER_MONSTERS_EDIT[9]?.maxDamage !== undefined && MEANER_MONSTERS_EDIT[9].maxDamage !== 16, 'the two mods disagree on the werewolf\'s damage');
   const wolf = makeEnemyEntity(9, ENEMY_BASICS[9], null, 1, () => 0.5);
   assert.equal(wolf.basics.maxDamage, 16, 'the mod\'s');
@@ -256,7 +256,7 @@ test('DEX1 loaded: the classic rows written in the table, and at a foe\'s mint -
 
 test('DEX1 a mod\'s monster and a mod\'s class are built on DFU\'s two arms (EnemyEntity.SetEnemyCareer :251-274)', async (t) => {
   t.after(() => { _resetEnemyExpansion(); clearCustomEnemies(); _resetMintRowEditors(); });
-  installEnemyExpansion({ on: true, meaner: false, log: silent });   // the mod's own rows: MUDEX restats the Goblin
+  installEnemyExpansion({ on: true, meaner: false, log: silent });   // the mod's own rows alone
   const fetchBytes = async () => { throw new Error('a new career reads no file'); };
   const goblinCareer = await loadEnemyCareer(256, fetchBytes);
   assert.equal(goblinCareer.name, 'Goblin');
@@ -304,5 +304,5 @@ test('DEX1 the read is idempotent: one read, one install', (t) => {
   t.after(() => { _resetEnemyExpansion(); clearCustomEnemies(); _resetMintRowEditors(); });
   installEnemyExpansion({ on: true, meaner: false, log: silent });
   assert.equal(dexRead(), dexRead());
-  assert.deepEqual(installEnemyExpansion({ on: false, log: silent }), { loaded: true, mudex: false, enemies: 50 }, 'a second call answers the first load');
+  assert.deepEqual(installEnemyExpansion({ on: false, log: silent }), { loaded: true, meaner: false, enemies: 50 }, 'a second call answers the first load');
 });

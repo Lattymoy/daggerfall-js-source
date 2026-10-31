@@ -2,7 +2,7 @@
 // FAST-SUITE (2026-10-04): THE ROAD PAINTER'S SKIP GUARD, PROVEN - world/road/roadPainter.js paintRoads passes by every tile
 // no painter can reach (off the centre cross, the two diagonals and the location rect). This runs the painter as it is
 // against the painter as it stood BEFORE the guard - taken from git, `--ref` (default the guard's parent commit) - over
-// every road, track, river and stream pixel of the shipped map (vendor/roads-hazelnut), water on and off, a location
+// every road, track, river and stream pixel of the Bay's network (OWN-WORK2: its own, ARENA2_PATH), water on and off, a location
 // rect and a few location tiles on some, the GRASS-PATH1 paths mask on all; then a synthetic sweep of every road mask
 // with random tracks, rivers, streams, corners and rects. Tilemap bytes, the paths mask and the count must agree,
 // case for case. AUDIT FAST-SUITE: the record's "103,487 cases" could be checked by nobody until this was committed.
@@ -40,8 +40,10 @@ async function main(argv) {
   const before = await painterAt(at('--ref') ?? GUARD_PARENT);
   const now = await import(pathToFileURL(join(ROOT, 'src/world/road/roadPainter.js')).href);
   const { MAP_W } = await import(pathToFileURL(join(ROOT, 'src/world/road/roadNetwork.js')).href);
-  const plane = (f) => new Uint8Array(readFileSync(join(ROOT, 'vendor/roads-hazelnut', f)));
-  const R = { road: plane('roadData.bytes'), track: plane('trackData.bytes'), river: plane('riverData.bytes'), stream: plane('streamData.bytes') };
+  const { bayRoads } = await import(pathToFileURL(join(ROOT, 'test/bayRoads.mjs')).href);
+  const bay = bayRoads();
+  if (!bay) { console.error('roadGuardProof: ARENA2_PATH is not an ARENA2 folder (sh tools/fetch-data.sh)'); process.exit(2); }
+  const R = { road: bay.roads, track: bay.tracks, river: bay.rivers, stream: bay.streams };
   let seed = 12345;
   const rnd = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
   let cases = 0, differing = 0;

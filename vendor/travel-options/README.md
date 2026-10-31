@@ -10,7 +10,8 @@ Mac (Lattymoy) handed the shipped zip
 (`TravelOptions-1.11-122-1-11-1721574422`) over on 2026-09-17: "This is
 the next daggerfall mod we are to implement 1:1", with two additions of
 his own - an enhanced-lane UI for it, and a check that it sits properly
-on the port's Basic Roads (`vendor/roads-hazelnut/`, also Hazelnut's).
+on the port's Basic Roads (also Hazelnut's; its arrays were retired by
+OWN-WORK2, 2026-10-31, and the network is the port's own).
 
 **Licence.** The mod's CODE is MIT ("Copyright (C) 2020 Hazelnut", the
 header of every script; `PlayerAutoPilot.cs` is "Copyright (C) 2019
@@ -21,8 +22,8 @@ art and carry no licence text of their own.
 
 **Permission: [Mac: record Hazelnut's permission for the three
 textures, or the link to it, here - the earlier mod records carry
-theirs in this line. The port's Basic Roads note (`vendor/
-roads-hazelnut/README.md`) records a permission from the same author.]**
+theirs in this line. Basic Roads' record (`bible/01-Overview/Own-Work.md`)
+names a permission from the same author.]**
 
 ## What is here
 

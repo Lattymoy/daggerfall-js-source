@@ -356,5 +356,75 @@
     "tests": [
       "test/systems/travel/it1_heldmap.test.js"
     ]
+  },
+  {
+    "name": "OWN-WORK2-the-house-unread",
+    "file": "src/world/immersiveTravelGates.js",
+    "old": "      if (v && v !== 0xfb && square(x, z, gx * C, gz * C, C) < reach) return false;\n",
+    "new": "",
+    "tests": [
+      "test/formats/worldData/it1_worlddata.test.js"
+    ],
+    "note": "A served file's house moves the stand."
+  },
+  {
+    "name": "OWN-WORK2-a-prop-unread",
+    "file": "src/world/immersiveTravelGates.js",
+    "old": "    return things.every(([px, pz, r]) => Math.hypot(px - x, pz - z) >= r + reach);",
+    "new": "    return things.length >= 0;",
+    "tests": [
+      "test/formats/worldData/it1_worlddata.test.js"
+    ],
+    "note": "A served file's models and flats move the stand."
+  },
+  {
+    "name": "OWN-WORK2-the-road-unread",
+    "file": "src/world/immersiveTravelGates.js",
+    "old": "ROAD_RECORDS.includes(",
+    "new": "[].includes(",
+    "tests": [
+      "test/formats/worldData/it1_worlddata.test.js"
+    ],
+    "note": "A served file's road tiles move the stand."
+  },
+  {
+    "name": "OWN-WORK2-the-lane-unread",
+    "file": "src/world/immersiveTravelGates.js",
+    "old": "if (q <= reach || Math.abs(p - GATE_OPENING.along) < GATE_OPENING.half + reach) return false;",
+    "new": "if (q <= reach) return false;",
+    "tests": [
+      "test/formats/worldData/it1_worlddata.test.js"
+    ],
+    "note": "The stand never stands on the gate's way out."
+  },
+  {
+    "name": "OWN-WORK2-a-thing-moved",
+    "file": "src/world/immersiveTravelGates.js",
+    "old": "  Object.freeze({ what: 'driver', at: Object.freeze([23.9, 11.2]) }),",
+    "new": "  Object.freeze({ what: 'driver', at: Object.freeze([23.9, 1.2]) }),",
+    "tests": [
+      "test/formats/worldData/it1_worlddata.test.js"
+    ],
+    "note": "The stand as designed."
+  },
+  {
+    "name": "OWN-WORK2-the-frame-unturned",
+    "file": "src/world/immersiveTravelGates.js",
+    "old": "const yRotation = 0 - Math.round((Math.atan2(f.out[0], f.out[1]) * 1024) / Math.PI);",
+    "new": "const yRotation = 0;",
+    "tests": [
+      "test/formats/worldData/it1_worlddata.test.js"
+    ],
+    "note": "The carriage's shafts down each gate's way out."
+  },
+  {
+    "name": "OWN-WORK2-the-layer-unshifted",
+    "file": "src/world/immersiveTravelGates.js",
+    "old": "return layGateRecords(json, standRecords(gate, standShift(json, gate)));",
+    "new": "return layGateRecords(json, standRecords(gate));",
+    "tests": [
+      "test/formats/worldData/it1_worlddata.test.js"
+    ],
+    "note": "The layer stands the stand clear on the file it is laid on."
   }
 ]

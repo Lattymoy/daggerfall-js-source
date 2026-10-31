@@ -15,7 +15,6 @@ import { findTheatreGateSite } from '../systems/gate/theatreGateSite.js';   // W
 import { keptPlaces } from '../net/staffPlaces.js';
 import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';
 import { arenaRoadsVersion, keptArenaRoadsHost } from '../world/arenaRoads.js';   // W14: the roads past the Bay, a region at a time
-import { loadModRoads, MOD_ROADS } from '../world/roadsProducer.js';
 import { TREMOR_TEXT, FISSURE_TEXT, COLOSSUS_TEXT } from '../systems/pass/seasonWords.js';
 import { mintResonantMaul } from '../systems/pass/resonantMaul.js';
 import { ITEM_UID_RE } from '../systems/item/itemLaw.js';   // AUDIT-STOREFRONT II (lane D 2): a held Maul's id is its claim's
@@ -86,9 +85,6 @@ export const SEASON_MAUL_ASK_MS = 4000;
  *  ask that had no answer. */
 export const SEASON_MAUL_HELD_STORE = 'dagger:maulHeld';
 export const SEASON_MAUL_REASK_MS = 30_000;
-/** AUDIT LANE 5: Basic Roads' roads and tracks asked again this long after a load that failed (seasonWorld.js keeps the
- *  fissures off them, so none stands before they are read). */
-export const SEASON_ROADS_RETRY_MS = 30_000;
 /** W14: a province's areas whose roads were not yet laid are asked again as the layer moves, and this often besides (a
  *  region whose build failed lays no layer, and is let go). */
 export const SEASON_LANES_ASK_MS = 5000;
@@ -112,7 +108,7 @@ const sameMatrix = (a, b) => { if (!a || !b) return false; for (let i = 0; i < 1
 
 /** THE HOST'S BINDINGS, BY NAME - the Starfall's own object (scenes/starfall/starfallHost.js): `renderer`, `state`,
  *  `exteriorFoes`, `gateScanOf`, `warmGateScan`, `surfaceAt`, `player`, `walkMode`, `playerSpawned`, `online`, `collider`,
- *  `_sharedOffsetMs`, `relayNowS`, `labGrassField`, `chatNotice`, the camp law's five, `gamePaused`, `townTalk` - and, for
+ *  `_sharedOffsetMs`, `relayNowS`, `labGrassField`, `chatNotice`, the camp law's five, `gamePaused`, `townTalk`, `terrainRoads` - and, for
  *  the tests, `audio`, `storage`, `say`, `shake`, `burst`, `struckAt`, `who`, `take`, `bindPass`, `passApi`, `maulApi`,
  *  `rid`, `wait`, `roads` and W14's `theatreScans`, `worldPlaces`, `landVersion`, `idle` and `pastBayRoads`. AUDIT-STOREFRONT
  *  II (lane D 2): for the tests, `entity`, `hearRealmSaves`, `onSlotSaved`, `onSlotLoaded` and `askCheckpoint`.
@@ -174,8 +170,8 @@ export function createSeasonHost(host) {
   const fissures = new Map();
   /** `<who>|<key>` -> when this character saw it cleared - kept in the store too (AUDIT LANE 5: a reload stood it again) */
   const quiet = new Map(readQuiet());
-  /** Basic Roads' roads and tracks: undefined until read (the tests hand theirs in - null keeps off none) */
-  const paths = { net: host.roads, askedAt: -Infinity };
+  /** The Bay's roads and tracks: undefined until read (the tests hand theirs in - null keeps off none) */
+  const paths = { net: host.roads };
   let frameN = 0, artUp = false, barUp = false;
   const tremor = { hour: NaN, kickAt: -Infinity, dustAt: -Infinity };
   /** the stage's fissures: the Bay's (`bay`) made once a stage and a scan, then each theatre's past it (`lanes`) - `list`
@@ -223,12 +219,13 @@ export function createSeasonHost(host) {
     const out = Object.fromEntries([...held].map(([rid, h]) => [rid, { day: h.day, who: h.who }]));
     try { storage?.setItem?.(SEASON_MAUL_HELD_STORE, JSON.stringify(out)); } catch { /* a full store: this page keeps it */ }
   }
-  /** The room's roads (systems/online/onlineLane.js forces Basic Roads on), this host's own copy of his vendored bytes. */
+  /** The room's roads (systems/online/onlineLane.js forces Basic Roads on): the terrain's network once it has landed -
+   *  AUDIT LANE 5: seasonWorld.js keeps the fissures off them, so none stands before they are read. */
   function roads() {
-    if (paths.net !== undefined || Date.now() - paths.askedAt < SEASON_ROADS_RETRY_MS) return paths.net;
-    paths.askedAt = Date.now();
-    loadModRoads(globalThis.fetch, /** @type {any} */ ({ roads: MOD_ROADS.roads, tracks: MOD_ROADS.tracks })).then((net) => { if (net) paths.net = net; }, () => {});
-    return undefined;
+    if (paths.net !== undefined) return paths.net;
+    const net = host.terrainRoads?.();
+    if (net) paths.net = { roads: net.roads, tracks: net.tracks };
+    return paths.net;
   }
   function stageSites(at) {
     const sc = scan(), rn = roads();

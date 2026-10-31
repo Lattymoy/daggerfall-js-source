@@ -212,7 +212,7 @@ export function addVendorTextures(entries) {
     // doll, decoded only when asked (`lazy`) - and its picture stands in for the studio's that will not load, and gives
     // the studio's picture its size and scale (entryColor32): a picture of any size stands as big as the one it covers.
     const prev = _vendor.get(key);
-    const entry = { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map, dye: e.dye ?? null, gate: typeof e.gate === 'function' ? e.gate : null, lazy: e.lazy === true, fileName: e.fileName ?? key, load: e.load ?? null, build: typeof e.build === 'function' ? e.build : null, standIn: e.standIn === true, yields: e.yields === true, offset: e.offset ?? null, studio: e.studio === true, under: null, readOnly: e.readOnly === true, cutout: e.cutout === true };   // WD2: `build(ctx)` - a picture DERIVED from the player's own classic records (formats/derivedTexture.js), never a file   // FIELD-GUN4: a WORN stand-in needs a place on the doll, which only its registration knows; AUDIT-DW F1: `lazy` - decoded per record when asked, never by the archive's preload
+    const entry = { archive: Number(e.archive), record: Number(e.record), frame: Number(e.frame ?? 0), map, dye: e.dye ?? null, gate: typeof e.gate === 'function' ? e.gate : null, lazy: e.lazy === true, selfBuilt: e.selfBuilt === true, fileName: e.fileName ?? key, load: e.load ?? null, build: typeof e.build === 'function' ? e.build : null, standIn: e.standIn === true, yields: e.yields === true, offset: e.offset ?? null, studio: e.studio === true, under: null, readOnly: e.readOnly === true, cutout: e.cutout === true };   // WD2: `build(ctx)` - a picture DERIVED from the player's own classic records (formats/derivedTexture.js), never a file   // FIELD-GUN4: a WORN stand-in needs a place on the doll, which only its registration knows; AUDIT-DW F1: `lazy` - decoded per record when asked, never by the archive's preload
     if (prev?.studio && !entry.studio) {
       coverWith(prev, entry);
       dropDecoded(key);   // decoded again with what it covers
@@ -726,7 +726,8 @@ async function entryColor32(entry, decode) {
 /** One entry's own picture in the port's color32 contract. */
 async function pictureColor32(entry, decode) {
   if (entry.build) {
-    if (!_deriveContext) throw new Error(`${entry.fileName}: derived from classic art and no pipeline is up to read it`);
+    // NO-BETHESDA2: a `selfBuilt` entry reads the player's files itself (systems/classicArt.js), so no pipeline is asked
+    if (!_deriveContext && !entry.selfBuilt) throw new Error(`${entry.fileName}: derived from classic art and no pipeline is up to read it`);
     const picture = await entry.build(_deriveContext);
     return picture ? withRecordScale(toColor32(picture), picture) : null;
   }

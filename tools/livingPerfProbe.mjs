@@ -1,13 +1,13 @@
 // LW-PERF (2026-10-05, Mac: "how is performance after we integrate this?"; bible/06-Systems/Living-World.md "LW-PERF"):
 // THE LIVING WORLD'S OWN COST, MEASURED - the script time it adds to a frame, on the engine the game runs on (V8), with
-// no GPU and no ARENA2: the synthetic towns and map the tests stand (test/lwTown.mjs, test/lwRoads.mjs) and Hazelnut's
-// own road bytes (vendor/roads-hazelnut). What a frame pays for:
+// no GPU: the synthetic towns and map the tests stand (test/lwTown.mjs, test/lwRoads.mjs) and, where ARENA2_PATH is,
+// the Bay's own network (test/bayRoads.mjs, OWN-WORK2). What a frame pays for:
 //   - THE STREET: a town's census read on its beat and its walks searched (LivingTown.update), against DFU's own pool
 //     (TownPopulation.update) on the same town - a village (3x3 blocks) and a great city (8x8), a morning, a noon and
 //     an evening, the player crossing it; the way in (the first frame), the frames while the street is stood
 //     (ARRIVAL_SHOW_S) and every frame after; and how soon every resident out of doors near the player is on the street.
 //   - THE TOWN'S BUILD (LivingTown's constructor: its places and its census), paid once as the town streams in.
-//   - THE ROADS: the way planner on Hazelnut's roads (one pair), the roads' layer's frame (its read of the parties near
+//   - THE ROADS: the way planner on the Bay's roads (one pair), the roads' layer's frame (its read of the parties near
 //     spread over a few frames), and the deep's two readers.
 //   - THE ROOM: twelve inside, talking and stirring.
 // Budgets (a desktop's CPU; a frame is 16.7 ms at 60 Hz):
@@ -155,8 +155,8 @@ console.log('THE DAY\'S TURN (the great city carried across four, its census rea
 
 console.log('THE ROADS');
 {
-  const bytes = (n) => new Uint8Array(readFileSync(new URL(`../vendor/roads-hazelnut/${n}`, import.meta.url)));
-  const roads = bytes('roadData.bytes'), tracks = bytes('trackData.bytes');
+  const { bayRoads } = await import('../test/bayRoads.mjs');   // OWN-WORK2: the Bay's own network - the planner's half wants ARENA2_PATH
+  const { roads, tracks } = bayRoads() ?? { roads: new Uint8Array(1000 * 500).fill(0x22), tracks: new Uint8Array(1000 * 500) };
   const on = []; for (let i = 0; i < roads.length; i++) if (roads[i]) on.push(i);
   let seed = 12345; const rnd = () => ((seed = (Math.imul(seed, 1103515245) + 12345) >>> 0) / 2 ** 32);
   const times = [];

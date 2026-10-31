@@ -16,6 +16,7 @@ import { LocationSession, pickLocations } from '../../../src/world/worldOfDagger
 import { decodeRegionPack } from '../../../src/world/worldOfDaggerfall/wodLocationPack.js';
 import { loadLocationPrefab } from '../../../src/world/worldOfDaggerfall/wodLocationData.js';
 import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
+import { bayRoads, BAY_SKIP } from '../../bayRoads.mjs';   // OWN-WORK2: the Bay's own network, off the player's ARENA2
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const rd = (p) => hostText(p);
@@ -96,10 +97,9 @@ test('ROADS-CLEAR: a whole WoD site whose pieces reach a road is refused, a terr
     'the port: the first reaches the road, so the second stands');
 });
 
-test('ROADS-CLEAR over the shipped lists and Basic Roads: WoD pieces DO land on roads, and every one is a rock field or mountain piece', () => {
+test('ROADS-CLEAR over the shipped lists and the Bay\'s network: WoD pieces DO land on roads, and every one is a rock field or mountain piece', { skip: BAY_SKIP }, () => {
   const V = join(ROOT, 'vendor/world-of-daggerfall');
-  const rb = (n) => new Uint8Array(readFileSync(join(ROOT, 'vendor/roads-hazelnut', n)));
-  const net = { roads: rb('roadData.bytes'), tracks: rb('trackData.bytes') };
+  const net = bayRoads();
   const prefabs = new Map();
   for (const f of readdirSync(join(V, 'LocationPrefab'))) prefabs.set(f.replace(/\.txt$/, ''), loadLocationPrefab(readFileSync(join(V, 'LocationPrefab', f), 'utf8')));
   const session = new LocationSession();
@@ -116,7 +116,7 @@ test('ROADS-CLEAR over the shipped lists and Basic Roads: WoD pieces DO land on 
       }
     }
   }
-  assert.ok(near > 300, `pieces whose own position is on a road band: ${near} (their mesh boxes reach more)`);
+  assert.ok(near > 100, `pieces whose own position is on a road band: ${near} (their mesh boxes reach more; 170 on the freeware, OWN-WORK2)`);
   assert.equal(nearWhole, 0, 'no camp, fort, shrine or ruin piece is - the mod\'s own pixel test already holds those back');
 });
 

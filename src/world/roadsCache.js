@@ -29,20 +29,23 @@
 // cache miss, never an error.
 
 import { ROAD_DIALS } from './road/roadNetwork.js';
+import { VOYAGER_DIALS } from './road/roadLand.js';
+import { RIVER_DIALS } from './road/riverNetwork.js';
 import { landLayer } from './land/landLayer.js';   // FOUNDATION F4: the land's rows
 
 /** Bump when the generator changes shape. The dials are in the key on
  *  their own, so a tuned number does not need this.
  *  19 -> 20, AUDIT 58 F4: the location smoothing rewrote the heightmap
- *  content the bake reads, and no other key term can see it. */
-export const GENERATOR_VERSION = 20;
+ *  content the bake reads, and no other key term can see it.
+ *  20 -> 21, OWN-WORK2: the Bay's rivers and streams, and the land's law. */
+export const GENERATOR_VERSION = 21;
 
 const DB = 'daggerfall-roads', STORE = 'networks';
 
 export function roadsCacheKey({ settlements, woodsLength, dials = {}, land = landLayer().stamp }) {
   let sum = 0;
   for (const s of settlements) sum = (sum + s.x * 31 + s.y * 17 + (s.type | 0) * 7) >>> 0;
-  const d = { ...ROAD_DIALS, ...dials };
+  const d = { ...ROAD_DIALS, ...dials, terrain: VOYAGER_DIALS, rivers: { ...RIVER_DIALS, ...(dials.rivers ?? {}) } };   // OWN-WORK2: the land's law's and the rivers' dials too
   return `roads:v${GENERATOR_VERSION}:${settlements.length}:${sum}:${woodsLength}:${JSON.stringify(d)}${land ? `:land${land}` : ''}`;   // FOUNDATION F4: the land's rows move the ground the roads were laid on
 }
 
@@ -103,6 +106,6 @@ export async function cachedNetwork({ key, build, store = idbStore() }) {
     if (hit && hit.roads && hit.tracks) return { ...hit, cached: true };
   }
   const net = build();
-  if (net && store) await store.set(key, { roads: net.roads, tracks: net.tracks, stats: net.stats });
+  if (net && store) await store.set(key, { roads: net.roads, tracks: net.tracks, rivers: net.rivers ?? null, streams: net.streams ?? null, stats: net.stats });   // OWN-WORK2: and the rivers
   return net ? { ...net, cached: false } : null;
 }

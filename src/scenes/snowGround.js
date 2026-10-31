@@ -63,7 +63,7 @@ export function createSnowGround(host) {
     roads(p) {
       const raw = terrainGen.roads();
       // BAY-LEFT-GROUND: past the Bay TESA's own roads, classified by the painter's word (the build's `paths`); on the Bay
-      // Basic Roads' own network, as the mod reads it
+      // the Basic Roads switch's network, as the mod reads it
       const net = !inBay(p.px, p.py) ? snowfallNetworkBeyond(p.px, p.py, p.paths) : raw?.source === 'basic-roads' ? snowfallNetwork(raw, p.px, p.py) : null;
       if (!net) return null;
       const loc = p.locationRect ? locationIndex.get(`${p.px},${p.py}`) : null;

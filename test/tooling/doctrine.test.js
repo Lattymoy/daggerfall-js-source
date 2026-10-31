@@ -457,7 +457,6 @@ const PUBLIC_ALLOWLIST = new Map([
   ['vendor/climates-calories/Textures/534_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten bread"],
   ['vendor/climates-calories/Textures/535_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy raw fish"],
   ['vendor/climates-calories/Textures/535_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten raw fish"],
-  ['vendor/climates-calories/Textures/536_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten cooked fish"],
   ['vendor/climates-calories/Textures/537_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a mouldy meat"],
   ['vendor/climates-calories/Textures/537_1-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - a rotten meat"],
   ['vendor/climates-calories/Textures/538_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - mouldy raw meat"],
@@ -1014,7 +1013,7 @@ const BUNDLE_ART = new Map([
       why: "THIRD-PARTY - Daggerfall class skins (Mac's ExistingClasses archive; the artists unnamed but the bounty hunter's, Kamer), carried on Mac's word of the artists' permission; twenty enemy-class sprite sheets, most of them Daggerfall's own class sprites under the artists' paint, byte for byte from the archive under the names class-skins.files.json maps (see vendor/class-skins/README.md for the open permission record)" }],
   ['public/art/diverse-weapons/',
     { manifest: 'vendor/diverse-weapons/diverse-weapons.dfmod.json',
-      why: "THIRD-PARTY - Diverse Weapons 1.7.3 (RealAKP); the mod's own first-person weapon sprites - eighteen weapons x ten metals, plain and enchanted, every record and frame, Weapon Widget's double-scale idles and the icons - re-encoded from the bundle's Texture2D objects by tools/diverseWeaponsExtract.mjs as indexed PNG where the picture fits one (lossless for every drawn pixel; see the vendor README)" }],
+      why: "THIRD-PARTY - Diverse Weapons 1.7.3 (RealAKP); the mod's own first-person weapon sprites - eighteen weapons x ten metals, plain and enchanted, every record and frame, Weapon Widget's double-scale idles and the icons - re-encoded from the bundle's Texture2D objects by tools/diverseWeaponsExtract.mjs as indexed PNG where the picture fits one (lossless for every drawn pixel; see the vendor README). NO-BETHESDA3: the twelve magic daggers that are 60% or more Daggerfall's own hand (WEAPON02.CIF) are rebuilt from the player's files (derived-art.json), not carried" }],
   // CSA-A (2026-09-27): Come Sail Away's pictures - AUDIT-TO1 F3's trap a third time: the slice ran its suite BEFORE
   // `git add`, pushed, and the next gate reddened on 27 files. The bundle's own manifest cannot be the authority here,
   // because the port carries LESS than it names and under other names for part: record 3 is Daggerfall's travel map
@@ -1077,7 +1076,7 @@ const BUNDLE_ART = new Map([
       why: "THIRD-PARTY - Windfall 1.0.0 (demifiend000), carried on Mac's word of the author's permission; the mod's own leaf sheets and snowflake, RGBA32 with one mip in the bundle - each PNG is the texture exactly (see vendor/windfall/README.md)" }],
 ]);
 /** NO-BETHESDA2 (2026-10-31, the owner: "ensuring they are not implemented"): the pictures a mod carried that are
- *  Daggerfall's own - 60% or more of their drawn pixels a TEXTURE or RCI record's, exactly - are rebuilt from the player's files
+ *  Daggerfall's own - 60% or more of their drawn pixels a TEXTURE, CIF or RCI record's, exactly - are rebuilt from the player's files
  *  (tools/classicDerive.mjs, formats/classicPictures.js), never carried. Each folder's listing, by the folder. */
 const REBUILT = new Map([
   ['vendor/eye-of-the-beholder/Textures/', 'vendor/eye-of-the-beholder/derived.json'],
@@ -1085,6 +1084,7 @@ const REBUILT = new Map([
   ['vendor/climates-calories/Textures/', 'vendor/climates-calories/derived.json'],
   ['public/art/roleplay-realism/', 'vendor/roleplay-realism/derived-art.json'],
   ['public/art/roleplay-realism-items/', 'vendor/roleplay-realism-items/derived-art.json'],
+  ['public/art/diverse-weapons/', 'vendor/diverse-weapons/derived-art.json'],   // NO-BETHESDA3: the magic daggers' classic hands
 ]);
 /** The names a folder's listing rebuilds, lowercased with `.png` - none where it has no listing. */
 const rebuiltNames = (dir) => (REBUILT.has(dir) ? new Set(Object.keys(JSON.parse(readFileSync(join(root, REBUILT.get(dir)), 'utf8'))).map((n) => `${n.toLowerCase()}.png`)) : new Set());
@@ -1164,8 +1164,9 @@ test('NO-BETHESDA2: a rebuilt picture is a spec and never a file, and every spec
     const files = new Set(tracked(dir).map((f) => f.split('/').pop().toLowerCase()));
     assert.deepEqual(names.filter((n) => files.has(`${n.toLowerCase()}.png`)), [], `${dir}: a picture both rebuilt and carried - Daggerfall's pixels in the tree`);
     for (const [n, spec] of Object.entries(specs)) {
-      // a TEXTURE record is [archive, record, frame]; an RCI file's (`rci`, Roleplay & Realism's buttons) [record, frame]
-      if (typeof spec.rci === 'string') assert.ok(/^[A-Z0-9_]+\.RCI$/.test(spec.rci) && spec.from?.length === 2 && spec.from.every(Number.isInteger), `${listing} ${n}: an RCI spec is rci and [record, frame]`);
+      // a TEXTURE record is [archive, record, frame]; a CIF or RCI file's (`file`: Diverse Weapons' daggers, Roleplay &
+      // Realism's buttons) [record, frame]
+      if (typeof spec.file === 'string') assert.ok(/^[A-Z0-9_]+\.(CIF|RCI)$/.test(spec.file) && spec.from?.length === 2 && spec.from.every(Number.isInteger), `${listing} ${n}: a CIF or RCI spec is file and [record, frame]`);
       else assert.ok(Array.isArray(spec.from) && spec.from.length === 3 && spec.from.every(Number.isInteger), `${listing} ${n}: from is [archive, record, frame]`);
       assert.ok(['ART_PAL.COL', 'PAL.PAL'].includes(spec.pal), `${listing} ${n}: a palette the player's ARENA2 has`);
     }

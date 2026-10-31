@@ -1,0 +1,215 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\M0B00Y17.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 0
+-- QuestId: 17
+Messages: 62
+Quest: M0B00Y17
+DisplayName: Runaway Pet
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcn, is it? Good. This job needs a
+<ce> head more than a sword arm. Interested?
+
+RefuseQuest:  [1001]
+<ce> No? Well, I did say it needed a head.
+
+AcceptQuest:  [1002]
+<ce> _dummy_'s pet sabertooth tiger has run
+<ce> off. %G tracked it to ___mondung_.
+<ce> Ring this bell in its face. Hit it if
+<ce> you must, but do not kill it. Bring it
+<ce> to __dummy_ in =qtime_ days, and %g
+<ce> pays _gold_ gold.
+
+QuestFail:  [1003]
+<ce> Still no tiger? It is waiting for
+<ce> you in ___mondung_, bell and all.
+
+QuestComplete:  [1004]
+<ce> =tiger_! Who is a good boy? Not a
+<ce> scratch on him, and only a few on
+<ce> you. Your pay is _gold_ gold, the
+<ce> sum I agreed with _questgiver_ at
+<ce> the Fighters Guild.
+
+RumorsDuringQuest:  [1005]
+<ce> Lock your doors. _dummy_'s tiger is loose again, and hungry.
+
+RumorsPostfailure:  [1006]
+<ce> Nobody has seen _dummy_'s tiger
+<ce> in days. %god keep it that way.
+
+RumorsPostsuccess:  [1007]
+<ce> _dummy_ paid the Fighters Guild to bring %g3
+<ce> tiger home to %g2. Who takes work like that?
+
+QuestorPostsuccess:  [1008]
+<ce> Here comes %pcf, friend to tigers!
+
+QuestorPostfailure:  [1009]
+<ce> Fetching a pet was the easiest job on the
+<ce> board, and you made a mess of it. What now?
+
+Message:  1020
+%qdt:
+ The Fighters Guild of ___questgiver_ sent
+ me after a sabertooth in ___mondung_.
+ _questgiver_ says it answers to my bell.
+ Its owner is _dummy_ at __dummy_ in
+ ___dummy_, and it must be home in =qtime_
+ days. %G pays _gold_ gold.
+
+Message:  1021
+%qdt:
+ The tiger in ___mondung_ heard
+ the bell and now follows me
+ like a kitten. It goes home to
+ _dummy_ in ___dummy_.
+
+Message:  1022
+%qdt:
+ The tiger in ___mondung_ is dead, by
+ my hand. I owe a visit to __dummy_ in
+ ___dummy_ and an apology to _dummy_.
+
+Message:  1030
+<ce> The tiger is dead. _dummy_
+<ce> will not be pleased.
+
+Message:  1040
+<ce> You ring the bell. Nothing happens.
+
+Message:  1041
+<ce> At the bell, the tiger's ears prick up.
+<ce> It swings its huge head and rumbles. Is
+<ce> that a purr? It leans against you hard
+<ce> enough to knock you over.
+<ce>
+<ce> The tiger follows you now.
+
+Message:  1050
+<ce> You murdered my =tiger_, you %ra brute!
+<ce> Get out before I call the guards!
+
+Message:  1060
+Dear _love_,
+ 
+ I cannot come to __lovehouse_ today, but
+ I think of you always. Even that loose
+ pet tiger over there reminds me of you.
+ It is bounding my way, so friendly...
+
+Message:  1061
+<ce> Why is this letter from _victim_ covered
+<ce> in blood? %G is dead? Poor thing. %G
+<ce> always thought we were in love. I will
+<ce> tell %g3 family. %G gave me this
+<ce> _magic_. You should have it, not me.
+
+
+QBN:
+Item _I.00_ bell
+Item _I.01_ dead_body
+Item _gold_ gold
+Item _letter_ letter used 1060
+Item _magic_ magic_item
+
+Person _questgiver_ group Questor
+Person _victim_ face 1 group Group_6.0 remote
+Person _love_ face 1 group Group_7.0 remote
+Person _dummy_ group Noble local
+
+Place _mondung_ remote dungeon6
+Place _newdung_ remote dungeon
+--unneeded dungeon variable
+Place _lovehouse_ local house2
+
+Clock _qtime_ 00:00 0 flag 17 range 0 2
+
+Foe _tiger_ is Sabretooth_tiger
+
+--	Quest start-up:
+	place item _I.01_ at _mondung_ 
+	dialog link for location _lovehouse_ person _love_ 
+	start timer _qtime_ 
+	reveal _mondung_ 
+	log 1020 step 0 
+	get item _I.00_ 
+	pick one of _S.10_ _S.10_ _S.11_ _S.11_ 
+	place foe _tiger_ at _mondung_ 
+	create npc _dummy_ 
+	have _I.01_ set _deadbody_
+
+_deadbody_ task:
+	take _I.01_ from pc
+--added deadbody task. otherwise body would clog inventory
+
+_qtime_ task:
+	end quest 
+
+_S.01_ task:
+	say 1040 
+
+_S.02_ task:
+	injured _tiger_ 
+	_I.00_ used do _S.04_ 
+
+until _S.02_ performed:
+	_I.00_ used do _S.01_ 
+
+_S.03_ task:
+	killed 1 _tiger_ 
+	say 1030 
+	log 1022 step 1
+--adds log in case user missed kill message
+
+variable _S.04_
+_S.05_ task:
+	when _S.04_ and not _S.03_ 
+	log 1021 step 1 
+	say 1041 
+	--remove foe action used here instead of attempting to transfer it to another dungeon
+	remove foe _tiger_
+-	unset _S.01_ _S.04_ 
+--prevented quest from giving reward. don't know the purpose of this unset.
+
+_S.06_ task:
+	clicked npc _dummy_ 
+
+_pcgetsgold_ task:
+	when _S.06_ and _S.05_ 
+	give pc _gold_  
+	take _I.00_ from pc
+	end quest 
+--removed unnecessary delay
+
+_S.08_ task:
+	when _S.06_ and _S.03_ 
+	say 1050 
+	unset _S.06_ 
+
+variable _duelist_
+-unused variable
+_S.10_ task:
+	_letter_ used do _readletter_ 
+	place item _letter_ at _mondung_ 
+	place npc _love_ at _lovehouse_ 
+
+variable _S.11_
+_S.12_ task:
+	toting _letter_ and _love_ clicked 
+	get item _magic_ 
+	say 1061 
+	make _magic_ permanent 
+
+_readletter_ task:
+	add dialog for location _lovehouse_ person _love_ 
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+	say 1003

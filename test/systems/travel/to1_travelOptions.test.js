@@ -1277,7 +1277,7 @@ test('TO1: the wiring - one construction, the fork on the popup\'s word, the pan
   const client = read('src/world/terrain/terrainGenClient.js');
   assert.equal((client.match(/source: this\._roadsSource/g) || []).length, 3, 'the source rides every rebuild of the network object');
   assert.match(client, /this\._roadsSource = net\.source \?\? 'basic-roads';/);
-  assert.match(client, /this\._roadsSource = 'generated';/);
+  assert.match(client, /setRoads\(settlements, onStats = null, switches = null, source = 'generated'\) \{[^\n]*\n(?:[^\n]*\n){8}\s*this\._roadsSource = source;/, 'OWN-WORK2: the built network\'s word is the host\'s - generated unless the switch says Basic Roads');
   assert.equal((client.match(/source: /g) || []).length, 4,
     'AUDIT 58 F3 / BR3: three assembly sites plus the stats fallback - a field on ONE of them is silently inert on the path the game takes');
   // the panel is drawn on the HUD layer, never pushed as an overlay

@@ -13,10 +13,9 @@
 // THE COMPASS is Basic Roads' own, copied into the mod at
 // TravelOptionsMod.cs:76-83 with the comment "Path type and direction
 // constants copied from BasicRoadsTexturing" - one byte per map pixel,
-// a bit per edge the path leaves through. The port's own roads lane
-// reads the same bytes out of the same four vendored arrays
-// (world/roadsProducer.js MOD_ROADS, vendor/roads-hazelnut/), so the
-// mod's data and the port's are one thing and this compass is shared:
+// a bit per edge the path leaves through. The port's own network
+// (world/roadsProducer.js, OWN-WORK2) is written in the same layout, so
+// the follow machine and the roads lane read one thing; the compass is shared:
 // world/road/roadNetwork.js DIR carries the identical eight values, and
 // `sameCompass` below is the pin that says so out loud.
 

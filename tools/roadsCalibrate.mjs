@@ -1,30 +1,25 @@
-// ROADS 14: THE ANSWER KEY, MEASURED. Basic Roads' hand-drawn network
-// is what "as close as we can" means, and its data cannot ship with the
-// port (bible/03-World/Roads.md, "The line"). What CAN be taken from it
-// is its judgement, expressed as numbers the generator's dials control:
-// how often a road bends, by how much, how many steps are diagonal, how
-// many ends dead, how many junctions. This tool prints those numbers
-// for the mod's arrays and, when ARENA2 is present, for OUR network on
-// the same map, side by side - so a dial is turned toward a measurement
-// rather than a feeling.
+// ROADS 14: THE ANSWER KEY, MEASURED. The network's shape as numbers the
+// generator's dials control: how often a road bends, by how much, how many
+// steps are diagonal, how many ends dead, how many junctions. ROADS 14-21
+// measured Basic Roads' hand-drawn arrays here beside ours; OWN-WORK2
+// (2026-10-31) retired them, and their numbers stay recorded in
+// bible/03-World/Roads.md. This prints OUR network on the player's map -
+// the Bay's own build (world/roadsProducer.js) - so a dial is turned
+// toward a measurement rather than a feeling.
 //
-//   node tools/roadsCalibrate.mjs --bytes <dir with roadData.bytes trackData.bytes>
-//   ARENA2_PATH=/path/to/ARENA2 node tools/roadsCalibrate.mjs --bytes <dir> [--turnCost 0.7 --climbCost 40 ...]
-//
-// The .bytes come from the author's public repo (ajrb/dfunity-mods,
-// BasicRoads/). Reading them here is reading, not shipping; nothing is
-// written anywhere but the console.
-import { readFileSync, existsSync } from 'node:fs';
+//   ARENA2_PATH=/path/to/ARENA2 node tools/roadsCalibrate.mjs [--turnCost 0.7 --climbCost 40 ...]
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { MAP_WIDTH, MAP_HEIGHT, WoodsFile } from '../src/formats/woodsFile.js';
+import { WoodsFile } from '../src/formats/woodsFile.js';
 import { MapsFile } from '../src/formats/mapsFile.js';
-import { buildRoadNetwork, ROAD_DIALS, DIR } from '../src/world/road/roadNetwork.js';
-import { settlementsOf, WATER_BYTE } from '../src/world/roadsProducer.js';
+import { ROAD_DIALS, DIR } from '../src/world/road/roadNetwork.js';
+import { settlementsOf, buildRoadsFromSettlements } from '../src/world/roadsProducer.js';
+import { buildMapDict } from '../src/systems/map/mapDirectory.js';
+import { smoothLocationNeighbourhood } from '../src/world/terrain/terrainHelper.js';
 import { isMain } from './lib/isMain.mjs';
 
 const args = process.argv.slice(2);
 const opt = (k, dflt = null) => { const i = args.indexOf(`--${k}`); return i >= 0 ? args[i + 1] : dflt; };
-const bytesDir = opt('bytes');
 const ORDER = [DIR.N, DIR.NE, DIR.E, DIR.SE, DIR.S, DIR.SW, DIR.W, DIR.NW];
 const OPP = (b) => ORDER[(ORDER.indexOf(b) + 4) % 8];
 
@@ -60,28 +55,20 @@ export function measure(mask) {
 const fmt = (m) => `${String(m.pixels).padStart(6)} px | bend ${(m.bendRate * 100).toFixed(0).padStart(3)}% | right-angle ${(m.rightAngleShare * 100).toFixed(1).padStart(4)}% | hairpin ${(m.hairpinShare * 100).toFixed(1)}% | diagonal ${(m.diagonalShare * 100).toFixed(0)}% | dead-end ${(m.deadEndRate * 100).toFixed(1)}% | junction ${(m.junctionRate * 100).toFixed(1)}%`;
 
 if (isMain(import.meta.url)) {
-  if (bytesDir) {
-    for (const [name, file] of [['his roads ', 'roadData.bytes'], ['his tracks', 'trackData.bytes']]) {
-      const p = join(bytesDir, file);
-      if (!existsSync(p)) { console.log(`${name}: ${file} not found in ${bytesDir}`); continue; }
-      const b = new Uint8Array(readFileSync(p));
-      if (b.length !== MAP_WIDTH * MAP_HEIGHT) { console.log(`${name}: ${b.length} bytes, expected ${MAP_WIDTH * MAP_HEIGHT}`); continue; }
-      console.log(`${name}: ${fmt(measure(b))}`);
-    }
-  }
   const ARENA2 = process.env.ARENA2_PATH;
   if (ARENA2) {
     const maps = new MapsFile();
     maps.load(new Uint8Array(readFileSync(join(ARENA2, 'MAPS.BSA'))), new Uint8Array(readFileSync(join(ARENA2, 'CLIMATE.PAK'))), new Uint8Array(readFileSync(join(ARENA2, 'POLITIC.PAK'))));
     const woods = new WoodsFile(); woods.load(new Uint8Array(readFileSync(join(ARENA2, 'WOODS.WLD'))));
+    smoothLocationNeighbourhood(buildMapDict(maps), woods);   // the world host's boot repair, as the game's build reads it
     const dials = {};
     for (const k of Object.keys(ROAD_DIALS)) { const v = opt(k); if (v != null) dials[k] = Number(v); }
     const t0 = Date.now();
-    const net = buildRoadNetwork({ locations: settlementsOf(maps), heightAt: (x, y) => woods.getHeightMapValue(x, y), isWater: (x, y) => woods.getHeightMapValue(x, y) <= WATER_BYTE, dials });
+    const net = buildRoadsFromSettlements(settlementsOf(maps), woods, dials);
     console.log(`our roads : ${fmt(measure(net.roads))}   (${Date.now() - t0}ms, dials ${JSON.stringify({ ...ROAD_DIALS, ...dials })})`);
     console.log(`our tracks: ${fmt(measure(net.tracks))}`);
     console.log(`stats: ${JSON.stringify({ ...net.stats, unroutedPairs: net.stats.unroutedPairs.length })}`);
   } else {
-    console.log('(set ARENA2_PATH to measure OUR network on the real map beside his)');
+    console.log('(set ARENA2_PATH to measure the network on the real map)');
   }
 }

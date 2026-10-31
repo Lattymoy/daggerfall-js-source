@@ -117,9 +117,9 @@ const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
  * @param {?Array<{x:number,y:number}>} [p.obstacles] - TESA14: pixels no route may cross, as a location that is no node
  *   (a capital's own pixels).
  * @param {?{ step: Function, d: { shoreCost: number, widenAbove: number } }} [p.terrain] - VOYAGER1: the land's law every
- *   route pays (world/road/roadLand.js landForRoutes' answer: its `step`, landStep, and its dials) in place of the Bay's
- *   climb, descent and height dials; null, the Bay's build. Its own module, so the Bay's builder - which the account
- *   Worker bundles - carries none of it.
+ *   route pays (world/road/roadLand.js landForRoutes' answer: its `step`, landStep, and its dials) in place of the
+ *   climb, descent and height dials; null, those dials (OWN-WORK2: the Bay's build takes the land's law too). Its own
+ *   module, so this builder - which the account Worker bundles - carries none of it.
  * @param {?Array<Array<{x:number,y:number}>>} [p.trunks] - VOYAGER-CYRODIIL (world/road/cyrodiilRoads.js): the named roads'
  *   legs, each [a, b] - routed as roads after the towns' road edges, each whole to its end (taking the towns' roads at the
  *   road discount where they run its way), before the tracks; a leg whose first end is the region's (`owns`); a leg with
@@ -200,8 +200,9 @@ export function* roadNetworkSteps({ locations, heightAt, isWater, dials = {}, ow
   }
   // TESA14: a region's thousands of towns are millions of pairs to sort - its tree is Prim's, the Bay's Kruskal's as ever.
   // A tree edge that is a neighbours' edge is the first end's, as above; a longer one (a bridge between two webs) either
-  // end's, so no region strands a town for want of the other's view - the one pair two regions may both route
-  for (const [i, j] of (owns ? primEdges(roadNodes) : kruskal(roadNodes))) {
+  // end's, so no region strands a town for want of the other's view - the one pair two regions may both route.
+  // OWN-WORK2: the Bay's tree is one a land - an edge across the sea strands the towns its own land would have joined
+  for (const [i, j] of (owns ? primEdges(roadNodes) : kruskal(roadNodes, sameLand))) {
     if (!near.has(i < j ? `${i},${j}` : `${j},${i}`) && (owned(roadNodes[i]) || owned(roadNodes[j]))) addEdge(i, j);
   }
 
@@ -410,10 +411,11 @@ export function primEdges(nodes) {
 }
 
 /** Kruskal over the complete graph of road nodes - O(n^2 log n) edges,
- *  fine for the few hundred towns Daggerfall has. */
-function kruskal(nodes) {
+ *  fine for the few hundred towns Daggerfall has. OWN-WORK2: a pair
+ *  `together` refuses (two lands) is no edge - a tree for each land. */
+function kruskal(nodes, together = () => true) {
   const all = [];
-  for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) all.push([dist(nodes[i], nodes[j]), i, j]);
+  for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) if (together(nodes[i], nodes[j])) all.push([dist(nodes[i], nodes[j]), i, j]);
   all.sort((a, b) => a[0] - b[0]);
   const parent = nodes.map((_, i) => i);
   const find = (x) => (parent[x] === x ? x : (parent[x] = find(parent[x])));
@@ -565,7 +567,7 @@ function routeInBox(from, to, { heightAt, isWater, existing, d, stopOn = null, s
       // diagonal seams.
       if (dx && dy && (isBlockedAt(cx + dx, cy) || isBlockedAt(cx, cy + dy))) continue;
       let cost = (dx && dy) ? Math.SQRT2 : 1;
-      if (terrain) cost = terrain.step(terrain, cx, cy, nx, ny, cost);   // VOYAGER1: past the Bay, the land's law (world/road/roadLand.js landStep)
+      if (terrain) cost = terrain.step(terrain, cx, cy, nx, ny, cost);   // VOYAGER1: the land's law (world/road/roadLand.js landStep) - OWN-WORK2: on the Bay too
       else {
         const hn = heightAt(nx, ny);
         const rise = hn - hc;

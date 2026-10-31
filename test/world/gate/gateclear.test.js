@@ -29,6 +29,7 @@ import { loadLocationPrefab } from '../../../src/world/worldOfDaggerfall/wodLoca
 import { pathsDataPoint } from '../../../src/systems/travel/travelPaths.js';
 import { wodSiteClear } from '../../../src/world/road/roadClearance.js';
 import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
+import { bayRoadsOrNone } from '../../bayRoads.mjs';   // OWN-WORK2: the Bay's own network, where the player's data is
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const rd = (p) => hostText(p);
@@ -194,8 +195,7 @@ test('GATE-CLEAR: the sweep - the turn asks every built pixel once; one the old 
 
 test('GATE-CLEAR over the shipped lists: a gate\'s spot DOES land in the mod\'s rock, and the clearing leaves nothing the mod stands within it', () => {
   const V = join(ROOT, 'vendor/world-of-daggerfall');
-  const rb = (n) => new Uint8Array(readFileSync(join(ROOT, 'vendor/roads-hazelnut', n)));
-  const net = { roads: rb('roadData.bytes'), tracks: rb('trackData.bytes') };
+  const net = bayRoadsOrNone();   // OWN-WORK2: the roads only pick the sites - none without ARENA2
   const prefabs = new Map();
   for (const f of readdirSync(join(V, 'LocationPrefab'))) prefabs.set(f.replace(/\.txt$/, ''), loadLocationPrefab(readFileSync(join(V, 'LocationPrefab', f), 'utf8')));
   const session = new LocationSession();

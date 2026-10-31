@@ -1,0 +1,139 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\M0B60Y10.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 60
+-- QuestId: 10
+Messages: 81
+Quest: M0B60Y10
+DisplayName: Hunt for an Atronach
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Ever fought an atronach? Living
+<ce> fire, ice, iron or flesh, called
+<ce> up by magic. One is loose, and the
+<ce> job pays _gold_ gold. Interested?
+
+RefuseQuest:  [1001]
+<ce> No? I thought you had more fire in you.
+
+AcceptQuest:  [1002]
+<ce> A young gentleman, whose name I swore to
+<ce> keep, played at magic without a license
+<ce> and called up an atronach. It must die
+<ce> before the Mages Guild hears. It fled
+<ce> into ___dungeon_. You have =2dung_ days.
+
+QuestComplete:  [1004]
+<ce> Good work, %pct. The Mages Guild
+<ce> knows nothing, and our client
+<ce> will gladly pay _gold_ gold.
+
+RumorsDuringQuest:  [1005]
+<ce> The Viscount's son has burns on both
+<ce> hands and will not say how he got them.
+
+RumorsPostfailure:  [1006]
+<ce> The Mages Guild has gone to %t
+<ce> %rn about the Viscount's son and
+<ce> the atronach he could not
+<ce> control. They want him punished.
+
+RumorsPostsuccess:  [1007]
+<ce> The Viscount's son wears a Mages
+<ce> Guild robe now. Someone must have
+<ce> scared him into proper lessons.
+
+QuestorPostsuccess:  [1008]
+<ce> Another monster down, %pcf.
+<ce> The guild keeps a list, and
+<ce> your name is on it often.
+
+QuestorPostfailure:  [1009]
+<ce> The atronach still walks, and the Mages Guild has
+<ce> the Viscount's son in chains. Thank you for nothing.
+
+QuestLogEntry:  [1010]
+On %qdt,
+ ___qgiver_'s Fighters Guild hired me
+ to quietly destroy an atronach
+ summoned without the Mages Guild's
+ leave. It hides in __dungeon_, and the
+ work must be done within =2dung_ days.
+
+Message:  1011
+<ce> The atronach collapses. Nothing
+<ce> is left to show the Mages Guild.
+
+Message:  1080
+<ce> You have been a good sport, %pcf, so
+<ce> this map to ___newdung_ is yours.
+
+
+QBN:
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _dungeon_ remote dungeon
+Place _newdung_ remote dungeon
+
+Clock _2dung_ 00:00 0 flag 17 range 0 2
+
+Foe _fire_ is Fire_atronach
+Foe _flesh_ is Flesh_atronach
+Foe _iron_ is Iron_atronach
+Foe _ice_ is Ice_atronach
+
+--	Quest start-up:
+	start timer _2dung_ 
+	reveal _dungeon_ 
+	log 1010 step 0 
+	pick one of _map_ _nomap_ _nomap_ _nomap_ 
+	pick one of _S.04_ _S.05_ _S.06_ _S.07_ 
+
+_2dung_ task:
+	end quest 
+
+_S.01_ task:
+	killed 1 _ice_ saying 1011 
+	killed 1 _fire_ saying 1011 
+	killed 1 _flesh_ saying 1011 
+	killed 1 _iron_ saying 1011 
+
+_S.02_ task:
+	clicked npc _qgiver_ 
+
+_clearclick_ task:
+	when _S.02_ and not _S.01_ 
+	clear _S.02_ _clearclick_ 
+
+_S.04_ task:
+	place foe _iron_ at _dungeon_ 
+
+_S.05_ task:
+	place foe _ice_ at _dungeon_ 
+
+_S.06_ task:
+	place foe _flesh_ at _dungeon_ 
+
+_S.07_ task:
+	place foe _fire_ at _dungeon_ 
+
+variable _map_
+variable _nomap_
+_S.10_ task:
+	when _map_ and _S.02_ 
+	reveal _newdung_ readmap
+    say 1080 
+
+_S.11_ task:
+	when _nomap_ and _S.02_ 
+
+_S.12_ task:
+	when _S.10_ or _S.11_ 
+	give pc _gold_
+	end quest

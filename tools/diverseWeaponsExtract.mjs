@@ -19,12 +19,13 @@
 // manifest (tools/diverseWeaponsIndex.mjs derives the door's index from
 // it; test/tooling/doctrine.test.js derives the folder's membership from it),
 // so a texture the manifest does not name is reported and not written.
-import { readFileSync, writeFileSync, mkdirSync, readdirSync, unlinkSync } from 'node:fs';
+// NO-BETHESDA3: a name vendor/diverse-weapons/derived-art.json rebuilds is Daggerfall's own and is not written.
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, unlinkSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readUnityBundle } from '../src/formats/unity/unityBundle.js';
 import { readPng, writePng, writeIndexedPng } from './pngIO.mjs';
-import { MANIFEST, manifestSpriteNames } from './diverseWeaponsIndex.mjs';
+import { MANIFEST, DERIVED, manifestSpriteNames, derivedSpriteNames } from './diverseWeaponsIndex.mjs';
 import { isMain } from './lib/isMain.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -60,16 +61,18 @@ if (isMain(import.meta.url)) {
   console.log(`opened ${manifest.ModTitle} ${manifest.ModVersion}: ${bundle.textures.length} textures in ${Date.now() - t0} ms`);
 
   const allowed = new Set(manifestSpriteNames(readFileSync(join(ROOT, MANIFEST), 'utf8')));
+  const derived = new Set(existsSync(join(ROOT, DERIVED)) ? derivedSpriteNames(readFileSync(join(ROOT, DERIVED), 'utf8')) : []);
   const out = join(ROOT, OUT_DIR);
   mkdirSync(out, { recursive: true });
   for (const f of readdirSync(out)) if (/\.png$/i.test(f)) unlinkSync(join(out, f));   // a clean set: a name the new bundle lacks is gone
 
   const written = new Set();
   const strangers = [];
-  let bytes = 0, raw = 0, dups = 0, indexed = 0;
+  let bytes = 0, raw = 0, dups = 0, indexed = 0, rebuilt = 0;
   for (const t of bundle.textures) {
     if (written.has(t.name)) { dups++; continue; }
     if (!allowed.has(t.name)) { strangers.push(t.name); continue; }
+    if (derived.has(t.name)) { written.add(t.name); rebuilt++; continue; }   // its spec rebuilds it from the player's files
     const img = t.rgba();
     const { png, indexed: isIndexed } = encodeSprite(img);
     if (!sameOnScreen(img, readPng(png))) throw new Error(`${t.name}: the PNG read back differs from the texel`);
@@ -78,7 +81,7 @@ if (isMain(import.meta.url)) {
     bytes += png.length; raw += img.data.length; indexed += isIndexed ? 1 : 0;
   }
   const missing = [...allowed].filter((n) => !written.has(n)).sort();
-  console.log(`wrote ${written.size} PNGs (${indexed} indexed, ${written.size - indexed} RGBA): ${(raw / 1e6).toFixed(0)} MB of texels as ${(bytes / 1e6).toFixed(1)} MB on disk; ${dups} duplicate names skipped; ${Date.now() - t0} ms`);
+  console.log(`wrote ${written.size - rebuilt} PNGs (${indexed} indexed, ${written.size - rebuilt - indexed} RGBA): ${(raw / 1e6).toFixed(0)} MB of texels as ${(bytes / 1e6).toFixed(1)} MB on disk; ${rebuilt} rebuilt from ARENA2 and not written; ${dups} duplicate names skipped; ${Date.now() - t0} ms`);
   if (strangers.length) console.warn(`${strangers.length} textures the manifest does not name were NOT written:`, strangers.slice(0, 10).join(', '), strangers.length > 10 ? '...' : '');
   if (missing.length) console.warn(`${missing.length} manifest names the bundle does not carry (the door will 404 once each if asked):`, missing.slice(0, 10).join(', '), missing.length > 10 ? '...' : '');
 }

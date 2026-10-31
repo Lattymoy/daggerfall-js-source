@@ -135,58 +135,33 @@
     ]
   },
   {
-    "name": "AUDIT-IT1-G1-one-slot-kept",
-    "file": "tools/immersiveTravelPatches.mjs",
-    "old": "for (let i = CLASSIC_BUILDING_SLOTS - 1; i >= slots.length; i--)",
-    "new": "for (let i = CLASSIC_BUILDING_SLOTS - 1; i > slots.length; i--)",
-    "tests": [
-      "test/systems/auditit1.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-IT1-G1-the-scales-not-set",
-    "file": "tools/immersiveTravelPatches.mjs",
-    "old": "    for (const k of MODEL_SCALES) if (k in rmb.Misc3dObjectRecords[i])",
-    "new": "    for (const k of MODEL_SCALES.slice(1)) if (k in rmb.Misc3dObjectRecords[i])",
-    "tests": [
-      "test/systems/auditit1.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-IT1-G1-a-classic-insert-laid",
+    "name": "AUDIT-IT1-G2-a-file-with-no-rmb-read",
     "file": "src/world/immersiveTravelGates.js",
-    "old": "    if (counts && !(path[2] >= (counts[path[1]] ?? 0))) continue;\n",
-    "new": "",
+    "old": "  if (!rmb || !appends) return json;",
+    "new": "  if (!appends) return json;",
     "tests": [
       "test/systems/auditit1.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-IT1-G2-an-op-refused",
-    "file": "src/world/immersiveTravelGates.js",
-    "old": "    if (kind !== 'i' || path?.length !== 3 || path[0] !== 'RmbBlock' || !ARRAYS.includes(path[1])) continue;",
-    "new": "    if (kind !== 'i' || path?.length !== 3 || path[0] !== 'RmbBlock' || !ARRAYS.includes(path[1])) throw new Error('cannot lay');",
-    "tests": [
-      "test/systems/auditit1.test.js"
-    ]
+    ],
+    "note": "OWN-WORK2: re-aimed from the retired patch reader - a served file with no RMB half is served as it is."
   },
   {
     "name": "AUDIT-IT1-G2-the-install-unguarded",
     "file": "src/scenes/modWorldData.js",
-    "old": "    try { installImmersiveTravelGates(itPatches, itOwn, immersiveTravelLoaded); } catch (e) { console.error(`[worlddata] immersive travel's gate layer: ${e?.message ?? e}`); }",
-    "new": "    installImmersiveTravelGates(itPatches, itOwn, immersiveTravelLoaded);",
+    "old": "    try { installImmersiveTravelGates(immersiveTravelLoaded); } catch (e) { console.error(`[worlddata] immersive travel's gate layer: ${e?.message ?? e}`); }",
+    "new": "    installImmersiveTravelGates(immersiveTravelLoaded);",
     "tests": [
       "test/systems/auditit1.test.js"
     ]
   },
   {
-    "name": "AUDIT-IT1-G3-the-patch-reads-the-switch",
+    "name": "AUDIT-IT1-G3-the-gates-read-the-switch",
     "file": "src/scenes/modWorldData.js",
-    "old": "      const isOn = vendor === IMMERSIVE_TRAVEL_VENDOR ? immersiveTravelLoaded : () => modSetting(vendor, 'Enabled') === true;",
-    "new": "      const isOn = () => modSetting(vendor, 'Enabled') === true;",
+    "old": "installImmersiveTravelGates(immersiveTravelLoaded);",
+    "new": "installImmersiveTravelGates(() => modSetting('immersive-travel', 'Enabled') === true);",
     "tests": [
       "test/systems/auditit1.test.js"
-    ]
+    ],
+    "note": "OWN-WORK2: re-aimed from the retired patch loop - the stand asks the mod loaded for the game."
   },
   {
     "name": "AUDIT-IT1-W4-no-latch",

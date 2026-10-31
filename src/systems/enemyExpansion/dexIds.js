@@ -4,19 +4,18 @@
 // and it judges every realm checkpoint's items with the item law (systems/item/itemLaw.js) - where a soul gem holds the
 // mobile id of the foe it was trapped from (mysticism.js attemptSoulTrap, as EnemyEntity.cs:217 hands
 // SoulTrap.FillEmptyTrapItem the foe's MobileEnemy.ID). So the law reads the ids here, from the mod's own tables: every
-// `.mdb.csv` line's ID that is no classic one, as readEnemyTables reads them (dexTables.js) - MUDEX's tables after the
-// mod's (MUDEX1: its lines edit, they add no enemy). test/systems/item/fb1020h_soul.test.js holds this list to the
-// game's own registry, with MUDEX and without.
+// `.mdb.csv` line's ID that is no classic one, as readEnemyTables reads them (dexTables.js). Our meaner monsters' lines
+// (dexMeaner.js, OWN-WORK2) edit and add no enemy, so they are not read here. test/systems/item/fb1020h_soul.test.js
+// holds this list to the game's own registry, with our meaner monsters and without.
 
 import { DEX_TABLE_TEXT } from './dexTableText.js';
-import { MUDEX_TABLE_TEXT } from './mudexTableText.js';
 import { readCsvTable, parseCsInt } from './dexCsv.js';
 import { isClassicEnemyId } from '../../characters/enemy/enemyBasics.js';
 
 /** Every mobile id the mod's tables give an enemy of its own (none of DFU's MobileTypes), ascending. */
 export const DEX_ENEMY_IDS = Object.freeze((() => {
   const ids = new Set();
-  for (const [name, text] of [...Object.entries(DEX_TABLE_TEXT), ...Object.entries(MUDEX_TABLE_TEXT)]) {
+  for (const [name, text] of Object.entries(DEX_TABLE_TEXT)) {
     if (!name.endsWith('.mdb.csv')) continue;
     const table = readCsvTable(text);
     const col = table.column('ID');

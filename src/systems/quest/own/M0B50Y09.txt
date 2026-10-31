@@ -1,0 +1,119 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\M0B50Y09.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 50
+-- QuestId: 9
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 81
+Quest: M0B50Y09
+DisplayName: Hunt for a Gargoyle
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> A merchant has a gargoyle problem. It
+<ce> pays _gold_ gold, which is not much
+<ce> for a gargoyle. Will you take it?
+
+RefuseQuest:  [1001]
+<ce> I will find someone braver.
+
+AcceptQuest:  [1002]
+<ce> The merchant paid a wizard to raise
+<ce> his mansion, then cheated him of his
+<ce> fee. The wizard woke a stone gargoyle
+<ce> on the roof, and it has hunted the
+<ce> merchant ever since. Kill it in
+<ce> ___dungeon_ within =2dung_ days.
+
+QuestComplete:  [1004]
+<ce> A hero's work, %pcn, for a
+<ce> clerk's pay. _gold_ gold is
+<ce> not enough, but it is yours.
+
+RumorsDuringQuest:  [1005]
+<ce> The Mages Guild says the gargoyle
+<ce> is not their problem. Typical.
+
+RumorsPostfailure:  [1006]
+<ce> The merchant with the fine new house
+<ce> is dead. Stone claws, they say.
+
+RumorsPostsuccess:  [1007]
+<ce> The Fighters Guild smashed a
+<ce> gargoyle to gravel. That
+<ce> merchant owes them his life.
+
+QuestorPostsuccess:  [1008]
+<ce> Still picking stone out
+<ce> of your boots, %pcn?
+
+QuestorPostfailure:  [1009]
+<ce> Our client is dead, and the guild's
+<ce> name with him. I hope it was worth it.
+
+QuestLogEntry:  [1010]
+On %qdt,
+ ___qgiver_'s Fighters Guild gave
+ me =2dung_ days to destroy a
+ gargoyle laired in ___dungeon_.
+
+Message:  1011
+<ce> The _monster_ breaks apart.
+<ce> That merchant should pay
+<ce> his wizards in future.
+
+Message:  1080
+<ce> Perhaps this map to ___newdung_
+<ce> makes up for the pay.
+
+
+QBN:
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _dungeon_ remote dungeon
+Place _newdung_ remote dungeon8
+
+Clock _2dung_ 00:00 0 flag 17 range 0 2
+Clock _end_ 00:00
+
+Foe _monster_ is Gargoyle
+
+--	Quest start-up:
+	start timer _2dung_ 
+	reveal _dungeon_ 
+	log 1010 step 0 
+	pick one of _map_ _nomap_ 
+	place foe _monster_ at _dungeon_ 
+
+_2dung_ task:
+	end quest 
+
+_S.01_ task:
+	killed 1 _monster_ saying 1011 
+
+_victory_ task:
+                when _S.01_ and _qgclicked_
+	give pc _gold_ 
+                start timer _end_
+
+_end_ task:
+	end quest 
+
+_qgclicked_ task:
+               clicked npc _qgiver_
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.01_ 
+	clear _qgclicked_ _clearclick_ 
+
+variable _map_
+variable _nomap_
+_S.06_ task:
+	when _map_ and _victory_ 
+	reveal _newdung_ readmap
+    say 1080

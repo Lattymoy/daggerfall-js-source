@@ -1,10 +1,11 @@
 // IT1 (2026-10-04, the owner: "Actually lets let this be the next mod we integrate 1:1"): IMMERSIVE TRAVEL 1.5, by
 // kkgobkk - carriages at the city gates, a driver's Fast Travel, a ship captain's passage. The port's law is the
-// shipped assembly's IL (vendor/immersive-travel/il); every pin here names the offsets it holds the port to, and the
-// mod's own bugs are pinned as it ships them (bible/06-Systems/Immersive-Travel.md).
+// release's assembly's IL (Immersive Travel 1.5's, IL_xxxx); every pin here names the offsets it holds the port to, and
+// the mod's own bugs are pinned as it ships them (bible/06-Systems/Immersive-Travel.md).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 
 import {
   IMMERSIVE_TRAVEL_VENDOR, IT_FACTIONS, CARRIAGE_DRIVERS_FACTION_ID, SAILORS_FACTION_ID, IT_SERVICE_LABEL, IT_TEXT, IT_POPUP,
@@ -24,8 +25,26 @@ import { TravelPopUpWindow } from '../../../src/ui/travel/travelPopUp.js';
 import { staticNpcRoute } from '../../../src/systems/guild/guildServiceFlow.js';
 
 const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
-const VENDOR = 'vendor/immersive-travel';
-const SHIPPED = JSON.parse(read(`${VENDOR}/modsettings.json`));
+/** OWN-WORK2 (2026-10-31): Immersive Travel 1.5's modsettings.json, written out - its copy left the tree. Each key:
+ *  [section.name, the shipped value, the author's description as shipped, a slider's [min, max]]. */
+const SHIPPED = [
+  ['General.DisableNormalTravel', true, 'If this option is eabled, you will no longer be able to travel from the map and you will have to use ONLY carriages and ships.'],
+  ['General.DailyCarriageFee', 1, 'The fee you must pay to travel with a carriage for every day of travel', [0, 99]],
+  ['General.ClearerMapDots', true, 'Draws larger dots depending on town size in the travel map.'],
+  ['General.DrawRoads', true, 'Draw roads on the map (if the BasicRoads mod is installed and enabled).'],
+  ['General.DrawTracks', true, 'Draw dirt tracks on the map (if the BasicRoads mod is installed and enabled).'],
+  ['General.RegionLockedCarriages', false, 'Prevent carriages from travelling to a different region. You must travel from the capital city to leave the region.'],
+  ['ShipTravel.DisableShipTravelOutsideDocks', true, 'Prevents you from choosing ship transport mode during land travel'],
+  ['ShipTravel.DailyShipCost', 15, 'Daily cost of renting a ship. Only applies if the player doesn\'t own their own ship', [0, 99]],
+  ['ShipTravel.DailyCaptainFee', 10, 'Daily cost of hiring a ship captain and his crew to man a ship. You will have to pay a captain even if you own the ship.', [0, 99]],
+  ['ShipTravel.LimitedRangeInSmallDocks', true, 'Ships in smaller locations will only take you to ports in the same region. To travel to a different region you\'ll need to sail from a city'],
+  ['ShipTravel.ShowLargerDocks', true, 'Uses larger dots on the map for loactions with a dock'],
+  ['ShipTravel.ShowOnlyDocks', false, 'Hides every location on the map except those that have a dock'],
+  ['AllowedDestinations.Cities', true], ['AllowedDestinations.Covens', false], ['AllowedDestinations.Dungeons', false],
+  ['AllowedDestinations.Graveyards', false], ['AllowedDestinations.Farms', false], ['AllowedDestinations.Hamlets', true],
+  ['AllowedDestinations.Homes', false], ['AllowedDestinations.Temples', false], ['AllowedDestinations.Taverns', false],
+  ['AllowedDestinations.Villages', true],
+];
 /** Settings as the port ships them (the mod's own but Disable Normal Travel), with `over` laid on - no store. */
 function settings(over = {}) {
   const base = Object.fromEntries(Object.entries(MOD_SETTINGS[IMMERSIVE_TRAVEL_VENDOR].keys).map(([k, d]) => [k, d.default]));
@@ -38,13 +57,10 @@ const online = (fn) => {
   try { return fn(); } finally { if (had) Object.defineProperty(globalThis, 'location', had); else delete globalThis.location; }
 };
 
-test('IT1 the record: the manifest and the settings verbatim, every key restated under the vendor with the mod\'s own words - Disable Normal Travel shipped OFF, the one recorded departure', () => {
-  const mf = JSON.parse(read(`${VENDOR}/immersive-travel.dfmod.json`));
-  assert.deepEqual([mf.ModTitle, mf.ModVersion, mf.ModAuthor, mf.DFUnity_Version, mf.GUID], ['ImmersiveTravel', '1.5', 'kkgobkk', '1.1.1', 'bcd05411-2d0c-4cf3-aa99-0df24c267aeb']);
+test('IT1 the record: the settings as the release ships them, every key restated under the vendor with the mod\'s own words - Disable Normal Travel shipped OFF, the one recorded departure', () => {
   const keys = MOD_SETTINGS[IMMERSIVE_TRAVEL_VENDOR].keys;
   const restated = Object.keys(keys).filter((k) => k !== 'Enabled');
-  const shipped = SHIPPED.Sections.flatMap((s) => s.Keys.map((k) => [`${s.Name}.${k.Name}`, k]));
-  assert.deepEqual(restated, shipped.map(([n]) => n), 'every key, in the file\'s order');
+  assert.deepEqual(restated, SHIPPED.map(([n]) => n), 'every key, in the file\'s order');
   // PLAIN-TEXT (2026-10-19): six of the author's lines said plainly for a player (two typos among them) - their words, exactly
   const PLAIN = {
     'General.DisableNormalTravel': 'You can no longer travel from the map, and must use carriages and ships.',
@@ -54,25 +70,29 @@ test('IT1 the record: the manifest and the settings verbatim, every key restated
     'ShipTravel.DailyCaptainFee': 'Daily cost of hiring a captain and crew. You pay a captain even if you own the ship.',
     'ShipTravel.ShowLargerDocks': 'Uses larger dots on the map for locations with a dock.',
   };
-  for (const [name, k] of shipped) {
+  for (const [name, value, words, range] of SHIPPED) {
     const def = keys[name];
-    assert.equal(def.description, PLAIN[name] ?? k.Description ?? '', `${name}: the author's words, or their plain rewording`);
-    if (name === 'General.DisableNormalTravel') { assert.equal(k.Value, true, 'the mod ships it on'); assert.equal(def.default, false, 'IT1: the port ships it off'); continue; }
-    assert.equal(def.default, k.Value, `${name}: the shipped default`);
-    if (k.$type.endsWith('SliderIntKey')) assert.deepEqual([def.min, def.max], [k.Min, k.Max], `${name}: the slider's range`);
+    assert.equal(def.description, PLAIN[name] ?? words ?? '', `${name}: the author's words, or their plain rewording`);
+    if (name === 'General.DisableNormalTravel') { assert.equal(value, true, 'the mod ships it on'); assert.equal(def.default, false, 'IT1: the port ships it off'); continue; }
+    assert.equal(def.default, value, `${name}: the shipped default`);
+    if (range) assert.deepEqual([def.min, def.max], range, `${name}: the slider's range`);
   }
   assert.equal(keys.Enabled.default, true);
 });
 
-test('IT1 the tables: the 40 capitals, the 15 large docks and the 382 dock pixels are the assembly\'s own field data, byte for byte and whole', () => {
-  const dll = readFileSync(new URL(`../../../${VENDOR}/ImmersiveTravel.dll`, import.meta.url));
-  for (const [name, table, bytes] of [['capitals', CAPITAL_MAP_IDS, 160], ['large docks', LARGE_DOCK_MAP_IDS, 60], ['docks', DOCK_PIXEL_IDS, 1528]]) {
+test('IT1 the tables: the 40 capitals, the 15 large docks and the 382 dock pixels, every value held - each table\'s int32 bytes by their sha256, taken while the assembly was in the tree and found there whole, once (OWN-WORK2: its copy left it); the docks in order, each large dock a dock (mutant: a dock id moved)', () => {
+  const DIGESTS = [
+    ['capitals', CAPITAL_MAP_IDS, 160, 82263135, 374370979, 'fb1c608d3e254bf7cfac5b6864ecff4a228c01bb5718f583505ecba0155eeffc'],
+    ['large docks', LARGE_DOCK_MAP_IDS, 60, 1306739903, 6570357, 'ad59727ec85514bb213a746bbaa516e9967f15e4865bd52cf9fb778e2b18f6c3'],
+    ['docks', DOCK_PIXEL_IDS, 1528, 5222, 495141, '64b7f1c832e05db524de8ea8baf75025bd3c1bcb41b0f8e3b5289061bfc0af20'],
+  ];
+  for (const [name, table, bytes, first, last, sha] of DIGESTS) {
     assert.equal(table.length * 4, bytes, `${name}: the InitializeArray size (.cctor)`);
-    const raw = Buffer.from(Int32Array.from(table).buffer);
-    const at = dll.indexOf(raw);
-    assert.ok(at > 0, `${name}: found in the DLL`);
-    assert.equal(dll.indexOf(raw, at + 1), -1, `${name}: once`);
+    assert.deepEqual([table[0], table.at(-1)], [first, last], `${name}: its ends`);
+    assert.equal(createHash('sha256').update(Buffer.from(Int32Array.from(table).buffer)).digest('hex'), sha, `${name}: every value`);
   }
+  assert.ok(DOCK_PIXEL_IDS.every((v, i, a) => i === 0 || a[i - 1] < v), 'the dock pixels ascending, each once');
+  assert.ok(LARGE_DOCK_MAP_IDS.every((id) => DOCK_PIXEL_IDS.includes(id & 0xfffff)), 'a large dock\'s pixel is a dock');
 });
 
 test('IT1 Init: Carriage Drivers (8642) and Sailors (8643) as the IL writes them, and a Fast Travel service each, gated on the mod - a driver routes to the merchant popup', () => {

@@ -1,0 +1,160 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\M0B00Y06.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 0
+-- QuestId: 6
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 81
+Quest: M0B00Y06
+DisplayName: Wild Animal
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> I am _qgiver_. A wild animal has got
+<ce> into a citizen's house, and he wants
+<ce> it dead. The guild pays _gold_ gold.
+<ce> Will you take it, %pcn?
+
+RefuseQuest:  [1001]
+<ce> Someone else will deal
+<ce> with the beast, then.
+
+AcceptQuest:  [1002]
+<ce> Right, %pcf. The animal is loose in
+<ce> _house_, here in town. Kill it within
+<ce> the day and your pay will be waiting.
+<ce>
+<ce> _qgiver_ shouts up the stairs,
+<ce> "Which animal was it again?"
+
+QuestComplete:  [1004]
+<ce> Well done, %pcf. Your
+<ce> _gold_ gold, as promised.
+
+RumorsDuringQuest:  [1005]
+An animal got into a house in town.
+I hope somebody kills it soon.
+
+RumorsPostfailure:  [1006]
+That beast mauled a woman before
+they drove it out of town. Terrible.
+
+RumorsPostsuccess:  [1007]
+The Fighters Guild killed the animal that got
+into _house_. Good thing they are around.
+
+QuestorPostsuccess:  [1008]
+Good work with that beast. What do you need?
+
+QuestorPostfailure:  [1009]
+The animal ate the man who owned that house.
+The guild's name suffers for it. Do better.
+
+QuestLogEntry:  [1010]
+%qdt:
+ The Fighters Guild in ___qgiver_
+ asked me to kill a wild animal that
+ got into _house_. I have one day.
+
+Message:  1011
+<ce> You have killed the bear.
+
+Message:  1012
+<ce> You have killed the harpy.
+
+Message:  1013
+<ce> You have killed the spider.
+
+Message:  1014
+<ce> You have killed the tiger.
+
+Message:  1021
+<ce> From upstairs, a voice shouts, "A bear!"
+
+Message:  1022
+<ce> From upstairs, a voice
+<ce> shouts, "A harpy!"
+
+Message:  1023
+<ce> From upstairs, a voice
+<ce> shouts, "A spider!"
+
+Message:  1024
+<ce> From upstairs, a voice
+<ce> shouts, "A tiger!"
+
+Message:  1080
+<ce> You enjoyed that beast, so you
+<ce> will enjoy ___newdung_ more. Here
+<ce> is the way there, marked on a map.
+
+
+QBN:
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _house_ local random
+Place _newdung_ remote dungeon
+
+Clock _2dung_ 1.00:00 0 flag 1 range 0 1
+
+Foe _bear_ is Grizzley_bear
+Foe _tiger_ is Sabretooth_tiger
+Foe _harpy_ is Harpy
+Foe _spider_ is Spider
+
+--	Quest start-up:
+	start timer _2dung_ 
+	reveal _house_ 
+	log 1010 step 0 
+	pick one of _map_ _nomap_ _nomap_ _nomap_ 
+	pick one of _monster1_ _monster2_ _monster3_ _monster4_ 
+	create npc at _house_ 
+
+_2dung_ task:
+	end quest 
+
+_mondead_ task:
+	killed 1 _spider_ saying 1013 
+	killed 1 _tiger_ saying 1014 
+	killed 1 _harpy_ saying 1012 
+	killed 1 _bear_ saying 1011 
+
+_S.02_ task:
+	when _qgclicked_ and _mondead_ 
+	give pc _gold_ 
+	end quest 
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_ 
+	clear _qgclicked_ _clearclick_ 
+
+_qgclicked_ task:
+	clicked npc _qgiver_ 
+
+variable _map_
+variable _nomap_
+_S.06_ task:
+	when _map_ and _S.02_ 
+	reveal _newdung_ readmap
+    say 1080 
+
+_monster1_ task:
+	say 1021 
+	place foe _bear_ at _house_ 
+
+_monster2_ task:
+	say 1022 
+	place foe _harpy_ at _house_ 
+
+_monster3_ task:
+	say 1023 
+	place foe _spider_ at _house_ 
+
+_monster4_ task:
+	say 1024 
+	place foe _tiger_ at _house_

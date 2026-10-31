@@ -32,6 +32,7 @@ import { transformedAabb } from '../../../src/render/frustum.js';
 import { WoodsFile } from '../../../src/formats/woodsFile.js';
 import { HAS_ARENA2, ARENA2, ROOT, loadMaps, classicModels } from '../../arena1Data.mjs';
 import { hostText } from '../../hostText.mjs';
+import { bayRoadsOrNone } from '../../bayRoads.mjs';   // OWN-WORK2: the Bay's own network, where the player's data is
 
 const FESTIVAL = FESTIVALS[0];
 const N = starNightAt(FESTIVAL.fromMs) + 30;
@@ -160,8 +161,7 @@ test('STAR-CLEAR THE SWEEP: a star come builds again the pixel whose rock reache
 /** World of Daggerfall's shipped lists in the room's order (17 first, then ascending) and its prefabs - online's Mountains off. */
 function wodLists() {
   const V = join(ROOT, 'vendor/world-of-daggerfall');
-  const rb = (n) => new Uint8Array(readFileSync(join(ROOT, 'vendor/roads-hazelnut', n)));
-  const net = { roads: rb('roadData.bytes'), tracks: rb('trackData.bytes') };
+  const net = bayRoadsOrNone();   // OWN-WORK2: the roads only pick the sites - none without ARENA2
   const prefabs = new Map();
   for (const f of readdirSync(join(V, 'LocationPrefab'))) prefabs.set(f.replace(/\.txt$/, ''), loadLocationPrefab(readFileSync(join(V, 'LocationPrefab', f), 'utf8')));
   const session = new LocationSession();

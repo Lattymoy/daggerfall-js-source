@@ -215,7 +215,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     if (roads.smooth !== false) smoothRoadHeights(samples, tilemap, 129, hasLocation ? locationRect : null);   // AUDIT 51: the mod skips the rect
     if (roads.smooth !== false && classic) smoothRoadHeights(classic, tilemap, 129, locationRect);   // AUDIT LANDFORMS II H2: DFU's own samples as its nature reads them
     if (!arena) {   // ROAD-DRY: the Bay's paving over the sea stands dry, its arms across the edges as their neighbours stand them
-      // BAY-OWN: Basic Roads' bytes are the Bay's 1000 x 500 network, read where the Bay's own pixels are
+      // BAY-OWN: the Bay's network is its own 1000 x 500 bytes (Basic Roads' layout), read where the Bay's own pixels are
       const crossings = roadCrossings(px, py, (x, y) => (x >= 0 && y >= 0 && x < MAP_W ? roads.roads?.[y * MAP_W + x] ?? 0 : 0) | arenaJoinByte(x, y), inBay);
       for (const S of classic ? [samples, classic] : [samples]) dryRoadHeights(S, tilemap, paths, 129, hasLocation ? locationRect : null, crossings);
     }

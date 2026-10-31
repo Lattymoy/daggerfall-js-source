@@ -13,7 +13,8 @@ import { createHash } from 'node:crypto';
 import { createClassicPictures } from '../../src/formats/classicPictures.js';
 import { rebuiltPicture } from '../../src/systems/rebuiltPicture.js';
 import { derivedTorchSpec, torchPicture, inTorchSet, DROPPED_ARCHIVE } from '../../src/systems/handheldTorches.js';
-import { derivedIconSpec, installSurvivalIcons, VENDOR_ICON_FILES, VENDOR_TENT_FILES } from '../../src/systems/survival/items.js';
+import { derivedIconSpec, ownIconSpec, installSurvivalIcons, VENDOR_TENT_FILES } from '../../src/systems/survival/itemIcons.js';
+import { VENDOR_ICON_FILES } from '../../src/systems/survival/items.js';
 import {
   clearVendorTextures, preloadTextureArchive, decodedTextureTopDown, setTextureDeriveContext, textureDeriveContext, isVendorArchive,
 } from '../../src/systems/textureReplacement.js';
@@ -42,11 +43,13 @@ test('NO-BETHESDA2: every picture Handheld Torches\' manifest names is a file or
   }
 });
 
-test('NO-BETHESDA2: every picture Climates & Calories draws is a file or a spec - never both, never neither', () => {
+test('NO-BETHESDA2: every picture Climates & Calories draws is a file, a spec or ours - one of them, never two, never none', () => {
   const drawn = [...VENDOR_ICON_FILES, ...VENDOR_TENT_FILES];
   const names = manifestNames(`${CC}/climates-calories.dfmod.json`);
   assert.deepEqual(names.filter((n) => !drawn.includes(n)), ['RALZARTAVERN', 'BLANKMENU_TAVERN'], 'the port draws all but the two tavern menus');
-  for (const n of drawn) assert.notEqual(isFile(CC, n), derivedIconSpec(n) != null, `${n}: a file or a spec, never both and never neither`);
+  // PIN MOVED (NO-BETHESDA3, 2026-10-31): the rotten cooked fish is ours - our rot over the player's record (rotPicture.js)
+  for (const n of drawn) assert.equal([isFile(CC, n), derivedIconSpec(n) != null, ownIconSpec(n) != null].filter(Boolean).length, 1, `${n}: a file, a spec or ours - exactly one`);
+  assert.deepEqual(drawn.filter((n) => ownIconSpec(n)), ['536_1-0'], 'ours: the rotten cooked fish');
   const specs = listing(CC);
   assert.deepEqual(Object.keys(specs).sort(), ['50_7-0', '534_0-0', '536_0-0', '67_10-0'], 'the tent\'s two, the mouldy bread and the mouldy cooked fish');
   assert.deepEqual(specs['50_7-0'], { from: [50, 7, 0], pal: 'PAL.PAL' }, 'the tent\'s canvas IS TEXTURE.050 record 7');
@@ -54,7 +57,7 @@ test('NO-BETHESDA2: every picture Climates & Calories draws is a file or a spec 
   assert.deepEqual(specs['536_0-0'], { from: [211, 10, 0], pal: 'PAL.PAL' }, 'the mouldy cooked fish IS the cooked fish, TEXTURE.211 record 10');
   assert.deepEqual(specs['534_0-0'].from, [211, 31, 0], 'the mouldy bread is the bread, record 31, under the author\'s mould');
   assert.ok(specs['534_0-0'].edits.length > 0);
-  assert.equal(readdirSync(join(root, `${CC}/Textures`)).filter((f) => f.endsWith('.png')).length, 14);
+  assert.equal(readdirSync(join(root, `${CC}/Textures`)).filter((f) => f.endsWith('.png')).length, 13, 'NO-BETHESDA3: the rotten cooked fish left');
 });
 
 /** A one-record, one-frame, uncompressed TEXTURE file (test/formats/classicpictures.test.js's). */

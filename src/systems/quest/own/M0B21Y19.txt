@@ -1,0 +1,287 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\M0B21Y19.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 21
+-- QuestId: 19
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 72
+Quest: M0B21Y19
+DisplayName: Standard Protection
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcf, a client wants a bodyguard,
+<ce> and you came to mind. Interested?
+
+RefuseQuest:  [1001]
+<ce> Too good for guard work now, are we?
+
+AcceptQuest:  [1002]
+<ce> Good. The client is _victim_, at
+<ce> _victimhouse_, a short walk from
+<ce> here. %G sounded frightened. Go
+<ce> now. %G will explain the rest.
+
+QuestFail:  [1003]
+<ce> So they got to him first. Find out who
+<ce> sent them. The guild wants to know.
+
+QuestComplete:  [1004]
+<ce> Father's killers are dead, and I am
+<ce> alive because of you. Take his _reward_.
+<ce> I can think of no better hands for it.
+
+QuestorPostsuccess:  [1008]
+<ce> Shame about _victim_. He was in deeper than he knew.
+
+QuestorPostfailure:  [1009]
+<ce> It was not your fault, but _victim_ still
+<ce> weighs on me. I should have listened to him.
+
+Message:  1015
+<ce> Try ___darkb_. _darkb_ is there most days. %G keeps
+<ce> bad company, so go armed if you go looking for %g2.
+<--->
+<ce> _darkb_ spends most days in ___darkb_.
+
+Message:  1016
+<ce> They say _darkb_ gives orders to the Dark Brotherhood
+<ce> around here. %G3 people meet at __darkb_ in ___darkb_.
+
+Message:  1020
+%qdt:
+ The Fighters Guild of ___questgiver_
+ sent me to _victimhouse_. A client
+ there, _victim_, wants a bodyguard
+ and will tell me why.
+
+Message:  1021
+%qdt:
+ Assassins were waiting in
+ _victimhouse_. I fought them, but
+ _victim_ had been dead for hours.
+
+Message:  1022
+%qdt:
+ A letter came from _daughter_, who
+ says _victim_ was her father. She
+ wants me to come to _daughterhouse_
+ in __daughterhouse_.
+
+Message:  1023
+%qdt:
+ The meeting with _daughter_
+ was a trap, and I cut my way
+ out. Now I am taking her to
+ _safehouse_ in __safehouse_.
+
+Message:  1024
+%qdt:
+ It was the Dark Brotherhood
+ that murdered _victim_. I have
+ nothing more to follow for now.
+
+Message:  1030
+Fair warning was given.
+ Nobody listens.
+ 
+<ce> _darkb_
+
+Message:  1031
+Dear %pcn,
+ 
+ I am _daughter_, daughter of
+ _victim_. I heard how you avenged
+ my father, and I want to thank you
+ myself. Please visit me if you can.
+ 
+<ce> _daughter_
+<ce> _daughterhouse_,
+<ce> __daughterhouse_
+
+Message:  1035
+<ce> Walk away, friend, or you
+<ce> join _victim_ on the floor.
+
+Message:  1036
+<ce> A sharp blade and a dull head,
+<ce> %pcn. Fighters Guild thugs are
+<ce> the easiest prey there is.
+
+Message:  1040
+<ce> Murder up the street. _victim_, dead in his own house.
+<--->
+<ce> _victim_ crossed the wrong people, and
+<ce> now the whole street keeps its eyes down.
+
+Message:  1041
+<ce> The Dark Brotherhood is out for blood.
+<ce> Some %ra killed one of their leaders.
+<--->
+<ce> Someone broke into the Dark Brotherhood's house
+<ce> in ___darkb_. I would not want to be them.
+
+Message:  1050
+<ce> You are the guild's muscle, the one
+<ce> _victim_ paid to keep him alive.
+<ce> That went well. Kill this %ra.
+
+Message:  1051
+<ce> %pcn, behind you! They were waiting!
+
+Message:  1052
+<ce> Thank you for saving me. Take me to
+<ce> _safehouse_ in __safehouse_. From
+<ce> there I can slip out of %reg alone.
+
+Message:  1070
+<ce> Someone grabs your sleeve, out
+<ce> of breath. "You are %pcn? By
+<ce> %god, I have ridden two days to
+<ce> find you. A letter for you."
+
+Message:  1071
+<ce> I cannot wait any longer. I
+<ce> will take my chances alone.
+
+
+QBN:
+Item _note_ letter used 1030
+Item _reward_ magic_item
+Item _I.02_ dead_body
+Item _letter_ letter used 1031
+
+Person _victim_ face 5 faction People_of_Sentinel male remote
+Person _questgiver_ group Questor
+Person _daughter_ face 3 faction People_of_Sentinel female remote
+Person _darkb_ faction The_Dark_Brotherhood remote anyInfo 1015 rumors 1016
+
+Place _victimhouse_ local house4
+Place _daughterhouse_ remote house4
+Place _safehouse_ remote house3
+
+Clock _qtime_ 00:00 0 flag 1 range 2 5
+Clock _S.03_ 3.00:00 5.00:00
+--shortened S.03 from 3 weeks to 3 days. this quest should not
+--drag on endlessly for no reason.
+Clock _S.04_ 00:00 0 flag 1 range 0 5
+
+Foe _enemy_ is Assassin
+Foe _F.01_ is Nightblade
+Foe _F.02_ is 4 Assassin
+
+--	Quest start-up:
+	dialog link for location _daughterhouse_ person _daughter_ 
+	dialog link for person _darkb_ 
+	start timer _qtime_ 
+	log 1020 step 0 
+	place npc _victim_ at _victimhouse_
+	hide npc _victim_
+	pc at _victimhouse_ set _S.05_ 
+	_note_ used do _readnote_
+	have _I.02_ set _deadbody_
+
+variable _qtime_
+_readnote_ task:
+	add dialog for person _darkb_ 
+
+_S.02_ task:
+	injured _enemy_ 
+	say 1035 
+
+_S.03_ task:
+	_letter_ used do _readletter_ 
+	start timer _S.04_ 
+	give pc _letter_ notify 1070 
+	place npc _daughter_ at _daughterhouse_ 
+
+_S.04_ task:
+	end quest 
+
+_S.05_ task:
+	start task _insidespawn_
+--more repairs to prevent duplicate effects. now only one time per quest
+
+_insidespawn_ task:
+	create foe _enemy_ every 0 minutes 4 times with 100% success 
+	place item _I.02_ at _victimhouse_ 
+	place item _note_ at _victimhouse_ 
+--sped up spawn rate. very slow for an ambush 
+	log 1021 step 1 
+	rumor mill 1040 
+	hide npc _victim_ 
+--user reports repeated spawns upon entering house, should not be so
+
+_deadbody_ task:
+	take _I.02_ from pc
+--added deadbody task. otherwise body would clog inventory
+
+_S.06_ task:
+	clicked npc _darkb_ 
+	create foe _enemy_ every 3 minutes 5 times with 100% success 
+	create foe _F.01_ every 0 minutes 1 times with 100% success 
+	--reduced spawn time to instant
+	hide npc _darkb_ 
+	say 1050 
+	start timer _S.03_ 
+--moving the S.03 timer here because the player may not always kill F.01, which was the previous
+--trigger for S.03. Now the quest will always be completeable.
+	log 1024 step 1
+
+_S.07_ task:
+	killed 1 _F.01_ 
+	rumor mill 1041 
+	change repute with _daughter_ by +10 
+	change repute with _darkb_ by -15 
+
+_S.08_ task:
+	clicked npc _daughter_ 
+	pc at _daughterhouse_ set _S.12_ 
+	create foe _F.02_ every 0 minutes 1 times with 100% success 
+--reduced spawn time to instant
+	say 1051 
+	add _daughter_ face 
+	hide npc _daughter_
+--using hide NPC rather than transfer
+
+_readletter_ task:
+	log 1022 step 1
+
+_S.10_ task:
+	when _qtime_ and not _S.07_ 
+	end quest 
+
+_S.11_ task:
+	injured _F.02_ 
+	say 1036 
+
+variable _S.12_
+_S.13_ task:
+	pc at _safehouse_ set _S.14_ 
+	when _S.08_ and not _S.12_ 
+	log 1023 step 1
+	say 1052
+--set msgs 1022 and 1023 to step 1. There's no need to keep each log entry in the journal.
+--they will now replace each other as they happen.
+
+_S.14_ task:
+	give pc _reward_ 
+	end quest 
+
+_S.15_ task:
+	when _S.04_ and not _S.14_ 
+	say 1071 
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+
+_clearclick_ task:
+	when _qgclicked_ and not _insidespawn_
+	clear _qgclicked_ _clearclick_
+
+_feedback_ task:
+	when _qgclicked_ and _insidespawn_
+	say 1003

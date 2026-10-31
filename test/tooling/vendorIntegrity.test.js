@@ -19,12 +19,8 @@ import { createHash } from 'node:crypto';
 
 const sha256 = (rel) => createHash('sha256').update(readFileSync(new URL(`../../vendor/${rel}`, import.meta.url))).digest('hex');
 
-const ROADS = {
-  'roads-hazelnut/roadData.bytes': '249ee50c54c564b9f89e3cf0cb28f87e0ab1c5603cdd4f794afc4e96a6b6af8a',
-  'roads-hazelnut/trackData.bytes': 'dce018b03bee20f846bfca0854ae38cf737b8a684e92bf95cd7468df403385a6',
-  'roads-hazelnut/riverData.bytes': '6b867c189be672874334557573d8c40598beb050277dd18f81a2c33b9b9ac8ab',
-  'roads-hazelnut/streamData.bytes': '567ebda53a121435f5c26c12c6141d2d596c54af82fe3a08109f25544cef349f',
-};
+// OWN-WORK2 (2026-10-31): Hazelnut's four path arrays are retired - their hashes are their Own-Work.md row's record now,
+// and the Bay's network is the port's own (test/world/road/ownwork2_bayroads.test.js).
 // TO1: Travel Options' three UI textures. Unlike every other row here
 // these are NOT the author's own file bytes - the mod ships one Unity
 // bundle and the PNGs it was built from are not in it, so these are
@@ -67,11 +63,6 @@ const DYNAMIC_SKIES = {
 };
 
 const check = (table) => { for (const [rel, want] of Object.entries(table)) assert.equal(sha256(rel), want, `${rel} is not the author's file`); };
-
-test('MODS AUDIT: Basic Roads - the four path arrays are Hazelnut’s, sha256 against ajrb/dfunity-mods master', () => {
-  check(ROADS);
-  assert.equal(Object.keys(ROADS).length, 4);
-});
 
 test('TO1: Travel Options - the three UI textures are the bundle\u2019s own pixels, sha256 of this tree\u2019s re-encode', () => {
   check(TRAVEL_OPTIONS);

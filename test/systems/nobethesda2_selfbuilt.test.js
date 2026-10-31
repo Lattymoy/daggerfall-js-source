@@ -1,0 +1,36 @@
+// NO-BETHESDA2 (2026-10-31): a picture rebuilt from the player's own files through systems/classicArt.js needs no
+// world pipeline, so the texture door builds a `selfBuilt` entry before one is up (the paper doll on the menu draws
+// Roleplay & Realism: Items' helmets before any world). An entry built from the pipeline's own context still waits.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { addVendorTextures, clearVendorTextures, setTextureDeriveContext, preloadTextureRecord } from '../../src/systems/textureReplacement.js';
+import { readFileSync } from 'node:fs';
+
+const picture = () => ({ width: 2, height: 1, data: new Uint8Array([10, 20, 30, 255, 40, 50, 60, 255]) });
+
+test('NO-BETHESDA2: with no pipeline up, a selfBuilt entry is built and a pipeline entry is refused', async () => {
+  clearVendorTextures();
+  setTextureDeriveContext(null);
+  const warn = console.warn; console.warn = () => {};
+  try {
+    addVendorTextures([
+      { archive: 98101, record: 0, frame: 0, standIn: true, fileName: 'own', build: async () => picture(), selfBuilt: true },
+      { archive: 98102, record: 0, frame: 0, standIn: true, fileName: 'pipeline', build: async (ctx) => ctx.classicRgba(1, 0, 0) },
+    ]);
+    const own = await preloadTextureRecord(98101, 0, 0);
+    assert.ok(own, 'built with no pipeline');
+    assert.equal(own.width, 2);
+    assert.equal(await preloadTextureRecord(98102, 0, 0), null, 'refused until a pipeline is up');
+  } finally {
+    console.warn = warn;
+    clearVendorTextures();
+  }
+});
+
+test('NO-BETHESDA2: every registrant that builds through classicArt says so', () => {
+  const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
+  assert.match(rd('src/systems/survival/itemIcons.js'), /build: \(\) => rebuiltPicture\(spec, art\), selfBuilt: true/);
+  assert.match(rd('src/systems/survival/itemIcons.js'), /build: \(\) => ownIconPicture\(f, art\), selfBuilt: true/);
+  assert.match(rd('src/systems/roleplayRealismItems/rriInstall.js'), /build: \(\) => rriDerivedPicture\(name, art \?\? classicArt\(\)\), selfBuilt: true/);
+  assert.match(rd('src/systems/roleplayRealism/rrVariants.js'), /build: \(\) => built\(fileName\), selfBuilt: true/);
+});

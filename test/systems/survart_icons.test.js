@@ -195,7 +195,7 @@ test('SURV-ART: both doors keep the arm that reaches the vendored art', () => {
 // wall and floor drawn from archive 50, gone. Nothing about the archive
 // NUMBER says which it is, so the registration says, and this holds it.
 
-import { installSurvivalIcons, VENDOR_TENT_FILES, derivedIconSpec } from '../../src/systems/survival/items.js';
+import { installSurvivalIcons, VENDOR_TENT_FILES, derivedIconSpec } from '../../src/systems/survival/itemIcons.js';
 import { hasTextureReplacement } from '../../src/systems/textureReplacement.js';
 import { TENT_MODEL } from '../../src/systems/survival/camp.js';
 

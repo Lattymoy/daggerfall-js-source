@@ -19,13 +19,13 @@ import { onCapitalApproach, APPROACH_HALF } from '../../src/world/capitalApproac
 import { GATE_CLEAR } from '../../src/world/townWalls.js';
 import { CAPITAL_RELIEFS } from '../../src/world/terrain/capitalRelief.js';
 import * as R from '../../src/world/solitudeRelief.js';
+import { bayRoads } from '../bayRoads.mjs';   // OWN-WORK2
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !existsSync(join(ARENA2 ?? '', 'BLOCKS.BSA')) ? 'ARENA2_PATH not set or missing - real-data validation skipped' : false;
 const B = 102.4;
-const patches = ['08', '09', '10', '11'].map((g) => JSON.parse(rd(`vendor/immersive-travel/WorldDataPatches/WALLAA${g}.RMB.json`)));
-const modOn = (on = true) => installImmersiveTravelGates(patches, patches.map(() => null), () => on);
+const modOn = (on = true) => installImmersiveTravelGates(() => on);   // OWN-WORK2: our stand on every gate
 /** Each capital's stands as the blocks read them (world/capitalModels.js capitalCarriagesOf) - its own footprint kept. */
 const footprints = new Map();
 const standsOf = (cap) => capitalCarriagesOf(cap, () => (footprints.has(cap.key) ? footprints.get(cap.key) : footprints.set(cap.key, capitalFootprint(cap)).get(cap.key))).stands;
@@ -306,7 +306,7 @@ test('AUDIT CAPITAL-CARRIAGES with ARENA2: a walled city\'s gates on their roads
   modOn();
   const maps = new MapsFile(); maps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK')); maps.autoDiscard = false;
   const woods = new WoodsFile(); woods.load(bytes('WOODS.WLD'));
-  const roadsB = new Uint8Array(readFileSync(new URL('../../vendor/roads-hazelnut/roadData.bytes', import.meta.url))), tracksB = new Uint8Array(readFileSync(new URL('../../vendor/roads-hazelnut/trackData.bytes', import.meta.url)));
+  const { roads: roadsB, tracks: tracksB } = bayRoads();   // OWN-WORK2: the Bay's own network
   const classicOf = (n) => { const i = blocks.getBlockIndex(blocks.checkName(n)); return i < 0 ? null : blocks.readClassicBlock(i); };
   const io = { classicOf, servedOf: (n) => blocks.getBlockByName(n) };
   const pixelOf = (loc) => ({ px: Math.trunc(loc.mapTableData.longitude / 128), py: 499 - Math.trunc(loc.mapTableData.latitude / 128) });
@@ -381,9 +381,10 @@ test('AUDIT CAPITAL-CARRIAGES T3-T7: the Imperial City\'s stand clear of its gat
   // T4: toward the wall - Helstrom's north carriage a step nearer its gate than Daggerfall's, its reach off the rim
   const car = standsOf(he)[0].items.find((it) => it.r.ModelIdNum === 41214), out08 = (r08.Misc3dObjectRecords.find((q) => q.ModelIdNum === 41214).ZPos + 4096) * 0.025 - IT_GATE_FRAMES.WALLAA08.at[1];
   assert.ok(he.gateAt.N[1] - car.z < out08 - 0.5, `toward the wall: ${he.gateAt.N[1] - car.z} for ${out08}`);
-  // T4: along either way - kept off the ground east of x -30, the things go west (the nearer)
-  const west = capitalCarriages(N, { footprintOf: () => (x, z) => x > -30 && x < 60 && z < -224.8 })[0];
-  assert.ok(west && west.items.every((it) => it.x < -30), 'west');
+  // T4: along either way - kept off the ground east of x 27, the things step west (the nearer: east is past x 64). PIN
+  // MOVED (OWN-WORK2): our stand stands east of Helstrom's north gate, where the mod's stood west of it
+  const west = capitalCarriages(N, { footprintOf: () => (x, z) => x > 27 && x < 64 && z < -224.8 })[0];
+  assert.ok(west && !west.inside && west.items.every((it) => it.x < 27), 'west');
   // T4: a thing within its reach of the gate's line steps out of it
   const f0 = r08.MiscFlatObjectRecords[0], near = { Misc3dObjectRecords: [], MiscFlatObjectRecords: [{ ...f0, XPos: Math.round((38.4 - 14) / 0.025), ZPos: Math.round((11.2 + 0.5) / 0.025) - 4096 }] };
   const stepped = capitalCarriages(N, { footprintOf: () => null, records: (g) => (g === 'WALLAA08' ? near : null) })[0];
@@ -399,10 +400,22 @@ test('AUDIT CAPITAL-CARRIAGES T3-T7: the Imperial City\'s stand clear of its gat
   const lk = capitalCarriages(lakeside, { footprintOf: () => null });
   assert.deepEqual(lk.map((st) => st.inside), [true], 'inside, the lake outside');
   for (const it of lk[0].items) assert.equal(planCell(lakeside, Math.floor(it.z / B + 4), Math.floor(it.x / B + 4)), 'G');
+  // T4: never on the gate's lane - a thing drawn 3 m along it, stood inside, steps along off it. PIN MOVED (OWN-WORK2):
+  // our stand stands 26 m along, past any lane, so the thing is the test's own
+  const laneRec = { Misc3dObjectRecords: [], MiscFlatObjectRecords: [{ ...f0, XPos: Math.round((38.4 - 3) / 0.025), ZPos: Math.round((91.2 - 5) / 0.025) - 4096 }] };
+  const onLane = capitalCarriages(lakeside, { footprintOf: () => null, records: (g) => (g === 'WALLAA10' ? laneRec : null) })[0];
+  assert.ok(onLane.inside && Math.abs(onLane.items[0].x) >= APPROACH_HALF + GATE_CLEAR.flat, `off the lane: ${onLane.items[0].x}`);
   // T4: never the sea - Solitude's north wall where its cliff falls to the sea, its plan's water there made garden: its
-  // things stand on no ground the relief says is the sea's (the sea lies level)
-  const cliff = capitalCarriages({ ...so, plan: so.plan.map((row, r) => (r < 2 ? row.map(() => 'G') : row)), gates: ['N'], gateAt: { N: [20, -108] } }, { footprintOf: () => null });
-  for (const st of cliff) for (const it of st.items) assert.ok(CAPITAL_RELIEFS.solitude.height(it.x, it.z) > 1e-3, `on the sea at ${it.x}, ${it.z}`);
+  // things stand on no ground the relief says is the sea's (the sea lies level), a model level on the ground as drawn.
+  // PIN MOVED (OWN-WORK2): our stand stands east of its gate, so a gate at x -60 puts it over the sea west of x -30
+  const sr = CAPITAL_RELIEFS.solitude, drawnSol = (x, z) => reliefDrawnAt(sr, x, z) - sr.flat;
+  for (const gx of [-60, 20]) {
+    const cliff = capitalCarriages({ ...so, plan: so.plan.map((row, r) => (r < 2 ? row.map(() => 'G') : row)), gates: ['N'], gateAt: { N: [gx, -108] } }, { footprintOf: () => null });
+    for (const st of cliff) for (const it of st.items) {
+      assert.ok(sr.height(it.x, it.z) > 1e-3, `on the sea at ${it.x}, ${it.z}`);
+      if (it.model) for (let k = 0; k < 8; k++) assert.ok(Math.abs(drawnSol(it.x + Math.cos((k * Math.PI) / 4) * GATE_CLEAR.model, it.z + Math.sin((k * Math.PI) / 4) * GATE_CLEAR.model) - it.h) <= CARRIAGE_LEVEL + 1e-9, `level at ${gx}`);
+    }
+  }
   // L2: a painted road's band two and a half tiles either side of its line - a 2 x 2 town, an arm in from the north
   const town = { exterior: { exteriorData: { width: 2, height: 2, blockNames: ['X', 'X', 'X', 'X'] } }, mapTableData: { mapId: 1 } };
   const roadOk = townGateOutside(town, { pieces: [] }, { roads: DIR.N, tracks: 0, curved: false }, () => null), mid = (64 - 48) * 6.4;

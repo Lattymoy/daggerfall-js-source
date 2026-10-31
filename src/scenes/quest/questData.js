@@ -18,6 +18,9 @@ import { questlineLines } from '../../systems/questlines/qlPatches.js';   // QL4
 
 const tableFiles = import.meta.glob('../../../vendor/dfu-quests/Tables/*.txt', { query: '?raw', import: 'default' });
 const questFiles = import.meta.glob('../../../vendor/dfu-quests/Quests/*.txt', { query: '?raw', import: 'default' });
+// OWN-WORDS1 (bible/06-Systems/Own-Words.md): a DFU quest in DFO's own words - DFU's QBN, our messages - is read in
+// place of DFU's file of its name. tools/ownQuestCheck.mjs holds each one to DFU's logic.
+const ownQuestFiles = import.meta.glob('../../systems/quest/own/*.txt', { query: '?raw', import: 'default' });
 // RR3: a vendored mod's Quests/ folder - its QuestList-<name>.txt lands
 // with the tables (the registered list's seam) and its quest sources
 // with the pack's (GetQuest checks the mod's folder the same way).
@@ -62,9 +65,10 @@ export async function loadQuestPack() {
     }));
     const quests = new Map();
     const patchable = new Map();   // SHAM-TRAIL: a DFU quest the port patches, kept as shipped and patched as it is read
+    const own = new Map(Object.entries(ownQuestFiles).map(([path, load]) => [baseName(path), load]));
     await Promise.all(Object.entries(questFiles).map(async ([path, load]) => {
       const name = baseName(path);
-      const text = stripBom(await load());
+      const text = stripBom(await (own.get(name) ?? load)());   // OWN-WORDS1: ours where we have it, patched as DFU's would be
       if (QUEST_PATCHES[name]) patchable.set(name, text);
       quests.set(name, text.split(/\r?\n/));
     }));

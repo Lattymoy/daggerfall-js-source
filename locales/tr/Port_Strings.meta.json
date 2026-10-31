@@ -1474,14 +1474,24 @@
   "tr": "0fb70fe49711",
   "by": "claude-in-session"
  },
+ "credits.ambientText.terms": {
+  "en": "a6f7cd6701a1",
+  "tr": "5c52be689f10",
+  "by": "claude-in-session"
+ },
+ "credits.ambientText.what": {
+  "en": "c71fb13b6590",
+  "tr": "d1aa74660c56",
+  "by": "claude-in-session"
+ },
  "credits.mudex.terms": {
-  "en": "e2ad3a44cdad",
-  "tr": "92515106644a",
+  "en": "9842b1e2ee2a",
+  "tr": "f7db01cb2238",
   "by": "claude-in-session"
  },
  "credits.mudex.what": {
-  "en": "dab7ae5a1402",
-  "tr": "9bc83b07c72a",
+  "en": "d59e8bd4c608",
+  "tr": "ec329e560c6d",
   "by": "claude-in-session"
  },
  "decor.bar.keys.nudge": {
@@ -3940,8 +3950,8 @@
   "by": "claude-in-session"
  },
  "mods.meanerMonsters.Enabled.description": {
-  "en": "0d3ed4997fe8",
-  "tr": "a97aa5090b47",
+  "en": "35bdbe812fb9",
+  "tr": "6230f687b82a",
   "by": "claude-in-session"
  },
  "naval.fleet.openSeaAway": {

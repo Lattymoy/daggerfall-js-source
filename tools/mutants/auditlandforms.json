@@ -930,37 +930,19 @@
     ]
   },
   {
-    "name": "AUDIT-LANDFORMS-C3-no-retry-online",
+    "name": "OWN-WORK2-the-rivers-ungated",
     "file": "src/scenes/world.js",
-    "old": "    if (params.has('online')) {\n      retryModRoads(",
-    "new": "    if (false) {\n      retryModRoads(",
+    "old": "{ ...roadSwitches, water: basicRoadsOn && roadSwitches.water }",
+    "new": "{ ...roadSwitches }",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
   },
   {
-    "name": "AUDIT-LANDFORMS-C3-retry-never-backs-off",
-    "file": "src/world/roadsProducer.js",
-    "old": "const ms = Math.min(60000, 5000 * 2 ** tries);",
-    "new": "const ms = 5000;",
-    "tests": [
-      "test/world/terrain/auditlandforms.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-LANDFORMS-C3-retry-forever",
-    "file": "src/world/roadsProducer.js",
-    "old": "export const MOD_ROADS_RETRY_MAX = 12;",
-    "new": "export const MOD_ROADS_RETRY_MAX = 1;",
-    "tests": [
-      "test/world/terrain/auditlandforms.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-LANDFORMS-C3-late-arrays-dropped",
+    "name": "OWN-WORK2-the-word-flipped",
     "file": "src/scenes/world.js",
-    "old": "        if (late) { terrainGen.setRoadsData({ ...late, ...roadSwitches }",
-    "new": "        if (false) { terrainGen.setRoadsData({ ...late, ...roadSwitches }",
+    "old": "basicRoadsOn ? 'basic-roads' : 'generated');",
+    "new": "'basic-roads');",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -1358,33 +1340,6 @@
     ]
   },
   {
-    "name": "AUDIT-LANDFORMS-II-G3-fetch-unraced",
-    "file": "src/world/roadsProducer.js",
-    "old": "const r = await Promise.race([fetchFn(url, ac ? { signal: ac.signal } : undefined), late]);",
-    "new": "const r = await fetchFn(url, ac ? { signal: ac.signal } : undefined);",
-    "tests": [
-      "test/world/terrain/auditlandforms.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-LANDFORMS-II-G3-body-unraced",
-    "file": "src/world/roadsProducer.js",
-    "old": "const b = new Uint8Array(await Promise.race([r.arrayBuffer(), late]));",
-    "new": "const b = new Uint8Array(await r.arrayBuffer());",
-    "tests": [
-      "test/world/terrain/auditlandforms.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-LANDFORMS-II-G3-never-aborted",
-    "file": "src/world/roadsProducer.js",
-    "old": "timer = setTimeout(() => { ac?.abort(); no(",
-    "new": "timer = setTimeout(() => { no(",
-    "tests": [
-      "test/world/terrain/auditlandforms.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-LANDFORMS-II-H2-gathering-asks-the-shaped",
     "file": "src/world/terrain/terrainNature.js",
     "old": "if (sampleHeight((beach ?? heightmapData)[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) return null;   // AUDIT LANDFORMS II H2",
@@ -1543,33 +1498,6 @@
       "test/world/terrain/auditlandforms.test.js"
     ],
     "note": "BAY-LEFT-GROUND: re-aimed by content - the lift's bound is the world's grid (D5); the Bay's north row left out."
-  },
-  {
-    "name": "AUDIT-LANDFORMS-II-J7-no-fetch",
-    "file": "src/world/roadsProducer.js",
-    "old": "export async function retryModRoads({ fetchFn = globalThis.fetch,",
-    "new": "export async function retryModRoads({ fetchFn = null,",
-    "tests": [
-      "test/world/terrain/auditlandforms.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-LANDFORMS-II-J7-no-wait",
-    "file": "src/world/roadsProducer.js",
-    "old": "wait = (ms) => new Promise((r) => setTimeout(r, ms)), max = MOD_ROADS_RETRY_MAX",
-    "new": "wait = (ms) => new Promise((r) => setTimeout(r, 0)), max = MOD_ROADS_RETRY_MAX",
-    "tests": [
-      "test/world/terrain/auditlandforms.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-LANDFORMS-II-J7-host-asks-none",
-    "file": "src/scenes/world.js",
-    "old": "      retryModRoads({ onTry: (n, ms) =>",
-    "new": "      retryModRoads({ max: 0, onTry: (n, ms) =>",
-    "tests": [
-      "test/world/terrain/auditlandforms.test.js"
-    ]
   },
   {
     "name": "AUDIT-LANDFORMS-II-J9-relief-blind",

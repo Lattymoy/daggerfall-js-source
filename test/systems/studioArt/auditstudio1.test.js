@@ -39,7 +39,7 @@ import { LAST_CLASSIC_TEXTURE_ARCHIVE } from '../../../src/formats/textureFile.j
 import { registerCarrackArt, _resetCarrackArt } from '../../../src/world/ships/carrackArt.js';
 import { registerLargeBoatArt, _resetLargeBoatArt } from '../../../src/world/ships/largeBoatArt.js';
 import { townPictureEntries, TOWN_PICTURES } from '../../../src/world/townPictures.js';
-import { installSurvivalIcons } from '../../../src/systems/survival/items.js';
+import { installSurvivalIcons } from '../../../src/systems/survival/itemIcons.js';
 import { installThunderlockIcons, PAPERDOLL_OFFSET } from '../../../src/systems/thunderlock.js';
 import { yardArt, YARD_ARCHIVE } from '../../../src/world/merchantYards/merchantYardArt.js';
 import { PORT_PAINTERS, PORT_ARCHIVE } from '../../../src/world/portArt.js';

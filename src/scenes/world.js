@@ -67,7 +67,7 @@ import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES, CLIMATES, REGION_NAMES } from '../formats/mapsFile.js';   // SPAWNED-DUNGEONS1: the ocean gate and the synthesized location's region name
 import { questTracker } from '../ui/quest/questTracker.js';   // GUIDE5: the quest the player follows - its places, marked
 import { marksOn, questMapMarks } from '../ui/quest/questMarks.js'; import { boatCompassPoints } from '../ui/boatMarks.js';   // GUIDE5: where the quests point, on the held map and the compass; BOAT-MARK: where my boats lie, on the compass
-import { settlementsOf, loadModRoads, retryModRoads, basicRoadsPathsPoint, WATER_BYTE } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT ROADS F2 / ROADS 22; WOD2: Basic Roads' getPathsPoint, the question World of Daggerfall's loader asks
+import { settlementsOf, basicRoadsPathsPoint, WATER_BYTE } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT ROADS F2; WOD2: Basic Roads' getPathsPoint, the question World of Daggerfall's loader asks
 import { modSetting, modSettingsOf, modSettingsGeneration, MOD_SETTINGS, latchModLoaded } from '../systems/modSettings.js';   // ROADS 24; HCC: the mod's eight switches; CSA-D: a mod's title for the load's failure line; AUDIT PRE-MERGE 0928 S4: the next-load mods latched at mount
 import { hasPortFor, hasPort, setSeatHarbours, PORT_LOCATION_IDS } from '../systems/travel/travelPorts.js';   // AUDIT-RR2 G22: Travel Options' port list for RR's ship gate; SEAT2b part two: a members' Harbour among them (hasPortFor)
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
@@ -1607,10 +1607,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const terrainGen = new TerrainGenClient({ woods, woodsBytes });
   // ROADS 3: OUR network, from the player's own map. Built once here,
   // handed to both terrain kernels; a failure draws a world without
-  // roads and says so, never no world.
-  // ROADS 22: HIS NETWORK FIRST, 1:1 - Basic Roads' arrays, vendored
-  // with Hazelnut's permission. Ours is the fallback for a map where
-  // they cannot load. The log line says which it was.
+  // roads and says so, never no world. OWN-WORK2: it is the Bay's only
+  // network - roads, tracks, rivers and streams (world/roadsProducer.js).
   const logRoads = (st) => {
     console.log(`[roads] ${st.roadNodes} towns, ${st.roadEdges} roads, ${st.trackEdges} tracks, ${st.unrouted} unrouted, ${st.ms}ms`);
     // AUDIT 45 F7: an unrouted pair is a finding, and it is named.
@@ -1624,9 +1622,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // as the world loads - SmoothRoads on, RiversAndStreams off, as the
   // mod ships them - and carried on the network object into the kernel.
   const roadSwitches = { smooth: modSetting('roads-hazelnut', 'SmoothRoads'), water: modSetting('roads-hazelnut', 'RiversAndStreams') };
-  // BR3: and the mod's OWN switch, which it did not have. Off is not a
-  // roadless world - it is the port's own network (ROADS 3), the same
-  // fallback a map his arrays cannot load already takes.
+  // BR3: and the mod's OWN switch. Off is not a roadless world: the same
+  // network is painted, but its rivers are not, and the maps and the
+  // journeys do not read it (`source`, TO1).
   const basicRoadsOn = modSetting('roads-hazelnut', 'Enabled');
   // ROADS 25 (Mac: "some roads are missing even though they show on
   // the map"): the network arrives AFTER the world has started
@@ -1634,7 +1632,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // painted with no network and then kept. The map rebuilt itself on
   // arrival; the terrain never did. Every pixel painted without a
   // network is torn down here, and the stream rebuilds it with one.
-  // Called on BOTH arrival paths - the mod's data and our own network.
+  // Called as the network is asked for (OWN-WORK2: one arrival path).
   //
   // FIX-C (2026-09-08, Mac: "players on first start either spawn in the
   // ground or the sky"): THIS SWEEP WAS THE FIRST START'S BUG. It tore
@@ -1667,32 +1665,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     swap.rebuild(again);   // IC-SWAP-BEHIND: each built again behind its standing view (scenes/swapBehind.js)
     console.log(`[roads] ${again.length} pixel(s) built before the network landed - rebuilt with roads`);
   }
-  (basicRoadsOn ? loadModRoads() : Promise.resolve(null)).then((his) => {
-    if (!basicRoadsOn) {
-      console.log('[roads] Basic Roads off in the Mods pane - generating the port\'s own network');
-      terrainGen.setRoads(settlementsOf(maps), logRoads, roadSwitches);
-      rebuildRoadless();
-      return;
-    }
-    if (his) { terrainGen.setRoadsData({ ...his, ...roadSwitches }, (st) => console.log(`[roads] Basic Roads, 1:1: ${st.roadPixels ?? '?'} road pixels (Hazelnut)${roadSwitches.water ? ', rivers and streams on' : ''}${roadSwitches.smooth ? '' : ', smoothing off'}`)); rebuildRoadless(); return; }
-    // AUDIT LANDFORMS C3: ONLINE, HIS NETWORK OR NONE YET. The room's ground is cut along his arrays (the lane forces the
-    // mod, onlineLane.js), and one failed fetch stood this client on the port's own network - other roads, no rivers: with
-    // the Landforms row a river pixel's ground a median 4.8 m off its peers'. Asked again (retryModRoads, WOD6's backoff);
-    // the pixels stand roadless meanwhile and ROADS 25 rebuilds them when the arrays land - the port's own network only
-    // once every try has failed.
-    if (params.has('online')) {
-      retryModRoads({ onTry: (n, ms) => console.warn(`[roads] Basic Roads data did not load - asking again in ${ms / 1000} s (online: the room's network)`) }).then((late) => {
-        if (late) { terrainGen.setRoadsData({ ...late, ...roadSwitches }, (st) => console.log(`[roads] Basic Roads, 1:1, landed late: ${st.roadPixels ?? '?'} road pixels (Hazelnut)`)); rebuildRoadless(); return; }
-        console.warn('[roads] Basic Roads data did not load on any try - generating our own network');
-        terrainGen.setRoads(settlementsOf(maps), logRoads, roadSwitches);
-        rebuildRoadless();
-      });
-      return;
-    }
-    console.warn('[roads] Basic Roads data did not load - generating our own network');
-    terrainGen.setRoads(settlementsOf(maps), logRoads, roadSwitches);
-    rebuildRoadless();
-  });
+  // AUDIT 58 F5: one bare statement, no lane's gate - every path ends at a network
+  terrainGen.setRoads(settlementsOf(maps), logRoads, { ...roadSwitches, water: basicRoadsOn && roadSwitches.water }, basicRoadsOn ? 'basic-roads' : 'generated');
+  rebuildRoadless();
   // WOD2: WORLD OF DAGGERFALL (Kamer, vendor/world-of-daggerfall/) - the
   // page's one LocationLoader, opened as the world mounts:
   // LocationModLoader.Init stands it at the Start state, and its Awake
@@ -1798,8 +1773,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     get woods() { return woods; },
   });
   // LocationLoader.cs:146-151 asks the Basic Roads MOD for the pixel's
-  // road|track mask - so only Hazelnut's own arrays answer; the port's
-  // generated fallback is not his mod, and with it the static stays 0.
+  // road|track mask - so only the network the Basic Roads switch turns on
+  // answers (`source`, TO1); with the switch off the static stays 0.
   const wodPathsPoint = (x, y) => {
     const net = terrainGen.roads();
     return net?.source === 'basic-roads' ? basicRoadsPathsPoint(net, x, y) : 0;
@@ -15775,13 +15750,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     settings: travelOptionsSettings,
     ui: travelControlUI,
     junctionMap: travelJunctionMap,
-    // THE PATH DATA IS HIS, OR IT IS NOTHING. The port draws roads
-    // either way - his vendored arrays, or its own generated network
-    // when Basic Roads is off - and FOLLOWING them is his mod's
-    // feature. A follower walking the port's generated tracks would be
-    // offering something the player never switched on, so the network
-    // is handed over only when it is actually his (`source`, TO1's own
-    // field on the network object, terrainGenClient.js).
+    // THE PATH DATA IS BASIC ROADS', OR IT IS NOTHING. The port paints
+    // its network either way, and FOLLOWING it is a Basic Roads feature:
+    // with the switch off the network is not handed over (`source`, TO1's
+    // own field on the network object, terrainGenClient.js).
     roads: () => { const net = terrainGen.roads(); return net?.source === 'basic-roads' ? net : null; },
     onRoad: () => travellerOnRoad(),   // RATE-LAW: a straight walk's ground - the road's rate while it runs along one
     isWater: (x, y) => tvWater(x, y),   // AUDIT DEEP T2-1: a road journey's resume never aims across the sea - AUDIT TAMRIEL-WIDE C5: the ground's own sea, past the Bay too
@@ -23676,7 +23648,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  crater; its coven's waves and master on the camp law (`px,py:star.<night>.<k>`), its cell's ledger and receipts; the
    *  tracker, the bar, the map, the compass and the timers. It reads what it needs of this scope by name. */
   const _eventHostDeps = {   // STOREFRONT: the world's bindings, one object the Starfall and the season share
-    renderer, state, exteriorFoes, gateScanOf, warmGateScan, surfaceAt, gateGroundAt, player, gamePaused, townTalk,
+    renderer, state, exteriorFoes, gateScanOf, warmGateScan, surfaceAt, gateGroundAt, player, gamePaused, townTalk, terrainRoads: () => terrainGen.roads(),   // OWN-WORK2: the season's fissures keep off the Bay's network
     _wodPeerSprung, wodPeerHeldAgo, wodForgetPeer, wodSprang, wodUnsprang, _questRegionIndex,
     get chatNotice() { return chatNotice; },   // made below
     get collider() { return collider; }, get online() { return online; }, get walkMode() { return walkMode; }, get playerSpawned() { return playerSpawned; },
@@ -29336,7 +29308,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   // location"; his calls: "Both, by target" and "Cap it to what loads cleanly"): THE CLICK, THE TRIP AND THE CAP.
   // A click is a ray from the view's own eye through this frame's matrices (player/tapRay.js), met with the built
   // ground (player/travelPick.js); what it lands on decides the journey - a known place is reached by the roads
-  // (systems/travel/travelRoute.js over Hazelnut's bytes), open ground is walked to - and Travel Options walks it
+  // (systems/travel/travelRoute.js over the Bay's network), open ground is walked to - and Travel Options walks it
   // (beginTravelAlongRoute / beginTravelToPoint, the port's own two journeys built from the mod's parts). The places
   // around the traveller wear plates a click also takes; the trip's way is the line under them.
   const TV_PLACE_GROW = 6144;   // native units (1.5 RMB blocks): a click this near a town's walls is a click on the town (OW-TOWN-ROUND: its journey asked at its middle alone)
@@ -29397,8 +29369,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   function travelViewRouteTo(summary, { roads = false, voyage = false, noWay = null } = {}) {
     return planJourney(() => {   // PLAN-SLICES: its plans a slice of cells at a time - it goes on when they land
     const from = playerTravelPixel();
-    // AUDIT DEEP T2-7: Hazelnut's bytes or none - the port's own generated network (Basic Roads off) is not his mod's, as
-    // the follow key and the static's paths already hold (`source`): with none, the journey goes across country
+    // AUDIT DEEP T2-7: the Basic Roads switch's network or none (Basic Roads off: `source` 'generated'), as the follow key
+    // and the static's paths already hold: with none, the journey goes across country
     let means = dragonMounted() ? null : tvSeaMeans();   // OWS2: a boat to cross the water in (at its helm, moored in reach, packed in the pack), or none - DRAGON6: never on the dragon, which flies it
     const raw = terrainGen.roads();
     const roadNet = raw?.source === 'basic-roads' ? raw : null;
@@ -29531,7 +29503,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (!door && !water && !dragonMounted() && tvRouteGround().peakAt(pix.x, pix.y)) { tvSay(TRAVEL_VIEW_TEXT.mountains); return false; }   // OW-MOUNTAINS; OW-WOD-PATH: a World of Daggerfall massif's pixel too
     // OW-MOUNTAINS: to the spot's pixel round the peaks (the roads where they help), then to the spot itself
     const from = playerTravelPixel();
-    const roadsRaw = terrainGen.roads(), roadNet = roadsRaw?.source === 'basic-roads' ? roadsRaw : null;   // AUDIT DEEP T2-7's law: Hazelnut's bytes or none
+    const roadsRaw = terrainGen.roads(), roadNet = roadsRaw?.source === 'basic-roads' ? roadsRaw : null;   // AUDIT DEEP T2-7's law: the Basic Roads switch's network or none
     let wnet = (roads || travelPathUsesRoads()) ? roadNet : null;   // OW-PATH: FREE never asks the roads
     // OWS2: a spot across the water, one on it, or any from a helm is a route that may put to sea (the planner's sea
     // layers); THE MERGE: every other spot is still routed on land, round the peaks (OW-MOUNTAINS) - never the straight walk

@@ -98,10 +98,10 @@ test('SOUL-LAW: every creature a soul gem can hold - DFU\'s 62 and the mod\'s fi
   assert.equal(itemNameParts(filled(createEmptySoulTrap(), OGRE)).name, 'Soul Trap (Ogre)', 'ItemHelper.ResolveItemLongName\'s soul tail (ItemHelper.cs:352-368)');
 });
 
-test('SOUL-LAW: the law\'s list is the mod\'s tables\' own, with MUDEX and without; a soul no creature has is still a finding (mutants: a forged soul taken; the classic ranges widened)', async () => {
+test('SOUL-LAW: the law\'s list is the mod\'s tables\' own, with our meaner monsters and without; a soul no creature has is still a finding (mutants: a forged soul taken; the classic ranges widened)', async () => {
   const { DEX_ENEMY_IDS } = await import('../../../src/systems/enemyExpansion/dexIds.js');
   assert.deepEqual([...DEX_ENEMY_IDS], MOD);
-  assert.deepEqual([...dexRead({ mudex: true }).enemies.keys()].sort(byId), MOD, 'MUDEX\'s lines edit, they add no enemy');
+  assert.deepEqual([...dexRead({ meaner: true }).enemies.keys()].sort(byId), MOD, 'OWN-WORK2: our meaner monsters\' lines edit, they add no enemy - so the law reads DEX\'s tables alone');
   for (const soul of [43, 127, 147, 255, 291, 383, 399, 1000]) {
     assert.deepEqual(itemFindings({ ...createEmptySoulTrap(), trappedSoulType: soul }), ['soul'], `soul ${soul}`);
   }

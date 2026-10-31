@@ -37,6 +37,7 @@ import { readFileSync } from 'node:fs';
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
 import { planRoute, routeLegs, routeDrawPoints } from '../src/systems/travel/travelRoute.js';
+import { bayRoads } from '../test/bayRoads.mjs';
 import { eyeFor, TV_TILT_DEFAULT, TV_HEIGHT_DEFAULT } from '../src/player/travelCamera.js';
 import { projectToScreen } from '../src/player/tapRay.js';
 import { perspective, lookAt, mirrorProjectionX } from '../src/world/mat4.js';
@@ -45,8 +46,8 @@ import { StreamingWorldState, mapPixelToWorldCoords } from '../src/world/streami
 /** FB0929: a journey's line as the readout is handed it, frame by frame - the traveller 3 m further along its first leg
  *  each frame, the camera behind them at the view's defaults turned `turn`, the frame's lens (DFU's 65 degrees). */
 function routeFrames({ from, goal, spot = null, turn = 0, frames = 120, w = 1366, h = 768 }) {
-  const bytes = (n) => new Uint8Array(readFileSync(new URL(`../vendor/roads-hazelnut/${n}`, import.meta.url)));
-  const plan = planRoute(from, goal, { roads: bytes('roadData.bytes'), tracks: bytes('trackData.bytes') });
+  const net = bayRoads();   // OWN-WORK2: the Bay's own network (ARENA2_PATH)
+  const plan = planRoute(from, goal, { roads: net.roads, tracks: net.tracks });
   const mid = (p) => { const o = mapPixelToWorldCoords(p.x, p.y); return [o.x + 16384, o.z + 16384]; };   // world.js tvLegMid
   const me = mid(from), end = spot ?? mid(goal);
   const natives = routeDrawPoints({ x: me[0], z: me[1] }, routeLegs(plan.pixels, plan.kinds), { x: end[0], z: end[1] }, mid);

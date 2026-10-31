@@ -155,7 +155,7 @@ export function installRoleplayRealismArt({ fetchBytes = null, art = null } = {}
   }
   return addVendorTextures(RR_NPC_RECORDS.map((record) => {
     const fileName = `${RR_NPC_ARCHIVE}_${record}-0`;
-    return { archive: RR_NPC_ARCHIVE, record, frame: 0, dye: null, map: 'Albedo', fileName, lazy: true, gate, ...(RR_DERIVED[fileName] ? { build: () => built(fileName) } : { load }) };
+    return { archive: RR_NPC_ARCHIVE, record, frame: 0, dye: null, map: 'Albedo', fileName, lazy: true, gate, ...(RR_DERIVED[fileName] ? { build: () => built(fileName), selfBuilt: true } : { load }) };
   }));
 }
 /** Test seam. */

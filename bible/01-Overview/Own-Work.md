@@ -43,7 +43,7 @@ The run of 2026-10-31 read 48,300 tracked files against 1,590 ARENA2 files.
 ### NO-BETHESDA2: the copies, rebuilt from the player's files
 
 A picture whose drawn pixels are 60% or more a classic record's, exactly, is not carried (DEX0's law, Port-Doctrine's
-fourth exception). `tools/classicDerive.mjs` writes it as a spec: the TEXTURE or RCI record, its palette (most are
+fourth exception). `tools/classicDerive.mjs` writes it as a spec: the TEXTURE, CIF or RCI record, its palette (most are
 PAL.PAL, not the pipeline's ART_PAL), its offset and the author's changed pixels. `formats/classicPictures.js`
 builds it from the player's own file at runtime, through `systems/classicArt.js`. Every spec rebuilds its old PNG
 byte for byte. `test/tooling/doctrine.test.js` holds each folder: a picture is a file or a spec, never both.
@@ -59,21 +59,29 @@ byte for byte. `test/tooling/doctrine.test.js` holds each folder: a picture is a
 A player without ARENA2 stored sees these pictures as a failed load, as any missing file. A texture-door entry is
 built once a world pipeline is up.
 
-The scan after NO-BETHESDA2 read 45,248 tracked files. Outside the exceptions it finds only the open items below:
-Diverse Weapons' seven magic daggers, the rotten cooked fish, and DFU's quest and TEXT.RSC text.
+The scan after NO-BETHESDA2 read 45,248 tracked files. Outside the exceptions it found only Diverse Weapons' magic
+daggers, the rotten cooked fish, and DFU's quest and TEXT.RSC text.
+
+### NO-BETHESDA3: the daggers and the fish (the owner: "Rebuild DW's 7 daggers", "Also rebuild the rotten fish ourself")
+
+Twelve Diverse Weapons sprites are 60% or more Daggerfall's own hand (WEAPON02.CIF, 62.7% to 84.5%), and the scan's
+seven are among them. They are rebuilt like the rest, the author's blades kept as edits
+(`vendor/diverse-weapons/derived-art.json`, loaded on first use); 12,612 stay as files. 687 more draw 10% or more of
+a CIF frame, under the law's line. The rotten cooked fish was the author's re-shade of TEXTURE.211 record 10: it is
+gone, and in its place is our own rot (`systems/survival/rotPicture.js`), drawn at runtime over the player's own
+cooked fish.
 
 ### Open: the owner's call
 
-- **Climates & Calories' rotten cooked fish (`536_1-0`).** It is a re-shade of TEXTURE.211 record 10 (95% of it
-  within a few shades) with 3% of its pixels exact, so a spec would carry the whole picture. Drop it, keep it under
-  an exception, or draw our own.
 
 - **Bethesda's words in Daggerfall Unity's MIT data.** `vendor/dfu-quests` carries DFU's 265 quest scripts, whose
   messages are Daggerfall's quest text (eight runs of 68 to 77 bytes match the QRC files byte for byte). Its
-  `dfu-text/Internal_RSC.csv` is TEXT.RSC's strings (954 bytes matched, runs up to 161). The quest system reads
-  both. Reading the player's own QBN and QRC files, or writing our own, would take them out.
-- **Daggerfall's first-person hands in Diverse Weapons.** 684 of its 12,624 sprites draw 10% or more of a classic
-  WEAPON CIF frame exactly (the magic daggers up to 85%). Wave 3 replaces the mod's art.
+  `dfu-text/Internal_RSC.csv` is TEXT.RSC's strings (954 bytes matched, runs up to 161). The owner chose our own
+  words over reading ARENA2: "We plan on moving away from arena so whatever works for future proofing". OWN-WORDS1
+  rewrote the Fighters Guild's 20 quests; 244 quests (3,506 messages) and Internal_RSC's 1,448 rows remain, counted
+  by `tools/bethesdaWordsBaseline.json`, which only goes down (`06-Systems/Own-Words.md`).
+- **The rest of Diverse Weapons' hands.** 687 sprites draw between 10% and 60% of a classic WEAPON CIF frame
+  exactly, under NO-BETHESDA2's line. Wave 3 replaces the mod's art.
 - **The exceptions themselves.** Vanilla Enhanced, Sands of the Alik'r, Snowfall and the class skins are outside
   authors' repaints of Daggerfall's art. Layered Gearing and Enemy Expansion's repaints stay (ours, and Kamer and
   Kab's). Wave 3 can replace the four with our own art.
@@ -83,26 +91,22 @@ Diverse Weapons' seven magic daggers, the rotten cooked fish, and DFU's quest an
 
 ## The inventory
 
-Forty directories under `vendor/` held an outside author's work on 2026-10-31. OWN-WORK1 retired twelve of them
-(the next section). The 28 left are below, sorted by what replacing them needs. "Runtime" means the game loads the
+Forty directories under `vendor/` held an outside author's work on 2026-10-31. OWN-WORK1 retired twelve of them and
+OWN-WORK2 four more (the next section). The 24 left are below, sorted by what replacing them needs. "Runtime" means the game loads the
 files, so a replacement has to exist before the directory can go. The registry (`Mod-Registry.md`) keeps each one's
 provenance until it is retired.
 
 | vendor | author | what the tree carries | runtime | kind | wave |
 |---|---|---|---|---|---|
-| `ambient-text` | Regnier | the 918-line text table, manifest, settings | yes | words | 2 |
-| `mudex` | Ralzar | two tables (35 monster lines, 89 encounter tables), manifest | yes | data | 2 |
-| `roads-hazelnut` | Hazelnut | four 500,000-byte path masks (the road drawing is already ours) | yes | data | 2 |
 | `beautiful-villages` | carademono | one world-data pack, 7,317 locations and 209 blocks | yes | world data | 2 |
 | `beautiful-cities` | carademono | one world-data pack, 410 cities and 611 blocks | yes | world data | 2 |
-| `immersive-travel` | kkgobkk | four city-gate block patches, the assembly and its IL | yes | world data, code | 2 |
-| `climates-calories` | Ralzar | item templates, 14 item icons (the rules are already an overhaul) | yes | data, art | 2 |
+| `climates-calories` | Ralzar | item templates, 13 item icons (the rules are already an overhaul) | yes | data, art | 2 |
 | `foraging` | Harbinger451 | 12 item templates, 22 quests, 7 textures, the assembly and its IL | yes | data, words, art | 2 |
 | `travel-options` | Hazelnut | the string table, settings, 3 UI textures | yes | words, art | 2 |
 | `roleplay-realism` | Hazelnut | quests, world data, 7 scripts, 5 sprites | yes | mixed | 2 |
 | `roleplay-realism-items` | Hazelnut and Ralzar | item templates, string table, 15 scripts, 230 sprites | yes | mixed | 2 |
 | `iliac-puddle-no-more` | jet082 | 7 fish templates, 7 fish pictures, the assembly (the coastline bake is already ours) | yes | data, art | 2 |
-| `diverse-weapons` | RealAKP | 12,624 weapon sprites (59 MB under `public/art/`), the script | yes | art | 3 |
+| `diverse-weapons` | RealAKP | 12,612 weapon sprites (59 MB under `public/art/`), the script | yes | art | 3 |
 | `grimoire-ui` | LordSquacquerone | 93 screens, 38 buttons and 2 fonts (23 MB under `public/art/`) | yes | art | 3 |
 | `eye-of-the-beholder` | RedRoryOTheGlen | 166 sprites, the assembly's IL | yes | art | 3 |
 | `shield-widget` | RedRoryOTheGlen | 600 shield textures, presets | yes | art | 3 |
@@ -125,8 +129,8 @@ art in their place also takes Bethesda's silhouettes out of the tree.
 
 ## Retired from vendor/
 
-Each row is the record a vendored directory's README and registry row held. `1b97b3a8f` is the last commit whose
-tree carries the files.
+Each row is the record a vendored directory's README and registry row held. The last cell names a commit whose tree
+still carries the files.
 
 | vendor | mod | author | licence or permission | what the tree carried | our code, now the record | retired |
 |---|---|---|---|---|---|---|
@@ -142,6 +146,10 @@ tree carries the files.
 | `kings-gambit` | The King's Gambit 1 | the bundle names no author | granted (the owner, 2026-10-13: "We also have permission") - **RECORD OPEN** | manifest, the assembly and its IL dump | `net/kingsGambit.js`, `systems/gambit/gambitPatrons.js` | 2026-10-31, `1b97b3a8f` |
 | `heat-haze` | Heat Haze 1.0.1 | demifiend000 | granted (Mac handed the four archives over 2026-10-08: "We have permission to use and implement everything into the codebase") - **RECORD OPEN** | manifest, settings, the assembly, its IL dump, its shader read back as GLSL | `systems/heatHaze.js`, `render/heatHaze.js`, `systems/modSettings.js` | 2026-10-31, `1b97b3a8f` |
 | `ocean-holes` | There's a Hole in the Bottom of the Ocean 1.1.0 | jet082 | granted (Mac handed the archive over 2026-09-25) - **RECORD OPEN** | manifest, settings (7 sliders), the assembly | `world/oceanHoles.js`, `scenes/oceanHolesHost.js`, `scenes/oceanHolesAbyss.js`, `systems/modSettings.js` | 2026-10-31, `1b97b3a8f` |
+| `ambient-text` | Ambient Text 1.8 | Regnier | the bundle states no licence; granted (Mac handed the archive over 2026-09-15: "I now want to implement this as our next mod. 1:1.") - **RECORD OPEN** | manifest, settings (4 sliders), the author's 918-line text table | `systems/ambientText.js`, `systems/ambientTextLines.json` (DFO's own 918 lines, OWN-WORK2), `systems/modSettings.js` | 2026-10-31, `c2fbbbbfa` |
+| `mudex` | MUDEX 1.0.1 (`Ralzar81/MUDEX` @ `6b66655`) | Ralzar | approved (Mac, 2026-10-20: "Approve MUDEX"; the repository states no licence) - **RECORD OPEN** | manifest, two tables (35 monster lines, 89 encounter tables) | `systems/enemyExpansion/dexMeaner.js` (OWN-WORK2: our own rules and courts, not MUDEX's), `systems/enemyExpansion/dexSwitches.js`, `net/foeBounds.js` | 2026-10-31, `c2fbbbbfa` |
+| `immersive-travel` | Immersive Travel 1.5 | kkgobkk | granted (the owner handed the zip over 2026-10-04: "let this be the next mod we integrate 1:1") - **RECORD OPEN** | manifest, settings (22 keys), the assembly and its IL dump, the author's edit of the four city-gate blocks | `systems/immersiveTravel.js`, `systems/immersiveTravelTables.js`, `world/immersiveTravelGates.js` (OWN-WORK2: our own carriage stand; no gate block is edited), `systems/modSettings.js` | 2026-10-31, `c2fbbbbfa` |
+| `roads-hazelnut` | Basic Roads 1.3.1 (`ajrb/dfunity-mods`, `BasicRoads/`) | Hazelnut | code MIT ("Copyright (C) 2020 Hazelnut", in `LICENSE`); the data no licence text, granted to Mac 2026-09-02 - **RECORD OPEN** | four 500,000-byte path masks (roads, tracks, rivers, streams) | `world/roadsProducer.js`, `world/road/riverNetwork.js`, `world/road/roadNetwork.js` (OWN-WORK2: our own Bay network, the provinces' rule), `world/road/roadPainter.js` (his MIT painter, ported) | 2026-10-31, `c2fbbbbfa` |
 
 The MIT rows keep their notice because our JS restates their code closely: `unleveledLoot.js` method by method,
 `meanerMonsters.js` the mod's 24-row table value for value, `worldTooltips.js` the mod's tables word for word.

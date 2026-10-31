@@ -1,0 +1,273 @@
+[
+  {
+    "name": "OWN-WORDS1-qbn-unread",
+    "file": "tools/ownQuestCheck.mjs",
+    "old": "  if (own.qbn !== dfu.qbn) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/tooling/ownquestcheck.test.js"
+    ],
+    "why": "a changed QBN passes: the rewrite may change the quest's logic"
+  },
+  {
+    "name": "OWN-WORDS1-header-unread",
+    "file": "tools/ownQuestCheck.mjs",
+    "old": "  if (fields(own.header).join('\\n') !== fields(dfu.header).join('\\n'))",
+    "new": "  if (false)",
+    "tests": [
+      "test/tooling/ownquestcheck.test.js"
+    ],
+    "why": "a changed DisplayName or Quest: passes"
+  },
+  {
+    "name": "OWN-WORDS1-credit-unread",
+    "file": "tools/ownQuestCheck.mjs",
+    "old": "  if (!own.header.includes(OWN_CREDIT))",
+    "new": "  if (false)",
+    "tests": [
+      "test/tooling/ownquestcheck.test.js"
+    ],
+    "why": "an own file with no credit to DFU passes"
+  },
+  {
+    "name": "OWN-WORDS1-ids-unread",
+    "file": "tools/ownQuestCheck.mjs",
+    "old": "  if (missing.length) problems.push",
+    "new": "  if (false) problems.push",
+    "tests": [
+      "test/tooling/ownquestcheck.test.js"
+    ],
+    "why": "a lost message passes"
+  },
+  {
+    "name": "OWN-WORDS1-layout-unread",
+    "file": "tools/ownQuestCheck.mjs",
+    "old": "    if (o.layout !== d.layout)",
+    "new": "    if (false)",
+    "tests": [
+      "test/tooling/ownquestcheck.test.js"
+    ],
+    "why": "a centred message written flat passes"
+  },
+  {
+    "name": "OWN-WORDS1-variants-unread",
+    "file": "tools/ownQuestCheck.mjs",
+    "old": "    if (o.variants.length !== d.variants.length)",
+    "new": "    if (false)",
+    "tests": [
+      "test/tooling/ownquestcheck.test.js"
+    ],
+    "why": "a rumor's variants lost pass"
+  },
+  {
+    "name": "OWN-WORDS1-macros-unread",
+    "file": "tools/ownQuestCheck.mjs",
+    "old": "    if (!sameSet(o.tokens, d.tokens)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/tooling/ownquestcheck.test.js"
+    ],
+    "why": "a dropped or added macro passes"
+  },
+  {
+    "name": "OWN-WORDS1-pronouns-unread",
+    "file": "tools/ownQuestCheck.mjs",
+    "old": "    if (!sameSet(o.pairs, d.pairs))",
+    "new": "    if (false)",
+    "tests": [
+      "test/tooling/ownquestcheck.test.js"
+    ],
+    "why": "a pronoun that reads someone else passes"
+  },
+  {
+    "name": "OWN-WORDS1-last-unread",
+    "file": "tools/ownQuestCheck.mjs",
+    "old": "    if (!sameSet(o.last, d.last))",
+    "new": "    if (false)",
+    "tests": [
+      "test/tooling/ownquestcheck.test.js"
+    ],
+    "why": "the journal's way pointed elsewhere passes"
+  },
+  {
+    "name": "OWN-WORDS1-capital-unfolded",
+    "file": "tools/ownQuestCheck.mjs",
+    "old": "const fold = (token) => (/^%[gG]/.test(token) ? token.toLowerCase() : token);",
+    "new": "const fold = (token) => token;",
+    "tests": [
+      "test/tooling/ownquestcheck.test.js"
+    ],
+    "why": "%G and %g read as two macros"
+  },
+  {
+    "name": "OWN-WORDS1-signer-unread",
+    "file": "tools/ownQuestCheck.mjs",
+    "old": "    if (letters.has(id)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/tooling/ownquestcheck.test.js"
+    ],
+    "why": "a letter's signer changed passes"
+  },
+  {
+    "name": "OWN-WORDS1-runs-unread",
+    "file": "tools/ownQuestCheck.mjs",
+    "old": "        if (runs.has(run)) {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/tooling/ownquestcheck.test.js"
+    ],
+    "why": "a Bethesda sentence kept passes"
+  },
+  {
+    "name": "OWN-WORDS1-plain-unread",
+    "file": "tools/ownQuestCheck.mjs",
+    "old": "      if (breach) problems.push",
+    "new": "      if (false) problems.push",
+    "tests": [
+      "test/tooling/ownquestcheck.test.js"
+    ],
+    "why": "a message past PLAIN-TEXT passes"
+  },
+  {
+    "name": "OWN-WORDS1-width-unread",
+    "file": "tools/ownQuestCheck.mjs",
+    "old": "      for (const l of v.lines) if (lineText(l).length > width)",
+    "new": "      for (const l of v.lines) if (false)",
+    "tests": [
+      "test/tooling/ownquestcheck.test.js"
+    ],
+    "why": "a line past the popup's width passes"
+  },
+  {
+    "name": "OWN-WORDS1-bay-unread",
+    "file": "tools/ownQuestCheck.mjs",
+    "old": "      if (!bayOwn && BAY_NAMES.test(said))",
+    "new": "      if (false)",
+    "tests": [
+      "test/tooling/ownquestcheck.test.js"
+    ],
+    "why": "the Iliac Bay named for a quest anywhere passes"
+  },
+  {
+    "name": "OWN-WORDS1-patches-unread",
+    "file": "tools/ownQuestCheck.mjs",
+    "old": "  if (QUEST_PATCHES[name]) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/tooling/ownquestcheck.test.js"
+    ],
+    "why": "a port patch that lost its text passes"
+  },
+  {
+    "name": "OWN-WORDS1-signature-merged",
+    "file": "tools/ownQuestCheck.mjs",
+    "old": "      if (t.slice(4).trim().split(/\\s+/).every((w) => getMacro(w).type !== MACRO_TYPES.None)) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/tooling/ownquestcheck.test.js"
+    ],
+    "why": "a letter's signature lines run together"
+  },
+  {
+    "name": "OWN-WORDS1-wrap-unbalanced",
+    "file": "tools/ownQuestCheck.mjs",
+    "old": "    while (even > 1 && greedy(even - 1).length === most) even--;",
+    "new": "",
+    "tests": [
+      "test/tooling/ownquestcheck.test.js"
+    ],
+    "why": "a word left alone on a message's last line"
+  },
+  {
+    "name": "OWN-WORDS1-lead-uncounted",
+    "file": "tools/ownQuestCheck.mjs",
+    "old": "lines.length ? Math.min(1, para.lead.length) : para.lead.length",
+    "new": "0",
+    "tests": [
+      "test/tooling/ownquestcheck.test.js"
+    ],
+    "why": "a journal line one space past its width"
+  },
+  {
+    "name": "OWN-WORDS1-pack-reads-dfu",
+    "file": "src/scenes/quest/questData.js",
+    "old": "      const text = stripBom(await (own.get(name) ?? load)());",
+    "new": "      const text = stripBom(await load());",
+    "tests": [
+      "test/tooling/ownquestcheck.test.js"
+    ],
+    "why": "the browser's pack reads DFU's words"
+  },
+  {
+    "name": "OWN-WORDS1-twin-reads-dfu",
+    "file": "test/qlSources.mjs",
+    "old": "    if (/\\.txt$/i.test(f) && was?.dir === 'dfu') Object.assign(was, { path: join(own, f), own: true });",
+    "new": "",
+    "tests": [
+      "test/tooling/ownquestcheck.test.js",
+      "test/systems/quest/ownwords1_play.test.js"
+    ],
+    "why": "the node twin reads DFU's words"
+  },
+  {
+    "name": "OWN-WORDS1-ratchet-own-uncounted",
+    "file": "tools/bethesdaWords.mjs",
+    "old": "    if (!f.endsWith('.txt') || own.has(f.slice(0, -4))) continue;",
+    "new": "    if (!f.endsWith('.txt')) continue;",
+    "tests": [
+      "test/tooling/bethesdawords.test.js"
+    ],
+    "why": "a quest in our words still counted as DFU's"
+  },
+  {
+    "name": "OWN-WORDS1-ratchet-empty-counted",
+    "file": "tools/bethesdaWords.mjs",
+    "old": "    if (n) { quests++; messages += n; }",
+    "new": "    { quests++; messages += n; }",
+    "tests": [
+      "test/tooling/bethesdawords.test.js"
+    ],
+    "why": "a script with no message counted"
+  },
+  {
+    "name": "OWN-WORDS1-ratchet-rise-let-through",
+    "file": "tools/bethesdaWords.mjs",
+    "old": "    if ((now[p] ?? 0) > (base[p] ?? 0)) over.push",
+    "new": "    if (false) over.push",
+    "tests": [
+      "test/tooling/bethesdawords.test.js"
+    ],
+    "why": "more of DFU's words read and nothing fails"
+  },
+  {
+    "name": "OWN-WORDS1-ratchet-fall-unread",
+    "file": "tools/bethesdaWords.mjs",
+    "old": "    else if ((now[p] ?? 0) < (base[p] ?? 0)) stale.push",
+    "new": "    else if (false) stale.push",
+    "tests": [
+      "test/tooling/bethesdawords.test.js"
+    ],
+    "why": "the baseline never asked to go down"
+  },
+  {
+    "name": "OWN-WORDS1-ratchet-raised",
+    "file": "tools/bethesdaWords.mjs",
+    "old": "Math.min(base[p] ?? 0, now[p] ?? 0)",
+    "new": "now[p] ?? 0",
+    "tests": [
+      "test/tooling/bethesdawords.test.js"
+    ],
+    "why": "--lower raises a count"
+  },
+  {
+    "name": "OWN-WORDS1-play-words",
+    "file": "src/systems/quest/own/M0C00Y11.txt",
+    "old": "<ce> You have killed the _monster_.",
+    "new": "<ce> The _monster_ is dead.",
+    "tests": [
+      "test/systems/quest/ownwords1_play.test.js"
+    ],
+    "why": "the played quest's kill box is not the one the pins read"
+  }
+]

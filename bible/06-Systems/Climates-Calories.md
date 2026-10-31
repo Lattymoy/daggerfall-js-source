@@ -938,6 +938,20 @@ PNG gave. Fourteen stay files. The rotten cooked fish (`536_1-0`) is
 that record re-shaded, and stays until the owner decides. Pins:
 `nobethesda2_torchesicons.test.js`.
 
+**NO-BETHESDA3 (2026-10-31, the owner).** The owner: "Drop the rotten
+fish icon", then "Also rebuild the rotten fish ourself". The author's
+rotten cooked fish (`536_1-0`) left the tree, and no pixel of it is
+read. In its place is our own rot (`systems/survival/rotPicture.js`)
+over the player's own cooked fish, TEXTURE.211 record 10 in PAL.PAL,
+the record the mouldy fish is. It draws each pixel's light toward a
+sick green-grey, darkens the two pixels inside the outline, and puts
+three pale mould specks, each with a soft fuzz, where our seed (536)
+says. None of its 177 drawn pixels is the author's or the record's own.
+`installSurvivalIcons` puts it on the texture door as a `build`
+(`OWN_ICONS`, `ownIconPicture` in `systems/survival/items.js`), so each
+of the eighteen pictures is now a file, a spec or ours. Thirteen stay
+files. Pins: `nobethesda3_rotfish.test.js`.
+
 ## SURV-TIERS - OFF, CASUAL, HARD (2026-09-23)
 
 > Mac: *"So I want to talk about adding a new tab to climates and

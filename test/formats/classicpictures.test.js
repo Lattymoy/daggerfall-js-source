@@ -1,6 +1,7 @@
 // NO-BETHESDA2 (2026-10-31): a mod's picture that is Daggerfall's own is built from the player's TEXTURE file in the
 // palette its spec names (formats/classicPictures.js), and tools/classicDerive.mjs writes that spec. Pinned on a
-// TEXTURE file, an RCI file and two palettes made here, so CI needs no ARENA2.
+// TEXTURE file, an RCI file, a CIF file and two palettes made here, so CI needs no ARENA2. NO-BETHESDA3: a CIF or RCI
+// spec names its file in one field, `file`.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createClassicPictures, DEFAULT_PALETTE } from '../../src/formats/classicPictures.js';
@@ -81,27 +82,67 @@ test('NO-BETHESDA2: the tool\'s spec rebuilds the author\'s picture from the rec
   assert.equal(derivedText({ b: { from: [1, 0, 0] }, a: { from: [2, 0, 0] } }), '{\n"b": {"from":[1,0,0]},\n"a": {"from":[2,0,0]}\n}\n');
 });
 
-test('NO-BETHESDA2: an rci spec is built from the player\'s RCI file - [record, frame], no archive - and the tool writes that form', async () => {
+test('NO-BETHESDA3: an RCI spec is built from the player\'s RCI file - `file`, [record, frame], no archive - and the tool writes that form', async () => {
   // BUTTONS.RCI is 32x16 raw records (CifRciFile's table): record 0 all clear, record 1 drawn
   const rci = new Uint8Array(32 * 16 * 2);
   for (let i = 512; i < rci.length; i++) rci[i] = 1 + (i % 200);
   const files = { ...FILES, 'BUTTONS.RCI': rci };
   const asked = [];
   const cp = createClassicPictures(getBytesOf(files, asked));
-  const rec = await cp.rciPicture('BUTTONS.RCI', 1, 0, 'PAL.PAL');
+  const rec = await cp.cifRciPicture('BUTTONS.RCI', 1, 0, 'PAL.PAL');
   assert.deepEqual([rec.width, rec.height], [32, 16]);
   const i = rci[512 + 4 * 32 + 5];
   assert.deepEqual([...rec.data.subarray((4 * 32 + 5) * 4, (4 * 32 + 5) * 4 + 4)], [i, (i * 5) & 255, 255 - i, 255]);
-  assert.equal(await cp.rciPicture('BUTTONS.RCI', 2, 0), null, 'no such record');
-  const spec = { rci: 'BUTTONS.RCI', from: [1, 0], edits: [[0, 0, '010203ff']], pal: 'PAL.PAL' };
+  assert.equal(await cp.cifRciPicture('BUTTONS.RCI', 2, 0), null, 'no such record');
+  const spec = { file: 'BUTTONS.RCI', from: [1, 0], edits: [[0, 0, '010203ff']], pal: 'PAL.PAL' };
   const built = await cp.build(spec);
   assert.deepEqual([...built.data.subarray(0, 4)], [1, 2, 3, 255], 'the author\'s pixel');
   assert.deepEqual([...built.data.subarray(4)], [...rec.data.subarray(4)], 'the rest is the record');
   assert.ok(!asked.some((n) => n.startsWith('TEXTURE.')), 'no TEXTURE file is read for an rci spec');
-  await assert.rejects(cp.build({ rci: 'NOTE.RCI', from: [0, 0], pal: 'PAL.PAL' }), /missing/, 'the player\'s file is not there');
-  // the tool's half: an RCI-tagged record yields the rci form
-  const records = [{ rci: 'BUTTONS.RCI', record: 1, frame: 0, rgba: rec, pal: 'PAL.PAL' }];
+  await assert.rejects(cp.build({ file: 'NOTE.RCI', from: [0, 0], pal: 'PAL.PAL' }), /missing/, 'the player\'s file is not there');
+  // the tool's half: a file-tagged record yields the file form
+  const records = [{ file: 'BUTTONS.RCI', record: 1, frame: 0, rgba: rec, pal: 'PAL.PAL' }];
   const pic = { width: 32, height: 16, data: rec.data.slice() };
   pic.data.set([1, 2, 3, 255], 0);
   assert.deepEqual(specFor(pic, records, exactIndex(records)), spec);
+});
+
+/** A plain CIF file: IMG records end to end, each a 12-byte header (width, height, uncompressed, length) and its pixels. */
+function cifFile(records) {
+  const bytes = new Uint8Array(records.reduce((n, r) => n + 12 + r.width * r.height, 0));
+  const v = new DataView(bytes.buffer);
+  let at = 0;
+  for (const { width, height, pixel } of records) {
+    v.setInt16(at + 4, width, true); v.setInt16(at + 6, height, true);
+    v.setUint16(at + 8, 0, true); v.setUint16(at + 10, width * height, true);
+    for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) bytes[at + 12 + y * width + x] = pixel(x, y);
+    at += 12 + width * height;
+  }
+  return bytes;
+}
+
+test('NO-BETHESDA3: a CIF spec is built from the player\'s CIF file in its palette, the author\'s pixels over it - and the tool writes that form', async () => {
+  // record 0 a 2x1 stranger, record 1 the 5x4 one the author's copy is drawn over (its first column clear)
+  const files = { ...FILES, 'SYNTH.CIF': cifFile([{ width: 2, height: 1, pixel: () => 9 }, { width: 5, height: 4, pixel: (x, y) => (x === 0 ? 0 : 20 + x + y * 5) }]) };
+  const asked = [];
+  const cp = createClassicPictures(getBytesOf(files, asked));
+  const rec = await cp.cifRciPicture('SYNTH.CIF', 1, 0, 'PAL.PAL');
+  assert.deepEqual([rec.width, rec.height], [5, 4]);
+  const i = 20 + 3 + 2 * 5;
+  assert.deepEqual([...rec.data.subarray((2 * 5 + 3) * 4, (2 * 5 + 3) * 4 + 4)], [i, (i * 5) & 255, 255 - i, 255], 'PAL.PAL, not ART_PAL');
+  assert.equal(rec.data[3], 0, 'index 0 is clear');
+  assert.equal(await cp.cifRciPicture('SYNTH.CIF', 2, 0, 'PAL.PAL'), null, 'no such record');
+  // the author's blade: two pixels of their own on the record
+  const pic = { width: 5, height: 4, data: rec.data.slice() };
+  pic.data.set([200, 10, 10, 255], (1 * 5 + 2) * 4);
+  pic.data.set([7, 7, 7, 255], 0);
+  const records = [{ file: 'SYNTH.CIF', record: 1, frame: 0, rgba: rec, pal: 'PAL.PAL' }];
+  const spec = specFor(pic, records, exactIndex(records));
+  assert.deepEqual(spec, { file: 'SYNTH.CIF', from: [1, 0], edits: [[0, 0, '070707ff'], [2, 1, 'c80a0aff']], pal: 'PAL.PAL' });
+  const built = await cp.build(spec);
+  assert.deepEqual([...built.data], [...pic.data], 'built from the player\'s CIF record, it is the author\'s picture');
+  assert.ok(!asked.some((n) => n.startsWith('TEXTURE.') || n === 'ART_PAL.COL'), 'only the CIF file and its palette are read');
+  // a stranger under DERIVED_SHARE of the record is the author's own
+  const own = { width: 5, height: 4, data: new Uint8Array(80).fill(250) };
+  assert.equal(specFor(own, records, exactIndex(records)), null);
 });

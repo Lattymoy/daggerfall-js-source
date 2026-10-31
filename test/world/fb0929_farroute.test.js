@@ -11,7 +11,7 @@
 // host's points were never the cost (a plan is made once, at the pick). Now the path is cut to the screen, grown by
 // ROUTE_CLIP_PX, before it is written - the same line on the screen, a screen's worth of dashes.
 //
-// Built by the real producers end to end: Hazelnut's own road bytes (vendor/roads-hazelnut) routed by the planner
+// Built by the real producers end to end: the Bay's own network (OWN-WORK2, where ARENA2 is) routed by the planner
 // (planRoute, routeLegs), the host's drawn points (tvLegMid and routeDrawPoints), the host's line (travelViewRoute,
 // lifted out of world.js's own text and run - tv7's bandHost way), the view's camera and the frame's projection
 // (createTravelView, mat4, tapRay.projectToScreen) and the readout (updateTravelViewHud). The browser's own measure
@@ -27,14 +27,14 @@ import { projectToScreen } from '../../src/player/tapRay.js';
 import { perspective, lookAt, mirrorProjectionX } from '../../src/world/mat4.js';
 import { StreamingWorldState, mapPixelToWorldCoords } from '../../src/world/streamingWorld.js';
 import * as hud from '../../src/ui/travel/travelViewHud.js';
+import { bayRoads, BAY_SKIP } from '../bayRoads.mjs';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
-const bytes = (n) => new Uint8Array(readFileSync(new URL(`../../vendor/roads-hazelnut/${n}`, import.meta.url)));
-const NET = { roads: bytes('roadData.bytes'), tracks: bytes('trackData.bytes') };
 const W = 1366, H = 768;   // the reporter's class of screen
-const FROM = { x: 195, y: 172 };   // a pixel on one of Hazelnut's roads
+const FROM = { x: 195, y: 172 };   // a pixel of Daggerfall's north, the network's roads about it
 const NEAR = { x: 193, y: 169 };   // three pixels off: a town's plate in the view
 const FAR = { x: 595, y: 5 };   // four hundred off: a pick on the travel map
+const NET = bayRoads();   // OWN-WORK2: the Bay's own network, off the player's ARENA2 (Basic Roads' arrays are retired)
 const SPOT_M = 300;   // a click on the ground the view shows: 300 m north, in the traveller's own pixel (40 native units a metre)
 
 // the line's paint, read off the style sheet: the dash's period and the casing's width
@@ -61,7 +61,7 @@ function lifted() {
 function journey(goal, spot = null) {
   const src = lifted();
   const plan = planRoute(FROM, goal, { roads: NET.roads, tracks: NET.tracks });
-  assert.ok(plan, 'Hazelnut\'s roads join the two');
+  assert.ok(plan, 'the planner joins the two');
   const legs = routeLegs(plan.pixels, plan.kinds);
   const tvLegMid = new Function('mapPixelToWorldCoords', `return ${src.mid};`)(mapPixelToWorldCoords);
   const state = new StreamingWorldState(5);
@@ -171,13 +171,13 @@ test('FB0929 law: the line is cut to the screen grown by ROUTE_CLIP_PX, wider th
   assert.equal(hud.routePath([at(10, 10), at(20, 20), at(1e6, 0, false), at(30, 30), at(40, 40)], 100, 100), 'M10 10 L20 20 M30 30 L40 40');
 });
 
-test('FB0929 far: a pick across the map is a line of 139 legs - uncut, ~1.5 million px of path and ~100,000 dashes a frame; cut, every point within the grown screen and a few hundred dashes', () => {
+test('FB0929 far: a pick across the map is a line of a hundred legs and more - uncut, ~1.5 million px of path and ~100,000 dashes a frame; cut, every point within the grown screen and a few hundred dashes', { skip: BAY_SKIP }, () => {
   const far = journey(FAR);
-  assert.equal(far.legs.length, 139, 'four hundred pixels of Hazelnut\'s roads');
+  assert.ok(far.legs.length >= 100, `four hundred pixels of roads: ${far.legs.length} legs (139 on Basic Roads' retired arrays, 231 on the Bay's own)`);
   const { d, points, dots: dotsDrawn } = drawn(far);
   assert.equal(points.length, 1 + 4 * far.legs.length, 'the host hands the readout the WHOLE way, four points a leg');
   const uncut = hud.routePath(points);
-  assert.ok(dashesOf(uncut) > 50000, `the line as it was: ${dashesOf(uncut)} dashes over ${Math.round(lengthOf(uncut))} px`);
+  assert.ok(dashesOf(uncut) > 5000, `the line as it was: ${dashesOf(uncut)} dashes over ${Math.round(lengthOf(uncut))} px (100,000 on Basic Roads' arrays, 8,513 on the Bay's own)`);
   const M = hud.ROUTE_CLIP_PX;
   for (const st of strokesOf(d)) for (const [x, y] of st) assert.ok(x >= -M && x <= W + M && y >= -M && y <= H + M, `(${x}, ${y}) lies within the screen grown by ${M}`);
   assert.ok(d.startsWith(uncut.slice(0, uncut.indexOf(' L'))), 'the line still starts at the traveller\'s feet');
@@ -185,10 +185,10 @@ test('FB0929 far: a pick across the map is a line of 139 legs - uncut, ~1.5 mill
   assert.ok(dotsDrawn.length > 0 && dotsDrawn.length <= ROUTE_DOTS_MAX, `OW-DOTS-GROUND: the dots drawn are bounded (${dotsDrawn.length})`);
   // the camera dragged half round: the line runs behind and beside the eye
   const back = drawn(far, Math.PI);
-  assert.ok(dashesOf(hud.routePath(back.points)) > 50000 && dashesOf(back.d) <= 500, `turned: ${dashesOf(hud.routePath(back.points))} dashes uncut, ${dashesOf(back.d)} cut`);
+  assert.ok(dashesOf(hud.routePath(back.points)) > 5000 && dashesOf(back.d) <= 500, `turned: ${dashesOf(hud.routePath(back.points))} dashes uncut, ${dashesOf(back.d)} cut`);
 });
 
-test('FB0929 in view: a click on the ground the picture shows is a line wholly on the screen - drawn byte for byte as it was', () => {
+test('FB0929 in view: a click on the ground the picture shows is a line wholly on the screen - drawn byte for byte as it was', { skip: BAY_SKIP }, () => {
   const o = mapPixelToWorldCoords(FROM.x, FROM.y);
   const spot = journey(FROM, { x: o.x + 16384, z: o.z + 16384 + SPOT_M * 40 });
   assert.equal(spot.legs.length, 0, 'in the traveller\'s own pixel: the straight line it is');
@@ -199,7 +199,7 @@ test('FB0929 in view: a click on the ground the picture shows is a line wholly o
   assert.equal(d, hud.routePath(points), 'the same path data - the dashes where they were');
 });
 
-test('FB0929: the cut line is the SAME line on the screen - every point of the screen as near to it as to the whole one, and its first stroke the whole one\'s from the feet to the screen\'s edge (the dashes\' phase with it) - a town\'s plate a few pixels off, and the pick across the map', () => {
+test('FB0929: the cut line is the SAME line on the screen - every point of the screen as near to it as to the whole one, and its first stroke the whole one\'s from the feet to the screen\'s edge (the dashes\' phase with it) - a town\'s plate a few pixels off, and the pick across the map', { skip: BAY_SKIP }, () => {
   for (const [goal, turn] of [[NEAR, 0], [FAR, 0], [FAR, Math.PI]]) {
     const { d, points } = drawn(journey(goal), turn);
     const cut = strokesOf(d), whole = strokesOf(hud.routePath(points));

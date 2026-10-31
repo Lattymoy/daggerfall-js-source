@@ -10,6 +10,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import * as walls from '../../src/world/townWalls.js';
+import { bayRoads } from '../bayRoads.mjs';   // OWN-WORK2
 
 const { townWallModel, WALL_MODELS, CORNER_TOWER } = walls;
 const ARENA2 = process.env.ARENA2_PATH;
@@ -279,8 +280,7 @@ test('WALL-FLICKER with ARENA2: Daggerfall\'s own pieces at every twentieth wall
   const blocks = new BlocksFile(); blocks.load(bytes('BLOCKS.BSA'));
   const maps = new MapsFile(); maps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK')); maps.autoDiscard = false;
   const rmbOf = (n) => (isWallCarrier(n) || n === TOWN_OUTLINE_BLOCK ? null : blocks.getBlockByName(n)?.rmbBlock ?? null);
-  const roadsB = new Uint8Array(readFileSync(new URL('../../vendor/roads-hazelnut/roadData.bytes', import.meta.url)));
-  const tracksB = new Uint8Array(readFileSync(new URL('../../vendor/roads-hazelnut/trackData.bytes', import.meta.url)));
+  const { roads: roadsB, tracks: tracksB } = bayRoads();   // OWN-WORK2: the Bay's own network
   const all = [];
   let k = 0;
   for (let r = 0; r < 62; r++) {

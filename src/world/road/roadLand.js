@@ -1,18 +1,18 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
-// VOYAGER1 (2026-10-26, bible/03-World/Roads.md VOYAGER1) - THE LAND'S LAW, the routes past the Bay's: what a step costs
-// on the land past the Bay (the grade, the height, the shore, a ford, the land's grain) and the land it is read off. The
-// builder (world/road/roadNetwork.js) takes it as its `terrain` - landForRoutes' answer, its own `step` - and never
-// imports it: the Bay's build is the Bay's dials alone, and the account Worker, which bundles the builder, carries none
-// of this (.github/workflows/account-deploy.yml).
+// VOYAGER1 (2026-10-26, bible/03-World/Roads.md VOYAGER1) - THE LAND'S LAW, every route's: what a step costs (the grade,
+// the height, the shore, a ford, the land's grain) and the land it is read off. The builder (world/road/roadNetwork.js)
+// takes it as its `terrain` - landForRoutes' answer, its own `step` - and never imports it: the account Worker, which
+// bundles the builder, carries none of this (.github/workflows/account-deploy.yml). OWN-WORK2: the Bay's roads take it
+// too (world/roadsProducer.js), so one law lays Tamriel's roads.
 // ═══════════════════════════════════════════════════════════════════
 import { DIR_DELTA, MAP_W as MAP_WIDTH } from './roadNetwork.js';
 
 /**
  * VOYAGER1 (2026-10-26, KPbICA's spec: "Roads should rely on landscape and should not be just 100km straights. Roads
  * should circle around rivers, on the shoreline, around tall mountains and not through all this"; bible/03-World/Roads.md
- * VOYAGER1): THE LAND'S LAW, the routes past the Bay's (world/tamrielRoads.js hands it as `terrain`). The Bay's build
- * never takes it - its dials above, its bytes to the hash. Every step of a route pays:
+ * VOYAGER1): THE LAND'S LAW (world/tamrielRoads.js hands it as `terrain`, and OWN-WORK2's Bay build,
+ * world/roadsProducer.js). Every step of a route pays:
  *  - its length (1, or the square root of 2 on a diagonal);
  *  - THE GRADE, squared: 1 + gradeCost x (rise per pixel)^2 on the land's height smoothed over SMOOTH_R pixels about
  *    each (the lattice's +-2 a pixel is the ground's texture, not a hill: read raw, a climb dial priced it as one and a

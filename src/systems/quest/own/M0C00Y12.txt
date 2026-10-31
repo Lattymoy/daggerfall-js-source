@@ -1,0 +1,101 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\M0C00Y12.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: fighter
+-- Repute: 0
+-- QuestId: 12
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 12
+Quest: M0C00Y12
+DisplayName: Hunt for a Giant Spider
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> I am _qgiver_. We rarely hire outside
+<ce> the guild, but you look honest. Someone
+<ce> took a giant spider's egg home, sure it
+<ce> was a silkworm's. It hatched. They
+<ce> cannot pay. Kill it for nothing?
+
+RefuseQuest:  [1001]
+<ce> I took you for someone who
+<ce> wanted work. I was wrong.
+
+AcceptQuest:  [1002]
+<ce> Here is your chance. The spider is
+<ce> shut in _house_. If it is dead by
+<ce> tonight, I will speak up for you.
+
+QuestComplete:  [1004]
+<ce> You have nerve, %pcf. Keep
+<ce> this up and the Fighters Guild
+<ce> will want you on its rolls.
+
+RumorsDuringQuest:  [1005]
+<ce> Some fool kept a spider egg
+<ce> for a silkworm. Now the thing
+<ce> that hatched wants to eat him.
+
+RumorsPostfailure:  [1006]
+<ce> A giant spider nearly killed a man in
+<ce> his own house. Nobody came to help him.
+
+RumorsPostsuccess:  [1007]
+<ce> You killed that giant spider, did you
+<ce> not? The Fighters Guild could use you.
+
+QuestorPostsuccess:  [1008]
+<ce> Good work on that spider.
+
+QuestorPostfailure:  [1009]
+<ce> One spider was too much for you. How will
+<ce> you manage the work we give our members?
+
+QuestLogEntry:  [1010]
+%qdt:
+ The Fighters Guild in ___qgiver_
+ asked me to deal with a giant
+ spider that hatched in _house_.
+ I have one day.
+
+Message:  1011
+<ce> The _monster_ will trouble nobody now.
+
+
+QBN:
+
+Person _qgiver_ group Questor
+
+Place _house_ local random
+
+Clock _2dung_ 1.00:00 0 flag 1 range 0 1
+
+Foe _monster_ is Spider
+
+--	Quest start-up:
+	start timer _2dung_ 
+	reveal _house_ 
+	log 1010 step 0 
+	create npc at _house_ 
+	place foe _monster_ at _house_ 
+
+_2dung_ task:
+	end quest 
+
+_S.01_ task:
+	killed 1 _monster_ saying 1011 
+
+_S.02_ task:
+	when _qgclicked_ and _S.01_ 
+	give pc nothing 
+	end quest 
+
+_qgclicked_ task:
+    clicked npc _qgiver_
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.01_ 
+	clear _qgclicked_ _clearclick_ 
+	--removed duplicate clearclick

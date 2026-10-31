@@ -297,9 +297,9 @@ export function edgeKind(a, b, bit, roads, tracks) {
  * road tiles with the water either side (the inlet's: 256 tiles, two wide, its ground at or over the ocean's
  * elevation). The step law refused them, so a route along the road left it at the causeway's foot and went round by
  * the open pixel beside - from Grayidge's road in (72, 132) to (73, 131) across the inlet's east arm, into the water
- * the causeway stands in. A step ON his road (both ends carrying the edge) is taken onto a water pixel and through a
+ * the causeway stands in. A step ON a road (both ends carrying the edge) is taken onto a water pixel and through a
  * corner of it. A track is not: his track table paints water over it (TRACK_TILES column 0 - a ford). Travel Options'
- * follow key walks his bytes whatever the ground under them.
+ * follow key walks the bytes whatever the ground under them. OWN-WORK2: the port's own network lays no road on the sea.
  */
 function pavedStep(ax, ay, bx, by, bit, width, height, roads) {
   if (!roads || ax < 0 || ay < 0 || bx < 0 || by < 0 || ax >= width || ay >= height || bx >= width || by >= height) return false;
@@ -314,7 +314,7 @@ function pavedStep(ax, ay, bx, by, bit, width, height, roads) {
  * VOYAGER2.1: `beyond` (planRoute's `pathsBeyond`, null for none) - the roads past the Bay's table.
  */
 function stepKind(ax, ay, bx, by, bit, width, height, roads, tracks, isWater, openBlocked, goal, leaving, beyond = null) {
-  // RPT1026-WORLD CAUSEWAY: his road's own step is ground - asked only where the sea would refuse it (pavedStep)
+  // RPT1026-WORLD CAUSEWAY: a road's own step is ground - asked only where the sea would refuse it (pavedStep)
   if (goal === 0 && isWater(bx, by) && !pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;
   // AUDIT DEEP T2-5: nor through a corner of the sea - a diagonal between two water pixels is a swim (the roads' own
   // ROADS 6, whose stricter half would refuse a coast road's own diagonal)

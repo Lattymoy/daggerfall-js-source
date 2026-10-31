@@ -66,7 +66,7 @@ export function installRoleplayRealismItems({ fetchBytes = null, art = null, ena
   installRoleplayRealismModules();
   const load = fetchBytes ?? (async (name) => { const r = await fetch(rriSpriteUrl(name)); if (!r.ok) throw new Error(`${name}: ${r.status}`); return new Uint8Array(await r.arrayBuffer()); });
   const derived = new Set(RRI_DERIVED);
-  const source = (name) => (derived.has(name) ? { build: () => rriDerivedPicture(name, art ?? classicArt()) } : { load });
+  const source = (name) => (derived.has(name) ? { build: () => rriDerivedPicture(name, art ?? classicArt()), selfBuilt: true } : { load });
   return addVendorTextures(rriSpriteEntries().map((e) => ({
     archive: e.archive, record: e.record, frame: e.frame, dye: e.dye, map: e.map, fileName: e.name,
     // the archives 513-526 exist only as this art (no TEXTURE.513): the

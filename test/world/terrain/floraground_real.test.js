@@ -13,6 +13,7 @@ import { join } from 'node:path';
 import { walkGroundAt, buildTerrainIndices } from '../../../src/world/terrain/terrainSurface.js';
 import { seatFlora, standsOnGround } from '../../../src/scenes/floraSeat.js';
 import { groundAt, MAX_STEEPNESS, SLOPE_SINK_RATIO } from '../../../src/world/terrain/terrainNature.js';
+import { bayRoads } from '../../bayRoads.mjs';   // OWN-WORK2
 
 const SINK = MAX_STEEPNESS / SLOPE_SINK_RATIO;   // the deepest a flat is sunk into its slope (DFU's steepness / 70)
 
@@ -36,8 +37,8 @@ async function realWorld() {
   const maps = new MapsFile(); maps.load(b('MAPS.BSA'), b('CLIMATE.PAK'), b('POLITIC.PAK'));
   const blocks = new BlocksFile(); blocks.load(b('BLOCKS.BSA'));
   const climates = landformClimates((x, y) => maps.getClimateIndex(x, y));
-  const vb = (f) => new Uint8Array(readFileSync(new URL(`../../../vendor/roads-hazelnut/${f}`, import.meta.url)));
-  const roads = { roads: vb('roadData.bytes'), tracks: vb('trackData.bytes'), rivers: vb('riverData.bytes'), streams: vb('streamData.bytes'), water: false, smooth: true };
+  const bay = bayRoads();   // OWN-WORK2: the Bay's own network
+  const roads = { roads: bay.roads, tracks: bay.tracks, rivers: bay.rivers, streams: bay.streams, water: false, smooth: true };
   const town = maps.getLocationByName('Daggerfall', 'Daggerfall');
   const tp = longitudeLatitudeToMapPixel(town.mapTableData.longitude, town.mapTableData.latitude);
   const cells = [

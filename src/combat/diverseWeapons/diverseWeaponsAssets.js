@@ -45,7 +45,8 @@ import { DFMOD_KEY_PREFIX } from '../../systems/seasonsIliacBayAssets.js';   // 
 import { weaponWidgetImage } from '../weapon/weaponWidgetAssets.js';
 import { dfmodCifRciNamed } from '../../systems/dfmodTextures.js';   // DFMOD2: an attached mod's handheld frames, after the two weapon mods
 import { APP_ROOT } from '../../systems/appRoot.js';   // DW2: the shipped sprites hang off the site root, as the held map does
-import { DIVERSE_WEAPONS_STEMS, DIVERSE_WEAPONS_METALS, DIVERSE_WEAPONS_BARE, DIVERSE_WEAPONS_ODD } from './diverseWeaponsIndex.js';   // DW2: generated from the manifest
+import { rebuiltPicture } from '../../systems/rebuiltPicture.js';   // NO-BETHESDA3: a sprite that is Daggerfall's own, built from the player's files
+import { DIVERSE_WEAPONS_STEMS, DIVERSE_WEAPONS_METALS, DIVERSE_WEAPONS_BARE, DIVERSE_WEAPONS_ODD, DIVERSE_WEAPONS_DERIVED } from './diverseWeaponsIndex.js';   // DW2: generated from the manifest
 
 export const DIVERSE_WEAPONS_MOD = Object.freeze({
   guid: '8e83d67c-a0ac-4935-a8c5-6b18c9f35bfc',
@@ -94,6 +95,31 @@ export const DIVERSE_WEAPONS_SPRITE_COUNT = Object.values(DIVERSE_WEAPONS_STEMS)
  *  the document's own base. */
 export const diverseWeaponsSpriteUrl = (name, root = APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/') =>
   new URL(`art/diverse-weapons/${encodeURIComponent(name)}.png`, root).href;
+
+// ---- NO-BETHESDA3: the sprites that are Daggerfall's own ---------------
+
+// The owner, 2026-10-31: "Rebuild DW's 7 daggers". Twelve magic-dagger frames are 60% or more WEAPON02.CIF's own
+// hand, exactly. They are not carried: each is the player's frame with the author's blade pixels laid over it.
+const DERIVED = new Set(DIVERSE_WEAPONS_DERIVED);
+/** Is `name` a sprite built from the player's files rather than a file? */
+export const isDerivedDiverseWeaponsSprite = (name) => DERIVED.has(name);
+let _specs = null;
+/** The specs (vendor/diverse-weapons/derived-art.json, 425 kB): their own chunk, read on the first build. A failed
+ *  read is forgotten. */
+export const diverseWeaponsDerivedSpecs = () => (_specs ??= import('../../../vendor/diverse-weapons/derived-art.json', { with: { type: 'json' } })
+  .then((m) => m.default, (e) => { _specs = null; throw e; }));
+/** A derived sprite in the door's shape, built through `art` (the session's classic reader by default); null, said
+ *  once, where the player's files will not build it - the classic frame then draws, as for any miss. */
+async function derivedImage(name, art) {
+  try {
+    const spec = (await diverseWeaponsDerivedSpecs())[name];
+    if (!spec) throw new Error('no spec in derived-art.json');
+    return toScreenOrder(await rebuiltPicture(spec, art));
+  } catch (e) {
+    console.warn(`[diverse weapons] ${name} would not build from the player's files:`, e?.message ?? e);
+    return null;
+  }
+}
 
 // ---- the registry ----------------------------------------------------
 
@@ -177,12 +203,13 @@ export async function diverseWeaponsTexturesAttached() { return !!(await diverse
  *  set carries it. Cached per name, misses included. The two arms are the widget door's
  *  (WW3, HT3): the bundle's texel rows are Unity's, bottom-up, and
  *  `toColor32` is the flip into the port's order; a decoded PNG is
- *  top-first already and keeps its rows through `toScreenOrder`. */
-export function diverseWeaponsImage(name, { decode = decodePng, fetchFn = globalThis.fetch } = {}) {
+ *  top-first already and keeps its rows through `toScreenOrder`. A derived name is built through `art`, never fetched. */
+export function diverseWeaponsImage(name, { decode = decodePng, fetchFn = globalThis.fetch, art = undefined } = {}) {
   if (!_images.has(name)) {
     _images.set(name, (async () => {
       const attached = _names.length ? await attachedImage(name, decode) : null;   // nothing attached: no bundle walk
       if (attached) return attached;
+      if (isDerivedDiverseWeaponsSprite(name)) return derivedImage(name, art);   // NO-BETHESDA3: built, never fetched
       // DW2: the shipped set, by the manifest's index - a name it lacks
       // is a miss here and now, not a 404
       if (!hasDiverseWeaponsSprite(name) || typeof fetchFn !== 'function') return null;

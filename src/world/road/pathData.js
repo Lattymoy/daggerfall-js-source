@@ -33,7 +33,7 @@ export const PATH_ROADS = 0;
 export const PATH_TRACKS = 1;
 export const PATH_RIVERS = 2;
 export const PATH_STREAMS = 3;
-/** The vendored arrays' keys in the port's road bundle, by that index. */
+/** The four arrays' keys in the port's road bundle, by that index. */
 export const PATH_KEYS = Object.freeze(['roads', 'tracks', 'rivers', 'streams']);
 
 /** TravelOptionsMod.cs:77-84. The compass mask, one bit an edge. */
@@ -61,9 +61,9 @@ export const P_SIZE = T_SIZE * 2;                           // 512 - a path's wi
 
 /** TravelOptionsMod.cs:808-814, GetPathsDataPoint: roads OR tracks, one
  *  byte. `net` is the port's road bundle - the four Uint8Arrays of
- *  world/roadsProducer.js loadModRoads, or the generated fallback,
- *  which carries the same compass. Past the mod's table, the roads past
- *  the Bay (dataPoint, BAY-LEFT-MAPS); off every network 0. */
+ *  world/roadsProducer.js, Basic Roads' compass (OWN-WORK2: the port's
+ *  own network). Past the mod's table, the roads past the Bay
+ *  (dataPoint, BAY-LEFT-MAPS); off every network 0. */
 export function pathsDataPoint(net, mapPixelX, mapPixelY) {
   return (dataPoint(net, PATH_ROADS, mapPixelX, mapPixelY) | dataPoint(net, PATH_TRACKS, mapPixelX, mapPixelY)) & 0xff;
 }

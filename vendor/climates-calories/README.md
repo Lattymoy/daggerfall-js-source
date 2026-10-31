@@ -40,8 +40,9 @@ not a 1:1 port, with the mod's own item art carried.**
   fish 1.5 to half a kilo, because a cut is a kilo and cooking takes
   its water.
   It adds 541, the port's own Campfire (eight nights of fuel, REST2).
-- `Textures/` - fourteen of the mod's twenty PNGs; with the four in
-  `derived.json` (below), the eighteen the port draws, in two kinds.
+- `Textures/` - thirteen of the mod's twenty PNGs; with the four in
+  `derived.json` and our own rotten cooked fish (below), the eighteen the
+  port draws, in two kinds.
 
   SIXTEEN ARE ARCHIVES OF THEIR OWN: the spoiled face of each food
   (`532_0-0` a mouldy apple, `532_1-0` a rotten one, and so on through
@@ -73,10 +74,15 @@ not a 1:1 port, with the mod's own item art carried.**
   `tools/classicDerive.mjs` wrote a spec for each (the record, the
   palette, the author's pixels), and the game builds it from the
   player's own ARENA2 (`src/systems/rebuiltPicture.js`), the same
-  pixels the PNG gave. The rotten cooked fish (`536_1-0`) is still
-  carried, and waits on the owner's word: it is the same record
-  re-shaded - Daggerfall's outline, 97% of its pixels moved a little -
-  so a spec could rebuild it only by carrying the whole picture.
+  pixels the PNG gave.
+- The rotten cooked fish (`536_1-0`) is not here (NO-BETHESDA3,
+  2026-10-31; the owner: "Drop the rotten fish icon", "Also rebuild the
+  rotten fish ourself"). The author's picture was the cooked fish
+  re-shaded - Daggerfall's outline, 97% of its pixels moved a little.
+  The game draws its own in its place: our rot
+  (`src/systems/survival/rotPicture.js`) over the player's own
+  TEXTURE.211 record 10, built at runtime. No pixel of the author's
+  picture is used.
 
 ## What the port does with it
 

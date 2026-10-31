@@ -1,0 +1,102 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\M0C00Y11.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: fighter
+-- Repute: 0
+-- QuestId: 11
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 12
+Quest: M0C00Y11
+DisplayName: Hunt for a Giant Scorpion
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Call me _qgiver_. Guild work is for members,
+<ce> but you look able, %pcn. A giant scorpion
+<ce> has to die. Kill it, and I will tell the
+<ce> guild you are worth a look. Will you do it?
+
+RefuseQuest:  [1001]
+<ce> Then find easier work somewhere else.
+
+AcceptQuest:  [1002]
+<ce> Good, %pcf. The scorpion got loose
+<ce> from a collector, and now it is
+<ce> shut in _house_. Kill it before the
+<ce> day ends and I will speak for you.
+
+QuestComplete:  [1004]
+<ce> The scorpion is dead and you are still
+<ce> standing. The guild will hear your name
+<ce> from me, and they will hear it kindly.
+
+RumorsDuringQuest:  [1005]
+<ce> A giant scorpion has taken over some
+<ce> poor man's house. He sits in the
+<ce> tavern now, too scared to go home.
+
+RumorsPostfailure:  [1006]
+<ce> A man went home sure that the
+<ce> Fighters Guild had killed his
+<ce> scorpion. Nobody had. They
+<ce> carried him out the next morning.
+
+RumorsPostsuccess:  [1007]
+<ce> The Fighters Guild killed a giant
+<ce> scorpion in a house in town. The
+<ce> owner sleeps in his own bed again.
+
+QuestorPostsuccess:  [1008]
+<ce> That scorpion was clean work. Keep it
+<ce> up and the guild will ask you to join.
+
+QuestorPostfailure:  [1009]
+<ce> One scorpion, %pcf. That was the
+<ce> whole job, and you could not do it.
+
+QuestLogEntry:  [1010]
+%qdt:
+ The Fighters Guild in ___qgiver_
+ asked me to kill a giant scorpion
+ trapped in _house_. I have one day.
+
+Message:  1011
+<ce> You have killed the _monster_.
+
+
+QBN:
+
+Person _qgiver_ group Questor
+
+Place _house_ local random
+
+Clock _2dung_ 1.00:00 0 flag 1 range 0 1
+
+Foe _monster_ is Giant_scorpion
+
+--	Quest start-up:
+	start timer _2dung_ 
+	reveal _house_ 
+	log 1010 step 0 
+	place foe _monster_ at _house_ 
+	create npc at _house_ 
+
+_2dung_ task:
+	end quest 
+
+_S.01_ task:
+	killed 1 _monster_ saying 1011 
+
+_S.02_ task:
+	when _qgclicked_ and _S.01_ 
+	give pc nothing 
+	end quest 
+
+_qgclicked_ task:
+               clicked npc _qgiver_
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.01_ 
+	clear _qgclicked_ _clearclick_

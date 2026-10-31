@@ -1,9 +1,9 @@
 [
   {
-    "name": "CANAL-ARM-the-arrays-as-they-ship",
+    "name": "CANAL-ARM-the-network-as-built",
     "file": "src/world/roadsProducer.js",
-    "old": "    return waterOffPaths({ ...out, source: 'basic-roads', stats: { source: 'basic-roads', roadPixels: n } });",
-    "new": "    return ({ ...out, source: 'basic-roads', stats: { source: 'basic-roads', roadPixels: n } });",
+    "old": "    waterOffPaths(Object.assign(net, { rivers, streams }));",
+    "new": "    Object.assign(net, { rivers, streams });",
     "tests": [
       "test/world/road/fb1009b_canalarm.test.js"
     ]

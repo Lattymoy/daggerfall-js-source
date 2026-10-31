@@ -3,7 +3,8 @@
 // the record, where it lands, the author's own pixels as edits, and `pal`, the palette the author's copy was drawn in).
 // This reads the record out of the player's TEXTURE file in that palette and builds the picture, for any reader that
 // is not a world pipeline (the texture door has its own context, scenes/dataPipeline.js, in ART_PAL alone). A spec with
-// `rci` names an RCI file instead, `from: [record, frame]` (Roleplay & Realism's buttons over BUTTONS.RCI).
+// `file` names a CIF or RCI file instead, `from: [record, frame]` (NO-BETHESDA3: Roleplay & Realism's buttons over
+// BUTTONS.RCI, Diverse Weapons' daggers over WEAPON02.CIF).
 import { TextureFile } from './textureFile.js';
 import { CifRciFile } from './cifRciFile.js';
 import { DFPalette } from './dfPalette.js';
@@ -40,7 +41,7 @@ export function createClassicPictures(getBytes) {
     const name = textureName(archive);
     return t.load(new Uint8Array(await getBytes(name)), name, null) ? t : null;
   });
-  const rciFile = (name) => once(files, `rci:${name}`, async () => {
+  const cifRciFile = (name) => once(files, `file:${name}`, async () => {
     const c = new CifRciFile();
     return c.load(new Uint8Array(await getBytes(name)), name, null) ? c : null;
   });
@@ -49,15 +50,15 @@ export function createClassicPictures(getBytes) {
     const [t, p] = await Promise.all([texture(archive), palette(pal)]);
     return recordRgba(t, record, frame, p);
   }
-  /** The same for a record of an RCI file (`BUTTONS.RCI`). */
-  async function rciPicture(name, record, frame = 0, pal = DEFAULT_PALETTE) {
-    const [c, p] = await Promise.all([rciFile(name), palette(pal)]);
+  /** The same for a record of a CIF or RCI file (`WEAPON02.CIF`, `BUTTONS.RCI`). */
+  async function cifRciPicture(name, record, frame = 0, pal = DEFAULT_PALETTE) {
+    const [c, p] = await Promise.all([cifRciFile(name), palette(pal)]);
     return recordRgba(c, record, frame, p);
   }
   /** A derived spec's picture, built from the player's record in the spec's own palette. */
   const build = (spec) => {
     const pal = spec.pal ?? DEFAULT_PALETTE;
-    return buildDerivedPicture(spec, spec.rci ? (r, f) => rciPicture(spec.rci, r, f, pal) : (a, r, f) => picture(a, r, f, pal));
+    return buildDerivedPicture(spec, spec.file ? (r, f) => cifRciPicture(spec.file, r, f, pal) : (a, r, f) => picture(a, r, f, pal));
   };
-  return { picture, rciPicture, build };
+  return { picture, cifRciPicture, build };
 }

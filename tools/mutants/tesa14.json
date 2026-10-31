@@ -110,7 +110,7 @@
   {
     "name": "TESA14-the-bay-prim",
     "file": "src/world/road/roadNetwork.js",
-    "old": "(owns ? primEdges(roadNodes) : kruskal(roadNodes))",
+    "old": "(owns ? primEdges(roadNodes) : kruskal(roadNodes, sameLand))",
     "new": "(primEdges(roadNodes))",
     "tests": [
       "test/tesa14_roads.test.js"

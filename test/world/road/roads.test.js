@@ -213,7 +213,7 @@ test('ROADS 3: the network rides both terrain kernels and the world host builds 
   // PIN MOVED (BAY-LEFT-GROUND, D1): and the sites past the Bay beside the Bay's (test/world/terrain/bayleftground_sites.test.js)
   assert.match(worker, /generatePixelTerrain\(\{ \.\.\.m, woods, roads, sites, beyond, climates \}\)/, 'and hands it to the kernel on every job');   // LANDFORM4: beside the sites
   const client = fs.readFileSync('src/world/terrain/terrainGenClient.js', 'utf8');
-  assert.match(client, /setRoads\(settlements, onStats = null, switches = null\)/, 'the client has the door (ROADS 24: the switches ride it)');
+  assert.match(client, /setRoads\(settlements, onStats = null, switches = null, source = 'generated'\)/, 'the client has the door (ROADS 24: the switches ride it; OWN-WORK2: and whose features read it)');
   assert.equal((client.match(/roads: this\._roads \?\? null/g) || []).length, 6,   // LANDFORM1-3: and the three paths a promotion's grid takes here - its ghost rows are cut along the same network
     'every same-thread path - direct, worker-error, and dying-worker drain - carries it');
   // AUDIT ROADS F2: the worker BUILDS; this thread builds only on a
@@ -762,41 +762,22 @@ test('ROADS 21: the web\u2019s two real-map rules, pinned at the source with the
   assert.match(src, /stopOn: paths, blocked: trackBlocked, towns: trackTowns, terrain,\s*\n\s*stopIf:/, 'links are entered wide and commit to B\u2019s side (PIN MOVED (VOYAGER1): on the land\u2019s law past the Bay)');
 });
 
-// ROADS 22: HIS NETWORK, 1:1. The four arrays load byte-exact from the
-// vendor folder; the wrong length is no file; a failed fetch is a null
-// and the generator takes over. The worker takes the arrays ready-made.
-test('ROADS 22: Basic Roads loads byte-exact, refuses the wrong size, and falls back on failure', async () => {
-  const { loadModRoads, MOD_ROADS } = await import('../../../src/world/roadsProducer.js');
+// ROADS 22 took Basic Roads' four arrays ready-made. PIN MOVED (OWN-WORK2, 2026-10-31): the arrays are retired - the
+// Bay's network is the port's own (test/world/road/ownwork2_bayroads.test.js) - and the ready-made door stays, the
+// tests' and the worker's.
+test('ROADS 22 / OWN-WORK2: the worker takes a network ready-made, rivers and switches included; the host builds the Bay\'s own, through one wire, the switch saying whose features read it', async () => {
   const fs = await import('node:fs');
-  const real = (k) => new Uint8Array(fs.readFileSync(`vendor/roads-hazelnut/${k}Data.bytes`));
-  const FILE = { roads: 'road', tracks: 'track', rivers: 'river', streams: 'stream' };
-  const fetchOk = async (url) => {
-    const key = Object.keys(MOD_ROADS).find((k) => MOD_ROADS[k] === url);
-    return { ok: true, arrayBuffer: async () => real(FILE[key]).buffer };
-  };
-  const net = await loadModRoads(fetchOk);
-  assert.ok(net, 'loaded');
-  assert.equal(net.roads.length, MAP_W * MAP_H); assert.equal(net.tracks.length, MAP_W * MAP_H);
-  let n = 0; for (const v of net.roads) if (v) n++;
-  assert.equal(n, 21554, 'his 21,554 road pixels, byte-exact');
-  assert.equal(net.stats.source, 'basic-roads');
-  const fetchShort = async () => ({ ok: true, arrayBuffer: async () => new Uint8Array(10).buffer });
-  assert.equal(await loadModRoads(fetchShort), null, 'the wrong length is no file');
-  const fetch404 = async () => ({ ok: false });
-  assert.equal(await loadModRoads(fetch404), null, 'a failed fetch is a null');
-  assert.equal(await loadModRoads(undefined), null, 'no fetch at all is a null');
   const worker = fs.readFileSync('src/world/terrain/terrainGenWorker.js', 'utf8');
   // AUDIT 58 F3: `smooth` joins `water` on this arm - it was the one
   // switch the three rebuilds of the network object dropped, so the
   // Mods pane's SmoothRoads was inert on the path the game takes.
   // The behavioural half lives in test/world/terrain/modsettings.test.js.
-  assert.match(worker, /if \(m\.net\) \{ roads = \{ roads: m\.net\.roads, tracks: m\.net\.tracks, rivers: m\.net\.rivers \?\? null, streams: m\.net\.streams \?\? null, water: !!m\.net\.water, smooth: m\.net\.smooth !== false \};/, 'the worker takes his arrays ready-made, water and smoothing included');
+  assert.match(worker, /if \(m\.net\) \{ roads = \{ roads: m\.net\.roads, tracks: m\.net\.tracks, rivers: m\.net\.rivers \?\? null, streams: m\.net\.streams \?\? null, water: !!m\.net\.water, smooth: m\.net\.smooth !== false \};/, 'a ready-made network, water and smoothing included');
+  assert.match(worker, /roads = net \? \{ roads: net\.roads, tracks: net\.tracks, rivers: net\.rivers \?\? null, streams: net\.streams \?\? null, \.\.\.\(m\.switches \?\? \{\}\) \}/, 'the built one carries its rivers');
   const host = hostText('src/scenes/world.js');
-  // BR3: the fetch is gated on the mod's own Enabled now. OFF asks his
-  // data for nothing and falls to ours - never to a roadless world.
   assert.match(host, /const basicRoadsOn = modSetting\('roads-hazelnut', 'Enabled'\);/, 'the mod has its own switch');
-  assert.match(host, /\(basicRoadsOn \? loadModRoads\(\) : Promise\.resolve\(null\)\)\.then\(\(his\) => \{[\s\S]{0,500}?if \(his\) \{ terrainGen\.setRoadsData\(\{ \.\.\.his, \.\.\.roadSwitches \}/, 'his first, with the switches');
-  assert.match(host, /terrainGen\.setRoads\(settlementsOf\(maps\), logRoads, roadSwitches\);/, 'ours as the fallback, with the switches');
+  assert.match(host, /terrainGen\.setRoads\(settlementsOf\(maps\), logRoads, \{ \.\.\.roadSwitches, water: basicRoadsOn && roadSwitches\.water \}, basicRoadsOn \? 'basic-roads' : 'generated'\);/, 'one wire: the rivers and the word by the switch');
+  assert.ok(!/loadModRoads|setRoadsData/.test(host), 'nothing fetched, nothing ready-made');
 });
 
 // ROADS 23: THE PAINTER IS A PORT - PaintPath table-driven, his slots,
@@ -861,16 +842,14 @@ test('ROADS 25: a pixel says whether a network was present, and the host rebuild
   assert.match(world, /const \{ yardPaths, yardGround, samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads[^}]*\} = await terrainGen\.generate\(/);   // PIN MOVED (FB1028): and the yards' paths, #1184's
   assert.match(world, /^\s+withRoads,\s+\/\/ ROADS 25/m);
   // ...and when the network lands, tears down every pixel built without
-  // one so the stream rebuilds it - on BOTH arrival paths, since the
-  // mod-data path returns early.
+  // one so the stream rebuilds it (OWN-WORK2: one arrival path).
   // FIX-C: the arrival MARKS the sweep; the frame RUNS it (between builds), and the sweep re-queues what it tears down
   assert.match(world, /function rebuildRoadless\(\) \{ roadsSweepDue = true; \}/);
   // SPAWN-ROADS: the sweep's first act takes back crossed provisional ruins, one line more before the rebuild
   // PIN MOVED (IC-SWAP-BEHIND): built again through the swap - behind its standing view, or torn down and re-queued
   // (scenes/swapBehind.js rebuild; test/scenes/fixc_firstStart.test.js, test/scenes/swapbehind.test.js)
   assert.match(world, /function sweepRoadless\(\) \{[\s\S]{0,520}if \(!again\.length\) return;\n\s*swap\.rebuild\(again\);/);
-  assert.match(world, /terrainGen\.setRoadsData\(\{ \.\.\.his, \.\.\.roadSwitches \}[^\n]*rebuildRoadless\(\); return; \}/, 'the mod-data path');
-  assert.match(world, /terrainGen\.setRoads\(settlementsOf\(maps\), logRoads, roadSwitches\);\s*\n\s*rebuildRoadless\(\);/, 'our own network');
+  assert.match(world, /terrainGen\.setRoads\(settlementsOf\(maps\), logRoads, [^\n]*\);\s*\n\s*rebuildRoadless\(\);/, 'the network asked for, the sweep marked');
   // A pixel IN FLIGHT when the network landed arrives roadless after the
   // sweep, and goes straight back.
   // ROADS 25a: the roadless pixel is REBUILT by the builder itself and the

@@ -536,8 +536,8 @@
   {
     "name": "TESA-BIOME-60-variant-shared",
     "file": "src/systems/tamrielFauna.js",
-    "old": "  const key = `${index}:${dex ? 1 : 0}:${mudex ? 1 : 0}`;",
-    "new": "  const key = `${index}:${dex ? 1 : 0}`;",
+    "old": "  const key = `${index}:${dex ? 1 : 0}`;",
+    "new": "  const key = `${index}`;",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -545,17 +545,8 @@
   {
     "name": "TESA-BIOME-61-levels-classic",
     "file": "src/systems/tamrielFauna.js",
-    "old": "  return dex ? dexClassicRow(id, v, { mudex }).level ?? v.level : v.level;",
+    "old": "  return dex ? dexClassicRow(id, v).level ?? v.level : v.level;",
     "new": "  return v.level;",
-    "tests": [
-      "test/systems/tesabiome_fauna.test.js"
-    ]
-  },
-  {
-    "name": "TESA-BIOME-62-levels-no-mudex",
-    "file": "src/systems/tamrielFauna.js",
-    "old": "  return dex ? dexClassicRow(id, v, { mudex }).level ?? v.level : v.level;",
-    "new": "  return dex ? dexClassicRow(id, v, { mudex: false }).level ?? v.level : v.level;",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]

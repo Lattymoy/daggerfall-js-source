@@ -1,28 +1,30 @@
-// MUDEX1 (2026-10-20, Mac: "We need to make everything compatible. No if ands or vutts", then "Approve MUDEX") - WHICH
-// ENEMY MODS ARE LOADED FOR THE GAME, for the leaves that cannot import an install. Daggerfall Enemy Expansion's switch,
-// and MUDEX's: Ralzar's "Meaner Unleveled Daggerfall Enemy Expansion" (vendor/mudex), the form of Meaner Monsters its
-// author made for a game with DEX in it. Meaner Monsters' own Init finds DEX by its GUID and asks the player to make
-// the swap ("Please switch to MUDEX", MeanerMonsters.cs:159-164); the port makes it - no switch of its own (MM1: no
-// compatibility switches between mods), Meaner Monsters' switch beside DEX's IS MUDEX's:
-//   - DEX loaded and Meaner Monsters on at the game's load: MUDEX is loaded (DEX's install latches it), and its tables
-//     are read after DEX's own (dexInstall.js);
-//   - DEX loaded: Meaner Monsters' own rows, its sprites' scales and PCAAO's edit of it stand aside, as they do in a
-//     DFU game that took the advice (MUDEX installed, Meaner Monsters not - PCAAO's arm asks for that mod by name);
+// OWN-WORK2 (2026-10-31, the owner: "removing mods from outside authors and instead replacing them with our own work") -
+// WHICH ENEMY TABLES ARE LOADED FOR THE GAME, for the leaves that cannot import an install. Daggerfall Enemy Expansion's
+// switch, and our meaner monsters for it (dexMeaner.js), which took the place of Ralzar's MUDEX 1.0.1 (MUDEX1,
+// 2026-10-20). Meaner Monsters' own Init finds DEX by its GUID and asks the player to swap it ("Please switch to MUDEX",
+// MeanerMonsters.cs:159-164); the port makes the swap - no switch of its own (MM1: no compatibility switches between
+// mods), Meaner Monsters' switch beside DEX's turns ours on:
+//   - DEX loaded and Meaner Monsters on at the game's load: ours are loaded (DEX's install latches them), and read
+//     after DEX's own tables (dexInstall.js);
+//   - DEX loaded: Meaner Monsters' own rows, its sprites' scales and PCAAO's edit of it stand aside - ours are the
+//     meaner monsters for that mod;
 //   - DEX not loaded: Meaner Monsters is itself.
 // A switch flipped mid-game waits for the next load, as DEX's does. A LEAF but for the settings store.
 
 import { modSetting, modLatchedOn } from '../modSettings.js';
 
 export const DEX_VENDOR = 'daggerfall-enemy-expansion';
-export const MUDEX_VENDOR = 'mudex';
+/** The latch our meaner monsters are loaded under - Meaner Monsters' switch beside DEX's, not a mod of its own. */
+export const DEX_MEANER_LATCH = 'dexMeaner';
 
 /** DEX as loaded for this game: the latch its install set, else (before the install, or in a test) its switch. */
 export const dexLoaded = () => modLatchedOn(DEX_VENDOR) ?? modSetting(DEX_VENDOR, 'Enabled') === true;
 
-/** MUDEX as loaded for this game: the latch DEX's install sets (DEX loaded, Meaner Monsters on); before it, none. */
-export const mudexLoaded = () => modLatchedOn(MUDEX_VENDOR) === true;
+/** Our meaner monsters as loaded for this game: the latch DEX's install sets (DEX loaded, Meaner Monsters on); before
+ *  it, none. */
+export const dexMeanerLoaded = () => modLatchedOn(DEX_MEANER_LATCH) === true;
 
 /** Meaner Monsters as itself - its rows, its xml, PCAAO's edit of it: its switch `on`, and DEX's install has not
- *  loaded DEX beside it. The latch alone, as MUDEX's: the boot installs DEX before any foe is minted, and a game (or a
- *  test) that never ran the install has no MUDEX to stand in for this mod. */
+ *  loaded DEX beside it. The latch alone, as ours: the boot installs DEX before any foe is minted, and a game (or a
+ *  test) that never ran the install has none of ours to stand in for this mod. */
 export const meanerMonstersAlone = (on) => !!on && modLatchedOn(DEX_VENDOR) !== true;

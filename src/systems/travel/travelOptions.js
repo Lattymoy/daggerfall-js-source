@@ -12,9 +12,9 @@
 // against the player's settings: TravelOptionsPopUp.IsPlayerControlledTravel
 // (:80-83), ported in ui/travel/travelPopUp.js.
 //
-// The other half is BASIC ROADS. With Hazelnut's own road mod present -
-// and the port has it, vendored, as `world/roadsProducer.js` MOD_ROADS -
-// the travel map draws his network and the follow key walks it: stand
+// The other half is BASIC ROADS. With its switch on - the port's own
+// network in his layout (`world/roadsProducer.js`, OWN-WORK2) - the
+// travel map draws the network and the follow key walks it: stand
 // on a road, face the way you want to go, press the key, and the
 // journey runs to the next junction on its own.
 //

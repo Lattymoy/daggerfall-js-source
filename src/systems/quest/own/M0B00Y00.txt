@@ -1,0 +1,142 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\M0B00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 0
+-- QuestId: 0
+Messages: 81
+Quest: M0B00Y00
+DisplayName: Hunt for a Lycanthrope
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> We have a small job for you. Something has been
+<ce> killing the farmers' stock around here, a
+<ce> werewolf or a wereboar or some such beast. Kill
+<ce> it and _reward_ gold is yours. Interested?
+
+RefuseQuest:  [1001]
+<ce> Fine. Somebody else will do it.
+
+AcceptQuest:  [1002]
+<ce> Good. The beast has a lair in
+<ce> ___mondung_. It has to be dead within
+<ce> =1stparton_ days, so get moving, kid.
+
+QuestFail:  [1003]
+<ce> Is the beast too much for you, kid? Go
+<ce> and finish it before it leaves for good.
+
+QuestComplete:  [1004]
+<ce> Nicely done, beast-killer.
+<ce> The gold is yours.
+
+RumorsDuringQuest:  [1005]
+They say a werewolf is loose around here.
+<--->
+Someone saw the wereboar going into ___mondung_.
+<--->
+Did you hear the howling last night? That was no dog.
+
+RumorsPostfailure:  [1006]
+The werewolf has gone south, they say. Good riddance.
+<--->
+My cousin saw the wereboar heading south, away from here.
+
+RumorsPostsuccess:  [1007]
+By day, that werebeast was a priest! Can you believe it?
+<--->
+People sleep easier now that the werebeast is dead.
+<--->
+A %ra hunted down that werewolf. Did you hear?
+
+QuestorPostsuccess:  [1008]
+<ce> %pcf! Thanks again for
+<ce> dealing with that werebeast.
+
+QuestorPostfailure:  [1009]
+<ce> Out. You could not even
+<ce> handle one werewolf.
+
+Message:  1020
+<ce> The werebeast will hunt no more.
+
+Message:  1021
+<ce> So this is the dreaded werebeast.
+<ce> It is only a grizzly bear.
+
+Message:  1030
+%qdt:
+ The Fighters Guild in
+ ___questgiver_ hired me to kill a
+ werewolf, wereboar or some such
+ beast in its lair at ___mondung_.
+ It must be dead within =1stparton_
+ days, or I will not be paid.
+
+Message:  1080
+<ce> This map shows the way to
+<ce> ___newdung_. Plenty of fighting and
+<ce> treasure there. Enjoy yourself.
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ group Questor
+
+Place _mondung_ remote dungeon
+Place _newdung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _werewolf_ is Werewolf
+Foe _wereboar_ is Wereboar
+Foe _bear_ is Grizzley_bear
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _mondung_ 
+	log 1030 step 0 
+	pick one of _map_ _nomap_ _nomap_ _nomap_ 
+	pick one of _S.06_ _S.07_ _S.08_ 
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_ 
+	give pc _reward_ 
+	end quest 
+
+_mondead_ task:
+	killed 1 _werewolf_ saying 1020 
+	killed 1 _wereboar_ saying 1020 
+	killed 1 _bear_ saying 1021 
+
+_qgclicked_ task:
+	clicked npc _questgiver_ 
+
+_1stparton_ task:
+	end quest 
+
+variable _2ndparton_
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_ 
+	say 1003
+	clear _qgclicked_ _clearclick_ 
+
+_S.06_ task:
+	place foe _bear_ at _mondung_ 
+
+_S.07_ task:
+	place foe _wereboar_ at _mondung_ 
+
+_S.08_ task:
+	place foe _werewolf_ at _mondung_ 
+
+variable _map_
+variable _nomap_
+_S.11_ task:
+	when _map_ and _pcgetsgold_ 
+	reveal _newdung_ readmap
+    say 1080

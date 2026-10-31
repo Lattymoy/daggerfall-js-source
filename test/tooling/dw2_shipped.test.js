@@ -22,9 +22,9 @@ import {
   hasDiverseWeaponsSprite, diverseWeaponsSpriteUrl, DIVERSE_WEAPONS_SPRITE_COUNT, SHIPPED_DIR,
   diverseWeaponsImage, setDiverseWeaponsSources, clearDiverseWeaponsSources, _resetDiverseWeaponsImages,
 } from '../../src/combat/diverseWeapons/diverseWeaponsAssets.js';
-import { DIVERSE_WEAPONS_STEMS, DIVERSE_WEAPONS_ODD, DIVERSE_WEAPONS_METALS, DIVERSE_WEAPONS_BARE } from '../../src/combat/diverseWeapons/diverseWeaponsIndex.js';
+import { DIVERSE_WEAPONS_STEMS, DIVERSE_WEAPONS_ODD, DIVERSE_WEAPONS_METALS, DIVERSE_WEAPONS_BARE, DIVERSE_WEAPONS_DERIVED } from '../../src/combat/diverseWeapons/diverseWeaponsIndex.js';
 import { MATERIAL_NAMES } from '../../src/systems/item/itemInfo.js';
-import { manifestSpriteNames, encodeIndex, renderIndex, MANIFEST, INDEX_FILE, METALS, BARE_BIT } from '../../tools/diverseWeaponsIndex.mjs';
+import { manifestSpriteNames, encodeIndex, renderIndex, MANIFEST, INDEX_FILE, METALS, BARE_BIT, DERIVED, derivedSpriteNames } from '../../tools/diverseWeaponsIndex.mjs';
 import { encodeSprite, sameOnScreen, OUT_DIR } from '../../tools/diverseWeaponsExtract.mjs';
 import { readPng, writePng, writeIndexedPng } from '../../tools/pngIO.mjs';
 
@@ -42,7 +42,7 @@ test('DW2 index: the generated module IS the manifest - every PNG basename the b
   assert.deepEqual([...METALS], [...MATERIAL_NAMES], 'the bit order is MetalTypes\' (itemInfo.js MATERIAL_NAMES)');
   assert.equal(DIVERSE_WEAPONS_BARE, BARE_BIT); assert.equal(BARE_BIT, 1 << 10);
   assert.equal(DIVERSE_WEAPONS_SPRITE_COUNT, 12624);
-  assert.equal(renderIndex(index, '1.7.3'), rd(INDEX_FILE), 'the checked-in module is what the tool writes today');
+  assert.equal(renderIndex(index, '1.7.3', derivedSpriteNames(rd(DERIVED))), rd(INDEX_FILE), 'the checked-in module is what the tool writes today (NO-BETHESDA3: the rebuilt names with it)');
   assert.ok(index.stems.size < 1400 && rd(INDEX_FILE).length < 60_000, 'a compact index, not 350 KB of names');
   // the whole set decodes back out of the module
   for (const n of names) assert.ok(hasDiverseWeaponsSprite(n), n);
@@ -123,14 +123,14 @@ test('DW2 tool: the indexed PNG round trip (palette, the transparent index, RGBA
   assert.deepEqual([...writeIndexedPng(img)], [...indexed]);
 });
 
-test('DW2 folder: what is tracked under public/art/diverse-weapons/ is exactly the index, both ways', () => {
+test('DW2 folder: what is tracked under public/art/diverse-weapons/ is exactly the index, both ways - less the names rebuilt from the player\'s files (NO-BETHESDA3)', () => {
   const files = tracked(SHIPPED_DIR).filter((f) => /\.png$/i.test(f)).map((f) => f.slice(f.lastIndexOf('/') + 1).replace(/\.png$/i, ''));
   const strangers = files.filter((n) => !hasDiverseWeaponsSprite(n));
   assert.deepEqual(strangers, [], 'files the index (the manifest) does not name');
-  const have = new Set(files);
-  const missing = manifestSpriteNames(rd(MANIFEST)).filter((n) => !have.has(n));
+  const have = new Set(files), rebuilt = new Set(DIVERSE_WEAPONS_DERIVED);
+  const missing = manifestSpriteNames(rd(MANIFEST)).filter((n) => !have.has(n) && !rebuilt.has(n));
   assert.deepEqual(missing.slice(0, 20), [], `${missing.length} index names with no file - run node tools/diverseWeaponsExtract.mjs "<diverse weapons.dfmod>"`);
-  assert.equal(files.length, DIVERSE_WEAPONS_SPRITE_COUNT);
+  assert.equal(files.length, DIVERSE_WEAPONS_SPRITE_COUNT - rebuilt.size);
   // the doctrine gate's row is on this folder and derives from the same manifest
   assert.match(rd('test/tooling/doctrine.test.js'), /\['public\/art\/diverse-weapons\/',\n\s+\{ manifest: 'vendor\/diverse-weapons\/diverse-weapons\.dfmod\.json',/);
 });

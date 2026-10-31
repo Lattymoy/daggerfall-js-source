@@ -108,7 +108,7 @@ export class TerrainGenClient {
           // `smoothRoadHeights` with SmoothRoads off. The switches come
           // from `_switches` - the same object the worker is running, and
           // the shape terrainGenWorker.js and _roadsFallback() both use.
-          if (m.net) this._roads = { roads: m.net.roads, tracks: m.net.tracks, ...(this._switches ?? {}), source: this._roadsSource ?? 'generated' };   // TO1: whose network this is
+          if (m.net) this._roads = { roads: m.net.roads, tracks: m.net.tracks, rivers: m.net.rivers ?? null, streams: m.net.streams ?? null, ...(this._switches ?? {}), source: this._roadsSource ?? 'generated' };   // TO1: whose network this is; OWN-WORK2: the rivers
           else if (!this._roads) this._settlements = null;   // AUDIT 68 S22: the build answered no network - it is not a known one (hasRoads)
           if (m.stats && this._roadsStats) this._roadsStats(m.stats);
           return;
@@ -142,7 +142,7 @@ export class TerrainGenClient {
    *  COPY (the RA1 law: the arrays this thread keeps are the fallback's)
    *  and this thread keeps its own for the same-thread path. null
    *  clears both. */
-  setRoads(settlements, onStats = null, switches = null) {   // ROADS 24: the mod's switches ride the fallback too
+  setRoads(settlements, onStats = null, switches = null, source = 'generated') {   // ROADS 24: the mod's switches ride the fallback too
     // AUDIT ROADS F2: the worker BUILDS from the list with its own woods;
     // this thread builds only if it has to - lazily, on the fallback
     // path, from the list it kept. A build is never paid twice and never
@@ -151,7 +151,7 @@ export class TerrainGenClient {
     this._roads = null;
     this._roadsStats = onStats;
     this._switches = switches;
-    this._roadsSource = 'generated';   // TO1: the port's own network, not Hazelnut's
+    this._roadsSource = source;   // TO1: whose network this is - OWN-WORK2: 'basic-roads' while the Basic Roads switch is on
     this.groundEpoch++;   // FLORA-GROUND: our roads cut the shaped ground
     if (this._worker && this._settlements) this._worker.postMessage({ t: 'roads', settlements: this._settlements, switches });
     else if (!this._worker) this._roadsFallback();
@@ -222,8 +222,8 @@ export class TerrainGenClient {
   /** ROADS 7: the network for whoever draws it - null until built. */
   roads() { return this._roads; }
 
-  /** ROADS 22: a ready-made network (his) - kept here for the map and
-   *  the fallback, a copy posted to the worker. No build anywhere. */
+  /** ROADS 22: a ready-made network - kept here for the map and the
+   *  fallback, a copy posted to the worker. No build anywhere. */
   /** ROADS 25: whether a network is known to this client - set the
    *  moment setRoads/setRoadsData is called, before the worker has it. */
   get hasRoads() { return !!this._roads || !!this._settlements; }
@@ -232,30 +232,23 @@ export class TerrainGenClient {
     this._settlements = null;
     // BR3: the switches ride HERE too. setRoads kept them in `_switches`
     // and this did not, so the three rebuilds that read `_switches` (the
-    // worker's net-back arm and _roadsFallback) would have rebuilt his
+    // worker's net-back arm and _roadsFallback) would have rebuilt the
     // network with the switches dropped - the AUDIT 58 F3 defect exactly,
     // in the one place that fix did not reach. Inert today only because
     // `_roads` below is set inline and _roadsFallback early-returns on it.
     this._switches = { water: !!net.water, smooth: net.smooth !== false };
-    // AUDIT 58 F3: `smooth` rides his data too. It was dropped by all three
+    // AUDIT 58 F3: `smooth` rides the data too. It was dropped by all three
     // rebuilds of the network object below while `water` survived them, so the
     // Mods pane's SmoothRoads switch reached the kernel only on the fallback
     // path and read `undefined` - i.e. ON - on the path the game takes.
     // `!== false` keeps the kernel's default-on gate for a caller that omits it.
-    // TO1: WHOSE NETWORK THIS IS, on the object itself. The port draws
-    // roads either way - Hazelnut's vendored arrays when Basic Roads is
-    // on, its OWN generated network when it is off or his files cannot
-    // be read (bible/03-World/Roads.md, the deliberate inversion) - and
-    // until now nothing the network was handed to could tell the two
-    // apart. Travel Options must: path FOLLOWING is his mod's feature,
-    // gated on his mod being enabled, and a follower that walked the
-    // port's generated tracks would be offering a feature the player
-    // never switched on. `source` is set at all THREE assembly sites and
-    // in the worker's own, which is the AUDIT 58 F3 / BR3 lesson: a
-    // field added to one of them is silently inert on the path the game
-    // actually takes.
+    // TO1: WHOSE NETWORK THIS IS, on the object itself: 'basic-roads'
+    // while the Basic Roads switch is on - path FOLLOWING and the maps
+    // are its features - and 'generated' while it is off (OWN-WORK2: the
+    // network is the port's own either way). `source` is set at all THREE
+    // assembly sites and in the worker's own, the AUDIT 58 F3 / BR3 lesson.
     this._roadsSource = net.source ?? 'basic-roads';
-    this.groundEpoch++;   // FLORA-GROUND: his roads cut the shaped ground
+    this.groundEpoch++;   // FLORA-GROUND: the roads cut the shaped ground
     this._roads = { roads: net.roads, tracks: net.tracks, rivers: net.rivers ?? null, streams: net.streams ?? null, water: !!net.water, smooth: net.smooth !== false, source: this._roadsSource };
     this._roadsStats = onStats;
     if (this._worker) {
@@ -268,7 +261,7 @@ export class TerrainGenClient {
   _roadsFallback() {
     if (this._roads || !this._settlements) return;
     const net = buildRoadsFromSettlements(this._settlements, this._woods);
-    this._roads = net ? { roads: net.roads, tracks: net.tracks, ...(this._switches ?? {}), source: this._roadsSource ?? 'generated' } : null;   // TO1
+    this._roads = net ? { roads: net.roads, tracks: net.tracks, rivers: net.rivers ?? null, streams: net.streams ?? null, ...(this._switches ?? {}), source: this._roadsSource ?? 'generated' } : null;   // TO1; OWN-WORK2: the rivers
     if (!net) this._settlements = null;   // AUDIT 68 S22: a failed build is not a known network, and is not paid again on every job
     if (net && this._roadsStats) this._roadsStats(net.stats);
   }

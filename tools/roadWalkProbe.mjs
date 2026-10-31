@@ -28,7 +28,8 @@ import { arenaRoadTowns, arenaTemplates, arenaTemplateOf } from '../src/world/ar
 import { arenaJoins, joinLayer, joinRunPixels, mergeArenaRoads, unpackArenaRoads, packArenaRoads, setArenaRoads, arenaRoadsLayer, arenaRoadByte, beyondKey, beyondPixel } from '../src/world/arenaRoads.js';
 import { cyrodiilTrunksFor } from '../src/scenes/tamrielRoadsHost.js';
 import { CAPITALS, capitalOnPixel, capitalGates, capitalSpanPixels } from '../src/world/tamrielCapitals.js';
-import { loadModRoads, WATER_BYTE } from '../src/world/roadsProducer.js';
+import { WATER_BYTE } from '../src/world/roadsProducer.js';
+import { bayRoads } from '../test/bayRoads.mjs';   // OWN-WORK2: the Bay's own network, off the same ARENA2
 import { isMainStoryDungeon } from '../src/world/dungeon/dungeonTextures.js';
 import { countryTemplates, countryCounts, bayLand as bayLandOf, countryRates } from '../src/world/tamrielCountry.js';
 import { lairTemplates, lairPools, LAIR_TYPES } from '../src/world/tamrielDungeons.js';
@@ -67,7 +68,7 @@ setTamrielFit({ ox: fit.ox * fit.ppu, oy: fit.oy * fit.ppu, ppu: fit.ppu });
 const woods = groundWoods(woods0), heightAt = (x, y) => woods.getHeightMapValue(x, y);
 const maps = new MapsFile(); maps.load(file('MAPS.BSA'), file('CLIMATE.PAK'), file('POLITIC.PAK'));
 const read = async (url) => { const p = fileURLToPath(url); return { ok: true, arrayBuffer: async () => { const b = readFileSync(p); return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength); } }; };
-const bay = await loadModRoads(read);
+const bay = { ...bayRoads(), source: 'basic-roads' };
 const pixels = arenaPixels();
 
 // ── the roads past the Bay: laid once, kept in CACHE ─────────────

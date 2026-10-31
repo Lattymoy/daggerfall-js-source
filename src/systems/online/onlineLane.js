@@ -237,8 +237,8 @@ export function onlineForcedPref(key, search) {
  * ONE THING IS DIFFERENT, and it is not a rule either - it is the
  * floor. Basic Roads rewrites TERRAIN HEIGHTS: terrainGen calls
  * smoothRoadHeights over the road beds, so which network is painted
- * (`Enabled`: Hazelnut's arrays or the port's own generated network,
- * BR3) and whether the beds are smoothed at all (`SmoothRoads`) decide
+ * (`Enabled`: with its rivers or without, BR3 and OWN-WORK2) and
+ * whether the beds are smoothed at all (`SmoothRoads`) decide
  * where the ground IS. Two players who disagree stand on two floors
  * along every road in the Bay, and a pose is a position on that floor,
  * so each sees the other sunk into or floating over the bed. That is

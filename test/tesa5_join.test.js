@@ -21,6 +21,7 @@ import { roadRoom } from '../src/world/road/roadVerge.js';
 import { TerrainGenClient } from '../src/world/terrain/terrainGenClient.js';
 import { inBay } from '../src/world/tamriel/tamrielFrame.js';
 import { hostText } from './hostText.mjs';   // HOST-SPLIT (at the merge of main): the world host read whole - its pixel build stands in scenes/pixelBuild.js
+import { bayRoads } from './bayRoads.mjs';   // OWN-WORK2: the Bay's own network, off the player's ARENA2
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 afterEach(() => setArenaRoads(null));
@@ -210,8 +211,9 @@ test('TESA5 the host: the crossings found on the Bay\'s own network with the lan
 });
 
 const ARENA2 = process.env.ARENA2_PATH;
+const [JOINS_N, JOINS_S, JOINS_E, JOIN_PIXELS] = [13, 11, 5, 50];   // OWN-WORK2: the Bay's own network's crossings
 const HAVE = !!ARENA2 && ['TMAP00I0.IMG', 'TAMRIEL2.IMG', 'ART_PAL.COL', 'WOODS.WLD', 'MAPS.BSA', 'CLIMATE.PAK', 'POLITIC.PAK'].every((f) => existsSync(pathJoin(ARENA2, f)));
-test('TESA5 with ARENA2: on Basic Roads\' own network fourteen crossings - seven north, five south, two east, none west (the Eltheric) - 47 join pixels on the Bay - PIN MOVED (ROAD-GAPS): seven and 19 at JOIN_SPACING 60', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
+test('TESA5 with ARENA2: on the Bay\'s own network the crossings - north, south and east, none west (the Eltheric) - PIN MOVED (OWN-WORK2): fourteen and 47 join pixels on Basic Roads\' retired arrays; PIN MOVED (ROAD-GAPS): seven and 19 at JOIN_SPACING 60', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
   const { DFPalette } = await import('../src/formats/dfPalette.js');
   const { preloadTamrielTrace } = await import('../src/ui/tamrielTrace.js');
   const { setTamrielTrace } = await import('../src/world/tamriel/tamrielLand.js');
@@ -231,11 +233,12 @@ test('TESA5 with ARENA2: on Basic Roads\' own network fourteen crossings - seven
     const woods = new WoodsFile(); woods.load(bytes('WOODS.WLD'));
     const g = groundWoods(woods);
     const maps = new MapsFile(); maps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK'));
-    const bay = { roads: new Uint8Array(readFileSync(new URL('../vendor/roads-hazelnut/roadData.bytes', import.meta.url))) };
+    const bay = bayRoads();
     const land = (x, y) => (inBay(x, y) ? !isWaterPixel(maps.getClimateIndex(x, y), g.getHeightMapValue(x, y)) : g.getHeightMapValue(x, y) > WATER_BYTE);
     const joins = arenaJoins(bay, land);
-    assert.deepEqual(joins.map((j) => j.side), ['N', 'N', 'N', 'N', 'N', 'N', 'N', 'S', 'S', 'S', 'S', 'S', 'E', 'E']);
-    assert.equal(joinLayer(joins).join.size, 47);
+    const sides = joins.map((j) => j.side);
+    assert.deepEqual([sides.filter((t) => t === 'N').length, sides.filter((t) => t === 'S').length, sides.filter((t) => t === 'E').length, sides.filter((t) => t === 'W').length], [JOINS_N, JOINS_S, JOINS_E, 0], 'measured 2026-10-31');
+    assert.equal(joinLayer(joins).join.size, JOIN_PIXELS);
     // PIN MOVED (TESA14): the network a gate is on is a region's now - test/tesa14_roads.test.js lays one on this data
   } finally { setTamrielTrace(null); setTamrielFit(null); }
 });

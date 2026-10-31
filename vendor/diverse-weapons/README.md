@@ -32,6 +32,8 @@ no licence line of their own.]**
   and lays it over the player's Weapon Widget settings while the mod's
   `WeaponWidgetPreset` switch is on (their own values kept underneath).
 - `Readme.txt` - the zip's own readme, verbatim.
+- `derived-art.json` - the specs of the twelve sprites that are Daggerfall's
+  own hand (NO-BETHESDA3, below), written by `tools/classicDerive.mjs`.
 - This note.
 
 ## What is NOT here, and why
@@ -62,6 +64,19 @@ the port cannot quietly widen it. These sprites are the author's own
 paintings rather than renders of ARENA2, so Port-Doctrine's "a render of
 game data is game data" ruling - the one that keeps Weapon Widget's and
 Seasons' repaints out of the repository - is not about them.
+
+**Twelve are not here (NO-BETHESDA3, 2026-10-31; the owner: "Rebuild DW's
+7 daggers").** The magic dagger's sprites draw Daggerfall's own
+first-person hand from `WEAPON02.CIF`. Twelve of them - record 2 frame 1
+in five metals, record 6 frame 2 in three and frame 3 in four - are 60%
+to 84.5% that frame's pixels exactly, in PAL.PAL, so they left the tree.
+`tools/classicDerive.mjs --cif` wrote each one's spec into
+`derived-art.json`: the file, the record and frame, the palette, and the
+author's blade pixels as edits. The game builds each from the player's
+own `WEAPON02.CIF` (`src/combat/diverseWeapons/diverseWeaponsAssets.js`),
+the same pixels the PNG gave, and `tools/diverseWeaponsExtract.mjs` no
+longer writes them. 687 sprites draw 10% or more of a CIF frame exactly;
+under 60% a sprite stays the author's own. The folder holds 12,612.
 
 A newer version's `.dfmod` attached through the textures pick (the Mods
 page) still wins over the shipped set: `src/combat/diverseWeaponsAssets

@@ -1,12 +1,16 @@
 // ROADS 3: THE PRODUCER. The one place the road network is built from
 // the player's own archives - MAPS.BSA for where the settlements are,
 // WOODS.WLD for the ground between them - and the reason roadNetwork.js
-// could stay pure. Nothing here is Hazelnut's; see bible/03-World/Roads.md.
+// could stay pure. OWN-WORK2: it is the Bay's only network - roads,
+// tracks, rivers and streams, all ours (bible/03-World/Roads.md).
 
-import { longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
+import { longitudeLatitudeToMapPixel, LOCATION_TYPES } from '../formats/mapsFile.js';
 import { MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { BASE_HEIGHT_SCALE, SCALED_BEACH_ELEVATION } from './terrain/terrainSampler.js';
-import { buildRoadNetwork } from './road/roadNetwork.js';
+import { buildRoadNetwork, ROAD_TYPES, TRACK_TYPES } from './road/roadNetwork.js';
+import { VOYAGER_DIALS, RIVER_FORD, landForRoutes, landGrain } from './road/roadLand.js';   // OWN-WORK2: the land's law past the Bay, on it too
+import { linkGaps } from './road/roadGaps.js';   // OWN-WORK2: and ROAD-GAPS' links
+import { buildRiverNetwork, riverPrices } from './road/riverNetwork.js';   // OWN-WORK2: the Bay's rivers and streams
 
 /** Water, in the small heightmap's own units: the sampler calls a
  *  height at or below the beach elevation water, and a WOODS byte
@@ -62,15 +66,30 @@ export function buildRoadsFromArchives(maps, woods, dials = {}) {
 /** AUDIT ROADS F2: the half that needs only the small heightmap and a
  *  settlement list, so the terrain WORKER can run it with its own
  *  woods - the list crosses the wire, the build does not touch the
- *  frame. buildRoadsFromArchives is the same-thread composition. */
+ *  frame. buildRoadsFromArchives is the same-thread composition.
+ *  OWN-WORK2: the rivers first (road/riverNetwork.js), then the roads by
+ *  the law the roads past the Bay take (world/tamrielRoads.js): the
+ *  land's (road/roadLand.js), each river priced as a ford, a place on its
+ *  own pixel's land, the pieces linked (road/roadGaps.js), and a road
+ *  out to the Bay's edges (edgeGates). No road on the sea. */
 export function buildRoadsFromSettlements(locations, woods, dials = {}) {
   try {
     const t0 = (globalThis.performance ?? Date).now();
-    const heightAt = (x, y) => woods.getHeightMapValue(x, y);
-    const isWater = (x, y) => woods.getHeightMapValue(x, y) <= WATER_BYTE;
-    const net = buildRoadNetwork({ locations, heightAt, isWater, dials });
+    const W = MAP_WIDTH, H = MAP_HEIGHT, heights = new Uint8Array(W * H), water = new Uint8Array(W * H);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const h = woods.getHeightMapValue(x, y); heights[y * W + x] = h; water[y * W + x] = h <= WATER_BYTE ? 1 : 0; }
+    const { rivers, streams, stats: riverStats } = buildRiverNetwork({ heights, water, W, H, dials: dials.rivers });
+    const dry = water.slice();
+    for (const l of locations) if ((ROAD_TYPES.has(l.type) || TRACK_TYPES.has(l.type)) && l.x >= 0 && l.y >= 0 && l.x < W && l.y < H) dry[l.y * W + l.x] = 0;
+    const land = landForRoutes(heights, dry, null, W, H, VOYAGER_DIALS, landGrain);
+    land.river = riverPrices(rivers, streams, RIVER_FORD);
+    const gates = edgeGates(dry, W, H);
+    const net = buildRoadNetwork({ locations: [...locations, ...gates], heightAt: (x, y) => heights[y * W + x], isWater: (x, y) => dry[y * W + x] === 1, dials, terrain: land });
+    net.stats.linked = linkGaps(net, W, H, { blocked: (u, v) => dry[v * W + u] === 1, owns: () => true });
+    waterOffPaths(Object.assign(net, { rivers, streams }));   // CANAL-ARM: an arm a path and a water share is the path's
     net.stats.ms = Math.round((globalThis.performance ?? Date).now() - t0);
     net.stats.settlements = locations.length;
+    net.stats.rivers = riverStats;
+    net.stats.gates = gates.length;
     return net;
   } catch (e) {
     console.warn('[roads] no network - the world draws without roads:', e?.message ?? e);
@@ -78,20 +97,36 @@ export function buildRoadsFromSettlements(locations, woods, dials = {}) {
   }
 }
 
-/** ROADS 22: HIS NETWORK, 1:1. Basic Roads' four arrays, vendored with
- *  Hazelnut's permission (vendor/roads-hazelnut/README.md, credited on
- *  the About screen), served as assets and read byte-exact. The
- *  generator above is the FALLBACK now - a map where these cannot load
- *  still gets roads, just not his. Each is 500,000 bytes: one per map
- *  pixel, the same compass mask the painter reads, which is why they
- *  drop straight in. Rivers and streams ride along for the slice that
- *  paints them; the mod ships them off by default and so does the port. */
-export const MOD_ROADS = Object.freeze({
-  roads: new URL('../../vendor/roads-hazelnut/roadData.bytes', import.meta.url).href,
-  tracks: new URL('../../vendor/roads-hazelnut/trackData.bytes', import.meta.url).href,
-  rivers: new URL('../../vendor/roads-hazelnut/riverData.bytes', import.meta.url).href,
-  streams: new URL('../../vendor/roads-hazelnut/streamData.bytes', import.meta.url).href,
-});
+/** OWN-WORK2: how far apart along each of the Bay's edges a road runs out to it, pixels. */
+export const EDGE_GATE_SPACING = 100;
+
+/**
+ * OWN-WORK2: THE BAY'S WAYS OUT. The Bay's roads join its towns, and the land goes on past its edges to the provinces,
+ * whose roads meet the Bay's where one reaches an edge (world/arenaRoads.js arenaJoins, TESA5). So each EDGE_GATE_SPACING
+ * of an edge takes a road node: the dry edge pixel nearest the stretch's middle with three dry pixels inward of it. The
+ * build joins each to the towns of its land; none stands where the edge is the sea.
+ * @param {Uint8Array} water 1 the sea's @param {number} W @param {number} H
+ * @returns {Array<{ x: number, y: number, type: number, name: null, region: number }>}
+ */
+export function edgeGates(water, W, H, spacing = EDGE_GATE_SPACING) {
+  const edges = [(u, k) => [u, k], (u, k) => [u, H - 1 - k], (u, k) => [k, u], (u, k) => [W - 1 - k, u]];
+  const out = [], seen = new Set();
+  edges.forEach((at, e) => {
+    const len = e < 2 ? W : H;
+    for (let s0 = 0; s0 < len; s0 += spacing) {
+      const s1 = Math.min(len, s0 + spacing), mid = (s0 + s1) >> 1;
+      for (let d = 0; d < spacing; d++) {
+        const u = d % 2 ? mid + ((d + 1) >> 1) : mid - (d >> 1);
+        if (u < s0 || u >= s1) continue;
+        if (![0, 1, 2, 3].every((k) => { const [x, y] = at(u, k); return water[y * W + x] === 0; })) continue;
+        const [x, y] = at(u, 0);
+        if (!seen.has(y * W + x)) { seen.add(y * W + x); out.push({ x, y, type: LOCATION_TYPES.TownCity, name: null, region: -1 }); }
+        break;
+      }
+    }
+  });
+  return out;
+}
 
 /**
  * WOD2: Basic Roads' `getPathsPoint` message (BasicRoadsMod.cs, the
@@ -100,7 +135,7 @@ export const MOD_ROADS = Object.freeze({
  * (`x + y * MapsFile.MaxMapPixelX`). Rivers and streams are not asked -
  * the message ORs the two path kinds and nothing else. It is how World of
  * Daggerfall keeps its camps off the roads (LocationLoader.cs:146-151).
- * @param {{roads:Uint8Array, tracks:Uint8Array}} net - his arrays
+ * @param {{roads:Uint8Array, tracks:Uint8Array}} net - the Bay's network
  * @returns {number} a byte; 0 when no road or track crosses the pixel
  */
 export function basicRoadsPathsPoint(net, x, y) {
@@ -109,16 +144,11 @@ export function basicRoadsPathsPoint(net, x, y) {
 }
 
 /**
- * CANAL-ARM (FIELD BUGS 2026-10-09b, "River/Stream Creation Turned Some Roads into Canals": "a lot of towns that usually
- * have straight dirt roads to them now have canals"): A COMPASS ARM A ROAD OR A TRACK CARRIES IS THE PATH'S. His arrays
- * share an arm between a path and a river or a stream at 32 arms of 30 pixels (a pixel's arm runs from its centre to
- * its edge - a water and a path that both meet a town's centre from one side share it). The painter paints the water
- * before the track (paintRoads, his order), so the whole arm was water where the track was, and a river along a road
- * flanked it with its banks; LANDFORM3 cuts the painted water into the land, so the arm was a straight sunken channel -
- * and since LANDFORM3 the room's rivers are on (onlineLane.js). Each such arm is the path's alone, once, as the arrays
- * load: the painter, the channel's cut and the maps all read the arrays, so all three agree. A crossing shares no arm
- * (the water and the path meet at the centre from different sides) - the fords and the causeways stand as they were.
- * Answers `net`, its river and stream arrays written in place.
+ * CANAL-ARM (FIELD BUGS 2026-10-09b, "River/Stream Creation Turned Some Roads into Canals"): A COMPASS ARM A ROAD OR A
+ * TRACK CARRIES IS THE PATH'S. The painter paints the water before the track (paintRoads), so a shared arm was water
+ * where the track ran, and LANDFORM3 cut it into the land - a sunken channel to the town. Each such arm is the path's
+ * alone, once, as the network is built: the painter, the channel's cut and the maps all read the arrays, so all three
+ * agree. A crossing shares no arm - its ford stands. Answers `net`, its river and stream arrays written in place.
  */
 export function waterOffPaths(net) {
   for (let i = 0; i < net.roads.length; i++) {
@@ -128,54 +158,4 @@ export function waterOffPaths(net) {
     if (net.streams) net.streams[i] &= ~path;
   }
   return net;
-}
-
-/** AUDIT LANDFORMS II G3: how long one of his files may take to arrive (each asked in turn) before the ask counts as
- *  failed. A fetch has no timeout of its own: one that never answered never settled, so the page stood roadless for the
- *  session - offline the port's own network never stood in, and online C3's retry never asked again. */
-export const MOD_ROADS_FETCH_TIMEOUT_MS = 30000;
-
-export async function loadModRoads(fetchFn = globalThis.fetch, urls = MOD_ROADS, timeoutMs = MOD_ROADS_FETCH_TIMEOUT_MS) {
-  if (!fetchFn) return null;
-  try {
-    const out = {};
-    for (const [k, url] of Object.entries(urls)) {
-      // raced, so a fetch that ignores its signal times out too; the file's body inside the same span
-      const ac = typeof globalThis.AbortController === 'function' ? new globalThis.AbortController() : null;
-      let timer = null;
-      const late = new Promise((_, no) => { timer = setTimeout(() => { ac?.abort(); no(new Error(`${url}: no answer in ${timeoutMs} ms`)); }, timeoutMs); });
-      try {
-        const r = await Promise.race([fetchFn(url, ac ? { signal: ac.signal } : undefined), late]);
-        if (!r || !r.ok) return null;
-        const b = new Uint8Array(await Promise.race([r.arrayBuffer(), late]));
-        if (b.length !== MAP_WIDTH * MAP_HEIGHT) return null;   // the wrong file, or a truncated one, is no file
-        out[k] = b;
-      } finally { clearTimeout(timer); }
-    }
-    let n = 0; for (const v of out.roads) if (v) n++;
-    return waterOffPaths({ ...out, source: 'basic-roads', stats: { source: 'basic-roads', roadPixels: n } });
-  } catch { return null; }
-}
-
-/** AUDIT LANDFORMS C3: how many more times an online page asks for Basic Roads' arrays after the first ask failed. */
-export const MOD_ROADS_RETRY_MAX = 12;
-
-/**
- * AUDIT LANDFORMS C3: Basic Roads' arrays asked again in the background after a failed load - 5 s after, then doubling
- * to a minute between tries (WOD6's backoff, worldOfDaggerfall.js), `max` more tries. Online a room's ground is cut along
- * HIS network (the lane forces the mod), so the host asks again rather than stand one client on the port's own.
- * @param {object} [o]
- * @param {(ms: number) => Promise<void>} [o.wait] - the pause before each try
- * @param {(tries: number, ms: number) => void} [o.onTry] - told before each pause
- * @returns {Promise<?object>} his arrays (loadModRoads' shape), or null once every try failed
- */
-export async function retryModRoads({ fetchFn = globalThis.fetch, urls = MOD_ROADS, wait = (ms) => new Promise((r) => setTimeout(r, ms)), max = MOD_ROADS_RETRY_MAX, onTry = null } = {}) {
-  for (let tries = 0; tries < max; tries++) {
-    const ms = Math.min(60000, 5000 * 2 ** tries);
-    onTry?.(tries, ms);
-    await wait(ms);
-    const his = await loadModRoads(fetchFn, urls);
-    if (his) return his;
-  }
-  return null;
 }

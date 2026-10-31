@@ -1,0 +1,153 @@
+[
+  {
+    "name": "NB3-the-tool-forgets-the-file",
+    "file": "tools/classicDerive.mjs",
+    "old": "  return best.file ? { file: best.file, ...spec, pal: best.pal } : { ...spec, pal: best.pal };",
+    "new": "  return { ...spec, pal: best.pal };",
+    "tests": [
+      "test/formats/classicpictures.test.js"
+    ],
+    "why": "a CIF or RCI spec names its file in one field, `file`"
+  },
+  {
+    "name": "NB3-the-tool-writes-an-archive-for-a-file",
+    "file": "tools/classicDerive.mjs",
+    "old": "deriveSpec(best.file ? [best.record, best.frame] : [best.archive, best.record, best.frame]",
+    "new": "deriveSpec([best.archive, best.record, best.frame]",
+    "tests": [
+      "test/formats/classicpictures.test.js"
+    ],
+    "why": "a CIF or RCI record is [record, frame], no archive"
+  },
+  {
+    "name": "NB3-a-file-spec-is-read-as-a-texture",
+    "file": "src/formats/classicPictures.js",
+    "old": "spec.file ? (r, f) => cifRciPicture(spec.file, r, f, pal) :",
+    "new": "spec.rci ? (r, f) => cifRciPicture(spec.rci, r, f, pal) :",
+    "tests": [
+      "test/formats/classicpictures.test.js"
+    ],
+    "why": "the reader builds the `file` form from the player's CIF or RCI file"
+  },
+  {
+    "name": "NB3-a-derived-dagger-is-fetched",
+    "file": "src/combat/diverseWeapons/diverseWeaponsAssets.js",
+    "old": "      if (isDerivedDiverseWeaponsSprite(name)) return derivedImage(name, art);   // NO-BETHESDA3: built, never fetched",
+    "new": "",
+    "tests": [
+      "test/combat/weapon/nobethesda3_dwdaggers.test.js"
+    ],
+    "why": "a sprite that is Daggerfall's own is built, never fetched"
+  },
+  {
+    "name": "NB3-a-derived-dagger-keeps-colour-under-clear",
+    "file": "src/combat/diverseWeapons/diverseWeaponsAssets.js",
+    "old": "    return toScreenOrder(await rebuiltPicture(spec, art));",
+    "new": "    return toScreenOrder(await art.build(spec));",
+    "tests": [
+      "test/combat/weapon/nobethesda3_dwdaggers.test.js"
+    ],
+    "why": "built as the browser's decode gave it: a clear pixel 0,0,0,0"
+  },
+  {
+    "name": "NB3-the-index-forgets-a-derived-dagger",
+    "file": "src/combat/diverseWeapons/diverseWeaponsIndex.js",
+    "old": "  \"DAGGERMAGIC.CIF_6-3_Iron\",\n]);",
+    "new": "]);",
+    "tests": [
+      "test/combat/weapon/nobethesda3_dwdaggers.test.js",
+      "test/tooling/dw2_shipped.test.js"
+    ],
+    "why": "the index names exactly the listing's sprites"
+  },
+  {
+    "name": "NB3-the-rotten-fish-is-fetched",
+    "file": "src/systems/survival/itemIcons.js",
+    "old": "  if (ownIconSpec(f)) return { ...at, build: () => ownIconPicture(f, art), selfBuilt: true };",
+    "new": "",
+    "tests": [
+      "test/systems/survival/nobethesda3_rotfish.test.js"
+    ],
+    "why": "our rotten fish is built over the player's record, never a file"
+  },
+  {
+    "name": "NB3-the-rotten-fish-reads-another-record",
+    "file": "src/systems/survival/itemIcons.js",
+    "old": "from: Object.freeze([211, 10, 0]), pal: 'PAL.PAL', seed: 536",
+    "new": "from: Object.freeze([211, 9, 0]), pal: 'PAL.PAL', seed: 536",
+    "tests": [
+      "test/systems/survival/nobethesda3_rotfish.test.js"
+    ],
+    "why": "the cooked fish, TEXTURE.211 record 10"
+  },
+  {
+    "name": "NB3-rot-keeps-the-rim",
+    "file": "src/systems/survival/rotPicture.js",
+    "old": "    const rim = depth[i] < 3 ? ROT_RIM[depth[i] - 1] : 1;",
+    "new": "    const rim = 1;",
+    "tests": [
+      "test/systems/survival/nobethesda3_rotfish.test.js"
+    ],
+    "why": "the two pixels inside the outline darken"
+  },
+  {
+    "name": "NB3-rot-keeps-the-hue",
+    "file": "src/systems/survival/rotPicture.js",
+    "old": "lum * ROT_TINT[c] * ROT_MIX",
+    "new": "lum * ROT_MIX",
+    "tests": [
+      "test/systems/survival/nobethesda3_rotfish.test.js"
+    ],
+    "why": "the light is drawn toward a green-grey, not a grey"
+  },
+  {
+    "name": "NB3-rot-paints-the-clear",
+    "file": "src/systems/survival/rotPicture.js",
+    "old": "    if (!depth[i]) continue;\n    const o = i * 4",
+    "new": "    const o = i * 4",
+    "tests": [
+      "test/systems/survival/nobethesda3_rotfish.test.js"
+    ],
+    "why": "a clear pixel stays clear"
+  },
+  {
+    "name": "NB3-specks-on-the-rim",
+    "file": "src/systems/survival/rotPicture.js",
+    "old": "if (depth[i] >= 2) room.push(i);",
+    "new": "if (depth[i] >= 1) room.push(i);",
+    "tests": [
+      "test/systems/survival/nobethesda3_rotfish.test.js"
+    ],
+    "why": "no speck on the outline"
+  },
+  {
+    "name": "NB3-specks-ignore-the-seed",
+    "file": "src/systems/survival/rotPicture.js",
+    "old": "const next = rng(seed), picked = [];",
+    "new": "const next = rng(1), picked = [];",
+    "tests": [
+      "test/systems/survival/nobethesda3_rotfish.test.js"
+    ],
+    "why": "the specks fall where our seed puts them"
+  },
+  {
+    "name": "NB3-a-speck-without-fuzz",
+    "file": "src/systems/survival/rotPicture.js",
+    "old": "      for (let c = 0; c < 3; c++) data[j * 4 + c] = Math.round(data[j * 4 + c] + (MOULD[c] - data[j * 4 + c]) * MOULD_FUZZ);",
+    "new": "",
+    "tests": [
+      "test/systems/survival/nobethesda3_rotfish.test.js"
+    ],
+    "why": "a speck's fuzz on the pixels beside it"
+  },
+  {
+    "name": "NB3-one-speck-a-picture",
+    "file": "src/systems/survival/rotPicture.js",
+    "old": "Math.max(MIN_SPECKS, Math.round(drawn / DRAWN_PER_SPECK))",
+    "new": "MIN_SPECKS",
+    "tests": [
+      "test/systems/survival/nobethesda3_rotfish.test.js"
+    ],
+    "why": "the speck count follows the drawn area"
+  }
+]

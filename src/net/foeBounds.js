@@ -26,8 +26,8 @@
 // (CreateCharCustomClass.cs's slider, systems/customClass.js HP_MAX). A monster's is the most of its row over the
 // profiles a game can build with (vanilla, Meaner Monsters, Meaner Monsters with PCAAO's edit - online forces the last,
 // systems/online/onlineLane.js ONLINE_ROOM_MOD_KEYS - and, DEX1, each of the three under Daggerfall Enemy Expansion's
-// classic lines, a room's switch; and, MUDEX1, the mod's lines with MUDEX's after them - Meaner Monsters beside the mod,
-// its own rows standing aside; the most of the seven, so a game that somehow built with them off is never refused).
+// classic lines, a room's switch; and, OWN-WORK2, the mod's lines with our meaner monsters' after them - Meaner Monsters
+// beside the mod, its own rows standing aside; the most of the seven, so a game built with them off is never refused).
 // UNVERIFIED - no bound, never refused: a type with no row (the horse, 39; an unknown id; DEX1, a mod's own kind, 256 and
 // up, whose career the relay does not hold), an ally, a companion or a crewman (the frame's own lists, which the caller
 // leaves out), a boss's relay-kept body (not on this stream). The constants each builder owns are copied here, as net/grantLaw.js copies the elite's and the champion's -
@@ -70,21 +70,21 @@ export const FOE_HERO_HEALTH_MAX = FOE_BOUND.hero.level.health ** (FOE_BOUND.her
  *  test to enemyBasics.js, the Meaner Monsters folds (characters/meanerMonsters.js applyMeanerMonsters, combat/
  *  pcaaoMeanerMonsters.js meanerMonstersRow) and DEX1's Daggerfall Enemy Expansion lines over each of the three
  *  (systems/enemyExpansion/dexInstall.js dexClassicRow: the mod writes its classic rows at its Start, after their Init -
- *  the Dragonling's 42 health its 146, the Werewolf's level 6 its 9), and MUDEX1's, the mod's lines with MUDEX's after
- *  them (`dexClassicRow(t, row, { mudex: true })` - the Flesh Atronach's 300 health, the Ice Atronach's level 21, both
- *  written into the table and so share levels too). The SHARE LEVEL is the level the builders' progression
+ *  the Dragonling's 42 health its 146, the Werewolf's level 6 its 9), and OWN-WORK2's, the mod's lines with our meaner
+ *  monsters' after them (`dexClassicRow(t, row, { meaner: true })` - the Ghost's 79 health, the Lamia's 90; they move
+ *  no level, so no share level either). The SHARE LEVEL is the level the builders' progression
  *  share reads (`foeShare(basics.level)`: the table's row, vanilla or the mod's - never a mint's fold), at its most; the
  *  relay reads it here, not the table, so the bound is the same on every machine whatever it has loaded. The horse (39)
  *  has none. */
 export const FOE_BOUND_ROWS = Object.freeze(new Map([
   [0, [35, 1, 1]], [1, [20, 2, 2]], [2, [40, 3, 3]], [3, [26, 3, 3]], [4, [110, 4, 4]], [5, [80, 4, 4]],
-  [6, [50, 4, 4]], [7, [70, 6, 6]], [8, [65, 5, 5]], [9, [66, 9, 9]], [10, [50, 6, 6]], [11, [50, 7, 7]],
-  [12, [100, 9, 9]], [13, [85, 8, 8]], [14, [120, 11, 11]], [15, [66, 9, 9]], [16, [200, 10, 10]], [17, [125, 10, 10]],
-  [18, [66, 11, 11]], [19, [190, 15, 15]], [20, [74, 12, 12]], [21, [110, 15, 15]], [22, [100, 14, 14]],
-  [23, [90, 15, 15]], [24, [150, 19, 19]], [25, [160, 17, 17]], [26, [138, 17, 17]], [27, [146, 18, 18]],
-  [28, [154, 19, 19]], [29, [146, 19, 19]], [30, [200, 20, 20]], [31, [285, 21, 21]], [32, [200, 20, 20]],
-  [33, [210, 21, 21]], [34, [146, 18, 18]], [35, [130, 21, 16]], [36, [155, 21, 16]], [37, [300, 16, 16]],
-  [38, [130, 21, 21]], [40, [250, 21, 16]], [41, [90, 16, 16]], [42, [74, 16, 16]],
+  [6, [50, 4, 4]], [7, [70, 6, 5]], [8, [65, 5, 5]], [9, [66, 9, 9]], [10, [50, 6, 6]], [11, [50, 7, 7]],
+  [12, [100, 9, 7]], [13, [85, 8, 8]], [14, [120, 11, 11]], [15, [66, 9, 9]], [16, [200, 10, 10]], [17, [125, 10, 10]],
+  [18, [79, 11, 11]], [19, [190, 15, 11]], [20, [87, 12, 12]], [21, [110, 15, 13]], [22, [102, 14, 14]],
+  [23, [101, 15, 15]], [24, [150, 19, 16]], [25, [160, 17, 17]], [26, [138, 17, 17]], [27, [146, 18, 18]],
+  [28, [154, 19, 19]], [29, [146, 19, 19]], [30, [200, 20, 20]], [31, [285, 21, 20]], [32, [200, 20, 20]],
+  [33, [210, 21, 21]], [34, [146, 18, 18]], [35, [130, 21, 16]], [36, [155, 21, 16]], [37, [245, 16, 16]],
+  [38, [130, 16, 16]], [40, [250, 21, 16]], [41, [90, 16, 16]], [42, [90, 16, 16]],
 ]));
 
 const isClass = (t) => t >= 128 && t <= 146;

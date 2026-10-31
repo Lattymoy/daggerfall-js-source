@@ -99,7 +99,7 @@
 import { loadImg, nativeMetrics, drawImg, drawImgCrop, drawRect, shadowText, NATIVE_W } from '../native/nativePanel.js';
 import { OVERWORLD_ROAD, OVERWORLD_TRACK, OVERWORLD_RIVER, OVERWORLD_STREAM } from '../overworldModel.js';   // ROADS 13/24: the relief's colours
 // TO1: Travel Options' own additions to this window - the ports
-// filter, the five-texel region page with his road network on it, the
+// filter, the five-texel region page with the road network on it, the
 // I key's location information, the resume prompt and the teleport
 // charge (ui/travel/travelMapOptions.js, TravelOptionsMapWindow.cs).
 import {

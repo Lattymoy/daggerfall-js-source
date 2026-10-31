@@ -243,73 +243,22 @@ test('AUDIT IT1 H-L2: a driver\'s sheet is a new CarriageMap - its own filters (
   assert.match(src, /markedMapId: this\._it \? -1 : this\.markedMapId,/, 'the mod\'s maps draw no mark (CarriageMap\'s markedLocationId stays -1)');
 }));
 
-// ── the gate world data (tools/immersiveTravelPatches.mjs, world/immersiveTravelGates.js, scenes/modWorldData.js) ──
-import { appendedEdit, appendedPatch, IT_GATE_BLOCKS, CLASSIC_BUILDING_SLOTS } from '../../tools/immersiveTravelPatches.mjs';
-import { gateAppends } from '../../src/world/immersiveTravelGates.js';
-import { patchJson } from '../../src/formats/worldData/worldDataJson.js';
-import { sha256Canonical } from '../../tools/worldDataPatch.mjs';
+// ── the gate world data (world/immersiveTravelGates.js, scenes/modWorldData.js) ──
+// OWN-WORK2 (2026-10-31): the author's gate patches left the tree with their tool, and AUDIT IT1 G1 (the editor's round
+// trip they carried) with them. G2 stands for our own stand: no served file can stop a world loading.
+import { layGateRecords, standRecords, standShift, installImmersiveTravelGates } from '../../src/world/immersiveTravelGates.js';
 
-/** An editor-written gate block: four building slots (the editor writes NumBlockDataRecords of them), a scale of 1 on
- *  every misc model, and the author's records past the header's classic counts (2 models, 1 flat). */
-const editorBlock = () => ({
-  Name: 'WALLAA08.RMB', Index: 5,
-  RmbBlock: {
-    FldHeader: {
-      NumBlockDataRecords: 4, NumMisc3dObjectRecords: 2, NumMiscFlatObjectRecords: 1,
-      BuildingDataList: [0, 1, 2, 3].map((i) => ({ NameSeed: i, FactionId: 0, Sector: 0, LocationId: 0, BuildingType: 'Town4', Quality: 0 })),
-    },
-    SubRecords: [{}, {}, {}, {}],
-    Misc3dObjectRecords: [10, 11, 41214, 41209].map((m) => ({ ModelIdNum: m, XPos: m, XScale: 1, YScale: 1, ZScale: 1 })),
-    MiscFlatObjectRecords: [{ TextureArchive: 210, FactionID: 0 }, { TextureArchive: 182, FactionID: 8642 }],
-  },
-});
-/** The classic block it was written over, as the port's reader serializes it: 32 building slots, no scale keys. */
-function classicOf(mod) {
-  const c = JSON.parse(JSON.stringify(mod));
-  const h = c.RmbBlock.FldHeader;
-  for (let i = h.BuildingDataList.length; i < CLASSIC_BUILDING_SLOTS; i++) h.BuildingDataList.push({ NameSeed: 0, FactionId: 0, Sector: 0, LocationId: 0, BuildingType: 'House1', Quality: 0 });
-  c.RmbBlock.Misc3dObjectRecords = c.RmbBlock.Misc3dObjectRecords.slice(0, h.NumMisc3dObjectRecords).map(({ XScale, YScale, ZScale, ...m }) => m);
-  c.RmbBlock.MiscFlatObjectRecords = c.RmbBlock.MiscFlatObjectRecords.slice(0, h.NumMiscFlatObjectRecords);
-  return c;
-}
-
-test('AUDIT IT1 G1: the header-count edit carries the editor\'s two round-trip changes too - BuildingDataList written at NumBlockDataRecords (the classic block reads 32) and a scale on the classic models (it has none) - so it rebuilds the author\'s file sha256 for sha256', () => {
-  assert.equal(CLASSIC_BUILDING_SLOTS, 32);
-  const mod = editorBlock();
-  const rebuilt = patchJson(classicOf(mod), appendedEdit(mod));
-  assert.equal(sha256Canonical(rebuilt), sha256Canonical(mod));
-  // the vendored four: 28 slots removed and each classic model scaled to 1, then the author's records. PIN MOVED (ARENA2-IT,
-  // 2026-10-29): WD1's diff against BLOCKS.BSA, which sets a model whose rotation the editor also wrote as one record
-  for (const name of IT_GATE_BLOCKS) {
-    const p = JSON.parse(read(`vendor/immersive-travel/WorldDataPatches/${name}.json`));
-    assert.equal(p.ops.filter(([k, path]) => k === 'r' && path[2] === 'BuildingDataList').length, 28, name);
-    for (const m of [0, 1]) {
-      const sets = p.ops.filter(([k, path]) => k === 's' && path[1] === 'Misc3dObjectRecords' && path[2] === m);
-      const scaled = sets.filter(([, path]) => /^[XYZ]Scale$/.test(path[3])).length === 3 || sets.some(([, path, v]) => path.length === 3 && v.XScale === 1 && v.YScale === 1 && v.ZScale === 1);
-      assert.ok(scaled, `${name}: classic model ${m} scaled to 1`);
-    }
-  }
-  assert.equal(appendedPatch(mod).sha256, sha256Canonical(mod));
-});
-
-test('AUDIT IT1 G1/G2: the layer lays only the author\'s records - a patch WD1 diffed against a real BLOCKS.BSA (removals, sets, inserts) is read for its inserts past the classic counts and never refused, so no op can stop a world loading', () => {
-  const mod = editorBlock();
-  const wd1 = { rebuilds: 'WALLAA08.RMB.json', ops: [
-    ['r', ['RmbBlock', 'FldHeader', 'BuildingDataList', 31]],
-    ['s', ['RmbBlock', 'FldHeader', 'AutoMapData', 7], 0],
-    ['s', ['RmbBlock', 'Misc3dObjectRecords', 0], { ModelIdNum: 10, XScale: 1 }],
-    ['i', ['RmbBlock', 'Misc3dObjectRecords', 2], mod.RmbBlock.Misc3dObjectRecords[2]],
-    ['i', ['RmbBlock', 'Misc3dObjectRecords', 3], mod.RmbBlock.Misc3dObjectRecords[3]],
-    ['i', ['RmbBlock', 'MiscFlatObjectRecords', 1], mod.RmbBlock.MiscFlatObjectRecords[1]],
-  ] };
-  const a = gateAppends(wd1, { Misc3dObjectRecords: 2, MiscFlatObjectRecords: 1 });
-  assert.deepEqual(a.Misc3dObjectRecords.map((m) => m.ModelIdNum), [41214, 41209]);
-  assert.deepEqual(a.MiscFlatObjectRecords.map((f) => f.FactionID), [8642]);
-  // a classic record the diff re-inserted (an insert below the classic count) is the mod's own file's, not the layer's
-  const low = gateAppends({ rebuilds: 'X', ops: [['i', ['RmbBlock', 'Misc3dObjectRecords', 0], { ModelIdNum: 10 }]] }, { Misc3dObjectRecords: 2, MiscFlatObjectRecords: 1 });
-  assert.equal(low.Misc3dObjectRecords.length, 0);
+test('AUDIT IT1 G2 (OWN-WORK2): the layer lays our stand on whatever a gate\'s name serves, never throwing - a file with no RMB half, no town map, no ground or subrecords with no exterior is served as it is or stands the stand as drawn; the install guarded (mutant: a file with no RMB half read)', () => {
+  const stand = standRecords('WALLAA08');
+  assert.deepEqual(layGateRecords({ Name: 'WALLAA08.RMB' }, stand), { Name: 'WALLAA08.RMB' }, 'no RMB half: served as it is');
+  assert.equal(layGateRecords(null, stand), null);
+  const bare = { Name: 'WALLAA08.RMB', RmbBlock: { SubRecords: [{ XPos: 10 }], Misc3dObjectRecords: 'not a list' } };
+  assert.deepEqual(standShift(bare, 'WALLAA08'), [0, 0], 'nothing to read: as drawn');
+  assert.deepEqual(layGateRecords(bare, stand).RmbBlock.Misc3dObjectRecords, stand.Misc3dObjectRecords, 'an array that is none: the stand\'s alone');
+  assert.deepEqual(standShift(bare, 'WALLAA07'), [0, 0]);
+  assert.equal(typeof installImmersiveTravelGates, 'function');
   const src = read('src/scenes/modWorldData.js');
-  assert.match(src, /try \{\s*\n?\s*installImmersiveTravelGates\(/, 'the install guarded: a world loads whatever the layer\'s patches say');
+  assert.match(src, /try \{\s*\n?\s*installImmersiveTravelGates\(/, 'the install guarded: a world loads whatever the layer says');
 });
 
 // ── the host and the online lane (systems/immersiveTravel.js, scenes/world.js, ui/merchant/merchantServiceDoor.js) ────────────
@@ -342,7 +291,7 @@ test('AUDIT IT1 W4/G3: the mod is loaded for the game - off at the start, no fac
   const w = read('src/scenes/world.js');
   assert.match(w, /const immersiveSettingsIfOn = \(\) => \(immersiveTravelLoaded\(\) \? readImmersiveTravelSettings\(\) : null\);/);
   assert.match(w, /if \(!immersiveTravelLoaded\(\) \|\| \(kind !== IT_POPUP\.carriage && kind !== IT_POPUP\.seafarer\)\) return null;/);
-  assert.match(read('src/scenes/modWorldData.js'), /const isOn = vendor === IMMERSIVE_TRAVEL_VENDOR \? immersiveTravelLoaded : \(\) => modSetting\(vendor, 'Enabled'\) === true;/);
+  assert.match(read('src/scenes/modWorldData.js'), /installImmersiveTravelGates\(immersiveTravelLoaded\);/);   // PIN MOVED (OWN-WORK2): the stand's layer, no patch of the mod's
   assert.match(read('src/systems/features.js'), /modFeature\('immersive-travel', \(\) => t\('features\.mod\.immersiveTravel\.effect', 'Takes effect the next time you start the game; loading a save is not enough\. Fares and rules change at the next map\.'/);
 });
 

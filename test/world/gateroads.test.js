@@ -17,6 +17,7 @@ import { gatesOnStreets, opensOntoStreet, townStreets, townHouses, townWall, sta
 import { townGateRoads, blockGates } from '../../src/world/townGates.js';
 import { TOWN_OUTLINE_BLOCK, townOutlineBlockJson } from '../../src/world/townOutline.js';
 import { DIR } from '../../src/world/road/roadNetwork.js';
+import { bayRoads } from '../bayRoads.mjs';   // OWN-WORK2
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const D = 128, TD = 129;
@@ -279,8 +280,7 @@ test('GATE-ROADS with ARENA2: online the Bay\'s walled cities keep Beautiful Cit
   const { BlocksFile } = await import('../../src/formats/blocksFile.js');
   const { MapsFile } = await import('../../src/formats/mapsFile.js');
   const { isWallCarrier } = await import('../../src/world/townShape.js');
-  const roadsB = new Uint8Array(readFileSync(new URL('../../vendor/roads-hazelnut/roadData.bytes', import.meta.url)));
-  const tracksB = new Uint8Array(readFileSync(new URL('../../vendor/roads-hazelnut/trackData.bytes', import.meta.url)));
+  const { roads: roadsB, tracks: tracksB } = bayRoads();   // OWN-WORK2: the Bay's own network
   const pixelOf = (loc) => ({ px: Math.trunc(loc.mapTableData.longitude / 128), py: 499 - Math.trunc(loc.mapTableData.latitude / 128) });
   // the packs off, first (the sweep puts both packs on the world-data door for the rest of the process): the Bay's cities
   // walled on their outline, their gates where their roads come in and onto a street
@@ -306,7 +306,8 @@ test('GATE-ROADS with ARENA2: online the Bay\'s walled cities keep Beautiful Cit
       }
     }
   }
-  assert.ok(gates > 400 && onStreet / gates > 0.85 && crossingOnStreet / crossings < 0.25, `the packs off: ${onStreet} of ${gates} gates on a street, where ${crossingOnStreet} of ${crossings} crossings were`);
+  // PIN MOVED (OWN-WORK2): over 400 gates, 85% and more on a street, on Basic Roads' arrays; 241 of 284 on the Bay's own network
+  assert.ok(gates > 250 && onStreet / gates > 0.8 && crossingOnStreet / crossings < 0.25, `the packs off: ${onStreet} of ${gates} gates on a street, where ${crossingOnStreet} of ${crossings} crossings were`);
   const { openSweep, sweepClone, ROADS_EVERY_WAY } = await import('../../tools/townBoardsSweep.mjs');
   const { setLocationTiles } = await import('../../src/world/terrain/terrainTiles.js');
   const { generatePixelTerrain } = await import('../../src/world/terrain/terrainGen.js');
@@ -327,7 +328,7 @@ test('GATE-ROADS with ARENA2: online the Bay\'s walled cities keep Beautiful Cit
       const { px, py } = pixelOf(loc), [roads, tracks] = roadsOf(px, py), gr = townGateRoads(loc, sw.maps, sw.blocks);
       if (!gr) continue;
       const plain = lay(loc, px, py, roads, tracks, null), laid = lay(loc, px, py, roads, tracks, gr);
-      if (!plain.paths) continue;
+      if (!plain.paths || !roads[py * 1000 + px]) continue;   // OWN-WORK2: a city on the sea's own pixel (Antelibuton) has no road to join
       for (const g of gr.gates) { n.gates++; if (onRoad(plain, plain.paths, g)) n.before++; if (onRoad(laid, plain.paths, g)) n.after++; }
     }
     return n;

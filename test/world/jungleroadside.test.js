@@ -479,8 +479,9 @@ test('JUNGLE-ROADSIDE the worker reads the roads by Basic Roads\' one port: worl
   assert.match(band, /Math\.min\(r \? curveDistance\(r, tx, tz\) : Infinity, t \? curveDistance\(t, tx, tz\) : Infinity\) \* TILE_M - PATH_HALF_M;/);
   assert.match(band, /const bits = pathsDataPoint\(net, mx, my\) \| arenaJoinByte\(mx, my\);/);
   assert.match(band, /import \{ pathsDataPoint, MP_WORLD_UNITS, N, NE, E, SE, S, SW, W, NW \} from '\.\/pathData\.js';/);
-  const bytes = (f) => new Uint8Array(readFileSync(join(ROOT, 'vendor/roads-hazelnut', f)));
-  const net = { roads: bytes('roadData.bytes'), tracks: bytes('trackData.bytes') };
+  // OWN-WORK2: a network of its own here - a track on every 211th pixel, a road on every 3rd of those
+  const net = { roads: new Uint8Array(MAP_W * MAP_H), tracks: new Uint8Array(MAP_W * MAP_H) };
+  for (let i = 0; i < net.tracks.length; i += 211) { net.tracks[i] = 0x88; if (i % 3 === 0) net.roads[i] = 0x22; }
   let tracks = 0;
   for (let y = 0; y < MAP_H; y++) for (let x = 0; x < MAP_W; x++) if (!net.roads[x + y * MAP_W] && pathData.pathsDataPoint(net, x, y)) tracks++;
   assert.ok(tracks > 1000, 'pixels a track alone crosses, read');

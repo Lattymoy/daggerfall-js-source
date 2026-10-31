@@ -17,13 +17,13 @@ import { resolveEncounterTableIndex } from '../encounters.js';
 import { encounterTableChoices, encounterTableGeneration } from '../../characters/encounterTableDoor.js';
 import { ENEMY_BASICS } from '../../characters/enemy/enemyBasics.js';
 import { faunaLevelIn } from '../tamrielFauna.js';
-import { dexLoaded, mudexLoaded } from '../enemyExpansion/dexSwitches.js';
+import { dexLoaded } from '../enemyExpansion/dexSwitches.js';
 import { tamrielLandVersion } from '../../world/tamriel/tamrielLand.js';
 
 /** A monster's id: Daggerfall's (under 128) or Daggerfall Enemy Expansion's (256 to 383) - never a person's. */
 const isMonster = (id) => Number.isInteger(id) && ((id >= 0 && id < 128) || (id >= 256 && id < 384));
-/** A monster's level as the game loaded it (Daggerfall Enemy Expansion's and Meaner Monsters' edits, or Daggerfall's). */
-const levelLoaded = (id) => { const dex = dexLoaded(); return faunaLevelIn(id, dex, dex && mudexLoaded()); };
+/** A monster's level as the game loaded it (Daggerfall Enemy Expansion's edits, or Daggerfall's - ours move none). */
+const levelLoaded = (id) => faunaLevelIn(id, dexLoaded());
 
 /**
  * THE LAND'S WILD on a pixel of `climateIndex` (MapsFile.getClimateIndex) and `fauna` (a zone's band past the Bay, null on
@@ -54,7 +54,7 @@ export function bountyLandWild(maps) {
   const kept = new Map();
   let key = '';
   return (/** @type {number} */ px, /** @type {number} */ py) => {
-    const k = `${encounterTableGeneration()}|${tamrielLandVersion()}|${dexLoaded()}|${mudexLoaded()}`;
+    const k = `${encounterTableGeneration()}|${tamrielLandVersion()}|${dexLoaded()}`;
     if (k !== key) { key = k; kept.clear(); }
     const at = `${px},${py}`;
     if (!kept.has(at)) kept.set(at, landWildOf(maps.getClimateIndex(px, py), maps.getFaunaBand?.(px, py) ?? null));

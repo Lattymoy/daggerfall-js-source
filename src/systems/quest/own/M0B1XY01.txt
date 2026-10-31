@@ -1,0 +1,128 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\M0B1XY01.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 1X
+-- QuestId: 1
+Messages: 81
+Quest: M0B1XY01
+DisplayName: Hunt for Harpies
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> I trust you with this one, kid. A flock
+<ce> of harpies is preying on traveling
+<ce> merchants. _reward_ gold says you go to
+<ce> ___mondung_ and thin them out. Yes?
+
+RefuseQuest:  [1001]
+<ce> Your loss. I thought
+<ce> that was a fair price.
+
+AcceptQuest:  [1002]
+<ce> Good. Five harpies roost in
+<ce> ___mondung_. Kill all five and be
+<ce> back within =1stparton_ days. Go
+<ce> straight there, kid, or the flock
+<ce> will move on and the job with it.
+
+QuestFail:  [1003]
+<ce> Charming as I am, kid, the harpies
+<ce> will not wait. All five, remember.
+
+QuestComplete:  [1004]
+<ce> That is the way, kid. _reward_
+<ce> gold, and you earned it.
+
+RumorsDuringQuest:  [1005]
+A man went poking around ___mondung_
+last week. They found pieces of him.
+<--->
+The caravans hire extra guards
+now, all because of a few harpies.
+
+RumorsPostfailure:  [1006]
+Nobody sees harpies over ___mondung_ any
+more. Gone after easier meat, I expect.
+<--->
+Every caravan leaving town counts its mules
+twice. The harpies are still out there.
+
+RumorsPostsuccess:  [1007]
+The roads are safer now the harpies
+are gone. Trade will pick up.
+<--->
+Someone smashed every egg in that harpy nest. Good.
+
+QuestorPostsuccess:  [1008]
+<ce> Here is the %ra who
+<ce> dealt with the harpies!
+
+QuestorPostfailure:  [1009]
+<ce> The %ra who lost to a few harpies. Sad.
+
+Message:  1020
+<ce> That makes five. _questgiver_
+<ce> will be satisfied with that.
+
+Message:  1030
+%qdt:
+ The Fighters Guild of ___questgiver_ wants
+ the harpies nesting in ___mondung_ dead. I
+ need at least five kills, and to be back
+ within =1stparton_ days, to be paid.
+
+Message:  1080
+<ce> You have been a help, kid, so this map
+<ce> to ___newdung_ is yours. On the house.
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ group Questor
+
+Place _mondung_ remote dungeon10
+Place _newdung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _monster_ is Harpy
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _mondung_ 
+	log 1030 step 0 
+	pick one of _map_ _nomap_ _nomap_ 
+	pc at _mondung_ set _S.04_ 
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_ 
+	give pc _reward_ 
+	end quest 
+
+_mondead_ task:
+	killed 5 _monster_ saying 1020 
+
+_qgclicked_ task:
+	clicked npc _questgiver_ 
+
+_1stparton_ task:
+	end quest 
+
+_S.04_ task:
+	create foe _monster_ every 15 minutes 20 times with 50% success 
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_
+	say 1003 
+	clear _qgclicked_ _clearclick_ 
+
+variable _map_
+variable _nomap_
+_S.08_ task:
+	when _map_ and _pcgetsgold_ 
+	reveal _newdung_ readmap
+    say 1080

@@ -138,13 +138,12 @@ test('TS7 stood clear: a gate\'s things inside it moved further in together, tho
 });
 
 test('TS7 the carriages and the boards on the carrier: the mod\'s records on a gate while it is loaded, none else; a city walled on its outline a carriage town; the carrier\'s JSON its markers, then what stands at its gates (mutants: the switch unread; the carrier no carriage town; the furniture unlaid)', () => {
-  const patch = { rebuilds: 'WALLAA08.RMB.json', ops: [['i', ['RmbBlock', 'Misc3dObjectRecords', 2], { ModelIdNum: 41214, XPos: 964, ZPos: -3236, YRotation: -690 }], ['i', ['RmbBlock', 'MiscFlatObjectRecords', 1], { XPos: 1075, ZPos: -3308, TextureArchive: 184, TextureRecord: 25, FactionID: 8642 }]] };
   let on = false;
-  installImmersiveTravelGates([patch], [null], () => on);
+  installImmersiveTravelGates(() => on);   // OWN-WORK2: our stand, on every gate
   assert.equal(carriageRecordsOf('WALLAA08.RMB'), null, 'the mod not loaded');
   on = true;
   assert.equal(carriageRecordsOf('wallaa08.rmb').Misc3dObjectRecords[0].ModelIdNum, 41214);
-  assert.equal(carriageRecordsOf('WALLAA09.RMB'), null);
+  assert.equal(carriageRecordsOf('WALLAA07.RMB'), null, 'no gate');
   assert.equal(hasCarriageGate({ exterior: { exteriorData: { blockNames: [townWallBlockName(5), 'H.RMB'] } } }), true);
   assert.equal(hasCarriageGate({ exterior: { exteriorData: { blockNames: ['H.RMB'] } } }), false);
   // the carrier: its markers first, then the gates' things
@@ -189,8 +188,7 @@ test('TS7 with ARENA2: every one of the Bay\'s walled cities walled on its outli
   const bytes = (n) => new Uint8Array(readFileSync(join(ARENA2, n)));
   const blocks = new BlocksFile(); blocks.load(bytes('BLOCKS.BSA'));
   const maps = new MapsFile(); maps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK')); maps.autoDiscard = false;
-  const patches = ['08', '09', '10', '11'].map((g) => JSON.parse(rd(`vendor/immersive-travel/WorldDataPatches/WALLAA${g}.RMB.json`)));
-  installImmersiveTravelGates(patches, patches.map(() => null), () => true);
+  installImmersiveTravelGates(() => true);   // OWN-WORK2: our stand
   const classicOf = (n) => { const i = blocks.getBlockIndex(blocks.checkName(n)); return i < 0 ? null : blocks.readClassicBlock(i); };
   const rmbOf = (n) => (isWallCarrier(n) || n === TOWN_OUTLINE_BLOCK ? null : blocks.getBlockByName(n)?.rmbBlock ?? null);
   let n = 0;

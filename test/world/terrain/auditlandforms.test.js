@@ -13,7 +13,6 @@ import { createLandforms, reliefLift, landformLift, landformLiftField, cliffFade
 import { generatePixelTerrain, restrideGrid } from '../../../src/world/terrain/terrainGen.js';
 import { waterCorners, WATER_DRAW_MASK_TABLE } from '../../../src/world/water/waterCorners.js';
 import { DIR, DIR_DELTA } from '../../../src/world/road/roadNetwork.js';
-import { retryModRoads, loadModRoads, MOD_ROADS, MOD_ROADS_RETRY_MAX, MOD_ROADS_FETCH_TIMEOUT_MS } from '../../../src/world/roadsProducer.js';
 import { ringGroundAt, buildFarRingGrid } from '../../../src/render/farRing.js';
 import { StreamingWorldState } from '../../../src/world/streamingWorld.js';
 import { syntheticWoodsBytes, network } from '../../landformWorld.mjs';
@@ -411,39 +410,23 @@ test('AUDIT LANDFORMS D3: the landforms move the ground, never a tile - a coasta
 
 // ---- C3, C4: online --------------------------------------------------------------------------------------------------------
 
-test('AUDIT LANDFORMS C3: online a failed fetch of Basic Roads\' arrays is asked again, WOD6\'s way - the pixels roadless meanwhile, the port\'s own network only once every try has failed', async () => {
-  const good = new Uint8Array(MAP_WIDTH * MAP_HEIGHT); good[7] = DIR.E;
-  const fetching = (failures) => { let left = failures; return async (url) => { if (url === MOD_ROADS.roads && left > 0) { left--; return { ok: false }; } return { ok: true, arrayBuffer: async () => good.slice().buffer }; }; };
-  const waits = [], tried = [];
-  const late = await retryModRoads({ fetchFn: fetching(3), wait: async (ms) => { waits.push(ms); }, onTry: (n, ms) => tried.push([n, ms]) });
-  assert.equal(late.roads[7], DIR.E, 'his arrays, on the fourth try');
-  assert.deepEqual(waits, [5000, 10000, 20000, 40000]);
-  assert.deepEqual(tried, [[0, 5000], [1, 10000], [2, 20000], [3, 40000]]);
-  waits.length = 0;
-  assert.equal(await retryModRoads({ fetchFn: fetching(Infinity), wait: async (ms) => { waits.push(ms); } }), null);
-  assert.equal(MOD_ROADS_RETRY_MAX, 12);
-  assert.deepEqual(waits, [5000, 10000, 20000, 40000, ...Array(8).fill(60000)], 'doubling to a minute, twelve more tries');
-  // the host's own landing, run: online it asks again before it stands the port's own network; offline it stands it
-  const head = '(basicRoadsOn ? loadModRoads() : Promise.resolve(null)).then(';
-  const i = WORLD.indexOf(head), j = WORLD.indexOf('\n  });\n', i);
-  assert.ok(i > 0 && j > i);
-  const handlerSrc = WORLD.slice(i + head.length, j + '\n  }'.length);
-  const land = async ({ online, his, retried }) => {
+// PIN MOVED (OWN-WORK2, 2026-10-31): C3 asked Basic Roads' arrays again online after a failed fetch. The arrays are retired:
+// the Bay's network is the port's own, built from each player's own files, so there is no fetch to fail and no second
+// network to stand in. What C3 held stands - every client on the room's network - and the wire is pinned here.
+test('OWN-WORK2 (was AUDIT LANDFORMS C3): one wire hands the Bay\'s network over at once - the switch on, its rivers as RiversAndStreams says and the maps\' and journeys\' word on it; off, the same roads without either; the roadless pixels rebuilt (mutants: the rivers ungated; the word flipped)', () => {
+  const wire = WORLD.match(/\n {2}terrainGen\.setRoads\(settlementsOf\(maps\)[^\n]*\n {2}rebuildRoadless\(\);\n/);
+  assert.ok(wire, 'the one wire, a bare statement in bootWorld');
+  assert.ok(!/loadModRoads|retryModRoads|setRoadsData/.test(WORLD), 'no fetch, no ready-made arrays');
+  const run = (basicRoadsOn, water) => {
     const did = [];
-    const terrainGen = { setRoadsData: (net) => did.push(['his', net.roads[7], net.water]), setRoads: () => did.push(['own']) };
-    const retry = () => { did.push(['retry']); return Promise.resolve(retried); };
-    const quiet = { log: () => {}, warn: () => {} };
-    const handler = new Function('basicRoadsOn', 'params', 'retryModRoads', 'terrainGen', 'rebuildRoadless', 'settlementsOf', 'maps', 'logRoads', 'roadSwitches', 'console', `return ${handlerSrc};`)(
-      true, { has: (k) => k === 'online' && online }, retry, terrainGen, () => did.push(['rebuild']), () => [], {}, () => {}, { water: true, smooth: true }, quiet);
-    handler(his);
-    await new Promise((r) => setTimeout(r, 0));
+    const terrainGen = { setRoads: (list, onStats, switches, source) => did.push([list.length, switches.water, switches.smooth, source]) };
+    new Function('terrainGen', 'settlementsOf', 'maps', 'logRoads', 'roadSwitches', 'basicRoadsOn', 'rebuildRoadless', wire[0])(
+      terrainGen, () => [1, 2], {}, () => {}, { smooth: true, water }, basicRoadsOn, () => did.push('rebuild'));
     return did;
   };
-  const his = { roads: good, tracks: good, rivers: good, streams: good };
-  assert.deepEqual(await land({ online: true, his: null, retried: his }), [['retry'], ['his', DIR.E, true], ['rebuild']], 'online: asked again, and his lands late');
-  assert.deepEqual(await land({ online: true, his: null, retried: null }), [['retry'], ['own'], ['rebuild']], '...the port\'s own only once every try failed');
-  assert.deepEqual(await land({ online: false, his: null, retried: his }), [['own'], ['rebuild']], 'offline: the port\'s own at once, as before');
-  assert.deepEqual(await land({ online: true, his, retried: null }), [['his', DIR.E, true], ['rebuild']], 'his first try: his');
+  assert.deepEqual(run(true, true), [[2, true, true, 'basic-roads'], 'rebuild'], 'on (online: forced, onlineLane.js): the rivers paint');
+  assert.deepEqual(run(true, false), [[2, false, true, 'basic-roads'], 'rebuild']);
+  assert.deepEqual(run(false, true), [[2, false, true, 'generated'], 'rebuild'], 'off: the roads stand, no river, nothing reads them');
 });
 
 test('AUDIT LANDFORMS C4: the ground\'s online note names the rivers - their row is one of the ground\'s since LANDFORM3 cut their channels', () => {
@@ -1030,22 +1013,7 @@ test('AUDIT LANDFORMS II G1/G2: a pixel rebuilt under the live pools carries wha
   assert.equal(run({ grounded: false, behind: true }).player.pos[1], gB + 0.25, 'and a fall under way is its own');
 });
 
-test('AUDIT LANDFORMS II G3: a Basic Roads file that never arrives is a failed ask - its fetch and its body each time out - so the port\'s own network or the next retry stands in, never a roadless session', async () => {
-  assert.equal(MOD_ROADS_FETCH_TIMEOUT_MS, 30000);
-  const guard = (p) => Promise.race([p, new Promise((res) => setTimeout(() => res('still waiting'), 2000))]);
-  const signals = [];
-  const never = (url, init) => { signals.push(init?.signal); return new Promise(() => {}); };
-  assert.equal(await guard(loadModRoads(never, MOD_ROADS, 20)), null, 'a fetch that never answers: settled, failed');
-  assert.ok(signals[0]?.aborted, 'and asked to stop');
-  const bodiless = () => Promise.resolve({ ok: true, arrayBuffer: () => new Promise(() => {}) });
-  assert.equal(await guard(loadModRoads(bodiless, MOD_ROADS, 20)), null, 'a body that never arrives: settled, failed');
-  // and an answer in time is the arrays, as before - every file asked in turn
-  const files = Object.keys(MOD_ROADS), asked = [];
-  const quick = (url) => { asked.push(url); return Promise.resolve({ ok: true, arrayBuffer: () => Promise.resolve(new ArrayBuffer(MAP_WIDTH * MAP_HEIGHT)) }); };
-  const got = await loadModRoads(quick, MOD_ROADS, 20);
-  assert.deepEqual(Object.keys(got).filter((k) => files.includes(k)).sort(), [...files].sort());
-  assert.deepEqual(asked, Object.values(MOD_ROADS));
-});
+// PIN MOVED (OWN-WORK2): AUDIT LANDFORMS II G3 timed out a fetch of Basic Roads' arrays - retired with them.
 
 test('AUDIT LANDFORMS II H2: nature asks the beach line of DFU\'s own blend in a town\'s pixel, as the tiles do - the landforms move the ground, never where the beach is', () => {
   // THE LAW, at every door nature asks it: on a ground whose own samples lie a hair under the beach line, nature stands
@@ -1186,40 +1154,7 @@ test('AUDIT LANDFORMS II J5: a record on a town pixel\'s west or south edge read
   }
 });
 
-test('AUDIT LANDFORMS II J7: online the host asks Basic Roads again on the retry\'s own defaults - the page\'s fetch, the backoff\'s real waits, twelve more tries - and hands it nothing else', async (t) => {
-  // the host's call: onTry alone (a `max: 0`, a wait of nought or no fetch there survived every test, which stubbed it)
-  assert.match(WORLD, /retryModRoads\(\{ onTry: \(n, ms\) => console\.warn\([^\n]*\}\)\.then\(\(late\) => \{/, 'the host asks with onTry alone');
-  t.mock.timers.enable({ apis: ['setTimeout'] });
-  const realFetch = globalThis.fetch, asked = [];
-  let failing = 2;   // the first two tries fail at his first file, the third answers
-  globalThis.fetch = (url) => {
-    asked.push(url);
-    if (url === Object.values(MOD_ROADS)[0] && failing > 0) { failing--; return Promise.resolve({ ok: false }); }
-    return Promise.resolve({ ok: true, arrayBuffer: () => Promise.resolve(new ArrayBuffer(MAP_WIDTH * MAP_HEIGHT)) });
-  };
-  const flush = async () => { for (let i = 0; i < 20; i++) await new Promise((r) => setImmediate(r)); };
-  const drive = async (state, waits) => { for (let i = 0; i < 20 && state.done === undefined; i++) { await flush(); if (waits.length) t.mock.timers.tick(waits.at(-1)); await flush(); } };
-  try {
-    const waits = [], state = { done: undefined };
-    retryModRoads({ onTry: (n, ms) => waits.push(ms) }).then((r) => { state.done = r; });
-    await flush();
-    assert.deepEqual(asked, [], 'nothing asked before the first wait');
-    t.mock.timers.tick(waits[0] - 1); await flush();
-    assert.deepEqual(asked, [], 'nor a millisecond before it ends - the backoff waits its whole length');
-    await drive(state, waits);
-    assert.deepEqual(waits, [5000, 10000, 20000], 'WOD6\'s backoff, waited for real');
-    assert.ok(state.done?.roads instanceof Uint8Array, 'his arrays, on the third try');
-    assert.deepEqual(asked, [Object.values(MOD_ROADS)[0], Object.values(MOD_ROADS)[0], ...Object.values(MOD_ROADS)], 'through the page\'s own fetch: his first file twice, then all four');
-    // ...and every try failing: twelve more, then none
-    asked.length = 0; failing = Infinity;
-    const all = [], none = { done: undefined };
-    retryModRoads({ onTry: (n, ms) => all.push(ms) }).then((r) => { none.done = r; });
-    await drive(none, all);
-    assert.equal(none.done, null);
-    assert.deepEqual(all, [5000, 10000, 20000, 40000, ...Array(8).fill(60000)]);
-    assert.equal(asked.length, MOD_ROADS_RETRY_MAX);
-  } finally { globalThis.fetch = realFetch; }
-});
+// PIN MOVED (OWN-WORK2): AUDIT LANDFORMS II J7 drove the host's retry of Basic Roads' arrays - retired with them.
 
 test('AUDIT LANDFORMS II I1: the lift fades beside the sea - a sea cliff\'s rim stands as DFU stands it and the plateau behind it takes its whole lift three map pixels in, no slope steeper than DFU\'s; a road over it, the far ring and every seam the same', () => {
   // Menevia's own shape: a plateau of 75 straight out of the fixture's sea at x = 100, rows 420..440, the sea beside it at

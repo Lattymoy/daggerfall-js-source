@@ -1,8 +1,8 @@
-// IT1 (2026-10-04): IMMERSIVE TRAVEL'S THREE HARD-CODED TABLES, verbatim out of the shipped assembly
-// (vendor/immersive-travel/ImmersiveTravel.dll) - the int32 arrays its static constructors fill with
-// RuntimeHelpers.InitializeArray from <PrivateImplementationDetails> field data. The IL dump shows the ldtoken and the
-// size (il/ImmersiveTravel.il.txt, CarriageMap::.cctor IL_15b0-15c2, SeafarersMap::.cctor IL_1957-1983) but not the
-// bytes; test/systems/guild/it1_immersivetravel.test.js finds each table, byte for byte and whole, in the vendored DLL.
+// IT1 (2026-10-04): IMMERSIVE TRAVEL'S THREE TABLES - the 40 capitals, the 15 large docks and the 382 dock pixels. They
+// are facts of Daggerfall's map, first read out of Immersive Travel 1.5's assembly (the int32 arrays its static
+// constructors fill with RuntimeHelpers.InitializeArray, CarriageMap::.cctor IL_15b0-15c2, SeafarersMap::.cctor
+// IL_1957-1983). OWN-WORK2 (2026-10-31): this module states them and is their record; the assembly left the tree, and
+// test/systems/guild/it1_immersivetravel.test.js holds every value as a literal digest.
 //
 // A leaf: numbers alone, so the laws (systems/immersiveTravel.js) and a test can read them without the world.
 

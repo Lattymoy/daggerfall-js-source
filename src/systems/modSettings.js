@@ -137,12 +137,10 @@ export const MOD_SETTINGS = Object.freeze({
   // AND NO GATE - the only one of the six. MO1 gave every mod the
   // switch and defaulted it TRUE; this one was missed, so Basic Roads
   // was not enabled-by-default, it was UNCONDITIONAL: world.js called
-  // loadModRoads() with nothing to ask, and a player could neither see
-  // that it was on nor turn it off. OFF does not mean a roadless map -
-  // the port has had its OWN network since ROADS 3 and it is the
-  // fallback for a map his arrays cannot load. So the switch reads the
-  // way Dynamic Skies' does: on, the mod's network 1:1; off, the
-  // port's own, generated from the player's map.
+  // its network with nothing to ask, and a player could neither see
+  // that it was on nor turn it off. OFF does not mean a roadless map.
+  // OWN-WORK2: the network is the port's own either way; on, its rivers
+  // paint and the maps and journeys read it, off they do not.
   'roads-hazelnut': Object.freeze({
     title: 'Basic Roads',
     author: 'Hazelnut',
@@ -150,8 +148,8 @@ export const MOD_SETTINGS = Object.freeze({
       Enabled: Object.freeze({
         default: true,
         get description() {
-          return t('mods.roadsHazelnut.Enabled.description', 'Hazelnut’s roads, tracks, rivers and streams across the whole Iliac Bay, painted onto the land. Off, '
-            + 'the game builds its own roads between the towns on your map.');
+          return t('mods.roadsHazelnut.Enabled.description', 'Roads, tracks, rivers and streams across the Iliac Bay, painted onto the land and drawn on the maps. '
+            + 'Off, the roads stay without rivers, and the maps and journeys do not use them.');
         },
       }),
       SmoothRoads: Object.freeze({ default: true, get description() { return t('mods.roadsHazelnut.SmoothRoads.description', 'Lightly smooths road surfaces. Turn it off for slightly better performance.'); } }),
@@ -432,10 +430,9 @@ export const MOD_SETTINGS = Object.freeze({
       Enabled: Object.freeze({
         default: true,
         get description() {
-          return t('mods.meanerMonsters.Enabled.description', 'Many monsters hit harder and take more to kill, while rats, bats and zombies are weaker. 20 monsters '
-            + 'are changed, and werebeasts and the dragonling are bigger. With Physical Combat And Armor Overhaul '
-            + 'also on, that mod’s version of these changes is used. With Daggerfall Enemy Expansion on, MUDEX, the '
-            + 'author’s version made for it, is used instead.');
+          return t('mods.meanerMonsters.Enabled.description', 'Many monsters hit harder and take more to kill. Rats, bats '
+            + 'and zombies are weaker. The combat overhaul uses its own version of these numbers. With Daggerfall Enemy '
+            + 'Expansion on, our own version made for that mod is used.');
         },
       }),
     }),
@@ -1301,7 +1298,7 @@ export const MOD_SETTINGS = Object.freeze({
     }),
   }),
   // IT1 (2026-10-04, the owner: "Actually lets let this be the next mod we integrate 1:1"): IMMERSIVE TRAVEL - kkgobkk's
-  // carriages outside the city gates, 1.5, its three sections restated verbatim (vendor/immersive-travel/modsettings.json),
+  // carriages outside the city gates, 1.5, its three sections restated verbatim (the release's modsettings.json),
   // the author's own words and spellings, a null or empty description carried as empty. Read live: the map reads them
   // as it opens (systems/immersiveTravel.js readImmersiveTravelSettings), the calculator as it bills - where the mod's
   // static constructors read four of them once a session (the bible's page records it).

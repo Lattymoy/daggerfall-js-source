@@ -62,7 +62,7 @@ stand.
 | W5 | low | The menu and the lane said a driver's fare is "the one fast travel there is" online - a port's ship passage is too (TRAVEL-ONLINE item 9). | "fast travel over land", and the Mods line names the room's hold on the fares and rules. |
 | W6 | low | A driver's map that did not open said nothing (a click landing after the player stepped indoors, the classic art not loaded). | `openImmersiveMap` says the travel map door's own lines. |
 
-**The gate world data** (`tools/immersiveTravelPatches.mjs`, `vendor/immersive-travel/WorldDataPatches/`,
+**The gate world data** (`tools/immersiveTravelPatches.mjs`, RETIRED by OWN-WORK2, `vendor/immersive-travel/WorldDataPatches/`,
 `src/world/immersiveTravelGates.js`, `src/scenes/modWorldData.js`)
 
 | ID | Sev | Finding | Fix |

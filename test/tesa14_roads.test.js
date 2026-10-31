@@ -115,7 +115,7 @@ test('TESA14 the builder\'s searches: nearestWithin answers the brute force\'s l
   assert.ok(Math.abs(pl - kl) < 1e-6, `the least length (${pl} vs ${kl})`);
   assert.deepEqual(primEdges([]), []);
   assert.deepEqual(primEdges([{ x: 0, y: 0 }]), []);
-  assert.match(read('src/world/road/roadNetwork.js'), /for \(const \[i, j\] of \(owns \? primEdges\(roadNodes\) : kruskal\(roadNodes\)\)\)/, 'the Bay\'s tree Kruskal\'s still');
+  assert.match(read('src/world/road/roadNetwork.js'), /for \(const \[i, j\] of \(owns \? primEdges\(roadNodes\) : kruskal\(roadNodes, sameLand\)\)\)/, 'the Bay\'s tree Kruskal\'s still - OWN-WORK2: one a land');
 });
 
 // ── THE REGIONS ─────────────────────────────────────────────────

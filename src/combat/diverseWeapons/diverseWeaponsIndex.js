@@ -2,9 +2,24 @@
 // The names public/art/diverse-weapons/ carries, as stems with a bitmask
 // over METALS' order (bit 10 = the bare stem); DIVERSE_WEAPONS_ODD are the
 // names no grammar holds. combat/diverseWeapons/diverseWeaponsAssets.js decodes it.
+// DIVERSE_WEAPONS_DERIVED are the names built from the player's files instead (vendor/diverse-weapons/derived-art.json).
 export const DIVERSE_WEAPONS_METALS = Object.freeze(["Iron","Steel","Silver","Elven","Dwarven","Mithril","Adamantium","Ebony","Orcish","Daedric"]);
 export const DIVERSE_WEAPONS_BARE = 1024;
 export const DIVERSE_WEAPONS_ODD = Object.freeze(["w_0"]);
+export const DIVERSE_WEAPONS_DERIVED = Object.freeze([
+  "DAGGERMAGIC.CIF_2-1_Adamantium",
+  "DAGGERMAGIC.CIF_2-1_Daedric",
+  "DAGGERMAGIC.CIF_2-1_Elven",
+  "DAGGERMAGIC.CIF_2-1_Iron",
+  "DAGGERMAGIC.CIF_2-1_Orcish",
+  "DAGGERMAGIC.CIF_6-2_Adamantium",
+  "DAGGERMAGIC.CIF_6-2_Daedric",
+  "DAGGERMAGIC.CIF_6-2_Elven",
+  "DAGGERMAGIC.CIF_6-3_Adamantium",
+  "DAGGERMAGIC.CIF_6-3_Dwarven",
+  "DAGGERMAGIC.CIF_6-3_Elven",
+  "DAGGERMAGIC.CIF_6-3_Iron",
+]);
 export const DIVERSE_WEAPONS_STEMS = Object.freeze({
   "233_0-0": 2043,
   "233_1-0": 2043,

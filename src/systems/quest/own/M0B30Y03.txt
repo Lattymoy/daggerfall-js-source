@@ -1,0 +1,132 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\M0B30Y03.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 30
+-- QuestId: 3
+Messages: 81
+Quest: M0B30Y03
+DisplayName: Hunt for a Daedroth
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Something has come up, and you are the
+<ce> one for it, %pcf. A Daedroth has turned
+<ce> up in ___mondung_. Where it came from
+<ce> is anyone's guess. The town just wants
+<ce> it dead. _reward_ gold. Can you do it?
+
+RefuseQuest:  [1001]
+<ce> Sensible, %pcf. Daedroths have eaten
+<ce> braver people than either of us.
+
+AcceptQuest:  [1002]
+<ce> Brave, %pcf, or mad. Kill it and be
+<ce> back within =1stparton_ days. Nobody
+<ce> knows how long it will stay, so move
+<ce> fast, and bring every potion you own.
+
+QuestFail:  [1003]
+<ce> The Daedroth is still breathing,
+<ce> %pcf, and so are you. Only one
+<ce> of those should be true.
+
+QuestComplete:  [1004]
+<ce> Look at this %ra, %pcf the
+<ce> Daedroth-slayer! Your gold. Buy
+<ce> yourself something with fewer teeth.
+
+RumorsDuringQuest:  [1005]
+That big lizard thing in ___mondung_ gives me the shivers.
+<--->
+All anyone talks about is the beast in ___mondung_.
+
+RumorsPostfailure:  [1006]
+The Daedroth is gone from its hole,
+and nobody knows where it went.
+<--->
+My wife will not let the children out after
+dark. That Daedroth is somewhere out there.
+
+RumorsPostsuccess:  [1007]
+%god bless the Fighters Guild.
+Somebody had to kill that Daedroth.
+<--->
+What was that big lizard, anyway? Nobody could tell me.
+
+QuestorPostsuccess:  [1008]
+<ce> Drinks are on the guild for the %ra
+<ce> who walked out of ___mondung_ alive.
+
+QuestorPostfailure:  [1009]
+<ce> You took the Daedroth job and lost. Next
+<ce> time, know your limits before you sign.
+
+Message:  1020
+<ce> The Daedroth falls, and
+<ce> the ground shakes with it.
+
+Message:  1030
+%qdt:
+ The Fighters Guild of ___questgiver_
+ offers _reward_ gold for the Daedroth in
+ ___mondung_, dead within =1stparton_ days.
+
+Message:  1080
+<ce> A Daedroth did not scare you,
+<ce> %pct, so ___newdung_ will not
+<ce> either. Here is the map.
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ group Questor
+
+Place _mondung_ remote dungeon
+Place _newdung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _monster_ is Daedroth
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _mondung_ 
+	log 1030 step 0 
+	pick one of _map_ _nomap_ _nomap_ _map_ 
+	place foe _monster_ at _mondung_ 
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_ 
+	give pc _reward_ 
+
+_mondead_ task:
+	killed 1 _monster_ saying 1020 
+
+_qgclicked_ task:
+	clicked npc _questgiver_ 
+
+_1stparton_ task:
+	end quest 
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_ 
+	say 1003
+	clear _qgclicked_ _clearclick_ 
+
+variable _map_
+variable _nomap_
+_S.07_ task:
+	when _map_ and _pcgetsgold_ 
+	reveal _newdung_ readmap
+    say 1080 
+
+_S.08_ task:
+	when _nomap_ and _pcgetsgold_ 
+
+_S.09_ task:
+	when _S.07_ or _S.08_ 
+	end quest

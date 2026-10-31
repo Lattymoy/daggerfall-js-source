@@ -88,12 +88,9 @@ function handle(m) {
     // keep off the frame. The stats go back so the host can log them.
     if (m.t === 'roads') {
       roads = null;
-      // ROADS 22: his arrays arrive ready-made and ride every job from
-      // now on; no build, no cache, nothing to wait for.
-      // AUDIT 58 F3: `smooth` rides his data on this arm too - it was
-      // dropped here (and at both of the client's rebuilds) while `water`
-      // survived, so the Mods pane's SmoothRoads switch was inert on the
-      // path the game actually takes.
+      // ROADS 22: a network handed in ready-made rides every job from now
+      // on; no build, no cache, nothing to wait for (the tests' door).
+      // AUDIT 58 F3: `smooth` rides it on this arm too.
       if (m.net) { roads = { roads: m.net.roads, tracks: m.net.tracks, rivers: m.net.rivers ?? null, streams: m.net.streams ?? null, water: !!m.net.water, smooth: m.net.smooth !== false }; globalThis.postMessage({ t: 'roads', stats: m.stats ?? null, net: null }); return; }
       if (m.settlements && woods) {
         // ROADS 19: through the cache. The key is everything that shapes
@@ -106,13 +103,13 @@ function handle(m) {
           key: roadsCacheKey({ settlements: m.settlements, woodsLength: woods._bytes?.byteLength ?? 0 }),
           build: () => buildRoadsFromSettlements(m.settlements, woods),
         }).then((net) => {
-          roads = net ? { roads: net.roads, tracks: net.tracks, ...(m.switches ?? {}) } : null;   // ROADS 24
+          roads = net ? { roads: net.roads, tracks: net.tracks, rivers: net.rivers ?? null, streams: net.streams ?? null, ...(m.switches ?? {}) } : null;   // ROADS 24; OWN-WORK2: the rivers
           // ROADS 7: the map draws the network too, on this thread's other
           // side, so the arrays go back ONCE - a copy, transferred - and
           // the worker keeps its own for the terrain jobs.
-          const back = roads ? { roads: roads.roads.slice(), tracks: roads.tracks.slice() } : null;
+          const back = roads ? { roads: roads.roads.slice(), tracks: roads.tracks.slice(), rivers: roads.rivers?.slice() ?? null, streams: roads.streams?.slice() ?? null } : null;
           const stats = net ? { ...net.stats, cached: !!net.cached } : null;
-          globalThis.postMessage({ t: 'roads', stats, net: back }, back ? [back.roads.buffer, back.tracks.buffer] : []);
+          globalThis.postMessage({ t: 'roads', stats, net: back }, back ? [back.roads, back.tracks, back.rivers, back.streams].filter(Boolean).map((a) => a.buffer) : []);
           pendingRoads = null;
         });
       }

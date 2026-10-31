@@ -37,7 +37,7 @@ const quiet = async (fn) => { const w = console.warn, l = console.log, i = conso
 const settle = async () => { for (let k = 0; k < 5; k++) await new Promise((r) => setTimeout(r, 0)); };
 
 /** The fifty as the port reads the mod's tables - `[id, name, affinity]`, ascending. */
-const dexRows = () => [...dexRead({ log: silent, mudex: false }).enemies].sort((a, b) => a[0] - b[0]).map(([id, e]) => [id, e.props.name, e.row.affinity]);
+const dexRows = () => [...dexRead({ log: silent, meaner: false }).enemies].sort((a, b) => a[0] - b[0]).map(([id, e]) => [id, e.props.name, e.row.affinity]);
 
 // ─── THE LAW: every one of the fifty, its hide ───────────────────────────────────────────────────────────────────────
 

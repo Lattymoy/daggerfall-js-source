@@ -42,8 +42,10 @@ const S1 = passSeasonById('s1');
 const HEART_T = S1.stages[2].fromMs + 30 * 60_000;   // mid-hour in the third stage: no tremor
 const U = UNITS_PER_METRE;
 const settle = async () => { for (let i = 0; i < 8; i++) await new Promise((r) => setImmediate(r)); };
-const vendored = (k) => new Uint8Array(readFileSync(join(ROOT, 'vendor/roads-hazelnut', `${k}Data.bytes`)));
-const NET = { roads: vendored('road'), tracks: vendored('track') };
+/** OWN-WORK2: a network of the test's own on the Bay (Basic Roads' arrays are retired) - a road east-west along every
+ *  seventh row; the Bay's draws keep off it as the old law's did. */
+const NET = { roads: new Uint8Array(500_000), tracks: new Uint8Array(500_000) };
+for (let i = 0; i < NET.roads.length; i++) if (Math.floor(i / 1000) % 7 === 0) NET.roads[i] = 0x22;
 
 /** Two Bay regions of 400 pixels each, every pixel its own town's (the season's test scan). */
 function bayScan(regions = [17, 23]) {
@@ -152,7 +154,7 @@ test('W14 THE ROADS PAST THE BAY: a province\'s draw whose heart comes within FI
     assert.ok(bare.some(near), 'some drawn on a road');
     assert.equal(kept.filter(near).length, 0, 'none kept on one');
     assert.deepEqual(theatreFissures(1, 2, SKYRIM, empty).map((f) => f.key), kept.map((f) => f.key), 'the same every run');
-    assert.deepEqual(stageFissures(1, 2, SCAN, NET).map(idOf), oldStage(1, 2, SCAN, NET), 'the Bay\'s keep off Basic Roads\' arms as before');
+    assert.deepEqual(stageFissures(1, 2, SCAN, NET).map(idOf), oldStage(1, 2, SCAN, NET), 'the Bay\'s keep off its roads\' arms as before');
   } finally { setArenaRoads(null); }
 });
 

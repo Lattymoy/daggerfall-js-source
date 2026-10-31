@@ -78,7 +78,7 @@ test('NO-BETHESDA2 RR: 197_4-0, 197_5-0 and the seventeen buttons are built thro
       assert.deepEqual([uploads[0].key, uploads[0].width, uploads[0].height], ['buttons:21', 3, 2]);
       assert.deepEqual([...new Uint8Array(uploads[0].colors.buffer, 0, 24)], [...pic.data], 'the built picture is the button');
       assert.deepEqual(fetched, ['197_0-0']);
-      assert.ok(RR_BUTTON_RECORDS.every((r) => RR_DERIVED[`BUTTONS.RCI_${r}-0`]?.rci === 'BUTTONS.RCI'), 'every button is a BUTTONS.RCI record\'s spec');
+      assert.ok(RR_BUTTON_RECORDS.every((r) => RR_DERIVED[`BUTTONS.RCI_${r}-0`]?.file === 'BUTTONS.RCI'), 'every button is a BUTTONS.RCI record\'s spec');
     });
   } finally {
     _setMessageBoxArtForTests(null);

@@ -398,7 +398,7 @@ const HARDCODED = {
   'src/systems/enchanting.js': 7,
   'src/systems/enchantmentCatalogue.js': 65,
   'src/systems/enemyExpansion/dexTableText.js': 5,   // DEX0: the mod's tables as text, verbatim (data, read by its own parser). AUDIT DEX A6: the fifty enemies' names among it are the game's own English (the Foes table's keys, the save); a player reads them through enemyExpansion/dexNames.js, in the player's language (getLocalizedEnemyName's custom arm), where DFU shows a custom enemy's English in every language
-  'src/systems/enemyExpansion/mudexTableText.js': 2,   // MUDEX1: MUDEX's two tables as text, verbatim (data, read by DEX's parser) - its classic lines' names ("Sabertooth Tiger") are a classic row's properties, never shown; its enemies' names are DEX's
+  'src/systems/enemyExpansion/dexMeaner.js': 1,   // OWN-WORK2: the encounter table's header, `Name,Table Indices,...` - the column DEX's reader asks for by that name (dexTables.js readEncounterTables), data, never shown
   'src/systems/enemyExpansion/dexBodies.js': 8,   // DEX7: the census's miss and sprite reasons (creatureBodies.js's eight are the classic table's) - read by the tests, never shown to a player: a miss keeps its sprite
   'src/systems/enemyExpansion/dexSpells.js': 1,   // DEX4a: the mod's `[DEX] Unknown enemy spell table` Debug.LogError line, verbatim - through the install's `log` seam, never shown to a player
   'src/systems/enemyExpansion/dexTables.js': 29,   // DEX1 (24) and DEX3 (5, ParseEncounterTables' and the first Update's): the mod's `[DEX]` Debug.LogError lines, verbatim - console diagnostics through the reading's `log` seam (a test silences it), never shown to a player

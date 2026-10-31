@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -17,15 +18,14 @@ import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second
 
 // ═══ AMBIENT TEXT 1.8 - Regnier (AT1/AT2) ═════════════════════════
 //
-// The mod is forty lines of arithmetic around 918 lines of the
-// author's prose, so the pins here are aimed at the arithmetic AND at
-// the reach: a key law that cannot reach a line the author wrote is
+// The mod is forty lines of arithmetic around a table of 918 lines,
+// DFO's own since OWN-WORK2, so the pins here are aimed at the arithmetic
+// AND at the reach: a key law that cannot reach a line in the table is
 // the same bug as a wrong interval, and only one of the two is visible
 // in a diff.
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => hostText(p);
-const vendor = (p) => JSON.parse(read(`vendor/ambient-text/${p}`));
 
 /** A rolls() that hands back a queued list of [0, 1) values and then
  *  throws - a test that rolls more than it planned is a test that has
@@ -46,12 +46,22 @@ function mod({ rolls, settings = SETTINGS, where = () => ({}), say = () => {}, .
   return createAmbientText({ settings: () => settings, rolls, where, say, ...rest });
 }
 
-// ── The vendored files, and the port's restatement of them ─────────
+// ── The mod's settings, and the port's restatement of them ─────────
+
+// OWN-WORK2 (2026-10-31): Ambient Text 1.8's modsettings.json, written out when its vendored copy left the tree - one
+// section, AmbientText, and four SliderIntKeys.
+const SHIPPED = Object.freeze({
+  Name: 'AmbientText',
+  Keys: [
+    { Name: 'textChance', Min: 0, Max: 100, Value: 33, Description: 'Chance % of selecting any ambient text each interval' },
+    { Name: 'interval', Min: 60, Max: 600, Value: 200, Description: 'Interval length between checking ambient text in real time seconds' },
+    { Name: 'postTextInterval', Min: 60, Max: 600, Value: 500, Description: 'Interval length after displaying a message in real time seconds' },
+    { Name: 'textDisplayTime', Min: 1, Max: 10, Value: 3, Description: 'Length of time text messages are displayed in seconds' },
+  ],
+});
 
 test('AT0: the settings entry IS the mod’s modsettings - section, names, bounds and defaults', () => {
-  const ship = vendor('modsettings.json');
-  assert.equal(ship.Sections.length, 1, 'the mod ships one section');
-  assert.equal(ship.Sections[0].Name, AMBIENT_TEXT_SECTION);
+  assert.equal(SHIPPED.Name, AMBIENT_TEXT_SECTION);
   const keys = MOD_SETTINGS[AMBIENT_TEXT_VENDOR].keys;
   // PLAIN-TEXT (2026-10-19): the four lines said plainly for a player - their words, exactly
   const PLAIN = {
@@ -60,9 +70,8 @@ test('AT0: the settings entry IS the mod’s modsettings - section, names, bound
     postTextInterval: 'Real-time seconds to wait after a line is shown',
     textDisplayTime: 'Seconds a line stays on screen',
   };
-  // Derived from the shipped file, so a hand-typed bound cannot drift:
-  // every key the mod ships is restated with ITS numbers.
-  for (const k of ship.Sections[0].Keys) {
+  // Every key the mod ships is restated with ITS numbers.
+  for (const k of SHIPPED.Keys) {
     const here = keys[k.Name];
     assert.ok(here, `modsettings ships ${k.Name} and the port does not carry it`);
     assert.equal(here.default, k.Value, `${k.Name}: default`);
@@ -72,7 +81,7 @@ test('AT0: the settings entry IS the mod’s modsettings - section, names, bound
   }
   // ...and the port carries NOTHING the mod does not, beyond its own
   // Enabled (DFU enables a mod by listing it; the port has no list).
-  const shipped = new Set(ship.Sections[0].Keys.map((k) => k.Name));
+  const shipped = new Set(SHIPPED.Keys.map((k) => k.Name));
   for (const k of Object.keys(keys)) {
     assert.ok(k === 'Enabled' || shipped.has(k), `the port invented a switch the mod has no key for: ${k}`);
   }
@@ -88,25 +97,36 @@ test('AT1: LoadSettings reads the mod’s four keys, and `interval` lands in std
   assert.deepEqual(s, { textChance: 7, stdInterval: 61, postTextInterval: 599, textDisplayTime: 9 });
 });
 
-test('AT1: the vendored table is the mod’s own, unrewritten', () => {
-  const ship = vendor('ambientTexts.json');
-  assert.equal(Object.keys(ship).length, 918, 'the bundle carries 918 lines');
-  assert.deepEqual(Object.keys(AMBIENT_TEXTS).sort(), Object.keys(ship).sort(), 'the module reads the vendored file');
-  assert.equal(AMBIENT_TEXTS.NoneDesert0, 'Your feet slide in the sand.');
-  assert.equal(AMBIENT_TEXTS.Crypt0, ship.Crypt0);
-  // Every value is a real line - the mod's IsNullOrWhiteSpace arm is a
-  // guard, not a feature of the table.
+test('OWN-WORK2: the table is DFO’s own - the mod’s 918 keys, our lines, plain and Tamriel-wide', () => {
+  // The keys are the mod's (its frequency curve, below); the lines are ours. The sha256 is of the sorted keys, one a
+  // line - a changed, added or dropped key fails it.
+  const keys = Object.keys(AMBIENT_TEXTS).sort();
+  assert.equal(keys.length, 918, 'the mod builds 918 keys that speak');
+  assert.equal(createHash('sha256').update(keys.join('\n')).digest('hex'), '09588f1e2ccd329b2e771dfc90635a18efa4aff85beb954ac3775f462633467f');
+  assert.equal(AMBIENT_TEXTS.NoneDesert0, 'Sweat dries on your skin as fast as it comes.');
+  assert.equal(AMBIENT_TEXTS.Crypt0, 'Stone lids bear the carved faces of the dead.');
+  const src = read('src/systems/ambientText.js');
+  assert.match(src, /^import AMBIENT_TEXTS from '\.\/ambientTextLines\.json' with \{ type: 'json' \};$/m, 'the module reads our table');
+  assert.doesNotMatch(src, /vendor\//, 'nothing is read from vendor/');
+  // Every value is a real line - the mod's IsNullOrWhiteSpace arm is a guard, not a feature of the table. The HUD
+  // says it as it is (processGrammar is English's identity), so it carries no macro; PLAIN-TEXT's limits hold, and
+  // a line that can show anywhere in Tamriel names no one place (TAMRIEL-WIDE).
   for (const [k, v] of Object.entries(AMBIENT_TEXTS)) {
     assert.equal(typeof v, 'string', `${k} is not a line`);
     assert.ok(v.trim().length, `${k} is blank`);
+    assert.doesNotMatch(v, /[%{}<>]/, `${k} carries a macro`);
+    assert.ok(v.split(/\s+/).length <= 40, `${k} is past 40 words`);
+    for (const sentence of v.split(/[.!?]/)) assert.ok(sentence.split(/\s+/).filter(Boolean).length <= 25, `${k} has a sentence past 25 words`);
+    assert.doesNotMatch(v, /iliac|\bbay\b|daggerfall/i, `${k} names the Bay`);
   }
+  assert.equal(new Set(Object.values(AMBIENT_TEXTS)).size, 918, 'no line is said for two keys');
 });
 
-// ── THE REACH: the key law against the author's own keys ───────────
+// ── THE REACH: the key law against the mod's own keys ──────────────
 
 test('AT1: EVERY line in the table is reachable by the key the mod builds', () => {
   // THE PIN THAT MATTERS. A key law that cannot spell one of the
-  // author's 918 keys does not crash and does not show in a diff - it
+  // table's 918 keys does not crash and does not show in a diff - it
   // just silently never says that line. So the reachable set is
   // GENERATED from ambientTextKey over every input it can be handed,
   // and the table must fit inside it. Change a separator, drop the
@@ -132,18 +152,18 @@ test('AT1: EVERY line in the table is reachable by the key the mod builds', () =
     }
   }
   const lost = Object.keys(AMBIENT_TEXTS).filter((k) => !reachable.has(k));
-  assert.deepEqual(lost, [], 'these lines the author wrote can never be said:');
+  assert.deepEqual(lost, [], 'these lines in the table can never be said:');
 });
 
 test('AT1: the table is SPARSE, and the port does not fill it', () => {
   // 233 families x 10 would be 2330; there are 918. The gaps ARE the
-  // author's frequency curve - a family with one line speaks rarely.
+  // mod's frequency curve - a family with one line speaks rarely.
   // A port that picked "from the keys that exist" would flatten it.
   const families = new Set(Object.keys(AMBIENT_TEXTS).map((k) => k.replace(/\d$/, '')));
   assert.equal(families.size, 233);
   assert.ok(Object.keys(AMBIENT_TEXTS).length < families.size * 10, 'the table is no longer sparse - did something fill it?');
   assert.equal(hasAmbientText('ReligionTempleDay0'), true);
-  assert.equal(hasAmbientText('HomeYourShipsDayCloudy0'), false, 'a family the author left short must stay short');
+  assert.equal(hasAmbientText('HomeYourShipsDayCloudy0'), false, 'a family the mod left short must stay short');
   // ...and the miss is answered with silence, not a neighbour.
   const m = mod({ rolls: queue(pick(4, 10), pick(2, 3)), where: () => ({ inLocationRect: true, locationType: LOCATION_TYPES.HomeYourShips, isDay: true, weather: 'overcast' }) });
   assert.equal(m.selectAmbientText(), null);
@@ -239,7 +259,7 @@ test('AT1: the tail roll spans all THREE registers - Random.Range(0, 3), not two
   // must reach the time-and-weather form, and a roll at 0 the climate.
   const where = () => ({ inLocationRect: true, locationType: LOCATION_TYPES.TownCity, climateIndex: 224, isDay: true, weather: 'rain' });
   const one = (tailRoll) => mod({ rolls: queue(pick(2, 10), tailRoll), where }).selectAmbientText();
-  assert.ok(AMBIENT_TEXTS.TownCityDesert2 && AMBIENT_TEXTS.TownCityDay2 && AMBIENT_TEXTS.TownCityDayRainy2, 'the three fixtures are lines the author wrote');
+  assert.ok(AMBIENT_TEXTS.TownCityDesert2 && AMBIENT_TEXTS.TownCityDay2 && AMBIENT_TEXTS.TownCityDayRainy2, 'the three fixtures are lines in the table');
   assert.equal(one(0.0), AMBIENT_TEXTS.TownCityDesert2, 'roll 0 -> the climate');
   assert.equal(one(0.5), AMBIENT_TEXTS.TownCityDay2, 'roll 0.5 -> the hour');
   assert.equal(one(0.999), AMBIENT_TEXTS.TownCityDayRainy2, 'roll 0.999 -> the hour AND the sky; a Range(0, 2) can never get here');
@@ -272,7 +292,7 @@ test('AT1: lastIndex is written ONLY on a hit, so a run of misses does not narro
 
 test('AT1: the do/while re-rolls until the index differs from the one that last spoke', () => {
   const where = () => ({ inLocationRect: false, climateIndex: 224 });   // NoneDesert*
-  // First: index 5 (a line the author wrote), tail 0 -> NoneDesert5.
+  // First: index 5 (a line in the table), tail 0 -> NoneDesert5.
   // Then: 5 refused twice, 6 accepted.
   const m = mod({ rolls: queue(pick(5, 10), pick(0, 3), pick(5, 10), pick(5, 10), pick(6, 10), pick(0, 3)), where });
   assert.equal(m.selectAmbientText(), AMBIENT_TEXTS.NoneDesert5);
@@ -386,7 +406,7 @@ test('AT2: a paused game and an unclaimed host both say nothing, and neither spe
 });
 
 test('AT2: a blank line is treated as no line - IsNullOrWhiteSpace, and the post-text interval is NOT armed', () => {
-  // The author's own table carries no blank line (pinned above), so the
+  // Our table carries no blank line (pinned above), so the
   // guard is driven through the `texts` seam - the static Hashtable a
   // test cannot otherwise reach.
   const blank = createAmbientText({
@@ -443,7 +463,7 @@ test('AUDIT AT F-SING: the SHIPPED mod runs - the slot, the tick and the HUD, dr
   //
   // So this drives the real one, end to end: a host claims the slot,
   // the tick runs on the wall clock the shipped path uses, and a line
-  // the author wrote comes back out of the host's own `say`.
+  // of the table comes back out of the host's own `say`.
   const said = [];
   let inside = false;
   setAmbientTextHost({
@@ -465,7 +485,7 @@ test('AUDIT AT F-SING: the SHIPPED mod runs - the slot, the tick and the HUD, dr
     for (const [text, seconds] of said) {
       assert.equal(typeof text, 'string');
       assert.ok(text.trim().length, 'a blank line reached the HUD');
-      assert.ok(Object.values(AMBIENT_TEXTS).includes(text), 'the line is one the author wrote');
+      assert.ok(Object.values(AMBIENT_TEXTS).includes(text), 'the line is one in the table');
       assert.match(text, /^\w/, 'and it is prose, not a key');
       assert.equal(seconds, MOD_SETTINGS[AMBIENT_TEXT_VENDOR].keys.textDisplayTime.default,
         'AddHUDText carries the mod\u2019s own textDisplayTime');

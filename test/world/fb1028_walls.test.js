@@ -24,6 +24,7 @@ import { ringAsWas } from '../../src/world/terrain/terrainGen.js';   // FB1028 Y
 import { townRoadRing, townGroundMask } from '../../src/world/terrain/terrainTiles.js';
 import { townGroundMaskBefore } from '../../src/world/terrain/townBlendBefore.js';
 import { blockFromJson } from '../../src/formats/worldData/worldDataReplacement.js';
+import { bayRoads } from '../bayRoads.mjs';   // OWN-WORK2
 
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !['BLOCKS.BSA', 'MAPS.BSA', 'ARCH3D.BSA', 'WOODS.WLD'].every((f) => existsSync(join(ARENA2 ?? '', f))) ? 'ARENA2_PATH not set or missing - real-data validation skipped' : false;
@@ -268,8 +269,7 @@ async function freeware() {
   const { dfMeshToModel } = await import('../../src/world/meshReader.js');
   const { installTownOutline } = await import('../../src/world/townOutline.js');
   const { installArena } = await import('../../src/world/arena/arenaCity.js');
-  const roadsB = new Uint8Array(readFileSync(new URL('../../vendor/roads-hazelnut/roadData.bytes', import.meta.url)));
-  const tracksB = new Uint8Array(readFileSync(new URL('../../vendor/roads-hazelnut/trackData.bytes', import.meta.url)));
+  const { roads: roadsB, tracks: tracksB } = bayRoads();   // OWN-WORK2: the Bay's own network
   setTownWallPaths(townWallPathsReader({ bay: () => ({ roads: roadsB, tracks: tracksB }) }));   // every wall made on its roads, as the game makes it
   const bytes = (f) => new Uint8Array(readFileSync(join(ARENA2, f)));
   const blocks = new BlocksFile(); blocks.load(bytes('BLOCKS.BSA'));
@@ -370,6 +370,7 @@ test('FB1028 with ARENA2: every eighth Bay walled city\'s pixel as the game lays
       }
       // every gate on a road: a tile a step out of its opening a road's, joined by road tiles to the painter's off its ground
       const road = (i) => !!job.paths[i] || paving(i), ground = job.townGround;
+      if (!roadsB[py * 1000 + px]) continue;   // OWN-WORK2: a city on the sea's own pixel (Antelibuton) has no road out
       for (const g of openings) {
         gates++;
         const from = [8, 10, 12].map((t) => { const tx = Math.floor((g.at[0] + g.out[0] * t) / 6.4 + o.x), ty = Math.floor((g.at[1] + g.out[1] * t) / 6.4 + o.y); return tx + ty * D; }).find((i) => i >= 0 && i < D * D && road(i));
@@ -385,18 +386,20 @@ test('FB1028 with ARENA2: every eighth Bay walled city\'s pixel as the game lays
       }
     }
   }
-  assert.ok(gates > 150 && onRoad / gates > 0.97, `${onRoad} of ${gates} gates on a road out (${streetsNear} street tiles within two lengths of a gate)`);
+  // PIN MOVED (OWN-WORK2): over 150 gates on Basic Roads' arrays; 108, every one on a road out, on the Bay's own network
+  assert.ok(gates > 100 && onRoad / gates > 0.97, `${onRoad} of ${gates} gates on a road out (${streetsNear} street tiles within two lengths of a gate)`);
 });
 
-/** a779c9c29's yards (the bare law: townGroundOf with no measures, yardSitesOn and craftYardSitesOn) - kind, gx, gy, turn. */
+/** a779c9c29's yards (the bare law: townGroundOf with no measures, yardSitesOn and craftYardSitesOn) - kind, gx, gy, turn.
+ *  PIN MOVED (OWN-WORK2): on the Bay's own network - Aldhope's, Mogandaton's and Newcester's stables moved with its roads. */
 const YARDS_1184 = {
   Agogurana: ['stable 316 276 0', 'transport 125 171 3', 'carpenter 167 129 2'],
-  Aldhope: ['stable 148 58 1', 'transport 119 274 0', 'carpenter 120 286 1'],
+  Aldhope: ['stable 56 152 1', 'transport 119 274 0', 'carpenter 120 286 1'],
   'Ceranda-Kom': ['stable 276 60 1', 'transport 223 183 0', 'carpenter 119 271 0'],
   Daggerfall: ['stable 88 56 0', 'transport 344 220 3', 'carpenter 212 315 1'],
   Mettula: ['stable 56 91 1', 'transport 314 180 1', 'carpenter 255 148 0'],
-  Mogandaton: ['stable 56 343 1', 'transport 165 257 3', 'carpenter 184 271 0'],
-  Newcester: ['stable 57 148 0', 'transport 314 211 0', 'carpenter 176 180 2'],
+  Mogandaton: ['stable 224 56 0', 'transport 165 257 3', 'carpenter 184 271 0'],
+  Newcester: ['stable 58 212 0', 'transport 314 211 0', 'carpenter 176 180 2'],
   Tsetono: ['stable 152 56 0', 'transport 136 190 0', 'carpenter 169 187 0'],
 };
 
@@ -434,7 +437,7 @@ test('FB1028 YARDS with ARENA2: every yard where #1184 stood it - placed on the 
   // PIN MOVED (AUDIT FB1028 YARDS): the host's wiring is read in the unskipped "the host" test below
 });
 
-test('FB1028 YARDS with ARENA2: a yard broken by the new wall and roads placed again - Chesterbeth\'s Wagon Yard on a gate\'s new road (the bare law\'s; Knightsmore\'s and Akhahanu\'s break only with the game\'s measures) stands again by its law clear of the new roads and wall and of its town\'s other yards, which keep a779c9c29\'s cells (mutant: a broken yard kept)', { skip: skipReal, timeout: 1_800_000 }, async () => {
+test('FB1028 YARDS with ARENA2: a yard broken by the new wall and roads placed again - Berbemijet\'s Wagon Yard on the new ground (PIN MOVED (OWN-WORK2): Chesterbeth\'s on Basic Roads\' arrays) stands again by its law clear of the new roads and wall and of its town\'s other yards, which keep a779c9c29\'s cells (mutant: a broken yard kept)', { skip: skipReal, timeout: 1_800_000 }, async () => {
   const { cities, maps, blocks, roadsB, tracksB, pixelOf, bytes } = await freeware();
   const { setLocationTiles } = await import('../../src/world/terrain/terrainTiles.js');
   const { generatePixelTerrain } = await import('../../src/world/terrain/terrainGen.js');
@@ -442,18 +445,18 @@ test('FB1028 YARDS with ARENA2: a yard broken by the new wall and roads placed a
   const { layoutLocation } = await import('../../src/world/locationLayout.js');
   const Y = await import('../../src/world/merchantYards/merchantYardSites.js');
   const woods = new WoodsFile(); woods.load(bytes('WOODS.WLD'));
-  const loc = cities.find((c) => c.name === 'Chesterbeth'), { px, py } = pixelOf(loc), tm = new Uint8Array(D * D), rect = setLocationTiles(loc, maps, blocks, tm);
+  const loc = cities.find((c) => c.name === 'Berbemijet'), { px, py } = pixelOf(loc), tm = new Uint8Array(D * D), rect = setLocationTiles(loc, maps, blocks, tm);
   rect.gateRoads = townGateRoads(loc, maps, blocks);
   const job = generatePixelTerrain({ woods, px, py, tilemap: tm, locationRect: rect, hasLocation: true, climateType: 0, roads: { roads: roadsB, tracks: tracksB, smooth: true } });
   const yl = layoutLocation(loc, maps, blocks), str = (q) => `${q.kind} ${q.gx} ${q.gy} ${q.turn}`;
   const was = Y.townGroundOf(yl, {}, townWalkShut(loc, job.townGround, job.yardPaths, true)), sites = [...Y.yardSitesOn(was), ...Y.craftYardSitesOn(was)];
-  assert.deepEqual(sites.map(str), ['stable 292 60 0', 'transport 210 37 1', 'carpenter 279 116 0'], 'placed on #1184\'s ground, a779c9c29\'s cells');
+  assert.deepEqual(sites.map(str), ['stable 315 148 0', 'transport 308 330 0', 'carpenter 184 147 3'], 'placed on the yards\' ground');
   const now = () => Y.townGroundOf(yl, {}, townWalkShut(loc, job.townGround, job.paths)), g = now();
   assert.ok(!Y.siteFits(g, sites[1]), 'its Wagon Yard broken on the new ground');
   const run = (gen) => { let r; while (!(r = gen.next()).done); return r.value; };
   const kept = run(Y.keptSitesSteps(now(), sites, []));
-  assert.deepEqual([str(kept[0]), str(kept[2])], ['stable 292 60 0', 'carpenter 279 116 0'], 'the others kept');
-  assert.notEqual(str(kept[1]), 'transport 210 37 1', 'the Wagon Yard placed again');
+  assert.deepEqual([str(kept[0]), str(kept[2])], ['stable 315 148 0', 'carpenter 184 147 3'], 'the others kept');
+  assert.notEqual(str(kept[1]), 'transport 308 330 0', 'the Wagon Yard placed again');
   assert.ok(kept.every((s) => Y.siteFits(g, s)), 'every yard fits the new ground');
   const t = kept[1];
   for (const q of [kept[0], kept[2]]) assert.ok(t.gx + t.nx <= q.gx || q.gx + q.nx <= t.gx || t.gy + t.nz <= q.gy || q.gy + q.nz <= t.gy, `clear of its ${q.kind}`);
@@ -693,14 +696,14 @@ async function placedYards(f, loc, { keep = true } = {}) {
   return { sites: keep ? runAll(ys.keptTownSitesSteps(yl, measures, shut.now, townYardsOf(loc), sites, [])) : sites, job, yl, measures, shut };
 }
 
-test('FB1028 YARDS Y1 with ARENA2: the gates\' things as #1184 laid them - Knightsgate\'s, Issaqumbaa\'s and Syra-Kom\'s stables placed on #1184\'s cells; Knightsgate\'s kept there, the other two on a gate\'s new road placed again (mutants: the carrier as it stands; the keep reads #1184\'s things)', { skip: skipReal, timeout: 1_800_000 }, async () => {
+test('FB1028 YARDS Y1 with ARENA2: the gates\' things as #1184 laid them - Berbaaqnia\'s, Bubogureg\'s and Atrahaga\'s stables placed on #1184\'s cells (PIN MOVED (OWN-WORK2): Knightsgate\'s, Issaqumbaa\'s and Syra-Kom\'s on Basic Roads\' arrays); Berbaaqnia\'s kept there, the other two placed again (mutants: the carrier as it stands; the keep reads #1184\'s things)', { skip: skipReal, timeout: 1_800_000 }, async () => {
   const f = await freeware();
-  const was = { Knightsgate: 'stable 55 229 1', Issaqumbaa: 'stable 152 55 0', 'Syra-Kom': 'stable 49 341 2' };
+  const was = { Berbaaqnia: 'stable 380 43 0', Bubogureg: 'stable 228 398 3', Atrahaga: 'stable 88 41 1' };
   for (const loc of f.cities.filter((c) => was[c.name])) {
     const { sites } = await placedYards(f, loc, { keep: false });
     assert.equal(siteStr(sites[0]), was[loc.name], `${loc.name}: its stable on #1184's cells`);
     const kept = (await placedYards(f, loc)).sites[0];
-    if (loc.name === 'Knightsgate') assert.equal(siteStr(kept), was[loc.name], 'Knightsgate\'s kept');
+    if (loc.name === 'Berbaaqnia') assert.equal(siteStr(kept), was[loc.name], 'Berbaaqnia\'s kept');
     else assert.notEqual(siteStr(kept), was[loc.name], `${loc.name}'s on today's road: placed again`);
   }
 });

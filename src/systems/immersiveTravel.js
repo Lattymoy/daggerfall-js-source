@@ -1,9 +1,9 @@
 // IT1 (2026-10-04, the owner: "Actually lets let this be the next mod we integrate 1:1", after asking how instant
 // travel could come back online "as an option but with a cost"): IMMERSIVE TRAVEL 1.5, by kkgobkk - "Implements
-// diegetic fast-travel by adding carriages outside of city gates." (vendor/immersive-travel/README.md).
+// diegetic fast-travel by adding carriages outside of city gates." (the manifest's own description).
 //
-// THE MOD, WHOLE. A carriage, two horses and a driver stand outside the gate of every walled city (its four
-// WALLAA08-11 gate blocks - vendor/immersive-travel/WorldDataPatches). The driver belongs to a faction the mod
+// THE MOD, WHOLE. A carriage, two horses and a driver stand outside the gate of every walled city (OWN-WORK2: our own
+// stand, world/immersiveTravelGates.js, where the mod edited WALLAA08-11). The driver belongs to a faction the mod
 // registers, Carriage Drivers (8642), whose custom merchant service is "Fast Travel": talk to him and his travel map
 // opens. A trip picked there is Daggerfall's own fast travel, priced by the mod's own calculator - a daily carriage fee
 // on top of the inn nights - and refused where the driver will not go (a type of place the settings bar, another
@@ -13,7 +13,7 @@
 // player's own map refuses a trip to a place.
 //
 // THE PORT'S LAW IS THE ASSEMBLY. The bundle carries ImmersiveTravel.dll and no C# source; every rule here is read off
-// its IL (vendor/immersive-travel/il/ImmersiveTravel.il.txt, `tools/ilDump.py`), cited `IL_xxxx`, the mod's own bugs
+// its IL (Immersive Travel 1.5's assembly, dumped by `tools/ilDump.py`), cited `IL_xxxx`, the mod's own bugs
 // carried as it ships them and named where they stand. DFU's own popup is ui/travel/travelPopUp.js; this module is what the
 // mod changes about it, as pure functions both map skins run (ui/travel/travelMapWindow.js + ui/travel/travelPopUp.js, the classic
 // window; ui/heldMap.js, the enhanced one).
@@ -73,7 +73,7 @@ export const IT_TEXT = Object.freeze({
 });
 
 // ── the settings ───────────────────────────────────────────────────────────────────────────────────────────────────
-/** The mod's eighteen keys (vendor/immersive-travel/modsettings.json), read through the store - the room's value
+/** The mod's eighteen keys (Immersive Travel 1.5's modsettings.json), read through the store - the room's value
  *  online where systems/online/onlineLane.js says so. `get` is injectable for the pins. */
 export function readImmersiveTravelSettings(get = modSetting) {
   const v = (k) => get(IMMERSIVE_TRAVEL_VENDOR, k);
@@ -376,13 +376,13 @@ export const immersiveTravelLoaded = () => modLatchedOn(IMMERSIVE_TRAVEL_VENDOR)
  * ImmersiveTravelPopUp for its popup with DisableNormalTravel) are the hosts' and ui/ - an IT kind on the map's bag.
  */
 /** DRIVER-FACE (FIELD BUGS 2026-10-09b, "NPC Shrarton in Tasoparet face sprite missing."): THE ONE DRIVER WITH NO
- *  FACE. The mod stands a carriage driver at each of the four city gates (WorldDataPatches WALLAA08-11); WALLAA09's is
- *  the flat TEXTURE.357 record 3, a bearded man, which FLATS.CFG has no row for (it lists 357's princes and queen
- *  alone), and the Carriage Drivers' faction carries no flat of its own (IL_040f clears the record). So
- *  GetPortraitIndexFromStaticNPCBillboard stood its starting record - 410, TFAC00I0's grey "OOPS! Tell Mack NOW!" - on
- *  every walled city's WALLAA09 driver, in DFU with the mod as here. A departure from DFU and the mod: the flat is given
- *  the face FLATS.CFG gives classic's own bearded man (182.3, 429), as a mod writes the dictionary (staticNpc.js
- *  setFlatFaceOverride, rrVariants.js's own). The other three drivers' flats have rows, and keep them. */
+ *  FACE. Immersive Travel 1.5's own WALLAA09 driver was the flat TEXTURE.357 record 3, a bearded man, which FLATS.CFG
+ *  has no row for (it lists 357's princes and queen alone), and the Carriage Drivers' faction carries no flat of its own
+ *  (IL_040f clears the record). So GetPortraitIndexFromStaticNPCBillboard stood its starting record - 410, TFAC00I0's
+ *  grey "OOPS! Tell Mack NOW!" - in DFU with the mod as here. A departure from DFU and the mod: the flat is given the
+ *  face FLATS.CFG gives classic's own bearded man (182.3, 429), as a mod writes the dictionary (staticNpc.js
+ *  setFlatFaceOverride). OWN-WORK2: our own stand's drivers (world/immersiveTravelGates.js STAND_DRIVERS) each have a
+ *  FLATS.CFG row and none is 357.3, so no driver reads this override now; it is kept until its own decision. */
 export const IT_DRIVER_FACE = Object.freeze({ archive: 357, record: 3, faceIndex: 429 });
 
 export function installImmersiveTravel() {

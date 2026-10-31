@@ -29,6 +29,7 @@ import { QuestMachine } from '../../../src/systems/quest/machine.js';
 import { resetUid, ensureUidAtLeast } from '../../../src/systems/quest/quest.js';
 import { createQuestBridge } from '../../../src/scenes/quest/questBridge.js';
 import { makeWorld, seededRolls } from '../../guideWorld.mjs';   // the crafted world, the tables loaded
+import { QUEST_FILES } from '../../qlSources.mjs';   // OWN-WORDS1: the pack as the game reads it - our words where we have them
 import { getSeed, srand } from '../../../src/formats/dfRandom.js';
 import { quietLines } from '../../../src/ui/quest/questLens.js';
 import { remainWords, entryOpening, OPENING_MAX, QUEST_URGENT_SECONDS } from '../../../src/ui/quest/questRail.js';
@@ -501,7 +502,7 @@ test('GUIDE3 THE OPENING over the corpus - every message a quest of the 265 LOGS
   const empty = [];
   srand(4242);
   for (const f of readdirSync(join(VENDOR, 'Quests')).filter((x) => x.endsWith('.txt')).sort()) {
-    const src = readFileSync(join(VENDOR, 'Quests', f), 'utf8').replace(/^﻿/, '').split(/\r\n|\r|\n/);
+    const src = readFileSync(QUEST_FILES.get(f.replace(/\.txt$/, '').toUpperCase()).path, 'utf8').replace(/^﻿/, '').split(/\r\n|\r|\n/);
     const ids = new Set(src.flatMap((l) => { const mm = /^\s*log (\d+) step \d+\s*$/.exec(l); return mm ? [Number(mm[1])] : []; }));
     if (!ids.size) continue;
     const q = quiet(() => m.scheduleQuest(src, 0, { rolls: seededRolls(logged + 1) }));
@@ -519,6 +520,6 @@ test('GUIDE3 THE OPENING over the corpus - every message a quest of the 265 LOGS
     }
   }
   assert.deepEqual(empty, [], 'every logged entry has words to open with');
-  assert.deepEqual({ logged, headed, cut }, { logged: 408, headed: 395, cut: 55 },   // AUDIT GUIDE W4: a stop inside a closing quote ends a sentence (P0A01L00:1015)
-    'the 408 entries the corpus logs: 395 open on the %qdt header, and 56 first sentences run past OPENING_MAX (at 100 it was 159)');
+  assert.deepEqual({ logged, headed, cut }, { logged: 408, headed: 395, cut: 53 },   // AUDIT GUIDE W4: a stop inside a closing quote ends a sentence (P0A01L00:1015); PIN MOVED (OWN-WORDS1: 55 in DFU's words - ours open shorter)
+    'the 408 entries the pack logs: 395 open on the %qdt header, and 53 first sentences run past OPENING_MAX (at 100 it was 159)');
 });

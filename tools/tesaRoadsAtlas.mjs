@@ -41,7 +41,8 @@ import { DIR_DELTA } from '../src/world/road/roadNetwork.js';
 import { paintRoads } from '../src/world/road/roadPainter.js';
 import { cyrodiilTrunksFor } from '../src/scenes/tamrielRoadsHost.js';
 import { CAPITALS, capitalOnPixel, capitalGates, capitalSpanPixels } from '../src/world/tamrielCapitals.js';
-import { loadModRoads, WATER_BYTE } from '../src/world/roadsProducer.js';
+import { WATER_BYTE } from '../src/world/roadsProducer.js';
+import { bayRoads } from '../test/bayRoads.mjs';   // OWN-WORK2: the Bay's own network, off the same ARENA2
 import { isMainStoryDungeon } from '../src/world/dungeon/dungeonTextures.js';
 import { countryTemplates, countryCounts, bayLand as bayLandOf, countryRates } from '../src/world/tamrielCountry.js';
 import { lairTemplates, lairPools, LAIR_TYPES } from '../src/world/tamrielDungeons.js';
@@ -83,7 +84,7 @@ const land0 = bayLandOf(climateBay, (x, y, c) => isWaterPixel(c, woods.getHeight
 const cT = countryTemplates(rows, isMainStoryDungeon), lT = lairTemplates(rows, isMainStoryDungeon);
 const spec = rollSpec({ countryRates: countryRates(countryCounts(cT, climateBay), land0), countryTemplates: cT, lairRates: countryRates(countryCounts(lT, climateBay), land0, LAIR_TYPES), lairTemplates: lT, lairPools: lairPools(lT) });
 const read = async (url) => { const p = fileURLToPath(url); return { ok: true, arrayBuffer: async () => { const b = readFileSync(p); return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength); } }; };
-const bay = await loadModRoads(read);
+const bay = bayRoads();
 const joinLand = (x, y) => (inBay(x, y) ? !isWaterPixel(climateBay(x, y), woods.getHeightMapValue(x, y)) : heightAt(x, y) > WATER_BYTE);
 const joins = bay ? arenaJoins(bay, joinLand) : [];
 const gates = [], obstacles = [];
@@ -99,7 +100,7 @@ const nodes = [...towns, ...gates.map((g) => ({ x: g.x, y: g.y, type: LOCATION_T
 const trunks = process.argv.includes('--no-named') ? null : cyrodiilTrunksFor(pixels, walkable);   // VOYAGER-CYRODIIL: the host's own (scenes/tamrielRoadsHost.js start)
 const lattice = regionLattice(tamrielFrameInBay());
 const regions = regionsByNearness(lattice, (r) => regionHasLand(r, heightAt), { x: 500, y: 250 });
-console.log(`inputs: ${towns.length} Arena towns, ${gates.length} gates, ${joins.length} crossings (Basic Roads ${bay ? 'read' : 'NOT read'}), ${held.length} held pixels, the relief ${trace.relief ? 'on' : 'NOT on'}, ${trunks?.roads.length ?? 0} named roads; ${regions.length} regions with land (lattice ${lattice.cols} x ${lattice.rows})`);
+console.log(`inputs: ${towns.length} Arena towns, ${gates.length} gates, ${joins.length} crossings (the Bay's network ${bay ? 'built' : 'NOT built'}), ${held.length} held pixels, the relief ${trace.relief ? 'on' : 'NOT on'}, ${trunks?.roads.length ?? 0} named roads; ${regions.length} regions with land (lattice ${lattice.cols} x ${lattice.rows})`);
 if (trunks) for (const r of trunks.roads) console.log(`  ${r.name}: ${r.fromRing ? 'the ring, ' : ''}${r.stops.map((s) => `(${s[0]}, ${s[1]})`).join(' ')}`);
 
 // ── the regions, through the roads' worker's own state ──────────

@@ -1,0 +1,198 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\M0B40Y05.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 40
+-- QuestId: 5
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 81
+Quest: M0B40Y05
+DisplayName: Hunt for a Spriggan
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Woodcutters are paying the guild to get
+<ce> rid of a spriggan. It attacks them while
+<ce> they work the forest. Interested, %pcn?
+
+RefuseQuest:  [1001]
+<ce> Then I will put it on the board
+<ce> for someone with more nerve.
+
+AcceptQuest:  [1002]
+<ce> The woodcutters tried to trap it twice,
+<ce> and twice it saw them coming. So you go
+<ce> to it, in ___dungeon_. Be back within
+<ce> =2dung_ days for _gold_ gold.
+
+QuestFail:  [1003]
+<ce> Firewood at last. You are
+<ce> worth every coin, %pct.
+
+QuestComplete:  [1004]
+<ce> _gold_ gold, counted twice. It is yours.
+
+RumorsDuringQuest:  [1005]
+<ce> _woodsman_ fells more trees than anyone,
+<ce> and now blames the spriggans for
+<ce> everything. The woods were quiet before.
+
+RumorsPostfailure:  [1006]
+<ce> The spriggan got _woodsman_ in
+<ce> the end. The other woodcutters
+<ce> have packed up their axes.
+
+RumorsPostsuccess:  [1007]
+<ce> The woodcutters sing at
+<ce> their work again. Whatever
+<ce> was in the forest is gone.
+
+QuestorPostsuccess:  [1008]
+<ce> The woodcutters toast
+<ce> your name, you know.
+
+QuestorPostfailure:  [1009]
+<ce> Beaten by a walking tree. The
+<ce> guild will not let you forget it.
+
+QuestLogEntry:  [1010]
+On %qdt,
+ ___qgiver_'s Fighters Guild sent
+ me after a spriggan that attacks
+ woodcutters. It hides in
+ ___dungeon_, and the job must be
+ done within =2dung_ days.
+
+Message:  1011
+<ce> The spriggan crumbles into
+<ce> dead wood and leaves.
+
+Message:  1020
+<ce> Why do you strike me, %ra? Yes, I
+<ce> hunt the woodcutters. They kill my
+<ce> saplings. Would you stand still for
+<ce> that? Make them cut with care, and
+<ce> I will leave them be. Will you?
+
+Message:  1021
+<ce> _woodsman_ is the worst. %G3 axe spares
+<ce> nothing. Seek __woodsman_ in ___woodsman_
+<ce> and win %g3 word. Then stay away. The forest
+<ce> itself will tell me if %g3 word holds.
+
+Message:  1022
+<ce> Then you are like the rest of
+<ce> them, and you will die like them.
+
+Message:  1023
+<ce> A bargain with a talking tree? My
+<ce> grandmother would laugh. Still, I
+<ce> like my neck. We will cut with
+<ce> care. You have my word, %pcn.
+
+Message:  1025
+<ce> Peace in the forest and nobody
+<ce> dead? That is not how we usually
+<ce> do things, %pcn. Well done.
+
+Message:  1030
+%qdt:
+ The spriggan only defends its saplings.
+ The trees are falling to _woodsman_, of
+ __woodsman_ in ___woodsman_. A promise
+ from _woodsman_ to cut with care would
+ end the killing.
+
+Message:  1080
+<ce> I am in a giving mood. ___newdung_ is
+<ce> on this map, full of monsters and loot.
+
+
+QBN:
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+Person _woodsman_ face 168 group Resident2 remote
+
+Place _dungeon_ remote dungeon
+Place _newdung_ remote dungeon
+
+Clock _2dung_ 00:00 0 flag 17 range 0 2
+Clock _end_ 00:00
+
+Foe _monster_ is Spriggan
+
+--	Quest start-up:
+	start timer _2dung_ 
+	reveal _dungeon_ 
+	log 1010 step 0 
+	pick one of _map_ _nomap_
+	place foe _monster_ at _dungeon_ 
+
+_2dung_ task:
+	end quest 
+
+_S.01_ task:
+	killed 1 _monster_ saying 1011 
+	hide npc _woodsman_
+	remove log step 1
+
+_qgclicked_ task:
+	clicked npc _qgiver_ 
+
+_normalvict_ task:
+    when _qgclicked_ and _S.01_
+	say 1003
+    start task _victory_
+--1003 appears to be a victory statement for kill path
+
+_victory_ task:
+	give pc _gold_ 
+    start timer _end_
+--	end quest 
+--this would cause double quest ending, for double reputation gain
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.01_ and not _S.07_ 
+	clear _qgclicked_ _clearclick_ 
+
+_S.04_ task:
+	injured _monster_
+
+_injtalk_ task:
+    when _S.04_ and not _S.01_
+	prompt 1020 yes _yes_ no _no_ 
+
+_yes_ task:
+	add dialog for person _woodsman_ 
+	log 1030 step 1 
+	say 1021 
+	restrain foe _monster_
+
+_no_ task:
+	say 1022 
+
+_S.07_ task:
+	clicked npc _woodsman_
+
+_notkill_ task:
+	when _S.07_ and _injtalk_ and not _S.01_
+    say 1023 
+	change repute with _woodsman_ by +10 
+
+_S.08_ task:
+	when _qgclicked_ and _notkill_ 
+	say 1025 
+	start task _victory_
+
+variable _map_
+variable _nomap_
+_S.11_ task:
+	when _map_ and _victory_ 
+	reveal _newdung_ readmap
+    say 1080 
+
+_end_ task:
+    end quest

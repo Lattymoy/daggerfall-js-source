@@ -71,7 +71,7 @@ test('QL4 the branch, the fee: asked in the quest\'s own words, the fee paid, th
   assert.equal(r.asked[0].message.id, 1900);
   assert.deepEqual(r.asked[0].choices.map((c) => c.id), [1901, 1902]);
   assert.equal(r.rewards.length, 1, 'the fee, through RW1\'s door');
-  assert.ok(r.popups.some((p) => /fee of/.test(p)), 'the script\'s own QuestComplete box over its fee');
+  assert.ok(r.popups.some((p) => /clerk's pay/.test(p)), 'the script\'s own QuestComplete box over its fee');   // PIN MOVED (OWN-WORDS1: M0B50Y09 speaks our words, src/systems/quest/own/)
   assert.equal(r.quest.ql.choices.payment, 'keep');
   assert.equal(r.quest.ql.outcome, 'fee');
   assert.deepEqual(r.rep, [[FIGHTERS_GUILD, 5]], 'DFU\'s +5 alone - the fee moves no standing');
@@ -84,7 +84,7 @@ test('QL4 the branch, waived: no gold, the Guild\'s standing raised by the outco
   assert.equal(r.quest.ql.choices.payment, 'alt');
   assert.equal(r.quest.ql.outcome, 'waived');
   assert.ok(r.quest.questComplete && r.quest.questSuccess, 'ended a success - `ql paid`');
-  assert.ok(!r.popups.some((p) => /fee of/.test(p)), 'and quietly: no QuestComplete box paying a fee the player waived');
+  assert.ok(!r.popups.some((p) => /clerk's pay/.test(p)), 'and quietly: no QuestComplete box paying a fee the player waived');   // PIN MOVED (OWN-WORDS1)
   assert.deepEqual(r.rep.sort(), [[FIGHTERS_GUILD, 5], [FIGHTERS_GUILD, 5]].sort(), 'DFU\'s +5 and the outcome\'s +5');
   assert.equal(r.offers.length, 1, 'the questlines pay their choice of gear either way');
   assert.equal(r.offers[0].outcome, 'waived');
@@ -148,7 +148,7 @@ test('QL4 BRANCH-4 M0B50Y09: the fee waived keeps DFU\'s map - the second answer
     const t = quest.getTask({ name: task });
     assert.ok(t?.getTriggerValue(), `${task} ran`);
     assert.ok(t.actions.find((a) => a.typeName === 'RevealLocation')?.isComplete, 'the second dungeon revealed');
-    assert.ok(rec.popups.some((p) => /map to .* will sweeten/.test(p)), 'and DFU\'s 1080 said');
+    assert.ok(rec.popups.some((p) => /map to .* makes up for the pay/.test(p)), 'and the script\'s 1080 said');   // PIN MOVED (OWN-WORDS1)
   }
 });
 

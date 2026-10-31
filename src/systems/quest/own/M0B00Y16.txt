@@ -1,0 +1,222 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\M0B00Y16.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: fighter
+-- Repute: 0
+-- QuestId: 16
+Messages: 81
+Quest: M0B00Y16
+DisplayName: Giant Killing
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcf! A giant needs killing, and
+<ce> it will take a few days. You
+<ce> came to mind first. Interested?
+
+RefuseQuest:  [1001]
+<ce> Too busy? In my day we always had time
+<ce> for a giant or two. Young people.
+
+AcceptQuest:  [1002]
+<ce> A giant has moved into ___mondung_ and is
+<ce> eating _dummy_'s sheep, and a villager or
+<ce> two besides. %G wants it dead within =qtime_
+<ce> days and will pay _gold_ gold. Off you go.
+
+QuestFail:  [1003]
+<ce> Back so soon, %pcf? That giant
+<ce> is not going to kill itself.
+
+QuestComplete:  [1004]
+<ce> Look at you, not a bone broken. Your
+<ce> _gold_ gold, and a drink on me later.
+
+RumorsDuringQuest:  [1005]
+<ce> The giant in ___mondung_ keeps taking people,
+<ce> and all _dummy_ talks about is sheep.
+<--->
+<ce> Nobody goes near ___mondung_ now. The
+<ce> giant has eaten three people this month.
+
+RumorsPostfailure:  [1006]
+<ce> The giant has left ___mondung_.
+<ce> Maybe it ran out of villagers.
+
+RumorsPostsuccess:  [1007]
+<ce> %god be praised, the giant in ___mondung_ is dead.
+<ce> _dummy_ only paid for it once it started on %g3 sheep.
+
+QuestorPostsuccess:  [1008]
+<ce> Well, if it is not
+<ce> %pcf the giant-killer!
+
+QuestorPostfailure:  [1009]
+<ce> In my day the guild threw you out for
+<ce> losing to one giant. Soft times now.
+
+Message:  1020
+%qdt:
+ At the Fighters Guild in
+ ___questgiver_, _questgiver_ wants the
+ giant in ___mondung_ dead. If I am back
+ within =qtime_ days, I get _gold_ gold.
+
+Message:  1021
+%qdt:
+ I found a merchant the giant
+ had kept alive for later.
+ _villager_ wants me to see %g2
+ safely to _store_ in __store_.
+
+Message:  1030
+<ce> The giant bellows in pain. Heavy feet
+<ce> are coming this way. It has friends.
+
+Message:  1031
+<ce> The giant falls and does not get up.
+
+Message:  1040
+<ce> %god be thanked! The giant took me on
+<ce> the road to market, with four others. It
+<ce> ate them. Will you help me out of here?
+
+Message:  1041
+<ce> You saved my life. My name is _villager_,
+<ce> from ___villager_. Take me to _store_ in
+<ce> __store_ and I will owe you forever.
+
+Message:  1042
+<ce> You have been kind, but
+<ce> I will go on alone now.
+
+Message:  1043
+<ce> You would leave me here? Heartless.
+
+Message:  1044
+<ce> Home at last. My family will
+<ce> hear your name, %pcf, every
+<ce> day for the rest of my life.
+
+Message:  1080
+<ce> One of the lads found a map to
+<ce> ___newdung_. Ten years ago, you and I
+<ce> would have cleared it together. Take it.
+
+
+QBN:
+Item _gold_ gold
+Item _magic_ magic_item
+
+Person _questgiver_ group Questor
+Person _dummy_ face 9 group Noble remote
+Person _villager_ face 8 group Shopkeeper remote
+
+Place _mondung_ remote dungeon
+Place _newdung_ remote dungeon
+Place _store_ remote generalstore
+
+Clock _qtime_ 00:00 0 flag 17 range 0 2
+
+Foe _giant_ is Giant
+Foe _giantFriends_ is Giant
+
+--	Quest start-up:
+	start timer _qtime_ 
+	reveal _mondung_ 
+	log 1020 step 0 
+	pick one of _victim_ _S.09_ _S.09_ 
+	pick one of _map_ _nomap_ _nomap_ 
+	pick one of _magicItem_ _noMagicItem_ _noMagicItem_ _noMagicItem_
+	place foe _giant_ at _mondung_ 
+
+variable _map_
+variable _nomap_
+_S.02_ task:
+	injured _giant_ 
+	start task _giantWaveWhileInDungeon_
+	say 1030 
+
+_S.03_ task:
+	killed 1 _giant_ 
+	say 1031
+
+_clickqgiver_ task:
+	clicked npc _questgiver_ 
+
+_clearclick_ task:
+	when _clickqgiver_ and not _S.03_
+	say 1003
+	clear _clickqgiver_ _clearclick_
+
+_success_ task:
+	when _clickqgiver_ and _S.03_ 
+	give pc _gold_ 
+
+variable _qtime_
+_duelist_ task:
+	when _success_ and _map_ 
+	reveal _newdung_ readmap
+	say 1080 
+
+_victim_ task:
+	place npc _villager_ at _mondung_ 
+
+variable _noMagicItem_
+_magicItem_ task:
+	give item _magic_ to _giant_ 
+	make _magic_ permanent 
+
+_S.09_ task:
+	hide npc _villager_ 
+
+_S.10_ task:
+	clicked npc _villager_ 
+	prompt 1040 yes _yes_ no _no_ 
+
+_yes_ task:
+	pc at _store_ set _S.13_ 
+	log 1021 step 1 
+	hide npc _villager_ 
+	say 1041 
+	add _villager_ face 
+
+_no_ task:
+	say 1043 
+	change repute with _villager_ by -10 
+
+variable _escortComplete_
+_S.13_ task:
+	say 1044 
+	drop _villager_ face 
+	change repute with _villager_ by +15 
+	place npc _villager_ at _store_ 
+	start task _escortComplete_
+
+_S.14_ task:
+	when _yes_ and not _escortComplete_ and _qtime_ 
+	say 1042 
+
+_S.15_ task:
+	when _success_ and _no_ 
+
+_S.16_ task:
+	when _success_ and _S.09_
+
+_S.17_ task:
+	when _success_ and _escortComplete_ 
+
+_S.18_ task:
+	when _qtime_ or _S.15_ or _S.16_ or _S.17_ or _S.19_
+	end quest 
+
+_S.19_ task:
+	when _success_ and _victim_ and not _S.10_
+
+_giantWaveWhileInDungeon_ task:
+	pc at _mondung_ set _spawnGiants_
+
+_spawnGiants_ task:
+	create foe _giantFriends_ every 3 minutes 6 times with 50% success

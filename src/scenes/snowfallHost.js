@@ -350,9 +350,9 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
 }
 
 /** The road network round a map pixel, as BasicRoadsBridge.TryReadNetwork answers it: the pixel's road and track
- *  bits, and its corners from its west and east neighbours'. `net` Basic Roads' own network (world/roadsProducer.js:
- *  `roads`, `tracks`, 1000 x 500 bytes) - the mod asks the Basic Roads MOD, so the port's generated fallback is not
- *  it (the rule World of Daggerfall's LocationLoader keeps, world.js wodPathsPoint). BAY-LEFT-GROUND: and a crossing's
+ *  bits, and its corners from its west and east neighbours'. `net` the Bay's network (world/roadsProducer.js:
+ *  `roads`, `tracks`, 1000 x 500 bytes) - the mod asks the Basic Roads MOD, so with its switch off there is none
+ *  (the rule World of Daggerfall's LocationLoader keeps, world.js wodPathsPoint). BAY-LEFT-GROUND: and a crossing's
  *  join on its road bits (`joinAt`, world/arenaRoads.js arenaJoinByte - TESA5's road carried out to the Bay's edge,
  *  straight, which the ground paints there: world/terrain/terrainGen.js), so the snow knows the road the ground draws;
  *  no join, the Bay's own byte for byte. */

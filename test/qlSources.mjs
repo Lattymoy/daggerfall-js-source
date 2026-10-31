@@ -1,6 +1,6 @@
 // QL1 (bible/06-Systems/Questlines-Arc.md section 2.5): THE QUEST PACK AS THE GAME READS IT, OFF THE DISK - the node
 // twin of scenes/quest/questData.js (browser-only: Vite's glob), for the sheets' and the branches' pins. The same order
-// of reads: DFU's vendored quests with the port's own patches (SHAM-TRAIL, quest/questPatches.js), the mods' quests with
+// of reads: DFU's vendored quests (ours in their place, OWN-WORDS1) with the port's own patches (SHAM-TRAIL, quest/questPatches.js), the mods' quests with
 // Foraging's (FORAGE-FIX), and - while the questlines' switch is on - a flagship quest's branch (qlPatches.js). And a
 // machine that knows every line the pack says: DFU's 82, Jagget's four (Foraging's quests), the questlines' six (AUDIT QUESTLINES DOC-29: said three; AUDIT STAR8 S1: `ql gone`).
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
@@ -28,7 +28,11 @@ export const QUEST_DIRS = Object.freeze([
   ['starts', 'src/systems/starts/quests'],   // START1: the starts' own quests (systems/starts/starts.js)
 ]);
 
-/** Every quest file the pack holds: upper-case name -> { name, dir, path }. A mod's quest of a DFU name is the mod's. */
+/** OWN-WORDS1 (bible/06-Systems/Own-Words.md): DFU's quests in DFO's own words, read in place of DFU's file of the name. */
+export const OWN_QUEST_DIR = 'src/systems/quest/own';
+
+/** Every quest file the pack holds: upper-case name -> { name, dir, path }. A mod's quest of a DFU name is the mod's. A DFU
+ *  quest in our own words stays DFU's (`dir`) and is read from our file (`path`, `own`), as questData.js reads it. */
 export const QUEST_FILES = (() => {
   const map = new Map();
   for (const [dir, rel] of QUEST_DIRS) {
@@ -39,6 +43,11 @@ export const QUEST_FILES = (() => {
       const name = f.replace(/\.txt$/i, '');
       map.set(name.toUpperCase(), { name, dir, path: join(abs, f) });
     }
+  }
+  const own = join(ROOT, OWN_QUEST_DIR);
+  for (const f of existsSync(own) ? readdirSync(own) : []) {
+    const was = map.get(f.replace(/\.txt$/i, '').toUpperCase());
+    if (/\.txt$/i.test(f) && was?.dir === 'dfu') Object.assign(was, { path: join(own, f), own: true });
   }
   return map;
 })();

@@ -61,7 +61,8 @@ test('CR1: a mod row carries what a modder is owed - title, author, what it is, 
   assert.ok(CREDITS.mods.length >= 1, 'no mods credited');
   for (const m of CREDITS.mods) {
     for (const k of ['title', 'author', 'what', 'terms']) assert.ok(m[k], `mod "${m.title}" lacks ${k}`);
-    assert.match(m.terms, /permission/i, 'a mod is carried with permission or not at all');
+    // OWN-WORK: a retired credit carries nothing, so its terms say what is ours; what is still carried states its permission
+    if (m.vendor?.length) assert.match(m.terms, /permission/i, 'a mod is carried with permission or not at all');
     assert.ok((m.vendor?.length ?? 0) + (m.retired?.length ?? 0) >= 1, `mod "${m.title}" names neither its folder nor its retired key`);
     // No invented contact: it is the manifest's own words or absent.
     if (m.contact) assert.doesNotMatch(m.contact, /^https?:/, 'a contact is a name from the manifest, not a guessed URL');

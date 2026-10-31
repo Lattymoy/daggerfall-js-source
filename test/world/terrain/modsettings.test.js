@@ -17,7 +17,7 @@ test('ROADS 24: the switches are the mod\u2019s own - names, defaults, descripti
   assert.equal(m.keys.RiversAndStreams.description, 'Draws rivers and streams on the land.');
   // BR3: the switch this mod did not have. It was the only one of the six
   // with no `Enabled` and no gate, so it was not enabled-by-default, it was
-  // unconditional - loadModRoads() ran with nothing to ask it.
+  // unconditional - the arrays were fetched with nothing to ask it.
   assert.equal(modSetting('roads-hazelnut', 'Enabled'), true, 'Basic Roads is ON by default, like every other mod (MO1)');
   assert.equal(modSetting('roads-hazelnut', 'SmoothRoads'), true, 'default read');
   assert.equal(modSetting('roads-hazelnut', 'RiversAndStreams'), false);
@@ -32,14 +32,11 @@ test('ROADS 24: the switches reach the kernel on both paths, and the Mods pane s
   const host = readFileSync('src/scenes/world.js', 'utf8');
   assert.match(host, /smooth: modSetting\('roads-hazelnut', 'SmoothRoads'\), water: modSetting\('roads-hazelnut', 'RiversAndStreams'\)/, 'read as the world loads');
   // BR3: and the gate, which is the point of the key. OFF is not a roadless
-  // world - it is the port's own network (ROADS 3), the same fallback a map
-  // his arrays cannot load already takes, so the switch can never cost a
-  // player their roads.
+  // world - the switch can never cost a player their roads. OWN-WORK2: the
+  // network is the port's own either way; off, no river, and its word
+  // `generated` keeps the maps and the journeys off it.
   assert.match(host, /const basicRoadsOn = modSetting\('roads-hazelnut', 'Enabled'\);/, 'the mod\u2019s own switch is read');
-  assert.match(host, /\(basicRoadsOn \? loadModRoads\(\) : Promise\.resolve\(null\)\)/, 'and it gates the fetch - OFF asks his data for nothing');
-  assert.match(host, /if \(!basicRoadsOn\) \{[\s\S]{0,400}?terrainGen\.setRoads\(settlementsOf\(maps\), logRoads, roadSwitches\);/, 'OFF falls to the port\u2019s own network, never to no roads');
-  assert.match(host, /setRoadsData\(\{ \.\.\.his, \.\.\.roadSwitches \}/, 'on his data');
-  assert.match(host, /setRoads\(settlementsOf\(maps\), logRoads, roadSwitches\)/, 'and on the fallback');
+  assert.match(host, /terrainGen\.setRoads\(settlementsOf\(maps\), logRoads, \{ \.\.\.roadSwitches, water: basicRoadsOn && roadSwitches\.water \}, basicRoadsOn \? 'basic-roads' : 'generated'\);/, 'one network, the switches on it, never no roads');
   const worker = readFileSync('src/world/terrain/terrainGenWorker.js', 'utf8');
   assert.match(worker, /\.\.\.\(m\.switches \?\? \{\}\)/, 'the worker attaches them to the built network');
   const menu = readFileSync('src/ui/enhanced/enhancedMenu.js', 'utf8');
@@ -198,8 +195,7 @@ test('the Mods pane puts each creator\'s name in the mod title (Mac, 2026-09-08)
     assert.ok('Enabled' in mod.keys, `${vendor} has no Enabled switch - a player cannot turn it off`);
     assert.equal(mod.keys.Enabled.default, true, `${vendor} is not on by default (MO1)`);
   }
-  assert.equal(MOD_SETTINGS['roads-hazelnut'].author, 'Hazelnut');
-  assert.match(readFileSync('vendor/roads-hazelnut/README.md', 'utf8'), /by Hazelnut/);
+  assert.equal(MOD_SETTINGS['roads-hazelnut'].author, 'Hazelnut', 'OWN-WORK2: Basic Roads\' author, written out when vendor/roads-hazelnut was retired');
   for (const [vendor, mod] of Object.entries(MOD_SETTINGS)) assert.ok(typeof mod.author === 'string' && mod.author.length > 0, `${vendor}: an author`);
   // FT14: the pane's h3 is gone with the pane - the creator's name rides the TILE's title now,
   // which is the same string built once in features.js modFeature and shown wherever the row is.

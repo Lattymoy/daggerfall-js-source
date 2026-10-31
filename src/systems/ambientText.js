@@ -1,22 +1,22 @@
-// AMBIENT TEXT 1.8 - Regnier (AT1). The mod ported 1:1, read off its
-// compiled scripts (vendor/ambient-text/README.md records how they were
-// recovered); IL offsets below are into AmbientText.dll's own methods.
+// AMBIENT TEXT 1.8 - Regnier (AT1). The mod's rules ported 1:1, read off
+// its compiled scripts (the shipped release's AmbientText.dll); IL offsets
+// below are into that assembly's own methods.
 //
 // The whole mod is: a clock that ticks in REAL time, a percentage roll,
-// and a key built out of where and when you are. What makes it worth
-// porting is not the arithmetic - it is the 918 lines of the author's
-// own prose the key reaches, which is why they are vendored verbatim
-// (vendor/ambient-text/ambientTexts.json) rather than rewritten.
+// and a key built out of where and when you are. The lines the key
+// reaches are DFO's own (OWN-WORK2, 2026-10-31): ambientTextLines.json,
+// written for this game over the mod's 918 keys. The author's table is
+// no longer carried, and no line of ours rewords one of his.
 //
 // THE TABLE IS SPARSE AND THAT IS THE DESIGN. 233 key families x 10
 // indices would be 2330 entries; there are 918. The mod builds a key
 // and, when the table has no line for it, says NOTHING this tick and
 // leaves `lastIndex` alone. So a family with one line speaks rarely and
-// a family with ten speaks often, and the gaps ARE the author's
+// a family with ten speaks often, and the gaps ARE the mod's
 // frequency curve. Nothing here fills them, and nothing here picks
 // "from the keys that exist" - either would be a different mod.
 
-import AMBIENT_TEXTS from '../../vendor/ambient-text/ambientTexts.json' with { type: 'json' };
+import AMBIENT_TEXTS from './ambientTextLines.json' with { type: 'json' };
 import { LOCATION_TYPES, DUNGEON_TYPES } from '../formats/mapsFile.js';   // DFRegion.LocationTypes / DungeonTypes - the names the keys are spelled with
 import { dice100 } from '../combat/formulas.js';   // Dice100.SuccessRoll
 import { weatherFlags } from '../world/weather.js';   // WeatherManager's four public flags
@@ -112,7 +112,7 @@ export function ambientTextKey({
 
 /** Whether a table carries a line for a key (IDictionary.Contains).
  *  Hashtable.Contains is a plain key test, so an inherited property
- *  must not answer for one the author wrote. */
+ *  must not answer for one the table holds. */
 export const hasAmbientText = (key, texts = AMBIENT_TEXTS) => Object.prototype.hasOwnProperty.call(texts, key);
 
 /**
@@ -147,9 +147,9 @@ export const hasAmbientText = (key, texts = AMBIENT_TEXTS) => Object.prototype.h
  *                  no line of this mod changed to do it.
  *   rolls          Random.Range, as a [0, 1) source
  *   enabled()      the mod's own switch (the port's - DFU enables a mod by listing it)
- *   texts          AmbientText.AmbientTexts, the static Hashtable. A seam
- *                  only because a static one cannot be reached from a
- *                  test; the game always gets the author's own table.
+ *   texts          the table (the mod's AmbientText.AmbientTexts, a static
+ *                  Hashtable). A seam only because a static one cannot be
+ *                  reached from a test; the game always gets our own table.
  */
 export function createAmbientText({
   settings, where = () => ({}), insideBuilding = () => false,
