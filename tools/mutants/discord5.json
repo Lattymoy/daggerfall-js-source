@@ -90,8 +90,8 @@
   {
     "name": "D5-3ARMS-relaxed-ships-on",
     "file": "src/systems/modSettings.js",
-    "old": "      'Handling.RelaxedTwoHandedWeapons': Object.freeze({ default: false,",
-    "new": "      'Handling.RelaxedTwoHandedWeapons': Object.freeze({ default: true,",
+    "old": "      'Handling.RelaxedTwoHandedWeapons': Object.freeze({\n        default: false,",
+    "new": "      'Handling.RelaxedTwoHandedWeapons': Object.freeze({\n        default: true,",
     "tests": [
       "test/systems/ht1_handheldtorches.test.js",
       "test/systems/discord5.test.js"

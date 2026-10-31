@@ -128,8 +128,8 @@
   {
     "name": "S4-latch-not-kept",
     "file": "src/systems/modSettings.js",
-    "old": "export function latchModLoaded(vendor, on) { _loadedForGame.set(vendor, !!on); return !!on; }",
-    "new": "export function latchModLoaded(vendor, on) { return !!on; }",
+    "old": "  _loadedForGame.set(vendor, !!on);\n  return !!on;",
+    "new": "  return !!on;",
     "tests": [
       "test/systems/comeSailAway/audit0928_save.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "S4-reset-keeps-latch",
     "file": "src/systems/modSettings.js",
-    "old": "_generation++; _loadedForGame.clear(); try",
-    "new": "_generation++; try",
+    "old": "  _loadedForGame.clear();\n  try {",
+    "new": "  try {",
     "tests": [
       "test/systems/comeSailAway/audit0928_save.test.js"
     ]

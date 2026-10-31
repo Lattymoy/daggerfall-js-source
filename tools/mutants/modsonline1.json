@@ -98,8 +98,8 @@
   {
     "name": "the-declared-key-check-goes-back-to-an-inherited-one",
     "file": "src/systems/modSettings.js",
-    "old": "  (Object.hasOwn(MOD_SETTINGS, vendor) && Object.hasOwn(MOD_SETTINGS[vendor].keys, key) ? MOD_SETTINGS[vendor].keys[key] : undefined);",
-    "new": "  MOD_SETTINGS[vendor]?.keys?.[key];",
+    "old": "const declaredKey = (vendor, key) =>\n  Object.hasOwn(MOD_SETTINGS, vendor) && Object.hasOwn(MOD_SETTINGS[vendor].keys, key)\n    ? MOD_SETTINGS[vendor].keys[key]\n    : undefined;",
+    "new": "const declaredKey = (vendor, key) => MOD_SETTINGS[vendor]?.keys?.[key];",
     "tests": [
       "test/systems/modsonline.test.js"
     ]
@@ -107,8 +107,8 @@
   {
     "name": "the-vendor-half-of-the-own-key-check-goes",
     "file": "src/systems/modSettings.js",
-    "old": "  (Object.hasOwn(MOD_SETTINGS, vendor) && Object.hasOwn(MOD_SETTINGS[vendor].keys, key) ? MOD_SETTINGS[vendor].keys[key] : undefined);",
-    "new": "  (MOD_SETTINGS[vendor] && Object.hasOwn(MOD_SETTINGS[vendor].keys, key) ? MOD_SETTINGS[vendor].keys[key] : undefined);",
+    "old": "  Object.hasOwn(MOD_SETTINGS, vendor) && Object.hasOwn(MOD_SETTINGS[vendor].keys, key)\n    ? MOD_SETTINGS[vendor].keys[key]\n    : undefined;",
+    "new": "  MOD_SETTINGS[vendor] && Object.hasOwn(MOD_SETTINGS[vendor].keys, key) ? MOD_SETTINGS[vendor].keys[key] : undefined;",
     "tests": [
       "test/systems/modsonline.test.js"
     ]

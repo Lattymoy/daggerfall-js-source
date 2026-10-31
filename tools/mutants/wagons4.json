@@ -83,8 +83,8 @@
   {
     "name": "WAGONS4-the-mend-row-on-the-stable",
     "file": "src/systems/merchantYards.js",
-    "old": "validYardKind(kind) === 'transport' ? [...YARD_ROWS, YARD_MEND_ROW] : [...YARD_ROWS]);",
-    "new": "[...YARD_ROWS, YARD_MEND_ROW]);",
+    "old": "  validYardKind(kind) === 'carpenter'\n    ? [YARD_BENCH_ROW]\n    : validYardKind(kind) === 'transport'\n      ? [...YARD_ROWS, YARD_MEND_ROW]\n      : [...YARD_ROWS];",
+    "new": "  validYardKind(kind) === 'carpenter' ? [YARD_BENCH_ROW] : [...YARD_ROWS, YARD_MEND_ROW];",
     "tests": [
       "test/systems/wagons4_upkeep.test.js"
     ]

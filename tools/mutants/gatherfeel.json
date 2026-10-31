@@ -47,8 +47,8 @@
   {
     "name": "GATHER-FEEL-strike-lands-whole-swing",
     "file": "src/systems/mineAct.js",
-    "old": "get landsIn() { return Math.max(0, st.swing - MINE_REST_S); },",
-    "new": "get landsIn() { return Math.max(0, st.swing); },",
+    "old": "      return Math.max(0, st.swing - MINE_REST_S);",
+    "new": "      return Math.max(0, st.swing);",
     "tests": [
       "test/systems/gatherfeel.test.js"
     ]
@@ -65,7 +65,7 @@
   {
     "name": "GATHER-FEEL-strike-swing-frozen-at-end",
     "file": "src/systems/mineAct.js",
-    "old": "      st.swing = Math.max(0, st.swing - dt);   // GATHER-FEEL: past the end too - the last swing runs out, its blow lands\n      if (aloft && !(st.swing > MINE_REST_S)) st.landed++;   // AUDIT GATHER-FEEL LANDING: counted before a press can begin the next swing\n      if (st.done || st.cancelled) return;",
+    "old": "      st.swing = Math.max(0, st.swing - dt); // GATHER-FEEL: past the end too - the last swing runs out, its blow lands\n      if (aloft && !(st.swing > MINE_REST_S)) st.landed++; // AUDIT GATHER-FEEL LANDING: counted before a press can begin the next swing\n      if (st.done || st.cancelled) return;",
     "new": "      if (st.done || st.cancelled) return;\n      st.swing = Math.max(0, st.swing - dt);\n      if (aloft && !(st.swing > MINE_REST_S)) st.landed++;",
     "tests": [
       "test/systems/gatherfeel.test.js"

@@ -2,8 +2,8 @@
   {
     "name": "HT-WAIST-ON-the-key-ships-off",
     "file": "src/systems/modSettings.js",
-    "old": "'Handling.LanternsAtWaist': Object.freeze({ default: true,",
-    "new": "'Handling.LanternsAtWaist': Object.freeze({ default: false,",
+    "old": "      'Handling.LanternsAtWaist': Object.freeze({\n        default: true,",
+    "new": "      'Handling.LanternsAtWaist': Object.freeze({\n        default: false,",
     "tests": [
       "test/systems/htwaist_setting.test.js"
     ]

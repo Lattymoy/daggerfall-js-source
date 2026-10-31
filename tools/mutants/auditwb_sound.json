@@ -29,8 +29,8 @@
   {
     "name": "AUDWB-D2-fadeout-a-cut",
     "file": "src/systems/music.js",
-    "old": "    if (!this.playing || this._current === null) { this.stop(); return; }\n    const sw = { from: this._current, to: null, timer: null };",
-    "new": "    { this.stop(); return; }\n    const sw = { from: this._current, to: null, timer: null };",
+    "old": "    if (!this.playing || this._current === null) {",
+    "new": "    {",
     "tests": [
       "test/systems/gate/auditwb_sound.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDWB-D2-fadeout-never-stops",
     "file": "src/systems/music.js",
-    "old": "      this._switch = null;\n      this.player?.stop();\n      this._audio?.stop();\n      if (sw.to && !this._start(sw.to)",
-    "new": "      this._switch = null;\n      if (sw.to && !this._start(sw.to)",
+    "old": "      this.player?.stop();\n      this._audio?.stop();\n      if (sw.to && !this._start(sw.to) && this._current === sw.to) this._current = null;",
+    "new": "      if (sw.to && !this._start(sw.to) && this._current === sw.to) this._current = null;",
     "tests": [
       "test/systems/gate/auditwb_sound.test.js"
     ]

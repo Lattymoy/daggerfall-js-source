@@ -66,8 +66,8 @@
   {
     "name": "AUDITGF-F3-the-strike-landing-uncounted",
     "file": "src/systems/mineAct.js",
-    "old": "      if (aloft && !(st.swing > MINE_REST_S)) st.landed++;",
-    "new": "      if (aloft && !(st.swing > MINE_REST_S)) st.landed += 0;",
+    "old": "      if (aloft && !(st.swing > MINE_REST_S)) st.landed++; // AUDIT GATHER-FEEL LANDING: counted before a press can begin the next swing",
+    "new": "      if (aloft && !(st.swing > MINE_REST_S)) st.landed += 0; // AUDIT GATHER-FEEL LANDING: counted before a press can begin the next swing",
     "tests": [
       "test/systems/audit_gatherfeel.test.js",
       "test/systems/gatherfeel.test.js",

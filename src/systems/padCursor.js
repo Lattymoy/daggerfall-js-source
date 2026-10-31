@@ -43,7 +43,11 @@ export const PAD_CURSOR = Object.freeze({
 
 /** Whether the assisted feel is in force (the pref; a broken store reads as on - the default). */
 export function padCursorAssist() {
-  try { return getPref('padCursorAssist') !== false; } catch { return true; }
+  try {
+    return getPref('padCursorAssist') !== false;
+  } catch {
+    return true;
+  }
 }
 
 /** A cursor's carried state: its velocity (screen px/s, y down) and how long the stick has been at a full lean. */
@@ -64,28 +68,37 @@ export function curvedThrow(mag, deadzone, curve = PAD_CURSOR.CURVE) {
  * `target` is the control to pull toward ({ x, y } its centre, client px) or null; `at` is the cursor ([x, y]).
  * Answers { dx, dy } in screen px (y DOWN) and advances `state`. Pure apart from `state`.
  */
-export function stepPadCursor(state, { h = 0, v = 0, dt = 0, deadzone = 0.1, speed = CURSOR_SPEED, over = false, target = null, at = null } = {}) {
+export function stepPadCursor(
+  state,
+  { h = 0, v = 0, dt = 0, deadzone = 0.1, speed = CURSOR_SPEED, over = false, target = null, at = null } = {},
+) {
   const P = PAD_CURSOR;
   const mag = Math.hypot(h, v);
   const k = curvedThrow(mag, deadzone);
   const raw = mag > deadzone ? Math.min(1, (mag - deadzone) / Math.max(1e-6, 1 - deadzone)) : 0;
   state.full = raw >= P.FULL_LEAN ? state.full + dt : 0;
   const boost = 1 + (P.BOOST - 1) * Math.min(1, Math.max(0, (state.full - P.BOOST_AFTER_S) / P.BOOST_RAMP_S));
-  let tx = 0, ty = 0;
+  let tx = 0,
+    ty = 0;
   if (k > 0) {
     const s = speed * k * boost * (over && boost === 1 ? P.FRICTION : 1);
     tx = (h / mag) * s;
-    ty = (-v / mag) * s;   // Unity's y is up; the screen's is down
+    ty = (-v / mag) * s; // Unity's y is up; the screen's is down
   }
-  if (k === 0) { state.vx = 0; state.vy = 0; }   // let go: it stops - nothing coasts past a button
+  if (k === 0) {
+    state.vx = 0;
+    state.vy = 0;
+  } // let go: it stops - nothing coasts past a button
   else {
     const a = Math.min(1, dt / P.RAMP_S);
     state.vx += (tx - state.vx) * a;
     state.vy += (ty - state.vy) * a;
   }
-  let dx = state.vx * dt, dy = state.vy * dt;
+  let dx = state.vx * dt,
+    dy = state.vy * dt;
   if (target && at && raw < P.PULL_MAX_STICK) {
-    const ox = target.x - at[0], oy = target.y - at[1];
+    const ox = target.x - at[0],
+      oy = target.y - at[1];
     const pull = Math.min(1, P.PULL * dt) * (1 - raw / P.PULL_MAX_STICK);
     dx += ox * pull;
     dy += oy * pull;
@@ -103,17 +116,25 @@ export function linearPadCursorStep(h, v, dt, sensitivity) {
 // A canvas-drawn window has no DOM for the pull to find. One that wants the pull hands its buttons here as client-px
 // rects ({ x, y, w, h }) through a getter read each frame; the slot holds one source, the window that is up.
 let _targets = null;
-export function setPadCursorTargets(getter) { _targets = typeof getter === 'function' ? getter : null; }
+export function setPadCursorTargets(getter) {
+  _targets = typeof getter === 'function' ? getter : null;
+}
 export function padCursorCanvasTargets() {
-  try { return _targets?.() ?? []; } catch { return []; }
+  try {
+    return _targets?.() ?? [];
+  } catch {
+    return [];
+  }
 }
 
 /** The rect a point is inside, or the nearest whose edge is within `radius` - centre and inside flag - or null. */
 export function pullTargetAmong(rects, x, y, radius = PAD_CURSOR.PULL_RADIUS) {
-  let best = null, bestD = Infinity;
+  let best = null,
+    bestD = Infinity;
   for (const r of rects ?? []) {
     if (!r || !(r.w > 0) || !(r.h > 0)) continue;
-    const ex = Math.max(r.x - x, 0, x - (r.x + r.w)), ey = Math.max(r.y - y, 0, y - (r.y + r.h));
+    const ex = Math.max(r.x - x, 0, x - (r.x + r.w)),
+      ey = Math.max(r.y - y, 0, y - (r.y + r.h));
     const d = Math.hypot(ex, ey);
     if (d > radius || d >= bestD) continue;
     bestD = d;
@@ -125,6 +146,11 @@ export function pullTargetAmong(rects, x, y, radius = PAD_CURSOR.PULL_RADIUS) {
 /** The front door's cursor law, handed IN to ui/menu/menuPad.js (a leaf the desktop launcher serves alone - DA12 - so it
  *  imports nothing): the switch, the state, the step, DFU's step, the pull's target, its radius and the full speed. */
 export const padDoorCursorLaw = Object.freeze({
-  assist: padCursorAssist, createState: createPadCursorState, step: stepPadCursor, linear: linearPadCursorStep,
-  pullTarget: pullTargetAmong, PULL_RADIUS: PAD_CURSOR.PULL_RADIUS, SPEED: CURSOR_SPEED,
+  assist: padCursorAssist,
+  createState: createPadCursorState,
+  step: stepPadCursor,
+  linear: linearPadCursorStep,
+  pullTarget: pullTargetAmong,
+  PULL_RADIUS: PAD_CURSOR.PULL_RADIUS,
+  SPEED: CURSOR_SPEED,
 });

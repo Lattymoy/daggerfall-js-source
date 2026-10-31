@@ -147,8 +147,8 @@
   {
     "name": "DRAGON5c-the-oil-unsold",
     "file": "src/systems/merchantYards.js",
-    "old": ", ...(dwarvenOilAvailable(online) ? [mint(newUpkeepItem(UPKEEP_ITEM.DwarvenOil, YARD_OIL_STACK))] : [])];",
-    "new": ", ...[]];",
+    "old": "      ...(dwarvenOilAvailable(online) ? [mint(newUpkeepItem(UPKEEP_ITEM.DwarvenOil, YARD_OIL_STACK))] : []),",
+    "new": "      ...[],",
     "tests": [
       "test/net/dragon/dragon5c_care.test.js"
     ]

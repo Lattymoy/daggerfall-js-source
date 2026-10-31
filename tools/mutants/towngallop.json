@@ -2,8 +2,8 @@
   {
     "name": "TOWNGALLOP-town-walks-as-shipped",
     "file": "src/systems/modSettings.js",
-    "old": "'EnhancedRiding.GallopingInTowns': Object.freeze({ default: true,",
-    "new": "'EnhancedRiding.GallopingInTowns': Object.freeze({ default: false,",
+    "old": "      'EnhancedRiding.GallopingInTowns': Object.freeze({\n        default: true,",
+    "new": "      'EnhancedRiding.GallopingInTowns': Object.freeze({\n        default: false,",
     "tests": [
       "test/systems/horsewalk.test.js",
       "test/systems/rr1_realism.test.js"
@@ -57,8 +57,8 @@
   {
     "name": "TOWNGALLOP-trample-ships-off",
     "file": "src/systems/modSettings.js",
-    "old": "'EnhancedRiding.TrampleCivilians': Object.freeze({ default: true,",
-    "new": "'EnhancedRiding.TrampleCivilians': Object.freeze({ default: false,",
+    "old": "      'EnhancedRiding.TrampleCivilians': Object.freeze({\n        default: true,",
+    "new": "      'EnhancedRiding.TrampleCivilians': Object.freeze({\n        default: false,",
     "tests": [
       "test/systems/horsewalk.test.js"
     ]

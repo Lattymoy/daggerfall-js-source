@@ -668,8 +668,8 @@
   {
     "name": "COMPANION-VOL-0-read-as-unset",
     "file": "src/systems/monsterVolume.js",
-    "old": "const shelfVolume = (key) => { const v = Number(getPref(key)); return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1; };",
-    "new": "const shelfVolume = (key) => { const v = Number(getPref(key)); return v ? Math.max(0, Math.min(1, v)) : 1; };",
+    "old": "  return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1;",
+    "new": "  return v ? Math.max(0, Math.min(1, v)) : 1;",
     "tests": [
       "test/systems/companion_volume.test.js"
     ],
@@ -678,8 +678,8 @@
   {
     "name": "COMPANION-VOL-no-clamp",
     "file": "src/systems/monsterVolume.js",
-    "old": "const shelfVolume = (key) => { const v = Number(getPref(key)); return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1; };",
-    "new": "const shelfVolume = (key) => { const v = Number(getPref(key)); return Number.isFinite(v) ? v : 1; };",
+    "old": "  return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1;",
+    "new": "  return Number.isFinite(v) ? v : 1;",
     "tests": [
       "test/systems/companion_volume.test.js"
     ],

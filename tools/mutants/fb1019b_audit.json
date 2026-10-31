@@ -92,7 +92,7 @@
   {
     "name": "AUDIT-1019-L2-3-mentor-floor-unread",
     "file": "src/systems/mentorMode.js",
-    "old": "  const rawMax = (entity.rawMaxHealth ?? entity.maxHealth ?? 0) + (Number.isFinite(entity.evenHp) && entity.evenHp > 0 ? entity.evenHp : 0);",
+    "old": "  const rawMax =\n    (entity.rawMaxHealth ?? entity.maxHealth ?? 0) +\n    (Number.isFinite(entity.evenHp) && entity.evenHp > 0 ? entity.evenHp : 0);",
     "new": "  const rawMax = entity.rawMaxHealth ?? entity.maxHealth ?? 0;",
     "tests": [
       "test/systems/fb1019b_audit.test.js"

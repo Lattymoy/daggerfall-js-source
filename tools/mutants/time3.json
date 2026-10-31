@@ -453,8 +453,8 @@
   {
     "name": "TIME3-bring-online-unmarked",
     "file": "src/systems/offlineCopy.js",
-    "old": "  if (copy.quest) markOwnClock(copy.quest, Math.floor(own) * 60);\n  return copy;\n}",
-    "new": "  return copy;\n}",
+    "old": "  if (copy.quest) markOwnClock(copy.quest, Math.floor(own) * 60);\n  return copy;",
+    "new": "  return copy;",
     "tests": [
       "test/systems/quest/time3_quests.test.js",
       "test/systems/auditlived1.test.js",
@@ -464,8 +464,8 @@
   {
     "name": "TIME3-bring-online-moves-the-countdowns",
     "file": "src/systems/offlineCopy.js",
-    "old": "rebaseWorldStamps(copy, Math.floor(worldNow) - Math.floor(own), daysBetween(worldNow, own));",
-    "new": "rebaseWorldStamps(copy, Math.floor(worldNow) - Math.floor(own), daysBetween(worldNow, own), { questOwn: true });",
+    "old": "  rebaseWorldStamps(copy, Math.floor(worldNow) - Math.floor(own), daysBetween(worldNow, own)); // TIME3: the countdowns stay - the one clock is the character's",
+    "new": "  rebaseWorldStamps(copy, Math.floor(worldNow) - Math.floor(own), daysBetween(worldNow, own), { questOwn: true }); // TIME3: the countdowns stay - the one clock is the character's",
     "tests": [
       "test/systems/quest/time3_quests.test.js",
       "test/systems/auditlived1.test.js",

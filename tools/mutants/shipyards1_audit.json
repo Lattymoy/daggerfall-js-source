@@ -606,8 +606,8 @@
   {
     "name": "AUDIT-SHIPYARDS-the-setting-names-no-shipyard",
     "file": "src/systems/modSettings.js",
-    "old": "Buy parts or a deed at a shipyard,",
-    "new": "Buy it as parts or as a deed,",
+    "old": "            'Own and sail a boat. Buy parts or a deed at a shipyard, put it in the water (a deed works only near a port) ' +",
+    "new": "            'Own and sail a boat. Buy it as parts or as a deed, put it in the water (a deed works only near a port) ' +",
     "tests": [
       "test/systems/shipyards1_audit_port.test.js"
     ]

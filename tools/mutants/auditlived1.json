@@ -57,8 +57,8 @@
   {
     "name": "AUDITLIVED1-E-the-copy-keeps-the-worlds-minute",
     "file": "src/systems/offlineCopy.js",
-    "old": "  delete copy.worldMinutes;\n",
-    "new": "",
+    "old": "  delete copy.worldMinutes;\n  delete copy.joinFresh;",
+    "new": "  delete copy.joinFresh;",
     "tests": [
       "test/systems/auditlived1.test.js"
     ]
@@ -86,8 +86,8 @@
   {
     "name": "AUDITLIVED1-E-the-rumours-keep-the-worlds-limits",
     "file": "src/systems/offlineCopy.js",
-    "old": "  for (const r of copy.talk?.listRumorMill ?? []) if (r && Number.isFinite(r.timeLimit) && r.timeLimit > 0) r.timeLimit += delta;",
-    "new": "",
+    "old": "  for (const r of copy.talk?.listRumorMill ?? [])\n    if (r && Number.isFinite(r.timeLimit) && r.timeLimit > 0) r.timeLimit += delta; // a quest rumour's 0 is \"no limit\"",
+    "new": "  // a quest rumour's 0 is \"no limit\"",
     "tests": [
       "test/systems/auditlived1.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "AUDITLIVED1-E-a-spawns-first-sight-stays-on-the-world",
     "file": "src/systems/offlineCopy.js",
-    "old": "row.map((v, i) => (i > 0 && Number.isFinite(v) ? v + delta : v))",
-    "new": "row.map((v, i) => (i > 1 && Number.isFinite(v) ? v + delta : v))",
+    "old": "      Array.isArray(row) ? row.map((v, i) => (i > 0 && Number.isFinite(v) ? v + delta : v)) : row,",
+    "new": "      Array.isArray(row) ? row.map((v, i) => (i > 1 && Number.isFinite(v) ? v + delta : v)) : row,",
     "tests": [
       "test/systems/auditlived1.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "AUDITLIVED1-E-a-fire-keeps-the-worlds-hours",
     "file": "src/systems/offlineCopy.js",
-    "old": "    if (c && Number.isFinite(c.litUntil)) c.litUntil += delta;\n",
-    "new": "",
+    "old": "    if (c && Number.isFinite(c.litUntil)) c.litUntil += delta;\n    if (c && Number.isFinite(c.placedAt)) c.placedAt += delta;",
+    "new": "    if (c && Number.isFinite(c.placedAt)) c.placedAt += delta;",
     "tests": [
       "test/systems/auditlived1.test.js"
     ]
@@ -113,8 +113,8 @@
   {
     "name": "AUDITLIVED1-E-the-distance-the-wrong-way",
     "file": "src/systems/offlineCopy.js",
-    "old": "rebaseWorldStamps(copy, Math.floor(own) - Math.floor(world), daysBetween(own, world), { questOwn: 'legacy' });",
-    "new": "rebaseWorldStamps(copy, Math.floor(world) - Math.floor(own), daysBetween(own, world), { questOwn: 'legacy' });",
+    "old": "  rebaseWorldStamps(copy, Math.floor(own) - Math.floor(world), daysBetween(own, world), { questOwn: 'legacy' }); // classic minutes: the character's clock less the world's",
+    "new": "  rebaseWorldStamps(copy, Math.floor(world) - Math.floor(own), daysBetween(own, world), { questOwn: 'legacy' }); // classic minutes: the character's clock less the world's",
     "tests": [
       "test/systems/auditlived1.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "AUDITLIVED1-G-the-join-reads-the-offline-calendar-as-an-absence",
     "file": "src/systems/offlineCopy.js",
-    "old": "  copy.worldMinutes = Math.floor(worldNow);\n",
-    "new": "",
+    "old": "  copy.worldMinutes = Math.floor(worldNow);\n  // AUDIT LIVED1b P2: ...and that is the minute THIS machine's clock said at the click - the menu has no relay to",
+    "new": "  // AUDIT LIVED1b P2: ...and that is the minute THIS machine's clock said at the click - the menu has no relay to",
     "tests": [
       "test/systems/auditlived1.test.js"
     ]

@@ -609,8 +609,8 @@
   {
     "name": "AUDIT-HCC-K1-no-migration",
     "file": "src/systems/modSettings.js",
-    "old": "  Object.freeze({ vendor: 'horse-cart-and-cargo', key: 'Hotkeys.SummonTransport', was: 'F10' }),\n",
-    "new": "",
+    "old": "  Object.freeze({ vendor: 'horse-cart-and-cargo', key: 'Hotkeys.SummonTransport', was: 'F10' }),\n]);",
+    "new": "]);",
     "tests": [
       "test/systems/audit_hcc.test.js"
     ]
@@ -618,8 +618,8 @@
   {
     "name": "AUDIT-HCC-K1-summon-back-on-f10",
     "file": "src/systems/modSettings.js",
-    "old": "default: 'Alpha6', text: true,",
-    "new": "default: 'F10', text: true,",
+    "old": "        default: 'Alpha6',",
+    "new": "        default: 'F10',",
     "tests": [
       "test/systems/audit_hcc.test.js"
     ]

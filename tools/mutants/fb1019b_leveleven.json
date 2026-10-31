@@ -92,8 +92,8 @@
   {
     "name": "LEVEL-EVEN-refresh-dropped-virtue",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "\n  refreshOnlineLayer(entity, { keepHealth: true });   // LEVEL-EVEN: the online health floor over the new level and maximum (AUDIT LEVEL-EVEN L2-1: health as it stands)",
-    "new": "",
+    "old": "  refreshOnlineLayer(entity, { keepHealth: true }); // LEVEL-EVEN: the online health floor over the new level and maximum (AUDIT LEVEL-EVEN L2-1: health as it stands)\n  rollOverLevelProgress(entity);",
+    "new": "  rollOverLevelProgress(entity);",
     "tests": [
       "test/systems/fb1019b_leveleven.test.js"
     ],

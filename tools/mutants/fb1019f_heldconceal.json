@@ -83,8 +83,8 @@
   {
     "name": "HELD-CONCEAL-the-HUD-shows-the-ended-one",
     "file": "src/systems/mysticism.js",
-    "old": "    if (a.ended || a.bundleId == null) continue;\n",
-    "new": "    if (a.bundleId == null) continue;\n",
+    "old": "    if (a.ended || a.bundleId == null) continue;",
+    "new": "    if (a.bundleId == null) continue;",
     "tests": [
       "test/systems/fb1019f_heldconceal.test.js"
     ]

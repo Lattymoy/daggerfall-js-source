@@ -2,8 +2,8 @@
   {
     "name": "JRN-space-runs-cut-as-words",
     "file": "src/systems/notebook.js",
-    "old": "(k % 2 || run.length <= MAX_LINE_LENGTH ? run : pieces(run))",
-    "new": "(run.length <= MAX_LINE_LENGTH ? run : pieces(run))",
+    "old": "    .map((run, k) => (k % 2 || run.length <= MAX_LINE_LENGTH ? run : pieces(run)))",
+    "new": "    .map((run, k) => (run.length <= MAX_LINE_LENGTH ? run : pieces(run)))",
     "tests": [
       "test/net/journal1.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "JRN-a-tab-taken-for-a-break",
     "file": "src/systems/notebook.js",
-    "old": ".split(/( +)/).map((run, k)",
-    "new": ".split(/(\\s+)/).map((run, k)",
+    "old": "    .split(/( +)/)",
+    "new": "    .split(/(\\s+)/)",
     "tests": [
       "test/net/journal1.test.js"
     ],

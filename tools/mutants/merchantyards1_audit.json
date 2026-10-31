@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-MERCHANT-YARDS-Y1-the-counter-silent",
     "file": "src/systems/merchantYards.js",
-    "old": "priceIndex: YARD_PRICE_INDEX, noSteal: YARD_TEXT.steal,",
-    "new": "priceIndex: YARD_PRICE_INDEX,",
+    "old": "    noSteal: YARD_TEXT.steal,\n    accepts: (/** @type {any} */ it) => yardBuysItem(k, it),",
+    "new": "    accepts: (/** @type {any} */ it) => yardBuysItem(k, it),",
     "tests": [
       "test/world/merchantyards1.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-MERCHANT-YARDS-Y5-the-title-unread",
     "file": "src/systems/merchantYards.js",
-    "old": "name: (typeof name === 'string' && name.trim()) || `The ${YARD_KINDS[k].title}`,",
-    "new": "name: name,",
+    "old": "    name: (typeof name === 'string' && name.trim()) || `The ${YARD_KINDS[k].title}`,",
+    "new": "    name: name,",
     "tests": [
       "test/world/merchantyards1.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "AUDIT-MERCHANT-YARDS-R4-the-region-unread",
     "file": "src/systems/merchantYards.js",
-    "old": "getNameBankOfRegion(Number.isInteger(regionIndex) ? regionIndex : -1)",
-    "new": "getNameBankOfRegion(-1)",
+    "old": "  const name = seededPersonName(\n    seed,\n    race ? folkNameBank(race) : getNameBankOfRegion(Number.isInteger(regionIndex) ? regionIndex : -1),\n    gender,\n    { race, region: Number.isInteger(regionIndex) ? regionIndex : -1, home: folkKeyOf(people) },\n  ); // REGION-NAMES: their people's customs, their region's",
+    "new": "  const name = seededPersonName(seed, race ? folkNameBank(race) : getNameBankOfRegion(-1), gender, {\n    race,\n    region: Number.isInteger(regionIndex) ? regionIndex : -1,\n    home: folkKeyOf(people),\n  }); // REGION-NAMES: their people's customs, their region's",
     "tests": [
       "test/world/merchantyards1.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "AUDIT-MERCHANT-YARDS-R4-the-outfits-bits-cut",
     "file": "src/systems/merchantYards.js",
-    "old": "variant: (seed >>> 11) & 3",
-    "new": "variant: (seed >>> 11) & 1",
+    "old": "    variant: (seed >>> 11) & 3,",
+    "new": "    variant: (seed >>> 11) & 1,",
     "tests": [
       "test/world/merchantyards1.test.js"
     ]

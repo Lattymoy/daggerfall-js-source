@@ -20,8 +20,8 @@
   {
     "name": "MERCHANT-YARDS-a-horse-at-the-wagon-yard",
     "file": "src/systems/merchantYards.js",
-    "old": "  if (validYardKind(kind) === 'transport') return [...WAGON_KIND_ORDER.map((k) => mint(newWagonItem(k))),",
-    "new": "  if (validYardKind(kind) === 'transport') return [mint({ group: 'Transportation', templateIndex: TRANSPORT_HORSE }), ...WAGON_KIND_ORDER.map((k) => mint(newWagonItem(k))),",
+    "old": "      ...WAGON_KIND_ORDER.map((k) => mint(newWagonItem(k))),",
+    "new": "      mint({ group: 'Transportation', templateIndex: TRANSPORT_HORSE }),\n      ...WAGON_KIND_ORDER.map((k) => mint(newWagonItem(k))),",
     "tests": [
       "test/world/merchantyards1.test.js"
     ]

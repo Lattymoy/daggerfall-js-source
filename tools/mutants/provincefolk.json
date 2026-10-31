@@ -164,8 +164,8 @@
   {
     "name": "PFOLK-the-keeper's-race-unread",
     "file": "src/systems/merchantYards.js",
-    "old": "const race = folkRace(people, seed ^ 0x666f6c6b);",
-    "new": "const race = null;",
+    "old": "  const race = folkRace(people, seed ^ 0x666f6c6b); // PROVINCE-FOLK: past the Bay one of the place's people (its zone's - AUDIT PROVINCE-FOLK B6), named from their own bank",
+    "new": "  const race = null; // PROVINCE-FOLK: past the Bay one of the place's people (its zone's - AUDIT PROVINCE-FOLK B6), named from their own bank",
     "tests": [
       "test/characters/provincefolk.test.js"
     ]

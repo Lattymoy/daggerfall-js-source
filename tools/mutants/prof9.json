@@ -741,8 +741,8 @@
   {
     "name": "PROF9-pan-gentle-done",
     "file": "src/systems/panAct.js",
-    "old": "const inWindow = (h) => !gentle && h >= st.lo && h <= st.hi;",
-    "new": "const inWindow = (h) => h >= st.lo && h <= st.hi;",
+    "old": "  const inWindow = (h) => !gentle && h >= st.lo && h <= st.hi;",
+    "new": "  const inWindow = (h) => h >= st.lo && h <= st.hi;",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -750,8 +750,8 @@
   {
     "name": "PROF9-pan-burnt-done",
     "file": "src/systems/panAct.js",
-    "old": "st.burnt++; st.heat = 1; off(false, st.t);",
-    "new": "st.burnt++; st.heat = 1; off(true, st.t);",
+    "old": "        off(false, st.t);",
+    "new": "        off(true, st.t);",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -759,8 +759,8 @@
   {
     "name": "PROF9-pan-ignores-gap",
     "file": "src/systems/panAct.js",
-    "old": "if (st.done || at - st.lastAt < PAN_ACT.gapS) return null;",
-    "new": "if (st.done) return null;",
+    "old": "      if (st.done || at - st.lastAt < PAN_ACT.gapS) return null;",
+    "new": "      if (st.done) return null;",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -768,8 +768,8 @@
   {
     "name": "PROF9-pan-lead-unbounded",
     "file": "src/systems/panAct.js",
-    "old": "Math.max(0, Math.min(PRESS_LEAD_MAX_S, Number(lead) || 0))",
-    "new": "Math.max(0, Number(lead) || 0)",
+    "old": "      const l = Math.max(0, Math.min(PRESS_LEAD_MAX_S, Number(lead) || 0));",
+    "new": "      const l = Math.max(0, Number(lead) || 0);",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -777,8 +777,8 @@
   {
     "name": "PROF9-pan-lead-ignored",
     "file": "src/systems/panAct.js",
-    "old": "const ok = inWindow(Math.min(1, st.heat + st.rate * l));",
-    "new": "const ok = inWindow(st.heat);",
+    "old": "      const ok = inWindow(Math.min(1, st.heat + st.rate * l));",
+    "new": "      const ok = inWindow(st.heat);",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -795,8 +795,8 @@
   {
     "name": "PROF9-pan-short-clean",
     "file": "src/systems/panAct.js",
-    "old": "clean: st.takes.length >= st.need && hits === st.takes.length",
-    "new": "clean: hits === st.takes.length",
+    "old": "      return {\n        pans: st.takes.length,\n        hits,\n        burnt: st.burnt,\n        clean: st.takes.length >= st.need && hits === st.takes.length,\n      };",
+    "new": "      return { pans: st.takes.length, hits, burnt: st.burnt, clean: hits === st.takes.length };",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -804,8 +804,8 @@
   {
     "name": "PROF9-pan-one-pace",
     "file": "src/systems/panAct.js",
-    "old": "PAN_ACT.paceLo + (PAN_ACT.paceHi - PAN_ACT.paceLo) *",
-    "new": "PAN_ACT.paceLo + 0 *",
+    "old": "  const pace = () => PAN_ACT.paceLo + (PAN_ACT.paceHi - PAN_ACT.paceLo) * Math.max(0, Math.min(1, Number(rng()) || 0));",
+    "new": "  const pace = () => PAN_ACT.paceLo + 0 * Math.max(0, Math.min(1, Number(rng()) || 0));",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -1329,8 +1329,8 @@
   {
     "name": "AUDIT-PROF-541-K6-tart-not-endable",
     "file": "src/systems/mysticism.js",
-    "old": "  DISH_STAMINA_KIND,   // AUDIT PROF-541 K6:",
-    "new": "  // AUDIT PROF-541 K6:",
+    "old": "    DISH_STAMINA_KIND, // AUDIT PROF-541 K6: the Tart's (cookItems.js feedEffect) - the other dishes are Fortify Attribute's",
+    "new": "    // AUDIT PROF-541 K6: the Tart's (cookItems.js feedEffect) - the other dishes are Fortify Attribute's",
     "tests": [
       "test/systems/prof9_client.test.js",
       "test/ui/hud/buffend.test.js"

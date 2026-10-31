@@ -603,8 +603,8 @@
   {
     "name": "EGLOOK-music-duck-dropped",
     "file": "src/systems/music.js",
-    "old": "duck(db, seconds) { this.player?.duck?.(db, seconds); }",
-    "new": "duck(db, seconds) { }",
+    "old": "  duck(db, seconds) {\n    this.player?.duck?.(db, seconds);\n  }",
+    "new": "  duck(db, seconds) {}",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]

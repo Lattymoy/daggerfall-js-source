@@ -9,8 +9,8 @@
 import { storedSession, SESSION_KEY } from '../net/accountClient.js';
 import { appStorage } from './appStorage.js';
 import { werewolfSkinOf } from '../characters/werewolfSkin.js';
-import { AURAS, ICONS } from '../net/identityToken.js';   // WB9g; WITCH1: and the icons
-import { armoryKitOk } from '../net/armoryLaw.js';   // ARMORY: and the kit
+import { AURAS, ICONS } from '../net/identityToken.js'; // WB9g; WITCH1: and the icons
+import { armoryKitOk } from '../net/armoryLaw.js'; // ARMORY: and the kit
 
 /** The glyphs the service last stated for this device's session, or none. The raw stored string is memoised, so a
  *  per-frame reader (weaponRig, while the player is transformed) parses nothing twice. */
@@ -22,7 +22,11 @@ let _armory = null;
 let _nameAsAt = null;
 function read(storage) {
   let raw = null;
-  try { raw = storage?.getItem?.(SESSION_KEY) ?? null; } catch { raw = null; }
+  try {
+    raw = storage?.getItem?.(SESSION_KEY) ?? null;
+  } catch {
+    raw = null;
+  }
   if (raw === _raw) return;
   _raw = raw;
   const s = storedSession(storage);
@@ -32,19 +36,34 @@ function read(storage) {
   _armory = armoryKitOk(s?.armory) ? s.armory : null;
   _nameAsAt = Number.isSafeInteger(s?.nameAsAt) && s.nameAsAt > 0 ? s.nameAsAt : null;
 }
-export function ownGlyphs(storage = appStorage()) { read(storage); return _glyphs; }
+export function ownGlyphs(storage = appStorage()) {
+  read(storage);
+  return _glyphs;
+}
 /** WB9g: the aura the service last stated this device's player wears (a token's, a wardrobe's after any wear), or null -
  *  per frame, under the fire at their own feet (scenes/world.js auraFrame); nothing parsed twice. */
-export function ownAura(storage = appStorage()) { read(storage); return _aura; }
+export function ownAura(storage = appStorage()) {
+  read(storage);
+  return _aura;
+}
 /** ARMORY: the Aura Armory kit the service last stated this device's player wears (a token's, a wardrobe's after any
  *  wear), or null - per frame, under the pieces drawn on their own body (scenes/auraHost.js). */
-export function ownArmory(storage = appStorage()) { read(storage); return _armory; }
+export function ownArmory(storage = appStorage()) {
+  read(storage);
+  return _armory;
+}
 /** WITCH1: the profile icon the service last stated this device's player wears, or null (the character's face) - the
  *  profile mark's and the account card's portrait (ui/profileIcons.js). */
-export function ownIcon(storage = appStorage()) { read(storage); return _icon; }
+export function ownIcon(storage = appStorage()) {
+  read(storage);
+  return _icon;
+}
 /** NAME-AS: the moment the service took a choice of name made on this device (ui/accountFlow.js chooseName), or null -
  *  per frame, where the world host asks whether the room must hear the new name (scenes/world.js nameAsFrame). */
-export function ownNameAsAt(storage = appStorage()) { read(storage); return _nameAsAt; }
+export function ownNameAsAt(storage = appStorage()) {
+  read(storage);
+  return _nameAsAt;
+}
 
 /** The skin this device's own player's werewolf wears, or null. */
 export const ownWerewolfSkin = (storage = appStorage()) => werewolfSkinOf(ownGlyphs(storage));

@@ -464,8 +464,8 @@
   {
     "name": "D4-saved-F-not-migrated",
     "file": "src/systems/modSettings.js",
-    "old": "key: 'Handling.ToggleLightInput', was: 'F' });",
-    "new": "key: 'Handling.ToggleLightInput', was: 'G' });",
+    "old": "const HT_LIGHT_KEY = Object.freeze({ vendor: 'handheld-torches', key: 'Handling.ToggleLightInput', was: 'F' });",
+    "new": "const HT_LIGHT_KEY = Object.freeze({ vendor: 'handheld-torches', key: 'Handling.ToggleLightInput', was: 'G' });",
     "tests": [
       "test/ui/soc5_interact.test.js"
     ]

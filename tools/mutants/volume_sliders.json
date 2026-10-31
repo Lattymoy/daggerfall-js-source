@@ -2,8 +2,8 @@
   {
     "name": "HORSE-VOL-unclamped",
     "file": "src/systems/monsterVolume.js",
-    "old": "Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1; };",
-    "new": "Number.isFinite(v) ? v : 1; };",
+    "old": "  return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 1;",
+    "new": "  return Number.isFinite(v) ? v : 1;",
     "tests": [
       "test/systems/volume_sliders.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "HORSE-VOL-zero-unset",
     "file": "src/systems/monsterVolume.js",
-    "old": "{ const v = Number(getPref(key));",
-    "new": "{ const v = Number(getPref(key)) || 1;",
+    "old": "  const v = Number(getPref(key));",
+    "new": "  const v = Number(getPref(key)) || 1;",
     "tests": [
       "test/systems/volume_sliders.test.js"
     ],

@@ -476,7 +476,7 @@ Work answer throws KeyNotFoundException out of GetQuestorGender
 can move the selection, and the topic stays dead in that town. The
 port's readers answered the empty string instead: "Go to a place called
  and talk to someone named ." Both mutators now end in
-`npcSession.js:"  _holdSelection() {"`, which takes the build's own rule,
+`npcSession.js:"_holdSelection() {"`, which takes the build's own rule,
 the last questor the pool holds. A selection still in the pool is left
 alone, and nothing is drawn. DFU's order is unchanged: the answer names
 the selection that stood before the ask, and the pick follows it.

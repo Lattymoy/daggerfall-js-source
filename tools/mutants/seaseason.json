@@ -308,8 +308,8 @@
   {
     "name": "SEA-SEASON-offline-keeps",
     "file": "src/systems/offlineCopy.js",
-    "old": "  dropLineage(copy);\n  dropSeason(copy);\n  const own",
-    "new": "  dropLineage(copy);\n  const own",
+    "old": "  dropSeason(copy);\n  const own = saneSaveClock(copy.classicMinutes),",
+    "new": "  const own = saneSaveClock(copy.classicMinutes),",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "SEA-SEASON-online-keeps",
     "file": "src/systems/offlineCopy.js",
-    "old": "  dropLineage(copy);\n  dropSeason(copy);\n  if (!Number.isFinite(worldNow))",
-    "new": "  dropLineage(copy);\n  if (!Number.isFinite(worldNow))",
+    "old": "  dropSeason(copy);\n  if (!Number.isFinite(worldNow)) return copy;",
+    "new": "  if (!Number.isFinite(worldNow)) return copy;",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]

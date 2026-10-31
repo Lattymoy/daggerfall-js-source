@@ -627,8 +627,8 @@
   {
     "name": "travel-options-off-by-default",
     "file": "src/systems/modSettings.js",
-    "old": "  'travel-options': Object.freeze({\n    title: 'Travel Options',\n    author: 'Hazelnut',\n    keys: Object.freeze({\n      Enabled: Object.freeze({\n        default: true,",
-    "new": "  'travel-options': Object.freeze({\n    title: 'Travel Options',\n    author: 'Hazelnut',\n    keys: Object.freeze({\n      Enabled: Object.freeze({\n        default: false,",
+    "old": "    author: 'Hazelnut',\n    keys: Object.freeze({\n      Enabled: Object.freeze({\n        default: true,\n        get description() {\n          return t(\n            'mods.travelOptions.Enabled.description',",
+    "new": "    author: 'Hazelnut',\n    keys: Object.freeze({\n      Enabled: Object.freeze({\n        default: false,\n        get description() {\n          return t(\n            'mods.travelOptions.Enabled.description',",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -945,8 +945,8 @@
   {
     "name": "i1-follow-key-back-on-f",
     "file": "src/systems/modSettings.js",
-    "old": "'RoadsIntegration.FollowPathsKey': Object.freeze({ default: 3, keyChoice: true,",
-    "new": "'RoadsIntegration.FollowPathsKey': Object.freeze({ default: 1, keyChoice: true,",
+    "old": "      'RoadsIntegration.FollowPathsKey': Object.freeze({\n        default: 3,",
+    "new": "      'RoadsIntegration.FollowPathsKey': Object.freeze({\n        default: 1,",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js",
       "test/systems/ht1_handheldtorches.test.js"
@@ -955,8 +955,8 @@
   {
     "name": "i1-follow-key-on-x-handheld-torches-throw",
     "file": "src/systems/modSettings.js",
-    "old": "'RoadsIntegration.FollowPathsKey': Object.freeze({ default: 3, keyChoice: true,",
-    "new": "'RoadsIntegration.FollowPathsKey': Object.freeze({ default: 5, keyChoice: true,",
+    "old": "      'RoadsIntegration.FollowPathsKey': Object.freeze({\n        default: 3,",
+    "new": "      'RoadsIntegration.FollowPathsKey': Object.freeze({\n        default: 5,",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js",
       "test/systems/ht1_handheldtorches.test.js"

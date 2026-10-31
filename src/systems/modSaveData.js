@@ -12,7 +12,7 @@
 // The record rides `snapshotPlayer`'s `modData` under the mod's vendor
 // name - the same slot HCC's does.
 
-const _mods = new Map();   // vendor -> { newSaveData, getSaveData, restoreSaveData }
+const _mods = new Map(); // vendor -> { newSaveData, getSaveData, restoreSaveData }
 
 /** Register a mod's three members; a second registration for the vendor replaces the first. CSA-J: `newGame`, where
  *  a mod has one, is what a new game does with it in place of its NewSaveData restored. */
@@ -62,4 +62,6 @@ export function newGameModSaveRecords() {
 
 export const registeredModSaveVendors = () => [..._mods.keys()];
 /** Test seam. */
-export function _resetModSaveData() { _mods.clear(); }
+export function _resetModSaveData() {
+  _mods.clear();
+}

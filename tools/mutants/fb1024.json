@@ -11,8 +11,8 @@
   {
     "name": "DARK1-the-dark-is-the-sun",
     "file": "src/systems/passiveSpecials.js",
-    "old": "export const playerInDarkness = (nowMinutes = null) => (_host !== null || nowMinutes !== null) && !playerInSunlight(nowMinutes);",
-    "new": "export const playerInDarkness = (nowMinutes = null) => (_host !== null || nowMinutes !== null) && playerInSunlight(nowMinutes);",
+    "old": "  (_host !== null || nowMinutes !== null) && !playerInSunlight(nowMinutes);",
+    "new": "  (_host !== null || nowMinutes !== null) && playerInSunlight(nowMinutes);",
     "tests": [
       "test/systems/fb1024_darkregen.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DARK1-the-dark-is-the-night-alone",
     "file": "src/systems/passiveSpecials.js",
-    "old": "export const playerInDarkness = (nowMinutes = null) => (_host !== null || nowMinutes !== null) && !playerInSunlight(nowMinutes);",
-    "new": "export const playerInDarkness = (nowMinutes = null) => (_host !== null || nowMinutes !== null) && !isDayFromMinutes(nowMinutes ?? _host?.now?.() ?? 0);",
+    "old": "  (_host !== null || nowMinutes !== null) && !playerInSunlight(nowMinutes);",
+    "new": "  (_host !== null || nowMinutes !== null) && !isDayFromMinutes(nowMinutes ?? _host?.now?.() ?? 0);",
     "tests": [
       "test/systems/fb1024_darkregen.test.js"
     ]
@@ -29,7 +29,7 @@
   {
     "name": "DARK2-headless-reads-midnight",
     "file": "src/systems/passiveSpecials.js",
-    "old": "export const playerInDarkness = (nowMinutes = null) => (_host !== null || nowMinutes !== null) && !playerInSunlight(nowMinutes);",
+    "old": "export const playerInDarkness = (nowMinutes = null) =>\n  (_host !== null || nowMinutes !== null) && !playerInSunlight(nowMinutes);",
     "new": "export const playerInDarkness = (nowMinutes = null) => !playerInSunlight(nowMinutes);",
     "tests": [
       "test/systems/fb1024_darkregen.test.js"

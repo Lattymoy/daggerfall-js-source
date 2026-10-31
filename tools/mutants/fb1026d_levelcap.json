@@ -32,8 +32,8 @@
   {
     "name": "LEVEL-45-virtue-bar-unread",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "  if (atLevelCap(entity)) { releaseCapLatch(entity); return false; }",
-    "new": "",
+    "old": "  if (atLevelCap(entity)) {\n    releaseCapLatch(entity);\n    return false;\n  } // LEVEL-45 (systems/levelCap.js): the bar fills and holds, no level owed - one latched before it let go",
+    "new": "  // LEVEL-45 (systems/levelCap.js): the bar fills and holds, no level owed - one latched before it let go",
     "tests": [
       "test/systems/fb1026d_levelcap.test.js"
     ],
@@ -42,7 +42,7 @@
   {
     "name": "LEVEL-45-virtue-commit-unread",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "  if (atLevelCap(entity)) { entity.readyToLevelUp = false; entity.pendingLevel = null; return false; }",
+    "old": "  if (atLevelCap(entity)) {\n    entity.readyToLevelUp = false;\n    entity.pendingLevel = null;\n    return false;\n  }",
     "new": "",
     "tests": [
       "test/systems/fb1026d_levelcap.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "LEVEL-45-virtue-check-holds-the-latch",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "  if (atLevelCap(entity)) { releaseCapLatch(entity); return false; }",
-    "new": "  if (atLevelCap(entity)) return false;",
+    "old": "  if (atLevelCap(entity)) {\n    releaseCapLatch(entity);\n    return false;\n  } // LEVEL-45 (systems/levelCap.js): the bar fills and holds, no level owed - one latched before it let go",
+    "new": "  if (atLevelCap(entity)) return false; // LEVEL-45 (systems/levelCap.js): the bar fills and holds, no level owed - one latched before it let go",
     "tests": [
       "test/systems/fb1026d_levelcap.test.js"
     ],

@@ -90,8 +90,8 @@
   {
     "name": "L10N3e-systems-npcSession-184-Faction",
     "file": "src/systems/npcSession.js",
-    "old": "  _factionName(id) { return getLocalizedFactionName(id, this.deps.factionName?.(id) ?? ''); }",
-    "new": "  _factionName(id) { return this.deps.factionName?.(id) ?? ''; }",
+    "old": "    return getLocalizedFactionName(id, this.deps.factionName?.(id) ?? '');",
+    "new": "    return this.deps.factionName?.(id) ?? '';",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3e_beings.test.js",

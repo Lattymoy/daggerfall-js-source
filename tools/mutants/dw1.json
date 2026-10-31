@@ -92,7 +92,7 @@
   {
     "name": "DW1-11-a-DFU-False-string-reads-as-on",
     "file": "src/systems/modSettings.js",
-    "old": "      const v = (typeof raw === 'string' && /^(true|false)$/i.test(raw.trim())) ? /^true$/i.test(raw.trim()) : raw;",
+    "old": "      const v = typeof raw === 'string' && /^(true|false)$/i.test(raw.trim()) ? /^true$/i.test(raw.trim()) : raw;",
     "new": "      const v = raw;",
     "tests": [
       "test/combat/weapon/dw1_diverseweapons.test.js"
@@ -101,8 +101,8 @@
   {
     "name": "DW1-12-an-undeclared-preset-key-becomes-a-switch",
     "file": "src/systems/modSettings.js",
-    "old": "      if (!def) continue;\n      // DFU writes booleans",
-    "new": "      if (!def) { out[name] = raw; continue; }\n      // DFU writes booleans",
+    "old": "      if (!def) continue;",
+    "new": "      if (!def) {\n        out[name] = raw;\n        continue;\n      }",
     "tests": [
       "test/combat/weapon/dw1_diverseweapons.test.js"
     ]

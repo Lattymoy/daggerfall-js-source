@@ -20,8 +20,8 @@
   {
     "name": "CARP-YARD-a-counter-row",
     "file": "src/systems/merchantYards.js",
-    "old": "export const yardRowsFor = (kind) => (validYardKind(kind) === 'carpenter' ? [YARD_BENCH_ROW]",
-    "new": "export const yardRowsFor = (kind) => (validYardKind(kind) === 'carpenter' ? [...YARD_ROWS]",
+    "old": "    ? [YARD_BENCH_ROW]",
+    "new": "    ? [...YARD_ROWS]",
     "tests": [
       "test/systems/carpyard1.test.js"
     ]

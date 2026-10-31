@@ -56,8 +56,8 @@
   {
     "name": "MENTOR2-the-ratio-unread",
     "file": "src/systems/mentorMode.js",
-    "old": "realLevel - Math.round(ref) >= MENTOR_MIN_GAP && realLevel >= ref * MENTOR_MIN_RATIO",
-    "new": "realLevel - Math.round(ref) >= MENTOR_MIN_GAP",
+    "old": "  return realLevel - Math.round(ref) >= MENTOR_MIN_GAP && realLevel >= ref * MENTOR_MIN_RATIO;",
+    "new": "  return realLevel - Math.round(ref) >= MENTOR_MIN_GAP;",
     "tests": [
       "test/systems/mentor2.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "MENTOR2-no-join-wait",
     "file": "src/systems/mentorMode.js",
-    "old": "if (now - s.since >= MENTOR_JOIN_MS) live.push(s.level);",
-    "new": "live.push(s.level);",
+    "old": "        if (now - s.since >= MENTOR_JOIN_MS) live.push(s.level);",
+    "new": "        live.push(s.level);",
     "tests": [
       "test/systems/mentor2.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "MENTOR2-no-linger",
     "file": "src/systems/mentorMode.js",
-    "old": "if (now - s.last > MENTOR_LEAVE_MS) { seen.delete(acct); continue; }",
-    "new": "if (now - s.last > 0) { seen.delete(acct); continue; }",
+    "old": "        if (now - s.last > MENTOR_LEAVE_MS) {",
+    "new": "        if (now - s.last > 0) {",
     "tests": [
       "test/systems/mentor2.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "MENTOR2-the-fight-held-forever",
     "file": "src/systems/mentorMode.js",
-    "old": "if (now - holdFrom < MENTOR_FIGHT_HOLD_MS) return held;",
-    "new": "return held;",
+    "old": "        if (now - holdFrom < MENTOR_FIGHT_HOLD_MS) return held;",
+    "new": "        return held;",
     "tests": [
       "test/systems/mentor2.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "MENTOR2-the-members-unread",
     "file": "src/systems/mentorMode.js",
-    "old": "if (member) for",
-    "new": "if (false) for",
+    "old": "      if (member) for (const acct of seen.keys()) if (!member(acct)) seen.delete(acct);",
+    "new": "      if (false) for (const acct of seen.keys()) if (!member(acct)) seen.delete(acct);",
     "tests": [
       "test/systems/mentor2.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "MENTOR2-the-fight-asked-with-no-change",
     "file": "src/systems/mentorMode.js",
-    "old": "      if (live.length === held.length && live.every((l, i) => l === held[i])) { holdFrom = null; return held; }\n",
-    "new": "",
+    "old": "      if (live.length === held.length && live.every((l, i) => l === held[i])) {\n        holdFrom = null;\n        return held;\n      }\n      if (typeof fighting === 'function' ? fighting() : fighting) {",
+    "new": "      if (typeof fighting === 'function' ? fighting() : fighting) {",
     "tests": [
       "test/systems/mentor2.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "MENTOR2-a-move-said-as-a-start",
     "file": "src/systems/mentorMode.js",
-    "old": "return 'moved';",
-    "new": "return 'on';",
+    "old": "  if (was && next && (was.level !== next.level || was.worldLevel !== next.worldLevel)) return 'moved';",
+    "new": "  if (was && next && (was.level !== next.level || was.worldLevel !== next.worldLevel)) return 'on';",
     "tests": [
       "test/systems/mentor2.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "MENTOR2-the-tile-names-the-real-level",
     "file": "src/systems/mentorText.js",
-    "old": "foot: levelShort(m.level)",
-    "new": "foot: levelShort(m.realLevel)",
+    "old": "  if (m) return { name: t('mentor.tile.mentor', 'Mentoring'), foot: levelShort(m.level), pupil: false };",
+    "new": "  if (m) return { name: t('mentor.tile.mentor', 'Mentoring'), foot: levelShort(m.realLevel), pupil: false };",
     "tests": [
       "test/systems/mentor2.test.js"
     ]

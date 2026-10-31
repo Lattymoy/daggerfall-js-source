@@ -242,8 +242,8 @@
   {
     "name": "AUDIT-TW-D6-the-raids-row",
     "file": "src/systems/modSettings.js",
-    "old": "raid towns across Tamriel for 2 hours.",
-    "new": "raid towns across the Bay for 2 hours.",
+    "old": "            'Knights, bandits or orcs raid towns across Tamriel for 2 hours. With the town guard, ' +",
+    "new": "            'Knights, bandits or orcs raid towns across the Bay for 2 hours. With the town guard, ' +",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js"
     ],

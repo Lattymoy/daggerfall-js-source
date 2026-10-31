@@ -991,7 +991,7 @@ the planner its rock table (`tvWodRocks`, `world.js:"function tvWodRocks"`, whic
 on-foot rule outside the zone is removed - the patch had for a while let only roads and tracks be walked in region 16
 outside the cut), and the planner no longer reads it. Offline too: the law is the planner's, not the zone's. The
 words that promised the old rule say the new one: First Person Travel's roads switch is "planned by land"
-(`modSettings.js:"'GeneralOptions.FirstPersonTravelFollowsRoads': Object.freeze"`) and the Overworld's Free path is "straight across
+(`modSettings.js:"'GeneralOptions.FirstPersonTravelFollowsRoads':"`) and the Overworld's Free path is "straight across
 country" (`travelPathMode.js:"tipFree:"`), neither "round the mountains" any more.
 
 ## 20. The test build (TESTBUILD)
@@ -1088,7 +1088,7 @@ each is a line here, findable by its tag.
   the pack for nowhere but the character's own wagon. The store ladder refuses it everywhere else - the ground, a pile,
   a body, a chest, a companion's pack - in its own words, "Your spellbook never leaves you." (`REFUSAL.spellbook`,
   `itemTransfer.js:"if (isKeptSpellbook(item) && !usingWagon)"`), and so does the shift-drop, ahead of a lock's
-  "unlock it first" (`shiftDropRefusal`, `physicalItems.js:"isKeptSpellbook(item) ? { text: SPELLBOOK_KEPT_TEXT }"`).
+  "unlock it first" (`shiftDropRefusal`, `physicalItems.js:": isKeptSpellbook"`).
   Neither counter puts it up for Sell or Sell Magic (`nativeTrade.js:"&& isKeptSpellbook(item)) {"`;
   `enhancedTrade.js:"if (selling() && isKeptSpellbook(item)) {"`, and the enhanced counter quotes it no price - its
   `saleRefused`). A death in the zone already kept it (section 4, `wildCanLose`). The player trade's table

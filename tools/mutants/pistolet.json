@@ -2,8 +2,8 @@
   {
     "name": "PLD-install-registers-nothing",
     "file": "src/systems/pistolet.js",
-    "old": "  return addVendorTextures(PISTOLET_ICON_FILES.map(",
-    "new": "  return 0 && addVendorTextures(PISTOLET_ICON_FILES.map(",
+    "old": "  return addVendorTextures(\n    PISTOLET_ICON_FILES.map(({ archive, record, frame, file, offset }) => ({\n      archive,\n      record,\n      frame,\n      fileName: file,\n      standIn: true,\n      offset,\n      load: () => load(file),\n    })),",
+    "new": "  return (\n    0 &&\n    addVendorTextures(\n      PISTOLET_ICON_FILES.map(({ archive, record, frame, file, offset }) => ({\n        archive,\n        record,\n        frame,\n        fileName: file,\n        standIn: true,\n        offset,\n        load: () => load(file),\n      })),\n    )",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PLD-install-not-a-stand-in",
     "file": "src/systems/pistolet.js",
-    "old": "fileName: file, standIn: true, offset, load",
-    "new": "fileName: file, standIn: false, offset, load",
+    "old": "      standIn: true,",
+    "new": "      standIn: false,",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PLD-install-drops-the-offsets",
     "file": "src/systems/pistolet.js",
-    "old": "fileName: file, standIn: true, offset, load",
-    "new": "fileName: file, standIn: true, offset: null, load",
+    "old": "      offset,",
+    "new": "      offset: null,",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PLD-gilded-right-doll-plain",
     "file": "src/systems/pistolet.js",
-    "old": "if (gilded) return left ? PISTOLET_ART_RECORDS.gildedDollLeft : PISTOLET_ART_RECORDS.gildedDoll;",
-    "new": "if (gilded) return left ? PISTOLET_ART_RECORDS.gildedDollLeft : PISTOLET_ART_RECORDS.doll;",
+    "old": "  if (gilded) return left ? PISTOLET_ART_RECORDS.gildedDollLeft : PISTOLET_ART_RECORDS.gildedDoll;",
+    "new": "  if (gilded) return left ? PISTOLET_ART_RECORDS.gildedDollLeft : PISTOLET_ART_RECORDS.doll;",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PLD-gilded-left-doll-file-right-offset",
     "file": "src/systems/pistolet.js",
-    "old": "file: 'pistolet-paperdoll-left-gilded.png', offset: PISTOLET_PAPERDOLL_OFFSET.left",
-    "new": "file: 'pistolet-paperdoll-left-gilded.png', offset: PISTOLET_PAPERDOLL_OFFSET.right",
+    "old": "    file: 'pistolet-paperdoll-left-gilded.png',\n    offset: PISTOLET_PAPERDOLL_OFFSET.left,",
+    "new": "    file: 'pistolet-paperdoll-left-gilded.png',\n    offset: PISTOLET_PAPERDOLL_OFFSET.right,",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PLD-left-doll-file-right-offset",
     "file": "src/systems/pistolet.js",
-    "old": "file: 'pistolet-paperdoll-left.png', offset: PISTOLET_PAPERDOLL_OFFSET.left",
-    "new": "file: 'pistolet-paperdoll-left.png', offset: PISTOLET_PAPERDOLL_OFFSET.right",
+    "old": "    file: 'pistolet-paperdoll-left.png',\n    offset: PISTOLET_PAPERDOLL_OFFSET.left,",
+    "new": "    file: 'pistolet-paperdoll-left.png',\n    offset: PISTOLET_PAPERDOLL_OFFSET.right,",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PLD-condition-unclamped",
     "file": "src/systems/pistolet.js",
-    "old": "item.currentCondition = Math.max(0, Math.min(item.maxCondition ?? condition, condition));",
-    "new": "item.currentCondition = condition;",
+    "old": "  if (condition != null) item.currentCondition = Math.max(0, Math.min(item.maxCondition ?? condition, condition));",
+    "new": "  if (condition != null) item.currentCondition = condition;",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PLD-not-dwarven",
     "file": "src/systems/pistolet.js",
-    "old": "export function createPistolet({ material = 4,",
-    "new": "export function createPistolet({ material = 3,",
+    "old": "export function createPistolet({ material = 4, condition = null } = {}) {",
+    "new": "export function createPistolet({ material = 3, condition = null } = {}) {",
     "tests": [
       "test/systems/pistolet.test.js",
       "test/systems/pistolet_pins.test.js"
@@ -75,8 +75,8 @@
   {
     "name": "PLD-offset-right-6px",
     "file": "src/systems/pistolet.js",
-    "old": "right: Object.freeze({ x: 200 + 17, y: 8 + 89 })",
-    "new": "right: Object.freeze({ x: 200 + 17, y: 8 + 93 })",
+    "old": "  right: Object.freeze({ x: 200 + 17, y: 8 + 89 }),",
+    "new": "  right: Object.freeze({ x: 200 + 17, y: 8 + 93 }),",
     "tests": [
       "test/systems/pistolet.test.js"
     ]

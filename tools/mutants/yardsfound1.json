@@ -11,8 +11,8 @@
   {
     "name": "YARDS-FOUND-the-middle-unread",
     "file": "src/systems/merchantYards.js",
-    "old": "position: [s.x, 0, s.z], buildingKey: yardBuildingKey(kind), yard: kind,",
-    "new": "position: [0, 0, 0], buildingKey: yardBuildingKey(kind), yard: kind,",
+    "old": "      position: [s.x, 0, s.z],",
+    "new": "      position: [0, 0, 0],",
     "tests": [
       "test/systems/yardsfound1.test.js"
     ]

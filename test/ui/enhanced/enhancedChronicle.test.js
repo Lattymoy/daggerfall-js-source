@@ -132,7 +132,7 @@ test('PX24b: an entry keeps its DATED HEAD - the notebook wrote one and the firs
   const H = (text) => ({ formatting: 'highlight', text });
   const e = chronicleEntry([H('11 Frostfall, 3E 405 in Daggerfall:'), T('The smith owes me a favour.')]);
   assert.deepEqual(e, { head: '11 Frostfall, 3E 405 in Daggerfall:', body: ['The smith owes me a favour.'] });
-  // A CONTINUATION page files with NO header (notebook.js:"if ((note.length - 2) >= (MAX_LINES_SMALL * 2))".."this.notes.push(note);") and
+  // A CONTINUATION page files with NO header (notebook.js:"if (note.length - 2 >= MAX_LINES_SMALL * 2)".."this.notes.push(note);") and
   // comes back headless rather than borrowing the previous one.
   assert.deepEqual(chronicleEntry([T('...and the rest of it.')]), { head: null, body: ['...and the rest of it.'] });
   assert.deepEqual(chronicleEntry(null), { head: null, body: [] });
@@ -154,7 +154,7 @@ test('PX24b: the player may WRITE - the first draft was read-only, which is a lo
   assert.match(cr, /deps\.notebook\(\)\.removeNote\(e\.index\);/);
   const nb = read('src/systems/notebook.js');
   assert.match(nb, /addNote\(str, index = -1\) \{/);
-  assert.match(nb, /removeNote\(index\) \{ this\.notes\.splice\(index, 1\); \}/);
+  assert.match(nb, /removeNote\(index\) \{\n\s*this\.notes\.splice\(index, 1\);\n\s*\}/);
   // Both arms appear only when there IS a notebook - a host may open
   // this before one exists, and a control that cannot act is the
   // drawn-door bug.
@@ -176,7 +176,7 @@ test('PX24c: a message has NO head, and PX24b printed a lie on every one', () =>
   // all fifty. A continuation is a NOTE whose page split; a message
   // simply has no header to begin with.
   const nb = read('src/systems/notebook.js');
-  assert.match(nb, /const message = \[\{ formatting: 'center', text: '' \}, \{ formatting: 'text', text: str \}\];/);
+  assert.match(nb, /const message = \[\n\s*\{ formatting: 'center', text: '' \},\n\s*\{ formatting: 'text', text: str \},\n\s*\];/);
   const cr = read('src/ui/enhanced/enhancedChronicle.js');
   assert.match(cr, /const head = e\.head \?\? \(section === 'messages'\n\s*\? \(i === rows\.length - 1 \? 'Most recent' : null\)\n\s*: '\\u2014 continued \\u2014'\);/,
     'the continued fallback is the NOTE\'s alone');

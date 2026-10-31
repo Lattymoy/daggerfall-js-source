@@ -261,8 +261,8 @@
   {
     "name": "IT1-27-shipped-default-on",
     "file": "src/systems/modSettings.js",
-    "old": "      'General.DisableNormalTravel': Object.freeze({ default: false,",
-    "new": "      'General.DisableNormalTravel': Object.freeze({ default: true,",
+    "old": "      'General.DisableNormalTravel': Object.freeze({\n        default: false,",
+    "new": "      'General.DisableNormalTravel': Object.freeze({\n        default: true,",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js"
     ],

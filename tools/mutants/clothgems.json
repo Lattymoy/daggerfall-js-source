@@ -382,8 +382,8 @@
   {
     "name": "CLOTHGEMS-bag-graded-unmapped",
     "file": "src/systems/materialsBag.js",
-    "old": "...MINED_KEYS, ...LOOSE_ONLY_KEYS].filter",
-    "new": "...MINED_KEYS].filter",
+    "old": "  return [...herbs, ...FOOD_KEYS, ...MINED_KEYS, ...LOOSE_ONLY_KEYS].filter((k) => !!material(k));",
+    "new": "  return [...herbs, ...FOOD_KEYS, ...MINED_KEYS].filter((k) => !!material(k));",
     "tests": [
       "test/systems/clothgems_jewel.test.js"
     ]

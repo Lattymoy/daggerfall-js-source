@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-QL-UI-5-outcome-filed-as-a-token",
     "file": "src/systems/notebook.js",
-    "old": "    entry[0].outcome = text.trim();\n",
-    "new": "    entry.push({ formatting: 'text', text: text.trim() }, NEWLINE);\n",
+    "old": "    entry[0].outcome = text.trim();",
+    "new": "    entry.push({ formatting: 'text', text: text.trim() }, NEWLINE);",
     "tests": [
       "test/ui/questlines/ql2_journal.test.js",
       "test/systems/questlines/ql1_layer.test.js"
@@ -21,8 +21,8 @@
   {
     "name": "AUDIT-QL-UI-5-save-drops-the-outcome",
     "file": "src/systems/notebook.js",
-    "old": "      ...outcomeField(this.finishedQuests),\n",
-    "new": "",
+    "old": "      ...outcomeField(this.finishedQuests),\n      // JOURNAL-CLEAN: the port's own field beside DFU's two - written only when something is hidden, so a save with",
+    "new": "      // JOURNAL-CLEAN: the port's own field beside DFU's two - written only when something is hidden, so a save with",
     "tests": [
       "test/ui/questlines/ql2_journal.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "AUDIT-QL-UI-5-restore-drops-the-outcome",
     "file": "src/systems/notebook.js",
-    "old": "    restoreOutcomes(this.finishedQuests, data.finishedQuestOutcomes);   // AUDIT QUESTLINES UI-5\n",
-    "new": "",
+    "old": "    restoreOutcomes(this.finishedQuests, data.finishedQuestOutcomes); // AUDIT QUESTLINES UI-5\n    // JOURNAL-CLEAN: an older save carries no list and hides nothing; a malformed one is read for what it holds.",
+    "new": "    // JOURNAL-CLEAN: an older save carries no list and hides nothing; a malformed one is read for what it holds.",
     "tests": [
       "test/ui/questlines/ql2_journal.test.js"
     ]

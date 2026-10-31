@@ -119,8 +119,8 @@
   {
     "name": "S2-setting-capped-at-the-mod",
     "file": "src/systems/modSettings.js",
-    "old": "max: FOOT_SKIN_COUNT - 1, get description() { return t('mods.eyeOfTheBeholder.Graphics.OnFoot.description', 'Sprite when on foot'); }",
-    "new": "max: 15, get description() { return t('mods.eyeOfTheBeholder.Graphics.OnFoot.description', 'Sprite when on foot'); }",
+    "old": "        max: FOOT_SKIN_COUNT - 1,",
+    "new": "        max: 15,",
     "tests": [
       "test/net/skin2_class_skins.test.js",
       "test/net/disc23b_eotb_sprites.test.js"

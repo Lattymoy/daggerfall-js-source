@@ -210,8 +210,8 @@
   {
     "name": "STEED1-the-owned-stood-again",
     "file": "src/systems/merchantYards.js",
-    "old": "    if (have.has(h.horseSeed)) continue;\n",
-    "new": "\n",
+    "old": "    if (have.has(h.horseSeed)) continue;",
+    "new": "",
     "tests": [
       "test/systems/steed1_horsecare.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "STEED1-the-stall-unread",
     "file": "src/systems/merchantYards.js",
-    "old": "stream(mix3(mapId | 0, day | 0, i))",
-    "new": "stream(mix3(mapId | 0, day | 0, 0))",
+    "old": "    birthHorses([h], stream(mix3(mapId | 0, day | 0, i)));",
+    "new": "    birthHorses([h], stream(mix3(mapId | 0, day | 0, 0)));",
     "tests": [
       "test/systems/steed1_horsecare.test.js"
     ]

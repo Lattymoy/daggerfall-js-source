@@ -11,8 +11,8 @@
   {
     "name": "PI1-arrow-a-weapon",
     "file": "src/systems/physicalItems.js",
-    "old": "item.templateIndex === TEMPLATES.Arrow ? 'Arrows' : 'Weapons'",
-    "new": "'Weapons'",
+    "old": "  if (item.group === 'Weapons') return item.templateIndex === TEMPLATES.Arrow ? 'Arrows' : 'Weapons';",
+    "new": "  if (item.group === 'Weapons') return 'Weapons';",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PI1-map-other",
     "file": "src/systems/physicalItems.js",
-    "old": "item.templateIndex === TEMPLATES.Map ? 'Maps' : 'Other Items'",
-    "new": "'Other Items'",
+    "old": "  if (item.group === 'MiscItems') return item.templateIndex === TEMPLATES.Map ? 'Maps' : 'Other Items';",
+    "new": "  if (item.group === 'MiscItems') return 'Other Items';",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PI1-artifact-not-magic",
     "file": "src/systems/physicalItems.js",
-    "old": "Artifacts: 'Magic Items',",
-    "new": "Artifacts: 'Other Items',",
+    "old": "  Artifacts: 'Magic Items',",
+    "new": "  Artifacts: 'Other Items',",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PI1-gold-other",
     "file": "src/systems/physicalItems.js",
-    "old": "Currency: 'Gold',",
-    "new": "Currency: 'Other Items',",
+    "old": "  Currency: 'Gold',",
+    "new": "  Currency: 'Other Items',",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PI1-arrow-height",
     "file": "src/systems/physicalItems.js",
-    "old": "arrow: 0.32,",
-    "new": "arrow: 0.33,",
+    "old": "export const PI_DEFAULT_HEIGHT = Object.freeze({ weapon: 0.8, arrow: 0.32, armor: 0.65, clothing: 0.52, other: 0.4 });",
+    "new": "export const PI_DEFAULT_HEIGHT = Object.freeze({ weapon: 0.8, arrow: 0.33, armor: 0.65, clothing: 0.52, other: 0.4 });",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PI1-clothing-height",
     "file": "src/systems/physicalItems.js",
-    "old": "clothing: 0.52,",
-    "new": "clothing: 0.5,",
+    "old": "export const PI_DEFAULT_HEIGHT = Object.freeze({ weapon: 0.8, arrow: 0.32, armor: 0.65, clothing: 0.52, other: 0.4 });",
+    "new": "export const PI_DEFAULT_HEIGHT = Object.freeze({ weapon: 0.8, arrow: 0.32, armor: 0.65, clothing: 0.5, other: 0.4 });",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PI1-pauldrons-two-keys",
     "file": "src/systems/physicalItems.js",
-    "old": "105: 'Pauldrons',",
-    "new": "105: 'Left Pauldron',",
+    "old": "  105: 'Pauldrons',",
+    "new": "  105: 'Left Pauldron',",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "PI1-impulse-unclamped",
     "file": "src/systems/physicalItems.js",
-    "old": "clamp(pct, 0, PI_IMPULSE_MAX_PCT) / 100",
-    "new": "pct / 100",
+    "old": "  const impulse =\n    typeof pct === 'number' && !Number.isNaN(pct) ? clamp(pct, 0, PI_IMPULSE_MAX_PCT) / 100 : PI_IMPULSE_DEFAULT;",
+    "new": "  const impulse = typeof pct === 'number' && !Number.isNaN(pct) ? pct / 100 : PI_IMPULSE_DEFAULT;",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PI1-override-zero-taken",
     "file": "src/systems/physicalItems.js",
-    "old": "if (finite(v) && v > 0) overrides.set",
-    "new": "if (finite(v)) overrides.set",
+    "old": "      if (finite(v) && v > 0) overrides.set(`${group}:${name}`, clamp(v, PI_SIZE_MIN, PI_SIZE_MAX));",
+    "new": "      if (finite(v)) overrides.set(`${group}:${name}`, clamp(v, PI_SIZE_MIN, PI_SIZE_MAX));",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "PI1-empty-picture-nothing",
     "file": "src/systems/physicalItems.js",
-    "old": "if (x1 < x0 || y1 < y0) return { x: 0, y: 0, w: width, h: height };",
-    "new": "if (x1 < x0 || y1 < y0) return { x: 0, y: 0, w: 1, h: 1 };",
+    "old": "  if (x1 < x0 || y1 < y0) return { x: 0, y: 0, w: width, h: height };",
+    "new": "  if (x1 < x0 || y1 < y0) return { x: 0, y: 0, w: 1, h: 1 };",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PI1-size-by-height",
     "file": "src/systems/physicalItems.js",
-    "old": "const k = worldH / Math.max(visW, visH);",
-    "new": "const k = worldH / visH;",
+    "old": "  const k = worldH / Math.max(visW, visH);",
+    "new": "  const k = worldH / visH;",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PI1-depth-half",
     "file": "src/systems/physicalItems.js",
-    "old": "Math.max(w, h * 0.4)",
-    "new": "Math.max(w, h * 0.5)",
+    "old": "export const colliderDepth = (w, h) => Math.max(w, h * 0.4);",
+    "new": "export const colliderDepth = (w, h) => Math.max(w, h * 0.5);",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PI1-scatter-nearer",
     "file": "src/systems/physicalItems.js",
-    "old": "PI_SCATTER = Object.freeze({ min: 0.45,",
-    "new": "PI_SCATTER = Object.freeze({ min: 0.5,",
+    "old": "export const PI_SCATTER = Object.freeze({ min: 0.45, max: 0.85, up: 0.65 });",
+    "new": "export const PI_SCATTER = Object.freeze({ min: 0.5, max: 0.85, up: 0.65 });",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "PI1-scatter-lower",
     "file": "src/systems/physicalItems.js",
-    "old": "max: 0.85, up: 0.65 });",
-    "new": "max: 0.85, up: 0.6 });",
+    "old": "export const PI_SCATTER = Object.freeze({ min: 0.45, max: 0.85, up: 0.65 });",
+    "new": "export const PI_SCATTER = Object.freeze({ min: 0.45, max: 0.85, up: 0.6 });",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PI1-throw-reach",
     "file": "src/systems/physicalItems.js",
-    "old": "PI_LAUNCH = Object.freeze({ reach: 0.85,",
-    "new": "PI_LAUNCH = Object.freeze({ reach: 0.8,",
+    "old": "  reach: 0.85,",
+    "new": "  reach: 0.8,",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "PI1-nudge",
     "file": "src/systems/physicalItems.js",
-    "old": "nudge: 0.08,",
-    "new": "nudge: 0.1,",
+    "old": "  nudge: 0.08,",
+    "new": "  nudge: 0.1,",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "PI1-nudge-scaled",
     "file": "src/systems/physicalItems.js",
-    "old": "const k = fresh ? impulse : 1;",
-    "new": "const k = impulse;",
+    "old": "  const k = fresh ? impulse : 1;",
+    "new": "  const k = impulse;",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "PI1-ring",
     "file": "src/systems/physicalItems.js",
-    "old": "PI_SPIRAL = Object.freeze({ ahead: 1.1, ring: 0.78,",
-    "new": "PI_SPIRAL = Object.freeze({ ahead: 1.1, ring: 0.8,",
+    "old": "  ring: 0.78,",
+    "new": "  ring: 0.8,",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "PI1-golden",
     "file": "src/systems/physicalItems.js",
-    "old": "golden: 2.399963140487671,",
-    "new": "golden: 2.4,",
+    "old": "export const PI_SPIRAL = Object.freeze({\n  ahead: 1.1,\n  ring: 0.78,\n  golden: 2.399963140487671,\n  tries: 256,\n  lift: 0.025,\n  overlap: 0.1,\n});",
+    "new": "export const PI_SPIRAL = Object.freeze({ ahead: 1.1, ring: 0.78, golden: 2.4, tries: 256, lift: 0.025, overlap: 0.1 });",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "PI1-overlap-no-margin",
     "file": "src/systems/physicalItems.js",
-    "old": "overlap: 0.1 });",
-    "new": "overlap: 0 });",
+    "old": "  overlap: 0.1,",
+    "new": "  overlap: 0,",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "PI1-bounce",
     "file": "src/systems/physicalItems.js",
-    "old": "drag: 0.9, bounce: 0.35,",
-    "new": "drag: 0.9, bounce: 0.3,",
+    "old": "  bounce: 0.35,",
+    "new": "  bounce: 0.3,",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "PI1-bounce-threshold",
     "file": "src/systems/physicalItems.js",
-    "old": "bounceThreshold: 2,",
-    "new": "bounceThreshold: 1,",
+    "old": "  bounceThreshold: 2,",
+    "new": "  bounceThreshold: 1,",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "PI1-settle-sooner",
     "file": "src/systems/physicalItems.js",
-    "old": "settleSq: 0.0025, settleS: 0.5,",
-    "new": "settleSq: 0.0025, settleS: 0.2,",
+    "old": "  settleS: 0.5,",
+    "new": "  settleS: 0.2,",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "PI1-drag",
     "file": "src/systems/physicalItems.js",
-    "old": "gravity: 9.81, dt: 0.02, drag: 0.9,",
-    "new": "gravity: 9.81, dt: 0.02, drag: 0,",
+    "old": "  drag: 0.9,",
+    "new": "  drag: 0,",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "PI1-shoulder-speed",
     "file": "src/systems/physicalItems.js",
-    "old": "ground: 0.15, speed: 0.45,",
-    "new": "ground: 0.15, speed: 0.5,",
+    "old": "  speed: 0.45,",
+    "new": "  speed: 0.5,",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "PI1-shoulder-fast-too",
     "file": "src/systems/physicalItems.js",
-    "old": "PI_SEPARATION = Object.freeze({ maxAcross: 0.65,",
-    "new": "PI_SEPARATION = Object.freeze({ maxAcross: 1.5,",
+    "old": "  maxAcross: 0.65,",
+    "new": "  maxAcross: 1.5,",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "PI1-rim-magic",
     "file": "src/systems/physicalItems.js",
-    "old": "PI_RIM = Object.freeze({ magic: 0.3,",
-    "new": "PI_RIM = Object.freeze({ magic: 0.35,",
+    "old": "  magic: 0.3,",
+    "new": "  magic: 0.35,",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "PI1-transport-refused-silently",
     "file": "src/systems/physicalItems.js",
-    "old": "(item?.group === 'Transportation' ? { text: CANNOT_REMOVE_ITEM_TEXT }",
-    "new": "(false ? { text: CANNOT_REMOVE_ITEM_TEXT }",
+    "old": "  item?.group === 'Transportation'\n    ? { text: CANNOT_REMOVE_ITEM_TEXT }\n    : isKeptSpellbook(item)\n      ? { text: SPELLBOOK_KEPT_TEXT }\n      : null;",
+    "new": "  false ? { text: CANNOT_REMOVE_ITEM_TEXT } : isKeptSpellbook(item) ? { text: SPELLBOOK_KEPT_TEXT } : null;",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "PI1-floor-unasked",
     "file": "src/systems/physicalItems.js",
-    "old": "groundRefusal: dropRefusal?.() ?? null,",
-    "new": "groundRefusal: null,",
+    "old": "    planStore(item, { remote: dest, getQuest, groundRefusal: dropRefusal?.() ?? null, bagLoaded: !bagMayLeave(entity) })",
+    "new": "    planStore(item, { remote: dest, getQuest, groundRefusal: null, bagLoaded: !bagMayLeave(entity) })",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "PI1-every-category-shown",
     "file": "src/systems/physicalItems.js",
-    "old": "settings?.enemyDrops !== false && !settings?.disabled?.has(itemCategory(item))",
-    "new": "settings?.enemyDrops !== false",
+    "old": "export const showsOnCorpse = (item, settings) =>\n  !!item && settings?.enemyDrops !== false && !settings?.disabled?.has(itemCategory(item));",
+    "new": "export const showsOnCorpse = (item, settings) => !!item && settings?.enemyDrops !== false;",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "PI1-every-body-fresh",
     "file": "src/systems/physicalItems.js",
-    "old": "return t !== undefined && at - t <= PI_FRESH_MS;",
-    "new": "return true;",
+    "old": "  return t !== undefined && at - t <= PI_FRESH_MS;",
+    "new": "  return true;",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]

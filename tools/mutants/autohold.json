@@ -656,7 +656,7 @@
   {
     "name": "AUTOHOLD-AUDIT-notCarried-a-no-op",
     "file": "src/systems/peerWord.js",
-    "old": "export const notCarried = (/** @type {any[] | null} */ list) => (Array.isArray(list) && _carriedFilter ? _carriedFilter(list) : list);",
+    "old": "export const notCarried = (/** @type {any[] | null} */ list) =>\n  Array.isArray(list) && _carriedFilter ? _carriedFilter(list) : list;",
     "new": "export const notCarried = (/** @type {any[] | null} */ list) => list;",
     "tests": [
       "test/server/autohold.test.js"

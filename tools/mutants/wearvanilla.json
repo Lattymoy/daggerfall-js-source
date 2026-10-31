@@ -2,8 +2,8 @@
   {
     "name": "WEAR-VANILLA-overhaul-wear-ships-on",
     "file": "src/systems/modSettings.js",
-    "old": "      equipmentDamageEnhanced: Object.freeze({ default: false,",
-    "new": "      equipmentDamageEnhanced: Object.freeze({ default: true,",
+    "old": "      equipmentDamageEnhanced: Object.freeze({\n        default: false,",
+    "new": "      equipmentDamageEnhanced: Object.freeze({\n        default: true,",
     "tests": [
       "test/systems/wear_vanilla.test.js",
       "test/systems/pcaao.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "WEAR-VANILLA-fading-ships-on",
     "file": "src/systems/modSettings.js",
-    "old": "      fadingEnchantedItems: Object.freeze({ default: false,",
-    "new": "      fadingEnchantedItems: Object.freeze({ default: true,",
+    "old": "      fadingEnchantedItems: Object.freeze({\n        default: false,",
+    "new": "      fadingEnchantedItems: Object.freeze({\n        default: true,",
     "tests": [
       "test/systems/wear_vanilla.test.js",
       "test/systems/pcaao.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "WEAR-VANILLA-rr-armour-x5-ships-on",
     "file": "src/systems/modSettings.js",
-    "old": "      equipDamage: Object.freeze({ default: false,",
-    "new": "      equipDamage: Object.freeze({ default: true,",
+    "old": "      equipDamage: Object.freeze({\n        default: false,",
+    "new": "      equipDamage: Object.freeze({\n        default: true,",
     "tests": [
       "test/systems/wear_vanilla.test.js",
       "test/systems/rr1_realism.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "WEAR-VANILLA-reset-drops-overhaul-wear",
     "file": "src/systems/modSettings.js",
-    "old": "  Object.freeze({ vendor: 'pcaao', key: 'equipmentDamageEnhanced', stamp: 'equipmentDamageEnhanced@WEAR-VANILLA' }),\n",
-    "new": "",
+    "old": "  Object.freeze({ vendor: 'pcaao', key: 'equipmentDamageEnhanced', stamp: 'equipmentDamageEnhanced@WEAR-VANILLA' }),\n  Object.freeze({ vendor: 'pcaao', key: 'fadingEnchantedItems', stamp: 'fadingEnchantedItems@WEAR-VANILLA' }),",
+    "new": "  Object.freeze({ vendor: 'pcaao', key: 'fadingEnchantedItems', stamp: 'fadingEnchantedItems@WEAR-VANILLA' }),",
     "tests": [
       "test/systems/wear_vanilla.test.js"
     ]
@@ -51,8 +51,8 @@
   {
     "name": "WEAR-VANILLA-reset-drops-fading",
     "file": "src/systems/modSettings.js",
-    "old": "  Object.freeze({ vendor: 'pcaao', key: 'fadingEnchantedItems', stamp: 'fadingEnchantedItems@WEAR-VANILLA' }),\n",
-    "new": "",
+    "old": "  Object.freeze({ vendor: 'pcaao', key: 'fadingEnchantedItems', stamp: 'fadingEnchantedItems@WEAR-VANILLA' }),\n  Object.freeze({ vendor: 'roleplay-realism', key: 'equipDamage', stamp: 'equipDamage@WEAR-VANILLA' }),",
+    "new": "  Object.freeze({ vendor: 'roleplay-realism', key: 'equipDamage', stamp: 'equipDamage@WEAR-VANILLA' }),",
     "tests": [
       "test/systems/wear_vanilla.test.js"
     ]
@@ -60,8 +60,8 @@
   {
     "name": "WEAR-VANILLA-reset-drops-rr-armour-x5",
     "file": "src/systems/modSettings.js",
-    "old": "  Object.freeze({ vendor: 'roleplay-realism', key: 'equipDamage', stamp: 'equipDamage@WEAR-VANILLA' }),\n",
-    "new": "",
+    "old": "  Object.freeze({ vendor: 'roleplay-realism', key: 'equipDamage', stamp: 'equipDamage@WEAR-VANILLA' }),\n]);",
+    "new": "]);",
     "tests": [
       "test/systems/wear_vanilla.test.js"
     ]

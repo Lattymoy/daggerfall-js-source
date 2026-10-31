@@ -250,8 +250,8 @@
   {
     "name": "PROF2-28-the-glint-stays",
     "file": "src/systems/mineAct.js",
-    "old": "      if (st.points >= st.need) { st.done = true; return; }\n      moveGlint();",
-    "new": "      if (st.points >= st.need) { st.done = true; return; }",
+    "old": "      moveGlint();\n    },",
+    "new": "    },",
     "tests": [
       "test/net/prof2_client.test.js"
     ]
@@ -259,8 +259,8 @@
   {
     "name": "PROF2-29-gentle-glints",
     "file": "src/systems/mineAct.js",
-    "old": "    if (gentle) { st.glint = -1; return; }\n",
-    "new": "",
+    "old": "    if (gentle) {\n      st.glint = -1;\n      return;\n    }\n    let g;",
+    "new": "    let g;",
     "tests": [
       "test/net/prof2_client.test.js"
     ]
@@ -268,8 +268,8 @@
   {
     "name": "PROF2-30-clean-with-one-glint",
     "file": "src/systems/mineAct.js",
-    "old": "clean: !gentle && st.glints === st.strikes };",
-    "new": "clean: !gentle && st.glints > 0 };",
+    "old": "      return { strikes: st.strikes, glints: st.glints, clean: !gentle && st.glints === st.strikes };",
+    "new": "      return { strikes: st.strikes, glints: st.glints, clean: !gentle && st.glints > 0 };",
     "tests": [
       "test/net/prof2_client.test.js"
     ]

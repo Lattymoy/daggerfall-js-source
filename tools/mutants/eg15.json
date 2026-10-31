@@ -292,8 +292,8 @@
   {
     "name": "EG15-magery-of-the-bearing",
     "file": "src/systems/passiveSpecials.js",
-    "old": "  const raw = Math.max(0, (entity.maxMagicka ?? 0) - onlineMpOf(entity));",
-    "new": "  const raw = Math.max(0, (entity.maxMagicka ?? 0) - (entity.renownMp | 0));",
+    "old": "  const raw = Math.max(0, (entity.maxMagicka ?? 0) - onlineMpOf(entity)); // EG15: Renown's and the folds' (the Battlemage's Bearing) - both above the floor",
+    "new": "  const raw = Math.max(0, (entity.maxMagicka ?? 0) - (entity.renownMp | 0)); // EG15: Renown's and the folds' (the Battlemage's Bearing) - both above the floor",
     "why": "the magery takes a third of the Bearing",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"

@@ -477,8 +477,8 @@
   {
     "name": "TOWNECON-AUDIT2-PRICE2-held-counted",
     "file": "src/systems/materialsBag.js",
-    "old": "&& (counter || !counterPiece(it))) n += it.stackCount ?? 1;",
-    "new": ") n += it.stackCount ?? 1;",
+    "old": "    for (const it of list) if (materialKeyOfItem(it) === key && (counter || !counterPiece(it))) n += it.stackCount ?? 1; // AUDIT TOWN-ECON 2 PRICE-2: `counter` false, a counter's pieces not",
+    "new": "    for (const it of list) if (materialKeyOfItem(it) === key) n += it.stackCount ?? 1; // AUDIT TOWN-ECON 2 PRICE-2: `counter` false, a counter's pieces not",
     "tests": [
       "test/systems/townecon_audit2.test.js"
     ],
@@ -487,8 +487,8 @@
   {
     "name": "TOWNECON-AUDIT2-PRICE2-taken-first",
     "file": "src/systems/materialsBag.js",
-    "old": "  for (const marked of counter ? [false, true] : [false]) for",
-    "new": "  for (const marked of counter ? [true, false] : [false]) for",
+    "old": "  for (const marked of counter ? [false, true] : [false])",
+    "new": "  for (const marked of counter ? [true, false] : [false])",
     "tests": [
       "test/systems/townecon_audit2.test.js"
     ],
@@ -497,8 +497,8 @@
   {
     "name": "TOWNECON-AUDIT2-PRICE2-page-takes",
     "file": "src/systems/materialsBag.js",
-    "old": "  for (const marked of counter ? [false, true] : [false]) for",
-    "new": "  for (const marked of [false, true]) for",
+    "old": "  for (const marked of counter ? [false, true] : [false])",
+    "new": "  for (const marked of [false, true])",
     "tests": [
       "test/systems/townecon_audit2.test.js"
     ],

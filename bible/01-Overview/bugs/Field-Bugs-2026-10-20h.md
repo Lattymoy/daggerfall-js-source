@@ -32,11 +32,11 @@ and the code. Reports 1-7 were traced in parallel lanes on 2026-10-21, each on m
 `src/systems/npcSession.js` (`_holdSelection`, run at the end of `removeNpcQuestor` and `restoreSaveData`).
 
 FOUND. The Work answers, TEXT.RSC 8076 (6 variants) and 8077 (8), each name the potential questor through `%pqn` and
-their building through `%pqp`. Both read the pool's selection, and `npcSession.js:"    if (!entry) return '';"` answers
+their building through `%pqp`. Both read the pool's selection, and `npcSession.js:"if (!entry) return"` answers
 the empty string for a selection the pool does not hold. The answer is expanded first and the next questor is picked
 after it (`answerPipeline.js:"this.deps.setRandomQuestor?.()"`), which is DFU's own order
 (TalkManager.cs:2033-2036). So an answer names the selection that stood BEFORE the ask. The build keeps that selection
-in the pool: it selects the last questor it adds (`npcSession.js:"        this.selectedNpcWorkKey = npc.nameSeed;"`,
+in the pool: it selects the last questor it adds (`npcSession.js:"this.selectedNpcWorkKey = npc.nameSeed"`,
 TalkManager.cs:2869). The other two writers did not:
 - THE OFFER. A click on a pool member opens the quest offer, and the offer window's constructor takes them out of the
   pool, whether the job is accepted, declined or never drawn:
@@ -52,7 +52,7 @@ TalkManager.cs:2869). The other two writers did not:
 - THE LOAD. `save.js:"    talk.session.restoreSaveData(extras.talk);"` brings the save's pool in, but neither the
   selection nor the pool's location is saved (DFU's SaveDataConversation carries neither). The arrival does not rebuild
   the pool in the same town (`world.js:"    if (key === _topicsKey) {"`, then the location gate,
-  `npcSession.js:"    if (this.exteriorUsedForQuestors === locationIndex) return false;"`). The 25% draw is another
+  `npcSession.js:"if (this.exteriorUsedForQuestors === locationIndex)"`). The 25% draw is another
   session's, so this session's selection is rarely in the restored pool. 72% of first answers after loading an earlier
   session's save in the same town were blank, and 100% after a boot load in a location at index 0. The dungeon
   quickload takes the same restore with no arrival at all
@@ -73,7 +73,7 @@ next Work answer throws KeyNotFoundException before SetRandomQuestor (TalkManage
 the topic stays dead in that town until the pool is rebuilt. DFU's RemoveNpcQuestor (TalkManager.cs:2602-2605) and
 RestoreConversationData (TalkManager.cs:2541-2542) both leave the selection where it stood.
 
-FIXED. Both writers end in `npcSession.js:"  _holdSelection() {"`. While the pool holds questors and none of them is the
+FIXED. Both writers end in `npcSession.js:"_holdSelection() {"`. While the pool holds questors and none of them is the
 selection, it selects the last one it holds, the build's own rule. A selection the pool still holds is left alone, and
 an empty pool still answers the no-work record. Nothing is drawn: neither DFRandom nor the talk's rolls. DFU's order
 stays: the answer names the selection that stood before the ask, and the pick follows it. A departure from DFU's
@@ -789,12 +789,12 @@ the host, because the classic boot's own window held every key through the probe
 
 FOUND. The "freeze" was the realm's trade hold, not a hang. The Ogre is not one of DFU's MobileTypes: it is Daggerfall
 Enemy Expansion's 282, a line of the mod's own MonsterBase table. DEX1 merged as #1067 on the day of the report and is on
-by default (`modSettings.js:"  'daggerfall-enemy-expansion': Object.freeze({"`); its fifty enemies are 256-290 (monsters)
+by default (`modSettings.js:"'daggerfall-enemy-expansion':"`); its fifty enemies are 256-290 (monsters)
 and 384-398 (people), joined to the bestiary at the game's load (`dexInstall.js:"  registerEnemyRows(rows);"`). The soul
 trap's kill door hands the foe's own mobile id to the trap
 (`exteriorFoes.js:"const trap = _peerTrap ? { allowDeath: true } : attemptSoulTrap(f.entity, f.mobileType, playerEntity.items, Math.random());"`,
 `dungeonContext.js:"const trap = _peerTrap ? { allowDeath: true } : attemptSoulTrap(foe.entity, foe.mobileType, playerEntity.items, Math.random());"`),
-and the gem takes it (`mysticism.js:"  trap.trappedSoulType = soulType;"`) - DFU's own law: EnemyEntity.cs:217 hands
+and the gem takes it (`mysticism.js:"trap.trappedSoulType"`) - DFU's own law: EnemyEntity.cs:217 hands
 `SoulTrap.FillEmptyTrapItem((MobileTypes)mobileEnemy.ID)` and SoulTrap.cs:158 writes it. With the mod installed DFU's
 EnemyBasics holds the custom id, and ItemHelper.cs:352-368 names the gem "Soul Trap (Ogre)", as the port does
 (`itemInfo.js:"const shownSoulName = (soul) => getLocalizedEnemyName(soul, enemyDisplayName(soul));"`).
@@ -900,11 +900,11 @@ NOT CHANGED:
 - THE NOTICE NAMES THE TEMPLATE. A law hold names the piece by `lawTemplate(why.t)` ("a Soul Trap", not "Soul Trap
   (Ogre)"): the finding records the template alone. Naming it as the pack does would need the judge to record the soul.
 - THE ITEM MAKER OVER AZURA'S STAR. EnumerateFilledTraps counts a Star's soul unbounded
-  (`mysticism.js:"    else if (isAzurasStar(it)) found.add(soul);   // :121-125, unbounded"`, SoulBound.cs:121-125), so a
+  (`mysticism.js:"else if (isAzurasStar(it))"`, SoulBound.cs:121-125), so a
   Star holding one of the fifty lists Bound Soul, and its chooser, held to SoulBound's 43 costed souls
   (`enchantmentCatalogue.js:"params = params.filter"`), is empty:
   pressing it does nothing. DFU with the mod throws IndexOutOfRangeException there (SoulBound.cs:125). A gem's soul past
-  43 is counted in neither game (`mysticism.js:"    if (isSoulTrap(it) && soul < SOUL_BOUND_MONSTER_ID_COUNT) found.add(soul);"`,
+  43 is counted in neither game (`mysticism.js:"if (isSoulTrap(it) && soul < SOUL_BOUND_MONSTER_ID_COUNT)"`,
   SoulBound.cs:115); the mod's souls bind nothing. Whether the Star should refuse or say so is the owner's call.
 - A FORGED SOUL'S STRIKE IS LIFTED TOO. The finding records the template, never the soul, so 0143 cannot tell a soul of
   the fifty from one no creature has. A forged soul gains nothing (the fill writes no value, the item maker reads only

@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-PI1-R3-alpha-bled",
     "file": "src/systems/physicalItems.js",
-    "old": "c[i * 4 + 2] = fill[k + 3]; owned[i] = 1;",
-    "new": "c[i * 4 + 2] = fill[k + 3]; c[i * 4 + 3] = 255; owned[i] = 1;",
+    "old": "      owned[i] = 1;",
+    "new": "      c[i * 4 + 3] = 255;\n      owned[i] = 1;",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "AUDIT-PI1-I1-constrain-to-the-face",
     "file": "src/systems/physicalItems.js",
-    "old": "const go = Math.max(0, hit.dist - skin - PI_CONSTRAIN.skin);",
-    "new": "const go = hit.dist;",
+    "old": "    const go = Math.max(0, hit.dist - skin - PI_CONSTRAIN.skin);",
+    "new": "    const go = hit.dist;",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "AUDIT-PI1-I1-constrain-no-slide",
     "file": "src/systems/physicalItems.js",
-    "old": "    if (!n) break;\n    const left",
-    "new": "    break;\n    const left",
+    "old": "    if (!n) break;",
+    "new": "    break;",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "AUDIT-PI1-L6-probe-from-half-a-metre",
     "file": "src/systems/physicalItems.js",
-    "old": "const floor = ground(b.pos[0], b.pos[1] + PI_PROBE_LIFT, b.pos[2]);",
-    "new": "const floor = ground(b.pos[0], b.pos[1] + 0.5, b.pos[2]);",
+    "old": "  const floor = ground(b.pos[0], b.pos[1] + PI_PROBE_LIFT, b.pos[2]);",
+    "new": "  const floor = ground(b.pos[0], b.pos[1] + 0.5, b.pos[2]);",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "AUDIT-PI1-I5-first-face-down",
     "file": "src/systems/physicalItems.js",
-    "old": "if (best == null || Math.abs(h.y - refY) < Math.abs(best - refY)) best = h.y;",
-    "new": "if (best == null) best = h.y;",
+    "old": "    if (best == null || Math.abs(h.y - refY) < Math.abs(best - refY)) best = h.y;",
+    "new": "    if (best == null) best = h.y;",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -318,8 +318,8 @@
   {
     "name": "AUDIT-PI1-I5-steep-face-a-floor",
     "file": "src/systems/physicalItems.js",
-    "old": "    if (!(h.ny >= PI_FLOOR_PROBE.floorNormalY)) continue;\n",
-    "new": "",
+    "old": "    if (!(h.ny >= PI_FLOOR_PROBE.floorNormalY)) continue;\n    if (best == null || Math.abs(h.y - refY) < Math.abs(best - refY)) best = h.y;",
+    "new": "    if (best == null || Math.abs(h.y - refY) < Math.abs(best - refY)) best = h.y;",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -345,8 +345,8 @@
   {
     "name": "AUDIT-PI1-I10-infinity-the-default",
     "file": "src/systems/physicalItems.js",
-    "old": "typeof pct === 'number' && !Number.isNaN(pct)",
-    "new": "Number.isFinite(pct)",
+    "old": "  const impulse =\n    typeof pct === 'number' && !Number.isNaN(pct) ? clamp(pct, 0, PI_IMPULSE_MAX_PCT) / 100 : PI_IMPULSE_DEFAULT;",
+    "new": "  const impulse = Number.isFinite(pct) ? clamp(pct, 0, PI_IMPULSE_MAX_PCT) / 100 : PI_IMPULSE_DEFAULT;",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "AUDIT-PI1-D1g-fresh-window-open",
     "file": "src/systems/physicalItems.js",
-    "old": "at - t <= PI_FRESH_MS",
-    "new": "at - t < PI_FRESH_MS",
+    "old": "  return t !== undefined && at - t <= PI_FRESH_MS;",
+    "new": "  return t !== undefined && at - t < PI_FRESH_MS;",
     "tests": [
       "test/systems/audit_pi1.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "AUDIT-PI1-I4-shoulder-over-under",
     "file": "src/systems/physicalItems.js",
-    "old": "          if (Math.abs((b.pos[1] + b.h / 2) - (o.pos[1] + o.h / 2)) >= (b.h + o.h) / 2 + S.query) continue;\n",
-    "new": "",
+    "old": "          if (Math.abs(b.pos[1] + b.h / 2 - (o.pos[1] + o.h / 2)) >= (b.h + o.h) / 2 + S.query) continue;\n          let dx = b.pos[0] - o.pos[0],",
+    "new": "          let dx = b.pos[0] - o.pos[0],",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -408,8 +408,8 @@
   {
     "name": "AUDIT-PI1-I4-settled-no-neighbour",
     "file": "src/systems/physicalItems.js",
-    "old": "  bodies.forEach((o, i) => {\n    const k",
-    "new": "  bodies.forEach((o, i) => {\n    if (o.settled) return;\n    const k",
+    "old": "    const k = `${cell(o.pos[0])},${cell(o.pos[2])}`;",
+    "new": "    if (o.settled) return;\n    const k = `${cell(o.pos[0])},${cell(o.pos[2])}`;",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]
@@ -417,8 +417,8 @@
   {
     "name": "AUDIT-PI1-I12-tie-flipped",
     "file": "src/systems/physicalItems.js",
-    "old": "dx = bi < oi ? -1 : 1;",
-    "new": "dx = bi < oi ? 1 : -1;",
+    "old": "            dx = bi < oi ? -1 : 1;",
+    "new": "            dx = bi < oi ? 1 : -1;",
     "tests": [
       "test/systems/pi1_physicalitems.test.js"
     ]

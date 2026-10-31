@@ -272,8 +272,8 @@
   {
     "name": "AUDITLIVED1B-P2-no-fresh-join",
     "file": "src/systems/offlineCopy.js",
-    "old": "  copy.joinFresh = true;\n",
-    "new": "",
+    "old": "  copy.joinFresh = true;\n  if (own === null) return copy;",
+    "new": "  if (own === null) return copy;",
     "tests": [
       "test/systems/auditlived1b.test.js",
       "test/systems/auditlived1.test.js"
@@ -291,8 +291,8 @@
   {
     "name": "AUDITLIVED1B-P2-the-offline-door-keeps-the-flag",
     "file": "src/systems/offlineCopy.js",
-    "old": "  delete copy.joinFresh;\n",
-    "new": "",
+    "old": "  delete copy.joinFresh;\n  delete copy.realmHeld; // AUDIT RESCUE-SAVE A1: the realm's spoils records (systems/realmSaves.js REALM_HELD_FIELD) - a new character holds none",
+    "new": "  delete copy.realmHeld; // AUDIT RESCUE-SAVE A1: the realm's spoils records (systems/realmSaves.js REALM_HELD_FIELD) - a new character holds none",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "AUDITLIVED1B-F3-the-ceiling-admitted",
     "file": "src/systems/offlineCopy.js",
-    "old": "v >= 0 && v < SAVE_CLOCK_MAX ? v : null",
-    "new": "v >= 0 && v <= SAVE_CLOCK_MAX ? v : null",
+    "old": "  typeof v === 'number' && Number.isFinite(v) && v >= 0 && v < SAVE_CLOCK_MAX ? v : null;",
+    "new": "  typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= SAVE_CLOCK_MAX ? v : null;",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "AUDITLIVED1B-F3-a-negative-admitted",
     "file": "src/systems/offlineCopy.js",
-    "old": "Number.isFinite(v) && v >= 0 && v < SAVE_CLOCK_MAX",
-    "new": "Number.isFinite(v) && v < SAVE_CLOCK_MAX",
+    "old": "export const saneSaveClock = (v) =>\n  typeof v === 'number' && Number.isFinite(v) && v >= 0 && v < SAVE_CLOCK_MAX ? v : null;",
+    "new": "export const saneSaveClock = (v) => (typeof v === 'number' && Number.isFinite(v) && v < SAVE_CLOCK_MAX ? v : null);",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "AUDITLIVED1B-F3-a-string-admitted",
     "file": "src/systems/offlineCopy.js",
-    "old": "export const saneSaveClock = (v) => (typeof v === 'number' && Number.isFinite(v)",
-    "new": "export const saneSaveClock = (v) => (Number.isFinite(Number(v))",
+    "old": "export const saneSaveClock = (v) =>\n  typeof v === 'number' && Number.isFinite(v) && v >= 0 && v < SAVE_CLOCK_MAX ? v : null;",
+    "new": "export const saneSaveClock = (v) => (Number.isFinite(Number(v)) && v >= 0 && v < SAVE_CLOCK_MAX ? v : null);",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "AUDITLIVED1B-R1-the-raids-ride-offline",
     "file": "src/systems/offlineCopy.js",
-    "old": "delete copy.modData[RAID_RECORD_VENDOR];   // AUDIT LIVED1b R1",
-    "new": "void RAID_RECORD_VENDOR;   // AUDIT LIVED1b R1",
+    "old": "  if (copy.modData && typeof copy.modData === 'object') delete copy.modData[RAID_RECORD_VENDOR]; // AUDIT LIVED1b R1",
+    "new": "  if (copy.modData && typeof copy.modData === 'object') void RAID_RECORD_VENDOR; // AUDIT LIVED1b R1",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -430,8 +430,8 @@
   {
     "name": "AUDITLIVED1B-D2-the-stock-stays",
     "file": "src/systems/offlineCopy.js",
-    "old": "        c.stockedDate = shiftStockDate(c.stockedDate, days);\n",
-    "new": "",
+    "old": "        c.stockedDate = shiftStockDate(c.stockedDate, days);\n        c.openedOn = shiftStockDate(c.openedOn, days); // UXB1-O: the searched lid is the stock's own day, and moves with it",
+    "new": "        c.openedOn = shiftStockDate(c.openedOn, days); // UXB1-O: the searched lid is the stock's own day, and moves with it",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -439,8 +439,8 @@
   {
     "name": "AUDITLIVED1B-D2-the-lid-stays",
     "file": "src/systems/offlineCopy.js",
-    "old": "        c.openedOn = shiftStockDate(c.openedOn, days);",
-    "new": "        void c.openedOn;",
+    "old": "        c.openedOn = shiftStockDate(c.openedOn, days); // UXB1-O: the searched lid is the stock's own day, and moves with it",
+    "new": "        void c.openedOn; // UXB1-O: the searched lid is the stock's own day, and moves with it",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -448,8 +448,8 @@
   {
     "name": "AUDITLIVED1B-D2-the-owned-latch-moves",
     "file": "src/systems/offlineCopy.js",
-    "old": "(Number.isFinite(d) && d > 1 ? stockDateOf",
-    "new": "(Number.isFinite(d) && d > 0 ? stockDateOf",
+    "old": "  Number.isFinite(d) && d > 1 ? stockDateOf(stockDayIndex(Math.floor(d)) + days) : d;",
+    "new": "  Number.isFinite(d) && d > 0 ? stockDateOf(stockDayIndex(Math.floor(d)) + days) : d;",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]

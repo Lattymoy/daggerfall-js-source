@@ -504,7 +504,7 @@ function paint() {
       // NEWEST FIRST for messages (the ring's own order is oldest
       // first and the last thing you were told is the thing you
       // opened this for); notes keep the player's OWN order, because
-      // they arranged them (MoveNote is a law, notebook.js:"getNotes() { return [...this.notes]; }").
+      // they arranged them (MoveNote is a law, notebook.js:"getNotes()").
       const list = section === 'messages'
         ? rows.map((e, i) => ({ e, i })).reverse()
         : rows.map((e, i) => ({ e, i }));
@@ -528,7 +528,7 @@ function paint() {
         const entry = el('div', `cr-entry${isFolded(folded, section, i) ? ' cr-shut' : ''}`);
         const top = el('div', 'cr-head');
         // THE DATE, which the notebook wrote and PX24 lost. A NOTE
-        // whose page split files with no header (notebook.js:"if ((note.length - 2) >= (MAX_LINES_SMALL * 2))".."this.notes.push(note);")
+        // whose page split files with no header (notebook.js:"if (note.length - 2 >= MAX_LINES_SMALL * 2)".."this.notes.push(note);")
         // and says so; a MESSAGE never has one at all, so it gets the
         // only true thing there is to say - which of them is newest.
         const head = e.head ?? (section === 'messages'

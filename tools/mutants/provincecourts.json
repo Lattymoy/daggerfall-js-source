@@ -245,8 +245,8 @@
   {
     "name": "PC-the-pools-palace-unread",
     "file": "src/systems/npcSession.js",
-    "old": "      id = buildingType === 'Palace' || buildingType === BUILDING_TYPES.Palace",
-    "new": "      id = buildingType === 'Palace'",
+    "old": "        buildingType === 'Palace' || buildingType === BUILDING_TYPES.Palace",
+    "new": "        buildingType === 'Palace'",
     "tests": [
       "test/world/worldWide/provincecourts.test.js"
     ]

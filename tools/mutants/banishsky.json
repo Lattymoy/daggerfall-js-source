@@ -101,8 +101,8 @@
   {
     "name": "BANISH-SKY-the-offline-door-leaves-the-term",
     "file": "src/systems/offlineCopy.js",
-    "old": "  moveBanishments(copy, (b) => Math.floor(own) + (skyOfEventLaw(b) - skyOfEventLaw(Math.floor(world))));\n",
-    "new": "",
+    "old": "  moveBanishments(copy, (b) => Math.floor(own) + (skyOfEventLaw(b) - skyOfEventLaw(Math.floor(world))));\n  if (copy.quest) markOwnClock(copy.quest, Math.floor(own) * 60); // TIME3: every countdown is on the character's clock now",
+    "new": "  if (copy.quest) markOwnClock(copy.quest, Math.floor(own) * 60); // TIME3: every countdown is on the character's clock now",
     "tests": [
       "test/systems/banishsky_standing.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "BANISH-SKY-the-online-door-leaves-the-term",
     "file": "src/systems/offlineCopy.js",
-    "old": "  moveBanishments(copy, (b) => eventOfSkyLaw(skyOfEventLaw(Math.floor(worldNow)) + (b - Math.floor(own))));\n",
-    "new": "",
+    "old": "  moveBanishments(copy, (b) => eventOfSkyLaw(skyOfEventLaw(Math.floor(worldNow)) + (b - Math.floor(own))));\n  if (copy.quest) markOwnClock(copy.quest, Math.floor(own) * 60);",
+    "new": "  if (copy.quest) markOwnClock(copy.quest, Math.floor(own) * 60);",
     "tests": [
       "test/systems/banishsky_standing.test.js"
     ]

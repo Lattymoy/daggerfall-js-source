@@ -38,8 +38,8 @@
   {
     "name": "VAMPDAY-the-sun-still-burns",
     "file": "src/systems/passiveSpecials.js",
-    "old": "    && careerSunAverse(entity)\n",
-    "new": "    && (careerSunAverse(entity) || override?.sunDamage)\n",
+    "old": "  if (nowMinutes % SUN_DAMAGE_PER_ROUNDS === 0 && careerSunAverse(entity) && playerInSunlight(clockMinutes)) {",
+    "new": "  if (\n    nowMinutes % SUN_DAMAGE_PER_ROUNDS === 0 &&\n    (careerSunAverse(entity) || override?.sunDamage) &&\n    playerInSunlight(clockMinutes)\n  ) {",
     "tests": [
       "test/systems/vampday.test.js"
     ]

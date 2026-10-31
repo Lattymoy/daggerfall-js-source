@@ -128,8 +128,8 @@
   {
     "name": "HAZE1-off-by-default",
     "file": "src/systems/modSettings.js",
-    "old": "Enabled: Object.freeze({ default: true, description: 'Heat shimmer",
-    "new": "Enabled: Object.freeze({ default: false, description: 'Heat shimmer",
+    "old": "    keys: Object.freeze({\n      Enabled: Object.freeze({\n        default: true,\n        description:\n          'Heat shimmer over the distant desert by day in the enhanced outdoors, strongest under a clear sky, fading in after sunrise and out before sunset.',",
+    "new": "    keys: Object.freeze({\n      Enabled: Object.freeze({\n        default: false,\n        description:\n          'Heat shimmer over the distant desert by day in the enhanced outdoors, strongest under a clear sky, fading in after sunrise and out before sunset.',",
     "tests": [
       "test/systems/haze1_heatHaze.test.js"
     ]

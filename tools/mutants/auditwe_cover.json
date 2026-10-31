@@ -75,8 +75,8 @@
   {
     "name": "AUDIT-WE-L6-9-the-career-unheld",
     "file": "src/systems/passiveSpecials.js",
-    "old": "const held = regenerate ? regenShare(REGENERATE_AMOUNT, 'career', entity) : 0;",
-    "new": "const held = regenerate ? REGENERATE_AMOUNT : 0;",
+    "old": "    const held = regenerate ? regenShare(REGENERATE_AMOUNT, 'career', entity) : 0; // WBX6 / EVENT-RULES: held in a made level",
+    "new": "    const held = regenerate ? REGENERATE_AMOUNT : 0; // WBX6 / EVENT-RULES: held in a made level",
     "tests": [
       "test/systems/auditwe_rules.test.js",
       "test/world/gate/wbx_gate_fixes.test.js",

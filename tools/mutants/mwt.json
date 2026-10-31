@@ -131,8 +131,8 @@
   {
     "name": "HT7-the-port-ships-the-mods-own-Drop-default-again",
     "file": "src/systems/modSettings.js",
-    "old": "      'Handling.OnStow': Object.freeze({ default: 0, options: lazyWords(() => t('mods.handheldTorches.option.unequip', 'Unequip'), () => t('mods.handheldTorches.option.drop', 'Drop')), get description() { return t('mods.handheldTorches.Handling.OnStow.description', 'Behavior when forced to stow a light source'); } }),",
-    "new": "      'Handling.OnStow': Object.freeze({ default: 1, options: lazyWords(() => t('mods.handheldTorches.option.unequip', 'Unequip'), () => t('mods.handheldTorches.option.drop', 'Drop')), get description() { return t('mods.handheldTorches.Handling.OnStow.description', 'Behavior when forced to stow a light source'); } }),",
+    "old": "      'Handling.OnStow': Object.freeze({\n        default: 0,",
+    "new": "      'Handling.OnStow': Object.freeze({\n        default: 1,",
     "tests": [
       "test/systems/ht6_offhand.test.js",
       "test/systems/ht1_handheldtorches.test.js"

@@ -308,8 +308,8 @@
   {
     "name": "APF-C-keeper-named-by-the-region",
     "file": "src/systems/merchantYards.js",
-    "old": "const name = seededPersonName(seed, race ? folkNameBank(race) : getNameBankOfRegion(Number.isInteger(regionIndex) ? regionIndex : -1), gender,",
-    "new": "const name = seededPersonName(seed, getNameBankOfRegion(Number.isInteger(regionIndex) ? regionIndex : -1), gender,",
+    "old": "  const name = seededPersonName(\n    seed,\n    race ? folkNameBank(race) : getNameBankOfRegion(Number.isInteger(regionIndex) ? regionIndex : -1),\n    gender,\n    { race, region: Number.isInteger(regionIndex) ? regionIndex : -1, home: folkKeyOf(people) },\n  ); // REGION-NAMES: their people's customs, their region's",
+    "new": "  const name = seededPersonName(seed, getNameBankOfRegion(Number.isInteger(regionIndex) ? regionIndex : -1), gender, {\n    race,\n    region: Number.isInteger(regionIndex) ? regionIndex : -1,\n    home: folkKeyOf(people),\n  }); // REGION-NAMES: their people's customs, their region's",
     "tests": [
       "test/characters/provincefolk.test.js"
     ]

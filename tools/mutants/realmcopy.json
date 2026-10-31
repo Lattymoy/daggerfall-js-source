@@ -2,8 +2,8 @@
   {
     "name": "REALM-COPY-the-copy-never-marked",
     "file": "src/systems/offlineCopy.js",
-    "old": "  markRealmCopy(copy);\n",
-    "new": "",
+    "old": "  markRealmCopy(copy);\n  if (own === null || world === null) return copy;",
+    "new": "  if (own === null || world === null) return copy;",
     "tests": [
       "test/systems/realm_copy_mark.test.js"
     ]

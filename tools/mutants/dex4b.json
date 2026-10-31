@@ -153,7 +153,7 @@
     "name": "AUDIT-DEX-C3-the-scan-skips-the-door",
     "file": "src/systems/nearbyObjects.js",
     "old": "export const enemyGroupOf = (mobileType) => GROUP_FLAG[enemyEntityGroup(careerIndexOf(mobileType))] ?? NEARBY.None;",
-    "new": "export const enemyGroupOf = (mobileType) => GROUP_FLAG[careerIndexOf(mobileType) > 255 ? -1 : enemyEntityGroup(careerIndexOf(mobileType))] ?? NEARBY.None;",
+    "new": "export const enemyGroupOf = (mobileType) =>\n  GROUP_FLAG[careerIndexOf(mobileType) > 255 ? -1 : enemyEntityGroup(careerIndexOf(mobileType))] ?? NEARBY.None;",
     "why": "the scan's group is a copy of DFU's switch again: a mod's enemies take no group - no Detect, Pacify or Dispel finds them",
     "tests": [
       "test/systems/enemyExpansion/dex4b_combat.test.js"

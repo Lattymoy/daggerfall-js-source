@@ -182,8 +182,8 @@
   {
     "name": "CSA-A-unread-key-claimed-read",
     "file": "src/systems/modSettings.js",
-    "old": "'Handling.BadTack': Object.freeze({ default: false, get description() { return t('mods.comeSailAway.unread.description', 'Has no effect: the mod never uses this setting.'); } }),",
-    "new": "'Handling.BadTack': Object.freeze({ default: false, get description() { return t('mods.comeSailAway.unread.description', 'Tack badly.'); } }),",
+    "old": "        default: false,\n        get description() {\n          return t('mods.comeSailAway.unread.description', 'Has no effect: the mod never uses this setting.');\n        },",
+    "new": "        default: false,\n        get description() {\n          return t('mods.comeSailAway.unread.description', 'Tack badly.');\n        },",
     "tests": [
       "test/systems/csa_registration.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "CSA-A-default-moved",
     "file": "src/systems/modSettings.js",
-    "old": "'Waves.Speed': Object.freeze({ default: 100, min: 0, max: 200,",
-    "new": "'Waves.Speed': Object.freeze({ default: 50, min: 0, max: 200,",
+    "old": "      'Waves.Speed': Object.freeze({\n        default: 100,",
+    "new": "      'Waves.Speed': Object.freeze({\n        default: 50,",
     "tests": [
       "test/systems/csa_registration.test.js"
     ]

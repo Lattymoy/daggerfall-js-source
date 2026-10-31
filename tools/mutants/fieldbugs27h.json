@@ -201,8 +201,8 @@
   {
     "name": "BUFF-END-held-item-endable",
     "file": "src/systems/mysticism.js",
-    "old": "if (!bundle || bundle.bundleType === 'HeldMagicItem') return false;",
-    "new": "if (!bundle) return false;",
+    "old": "  if (!bundle || bundle.bundleType === 'HeldMagicItem') return false;",
+    "new": "  if (!bundle) return false;",
     "tests": [
       "test/ui/hud/buffend.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "BUFF-END-duel-endable",
     "file": "src/systems/mysticism.js",
-    "old": "entries.every((a) => !a.bundleDuel && !a.permanent && ENDABLE_KINDS.has(a.kind))",
-    "new": "entries.every((a) => !a.permanent && ENDABLE_KINDS.has(a.kind))",
+    "old": "  return entries.length > 0 && entries.every((a) => !a.bundleDuel && !a.permanent && ENDABLE_KINDS.has(a.kind));",
+    "new": "  return entries.length > 0 && entries.every((a) => !a.permanent && ENDABLE_KINDS.has(a.kind));",
     "tests": [
       "test/ui/hud/buffend.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "BUFF-END-one-help-enough",
     "file": "src/systems/mysticism.js",
-    "old": "entries.every((a) => !a.bundleDuel",
-    "new": "entries.some((a) => !a.bundleDuel",
+    "old": "  return entries.length > 0 && entries.every((a) => !a.bundleDuel && !a.permanent && ENDABLE_KINDS.has(a.kind));",
+    "new": "  return entries.length > 0 && entries.some((a) => !a.bundleDuel && !a.permanent && ENDABLE_KINDS.has(a.kind));",
     "tests": [
       "test/ui/hud/buffend.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "BUFF-END-silence-endable",
     "file": "src/systems/mysticism.js",
-    "old": "...Object.values(BUFF_KINDS).filter((k) => k !== 'silenced'),",
-    "new": "...Object.values(BUFF_KINDS),",
+    "old": "    ...Object.values(BUFF_KINDS).filter((k) => k !== 'silenced'),",
+    "new": "    ...Object.values(BUFF_KINDS),",
     "tests": [
       "test/ui/hud/buffend.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "BUFF-END-refusal-ends",
     "file": "src/systems/mysticism.js",
-    "old": "  if (!canEndBundle(bundle)) return null;\n  dispelBundle(entity, bundleId, { selfCast: true });",
-    "new": "  if (!bundle) return null;\n  dispelBundle(entity, bundleId, { selfCast: true });",
+    "old": "  if (!canEndBundle(bundle)) return null;",
+    "new": "  if (!bundle) return null;",
     "tests": [
       "test/ui/hud/buffend.test.js"
     ]

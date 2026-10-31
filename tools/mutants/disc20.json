@@ -47,8 +47,8 @@
   {
     "name": "DISC20-B-the-switch-without-its-fade",
     "file": "src/systems/music.js",
-    "old": "if (this.playing && this._current !== null) { this._beginSwitch(name); return true; }",
-    "new": "if (false && this.playing && this._current !== null) { this._beginSwitch(name); return true; }",
+    "old": "    if (this.playing && this._current !== null) {",
+    "new": "    if (false && this.playing && this._current !== null) {",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DISC20-B-the-start-without-its-rise",
     "file": "src/systems/music.js",
-    "old": "if (ok && fresh) { player.fadeTo?.(0, 0); player.fadeTo?.(1, MUSIC_FADE_IN_S); }",
-    "new": "if (ok && fresh) { player.fadeTo?.(1, 0); }",
+    "old": "    if (ok && fresh) {\n      player.fadeTo?.(0, 0);\n      player.fadeTo?.(1, MUSIC_FADE_IN_S);",
+    "new": "    if (ok && fresh) {\n      player.fadeTo?.(1, 0);",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "DISC20-B-the-pack-s-start-without-its-rise",
     "file": "src/systems/music.js",
-    "old": "if (player.play(buffer)) { player.fadeTo?.(0, 0); player.fadeTo?.(1, MUSIC_FADE_IN_S); }",
-    "new": "player.play(buffer);",
+    "old": "    if (player.play(buffer)) {\n      player.fadeTo?.(0, 0);\n      player.fadeTo?.(1, MUSIC_FADE_IN_S);\n    } // DISC20-B: it rises in",
+    "new": "    player.play(buffer); // DISC20-B: it rises in",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "DISC20-B-the-flip-back-dropped",
     "file": "src/systems/music.js",
-    "old": "if (name === this._switch.from) { this._cancelSwitch();",
-    "new": "if (false) { this._cancelSwitch();",
+    "old": "      if (name === this._switch.from) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "DISC20-B-the-stop-leaves-the-switch-armed",
     "file": "src/systems/music.js",
-    "old": "    this._cancelSwitch();   // DISC20-B: a stop mid-fade starts nothing after it\n",
-    "new": "",
+    "old": "    this._cancelSwitch(); // DISC20-B: a stop mid-fade starts nothing after it\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "DISC20-B-a-song-that-will-not-start-claims-it",
     "file": "src/systems/music.js",
-    "old": "if (!this._start(sw.to) && this._current === sw.to) this._current = null;",
-    "new": "this._start(sw.to);",
+    "old": "      if (!this._start(sw.to) && this._current === sw.to) this._current = null; // a song that will not start leaves nothing claimed",
+    "new": "      this._start(sw.to); // a song that will not start leaves nothing claimed",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "DISC20-B-the-latest-request-lost",
     "file": "src/systems/music.js",
-    "old": "      this._switch.to = name;\n",
-    "new": "",
+    "old": "      this._switch.to = name;\n      this._current = name;",
+    "new": "      this._current = name;",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "DISC20-E-no-reset",
     "file": "src/systems/modSettings.js",
-    "old": "    if (!held || !Object.hasOwn(held, key) || held[stamp] === true) continue;\n    delete held[key];\n",
-    "new": "    if (!held || !Object.hasOwn(held, key) || held[stamp] === true) continue;\n",
+    "old": "    if (!held || !Object.hasOwn(held, key) || held[stamp] === true) continue;\n    delete held[key];\n    changed = true;",
+    "new": "    if (!held || !Object.hasOwn(held, key) || held[stamp] === true) continue;\n    changed = true;",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "DISC20-E-the-reset-every-load",
     "file": "src/systems/modSettings.js",
-    "old": "held[stamp] === true) continue;",
-    "new": "held[stamp] === 'never') continue;",
+    "old": "    if (!held || !Object.hasOwn(held, key) || held[stamp] === true) continue;",
+    "new": "    if (!held || !Object.hasOwn(held, key) || held[stamp] === 'never') continue;",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "DISC20-E-the-stamp-never-written",
     "file": "src/systems/modSettings.js",
-    "old": "  for (const r of SWITCH_RESETS) if (r.vendor === vendor && r.key === key) m[vendor][r.stamp] = true;   // DISC20-E: chosen after the reset - kept\n",
-    "new": "",
+    "old": "  for (const r of SWITCH_RESETS) if (r.vendor === vendor && r.key === key) m[vendor][r.stamp] = true; // DISC20-E: chosen after the reset - kept\n  save();",
+    "new": "  save();",
     "tests": [
       "test/systems/disc20.test.js"
     ]

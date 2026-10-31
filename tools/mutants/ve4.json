@@ -150,8 +150,8 @@
     "tests": [
       "test/systems/ve4_vanillaEnhancedShipped.test.js"
     ],
-    "old": "isOn: veWorn, wear: wearVanillaEnhanced, addons: veAddons, vendor: 'vanilla-enhanced',",
-    "new": "isOn: veWorn, wear: wearVanillaEnhanced, addons: null, vendor: 'vanilla-enhanced',"
+    "old": "        addons: veAddons,",
+    "new": "        addons: null,"
   },
   {
     "name": "VE4-addon-rows-when-not-worn",

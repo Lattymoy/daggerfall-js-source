@@ -206,7 +206,7 @@ test('EG-G2 THE SPIRE MIX (section 26): a personal sting always for a lord\'s bl
   assert.deepEqual(calls, [['cancel', 5], ['set', 1.45, 5], ['ramp', low, 5.02], ['set', low, 5.3], ['ramp', 1.45, +(5.3 + EG_DUCK_BACK_S).toFixed(3)]]);
   calls.length = 0; p.duck(0, 0.3); assert.equal(calls.length, 0, 'no depth, no duck');
   const M = readFileSync(new URL('../../../src/systems/music.js', import.meta.url), 'utf8');
-  assert.match(M, /duck\(db, seconds\) \{ this\.player\?\.duck\?\.\(db, seconds\); \}/);
+  assert.match(M, /duck\(db, seconds\) \{\n\s*this\.player\?\.duck\?\.\(db, seconds\);\n\s*\}/);
 });
 
 test('EG-G2 THE MIX IN THE FIGHT (scenes/eliteGates/egFight.js): a lord\'s blow on my feet stings once at its word and ducks the score, never again for that blow; an add\'s blow on my feet stings, a second add\'s within 1.5 s does not; a blow clear of my feet never stings; the legion\'s wind-up barks capped four a kind (mutants: a sting every frame; a blow clear of me stinging)', () => {

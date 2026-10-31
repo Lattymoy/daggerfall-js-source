@@ -72,8 +72,8 @@
   {
     "name": "LAYERED-ON-default-off",
     "file": "src/systems/modSettings.js",
-    "old": "'Graphics.LayeredGear': Object.freeze({ default: 3, min: 0, max: 3,",
-    "new": "'Graphics.LayeredGear': Object.freeze({ default: 0, min: 0, max: 3,",
+    "old": "      'Graphics.LayeredGear': Object.freeze({\n        default: 3,",
+    "new": "      'Graphics.LayeredGear': Object.freeze({\n        default: 0,",
     "tests": [
       "test/player/eyeOfTheBeholder/worn_armour.test.js",
       "test/ui/skinmode_toggle.test.js"

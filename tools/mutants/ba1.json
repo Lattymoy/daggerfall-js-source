@@ -382,8 +382,8 @@
   {
     "name": "ba2-ambient-ships-on",
     "file": "src/systems/modSettings.js",
-    "old": "'Dungeon Lighting.enableFogAmbientEffect': Object.freeze({ default: false,",
-    "new": "'Dungeon Lighting.enableFogAmbientEffect': Object.freeze({ default: true,",
+    "old": "      'Dungeon Lighting.enableFogAmbientEffect': Object.freeze({\n        default: false,",
+    "new": "      'Dungeon Lighting.enableFogAmbientEffect': Object.freeze({\n        default: true,",
     "tests": [
       "test/systems/ba1_betterambience.test.js"
     ]

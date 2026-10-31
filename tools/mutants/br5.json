@@ -164,8 +164,8 @@
   {
     "name": "BR5-overhaul-by-the-game",
     "file": "src/systems/overhauls.js",
-    "old": "by: 'The original game',\n        blurb: 'The original game\\u2019s own textures, for the classic look.'",
-    "new": "by: 'Daggerfall',\n        blurb: 'The original game\\u2019s own textures, for the classic look.'",
+    "old": "      textureOption('classic', 'Classic', {\n        by: 'The original game',",
+    "new": "      textureOption('classic', 'Classic', {\n        by: 'Daggerfall',",
     "tests": [
       "test/ui/brand.test.js"
     ],
@@ -224,8 +224,8 @@
   {
     "name": "BR5-mod-switch-the-game",
     "file": "src/systems/modSettings.js",
-    "old": "which the original game never shows.",
-    "new": "which classic Daggerfall never shows.",
+    "old": "            'See your shield in first person, which the original game never shows. It is drawn in its own metal, ' +",
+    "new": "            'See your shield in first person, which classic Daggerfall never shows. It is drawn in its own metal, ' +",
     "tests": [
       "test/ui/brand.test.js"
     ],

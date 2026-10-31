@@ -206,8 +206,8 @@
   {
     "name": "DISC10-D-V1-the-sun-reads-the-past-round",
     "file": "src/systems/passiveSpecials.js",
-    "old": "    && playerInSunlight(clockMinutes)) {\n    sinks?.hurt?.(SUN_DAMAGE_AMOUNT);",
-    "new": "    && playerInSunlight(nowMinutes)) {\n    sinks?.hurt?.(SUN_DAMAGE_AMOUNT);",
+    "old": "  if (nowMinutes % SUN_DAMAGE_PER_ROUNDS === 0 && careerSunAverse(entity) && playerInSunlight(clockMinutes)) {",
+    "new": "  if (nowMinutes % SUN_DAMAGE_PER_ROUNDS === 0 && careerSunAverse(entity) && playerInSunlight(nowMinutes)) {",
     "tests": [
       "test/systems/disc10_vampire.test.js"
     ]
@@ -623,8 +623,8 @@
   {
     "name": "DISC10-E-L4-the-virtue-level-adds-through-the-limiter",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);",
-    "new": "  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);",
+    "old": "  entity.maxHealth =\n    (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls); // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter",
+    "new": "  entity.maxHealth += hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls); // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]
