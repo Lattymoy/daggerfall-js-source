@@ -47,8 +47,8 @@
   {
     "name": "SEAT-WORDS-the-given-house-unread",
     "file": "src/systems/knightlyGifts.js",
-    "old": "((membership?.flags ?? 0) & HOUSE_FLAG_MASK) > 0 ? alreadyGivenHouseText()",
-    "new": "false ? alreadyGivenHouseText()",
+    "old": "      line:\n        ((membership?.flags ?? 0) & HOUSE_FLAG_MASK) > 0\n          ? alreadyGivenHouseText()\n          : t(\n              'knight.seatHouse',\n              \"Online, ranks {officer} and {master} are the order's chapter chairs, held by winning Merit. A chair brings no house.\",\n              { officer: SEAT_RANK.officer, master: SEAT_RANK.master },\n            ),",
+    "new": "      line: false\n        ? alreadyGivenHouseText()\n        : t(\n            'knight.seatHouse',\n            \"Online, ranks {officer} and {master} are the order's chapter chairs, held by winning Merit. A chair brings no house.\",\n            { officer: SEAT_RANK.officer, master: SEAT_RANK.master },\n          ),",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SEAT-WORDS-the-house-ranks-not-the-laws",
     "file": "src/systems/knightlyGifts.js",
-    "old": "{ officer: SEAT_RANK.officer, master: SEAT_RANK.master }) };",
-    "new": "{ officer: 7, master: SEAT_RANK.master }) };",
+    "old": "              { officer: SEAT_RANK.officer, master: SEAT_RANK.master },",
+    "new": "              { officer: 7, master: SEAT_RANK.master },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -747,8 +747,8 @@
   {
     "name": "LANE-E-KG-flag-bit",
     "file": "src/systems/knightlyGifts.js",
-    "old": "line: ((membership?.flags ?? 0) & HOUSE_FLAG_MASK) > 0 ? alreadyGivenHouseText()",
-    "new": "line: ((membership?.flags ?? 0) & 1) > 0 ? alreadyGivenHouseText()",
+    "old": "        ((membership?.flags ?? 0) & HOUSE_FLAG_MASK) > 0",
+    "new": "        ((membership?.flags ?? 0) & 1) > 0",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]

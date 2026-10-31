@@ -56,8 +56,8 @@
   {
     "name": "COMPANION-WEIGHT-asked-of-the-wagon",
     "file": "src/systems/inventorySession.js",
-    "old": "  if (state.usingWagon || state.chooseOne || !deps.loot) return null;\n  const cap = deps.loot.capacity?.();",
-    "new": "  if (!deps.loot) return null;\n  const cap = deps.loot.capacity?.();",
+    "old": "  if (state.usingWagon || state.chooseOne || !deps.loot) return null;",
+    "new": "  if (!deps.loot) return null;",
     "tests": [
       "test/systems/companion_weight.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "AUDIT-ECON-C4-a-limit-of-nothing",
     "file": "src/systems/inventorySession.js",
-    "old": "return cap && Number.isFinite(cap.kg) ? cap : null;",
-    "new": "return cap ? cap : null;",
+    "old": "  return cap && Number.isFinite(cap.kg) ? cap : null;",
+    "new": "  return cap ? cap : null;",
     "tests": [
       "test/systems/companion_weight.test.js"
     ]

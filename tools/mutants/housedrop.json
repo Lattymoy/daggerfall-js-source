@@ -29,8 +29,8 @@
   {
     "name": "HOUSE-session-wagon-refused",
     "file": "src/systems/inventorySession.js",
-    "old": "  if (state.usingWagon || state.usingBag || state.chooseOne) return null;",
-    "new": "  if (state.usingBag || state.chooseOne) return null;",
+    "old": "  if (state.usingWagon || state.usingBag || state.chooseOne) return null; // BAG1: the bag is no floor",
+    "new": "  if (state.usingBag || state.chooseOne) return null; // BAG1: the bag is no floor",
     "tests": [
       "test/systems/housedrop.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "HOUSE-session-merchant-refused",
     "file": "src/systems/inventorySession.js",
-    "old": "  if (state.usingWagon || state.usingBag || state.chooseOne) return null;",
-    "new": "  if (state.usingWagon || state.usingBag) return null;",
+    "old": "  if (state.usingWagon || state.usingBag || state.chooseOne) return null; // BAG1: the bag is no floor",
+    "new": "  if (state.usingWagon || state.usingBag) return null; // BAG1: the bag is no floor",
     "tests": [
       "test/systems/housedrop.test.js"
     ]

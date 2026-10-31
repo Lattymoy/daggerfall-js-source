@@ -38,8 +38,8 @@
   {
     "name": "HEIR-WHOLE-the-epoch-not-the-line's",
     "file": "src/systems/instancePlaces.js",
-    "old": "digest(`instance:epoch:${row.line}:${row.id}:remains`",
-    "new": "digest(`instance:epoch:${row.id}:remains`",
+    "old": "  return row?.line && row.id ? digest(`instance:epoch:${row.line}:${row.id}:remains`, INSTANCE_EPOCH_HEX / 2) : null;",
+    "new": "  return row?.line && row.id ? digest(`instance:epoch:${row.id}:remains`, INSTANCE_EPOCH_HEX / 2) : null;",
     "tests": [
       "test/systems/legacy/fb1019f_heirwhole.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "HEIR-WHOLE-the-epoch-not-the-row's",
     "file": "src/systems/instancePlaces.js",
-    "old": "digest(`instance:epoch:${row.line}:${row.id}:remains`",
-    "new": "digest(`instance:epoch:${row.line}:remains`",
+    "old": "  return row?.line && row.id ? digest(`instance:epoch:${row.line}:${row.id}:remains`, INSTANCE_EPOCH_HEX / 2) : null;",
+    "new": "  return row?.line && row.id ? digest(`instance:epoch:${row.line}:remains`, INSTANCE_EPOCH_HEX / 2) : null;",
     "tests": [
       "test/systems/legacy/fb1019f_heirwhole.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "HEIR-WHOLE-a-room-with-no-line",
     "file": "src/systems/instancePlaces.js",
-    "old": "  return row?.line && row.id ? digest(",
-    "new": "  return row ? digest(",
+    "old": "  return row?.line && row.id ? digest(`instance:epoch:${row.line}:${row.id}:remains`, INSTANCE_EPOCH_HEX / 2) : null;",
+    "new": "  return row ? digest(`instance:epoch:${row.line}:${row.id}:remains`, INSTANCE_EPOCH_HEX / 2) : null;",
     "tests": [
       "test/systems/legacy/fb1019f_heirwhole.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "HEIR-WHOLE-a-whole-public-room-offered",
     "file": "src/systems/instancePlaces.js",
-    "old": "  if (site?.relaid !== true) return [];\n  return (rows ?? [])",
-    "new": "  return (rows ?? [])",
+    "old": "  if (site?.relaid !== true) return [];\n  return (rows ?? []).filter((r) => r?.place?.dungeon?.size === 'full' && r.place.mapId === site.mapId);",
+    "new": "  return (rows ?? []).filter((r) => r?.place?.dungeon?.size === 'full' && r.place.mapId === site.mapId);",
     "tests": [
       "test/systems/legacy/fb1019f_heirwhole.test.js"
     ]

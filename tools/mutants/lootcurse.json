@@ -23,8 +23,8 @@
     "tests": [
       "test/systems/curse_persist.test.js"
     ],
-    "old": "    kind: 'disease',\n    permanent: true,",
-    "new": "    kind: 'disease',"
+    "old": "    kind: 'disease',\n    permanent: true, // CURSE-PERSIST1: lifelong until it turns or is cured - never the magic-round clock's (a plain disease's own flag, diseases.js)",
+    "new": "    kind: 'disease', // CURSE-PERSIST1: lifelong until it turns or is cured - never the magic-round clock's (a plain disease's own flag, diseases.js)"
   },
   {
     "name": "CP-old-saves-not-migrated",

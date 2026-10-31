@@ -242,8 +242,8 @@
   {
     "name": "DISC10-D-V2-the-deploy-mints-nothing",
     "file": "src/systems/infection.js",
-    "old": "  if (entity && _curseDeployer && Number.isFinite(now)) _curseDeployer(entity, { now: Math.floor(now) });\n",
-    "new": "",
+    "old": "  if (entity && _curseDeployer && Number.isFinite(now)) _curseDeployer(entity, { now: Math.floor(now) });\n  if (key === INFECTION.Vampirism) messageBox?.(DEATH_IS_NOT_ETERNAL_TEXT_ID);",
+    "new": "  if (key === INFECTION.Vampirism) messageBox?.(DEATH_IS_NOT_ETERNAL_TEXT_ID);",
     "tests": [
       "test/systems/disc10_vampire.test.js"
     ]
@@ -305,8 +305,8 @@
   {
     "name": "DISC10-D-V3-the-deploy-hands-no-player",
     "file": "src/systems/infection.js",
-    "old": "pending.clan = clanOf ? clanOf(entry.regionIndex, entity) : VAMPIRE_CLANS.Lyrezi;",
-    "new": "pending.clan = clanOf ? clanOf(entry.regionIndex) : VAMPIRE_CLANS.Lyrezi;",
+    "old": "    pending.clan = clanOf ? clanOf(entry.regionIndex, entity) : VAMPIRE_CLANS.Lyrezi;",
+    "new": "    pending.clan = clanOf ? clanOf(entry.regionIndex) : VAMPIRE_CLANS.Lyrezi;",
     "tests": [
       "test/systems/disc10_vampire.test.js"
     ]
@@ -404,8 +404,8 @@
   {
     "name": "DISC10-D-V8-the-turn-leaves-the-rest-window-up",
     "file": "src/systems/infection.js",
-    "old": "    cancelRest?.();\n",
-    "new": "",
+    "old": "    cancelRest?.();\n    // DISC10-D V3: GetVampireClan reads the PLAYER's own faction data",
+    "new": "    // DISC10-D V3: GetVampireClan reads the PLAYER's own faction data",
     "tests": [
       "test/systems/disc10_vampire.test.js"
     ]

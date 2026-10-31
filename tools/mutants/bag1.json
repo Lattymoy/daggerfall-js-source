@@ -84,8 +84,8 @@
   {
     "name": "BAG1-the-bag-a-floor",
     "file": "src/systems/inventorySession.js",
-    "old": "  if (state.usingWagon || state.usingBag || state.chooseOne) return null;",
-    "new": "  if (state.usingWagon || state.chooseOne) return null;",
+    "old": "  if (state.usingWagon || state.usingBag || state.chooseOne) return null; // BAG1: the bag is no floor",
+    "new": "  if (state.usingWagon || state.chooseOne) return null; // BAG1: the bag is no floor",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -382,8 +382,8 @@
   {
     "name": "AUDIT-BAG1-H1-the-toggle-over-a-tray",
     "file": "src/systems/inventorySession.js",
-    "old": "  if (state.chooseOne && !state.usingBag) return",
-    "new": "  if (false) return",
+    "old": "  if (state.chooseOne && !state.usingBag) return { ok: false, refusal: { reason: 'reward', text: BAG_WORDS.reward } };",
+    "new": "  if (false) return { ok: false, refusal: { reason: 'reward', text: BAG_WORDS.reward } };",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]

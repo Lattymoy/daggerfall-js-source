@@ -173,8 +173,8 @@
   {
     "name": "INTRO-REVERT2-THE-PLAYBACK-BUFFER-BACK",
     "file": "src/systems/introTheme.js",
-    "old": "      return Ctor ? new Ctor({ latencyHint: 'interactive' }) : null;",
-    "new": "      return Ctor ? new Ctor({ latencyHint: 'playback' }) : null;",
+    "old": "        return Ctor ? new Ctor({ latencyHint: 'interactive' }) : null;",
+    "new": "        return Ctor ? new Ctor({ latencyHint: 'playback' }) : null;",
     "tests": [
       "test/ui/intro.test.js"
     ]

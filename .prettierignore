@@ -1182,6 +1182,12 @@
 !/src/systems/immersiveTravel.js
 !/src/systems/immersiveTravelTables.js
 !/src/systems/improvedInteriorLighting.js
+!/src/systems/infection.js
+!/src/systems/inputActions.js
+!/src/systems/instancePlaces.js
+!/src/systems/introScore.js
+!/src/systems/introTheme.js
+!/src/systems/inventorySession.js
 !/src/systems/item/
 /src/systems/item/*
 !/src/systems/item/foundMark.js
@@ -1200,8 +1206,11 @@
 !/src/systems/item/itemTemplatesData.js
 !/src/systems/item/itemTransfer.js
 !/src/systems/item/possessedItems.js
+!/src/systems/jungleTreesAssets.js
 !/src/systems/ketch/
 /src/systems/ketch/*/
+!/src/systems/keyCodes.js
+!/src/systems/knightlyGifts.js
 !/src/systems/legacy/
 /src/systems/legacy/*
 !/src/systems/legacy/age.js

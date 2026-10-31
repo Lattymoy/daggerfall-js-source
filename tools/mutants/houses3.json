@@ -130,8 +130,8 @@
   {
     "name": "HOUSES3-the-order-gives-a-fourth",
     "file": "src/systems/knightlyGifts.js",
-    "old": "if (housesFull) return { kind: 'refuse', result: alreadyOwnResult, line: housesFullText() };",
-    "new": "if (false) return { kind: 'refuse', result: alreadyOwnResult, line: housesFullText() };",
+    "old": "  if (housesFull) return { kind: 'refuse', result: alreadyOwnResult, line: housesFullText() };",
+    "new": "  if (false) return { kind: 'refuse', result: alreadyOwnResult, line: housesFullText() };",
     "tests": [
       "test/systems/houses.test.js"
     ]

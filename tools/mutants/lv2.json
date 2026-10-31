@@ -129,8 +129,8 @@
   {
     "name": "the-inverse-lookup-answers-the-secondary-first",
     "file": "src/systems/inputActions.js",
-    "old": "  for (const primary of [true, false]) {\n    if (!(primary ? store?.primary : store?.secondary)) continue;",
-    "new": "  for (const primary of [false, true]) {\n    if (!(primary ? store?.primary : store?.secondary)) continue;",
+    "old": "export function codeForAction(store, action) {\n  for (const primary of [true, false]) {",
+    "new": "export function codeForAction(store, action) {\n  for (const primary of [false, true]) {",
     "tests": [
       "test/ui/levelNotice.test.js"
     ],

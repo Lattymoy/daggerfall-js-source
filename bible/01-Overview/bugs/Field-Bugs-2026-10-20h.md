@@ -646,7 +646,7 @@ Before the deploy, how many players this touched (the disenchants 0142 renames),
 `src/ui/input.js` (`isPageTarget`, `isPageFocusWalk` and `neverTheFocus`, plus the walk added to `swallowBrowserKey`),
 `src/ui/chatPanel.js` (the controls the chat stands over the world).
 
-FOUND. The game's Tab is the QuickDial (`inputActions.js:"['Tab', 'QuickDial'],"`, KB1). Daggerfall Unity binds nothing
+FOUND. The game's Tab is the QuickDial (`inputActions.js:"['Tab', 'QuickDial']"`, KB1). Daggerfall Unity binds nothing
 to Tab. ResetDefaults (InputManager.cs:954-1048) sets no KeyCode.Tab, and the only Tab DFU reads is a window's own: the
 advanced settings' page turn (DaggerfallAdvancedSettingsWindow.cs:224). A host prevented Tab only when the dial answered
 it: `world.js:"if (act === 'QuickDial' && hudCtx.toggleDial()) { e.preventDefault(); return true; }"` (PX17b: "preventDefault

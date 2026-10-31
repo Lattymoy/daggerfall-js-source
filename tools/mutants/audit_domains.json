@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-DOMAINS-C4-a-tenth-row",
     "file": "src/systems/instancePlaces.js",
-    "old": "(partners ?? []).slice(0, Math.max(0, INSTANCE_ROWS_MAX - rows.length - (mine ? 1 : 0) - (lastPublic ? 1 : 0)))",
-    "new": "(partners ?? [])",
+    "old": "  for (const p of (partners ?? []).slice(\n    0,\n    Math.max(0, INSTANCE_ROWS_MAX - rows.length - (mine ? 1 : 0) - (lastPublic ? 1 : 0)),\n  ))",
+    "new": "  for (const p of partners ?? [])",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]

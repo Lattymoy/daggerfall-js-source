@@ -238,7 +238,7 @@
   {
     "name": "follow-key-custom-no-fallback",
     "file": "src/systems/inputActions.js",
-    "old": "        name = i < row.options.length ? row.options[i] : (String(storedModSetting(vendor, row.choice) ?? '').trim() || null);",
+    "old": "        name =\n          i < row.options.length ? row.options[i] : String(storedModSetting(vendor, row.choice) ?? '').trim() || null;",
     "new": "        name = row.options[i] ?? null;",
     "tests": [
       "test/ui/kb1_keybinds.test.js"

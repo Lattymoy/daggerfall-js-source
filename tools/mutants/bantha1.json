@@ -336,8 +336,8 @@
   {
     "name": "BANTHA1-the-slot-0",
     "file": "src/systems/jungleTreesAssets.js",
-    "old": "    renderer, breathe, warn, now, slot: 1, scaleMax",
-    "new": "    renderer, breathe, warn, now, slot: 0, scaleMax",
+    "old": "    slot: 1,",
+    "new": "    slot: 0,",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -345,8 +345,8 @@
   {
     "name": "BANTHA1-the-scale-ceiling-low-poly-trees",
     "file": "src/systems/jungleTreesAssets.js",
-    "old": "    renderer, breathe, warn, now, slot: 1, scaleMax: JUNGLE_SCALE_MAX,",
-    "new": "    renderer, breathe, warn, now, slot: 1,",
+    "old": "    scaleMax: JUNGLE_SCALE_MAX,\n    label: 'bantha-jungle',",
+    "new": "    label: 'bantha-jungle',",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]

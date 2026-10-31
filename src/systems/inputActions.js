@@ -32,27 +32,65 @@
 // every existing index still means what it meant.
 
 import { t } from './textManager.js';
-import { appStorage } from './appStorage.js';   // DA1: the storage seam
-import { storedModSetting, modSetting, modLatchedOn } from './modSettings.js';   // KB1: a player's own mod key, carried into the registry once; and whether its mod is on
-import { domCodeForKeyCode, KEYCODE_NONE } from './keyCodes.js';   // KB1: the mods' TextKeys are Unity KeyCode names
+import { appStorage } from './appStorage.js'; // DA1: the storage seam
+import { storedModSetting, modSetting, modLatchedOn } from './modSettings.js'; // KB1: a player's own mod key, carried into the registry once; and whether its mod is on
+import { domCodeForKeyCode, KEYCODE_NONE } from './keyCodes.js'; // KB1: the mods' TextKeys are Unity KeyCode names
 
 /** InputManager.Actions (:324-384), names and ORDER verbatim.
  *  'Unknown' (:383) is the parse sentinel, not a bindable action -
  *  parseActionName answers it, the list does not carry it. */
-import { AXIS_ACTIONS, JOYSTICK_UI_ACTIONS, DEFAULT_AXIS_BINDINGS, DEFAULT_JOYSTICK_UI, axisOfKey, parseAxisKeyName } from './gamepad.js';   // GP1: the joystick dicts' vocabulary
+import {
+  AXIS_ACTIONS,
+  JOYSTICK_UI_ACTIONS,
+  DEFAULT_AXIS_BINDINGS,
+  DEFAULT_JOYSTICK_UI,
+  axisOfKey,
+  parseAxisKeyName,
+} from './gamepad.js'; // GP1: the joystick dicts' vocabulary
 
 export const ACTIONS = Object.freeze([
-  'Escape', 'ToggleConsole',
-  'MoveForwards', 'MoveBackwards', 'TurnLeft', 'MoveLeft', 'TurnRight', 'MoveRight',
-  'FloatUp', 'FloatDown', 'Jump', 'Crouch', 'Slide', 'Run',
-  'Rest', 'Transport', 'StealMode', 'GrabMode', 'InfoMode', 'TalkMode',
-  'CastSpell', 'RecastSpell', 'AbortSpell', 'UseMagicItem',
-  'ReadyWeapon', 'SwingWeapon', 'SwitchHand',
-  'Status', 'CharacterSheet', 'Inventory',
-  'ActivateCenterObject', 'ActivateCursor',
-  'LookUp', 'LookDown', 'CenterView', 'Sneak',
-  'LogBook', 'NoteBook', 'AutoMap', 'TravelMap',
-  'QuickSave', 'QuickLoad',
+  'Escape',
+  'ToggleConsole',
+  'MoveForwards',
+  'MoveBackwards',
+  'TurnLeft',
+  'MoveLeft',
+  'TurnRight',
+  'MoveRight',
+  'FloatUp',
+  'FloatDown',
+  'Jump',
+  'Crouch',
+  'Slide',
+  'Run',
+  'Rest',
+  'Transport',
+  'StealMode',
+  'GrabMode',
+  'InfoMode',
+  'TalkMode',
+  'CastSpell',
+  'RecastSpell',
+  'AbortSpell',
+  'UseMagicItem',
+  'ReadyWeapon',
+  'SwingWeapon',
+  'SwitchHand',
+  'Status',
+  'CharacterSheet',
+  'Inventory',
+  'ActivateCenterObject',
+  'ActivateCursor',
+  'LookUp',
+  'LookDown',
+  'CenterView',
+  'Sneak',
+  'LogBook',
+  'NoteBook',
+  'AutoMap',
+  'TravelMap',
+  'QuickSave',
+  'QuickLoad',
   'PrintScreen',
   'AutoRun',
   // SOC5: the port's own, past DFU's last row - see the header. The F-menu on
@@ -63,7 +101,9 @@ export const ACTIONS = Object.freeze([
   // 'SocialInteract' was - Daggerfall has no item slots on its HUD at all, so
   // these are Ledger A rows, not parity claims. The two consumable presses and
   // the weapon swap the diamond's cells name (systems/quickslots.js).
-  'QuickUse1', 'QuickUse2', 'QuickSwap',
+  'QuickUse1',
+  'QuickUse2',
+  'QuickSwap',
   // QS4 (2026-09-17, Mac: "The 4th quickslot doesnt have a keybind"): the
   // diamond's OFF-HAND cell, which had none - it spoke only through Handheld
   // Torches' own mod key, which the enhanced pane cannot rebind and no pad can
@@ -116,19 +156,35 @@ export const ACTIONS = Object.freeze([
   //  - 'DebugOverlay': the dungeon's diagnostics readout, a raw `F8` read that answered only while F8 was UNBOUND -
   //    and DFU binds F8 to PrintScreen, so it never answered for anyone who had not unbound the screenshot. It ships
   //    unbound: a developer's key, bound in Controls by whoever wants it.
-  'Interact', 'QuickDial',
-  'Hotbar5', 'Hotbar6', 'Hotbar7', 'Hotbar8', 'Hotbar9', 'Hotbar10',
-  'TorchToggleLight', 'TorchDrop', 'TorchThrow',
-  'ShoulderSwitch', 'AutoPerspective',
+  'Interact',
+  'QuickDial',
+  'Hotbar5',
+  'Hotbar6',
+  'Hotbar7',
+  'Hotbar8',
+  'Hotbar9',
+  'Hotbar10',
+  'TorchToggleLight',
+  'TorchDrop',
+  'TorchThrow',
+  'ShoulderSwitch',
+  'AutoPerspective',
   'FollowPaths',
-  'HorseMount', 'HorseSummon',
+  'HorseMount',
+  'HorseSummon',
   'DebugOverlay',
   // CSA-D: Come Sail Away's two helm keys this slice reads (Controls.Disembark, Controls.ToggleLight) - appended
-  'BoatDisembark', 'BoatToggleLight',
+  'BoatDisembark',
+  'BoatToggleLight',
   // CSA-E: and the sails' four (Controls.ToggleSail, TrimRight, TrimLeft, TrimModifier) - appended
-  'BoatToggleSail', 'BoatTrimRight', 'BoatTrimLeft', 'BoatTrimModifier',
+  'BoatToggleSail',
+  'BoatTrimRight',
+  'BoatTrimLeft',
+  'BoatTrimModifier',
   // CSA-G: and the time scale's three (Controls.IncreaseTimeScale, DecreaseTimeScale, ResetTimeScale) - appended
-  'BoatTimeScaleUp', 'BoatTimeScaleDown', 'BoatTimeScaleReset',
+  'BoatTimeScaleUp',
+  'BoatTimeScaleDown',
+  'BoatTimeScaleReset',
   // TV1 (2026-09-27, bible/06-Systems/Travel-View.md): the travel view from play. Its door is the map's Overworld
   // button (and O on the sheet); this row is for a player who wants a key without the map. It SHIPS UNBOUND, as
   // DebugOverlay does, and for the reason FREEMOUSE's own sweep records: every letter is spent, and a default on a
@@ -151,7 +207,8 @@ export const ACTIONS = Object.freeze([
   // your sails"): Come Sail Away's helm on the arrows - MORE SAIL and LESS SAIL, the port's own two steps through the
   // mod's sail states (systems/comeSailAway/comeSailAway.js MoreSail, LessSail), the down arrow's and the up arrow's (a DEFAULT
   // SHARE beside ActChoice, below). Appended, like every port action before them.
-  'BoatSailUp', 'BoatSailDown',
+  'BoatSailUp',
+  'BoatSailDown',
   // CLASSIC-PAGES (2026-09-30, Mac: "Enhanced pages + key"): THE PROFESSIONS KEY - the Professions and Stores pages on
   // either skin (ui/pauseDoor.js openPauseFlow: the classic pause has no pages). A DEFAULT SHARE on the down arrow beside
   // HELM-KEYS' less sail (DEFAULT_SHARES), as more sail shares the up arrow with the act choice: the professions' two keys
@@ -224,12 +281,60 @@ export const ACTIONS = Object.freeze([
  *  because it draws the row (ui/enhanced/enhancedControls.js over ACTION_GROUPS, the 'Online' group) and can rebind it.
  *  QS2: the three quickslot actions join it for the same reason, off the same face - the enhanced pane draws them
  *  under their own 'Quickslots' heading and the classic windows cannot draw them at all. */
-export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen', 'FreeMouse',
-  'Interact', 'QuickDial', 'Hotbar5', 'Hotbar6', 'Hotbar7', 'Hotbar8', 'Hotbar9', 'Hotbar10',
-  'TorchToggleLight', 'TorchDrop', 'TorchThrow', 'ShoulderSwitch', 'AutoPerspective', 'FollowPaths', 'HorseMount', 'HorseSummon', 'DebugOverlay',
-  'BoatDisembark', 'BoatToggleLight', 'BoatToggleSail', 'BoatTrimRight', 'BoatTrimLeft', 'BoatTrimModifier',
-  'BoatTimeScaleUp', 'BoatTimeScaleDown', 'BoatTimeScaleReset', 'TravelView', 'WalkMode', 'TogglePerspective', 'ActChoice', 'BoatSailUp', 'BoatSailDown', 'Professions',
-  'LegacyFamily', 'ModeWheel', 'WeaponTechnique', 'Spyglass', 'SaddlePanel', 'ShipHold', 'ShotCycle', 'PartyPing', 'Decorate', 'SignatureTechnique']);   // TECH-KEY2   // PARTY-PING: the party's ping   // the decorator, unbound   // SHOT-KINDS: the guns' load   // CARGO-ANYWHERE: the ship's hold   // SPYGLASS: the captain's glass   // TECH1: the weapon's technique   // LEGACY1: Project Legacy's family tree; MODE-WHEEL: the mode wheel   // KB1; TV1; PADWALK; VIEW-TOGGLE; PROF1   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
+export const PORT_ACTIONS = Object.freeze([
+  'SocialInteract',
+  'QuickUse1',
+  'QuickUse2',
+  'QuickSwap',
+  'QuickOffHand',
+  'QuickSpell',
+  'QuickLootAll',
+  'QuickLootOpen',
+  'FreeMouse',
+  'Interact',
+  'QuickDial',
+  'Hotbar5',
+  'Hotbar6',
+  'Hotbar7',
+  'Hotbar8',
+  'Hotbar9',
+  'Hotbar10',
+  'TorchToggleLight',
+  'TorchDrop',
+  'TorchThrow',
+  'ShoulderSwitch',
+  'AutoPerspective',
+  'FollowPaths',
+  'HorseMount',
+  'HorseSummon',
+  'DebugOverlay',
+  'BoatDisembark',
+  'BoatToggleLight',
+  'BoatToggleSail',
+  'BoatTrimRight',
+  'BoatTrimLeft',
+  'BoatTrimModifier',
+  'BoatTimeScaleUp',
+  'BoatTimeScaleDown',
+  'BoatTimeScaleReset',
+  'TravelView',
+  'WalkMode',
+  'TogglePerspective',
+  'ActChoice',
+  'BoatSailUp',
+  'BoatSailDown',
+  'Professions',
+  'LegacyFamily',
+  'ModeWheel',
+  'WeaponTechnique',
+  'Spyglass',
+  'SaddlePanel',
+  'ShipHold',
+  'ShotCycle',
+  'PartyPing',
+  'Decorate',
+  'SignatureTechnique',
+]); // TECH-KEY2   // PARTY-PING: the party's ping   // the decorator, unbound   // SHOT-KINDS: the guns' load   // CARGO-ANYWHERE: the ship's hold   // SPYGLASS: the captain's glass   // TECH1: the weapon's technique   // LEGACY1: Project Legacy's family tree; MODE-WHEEL: the mode wheel   // KB1; TV1; PADWALK; VIEW-TOGGLE; PROF1   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
 
 const ACTION_SET = new Set(ACTIONS);
 
@@ -260,7 +365,7 @@ export const DEFAULT_BINDINGS = Object.freeze([
   // rows stay in the pane for a player who wants DFU's keys back.
   ['Backspace', 'CastSpell'],
   ['KeyQ', 'RecastSpell'],
-  ['Backquote', 'AbortSpell'],   // KB1: E is Interact's (Mac's call); the console key DFU spent on a console this port has not
+  ['Backquote', 'AbortSpell'], // KB1: E is Interact's (Mac's call); the console key DFU spent on a console this port has not
   ['KeyU', 'UseMagicItem'],
   ['KeyZ', 'ReadyWeapon'],
   ['Mouse1', 'SwingWeapon'],
@@ -386,8 +491,8 @@ export const DEFAULT_BINDINGS = Object.freeze([
   ['KeyK', 'FollowPaths'],
   ['Comma', 'HorseMount'],
   ['Period', 'HorseSummon'],
-  ['F2', 'SaddlePanel'],   // UI-CALM: the saddle panel (Slash is the decorator's grid)
-  ['F4', 'ShipHold'],   // CARGO-ANYWHERE: the ship's hold, from anywhere
+  ['F2', 'SaddlePanel'], // UI-CALM: the saddle panel (Slash is the decorator's grid)
+  ['F4', 'ShipHold'], // CARGO-ANYWHERE: the ship's hold, from anywhere
   // CSA-D: the mod ships C (Crouch's) and Period (Horse Cart and Cargo's summon): one key, one action, so the port's
   // defaults are free keys under the right hand - `'` and `;` (DECLARED, the Port-Ledger's Come Sail Away row; `/` is
   // the decorator's own grid key, scenes/decor/decorTool.js DECOR_FREE_KEYS)
@@ -404,8 +509,8 @@ export const DEFAULT_BINDINGS = Object.freeze([
   ['NumpadMultiply', 'BoatTimeScaleUp'],
   ['NumpadSubtract', 'BoatTimeScaleDown'],
   ['NumpadEnter', 'BoatTimeScaleReset'],
-  ['ArrowUp', 'ActChoice'],   // PROF1 (THE MERGE: `;` is Come Sail Away's lantern, CSA-D; the up arrow is read by no action in play)
-  ['ArrowDown', 'BoatSailDown'],   // HELM-KEYS: less sail - the down arrow is read by nothing else in play (its More sail is DEFAULT_SHARES')
+  ['ArrowUp', 'ActChoice'], // PROF1 (THE MERGE: `;` is Come Sail Away's lantern, CSA-D; the up arrow is read by no action in play)
+  ['ArrowDown', 'BoatSailDown'], // HELM-KEYS: less sail - the down arrow is read by nothing else in play (its More sail is DEFAULT_SHARES')
   // LEGACY1 (LEGACY-KEY, a recorded departure): Project Legacy ships G, which is Handheld Torches' drop here (vendored
   // first). Every letter and digit is spent, and `-`, `=` and `/` are the decorator's own (scenes/decor/decorTool.js
   // DECOR_FREE_KEYS), so the tree ships on the keypad's slash, read by nothing in play - and the pause window's Family
@@ -464,31 +569,62 @@ export const HIDDEN_ACTIONS = Object.freeze(['ToggleConsole', 'Slide']);
 /** KB1: THE HOTBAR'S TEN KEYS, in slot order. Slots 1-4 are the quickslot diamond's own four actions - one key,
  *  one action: the diamond reads them while it is the quickbar, the hotbar while it is (systems/uiSkin.js
  *  hotbarInForce), never both - so a pad's d-pad, which carries those four, reaches the hotbar too. */
-export const HOTBAR_SLOT_ACTIONS = Object.freeze(['QuickUse1', 'QuickUse2', 'QuickSpell', 'QuickOffHand',
-  'Hotbar5', 'Hotbar6', 'Hotbar7', 'Hotbar8', 'Hotbar9', 'Hotbar10']);
+export const HOTBAR_SLOT_ACTIONS = Object.freeze([
+  'QuickUse1',
+  'QuickUse2',
+  'QuickSpell',
+  'QuickOffHand',
+  'Hotbar5',
+  'Hotbar6',
+  'Hotbar7',
+  'Hotbar8',
+  'Hotbar9',
+  'Hotbar10',
+]);
 
 /** KB1: A MOD'S KEYS ARE ITS OWN ACTIONS, answering only while that mod is on. `legacy` is the mod's old TextKey
  *  setting (modSettings.js) and every value the port ever shipped on it - a player's own choice there, anything
  *  else, is carried into the registry once (migrateKeyBinds). */
 export const MOD_ACTIONS = Object.freeze({
   'handheld-torches': Object.freeze([
-    Object.freeze({ action: 'TorchToggleLight', legacy: 'Handling.ToggleLightInput', shipped: Object.freeze(['O', 'F']) }),
+    Object.freeze({
+      action: 'TorchToggleLight',
+      legacy: 'Handling.ToggleLightInput',
+      shipped: Object.freeze(['O', 'F']),
+    }),
     Object.freeze({ action: 'TorchDrop', legacy: 'Handling.ManualDropInput', shipped: Object.freeze(['G', 'Tab']) }),
     Object.freeze({ action: 'TorchThrow', legacy: 'Throwing.ThrowTorchInput', shipped: Object.freeze(['X']) }),
   ]),
   'eye-of-the-beholder': Object.freeze([
     Object.freeze({ action: 'ShoulderSwitch', legacy: 'Camera.SwitchShoulder', shipped: Object.freeze(['B', 'Tab']) }),
-    Object.freeze({ action: 'AutoPerspective', legacy: 'AutoTogglePerspective.ToggleInput', shipped: Object.freeze(['KeypadPlus']) }),
+    Object.freeze({
+      action: 'AutoPerspective',
+      legacy: 'AutoTogglePerspective.ToggleInput',
+      shipped: Object.freeze(['KeypadPlus']),
+    }),
   ]),
   'travel-options': Object.freeze([
     // the mod's key is a CHOICE, not a KeyCode: an index into its six (TravelOptionsMod.cs:132), and an index past
     // the end is "Custom Key Bind", read from the second setting (:224-232)
-    Object.freeze({ action: 'FollowPaths', legacy: 'RoadsIntegration.FollowPathsKey', choice: 'RoadsIntegration.FollowPathsCustomKeyBind',
-      options: Object.freeze(['None', 'F', 'G', 'K', 'O', 'X']), shipped: Object.freeze([3]) }),
+    Object.freeze({
+      action: 'FollowPaths',
+      legacy: 'RoadsIntegration.FollowPathsKey',
+      choice: 'RoadsIntegration.FollowPathsCustomKeyBind',
+      options: Object.freeze(['None', 'F', 'G', 'K', 'O', 'X']),
+      shipped: Object.freeze([3]),
+    }),
   ]),
   'horse-cart-and-cargo': Object.freeze([
-    Object.freeze({ action: 'HorseMount', legacy: 'Hotkeys.QuickMountDismount', shipped: Object.freeze(['Alpha5', 'F7', 'K']) }),
-    Object.freeze({ action: 'HorseSummon', legacy: 'Hotkeys.SummonTransport', shipped: Object.freeze(['Alpha6', 'F10', 'G']) }),
+    Object.freeze({
+      action: 'HorseMount',
+      legacy: 'Hotkeys.QuickMountDismount',
+      shipped: Object.freeze(['Alpha5', 'F7', 'K']),
+    }),
+    Object.freeze({
+      action: 'HorseSummon',
+      legacy: 'Hotkeys.SummonTransport',
+      shipped: Object.freeze(['Alpha6', 'F10', 'G']),
+    }),
   ]),
   'come-sail-away': Object.freeze([
     // HELM-KEYS: the port's own two, first as the Controls group has them - no TextKey of the mod's to carry (`legacy` null)
@@ -499,10 +635,26 @@ export const MOD_ACTIONS = Object.freeze({
     Object.freeze({ action: 'BoatToggleSail', legacy: 'Controls.ToggleSail', shipped: Object.freeze(['Space']) }),
     Object.freeze({ action: 'BoatTrimRight', legacy: 'Controls.TrimRight', shipped: Object.freeze(['RightBracket']) }),
     Object.freeze({ action: 'BoatTrimLeft', legacy: 'Controls.TrimLeft', shipped: Object.freeze(['LeftBracket']) }),
-    Object.freeze({ action: 'BoatTrimModifier', legacy: 'Controls.TrimModifier', shipped: Object.freeze(['Backslash']) }),
-    Object.freeze({ action: 'BoatTimeScaleUp', legacy: 'Controls.IncreaseTimeScale', shipped: Object.freeze(['KeypadPlus']) }),
-    Object.freeze({ action: 'BoatTimeScaleDown', legacy: 'Controls.DecreaseTimeScale', shipped: Object.freeze(['KeypadMinus']) }),
-    Object.freeze({ action: 'BoatTimeScaleReset', legacy: 'Controls.ResetTimeScale', shipped: Object.freeze(['KeypadEnter']) }),
+    Object.freeze({
+      action: 'BoatTrimModifier',
+      legacy: 'Controls.TrimModifier',
+      shipped: Object.freeze(['Backslash']),
+    }),
+    Object.freeze({
+      action: 'BoatTimeScaleUp',
+      legacy: 'Controls.IncreaseTimeScale',
+      shipped: Object.freeze(['KeypadPlus']),
+    }),
+    Object.freeze({
+      action: 'BoatTimeScaleDown',
+      legacy: 'Controls.DecreaseTimeScale',
+      shipped: Object.freeze(['KeypadMinus']),
+    }),
+    Object.freeze({
+      action: 'BoatTimeScaleReset',
+      legacy: 'Controls.ResetTimeScale',
+      shipped: Object.freeze(['KeypadEnter']),
+    }),
     // SPYGLASS: the captain's glass - the port's own, live while the ships are (no TextKey of the mod's: `legacy` null)
     Object.freeze({ action: 'Spyglass', legacy: null, shipped: Object.freeze([]) }),
     // CARGO-ANYWHERE: the ship's hold - the port's own, live while the mod's boats are (`legacy` null)
@@ -524,7 +676,7 @@ export const actionMod = (action) => _modOf.get(action) ?? null;
  *  carries a check of its own. The key stays bound: switching the mod back on must not find it given away. */
 export function actionLive(action) {
   const vendor = _modOf.get(action);
-  return !vendor || (modLatchedOn(vendor) ?? !!modSetting(vendor, 'Enabled'));   // AUDIT PRE-MERGE 0928 U7: a next-load mod its host latched at mount (Come Sail Away, Travel Options) keeps its keys for the game it was loaded for
+  return !vendor || (modLatchedOn(vendor) ?? !!modSetting(vendor, 'Enabled')); // AUDIT PRE-MERGE 0928 U7: a next-load mod its host latched at mount (Come Sail Away, Travel Options) keeps its keys for the game it was loaded for
 }
 
 /**
@@ -540,7 +692,8 @@ export function actionLive(action) {
  * WASD/arrows while it is up, and the fly-cam's raw WASD (a developer mode). They answer only while their window is
  * the top one, so they share nothing with the world's keys below.
  */
-const g = (title, rows, mod = null) => Object.freeze({ title, mod, rows: Object.freeze(rows.map(([action, label]) => Object.freeze({ action, label }))) });
+const g = (title, rows, mod = null) =>
+  Object.freeze({ title, mod, rows: Object.freeze(rows.map(([action, label]) => Object.freeze({ action, label }))) });
 /** FB1018D KEY-LOGBOOK (kvassdrit: "Function does not match description in keybinding menu"): THE TWO JOURNAL KEYS NAME
  *  THE WINDOW EACH SKIN OPENS. On Enhanced Plus both open the Chronicle (ui/chronicleDoor.js, PX24d) - L on its Quests,
  *  N on its Notes (MAC-K2); on Classic, DFU's logbook as it stands and on its Notebook page. The rows said only a
@@ -548,80 +701,144 @@ const g = (title, rows, mod = null) => Object.freeze({ title, mod, rows: Object.
 const journalKeyLabel = (page, classic) => `Chronicle: ${page} (Enhanced Plus) / ${classic} (Classic)`;
 export const ACTION_GROUPS = Object.freeze([
   g('Movement', [
-    ['MoveForwards', 'Move forwards'], ['MoveBackwards', 'Move backwards'], ['MoveLeft', 'Move left'], ['MoveRight', 'Move right'],
-    ['TurnLeft', 'Turn left'], ['TurnRight', 'Turn right'], ['LookUp', 'Look up'], ['LookDown', 'Look down'],
-    ['CenterView', 'Center the view'], ['TogglePerspective', 'First / third person'], ['Jump', 'Jump'], ['Crouch', 'Crouch and sneak'], ['Run', 'Run'], ['AutoRun', 'Auto run'],
-    ['Sneak', 'Sneak (held, no crouch)'], ['WalkMode', 'Walk mode on / off'], ['FloatUp', 'Float up (levitate, swim)'], ['FloatDown', 'Float down (levitate, swim)'],
+    ['MoveForwards', 'Move forwards'],
+    ['MoveBackwards', 'Move backwards'],
+    ['MoveLeft', 'Move left'],
+    ['MoveRight', 'Move right'],
+    ['TurnLeft', 'Turn left'],
+    ['TurnRight', 'Turn right'],
+    ['LookUp', 'Look up'],
+    ['LookDown', 'Look down'],
+    ['CenterView', 'Center the view'],
+    ['TogglePerspective', 'First / third person'],
+    ['Jump', 'Jump'],
+    ['Crouch', 'Crouch and sneak'],
+    ['Run', 'Run'],
+    ['AutoRun', 'Auto run'],
+    ['Sneak', 'Sneak (held, no crouch)'],
+    ['WalkMode', 'Walk mode on / off'],
+    ['FloatUp', 'Float up (levitate, swim)'],
+    ['FloatDown', 'Float down (levitate, swim)'],
   ]),
   g('Combat', [
-    ['ReadyWeapon', 'Ready or sheathe weapon'], ['SwingWeapon', 'Swing weapon'], ['SwitchHand', 'Switch hand'],
-    ['WeaponTechnique', 'Weapon technique (hold to aim)'],   // TECH1
-    ['SignatureTechnique', 'Martial technique (hold to aim)'],   // TECH-KEY2: the held path's signature
-    ['ShotCycle', 'Shot (aboard)'],   // SHOT-KINDS: the guns' load at a helm, stepped on
+    ['ReadyWeapon', 'Ready or sheathe weapon'],
+    ['SwingWeapon', 'Swing weapon'],
+    ['SwitchHand', 'Switch hand'],
+    ['WeaponTechnique', 'Weapon technique (hold to aim)'], // TECH1
+    ['SignatureTechnique', 'Martial technique (hold to aim)'], // TECH-KEY2: the held path's signature
+    ['ShotCycle', 'Shot (aboard)'], // SHOT-KINDS: the guns' load at a helm, stepped on
   ]),
   g('Magic', [
-    ['CastSpell', 'Spellbook'], ['RecastSpell', 'Ready the last spell'], ['AbortSpell', 'Drop the readied spell'],
+    ['CastSpell', 'Spellbook'],
+    ['RecastSpell', 'Ready the last spell'],
+    ['AbortSpell', 'Drop the readied spell'],
     ['UseMagicItem', 'Use magic item'],
   ]),
   g('Interaction', [
-    ['ActivateCenterObject', 'Activate (mouse)'], ['Interact', 'Interact'], ['Decorate', t('input.action.decorate', 'Decorate this room')], ['ModeWheel', 'Mode wheel (hold, flick, release)'],
-    ['StealMode', 'Steal mode'], ['GrabMode', 'Grab mode'], ['InfoMode', 'Info mode'], ['TalkMode', 'Talk mode'],
-    ['QuickLootAll', 'Take everything'], ['QuickLootOpen', 'Open the container'],
-    ['Transport', 'Transport'], ['Rest', 'Rest'],
-    ['SaddlePanel', 'Saddle panel: show or hide (riding)'],   // UI-CALM
-    ['PartyPing', 'Ping'],   // PARTY-PING
+    ['ActivateCenterObject', 'Activate (mouse)'],
+    ['Interact', 'Interact'],
+    ['Decorate', t('input.action.decorate', 'Decorate this room')],
+    ['ModeWheel', 'Mode wheel (hold, flick, release)'],
+    ['StealMode', 'Steal mode'],
+    ['GrabMode', 'Grab mode'],
+    ['InfoMode', 'Info mode'],
+    ['TalkMode', 'Talk mode'],
+    ['QuickLootAll', 'Take everything'],
+    ['QuickLootOpen', 'Open the container'],
+    ['Transport', 'Transport'],
+    ['Rest', 'Rest'],
+    ['SaddlePanel', 'Saddle panel: show or hide (riding)'], // UI-CALM
+    ['PartyPing', 'Ping'], // PARTY-PING
   ]),
   g('Windows', [
-    ['Escape', 'Pause menu'], ['CharacterSheet', 'Character sheet'], ['Inventory', 'Inventory'], ['Status', 'Status'],
-    ['LogBook', journalKeyLabel('Quests', 'logbook')], ['NoteBook', journalKeyLabel('Notes', 'notebook')],   // FB1018D KEY-LOGBOOK
-    ['AutoMap', 'Map'], ['TravelMap', 'Travel map'],
-    ['QuickDial', 'Quick dial'], ['TravelView', 'Overworld (the travel view)'],
+    ['Escape', 'Pause menu'],
+    ['CharacterSheet', 'Character sheet'],
+    ['Inventory', 'Inventory'],
+    ['Status', 'Status'],
+    ['LogBook', journalKeyLabel('Quests', 'logbook')],
+    ['NoteBook', journalKeyLabel('Notes', 'notebook')], // FB1018D KEY-LOGBOOK
+    ['AutoMap', 'Map'],
+    ['TravelMap', 'Travel map'],
+    ['QuickDial', 'Quick dial'],
+    ['TravelView', 'Overworld (the travel view)'],
   ]),
   g('Quickslots and hotbar', [
-    ['QuickUse1', 'Use quickslot 1 / hotbar slot 1'], ['QuickUse2', 'Use quickslot 2 / hotbar slot 2'],
+    ['QuickUse1', 'Use quickslot 1 / hotbar slot 1'],
+    ['QuickUse2', 'Use quickslot 2 / hotbar slot 2'],
     ['QuickSpell', 'Ready quickslot spell (hold to cycle the book) / hotbar slot 3'],
-    ['QuickOffHand', 'Off hand: light, douse or swap / hotbar slot 4'], ['QuickSwap', 'Swap weapon'],
-    ['Hotbar5', 'Hotbar slot 5'], ['Hotbar6', 'Hotbar slot 6'], ['Hotbar7', 'Hotbar slot 7'], ['Hotbar8', 'Hotbar slot 8'],
-    ['Hotbar9', 'Hotbar slot 9'], ['Hotbar10', 'Hotbar slot 10'],
+    ['QuickOffHand', 'Off hand: light, douse or swap / hotbar slot 4'],
+    ['QuickSwap', 'Swap weapon'],
+    ['Hotbar5', 'Hotbar slot 5'],
+    ['Hotbar6', 'Hotbar slot 6'],
+    ['Hotbar7', 'Hotbar slot 7'],
+    ['Hotbar8', 'Hotbar slot 8'],
+    ['Hotbar9', 'Hotbar slot 9'],
+    ['Hotbar10', 'Hotbar slot 10'],
   ]),
   g('Mouse', [
-    ['ActivateCursor', 'Free the mouse (offline) / open chat (online)'], ['FreeMouse', 'Free the mouse (press again to look)'],
+    ['ActivateCursor', 'Free the mouse (offline) / open chat (online)'],
+    ['FreeMouse', 'Free the mouse (press again to look)'],
   ]),
-  g('Online', [
-    ['SocialInteract', 'Interact with player'],
-  ]),
+  g('Online', [['SocialInteract', 'Interact with player']]),
   g('Professions', [
-    ['ActChoice', 'Next action at a profession node'],   // PROF-MENU: the node's list is the plaque's - the key steps its light
-    ['Professions', t('input.action.professions', 'Open your Professions page, or the Crafting page at a station (online)')],   // CLASSIC-PAGES: the pages on either skin; AUDIT HORIZONTAL A7: at a station it lands on the Crafting page (profPages.js professionsKeyAt), else the Professions page   // PROF1 - Interact starts the act, attack plays the Basket's, Escape ends it; AUDIT 32 R1: PROF7's body (the knife's trace drawn with Interact held)
+    ['ActChoice', 'Next action at a profession node'], // PROF-MENU: the node's list is the plaque's - the key steps its light
+    [
+      'Professions',
+      t('input.action.professions', 'Open your Professions page, or the Crafting page at a station (online)'),
+    ], // CLASSIC-PAGES: the pages on either skin; AUDIT HORIZONTAL A7: at a station it lands on the Crafting page (profPages.js professionsKeyAt), else the Professions page   // PROF1 - Interact starts the act, attack plays the Basket's, Escape ends it; AUDIT 32 R1: PROF7's body (the knife's trace drawn with Interact held)
   ]),
   g('Game', [
-    ['QuickSave', 'Quick save'], ['QuickLoad', 'Quick load'], ['PrintScreen', 'Screenshot'], ['DebugOverlay', 'Diagnostics readout'],
+    ['QuickSave', 'Quick save'],
+    ['QuickLoad', 'Quick load'],
+    ['PrintScreen', 'Screenshot'],
+    ['DebugOverlay', 'Diagnostics readout'],
   ]),
-  g('Handheld Torches', [
-    ['TorchToggleLight', 'Light or douse'], ['TorchDrop', 'Drop the light'], ['TorchThrow', 'Throw a torch (hold to charge)'],
-  ], 'handheld-torches'),
-  g('Eye of the Beholder', [
-    ['ShoulderSwitch', 'Switch shoulder'], ['AutoPerspective', 'Auto perspective on/off'],
-  ], 'eye-of-the-beholder'),
-  g('Travel Options', [
-    ['FollowPaths', 'Follow the road'],
-  ], 'travel-options'),
-  g('Horse Cart and Cargo', [
-    ['HorseMount', 'Mount or dismount'], ['HorseSummon', 'Summon horse and wagon'],
-  ], 'horse-cart-and-cargo'),
-  g('Come Sail Away', [
-    ['BoatSailUp', 'More sail'], ['BoatSailDown', 'Less sail'],   // HELM-KEYS: first - the helm's arrows
-    ['BoatDisembark', 'Leave the helm'], ['BoatToggleLight', 'Light or douse the boat\u2019s lanterns'],
-    ['BoatToggleSail', 'Raise or stow the sails'], ['BoatTrimRight', 'Trim the sails right'], ['BoatTrimLeft', 'Trim the sails left'],
-    ['BoatTrimModifier', 'Trim the square sails (hold)'],
-    ['BoatTimeScaleUp', 'Speed time up at the helm'], ['BoatTimeScaleDown', 'Slow time down at the helm'],
-    ['BoatTimeScaleReset', 'Put time back to normal at the helm'],
-    ['Spyglass', 'Raise or lower the spyglass (aboard)'],   // SPYGLASS
-    ['ShipHold', 'Cargo'],   // CARGO-ANYWHERE: the ship's hold, from anywhere
-  ], 'come-sail-away'),
-  g('Project Legacy', [
-    ['LegacyFamily', 'Family tree'],
-  ], 'project-legacy'),
+  g(
+    'Handheld Torches',
+    [
+      ['TorchToggleLight', 'Light or douse'],
+      ['TorchDrop', 'Drop the light'],
+      ['TorchThrow', 'Throw a torch (hold to charge)'],
+    ],
+    'handheld-torches',
+  ),
+  g(
+    'Eye of the Beholder',
+    [
+      ['ShoulderSwitch', 'Switch shoulder'],
+      ['AutoPerspective', 'Auto perspective on/off'],
+    ],
+    'eye-of-the-beholder',
+  ),
+  g('Travel Options', [['FollowPaths', 'Follow the road']], 'travel-options'),
+  g(
+    'Horse Cart and Cargo',
+    [
+      ['HorseMount', 'Mount or dismount'],
+      ['HorseSummon', 'Summon horse and wagon'],
+    ],
+    'horse-cart-and-cargo',
+  ),
+  g(
+    'Come Sail Away',
+    [
+      ['BoatSailUp', 'More sail'],
+      ['BoatSailDown', 'Less sail'], // HELM-KEYS: first - the helm's arrows
+      ['BoatDisembark', 'Leave the helm'],
+      ['BoatToggleLight', 'Light or douse the boat\u2019s lanterns'],
+      ['BoatToggleSail', 'Raise or stow the sails'],
+      ['BoatTrimRight', 'Trim the sails right'],
+      ['BoatTrimLeft', 'Trim the sails left'],
+      ['BoatTrimModifier', 'Trim the square sails (hold)'],
+      ['BoatTimeScaleUp', 'Speed time up at the helm'],
+      ['BoatTimeScaleDown', 'Slow time down at the helm'],
+      ['BoatTimeScaleReset', 'Put time back to normal at the helm'],
+      ['Spyglass', 'Raise or lower the spyglass (aboard)'], // SPYGLASS
+      ['ShipHold', 'Cargo'], // CARGO-ANYWHERE: the ship's hold, from anywhere
+    ],
+    'come-sail-away',
+  ),
+  g('Project Legacy', [['LegacyFamily', 'Family tree']], 'project-legacy'),
 ]);
 const _groupOf = new Map(ACTION_GROUPS.flatMap((grp) => grp.rows.map((r) => [r.action, grp])));
 /** KB1: the words a player reads for an action - its row's label, with its mod's name after a mod's. */
@@ -675,19 +892,19 @@ export function actionLabel(action) {
  * world's edge ring - ui/input.js), and in a window it is Back still.
  */
 export const DEFAULT_SECONDARY_BINDINGS = Object.freeze([
-  ['JoystickButton1', 'Interact'],        // B / Circle - in the world (Back in a window)
-  ['JoystickButton4', 'Crouch'],          // LB / L1
-  ['JoystickButton5', 'Jump'],            // RB / R1
-  ['JoystickButton6', 'Inventory'],       // View / Share
-  ['JoystickButton7', 'Escape'],          // Menu / Options
-  ['JoystickButton8', 'Run'],             // L3
-  ['JoystickButton9', 'ReadyWeapon'],     // R3
-  ['JoystickAxis9Button0', 'CastSpell'],  // LT / L2
-  ['JoystickAxis10Button0', 'SwingWeapon'],   // RT / R2, beside Y's right-click
-  ['JoystickAxis7Button0', 'QuickUse1'],  // d-pad up
-  ['JoystickAxis7Button1', 'QuickUse2'],  // d-pad down
+  ['JoystickButton1', 'Interact'], // B / Circle - in the world (Back in a window)
+  ['JoystickButton4', 'Crouch'], // LB / L1
+  ['JoystickButton5', 'Jump'], // RB / R1
+  ['JoystickButton6', 'Inventory'], // View / Share
+  ['JoystickButton7', 'Escape'], // Menu / Options
+  ['JoystickButton8', 'Run'], // L3
+  ['JoystickButton9', 'ReadyWeapon'], // R3
+  ['JoystickAxis9Button0', 'CastSpell'], // LT / L2
+  ['JoystickAxis10Button0', 'SwingWeapon'], // RT / R2, beside Y's right-click
+  ['JoystickAxis7Button0', 'QuickUse1'], // d-pad up
+  ['JoystickAxis7Button1', 'QuickUse2'], // d-pad down
   ['JoystickAxis6Button1', 'QuickSpell'], // d-pad left
-  ['JoystickAxis6Button0', 'QuickOffHand'],   // d-pad right
+  ['JoystickAxis6Button0', 'QuickOffHand'], // d-pad right
 ]);
 
 // ── key combos ──────────────────────────────────────────────────────
@@ -706,7 +923,7 @@ export const DEFAULT_SECONDARY_BINDINGS = Object.freeze([
 /** GetComboCode(a, b) (:1165-1177). `mod` is the key held FIRST. */
 export function comboCode(mod, key) {
   if (mod == null || key == null) return null;
-  if (isCombo(mod) || isCombo(key)) return null;   // the <= 32767 guard
+  if (isCombo(mod) || isCombo(key)) return null; // the <= 32767 guard
   return `${mod}+${key}`;
 }
 
@@ -777,7 +994,7 @@ export function modifierHeldFirstDict(store) {
   const rev = store.rev ?? 0;
   if (store._heldFirstRev === rev && store._heldFirst) return store._heldFirst;
   const dict = new Map();
-  for (const m of comboModifiers(store)) dict.set(m, false);   // :1355-1358
+  for (const m of comboModifiers(store)) dict.set(m, false); // :1355-1358
   store._heldFirstRev = rev;
   store._heldFirst = dict;
   return dict;
@@ -814,16 +1031,16 @@ export function pairedCodes(store) {
     const primKey = getBinding(store, action, true);
     const secKey = getBinding(store, action, false);
     if (primKey != null && secKey != null) {
-      map.set(primKey, secKey);          // SetSecondaryBinding :1372-1373
+      map.set(primKey, secKey); // SetSecondaryBinding :1372-1373
       map.set(secKey, primKey);
     } else {
       const existingKey = primKey ?? secKey;
       let detached = null;
       if (existingKey != null && map.has(existingKey)) {
         detached = map.get(existingKey);
-        map.set(existingKey, null);      // :1392 - the KEY stays, the pair goes
+        map.set(existingKey, null); // :1392 - the KEY stays, the pair goes
       }
-      if (detached != null) map.delete(detached);   // :1395
+      if (detached != null) map.delete(detached); // :1395
     }
   }
   store._pairRev = rev;
@@ -838,7 +1055,9 @@ export function isPairedCode(store, code) {
 
 /** Every binding write goes through here so comboModifiers can tell
  *  when its answer went stale (SetupActionKeyDict's own trigger). */
-const touched = (store) => { store.rev = (store.rev ?? 0) + 1; };
+const touched = (store) => {
+  store.rev = (store.rev ?? 0) + 1;
+};
 
 /** THE ANY-KEY MODIFIER RULE, ported straight: DFU does not restrict a
  *  combo's first key to Shift/Ctrl/Alt - LeftShift+K and Z+LeftShift
@@ -856,9 +1075,9 @@ export function createBindings() {
   return {
     primary: new Map(),
     secondary: new Map(),
-    rev: 0,                      // bumped on every write; comboModifiers' cache key
-    removedPrimary: new Set(),   // :87 - "don't autofill this default back"
-    removedSecondary: new Set(),   // PAD1: the same mark for the secondary dict, which carries the pad defaults
+    rev: 0, // bumped on every write; comboModifiers' cache key
+    removedPrimary: new Set(), // :87 - "don't autofill this default back"
+    removedSecondary: new Set(), // PAD1: the same mark for the secondary dict, which carries the pad defaults
     unknown: new Map(),
     secondaryUnknown: new Map(),
     // UXB1-S: the actions a key answers BESIDE its dict's owner - code -> [action, ...]. A code here is always a key
@@ -878,7 +1097,7 @@ export function createBindings() {
   };
 }
 
-const NO_SHARERS = Object.freeze([]);   // AUDIT UXB1 F5: dictEntries' unshared key - not a fresh [] per key per walk
+const NO_SHARERS = Object.freeze([]); // AUDIT UXB1 F5: dictEntries' unshared key - not a fresh [] per key per walk
 
 /**
  * UXB1-S (2026-09-25, the UX backlog: "Is there a reason you cannot have multiple keys bound to the same action such
@@ -910,7 +1129,8 @@ export function actionsAt(store, code, primary = true) {
 /** UXB1-S: every action a code answers, both dicts, owner first - the one-answer readers take `[0]` (actionForCode). */
 export function actionsForCode(store, code) {
   const out = [];
-  for (const primary of [true, false]) for (const a of actionsAt(store, code, primary)) if (!out.includes(a)) out.push(a);
+  for (const primary of [true, false])
+    for (const a of actionsAt(store, code, primary)) if (!out.includes(a)) out.push(a);
   return out;
 }
 /** UXB1-S: does this code answer this action - its owner or one of its sharers? A window's own-key close asks this,
@@ -956,7 +1176,10 @@ export function setJoystickUIBinding(store, code, action) {
 /** GetAxisActionInversion (:931-934): unset is false. */
 export const getAxisInversion = (store, action) => store.axisInversions.get(action) === true;
 /** SetAxisActionInversion (:936-939). */
-export function setAxisInversion(store, action, invert) { touched(store); store.axisInversions.set(action, !!invert); }
+export function setAxisInversion(store, action, invert) {
+  touched(store);
+  store.axisInversions.set(action, !!invert);
+}
 /** IsUsedInAxisBinding (:941-950): is this synthetic axis key's axis one
  *  of the four bound axes - the controls grid refuses such a key. */
 export function isUsedInAxisBinding(store, code) {
@@ -964,8 +1187,12 @@ export function isUsedInAxisBinding(store, code) {
   return !!axis && [...store.axisActions.keys()].includes(axis);
 }
 // TestSetAxisBinding / TestSetJoystickUIBinding (:1427-1444): only if the action is missing
-function testSetAxisBinding(store, axis, action) { if (!getAxisBinding(store, action)) setAxisBinding(store, axis, action); }
-function testSetJoystickUIBinding(store, code, action) { if (getJoystickUIBinding(store, action) == null) setJoystickUIBinding(store, code, action); }
+function testSetAxisBinding(store, axis, action) {
+  if (!getAxisBinding(store, action)) setAxisBinding(store, axis, action);
+}
+function testSetJoystickUIBinding(store, code, action) {
+  if (getJoystickUIBinding(store, action) == null) setJoystickUIBinding(store, code, action);
+}
 
 /** SetBinding (:727-758). The order is the law: steal the code from
  *  the OTHER dict first, then clear this dict's old code for the
@@ -976,11 +1203,11 @@ export function setBinding(store, code, action, primary = true) {
   const dict = primary ? store.primary : store.secondary;
   const alt = primary ? store.secondary : store.primary;
   alt.delete(code);
-  (primary ? store.sharedSecondary : store.sharedPrimary)?.delete(code);   // UXB1-S: a steal takes the key from its sharers too
+  (primary ? store.sharedSecondary : store.sharedPrimary)?.delete(code); // UXB1-S: a steal takes the key from its sharers too
   clearBinding(store, action, primary);
   if (code != null) {
     if (primary) store.removedPrimary.delete(action);
-    else store.removedSecondary.delete(action);   // PAD1
+    else store.removedSecondary.delete(action); // PAD1
     dict.delete(code);
     (primary ? store.sharedPrimary : store.sharedSecondary)?.delete(code);
     dict.set(code, action);
@@ -992,8 +1219,12 @@ export function setBinding(store, code, action, primary = true) {
  *  force-removed action un-removes it, as SetBinding's does. A free code is a plain bind. */
 export function shareBinding(store, code, action, primary = true) {
   touched(store);
-  if (code == null) { clearBinding(store, action, primary); return; }
-  for (const [c, a] of [...dictEntries(store, primary)]) if (a === action && c !== code) dropBinding(store, c, action, primary);
+  if (code == null) {
+    clearBinding(store, action, primary);
+    return;
+  }
+  for (const [c, a] of [...dictEntries(store, primary)])
+    if (a === action && c !== code) dropBinding(store, c, action, primary);
   if (primary) store.removedPrimary.delete(action);
   else store.removedSecondary.delete(action);
   seatOnKey(store, code, action, primary);
@@ -1003,9 +1234,12 @@ export function shareBinding(store, code, action, primary = true) {
 function seatOnKey(store, code, action, primary) {
   const dict = primary ? store.primary : store.secondary;
   const shared = primary ? store.sharedPrimary : store.sharedSecondary;
-  if (!dict.has(code)) { dict.set(code, action); return; }
+  if (!dict.has(code)) {
+    dict.set(code, action);
+    return;
+  }
   const list = shared.get(code) ?? [];
-  if (dict.get(code) !== action && !list.includes(action)) shared.set(code, [...list, action]);   // already on it: nothing moves
+  if (dict.get(code) !== action && !list.includes(action)) shared.set(code, [...list, action]); // already on it: nothing moves
 }
 
 /** UXB1-S: one action lets go of one code in one dict, and nobody else does - the owner leaving hands the key to its
@@ -1016,24 +1250,34 @@ export function dropBinding(store, code, action, primary = true) {
   const shared = primary ? store.sharedPrimary : store.sharedSecondary;
   const list = shared?.get(code) ?? [];
   if (dict.get(code) === action) {
-    if (list.length) { dict.set(code, list[0]); setShared(shared, code, list.slice(1)); }
-    else dict.delete(code);
-  } else if (list.includes(action)) setShared(shared, code, list.filter((a) => a !== action));
+    if (list.length) {
+      dict.set(code, list[0]);
+      setShared(shared, code, list.slice(1));
+    } else dict.delete(code);
+  } else if (list.includes(action))
+    setShared(
+      shared,
+      code,
+      list.filter((a) => a !== action),
+    );
 }
-const setShared = (shared, code, list) => { if (list.length) shared.set(code, list); else shared.delete(code); };
+const setShared = (shared, code, list) => {
+  if (list.length) shared.set(code, list);
+  else shared.delete(code);
+};
 
 /** ClearBinding(Actions) (:839-846) - every code the action holds in
  *  the named dict. */
 export function clearBinding(store, action, primary = true) {
   touched(store);
-  for (const [code, a] of [...dictEntries(store, primary)]) if (a === action) dropBinding(store, code, action, primary);   // UXB1-S: as an owner or a sharer
+  for (const [code, a] of [...dictEntries(store, primary)]) if (a === action) dropBinding(store, code, action, primary); // UXB1-S: as an owner or a sharer
 }
 
 /** ClearBinding(KeyCode) (:803-811). */
 export function clearBindingByCode(store, code, primary = true) {
   touched(store);
   (primary ? store.primary : store.secondary).delete(code);
-  (primary ? store.sharedPrimary : store.sharedSecondary)?.delete(code);   // UXB1-S: and every action sharing it
+  (primary ? store.sharedPrimary : store.sharedSecondary)?.delete(code); // UXB1-S: and every action sharing it
 }
 
 /** AddRemovedPrimaryAction (:795-798) - the controls UI's "unbind and
@@ -1055,7 +1299,7 @@ export function addRemovedSecondaryAction(store, action) {
 /** GetBinding (:641-671). One-arg walks the primary dict ("first
  *  non-None KeyCode"); pass primary=false for the secondary dict. */
 export function getBinding(store, action, primary = true) {
-  for (const [code, a] of dictEntries(store, primary)) if (a === action) return code;   // UXB1-S: a shared key is the action's key too
+  for (const [code, a] of dictEntries(store, primary)) if (a === action) return code; // UXB1-S: a shared key is the action's key too
   return null;
 }
 
@@ -1109,9 +1353,9 @@ function testSetBinding(store, code, action, primary = true) {
   const dict = primary ? store.primary : store.secondary;
   const alt = primary ? store.secondary : store.primary;
   if (dict.has(code) || alt.has(code)) return;
-  for (const [, a] of dictEntries(store, primary)) if (a === action) return;   // UXB1-S: an action on a shared key is not missing
+  for (const [, a] of dictEntries(store, primary)) if (a === action) return; // UXB1-S: an action on a shared key is not missing
   if (primary && store.removedPrimary.has(action)) return;
-  if (!primary && store.removedSecondary.has(action)) return;   // PAD1
+  if (!primary && store.removedSecondary.has(action)) return; // PAD1
   if (comboModifiers(store).has(code)) return;
   setBinding(store, code, action, primary);
 }
@@ -1126,10 +1370,10 @@ export function resetDefaults(store, autofill = false) {
   touched(store);
   if (!autofill) {
     store.primary.clear();
-    store.sharedPrimary?.clear();   // UXB1-S: the primary's shares go with it
-    store.sharedUnknown?.clear();   // AUDIT UXB1 F3/F8: ...and the ones it carried for a newer build
+    store.sharedPrimary?.clear(); // UXB1-S: the primary's shares go with it
+    store.sharedUnknown?.clear(); // AUDIT UXB1 F3/F8: ...and the ones it carried for a newer build
     store.removedPrimary.clear();
-    store.removedSecondary.clear();   // PAD1: a full reset forgets the pad marks too, and refills below
+    store.removedSecondary.clear(); // PAD1: a full reset forgets the pad marks too, and refills below
   }
   const set = autofill
     ? (code, action) => testSetBinding(store, code, action, true)
@@ -1137,7 +1381,13 @@ export function resetDefaults(store, autofill = false) {
   for (const [code, action] of DEFAULT_BINDINGS) set(code, action);
   // HELM-KEYS: the default shares, onto their partner's key alone (DEFAULT_SHARES)
   for (const [code, action, partner] of DEFAULT_SHARES) {
-    if (autofill && (getBinding(store, action, true) != null || getBinding(store, action, false) != null || store.removedPrimary.has(action))) continue;
+    if (
+      autofill &&
+      (getBinding(store, action, true) != null ||
+        getBinding(store, action, false) != null ||
+        store.removedPrimary.has(action))
+    )
+      continue;
     const owner = store.primary.get(code);
     if (owner === partner) shareBinding(store, code, action, true);
     // AUDIT CAPTAIN'S SEA S14: an autofill finding the share's key FREE - its partner moved off it in an older file (Travel
@@ -1156,10 +1406,13 @@ export function resetDefaults(store, autofill = false) {
   // autofill fills only a MISSING action. The inversions: false unless
   // autofill and the file already said.
   const setAxis = autofill ? (a, x) => testSetAxisBinding(store, a, x) : (a, x) => setAxisBinding(store, a, x);
-  const setUI = autofill ? (c, x) => testSetJoystickUIBinding(store, c, x) : (c, x) => setJoystickUIBinding(store, c, x);
+  const setUI = autofill
+    ? (c, x) => testSetJoystickUIBinding(store, c, x)
+    : (c, x) => setJoystickUIBinding(store, c, x);
   for (const [axis, action] of DEFAULT_AXIS_BINDINGS) setAxis(axis, action);
   for (const [code, action] of DEFAULT_JOYSTICK_UI) setUI(code, action);
-  for (const action of AXIS_ACTIONS) if (!autofill || !store.axisInversions.has(action)) setAxisInversion(store, action, false);
+  for (const action of AXIS_ACTIONS)
+    if (!autofill || !store.axisInversions.has(action)) setAxisInversion(store, action, false);
 }
 
 /** PARTY-PING: a saved file whose middle button is still DFU's AutoRun gives that button to the ping, once.
@@ -1170,7 +1423,8 @@ export function adoptPartyPingKey(store) {
   if (store.primary.get('Mouse2') !== 'AutoRun') return false;
   clearBinding(store, 'AutoRun', true);
   setBinding(store, 'Mouse2', 'PartyPing', true);
-  if (!store.removedPrimary.has('AutoRun') && getBinding(store, 'AutoRun', true) == null) testSetBinding(store, 'F3', 'AutoRun', true);
+  if (!store.removedPrimary.has('AutoRun') && getBinding(store, 'AutoRun', true) == null)
+    testSetBinding(store, 'F3', 'AutoRun', true);
   return true;
 }
 
@@ -1200,11 +1454,11 @@ export function serializeKeyBinds(store) {
   const joystickUIKeyBinds = {};
   for (const [code, action] of store.joystickUI) joystickUIKeyBinds[code] = action;
   const out = {
-    version: KEYBINDS_VERSION,   // KB1: the port's own field - DFU's KeyBindData_v1 has none, and a file without it is v1
+    version: KEYBINDS_VERSION, // KB1: the port's own field - DFU's KeyBindData_v1 has none, and a file without it is v1
     actionKeyBinds,
     secondaryActionKeyBinds,
     removedPrimaryActions: [...store.removedPrimary],
-    removedSecondaryActions: [...store.removedSecondary],   // PAD1
+    removedSecondaryActions: [...store.removedSecondary], // PAD1
     axisActionKeyBinds,
     axisActionInversions,
     joystickUIKeyBinds,
@@ -1261,7 +1515,10 @@ function loadSharedKeybinds(store, saved, primary) {
   const carried = primary ? store.sharedUnknown : store.secondarySharedUnknown;
   for (const [code, names] of Object.entries(saved)) {
     const list = (Array.isArray(names) ? names : []).filter((n) => typeof n === 'string');
-    if (!dict.has(code) && unknown.has(code)) { if (list.length) carried.set(code, { owner: unknown.get(code), names: list }); continue; }
+    if (!dict.has(code) && unknown.has(code)) {
+      if (list.length) carried.set(code, { owner: unknown.get(code), names: list });
+      continue;
+    }
     const kept = [];
     for (const name of list) {
       const action = parseActionName(name);
@@ -1280,7 +1537,7 @@ export function loadKeyBinds(store, data) {
   if (!data) return;
   loadActionKeybinds(store, data.actionKeyBinds, true);
   loadActionKeybinds(store, data.secondaryActionKeyBinds, false);
-  loadSharedKeybinds(store, data.sharedActionKeyBinds, true);   // UXB1-S
+  loadSharedKeybinds(store, data.sharedActionKeyBinds, true); // UXB1-S
   loadSharedKeybinds(store, data.sharedSecondaryActionKeyBinds, false);
   if (Array.isArray(data.removedPrimaryActions)) {
     for (const name of data.removedPrimaryActions) {
@@ -1374,13 +1631,20 @@ function storage() {
  *  repair that cannot strand anyone, applied at the one door every
  *  load comes through. Only onto a FREE default (KEEP-CLICK): a key
  *  the player gave another action is theirs to keep. */
-export const UNLOSEABLE_ACTIONS = Object.freeze(['SwingWeapon', 'ActivateCenterObject', 'MoveForwards', 'MoveBackwards', 'MoveLeft', 'MoveRight']);
+export const UNLOSEABLE_ACTIONS = Object.freeze([
+  'SwingWeapon',
+  'ActivateCenterObject',
+  'MoveForwards',
+  'MoveBackwards',
+  'MoveLeft',
+  'MoveRight',
+]);
 
 /** The codes an action answers to right now, across both dicts. */
 export function codesForAction(store, action) {
   const out = [];
   for (const primary of [true, false]) {
-    for (const [code, a] of dictEntries(store, primary)) if (a === action) out.push(code);   // UXB1-S: its shared keys too
+    for (const [code, a] of dictEntries(store, primary)) if (a === action) out.push(code); // UXB1-S: its shared keys too
   }
   return out;
 }
@@ -1429,7 +1693,9 @@ export const KEYBINDS_VERSION = 3;
  *  the wheel's default lands there - a player who chose Alt for something else keeps it, and is told the wheel has
  *  no key. F1-F4 are NOT let go: a saved file's mode keys still work beside the wheel. */
 const LET_GO = Object.freeze([
-  ['KeyE', 'AbortSpell', 2], ['Backquote', 'ToggleConsole', 2], ['ControlLeft', 'Slide', 2],
+  ['KeyE', 'AbortSpell', 2],
+  ['Backquote', 'ToggleConsole', 2],
+  ['ControlLeft', 'Slide', 2],
   ['AltLeft', 'Sneak', 3],
 ]);
 
@@ -1459,42 +1725,63 @@ const LET_GO = Object.freeze([
 export function migrateKeyBinds(store, fromVersion) {
   const report = { moved: [], kept: [], lost: [] };
   if (fromVersion >= KEYBINDS_VERSION) return report;
-  const unkeyed = [];   // MODE-WHEEL AUDIT: an action left with NO key by a let-go - the player is told, not the console only
+  const unkeyed = []; // MODE-WHEEL AUDIT: an action left with NO key by a let-go - the player is told, not the console only
   for (const [code, was, by] of LET_GO) {
-    if (fromVersion < by && store.primary.get(code) === was) { store.primary.delete(code); touched(store); report.moved.push(`${was} off ${code}`); }
-    if (by > 2 && report.moved.includes(`${was} off ${code}`)) unkeyed.push([code, was]);   // a v2-era default (Sneak's Alt) ships no new one
+    if (fromVersion < by && store.primary.get(code) === was) {
+      store.primary.delete(code);
+      touched(store);
+      report.moved.push(`${was} off ${code}`);
+    }
+    if (by > 2 && report.moved.includes(`${was} off ${code}`)) unkeyed.push([code, was]); // a v2-era default (Sneak's Alt) ships no new one
   }
   for (const hidden of HIDDEN_ACTIONS) {
     for (const primary of [true, false]) {
       const had = getBinding(store, hidden, primary);
-      if (had != null) { clearBinding(store, hidden, primary); report.moved.push(`${hidden} off ${had}`); }
+      if (had != null) {
+        clearBinding(store, hidden, primary);
+        report.moved.push(`${hidden} off ${had}`);
+      }
     }
   }
-  resetDefaults(store, true);   // step 2: the standard's defaults, on every code still free
+  resetDefaults(store, true); // step 2: the standard's defaults, on every code still free
   const spoken = (code) => actionForCode(store, code) != null || comboModifiers(store).has(code);
   for (const [vendor, rows] of Object.entries(MOD_ACTIONS)) {
-    if (fromVersion >= 2) break;   // MODE-WHEEL: the mods' old keys are a v1 file's alone - a v2 file carried them already
+    if (fromVersion >= 2) break; // MODE-WHEEL: the mods' old keys are a v1 file's alone - a v2 file carried them already
     for (const row of rows) {
-      if (row.legacy == null) continue;   // HELM-KEYS: a port row - no old setting to carry
+      if (row.legacy == null) continue; // HELM-KEYS: a port row - no old setting to carry
       let saved;
-      try { saved = storedModSetting(vendor, row.legacy); } catch { saved = undefined; }
+      try {
+        saved = storedModSetting(vendor, row.legacy);
+      } catch {
+        saved = undefined;
+      }
       if (saved === undefined || row.shipped.includes(saved)) continue;
       let name = saved;
-      if (row.choice) {   // Travel Options: one of its six by index, else its custom bind (an empty one is no choice)
+      if (row.choice) {
+        // Travel Options: one of its six by index, else its custom bind (an empty one is no choice)
         const i = saved | 0;
-        name = i < row.options.length ? row.options[i] : (String(storedModSetting(vendor, row.choice) ?? '').trim() || null);
+        name =
+          i < row.options.length ? row.options[i] : String(storedModSetting(vendor, row.choice) ?? '').trim() || null;
         if (name == null) continue;
       }
-      if (name === KEYCODE_NONE || name === 'None') { clearBinding(store, row.action, true); store.removedPrimary.add(row.action); report.moved.push(`${row.action} unbound`); continue; }
+      if (name === KEYCODE_NONE || name === 'None') {
+        clearBinding(store, row.action, true);
+        store.removedPrimary.add(row.action);
+        report.moved.push(`${row.action} unbound`);
+        continue;
+      }
       const code = domCodeForKeyCode(String(name));
-      if (!code || getBinding(store, row.action, true) === code) continue;   // a key that parses to nothing, or the one it already has
-      if (spoken(code)) { report.kept.push({ action: row.action, code, holder: actionForCode(store, code) }); continue; }
+      if (!code || getBinding(store, row.action, true) === code) continue; // a key that parses to nothing, or the one it already has
+      if (spoken(code)) {
+        report.kept.push({ action: row.action, code, holder: actionForCode(store, code) });
+        continue;
+      }
       setBinding(store, code, row.action, true);
       report.moved.push(`${row.action} on ${code}`);
     }
   }
   for (const [code, action] of DEFAULT_BINDINGS) {
-    if (fromVersion >= 2 && action !== 'ModeWheel') continue;   // MODE-WHEEL: a v2 file was told its losses at v2; v3 adds only the wheel
+    if (fromVersion >= 2 && action !== 'ModeWheel') continue; // MODE-WHEEL: a v2 file was told its losses at v2; v3 adds only the wheel
     if (getBinding(store, action, true) != null || store.removedPrimary.has(action)) continue;
     report.lost.push({ action, code, holder: actionForCode(store, code) });
   }
@@ -1513,22 +1800,27 @@ export function loadOrCreateBindings() {
       const data = JSON.parse(raw);
       loadKeyBinds(store, data);
       const from = Number(data?.version) || 1;
-      const report = migrateKeyBinds(store, from);   // KB1: runs the autofill inside it, between its steps
+      const report = migrateKeyBinds(store, from); // KB1: runs the autofill inside it, between its steps
       resetDefaults(store, true);
-      if (adoptPartyPingKey(store)) saveKeyBinds(store);   // PARTY-PING: Mouse2 was AutoRun - the ping takes it, once
+      if (adoptPartyPingKey(store)) saveKeyBinds(store); // PARTY-PING: Mouse2 was AutoRun - the ping takes it, once
       if (from < KEYBINDS_VERSION) {
-        const said = [...report.moved, ...report.kept.map((k) => `${k.action} kept its key (${k.code} is ${k.holder}'s)`),
-          ...report.lost.map((l) => `${l.action} has no key (${l.code} is ${l.holder}'s)`)];
+        const said = [
+          ...report.moved,
+          ...report.kept.map((k) => `${k.action} kept its key (${k.code} is ${k.holder}'s)`),
+          ...report.lost.map((l) => `${l.action} has no key (${l.code} is ${l.holder}'s)`),
+        ];
         if (said.length) console.info(`[keybinds] brought forward to v${KEYBINDS_VERSION}: ${said.join(', ')}`);
-        if (report.kept.length || report.lost.length) store.carried = report;   // AUDIT KB1 F3: for the player, not the console only (ui/input.js)
-        saveKeyBinds(store);   // written as v2 at once, so the carry runs exactly once
+        if (report.kept.length || report.lost.length) store.carried = report; // AUDIT KB1 F3: for the player, not the console only (ui/input.js)
+        saveKeyBinds(store); // written as v2 at once, so the carry runs exactly once
       }
       // MAC-D1: ...and the autofill pass above will NOT do this, by
       // design - it obeys the removal marks. This runs after it and
       // writes the repair back, so the next load starts sound.
       if (repairUnloseableBindings(store).length) saveKeyBinds(store);
       return store;
-    } catch { /* a corrupt file falls through to defaults */ }
+    } catch {
+      /* a corrupt file falls through to defaults */
+    }
   }
   resetDefaults(store);
   saveKeyBinds(store);
@@ -1542,8 +1834,11 @@ export function loadOrCreateBindings() {
  *  rebind flow and out of first-boot loadOrCreateBindings. Losing
  *  the write costs a rebind, not a session. */
 export function saveKeyBinds(store) {
-  try { storage()?.setItem(STORAGE_KEY, JSON.stringify(serializeKeyBinds(store))); }
-  catch (err) { console.warn('[inputActions] keybind write failed:', err?.name ?? err); }
+  try {
+    storage()?.setItem(STORAGE_KEY, JSON.stringify(serializeKeyBinds(store)));
+  } catch (err) {
+    console.warn('[inputActions] keybind write failed:', err?.name ?? err);
+  }
   _raiseSavedKeyBinds();
 }
 
@@ -1579,7 +1874,11 @@ export function onSavedKeyBinds(fn) {
 }
 function _raiseSavedKeyBinds() {
   for (const fn of [..._savedKeyBindListeners]) {
-    try { fn(); } catch (e) { console.warn('[inputActions] OnSavedKeyBinds listener failed:', e?.message ?? e); }
+    try {
+      fn();
+    } catch (e) {
+      console.warn('[inputActions] OnSavedKeyBinds listener failed:', e?.message ?? e);
+    }
   }
 }
 
@@ -1590,12 +1889,12 @@ function _raiseSavedKeyBinds() {
 export function createActionState() {
   return { current: new Set(), previous: new Set() };
 }
-export const addAction = (state, action) => { state.current.add(action); };
+export const addAction = (state, action) => {
+  state.current.add(action);
+};
 export const hasAction = (state, action) => state.current.has(action);
-export const actionStarted = (state, action) =>
-  !state.previous.has(action) && state.current.has(action);
-export const actionComplete = (state, action) =>
-  state.previous.has(action) && !state.current.has(action);
+export const actionStarted = (state, action) => !state.previous.has(action) && state.current.has(action);
+export const actionComplete = (state, action) => state.previous.has(action) && !state.current.has(action);
 export function endFrame(state) {
   state.previous = state.current;
   state.current = new Set();

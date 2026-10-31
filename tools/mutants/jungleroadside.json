@@ -173,8 +173,8 @@
   {
     "name": "JUNGLE-ROADSIDE-a-pair-failing-fails-the-door",
     "file": "src/systems/jungleTreesAssets.js",
-    "old": "Promise.allSettled(JUNGLE_PAIRS.map((p) => read(pairFiles(p)))),",
-    "new": "Promise.all(JUNGLE_PAIRS.map((p) => read(pairFiles(p)))),",
+    "old": "          Promise.allSettled(JUNGLE_PAIRS.map((p) => read(pairFiles(p)))),",
+    "new": "          Promise.all(JUNGLE_PAIRS.map((p) => read(pairFiles(p)))),",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "JUNGLE-ROADSIDE-the-pairs-read-unbreathed",
     "file": "src/systems/jungleTreesAssets.js",
-    "old": "          if (breathe) await breathe();\n",
-    "new": "",
+    "old": "          if (breathe) await breathe();\n          const f = fetched[k];",
+    "new": "          const f = fetched[k];",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "JUNGLE-ROADSIDE-the-halfs-side-ignored",
     "file": "src/systems/jungleTreesAssets.js",
-    "old": "pairRecord(JUNGLE_PAIRS[kind], side));",
-    "new": "pairRecord(JUNGLE_PAIRS[kind], 0));",
+    "old": "  api.pairProto = (kind, side) => door.proto(JUNGLE_ARCHIVE, pairRecord(JUNGLE_PAIRS[kind], side));",
+    "new": "  api.pairProto = (kind, side) => door.proto(JUNGLE_ARCHIVE, pairRecord(JUNGLE_PAIRS[kind], 0));",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]

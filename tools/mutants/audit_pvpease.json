@@ -308,8 +308,8 @@
   {
     "name": "AUDIT-PVP-EASE-L2-1-the-window-unasked",
     "file": "src/systems/inventorySession.js",
-    "old": "  return deps.storeRefusal ? deps.storeRefusal() ?? null : wildStoreRefusal();",
-    "new": "  return deps.storeRefusal ? deps.storeRefusal() ?? null : null;",
+    "old": "  return deps.storeRefusal ? (deps.storeRefusal() ?? null) : wildStoreRefusal();",
+    "new": "  return deps.storeRefusal ? (deps.storeRefusal() ?? null) : null;",
     "tests": [
       "test/systems/wild/combatlock.test.js"
     ]

@@ -258,8 +258,8 @@
   {
     "name": "INSTANCES-PARTNER-ANY-PLACE",
     "file": "src/systems/instancePlaces.js",
-    "old": "    if (!r || r.base !== base || out.some(",
-    "new": "    if (!r || out.some(",
+    "old": "    if (!r || r.base !== base || out.some((o) => o.owner === r.owner && o.epoch === r.epoch)) continue;",
+    "new": "    if (!r || out.some((o) => o.owner === r.owner && o.epoch === r.epoch)) continue;",
     "tests": [
       "test/systems/quest/instances3_door.test.js"
     ],

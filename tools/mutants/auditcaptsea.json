@@ -2466,8 +2466,8 @@
   {
     "name": "ACS-S14-removed-gate",
     "file": "src/systems/inputActions.js",
-    "old": " || getBinding(store, action, false) != null || store.removedPrimary.has(action))) continue;",
-    "new": " || getBinding(store, action, false) != null)) continue;",
+    "old": "    if (\n      autofill &&\n      (getBinding(store, action, true) != null ||\n        getBinding(store, action, false) != null ||\n        store.removedPrimary.has(action))\n    )\n      continue;",
+    "new": "    if (autofill && (getBinding(store, action, true) != null || getBinding(store, action, false) != null)) continue;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

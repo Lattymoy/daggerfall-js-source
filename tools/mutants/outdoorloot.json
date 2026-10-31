@@ -414,8 +414,8 @@
   {
     "name": "OUTDOOR-LOOT-window-never-told-it-closed",
     "file": "src/systems/inventorySession.js",
-    "old": "try { loot?.closed?.(); }",
-    "new": "try { void 0; }",
+    "old": "    loot?.closed?.();",
+    "new": "    void 0;",
     "tests": [
       "test/net/outdoorloot_pins.test.js"
     ]

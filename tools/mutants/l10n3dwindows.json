@@ -32,8 +32,8 @@
   {
     "name": "L10N3d2-systems-inventorySession-54-noWagon",
     "file": "src/systems/inventorySession.js",
-    "old": "  noWagon: { reason: 'noWagon', get text() { return localizedText('noWagon', NO_WAGON_TEXT); } },",
-    "new": "  noWagon: { reason: 'noWagon', get text() { return NO_WAGON_TEXT; } },",
+    "old": "      return localizedText('noWagon', NO_WAGON_TEXT);",
+    "new": "      return NO_WAGON_TEXT;",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/ui/l10n3d_windows.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "L10N3d2-systems-inventorySession-55-exitTooFar",
     "file": "src/systems/inventorySession.js",
-    "old": "  exitTooFar: { reason: 'exitTooFar', get text() { return localizedText('exitTooFar', EXIT_TOO_FAR_TEXT); } },",
-    "new": "  exitTooFar: { reason: 'exitTooFar', get text() { return EXIT_TOO_FAR_TEXT; } },",
+    "old": "      return localizedText('exitTooFar', EXIT_TOO_FAR_TEXT);",
+    "new": "      return EXIT_TOO_FAR_TEXT;",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/ui/l10n3d_windows.test.js"

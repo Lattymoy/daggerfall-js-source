@@ -24,11 +24,19 @@ export function audibleContextTime(context, presentationMs) {
 
 /** Session ownership belongs to the front door, NOT the cinematic DOM. */
 export class IntroTheme {
-  constructor({ makeContext, fetcher = globalThis.fetch?.bind(globalThis), readVolume = trackGain, subscribe = onSettingChange, now = () => performance.now() } = {}) {
-    this.makeContext = makeContext ?? (() => {
-      const Ctor = globalThis.AudioContext ?? globalThis.webkitAudioContext;
-      return Ctor ? new Ctor({ latencyHint: 'interactive' }) : null;
-    });
+  constructor({
+    makeContext,
+    fetcher = globalThis.fetch?.bind(globalThis),
+    readVolume = trackGain,
+    subscribe = onSettingChange,
+    now = () => performance.now(),
+  } = {}) {
+    this.makeContext =
+      makeContext ??
+      (() => {
+        const Ctor = globalThis.AudioContext ?? globalThis.webkitAudioContext;
+        return Ctor ? new Ctor({ latencyHint: 'interactive' }) : null;
+      });
     this.fetcher = fetcher;
     this.readVolume = readVolume;
     this.subscribe = subscribe;
@@ -73,10 +81,19 @@ export class IntroTheme {
       };
       // Bound fetch AND decode. Aborting fetch alone cannot stop a decoder
       // that never settles, and the player's Begin button must not get stuck.
-      this.buffer = await Promise.race([load(), new Promise((_, reject) => {
-        this.loadTimer = setTimeout(() => { this.abort.abort(); reject(new Error('Theme loading timed out')); }, THEME_LOAD_TIMEOUT_MS);
-      })]);
-      if (this.disposed) { this.buffer = null; return false; }
+      this.buffer = await Promise.race([
+        load(),
+        new Promise((_, reject) => {
+          this.loadTimer = setTimeout(() => {
+            this.abort.abort();
+            reject(new Error('Theme loading timed out'));
+          }, THEME_LOAD_TIMEOUT_MS);
+        }),
+      ]);
+      if (this.disposed) {
+        this.buffer = null;
+        return false;
+      }
       return true;
     } catch (error) {
       if (!this.disposed) console.warn('[intro] music unavailable:', error.message);
@@ -92,8 +109,12 @@ export class IntroTheme {
     if (this.disposed) return Promise.resolve(false);
     this.prepare();
     try {
-      return Promise.resolve(this.context?.resume()).then(() => this.context?.state === 'running').catch(() => false);
-    } catch { return Promise.resolve(false); }
+      return Promise.resolve(this.context?.resume())
+        .then(() => this.context?.state === 'running')
+        .catch(() => false);
+    } catch {
+      return Promise.resolve(false);
+    }
   }
 
   start() {
@@ -125,7 +146,11 @@ export class IntroTheme {
     const at = this.context.currentTime;
     const value = this.level * Math.max(0, Math.min(1, this.readVolume()));
     if (param.cancelAndHoldAtTime) param.cancelAndHoldAtTime(at);
-    else { const held = param.value; param.cancelScheduledValues(at); param.setValueAtTime(held, at); }
+    else {
+      const held = param.value;
+      param.cancelScheduledValues(at);
+      param.setValueAtTime(held, at);
+    }
     param.linearRampToValueAtTime(value, at + Math.max(0.01, seconds));
   }
 
@@ -146,13 +171,21 @@ export class IntroTheme {
     this.unsubscribe = null;
     const source = this.source;
     this.source = null;
-    try { source?.stop(); } catch { /* a source can already have ended */ }
+    try {
+      source?.stop();
+    } catch {
+      /* a source can already have ended */
+    }
     source?.disconnect();
     this.gain?.disconnect();
     this.buffer = null;
     this.gain = null;
     const context = this.context;
     this.context = null;
-    try { await context?.close(); } catch { /* already closed */ }
+    try {
+      await context?.close();
+    } catch {
+      /* already closed */
+    }
   }
 }

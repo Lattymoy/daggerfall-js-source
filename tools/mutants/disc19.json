@@ -20,8 +20,8 @@
   {
     "name": "DISC19-A-infection-rounds-out",
     "file": "src/systems/infection.js",
-    "old": "    permanent: true,   // CURSE-PERSIST1: lifelong until it turns or is cured - never the magic-round clock's (a plain disease's own flag, diseases.js)\n",
-    "new": "",
+    "old": "    permanent: true, // CURSE-PERSIST1: lifelong until it turns or is cured - never the magic-round clock's (a plain disease's own flag, diseases.js)\n    infection: key,",
+    "new": "    infection: key,",
     "tests": [
       "test/systems/disc19.test.js"
     ]

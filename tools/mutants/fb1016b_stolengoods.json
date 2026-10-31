@@ -78,7 +78,7 @@
     "name": "FB1016-STOLEN-GOODS-every-loot-a-theft",
     "file": "src/systems/inventorySession.js",
     "old": "  return remoteTargetType(deps, state) === REMOTE_TARGET_TYPES.Loot && keeping instanceof Set ? keeping : null;",
-    "new": "  return remoteTargetType(deps, state) === REMOTE_TARGET_TYPES.Loot ? (keeping instanceof Set ? keeping : new Set(deps.loot?.items?.() ?? [])) : null;",
+    "new": "  return remoteTargetType(deps, state) === REMOTE_TARGET_TYPES.Loot\n    ? keeping instanceof Set\n      ? keeping\n      : new Set(deps.loot?.items?.() ?? [])\n    : null;",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ],

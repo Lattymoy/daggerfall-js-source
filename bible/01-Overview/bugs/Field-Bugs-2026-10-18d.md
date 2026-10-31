@@ -307,7 +307,7 @@ Ready ends a solo rest about 12 s later. All of it is the record's (16.2-16.4, 1
 
 FOUND ON THE WAY, NOT FIXED. One key does two things there (Controls.md KB1 law 3, "No default code ships twice", and
 law 5, no raw read of a bound key):
-- Y is the default FreeMouse (`inputActions.js:"  ['KeyY', 'FreeMouse'],"`), heard first by the capture-phase toggle
+- Y is the default FreeMouse (`inputActions.js:"['KeyY', 'FreeMouse']"`), heard first by the capture-phase toggle
   (`pointerLock.js:"addEventListener('keydown', onKey, true)"`), which does not stop the key. The world's handler
   then hands the same press to the Spire (`world.js:"if ((!e.repeat && !gamePaused() && egClient?.key(e)) || (!gamePaused() && staffView.key(e))) { e.preventDefault(); return; }"`),
   which reads Y as a Ready vote (`egClient.js:"if (open.length && (code === 'KeyY' || code === 'KeyN')) return this.vote("`).
@@ -338,7 +338,7 @@ FOUND. On Enhanced Plus L and N open the Chronicle (PX24d, a66c269a: both journa
 "Quest log" over a window headed Chronicle.
 
 FIXED. The rows say both skins, because the same Controls pane is the Classic boot Settings' too:
-`inputActions.js:"const journalKeyLabel = (page, classic) =>"`
+`inputActions.js:"const journalKeyLabel"`
 - "Chronicle: Quests (Enhanced Plus) / logbook (Classic)" and "Chronicle: Notes (Enhanced Plus) / notebook
 (Classic)". The Controller bindings window (Enhanced Plus only) says "Chronicle: Quests" for the d-pad. No host
 changed: a key rebound gets what the row says (LogBook moved to K: K opened and closed the Chronicle, L did nothing).
@@ -469,7 +469,7 @@ The quest is N0B20Y05; its target `Foe _monster_ is Mage`, placed by `place foe 
 quest marker of `remote dungeon9`. Every link from the door to the foe standing answers yes in the instance:
 - the popup's "Your instance" enters the dungeon whole (`instanceDoor.js:"if (row.kind === 'public')"`,
   `smallerDungeons.js:"if (online) return whole"`), and the mount's gate
-  lets it through (`instancePlaces.js:"export const questMountsHere = ({ online, builtSize }) => !online || builtSize === 'full';"`);
+  lets it through (`instancePlaces.js:"export const questMountsHere"`);
 - a quest taken online is stamped whole (`smallerDungeons.js:"if (online) return SMALLER_DUNGEONS_STATE.Disabled"`),
   and an older stamp is re-laid onto the whole dungeon at the next online load (`questRepair.js` relayQuestOnline).
 Reproduced in Node with the real QuestMachine, Place, sceneMount, questRepair and smallerDungeons over N0B20Y05's own

@@ -150,8 +150,8 @@
   {
     "name": "DOMAIN2-no-castle-row",
     "file": "src/systems/instancePlaces.js",
-    "old": "  if (castle?.owner && castle?.epoch) rows.push({ kind: 'castle', owner: castle.owner, epoch: castle.epoch });\n",
-    "new": "",
+    "old": "  if (castle?.owner && castle?.epoch) rows.push({ kind: 'castle', owner: castle.owner, epoch: castle.epoch });\n  // The party's rooms come before mine: a member who holds a copy of the quest has an instance of their own, which is",
+    "new": "  // The party's rooms come before mine: a member who holds a copy of the quest has an instance of their own, which is",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]

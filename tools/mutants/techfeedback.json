@@ -142,8 +142,8 @@
   {
     "name": "TECH-KEY2-row-missing",
     "file": "src/systems/inputActions.js",
-    "old": "    ['SignatureTechnique', 'Martial technique (hold to aim)'],   // TECH-KEY2: the held path's signature\n",
-    "new": "",
+    "old": "    ['SignatureTechnique', 'Martial technique (hold to aim)'], // TECH-KEY2: the held path's signature\n    ['ShotCycle', 'Shot (aboard)'], // SHOT-KINDS: the guns' load at a helm, stepped on",
+    "new": "    ['ShotCycle', 'Shot (aboard)'], // SHOT-KINDS: the guns' load at a helm, stepped on",
     "tests": [
       "test/scenes/tech1_hosts.test.js"
     ],

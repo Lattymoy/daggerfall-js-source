@@ -2,8 +2,8 @@
   {
     "name": "INTRO3-LEAD",
     "file": "src/systems/introScore.js",
-    "old": "Math.round(CLOUD_REVEAL_TIME / INTRO_SECONDS_PER_TICK) - (CLOUD_BAR - FIRST_BAR) * BAR;",
-    "new": "Math.round(CLOUD_REVEAL_TIME / INTRO_SECONDS_PER_TICK) - (CLOUD_BAR - FIRST_BAR) * BAR + 1;",
+    "old": "export const INTRO_LEAD_TICKS = Math.round(CLOUD_REVEAL_TIME / INTRO_SECONDS_PER_TICK) - (CLOUD_BAR - FIRST_BAR) * BAR;",
+    "new": "export const INTRO_LEAD_TICKS =\n  Math.round(CLOUD_REVEAL_TIME / INTRO_SECONDS_PER_TICK) - (CLOUD_BAR - FIRST_BAR) * BAR + 1;",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "INTRO3-TEMPO",
     "file": "src/systems/introScore.js",
-    "old": "((IMPACT_BAR - CLOUD_BAR) * BAR);",
-    "new": "((IMPACT_BAR - CLOUD_BAR + 1) * BAR);",
+    "old": "export const INTRO_SECONDS_PER_TICK = (CREST_TIME - CLOUD_REVEAL_TIME) / ((IMPACT_BAR - CLOUD_BAR) * BAR);",
+    "new": "export const INTRO_SECONDS_PER_TICK = (CREST_TIME - CLOUD_REVEAL_TIME) / ((IMPACT_BAR - CLOUD_BAR + 1) * BAR);",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "INTRO3-CLOUD-HIT",
     "file": "src/systems/introScore.js",
-    "old": "landOn(w, CLOUD_BAR, 'C', 0.96);",
-    "new": "landOn(w, CLOUD_BAR + 1, 'C', 0.96);",
+    "old": "  landOn(w, CLOUD_BAR, 'C', 0.96);",
+    "new": "  landOn(w, CLOUD_BAR + 1, 'C', 0.96);",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "INTRO3-IMPACT-SWELL",
     "file": "src/systems/introScore.js",
-    "old": "swellInto(w, IMPACT_BAR, 4);",
-    "new": "swellInto(w, IMPACT_BAR - 1, 4);",
+    "old": "  swellInto(w, IMPACT_BAR, 4);",
+    "new": "  swellInto(w, IMPACT_BAR - 1, 4);",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "INTRO3-SWELL-TOP",
     "file": "src/systems/introScore.js",
-    "old": "12 + 115 * Math.pow(i / steps, 1.6)",
-    "new": "12 + 114 * Math.pow(i / steps, 1.6)",
+    "old": "  for (let i = 0; i <= steps; i++) w.hit('ride', bar - 1, 4 - beats + i / 4, 12 + 115 * Math.pow(i / steps, 1.6));",
+    "new": "  for (let i = 0; i <= steps; i++) w.hit('ride', bar - 1, 4 - beats + i / 4, 12 + 114 * Math.pow(i / steps, 1.6));",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "INTRO3-THEME-NOTE",
     "file": "src/systems/introScore.js",
-    "old": "9: [['C5', 0.75], ['C5', 0.25], ['F5', 1],",
-    "new": "9: [['C5', 0.75], ['C5', 0.25], ['G5', 1],",
+    "old": "    ['C5', 0.25],\n    ['F5', 1],",
+    "new": "    ['C5', 0.25],\n    ['G5', 1],",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "INTRO3-HARMONY",
     "file": "src/systems/introScore.js",
-    "old": "10: ['Cm', 'F'], 11: ['Gm', 'Dm'],",
-    "new": "10: ['Cm', 'Cm'], 11: ['Gm', 'Dm'],",
+    "old": "  10: ['Cm', 'F'],",
+    "new": "  10: ['Cm', 'Cm'],",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "INTRO3-CLOUD-CHORD",
     "file": "src/systems/introScore.js",
-    "old": "2: ['C', 'C'], 3: ['C', 'C'],",
-    "new": "2: ['Cm', 'C'], 3: ['C', 'C'],",
+    "old": "  2: ['C', 'C'],",
+    "new": "  2: ['Cm', 'C'],",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "INTRO3-MELODY-BEAT",
     "file": "src/systems/introScore.js",
-    "old": "      w.note('horn', m, beat, beats * 0.94, n, (100 + accent) * Math.min(1.1, s.dyn));\n      if (s.octave) w.note('violins', m, beat, beats * 0.94, midiNote(n) + 12, (90 + accent) * s.dyn);\n    }\n    beat += beats;",
-    "new": "      w.note('horn', m, beat, beats * 0.94, n, (100 + accent) * Math.min(1.1, s.dyn));\n      if (s.octave) w.note('violins', m, beat, beats * 0.94, midiNote(n) + 12, (90 + accent) * s.dyn);\n    }\n    beat += Math.max(beats, 0.5);",
+    "old": "    beat += beats;",
+    "new": "    beat += Math.max(beats, 0.5);",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "INTRO3-BREAKDOWN-BASS",
     "file": "src/systems/introScore.js",
-    "old": "if (!s.bare) w.note('contrabass'",
-    "new": "if (s.bare || !s.bare) w.note('contrabass'",
+    "old": "      if (!s.bare) w.note('contrabass', m, half, len, c.root, 100 * d);",
+    "new": "      if (s.bare || !s.bare) w.note('contrabass', m, half, len, c.root, 100 * d);",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "INTRO3-OPENING-SWELL",
     "file": "src/systems/introScore.js",
-    "old": "? 44 : level });",
-    "new": "? level : level });",
+    "old": "      value: voice === 'strings' || voice === 'pad' || voice === 'contrabass' || voice === 'harp' ? 44 : level,",
+    "new": "      value: voice === 'strings' || voice === 'pad' || voice === 'contrabass' || voice === 'harp' ? level : level,",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "INTRO3-DOUBLE-STRIKE",
     "file": "src/systems/introScore.js",
-    "old": "if (was) { was.velocity = Math.max(was.velocity, v); was.duration = Math.max(was.duration, duration); return; }\n      const e = { tick: at, type: 'noteOn', channel, note, velocity: v, duration };",
-    "new": "if (was && false) { was.velocity = Math.max(was.velocity, v); was.duration = Math.max(was.duration, duration); return; }\n      const e = { tick: at, type: 'noteOn', channel, note, velocity: v, duration };",
+    "old": "      if (was) {",
+    "new": "      if (was && false) {",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "INTRO3B-VOICES",
     "file": "src/systems/introScore.js",
-    "old": "voices: INTRO_VOICES_BY_CHANNEL, kit: INTRO_KIT,",
-    "new": "voices: null, kit: INTRO_KIT,",
+    "old": "    voices: INTRO_VOICES_BY_CHANNEL,",
+    "new": "    voices: null,",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "INTRO3B-KIT",
     "file": "src/systems/introScore.js",
-    "old": "voices: INTRO_VOICES_BY_CHANNEL, kit: INTRO_KIT,",
-    "new": "voices: INTRO_VOICES_BY_CHANNEL, kit: null,",
+    "old": "    kit: INTRO_KIT, // INTRO3b: its own voices and kit (songPlayer.js songVoices, songKit)",
+    "new": "    kit: null, // INTRO3b: its own voices and kit (songPlayer.js songVoices, songKit)",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "INTRO3B-HALO-OCTAVE",
     "file": "src/systems/introScore.js",
-    "old": "w.note('halo', m, half, len, midiNote(n) + 12, 72 * d);",
-    "new": "w.note('halo', m, half, len, midiNote(n), 72 * d);",
+    "old": "      if (s.halo) for (const n of c.choir) w.note('halo', m, half, len, midiNote(n) + 12, 72 * d);",
+    "new": "      if (s.halo) for (const n of c.choir) w.note('halo', m, half, len, midiNote(n), 72 * d);",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "INTRO3B-BRAAM",
     "file": "src/systems/introScore.js",
-    "old": "if (s.brass) w.note('brass', m, half, len * 0.9, midiNote(c.brass[0]) - 12, 96 * d);",
-    "new": "if (s.brass) w.note('brass', m, half, len * 0.9, midiNote(c.brass[0]), 96 * d);",
+    "old": "      if (s.brass) w.note('brass', m, half, len * 0.9, midiNote(c.brass[0]) - 12, 96 * d);",
+    "new": "      if (s.brass) w.note('brass', m, half, len * 0.9, midiNote(c.brass[0]), 96 * d);",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "INTRO3B-TIMPANI-THREE",
     "file": "src/systems/introScore.js",
-    "old": "if (s.kit >= 2) w.note('timpani', m, 2, 1,",
-    "new": "if (s.kit >= 3) w.note('timpani', m, 2, 1,",
+    "old": "  if (s.kit >= 2) w.note('timpani', m, 2, 1, midiNote(CHORDS[h2].root) + 12, 80 * d); // INTRO3b: the timpani answers on three",
+    "new": "  if (s.kit >= 3) w.note('timpani', m, 2, 1, midiNote(CHORDS[h2].root) + 12, 80 * d); // INTRO3b: the timpani answers on three",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "INTRO3B-CELLOS-EVERY-STEP",
     "file": "src/systems/introScore.js",
-    "old": "if (accent || s.kit >= 3) w.note('cellos'",
-    "new": "if (accent) w.note('cellos'",
+    "old": "        if (accent || s.kit >= 3) w.note('cellos', m, b, 0.45, p, (accent ? 88 : 70) * d);",
+    "new": "        if (accent) w.note('cellos', m, b, 0.45, p, (accent ? 88 : 70) * d);",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "INTRO3B-ROLL",
     "file": "src/systems/introScore.js",
-    "old": "rollSnare(w, 55, 2);",
-    "new": "rollSnare(w, 55, 1);",
+    "old": "  rollSnare(w, 55, 2);",
+    "new": "  rollSnare(w, 55, 1);",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "INTRO3B-SWELL-SURGE",
     "file": "src/systems/introScore.js",
-    "old": "from + (1 - from) * ((i - 8) / 8)",
-    "new": "from",
+    "old": "    const k = i <= 8 ? 1 - (1 - from) * (i / 8) : from + (1 - from) * ((i - 8) / 8);",
+    "new": "    const k = i <= 8 ? 1 - (1 - from) * (i / 8) : from;",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "INTRO3B-PRESS-ATTACK",
     "file": "src/systems/introScore.js",
-    "old": "attack: 0.012, release: 0.25, ceiling: -1, out: 2",
-    "new": "attack: 0.003, release: 0.25, ceiling: -1, out: 2.4",
+    "old": "  attack: 0.012,\n  release: 0.25,\n  ceiling: -1,\n  out: 2,",
+    "new": "  attack: 0.003,\n  release: 0.25,\n  ceiling: -1,\n  out: 2.4,",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "INTRO3C-HALO-OPENING",
     "file": "src/systems/introScore.js",
-    "old": "if (m <= 1) return { dyn: 0.85, kit: 0, pad: true, harp: true };",
-    "new": "if (m <= 1) return { dyn: 0.85, kit: 0, pad: true, harp: true, halo: true };",
+    "old": "  if (m <= 1) return { dyn: 0.85, kit: 0, pad: true, harp: true };",
+    "new": "  if (m <= 1) return { dyn: 0.85, kit: 0, pad: true, harp: true, halo: true };",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "INTRO3C-HALO-QUIET-AFTER",
     "file": "src/systems/introScore.js",
-    "old": "if (m <= 5) return { dyn: 0.75, kit: 0, pad: true, harp: true };",
-    "new": "if (m <= 5) return { dyn: 0.75, kit: 0, pad: true, harp: true, halo: true };",
+    "old": "  if (m <= 5) return { dyn: 0.75, kit: 0, pad: true, harp: true };",
+    "new": "  if (m <= 5) return { dyn: 0.75, kit: 0, pad: true, harp: true, halo: true };",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "INTRO3C-HALO-SOFT",
     "file": "src/systems/introScore.js",
-    "old": "w.note('halo', m, half, len, midiNote(n) + 12, 72 * d);",
-    "new": "w.note('halo', m, half, len, midiNote(n) + 12, 96 * d);",
+    "old": "      if (s.halo) for (const n of c.choir) w.note('halo', m, half, len, midiNote(n) + 12, 72 * d);",
+    "new": "      if (s.halo) for (const n of c.choir) w.note('halo', m, half, len, midiNote(n) + 12, 96 * d);",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "INTRO3C-HALO-BOWED",
     "file": "src/systems/introScore.js",
-    "old": "halo: Object.freeze({ saw: 1, cutoff: 6,",
-    "new": "halo: Object.freeze({ saw: 0, cutoff: 6,",
+    "old": "  halo: Object.freeze({\n    saw: 1,",
+    "new": "  halo: Object.freeze({\n    saw: 0,",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "INTRO3C-VIOLINS-HILL",
     "file": "src/systems/introScore.js",
-    "old": "[3000, 8, 1]], air: -4, ensemble: 0.45, ensembleRate: 0.8, ensembleMs: 10 })",
-    "new": "[3000, 0, 1]], air: -4, ensemble: 0.45, ensembleRate: 0.8, ensembleMs: 10 })",
+    "old": "      [3000, 8, 1],",
+    "new": "      [3000, 0, 1],",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "INTRO3C-ROLL-TONE",
     "file": "src/systems/introScore.js",
-    "old": "[KIT.ride]: Object.freeze({ hz: 5500, q: 0.6, attack: 0.02, decay: 0.45, gain: 0.55 }),",
-    "new": "[KIT.ride]: Object.freeze({ hz: 1200, q: 0.6, attack: 0.02, decay: 0.45, gain: 0.55 }),",
+    "old": "  [KIT.ride]: Object.freeze({ hz: 5500, q: 0.6, attack: 0.02, decay: 0.45, gain: 0.55 }),",
+    "new": "  [KIT.ride]: Object.freeze({ hz: 1200, q: 0.6, attack: 0.02, decay: 0.45, gain: 0.55 }),",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "INTRO3C-VIOLINS-VIBRATO",
     "file": "src/systems/introScore.js",
-    "old": "vibrato: 13, vibRate: 5.6, arc: 0.4, sway: 0.25, swayRate: 0.4, noise: 0.08,",
-    "new": "vibrato: 0, vibRate: 5.6, arc: 0.4, sway: 0.25, swayRate: 0.4, noise: 0.08,",
+    "old": "    vibrato: 13,",
+    "new": "    vibrato: 0,",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "INTRO3C-STRINGS-STATIC",
     "file": "src/systems/introScore.js",
-    "old": "gain: 1.1, unison: 3, cents: 6, spread: 0.6, vibrato: 11,",
-    "new": "gain: 1.1, unison: 3, cents: 12, spread: 0.6, vibrato: 11,",
+    "old": "    unison: 3,\n    cents: 6,\n    spread: 0.6,",
+    "new": "    unison: 3,\n    cents: 12,\n    spread: 0.6,",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "INTRO3C-STRINGS-BREATH",
     "file": "src/systems/introScore.js",
-    "old": "swayRate: 0.35, noise: 0.08, body: [[450, 7, 0.8]",
-    "new": "swayRate: 0.35, noise: 0.4, body: [[450, 7, 0.8]",
+    "old": "    swayRate: 0.35,\n    noise: 0.08,",
+    "new": "    swayRate: 0.35,\n    noise: 0.4,",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "INTRO3C-TONE-250",
     "file": "src/systems/introScore.js",
-    "old": "[250, -4, 1.2]",
-    "new": "[250, 0, 1.2]",
+    "old": "    [250, -4, 1.2],",
+    "new": "    [250, 0, 1.2],",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "INTRO3C-CHOIR-VOWEL",
     "file": "src/systems/introScore.js",
-    "old": "body: [[650, 7, 2.5], [1050, 5, 3], [2500, 6, 3]]",
-    "new": "body: [[300, 7, 2.5], [1050, 5, 3], [2500, 6, 3]]",
+    "old": "      [650, 7, 2.5],",
+    "new": "      [300, 7, 2.5],",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "INTRO3C-HORN-FLOOR",
     "file": "src/systems/introScore.js",
-    "old": "idxDecay: 1.1, idxFloor: 0.5,",
-    "new": "idxDecay: 1.1,",
+    "old": "    idxFloor: 0.5,\n    release: 0.3,",
+    "new": "    release: 0.3,",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "INTRO3C-CONTRABASS-BOWED",
     "file": "src/systems/introScore.js",
-    "old": "contrabass: Object.freeze({ saw: 1, cutoff: 14,",
-    "new": "contrabass: Object.freeze({ cutoff: 14,",
+    "old": "    saw: 1,\n    cutoff: 14,",
+    "new": "    cutoff: 14,",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "INTRO3C-ROLL-STICK",
     "file": "src/systems/introScore.js",
-    "old": "[KIT.ride]: Object.freeze({ hz: 5500, q: 0.6, attack: 0.02, decay: 0.45, gain: 0.55 }),",
-    "new": "[KIT.ride]: Object.freeze({ hz: 5500, q: 0.6, attack: 0.002, decay: 0.45, gain: 0.55, click: 0.4 }),",
+    "old": "  [KIT.ride]: Object.freeze({ hz: 5500, q: 0.6, attack: 0.02, decay: 0.45, gain: 0.55 }),",
+    "new": "  [KIT.ride]: Object.freeze({ hz: 5500, q: 0.6, attack: 0.002, decay: 0.45, gain: 0.55, click: 0.4 }),",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "INTRO3C-ROLL-FLAT",
     "file": "src/systems/introScore.js",
-    "old": "w.hit('ride', bar - 1, 4 - beats + i / 4, 12 + 115 * Math.pow(i / steps, 1.6));",
-    "new": "w.hit('ride', bar - 1, 4 - beats + i / 4, 80);",
+    "old": "  for (let i = 0; i <= steps; i++) w.hit('ride', bar - 1, 4 - beats + i / 4, 12 + 115 * Math.pow(i / steps, 1.6));",
+    "new": "  for (let i = 0; i <= steps; i++) w.hit('ride', bar - 1, 4 - beats + i / 4, 80);",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -596,8 +596,8 @@
   {
     "name": "INTRO3C-BASS-ARC",
     "file": "src/systems/introScore.js",
-    "old": "vibRate: 4.4, arc: 1, sway: 0.2, swayRate: 0.15,",
-    "new": "vibRate: 4.4, sway: 0.2, swayRate: 0.15,",
+    "old": "    arc: 1,\n    sway: 0.2,",
+    "new": "    sway: 0.2,",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "INTRO3C-PAD-SWAY",
     "file": "src/systems/introScore.js",
-    "old": "vibRate: 4, arc: 0.8, sway: 0.4, swayRate: 0.25,",
-    "new": "vibRate: 4, arc: 0.8,",
+    "old": "    sway: 0.4,\n    swayRate: 0.25,\n    body: [[300, 5, 0.8]],",
+    "new": "    body: [[300, 5, 0.8]],",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -614,8 +614,8 @@
   {
     "name": "INTRO3C-BASS-LOUD",
     "file": "src/systems/introScore.js",
-    "old": "gain: 1, unison: 2, cents: 4, spread: 0.15, vibrato: 5",
-    "new": "gain: 1.4, unison: 2, cents: 4, spread: 0.15, vibrato: 5",
+    "old": "    gain: 1,",
+    "new": "    gain: 1.4,",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -623,8 +623,8 @@
   {
     "name": "INTRO3C-TONE-100",
     "file": "src/systems/introScore.js",
-    "old": "bands: [[100, 2, 1.2]",
-    "new": "bands: [[100, 6, 1.2]",
+    "old": "    [100, 2, 1.2],",
+    "new": "    [100, 6, 1.2],",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]
@@ -632,8 +632,8 @@
   {
     "name": "INTRO3C-DRUMS-LIGHT",
     "file": "src/systems/introScore.js",
-    "old": "[KIT.kick]: Object.freeze({ hz: 50, decay: 0.42, gain: 1.4, click: 0.5 }),",
-    "new": "[KIT.kick]: Object.freeze({ hz: 50, decay: 0.42, gain: 1.2, click: 0.5 }),",
+    "old": "  [KIT.kick]: Object.freeze({ hz: 50, decay: 0.42, gain: 1.4, click: 0.5 }),",
+    "new": "  [KIT.kick]: Object.freeze({ hz: 50, decay: 0.42, gain: 1.2, click: 0.5 }),",
     "tests": [
       "test/systems/intro3_score.test.js"
     ]

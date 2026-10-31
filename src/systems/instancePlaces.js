@@ -31,8 +31,8 @@ export function questsAtSite(machine, site) {
     if (!live(q)) continue;
     for (const r of q.resources?.values?.() ?? []) {
       const sd = r?.isPlace ? r.siteDetails : null;
-      if (!sd || sd.siteType !== site.siteType || (Number(sd.mapId) >>> 0) !== id) continue;
-      if (building && (sd.unseated || (Number(sd.buildingKey) >>> 0) !== key)) continue;
+      if (!sd || sd.siteType !== site.siteType || Number(sd.mapId) >>> 0 !== id) continue;
+      if (building && (sd.unseated || Number(sd.buildingKey) >>> 0 !== key)) continue;
       out.push(q);
       break;
     }
@@ -44,12 +44,14 @@ export function questsAtSite(machine, site) {
  *  pointing at one dungeon share one room, and the room goes when the first of them ends. Null for none. */
 export function openerQuestOf(machine, site) {
   let best = null;
-  for (const q of questsAtSite(machine, site)) if (Number.isSafeInteger(q.uid) && (best == null || q.uid < best.uid)) best = q;
+  for (const q of questsAtSite(machine, site))
+    if (Number.isSafeInteger(q.uid) && (best == null || q.uid < best.uid)) best = q;
   return best;
 }
 
 /** Eight random hex - a quest's instance epoch, from the platform's own generator. */
-const randomEpoch = () => [...globalThis.crypto.getRandomValues(new Uint8Array(4))].map((b) => b.toString(16).padStart(2, '0')).join('');
+const randomEpoch = () =>
+  [...globalThis.crypto.getRandomValues(new Uint8Array(4))].map((b) => b.toString(16).padStart(2, '0')).join('');
 
 /**
  * A QUEST'S INSTANCE IS ITS OWN, FOR ITS LIFE: the epoch of the room `quest` opens - minted the first time it opens one
@@ -127,7 +129,13 @@ export function partnerInstances(members, base, ownerOf = () => null, stood = nu
   for (const r of rooms) {
     if (!r || r.base !== base || out.some((o) => o.owner === r.owner && o.epoch === r.epoch)) continue;
     const owner = list.find((o) => typeof o?.acct === 'string' && ownerOf(o.acct) === r.owner);
-    if (owner) out.push({ acct: owner.acct, name: typeof owner.name === 'string' ? owner.name : '', owner: r.owner, epoch: r.epoch });
+    if (owner)
+      out.push({
+        acct: owner.acct,
+        name: typeof owner.name === 'string' ? owner.name : '',
+        owner: r.owner,
+        epoch: r.epoch,
+      });
   }
   return out;
 }
@@ -152,7 +160,15 @@ export function partnerInstances(members, base, ownerOf = () => null, stood = nu
  */
 /** AUDIT DOMAINS C4: the most rows the door offers - its keys are Digit1-Digit9 (scenes/instanceDoor.js). */
 export const INSTANCE_ROWS_MAX = 9;
-export function instanceOffer({ online, instanceOk, isHold = false, questHere = false, relaid = false, partners = [], castle = null }) {
+export function instanceOffer({
+  online,
+  instanceOk,
+  isHold = false,
+  questHere = false,
+  relaid = false,
+  partners = [],
+  castle = null,
+}) {
   if (!online || !instanceOk) return null;
   const rows = [];
   const publicLast = questHere && relaid;
@@ -164,8 +180,13 @@ export function instanceOffer({ online, instanceOk, isHold = false, questHere = 
   // made a tenth no key chose; a partner past the ninth row is not offered (one at most: the seventh, at a castle's door
   // a quest of mine names). At the merge of main into TESA: main's order, TESA's bound - my own row keeps its key.
   // QUEST-FIRST (main): where the quest's dungeon is laid smaller (`relaid`) the public room goes last - its key kept too.
-  const mine = questHere || isHold, lastPublic = !isHold && publicLast;
-  for (const p of (partners ?? []).slice(0, Math.max(0, INSTANCE_ROWS_MAX - rows.length - (mine ? 1 : 0) - (lastPublic ? 1 : 0)))) rows.push({ kind: 'join', name: p.name, acct: p.acct, owner: p.owner, epoch: p.epoch });
+  const mine = questHere || isHold,
+    lastPublic = !isHold && publicLast;
+  for (const p of (partners ?? []).slice(
+    0,
+    Math.max(0, INSTANCE_ROWS_MAX - rows.length - (mine ? 1 : 0) - (lastPublic ? 1 : 0)),
+  ))
+    rows.push({ kind: 'join', name: p.name, acct: p.acct, owner: p.owner, epoch: p.epoch });
   if (mine) rows.push({ kind: 'mine' });
   if (lastPublic) rows.push({ kind: 'public' });
   return rows.length > (isHold ? 0 : 1) ? rows : null;

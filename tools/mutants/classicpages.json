@@ -67,8 +67,8 @@
   {
     "name": "CLASSICPAGES-key-unbound",
     "file": "src/systems/inputActions.js",
-    "old": "  Object.freeze(['ArrowDown', 'Professions', 'BoatSailDown']),\n",
-    "new": "",
+    "old": "  Object.freeze(['ArrowDown', 'Professions', 'BoatSailDown']),\n  // SPYGLASS: the captain's glass on K beside the road's follow - ashore the road's, aboard the glass's (scenes/world.js",
+    "new": "  // SPYGLASS: the captain's glass on K beside the road's follow - ashore the road's, aboard the glass's (scenes/world.js",
     "tests": [
       "test/systems/classicpages.test.js",
       "test/systems/inputactions.test.js"
