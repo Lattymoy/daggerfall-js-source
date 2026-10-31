@@ -116,6 +116,41 @@ HAND = {
     ('female', '4-2'): dict(q=(79, 90.5), t=(81, 95), lit=[(76, 88, 81, 92)], all=[(77, 92, 85, 99)]),
     ('female', '4-3'): dict(q=(81.5, 88.5), t=(83, 93.5), lit=[(79, 82, 84, 90)], all=[(79, 90, 86, 97)]),
 }
+# THE ARMS' PASS (2026-10-31, the owner: "Comprehensive pass on the arms ensuring no leftover hammer texture"): what the
+# trace and the boxes above still left, read frame by frame on every chest family - `extra` as EXTRA, `air` as AIR, `all`
+# a HAND frame's own. A butt the plate legs shade their own way fails STEADY's every-outfit test; a piece between the
+# fists seeded the fill, which drew it back below them.
+ARMS = {
+    ('male', '1-3'): dict(extra=[(36, 62, 49, 67)], air=[(36, 62, 49, 67)]),   # the haft over the gap to the leg: the fill grew the leg into it
+    ('male', '2-0'): dict(extra=[(43, 61, 47, 66)], air=[(43, 62, 44, 66)]),   # the butt below the fist
+    ('male', '2-3'): dict(extra=[(42, 60, 47, 66)], air=[(42, 60, 43, 66)]),
+    ('male', '5-1'): dict(skin=[(45, 21, 50, 32)], air=[(45, 21, 50, 32)]),   # the thumb laid up the shaft, skin and all
+    ('male', '5-3'): dict(extra=[(86, 75, 90, 82), (87, 85, 87, 97, 1.7)]),   # between the fists, and the butt below them
+    ('male', '6-5'): dict(extra=[(60, 23, 73, 30)], air=[(60, 23, 69, 30)]),   # the butt past the segment's end, in the air
+    ('male', '8-4'): dict(all=[(59, 46, 61, 58)]),   # the shaft's lit edge beside the hood
+    ('male', '8-3'): dict(extra=[(26, 78, 29, 82)], air=[(26, 78, 29, 82)]),   # a plate chest's specks of the rim, off the fist
+    ('male', '9-0'): dict(extra=[(56, 22, 58, 24)], air=[(56, 22, 58, 24)]),   # and a chain chest's
+    # the chain and plate chests draw the haft longer, its butt out in the air below the hand
+    ('female', '1-1'): dict(extra=[(60, 88, 74, 93)], air=[(60, 88, 74, 93)]),
+    ('female', '1-2'): dict(extra=[(66, 89, 73, 97)], air=[(66, 89, 73, 97)]),
+    ('female', '1-3'): dict(extra=[(58, 87, 66, 96)], air=[(58, 87, 66, 96), (66, 87, 73, 92)]),
+    ('female', '2-0'): dict(extra=[(65, 93, 70, 97)], air=[(65, 93, 70, 97)]),   # the butt below the fist
+    ('female', '5-1'): dict(skin=[(56, 25, 62, 32)], air=[(56, 25, 62, 32)]),   # the thumb laid up the shaft, skin and all
+    ('female', '7-3'): dict(extra=[(57, 78, 61, 82), (45, 78, 48, 82)], air=[(57, 78, 61, 82), (45, 78, 48, 82)]),   # a speck of the haft in the air between the arms
+    ('female', '8-3'): dict(extra=[(43, 79, 47, 83)], air=[(43, 79, 47, 83)]),   # a chain chest's, off the hand
+    ('female', '17-0'): dict(extra=[(58, 86, 61, 89)], air=[(58, 86, 61, 89)]),   # a chain or plate chest's, off the hand
+}
+# Frames whose chain or plate trace lost the hammer the leather one found (male 10-0 and 12-0: the head and the haft's
+# foot, black as the plate gauntlet beside them): that family takes the leather trace too, moved to where its own
+# picture draws the hammer (the best of +-3 px), skin aside.
+LIKE_LEATHER = {('male', '10-0'), ('male', '12-0')}
+SKIN = {_k: _v['skin'] for _k, _v in ARMS.items() if _v.get('skin')}
+HAND_MORE = {_k: _v['all'] for _k, _v in ARMS.items() if _v.get('all')}   # a HAND frame's, moved with its family's offset, not read for it   # boxes taken skin and all: a thumb up the haft
+# what any of the family's outfits draws there, not the reference's alone: a chain or plate helmet or legs draws its
+# own rim of the haft (female 1-1's bars below the hand)
+EXTRA_ANY = {_k: _v['extra'] for _k, _v in ARMS.items() if _v.get('extra')}
+for _k, _v in ARMS.items():
+    if _v.get('air'): AIR.setdefault(_k, []).extend(_v['air'])
 # Walk and idle frames whose hammer hides its shaft - a front view's points at the camera, a back view's is behind the
 # body with its butt out - and a swing's whose grip the trace missed draw the weapon on Daggerfall's own sword
 # (TEXTURE.482, .481: the Archer, one render with the strips) instead: (grip, the head's place at the hammer's length, and
@@ -348,6 +383,23 @@ def trace(body, rf, fam, cap=16):
         tt = (xx - sx0) * vx + (yy - sy0) * vy; ee = np.abs((xx - sx0) * -vy + (yy - sy0) * vx)
         m |= opq & ~sk & (tt >= -1) & (tt <= ln + 1) & (ee <= ex[4])
     for x0, y0, x1, y1 in STEADY.get((body, rf), []): m |= stab & ~sk & (xx >= x0) & (xx <= x1) & (yy >= y0) & (yy <= y1)
+    for x0, y0, x1, y1 in SKIN.get((body, rf), []): m |= opq & (xx >= x0) & (xx <= x1) & (yy >= y0) & (yy <= y1)
+    drawn = (st[..., 3] > 0).any(axis=0)
+    for ex in EXTRA_ANY.get((body, rf), []):
+        sx0, sy0, sx1, sy1 = ex[:4]
+        if len(ex) == 4: m |= drawn & ~sk & (xx >= sx0) & (xx <= sx1) & (yy >= sy0) & (yy <= sy1); continue
+        vx, vy = sx1 - sx0, sy1 - sy0; ln = math.hypot(vx, vy); vx, vy = vx / ln, vy / ln
+        tt = (xx - sx0) * vx + (yy - sy0) * vy; ee = np.abs((xx - sx0) * -vy + (yy - sy0) * vx)
+        m |= drawn & ~sk & (tt >= -1) & (tt <= ln + 1) & (ee <= ex[4])
+    if (body, rf) in LIKE_LEATHER and fam != 'leather':
+        g0 = trace(body, rf, 'leather', cap); R0, at = g0['L'], np.nonzero(g0['m'] & (g0['L'][..., 3] > 0))
+        best = (float('inf'), 0, 0)
+        for dy in range(-3, 4):
+            for dx in range(-3, 4):
+                Y, X = np.clip(at[0] + dy, 0, H - 1), np.clip(at[1] + dx, 0, W - 1)
+                c = (np.abs(L[Y, X, :3].astype(np.int32) - R0[at][:, :3].astype(np.int32)).sum(-1) + 765 * (L[Y, X, 3] == 0)).mean() + 2 * (abs(dx) + abs(dy))
+                if c < best[0]: best = (c, dx, dy)
+        m |= np.roll(g0['m'], (best[2], best[1]), (0, 1)) & opq & ~sk
     for x0, y0, x1, y1 in CUT.get((body, rf), []): m &= ~((xx >= x0) & (xx <= x1) & (yy >= y0) & (yy <= y1))
     rest = opq & ~m                                               # a piece left floating is the hammer's too
     lab3, k3 = nd.label(rest, structure=K8)
@@ -386,7 +438,7 @@ def hand(body, rf, fam):
             c += 2 * (abs(dx) + abs(dy))
             if c < best[0]: best = (c, dx, dy)
     _, ox, oy = best
-    head = opq & ~sk & boxes(h['all'], ox, oy)
+    head = opq & ~sk & boxes(h['all'] + HAND_MORE.get((body, rf), []), ox, oy)
     for x0, y0, x1, y1, hw in h.get('seg', []):
         x0, y0, x1, y1 = x0 + ox, y0 + oy, x1 + ox, y1 + oy
         vx, vy = x1 - x0, y1 - y0; ln = math.hypot(vx, vy); vx, vy = vx / ln, vy / ln

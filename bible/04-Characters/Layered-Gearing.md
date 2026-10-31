@@ -128,6 +128,18 @@ pixel but skin each outfit draws alike there - the legs behind differ by outfit,
 segments the idle's haft. Where the haft crossed open air past the hip or the fist, `AIR` keeps the fill from growing
 the body (male 3-0, 3-1, 3-3, 4-0 and 19-0).
 
+**The arms' pass** (2026-10-31, the owner: "Comprehensive pass on the arms ensuring no leftover hammer texture").
+Every hammer frame of both bodies was composed empty-handed in each chest family and read beside the art. What stayed
+is taken out by the rig's `ARMS` table: a butt below the fist (male 2-0, 2-3, female 2-0), the shaft between the fists
+and below them (male 5-3, whose white had seeded the fill), the haft across open air (male 1-3, 6-5, female 1-1 to
+1-3, where a chain or plate chest draws it longer), a lit edge by the hood (male 8-4), specks off a fist, and the thumb
+laid up the shaft (male and female 5-1).
+
+Its boxes take what any outfit of the family draws, so a chain or plate helmet's or legs' own rim of the haft goes
+too. Where a chain or plate trace lost the hammer the leather one found
+(male 10-0 and 12-0: the head kept in a flinch), that family takes the leather trace, moved onto its own picture
+(`LIKE_LEATHER`).
+
 **Taking it out.** Each hammer pixel takes the side of the nearest pixels outside it - at its edge, the side most of
 them are on, so a butt poking past the fist into the air goes with the air: open air is cleared, a pixel the body was
 behind is filled. Each such pixel copies its own source, written into the mask's colour (`fillFrom`): the builder fills
@@ -243,8 +255,7 @@ go with its outfit's (`releaseOutfits`).
 **Known limits.** The body has the hammer's one two-handed swing; each weapon plays its own cut of it (above), and new
 motion needs new frames in every outfit (a shield-bearer's is one-handed: "The shield", below). An attack frame whose hammer points
 at the camera draws the weapon short. Each outfit's helmet and legs draw the hammer's rim their own way, so a pixel or
-two of it can stay, and a fill can borrow a patch of another piece's colour. Male 5-1 keeps the thumb laid up the
-shaft. The female's back-view flinch (14-0) keeps its raised hand two pixels off the wrist,
+two of it can stay, and a fill can borrow a patch of another piece's colour. The female's back-view flinch (14-0) keeps its raised hand two pixels off the wrist,
 and with empty hands her back-3/4 swing (8-2) its hand, whose arm is behind the body.
 
 **The sheets** (2026-10-31, the owner: "Fix all the minor issues and the attached innormalities"). The back-3/4 walk's
