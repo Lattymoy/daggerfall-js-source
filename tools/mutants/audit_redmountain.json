@@ -202,8 +202,8 @@
   {
     "name": "AUDIT-RED-MOUNTAIN-N1-the-pieces-a-run-each",
     "file": "src/world/tamriel/ghostfence.js",
-    "old": "m = Math.max(1, Math.ceil((t1 - t0) * len - 1e-9));",
-    "new": "m = 1;",
+    "old": "      m = Math.max(1, Math.ceil((t1 - t0) * len - 1e-9));",
+    "new": "      m = 1;",
     "tests": [
       "test/world/audit_redmountain.test.js",
       "test/world/ghostfence.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "AUDIT-RED-MOUNTAIN-N1-the-pixel-edges-uncut",
     "file": "src/world/tamriel/ghostfence.js",
-    "old": "    for (let k = Math.ceil(lo / 128); k * 128 <= hi; k++) { const t = (k * 128 - a) / d; if (t > 0 && t < 1) ts.push(t); }\n",
-    "new": "",
+    "old": "    for (let k = Math.ceil(lo / 128); k * 128 <= hi; k++) {\n      const t = (k * 128 - a) / d;\n      if (t > 0 && t < 1) ts.push(t);\n    }\n  }",
+    "new": "  }",
     "tests": [
       "test/world/audit_redmountain.test.js",
       "test/world/ghostfence.test.js"
@@ -242,8 +242,8 @@
   {
     "name": "AUDIT-RED-MOUNTAIN-N1-a-run's-curtain-points-unfiled",
     "file": "src/world/tamriel/ghostfence.js",
-    "old": "    for (let k = 0; k <= CURTAIN_STEPS; k++) { const [x, y] = ghostfenceCurtainPoint(part, i, k); add(x, y, i); }\n",
-    "new": "",
+    "old": "    for (let k = 0; k <= CURTAIN_STEPS; k++) {\n      const [x, y] = ghostfenceCurtainPoint(part, i, k);\n      add(x, y, i);\n    }\n  }",
+    "new": "  }",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -332,8 +332,8 @@
   {
     "name": "AUDIT-RED-MOUNTAIN-G2-the-gate-shut-too",
     "file": "src/world/tamriel/ghostfence.js",
-    "old": "return onGhostfence(px, py) && !(/** @type {GhostfenceFrame} */ (_frame)).open.has(keyOf(px, py));",
-    "new": "return onGhostfence(px, py);",
+    "old": "  return onGhostfence(px, py) && !(/** @type {GhostfenceFrame} */ (_frame).open.has(keyOf(px, py)));",
+    "new": "  return onGhostfence(px, py);",
     "tests": [
       "test/world/audit_redmountain.test.js"
     ]
@@ -450,8 +450,8 @@
   {
     "name": "AUDIT-RED-MOUNTAIN-R5-the-gullies-at-the-lip",
     "file": "src/world/tamriel/redMountain.js",
-    "old": " * reach * smooth01(d / 400) * still;",
-    "new": " * reach * still;",
+    "old": "    lift +=\n      D.gully.depth *\n      (2 * (v < 0 ? -v : v) - 0.8) *\n      (grade < 0.5 ? grade / 0.5 : 1) *\n      reach *\n      smooth01(d / 400) *\n      still;",
+    "new": "    lift += D.gully.depth * (2 * (v < 0 ? -v : v) - 0.8) * (grade < 0.5 ? grade / 0.5 : 1) * reach * still;",
     "tests": [
       "test/world/audit_redmountain.test.js"
     ]
@@ -459,8 +459,8 @@
   {
     "name": "AUDIT-RED-MOUNTAIN-R5-the-gullies-twice-as-deep",
     "file": "src/world/tamriel/redMountain.js",
-    "old": "lift += D.gully.depth * (2 * (v < 0 ? -v : v) - 0.8)",
-    "new": "lift += 2 * D.gully.depth * (2 * (v < 0 ? -v : v) - 0.8)",
+    "old": "      D.gully.depth *",
+    "new": "      2 *\n      D.gully.depth *",
     "tests": [
       "test/world/audit_redmountain.test.js"
     ]

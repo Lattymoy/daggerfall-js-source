@@ -2,8 +2,8 @@
   {
     "name": "SKYRIM-AURORA-the-theatre-any-province",
     "file": "src/world/tamriel/skyrimAurora.js",
-    "old": "skyTheatreAt(px, py) !== SKYRIM_THEATRE) return null;",
-    "new": "skyTheatreAt(px, py) < 0) return null;",
+    "old": "  if (!inWorldGrid(px, py) || skyTheatreAt(px, py) !== SKYRIM_THEATRE) return null;",
+    "new": "  if (!inWorldGrid(px, py) || skyTheatreAt(px, py) < 0) return null;",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SKYRIM-AURORA-the-latitude-unturned",
     "file": "src/world/tamriel/skyrimAurora.js",
-    "old": "return clamp01((south - bayToPicture(px + 0.5, py + 0.5)[1]) / (south - north));",
-    "new": "return clamp01((bayToPicture(px + 0.5, py + 0.5)[1] - north) / (south - north));",
+    "old": "  return clamp01((south - bayToPicture(px + 0.5, py + 0.5)[1]) / (south - north));",
+    "new": "  return clamp01((bayToPicture(px + 0.5, py + 0.5)[1] - north) / (south - north));",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SKYRIM-AURORA-the-pixels-centre-dropped",
     "file": "src/world/tamriel/skyrimAurora.js",
-    "old": "return clamp01((south - bayToPicture(px + 0.5, py + 0.5)[1])",
-    "new": "return clamp01((south - bayToPicture(px, py)[1])",
+    "old": "  return clamp01((south - bayToPicture(px + 0.5, py + 0.5)[1]) / (south - north));",
+    "new": "  return clamp01((south - bayToPicture(px, py)[1]) / (south - north));",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SKYRIM-AURORA-a-pixel-not-whole",
     "file": "src/world/tamriel/skyrimAurora.js",
-    "old": "if (!inWorldGrid(px, py) || skyTheatreAt",
-    "new": "if (skyTheatreAt",
+    "old": "  if (!inWorldGrid(px, py) || skyTheatreAt(px, py) !== SKYRIM_THEATRE) return null;",
+    "new": "  if (skyTheatreAt(px, py) !== SKYRIM_THEATRE) return null;",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SKYRIM-AURORA-the-rows-fixed",
     "file": "src/world/tamriel/skyrimAurora.js",
-    "old": "    const has = (y) =>",
-    "new": "    _rows = { version, north: 18.25, south: 77.75 };\n    return [_rows.north, _rows.south];\n    // eslint-disable-next-line no-unreachable\n    const has = (y) =>",
+    "old": "    const has = (y) => {",
+    "new": "    _rows = { version, north: 18.25, south: 77.75 };\n    return [_rows.north, _rows.south];\n    // eslint-disable-next-line no-unreachable\n    const has = (y) => {",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SKYRIM-AURORA-the-sea-reach-unbounded",
     "file": "src/world/tamriel/skyrimAurora.js",
-    "old": "r <= AURORA_DIALS.seaReach && theatre < 0",
-    "new": "r <= 40 && theatre < 0",
+    "old": "  for (let r = 0.5; r <= AURORA_DIALS.seaReach && theatre < 0; r += 0.5) {",
+    "new": "  for (let r = 0.5; r <= 40 && theatre < 0; r += 0.5) {",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SKYRIM-AURORA-the-dark-ramp-turned",
     "file": "src/world/tamriel/skyrimAurora.js",
-    "old": "smoothstep(AURORA_DIALS.sunFrom, AURORA_DIALS.sunFull, elevDeg);",
-    "new": "smoothstep(AURORA_DIALS.sunFull, AURORA_DIALS.sunFrom, elevDeg);",
+    "old": "  const dark = smoothstep(AURORA_DIALS.sunFrom, AURORA_DIALS.sunFull, elevDeg);",
+    "new": "  const dark = smoothstep(AURORA_DIALS.sunFull, AURORA_DIALS.sunFrom, elevDeg);",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SKYRIM-AURORA-the-sun-at-noon",
     "file": "src/world/tamriel/skyrimAurora.js",
-    "old": "Math.asin(Math.sin(Math.PI * dayFraction(minuteOfDay)))",
-    "new": "Math.asin(Math.cos(Math.PI * dayFraction(minuteOfDay)))",
+    "old": "  const elevDeg = (Math.asin(Math.sin(Math.PI * dayFraction(minuteOfDay))) * 180) / Math.PI;",
+    "new": "  const elevDeg = (Math.asin(Math.cos(Math.PI * dayFraction(minuteOfDay))) * 180) / Math.PI;",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SKYRIM-AURORA-the-cover-unread",
     "file": "src/world/tamriel/skyrimAurora.js",
-    "old": ": 1 - smoothstep(d.coverFrom, d.coverGone, c);",
-    "new": ": 1;",
+    "old": "  return decks ? 1 - smoothstep(d.decksFrom, d.decksGone, c) : 1 - smoothstep(d.coverFrom, d.coverGone, c);",
+    "new": "  return decks ? 1 - smoothstep(d.decksFrom, d.decksGone, c) : 1;",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SKYRIM-AURORA-the-decks-unread",
     "file": "src/world/tamriel/skyrimAurora.js",
-    "old": "return decks ? 1 - smoothstep(d.decksFrom, d.decksGone, c) :",
-    "new": "return false ? 1 - smoothstep(d.decksFrom, d.decksGone, c) :",
+    "old": "  return decks ? 1 - smoothstep(d.decksFrom, d.decksGone, c) : 1 - smoothstep(d.coverFrom, d.coverGone, c);",
+    "new": "  return false ? 1 - smoothstep(d.decksFrom, d.decksGone, c) : 1 - smoothstep(d.coverFrom, d.coverGone, c);",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SKYRIM-AURORA-no-cover-a-clear-sky",
     "file": "src/world/tamriel/skyrimAurora.js",
-    "old": "c = Number.isFinite(cover) ? cover : 1;",
-    "new": "c = Number.isFinite(cover) ? cover : 0;",
+    "old": "    c = Number.isFinite(cover) ? cover : 1;",
+    "new": "    c = Number.isFinite(cover) ? cover : 0;",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SKYRIM-AURORA-the-night-sky-unread",
     "file": "src/world/tamriel/skyrimAurora.js",
-    "old": "  if (!nightSky) return NO_AURORA;\n",
-    "new": "",
+    "old": "  if (!nightSky) return NO_AURORA;\n  const lat = auroraLatitude(px, py);",
+    "new": "  const lat = auroraLatitude(px, py);",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SKYRIM-AURORA-the-night-cut-at-midnight",
     "file": "src/world/tamriel/skyrimAurora.js",
-    "old": "Math.floor((skyMinutes + MINUTES_PER_DAY / 2) / MINUTES_PER_DAY)",
-    "new": "Math.floor(skyMinutes / MINUTES_PER_DAY)",
+    "old": "export const auroraNight = (skyMinutes) => Math.floor((skyMinutes + MINUTES_PER_DAY / 2) / MINUTES_PER_DAY);",
+    "new": "export const auroraNight = (skyMinutes) => Math.floor(skyMinutes / MINUTES_PER_DAY);",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "SKYRIM-AURORA-the-tier-roll-unspent",
     "file": "src/world/tamriel/skyrimAurora.js",
-    "old": "r -= t.share; }",
-    "new": "}",
+    "old": "    r -= t.share;\n  }",
+    "new": "  }",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -173,7 +173,7 @@
   {
     "name": "SKYRIM-AURORA-the-swell-gone",
     "file": "src/world/tamriel/skyrimAurora.js",
-    "old": "  return auroraNightBase(night) * (1 - swell + swell * 0.5 * (1 + Math.sin(2 * Math.PI * skyMinutes / swellMinutes + phase)));",
+    "old": "  return (\n    auroraNightBase(night) *\n    (1 - swell + swell * 0.5 * (1 + Math.sin((2 * Math.PI * skyMinutes) / swellMinutes + phase)))\n  );",
     "new": "  return auroraNightBase(night) * (1 - swell + swell * 0.5 * (1 + Math.sin(phase)));",
     "tests": [
       "test/world/skyrimaurora.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "SKYRIM-AURORA-the-swells-phase-lost",
     "file": "src/world/tamriel/skyrimAurora.js",
-    "old": "skyMinutes / swellMinutes + phase)));",
-    "new": "skyMinutes / swellMinutes)));",
+    "old": "  return (\n    auroraNightBase(night) *\n    (1 - swell + swell * 0.5 * (1 + Math.sin((2 * Math.PI * skyMinutes) / swellMinutes + phase)))\n  );",
+    "new": "  return auroraNightBase(night) * (1 - swell + swell * 0.5 * (1 + Math.sin((2 * Math.PI * skyMinutes) / swellMinutes)));",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "SKYRIM-AURORA-the-souths-share",
     "file": "src/world/tamriel/skyrimAurora.js",
-    "old": "const weight = (d.south + (1 - d.south) * lat)",
-    "new": "const weight = (1 * lat + d.south * 0)",
+    "old": "  const weight = (d.south + (1 - d.south) * lat) * auroraClear(cover, decks) * auroraNightStrength(skyMinutes);",
+    "new": "  const weight = (1 * lat + d.south * 0) * auroraClear(cover, decks) * auroraNightStrength(skyMinutes);",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "SKYRIM-AURORA-the-hang-unturned",
     "file": "src/world/tamriel/skyrimAurora.js",
-    "old": "hang: d.hangSouth * (1 - lat) + d.hangNorth * lat",
-    "new": "hang: d.hangNorth * (1 - lat) + d.hangSouth * lat",
+    "old": "  return { weight: Number.isFinite(weight) ? weight : 0, hang: d.hangSouth * (1 - lat) + d.hangNorth * lat };",
+    "new": "  return { weight: Number.isFinite(weight) ? weight : 0, hang: d.hangNorth * (1 - lat) + d.hangSouth * lat };",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SKYRIM-AURORA-the-dark-unread",
     "file": "src/world/tamriel/skyrimAurora.js",
-    "old": "return sky.weight > 0 && dark > 0 ? { weight: sky.weight * dark, hang: sky.hang } : NO_AURORA;",
-    "new": "return sky.weight > 0 ? { weight: sky.weight, hang: sky.hang } : NO_AURORA;",
+    "old": "  return sky.weight > 0 && dark > 0 ? { weight: sky.weight * dark, hang: sky.hang } : NO_AURORA;",
+    "new": "  return sky.weight > 0 ? { weight: sky.weight, hang: sky.hang } : NO_AURORA;",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SKYRIM-AURORA-a-dial-moved",
     "file": "src/world/tamriel/skyrimAurora.js",
-    "old": "  swellMinutes: 150, swell: 0.2,",
-    "new": "  swellMinutes: 15, swell: 0.2,",
+    "old": "  swellMinutes: 150,",
+    "new": "  swellMinutes: 15,",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]

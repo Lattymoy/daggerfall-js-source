@@ -500,8 +500,8 @@
   {
     "name": "ROAD-LOOK-the-margin-unread",
     "file": "src/world/tamriel/tamrielWaters.js",
-    "old": "if (lakeDistance(l, x0 + u + 0.5, y0 + v + 0.5) < margin) out[v * w + u] = 1;",
-    "new": "if (lakeDistance(l, x0 + u + 0.5, y0 + v + 0.5) < 0) out[v * w + u] = 1;",
+    "old": "      for (let u = u0; u <= u1; u++) if (lakeDistance(l, x0 + u + 0.5, y0 + v + 0.5) < margin) out[v * w + u] = 1;",
+    "new": "      for (let u = u0; u <= u1; u++) if (lakeDistance(l, x0 + u + 0.5, y0 + v + 0.5) < 0) out[v * w + u] = 1;",
     "tests": [
       "test/world/road/roadlook.test.js"
     ]

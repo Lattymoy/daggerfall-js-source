@@ -15,20 +15,25 @@ export const SKYRIM_THEATRE = THEATRE_KEYS.indexOf('Skyrim');
 
 export const AURORA_DIALS = Object.freeze({
   /** the sun's elevation in degrees where the aurora starts to show, and where it is whole */
-  sunFrom: -6, sunFull: -16,
+  sunFrom: -6,
+  sunFull: -16,
   /** the sky's eased cloud cover (render/enhancedSky.js WEATHER_SKY) where it starts to hide, and where it is gone: a
    *  cloudy night (0.55) keeps it whole, the volumetric clouds drawn over it; an overcast one (0.94) hides it */
-  coverFrom: 0.6, coverGone: 0.9,
+  coverFrom: 0.6,
+  coverGone: 0.9,
   /** the same while the sky draws its own cloud decks (no volumetric clouds yet, or `?clouds=off`): the aurora is drawn
    *  over those decks, so it goes from a sunny night's cover (0.32) and is gone by a cloudy one's */
-  decksFrom: 0.35, decksGone: 0.55,
+  decksFrom: 0.35,
+  decksGone: 0.55,
   /** the strength at Skyrim's south edge, of its north coast's */
   south: 0.6,
   /** how far north of the eye the arcs hang, in the curtains' base heights: at the south edge (low over the north
    *  horizon) and on the north coast (nearly overhead) */
-  hangSouth: 3.2, hangNorth: 0.4,
+  hangSouth: 3.2,
+  hangNorth: 0.4,
   /** game minutes a night's slow swell takes, and how much of its strength it moves */
-  swellMinutes: 150, swell: 0.2,
+  swellMinutes: 150,
+  swell: 0.2,
   /** at sea past the Bay, how far (picture units, 15.36 km each) the nearest land is looked for: its province's sky */
   seaReach: 10,
 });
@@ -54,8 +59,15 @@ export const auroraNight = (skyMinutes) => Math.floor((skyMinutes + MINUTES_PER_
 
 /** A night's own strength, 0..1: its tier by one roll (AURORA_NIGHTS' shares), its place in the tier by another. */
 export function auroraNightBase(night) {
-  let r = auroraRoll(night, 0x51a7), tier = AURORA_NIGHTS[AURORA_NIGHTS.length - 1];
-  for (const t of AURORA_NIGHTS) { if (r < t.share) { tier = t; break; } r -= t.share; }
+  let r = auroraRoll(night, 0x51a7),
+    tier = AURORA_NIGHTS[AURORA_NIGHTS.length - 1];
+  for (const t of AURORA_NIGHTS) {
+    if (r < t.share) {
+      tier = t;
+      break;
+    }
+    r -= t.share;
+  }
   return tier.from + (tier.to - tier.from) * auroraRoll(night, 0x0b0e);
 }
 
@@ -64,20 +76,24 @@ export function auroraNightStrength(skyMinutes) {
   const night = auroraNight(skyMinutes);
   const phase = 2 * Math.PI * auroraRoll(night, 0x5e11);
   const { swellMinutes, swell } = AURORA_DIALS;
-  return auroraNightBase(night) * (1 - swell + swell * 0.5 * (1 + Math.sin(2 * Math.PI * skyMinutes / swellMinutes + phase)));
+  return (
+    auroraNightBase(night) *
+    (1 - swell + swell * 0.5 * (1 + Math.sin((2 * Math.PI * skyMinutes) / swellMinutes + phase)))
+  );
 }
 
 /** How dark it is for the aurora at a minute of the day, 0..1, by the sun's depth (worldClock's arc, continued under
  *  the horizon as render/enhancedSky.js sunSkyDirection continues it). */
 export function auroraDark(minuteOfDay) {
-  const elevDeg = Math.asin(Math.sin(Math.PI * dayFraction(minuteOfDay))) * 180 / Math.PI;
+  const elevDeg = (Math.asin(Math.sin(Math.PI * dayFraction(minuteOfDay))) * 180) / Math.PI;
   const dark = smoothstep(AURORA_DIALS.sunFrom, AURORA_DIALS.sunFull, elevDeg);
   return Number.isFinite(dark) ? dark : 0;
 }
 
 /** How much of the aurora the cloud cover leaves, 0..1 - `decks` while the sky draws its own cloud decks. */
 export function auroraClear(cover, decks = false) {
-  const d = AURORA_DIALS, c = Number.isFinite(cover) ? cover : 1;
+  const d = AURORA_DIALS,
+    c = Number.isFinite(cover) ? cover : 1;
   return decks ? 1 - smoothstep(d.decksFrom, d.decksGone, c) : 1 - smoothstep(d.coverFrom, d.coverGone, c);
 }
 
@@ -88,8 +104,12 @@ let _rows = /** @type {{ version: number, north: number, south: number }|null} *
 export function skyrimRows() {
   const version = tamrielLandVersion();
   if (_rows?.version !== version) {
-    const has = (y) => { for (let x = 0.25; x < PICTURE_W; x += 0.5) if (provinceKeyAt(x, y) === 'Skyrim') return true; return false; };
-    let north = 0.25, south = PICTURE_H - 0.25;
+    const has = (y) => {
+      for (let x = 0.25; x < PICTURE_W; x += 0.5) if (provinceKeyAt(x, y) === 'Skyrim') return true;
+      return false;
+    };
+    let north = 0.25,
+      south = PICTURE_H - 0.25;
     while (north < PICTURE_H && !has(north)) north += 0.5;
     while (south > north && !has(south)) south -= 0.5;
     _rows = { version, north, south: Math.max(south, north + 1) };
@@ -101,15 +121,24 @@ export function skyrimRows() {
 // pixel asked (a ship crosses a pixel in seconds) and its land version.
 let _sea = /** @type {{ key: number, version: number, theatre: number }|null} */ (null);
 function seaTheatre(px, py) {
-  const key = worldPixelKey(px, py), version = tamrielLandVersion();
+  const key = worldPixelKey(px, py),
+    version = tamrielLandVersion();
   if (_sea?.key === key && _sea.version === version) return _sea.theatre;
   const [cx, cy] = bayToPicture(px + 0.5, py + 0.5);
   let theatre = -1;
   for (let r = 0.5; r <= AURORA_DIALS.seaReach && theatre < 0; r += 0.5) {
     for (let i = -r; i <= r && theatre < 0; i += 0.5) {
-      for (const [x, y] of [[cx + i, cy - r], [cx + i, cy + r], [cx - r, cy + i], [cx + r, cy + i]]) {
+      for (const [x, y] of [
+        [cx + i, cy - r],
+        [cx + i, cy + r],
+        [cx - r, cy + i],
+        [cx + r, cy + i],
+      ]) {
         const k = provinceKeyAt(x, y);
-        if (k !== null) { theatre = THEATRE_KEYS.indexOf(k); break; }
+        if (k !== null) {
+          theatre = THEATRE_KEYS.indexOf(k);
+          break;
+        }
       }
     }
   }
@@ -149,6 +178,7 @@ export function auroraSky({ px, py, skyMinutes, cover, nightSky = true, decks = 
  *  @param {{ px: number, py: number, minuteOfDay: number, skyMinutes: number, cover: number, nightSky?: boolean, decks?: boolean }} at
  *  @returns {Aurora} */
 export function auroraTarget(at) {
-  const sky = auroraSky(at), dark = auroraDark(at.minuteOfDay);
+  const sky = auroraSky(at),
+    dark = auroraDark(at.minuteOfDay);
   return sky.weight > 0 && dark > 0 ? { weight: sky.weight * dark, hang: sky.hang } : NO_AURORA;
 }

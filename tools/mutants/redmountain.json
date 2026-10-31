@@ -2,8 +2,8 @@
   {
     "name": "RED-MOUNTAIN-the-summit-cone-rounder",
     "file": "src/world/tamriel/redMountain.js",
-    "old": "Object.freeze({ share: 0.54, reach: 10000, power: 2 }),",
-    "new": "Object.freeze({ share: 0.54, reach: 10000, power: 3 }),",
+    "old": "    Object.freeze({ share: 0.54, reach: 10000, power: 2 }),",
+    "new": "    Object.freeze({ share: 0.54, reach: 10000, power: 3 }),",
     "tests": [
       "test/world/redmountain.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RED-MOUNTAIN-the-body-shares-more",
     "file": "src/world/tamriel/redMountain.js",
-    "old": "Object.freeze({ share: 0.2, reach: 35000, power: 2 }),",
-    "new": "Object.freeze({ share: 0.25, reach: 35000, power: 2 }),",
+    "old": "    Object.freeze({ share: 0.2, reach: 35000, power: 2 }),",
+    "new": "    Object.freeze({ share: 0.25, reach: 35000, power: 2 }),",
     "tests": [
       "test/world/redmountain.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RED-MOUNTAIN-the-centre-a-row-off",
     "file": "src/world/tamriel/redMountain.js",
-    "old": "cy = (MAP_ROWS + 1 - by) * 128, k = 1 / SAMPLE_M;",
-    "new": "cy = (MAP_ROWS - by) * 128, k = 1 / SAMPLE_M;",
+    "old": "    cy = (MAP_ROWS + 1 - by) * 128,",
+    "new": "    cy = (MAP_ROWS - by) * 128,",
     "tests": [
       "test/world/redmountain.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RED-MOUNTAIN-the-foyada-leave-the-centre",
     "file": "src/world/tamriel/redMountain.js",
-    "old": "const along = i * D.trough.step, r = D.rim + along;",
-    "new": "const along = i * D.trough.step, r = along;",
+    "old": "        r = D.rim + along;",
+    "new": "        r = along;",
     "tests": [
       "test/world/redmountain.test.js"
     ]
@@ -38,7 +38,7 @@
   {
     "name": "RED-MOUNTAIN-no-crown",
     "file": "src/world/tamriel/redMountain.js",
-    "old": "const crownOf = (ux, uy) => 1 + D.lobes.amp * (2 * perlinNoise(ux * D.lobes.radius + 17.31, uy * D.lobes.radius + 5.77) - 1);",
+    "old": "const crownOf = (ux, uy) =>\n  1 + D.lobes.amp * (2 * perlinNoise(ux * D.lobes.radius + 17.31, uy * D.lobes.radius + 5.77) - 1);",
     "new": "const crownOf = (ux, uy) => 1 + 0 * (ux + uy);",
     "tests": [
       "test/world/redmountain.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "RED-MOUNTAIN-a-foyada-floor-rising",
     "file": "src/world/tamriel/redMountain.js",
-    "old": "lv[i] = own < above ? own : above;",
-    "new": "lv[i] = own;",
+    "old": "      lv[i] = own < above ? own : above;",
+    "new": "      lv[i] = own;",
     "tests": [
       "test/world/redmountain.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RED-MOUNTAIN-the-landforms-whole-on-the-rim",
     "file": "src/world/tamriel/redMountain.js",
-    "old": "let land = base + hills * smooth01(d / D.keep) * still + lift / UNIT_M;",
-    "new": "let land = base + hills * still + lift / UNIT_M;",
+    "old": "  let land = base + hills * smooth01(d / D.keep) * still + lift / UNIT_M;",
+    "new": "  let land = base + hills * still + lift / UNIT_M;",
     "tests": [
       "test/world/redmountain.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "RED-MOUNTAIN-the-foyada-floor-not-flat",
     "file": "src/world/tamriel/redMountain.js",
-    "old": "land += (_near[1] - land) * (1 - smooth01((_near[0] - 0.5) / 0.5));",
-    "new": "land += (_near[1] - land) * (1 - smooth01(_near[0]));",
+    "old": "  if (near && _near[1] < land) land += (_near[1] - land) * (1 - smooth01((_near[0] - 0.5) / 0.5)); // the foyada's floor",
+    "new": "  if (near && _near[1] < land) land += (_near[1] - land) * (1 - smooth01(_near[0])); // the foyada's floor",
     "tests": [
       "test/world/redmountain.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RED-MOUNTAIN-a-cell-its-centre-alone",
     "file": "src/world/tamriel/redMountain.js",
-    "old": "return redMountainSmooth(x * 128, (MAP_ROWS + 1 - y) * 128);",
-    "new": "return redMountainSmooth((x + 0.5) * 128, (MAP_ROWS - y) * 128 + 64);",
+    "old": "  return redMountainSmooth(x * 128, (MAP_ROWS + 1 - y) * 128);",
+    "new": "  return redMountainSmooth((x + 0.5) * 128, (MAP_ROWS - y) * 128 + 64);",
     "tests": [
       "test/world/redmountain.test.js"
     ],
@@ -315,8 +315,8 @@
   {
     "name": "RED-MOUNTAIN-a-run's-box-skips-its-sample",
     "file": "src/world/tamriel/redMountain.js",
-    "old": "        if (gx < ch[c] || gx > ch[c + 1] || gy < ch[c + 2] || gy > ch[c + 3]) { i += CHUNK - 1; continue; }",
-    "new": "        if (gx < ch[c] || gx > ch[c + 1] || gy < ch[c + 2] || gy < ch[c + 3]) { i += CHUNK - 1; continue; }",
+    "old": "        if (gx < ch[c] || gx > ch[c + 1] || gy < ch[c + 2] || gy > ch[c + 3]) {",
+    "new": "        if (gx < ch[c] || gx > ch[c + 1] || gy < ch[c + 2] || gy < ch[c + 3]) {",
     "tests": [
       "test/world/redmountain.test.js"
     ]

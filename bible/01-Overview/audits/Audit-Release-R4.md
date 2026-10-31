@@ -148,7 +148,7 @@ about a second of the page's thread and one of the worker's each boot. **Propose
 the trace, its relief and the fit in IndexedDB under a print of TMAP00I0, TAMRIEL2, WOODS.WLD and the relief module's
 version - the roads' own `inputsPrint` already hashes all four.
 **Fixed (the coast's stream, 2026-10-26; the owner: "Take care of exclusions and gaps"):**
-`src/world/tamriel/tamrielBootCache.js:"export const BOOT_CACHE_VERSION ="` keeps in IndexedDB, and a returning boot
+`src/world/tamriel/tamrielBootCache.js:"export const BOOT_CACHE_VERSION"` keeps in IndexedDB, and a returning boot
 takes: the trace and its relief (`preloadTamrielTrace`), under a print of the two pictures' bytes, the palette read and
 the relief's own data, each record checked against its key, its sizes and its arrays' checksum; the fit (`fitBayToPicture`
 takes a kept fit for the very land it samples - its masks' print); and the roads' regions to build (the roads' start - since EXACT-PIECES the regions it wants, the Bay's own with those with land, the kept set's key tagged `w1`,
@@ -174,7 +174,7 @@ player first and the rest only when the page is idle.
 
 ### R4-7 - the smooth land's law and lines, built whole on the page (FIXED)
 
-`src/world/tamriel/tamrielLand.js:"export function landLaw(trace) {"`, `src/world/tamriel/tamrielLines.js:"export function lawLines(trace) {"`,
+`src/world/tamriel/tamrielLand.js:"export function landLaw(trace) {"`, `src/world/tamriel/tamrielLines.js:"export function lawLines"`,
 `src/ui/tamrielInk.js:"export function tracedChains(trace) {"`, `src/systems/wild/cyrodiilZone.js:"export function zoneLineOf"`.
 SMOOTH-LAND (`03-World/Tamriel.md`; the owner: "Whatever is most detailed"), merged into this lane at ad2a8d71de, reads a
 pixel's province past the Bay through the land's smooth law, made once a trace on each thread that asks (`landLaw`: the

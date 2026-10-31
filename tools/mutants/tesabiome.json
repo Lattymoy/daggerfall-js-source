@@ -743,8 +743,8 @@
   {
     "name": "TESA-BIOME-83-range-keep-unread",
     "file": "src/world/tamriel/tamrielGeography.js",
-    "old": "    if (keep && !keep(rg.name)) continue;\n",
-    "new": "",
+    "old": "    if (keep && !keep(rg.name)) continue;\n    const d = spineDistance(rg, x, y);",
+    "new": "    const d = spineDistance(rg, x, y);",
     "tests": [
       "test/world/tesabiome_biomes.test.js"
     ]

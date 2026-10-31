@@ -188,8 +188,8 @@
   {
     "name": "SMOOTH-LAND-LINES-the-coasts-ask-turned",
     "file": "src/world/tamriel/tamrielLines.js",
-    "old": "const same = coast ? landSideAt(L, x, y) === landFirst : provinceLeadAt(L, x, y, p, q);",
-    "new": "const same = coast ? landSideAt(L, x, y) !== landFirst : provinceLeadAt(L, x, y, p, q);",
+    "old": "      const same = coast ? landSideAt(L, x, y) === landFirst : provinceLeadAt(L, x, y, p, q);",
+    "new": "      const same = coast ? landSideAt(L, x, y) !== landFirst : provinceLeadAt(L, x, y, p, q);",
     "tests": [
       "test/world/smoothland.test.js"
     ]
@@ -197,8 +197,8 @@
   {
     "name": "SMOOTH-LAND-LINES-the-borders-ask-turned",
     "file": "src/world/tamriel/tamrielLines.js",
-    "old": "const same = coast ? landSideAt(L, x, y) === landFirst : provinceLeadAt(L, x, y, p, q);",
-    "new": "const same = coast ? landSideAt(L, x, y) === landFirst : provinceLeadAt(L, x, y, q, p);",
+    "old": "      const same = coast ? landSideAt(L, x, y) === landFirst : provinceLeadAt(L, x, y, p, q);",
+    "new": "      const same = coast ? landSideAt(L, x, y) === landFirst : provinceLeadAt(L, x, y, q, p);",
     "tests": [
       "test/world/smoothland.test.js"
     ]
@@ -206,8 +206,8 @@
   {
     "name": "SMOOTH-LAND-LINES-the-meeting-off-the-coast",
     "file": "src/world/tamriel/tamrielLines.js",
-    "old": "      if (l1 !== l2) return onChord(coast[0].id, coast[1].id, l1, l2);",
-    "new": "",
+    "old": "      if (l1 !== l2) return onChord(coast[0].id, coast[1].id, l1, l2);\n    }",
+    "new": "    }",
     "tests": [
       "test/ui/tamriel4.test.js",
       "test/world/smoothland.test.js"
@@ -234,8 +234,8 @@
   {
     "name": "SMOOTH-LAND-LINES-the-line-between-the-meetings-lost",
     "file": "src/world/tamriel/tamrielLines.js",
-    "old": "      piece(mid, second, { p: y, q: z, side: a === c ? [bx + 1, by, bx, by + 1] : [bx, by, bx + 1, by + 1] });",
-    "new": "",
+    "old": "      piece(mid, second, { p: y, q: z, side: a === c ? [bx + 1, by, bx, by + 1] : [bx, by, bx + 1, by + 1] });\n    } else if (distinct >= 3) {",
+    "new": "    } else if (distinct >= 3) {",
     "tests": [
       "test/world/smoothland.test.js"
     ]
@@ -252,8 +252,8 @@
   {
     "name": "SMOOTH-LAND-LINES-the-walk-a-row-short",
     "file": "src/world/tamriel/tamrielLines.js",
-    "old": "by0 = Math.floor(y0) - 1, by1 = Math.ceil(y1), n = bx1 - bx0 + 2;",
-    "new": "by0 = Math.floor(y0), by1 = Math.ceil(y1) - 1, n = bx1 - bx0 + 2;",
+    "old": "          by0 = Math.floor(y0) - 1,\n          by1 = Math.ceil(y1),",
+    "new": "          by0 = Math.floor(y0),\n          by1 = Math.ceil(y1) - 1,",
     "tests": [
       "test/world/smoothland.test.js"
     ],
@@ -263,8 +263,8 @@
   {
     "name": "SMOOTH-LAND-LINES-a-run-through-a-meeting",
     "file": "src/world/tamriel/tamrielLines.js",
-    "old": "cur = list.length === 2 ? (list[0] === cur ? list[1] : list[0]) : -1;",
-    "new": "cur = list.length >= 2 ? (list[0] === cur ? list[1] : list[0]) : -1;",
+    "old": "      cur = list.length === 2 ? (list[0] === cur ? list[1] : list[0]) : -1;",
+    "new": "      cur = list.length >= 2 ? (list[0] === cur ? list[1] : list[0]) : -1;",
     "tests": [
       "test/world/smoothland.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "SMOOTH-LAND-LINES-a-border-a-coast",
     "file": "src/world/tamriel/tamrielLines.js",
-    "old": "(p === 0 || q === 0 ? 'coast' : 'border')",
-    "new": "(p === 0 || q === 0 ? 'coast' : 'coast')",
+    "old": "  const kindOf = (/** @type {number} */ p, /** @type {number} */ q) => (p === 0 || q === 0 ? 'coast' : 'border');",
+    "new": "  const kindOf = (/** @type {number} */ p, /** @type {number} */ q) => (p === 0 || q === 0 ? 'coast' : 'coast');",
     "tests": [
       "test/world/tamriel3.test.js",
       "test/world/smoothland.test.js"
@@ -282,8 +282,8 @@
   {
     "name": "SMOOTH-LAND-LINES-the-label-the-pictures-pixel",
     "file": "src/world/tamriel/tamrielLines.js",
-    "old": "if (v === 255) t.lab[i] = v = landLabelAt(L, picX(bx + 0.5), picY(by + 0.5));",
-    "new": "if (v === 255) t.lab[i] = v = landLabelAt(L, Math.floor(picX(bx + 0.5)) + 0.5, Math.floor(picY(by + 0.5)) + 0.5);",
+    "old": "    if (v === 255) t.lab[i] = v = landLabelAt(L, picX(bx + 0.5), picY(by + 0.5));",
+    "new": "    if (v === 255) t.lab[i] = v = landLabelAt(L, Math.floor(picX(bx + 0.5)) + 0.5, Math.floor(picY(by + 0.5)) + 0.5);",
     "tests": [
       "test/ui/mapwaters.test.js",
       "test/world/smoothland.test.js"
@@ -437,8 +437,8 @@
   {
     "name": "R4-7-the-walks-step-lost",
     "file": "src/world/tamriel/tamrielLines.js",
-    "old": "        yield;\n      }\n    }\n    whole = ",
-    "new": "      }\n    }\n    whole = ",
+    "old": "        yield;\n      }",
+    "new": "      }",
     "tests": [
       "test/world/smoothland.test.js"
     ]
@@ -446,8 +446,8 @@
   {
     "name": "R4-7-the-linkings-index-step-lost",
     "file": "src/world/tamriel/tamrielLines.js",
-    "old": "if ((i + 1) % LINK_STEP === 0) yield;",
-    "new": "if (false) yield;",
+    "old": "    if ((i + 1) % LINK_STEP === 0) yield;",
+    "new": "    if (false) yield;",
     "tests": [
       "test/world/smoothland.test.js"
     ]

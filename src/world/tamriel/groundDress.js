@@ -12,19 +12,25 @@ export const DRESS_CLASSES = Object.freeze(['water', 'dirt', 'grass', 'stone', '
 export const CLASS_RECORDS = Object.freeze([0, 1, 2, 3, 46]);
 /** Records the town's paving is painted in, and the only classes their texels are of (46 the paving whole, 47 a dirt
  *  edge on it, 55 a grass edge - world/terrain/terrainTiles.js's road records, render/labGrass.js grassRecordsOf's). */
-export const PAVED_RECORDS = Object.freeze({ 46: Object.freeze([4]), 47: Object.freeze([1, 4]), 55: Object.freeze([2, 4]) });
+export const PAVED_RECORDS = Object.freeze({
+  46: Object.freeze([4]),
+  47: Object.freeze([1, 4]),
+  55: Object.freeze([2, 4]),
+});
 /** THE DIALS (one place) - why each stands where it does: bible/03-World/Tamriel-Lands.md, "The ground". */
 export const DRESS_DIALS = Object.freeze({
-  contrast: 1,   // a texel's luminance over its class's mean, to this power, is its luminance over the ramp's middle
-  reach: Object.freeze([0.55, 1.6]),   // past the ramp's ends its end colour, scaled on within these
-  keep: 0.22,   // the share of the texel's own colour noise kept over the ramp's - the set's mottle through it
-  soft: 0.5, softMin: 0.02,   // a class share is a Gaussian of colour distance this share of the nearest prototypes' gap wide
-  blur: 0.045,   // then blurred over this share of the record (a transition's shape is half a tile, a grain a texel)
-  crisp: 0.15,   // then under this none, over 1 less it whole: a transition's inside its class's, as the solid record is
-  present: 0.02,   // a class nearest to fewer of a record's texels than this is not asked there
-  fleckTexels: 1, fleckBlend: 0.8,   // a fleck's cell at a 128-texel record, and how much of its own colour it takes
-  albedo: 0.7,   // the ramps are lit screenshot colours and a set an albedo: the classic grass 65 against 99 sampled
-  vivid: 1.25,   // the screenshots' haze undone: a ramp's colours moved this much further from their grey
+  contrast: 1, // a texel's luminance over its class's mean, to this power, is its luminance over the ramp's middle
+  reach: Object.freeze([0.55, 1.6]), // past the ramp's ends its end colour, scaled on within these
+  keep: 0.22, // the share of the texel's own colour noise kept over the ramp's - the set's mottle through it
+  soft: 0.5,
+  softMin: 0.02, // a class share is a Gaussian of colour distance this share of the nearest prototypes' gap wide
+  blur: 0.045, // then blurred over this share of the record (a transition's shape is half a tile, a grain a texel)
+  crisp: 0.15, // then under this none, over 1 less it whole: a transition's inside its class's, as the solid record is
+  present: 0.02, // a class nearest to fewer of a record's texels than this is not asked there
+  fleckTexels: 1,
+  fleckBlend: 0.8, // a fleck's cell at a 128-texel record, and how much of its own colour it takes
+  albedo: 0.7, // the ramps are lit screenshot colours and a set an albedo: the classic grass 65 against 99 sampled
+  vivid: 1.25, // the screenshots' haze undone: a ramp's colours moved this much further from their grey
 });
 
 /** How many rows of a 256-texel record a step dresses (dressRecordSteps): the build's breather gives the frame back
@@ -44,9 +50,20 @@ export function hexRgb(h) {
 /** A material's ramp at `t` (0 its darkest stop, 1 its lightest - its stops evenly spaced), written into `out`. */
 export function rampAt(stops, t, out = [0, 0, 0]) {
   const n = stops.length - 1;
-  if (n <= 0) { out[0] = stops[0][0]; out[1] = stops[0][1]; out[2] = stops[0][2]; return out; }
-  const f = Math.min(n, Math.max(0, t * n)), i = Math.min(n - 1, Math.floor(f)), u = f - i, a = stops[i], b = stops[i + 1];
-  out[0] = a[0] + (b[0] - a[0]) * u; out[1] = a[1] + (b[1] - a[1]) * u; out[2] = a[2] + (b[2] - a[2]) * u;
+  if (n <= 0) {
+    out[0] = stops[0][0];
+    out[1] = stops[0][1];
+    out[2] = stops[0][2];
+    return out;
+  }
+  const f = Math.min(n, Math.max(0, t * n)),
+    i = Math.min(n - 1, Math.floor(f)),
+    u = f - i,
+    a = stops[i],
+    b = stops[i + 1];
+  out[0] = a[0] + (b[0] - a[0]) * u;
+  out[1] = a[1] + (b[1] - a[1]) * u;
+  out[2] = a[2] + (b[2] - a[2]) * u;
   return out;
 }
 
@@ -62,19 +79,38 @@ export function setPrototypes(layers) {
     const l = layers[rec];
     const n = l ? l.width * l.height : 0;
     if (!n) return null;
-    let r = 0, g = 0, b = 0, s = 0, s2 = 0;
+    let r = 0,
+      g = 0,
+      b = 0,
+      s = 0,
+      s2 = 0;
     for (let k = 0; k < n; k++) {
-      const R = l.colors[k * 4], G = l.colors[k * 4 + 1], B = l.colors[k * 4 + 2], L = lumOf(R, G, B);
-      r += R; g += G; b += B; s += L; s2 += L * L;
+      const R = l.colors[k * 4],
+        G = l.colors[k * 4 + 1],
+        B = l.colors[k * 4 + 2],
+        L = lumOf(R, G, B);
+      r += R;
+      g += G;
+      b += B;
+      s += L;
+      s2 += L * L;
     }
     const lum = s / n;
-    return Object.freeze({ rgb: Object.freeze([r / n, g / n, b / n]), lum, sd: Math.sqrt(Math.max(0, s2 / n - lum * lum)) });
+    return Object.freeze({
+      rgb: Object.freeze([r / n, g / n, b / n]),
+      lum,
+      sd: Math.sqrt(Math.max(0, s2 / n - lum * lum)),
+    });
   });
 }
 
 /** A fleck cell's hash, 0..1 (murmur3's finaliser over the cell, the record and the salt) - the same in every engine. */
 export function fleckDraw(cx, cy, record, salt) {
-  let h = Math.imul(cx | 0, 0x9e3779b1) ^ Math.imul(cy | 0, 0x85ebca77) ^ Math.imul((record | 0) + 0x27d4eb2f, 0xc2b2ae3d) ^ Math.imul(salt | 0, 0x165667b1);
+  let h =
+    Math.imul(cx | 0, 0x9e3779b1) ^
+    Math.imul(cy | 0, 0x85ebca77) ^
+    Math.imul((record | 0) + 0x27d4eb2f, 0xc2b2ae3d) ^
+    Math.imul(salt | 0, 0x165667b1);
   h = Math.imul(h ^ (h >>> 16), 0x85ebca6b);
   h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
@@ -91,12 +127,27 @@ export function compileDress(dress) {
   return DRESS_CLASSES.map((name, c) => {
     const m = c === 0 || c === 4 ? null : dress?.[name];
     if (!m?.ramp?.length) return null;
-    const stops = m.ramp.map((h) => { const c = hexRgb(h), L = lumOf(c[0], c[1], c[2]); return c.map((v) => L + (v - L) * DRESS_DIALS.vivid); });
-    const lum = new Float64Array(RAMP_STEPS + 1), at = [0, 0, 0];
-    for (let i = 0; i <= RAMP_STEPS; i++) { rampAt(stops, i / RAMP_STEPS, at); lum[i] = Math.max(i ? lum[i - 1] : 0, lumOf(at[0], at[1], at[2])); }
+    const stops = m.ramp.map((h) => {
+      const c = hexRgb(h),
+        L = lumOf(c[0], c[1], c[2]);
+      return c.map((v) => L + (v - L) * DRESS_DIALS.vivid);
+    });
+    const lum = new Float64Array(RAMP_STEPS + 1),
+      at = [0, 0, 0];
+    for (let i = 0; i <= RAMP_STEPS; i++) {
+      rampAt(stops, i / RAMP_STEPS, at);
+      lum[i] = Math.max(i ? lum[i - 1] : 0, lumOf(at[0], at[1], at[2]));
+    }
     return Object.freeze({
-      stops, lum, mid: lum[RAMP_STEPS >> 1], keep: m.keep ?? DRESS_DIALS.keep, contrast: m.contrast ?? DRESS_DIALS.contrast,
-      fleck: m.fleck?.share > 0 ? Object.freeze({ colors: m.fleck.colors.map(hexRgb), share: m.fleck.share, salt: c * 131 + 7 }) : null,
+      stops,
+      lum,
+      mid: lum[RAMP_STEPS >> 1],
+      keep: m.keep ?? DRESS_DIALS.keep,
+      contrast: m.contrast ?? DRESS_DIALS.contrast,
+      fleck:
+        m.fleck?.share > 0
+          ? Object.freeze({ colors: m.fleck.colors.map(hexRgb), share: m.fleck.share, salt: c * 131 + 7 })
+          : null,
     });
   });
 }
@@ -106,13 +157,32 @@ export function compileDress(dress) {
  *  else the four grounds - each kept where it is nearest to `present` of the record's texels. */
 function recordClasses(layer, record, protos) {
   const solid = record < 4 ? [record] : null;
-  const pool = (PAVED_RECORDS[/** @type {keyof typeof PAVED_RECORDS} */ (record)] ?? solid ?? [0, 1, 2, 3]).filter((c) => protos[c]);
+  const pool = (PAVED_RECORDS[/** @type {keyof typeof PAVED_RECORDS} */ (record)] ?? solid ?? [0, 1, 2, 3]).filter(
+    (c) => protos[c],
+  );
   if (pool.length <= 1) return pool;
-  const m = pool.length, P = pool.map((c) => protos[c].rgb), near = new Array(m).fill(0), n = layer.width * layer.height, src = layer.colors;
+  const m = pool.length,
+    P = pool.map((c) => protos[c].rgb),
+    near = new Array(m).fill(0),
+    n = layer.width * layer.height,
+    src = layer.colors;
   for (let k = 0, o = 0; k < n; k++, o += 4) {
-    const R = src[o], G = src[o + 1], B = src[o + 2];
-    let best = 0, bd = Infinity;
-    for (let i = 0; i < m; i++) { const p = P[i], dr = R - p[0], dg = G - p[1], db = B - p[2], d = dr * dr + dg * dg + db * db; if (d < bd) { bd = d; best = i; } }
+    const R = src[o],
+      G = src[o + 1],
+      B = src[o + 2];
+    let best = 0,
+      bd = Infinity;
+    for (let i = 0; i < m; i++) {
+      const p = P[i],
+        dr = R - p[0],
+        dg = G - p[1],
+        db = B - p[2],
+        d = dr * dr + dg * dg + db * db;
+      if (d < bd) {
+        bd = d;
+        best = i;
+      }
+    }
     near[best]++;
   }
   const kept = pool.filter((_, i) => near[i] >= n * DRESS_DIALS.present);
@@ -126,8 +196,13 @@ export function rampFor(lum, target) {
   const N = lum.length - 1;
   if (target <= lum[0]) return { t: 0, k: Math.max(DRESS_DIALS.reach[0], target / Math.max(lum[0], 1e-3)) };
   if (target >= lum[N]) return { t: 1, k: Math.min(DRESS_DIALS.reach[1], target / Math.max(lum[N], 1e-3)) };
-  let lo = 0, hi = N;
-  while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (lum[mid] <= target) lo = mid; else hi = mid; }
+  let lo = 0,
+    hi = N;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (lum[mid] <= target) lo = mid;
+    else hi = mid;
+  }
   const span = lum[hi] - lum[lo];
   return { t: (lo + (span > 0 ? (target - lum[lo]) / span : 0)) / N, k: 1 };
 }
@@ -143,11 +218,20 @@ const LUT_STEPS = 2048;
  */
 function classLut(m, p, light) {
   if (!m) return null;
-  const N = LUT_STEPS, r = new Float32Array(N + 1), g = new Float32Array(N + 1), b = new Float32Array(N + 1), t = new Float32Array(N + 1), ramp = [0, 0, 0];
+  const N = LUT_STEPS,
+    r = new Float32Array(N + 1),
+    g = new Float32Array(N + 1),
+    b = new Float32Array(N + 1),
+    t = new Float32Array(N + 1),
+    ramp = [0, 0, 0];
   for (let j = 0; j <= N; j++) {
-    const L = (j * 256) / N, at = rampFor(m.lum, m.mid * Math.pow(Math.max(L, 1) / Math.max(p.lum, 1), m.contrast));
+    const L = (j * 256) / N,
+      at = rampFor(m.lum, m.mid * Math.pow(Math.max(L, 1) / Math.max(p.lum, 1), m.contrast));
     rampAt(m.stops, at.t, ramp);
-    r[j] = ramp[0] * at.k * light; g[j] = ramp[1] * at.k * light; b[j] = ramp[2] * at.k * light; t[j] = at.t;
+    r[j] = ramp[0] * at.k * light;
+    g[j] = ramp[1] * at.k * light;
+    b[j] = ramp[2] * at.k * light;
+    t[j] = at.t;
   }
   return { r, g, b, t, scale: N / 256, keep: m.keep, pr: p.rgb[0], pg: p.rgb[1], pb: p.rgb[2], lum: p.lum };
 }
@@ -183,19 +267,30 @@ export function boxBlur(a, w, h, r, tmp) {
  */
 function* transitionShares(layer, classes, protos) {
   let near = Infinity;
-  for (let i = 0; i < classes.length; i++) for (let j = i + 1; j < classes.length; j++) {
-    const a = protos[classes[i]].rgb, b = protos[classes[j]].rgb;
-    near = Math.min(near, Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) / 255);
-  }
-  const width = Math.max(DRESS_DIALS.softMin, near * DRESS_DIALS.soft), inv2 = 1 / (2 * width * width * 255 * 255);
-  const { width: w, height: h, colors: src } = layer, n = w * h, nc = classes.length, P = classes.map((c) => protos[c].rgb);
-  const maps = classes.map(() => new Float32Array(n)), tmp = new Float32Array(n), rows = Math.max(1, Math.round((DRESS_BAND * 256) / w));
+  for (let i = 0; i < classes.length; i++)
+    for (let j = i + 1; j < classes.length; j++) {
+      const a = protos[classes[i]].rgb,
+        b = protos[classes[j]].rgb;
+      near = Math.min(near, Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) / 255);
+    }
+  const width = Math.max(DRESS_DIALS.softMin, near * DRESS_DIALS.soft),
+    inv2 = 1 / (2 * width * width * 255 * 255);
+  const { width: w, height: h, colors: src } = layer,
+    n = w * h,
+    nc = classes.length,
+    P = classes.map((c) => protos[c].rgb);
+  const maps = classes.map(() => new Float32Array(n)),
+    tmp = new Float32Array(n),
+    rows = Math.max(1, Math.round((DRESS_BAND * 256) / w));
   for (let y = 0; y < h; y += rows) {
     if (y) yield;
     shareRows(src, w * Math.min(h, y + rows), y * w, P, inv2, maps);
   }
   const r = Math.max(1, Math.round(w * DRESS_DIALS.blur));
-  for (const m of maps) { yield; boxBlur(m, w, h, r, tmp); }
+  for (const m of maps) {
+    yield;
+    boxBlur(m, w, h, r, tmp);
+  }
   yield;
   for (let k = 0; k < n; k++) {
     let sum = 0;
@@ -203,7 +298,7 @@ function* transitionShares(layer, classes, protos) {
     if (!(sum > 0)) continue;
     let crisp = 0;
     for (let i = 0; i < nc; i++) crisp += crispShare(maps[i][k] / sum);
-    for (let i = 0; i < nc; i++) maps[i][k] = crisp > 0 ? crispShare(maps[i][k] / sum) / crisp : maps[i][k] / sum;   // every share under the floor (many classes evenly): as they were
+    for (let i = 0; i < nc; i++) maps[i][k] = crisp > 0 ? crispShare(maps[i][k] / sum) / crisp : maps[i][k] / sum; // every share under the floor (many classes evenly): as they were
   }
   return maps;
 }
@@ -215,14 +310,29 @@ const crispShare = (s) => Math.min(1, Math.max(0, (s - DRESS_DIALS.crisp) / (1 -
 function shareRows(src, to, from, P, inv2, maps) {
   const nc = P.length;
   for (let k = from, o = from * 4; k < to; k++, o += 4) {
-    const R = src[o], G = src[o + 1], B = src[o + 2];
-    let best = 0, bd = Infinity, sum = 0;
+    const R = src[o],
+      G = src[o + 1],
+      B = src[o + 2];
+    let best = 0,
+      bd = Infinity,
+      sum = 0;
     for (let i = 0; i < nc; i++) {
-      const p = P[i], dr = R - p[0], dg = G - p[1], db = B - p[2], d = dr * dr + dg * dg + db * db;
-      if (d < bd) { bd = d; best = i; }
-      sum += (maps[i][k] = Math.exp(-d * inv2));
+      const p = P[i],
+        dr = R - p[0],
+        dg = G - p[1],
+        db = B - p[2],
+        d = dr * dr + dg * dg + db * db;
+      if (d < bd) {
+        bd = d;
+        best = i;
+      }
+      sum += maps[i][k] = Math.exp(-d * inv2);
     }
-    if (!(sum > 1e-12)) { for (let i = 0; i < nc; i++) maps[i][k] = 0; maps[best][k] = 1; sum = 1; }   // past every prototype's reach: its nearest class whole
+    if (!(sum > 1e-12)) {
+      for (let i = 0; i < nc; i++) maps[i][k] = 0;
+      maps[best][k] = 1;
+      sum = 1;
+    } // past every prototype's reach: its nearest class whole
     for (let i = 0; i < nc; i++) maps[i][k] /= sum;
   }
 }
@@ -237,7 +347,10 @@ function shareRows(src, to, from, P, inv2, maps) {
  */
 export function dressRecord(layer, record, mats, protos, light = DRESS_DIALS.albedo) {
   const steps = dressRecordSteps(layer, record, mats, protos, light);
-  for (;;) { const r = steps.next(); if (r.done) return r.value; }
+  for (;;) {
+    const r = steps.next();
+    if (r.done) return r.value;
+  }
 }
 
 /**
@@ -250,11 +363,14 @@ export function* dressRecordSteps(layer, record, mats, protos, light = DRESS_DIA
   if (!layer?.width || !layer.height) return layer;
   const classes = recordClasses(layer, record, protos);
   if (!classes.some((c) => mats[c])) return layer;
-  const { width: w, height: h } = layer, src = layer.colors, out = new Uint8Array(w * h * 4);
+  const { width: w, height: h } = layer,
+    src = layer.colors,
+    out = new Uint8Array(w * h * 4);
   const shares = classes.length > 1 ? yield* transitionShares(layer, classes, protos) : null;
   if (shares) yield;
-  const band = Math.max(1, Math.round((DRESS_BAND * 256) / w));   // DRESS_BAND rows of a 256-wide record's texels a step
-  const luts = classes.map((c) => classLut(mats[c], protos[c], light)), flecks = classes.map((c) => mats[c]?.fleck ?? null);
+  const band = Math.max(1, Math.round((DRESS_BAND * 256) / w)); // DRESS_BAND rows of a 256-wide record's texels a step
+  const luts = classes.map((c) => classLut(mats[c], protos[c], light)),
+    flecks = classes.map((c) => mats[c]?.fleck ?? null);
   for (let y = 0; y < h; y += band) {
     if (y) yield;
     dressRows(src, out, w, y, Math.min(h, y + band), shares, luts, flecks, record, light);
@@ -264,28 +380,56 @@ export function* dressRecordSteps(layer, record, mats, protos, light = DRESS_DIA
 
 /** dressRecordSteps' rows `y0` to `y1` (a plain function: the engine optimises its loop as it does not a generator's). */
 function dressRows(src, out, w, y0, y1, shares, luts, flecks, record, light) {
-  const nc = luts.length, cell = Math.max(1, Math.round((DRESS_DIALS.fleckTexels * w) / 128));
+  const nc = luts.length,
+    cell = Math.max(1, Math.round((DRESS_DIALS.fleckTexels * w) / 128));
   for (let y = y0; y < y1; y++) {
     for (let x = 0; x < w; x++) {
-      const k = y * w + x, o = k * 4, R = src[o], G = src[o + 1], B = src[o + 2], L = lumOf(R, G, B);
-      let r = 0, g = 0, b = 0, fShare = 0, fi = -1, fT = 0.5;
+      const k = y * w + x,
+        o = k * 4,
+        R = src[o],
+        G = src[o + 1],
+        B = src[o + 2],
+        L = lumOf(R, G, B);
+      let r = 0,
+        g = 0,
+        b = 0,
+        fShare = 0,
+        fi = -1,
+        fT = 0.5;
       for (let i = 0; i < nc; i++) {
         const wi = shares ? shares[i][k] : 1;
         if (!(wi > 0)) continue;
         const t = luts[i];
-        if (!t) { r += R * wi; g += G * wi; b += B * wi; continue; }
-        const f = L * t.scale, j = f | 0, u = f - j, dl = L - t.lum;
+        if (!t) {
+          r += R * wi;
+          g += G * wi;
+          b += B * wi;
+          continue;
+        }
+        const f = L * t.scale,
+          j = f | 0,
+          u = f - j,
+          dl = L - t.lum;
         r += (t.r[j] + (t.r[j + 1] - t.r[j]) * u + (R - t.pr - dl) * t.keep) * wi;
         g += (t.g[j] + (t.g[j + 1] - t.g[j]) * u + (G - t.pg - dl) * t.keep) * wi;
         b += (t.b[j] + (t.b[j + 1] - t.b[j]) * u + (B - t.pb - dl) * t.keep) * wi;
-        if (flecks[i] && wi > fShare) { fShare = wi; fi = i; fT = t.t[j] + (t.t[j + 1] - t.t[j]) * u; }
+        if (flecks[i] && wi > fShare) {
+          fShare = wi;
+          fi = i;
+          fT = t.t[j] + (t.t[j + 1] - t.t[j]) * u;
+        }
       }
       if (fi >= 0 && fShare > 0.5) {
-        const f = /** @type {any} */ (flecks[fi]), cx = Math.floor(x / cell), cy = Math.floor(y / cell);
+        const f = /** @type {any} */ (flecks[fi]),
+          cx = Math.floor(x / cell),
+          cy = Math.floor(y / cell);
         if (fleckDraw(cx, cy, record, f.salt) < f.share) {
-          const col = f.colors[Math.floor(fleckDraw(cx, cy, record, f.salt + 1) * f.colors.length)], lift = light * (0.85 + 0.3 * (fT - 0.5));
+          const col = f.colors[Math.floor(fleckDraw(cx, cy, record, f.salt + 1) * f.colors.length)],
+            lift = light * (0.85 + 0.3 * (fT - 0.5));
           const kk = DRESS_DIALS.fleckBlend * fShare;
-          r += (col[0] * lift - r) * kk; g += (col[1] * lift - g) * kk; b += (col[2] * lift - b) * kk;
+          r += (col[0] * lift - r) * kk;
+          g += (col[1] * lift - g) * kk;
+          b += (col[2] * lift - b) * kk;
         }
       }
       out[o] = r < 0 ? 0 : r > 255 ? 255 : Math.round(r);
@@ -304,7 +448,8 @@ export function landLuminance(protos) {
 /** A drawn set's EXPOSURE: its land's luminance over the classic set's (`classic` the player's own records of the same
  *  archive) - 1 for the classic set itself, or where either has no land. */
 export function setExposure(layers, classic) {
-  const a = landLuminance(setPrototypes(layers)), b = classic ? landLuminance(setPrototypes(classic)) : 0;
+  const a = landLuminance(setPrototypes(layers)),
+    b = classic ? landLuminance(setPrototypes(classic)) : 0;
   return a > 0 && b > 0 ? a / b : 1;
 }
 
@@ -316,7 +461,8 @@ export function setExposure(layers, classic) {
  * @param {number} [exposure]
  */
 export function* dressLayersSteps(layers, dress, exposure = 1) {
-  const mats = compileDress(dress), protos = setPrototypes(layers);
+  const mats = compileDress(dress),
+    protos = setPrototypes(layers);
   const out = layers.slice();
   if (!mats.some(Boolean)) return out;
   const light = DRESS_DIALS.albedo * exposure;
@@ -330,5 +476,8 @@ export function* dressLayersSteps(layers, dress, exposure = 1) {
 /** dressLayersSteps run through (the pins' and the probes' door). */
 export function dressLayers(layers, dress, exposure = 1) {
   const steps = dressLayersSteps(layers, dress, exposure);
-  for (;;) { const r = steps.next(); if (r.done) return r.value; }
+  for (;;) {
+    const r = steps.next();
+    if (r.done) return r.value;
+  }
 }

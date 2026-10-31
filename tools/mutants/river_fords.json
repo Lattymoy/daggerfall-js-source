@@ -47,8 +47,8 @@
   {
     "name": "RIVER-FORDS-the-paths-unread",
     "file": "src/world/tamriel/tamrielWaters.js",
-    "old": "      if (paths && onPath(paths, x, y, span)) continue;",
-    "new": "      if (false) continue;",
+    "old": "      if (paths && onPath(paths, x, y, span)) continue; // RIVER-FORDS: a road's or a track's own tiles keep their ground - the ford",
+    "new": "      if (false) continue; // RIVER-FORDS: a road's or a track's own tiles keep their ground - the ford",
     "tests": [
       "test/world/road/river_fords.test.js"
     ]

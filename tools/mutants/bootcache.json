@@ -20,8 +20,8 @@
   {
     "name": "BOOT-CACHE-the-key-unread",
     "file": "src/world/tamriel/tamrielBootCache.js",
-    "old": "if (!v || v.key !== key || !(v.land instanceof Uint8Array)",
-    "new": "if (!v || !(v.land instanceof Uint8Array)",
+    "old": "  if (!v || v.key !== key || !(v.land instanceof Uint8Array) || !(v.province instanceof Uint8Array)) return null;",
+    "new": "  if (!v || !(v.land instanceof Uint8Array) || !(v.province instanceof Uint8Array)) return null;",
     "tests": [
       "test/world/bootcache.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "BOOT-CACHE-the-picker-out-of-the-print",
     "file": "src/world/tamriel/tamrielBootCache.js",
-    "old": ":${fnv32(picker).toString(36)}",
-    "new": "",
+    "old": "  return `tamriel-boot:v${BOOT_CACHE_VERSION}:${fnv32(picture).toString(36)}:${fnv32(picker).toString(36)}:${fnv32(palette).toString(36)}:${relief === null ? 'none' : fnv32(relief).toString(36)}`;",
+    "new": "  return `tamriel-boot:v${BOOT_CACHE_VERSION}:${fnv32(picture).toString(36)}:${fnv32(palette).toString(36)}:${relief === null ? 'none' : fnv32(relief).toString(36)}`;",
     "tests": [
       "test/world/bootcache.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "BOOT-CACHE-the-relief-out-of-the-print",
     "file": "src/world/tamriel/tamrielBootCache.js",
-    "old": ":${relief === null ? 'none' : fnv32(relief).toString(36)}",
-    "new": "",
+    "old": "  return `tamriel-boot:v${BOOT_CACHE_VERSION}:${fnv32(picture).toString(36)}:${fnv32(picker).toString(36)}:${fnv32(palette).toString(36)}:${relief === null ? 'none' : fnv32(relief).toString(36)}`;",
+    "new": "  return `tamriel-boot:v${BOOT_CACHE_VERSION}:${fnv32(picture).toString(36)}:${fnv32(picker).toString(36)}:${fnv32(palette).toString(36)}`;",
     "tests": [
       "test/world/bootcache.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "BOOT-CACHE-the-ground-out-of-the-lands-print",
     "file": "src/world/tamriel/tamrielBootCache.js",
-    "old": "const print = `${ground}|${lattice.x0}",
-    "new": "const print = `|${lattice.x0}",
+    "old": "  const print = `${ground}|${lattice.x0},${lattice.y0},${lattice.cols},${lattice.rows}`;",
+    "new": "  const print = `|${lattice.x0},${lattice.y0},${lattice.cols},${lattice.rows}`;",
     "tests": [
       "test/world/bootcache.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "BOOT-CACHE-the-lattice-out-of-the-lands-print",
     "file": "src/world/tamriel/tamrielBootCache.js",
-    "old": "|${lattice.x0},${lattice.y0},${lattice.cols},${lattice.rows}`;",
-    "new": "`;",
+    "old": "  const print = `${ground}|${lattice.x0},${lattice.y0},${lattice.cols},${lattice.rows}`;",
+    "new": "  const print = `${ground}`;",
     "tests": [
       "test/world/bootcache.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "BOOT-CACHE-the-lands-kept-before-the-last",
     "file": "src/world/tamriel/tamrielBootCache.js",
-    "old": "if (++asked === total && key && key === _traceKey) {",
-    "new": "if (++asked >= 1 && key && key === _traceKey) {",
+    "old": "    if (++asked === total && key && key === _traceKey) {",
+    "new": "    if (++asked >= 1 && key && key === _traceKey) {",
     "tests": [
       "test/world/bootcache.test.js"
     ]

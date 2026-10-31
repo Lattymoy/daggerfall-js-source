@@ -83,8 +83,8 @@
   {
     "name": "RELIEF-PEAKS-frames-strength-unread",
     "file": "src/world/tamriel/tamrielLandforms.js",
-    "old": "strong = smooth01(dl / ORIENT_FULL);",
-    "new": "strong = 1;",
+    "old": "    strong = smooth01(dl / ORIENT_FULL);",
+    "new": "    strong = 1;",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RELIEF-PEAKS-frames-fixed-share-dropped",
     "file": "src/world/tamriel/tamrielLandforms.js",
-    "old": "let w0 = o[1] * strong, w1 = o[3] * strong, w2 = 1 - strong;",
-    "new": "let w0 = o[1] * strong, w1 = o[3] * strong, w2 = 0;",
+    "old": "    w2 = 1 - strong; // w2: the fixed frame's (frame 0)",
+    "new": "    w2 = 0; // w2: the fixed frame's (frame 0)",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RELIEF-PEAKS-frames-direction-unit-at-node",
     "file": "src/world/tamriel/tamrielLandforms.js",
-    "old": "vals[o + V_C2] = _st[0] * a + fc * (1 - a); vals[o + V_S2] = _st[1] * a + fs * (1 - a);",
-    "new": "vals[o + V_C2] = _st[0] * a + fc * (1 - a); vals[o + V_S2] = _st[1] * a + fs * (1 - a); { const l = Math.sqrt(vals[o + V_C2] * vals[o + V_C2] + vals[o + V_S2] * vals[o + V_S2]); if (l > 1e-9) { vals[o + V_C2] /= l; vals[o + V_S2] /= l; } }",
+    "old": "  vals[o + V_WX] = D.warp * signed(gx / D.warpScale + 5.2, gy / D.warpScale + 1.3);",
+    "new": "  {\n    const l = Math.sqrt(vals[o + V_C2] * vals[o + V_C2] + vals[o + V_S2] * vals[o + V_S2]);\n    if (l > 1e-9) {\n      vals[o + V_C2] /= l;\n      vals[o + V_S2] /= l;\n    }\n  }\n  vals[o + V_WX] = D.warp * signed(gx / D.warpScale + 5.2, gy / D.warpScale + 1.3);",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "RELIEF-PEAKS-ranges-swing-halved",
     "file": "src/world/tamriel/tamrielRanges.js",
-    "old": "foot: 1000, full: 2300, high: 1250,",
-    "new": "foot: 1000, full: 2300, high: 600,",
+    "old": "  high: 1250,",
+    "new": "  high: 600,",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "RELIEF-PEAKS-ranges-centre-at-top",
     "file": "src/world/tamriel/tamrielRanges.js",
-    "old": "return RANGE_MEAN + (1 - RANGE_MEAN) * smooth01(",
-    "new": "return 1 + 0 * smooth01(",
+    "old": "  return RANGE_MEAN + (1 - RANGE_MEAN) * smooth01((metresOf(h) - D.crest) / (metresOf(rangeCeiling()) - D.crest));",
+    "new": "  return 1 + 0 * smooth01((metresOf(h) - D.crest) / (metresOf(rangeCeiling()) - D.crest));",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "RELIEF-PEAKS-ranges-no-floor",
     "file": "src/world/tamriel/tamrielRanges.js",
-    "old": "return (out < floor ? floor : out) - h;",
-    "new": "return out - h;",
+    "old": "  return (out < floor ? floor : out) - h;",
+    "new": "  return out - h;",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ],
@@ -166,8 +166,8 @@
   {
     "name": "RELIEF-PEAKS-ranges-no-clip",
     "file": "src/world/tamriel/tamrielRanges.js",
-    "old": "if (out > from && ceiling > from) {",
-    "new": "if (false) {",
+    "old": "  if (out > from && ceiling > from) {",
+    "new": "  if (false) {",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "RELIEF-PEAKS-ranges-through-the-waters",
     "file": "src/world/tamriel/tamrielRanges.js",
-    "old": "if (swing > 0 && nearWater) swing *= smooth01(",
-    "new": "if (false) swing *= smooth01(",
+    "old": "  if (swing > 0 && nearWater) swing *= smooth01((waterDistance(bx, by) - D.water[0]) / (D.water[1] - D.water[0]));",
+    "new": "  if (false) swing *= smooth01((waterDistance(bx, by) - D.water[0]) / (D.water[1] - D.water[0]));",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "RELIEF-PEAKS-ranges-swing-ungraded",
     "file": "src/world/tamriel/tamrielRanges.js",
-    "old": "return (D.high / STREAMING_TERRAIN_SCALE) * smooth01((metresOf(h) - D.foot) / (D.full - D.foot));",
-    "new": "return D.high / STREAMING_TERRAIN_SCALE;",
+    "old": "  return (D.high / STREAMING_TERRAIN_SCALE) * smooth01((metresOf(h) - D.foot) / (D.full - D.foot));",
+    "new": "  return D.high / STREAMING_TERRAIN_SCALE;",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
