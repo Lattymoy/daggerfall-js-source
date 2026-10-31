@@ -128,8 +128,8 @@
   {
     "name": "D23A-door-drops-party",
     "file": "src/ui/automap/automapDoor.js",
-    "old": "        party: deps.party ?? null,   // DISC23-A: the party members whose bodies stand in this level (the classic 3D arm ignores it)\n",
-    "new": "",
+    "old": "        party: deps.party ?? null, // DISC23-A: the party members whose bodies stand in this level (the classic 3D arm ignores it)\n        portals: deps.portals ?? null, // TP-SEEN: every teleporter in the level (the classic 3D arm ignores it)",
+    "new": "        portals: deps.portals ?? null, // TP-SEEN: every teleporter in the level (the classic 3D arm ignores it)",
     "tests": [
       "test/ui/ink/disc23a_party_plans.test.js"
     ]

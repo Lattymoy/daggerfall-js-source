@@ -218,8 +218,8 @@
   {
     "name": "ECHO1-the-map-left-blank",
     "file": "src/ui/automap/automapDoor.js",
-    "old": "        echoes: deps.echoes ?? null,",
-    "new": "        echoes: null,",
+    "old": "        echoes: deps.echoes ?? null, // ECHO1: where a chain moved something out of sight (the classic 3D arm ignores them)",
+    "new": "        echoes: null, // ECHO1: where a chain moved something out of sight (the classic 3D arm ignores them)",
     "tests": [
       "test/systems/echo1_dungeonecho.test.js"
     ]

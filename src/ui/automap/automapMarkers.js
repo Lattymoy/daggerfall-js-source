@@ -72,10 +72,10 @@ export const MARKER_TEX = Object.freeze({
   PLAYER: 'beaconPlayer',
   PIVOT: 'beaconPivot',
   ENTRANCE: 'beaconEntrance',
-  NOTE: 'noteMarker',                 // c2/S8
-  PORTAL_ENTRANCE: 'portalEntrance',  // c2/S8
-  PORTAL_EXIT: 'portalExit',          // c2/S8
-  CONNECTION: 'portalConnection',     // c2/S8
+  NOTE: 'noteMarker', // c2/S8
+  PORTAL_ENTRANCE: 'portalEntrance', // c2/S8
+  PORTAL_EXIT: 'portalExit', // c2/S8
+  CONNECTION: 'portalConnection', // c2/S8
 });
 
 /**
@@ -83,15 +83,15 @@ export const MARKER_TEX = Object.freeze({
  * opaque Standard material then throws away.
  */
 export const BEACON_COLOURS = Object.freeze({
-  player: Object.freeze([1.0, 0.0, 0.0, 0.5]),      // :1372
-  pivot: Object.freeze([0.0, 0.0, 1.0, 0.5]),       // :1388
-  entranceRay: Object.freeze([0.0, 1.0, 0.0, 0.75]),// :1428
-  entranceCube: Object.freeze([0.0, 1.0, 0.0, 1.0]),// :1437 - `new Color(r,g,b)` is alpha 1
+  player: Object.freeze([1.0, 0.0, 0.0, 0.5]), // :1372
+  pivot: Object.freeze([0.0, 0.0, 1.0, 0.5]), // :1388
+  entranceRay: Object.freeze([0.0, 1.0, 0.0, 0.75]), // :1428
+  entranceCube: Object.freeze([0.0, 1.0, 0.0, 1.0]), // :1437 - `new Color(r,g,b)` is alpha 1
   // c2/S8, all `new Color(r,g,b)` and therefore all alpha 1
-  note: Object.freeze([1.0, 0.55, 0.0, 1.0]),          // :1582
-  portalEntrance: Object.freeze([0.513, 0.4, 1.0, 1.0]),// :1641
-  portalExit: Object.freeze([0.355, 0.279, 0.7, 1.0]),  // :1668
-  connection: Object.freeze([0.43, 0.34, 0.85, 1.0]),   // :638
+  note: Object.freeze([1.0, 0.55, 0.0, 1.0]), // :1582
+  portalEntrance: Object.freeze([0.513, 0.4, 1.0, 1.0]), // :1641
+  portalExit: Object.freeze([0.355, 0.279, 0.7, 1.0]), // :1668
+  connection: Object.freeze([0.43, 0.34, 0.85, 1.0]), // :638
 });
 
 /** The three 1x1 textures, as packed ABGR (uploadTexture's colour32
@@ -122,13 +122,13 @@ export function colour32(c) {
 
 /** localScale, transcribed. */
 export const BEACON_SCALES = Object.freeze({
-  player: Object.freeze([0.3, 50.0, 0.3]),        // :1370
-  pivot: Object.freeze([0.15, 50.2, 0.15]),       // :1386
-  rotateArrow: Object.freeze([0.15, 0.0005, 0.15]),// :1399, :1409
-  entranceRay: Object.freeze([0.3, 50.0, 0.3]),   // :1426
-  entranceCube: Object.freeze([0.8, 0.8, 0.8]),   // :1440
-  note: Object.freeze([0.6, 0.6, 0.6]),           // c2/S8 :1585
-  portal: Object.freeze([2.0, 0.1, 1.0]),         // c2/S8 :1650, :1676
+  player: Object.freeze([0.3, 50.0, 0.3]), // :1370
+  pivot: Object.freeze([0.15, 50.2, 0.15]), // :1386
+  rotateArrow: Object.freeze([0.15, 0.0005, 0.15]), // :1399, :1409
+  entranceRay: Object.freeze([0.3, 50.0, 0.3]), // :1426
+  entranceCube: Object.freeze([0.8, 0.8, 0.8]), // :1440
+  note: Object.freeze([0.6, 0.6, 0.6]), // c2/S8 :1585
+  portal: Object.freeze([2.0, 0.1, 1.0]), // c2/S8 :1650, :1676
 });
 
 /** The portal disc's LOCAL rotation under its parent (:1651, :1677) and
@@ -174,15 +174,22 @@ export const RAY_ENTRANCE_POS_OFFSET = Object.freeze([0, 0, 0]);
  *  origin. `sides` is the port's own tessellation and is the only free
  *  number here - Unity's mesh uses 20, so this does. */
 export function buildCylinderModel(textureRecord, sides = 20) {
-  const positions = [], normals = [], uvs = [], indices = [];
+  const positions = [],
+    normals = [],
+    uvs = [],
+    indices = [];
   const push = (x, y, z, nx, ny, nz) => {
-    positions.push(x, y, z); normals.push(nx, ny, nz); uvs.push(0.5, 0.5);
+    positions.push(x, y, z);
+    normals.push(nx, ny, nz);
+    uvs.push(0.5, 0.5);
     return positions.length / 3 - 1;
   };
-  const bot = [], top = [];
+  const bot = [],
+    top = [];
   for (let i = 0; i < sides; i++) {
     const a = (i / sides) * Math.PI * 2;
-    const cx = Math.cos(a) * 0.5, cz = Math.sin(a) * 0.5;
+    const cx = Math.cos(a) * 0.5,
+      cz = Math.sin(a) * 0.5;
     bot.push(push(cx, -1, cz, Math.cos(a), 0, Math.sin(a)));
     top.push(push(cx, 1, cz, Math.cos(a), 0, Math.sin(a)));
   }
@@ -190,10 +197,12 @@ export function buildCylinderModel(textureRecord, sides = 20) {
     const j = (i + 1) % sides;
     indices.push(bot[i], top[j], bot[j], bot[i], top[i], top[j]);
   }
-  const capTop = [], capBot = [];
+  const capTop = [],
+    capBot = [];
   for (let i = 0; i < sides; i++) {
     const a = (i / sides) * Math.PI * 2;
-    const cx = Math.cos(a) * 0.5, cz = Math.sin(a) * 0.5;
+    const cx = Math.cos(a) * 0.5,
+      cz = Math.sin(a) * 0.5;
     capTop.push(push(cx, 1, cz, 0, 1, 0));
     capBot.push(push(cx, -1, cz, 0, -1, 0));
   }
@@ -206,18 +215,73 @@ export function buildCylinderModel(textureRecord, sides = 20) {
 
 /** Unity's Cube primitive: 1x1x1 on the origin. */
 export function buildCubeModel(textureRecord) {
-  const positions = [], normals = [], uvs = [], indices = [];
+  const positions = [],
+    normals = [],
+    uvs = [],
+    indices = [];
   const faces = [
-    [[1, 0, 0], [[0.5, -0.5, 0.5], [0.5, -0.5, -0.5], [0.5, 0.5, -0.5], [0.5, 0.5, 0.5]]],
-    [[-1, 0, 0], [[-0.5, -0.5, -0.5], [-0.5, -0.5, 0.5], [-0.5, 0.5, 0.5], [-0.5, 0.5, -0.5]]],
-    [[0, 1, 0], [[-0.5, 0.5, 0.5], [0.5, 0.5, 0.5], [0.5, 0.5, -0.5], [-0.5, 0.5, -0.5]]],
-    [[0, -1, 0], [[-0.5, -0.5, -0.5], [0.5, -0.5, -0.5], [0.5, -0.5, 0.5], [-0.5, -0.5, 0.5]]],
-    [[0, 0, 1], [[-0.5, -0.5, 0.5], [0.5, -0.5, 0.5], [0.5, 0.5, 0.5], [-0.5, 0.5, 0.5]]],
-    [[0, 0, -1], [[0.5, -0.5, -0.5], [-0.5, -0.5, -0.5], [-0.5, 0.5, -0.5], [0.5, 0.5, -0.5]]],
+    [
+      [1, 0, 0],
+      [
+        [0.5, -0.5, 0.5],
+        [0.5, -0.5, -0.5],
+        [0.5, 0.5, -0.5],
+        [0.5, 0.5, 0.5],
+      ],
+    ],
+    [
+      [-1, 0, 0],
+      [
+        [-0.5, -0.5, -0.5],
+        [-0.5, -0.5, 0.5],
+        [-0.5, 0.5, 0.5],
+        [-0.5, 0.5, -0.5],
+      ],
+    ],
+    [
+      [0, 1, 0],
+      [
+        [-0.5, 0.5, 0.5],
+        [0.5, 0.5, 0.5],
+        [0.5, 0.5, -0.5],
+        [-0.5, 0.5, -0.5],
+      ],
+    ],
+    [
+      [0, -1, 0],
+      [
+        [-0.5, -0.5, -0.5],
+        [0.5, -0.5, -0.5],
+        [0.5, -0.5, 0.5],
+        [-0.5, -0.5, 0.5],
+      ],
+    ],
+    [
+      [0, 0, 1],
+      [
+        [-0.5, -0.5, 0.5],
+        [0.5, -0.5, 0.5],
+        [0.5, 0.5, 0.5],
+        [-0.5, 0.5, 0.5],
+      ],
+    ],
+    [
+      [0, 0, -1],
+      [
+        [0.5, -0.5, -0.5],
+        [-0.5, -0.5, -0.5],
+        [-0.5, 0.5, -0.5],
+        [0.5, 0.5, -0.5],
+      ],
+    ],
   ];
   for (const [n, quad] of faces) {
     const base = positions.length / 3;
-    for (const v of quad) { positions.push(v[0], v[1], v[2]); normals.push(n[0], n[1], n[2]); uvs.push(0.5, 0.5); }
+    for (const v of quad) {
+      positions.push(v[0], v[1], v[2]);
+      normals.push(n[0], n[1], n[2]);
+      uvs.push(0.5, 0.5);
+    }
     indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
   }
   return finish(positions, normals, uvs, indices, textureRecord);
@@ -230,9 +294,14 @@ export function buildCubeModel(textureRecord) {
  * units and the map camera looks at it from either side.
  */
 export function buildCurvedArrowModel(textureRecord, segments = 12) {
-  const positions = [], normals = [], uvs = [], indices = [];
-  const R_OUT = 0.45, R_IN = 0.30;
-  const A0 = 25 * Math.PI / 180, A1 = 145 * Math.PI / 180;
+  const positions = [],
+    normals = [],
+    uvs = [],
+    indices = [];
+  const R_OUT = 0.45,
+    R_IN = 0.3;
+  const A0 = (25 * Math.PI) / 180,
+    A1 = (145 * Math.PI) / 180;
   const at = (r, a) => [Math.cos(a) * r, 0, Math.sin(a) * r];
   const ring = [];
   for (let i = 0; i <= segments; i++) {
@@ -240,11 +309,12 @@ export function buildCurvedArrowModel(textureRecord, segments = 12) {
     ring.push([at(R_IN, a), at(R_OUT, a)]);
   }
   // the head: a triangle past the arc's far end
-  const aHead = A1 + 22 * Math.PI / 180;
+  const aHead = A1 + (22 * Math.PI) / 180;
   const head = [at(R_IN - 0.09, A1), at(R_OUT + 0.09, A1), at((R_IN + R_OUT) / 2, aHead)];
   const tris = [];
   for (let i = 0; i < segments; i++) {
-    const [i0, o0] = ring[i], [i1, o1] = ring[i + 1];
+    const [i0, o0] = ring[i],
+      [i1, o1] = ring[i + 1];
     tris.push([i0, o0, o1], [i0, o1, i1]);
   }
   tris.push(head);
@@ -253,8 +323,16 @@ export function buildCurvedArrowModel(textureRecord, segments = 12) {
     // front face under `frontFace(CW)` survives the cull from either
     // side. The pass is UNLIT, so the normals are documentation.
     const base = positions.length / 3;
-    for (const v of [a, b, c]) { positions.push(v[0], v[1], v[2]); normals.push(0, 1, 0); uvs.push(0.5, 0.5); }
-    for (const v of [a, c, b]) { positions.push(v[0], v[1], v[2]); normals.push(0, -1, 0); uvs.push(0.5, 0.5); }
+    for (const v of [a, b, c]) {
+      positions.push(v[0], v[1], v[2]);
+      normals.push(0, 1, 0);
+      uvs.push(0.5, 0.5);
+    }
+    for (const v of [a, c, b]) {
+      positions.push(v[0], v[1], v[2]);
+      normals.push(0, -1, 0);
+      uvs.push(0.5, 0.5);
+    }
     indices.push(base, base + 1, base + 2, base + 3, base + 4, base + 5);
   }
   return finish(positions, normals, uvs, indices, textureRecord);
@@ -277,24 +355,49 @@ export function buildCurvedArrowModel(textureRecord, segments = 12) {
  * the port transcribes it the same way - the listing IS the mesh.
  */
 export function buildDiamondModel(textureRecord) {
-  const p0 = [+0.5, 0, -0.5], p1 = [-0.5, 0, -0.5], p2 = [-0.5, 0, +0.5], p3 = [+0.5, 0, +0.5];
-  const s1 = [0, +1.0, 0], s2 = [0, -1.0, 0];
+  const p0 = [+0.5, 0, -0.5],
+    p1 = [-0.5, 0, -0.5],
+    p2 = [-0.5, 0, +0.5],
+    p3 = [+0.5, 0, +0.5];
+  const s1 = [0, +1.0, 0],
+    s2 = [0, -1.0, 0];
   const tris = [
-    [p0, p1, s1], [p1, p2, s1], [p2, p3, s1], [p3, p0, s1],
-    [p1, p0, s2], [p2, p1, s2], [p3, p2, s2], [p0, p3, s2],
+    [p0, p1, s1],
+    [p1, p2, s1],
+    [p2, p3, s1],
+    [p3, p0, s1],
+    [p1, p0, s2],
+    [p2, p1, s2],
+    [p3, p2, s2],
+    [p0, p3, s2],
   ];
-  const positions = [], normals = [], uvs = [], indices = [];
+  const positions = [],
+    normals = [],
+    uvs = [],
+    indices = [];
   for (const [a, b, c] of tris) {
     // RecalculateNormals' face normal, in Unity's LEFT-handed winding
     // (cross(b-a, c-a) there is the negation of the right-handed one).
     // The pass is UNLIT, so this is documentation either way.
-    const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
-    const vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
-    let nx = uz * vy - uy * vz, ny = ux * vz - uz * vx, nz = uy * vx - ux * vy;
+    const ux = b[0] - a[0],
+      uy = b[1] - a[1],
+      uz = b[2] - a[2];
+    const vx = c[0] - a[0],
+      vy = c[1] - a[1],
+      vz = c[2] - a[2];
+    let nx = uz * vy - uy * vz,
+      ny = ux * vz - uz * vx,
+      nz = uy * vx - ux * vy;
     const len = Math.hypot(nx, ny, nz) || 1;
-    nx /= len; ny /= len; nz /= len;
+    nx /= len;
+    ny /= len;
+    nz /= len;
     const base = positions.length / 3;
-    for (const v of [a, b, c]) { positions.push(v[0], v[1], v[2]); normals.push(nx, ny, nz); uvs.push(0.5, 0.5); }
+    for (const v of [a, b, c]) {
+      positions.push(v[0], v[1], v[2]);
+      normals.push(nx, ny, nz);
+      uvs.push(0.5, 0.5);
+    }
     indices.push(base, base + 1, base + 2);
   }
   return finish(positions, normals, uvs, indices, textureRecord);
@@ -302,11 +405,19 @@ export function buildDiamondModel(textureRecord) {
 
 function finish(positions, normals, uvs, indices, textureRecord) {
   const p = new Float32Array(positions);
-  let x0 = Infinity, y0 = Infinity, z0 = Infinity, x1 = -Infinity, y1 = -Infinity, z1 = -Infinity;
+  let x0 = Infinity,
+    y0 = Infinity,
+    z0 = Infinity,
+    x1 = -Infinity,
+    y1 = -Infinity,
+    z1 = -Infinity;
   for (let i = 0; i < p.length; i += 3) {
-    if (p[i] < x0) x0 = p[i]; if (p[i] > x1) x1 = p[i];
-    if (p[i + 1] < y0) y0 = p[i + 1]; if (p[i + 1] > y1) y1 = p[i + 1];
-    if (p[i + 2] < z0) z0 = p[i + 2]; if (p[i + 2] > z1) z1 = p[i + 2];
+    if (p[i] < x0) x0 = p[i];
+    if (p[i] > x1) x1 = p[i];
+    if (p[i + 1] < y0) y0 = p[i + 1];
+    if (p[i + 1] > y1) y1 = p[i + 1];
+    if (p[i + 2] < z0) z0 = p[i + 2];
+    if (p[i + 2] > z1) z1 = p[i + 2];
   }
   return {
     positions: p,
@@ -355,10 +466,12 @@ const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 export function fromToRotationUp(d) {
   const len = Math.hypot(d[0], d[1], d[2]);
   if (!(len > 0)) return [0, 0, 0, 1];
-  const ax = d[2], ay = 0, az = -d[0];       // cross([0,1,0], d)
-  const w = len + d[1];                       // |from||to| + dot(from, to)
+  const ax = d[2],
+    ay = 0,
+    az = -d[0]; // cross([0,1,0], d)
+  const w = len + d[1]; // |from||to| + dot(from, to)
   const n = Math.hypot(ax, ay, az, w);
-  if (!(n > 1e-9)) return [1, 0, 0, 0];       // d is straight down: a half turn about +x
+  if (!(n > 1e-9)) return [1, 0, 0, 0]; // d is straight down: a half turn about +x
   return [ax / n, ay / n, az / n, w / n];
 }
 
@@ -371,7 +484,10 @@ export function trsQuat(pos, quat, scale) {
   for (let col = 0; col < 3; col++) {
     for (let row = 0; row < 3; row++) m[col * 4 + row] = r[col * 4 + row] * scale[col];
   }
-  m[12] = pos[0]; m[13] = pos[1]; m[14] = pos[2]; m[15] = 1;
+  m[12] = pos[0];
+  m[13] = pos[1];
+  m[14] = pos[2];
+  m[15] = 1;
   return m;
 }
 
@@ -412,7 +528,8 @@ export function teleporterMarkerRows(key, conn) {
  *  its collider for real at :632, so it never answers a pick. */
 export function teleporterConnectionTransform(conn) {
   if (!conn) return null;
-  const a = conn.entrance.pos, b = conn.exit.pos;
+  const a = conn.entrance.pos,
+    b = conn.exit.pos;
   const d = [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
   const mid = [(a[0] + b[0]) * 0.5, (a[1] + b[1]) * 0.5, (a[2] + b[2]) * 0.5];
   const half = Math.hypot(d[0], d[1], d[2]) * 0.5;
@@ -460,12 +577,18 @@ export function userNoteMarkerRows(notes) {
  * `markerModels()` key or `'playerArrow'` for mesh 99900.
  */
 export function automapMarkerSet({
-  playerPos = null, playerYawDeg = 0, pivotPos = null, cameraYawDeg = 0,
-  entrancePos = null, entranceDiscovered = false, arrowBounds = null,
+  playerPos = null,
+  playerYawDeg = 0,
+  pivotPos = null,
+  cameraYawDeg = 0,
+  entrancePos = null,
+  entranceDiscovered = false,
+  arrowBounds = null,
   // c2/S8: the two user-data containers, which live BESIDE
   // gameobjectBeacons under gameobjectAutomap (:1573, :1620) and are
   // picked by the same RaycastAll over the whole automap layer
-  notes = null, teleporters = null,
+  notes = null,
+  teleporters = null,
 } = {}) {
   const M = markerModels();
   const out = [];
@@ -489,7 +612,12 @@ export function automapMarkerSet({
     // the pivot object carries the MAP CAMERA's yaw, which is how its
     // two child arrows keep pointing the way a rotation would turn
     const pivot = trs(pivotPos[0], pivotPos[1], pivotPos[2], 0, cameraYawDeg, 0, ...BEACON_SCALES.pivot);
-    out.push({ name: MARKER_NAMES.PIVOT_BEACON, model: 'cylinderPivot', matrix: pivot, bounds: M.cylinderPivot.bounds });
+    out.push({
+      name: MARKER_NAMES.PIVOT_BEACON,
+      model: 'cylinderPivot',
+      matrix: pivot,
+      bounds: M.cylinderPivot.bounds,
+    });
     for (const a of ROTATE_ARROW_LOCAL) {
       // parent-first: the pivot's (0.15, 50.2, 0.15) multiplies both
       // the arrow's offset and its own scale (see the header)

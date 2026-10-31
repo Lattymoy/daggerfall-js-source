@@ -1461,6 +1461,13 @@
 /src/ui/*
 !/src/ui/arena/
 /src/ui/arena/*/
+!/src/ui/automap/
+/src/ui/automap/*
+!/src/ui/automap/automapCamera.js
+!/src/ui/automap/automapChrome.js
+!/src/ui/automap/automapDoor.js
+!/src/ui/automap/automapMarkers.js
+!/src/ui/automap/automapText.js
 !/src/ui/card/
 /src/ui/card/*/
 !/src/ui/chronicleDoor.js
