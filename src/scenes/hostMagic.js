@@ -1521,7 +1521,7 @@ export function createPlayerMagic({
     m.dead = true;
   }
 
-  /** AUDIT FB1031 F2, F3: the bodies `m` may strike, and no other - the list flightStop's cover law reads (a body it flies
+  /** AUDIT FB1031 F2 and F3 - the bodies `m` may strike, and no other - the list flightStop's cover law reads (a body it flies
    *  through held cover open for it: a foe in a crown for a foe's bolt at me, a town defender for mine). A foe's strikes me
    *  alone, never a shipmate's; mine my targets (never one sparedByPlayer, never me) and the marks its flags meet - a
    *  mate's, my companion's, my duel's at a person's capsule, the court's boss at his own; a peer's drawn one any body. */
