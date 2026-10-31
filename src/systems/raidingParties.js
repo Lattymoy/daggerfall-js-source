@@ -114,7 +114,7 @@ import { giveBossTraits, rollBossTraits } from './bossTraits.js';   // RAID5: th
 import { RAID_KIND_ORDER, raidKindOf, raidKindAsk, raidKindName, raidWavePlan, raidWaveAt, raidWaveLine, raidLeaderLine, raidLeaderName, raidLeaderOf, raidLeaderNameOf,
   raidBearerFellLine, raidRefugeeSafeLine, raidRefugeeLostLine, raidHeldLine, raidObjectiveDetail, alongWay, wayLength,
   RAID_WAVE_BREATHER_S, RAID_WAVE_PACK_MIN, RAID_WAVE_PACK_MAX, RAID_WAVE_PACK_GAP_S, RAID_LEADER_TRAITS, RAID_LEADER_AGAIN_S,
-  RAID_DEFEND_PACK_MAX, RAID_DEFEND_PACK_GAP_S, RAID_DEFEND_FROM_M, RAID_AIM_TICKS, RAID_REFUGEES, RAID_REFUGEES_HOLD, RAID_REFUGEE_PACE,
+  RAID_DEFEND_PACK_MIN, RAID_DEFEND_PACK_MAX, RAID_DEFEND_PACK_GAP_S, RAID_DEFEND_FROM_M, RAID_AIM_TICKS, RAID_REFUGEES, RAID_REFUGEES_HOLD, RAID_REFUGEE_PACE,
   RAID_REFUGEE_WAIT_M, RAID_REFUGEE_SAFE_M, RAID_ESCORT_PACK_MAX, RAID_ESCORT_PACK_GAP_S, RAID_ESCORT_AHEAD_M,
   RAID_WAVE_STALL_S, RAID_SITE_AGAIN_S, RAID_REFUGEE_GAP_M } from './raidKinds.js';   // RAID5: the raid's kind; AUDIT WORLD-EVENTS: and its clocks
 import { enemyDisplayName } from '../characters/enemy/enemyBasics.js';   // STAFF-EVENT: its lines name a kind
@@ -140,6 +140,11 @@ export const MAX_RAID_DEFENDERS = 8;
 export const SPAWN_INTERVAL_MIN_S = 1;
 export const SPAWN_INTERVAL_MAX_S = 10;
 export const ORC_SPAWN_INTERVAL_MAX_S = 8;
+/** RAID-PACKS: a classic raid's pack, and the gap after one - the mod's mean wait a raider (5.5 s; 4.5 s an orc raid's)
+ *  a pack, so a raid stands about three times as quick. */
+export const RAID_CLASSIC_PACK_MIN = 3;
+export const RAID_CLASSIC_PACK_MAX = 5;
+export const raidClassicGapS = (type) => (SPAWN_INTERVAL_MIN_S + (type === 2 ? ORC_SPAWN_INTERVAL_MAX_S : SPAWN_INTERVAL_MAX_S)) / 2;
 /** PendingTimeoutSeconds [IL_069f], and what both clocks wait when a spawn lapses [IL_06b2, IL_06c3]. */
 export const PENDING_TIMEOUT_S = 8;
 export const PENDING_BACKOFF_S = 10;
@@ -789,12 +794,12 @@ export function raidFrame(dt = 0) {
   // I. a raider [IL_0712-IL_0760]
   if (_nextSpawnIn <= 0) {
     if (raid.staff) return staffPackStep(raid, liveRaiders(raidKey(raid)).length);   // STAFF-EVENT PACKS
-    scheduleNextSpawn(raid.type);
     const standing = liveRaiders(raidKey(raid)).length;
-    if (standing < MAX_RAID_ENEMIES) {
-      spawn(raid, 'raider', chooseRaider(raid.type, rnd()));
-      return 'raider';
-    }
+    // RAID-PACKS (2026-10-31: "make sure my fixes for staff raid are carried over to town raid"): the classic raid's
+    // raiders in packs about each player in turn (PACK-SPREAD), its cap by the players in the town (PACK-SCALE) - one
+    // raider a few seconds about the runner alone stood them in one corner, and few
+    if (standing < raidCap()) return kindPackStep(raid, raidCap() - standing, RAID_CLASSIC_PACK_MIN, RAID_CLASSIC_PACK_MAX, raidClassicGapS(raid.type));
+    scheduleNextSpawn(raid.type);
   }
   return 'idle';
 }
@@ -957,21 +962,28 @@ function letGoAllies(key) {
   _live = _live.filter((e) => !e.gone);
 }
 
-/** One of a kind's packs (the assault's, the standard's, the exodus's): up to `room` raiders, `min` to `max` at once,
- *  `gapS` between - its leader stood about `near` (a point, or the next player in the town - PACK-SPREAD's turn), its
- *  pack about its leader. Answers the section's word. */
-function kindPackStep(raid, room, min, max, gapS, near = undefined) {
+/** One of a kind's packs (the assault's, the standard's, the exodus's, RAID-PACKS the classic raid's): up to `room`
+ *  raiders, `min` to `max` at once, `gapS` between - its leader stood about `near` (a point, or the next player in the
+ *  town - PACK-SPREAD's turn), its pack about its leader. RAID-STALL: a leader with no spot STAFF_PACK_LEADER_TRIES times
+ *  is sought about `renear()` - the next player, or another side of the square. Answers the section's word. */
+function kindPackStep(raid, room, min, max, gapS, near = undefined, renear = nextPackPlayer) {
   const key = raidKey(raid);
   if (_pack && (_pack.key !== key || _pack.left <= 0)) _pack = null;
   if (room <= 0) { _pack = null; _nextSpawnIn = 1; return 'idle'; }
-  if (!_pack) { const size = Math.min(room, rangeInt(min, max + 1, rnd())); _pack = { key, left: size, size, at: null, far: true, near: near ?? staffPackPlayer()?.slice() ?? null, kind: true }; }   // AUDIT WORLD-EVENTS L4-7: its own point (the origin's shift moves it)
+  if (!_pack) { const size = Math.min(room, rangeInt(min, max + 1, rnd())); _pack = { key, left: size, size, at: null, far: true, near: near ?? nextPackPlayer(), kind: true }; }   // AUDIT WORLD-EVENTS L4-7: its own point (the origin's shift moves it)
   const pack = _pack;
+  if (!pack.at && (pack.fails ?? 0) >= STAFF_PACK_LEADER_TRIES) { pack.near = renear(); pack.fails = 0; }   // RAID-STALL: PACK-STALL's turn, for the town's raids
   pack.left--;
   const o = pack.at ? { at: pack.at, min: 1.5, max: STAFF_PACK_NEAR, los: false } : { min: RAID_SPAWN_MIN_DISTANCE, max: STAFF_PACK_FAR_MAX / 2, los: false, near: pack.near };
   _nextSpawnIn = pack.left > 0 ? STAFF_PACK_STEP_S : gapS;
   spawn(raid, 'raider', chooseRaider(raid.type, rnd()), o, pack);
   return 'raider';
 }
+
+/** PACK-SPREAD's next player, as a point a pack keeps (null: about me). */
+const nextPackPlayer = () => staffPackPlayer()?.slice() ?? null;
+/** RAID-SCALE: how many of a town raid's raiders stand at once - PACK-SCALE's cap, by the players in the town. */
+const raidCap = () => staffPackScale(host().peerFeetInTown?.()?.length ?? 1).cap;
 
 /** THE ASSAULT: the waves, a breather between, and the leader alone at the last. AUDIT WORLD-EVENTS L3-7: at a raid
  *  relay, nothing stands before its ledger is heard (a late-comer stood its first pack off its own count of none), and
@@ -1022,7 +1034,7 @@ function defendStep(raid) {
   if (b && !b.foe.dead && b.foe.entity) { o.share = Math.max(0, b.foe.entity.health) / Math.max(1, b.foe.entity.maxHealth); raid.stAt = localNow(); }   // AUDIT WORLD-EVENTS L3-8/L4-6: seen standing, and as he stands
   if (!raid.sacked && !b) { spawn(raid, 'bearer', null, o.post); return 'bearer'; }
   if (_nextSpawnIn > 0) return 'idle';
-  return kindPackStep(raid, Math.min(RAID_DEFEND_PACK_MAX, MAX_RAID_ENEMIES - liveRaiders(key).length), 2, RAID_DEFEND_PACK_MAX, RAID_DEFEND_PACK_GAP_S, alongSquare(o.post));
+  return kindPackStep(raid, Math.min(RAID_DEFEND_PACK_MAX, raidCap() - liveRaiders(key).length), RAID_DEFEND_PACK_MIN, RAID_DEFEND_PACK_MAX, RAID_DEFEND_PACK_GAP_S, alongSquare(o.post), () => alongSquare(o.post));   // RAID-SCALE; RAID-STALL: another side of the square
 }
 /** Where the standard's packs come from: a point about the square, RAID_DEFEND_FROM_M out on a bearing of the roll. */
 const alongSquare = (post) => { const a = rnd()() * Math.PI * 2; return [post[0] + Math.sin(a) * RAID_DEFEND_FROM_M, post[1], post[2] + Math.cos(a) * RAID_DEFEND_FROM_M]; };
@@ -1057,7 +1069,7 @@ function escortStep(raid, dt) {
   }
   if (!alive.length && still <= 0) return null;   // the exodus over, every refugee safe or fallen: the rest of the raid is the mod's
   if (_nextSpawnIn > 0 || !alive.length) return 'idle';
-  return kindPackStep(raid, Math.min(RAID_ESCORT_PACK_MAX, MAX_RAID_ENEMIES - liveRaiders(key).length), 2, RAID_ESCORT_PACK_MAX, RAID_ESCORT_PACK_GAP_S, alongWay(o.way, o.guide + RAID_ESCORT_AHEAD_M));
+  return kindPackStep(raid, Math.min(RAID_ESCORT_PACK_MAX, raidCap() - liveRaiders(key).length), 2, RAID_ESCORT_PACK_MAX, RAID_ESCORT_PACK_GAP_S, alongWay(o.way, o.guide + RAID_ESCORT_AHEAD_M));
 }
 /** A refugee's `follow` (characters/enemy/enemyMotor.js): its guide on the way, a step behind the one before it, and the
  *  way walked so far as the trail it keeps to. */
