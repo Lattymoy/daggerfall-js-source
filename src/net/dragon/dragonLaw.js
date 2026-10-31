@@ -66,7 +66,8 @@ export const dragonHolds = (o, nowMs) => { if (!isDragonOmen(o)) return false; c
 /** A cell's side, pixels: the relay's own cells, so a site's fight stands in its cell's room. */
 export const DRAGON_CELL_PX = WORLD_CELL;
 /** The cells a seed picks from: the continent's frame at its authored fit (world/tamriel/tamrielFrame.js BAY_ORIGIN 862,
- *  975, 6000 x 3750 pixels), which holds the land at any fit the game makes. */
+ *  975, 6000 x 3750 pixels). It holds the land at that fit and at the freeware's trace (ppu 15.5), not at every fit the
+ *  search allows (AUDIT DRAGON-CELL D11: past ppu 18.75 the land spills east of it). */
 export const DRAGON_CELLS = Object.freeze({ cx0: -54, cy0: -61, cols: 376, rows: 235 });
 /** How far past its cell a player is told its omen, pixels: DRAGON_SIGHT_R (4 km, scenes/dragonHost.js) and its roost
  *  (dragonBody.js ROOST_R) from the cell's edge, at 0.8192 km a pixel. */
@@ -82,24 +83,24 @@ export function dragonToldAt(o, px, py) {
   const { cx, cy } = dragonCellOf(o), x0 = cx * DRAGON_CELL_PX - DRAGON_TELL_PX, y0 = cy * DRAGON_CELL_PX - DRAGON_TELL_PX, span = DRAGON_CELL_PX + 2 * DRAGON_TELL_PX;
   return Number.isInteger(px) && Number.isInteger(py) && px >= x0 && py >= y0 && px < x0 + span && py < y0 + span;
 }
-/** How many omens a watch holds. Measured on the freeware (tools/dragonCellProbe.mjs): 27.7% of DRAGON_CELLS hold ground,
- *  so four, one in three a dragon, bring some eight a day down - as one in three watches did before. */
+/** How many omens a watch holds. On the freeware (tools/dragonCellProbe.mjs) at most 27.7% of DRAGON_CELLS hold ground,
+ *  so four, one in three a dragon, bring at most 8.9 a day down, and up to four a watch - one in three watches had one. */
 export const DRAGON_CELLS_A_WATCH = 4;
-/** A watch's omens: each `{w, s}` with a seed of the watch's seed `o.s`, the relay's alone, so each is an omen as the law
- *  reads one. One within two cells of an earlier one's is dropped, so a player stands near one at most.
- *  @param {{w: number, s: number}} o */
+/** A watch's omens: each `{w, s}`, `s` one of the watch's `seeds` (net/dragon/dragonSeed.js dragonOmenSeeds - each its own
+ *  HMAC, so one told says nothing of another), an omen as the law reads one. One within two cells of an earlier one's is
+ *  dropped, so a player stands near one at most. @param {{w: number, seeds: readonly number[]}} o */
 export function dragonCandidates(o) {
   /** @type {Array<{w: number, s: number}>} */ const out = [];
   for (let i = 0; i < DRAGON_CELLS_A_WATCH; i++) {
-    const c = { w: o.w, s: dragonRoll(o, 100 + i) }, cell = dragonCellOf(c);
+    const c = { w: o.w, s: o.seeds[i] >>> 0 }, cell = dragonCellOf(c);
     if (out.some((d) => { const e = dragonCellOf(d); return Math.max(Math.abs(e.cx - cell.cx), Math.abs(e.cy - cell.cy)) <= 2; })) continue;
     out.push(c);
   }
   return out;
 }
-/** The omen of a watch's that a player on map pixel (px, py) may be told, or null. @param {{w: number, s: number}} o @param {number} px @param {number} py */
+/** The omen of a watch's that a player on map pixel (px, py) may be told, or null. @param {{w: number, seeds: readonly number[]}} o @param {number} px @param {number} py */
 export const dragonCandidateAt = (o, px, py) => dragonCandidates(o).find((c) => dragonToldAt(c, px, py)) ?? null;
-/** The omen of a watch's whose dragon could stand at this site, or null. @param {{w: number, s: number}} o @param {number} sx @param {number} sz */
+/** The omen of a watch's whose dragon could stand at this site, or null. @param {{w: number, seeds: readonly number[]}} o @param {number} sx @param {number} sz */
 export const dragonCandidateOf = (o, sx, sz) => dragonCandidates(o).find((c) => dragonSiteOk(c, sx, sz)) ?? null;
 /** Which of its cell's grounds an omen's site is: its own roll, never the watch's number. @param {{w: number, s: number}} o */
 export const dragonSitePick = (o) => dragonRoll(o, 5);

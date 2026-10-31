@@ -14,7 +14,8 @@ import { cellRoomOfWire, PIXEL_UNITS } from '../../../src/net/wire.js';
 import { createDragonHost, DRAGON_ASK_RETRY_MS } from '../../../src/scenes/dragonHost.js';
 import { createDragonLink } from '../../../src/net/dragon/dragonLink.js';
 import { fakeRooms } from '../../fakeRoom.mjs';
-import { RELAY_KEY, omenOf, dragonOmenFrom, siteOf } from '../../dragonOmen.mjs';
+import { RELAY_KEY, omenOf, watchOf, dragonOmenFrom, siteOf } from '../../dragonOmen.mjs';
+import { DRAGON_TELL_DWELL_MS } from '../../../server/src/dragonFights.js';
 
 const subtle = globalThis.crypto.subtle;
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
@@ -77,10 +78,10 @@ test('DRAGON-HIDDEN the cell tells a watch\'s omen once its landing is past - fo
     assert.notEqual(OMEN.s, (await omenOf(W)).s);
     await say(a, { k: 'ask', w: W });
     assert.deepEqual(omens(a).map(({ w, s }) => [w, s]), [[W, OMEN.s], [W, OMEN.s]], 'told again: an answer lost is never the watch lost');
-    const last = Law.dragonCandidateAt(await omenOf(W - 1), PX, PY);
+    const last = Law.dragonCandidateAt(await watchOf(W - 1), PX, PY);
     await say(b, { k: 'ask', w: W - 1 });
-    assert.deepEqual(omens(b).map(({ w, s }) => [w, s]), [[W - 1, last ? last.s : null]], 'the last watch\'s too - its remains may lie');
-  });
+    assert.deepEqual(omens(b).map(({ w, s }) => [w, s]), [[W - 1, last && Law.isDragonOmen(last) ? last.s : null]], 'the last watch\'s too - its remains may lie (a quiet omen told null - AUDIT DRAGON-CELL D1)');
+  }, { start: TT.landAt - DRAGON_TELL_DWELL_MS - 1000 });   // AUDIT DRAGON-CELL D3: the sockets stood before it lands
   await withRelay(async ({ r, say }) => {
     const a = r.connect();
     await r.hello(a, 'peer-0001', at(0, 0));
@@ -93,7 +94,7 @@ test('DRAGON-HIDDEN the cell tells a watch\'s omen once its landing is past - fo
 
 test('DRAGON-HIDDEN the cell holds no fight for a watch its secret brings no dragon, and tells an old game - the public salt\'s - to reload (mutants: the brain\'s floor left at 1; the quiet watch is two guards - dragonHolds and dragonAdmits each refuse it - so no one mutant of either moves it, and DRAGON2-every-watch-a-dragon holds the roll they share)', async () => {
   let quiet = W + 1, qc = null;   // DRAGON-CELL: a watch with a quiet omen, at a site in its cell
-  while (!(qc = Law.dragonCandidates(await omenOf(quiet)).find((c) => !Law.isDragonOmen(c)))) quiet++;
+  while (!(qc = Law.dragonCandidates(await watchOf(quiet)).find((c) => !Law.isDragonOmen(c)))) quiet++;
   const Q = siteOf(qc), qAt = (mx, mz) => ({ x: Q.sx + mx * Law.DRAGON_NATIVE_PER_M, y: 0, z: Q.sz + mz * Law.DRAGON_NATIVE_PER_M, yaw: 0, pitch: 0 });
   await withRelay(async ({ r, say }) => {
     const a = r.connect();

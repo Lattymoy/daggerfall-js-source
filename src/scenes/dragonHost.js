@@ -5,7 +5,7 @@
 // the `in`, its blows draped on the land and judged on MY feet (egBlowVerdict), my shafts, spells and swings out to its
 // cell, its bar's model, its voice, its fall and its remains. scenes/world.js wires it; every seam is in `deps` (below,
 // createDragonHost), so it runs in Node. Not a DFU member. Ledger A (DRAGON).
-import { dragonTimes, dragonWatchesAbout, dragonQuietAt, dragonAskEnd, isDragonOmen, dragonLookOf, DRAGON_CLIMB_MS, DRAGON_REMAINS_MS, DRAGON_BRAIN_V, DRAGON_NATIVE_PER_M, DRAGON_LAND_SPAN_MS } from '../net/dragon/dragonLaw.js';
+import { dragonTimes, dragonWatchesAbout, dragonQuietAt, dragonAskEnd, dragonToldAt, isDragonOmen, dragonLookOf, DRAGON_CLIMB_MS, DRAGON_REMAINS_MS, DRAGON_BRAIN_V, DRAGON_NATIVE_PER_M, DRAGON_LAND_SPAN_MS } from '../net/dragon/dragonLaw.js';
 import { planAt, dragonLegAt, roostLeg, climbLeg, DRAGON_BODY_R, DRAGON_BODY_H } from '../net/dragon/dragonBody.js';
 import { DRAGON_BLOWS, DRAGON_BLOW, DRAGON_ADMIT_R, DRAGON_FAN_R, DRAGON_ENGAGE_R, DRAGON_MODE, DRAGON_STATE_SEND_MS } from '../net/dragon/dragonBrain.js';
 import { HIT_KINDS } from '../net/gate/gateBrain.js';
@@ -54,6 +54,9 @@ export const DRAGON_IN_RETRY_MS = 3000;
 /** DRAGON-HIDDEN: an `ask` for a watch's omen, again this often until it is answered. DRAGON-HIDDEN-TIME: asked from the
  *  watch's start (its landing is nobody's to count), so a landing is heard within this of it, at four asks a minute. */
 export const DRAGON_ASK_RETRY_MS = 15_000;
+/** AUDIT DRAGON-CELL D6: a `null` is asked again from the same pixel after this long (ms) - the relay may not have judged
+ *  my pose there yet, or I asked from a room it could not judge. */
+export const DRAGON_NONE_AGAIN_MS = 60_000;
 /** A fight unheard this long (three of its whole states) is left and asked again (ms). */
 export const DRAGON_HEARD_MS = 3 * DRAGON_STATE_SEND_MS;
 /** A landing seen later than this is neither judged nor heard (ms - the gate's), and a shape lingers this long after (ms). */
@@ -128,19 +131,24 @@ export function createDragonHost(deps) {
   const player = deps.player ?? (() => playerEntity);
   const judged = new Set(), cued = new Set(), heardLand = new Set(), meshes = new Map();
   let memW = null, lastIn = { w: null, at: -Infinity }, noticed = null, nearSince = null, roarSlot = null;
-  const omens = new Map(), asked = new Map(), toldNoneAt = new Map();   // DRAGON-HIDDEN: each watch's seed its cell told (null: none here), and when I last asked
+  const omens = new Map(), asked = new Map(), askedFrom = new Map(), toldNoneAt = new Map();   // DRAGON-HIDDEN: each watch's seed its cell told (null: none here), when and where I last asked
   const seedOf = (w) => omens.get(w);
-  /** DRAGON-CELL: the map pixel I stand on, as a word - a `null` answer is asked again from another. */
-  const pixelHere = () => { const f = deps.feet?.(); if (!f) return ''; const n = deps.native(f[0], f[2]); return mapPixelOfWire(n[0], n[1]).join(','); };
+  /** DRAGON-CELL: the map pixel I stand on, or null. */
+  const pixelHere = () => { const f = deps.feet?.(); if (!f) return null; const n = deps.native(f[0], f[2]); return mapPixelOfWire(n[0], n[1]); };
   /** DRAGON-HIDDEN: an `ask` for each watch about whose landing is past, until it is answered - down whatever room I
-   *  stand in (AUDIT DRAGON-HIDDEN B1: net/online.js sendDragon - a siege's battle sees the sky too). DRAGON-CELL: the relay
-   *  tells a seed only near its cell, so a `null` (nothing near me) is asked again once I stand on another pixel. */
+   *  stand in. DRAGON-CELL: the relay tells a seed only near its omen's cell, so a seed is asked again once I stand outside
+   *  that omen's reach (another omen of the watch may be about me - AUDIT DRAGON-CELL D5), and a null from another pixel,
+   *  or from this one after DRAGON_NONE_AGAIN_MS (a room or a pose the relay could not judge yet - D6). */
   function ask(t) {
+    const here = pixelHere(), key = here ? here.join(',') : '';
     for (const w of dragonWatchesAbout(t)) {
-      if (omens.get(w) != null || (omens.has(w) && toldNoneAt.get(w) === pixelHere()) || t < dragonQuietAt(w) - DRAGON_LAND_SPAN_MS || t >= dragonAskEnd(w) || t - (asked.get(w) ?? -Infinity) < DRAGON_ASK_RETRY_MS) continue;   // DRAGON-HIDDEN-TIME: from the watch's start, its landing being nobody's to count
-      if (deps.online?.send?.({ k: 'ask', w })) asked.set(w, t);
+      const s = omens.get(w), none = toldNoneAt.get(w);
+      if (s != null && (!here || dragonToldAt({ w, s }, here[0], here[1]))) continue;
+      if (s == null && omens.has(w) && none?.at === key && t - none.t < DRAGON_NONE_AGAIN_MS) continue;
+      if (t < dragonQuietAt(w) - DRAGON_LAND_SPAN_MS || t >= dragonAskEnd(w) || t - (asked.get(w) ?? -Infinity) < DRAGON_ASK_RETRY_MS) continue;   // DRAGON-HIDDEN-TIME: from the watch's start, its landing being nobody's to count
+      if (deps.online?.send?.({ k: 'ask', w })) { asked.set(w, t); askedFrom.set(w, key); }
     }
-    for (const m of [omens, asked, toldNoneAt]) for (const w of m.keys()) if (!dragonWatchesAbout(t).includes(w)) m.delete(w);
+    for (const m of [omens, asked, askedFrom, toldNoneAt]) for (const w of m.keys()) if (!dragonWatchesAbout(t).includes(w)) m.delete(w);
   }
   let lastPh = 1, lastMd = DRAGON_MODE.air, saidFell = false, saidGone = false, landed = false;
   let hpSeen = null, hurtAt = -Infinity, roomAt = -Infinity, heardHurt = -Infinity;
@@ -428,7 +436,7 @@ export function createDragonHost(deps) {
     site: () => live?.site ?? null,
     /** DRAGON-HIDDEN: a watch's omen as its cell told it (`s` null: none near me - DRAGON-CELL - or no dragon at this relay).
      *  @param {{w: number, s: number|null}} o */
-    omen(o) { omens.set(o.w, o.s); if (o.s == null) toldNoneAt.set(o.w, pixelHere()); else toldNoneAt.delete(o.w); },
+    omen(o) { omens.set(o.w, o.s); if (o.s == null) toldNoneAt.set(o.w, { at: askedFrom.get(o.w) ?? '', t: deps.now() }); else toldNoneAt.delete(o.w); },   // AUDIT DRAGON-CELL D6: the pixel it was asked from
     /** Test seams. */
     _queue: () => queue,
     _live: () => live,

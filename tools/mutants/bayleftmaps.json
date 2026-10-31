@@ -446,12 +446,12 @@
   {
     "name": "BLM-C9-the-rows-unread",
     "file": "src/ui/heldMap.js",
-    "old": "[...tamrielFindRows(ink), ...tamrielFoundRows(foundMadePlaces())]",
-    "new": "[...tamrielFoundRows(foundMadePlaces())]",
+    "old": "    for (const row of ink ? tamrielFindRows(ink) : []) {",
+    "new": "    for (const row of []) {",
     "tests": [
       "test/ui/bayleft_find.test.js"
     ],
-    "note": "the find box finds no place past the Bay (lane C's p1: 296 of 296 names never found) - re-aimed by content (FIND-FOUND: the listed rows beside the found)"
+    "note": "the find box finds no place past the Bay (lane C's p1: 296 of 296 names never found) - re-aimed by content (FIND-FOUND: the listed rows beside the found) Re-aimed by content (AUDIT DRAGON-CELL)."
   },
   {
     "name": "BLM-C9-the-index-kept-for-good",

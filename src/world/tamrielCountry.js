@@ -44,6 +44,9 @@ export const COUNTRY_SALT = 0xc0c7;
 export const COUNTRY_TYPES = Object.freeze([LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage, LOCATION_TYPES.HomeFarms,
   LOCATION_TYPES.ReligionTemple, LOCATION_TYPES.Tavern, LOCATION_TYPES.HomeWealthy, LOCATION_TYPES.ReligionCult, LOCATION_TYPES.HomePoor]);
 /** The id's lanes: the first, and how many. */
+/** The countryside's pixel provider's name in the world's registry (scenes/tamrielPlacesHost.js registers it once the land
+ *  past the Bay stands; AUDIT DRAGON-CELL D8: a reader of that land waits for it). */
+export const COUNTRY_SOURCE = 'tesa-country';
 export const COUNTRY_LANE = 0x300;
 export const COUNTRY_LANES = 64;
 /** The location indices count down from here, past Arena's (-1,000,000 and down 432). */

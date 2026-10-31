@@ -72,9 +72,10 @@
   {
     "name": "WWGE-the-forced-slice-none",
     "file": "src/scenes/gate/gateLanes.js",
-    "old": "const until = clock() + (deadline.didTimeout ? SCAN_FORCED_SLICE_MS : 0);",
-    "new": "const until = clock() + 0;",
-    "tests": ["test/world/worldWide/ww_gates_everywhere.test.js"]
+    "old": "const until = clock() + (deadline.didTimeout ? SCAN_FORCED_SLICE_MS : 0);\n        const more = () =>",
+    "new": "const until = clock() + 0;\n        const more = () =>",
+    "tests": ["test/world/worldWide/ww_gates_everywhere.test.js"],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL)."
   },
   {
     "name": "WWGE-a-site-off-a-scan-not-whole",

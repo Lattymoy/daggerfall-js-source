@@ -1,6 +1,6 @@
 // DRAGON-CELL (2026-10-31, from Discord: a player decoded the omen the relay told every screen at a dragon's landing and read
 // its pixel; the owner chose "Cell-scoped"; bible/11-Multiplayer/Dwarven-Dragon.md DRAGON-CELL). A watch holds
-// DRAGON_CELLS_A_WATCH omens, each a seed of the watch's own seed and a cell of its own; the relay tells one only to a socket
+// DRAGON_CELLS_A_WATCH omens, each its own seed (AUDIT DRAGON-CELL D1: its own HMAC) and cell; the relay tells one only to a socket
 // whose pose stands within DRAGON_TELL_PX of its cell, and the client finds its site in that cell. Pinned: the law's box,
 // its omens and their spacing; the relay's answer near, far and outside a socket's cover; the client asking again from
 // another pixel; a square's ground past the Bay. tools/mutants/dragoncell.json.
@@ -14,24 +14,27 @@ import { createTheatreGateScans } from '../../../src/scenes/gate/gateLanes.js';
 import { LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
 import { theatreAt } from '../../../src/world/worldWide/worldGrid.js';
 import { fakeRooms } from '../../fakeRoom.mjs';
-import { RELAY_KEY, omenOf, dragonOmenFrom, siteOf } from '../../dragonOmen.mjs';
+import { RELAY_KEY, watchOf, dragonOmenFrom, siteOf } from '../../dragonOmen.mjs';
+import { DRAGON_TELL_DWELL_MS } from '../../../server/src/dragonFights.js';
+import { COUNTRY_SOURCE } from '../../../src/world/tamrielCountry.js';
 
 const OMEN = await dragonOmenFrom(500_000), W = OMEN.w, TT = Law.dragonTimes(OMEN);
 const SITE = siteOf(OMEN), CELL = cellRoomOfWire(SITE.sx, SITE.sz);
 const posed = (px, py) => { const c = Law.pixelCentreNative(px, py); return { x: c.sx, y: 0, z: c.sz, yaw: 0, pitch: 0 }; };
 const omens = (ws) => ws.sent.filter((m) => m.t === 'dragon' && m.k === 'omen').map(({ w, s }) => [w, s]);
 
-test('DRAGON-CELL the law: a pixel is told an omen within DRAGON_TELL_PX of its cell and no further; a watch\'s omens are seeds of its own seed, none within two cells of another, the one near a pixel and the one a site stands in found (mutants: the box\'s margin; the spacing; another omen\'s cell)', async () => {
+test('DRAGON-CELL the law: a pixel is told an omen within DRAGON_TELL_PX of its cell and no further; a watch\'s omens are its seeds, none within two cells of another, the one near a pixel and the one a site stands in found (mutants: the box\'s margin; the spacing; another omen\'s cell)', async () => {
   const { cx, cy } = Law.dragonCellOf(OMEN), x0 = cx * Law.DRAGON_CELL_PX, y0 = cy * Law.DRAGON_CELL_PX, T = Law.DRAGON_TELL_PX, E = x0 + Law.DRAGON_CELL_PX + T;
   assert.deepEqual([Law.DRAGON_CELL_PX, T, Law.DRAGON_CELLS_A_WATCH], [16, 6, 4]);
   assert.deepEqual([Law.dragonToldAt(OMEN, x0 - T, y0), Law.dragonToldAt(OMEN, x0 - T - 1, y0), Law.dragonToldAt(OMEN, E - 1, y0), Law.dragonToldAt(OMEN, E, y0)], [true, false, true, false]);
   assert.deepEqual([Law.dragonToldAt(OMEN, x0, y0 - T), Law.dragonToldAt(OMEN, x0, y0 - T - 1), Law.dragonToldAt(OMEN, x0, E - x0 + y0 - 1), Law.dragonToldAt(OMEN, x0, E - x0 + y0)], [true, false, true, false]);
-  let spaced = 0;
+  let spaced = 0, kept = 0;
   for (let w = W; w < W + 400; w++) {
-    const o = await omenOf(w), cs = Law.dragonCandidates(o);
+    const o = await watchOf(w), cs = Law.dragonCandidates(o);
+    kept += cs.length;
     assert.ok(cs.length >= 1 && cs.length <= Law.DRAGON_CELLS_A_WATCH);
     for (const c of cs) {
-      assert.notEqual(c.s, o.s, 'never the watch\'s own seed');
+      assert.ok(o.seeds.includes(c.s), 'one of the watch\'s seeds');
       assert.equal(c.w, w);
       for (const d of cs) if (d !== c) { const a = Law.dragonCellOf(c), b = Law.dragonCellOf(d); assert.ok(Math.max(Math.abs(a.cx - b.cx), Math.abs(a.cy - b.cy)) > 2); spaced++; }
       const { px, py, sx, sz } = siteOf(c);
@@ -40,10 +43,11 @@ test('DRAGON-CELL the law: a pixel is told an omen within DRAGON_TELL_PX of its 
     }
   }
   assert.ok(spaced > 0);
+  assert.ok(kept >= 0.97 * Law.DRAGON_CELLS_A_WATCH * 400, `the spacing drops few (${kept} of ${Law.DRAGON_CELLS_A_WATCH * 400} kept)`);
   // the spacing's own law: an omen within two cells of an earlier one is dropped
   let w = W, o, cs;
-  for (;; w++) { o = await omenOf(w); cs = Law.dragonCandidates(o); if (cs.length < Law.DRAGON_CELLS_A_WATCH) break; if (w > W + 200_000) assert.fail('no watch drops an omen'); }
-  const all = Array.from({ length: Law.DRAGON_CELLS_A_WATCH }, (_, i) => ({ w, s: Law.dragonRoll(o, 100 + i) }));
+  for (;; w++) { o = await watchOf(w); cs = Law.dragonCandidates(o); if (cs.length < Law.DRAGON_CELLS_A_WATCH) break; if (w > W + 200_000) assert.fail('no watch drops an omen'); }
+  const all = o.seeds.map((s) => ({ w, s }));
   const lost = all.filter((c) => !cs.some((d) => d.s === c.s));
   assert.ok(lost.length >= 1);
   for (const c of lost) assert.ok(all.slice(0, all.indexOf(c)).some((d) => { const a = Law.dragonCellOf(c), b = Law.dragonCellOf(d); return Math.max(Math.abs(a.cx - b.cx), Math.abs(a.cy - b.cy)) <= 2; }));
@@ -60,12 +64,12 @@ async function withRelay(fn, { start = TT.landAt + 60_000 } = {}) {
   } finally { Date.now = realNow; }
 }
 
-test('DRAGON-CELL the relay: a socket posed near the omen\'s cell is told its seed once it lands; one posed far is told nothing until a quiet watch would be, then null; a pose outside the socket\'s cover is far; the watch\'s own seed is never said (mutants: told to every pose; the far told at once; the cover unread; the watch\'s seed told)', async () => {
+test('DRAGON-CELL the relay: a socket posed near the omen\'s cell is told its seed once it lands (and it has stood DRAGON_TELL_DWELL_MS - AUDIT DRAGON-CELL D3); one posed far is told nothing until a quiet watch would be, then null; a pose outside the socket\'s cover is told nothing; no other omen\'s seed is said (mutants: told to every pose; the far told at once; the cover unread)', async () => {
   const { cx, cy } = Law.dragonCellOf(OMEN), farPx = cx * Law.DRAGON_CELL_PX + Law.DRAGON_CELL_PX + Law.DRAGON_TELL_PX + 2, farPy = SITE.py;
   const FAR_CELL = cellRoomOfWire(posed(farPx, farPy).x, posed(farPx, farPy).z), AWAY = posed(SITE.px + 4 * Law.DRAGON_CELL_PX, SITE.py);
   const AWAY_CELL = cellRoomOfWire(AWAY.x, AWAY.z);
   assert.notEqual(FAR_CELL, CELL);
-  const watchSeed = (await omenOf(W)).s;
+  const others = (await watchOf(W)).seeds.filter((s) => s !== OMEN.s);
   await withRelay(async ({ room, say, set }) => {
     const r = room(CELL), f = room(FAR_CELL), aw = room(AWAY_CELL);
     const near = r.connect(), out = r.connect(), far = f.connect(), liar = aw.connect();
@@ -76,17 +80,17 @@ test('DRAGON-CELL the relay: a socket posed near the omen\'s cell is told its se
     set(TT.landAt - 1);
     await say(r, near, { k: 'ask', w: W });
     assert.deepEqual(omens(near), [], 'nothing before it lands');
-    set(Math.min(TT.landAt + 1, Law.dragonQuietAt(W) - 1));
+    set(Math.min(TT.landAt + 1, Law.dragonQuietAt(W) - 1));   // the sockets stood since landAt - DRAGON_TELL_DWELL_MS
     for (const [rr, ws] of [[r, near], [r, out], [f, far]]) await say(rr, ws, { k: 'ask', w: W });
     assert.deepEqual([omens(near), omens(out), omens(far)], [[[W, OMEN.s]], [], []], 'near: its seed; far: nothing yet, as before a landing');
     set(Law.dragonQuietAt(W));
     await say(r, out, { k: 'ask', w: W }); await say(f, far, { k: 'ask', w: W }); await say(aw, liar, { k: 'ask', w: W });
-    assert.deepEqual([omens(out), omens(far), omens(liar)], [[[W, null]], [[W, null]], [[W, null]]], 'far, or a pose its room does not cover: null, as a quiet watch is told');
-    for (const ws of [near, out, far, liar]) assert.ok(!ws.sent.some((m) => m.t === 'dragon' && m.s === watchSeed), 'the watch\'s own seed is never said');
-  });
+    assert.deepEqual([omens(out), omens(far), omens(liar)], [[], [[W, null]], []], 'far: null, as a quiet watch is told; a pose its room does not cover is not judged - nothing (AUDIT DRAGON-CELL D6)');
+    for (const ws of [near, out, far, liar]) assert.ok(!ws.sent.some((m) => m.t === 'dragon' && others.includes(m.s)), 'no other omen\'s seed is said');
+  }, { start: TT.landAt - DRAGON_TELL_DWELL_MS - 1 });
 });
 
-test('DRAGON-CELL the client: a null answer is asked again only from another pixel, after the retry; a seed told is never asked again (mutants: a null asked again where it was heard; a null never asked again)', () => {
+test('DRAGON-CELL the client: a null answer is asked again from another pixel, after the retry; a seed told is not asked again while I stand within its reach (mutants: a null asked again where it was heard; a null never asked again)', () => {
   const M = 40, S = { t: TT.landAt + 1000, sent: [], px: SITE.px };
   const link = createDragonLink({ now: () => S.t, site: () => null });
   const host = createDragonHost({
@@ -104,9 +108,11 @@ test('DRAGON-CELL the client: a null answer is asked again only from another pix
   assert.equal(asks(), 1, 'told none here: not asked again from here');
   S.px += 1; host.frame();
   assert.equal(asks(), 2, 'asked again from another pixel');
+  S.t += DRAGON_ASK_RETRY_MS; host.frame();
+  assert.equal(asks(), 3, 'unanswered: asked again after the retry');
   host.omen({ w: W, s: OMEN.s });
   S.px += 1; S.t += DRAGON_ASK_RETRY_MS; host.frame();
-  assert.equal(asks(), 2, 'told: never asked again');
+  assert.equal(asks(), 3, 'told: not asked again within its reach');
 });
 
 test('DRAGON-CELL a square\'s ground past the Bay (groundIn): its towns every place of a town\'s kind about it - one the theatre lists not - its ground in the square alone and on a lane that stands (never Cyrodiil\'s); kept for the square (mutants: the towns the listed alone; the square unbounded; any lane)', () => {
@@ -114,7 +120,7 @@ test('DRAGON-CELL a square\'s ground past the Bay (groundIn): its towns every pl
   const imperial = { ...town, px: 2504, py: 804, name: 'Bruma Road', mapId: 2 };   // Cyrodiil: the open zone's theatre, no lane
   let asks = 0;
   const places = {
-    generation: () => 1, theatres: () => [], inTheatre: () => [],
+    generation: () => 1, theatres: () => [], inTheatre: () => [], sources: () => [COUNTRY_SOURCE],
     at: (x, y) => { asks++; return [town, imperial].find((p) => p.px === x && p.py === y) ?? null; },
   };
   const scans = createTheatreGateScans({ places: /** @type {any} */ (places), wet: () => false, spawnSalt: 1, idle: null });

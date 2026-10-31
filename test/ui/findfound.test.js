@@ -95,3 +95,30 @@ test('FIND-FOUND THE BOX: with the continent on, a quest\'s town past the Bay is
   win._tamriel = false;
   assert.deepEqual(helbenar(), [], 'the Bay\'s sheet alone: nothing past it');
 });
+
+test('AUDIT FIND-FOUND F1, F2 one name, many places: found homonyms past the Bay come nearest first, each with its way from the player in the board\'s words; a find reads the found rows again, never MAPS.BSA\'s (mutants: the homonyms unsorted; no way; the Bay\'s rows read on every find)', () => {
+  _resetForTests();
+  globalThis.location = { search: '?skin=enhanced' };
+  globalThis.document = fakeDocument();
+  const me = { x: 3700, y: 700 };
+  const win = new HeldMapWindow({
+    getPlayerPixel: () => me, getClimateIndex: () => 231, woods: { heightMapBuffer: new Uint8Array(100).fill(10) }, mapSize: { width: 10, height: 10 },
+    gold: () => 1e6, goldPieces: () => 1e6, hasHorse: false, hasCart: false, hasShip: false, diseaseCount: () => 0, poisonCount: () => 0,
+  });
+  for (let i = 0; i < 20; i++) win.tick(0.05);
+  win._tamriel = true;
+  let rows = 0;
+  const read = win._searchRows.bind(win);
+  win._searchRows = (ink) => { rows++; return read(ink); };
+  const far = { x: 3900, y: 900 }, near = { x: 3710, y: 700 };
+  discoverLocation(countryId(far), { regionName: 'Morrowind', locationName: 'Helbenar' });
+  win._findLocations('Helbenar');
+  discoverLocation(countryId(near), { regionName: 'Morrowind', locationName: 'Helbenar' });
+  const hits = win._findLocations('Helbenar').filter((e) => e.pastBay && e.name === 'Helbenar');
+  assert.equal(rows, 1, 'MAPS.BSA\'s and the listed rows read once, across a find');
+  assert.deepEqual(hits.map((e) => e.pos), [near, far], 'the nearest first');
+  assert.deepEqual(hits.map((e) => e.way), ['8.2 km E', '232 km SE'], 'each its way, the board\'s words');
+  win._renderSearch(hits);
+  const shown = win._chrome.results.children.map((li) => li.children[0].children[1].textContent ?? li.children[0].children[1].children?.[0]?.textContent);
+  assert.deepEqual(shown, ['Morrowind, 8.2 km E', 'Morrowind, 232 km SE']);
+});

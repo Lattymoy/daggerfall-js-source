@@ -69,8 +69,8 @@
     "file": "src/scenes/dragonHost.js",
     "old": "  for (const w of dragonWatchesAbout(t)) {\n    const s = seedOf(w), o = { w, s };",
     "new": "  for (const w of dragonWatchesAbout(t).slice(0, 1)) {\n    const s = seedOf(w), o = { w, s };",
-    "tests": ["test/net/dragon/dragon3_client.test.js"],
-    "note": "Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed."
+    "tests": ["test/net/dragon/dragon3_client.test.js", "test/net/dragon/dragoncellaudit.test.js"],
+    "note": "Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed. AUDIT DRAGON-CELL D12: alive on main too; dragoncellaudit's pin reads it."
   },
   {
     "name": "DRAGON3-in-from-anywhere",

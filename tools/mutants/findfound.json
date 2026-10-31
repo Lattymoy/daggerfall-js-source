@@ -44,9 +44,10 @@
   {
     "name": "FIND-FOUND-the-box-unread",
     "file": "src/ui/heldMap.js",
-    "old": "[...tamrielFindRows(ink), ...tamrielFoundRows(foundMadePlaces())]",
-    "new": "[...tamrielFindRows(ink)]",
-    "tests": ["test/ui/findfound.test.js"]
+    "old": "    for (const row of ink ? tamrielFoundRows(foundMadePlaces()) : []) {",
+    "new": "    for (const row of []) {",
+    "tests": ["test/ui/findfound.test.js"],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL)."
   },
   {
     "name": "FIND-FOUND-the-index-kept-across-a-find",

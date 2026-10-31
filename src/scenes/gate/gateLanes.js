@@ -24,6 +24,7 @@ import { gateLaneOf, GATE_LANES, gateLaneOpen } from '../../net/gate/gateLaw.js'
 import { theatreAt, areaAt, BAY_THEATRE } from '../../world/worldWide/worldGrid.js';
 import { GATE_TOWN_MAX_PX } from '../../systems/gate/gateSite.js';   // DRAGON-CELL: how far about a square its towns are read
 import { inBay } from '../../world/tamriel/tamrielFrame.js';   // DRAGON-CELL: a square's ground past the Bay; the Bay's is its own scan's
+import { COUNTRY_SOURCE } from '../../world/tamrielCountry.js';   // AUDIT DRAGON-CELL D8: the countryside standing
 
 /**
  * WW-GATES-EVERYWHERE (A2c): the page's idle moments - the browser's idle callback, else (a page with none: Safari) a
@@ -62,14 +63,51 @@ export function createTheatreGateScans({ places, wet, spawnSalt, land = () => 0,
   /** @type {Map<number, ReturnType<typeof theatreGateScanner>>} */ const scanners = new Map();
   /** @type {Map<number, boolean>} */ const grounds = new Map();   // a whole scan's: whether it offers a gate ground
   /** @type {Map<string, import('../../systems/gate/theatreGateSite.js').TheatreGateScan>} */ const grounds8 = new Map();   // DRAGON-CELL: a square's (groundIn)
+  /** @type {any} */ let dig = null;   // AUDIT DRAGON-CELL D9: the square being read, a slice an idle moment
+  let digging = false;
   /** @type {number[]|null} */ let theatres = null;
   let warming = false;
-  const fresh = () => { if (places.generation() !== gen || land() !== ver) { gen = places.generation(); ver = land(); scans.clear(); scanners.clear(); grounds.clear(); grounds8.clear(); theatres = null; } };
+  const fresh = () => { if (places.generation() !== gen || land() !== ver) { gen = places.generation(); ver = land(); scans.clear(); scanners.clear(); grounds.clear(); grounds8.clear(); dig = null; theatres = null; } };
   /** @param {number} t */
   const scannerOf = (t) => {
     let s = scanners.get(t);
     if (!s) scanners.set(t, s = theatreGateScanner({ towns: places.inTheatre(t), placeAt: places.at, inTheatre: (x, y) => theatreAt(x, y) === t, areaAt: (x, y) => areaAt(x, y, () => -1), wet, theatre: t, spawnSalt }));
     return s;
+  };
+  /** DRAGON-CELL: read on in square `j` while `more()` - its towns a pixel at a time, then the gate's law over them - and
+   *  keep it once whole. Its towns are every place of a town's kind about it, row by row. */
+  const digOn = (/** @type {any} */ j, /** @type {() => boolean} */ more) => {
+    const R = GATE_TOWN_MAX_PX, span = j.side + 2 * R;
+    while (j.i < span * span) {
+      const x = j.x0 - R + (j.i % span), y = j.y0 - R + Math.floor(j.i / span);
+      j.i++;
+      const p = inBay(x, y) ? null : places.at(x, y);
+      if (p && p.px === x && p.py === y) j.towns.push(p);
+      if (j.i % 16 === 0 && !more()) return null;
+    }
+    const laneOk = (/** @type {number} */ t) => t !== BAY_THEATRE && t < GATE_LANES && open(t);
+    const inside = (/** @type {number} */ x, /** @type {number} */ y) => x >= j.x0 && y >= j.y0 && x < j.x0 + j.side && y < j.y0 + j.side && laneOk(theatreAt(x, y));
+    j.scan ??= theatreGateScanner({ towns: j.towns, placeAt: places.at, inTheatre: inside, areaAt: (x, y) => areaAt(x, y, () => -1), wet, theatre: -1, spawnSalt });
+    const g = j.scan.step(more);
+    if (!g) return null;
+    grounds8.set(j.key, g);
+    if (grounds8.size > 8) grounds8.delete(/** @type {string} */ (grounds8.keys().next().value));
+    if (dig === j) dig = null;
+    return g;
+  };
+  /** THE SQUARE'S WARM: the square asked last read on in the page's idle moments until it is whole. */
+  const warmDig = () => {
+    if (digging || !idle) return;
+    digging = true;
+    const go = /** @type {NonNullable<typeof idle>} */ (idle);
+    go(function slice(deadline) {
+      try {
+        fresh();
+        const until = clock() + (deadline.didTimeout ? SCAN_FORCED_SLICE_MS : 0);
+        if (dig && !digOn(dig, () => deadline.timeRemaining() > 2 || clock() < until)) { go(slice, { timeout: 250 }); return; }
+      } catch (e) { console.warn('[dragon] a square\'s ground', /** @type {any} */ (e)?.message ?? e); dig = null; }
+      digging = false;
+    }, { timeout: 1000 });
   };
   /** A theatre's scan made whole, kept for the generation. @param {number} t @param {import('../../systems/gate/theatreGateSite.js').TheatreGateScan} s */
   const keep = (t, s) => { scans.set(t, s); scanners.delete(t); grounds.set(t, theatreGateAreas(s).length > 0); theatres = null; return s; };
@@ -122,28 +160,24 @@ export function createTheatreGateScans({ places, wet, spawnSalt, land = () => 0,
     /** DRAGON-CELL (bible/11-Multiplayer/Dwarven-Dragon.md section 2): the gate's ground in one square past the Bay, `side`
      *  pixels from (x0, y0) - each pixel on a lane that stands, its towns every place of a town's kind about it, the
      *  countryside's among them (a theatre's scan lists its listed towns alone). Kept for the generation, the last few.
+     *  AUDIT DRAGON-CELL: null until the countryside stands (D8 - read before it, a square named another site) and, where
+     *  the page has idle moments, until its slices are read (D9 - 13 to 95 ms a square, 514 the first, on the freeware).
      *  @param {number} x0 @param {number} y0 @param {number} side */
     groundIn(x0, y0, side) {
       fresh();
-      const key = `${x0},${y0},${side}`;
-      let g = grounds8.get(key);
+      if (!places.sources().includes(COUNTRY_SOURCE)) return null;
+      const key = `${x0},${y0},${side}`, g = grounds8.get(key);
       if (g) return g;
-      const towns = [], R = GATE_TOWN_MAX_PX, laneOk = (/** @type {number} */ t) => t !== BAY_THEATRE && t < GATE_LANES && open(t);
-      for (let y = y0 - R; y < y0 + side + R; y++) for (let x = x0 - R; x < x0 + side + R; x++) {
-        const p = inBay(x, y) ? null : places.at(x, y);
-        if (p && p.px === x && p.py === y) towns.push(p);
-      }
-      const inside = (/** @type {number} */ x, /** @type {number} */ y) => x >= x0 && y >= y0 && x < x0 + side && y < y0 + side && laneOk(theatreAt(x, y));
-      g = theatreGateScanner({ towns, placeAt: places.at, inTheatre: inside, areaAt: (x, y) => areaAt(x, y, () => -1), wet, theatre: -1, spawnSalt }).step();
-      grounds8.set(key, g);
-      if (grounds8.size > 8) grounds8.delete(/** @type {string} */ (grounds8.keys().next().value));
-      return g;
+      if (dig?.key !== key) dig = { key, x0, y0, side, i: 0, towns: [], scan: null };
+      if (!idle) return digOn(dig, () => true);
+      warmDig();
+      return null;
     },
   });
 }
 /** @typedef {{ scanOf: (t: number) => import('../../systems/gate/theatreGateSite.js').TheatreGateScan, theatres: () => number[], siteOf: (n: number) => any,
  *   wholeScan?: (t: number) => (import('../../systems/gate/theatreGateSite.js').TheatreGateScan | null),
- *   groundIn?: (x0: number, y0: number, side: number) => import('../../systems/gate/theatreGateSite.js').TheatreGateScan }} TheatreGateScans */
+ *   groundIn?: (x0: number, y0: number, side: number) => (import('../../systems/gate/theatreGateSite.js').TheatreGateScan | null) }} TheatreGateScans */
 /** @type {TheatreGateScans|null} */
 let _kept = null;
 /** WW5 (bible/03-World/World-Wide.md WW5): the world host's theatre scans as it made them (scenes/world.js - online alone),

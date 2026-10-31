@@ -40,12 +40,12 @@
   {
     "name": "DRAGON-HIDDEN-told-for-any-watch",
     "file": "server/src/dragonFights.js",
-    "old": "  if (!dragonWatchesAbout(now).includes(m.w)) return;\n  const o = await dragonOmenOf(room, m.w);",
-    "new": "  const o = await dragonOmenOf(room, m.w);",
+    "old": "  if (!dragonWatchesAbout(now).includes(m.w)) return;\n  const p = judgedPixel(a);",
+    "new": "  const p = judgedPixel(a);",
     "tests": [
       "test/net/dragon/dragonhidden.test.js"
     ],
-    "note": "Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start."
+    "note": "Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start. Re-aimed by content (AUDIT DRAGON-CELL)."
   },
   {
     "name": "DRAGON-HIDDEN-the-seed-not-the-relays",
@@ -70,12 +70,12 @@
   {
     "name": "DRAGON-HIDDEN-asked-before-the-landing",
     "file": "src/scenes/dragonHost.js",
-    "old": " || t < dragonQuietAt(w) - DRAGON_LAND_SPAN_MS || t >= dragonAskEnd(w)",
-    "new": " || t >= dragonAskEnd(w)",
+    "old": "t < dragonQuietAt(w) - DRAGON_LAND_SPAN_MS || t >= dragonAskEnd(w)",
+    "new": "t >= dragonAskEnd(w)",
     "tests": [
       "test/net/dragon/dragonhidden.test.js"
     ],
-    "note": "Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start. Re-aimed by content again (DRAGON-CELL).",
+    "note": "Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start. Re-aimed by content again (DRAGON-CELL). Re-aimed by content (AUDIT DRAGON-CELL).",
     "equivalent": true,
     "why": "DRAGON-CELL found it alive on main too: the ask walks dragonWatchesAbout, whose watches are never before their start, so the bound is a guard no clock reaches."
   },
@@ -113,7 +113,9 @@
     "old": "if (s == null || !isDragonOmen(o)) continue;",
     "new": "if (s != null && !isDragonOmen(o)) continue;",
     "tests": [
-      "test/net/dragon/dragonhidden.test.js"
-    ]
+      "test/net/dragon/dragonhidden.test.js",
+      "test/net/dragon/dragoncellaudit.test.js"
+    ],
+    "note": "AUDIT DRAGON-CELL D12: alive on main too; dragoncellaudit's pin reads it."
   }
 ]

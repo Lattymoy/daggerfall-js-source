@@ -50,25 +50,29 @@ call it **Aetherbright**: its plates are the blue of the crystal, its wings the 
 
 DRAGON-HIDDEN (the owner: "people are able to predict the dragon spawn by looking at source code"): the rolls were a
 public salt's, so anyone could count every dragon to come. Every roll now takes an omen `{w, s}` (net/dragon/dragonLaw.js),
-its seed from HMAC of the relay's `GATE_SIGNING_KEY` under its own label (net/dragon/dragonSeed.js). DRAGON-CELL: the relay
-told that seed to every screen at the landing, and the seed named the pixel; now only a player near its cell is told.
+its seed an HMAC of the relay's `GATE_SIGNING_KEY` under its own label (net/dragon/dragonSeed.js). DRAGON-CELL: the relay
+told the seed to every screen at the landing, and the seed named the pixel; now only a player near its cell is told.
 
 - **The watch.** The real clock is cut into watches of `DRAGON_WATCH_MS` (one hour). A watch holds `DRAGON_CELLS_A_WATCH`
-  (4) omens, each a seed of the watch's own seed (`dragonCandidates`). One omen in `DRAGON_WATCH_ONE_IN` (3) brings a
-  dragon down where its cell has ground: about eight a day.
+  (4) omens, each seed its own HMAC (`dragonOmenSeeds`, `dragonCandidates`), so one told says nothing of another. One
+  omen in `DRAGON_WATCH_ONE_IN` (3) brings a dragon down where its cell has ground: at most 8.9 a day, up to four a watch.
 - **When.** An omen's landing is a whole second its seed rolls in the watch's first `DRAGON_LAND_SPAN_MS` (20 minutes,
   DRAGON-HIDDEN-TIME), so the clock tells nobody when.
 - **Where.** An omen picks a cell (`dragonCellOf`): one of the relay's 16-pixel world cells in the continent's frame at
-  its authored fit (`DRAGON_CELLS`), a box the relay knows with no map. The client finds the site in it over the world's
-  own data (`systems/dragon/dragonSite.js`): the Bay's gate scan on the Bay, and past it the gate's law over the towns
-  about the cell, the countryside's among them (`scenes/gate/gateLanes.js` groundIn). Its own roll picks one pixel. A
-  cell with no ground brings no dragon. An omen within two cells of an earlier one of its watch is dropped.
+  its authored fit (`DRAGON_CELLS`), a box the relay knows with no map; it holds the land at the shipped fits. The client
+  finds the site in it over the world's own data (`systems/dragon/dragonSite.js`): the Bay's gate scan's ground where the
+  cell has any, which every screen holds; else the gate's law over the towns about the cell past the Bay, the
+  countryside's among them (`scenes/gate/gateLanes.js` groundIn, read in idle slices once the countryside stands). Its
+  own roll picks one pixel. A cell with no ground brings no dragon. An omen within two cells of an earlier one is dropped.
 - **Told near its cell.** A client asks (`ask`) for this watch and the last, down whatever room it stands in. The relay
-  tells an omen's seed only to a socket posed within `DRAGON_TELL_PX` (6 pixels, the dragon's sight) of its cell, in a
-  cell that socket covers, once it has landed. Any other socket is told null, no sooner than a quiet watch
-  (`dragonQuietAt`), and asks again from another pixel. The watch's own seed is never told. No secret, no dragon.
-- **Its life.** It stays until slain or `DRAGON_STAY_MS` (40 minutes) after its landing, then climbs away. Two may stand
-  at once, in cells far apart.
+  judges a pose in a cell room (in a cell the socket covers) and in a battle (on its map frame); another room answers
+  nothing. It tells a dragon's omen only to a socket posed within `DRAGON_TELL_PX` (6 pixels, the dragon's sight) of its
+  cell, once it has landed and the socket has stood `DRAGON_TELL_DWELL_MS` (20 s) in its room. Any other is told null,
+  no sooner than a quiet watch (`dragonQuietAt`). The client asks again outside a told omen's reach, and after a null
+  from another pixel, or the same one a minute on. No secret, no dragon.
+- **Its life.** It stays until slain or `DRAGON_STAY_MS` (40 minutes) after its landing, then climbs away. Up to four may
+  stand at once, three cells apart at least. An account is rewarded for one a watch: the account service keys a kill by
+  watch and account (AUDIT DRAGON-CELL D4, put to the owner).
 - **The shiny.** One omen in `DRAGON_SHINY_ONE_IN` (20) is the Aetherbright. The fight, its receipt and the account's
   row carry it.
 - **The fight's site.** The relay holds a fight at the site an `in` names in its own cell, at most `DRAGON_SITES_MAX` a
@@ -465,6 +469,15 @@ DRAGON3-the-gates-day and -a-site-asked-every-frame, AUDIT-DRAGON-the-gate-its-o
 three A1 of `dragonhiddenaudit`'s, and the relay version's three. Retired with their code: AUDIT-DRAGON-HIDDEN-A1-the-cells-check-dropped
 and -B5-asked-after-a-null-omen (DRAGON-CELL-the-in-any-site and -the-null-asked-again-here hold their laws).
 DRAGON-HIDDEN-asked-before-the-landing was alive on main too: recorded equivalent, with why. The version line carries STOREFRONT's rollback floor and kill fields, so WIREAUDIT-6 and -9 aim there.
+
+**AUDIT DRAGON-CELL (2026-10-31, the owner: "Audit"; `01-Overview/audits/Audit-Dragon-Cell.md`).** Three lanes read
+DRAGON-CELL and FIND-FOUND cold. A told omen's seed ran back to its watch's seed through gateHash, so each omen's seed is
+its own HMAC now, and a quiet omen is told null. An `in` reads no omen outside its socket's cover or far from its pose.
+A socket is told after 20 s in its room, a battle's pose is judged, and the client asks again outside a told omen's
+reach and after a null. A cell across the Bay's edge takes the Bay's ground where it has any, and a square is read once
+the countryside stands, in idle slices. Open, and put to the owner: many forged sockets at once (D3), and one reward a
+watch (D4). Relay world298, re-hashed in place. Pinned by `test/net/dragon/dragoncellaudit.test.js` (9);
+`tools/mutants/dragoncellaudit.json`, 18 dead.
 
 **DRAGON7 - the Aetherbright (2026-10-29).** `characters/dwarvenDragonShiny.js` turns each PLTE colour at load - the brass
 and copper to aetherium's blue, the wings' olive membrane to its violet, the greys cooled - and writes the chunk's CRC

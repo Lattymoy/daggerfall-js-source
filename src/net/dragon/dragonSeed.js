@@ -30,3 +30,17 @@ export async function dragonWatchSeed(key, w, { subtle }) {
   const mac = new Uint8Array(await subtle.sign('HMAC', key, enc.encode(`dragon-watch:${w}`)));
   return ((mac[0] << 24) | (mac[1] << 16) | (mac[2] << 8) | mac[3]) >>> 0;
 }
+
+/**
+ * AUDIT DRAGON-CELL D1: watch `w`'s `n` omens' seeds, each the first four bytes of its own HMAC - one told says nothing of
+ * another or of the watch's (a seed rolled from the watch's by net/gate/gateLaw.js gateHash ran back to it in four guesses).
+ * @param {CryptoKey} key @param {number} w @param {number} n @param {{subtle: SubtleCrypto}} env @returns {Promise<number[]>}
+ */
+export async function dragonOmenSeeds(key, w, n, { subtle }) {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const mac = new Uint8Array(await subtle.sign('HMAC', key, enc.encode(`dragon-omen:${w}:${i}`)));
+    out.push(((mac[0] << 24) | (mac[1] << 16) | (mac[2] << 8) | mac[3]) >>> 0);
+  }
+  return out;
+}

@@ -56,11 +56,12 @@
   {
     "name": "DRAGON-CELL-the-omen-the-watchs-seed",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "    const c = { w: o.w, s: dragonRoll(o, 100 + i) }, cell = dragonCellOf(c);",
-    "new": "    const c = { w: o.w, s: i ? dragonRoll(o, 100 + i) : o.s }, cell = dragonCellOf(c);",
+    "old": "    const c = { w: o.w, s: o.seeds[i] >>> 0 }, cell = dragonCellOf(c);",
+    "new": "    const c = { w: o.w, s: o.seeds[0] >>> 0 }, cell = dragonCellOf(c);",
     "tests": [
       "test/net/dragon/dragoncell.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL)."
   },
   {
     "name": "DRAGON-CELL-told-to-every-pose",
@@ -74,11 +75,12 @@
   {
     "name": "DRAGON-CELL-the-cover-unread",
     "file": "server/src/dragonFights.js",
-    "old": "a.pose && !a.pose.dd && inCover(a, cellRoomOfWire(a.pose.x, a.pose.z)) ? mapPixelOfWire",
-    "new": "a.pose && !a.pose.dd ? mapPixelOfWire",
+    "old": "(!isCellRoom(a.key) || inCover(a, cellRoomOfWire(a.pose.x, a.pose.z)))",
+    "new": "true",
     "tests": [
       "test/net/dragon/dragoncell.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL)."
   },
   {
     "name": "DRAGON-CELL-the-far-told-at-once",
@@ -110,20 +112,22 @@
   {
     "name": "DRAGON-CELL-the-null-asked-again-here",
     "file": "src/scenes/dragonHost.js",
-    "old": "(omens.has(w) && toldNoneAt.get(w) === pixelHere())",
-    "new": "false",
+    "old": "      if (s == null && omens.has(w) && none?.at === key && t - none.t < DRAGON_NONE_AGAIN_MS) continue;\n",
+    "new": "",
     "tests": [
       "test/net/dragon/dragoncell.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL)."
   },
   {
     "name": "DRAGON-CELL-the-null-never-asked-again",
     "file": "src/scenes/dragonHost.js",
-    "old": "if (omens.get(w) != null || (omens.has(w)",
-    "new": "if (omens.has(w) || (omens.has(w)",
+    "old": "if (s == null && omens.has(w) && none?.at === key && t - none.t < DRAGON_NONE_AGAIN_MS) continue;",
+    "new": "if (s == null && omens.has(w)) continue;",
     "tests": [
       "test/net/dragon/dragoncell.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL)."
   },
   {
     "name": "DRAGON-CELL-the-site-a-pixel-outside",
@@ -144,57 +148,43 @@
     ]
   },
   {
-    "name": "DRAGON-CELL-the-site-the-wild-zone",
-    "file": "src/systems/dragon/dragonSite.js",
-    "old": "      if (r === WILD_REGION) continue;",
-    "new": "",
-    "tests": [
-      "test/net/dragon/dragon3_client.test.js"
-    ]
-  },
-  {
-    "name": "DRAGON-CELL-the-none-forgotten",
-    "file": "src/systems/dragon/dragonSite.js",
-    "old": "      found.clear(); found.set(key, s || null);",
-    "new": "      if (s) { found.clear(); found.set(key, s); }",
-    "tests": [
-      "test/net/dragon/dragon3_client.test.js"
-    ]
-  },
-  {
     "name": "DRAGON-CELL-the-square-the-listed-towns",
     "file": "src/scenes/gate/gateLanes.js",
-    "old": "        if (p && p.px === x && p.py === y) towns.push(p);",
+    "old": "      if (p && p.px === x && p.py === y) j.towns.push(p);\n",
     "new": "",
     "tests": [
       "test/net/dragon/dragoncell.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL)."
   },
   {
     "name": "DRAGON-CELL-the-square-unbounded",
     "file": "src/scenes/gate/gateLanes.js",
-    "old": "const inside = (/** @type {number} */ x, /** @type {number} */ y) => x >= x0 && y >= y0 && x < x0 + side && y < y0 + side && laneOk(theatreAt(x, y));",
+    "old": "const inside = (/** @type {number} */ x, /** @type {number} */ y) => x >= j.x0 && y >= j.y0 && x < j.x0 + j.side && y < j.y0 + j.side && laneOk(theatreAt(x, y));",
     "new": "const inside = (/** @type {number} */ x, /** @type {number} */ y) => laneOk(theatreAt(x, y));",
     "tests": [
       "test/net/dragon/dragoncell.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL)."
   },
   {
     "name": "DRAGON-CELL-the-square-any-lane",
     "file": "src/scenes/gate/gateLanes.js",
-    "old": "y < y0 + side && laneOk(theatreAt(x, y));",
-    "new": "y < y0 + side;",
+    "old": "y < j.y0 + j.side && laneOk(theatreAt(x, y));",
+    "new": "y < j.y0 + j.side;",
     "tests": [
       "test/net/dragon/dragoncell.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL)."
   },
   {
     "name": "DRAGON-CELL-the-square-not-kept",
     "file": "src/scenes/gate/gateLanes.js",
-    "old": "      if (g) return g;\n      const towns = [], R = GATE_TOWN_MAX_PX",
-    "new": "      const towns = [], R = GATE_TOWN_MAX_PX",
+    "old": "      if (g) return g;\n      if (dig?.key !== key)",
+    "new": "      if (dig?.key !== key)",
     "tests": [
       "test/net/dragon/dragoncell.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL)."
   }
 ]
