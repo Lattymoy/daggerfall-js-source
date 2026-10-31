@@ -46,7 +46,7 @@ items since a time.
 session (`/v1/staff/order-key/add`; two live at most; revoked, never deleted). A request to `POST /v1/staff/order` signed by
 that key runs one panel door as that member. The signature covers the handle, a second and a hash of the path and body, and
 works once. The same dispatcher a panel session uses checks the role, owner and claim rules, and every audit row carries
-`via: claude-project`. Sign-in, key, invite and order-key doors are refused, and every refusal is the word `staff-login`. No
+`via: claude-project`. Sign-in, key, invite, claim, hiding, following and order-key doors are refused, and every refusal is the word `staff-login`. An order is never an owner: Team, cutting a member off and the audit log answer `staff-owner` to it and stay with a live panel session. No
 password is stored and no session outlives the request.
 
 **Keeping.** The hourly job deletes suggestions after 30 days.

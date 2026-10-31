@@ -9,7 +9,7 @@ import { mintId, overRate, clearRate } from './accounts.js';
 import { handleList } from './titles.js';
 import { isBanned } from './sanctions.js';
 import { STAFF_ROUTES } from './service.js';
-import { staffRole, isOwner, refused, auditStatement, STAFF_IP_MAX, STAFF_TRY_MAX, STAFF_TRY_WINDOW_S, STAFF_SIG_S } from './staff.js';
+import { staffRole, refused, auditStatement, STAFF_IP_MAX, STAFF_TRY_MAX, STAFF_TRY_WINDOW_S, STAFF_SIG_S } from './staff.js';
 import { HIDDEN_ROUTES } from './staffHidden.js';
 import { FOLLOW_ROUTES } from './staffFollow.js';
 
@@ -79,7 +79,8 @@ export async function staffOrder(ctx, env, body, ip, dispatch) {
   if (!took.meta.changes) return refused(ctx, player, role, 'replayed');
   await clearRate(ctx, `stafftry:${lc}:${ip}`);
   await auditStatement(db, nowS, { actor: player, role, act: 'order', target: body.path.slice(0, 64), detail: { via: ORDER_VIA }, keyId: key.id }).run();
-  const who = { player, role, owner: isOwner(player, env), hash: null, keyId: key.id, idleAt: nowS, expiresAt: nowS, via: ORDER_VIA };
+  // owner doors (Team, cutting a member off, the audit log, invites) stay with a live panel session: an order is never an owner
+  const who = { player, role, owner: false, hash: null, keyId: key.id, idleAt: nowS, expiresAt: nowS, via: ORDER_VIA };
   return dispatch(who, body.path, body.body ?? {});
 }
 

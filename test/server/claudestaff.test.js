@@ -371,6 +371,12 @@ test('orders: a good one runs as the member and is audited with via; every bad o
   assert.equal(row.actor_name, 'SirMcMobdon');
   assert.equal(JSON.parse(row.detail).via, 'claude-project');
   assert.equal(JSON.parse(t.audits('order')[0].detail).via, 'claude-project');
+  // an order is never an owner: Team and the audit log stay with a live panel session
+  for (const [i, path] of ['/v1/staff/team', '/v1/staff/audit'].entries()) {
+    const r = await order(t, lead, 'SirMcMobdon', path, {}, { ts: nowS() + 1 + i });
+    assert.equal(r.status, 403, path);
+    assert.equal(r.body.error, 'staff-owner', path);
+  }
   const bad = async (res) => { assert.equal(res.status, 401); assert.equal(res.body.error, 'staff-login'); };
   const spent = at - 1;
   await bad(await order(t, lead, 'SirMcMobdon', '/v1/staff/me', {}, { signs: { path: '/v1/staff/me', body: { other: 1 } } }));   // the signature is over another body
@@ -383,8 +389,8 @@ test('orders: a good one runs as the member and is audited with via; every bad o
   await bad(await order(t, lead, 'kpblca_1', '/v1/staff/me'));   // one account's key, another's handle
   await bad(await order(t, second, 'SirMcMobdon', '/v1/staff/me'));   // a key bound to another account
   for (const path of ['/v1/staff/keys', '/v1/staff/key/forget', '/v1/staff/invite', '/v1/staff/claim', '/v1/staff/release', '/v1/staff/login', '/v1/staff/enroll', '/v1/staff/logout', '/v1/staff/order', '/v1/staff/order-key/add', '/v1/staff/order-key/list', '/v1/staff/nope'])
-    await bad(await order(t, lead, 'SirMcMobdon', path, {}, { ts: nowS() + 10 + Math.floor(Math.random() * 1000) }));
-  assert.ok(t.audits('login-refused').some((r) => JSON.parse(r.detail).why === 'order-path'), 'a refused path with a good signature is written down');
+    await bad(await order(t, lead, 'SirMcMobdon', path, {}, { ts: nowS() + 10 }));
+  assert.equal(t.audits('login-refused').filter((r) => JSON.parse(r.detail).why === 'order-path').length, 12, 'every refused path with a good signature is written down');
   // a Moderator-only member orders an Admin act: the normal role check refuses it
   const denied = await order(t, mod, 'Asynian', '/v1/staff/mods');
   assert.equal(denied.status, 403);
