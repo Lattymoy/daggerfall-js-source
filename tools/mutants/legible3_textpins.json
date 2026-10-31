@@ -61,5 +61,25 @@
     "tests": [
       "test/tooling/legible3_textpins.test.js"
     ]
+  },
+  {
+    "name": "TEXTPINS-the-run-never-cut",
+    "file": "tools/carryTextPins.mjs",
+    "old": "      runs.push(cur.slice(0, -1));\n      cur = '';\n    } else cur += c;",
+    "new": "      cur += c;\n    } else cur += c;",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-the-filter-unread",
+    "file": "tools/carryTextPins.mjs",
+    "old": "        ? frag && !s.includes(frag)",
+    "new": "        ? false",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ],
+    "equivalent": true,
+    "why": "the filter only spares the time: a regex whose literal run a text lacks cannot match it, so dropping the filter changes no answer"
   }
 ]

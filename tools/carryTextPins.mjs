@@ -94,10 +94,40 @@ const quoteAs = (q, s) =>
   `${q}${s.replace(/\\/g, '\\\\').replace(new RegExp(q, 'g'), `\\${q}`).replace(/\n/g, '\\n')}${q}`;
 const hasCapture = (pattern) => /(^|[^\\])\((?!\?)/.test(pattern.replace(/\[(?:\\.|[^\]])*\]/g, '[]'));
 
+/** A regex's longest run of literal characters (an escaped punctuation mark counts as one), or null under six. */
+export function literalRun(pattern) {
+  const runs = [];
+  let cur = '';
+  for (let i = 0; i < pattern.length; i++) {
+    const c = pattern[i];
+    if (c === '\\') {
+      const e = pattern[++i];
+      if (e !== undefined && /[^A-Za-z0-9]/.test(e)) cur += e;
+      else {
+        runs.push(cur);
+        cur = '';
+      }
+    } else if ('^$.|()[]{}'.includes(c)) {
+      runs.push(cur);
+      cur = '';
+      if (c === '[') {
+        while (i < pattern.length && pattern[i] !== ']') i += pattern[i] === '\\' ? 2 : 1;
+      }
+    } else if ('*+?'.includes(c)) {
+      runs.push(cur.slice(0, -1));
+      cur = '';
+    } else cur += c;
+  }
+  runs.push(cur);
+  const best = runs.reduce((a, b) => (b.length > a.length ? b : a), '');
+  return best.length >= 6 ? best : null;
+}
+
 /** The literals of a test that the change left behind, each with its carried spelling (or why it has none). */
 export function carriedIn(testSource, sources) {
   const ast = parse(testSource, { ecmaVersion: 'latest', sourceType: 'module', allowHashBang: true });
   const asserted = new Set();
+  const maps = new Map();
   const named = new Set();
   const out = [];
   const walk = (n, parent) => {
@@ -133,10 +163,21 @@ export function carriedIn(testSource, sources) {
       : null;
     const text = lit.type === 'TemplateLiteral' ? lit.quasis[0].value.cooked : lit.value;
     if (!regex && (typeof text !== 'string' || text.length < 12)) continue;
-    const hit = (s) => (regex ? regex.exec(s) : s.includes(text) ? { index: s.indexOf(text), 0: text } : null);
+    // a regex is tried only on a text that holds its longest literal run - a pin's pattern over a file it was never
+    // written for can backtrack for an hour
+    const frag = regex ? literalRun(lit.regex.pattern) : null;
+    const hit = (s) =>
+      regex
+        ? frag && !s.includes(frag)
+          ? null
+          : regex.exec(s)
+        : s.includes(text)
+          ? { index: s.indexOf(text), 0: text }
+          : null;
     const before = sources.map((s) => ({ s, m: hit(s.old) })).find((x) => x.m);
     if (!before || sources.some((s) => hit(s.new))) continue;
-    const map = offsetMap(before.s.old, before.s.new);
+    if (!maps.has(before.s)) maps.set(before.s, offsetMap(before.s.old, before.s.new));
+    const map = maps.get(before.s);
     const from = map(before.m.index, 'start'),
       to = map(before.m.index + before.m[0].length, 'end');
     const raw = testSource.slice(lit.start, lit.end);

@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { offsetMap, carriedIn } from '../../tools/carryTextPins.mjs';
+import { offsetMap, carriedIn, literalRun } from '../../tools/carryTextPins.mjs';
 
 const OLD = "export const a = { name: this.name.trim(), icon: this.icon };\nfunction f(x) { return x+1 }\n";
 const NEW = 'export const a = {\n  name: this.name.trim(),\n  icon: this.icon,\n};\nfunction f(x) {\n  return x + 1;\n}\n';
@@ -33,4 +33,12 @@ test('LEGIBLE 3 text pins: a quote that still finds the code, one that never fou
 test('LEGIBLE 3 text pins: a regex with a capture group outside an assertion is named, not carried - its groups are read (mutant: the capture rule unread)', () => {
   assert.deepEqual(carried("const m = s.match(/return (x)\\+1/); use(m[1]);"), ['a capture group read outside an assertion']);
   assert.deepEqual(carried("assert.match(s, /return (x)\\+1/);"), ['/return x \\+ 1/']);
+});
+
+test('LEGIBLE 3 text pins: a regex is tried only on a text holding its longest literal run - an escaped mark is a letter of it, a class or a quantifier ends it (mutant: the run never cut)', () => {
+  assert.equal(literalRun('name: this\\.name\\.trim\\(\\), icon'), 'name: this.name.trim(), icon');
+  assert.equal(literalRun('release\\(\\) \\{\\n\\s*this'), 'release() {');
+  assert.equal(literalRun('a[bc]+d'), null, 'nothing six long');
+  assert.equal(literalRun('abcdefg+hij'), 'abcdef', 'a quantified letter is not in the run');
+  assert.deepEqual(carried('assert.match(s, /nowhere at all[^x]*icon/);'), [], 'never run on a text without its run');
 });
