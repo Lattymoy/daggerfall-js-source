@@ -2,8 +2,8 @@
   {
     "name": "EGHERO-GALLERIES-caverns-the-fire-fall-a-metre-short",
     "file": "tools/egHeroCavernsScene.mjs",
-    "old": "add(refFragMesh('hazard.fall.curtain.ph1200')).level(-3, FALL_Y0, 3, FALL_Y1, 0);",
-    "new": "add(refFragMesh('hazard.fall.curtain.ph1200')).level(-2, FALL_Y0, 3, FALL_Y1, 0);",
+    "old": "  add(refFragMesh('hazard.fall.curtain.ph1200')).level(-3, FALL_Y0, 3, FALL_Y1, 0);",
+    "new": "  add(refFragMesh('hazard.fall.curtain.ph1200')).level(-2, FALL_Y0, 3, FALL_Y1, 0);",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EGHERO-GALLERIES-caverns-the-bore-pushed-in",
     "file": "tools/egHeroCavernsScene.mjs",
-    "old": "  const d = w * (PUSH * (0.15 + 0.85 * fbm2(SEED, Y * 0.42, ARC[i] * 0.5))",
-    "new": "  const d = -w * (PUSH * (0.15 + 0.85 * fbm2(SEED, Y * 0.42, ARC[i] * 0.5))",
+    "old": "  const d = w * (PUSH * (0.15 + 0.85 * fbm2(SEED, Y * 0.42, ARC[i] * 0.5)) + BENCH * clamp01((z - 1.7) / 0.4));",
+    "new": "  const d = -w * (PUSH * (0.15 + 0.85 * fbm2(SEED, Y * 0.42, ARC[i] * 0.5)) + BENCH * clamp01((z - 1.7) / 0.4));",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EGHERO-GALLERIES-caverns-the-ceiling-over-the-vault",
     "file": "tools/egHeroCavernsScene.mjs",
-    "old": "const LEN = 28, LIP_N = 8, LIP_F = 21, SKY0 = 11.2, SKY1 = 18.2, CEIL = 5.2;",
-    "new": "const LEN = 28, LIP_N = 8, LIP_F = 21, SKY0 = 11.2, SKY1 = 18.2, CEIL = 6.6;",
+    "old": "  CEIL = 5.2;",
+    "new": "  CEIL = 6.6;",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "EGHERO-GALLERIES-caverns-a-proxy-wall-left-off",
     "file": "tools/egHeroCavernsScene.mjs",
-    "old": "    .along(-3, 0, LIP_N, 0, CEIL, 0, true).along(3, 0, LIP_N, 0, CEIL)",
+    "old": "    .along(-3, 0, LIP_N, 0, CEIL, 0, true)\n    .along(3, 0, LIP_N, 0, CEIL)",
     "new": "    .along(3, 0, LIP_N, 0, CEIL)",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "EGHERO-GALLERIES-caverns-a-plank-past-the-reach",
     "file": "tools/egHeroCavernsScene.mjs",
-    "old": "['b', -0.5, 13.5, 15.5, -0.45]",
-    "new": "['b', -0.5, 15.3, 16.5, -0.45]",
+    "old": "  ['b', -0.5, 13.5, 15.5, -0.45],",
+    "new": "  ['b', -0.5, 15.3, 16.5, -0.45],",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "EGHERO-GALLERIES-caverns-the-graph-across-the-chasm",
     "file": "tools/egHeroCavernsScene.mjs",
-    "old": "['fx', 'fh'], ['fc', 'fh']]) add(refFragMesh(`edge.${a}${b}`))",
-    "new": "['fx', 'fh'], ['fc', 'fh'], ['nl', 'fl']]) add(refFragMesh(`edge.${a}${b}`))",
+    "old": "    ['fc', 'fh'],\n  ])",
+    "new": "    ['fc', 'fh'],\n    ['nl', 'fl'],\n  ])",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "EGHERO-GALLERIES-caverns-a-plank-out-of-its-kit",
     "file": "tools/egHeroCavernsScene.mjs",
-    "old": "add(refFragMesh(`course.ledge.${k}`)).box(x - PLANK_W / 2",
-    "new": "add(refFragMesh(`course.still.${k}`)).box(x - PLANK_W / 2",
+    "old": "    add(refFragMesh(`course.ledge.${k}`)).box(x - PLANK_W / 2, y0, top - 0.6, x + PLANK_W / 2, y1, top);",
+    "new": "    add(refFragMesh(`course.still.${k}`)).box(x - PLANK_W / 2, y0, top - 0.6, x + PLANK_W / 2, y1, top);",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "EGHERO-GALLERIES-caverns-the-surge-a-lane-narrowed",
     "file": "tools/egHeroCavernsScene.mjs",
-    "old": "add(refFragMesh('hazard.surge.channel.ph5300')).level(-2.6, 21.4, 1.4, 27.4, 0);",
-    "new": "add(refFragMesh('hazard.surge.channel.ph5300')).level(-2.6, 21.4, 0.6, 27.4, 0);",
+    "old": "  add(refFragMesh('hazard.surge.channel.ph5300')).level(-2.6, 21.4, 1.4, 27.4, 0);",
+    "new": "  add(refFragMesh('hazard.surge.channel.ph5300')).level(-2.6, 21.4, 0.6, 27.4, 0);",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "EGHERO-GALLERIES-stacks-the-bridge-unlined-west",
     "file": "tools/egHeroStacksScene.mjs",
-    "old": "  for (const sx of [-1, 1]) cells(edge, sx > 0 ? [DOOR_HW - 0.12, DOOR_HW]",
-    "new": "  for (const sx of [1]) cells(edge, sx > 0 ? [DOOR_HW - 0.12, DOOR_HW]",
+    "old": "  cells(edge, [-DOOR_HW, DOOR_HW], [THRESH - 0.12, THRESH], 0.012);\n  for (const sx of [-1, 1])",
+    "new": "  cells(edge, [-DOOR_HW, DOOR_HW], [THRESH - 0.12, THRESH], 0.012);\n  for (const sx of [1])",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "EGHERO-GALLERIES-stacks-the-stair-head-cut",
     "file": "tools/egHeroStacksScene.mjs",
-    "old": "['em', 'eh'], ['eh', 'eb'], ['c', 'wf']",
-    "new": "['em', 'eb'], ['eh', 'eb'], ['c', 'wf']",
+    "old": "    ['em', 'eh'],",
+    "new": "    ['em', 'eb'],",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "EGHERO-GALLERIES-stacks-the-galleries-low",
     "file": "tools/egHeroStacksScene.mjs",
-    "old": "const BZ = 3.5, BR0 = 15.5, BR1 = 22.05, BK = 5, SK = 2, SR0 = 6;",
-    "new": "const BZ = 2.5, BR0 = 15.5, BR1 = 22.05, BK = 5, SK = 2, SR0 = 6;",
+    "old": "const BZ = 3.5,",
+    "new": "const BZ = 2.5,",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "EGHERO-GALLERIES-stacks-a-stair-side-unwalled",
     "file": "tools/egHeroStacksScene.mjs",
-    "old": "    for (const ks of [kc - SK, kc + SK]) px.face(",
-    "new": "    for (const ks of [kc - SK]) px.face(",
+    "old": "    for (const ks of [kc - SK, kc + SK])",
+    "new": "    for (const ks of [kc - SK])",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "EGHERO-GALLERIES-stacks-a-parapet-unwalled",
     "file": "tools/egHeroStacksScene.mjs",
-    "old": "      if (!stairBay) px.face([[...p0, BZ], [...p0, BZ + 0.9]",
-    "new": "      if (!stairBay && k > kc) px.face([[...p0, BZ], [...p0, BZ + 0.9]",
+    "old": "      ]);\n      if (!stairBay)",
+    "new": "      ]);\n      if (!stairBay && k > kc)",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "EGHERO-GALLERIES-stacks-a-bookcase-past-the-reach",
     "file": "tools/egHeroStacksScene.mjs",
-    "old": "['b', -0.3, 6.24, 8.24, -0.2]",
-    "new": "['b', -0.3, 7.6, 8.4, -0.2]",
+    "old": "  ['b', -0.3, 6.24, 8.24, -0.2],",
+    "new": "  ['b', -0.3, 7.6, 8.4, -0.2],",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "EGHERO-GALLERIES-colonnade-a-drum-rolls-further",
     "file": "tools/egHeroColonnadeScene.mjs",
-    "old": "['drum', 'b', 12.0, 15.0, 0, 120, 300]",
-    "new": "['drum', 'b', 12.0, 15.0, 0, 160, 300]",
+    "old": "  ['drum', 'b', 12.0, 15.0, 0, 120, 300],",
+    "new": "  ['drum', 'b', 12.0, 15.0, 0, 160, 300],",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "EGHERO-GALLERIES-colonnade-the-capital-unlined",
     "file": "tools/egHeroColonnadeScene.mjs",
-    "old": "  cells(edge, [c0, c0 + W, c1 - W, c1], [d0, d0 + W, d1 - W, d1], CAP.top + E,",
-    "new": "  cells(edge, [c0, c0 + W, c1 - W, c1], [d0, d0 + W, d1 - W, d1], CAP.top + 0.2,",
+    "old": "    CAP.top + E,",
+    "new": "    CAP.top + 0.2,",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "EGHERO-GALLERIES-colonnade-the-still-drum-out-of-reach",
     "file": "tools/egHeroColonnadeScene.mjs",
-    "old": "[['still', 'a', 6.8, 9.4, 0.35, 0, 0]",
-    "new": "[['still', 'a', 6.8, 9.4, 0.6, 0, 0]",
+    "old": "  ['still', 'a', 6.8, 9.4, 0.35, 0, 0],",
+    "new": "  ['still', 'a', 6.8, 9.4, 0.6, 0, 0],",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "EGHERO-GALLERIES-colonnade-the-far-landing-out-of-reach",
     "file": "tools/egHeroColonnadeScene.mjs",
-    "old": "const HW = 2.5, LEN = 28, NEAR = 4.6, FAR = 23.6;",
-    "new": "const HW = 2.5, LEN = 28, NEAR = 4.6, FAR = 24.4;",
+    "old": "  FAR = 23.6;",
+    "new": "  FAR = 24.4;",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "EGHERO-GALLERIES-kit-newell-misread",
     "file": "tools/egHeroKit.mjs",
-    "old": "    n[0] += (a[1] - b[1]) * (a[2] + b[2]); n[1] += (a[2] - b[2]) * (a[0] + b[0]); n[2] += (a[0] - b[0]) * (a[1] + b[1]);\n  }\n  return unit(n);",
-    "new": "    n[0] += (a[1] + b[1]) * (a[2] + b[2]); n[1] += (a[2] - b[2]) * (a[0] + b[0]); n[2] += (a[0] - b[0]) * (a[1] + b[1]);\n  }\n  return unit(n);",
+    "old": "    n[0] += (a[1] - b[1]) * (a[2] + b[2]);",
+    "new": "    n[0] += (a[1] + b[1]) * (a[2] + b[2]);",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "EGHERO-GALLERIES-kit-a-doorway-uncut",
     "file": "tools/egHeroKit.mjs",
-    "old": "      if (!cut(i, j)) m.face(",
-    "new": "      if (true) m.face(",
+    "old": "      if (!cut(i, j))",
+    "new": "      if (true)",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "EGHERO-GALLERIES-kit-a-block-face-dropped",
     "file": "tools/egHeroKit.mjs",
-    "old": "  for (const [k, f] of Object.entries(F)) if (!skip.includes(k)) flat(m, f.map((i) => p[i]), mat, uvOf);",
-    "new": "  for (const [k, f] of Object.entries(F)) if (!skip.includes(k) && k !== '+z') flat(m, f.map((i) => p[i]), mat, uvOf);",
+    "old": "    if (!skip.includes(k))",
+    "new": "    if (!skip.includes(k) && k !== '+z')",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]

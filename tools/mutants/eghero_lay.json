@@ -875,8 +875,8 @@
   {
     "name": "EGHL-sweep-hero-ground-unread",
     "file": "tools/egSpanSolve.mjs",
-    "old": "    for (const q of spec.heroes ?? []) for (const g of q.floors) {",
-    "new": "    for (const q of []) for (const g of q.floors) {",
+    "old": "    for (const q of spec.heroes ?? [])",
+    "new": "    for (const q of [])",
     "tests": [
       "test/net/eliteGates/eghero_lay.test.js"
     ]

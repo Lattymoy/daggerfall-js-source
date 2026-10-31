@@ -398,8 +398,8 @@
   {
     "name": "PILOT-the-ledge-unrested",
     "file": "tools/egSpanSolve.mjs",
-    "old": "const rest = m.grounded && m.grip < 1 && me().y > foot + 0.3;",
-    "new": "const rest = false;",
+    "old": "      const rest = m.grounded && m.grip < 1 && me().y > foot + 0.3;",
+    "new": "      const rest = false;",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "PILOT-the-climb-at-a-rested-grip",
     "file": "tools/egSpanSolve.mjs",
-    "old": "    skills = CLIMB0;\n    const foot",
-    "new": "    skills = SKILL0;\n    const foot",
+    "old": "    skills = CLIMB0;",
+    "new": "    skills = SKILL0;",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "PILOT-a-routed-road-unswept",
     "file": "tools/egSpanSolve.mjs",
-    "old": "if (egRouted(spec)) { if (!egRouteRoads(spec).includes(road)) continue; } else {",
-    "new": "if (egRouted(spec)) { continue; } else {",
+    "old": "        if (!egRouteRoads(spec).includes(road)) continue;",
+    "new": "        continue;",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "PILOT-the-faces-unstood",
     "file": "tools/egSpanSolve.mjs",
-    "old": "      if (col.raycastHit(P((ax + bx) / 2 + nx, (y0 + y1) / 2, (az + bz) / 2 + nz), [-nx, 0, -nz], 1.5).dist < 1.5) continue;",
-    "new": "      continue;",
+    "old": "        if (col.raycastHit(P((ax + bx) / 2 + nx, (y0 + y1) / 2, (az + bz) / 2 + nz), [-nx, 0, -nz], 1.5).dist < 1.5)\n          continue;",
+    "new": "        continue;",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "PILOT-routed-halls-crossed-by-z",
     "file": "tools/egSpanSolve.mjs",
-    "old": "  if (egRouted(spec)) return sweepRoute(S, spec, road, t0, trace);\n",
-    "new": "",
+    "old": "  if (egRouted(spec)) return sweepRoute(S, spec, road, t0, trace);\n  const P = pilotOf(S, spec, road, t0, trace),",
+    "new": "  const P = pilotOf(S, spec, road, t0, trace),",
     "tests": [
       "test/net/eliteGates/law9_proofs.test.js"
     ]

@@ -389,7 +389,7 @@
   {
     "name": "EG6A-the-low-road-crossed-without-its-trunk",
     "file": "tools/egSpanSolve.mjs",
-    "old": "  const path = egSpanPairs(spec).filter((p) => (fork ? roadOf(p) === 1 || (roadOf(p) === 0 && launch(p) < spec.fork.z - 0.01) : roadOf(p) === road));",
+    "old": "  const path = egSpanPairs(spec).filter((p) =>\n    fork ? roadOf(p) === 1 || (roadOf(p) === 0 && launch(p) < spec.fork.z - 0.01) : roadOf(p) === road,\n  );",
     "new": "  const path = egSpanPairs(spec).filter((p) => (fork ? roadOf(p) === 1 : roadOf(p) === road));",
     "tests": [
       "test/tooling/eg6a_sweep.test.js"
@@ -398,8 +398,8 @@
   {
     "name": "EG6A-a-riser-jumped",
     "file": "tools/egSpanSolve.mjs",
-    "old": "const parkour = { enabled: () => true, leap:",
-    "new": "const parkour = { enabled: () => false, leap:",
+    "old": "    enabled: () => true,",
+    "new": "    enabled: () => false,",
     "tests": [
       "test/tooling/eg6a_sweep.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "EG6A-a-pendulum-judged-at-its-middle",
     "file": "tools/egSpanSolve.mjs",
-    "old": "    if (b?.kind !== 'pend') return true;\n    const A = aimOf(pi, u, lane);",
-    "new": "    return true;\n    const A = aimOf(pi, u, lane);",
+    "old": "    if (b?.kind !== 'pend') return true;",
+    "new": "    return true;",
     "tests": [
       "test/tooling/eg6a_sweep.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "EG6A-a-fall-called-a-crossing",
     "file": "tools/egSpanSolve.mjs",
-    "old": "        if (!r.ok) { bad++; log(",
-    "new": "        if (!r.ok) { log(",
+    "old": "          bad++;\n          log(",
+    "new": "          log(",
     "tests": [
       "test/tooling/eg6a_sweep.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "EG6A-the-exit-always-clean",
     "file": "tools/egSpanSolve.mjs",
-    "old": "  return bad ? 1 : 0;\n}",
-    "new": "  return 0;\n}",
+    "old": "  return bad ? 1 : 0;",
+    "new": "  return 0;",
     "tests": [
       "test/tooling/eg6a_sweep.test.js"
     ]
@@ -461,7 +461,7 @@
   {
     "name": "EG6A-the-golden-seeds-unswept",
     "file": "tools/egSpanSolve.mjs",
-    "old": "export const sweepSeeds = (n, from = 1, golden = false) => [...new Set([...Array.from({ length: n }, (_, i) => from + i), ...(golden ? SWEEP_GOLDEN : [])])];",
+    "old": "export const sweepSeeds = (n, from = 1, golden = false) => [\n  ...new Set([...Array.from({ length: n }, (_, i) => from + i), ...(golden ? SWEEP_GOLDEN : [])]),\n];",
     "new": "export const sweepSeeds = (n, from = 1) => [...new Set([...Array.from({ length: n }, (_, i) => from + i)])];",
     "tests": [
       "test/tooling/eg6a_sweep.test.js"
@@ -506,8 +506,8 @@
   {
     "name": "EG6A-the-jump-pressed-short",
     "file": "tools/egSpanSolve.mjs",
-    "old": "const EDGE_M = 0; ",
-    "new": "const EDGE_M = 0.3; ",
+    "old": "const EDGE_M = 0; // the jump is pressed at the edge: the motor still stands on it the frame it passes it, and a",
+    "new": "const EDGE_M = 0.3; // the jump is pressed at the edge: the motor still stands on it the frame it passes it, and a",
     "tests": [
       "test/tooling/eg6a_sweep.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "EG6A-the-side-lane-refused",
     "file": "tools/egSpanSolve.mjs",
-    "old": "const level = onGround(key) && b && me().y >= b.y - 0.3;",
-    "new": "const level = false;",
+    "old": "      const level = onGround(key) && b && me().y >= b.y - 0.3;",
+    "new": "      const level = false;",
     "tests": [
       "test/tooling/eg6a_sweep.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "EG6A-the-rail-jumped-past",
     "file": "tools/egSpanSolve.mjs",
-    "old": "      across = !jumped && onB();",
-    "new": "      across = false;",
+    "old": "        across = !jumped && onB();",
+    "new": "        across = false;",
     "tests": [
       "test/tooling/eg6a_sweep.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "EG6A-a-gust-launched-into",
     "file": "tools/egSpanSolve.mjs",
-    "old": " && (turn || !gusty((p.b ?? p.a)?.road ?? 0, lzOf(p, u, lane), u - 0.2, u + airOf(p) + 0.1, (p.b ?? p.a)?.x ?? null)) && ",
-    "new": " && ",
+    "old": "    return (\n      lands(p, u) &&\n      (turn ||\n        !gusty((p.b ?? p.a)?.road ?? 0, lzOf(p, u, lane), u - 0.2, u + airOf(p) + 0.1, (p.b ?? p.a)?.x ?? null)) &&\n      pendClear(pi, u - HOLD_S, lane) &&\n      pendClear(pi, u, lane) &&\n      pendClear(pi, u + HOLD_S, lane)\n    ); // (a turned course keeps no Gust)",
+    "new": "    return lands(p, u) && pendClear(pi, u - HOLD_S, lane) && pendClear(pi, u, lane) && pendClear(pi, u + HOLD_S, lane); // (a turned course keeps no Gust)",
     "tests": [
       "test/tooling/eg6a_sweep.test.js"
     ]

@@ -9858,7 +9858,7 @@ ways are proven gap by gap, the running leap is refused and the press is DFU's p
     `parkourDeps` is the rule's reader, and asks no made level itself.
   - THE SWEEP'S PILOT (`tools/egSpanSolve.mjs` `pilotOf`) now crosses with the online page's parkour on in every frame, as
     the game does - it had it on for a riser and a climb alone, so it never met the running leap - with the leap refused as
-    the Spire refuses it (`tools/egSpanSolve.mjs:"const parkour = { enabled: () => true, leap: () => madeLevelRule('spire', 'runLeap') !== 'refused',"`).
+    the Spire refuses it (`tools/egSpanSolve.mjs:"const parkour = {"`).
     At the branch's head, 3 seeds a band (every fix below in): 20, 19, 23 and 21 courses, every one of 83 crossed.
 - **THE COLLAPSING TUBE'S CLOCK IN A ROUTED HALL** (`src/net/eliteGates/egFair.js:"export function egTubeEdgeIn(spec, hw, tm, tMs) {"`;
   section 11.3).

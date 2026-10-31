@@ -1833,8 +1833,8 @@
   {
     "name": "EG6C-the-origin-off-its-middle",
     "file": "tools/egRefFragScene.mjs",
-    "old": "const o = lo.map((v, k) => Math.round(((v + hi[k]) / 2) * 1000) / 1000 + 0);",
-    "new": "const o = lo.map((v) => v);",
+    "old": "    const o = lo.map((v, k) => Math.round(((v + hi[k]) / 2) * 1000) / 1000 + 0); // the origin at the middle of its box",
+    "new": "    const o = lo.map((v) => v); // the origin at the middle of its box",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1842,8 +1842,8 @@
   {
     "name": "EG6C-a-post-s-seam-closed",
     "file": "tools/egRefFragScene.mjs",
-    "old": "u0 = k / 8, u1 = (k + 1) / 8;",
-    "new": "u0 = k / 8, u1 = ((k + 1) % 8) / 8;",
+    "old": "          u1 = (k + 1) / 8;",
+    "new": "          u1 = ((k + 1) % 8) / 8;",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]

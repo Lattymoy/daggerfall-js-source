@@ -235,12 +235,12 @@ test('EL5: the glare hides in world units at five taps, the resolve grades in di
   assert.match(b, /^import \{ frustumPlanes \} from '\.\/frustum\.js';/m, 'bounds.js imports EV3\'s plane extraction and nothing else (one home)');
   assert.equal((b.match(/^import /gm) || []).length, 1);
   const probe = read('tools/enhancedLightingProbe.mjs');
-  assert.match(probe, /if \(bleed > 0\.005\) failures\.push\(`lantern A bleeds through the wall/, 'the bleed check (EL6: the eye frozen, five times tighter)');
-  assert.match(probe, /if \(emitBleed > 0\.002\) failures\.push\(`the emitter behind the wall blooms through it/, 'EL6: the emitter check');
-  assert.match(probe, /if \(!\(front\.bloom\?\.sum > 0\)\) failures\.push\('an emitter in view put nothing in the bloom source/, 'EL6: and the occlusion discriminates');
+  assert.match(probe, /if \(bleed > 0\.005\)\n\s*failures\.push\(`lantern A bleeds through the wall/, 'the bleed check (EL6: the eye frozen, five times tighter)');
+  assert.match(probe, /if \(emitBleed > 0\.002\)\n\s*failures\.push\(`the emitter behind the wall blooms through it/, 'EL6: the emitter check');
+  assert.match(probe, /if \(!\(front\.bloom\?\.sum > 0\)\)\n\s*failures\.push\('an emitter in view put nothing in the bloom source/, 'EL6: and the occlusion discriminates');
   assert.match(probe, /if \(r\.air\) r\.air\._now = \(\) => 1000;/, 'EL6: the eye frozen for the comparisons');
-  assert.match(probe, /if \(!\(shadowLane - shadowNoA < 0\.01\)\) failures\.push/, 'the shadow check (EL7: A\'s own contribution behind the wall, none)');
-  assert.match(probe, /if \(!\(openLane - openNoA > 0\.02\)\) failures\.push/, 'and beside it, some');
+  assert.match(probe, /if \(!\(shadowLane - shadowNoA < 0\.01\)\)\n\s*failures\.push/, 'the shadow check (EL7: A\'s own contribution behind the wall, none)');
+  assert.match(probe, /if \(!\(openLane - openNoA > 0\.02\)\)\n\s*failures\.push/, 'and beside it, some');
   assert.match(probe, /sh\.culledTotal === 0\) failures\.push\('the replays culled nothing/, 'the cull check (SC1: summed over the frames - a still room replays nothing on its last)');
   assert.match(probe, /'--use-angle=swiftshader'/, 'a real GL, software');
 });
