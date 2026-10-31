@@ -248,8 +248,8 @@ export function createGroundFrame(host) {
       moved = settlementMovedField(host.woods, px, py);
     }
     _padsMoved.set(key, moved);
-    const t = host.state.pixelTranslation(px, py);
-    return moved ? moved((x - t[0]) / heightCell, (z - t[2]) / heightCell) * STREAMING_TERRAIN_SCALE : 0;
+    const origin = host.state.pixelTranslation(px, py);
+    return moved ? moved((x - origin[0]) / heightCell, (z - origin[2]) / heightCell) * STREAMING_TERRAIN_SCALE : 0;
   };
   /** The stream's frame, read live (a load's teleport makes a new origin). */
   const frameNow = { get compensation() { return host.state.compensation; }, localFromWorld: (nx, nz) => host.state.localFromWorld(nx, nz) };

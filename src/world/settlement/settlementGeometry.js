@@ -23,7 +23,7 @@ export function ringArea2(ring) {
 const cross = (a, b, c) => (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
 
 /** Distance from p to the segment a-b. @param {Pt} p @param {Pt} a @param {Pt} b */
-export function segmentDistance(p, a, b) {
+export function distanceToSegment(p, a, b) {
   const dx = b[0] - a[0], dz = b[1] - a[1];
   const len2 = dx * dx + dz * dz;
   const t = len2 ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dz) / len2)) : 0;
@@ -33,7 +33,7 @@ export function segmentDistance(p, a, b) {
 /** Distance from p to the ring's edge. @param {Pt} p @param {readonly Pt[]} ring */
 export function edgeDistance(p, ring) {
   let d = Infinity;
-  for (let i = 0, n = ring.length; i < n; i++) d = Math.min(d, segmentDistance(p, ring[i], ring[(i + 1) % n]));
+  for (let i = 0, n = ring.length; i < n; i++) d = Math.min(d, distanceToSegment(p, ring[i], ring[(i + 1) % n]));
   return d;
 }
 
@@ -73,7 +73,7 @@ export function ringOk(ring) {
     for (let j = i + 2; j < n; j++) {
       if (i === 0 && j === n - 1) continue;   // neighbours across the closing edge
       const c = ring[j], d = ring[(j + 1) % n];
-      if (segmentsCross(a, b, c, d) || segmentDistance(c, a, b) <= GEOM_EPS || segmentDistance(a, c, d) <= GEOM_EPS) return false;
+      if (segmentsCross(a, b, c, d) || distanceToSegment(c, a, b) <= GEOM_EPS || distanceToSegment(a, c, d) <= GEOM_EPS) return false;
     }
   }
   return true;

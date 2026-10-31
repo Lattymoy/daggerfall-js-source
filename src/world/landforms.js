@@ -1328,7 +1328,7 @@ export function townMeetMovedField(woods, px, py, locationRect, about, hDim = HE
 export function settlementMovedField(woods, px, py, hDim = HEIGHTMAP_DIMENSION) {
   const ground = generateSamples(woods, px, py, hDim), now = Float32Array.from(ground);
   if (!standSettlementGround(px, py, now)) return null;
-  const moved = now.map((v, i) => (v - ground[i]) * MAX_TERRAIN_HEIGHT);
+  const moved = now.map((sample, i) => (sample - ground[i]) * MAX_TERRAIN_HEIGHT);
   return fieldBetween((x, y) => moved[x * hDim + y], hDim - 1);
 }
 

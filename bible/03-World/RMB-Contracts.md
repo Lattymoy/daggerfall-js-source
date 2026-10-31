@@ -68,7 +68,7 @@ Each is dated, says what was decided and why, and names what it costs.
 - **RD-13 (2026-10-31) The same answer on every engine.** `Math.sin`, `cos`, `atan2` and `hypot` may differ in their last
   bit between browsers. `exactMath.js` builds them from `+`, `-`, `*`, `/` and `Math.sqrt`, which IEEE 754 rounds
   exactly, in a fixed order, to about 1e-15. The generator reads no other. Golden prints pin three plans bit for bit; a
-  change that moves one is a new `GENERATOR_VERSION`. Cost: a few slower trigonometric calls a layout.
+  change that moves one is a new `SETTLEMENT_GENERATOR_VERSION`. Cost: a few slower trigonometric calls a layout.
 - **RD-14 (2026-10-31) Pads are geometry; the terrain sits under them.** The terrain's vertices are 6.4 m apart, coarser
   than a street, so terraces drawn by the terrain alone would slope across every rim. A pad is drawn and walked as its
   own paving or deck. The terrain is carved to stand under every cut pad within one cell's diagonal, so no triangle rises

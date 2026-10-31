@@ -5,7 +5,7 @@
 // (TAMRIEL-WIDE). Pins mutation-checked (tools/mutants/rmbc2.json).
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { generateSettlement, GENERATOR_ID, GENERATOR_VERSION, DECK_CLEAR } from '../../../src/world/settlement/settlementGen.js';
+import { generateSettlement, GENERATOR_ID, SETTLEMENT_GENERATOR_VERSION, DECK_CLEAR } from '../../../src/world/settlement/settlementGen.js';
 import { SETTLEMENT_STYLES, SETTLEMENT_ARCHETYPES, styleOfTheatre } from '../../../src/world/settlement/settlementStyles.js';
 import { settlementPrint, groundAt, padAt, STEP_MAX } from '../../../src/world/settlement/settlementContract.js';
 import { BUILDING_TYPES as T, isResidence } from '../../../src/world/buildingNames.js';
@@ -37,7 +37,7 @@ test('RMBC2 every archetype in every style, on ground that suits it, keeps the c
       const { plan, report } = gen(archetype, style);
       assert.deepEqual(report.problems, [], `${archetype} in ${style}`);
       assert.equal(report.ok, true, `${archetype} in ${style}: ${JSON.stringify(report.fit)}`);
-      assert.deepEqual(plan.generator, { id: GENERATOR_ID, version: GENERATOR_VERSION, seed: 1 });
+      assert.deepEqual(plan.generator, { id: GENERATOR_ID, version: SETTLEMENT_GENERATOR_VERSION, seed: 1 });
     }
   }
 });

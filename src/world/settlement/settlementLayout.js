@@ -11,7 +11,7 @@ import { SETTLEMENT_STYLES, SETTLEMENT_ARCHETYPES } from './settlementStyles.js'
 
 export const GENERATOR_ID = 'rmbc-terrace';
 /** Raised when the same inputs would lay out a different plan. A published plan keeps the version it was made by. */
-export const GENERATOR_VERSION = 1;
+export const SETTLEMENT_GENERATOR_VERSION = 1;
 /** Most an arc runs between two of its points, metres. */
 export const ARC_STEP = 8;
 /** The canal between two decks of an island settlement, metres. */
@@ -37,8 +37,8 @@ export const CUT_STEPS_MAX = 2.5;
 
 export const TAU = Math.PI * 2;
 export const cm = (/** @type {number} */ x) => Math.round(x * 100) / 100;
-export const clamp = (/** @type {number} */ x, /** @type {number} */ lo, /** @type {number} */ hi) => Math.max(lo, Math.min(hi, x));
-export const bearingOf = (/** @type {number} */ e, /** @type {number} */ n) => datan2(e, n);
+export const clampWithin = (/** @type {number} */ x, /** @type {number} */ lo, /** @type {number} */ hi) => Math.max(lo, Math.min(hi, x));
+export const compassBearing = (/** @type {number} */ e, /** @type {number} */ n) => datan2(e, n);
 
 /** The polar frame every layout is cut in: u an angle clockwise from north, v a distance from its centre. */
 export function polarFrame(c) {
@@ -113,7 +113,7 @@ export function layoutSettlement(input, env) {
   if (!st) throw new RangeError(`no settlement style '${input.style}' (settlementStyles.js SETTLEMENT_STYLES)`);
   const rng = (...ns) => hash32(seed >>> 0, place >>> 0, ...ns) / 0x100000000;
   const pick = (range, ...ns) => range[0] + (range[1] - range[0]) * rng(...ns);
-  const sizeK = clamp(params.size ?? 1, 0.5, 2);
+  const sizeK = clampWithin(params.size ?? 1, 0.5, 2);
 
   // A - the site and its layout: a ring round a square, or a row along an arc
   // a published settlement fixes what its ground chose when the toolchain laid it out (settlementPlaces.js `fix`)
@@ -135,9 +135,9 @@ export function layoutSettlement(input, env) {
   const ws = st.street, wl = st.lane, gap = islands ? ISLAND_GAP : 0;
   const plotDepth = pick(st.depth, 1);
   const bandDepth = ws + plotDepth + st.back + gap;
-  const bands = clamp(Math.round(params.bands ?? A.bands), 1, 8);
+  const bands = clampWithin(Math.round(params.bands ?? A.bands), 1, 8);
   const size = pick(A.size, 3) * sizeK * (A.frame === 'auto' && !ring ? 2.2 : 1);   // an auto village's size is a radius
-  const sectors = clamp(Math.round(params.sectors ?? (ring ? pick(A.sectors, 2) : size / 28)), ring ? 3 : 2, 16);
+  const sectors = clampWithin(Math.round(params.sectors ?? (ring ? pick(A.sectors, 2) : size / 28)), ring ? 3 : 2, 16);
   const depthAll = bands * bandDepth;
 
   let frame, inner, uStart, uSpan, vOut = 0;
@@ -167,7 +167,7 @@ export function layoutSettlement(input, env) {
     frame = polarFrame(c);
     inner = R0;
     uSpan = size / (R0 + depthAll / 2);
-    uStart = bearingOf(toward[0], toward[1]) - uSpan / 2;
+    uStart = compassBearing(toward[0], toward[1]) - uSpan / 2;
   }
 
   // B - the cells: sector edges, each sector's band radii, the arc grid a sector's bands share
@@ -213,14 +213,14 @@ export function layoutSettlement(input, env) {
   if (ring && inner > 0) {
     const r = inner - gap / 2, us = [];
     for (const g of grids) for (const u of g) if (!us.length || u - us[us.length - 1] > 1e-9) us.push(u);
-    cells.set('plaza', { id: 'plaza', k: 0, j: -1, a: 0, b: r, poly: us.filter((u) => u < uStart + TAU - 1e-9).map((u) => frame.toW(u, r)) });
+    cells.set('plaza', { id: 'plaza', k: 0, j: -1, a: 0, b: r, poly: us.filter((u) => u < uStart + uSpan - 1e-9).map((u) => frame.toW(u, r)) });   // a ring's span is the whole turn
   }
 
   // natural ground under each cell; a cut cell under water is dropped
   const made = cells.size;
   for (const c of cells.values()) {
     const samples = c.poly.filter((_, i) => i % 2 === 0);
-    samples.push(centroid(c.poly));
+    samples.push(ringCentroid(c.poly));
     const hs = samples.map(([e, n]) => env.heightAt(e, n));
     c.natural = hs.reduce((s, x) => s + x, 0) / hs.length;
     c.top = Math.max(...hs);
@@ -307,13 +307,13 @@ export function layoutSettlement(input, env) {
   });
 
   return {
-    version: GENERATOR_VERSION, layout, c: frame.c, shore, ring, inner, uStart, uSpan, vOut, edges, radii, reachOf, grids, gateSectors, gateBand,
+    version: SETTLEMENT_GENERATOR_VERSION, layout, c: frame.c, shore, ring, inner, uStart, uSpan, vOut, edges, radii, reachOf, grids, gateSectors, gateBand,
     islands, gap, ws, wl, plotDepth, bands, sectors, size, keepHalf, made, keptCount: kept.length, datum, pads, links: planLinks,
     cells: [...cells.values()].map((c) => ({ id: c.id, k: c.k, j: c.j, a: c.a, b: c.b, u0: c.u0, u1: c.u1, poly: c.poly, natural: c.natural, h: c.h, raised: c.raised, gb: c.gb })),
   };
 }
 
 /** @param {readonly Pt[]} ring */
-export function centroid(ring) {
+export function ringCentroid(ring) {
   return /** @type {Pt} */ ([cm(ring.reduce((s, p) => s + p[0], 0) / ring.length), cm(ring.reduce((s, p) => s + p[1], 0) / ring.length)]);
 }

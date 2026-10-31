@@ -11,9 +11,9 @@ import { GUILD_FACTION_IDS, DIVINES } from '../../systems/guild/guildFactions.js
 import { SETTLEMENT_CONTRACT_VERSION, validateSettlement } from './settlementContract.js';
 import { emptyIdLedger, reconcileBuildingIds } from './settlementIds.js';
 import { SETTLEMENT_STYLES, SETTLEMENT_ARCHETYPES } from './settlementStyles.js';
-import { layoutSettlement, polarFrame, along, splits, cm, clamp, bearingOf, centroid, TAU, GENERATOR_ID, GENERATOR_VERSION, CUT_STEPS_MAX } from './settlementLayout.js';
+import { layoutSettlement, polarFrame, along, splits, cm, clampWithin, compassBearing, ringCentroid, TAU, GENERATOR_ID, SETTLEMENT_GENERATOR_VERSION, CUT_STEPS_MAX } from './settlementLayout.js';
 
-export { GENERATOR_ID, GENERATOR_VERSION, ARC_STEP, ISLAND_GAP, DECK_CLEAR, ROW_RADIUS, SHORE_RADIUS, layoutSettlement } from './settlementLayout.js';
+export { GENERATOR_ID, SETTLEMENT_GENERATOR_VERSION, ARC_STEP, ISLAND_GAP, DECK_CLEAR, ROW_RADIUS, SHORE_RADIUS, layoutSettlement } from './settlementLayout.js';
 
 /** @typedef {import('./settlementContract.js').SettlementPlan} SettlementPlan @typedef {import('./settlementContract.js').Building} Building */
 /** @typedef {import('./settlementIds.js').IdLedger} IdLedger @typedef {readonly [number, number]} Pt */
@@ -37,7 +37,7 @@ export function dressSettlement(input, L) {
   if (!st) throw new RangeError(`no settlement style '${input.style}' (settlementStyles.js SETTLEMENT_STYLES)`);
   const rng = (...ns) => hash32(seed >>> 0, place >>> 0, ...ns) / 0x100000000;
   const pick = (range, ...ns) => range[0] + (range[1] - range[0]) * rng(...ns);
-  const density = clamp(params.density ?? 1, 0.5, 2), openShare = clamp(params.open ?? 0.08, 0, 0.9);
+  const density = clampWithin(params.density ?? 1, 0.5, 2), openShare = clampWithin(params.open ?? 0.08, 0, 0.9);
   const frame = polarFrame(L.c), inset = (v, s) => frame.du(s, v);
   const { ring, inner, uStart, uSpan, vOut, edges, radii, reachOf, grids, gateSectors, gateBand, gap, ws, wl, plotDepth, bands, sectors, size, keepHalf, made, datum, pads, layout } = L;
   const planLinks = L.links;
@@ -84,11 +84,11 @@ export function dressSettlement(input, L) {
       const fp = [frame.toW(q0(r1), r1), frame.toW(q1(r1), r1), frame.toW(q1(r2), r2), frame.toW(q0(r2), r2)];
       const width = dhypot(fp[1][0] - fp[0][0], fp[1][1] - fp[0][1]);
       if (width < 5 || bd < 5 || rng(17, i) < openShare) {
-        features.push({ id: `g${features.length}`, kind: 'garden', pad: c.id, at: centroid(poly) });
+        features.push({ id: `g${features.length}`, kind: 'garden', pad: c.id, at: ringCentroid(poly) });
         continue;
       }
       const door = /** @type {Pt} */ ([cm((fp[0][0] + fp[1][0]) / 2), cm((fp[0][1] + fp[1][1]) / 2)]);
-      const facing = degrees(bearingOf(-dsin((p0 + p1) / 2), -dcos((p0 + p1) / 2)));   // toward the street: the frame's centre
+      const facing = degrees(compassBearing(-dsin((p0 + p1) / 2), -dcos((p0 + p1) / 2)));   // toward the street: the frame's centre
       const prestige = (1 - (c.k - 1) / Math.max(1, bands)) * 0.6 + (gateSectors.includes(c.j) ? 0.3 : 0) + rng(11, i) * 0.1;
       proposed.push({ id, c, fp, door, facing, prestige, area: width * bd });
     }
@@ -115,10 +115,10 @@ export function dressSettlement(input, L) {
   const buildings = proposed.map((p, i) => {
     const t = taken.get(p.id) ?? { type: p.prestige > 0.75 ? T.House2 : T.House1, factionId: 0 };
     return /** @type {Building} */ ({
-      key: 0, source: 'procedural', anchor: p.id, pad: p.c.id, at: centroid(p.fp), yaw: p.facing, lift: 0, footprint: p.fp,
-      storeys: p.keep ? st.storeys[1] + 1 : clamp(Math.round(pick(st.storeys, 12, i) + (p.prestige > 0.8 ? 1 : 0)), 1, st.storeys[1] + 1),
+      key: 0, source: 'procedural', anchor: p.id, pad: p.c.id, at: ringCentroid(p.fp), yaw: p.facing, lift: 0, footprint: p.fp,
+      storeys: p.keep ? st.storeys[1] + 1 : clampWithin(Math.round(pick(st.storeys, 12, i) + (p.prestige > 0.8 ? 1 : 0)), 1, st.storeys[1] + 1),
       exterior: { kind: 'procedural', style: input.style }, interior: { kind: 'generated', plan: p.id }, entrances: [{ n: 0, at: p.door, facing: p.facing }],
-      type: t.type, factionId: t.factionId, quality: clamp(Math.round(1 + 19 * (A.wealth * 0.6 + Math.min(1, p.prestige) * 0.4)), 1, 20),
+      type: t.type, factionId: t.factionId, quality: clampWithin(Math.round(1 + 19 * (A.wealth * 0.6 + Math.min(1, p.prestige) * 0.4)), 1, 20),
       nameSeed: hash32(place >>> 0, ...[...p.id].map((ch) => ch.charCodeAt(0))) & 0x7fffffff, access: isResidence(t.type) ? 'private' : 'public',
     });
   });
@@ -157,7 +157,7 @@ export function dressSettlement(input, L) {
   });
   /** @type {SettlementPlan} */
   const plan = {
-    contract: SETTLEMENT_CONTRACT_VERSION, place, source: 'procedural', generator: { id: GENERATOR_ID, version: GENERATOR_VERSION, seed: seed >>> 0 }, revision: 0,
+    contract: SETTLEMENT_CONTRACT_VERSION, place, source: 'procedural', generator: { id: GENERATOR_ID, version: SETTLEMENT_GENERATOR_VERSION, seed: seed >>> 0 }, revision: 0,
     origin, footprint, pads, links: planLinks, gates, streets, districts, buildings: ids.buildings, plots, features,
   };
   const cut = [...cells.values()].filter((c) => !c.raised).map((c) => Math.abs(c.h - c.natural));

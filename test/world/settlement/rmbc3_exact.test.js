@@ -1,12 +1,12 @@
 // RMB-CONTRACTS RMBC3 (bible/03-World/RMB-Contracts.md RD-13): THE SAME PLAN ON EVERY ENGINE - the generator's sines, cosines,
 // angles and lengths are built from exactly rounded arithmetic (exactMath.js), so a plan is a function of its inputs alone.
-// The golden prints hold three plans bit for bit: a change that moves one is a new GENERATOR_VERSION, said in its record.
+// The golden prints hold three plans bit for bit: a change that moves one is a new SETTLEMENT_GENERATOR_VERSION, said in its record.
 // In the settlements' own lane past the Bay (Hammerfell's ground). Pins mutation-checked (tools/mutants/rmbc3.json).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dsin, dcos, datan2, dhypot } from '../../../src/world/settlement/exactMath.js';
-import { generateSettlement, dressSettlement, layoutSettlement, GENERATOR_VERSION } from '../../../src/world/settlement/settlementGen.js';
+import { generateSettlement, dressSettlement, layoutSettlement, SETTLEMENT_GENERATOR_VERSION } from '../../../src/world/settlement/settlementGen.js';
 import { settlementPrint } from '../../../src/world/settlement/settlementContract.js';
 import { SYNTHETIC } from '../../../tools/settlementProbe.mjs';
 
@@ -31,7 +31,7 @@ test('RMBC3 the generator reads no engine\'s Math.sin, cos, atan2 or hypot (muta
 });
 
 test('RMBC3 golden prints: three plans bit for bit at generator version 1 (mutant: any change to the layout)', () => {
-  assert.equal(GENERATOR_VERSION, 1);
+  assert.equal(SETTLEMENT_GENERATOR_VERSION, 1);
   const print = (archetype) => settlementPrint(generateSettlement({ place: PLACE, origin: { px: 1000, py: 200, east: 0, north: 0 }, seed: 7, archetype, style: 'Hammerfell', site: { east: 400, north: 400, radius: 90 }, env: SYNTHETIC[archetype] }).plan);
   assert.deepEqual([print('fort'), print('river'), print('wetland')], [2924236142, 3082883572, 3655091972]);
 });

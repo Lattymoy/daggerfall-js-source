@@ -6,7 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { earClip, groundModel, buildingPiece, buildingInterior, buildingRecord, poolOf, groundModelId, buildingModelId, isSettlementModelId, SETTLEMENT_MODEL_BASE, WALL_DROP } from '../../../src/world/settlement/settlementModels.js';
+import { earClip, groundModel, buildingPiece, buildingInterior, buildingRecord, interiorPoolOf, groundModelId, buildingModelId, isSettlementModelId, SETTLEMENT_MODEL_BASE, WALL_DROP } from '../../../src/world/settlement/settlementModels.js';
 import { standSettlement, createSettlementHost } from '../../../src/scenes/settlementHost.js';
 import { layoutSettlement } from '../../../src/world/settlement/settlementLayout.js';
 import { dressSettlement } from '../../../src/world/settlement/settlementGen.js';
@@ -76,8 +76,8 @@ test('RMBC4 a building\'s rooms and record: its own interior filed under its pla
   assert.equal(rec.buildingKey, a.key);
   assert.equal(keyBandOf(rec.buildingKey), 'minted');
   assert.deepEqual([rec.townMapId, rec.townName, rec.regionIndex, rec.buildingType, rec.hasInterior], [input.place, ROW.name, 63, a.type, true]);
-  assert.equal(poolOf(T.Tavern), 'tavern');
-  assert.equal(poolOf(T.Palace), 'house4', 'no donor keeps a palace: the largest house\'s rooms');
+  assert.equal(interiorPoolOf(T.Tavern), 'tavern');
+  assert.equal(interiorPoolOf(T.Palace), 'house4', 'no donor keeps a palace: the largest house\'s rooms');
 });
 
 test('RMBC4 the model ids: a run of 4,096 a settlement past the Imperial City\'s (mutant: the run)', () => {

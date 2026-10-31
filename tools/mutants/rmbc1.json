@@ -443,7 +443,7 @@
   {
     "name": "RMBC1-self-cross-gone",
     "file": "src/world/settlement/settlementGeometry.js",
-    "old": "if (segmentsCross(a, b, c, d) || segmentDistance(c, a, b) <= GEOM_EPS || segmentDistance(a, c, d) <= GEOM_EPS) return false;",
+    "old": "if (segmentsCross(a, b, c, d) || distanceToSegment(c, a, b) <= GEOM_EPS || distanceToSegment(a, c, d) <= GEOM_EPS) return false;",
     "new": "if (false) return false;",
     "tests": [
       "test/world/settlement/rmbc1_contract.test.js"

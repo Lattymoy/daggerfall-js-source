@@ -34,6 +34,8 @@ const drain = async () => {
     await frames(2);
   }
 };
+/** A verdict against the game: said, and the exit code set. */
+const fail = (why) => { console.log('FAIL:', why); process.exitCode = 1; };
 const until = async (fn, cap = 240000) => { const t0 = Date.now(); for (;;) { const v = await page.evaluate(fn).catch(() => null); if (v) return v; if (Date.now() - t0 > cap) return null; await frames(1, 10000); } };
 try {
   await page.goto('http://localhost:5241/play/?world&nomenu&class=0&novideo&shot&play&tod=12:00');
@@ -94,9 +96,11 @@ try {
   page.off('console', hear);
   const inside = await page.evaluate(() => window.__building?.() ?? null);
   console.log(JSON.stringify({ door: d.type, greeted, modeBefore: before, modeAfter: after, inside }));
+  if (after !== 'interior') { console.log(said.slice(0, 15).join('\n')); fail(`the door opened no rooms (mode ${after})`); }
+  else if (!JSON.parse(inside ?? 'null')?.name) fail('inside, but no building was read');
   await drain(); await frames(20, 180000);
   await page.screenshot({ path: join(out, 'inside.png'), timeout: 240000 }).catch((e) => console.log('no shot inside:', e.message.split('\n')[0]));
-  if (after !== 'interior') console.log(said.slice(0, 15).join('\n'));
-} catch (e) { console.log('FAIL:', e.message); }
-console.log(errors.length ? `errors:\n${errors.slice(0, 12).join('\n')}` : 'no page errors');
+} catch (e) { fail(e.message); }
+if (errors.length) fail(`page errors:\n${errors.slice(0, 12).join('\n')}`);
+else console.log('no page errors');
 await browser.close(); await server.close();

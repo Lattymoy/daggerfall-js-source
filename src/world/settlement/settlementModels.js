@@ -102,7 +102,7 @@ export function groundModel(plan, datum, cells) {
 }
 
 /** The fabric's pool and donor for a building's type (its rooms and its keeper): the first donor of the type, a house's else. */
-export function poolOf(type) {
+export function interiorPoolOf(type) {
   const d = FABRIC_DONORS.find((x) => x.type === type);
   return d ? d.pool : type === T.Palace ? 'house4' : 'house1';
 }
@@ -128,7 +128,7 @@ export function buildingPiece(plan, b, floor, style) {
   };
   const mb = new MeshBuilder();
   buildPlot(mb, plot);
-  const pool = poolOf(b.type), area = Math.abs(ringArea2(fp)) / 2, donor = fabricDonorOf(pool, b.key, area);
+  const pool = interiorPoolOf(b.type), area = Math.abs(ringArea2(fp)) / 2, donor = fabricDonorOf(pool, b.key, area);
   const e = b.entrances[0], ry = e.facing + 180;   // the door model faces south at its origin: turned to face out
   const doorFrame = trs(e.at[0], floor, e.at[1], 0, ry, 0);
   const doorModel = fabricDoorModel(fabricDoorModelId(donor));

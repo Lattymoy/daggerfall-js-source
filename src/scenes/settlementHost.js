@@ -16,6 +16,7 @@ import { theatreAt } from '../world/worldWide/worldGrid.js';
 import { townLookBase } from '../world/urban/townLook.js';
 import { INTERIOR_SEASON } from '../world/climateSwaps.js';
 import { trs } from '../world/mat4.js';
+import { pageHas } from '../systems/pageQuery.js';
 
 /** The models the family answers, by id: made when a settlement is stood, dropped when it goes. */
 const _models = new Map();
@@ -103,7 +104,7 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
     s.colAt = sc;
   }
   // a shot-mode probe's view (tools/settlementWorldProbe.mjs): each stood settlement, its middle in the scene, its doors
-  if (typeof window !== 'undefined' && /[?&]shot\b/.test(window.location?.search ?? '')) {
+  if (typeof window !== 'undefined' && pageHas('shot')) {
     /** @type {any} */ (window).__settlementView = () => [...stood.values()].map((s) => {
       const sc = scene(s), c = s.plan.pads.find((p) => p.id === 'plaza') ?? s.plan.pads[0];
       const mid = c.poly.reduce((a, p) => [a[0] + p[0] / c.poly.length, a[1] + p[1] / c.poly.length], [0, 0]);
