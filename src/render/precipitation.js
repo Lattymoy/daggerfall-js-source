@@ -127,7 +127,7 @@ export const SHELTER_MAX = 24;
 export const SHELTER_REACH_M = 48;
 
 /**
- * Pack nearby building AABBs into `xzOut` (minx,minz,maxx,maxz × N) and `yOut` (max y × N) for the lab shelter cull.
+ * Pack nearby building AABBs into `xzOut` (minx,minz,maxx,maxz × N) and `yOut` (minY,maxY × N) for the lab shelter cull.
  * Answers how many were written. Pure aside from writing the arrays.
  * @param {Float32Array} xzOut @param {Float32Array} yOut
  * @param {Array<{ aabb?: { min: number[], max: number[] } }>} buildings
@@ -147,13 +147,13 @@ export function packShelters(xzOut, yOut, buildings, eye) {
     near.push({ aabb: box, d2 });
   }
   near.sort((a, b) => a.d2 - b.d2);
-  const cap = Math.min(SHELTER_MAX, (xzOut.length / 4) | 0, yOut.length | 0);
+  const cap = Math.min(SHELTER_MAX, (xzOut.length / 4) | 0, (yOut.length / 2) | 0);
   let n = 0;
   for (; n < near.length && n < cap; n++) {
     const { min, max } = near[n].aabb;
     const o = n * 4;
     xzOut[o] = min[0]; xzOut[o + 1] = min[2]; xzOut[o + 2] = max[0]; xzOut[o + 3] = max[2];
-    yOut[n] = max[1];
+    yOut[n * 2] = min[1]; yOut[n * 2 + 1] = max[1];
   }
   return n;
 }
@@ -165,7 +165,7 @@ uniform float uTime, uKind, uBox, uFall;
 uniform vec2 uWindV, uWindOff;
 uniform int uShelterN;
 uniform vec4 uShelterXZ[${SHELTER_MAX}];
-uniform float uShelterY[${SHELTER_MAX}];
+uniform vec2 uShelterY[${SHELTER_MAX}];   // x floor, y roof - without the floor an oversized AABB dried open air under it
 out float vT; out float vSeed;
 void main(){
   vSeed = aSeed.w;
@@ -195,11 +195,12 @@ void main(){
   p += vec3(uWindOff.x, 0.0, uWindOff.y) * gust;
   p.y -= uTime * fall;
   p = mod(p - uEye + uBox*0.5, uBox) + uEye - uBox*0.5;
-  // WET1c: under a building AABB (porch, room, eaves) the drop is gone - depth alone cannot hide rain in open sky under a roof
+  // WET1c: inside a building's volume (porch, room) the drop is gone - depth alone cannot hide rain in open sky under a roof
   for (int i = 0; i < ${SHELTER_MAX}; i++) {
     if (i >= uShelterN) break;
     vec4 b = uShelterXZ[i];
-    if (p.x >= b.x && p.x <= b.z && p.z >= b.y && p.z <= b.w && p.y < uShelterY[i] + 0.4) {
+    vec2 yy = uShelterY[i];
+    if (p.x >= b.x && p.x <= b.z && p.z >= b.y && p.z <= b.w && p.y > yy.x - 0.2 && p.y < yy.y + 0.4) {
       vT = 0.0; gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return;
     }
   }
@@ -515,7 +516,7 @@ export class PrecipitationRenderer {
     // shelter buffers may already hold this frame's pack (setShelters before the first drawLab)
     if (!this._shelterXZ) {
       this._shelterXZ = new Float32Array(SHELTER_MAX * 4);
-      this._shelterY = new Float32Array(SHELTER_MAX);
+      this._shelterY = new Float32Array(SHELTER_MAX * 2);   // minY, maxY pairs
       this._shelterN = 0;
     }
     // the lab's instances: x,y,z in [0, BOX) + a phase, from the lab's
@@ -542,7 +543,7 @@ export class PrecipitationRenderer {
    * @param {number[]|Float32Array} eye
    */
   setShelters(buildings, eye) {
-    if (!this._shelterXZ) { this._shelterXZ = new Float32Array(SHELTER_MAX * 4); this._shelterY = new Float32Array(SHELTER_MAX); }
+    if (!this._shelterXZ) { this._shelterXZ = new Float32Array(SHELTER_MAX * 4); this._shelterY = new Float32Array(SHELTER_MAX * 2); }
     this._shelterN = packShelters(this._shelterXZ, this._shelterY, buildings, eye);
   }
 
@@ -698,7 +699,7 @@ export class PrecipitationRenderer {
     gl.uniform1i(L.uShelterN, this._shelterN | 0);   // WET1c: rain under a roof
     if (this._shelterN > 0) {
       gl.uniform4fv(L.uShelterXZ, this._shelterXZ);
-      gl.uniform1fv(L.uShelterY, this._shelterY);
+      gl.uniform2fv(L.uShelterY, this._shelterY);
     }
     gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.enable(gl.DEPTH_TEST);   // walls and roofs occlude; an open 2D run left this off and rain drew through
@@ -710,6 +711,7 @@ export class PrecipitationRenderer {
     gl.enable(gl.CULL_FACE);
     gl.depthMask(true);
     gl.disable(gl.BLEND);
+    // leave DEPTH_TEST on: the street's next opaque pass wants it (classic lab never touched it)
   }
 
   draw(mode, proj, view, camPos, camRight, timeSeconds) {

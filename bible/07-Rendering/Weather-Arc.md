@@ -1569,19 +1569,18 @@ date the ground lay under snow, and the wet stayed under it. No probe stood past
 rain) plus one sheen. In the rain soil stays nearly matte (WET_SHEEN_SOIL), a path tile (46, 47, 55) takes a dull
 sheen, and a puddle drops that lobe and keeps a tight lamp glint. The puddle's edge is PUDDLE_EDGE wide, not a line.
 The lab's rain streaks fade to 0.22 alpha. The sky mix takes the ambient with the fog, so a night puddle is not black.
-**WET1c.** Lab rain enables DEPTH_TEST and culls drops inside nearby building AABBs (`setShelters`), so a porch and a
-room stay dry. Puddle rings use a finer cell and a higher rate, so a downpour reads as many hits. Eave drips were tried
-and pulled: the AABB eave was the ridge, and the model-edge pass still drew nothing the eye could trust.
+**WET1c.** Lab rain enables DEPTH_TEST and culls drops inside nearby building AABBs (`setShelters`), floor to roof
+(`uShelterY` min/max), so a porch and a room stay dry and open air under a tall box still rains. Puddle rings use a
+finer cell and a higher rate. Eave drips were tried and pulled: the AABB eave was the ridge, and the model-edge pass
+still drew nothing the eye could trust.
 
 **WET1d.** A puddle read as matte stone: the lamp's diffuse pool lay on it, and the night mirror was the full ambient.
-Now the puddle takes little diffuse (PUDDLE_DARK), the wet lobe tightens to PUDDLE_GLOSS (a lamp is a point, not a
-column), the mirror shows WET_SKY_AMBIENT of the ambient, and a lamp-lit pane glints in it (`winGlint`). Soil stays
-matte: WET_SHEEN_SOIL and soil glints are a tenth of a road's, and a soil puddle takes PUDDLE_SHEEN_SOIL, not glass.
-`roadAmt` smears soil↔stones at the paving's edge. `winGlint` mirrors the glass mask (a row of panes, not one lamp) and
-marches the previous depth along the ray so a bush between the puddle and the pane hides it. Soil always scatters more
-than stone (`scatter` into winGlint, duller wetSky). Distance softens from WIN_GLINT_NEAR_M to WIN_GLINT_FAR_M.
-Stone panes take +25% soft (WIN_GLINT_LOD0 and the softIn/Out band). A lamp's puddle glint uses PUDDLE_GLOSS and
-PUDDLE_STRETCH so Blinn does not draw it as a tall column.
+Now the puddle takes little diffuse (PUDDLE_DARK), the wet lobe tightens to PUDDLE_GLOSS with PUDDLE_STRETCH (a lamp is
+a point, not a column), the mirror shows WET_SKY_AMBIENT of the ambient, and a lamp-lit pane glints in it (`winGlint`)
+only where there is puddle. Soil stays matte: WET_SHEEN_SOIL and soil glints are a tenth of a road's, and a soil puddle
+takes PUDDLE_SHEEN_SOIL, not glass. `roadAmt` smears soil↔stones at the paving's edge. `winGlint` mirrors the glass
+mask and marches previous depth so a bush hides the pane. Soil scatters more than stone. Distance softens from
+WIN_GLINT_NEAR_M to WIN_GLINT_FAR_M. Stone panes take +25% soft. Mesh compiles no `winGlint`.
 
 **Not yet.** A puddle mirrors no wall or tree until a screen-space reflection pass reads the previous frame's colour -
 today only lit panes and the sky. A porch's floor still wets as the street does. Meshes take no puddles. No eave drips.

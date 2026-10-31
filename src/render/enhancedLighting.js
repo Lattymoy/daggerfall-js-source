@@ -402,9 +402,9 @@ int elClusterLight(highp uvec2 cell, int j) {
 // lights where it walked forty-eight - and every light with the grid off.
 // WL1: `wlShadow` is windowLightGlsl's - a surface's programs read the sun map per fragment, the flat's takes its quad's
 // one read (TREES1, LA-COST3: a flat's fragment reads no sun map).
-const elPointLitGlsl = (wlShadow) => `
+const elPointLitGlsl = (wlShadow, wetGlint = false) => `
 ${EL_CLUSTER_GLSL}
-${windowLightGlsl({ atten: 'elAttenuation(rl, r)', shadow: wlShadow, wetGlint: true })}
+${windowLightGlsl({ atten: 'elAttenuation(rl, r)', shadow: wlShadow, wetGlint })}
 // BLOOD2f / BLOOD AUDIT 5: the lantern loop with a WET surface's glint
 // beside the diffuse - ONE loop, ONE shadow answer for both (a mark in a
 // contact shadow is glint-shadowed as it is diffuse-shadowed), the
@@ -554,7 +554,8 @@ vec3 elFinish(vec3 lit, vec3 wp) {
   return dwWaterFog(col, wp) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it   // DW-C: the sea's distance fog on the DISPLAY colour - the mod's post effect reads the camera's finished image
 }
 `;
-const EL_POINT_LIT_GLSL = elPointLitGlsl(true);
+const EL_POINT_LIT_GLSL = elPointLitGlsl(true);   // mesh/char: no puddle winGlint (terrain-only below)
+const EL_POINT_LIT_TERRAIN_GLSL = elPointLitGlsl(true, true);   // WET1d: lit panes in puddles
 const EL_POINT_LIT_FLAT_GLSL = elPointLitGlsl('flat');   // WL1: the billboard program's
 
 /** The mesh fragment shader of the lane - the classic FS's every term
@@ -1028,7 +1029,7 @@ ${EL_GLSL}
 ${SHADOW_GLSL}
 ${AIR_CONTACT_GLSL}
 ${EL_FOG_GLSL}
-${EL_POINT_LIT_GLSL}
+${EL_POINT_LIT_TERRAIN_GLSL}
 ${ecotoneGlsl('elDecode')}
 ${snowCoverGlsl('elDecode')}
 ${snowCapGlsl('elDecode', SNOW_TILE_M)}
@@ -1121,7 +1122,8 @@ void main() {
   float soilK = mix(0.1, 1.0, road);
   float soilScatter = (1.0 - road) * 0.4;   // WET1d: soil scatters more than stone, but not 3x mush
   lit += wetGlint * mix(soilK, ${glslFloat(PUDDLE_GLINT)} * soilK, wetW.y) + wetSunGlint(n, wetV, diff / max(ndl, 1e-4), wetG);
-  lit += winGlint(vWorldPos, n, wetV, elWetPow, soilScatter) * (${glslFloat(PUDDLE_WIN_GLINT)} * wetW.y * soilK);
+  // puddle gate: without it every ground pixel marched every lit pane (same TDR class as ungated SSR)
+  if (wetW.y > 0.0) lit += winGlint(vWorldPos, n, wetV, elWetPow, soilScatter) * (${glslFloat(PUDDLE_WIN_GLINT)} * wetW.y * soilK);
   outColor = vec4(elFinish(lit, vWorldPos), 1.0);
   outColor.rgb = wetSky(outColor.rgb, n, wetV, wetG * mix(0.8, 1.0, road));   // WET1d: soil's sky a little duller than stone's
 }`;

@@ -47,8 +47,9 @@ export function createWetness({ on = wetOn } = {}) {
     uniform,
     /** @param {{ minutes: number, shown: string | null, intensity: number, snow?: number | null, tsec: number }} f */
     tick({ minutes: now, shown, intensity, snow, tsec }) {
-      const rain = on() ? rainOf(shown, intensity, snow ?? 0) : 0;
-      state = on() ? wetStep(state, rain, minutes == null ? NaN : now - minutes) : { wet: 0, puddle: 0 };
+      const live = on();
+      const rain = live ? rainOf(shown, intensity, snow ?? 0) : 0;
+      state = live ? wetStep(state, rain, minutes == null ? NaN : now - minutes) : { wet: 0, puddle: 0 };
       minutes = now;
       uniform[0] = state.wet; uniform[1] = state.puddle; uniform[2] = tsec % 1000; uniform[3] = rain;
       return uniform;

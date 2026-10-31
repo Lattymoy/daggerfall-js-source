@@ -11,11 +11,11 @@ export const WET_DARK = 0.55;
 export const WET_WALL_DARK = 0.8;
 export const PUDDLE_DARK = 0.2;   // WET1d: water takes almost no diffuse light - the lamp's pool on it read as matte stone
 /** WET1d: a puddle's wet lobe (a lamp's reflection is a point), its glint gain, and a lit window's glint gain. */
-export const PUDDLE_GLOSS = 4500;   // WET1d: 1400 still drew a lamp as a tall column at night
+export const PUDDLE_GLOSS = 1024;   // WET1d: stretch does the column kill; 4500 pow() was GPU-heavy next to winGlint
 export const PUDDLE_GLINT = 5;
 export const PUDDLE_WIN_GLINT = 3;
 /** WET1d: kill the Blinn column along the view on the ground (0 = isotropic). */
-export const PUDDLE_STRETCH = 7;
+export const PUDDLE_STRETCH = 9;
 /** WET1d: window glint - near keeps the lattice; far dissolves the hard square (soft + fade), metres to the window. */
 export const WIN_GLINT_LOD0 = 0.5;   // WET1d: +25% stone scatter (was 0.4)
 export const WIN_GLINT_LOD1 = 3.0;
