@@ -2823,6 +2823,8 @@ features.weatherEvents.note,"La pluie, les orages et la neige se déplacent sur 
 features.weatherEvents.title,"Météo localisée"
 features.wildernessCamps.note,"En pleine nature, vous rencontrez parfois un petit groupe d’ennemis, un camp ou une bande errante, au lieu d’un seul à la fois. Désactivé garde les rencontres isolées classiques."
 features.wildernessCamps.title,"Camps et bandes sauvages"
+features.wildlife.note,"Oiseaux, chauves-souris et petits animaux vivent en plein air. Des volées traversent le ciel, les oiseaux se posent sur les toits et s’envolent à votre approche, et les petites bêtes détalent à votre passage."
+features.wildlife.title,"Faune"
 features.wind.note,"Voyez le vent en extérieur amélioré : arbres et plantes se penchent et oscillent avec lui, et de légères traînées d’air montrent dans quel sens et avec quelle force il souffle."
 features.wind.sway,"Oscillation"
 features.wind.title,"Vent"

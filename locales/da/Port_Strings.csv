@@ -2823,6 +2823,8 @@ features.weatherEvents.note,"Regn, storme og sne bevæger sig hen over landet me
 features.weatherEvents.title,"Vejr som steder"
 features.wildernessCamps.note,"Ude i vildmarken møder du nogle gange en lille gruppe fjender, en lejr eller en strejfende flok, i stedet for kun én ad gangen. Fra beholder de klassiske enkeltmøder."
 features.wildernessCamps.title,"Vildmarkslejre & flokke"
+features.wildlife.note,"Fugle, flagermus og små dyr lever udendørs. Flokke krydser himlen, fugle sidder på tagene og flyver op, når du kommer tæt på, og små dyr løber væk fra dine fødder."
+features.wildlife.title,"Dyreliv"
 features.wind.note,"Se vinden i det forbedrede udeområde: træer og planter læner sig og svajer med den, og svage luftstriber viser, hvilken vej den blæser, og hvor hårdt."
 features.wind.sway,"Svaj"
 features.wind.title,"Vind"

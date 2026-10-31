@@ -2823,6 +2823,8 @@ features.weatherEvents.note,"Pioggia, tempeste e neve si spostano sulla terra co
 features.weatherEvents.title,"Il tempo come luoghi"
 features.wildernessCamps.note,"Nelle terre selvagge a volte incontri un piccolo gruppo di nemici, un accampamento o un branco errante, invece di uno solo alla volta. Disattivato mantiene gli incontri singoli classici."
 features.wildernessCamps.title,"Accampamenti e branchi selvaggi"
+features.wildlife.note,"Uccelli, pipistrelli e piccoli animali vivono all’aperto. Gli stormi attraversano il cielo, gli uccelli si posano sui tetti e volano via quando ti avvicini, e i piccoli animali scappano al tuo passaggio."
+features.wildlife.title,"Fauna"
 features.wind.note,"Vedi il vento negli esterni migliorati: alberi e piante si piegano e ondeggiano con esso, e deboli scie d’aria mostrano da che parte soffia e con quanta forza."
 features.wind.sway,"Ondeggiamento"
 features.wind.title,"Vento"
