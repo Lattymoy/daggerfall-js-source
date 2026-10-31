@@ -353,7 +353,7 @@
   {
     "name": "AUDIT-WB14-PLAY-7-the-passes-skipped",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "    lastPass(items, rolls); socketPass(items, rolls); weaponSocketPass(items, rolls); techniquePass(items, rolls);",
+    "old": "    lastPass(items, rolls);\n    socketPass(items, rolls);\n    weaponSocketPass(items, rolls);\n    techniquePass(items, rolls);",
     "new": "    void items;",
     "tests": [
       "test/net/gate/audit_wb14.test.js"

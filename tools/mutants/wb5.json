@@ -83,8 +83,8 @@
   {
     "name": "WB5-ammunition-kept",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "    for (let n = 0; n < 32 && isAmmunition(w); n++)",
-    "new": "    for (let n = 0; n < 0 && isAmmunition(w); n++)",
+    "old": "    for (let n = 0; n < 32 && isAmmunition(w); n++) w = createRandomWeapon(level, rolls); // \"no arrows\" - ItemBuilder's own rule for a made piece",
+    "new": "    for (let n = 0; n < 0 && isAmmunition(w); n++) w = createRandomWeapon(level, rolls); // \"no arrows\" - ItemBuilder's own rule for a made piece",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "WB5-no-condition",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  return mintCondition(item);\n}",
-    "new": "  return item;\n}",
+    "old": "  return mintCondition(item);",
+    "new": "  return item;",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "WB5-unidentified",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  item.isIdentified = true;\n",
-    "new": "",
+    "old": "  item.isIdentified = true;\n  return { item, tier: item.rarity ?? tier };",
+    "new": "  return { item, tier: item.rarity ?? tier };",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"
     ]
@@ -194,7 +194,7 @@
     "name": "WB5-the-sigil-a-renamed-gem",
     "file": "src/systems/gate/gateSpoils.js",
     "old": "  return mintCondition(setItemFields({ group: 'Gems', templateIndex: SIGIL_STONE_TEMPLATE }));",
-    "new": "  return mintCondition(setItemFields({ group: 'Gems', templateIndex: 0, name: SIGIL_STONE.name, value: SIGIL_STONE.value }));",
+    "new": "  return mintCondition(\n    setItemFields({ group: 'Gems', templateIndex: 0, name: SIGIL_STONE.name, value: SIGIL_STONE.value }),\n  );",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "WB5-a-piece-without-its-row",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "(!templateByIndex(item?.templateIndex) || !wearableItem(item)); n++)",
-    "new": "!wearableItem(item); n++)",
+    "old": "  for (let n = 0; n < 32 && (!templateByIndex(item?.templateIndex) || !wearableItem(item)); n++)\n    item = makeBase(level, rolls);",
+    "new": "  for (let n = 0; n < 32 && !wearableItem(item); n++) item = makeBase(level, rolls);",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"
     ]

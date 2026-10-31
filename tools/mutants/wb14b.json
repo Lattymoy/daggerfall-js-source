@@ -47,8 +47,8 @@
   {
     "name": "WB14b-the-portents-unsaid-in-the-chat",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "          if (pt) sayOf(pt);\n",
-    "new": "\n",
+    "old": "          if (pt) sayOf(pt);\n        } else if (line === 'seal')",
+    "new": "        } else if (line === 'seal')",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WB14b-the-map-card-without-them",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "marksLineOf(c.t.day), ...(pt ? [pt] : [])]",
-    "new": "marksLineOf(c.t.day)]",
+    "old": "      ...(Number.isFinite(fell)\n        ? [`${boss.name} has fallen`]\n        : [`${boss.name}, ${boss.title}`, marksLineOf(c.t.day), ...(pt ? [pt] : [])]),",
+    "new": "      ...(Number.isFinite(fell) ? [`${boss.name} has fallen`] : [`${boss.name}, ${boss.title}`, marksLineOf(c.t.day)]),",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]

@@ -335,8 +335,8 @@
   {
     "name": "SD20D-A8-the-gates-merge-undone",
     "file": "src/systems/gate/gateScore.js",
-    "old": "      if (was) { was.velocity = Math.max(was.velocity, v); was.duration = Math.max(was.duration, duration); return; }\n",
-    "new": "",
+    "old": "      if (was) {\n        was.velocity = Math.max(was.velocity, v);\n        was.duration = Math.max(was.duration, duration);\n        return;\n      }\n      const e = { tick: at, type: 'noteOn', channel, note, velocity: v, duration };",
+    "new": "      const e = { tick: at, type: 'noteOn', channel, note, velocity: v, duration };",
     "tests": [
       "test/scenes/superDungeon/sd20d_audio.test.js"
     ]

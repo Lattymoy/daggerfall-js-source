@@ -2,8 +2,8 @@
   {
     "name": "SS1-the-row-unstacked",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  stackable: true,\n  bound: true,\n}]);",
-    "new": "  bound: true,\n}]);",
+    "old": "    stackable: true,\n    bound: true,",
+    "new": "    bound: true,",
     "tests": [
       "test/systems/item/ss1_stones.test.js",
       "test/systems/item/wb5_gate_spoils.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "SS1-the-row-unbound",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  stackable: true,\n  bound: true,\n}]);",
-    "new": "  stackable: true,\n}]);",
+    "old": "    bound: true,\n  },",
+    "new": "  },",
     "tests": [
       "test/systems/item/ss1_stones.test.js"
     ]

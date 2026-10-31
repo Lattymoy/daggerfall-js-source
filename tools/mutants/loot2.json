@@ -122,8 +122,8 @@
   {
     "name": "LOOT2-the-gate-before-the-regalia",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  const regalia = rollRegalia(rolls);\n  if (regalia) pieces.push({ item: regalia, tier: regalia.rarity });\n  // LOOT2",
-    "new": "  lastPass(pieces.map((p) => p.item), rolls);\n  const regalia = rollRegalia(rolls);\n  if (regalia) pieces.push({ item: regalia, tier: regalia.rarity });\n  // LOOT2",
+    "old": "  const regalia = rollRegalia(rolls);",
+    "new": "  lastPass(\n    pieces.map((p) => p.item),\n    rolls,\n  );\n  const regalia = rollRegalia(rolls);",
     "tests": [
       "test/systems/loot2_exalted.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "LOOT2-the-gate-never",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  lastPass(pieces.map((p) => p.item), rolls);\n  // CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 32): THE WARDEN'S OWN CARD",
-    "new": "  // CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 32): THE WARDEN'S OWN CARD",
+    "old": "  lastPass(\n    pieces.map((p) => p.item),\n    rolls,\n  );\n  // CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 32): THE WARDEN'S OWN CARD - one draw more, LAST of all (after",
+    "new": "  // CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 32): THE WARDEN'S OWN CARD - one draw more, LAST of all (after",
     "tests": [
       "test/systems/loot2_exalted.test.js"
     ]

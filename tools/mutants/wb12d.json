@@ -710,7 +710,7 @@
   {
     "name": "WB12d-the-line-unsaid",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "        if ((line === 'omen' || line === 'rise') && riteDay !== t.day) { riteDay = t.day; if (riteReady() && !riteBroken(t.day, s)) sayOf(riteOmenLine()); }",
+    "old": "        if ((line === 'omen' || line === 'rise') && riteDay !== t.day) {\n          riteDay = t.day;\n          if (riteReady() && !riteBroken(t.day, s)) sayOf(riteOmenLine());\n        }",
     "new": "",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
@@ -1563,8 +1563,8 @@
   {
     "name": "AUDIT-WB12d-the-order-over-a-broken-rite",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "if (riteReady() && !riteBroken(t.day, s)) sayOf(riteOmenLine());",
-    "new": "sayOf(riteOmenLine());",
+    "old": "          if (riteReady() && !riteBroken(t.day, s)) sayOf(riteOmenLine());",
+    "new": "          sayOf(riteOmenLine());",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]

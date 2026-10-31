@@ -69,8 +69,8 @@
   {
     "name": "WB13b-a-dash-aside-back",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "${top?.length ? `, struck down by",
-    "new": "${top?.length ? ` - struck down by",
+    "old": "  `${boss} has fallen at Dagon's Breach ${near ? `near ${near}` : 'in the wilds'}${top?.length ? `, struck down by ${top.length > 1 ? `${top.slice(0, -1).join(', ')} and ${top[top.length - 1]}` : top[0]}` : ''}. The breach collapses.`; // WB13b: \"in the wilds\" where this screen never found the site, as Discord says it",
+    "new": "  `${boss} has fallen at Dagon's Breach ${near ? `near ${near}` : 'in the wilds'}${top?.length ? ` - struck down by ${top.length > 1 ? `${top.slice(0, -1).join(', ')} and ${top[top.length - 1]}` : top[0]}` : ''}. The breach collapses.`; // WB13b: \"in the wilds\" where this screen never found the site, as Discord says it",
     "tests": [
       "test/net/gate/wb13b_words.test.js",
       "test/systems/gate/wb12a_breach_words.test.js"

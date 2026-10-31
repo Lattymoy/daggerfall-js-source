@@ -304,8 +304,8 @@
   {
     "name": "WB8c-the-card-without-marks",
     "file": "src/systems/gate/gateOmen.js",
-    "old": ": [`${boss.name}, ${boss.title}`, marksLineOf(c.t.day), ...(pt ? [pt] : [])])] };",
-    "new": ": [`${boss.name}, ${boss.title}`, ...(pt ? [pt] : [])])] };",
+    "old": "      ...(Number.isFinite(fell)\n        ? [`${boss.name} has fallen`]\n        : [`${boss.name}, ${boss.title}`, marksLineOf(c.t.day), ...(pt ? [pt] : [])]),",
+    "new": "      ...(Number.isFinite(fell) ? [`${boss.name} has fallen`] : [`${boss.name}, ${boss.title}`, ...(pt ? [pt] : [])]),",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js"
     ]
@@ -313,8 +313,8 @@
   {
     "name": "WB8c-the-marks-said-every-line",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "&& marksDay !== t.day) {\n          marksDay = t.day;",
-    "new": "&& true) {\n          marksDay = t.day;",
+    "old": "        if ((line === 'omen' || line === 'rise' || line === 'open') && marksDay !== t.day) {",
+    "new": "        if ((line === 'omen' || line === 'rise' || line === 'open') && true) {",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]

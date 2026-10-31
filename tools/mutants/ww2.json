@@ -138,8 +138,8 @@
   {
     "name": "WW2-the-rings-inner-bound",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "      if (d < GATE_TOWN_MIN_PX) continue;\n",
-    "new": "      if (d < GATE_TOWN_MIN_PX - 1) continue;\n",
+    "old": "          if (d < GATE_TOWN_MIN_PX) continue;",
+    "new": "          if (d < GATE_TOWN_MIN_PX - 1) continue;",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ],
@@ -149,8 +149,8 @@
   {
     "name": "WW2-the-neighbours-test",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "near = placeOn(x + dx, y + dy);",
-    "new": "near = placeOn(x, y);",
+    "old": "    for (let dy = -1; dy <= 1 && !near; dy++) for (let dx = -1; dx <= 1 && !near; dx++) near = placeOn(x + dx, y + dy);",
+    "new": "    for (let dy = -1; dy <= 1 && !near; dy++) for (let dx = -1; dx <= 1 && !near; dx++) near = placeOn(x, y);",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "WW2-the-nearest-town",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "if (!b || d < b.d) best.set(k, { d, t });",
-    "new": "if (!b || d <= b.d) best.set(k, { d, t });",
+    "old": "          if (!b || d < b.d) best.set(k, { d, t }); // the NEAREST town names the gate; the first listed wins a tie",
+    "new": "          if (!b || d <= b.d) best.set(k, { d, t }); // the NEAREST town names the gate; the first listed wins a tie",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "WW2-the-spawned-dungeon",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "if (near || wet(x, y) || onGhostfence(x, y) || redMountainLavaIn(x, y) || spawnsDungeon(spawnSalt, x, y)) return;",
-    "new": "if (near || wet(x, y) || onGhostfence(x, y) || redMountainLavaIn(x, y)) return;",
+    "old": "    if (near || wet(x, y) || onGhostfence(x, y) || redMountainLavaIn(x, y) || spawnsDungeon(spawnSalt, x, y)) return; // FENCE-CLEAR, LAVA-CLEAR: nor the fence's line or the lava",
+    "new": "    if (near || wet(x, y) || onGhostfence(x, y) || redMountainLavaIn(x, y)) return; // FENCE-CLEAR, LAVA-CLEAR: nor the fence's line or the lava",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -176,8 +176,8 @@
   {
     "name": "WW2-the-water",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "if (near || wet(x, y) || onGhostfence(x, y) || redMountainLavaIn(x, y) || spawnsDungeon(spawnSalt, x, y)) return;",
-    "new": "if (near || onGhostfence(x, y) || redMountainLavaIn(x, y) || spawnsDungeon(spawnSalt, x, y)) return;",
+    "old": "    if (near || wet(x, y) || onGhostfence(x, y) || redMountainLavaIn(x, y) || spawnsDungeon(spawnSalt, x, y)) return; // FENCE-CLEAR, LAVA-CLEAR: nor the fence's line or the lava",
+    "new": "    if (near || onGhostfence(x, y) || redMountainLavaIn(x, y) || spawnsDungeon(spawnSalt, x, y)) return; // FENCE-CLEAR, LAVA-CLEAR: nor the fence's line or the lava",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "WW2-another-theatres-pixel",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "if (!inWorldGrid(x, y) || !inTheatre(x, y)) continue;",
-    "new": "if (!inWorldGrid(x, y)) continue;",
+    "old": "          if (!inWorldGrid(x, y) || !inTheatre(x, y)) continue;",
+    "new": "          if (!inWorldGrid(x, y)) continue;",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "WW2-the-lanes-bag",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "const area = pickGateRegion(n, theatreGateAreas(scan));",
-    "new": "const area = pickGateRegion(0, theatreGateAreas(scan));",
+    "old": "  const area = pickGateRegion(n, theatreGateAreas(scan));",
+    "new": "  const area = pickGateRegion(0, theatreGateAreas(scan));",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "WW2-the-region-past-the-bay",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "day: n, region: isBayArea(area) ? area : regionOfTheatre(scan.theatre),",
-    "new": "day: n, region: area,",
+    "old": "    region: isBayArea(area) ? area : regionOfTheatre(scan.theatre),",
+    "new": "    region: area,",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -248,8 +248,8 @@
   {
     "name": "WW2-a-lanes-line-on-the-bays-card",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "const sayOf = (/** @type {string} */ text) => say(text, t.day);",
-    "new": "const sayOf = (/** @type {string} */ text) => say(text);",
+    "old": "      const sayOf = (/** @type {string} */ text) => say(text, t.day); // WW2: each line with its gate's number - a lane past the Bay's card is its own",
+    "new": "      const sayOf = (/** @type {string} */ text) => say(text); // WW2: each line with its gate's number - a lane past the Bay's card is its own",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]

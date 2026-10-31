@@ -11,8 +11,8 @@
   {
     "name": "AUDWB-D2-a-late-arrival-hears-the-fanfare",
     "file": "src/systems/gate/gateScore.js",
-    "old": "      if (law === GATE_SONGS.fell && stingAt === null) stingAt = now + SCORE_STING_LEAD_MS;",
-    "new": "      if (s.fell && stingAt === null) stingAt = now + SCORE_STING_LEAD_MS;",
+    "old": "      if (law === GATE_SONGS.fell && stingAt === null) stingAt = now + SCORE_STING_LEAD_MS; // AUDIT WBX W3: from when it sounds",
+    "new": "      if (s.fell && stingAt === null) stingAt = now + SCORE_STING_LEAD_MS; // AUDIT WBX W3: from when it sounds",
     "tests": [
       "test/systems/gate/auditwb_sound.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDWB-D2-the-next-day-remembers-the-last",
     "file": "src/systems/gate/gateScore.js",
-    "old": "      if (s.day !== day) { day = s.day; stingAt = null; }",
-    "new": "      if (s.day !== day) { day = s.day; }",
+    "old": "        stingAt = null;\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/gate/auditwb_sound.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDWB-D4-the-war-songs-classic",
     "file": "src/systems/gate/gateScore.js",
-    "old": "durationTicks: bars * 4 * SCORE_TPQ, seamless: true, level };",
-    "new": "durationTicks: bars * 4 * SCORE_TPQ, level };",
+    "old": "    seamless: true,\n    level,",
+    "new": "    level,",
     "tests": [
       "test/systems/gate/auditwb_sound.test.js"
     ]

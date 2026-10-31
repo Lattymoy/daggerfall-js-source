@@ -251,8 +251,8 @@
   {
     "name": "AUDWBX-W3-the-fanfare-under-the-fade",
     "file": "src/systems/gate/gateScore.js",
-    "old": "stingAt = now + SCORE_STING_LEAD_MS;",
-    "new": "stingAt = now;",
+    "old": "      if (law === GATE_SONGS.fell && stingAt === null) stingAt = now + SCORE_STING_LEAD_MS; // AUDIT WBX W3: from when it sounds",
+    "new": "      if (law === GATE_SONGS.fell && stingAt === null) stingAt = now; // AUDIT WBX W3: from when it sounds",
     "tests": [
       "test/net/gate/auditwbx.test.js",
       "test/systems/gate/auditwb_sound.test.js"

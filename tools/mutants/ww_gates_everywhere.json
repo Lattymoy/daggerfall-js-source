@@ -47,8 +47,8 @@
   {
     "name": "WWGE-the-towns-region-past-the-bay",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "region: isBayArea(town.area) ? town.area : regionOfTheatre(scan.theatre), area: town.area }",
-    "new": "region: isBayArea(town.area) ? town.area : null, area: town.area }",
+    "old": "      ? {\n          name: town.name,\n          px: town.px,\n          py: town.py,\n          region: isBayArea(town.area) ? town.area : regionOfTheatre(scan.theatre),\n          area: town.area,\n        }",
+    "new": "      ? { name: town.name, px: town.px, py: town.py, region: isBayArea(town.area) ? town.area : null, area: town.area }",
     "tests": [
       "test/world/worldWide/ww_gates_everywhere.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WWGE-the-scans-slice-unbounded",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "if (i < K.length && more && !more()) return null;",
-    "new": "if (false) return null;",
+    "old": "        if (i < K.length && more && !more()) return null;",
+    "new": "        if (false) return null;",
     "tests": [
       "test/world/worldWide/ww_gates_everywhere.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WWGE-the-scans-step-the-whole",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "const end = Math.min(K.length, i + THEATRE_SCAN_STEP);",
-    "new": "const end = K.length;",
+    "old": "        const end = Math.min(K.length, i + THEATRE_SCAN_STEP);",
+    "new": "        const end = K.length;",
     "tests": [
       "test/world/worldWide/ww_gates_everywhere.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WWGE-a-pixels-place-asked-again",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "if (v === undefined) placed.set(k, v = !!placeAt(x, y));",
-    "new": "v = !!placeAt(x, y);",
+    "old": "    if (v === undefined) placed.set(k, (v = !!placeAt(x, y)));",
+    "new": "    v = !!placeAt(x, y);",
     "tests": [
       "test/world/worldWide/ww_gates_everywhere.test.js"
     ]

@@ -342,8 +342,8 @@
   {
     "name": "GC-the-court-s-number",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "court: c + 1,",
-    "new": "court: c,",
+    "old": "  const args = { boss, court: c + 1, near: near ?? '', by: (top ?? []).join(', '), struck: top?.length ? 'yes' : 'no' };",
+    "new": "  const args = { boss, court: c, near: near ?? '', by: (top ?? []).join(', '), struck: top?.length ? 'yes' : 'no' };",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -352,8 +352,8 @@
   {
     "name": "GC-the-collapse-for-a-court",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "in the wilds{struck, select, yes {, struck down by {by}} other {}}.\", args)",
-    "new": "in the wilds{struck, select, yes {, struck down by {by}} other {}}. The breach collapses.\", args)",
+    "old": "        \"{boss} has fallen in court {court} of Dagon's Breach in the wilds{struck, select, yes {, struck down by {by}} other {}}.\",",
+    "new": "        \"{boss} has fallen in court {court} of Dagon's Breach in the wilds{struck, select, yes {, struck down by {by}} other {}}. The breach collapses.\",",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -812,8 +812,8 @@
   {
     "name": "GCA-the-seal-said-at-once",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "      if (line === 'seal' && now() - t.sealAt < SEAL_SAY_HOLD_MS) return current;\n",
-    "new": "",
+    "old": "      if (line === 'seal' && now() - t.sealAt < SEAL_SAY_HOLD_MS) return current;\n      // a gate collapsing because its boss FELL says no wrath: the relay's own line (WB3) said the fall",
+    "new": "      // a gate collapsing because its boss FELL says no wrath: the relay's own line (WB3) said the fall",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],

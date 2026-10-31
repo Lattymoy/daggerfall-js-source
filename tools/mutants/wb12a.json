@@ -2,8 +2,8 @@
   {
     "name": "WB12a-the-repair-never-renames",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  for (const it of list) if (isSigilStone(it) && it.name !== SIGIL_STONE.name) { it.name = SIGIL_STONE.name; renamed++; }",
-    "new": "  for (const it of list) if (false && isSigilStone(it)) { it.name = SIGIL_STONE.name; renamed++; }",
+    "old": "    if (isSigilStone(it) && it.name !== SIGIL_STONE.name) {",
+    "new": "    if (false && isSigilStone(it)) {",
     "tests": [
       "test/systems/gate/wb12a_breach_words.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WB12a-every-item-renamed",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  for (const it of list) if (isSigilStone(it) && it.name !== SIGIL_STONE.name) { it.name = SIGIL_STONE.name; renamed++; }",
-    "new": "  for (const it of list) if (it && it.name !== SIGIL_STONE.name) { it.name = SIGIL_STONE.name; renamed++; }",
+    "old": "    if (isSigilStone(it) && it.name !== SIGIL_STONE.name) {",
+    "new": "    if (it && it.name !== SIGIL_STONE.name) {",
     "tests": [
       "test/systems/gate/wb12a_breach_words.test.js"
     ]

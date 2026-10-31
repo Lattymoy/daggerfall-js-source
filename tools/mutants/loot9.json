@@ -2,8 +2,8 @@
   {
     "name": "LOOT9-shard-unbound",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  bound: true,\n  stackable: true,\n}]);",
-    "new": "  stackable: true,\n}]);",
+    "old": "    worldTextureRecord: 2,\n    bound: true,\n    stackable: true,",
+    "new": "    worldTextureRecord: 2,\n    stackable: true,",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "LOOT9-shard-unstacked",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  bound: true,\n  stackable: true,\n}]);",
-    "new": "  bound: true,\n}]);",
+    "old": "    stackable: true,\n  },",
+    "new": "  },",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LOOT9-shards-below-one",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "{ stackCount: Math.max(1, Math.trunc(Number(n) || 1)) }",
-    "new": "{ stackCount: Math.trunc(Number(n) || 1) }",
+    "old": "    stackCount: Math.max(1, Math.trunc(Number(n) || 1)),",
+    "new": "    stackCount: Math.trunc(Number(n) || 1),",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]

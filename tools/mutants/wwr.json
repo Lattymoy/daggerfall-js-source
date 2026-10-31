@@ -249,8 +249,8 @@
   {
     "name": "WWR-the-gate-scan-a-provinces-politic",
     "file": "src/systems/gate/gateSite.js",
-    "old": "(pol >= 128 && pol < 128 + BAY_REGION_COUNT) || pol === 128 + 105;",
-    "new": "(pol >= 128 && pol < 128 + REGION_NAMES.length) || pol === 128 + 105;",
+    "old": "export const politicClaimed = (pol) => (pol >= 128 && pol < 128 + BAY_REGION_COUNT) || pol === 128 + 105; // WW-R: the Bay's own regions - the Bay's scan reads the Bay's map",
+    "new": "export const politicClaimed = (pol) => (pol >= 128 && pol < 128 + REGION_NAMES.length) || pol === 128 + 105; // WW-R: the Bay's own regions - the Bay's scan reads the Bay's map",
     "tests": [
       "test/world/worldWide/wwr_regions.test.js"
     ]

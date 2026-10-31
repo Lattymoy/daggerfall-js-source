@@ -29,15 +29,28 @@
 //
 // Not a DFU member. Ledger A (WB).
 import { seededRng } from '../wind/wind.js';
-import { createRandomWeapon, createRandomArmor, createRandomGem, ITEM_GROUPS } from '../loot/loot.js';   // WB14e: a Tithe-Imp's gem, ItemBuilder's own draw
-import { setItemFields, isAmmunition, mintCondition, registerCustomTemplates, templateByIndex } from '../item/itemTemplates.js';
-import { applyRarity, rarityChances, lastPass, socketPass, weaponSocketPass, techniquePass } from '../loot/lootRarity.js';   // GEM1: the sockets' passes, the spoils' last but the gems; TECH1: the technique pass, a door's last draw
-import { bossGems } from '../gems.js';   // GEM2: the Warden's gem
-import { rollRegalia } from '../aetheric.js';   // SET6: Ruhn's Regalia - the spoils' last roll
-import { stacksWith, addItem } from '../inventory.js';   // SS1: the fold of a pack saved before the stone stacked; PORTAL-GIFT: the gift joins the pack's stack
-import { wearableItem } from '../equip.js';   // RARITY-WEAR: a spoils piece is one a slot takes
-import { bossCardRoll } from '../bossCards.js';   // CARDS9: the Warden's own card, the hoard's last draw
-import { rollDragonfireOath } from '../gilded.js';   // GILDED2: the Dragonfire Oath - the spoils' very last draw
+import { createRandomWeapon, createRandomArmor, createRandomGem, ITEM_GROUPS } from '../loot/loot.js'; // WB14e: a Tithe-Imp's gem, ItemBuilder's own draw
+import {
+  setItemFields,
+  isAmmunition,
+  mintCondition,
+  registerCustomTemplates,
+  templateByIndex,
+} from '../item/itemTemplates.js';
+import {
+  applyRarity,
+  rarityChances,
+  lastPass,
+  socketPass,
+  weaponSocketPass,
+  techniquePass,
+} from '../loot/lootRarity.js'; // GEM1: the sockets' passes, the spoils' last but the gems; TECH1: the technique pass, a door's last draw
+import { bossGems } from '../gems.js'; // GEM2: the Warden's gem
+import { rollRegalia } from '../aetheric.js'; // SET6: Ruhn's Regalia - the spoils' last roll
+import { stacksWith, addItem } from '../inventory.js'; // SS1: the fold of a pack saved before the stone stacked; PORTAL-GIFT: the gift joins the pack's stack
+import { wearableItem } from '../equip.js'; // RARITY-WEAR: a spoils piece is one a slot takes
+import { bossCardRoll } from '../bossCards.js'; // CARDS9: the Warden's own card, the hoard's last draw
+import { rollDragonfireOath } from '../gilded.js'; // GILDED2: the Dragonfire Oath - the spoils' very last draw
 
 /** Gold a level of the player's, before the seed's variation (0.8 to 1.2 of it). */
 export const SPOILS_GOLD_PER_LEVEL = 250;
@@ -54,18 +67,20 @@ export const SIGIL_STONE = Object.freeze({ name: 'Deadlands Ember', value: 5000 
 /** The Sigil Stone's row, in DFU's ItemTemplates.txt columns: a gem's weight and wear, the gate's price, the rarest
  *  rarity, the Ruby's art (TEXTURE.254 record 0) - and the port's two (SS1): it stacks, with its own kind alone, and it
  *  is bound. */
-export const SIGIL_STONE_TEMPLATES = Object.freeze([{
-  index: SIGIL_STONE_TEMPLATE,
-  name: SIGIL_STONE.name,
-  baseWeight: 0.25,
-  hitPoints: 1000,
-  basePrice: SIGIL_STONE.value,
-  rarity: 20,
-  worldTextureArchive: 254,
-  worldTextureRecord: 0,
-  stackable: true,
-  bound: true,
-}]);
+export const SIGIL_STONE_TEMPLATES = Object.freeze([
+  {
+    index: SIGIL_STONE_TEMPLATE,
+    name: SIGIL_STONE.name,
+    baseWeight: 0.25,
+    hitPoints: 1000,
+    basePrice: SIGIL_STONE.value,
+    rarity: 20,
+    worldTextureArchive: 254,
+    worldTextureRecord: 0,
+    stackable: true,
+    bound: true,
+  },
+]);
 registerCustomTemplates(SIGIL_STONE_TEMPLATES);
 export const isSigilStone = (item) => item?.templateIndex === SIGIL_STONE_TEMPLATE;
 /** LOOT9 (the Loot arc, bible/06-Systems/Loot-Arc.md section 11): THE WELKYND SHARD - a sliver of Ayleid
@@ -75,23 +90,27 @@ export const isSigilStone = (item) => item?.templateIndex === SIGIL_STONE_TEMPLA
  *  (TEXTURE.254 record 2): a Welkynd stone's blue. */
 export const WELKYND_SHARD_TEMPLATE = 571;
 export const WELKYND_SHARD = Object.freeze({ name: 'Welkynd Shard', value: 250 });
-export const WELKYND_SHARD_TEMPLATES = Object.freeze([{
-  index: WELKYND_SHARD_TEMPLATE,
-  name: WELKYND_SHARD.name,
-  baseWeight: 0.1,
-  hitPoints: 1000,
-  basePrice: WELKYND_SHARD.value,
-  rarity: 20,
-  worldTextureArchive: 254,
-  worldTextureRecord: 2,
-  bound: true,
-  stackable: true,
-}]);
+export const WELKYND_SHARD_TEMPLATES = Object.freeze([
+  {
+    index: WELKYND_SHARD_TEMPLATE,
+    name: WELKYND_SHARD.name,
+    baseWeight: 0.1,
+    hitPoints: 1000,
+    basePrice: WELKYND_SHARD.value,
+    rarity: 20,
+    worldTextureArchive: 254,
+    worldTextureRecord: 2,
+    bound: true,
+    stackable: true,
+  },
+]);
 registerCustomTemplates(WELKYND_SHARD_TEMPLATES);
 export const isWelkyndShard = (item) => item?.templateIndex === WELKYND_SHARD_TEMPLATE;
 /** `n` shards (at least one), one stack, minted on their own row. */
 export function welkyndShards(n = 1) {
-  return Object.assign(mintCondition(setItemFields({ group: 'Gems', templateIndex: WELKYND_SHARD_TEMPLATE })), { stackCount: Math.max(1, Math.trunc(Number(n) || 1)) });
+  return Object.assign(mintCondition(setItemFields({ group: 'Gems', templateIndex: WELKYND_SHARD_TEMPLATE })), {
+    stackCount: Math.max(1, Math.trunc(Number(n) || 1)),
+  });
 }
 /** PORTAL1 (systems/portalStone.js): THE PORTAL STONE - what the shards buy at every shop's counter, one portal a stone.
  *  Its own row beside the shard's, on the same laws: it stacks with its own kind alone, and it is BOUND (the shards that
@@ -103,17 +122,20 @@ export const PORTAL_STONE_TEMPLATE = 572;
 /** What a stone costs at the counter, in Welkynd Shards (a Magic piece salvages into 1, a Rare 3, a Legendary 8). */
 export const PORTAL_STONE_SHARDS = 5;
 export const PORTAL_STONE = Object.freeze({ name: 'Portal Stone', value: PORTAL_STONE_SHARDS * WELKYND_SHARD.value });
-export const PORTAL_STONE_TEMPLATES = Object.freeze([{
-  index: PORTAL_STONE_TEMPLATE,
-  name: PORTAL_STONE.name,
-  baseWeight: 0.25,
-  hitPoints: 1000,
-  basePrice: PORTAL_STONE.value,
-  rarity: 20,
-  worldTextureArchive: 254,
-  worldTextureRecord: 3,
-  bound: true, stackable: true,   // the shard's two laws
-}]);
+export const PORTAL_STONE_TEMPLATES = Object.freeze([
+  {
+    index: PORTAL_STONE_TEMPLATE,
+    name: PORTAL_STONE.name,
+    baseWeight: 0.25,
+    hitPoints: 1000,
+    basePrice: PORTAL_STONE.value,
+    rarity: 20,
+    worldTextureArchive: 254,
+    worldTextureRecord: 3,
+    bound: true,
+    stackable: true, // the shard's two laws
+  },
+]);
 registerCustomTemplates(PORTAL_STONE_TEMPLATES);
 export const isPortalStone = (item) => item?.templateIndex === PORTAL_STONE_TEMPLATE;
 /** PORTAL-GIFT (2026-10-04, the owner: "every current player should recieve x10 of these. They should stack"): EVERY
@@ -138,11 +160,17 @@ export function givePortalGift(entity) {
   return PORTAL_GIFT_STONES;
 }
 /** The stones given since the last ask (0: none), and the notice cleared - the host says it once. */
-export const takePortalGiftNotice = () => { const n = _giftNotice; _giftNotice = 0; return n; };
+export const takePortalGiftNotice = () => {
+  const n = _giftNotice;
+  _giftNotice = 0;
+  return n;
+};
 /** `n` Portal Stones (at least one), one stack. */
 export function portalStones(n = 1) {
   const count = Math.max(1, Math.trunc(Number(n) || 1));
-  return Object.assign(mintCondition(setItemFields({ group: 'UselessItems2', templateIndex: PORTAL_STONE_TEMPLATE })), { stackCount: count });
+  return Object.assign(mintCondition(setItemFields({ group: 'UselessItems2', templateIndex: PORTAL_STONE_TEMPLATE })), {
+    stackCount: count,
+  });
 }
 
 /** SS1: STONES WON BEFORE THEY STACKED ARE ONE STACK. A pack saved before the row stacked holds a record a stone; each
@@ -173,7 +201,11 @@ export function restackStones(list) {
 export function nameEmbers(list) {
   if (!Array.isArray(list)) return 0;
   let renamed = 0;
-  for (const it of list) if (isSigilStone(it) && it.name !== SIGIL_STONE.name) { it.name = SIGIL_STONE.name; renamed++; }
+  for (const it of list)
+    if (isSigilStone(it) && it.name !== SIGIL_STONE.name) {
+      it.name = SIGIL_STONE.name;
+      renamed++;
+    }
   return renamed;
 }
 
@@ -186,14 +218,15 @@ const pick = (list, rolls) => list[Math.floor(rolls() * list.length)];
  *  nothing - so it is made again too; a seed that drew no wand draws what it drew before. */
 export function spoilsBase(level, rolls) {
   let item = makeBase(level, rolls);
-  for (let n = 0; n < 32 && (!templateByIndex(item?.templateIndex) || !wearableItem(item)); n++) item = makeBase(level, rolls);
+  for (let n = 0; n < 32 && (!templateByIndex(item?.templateIndex) || !wearableItem(item)); n++)
+    item = makeBase(level, rolls);
   return mintCondition(item);
 }
 function makeBase(level, rolls) {
   const k = Math.floor(rolls() * 3);
   if (k === 0) {
     let w = createRandomWeapon(level, rolls);
-    for (let n = 0; n < 32 && isAmmunition(w); n++) w = createRandomWeapon(level, rolls);   // "no arrows" - ItemBuilder's own rule for a made piece
+    for (let n = 0; n < 32 && isAmmunition(w); n++) w = createRandomWeapon(level, rolls); // "no arrows" - ItemBuilder's own rule for a made piece
     return w;
   }
   if (k === 1) return createRandomArmor(level, rolls);
@@ -236,19 +269,31 @@ export function rollSpoils(seed, level, p = 0) {
   if (regalia) pieces.push({ item: regalia, tier: regalia.rarity });
   // LOOT2 (bible/06-Systems/Loot-Arc.md section 4): the ladder's last pass - a Legendary among them Exalted one time in
   // ten - rolled after the Regalia, so every spoils before it is what it was for its seed
-  lastPass(pieces.map((p) => p.item), rolls);
+  lastPass(
+    pieces.map((p) => p.item),
+    rolls,
+  );
   // CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 32): THE WARDEN'S OWN CARD - one draw more, LAST of all (after
   // the last pass), so every spoils before it is what it was for its seed; kept beside the pieces, never among them
   const card = bossCardRoll('gate', rolls);
   // GEM1/GEM2 (bible/06-Systems/Gem-Sockets.md section 4): the sockets' passes over the pieces - LOOT20's, then the
   // weapons' own - and the Warden's gem at a boss's grade, LAST of all (after the card), so every spoils before them is
   // what it was for its seed
-  socketPass(pieces.map((p) => p.item), rolls);
-  weaponSocketPass(pieces.map((p) => p.item), rolls);
+  socketPass(
+    pieces.map((p) => p.item),
+    rolls,
+  );
+  weaponSocketPass(
+    pieces.map((p) => p.item),
+    rolls,
+  );
   const gems = bossGems('gate', rolls);
   // TECH1 (bible/05-Combat/Weapon-Techniques.md): a weapon's technique - after even the Warden's gem, so every spoils
   // before it is what it was for its seed (a piece with no technique family takes no draw)
-  techniquePass(pieces.map((p) => p.item), rolls);
+  techniquePass(
+    pieces.map((p) => p.item),
+    rolls,
+  );
   // GILDED2 (bible/06-Systems/Gilded.md section 7): THE DRAGONFIRE OATH - one draw more, LAST of all (after even the
   // technique pass), so every spoils before it is what it was for its seed; a static roll, so no pass ever reaches it
   const oath = rollDragonfireOath(rolls);
@@ -258,11 +303,18 @@ export function rollSpoils(seed, level, p = 0) {
   // AUDIT WB14 (PLAY-7): and each such piece through the passes every other piece had - the ladder's last (an Exalted), the
   // sockets', the weapons' and the technique's - over them alone, after them, so nothing drawn before them moves
   const more = [];
-  for (const bit of SPOILS_PORTENT_BITS) if ((p & bit) !== 0) more.push(graded(spoilsBase(lv, rolls), magicOrBetter(rolls), rolls));
+  for (const bit of SPOILS_PORTENT_BITS)
+    if ((p & bit) !== 0) more.push(graded(spoilsBase(lv, rolls), magicOrBetter(rolls), rolls));
   if (more.length) {
     const items = more.map((q) => q.item);
-    lastPass(items, rolls); socketPass(items, rolls); weaponSocketPass(items, rolls); techniquePass(items, rolls);
-    for (const q of more) { q.tier = q.item.rarity ?? q.tier; pieces.push(q); }
+    lastPass(items, rolls);
+    socketPass(items, rolls);
+    weaponSocketPass(items, rolls);
+    techniquePass(items, rolls);
+    for (const q of more) {
+      q.tier = q.item.rarity ?? q.tier;
+      pieces.push(q);
+    }
   }
   return { gold, pieces, sigil: sigilStone(), card, gems, portent: more.length };
 }
@@ -278,7 +330,10 @@ export function titheList(seed, level) {
   const rolls = seededRng(((seed >>> 0) ^ 0x7177e) >>> 0);
   const lv = Math.max(1, Math.floor(Number(level) || 1));
   const gold = Math.round(TITHE_GOLD_PER_LEVEL * lv * (0.8 + 0.4 * rolls()));
-  return [{ kind: 'gold', gold, tier: 'common' }, { kind: 'item', item: mintCondition(setItemFields(createRandomGem(rolls))), tier: 'common' }];
+  return [
+    { kind: 'gold', gold, tier: 'common' },
+    { kind: 'item', item: mintCondition(setItemFields(createRandomGem(rolls))), tier: 'common' },
+  ];
 }
 
 /** A piece laddered to its tier and known - a Legendary with no record for its kind falls to Rare (applyRarity's own

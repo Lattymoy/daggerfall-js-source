@@ -931,6 +931,13 @@
 /src/systems/gambit/*/
 !/src/systems/gameDate.js
 !/src/systems/gamepad.js
+!/src/systems/gate/
+/src/systems/gate/*
+!/src/systems/gate/gateOmen.js
+!/src/systems/gate/gateScore.js
+!/src/systems/gate/gateSite.js
+!/src/systems/gate/gateSpoils.js
+!/src/systems/gate/theatreGateSite.js
 !/src/systems/gateTier.js
 !/src/systems/gatherBlow.js
 !/src/systems/gatherSounds.js

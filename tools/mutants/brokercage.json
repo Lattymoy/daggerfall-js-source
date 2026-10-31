@@ -225,8 +225,8 @@
   {
     "name": "BROKER-CAGE-a-cage-site-a-frame",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "      if (cage?.day !== c.t.day || cage.px !== s.px || cage.py !== s.py) cage = ",
-    "new": "      cage = ",
+    "old": "      if (cage?.day !== c.t.day || cage.px !== s.px || cage.py !== s.py)\n        cage = Object.freeze({ day: c.t.day, px: s.px, py: s.py });",
+    "new": "      cage = Object.freeze({ day: c.t.day, px: s.px, py: s.py });",
     "tests": [
       "test/systems/brokercage.test.js"
     ]

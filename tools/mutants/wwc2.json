@@ -243,8 +243,8 @@
   {
     "name": "WWC2-cyrodiils-areas-open",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "filter((a) => theatreOfArea(a) !== theatreOfRegion(WILD_REGION) &&",
-    "new": "filter((a) => a !== WILD_REGION &&",
+    "old": "    .filter(\n      (a) =>\n        theatreOfArea(a) !== theatreOfRegion(WILD_REGION) &&\n        /** @type {Int32Array} */ (scan.byArea.get(a)).length >= GATE_REGION_MIN_PIXELS,\n    )",
+    "new": "    .filter((a) => a !== WILD_REGION && /** @type {Int32Array} */ (scan.byArea.get(a)).length >= GATE_REGION_MIN_PIXELS)",
     "tests": [
       "test/world/worldWide/wwc2_zone.test.js"
     ]

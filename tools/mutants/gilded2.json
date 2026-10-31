@@ -56,8 +56,8 @@
   {
     "name": "GILDED2-the-oath-before-the-passes",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  techniquePass(pieces.map((p) => p.item), rolls);\n  // GILDED2",
-    "new": "  rollDragonfireOath(rolls);\n  techniquePass(pieces.map((p) => p.item), rolls);\n  // GILDED2",
+    "old": "  // before it is what it was for its seed (a piece with no technique family takes no draw)\n  techniquePass(",
+    "new": "  // before it is what it was for its seed (a piece with no technique family takes no draw)\n  rollDragonfireOath(rolls);\n  techniquePass(",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]

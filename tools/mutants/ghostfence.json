@@ -435,8 +435,8 @@
   {
     "name": "FENCE-CLEAR-a-gate-on-the-line",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "wet(x, y) || onGhostfence(x, y) || redMountainLavaIn(x, y) || spawnsDungeon(",
-    "new": "wet(x, y) || spawnsDungeon(",
+    "old": "    if (near || wet(x, y) || onGhostfence(x, y) || redMountainLavaIn(x, y) || spawnsDungeon(spawnSalt, x, y)) return; // FENCE-CLEAR, LAVA-CLEAR: nor the fence's line or the lava",
+    "new": "    if (near || wet(x, y) || spawnsDungeon(spawnSalt, x, y)) return; // FENCE-CLEAR, LAVA-CLEAR: nor the fence's line or the lava",
     "tests": [
       "test/world/ghostfence.test.js"
     ]

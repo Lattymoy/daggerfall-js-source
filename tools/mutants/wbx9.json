@@ -30,8 +30,8 @@
   {
     "name": "WBX9-a-song-without-its-level",
     "file": "src/systems/gate/gateScore.js",
-    "old": "durationTicks: bars * 4 * SCORE_TPQ, seamless: true, level };",
-    "new": "durationTicks: bars * 4 * SCORE_TPQ, seamless: true };",
+    "old": "    level,\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/gate/wbx9_gate_score.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "WBX9-the-first-songs-strings-held-back",
     "file": "src/systems/gate/gateScore.js",
-    "old": "      underBar(w, bar, chord, { strings: true, choir: bar >= 8, busy: bar % 4 === 3 });",
-    "new": "      underBar(w, bar, chord, { strings: bar >= 8, choir: bar >= 8, busy: bar % 4 === 3 });",
+    "old": "        underBar(w, bar, chord, { strings: true, choir: bar >= 8, busy: bar % 4 === 3 });",
+    "new": "        underBar(w, bar, chord, { strings: bar >= 8, choir: bar >= 8, busy: bar % 4 === 3 });",
     "tests": [
       "test/systems/gate/wbx9_gate_score.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "WBX9-the-thirds-drive-lost",
     "file": "src/systems/gate/gateScore.js",
-    "old": "      underBar(w, bar, chord, { strings: true, choir: false, drive: 0, organ: 1.2, vel: 1.05 });",
-    "new": "      underBar(w, bar, chord, { strings: true, choir: false, busy: true, organ: 1.2, vel: 1.05 });",
+    "old": "        underBar(w, bar, chord, { strings: true, choir: false, drive: 0, organ: 1.2, vel: 1.05 });",
+    "new": "        underBar(w, bar, chord, { strings: true, choir: false, busy: true, organ: 1.2, vel: 1.05 });",
     "tests": [
       "test/systems/gate/wbx9_gate_score.test.js"
     ]
