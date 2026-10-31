@@ -629,7 +629,7 @@ export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date
       if (!r) return false;
       if (!r.ok) {
         refuse(accountRefusalText(r.error));
-        if (r.error === 'aurum-sale' || r.error === 'aurum-held' || r.error === 'aurum-price') await self.refresh();
+        if (r.error === 'aurum-sale' || r.error === 'aurum-held' || r.error === 'aurum-price' || r.error === 'aurum-short') await self.refresh();   // AUDIT AURUM-SPEND F6: the balance read again
         return false;
       }
       self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };

@@ -167,7 +167,7 @@ export function shopWareState(flow, ware) {
   if (aurum) {
     const a = flow.aurum;
     if (!row || !a?.open) return { state: 'closed', buy: null, ...base };
-    return a.balance >= base.price ? { state: 'afford', buy: null, ...base } : { state: 'short', buy: null, need: base.price - Math.max(0, a.balance), ...base };
+    return a.balance >= base.price ? { state: 'afford', buy: null, ...base } : { state: 'short', buy: null, need: base.price - a.balance, ...base };   // AUDIT AURUM-SPEND F5: a debt counts
   }
   if (!flow.shop.on || !row?.buy) return { state: 'closed', buy: null, ...base };
   return { state: 'buy', buy: row.buy, ...base };

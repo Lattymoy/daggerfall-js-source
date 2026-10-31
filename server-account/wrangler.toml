@@ -472,6 +472,11 @@ PATREON_CLIENT_ID = "xyF8_xJg78YwVgT0xRhs6uhPVeAdOzJu7_dcpaGqvqH-5DNdbLp-gugahtf
 # too - its pledge holds TITLE-N's Hierophant, the rose title and the
 # crown. A title made for one patron is still granted by name, beside it.
 PATREON_TIERS = "29666211:disciple,29666234:herald,29666221:hierophant"
+# AUDIT PATRON-AURUM H1 (2026-10-31): the campaign whose patrons' totals are paid as Aurum - its id on
+# Patreon (public, not a secret). Set, a link pays that campaign's member's total and no other; empty, a link
+# pays only where Patreon granted the `identity` scope alone, and the member webhook (signed, this campaign's
+# own) pays the rest at the next charge.
+PATREON_CAMPAIGN_ID = ""
 # SHOP (2026-10-28, the owner: "A new glyph panel alongside the timer and
 # mailbox that will be used for our monetization shop"; bible/06-Systems/
 # Shop.md): WHAT THE SHOP SELLS NOW - ware ids (src/net/shopLaw.js

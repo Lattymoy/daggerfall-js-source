@@ -5,7 +5,7 @@
 // ledger's lines - what the finds, the challenges, the week's witnessed deeds (migration 0201's triggers) and the caches
 // gave, and what the pass and the shop's wares cost. So a refund takes a pack's Aurum back by its order's status. The law
 // both ends read is src/net/aurumLaw.js. AURUM-ONLY (2026-10-30): every ware is bought here (buyWare), money buys packs.
-import { shopOwns, shopWareById, shopOnSaleOf, shopFeaturedOf, shopDropped, shopSellable, shopPriceFor, shopRepeatable } from '../../src/net/shopLaw.js';
+import { shopCreditOf, shopClosure, shopOwns, shopWareById, shopOnSaleOf, shopFeaturedOf, shopDropped, shopSellable, shopPriceFor, shopRepeatable } from '../../src/net/shopLaw.js';
 import { AURUM_DEEDS, aurumSwitchOf, aurumDailyOf, aurumDayEndMs, aurumWeekOf, aurumWeekEndMs, aurumDealOf } from '../../src/net/aurumLaw.js';
 import { utcDay } from '../../src/net/marksLaw.js';
 import { isDeveloper, holdsAll } from './titles.js';   // ADMIN-ALL: an admin holds every daily ware, so is sold none
@@ -116,12 +116,15 @@ export async function buyWare({ db, nowS }, player, body, env) {
     if (!paid && Number.isSafeInteger(body?.price) && body.price !== at.price) return { error: 'aurum-price', price: at.price };
     const balance = balanceOfRow(row);
     if (!paid && balance < at.price) return { error: 'aurum-short', balance };
-    const toks = String(row.shop_held ?? '').split(' ').filter(Boolean);
+    // AUDIT AURUM-SPEND F1, F2: the line keeps what the price took off as held, so a money refund of one of those takes it
+    // back; and the marks come off what this buy pays for (shop.js heldGranted's law), so what was paid for is given
+    const credit = shopCreditOf(row, w.id), covers = shopClosure(w.id).filter((id) => !credit.includes(id));
+    const toks = String(row.shop_held ?? '').split(' ').filter((t) => t && !(t[0] === '-' && covers.includes(t.slice(1))));
     const after = { shop_wares: (Number(row.shop_wares) || 0) | w.bit, shop_held: (w.bit || toks.includes(w.id) ? toks : [...toks, w.id]).join(' ') };
     try {
       await db.batch([
-        ...(paid ? [] : [db.prepare(`INSERT INTO aurum_ledger (account, kind, ref, amount, day, at) SELECT ?1, 'buy', ?2, ?3, ?4, ?5
-          WHERE ${AURUM_BALANCE_SQL} >= ?6`).bind(player.id, w.id, -at.price, utcDay(nowS), nowS, at.price), mustChange(db)]),
+        ...(paid ? [] : [db.prepare(`INSERT INTO aurum_ledger (account, kind, ref, amount, day, at, credit) SELECT ?1, 'buy', ?2, ?3, ?4, ?5, ?7
+          WHERE ${AURUM_BALANCE_SQL} >= ?6`).bind(player.id, w.id, -at.price, utcDay(nowS), nowS, at.price, credit.join(' ')), mustChange(db)]),
         db.prepare('UPDATE players SET shop_wares = ?2, shop_held = ?3 WHERE id = ?1 AND shop_wares = ?4 AND shop_held = ?5')
           .bind(player.id, after.shop_wares, after.shop_held, Number(row.shop_wares) || 0, String(row.shop_held ?? '')),
         mustChange(db),

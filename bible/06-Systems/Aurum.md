@@ -133,6 +133,13 @@ user now, for what the total adds past every line that user was ever paid, on an
 of order pays nothing more, a link moved to a new account pays it only what Patreon adds after, and an unlink or a
 refund takes nothing back. The confirm page says a cent becomes an Aurum; the page after it says what Patreon has paid.
 
+**Guarded** (AUDIT PATRON-AURUM, 2026-10-31). A link pays only this campaign's total: the member of PATREON_CAMPAIGN_ID
+where the config names it, else only where Patreon granted the `identity` scope alone (a widened grant lists other
+campaigns' totals). A charge Patreon calls `Refunded` or `Fraud` takes its fall back; a fall it does not explain takes
+nothing, so a word out of order cannot. Refs carry `:<n>`, so a total reached again pays again. The confirm page names
+the Aurum and that it stays. With `AURUM_OPEN` shut, neither the link nor a webhook pays; the next word after it opens
+pays what is new.
+
 **Who.** Every linked patron. A patron linked before PATRON-AURUM is paid at their next charge, or at once by pressing
 Link Patreon again. A patron granted a title by name is paid once they link. `test/server/patreon_link.test.js`;
 `tools/mutants/patron_aurum.json`.

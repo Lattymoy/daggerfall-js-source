@@ -202,7 +202,7 @@
   {
     "name": "PL-confirm-never-writes",
     "file": "server-account/src/index.js",
-    "old": "        const r = await linkPatreon(ctx, { p: ticket.p, u: who.user, t: who.tiers.join(','), s: who.status, c: who.cents });",
+    "old": "        const r = await linkPatreon(ctx, { p: ticket.p, u: who.user, t: who.tiers.join(','), s: who.status, c: aurumOpenFor(row, env) ? patreonCentsPayable(who, ticket.o === 1, env) : null });   // AUDIT PATRON-AURUM H1, A1",
     "new": "        const r = { ok: true };",
     "tests": [
       "test/server/patreon_link.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "PL-confirm-trusts-the-page",
     "file": "server-account/src/index.js",
-    "old": "        const who = await patreonIdentity(outbound, ticket.k);",
-    "new": "        const who = { user: ticket.u, name: '', tiers: ['1001'], status: 'active_patron' };",
+    "old": "        const who = await patreonIdentity(outbound, ticket.k, patreonCampaignOf(env));",
+    "new": "        const who = { user: ticket.u, name: '', tiers: ['1001'], status: 'active_patron', cents: null, campaign: null };",
     "tests": [
       "test/server/patreon_link.test.js"
     ],

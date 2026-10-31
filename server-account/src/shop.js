@@ -430,8 +430,8 @@ const heldRow = (/** @type {any} */ db, /** @type {string} */ player) => db.prep
  *  (aurum.js buyWare's `buy` lines), each its own holder for good: a money refund never takes a ware Aurum paid for. */
 const paidOthers = async (/** @type {any} */ db, /** @type {any} */ order) => {
   const paid = (await db.prepare("SELECT id, ware, credit FROM shop_orders WHERE player = ?1 AND status = 'paid' AND id <> ?2").bind(order.player, order.id).all())?.results ?? [];
-  const bought = (await db.prepare("SELECT ref FROM aurum_ledger WHERE account = ?1 AND kind = 'buy'").bind(order.player).all())?.results ?? [];
-  return [...paid, ...bought.map((/** @type {any} */ b) => ({ id: `aurum:${b.ref}`, ware: String(b.ref), credit: '' }))];
+  const bought = (await db.prepare("SELECT ref, credit FROM aurum_ledger WHERE account = ?1 AND kind = 'buy'").bind(order.player).all())?.results ?? [];
+  return [...paid, ...bought.map((/** @type {any} */ b) => ({ id: `aurum:${b.ref}`, ware: String(b.ref), credit: String(b.credit ?? '') }))];   // AUDIT AURUM-SPEND F1: its credit, as an order's
 };
 
 const postStatement = (/** @type {any} */ db, /** @type {string} */ to, /** @type {{ batch: string, subject: string, body: string }} */ p, /** @type {string|null} */ ware, /** @type {number} */ nowS) =>
@@ -599,7 +599,7 @@ export async function revokeOrder({ db, nowS }, intent, why, { env = {}, fetch }
  *  STOREFRONT II A3: a refund ends it refunded). `{ ok, applied }`. */
 export async function restoreOrder({ db, nowS }, /** @type {unknown} */ intent) {
   if (typeof intent !== 'string' || !intent) return { ok: true, applied: 0 };
-  const order = await db.prepare("SELECT id, player, ware, credit FROM shop_orders WHERE payment_intent = ?1 AND status = 'disputed'").bind(intent).first();
+  const order = await db.prepare("SELECT id, player, ware, credit, ended_at FROM shop_orders WHERE payment_intent = ?1 AND status = 'disputed'").bind(intent).first();
   const w = shopWareById(order?.ware);
   if (!order?.player || !w) return { ok: true, applied: 0 };
   const fate = await chargeFate(db, intent);
@@ -615,6 +615,9 @@ export async function restoreOrder({ db, nowS }, /** @type {unknown} */ intent) 
       mustChange(db),
       rowWrite(db, order.player, row, after),
       mustChange(db),
+      // AUDIT AURUM-SPEND F4: bought again with Aurum while the dispute stood - the money stands now, so the Aurum comes back
+      db.prepare(`INSERT OR IGNORE INTO aurum_ledger (account, kind, ref, amount, day, at) SELECT ?1, 'back', ?2, -amount, ?3, ?4
+        FROM aurum_ledger WHERE account = ?1 AND kind = 'buy' AND ref = ?5 AND at >= ?6`).bind(order.player, `order:${order.id}`, Math.floor(nowS / 86400), nowS, w.id, Number(order.ended_at ?? 0)),
       postStatement(db, order.player, restorePost(order), w.id, nowS),
     ]);
     return { ok: true, applied: 1 };

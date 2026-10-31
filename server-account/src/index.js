@@ -382,12 +382,12 @@ import { heartbeat } from './heartbeat.js';   // SCALE4c: one request for a tab'
 import { ADMIT_ROUTES, admitWait } from './admit.js';   // ADMIT-LINE: the sign-in line
 export { AdmitGate } from './admit.js';   // ADMIT-LINE: the line's Durable Object (wrangler.toml binds it from this module)
 import {
-  patreonLinkOn, openPatreon, sealPatreon, patreonExchange, patreonIdentity, linkPatreon, unlinkPatreon, patreonWebhook,
+  patreonLinkOn, openPatreon, sealPatreon, patreonExchange, patreonIdentity, linkPatreon, unlinkPatreon, patreonWebhook, patreonScopeOk, patreonCampaignOf, patreonCentsPayable,
   patreonCardOf, pledgeTitles, patreonHtml, patreonPage, patreonConfirmPage, patreonLinkedPage,
   PATREON_PAGES, PATREON_TICKET_S, PATREON_HOOK_MAX_BYTES, PATREON_CALLBACK_PATH,
 } from './patreon.js';   // PATREON-LINK: a patron's own Patreon, linked
 import { SHOP_OPEN_ROUTES, SHOP_WEBHOOK_PATH, SHOP_HOOK_MAX_BYTES, shopDoor, shopCardOf, closeStale } from './shop.js';   // SHOP: the shop's doors, and its card on the account read
-import { aurumCardOf, buyWare, AURUM_STATUS } from './aurum.js';   // AURUM: the balance, the day's deals and a ware bought
+import { aurumCardOf, buyWare, AURUM_STATUS, aurumOpenFor } from './aurum.js';   // AURUM: the balance, the day's deals and a ware bought
 import { claimCache, AURUM_CACHE_STATUS } from './aurumCache.js';   // AURUM-CACHES: a cache claimed
 
 // THIS MODULE EXPORTS `default` AND NOTHING ELSE, and that is a
@@ -948,13 +948,14 @@ const service = {
           if (!player?.handle) return page(PATREON_PAGES.account, 403);
           const token = await patreonExchange(outbound, env, code, `${url.origin}${PATREON_CALLBACK_PATH}`);
           if ('error' in token) return page(PATREON_PAGES.down, 502);
-          const who = await patreonIdentity(outbound, token.token);
+          const who = await patreonIdentity(outbound, token.token, patreonCampaignOf(env));
           if ('error' in who) return page(PATREON_PAGES.down, 502);
+          const o = patreonScopeOk(token.scope) ? 1 : 0, aurum = aurumOpenFor(player, env) ? patreonCentsPayable(who, !!o, env) ?? 0 : 0;   // AUDIT PATRON-AURUM H1, A1
           // NOTHING IS WRITTEN HERE. The page names the game account the state did, and the yes carries a sealed ticket -
           // so a link somebody else started is read by the patron before it can be finished.
           const from = await db.prepare('SELECT handle FROM players WHERE patreon_user = ?1 AND id <> ?2').bind(who.user, player.id).first();
-          const ticket = await sealPatreon('ticket', { p: player.id, u: who.user, k: token.token, x: nowS + PATREON_TICKET_S }, env, { subtle, rand });
-          return patreonHtml(patreonConfirmPage({ handle: player.handle, name: who.name, titles: pledgeTitles(who.tiers, who.status, env), ticket, from: from?.handle ?? null }));
+          const ticket = await sealPatreon('ticket', { p: player.id, u: who.user, k: token.token, o, x: nowS + PATREON_TICKET_S }, env, { subtle, rand });
+          return patreonHtml(patreonConfirmPage({ handle: player.handle, name: who.name, titles: pledgeTitles(who.tiers, who.status, env), ticket, from: from?.handle ?? null, aurum }));
         }
         // /v1/patreon/confirm - the page's own form
         if (request.method !== 'POST') return no('method', 405, origin);
@@ -963,12 +964,12 @@ const service = {
         if (!ticket || typeof ticket.k !== 'string') return page(PATREON_PAGES.expired, 400);
         // THE YES WRITES WHAT PATREON SAYS NOW - asked again with the patron's own token, not what the page showed: a
         // pledge cancelled between the page and the press holds nothing, and a yes pressed twice is Patreon asked twice.
-        const who = await patreonIdentity(outbound, ticket.k);
+        const who = await patreonIdentity(outbound, ticket.k, patreonCampaignOf(env));
         if ('error' in who) return page(PATREON_PAGES.down, 502);
         if (who.user !== ticket.u) return page(PATREON_PAGES.expired, 400);   // the token answers for another Patreon account now
-        const r = await linkPatreon(ctx, { p: ticket.p, u: who.user, t: who.tiers.join(','), s: who.status, c: who.cents });
+        const row = await db.prepare('SELECT id, handle FROM players WHERE id = ?1').bind(ticket.p).first();
+        const r = await linkPatreon(ctx, { p: ticket.p, u: who.user, t: who.tiers.join(','), s: who.status, c: aurumOpenFor(row, env) ? patreonCentsPayable(who, ticket.o === 1, env) : null });   // AUDIT PATRON-AURUM H1, A1
         if ('error' in r) return page(PATREON_PAGES.account, 403);
-        const row = await db.prepare('SELECT handle FROM players WHERE id = ?1').bind(ticket.p).first();
         return patreonHtml(patreonLinkedPage({ handle: row?.handle ?? '', titles: pledgeTitles(who.tiers, who.status, env), aurum: r.aurum }));
       }
 

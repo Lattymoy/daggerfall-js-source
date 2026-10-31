@@ -112,8 +112,8 @@
   {
     "name": "AURUM-service-price-never-spent",
     "file": "server-account/src/aurum.js",
-    "old": ".bind(player.id, w.id, -at.price, utcDay(nowS), nowS, at.price)",
-    "new": ".bind(player.id, w.id, 0, utcDay(nowS), nowS, at.price)",
+    "old": ".bind(player.id, w.id, -at.price, utcDay(nowS), nowS, at.price, credit.join(' '))",
+    "new": ".bind(player.id, w.id, 0, utcDay(nowS), nowS, at.price, credit.join(' '))",
     "tests": [
       "test/server/aurum_service.test.js"
     ],

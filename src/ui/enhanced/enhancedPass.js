@@ -45,7 +45,7 @@ export function passCannot(/** @type {any} */ flow) {
 /** Afford or short of `price`, off the Aurum card's balance. */
 const pay = (/** @type {any} */ flow, /** @type {number} */ price) => {
   const bal = Number(flow?.aurum?.balance) || 0;
-  return bal >= price ? { state: 'afford', price } : { state: 'short', price, need: price - Math.max(0, bal) };
+  return bal >= price ? { state: 'afford', price } : { state: 'short', price, need: price - bal };   // AUDIT AURUM-SPEND F5: a debt counts
 };
 /**
  * WHAT AN ITEM IN A FOLIO OFFERS, from the flow as it stands. Pure. `state`: 'held', 'afford' (Buy, for `price` Aurum),

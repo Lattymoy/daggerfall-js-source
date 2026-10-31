@@ -93,7 +93,8 @@ ALTER TABLE shop_orders ADD COLUMN aurum INTEGER NOT NULL DEFAULT 0;
 -- UTC), `find` a UTC day's finds (ref the day, its amount the day's sum), `challenge` a stage's challenge paid (ref
 -- `<season>:<key>`), `cache` a cache found (ref its id), `patreon` what a Patreon total adds (ref `<user>:<total>`,
 -- PATRON-AURUM), and spent as negative amounts: `buy` a daily ware (ref its id),
--- `track` a premium track opened (ref `<season>:premium`), `panel` a pass item bought (ref `<season>:<grant>`).
+-- `track` a premium track opened (ref `<season>:premium`), `panel` a pass item bought (ref `<season>:<grant>`). `credit`: a
+-- `buy` line's wares its price took off as already held (AUDIT AURUM-SPEND F1: what a money refund of those may take back).
 CREATE TABLE IF NOT EXISTS aurum_ledger (
   account TEXT NOT NULL,
   kind    TEXT NOT NULL,
@@ -101,6 +102,7 @@ CREATE TABLE IF NOT EXISTS aurum_ledger (
   amount  INTEGER NOT NULL,
   day     INTEGER NOT NULL,
   at      INTEGER NOT NULL,
+  credit  TEXT NOT NULL DEFAULT '',
   PRIMARY KEY (account, kind, ref),
   FOREIGN KEY (account) REFERENCES players(id) ON DELETE CASCADE
 );

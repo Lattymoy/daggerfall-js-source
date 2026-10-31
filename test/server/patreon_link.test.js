@@ -14,7 +14,7 @@ import { createHash, createHmac, randomBytes } from 'node:crypto';
 import { standService } from '../accountDb.mjs';
 import {
   md5, hmacMd5, patreonSignatureOk, patreonTierMap, pledgeTitles, patreonTitlesOf, sealPatreon, openPatreon, patreonLinkOn,
-  memberOfIdentity, memberOfHook, PATREON_TOKEN, PATREON_TITLES, PATREON_STATE_S, PATREON_CENTS_MAX, PATREON_IDENTITY,
+  memberOfIdentity, memberOfHook, PATREON_TOKEN, PATREON_TITLES, PATREON_STATE_S, PATREON_CENTS_MAX, PATREON_IDENTITY, patreonScopeOk, patreonCentsPayable,
 } from '../../server-account/src/patreon.js';
 import { titlesHeld, glyphsOf, titleWorn, equipRefusal } from '../../server-account/src/titles.js';
 import { AccountFlow } from '../../src/ui/accountFlow.js';
@@ -116,8 +116,8 @@ test('PATREON-LINK: the state and the ticket are this service\'s own - SEALED un
 test('PATREON-LINK: Patreon\'s two shapes read - the identity\'s membership of this campaign, and a webhook\'s member, where a field left out is NOT read as none (mutants: a missing status read as null; missing tiers read as none)', () => {
   const id = (member) => ({ data: { id: '555', type: 'user', attributes: { full_name: 'Pat Ron' }, relationships: { memberships: { data: member ? [{ id: 'm-1', type: 'member' }] : [] } } }, included: member ? [member] : [] });
   const m = { id: 'm-1', type: 'member', attributes: { patron_status: 'active_patron' }, relationships: { currently_entitled_tiers: { data: [{ id: '1002', type: 'tier' }, { id: 'x', type: 'tier' }] } } };
-  assert.deepEqual(memberOfIdentity(id(m)), { user: '555', name: 'Pat Ron', tiers: ['1002'], status: 'active_patron', cents: null });
-  assert.deepEqual(memberOfIdentity(id(null)), { user: '555', name: 'Pat Ron', tiers: [], status: null, cents: null }, 'a user with no membership is still a user');
+  assert.deepEqual(memberOfIdentity(id(m)), { user: '555', name: 'Pat Ron', tiers: ['1002'], status: 'active_patron', cents: null, campaign: null });
+  assert.deepEqual(memberOfIdentity(id(null)), { user: '555', name: 'Pat Ron', tiers: [], status: null, cents: null, campaign: null }, 'a user with no membership is still a user');
   assert.equal(memberOfIdentity({ data: { id: 'not-digits' } }), null);
   const hook = (rel, attrs) => ({ data: { type: 'member', id: 'm-1', attributes: attrs, relationships: { user: { data: { id: '555', type: 'user' } }, ...rel } } });
   assert.deepEqual(memberOfHook(hook({ currently_entitled_tiers: { data: [] } }, { patron_status: 'former_patron' })), { user: '555', tiers: [], status: 'former_patron', cents: undefined });
@@ -145,18 +145,19 @@ test('PATRON-AURUM: both shapes read the member\'s lifetime total to the campaig
 /** Patreon's two OAuth endpoints, stood in for on the global fetch the Worker calls. `cfg` is what Patreon says, read at
  *  each ask - so a pin can move a pledge between the page and the yes. */
 function patreon(o = {}) {
-  const cfg = { user: '555', name: 'Pat Ron', tiers: ['1001'], status: 'active_patron', token: true, cents: undefined, ...o };
+  const cfg = { user: '555', name: 'Pat Ron', tiers: ['1001'], status: 'active_patron', token: true, cents: undefined, scope: 'identity', campaign: '42', others: [], ...o };
   const asked = [];
   const real = globalThis.fetch;
   globalThis.fetch = async (url, init = {}) => {
     asked.push({ url: String(url), init });
     if (String(url) === PATREON_TOKEN) {
-      return cfg.token ? Response.json({ access_token: 'patreon-access', token_type: 'Bearer' }) : new Response('{"error":"invalid_grant"}', { status: 400 });
+      return cfg.token ? Response.json({ access_token: 'patreon-access', token_type: 'Bearer', ...(cfg.scope === null ? {} : { scope: cfg.scope }) }) : new Response('{"error":"invalid_grant"}', { status: 400 });
     }
     if (String(url).startsWith('https://www.patreon.com/api/oauth2/v2/identity')) {
       return Response.json({
-        data: { id: cfg.user, type: 'user', attributes: { full_name: cfg.name }, relationships: { memberships: { data: [{ id: 'm-1', type: 'member' }] } } },
-        included: [{ id: 'm-1', type: 'member', attributes: { patron_status: cfg.status, ...(cfg.cents === undefined ? {} : { campaign_lifetime_support_cents: cfg.cents }) }, relationships: { currently_entitled_tiers: { data: cfg.tiers.map((id) => ({ id, type: 'tier' })) } } }],
+        data: { id: cfg.user, type: 'user', attributes: { full_name: cfg.name }, relationships: { memberships: { data: [...cfg.others.map((m, i) => ({ id: `m-x${i}`, type: 'member' })), { id: 'm-1', type: 'member' }] } } },
+        included: [...cfg.others.map((m, i) => ({ id: `m-x${i}`, type: 'member', attributes: { patron_status: 'active_patron', campaign_lifetime_support_cents: m.cents }, relationships: { campaign: { data: { id: m.campaign, type: 'campaign' } }, currently_entitled_tiers: { data: [] } } })),
+          { id: 'm-1', type: 'member', attributes: { patron_status: cfg.status, ...(cfg.cents === undefined ? {} : { campaign_lifetime_support_cents: cfg.cents }) }, relationships: { campaign: { data: { id: cfg.campaign, type: 'campaign' } }, currently_entitled_tiers: { data: cfg.tiers.map((id) => ({ id, type: 'tier' })) } } }],
       });
     }
     throw new Error(`no stand-in for ${url}`);
@@ -178,13 +179,13 @@ async function stand(extra = ON) {
       headers: { 'content-type': 'application/json', 'x-patreon-event': event, 'x-patreon-signature': createHmac('md5', secret).update(body).digest('hex') },
     });
   };
-  const member = (user, tiers, status, cents) => ({
-    data: { type: 'member', id: 'm-1', attributes: { patron_status: status, ...(cents === undefined ? {} : { campaign_lifetime_support_cents: cents }) }, relationships: { user: { data: { id: user, type: 'user' } }, currently_entitled_tiers: { data: tiers.map((id) => ({ id, type: 'tier' })) } } },
+  const member = (user, tiers, status, cents, charge) => ({
+    data: { type: 'member', id: 'm-1', attributes: { patron_status: status, ...(cents === undefined ? {} : { campaign_lifetime_support_cents: cents }), ...(charge ? { last_charge_status: charge } : {}) }, relationships: { user: { data: { id: user, type: 'user' } }, currently_entitled_tiers: { data: tiers.map((id) => ({ id, type: 'tier' })) } } },
     included: [{ type: 'campaign', id: '42', attributes: { summary: 'x'.repeat(6000) } }],
   });
   const raw = (who) => ({ ...s.env.DB._raw.prepare('SELECT patreon_user, patreon_tiers, patreon_status FROM players WHERE id = ?').get(who.id) });
   /** PATRON-AURUM: an account's `patreon` lines, oldest first. */
-  const paid = (who) => s.env.DB._raw.prepare("SELECT ref, amount FROM aurum_ledger WHERE account = ? AND kind = 'patreon' ORDER BY at, ref").all(who.id).map((l) => ({ ...l }));
+  const paid = (who) => s.env.DB._raw.prepare("SELECT ref, amount FROM aurum_ledger WHERE account = ? AND kind = 'patreon' ORDER BY rowid").all(who.id).map((l) => ({ ...l }));
   /** The whole link, as a player makes it: the card's link, Patreon's code back to the callback, the page's yes. */
   const link = async (who, stub = {}) => {
     const p = patreon(stub);
@@ -339,10 +340,10 @@ test('PATRON-AURUM, end to end: the link pays the lifetime total as Aurum, a cen
   const l = await link(me, { cents: 20_000 });
   assert.match(l.page, /Every cent you have paid on Patreon becomes 1 Aurum, paid once\./);
   assert.match(l.html, /Patreon has paid Patron 20,000 Aurum\./);
-  assert.deepEqual(paid(me), [{ ref: '555:20000', amount: 20_000 }]);
+  assert.deepEqual(paid(me), [{ ref: '555:20000:0', amount: 20_000 }]);
   assert.equal((await account(me)).aurum.balance, 20_000, '$200 paid is 20,000 Aurum');
   await hook('members:pledge:update', member('555', ['1001'], 'active_patron', 25_000));
-  assert.deepEqual(paid(me).at(-1), { ref: '555:25000', amount: 5000 }, 'the month\'s $50 adds 5,000');
+  assert.deepEqual(paid(me).at(-1), { ref: '555:25000:1', amount: 5000 }, 'the month\'s $50 adds 5,000');
   for (const cents of [25_000, 21_000, undefined]) await hook('members:update', member('555', ['1001'], 'active_patron', cents));
   assert.equal(paid(me).length, 2, 'the same total, a lower one and none stated pay nothing');
   assert.equal((await account(me)).aurum.balance, 25_000);
@@ -360,9 +361,9 @@ test('PATRON-AURUM, end to end: a Patreon user\'s total is paid once across ever
   const a = await registered('First'), b = await registered('Second');
   await link(a, { cents: 10_000 });
   await link(b, { cents: 10_000 });
-  assert.deepEqual([paid(a), paid(b)], [[{ ref: '555:10000', amount: 10_000 }], []], 'moved: nothing paid twice');
+  assert.deepEqual([paid(a), paid(b)], [[{ ref: '555:10000:0', amount: 10_000 }], []], 'moved: nothing paid twice');
   await hook('members:pledge:update', member('555', ['1001'], 'active_patron', 12_000));
-  assert.deepEqual(paid(b), [{ ref: '555:12000', amount: 2000 }], 'what Patreon adds goes where it is linked now');
+  assert.deepEqual(paid(b), [{ ref: '555:12000:1', amount: 2000 }], 'what Patreon adds goes where it is linked now');
   assert.equal((await account(a)).aurum.balance, 10_000, 'the first keeps what it was paid');
   assert.equal((await call('/v1/patreon/unlink', {}, b.secret)).status, 200);
   assert.equal((await account(b)).aurum.balance, 2000, 'an unlink takes nothing back');
@@ -370,6 +371,53 @@ test('PATRON-AURUM, end to end: a Patreon user\'s total is paid once across ever
   assert.equal(paid(b).length, 1, 'unlinked: nobody is paid');
   await hook('members:pledge:create', member('999', ['1001'], 'active_patron', 50_000));
   assert.deepEqual([paid(a).length, paid(b).length], [1, 1], 'a stranger pays nobody');
+});
+
+// AUDIT PATRON-AURUM (2026-10-31, the owner: "Ensure security on aurem caches so nobody can dupe or cheat", a deep audit
+// before ship): H1 a widened grant read another campaign's total; P2 a refunded charge kept its Aurum; P3 the page named
+// no Aurum; A1 the switch shut paid on. The refs carry `:<n>` now (PIN MOVED above), so a total reached again is a line.
+test('AUDIT PATRON-AURUM H1: a link pays this campaign\'s total alone - granted `identity` and nothing else, or the configured campaign\'s member; a widened grant (identity.memberships) whose answer lists another campaign\'s total pays nothing, and with PATREON_CAMPAIGN_ID the other campaign listed first is passed over; no stated scope pays nothing at the link (mutants: the scope unread, the campaign unread)', async () => {
+  assert.deepEqual(['identity', ' identity ', 'identity identity.memberships', 'identity.memberships', '', undefined].map(patreonScopeOk), [true, true, false, false, false, false]);
+  assert.equal(patreonCentsPayable({ cents: 9, campaign: '7' }, true, { PATREON_CAMPAIGN_ID: '42' }), null, 'the configured campaign is the one paid');
+  assert.equal(patreonCentsPayable({ cents: 9, campaign: '42' }, false, { PATREON_CAMPAIGN_ID: '42' }), 9);
+  const { registered, link, paid } = await stand({ ...ON, AURUM_OPEN: 'on' });
+  const a = await registered('Wide');
+  const wide = await link(a, { scope: 'identity identity.memberships', cents: 0, others: [{ campaign: '9999', cents: 500_000 }] });
+  assert.deepEqual(paid(a), [], 'another campaign\'s $5,000 pays nothing');
+  assert.ok(!/Linking pays/.test(wide.page) && !/Patreon has paid/.test(wide.html));
+  const b = await registered('Unsaid');
+  await link(b, { scope: null, cents: 30_000 });
+  assert.deepEqual(paid(b), [], 'a grant Patreon did not state pays nothing at the link - its webhook does');
+  const s2 = await stand({ ...ON, AURUM_OPEN: 'on', PATREON_CAMPAIGN_ID: '42' });
+  const c = await s2.registered('Ours');
+  await s2.link(c, { scope: 'identity identity.memberships', cents: 20_000, others: [{ campaign: '9999', cents: 500_000 }] });
+  assert.deepEqual(s2.paid(c), [{ ref: '555:20000:0', amount: 20_000 }], 'the configured campaign\'s member, the other passed over');
+});
+
+test('AUDIT PATRON-AURUM P2, P3, A1: a charge Patreon calls Refunded or Fraud takes its fall back, a fall it does not explain takes nothing, and a total reached again pays again; the confirm page names the Aurum and that it stays; with AURUM_OPEN off neither the link nor a webhook pays, and the first webhook after it opens pays the whole (mutants: the refund unread, the page silent, the switch unread)', async () => {
+  const { registered, link, hook, member, paid, account } = await stand({ ...ON, AURUM_OPEN: 'on' });
+  const me = await registered('Refunded');
+  const l = await link(me, { cents: 20_000 });
+  assert.match(l.page, /Linking pays Refunded up to 20,000 Aurum\. It stays on that game account\./);
+  await hook('members:update', member('555', ['1001'], 'active_patron', 15_000));
+  assert.equal(paid(me).length, 1, 'a fall Patreon does not explain (a word out of order) takes nothing');
+  await hook('members:update', member('555', ['1001'], 'active_patron', 15_000, 'Refunded'));
+  assert.deepEqual(paid(me).at(-1), { ref: '555:15000:1', amount: -5000 }, 'a refunded charge takes its fall back');
+  assert.equal((await account(me)).aurum.balance, 15_000);
+  await hook('members:update', member('555', ['1001'], 'active_patron', 10_000, 'Fraud'));
+  assert.equal((await account(me)).aurum.balance, 10_000, 'and Patreon\'s fraud call');
+  await hook('members:pledge:update', member('555', ['1001'], 'active_patron', 20_000, 'Paid'));
+  assert.deepEqual(paid(me).at(-1), { ref: '555:20000:3', amount: 10_000 }, 'a total reached again is a line of its own');
+  assert.equal((await account(me)).aurum.balance, 20_000);
+  const off = await stand({ ...ON, AURUM_OPEN: 'off' });
+  const shut = await off.registered('Shut');
+  const page = await off.link(shut, { cents: 7000 });
+  assert.ok(!/Linking pays/.test(page.page));
+  await off.hook('members:update', off.member('555', ['1001'], 'active_patron', 8000));
+  assert.deepEqual(off.paid(shut), [], 'shut: nothing paid');
+  off.env.AURUM_OPEN = 'on';
+  await off.hook('members:update', off.member('555', ['1001'], 'active_patron', 8000));
+  assert.deepEqual(off.paid(shut), [{ ref: '555:8000:0', amount: 8000 }], 'opened: the next word pays the whole');
 });
 
 test('PATREON-LINK, end to end: one Patreon dresses one account - linking it elsewhere MOVES it, and the page says from where; unlink takes it off whole (mutants: the move left on both; the page silent about the move; unlink keeps the pledge)', async () => {
