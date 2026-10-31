@@ -92,8 +92,8 @@
   {
     "name": "DECOR1-a-guest-places",
     "file": "server-account/src/decor.js",
-    "old": "  if (accountKind(player) !== 'linked') return 'homes-need-account';\n",
-    "new": "",
+    "old": "  if (accountKind(player) !== 'linked') return 'homes-need-account';\n  if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey)) return 'bad-home';",
+    "new": "  if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey)) return 'bad-home';",
     "tests": [
       "test/server/decor1.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "DECOR1-anyone-owns",
     "file": "server-account/src/decor.js",
-    "old": "WHERE (h.guild_id IS NULL AND h.player = k.p AND (h.deed = 0 OR h.char_id = k.c))",
-    "new": "WHERE (h.guild_id IS NULL AND k.p IS NOT NULL AND (h.deed = 0 OR h.char_id = k.c))",
+    "old": "  WHERE (h.guild_id IS NULL AND h.player = k.p AND (h.deed = 0 OR h.char_id = k.c))",
+    "new": "  WHERE (h.guild_id IS NULL AND k.p IS NOT NULL AND (h.deed = 0 OR h.char_id = k.c))",
     "tests": [
       "test/server/decor1.test.js"
     ],
@@ -111,8 +111,8 @@
   {
     "name": "DECOR1-the-cap-unread",
     "file": "server-account/src/decor.js",
-    "old": "cap: DECOR_CAP, seat: false,",
-    "new": "cap: DECOR_CAP + 1, seat: false,",
+    "old": "  cap: DECOR_CAP,",
+    "new": "  cap: DECOR_CAP + 1,",
     "tests": [
       "test/server/decor1.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "DECOR1-the-repeat-refused",
     "file": "server-account/src/decor.js",
-    "old": "return had && JSON.stringify(had) === JSON.stringify(p) ? { ok: true, repeat: true, piece: had } : { error: 'decor-taken' };",
-    "new": "return { error: 'decor-taken' };",
+    "old": "    return had && JSON.stringify(had) === JSON.stringify(p)\n      ? { ok: true, repeat: true, piece: had }\n      : { error: 'decor-taken' };",
+    "new": "    return { error: 'decor-taken' };",
     "tests": [
       "test/server/decor1.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "DECOR1-a-move-rewrites-what-it-is",
     "file": "server-account/src/decor.js",
-    "old": "UPDATE ${S.table} SET place = ? WHERE map_id = ? AND building_key = ? AND id = ? AND yard = ? AND ${S.owns}`)\n    .bind(placeJson(pl), ",
-    "new": "UPDATE ${S.table} SET place = ?, model = 99999 WHERE map_id = ? AND building_key = ? AND id = ? AND yard = ? AND ${S.owns}`)\n    .bind(placeJson(pl), ",
+    "old": "      `UPDATE ${S.table} SET place = ? WHERE map_id = ? AND building_key = ? AND id = ? AND yard = ? AND ${S.owns}`,",
+    "new": "      `UPDATE ${S.table} SET place = ?, model = 99999 WHERE map_id = ? AND building_key = ? AND id = ? AND yard = ? AND ${S.owns}`,",
     "tests": [
       "test/server/decor1.test.js"
     ],
@@ -139,8 +139,8 @@
   {
     "name": "DECOR1-the-rate-unread",
     "file": "server-account/src/decor.js",
-    "old": "  if (await overRate({ db, nowS }, `decor:${player.id}`, DECOR_OPS_MAX, DECOR_OPS_WINDOW_S)) return 'decor-rate';\n",
-    "new": "",
+    "old": "  if (await overRate({ db, nowS }, `decor:${player.id}`, DECOR_OPS_MAX, DECOR_OPS_WINDOW_S)) return 'decor-rate';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/server/decor1.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "DECOR1-a-stored-row-unprojected",
     "file": "server-account/src/decor.js",
-    "old": "  return decorPieceOf({\n    ...place, id: row.id,",
-    "new": "  return ({\n    ...place, id: row.id,",
+    "old": "  return decorPieceOf({\n    ...place,\n    id: row.id,\n    model: row.model ?? null,\n    flat: row.model == null ? [row.flat_archive, row.flat_record] : null,\n    item,\n  });",
+    "new": "  return {\n    ...place,\n    id: row.id,\n    model: row.model ?? null,\n    flat: row.model == null ? [row.flat_archive, row.flat_record] : null,\n    item,\n  };",
     "tests": [
       "test/server/decor1.test.js"
     ]

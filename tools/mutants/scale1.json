@@ -2,8 +2,8 @@
   {
     "name": "SCALE1-A-every-request-touches",
     "file": "server-account/src/accounts.js",
-    "old": "const stale = !Number.isSafeInteger(session.last_seen) || nowS - session.last_seen >= SESSION_TOUCH_S;",
-    "new": "const stale = true;",
+    "old": "  const stale = !Number.isSafeInteger(session.last_seen) || nowS - session.last_seen >= SESSION_TOUCH_S;",
+    "new": "  const stale = true;",
     "tests": [
       "test/net/scale1.test.js"
     ]

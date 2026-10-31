@@ -57,8 +57,8 @@
   {
     "name": "AUDIT28-M4-the-strike-outside-the-rows-batch",
     "file": "server-account/src/accounts.js",
-    "old": "  const [r, ...rest] = stmt || deed || roll ? await db.batch([kill, ...(roll ? [roll] : []), ...(stmt ? [stmt] : [db.prepare('SELECT 0')]), ...(deed ?? [])]) : [await kill.run(), null];",
-    "new": "  const [r, ...rest] = stmt || deed || roll ? [await kill.run(), ...(roll ? [await roll.run()] : []), stmt ? await stmt.run() : null, ...(deed ? await db.batch(deed) : [])] : [await kill.run(), null];",
+    "old": "      ? await db.batch([kill, ...(roll ? [roll] : []), ...(stmt ? [stmt] : [db.prepare('SELECT 0')]), ...(deed ?? [])])",
+    "new": "      ? [\n          await kill.run(),\n          ...(roll ? [await roll.run()] : []),\n          stmt ? await stmt.run() : null,\n          ...(deed ? await db.batch(deed) : []),\n        ]",
     "tests": [
       "test/net/audit28_marks.test.js"
     ]

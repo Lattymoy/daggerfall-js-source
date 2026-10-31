@@ -355,8 +355,8 @@
   {
     "name": "ARMORY-a-kit-worn-with-a-piece-not-held",
     "file": "server-account/src/accounts.js",
-    "old": "const why = key ? armoryRefusal(slot, key, player, env) : null;",
-    "new": "const why = key && slot === 'head' ? armoryRefusal(slot, key, player, env) : null;",
+    "old": "    const why = key ? armoryRefusal(slot, key, player, env) : null;",
+    "new": "    const why = key && slot === 'head' ? armoryRefusal(slot, key, player, env) : null;",
     "tests": [
       "test/server/armory_service.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "ARMORY-a-kit-of-no-piece-worn",
     "file": "server-account/src/accounts.js",
-    "old": "if (kit !== null && !armoryKitOk(kit)) return { error: 'no-piece' };",
-    "new": "",
+    "old": "  if (kit !== null && !armoryKitOk(kit)) return { error: 'no-piece' };\n  for (const [slot, key] of Object.entries(armoryKitPieces(kit))) {",
+    "new": "  for (const [slot, key] of Object.entries(armoryKitPieces(kit))) {",
     "tests": [
       "test/server/armory_service.test.js"
     ]

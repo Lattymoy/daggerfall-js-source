@@ -12,8 +12,8 @@
   {
     "name": "FB1025D-STRANDED-GHOSTS-STAY",
     "file": "server-account/src/decorAccess.js",
-    "old": "    if (back.length) clearGhosts(live, name, id, new Set(back.map((it) => it.uid)));\n",
-    "new": "",
+    "old": "    if (back.length) clearGhosts(live, name, id, new Set(back.map((it) => it.uid)));\n    if (pour.length) {",
+    "new": "    if (pour.length) {",
     "tests": [
       "test/server/fb1025d_strandedpour.test.js"
     ]

@@ -65,8 +65,8 @@
   {
     "name": "DECORROOMY-batch-flat",
     "file": "server-account/src/decorBatch.js",
-    "old": "(hall ? DECOR_HALL_CAP : decorCapOf(home.ground))",
-    "new": "(hall ? DECOR_HALL_CAP : decorCapOf(null))",
+    "old": "  const cap = yard ? DECOR_YARD_CAP : hall ? DECOR_HALL_CAP : decorCapOf(home.ground); // DECOR-ROOMY: a wider house holds more",
+    "new": "  const cap = yard ? DECOR_YARD_CAP : hall ? DECOR_HALL_CAP : decorCapOf(null); // DECOR-ROOMY: a wider house holds more",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "DECORROOMY-place-flat",
     "file": "server-account/src/decor.js",
-    "old": "  const roomCap = S.seat ? S.cap : decorCapOf(",
-    "new": "  const roomCap = S.seat ? S.cap : DECOR_CAP ?? decorCapOf(",
+    "old": "    : decorCapOf(\n        (\n          await db\n            .prepare('SELECT ground FROM homes WHERE map_id = ? AND building_key = ?')\n            .bind(mapId, buildingKey)\n            .first()\n        )?.ground,\n      );",
+    "new": "    : (DECOR_CAP ??\n      decorCapOf(\n        (\n          await db\n            .prepare('SELECT ground FROM homes WHERE map_id = ? AND building_key = ?')\n            .bind(mapId, buildingKey)\n            .first()\n        )?.ground,\n      ));",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "DECORROOMY-list-unsaid",
     "file": "server-account/src/decor.js",
-    "old": "  const cap = home?.guild_id != null ? DECOR_HALL_CAP : decorCapOf(home?.ground);",
-    "new": "  const cap = home?.guild_id != null ? DECOR_HALL_CAP : DECOR_CAP;",
+    "old": "  const cap = home?.guild_id != null ? DECOR_HALL_CAP : decorCapOf(home?.ground); // DECOR-ROOMY: the room's own, said with it",
+    "new": "  const cap = home?.guild_id != null ? DECOR_HALL_CAP : DECOR_CAP; // DECOR-ROOMY: the room's own, said with it",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "DECORROOMY-hall-cap",
     "file": "server-account/src/decor.js",
-    "old": "  const cap = home?.guild_id != null ? DECOR_HALL_CAP : decorCapOf(home?.ground);",
-    "new": "  const cap = decorCapOf(home?.ground);",
+    "old": "  const cap = home?.guild_id != null ? DECOR_HALL_CAP : decorCapOf(home?.ground); // DECOR-ROOMY: the room's own, said with it",
+    "new": "  const cap = decorCapOf(home?.ground); // DECOR-ROOMY: the room's own, said with it",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "DECORROOMY-ground-op-unwired",
     "file": "server-account/src/decorAccess.js",
-    "old": "  if (body.op === 'ground') return setHomeGround(ctx, player, body);   // DECOR-ROOMY\n",
-    "new": "",
+    "old": "  if (body.op === 'ground') return setHomeGround(ctx, player, body); // DECOR-ROOMY\n  if (body.op === 'grants') return decorGrants(ctx, player, body);",
+    "new": "  if (body.op === 'grants') return decorGrants(ctx, player, body);",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "DECORROOMY-ground-anyone",
     "file": "server-account/src/decorAccess.js",
-    "old": "  if (!(await owns(db, mapId, buildingKey, player, character))?.owns) return { error: 'no-home' };\n  const home = await db.prepare('SELECT price, ground, guild_id",
-    "new": "  const home = await db.prepare('SELECT price, ground, guild_id",
+    "old": "  if (!(await owns(db, mapId, buildingKey, player, character))?.owns) return { error: 'no-home' };\n  const home = await db",
+    "new": "  const home = await db",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "DECORROOMY-ground-rewritten",
     "file": "server-account/src/decorAccess.js",
-    "old": "  if (home.ground != null) return { ok: true, ground: home.ground };\n",
-    "new": "",
+    "old": "  if (home.ground != null) return { ok: true, ground: home.ground };\n  if (!homeGroundOk(ground, townBlocks, home.price)) return { error: 'bad-home' };",
+    "new": "  if (!homeGroundOk(ground, townBlocks, home.price)) return { error: 'bad-home' };",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "DECORROOMY-ground-unheld",
     "file": "server-account/src/decorAccess.js",
-    "old": "  if (!homeGroundOk(ground, townBlocks, home.price)) return { error: 'bad-home' };\n",
-    "new": "",
+    "old": "  if (!homeGroundOk(ground, townBlocks, home.price)) return { error: 'bad-home' };\n  const kept = homeGroundKept(ground);",
+    "new": "  const kept = homeGroundKept(ground);",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "DECORROOMY-ground-race-guard",
     "file": "server-account/src/decorAccess.js",
-    "old": "WHERE map_id = ? AND building_key = ? AND ground IS NULL').bind(kept, mapId, buildingKey).run();",
-    "new": "WHERE map_id = ? AND building_key = ?').bind(kept, mapId, buildingKey).run();",
+    "old": "    .prepare('UPDATE homes SET ground = ? WHERE map_id = ? AND building_key = ? AND ground IS NULL')",
+    "new": "    .prepare('UPDATE homes SET ground = ? WHERE map_id = ? AND building_key = ?')",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ],

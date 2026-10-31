@@ -58,8 +58,8 @@
   {
     "name": "DECOR2a-the-descriptor-dropped",
     "file": "server-account/src/decor.js",
-    "old": "p.item ? JSON.stringify(p.item) : null,",
-    "new": "null,",
+    "old": "      p.item ? JSON.stringify(p.item) : null,",
+    "new": "      null,",
     "tests": [
       "test/server/decor1.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "DECOR2a-a-cost-moved-on",
     "file": "server-account/src/decor.js",
-    "old": "if (!was || !decorPieceOf({ ...was, ...pl })) return { error: 'bad-decor' };",
-    "new": "if (!was) return { error: 'bad-decor' };",
+    "old": "  if (!was || !decorPieceOf({ ...was, ...pl })) return { error: 'bad-decor' };",
+    "new": "  if (!was) return { error: 'bad-decor' };",
     "tests": [
       "test/server/decor1.test.js"
     ]

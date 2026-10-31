@@ -6221,7 +6221,7 @@ The report (SaberGGaming, through the owner): no Daedric Ingot could be had, and
   bound is the ember the service counts, one a unit, so the heart a modified client could claim buys nothing past it.
   DFU's Daedra's Heart is an alchemy ingredient (no potion of DFU's twenty asks it); spending it at a forge is the
   port's own - Daggerfall has no professions (Ledger A, the row below PROF2's).
-- **The ember from the account's purse, on the service, the Broker's way** (`accounts.js:"export async function insigniaPurse({ db }, player) {"`):
+- **The ember from the account's purse, on the service, the Broker's way** (`accounts.js:"export async function insigniaPurse"`):
   the smelt's own decision asks that the account's gates, serpents and Redoubts earned the embers its insignia, the
   Panoply and the forge have not yet taken (`professions.js:"  const embers = workEmbers(r, count);"` and the purse's clause beside the
   inputs' in the INSERT), and the same batch adds them to `insignia_spent` - so two smelts pressed at once never spend one ember twice. Short:

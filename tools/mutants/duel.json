@@ -317,8 +317,8 @@
   {
     "name": "DUEL1-record-pair-bound-off-by-one",
     "file": "server-account/src/accounts.js",
-    "old": "AND winner = ?2 AND at > ?3 - ?5) < ?6\n",
-    "new": "AND winner = ?2 AND at > ?3 - ?5) <= ?6\n",
+    "old": "       AND (SELECT COUNT(*) FROM duel_results WHERE loser = ?1 AND winner = ?2 AND at > ?3 - ?5) < ?6",
+    "new": "       AND (SELECT COUNT(*) FROM duel_results WHERE loser = ?1 AND winner = ?2 AND at > ?3 - ?5) <= ?6",
     "tests": [
       "test/server/duel_record.test.js"
     ]

@@ -238,8 +238,8 @@
   {
     "name": "WB12d-the-rite-s-ember-unpaid",
     "file": "server-account/src/accounts.js",
-    "old": "const embers = c.r === 1 ? 2 : 1;",
-    "new": "const embers = 1;",
+    "old": "  const embers = c.r === 1 ? 2 : 1;",
+    "new": "  const embers = 1;",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "WB12d-the-rite-counted-a-breach",
     "file": "server-account/src/accounts.js",
-    "old": "WHERE account = ?1 AND earned != 'rite'",
-    "new": "WHERE account = ?1",
+    "old": "  const r = await db\n    .prepare(\"SELECT COUNT(*) AS n FROM gate_kills WHERE account = ?1 AND earned != 'rite'\")\n    .bind(playerId)\n    .first();",
+    "new": "  const r = await db.prepare('SELECT COUNT(*) AS n FROM gate_kills WHERE account = ?1').bind(playerId).first();",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "WB12d-the-rite-struck",
     "file": "server-account/src/accounts.js",
-    "old": "const stmt = c.x === 'rite' ? null : strike?.(c.d) ?? null;",
-    "new": "const stmt = strike?.(c.d) ?? null;",
+    "old": "  const stmt = c.x === 'rite' ? null : (strike?.(c.d) ?? null);",
+    "new": "  const stmt = strike?.(c.d) ?? null;",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "WB12d-the-purse-counting-rows",
     "file": "server-account/src/accounts.js",
-    "old": "'((SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) +",
-    "new": "'((SELECT COUNT(*) FROM gate_kills WHERE account = ?1) +",
+    "old": "  '((SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM serpent_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM eg_redoubts WHERE account = ?1))';",
+    "new": "  '((SELECT COUNT(*) FROM gate_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM serpent_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM eg_redoubts WHERE account = ?1))';",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js"
     ],
@@ -1046,8 +1046,8 @@
   {
     "name": "AUDIT-WB12d-r-never-made-good",
     "file": "server-account/src/accounts.js",
-    "old": "  if (c.r === 1) await db.prepare(\"UPDATE gate_kills SET stones = 2",
-    "new": "  if (false) await db.prepare(\"UPDATE gate_kills SET stones = 2",
+    "old": "  if (c.r === 1)",
+    "new": "  if (false)",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js",
       "test/net/marks1.test.js"
@@ -1056,8 +1056,8 @@
   {
     "name": "AUDIT-WB12d-a-rite-row-raised",
     "file": "server-account/src/accounts.js",
-    "old": "AND stones = 1 AND earned != 'rite'\").bind",
-    "new": "AND stones = 1\").bind",
+    "old": "      .prepare(\"UPDATE gate_kills SET stones = 2 WHERE day = ?1 AND account = ?2 AND stones = 1 AND earned != 'rite'\")",
+    "new": "      .prepare('UPDATE gate_kills SET stones = 2 WHERE day = ?1 AND account = ?2 AND stones = 1')",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js"
     ]
@@ -1065,8 +1065,8 @@
   {
     "name": "AUDIT-WB12d-the-embers-unsaid",
     "file": "server-account/src/accounts.js",
-    "old": "  return { recorded, why: 'claimed', ...(Number.isSafeInteger(row?.stones) ? { stones: row.stones } : {}),",
-    "new": "  return { recorded, why: 'claimed',",
+    "old": "  return {\n    recorded,\n    why: 'claimed',\n    ...(Number.isSafeInteger(row?.stones) ? { stones: row.stones } : {}),\n    ...(await gateRecordOf({ db }, player.id)),\n  };",
+    "new": "  return { recorded, why: 'claimed', ...(await gateRecordOf({ db }, player.id)) };",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js",
       "test/net/marks1.test.js"
@@ -3169,8 +3169,8 @@
   {
     "name": "MERGE-WB12d-the-rite-s-row-takes-the-region",
     "file": "server-account/src/accounts.js",
-    "old": "nowS, c.x !== 'rite' && gateRegionOk(c.d, region) ? region : null, embers, c.m",
-    "new": "nowS, gateRegionOk(c.d, region) ? region : null, embers, c.m",
+    "old": "      c.x !== 'rite' && gateRegionOk(c.d, region) ? region : null,",
+    "new": "      gateRegionOk(c.d, region) ? region : null,",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js"
     ],
@@ -3188,8 +3188,8 @@
   {
     "name": "MERGE-WB12d-the-row-without-its-embers",
     "file": "server-account/src/accounts.js",
-    "old": "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)')\n    .bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && gateRegionOk(c.d, region) ? region : null, embers, c.m",
-    "new": "VALUES (?1, ?2, ?3, ?4, ?5, ?6, 1, ?8)')\n    .bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && gateRegionOk(c.d, region) ? region : null, embers, c.m",
+    "old": "      'INSERT OR IGNORE INTO gate_kills (day, account, boss, earned, at, region, stones, body) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)',",
+    "new": "      'INSERT OR IGNORE INTO gate_kills (day, account, boss, earned, at, region, stones, body) VALUES (?1, ?2, ?3, ?4, ?5, ?6, 1, ?8)',",
     "tests": [
       "test/net/gate/wb12d_rite_law.test.js"
     ],

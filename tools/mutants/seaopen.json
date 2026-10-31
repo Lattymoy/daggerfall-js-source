@@ -767,8 +767,8 @@
   {
     "name": "CREW-the-release-unowned",
     "file": "server-account/src/crewSigns.js",
-    "old": "'DELETE FROM crew_signed WHERE town = ?1 AND day = ?2 AND slot = ?3 AND player = ?4'",
-    "new": "'DELETE FROM crew_signed WHERE town = ?1 AND day = ?2 AND slot = ?3 AND (player = ?4 OR 1)'",
+    "old": "    .prepare('DELETE FROM crew_signed WHERE town = ?1 AND day = ?2 AND slot = ?3 AND player = ?4')",
+    "new": "    .prepare('DELETE FROM crew_signed WHERE town = ?1 AND day = ?2 AND slot = ?3 AND (player = ?4 OR 1)')",
     "tests": [
       "test/server/crewsigned.test.js"
     ]
@@ -776,8 +776,8 @@
   {
     "name": "CREW-the-cap",
     "file": "server-account/src/crewSigns.js",
-    "old": "AND day = ?2) < ?8`)",
-    "new": "AND day = ?2) <= ?8`)",
+    "old": "      WHERE (SELECT COUNT(*) FROM crew_signed WHERE player >= ?6 AND player < ?7 AND day = ?2) < ?8`,",
+    "new": "      WHERE (SELECT COUNT(*) FROM crew_signed WHERE player >= ?6 AND player < ?7 AND day = ?2) <= ?8`,",
     "tests": [
       "test/server/crewsigned.test.js"
     ]
@@ -794,8 +794,8 @@
   {
     "name": "CREW-the-fresh-unsaid",
     "file": "server-account/src/crewSigns.js",
-    "old": "  if (Number(r?.meta?.changes ?? 0) > 0) return { signed: true, fresh: true };",
-    "new": "  if (Number(r?.meta?.changes ?? 0) > 0) return { signed: true, fresh: false };",
+    "old": "    if (Number(r?.meta?.changes ?? 0) > 0) return { signed: true, fresh: true };",
+    "new": "    if (Number(r?.meta?.changes ?? 0) > 0) return { signed: true, fresh: false };",
     "tests": [
       "test/server/crewsigned.test.js",
       "test/systems/shipyards1_host.test.js"
@@ -804,8 +804,8 @@
   {
     "name": "CREW-mine-read-as-taken",
     "file": "server-account/src/crewSigns.js",
-    "old": "(r.player === who ? mine : taken)",
-    "new": "(r.player !== who ? mine : taken)",
+    "old": "    if (r.slot >= 0 && r.slot < CREW_SIGN_SLOTS) (r.player === who ? mine : taken).push(r.slot);",
+    "new": "    if (r.slot >= 0 && r.slot < CREW_SIGN_SLOTS) (r.player !== who ? mine : taken).push(r.slot);",
     "tests": [
       "test/server/crewsigned.test.js",
       "test/systems/shipyards1_host.test.js"
@@ -814,8 +814,8 @@
   {
     "name": "CREW-the-keep",
     "file": "server-account/src/crewSigns.js",
-    "old": "crewDayAt(nowS * 1000) - CREW_SIGN_KEEP_DAYS,",
-    "new": "crewDayAt(nowS * 1000) - CREW_SIGN_KEEP_DAYS + 1,",
+    "old": "    crewDayAt(nowS * 1000) - CREW_SIGN_KEEP_DAYS,",
+    "new": "    crewDayAt(nowS * 1000) - CREW_SIGN_KEEP_DAYS + 1,",
     "tests": [
       "test/server/crewsigned.test.js"
     ]
@@ -950,8 +950,8 @@
   {
     "name": "CREW-C2-the-cap-unwritten",
     "file": "server-account/src/crewSigns.js",
-    "old": "      WHERE (SELECT COUNT(*) FROM crew_signed WHERE player >= ?6 AND player < ?7 AND day = ?2) < ?8`)",
-    "new": "      WHERE ?6 <> ?7 OR ?8`)",
+    "old": "      WHERE (SELECT COUNT(*) FROM crew_signed WHERE player >= ?6 AND player < ?7 AND day = ?2) < ?8`,",
+    "new": "      WHERE ?6 <> ?7 OR ?8`,",
     "tests": [
       "test/server/crewsigned.test.js"
     ]
@@ -977,8 +977,8 @@
   {
     "name": "CREW-C8-the-cap-a-characters",
     "file": "server-account/src/crewSigns.js",
-    "old": "WHERE (SELECT COUNT(*) FROM crew_signed WHERE player >= ?6 AND player < ?7 AND day = ?2) < ?8`)",
-    "new": "WHERE (SELECT COUNT(*) FROM crew_signed WHERE player = ?4 AND ?6 <> ?7 AND day = ?2) < ?8`)",
+    "old": "      WHERE (SELECT COUNT(*) FROM crew_signed WHERE player >= ?6 AND player < ?7 AND day = ?2) < ?8`,",
+    "new": "      WHERE (SELECT COUNT(*) FROM crew_signed WHERE player = ?4 AND ?6 <> ?7 AND day = ?2) < ?8`,",
     "tests": [
       "test/server/crewsigned.test.js"
     ]
@@ -995,8 +995,8 @@
   {
     "name": "CREW-C8-the-release-the-accounts",
     "file": "server-account/src/crewSigns.js",
-    "old": "'DELETE FROM crew_signed WHERE town = ?1 AND day = ?2 AND slot = ?3 AND player = ?4'",
-    "new": "'DELETE FROM crew_signed WHERE town = ?1 AND day = ?2 AND slot = ?3 AND substr(player, 1, instr(player, \\':\\')) = substr(?4, 1, instr(?4, \\':\\'))'",
+    "old": "    .prepare('DELETE FROM crew_signed WHERE town = ?1 AND day = ?2 AND slot = ?3 AND player = ?4')",
+    "new": "    .prepare(\n      \"DELETE FROM crew_signed WHERE town = ?1 AND day = ?2 AND slot = ?3 AND substr(player, 1, instr(player, ':')) = substr(?4, 1, instr(?4, ':'))\",\n    )",
     "tests": [
       "test/server/crewsigned.test.js"
     ]

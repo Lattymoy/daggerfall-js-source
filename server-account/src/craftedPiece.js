@@ -22,7 +22,9 @@ export function takeCraftedPiece(save, provenance) {
   const at = items.findIndex((rec) => rec?.provenance === provenance && tradeableRecord(rec));
   if (at >= 0) return takeTradeGoods(save, { items: [items[at]], gold: 0 }, [at])?.[0] ?? null;
   const home = Array.isArray(save.furnishings) ? save.furnishings : [];
-  const h = home.findIndex((rec) => !!rec && typeof rec === 'object' && !Array.isArray(rec) && rec.provenance === provenance);
+  const h = home.findIndex(
+    (rec) => !!rec && typeof rec === 'object' && !Array.isArray(rec) && rec.provenance === provenance,
+  );
   return h >= 0 ? home.splice(h, 1)[0] : null;
 }
 
@@ -38,10 +40,16 @@ export function takeCraftedPiece(save, provenance) {
 export async function prepareCraftedPiece(ctx, me, at, provenance, escrow, check = null) {
   /** @type {any} */
   let moved = null;
-  const prep = await prepareRealmRecord(ctx, me, at, (save) => {
-    moved = takeCraftedPiece(save, provenance);
-    return moved ? (check?.(moved) ?? null) : 'market-piece-gone';
-  }, { outbound: true, escrow });   // INT3: the piece goes to another player - a held record hands nothing on
+  const prep = await prepareRealmRecord(
+    ctx,
+    me,
+    at,
+    (save) => {
+      moved = takeCraftedPiece(save, provenance);
+      return moved ? (check?.(moved) ?? null) : 'market-piece-gone';
+    },
+    { outbound: true, escrow },
+  ); // INT3: the piece goes to another player - a held record hands nothing on
   return prep.error ? prep : { ...prep, moved };
 }
 
@@ -53,6 +61,10 @@ export async function prepareCraftedPiece(ctx, me, at, provenance, escrow, check
  * @param {any} db @param {string} me @param {string} provenance
  */
 export async function pieceComingBack(db, me, provenance) {
-  return !!(await db.prepare("SELECT 1 FROM market_deliveries WHERE player = ?2 AND collected = 0 AND item IS NOT NULL AND json_extract(item, '$.provenance') = ?1")
-    .bind(provenance, me).first());
+  return !!(await db
+    .prepare(
+      "SELECT 1 FROM market_deliveries WHERE player = ?2 AND collected = 0 AND item IS NOT NULL AND json_extract(item, '$.provenance') = ?1",
+    )
+    .bind(provenance, me)
+    .first());
 }

@@ -468,8 +468,8 @@
   {
     "name": "EGZM-clock-a-second-early",
     "file": "server-account/src/eg.js",
-    "old": ".bind(nowS - EG_STAKE_CLOCK_S, limit).all())",
-    "new": ".bind(nowS - EG_STAKE_CLOCK_S + 1, limit).all())",
+    "old": "        .bind(nowS - EG_STAKE_CLOCK_S, limit)",
+    "new": "        .bind(nowS - EG_STAKE_CLOCK_S + 1, limit)",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -477,8 +477,8 @@
   {
     "name": "EGZM-clock-a-second-late",
     "file": "server-account/src/eg.js",
-    "old": "WHERE state = 'held' AND until <= ?1 ORDER BY",
-    "new": "WHERE state = 'held' AND until < ?1 ORDER BY",
+    "old": "        .prepare(\"SELECT ez FROM eg_stakes WHERE state = 'held' AND until <= ?1 ORDER BY until, ez LIMIT ?2\")",
+    "new": "        .prepare(\"SELECT ez FROM eg_stakes WHERE state = 'held' AND until < ?1 ORDER BY until, ez LIMIT ?2\")",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -504,8 +504,8 @@
   {
     "name": "EGZM-settled-stake-spent",
     "file": "server-account/src/eg.js",
-    "old": "SELECT ez FROM eg_stakes WHERE state = 'held' AND until",
-    "new": "SELECT ez FROM eg_stakes WHERE state != 'spent' AND until",
+    "old": "        .prepare(\"SELECT ez FROM eg_stakes WHERE state = 'held' AND until <= ?1 ORDER BY until, ez LIMIT ?2\")",
+    "new": "        .prepare(\"SELECT ez FROM eg_stakes WHERE state != 'spent' AND until <= ?1 ORDER BY until, ez LIMIT ?2\")",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -513,8 +513,8 @@
   {
     "name": "EGZM-key-returned",
     "file": "server-account/src/eg.js",
-    "old": "UPDATE eg_stakes SET state = 'spent' WHERE state = 'held' AND ez IN",
-    "new": "UPDATE eg_stakes SET state = 'returned' WHERE state = 'held' AND ez IN",
+    "old": "      .prepare(\"UPDATE eg_stakes SET state = 'spent' WHERE state = 'held' AND ez IN (SELECT value FROM json_each(?1))\")",
+    "new": "      .prepare(\n        \"UPDATE eg_stakes SET state = 'returned' WHERE state = 'held' AND ez IN (SELECT value FROM json_each(?1))\",\n      )",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -522,8 +522,8 @@
   {
     "name": "EGZM-raced-stake-spent",
     "file": "server-account/src/eg.js",
-    "old": "UPDATE eg_stakes SET state = 'spent' WHERE state = 'held' AND ez IN",
-    "new": "UPDATE eg_stakes SET state = 'spent' WHERE ez IN",
+    "old": "    db\n      .prepare(\"UPDATE eg_stakes SET state = 'spent' WHERE state = 'held' AND ez IN (SELECT value FROM json_each(?1))\")\n      .bind(ez),",
+    "new": "    db.prepare(\"UPDATE eg_stakes SET state = 'spent' WHERE ez IN (SELECT value FROM json_each(?1))\").bind(ez),",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -531,8 +531,8 @@
   {
     "name": "EGZM-letter-unwritten",
     "file": "server-account/src/eg.js",
-    "old": "FROM eg_stakes WHERE state = 'held' AND rh = 0 AND ez IN",
-    "new": "FROM eg_stakes WHERE state = 'held' AND 0 AND ez IN",
+    "old": "      FROM eg_stakes WHERE state = 'held' AND rh = 0 AND ez IN (SELECT value FROM json_each(?1))`,",
+    "new": "      FROM eg_stakes WHERE state = 'held' AND 0 AND ez IN (SELECT value FROM json_each(?1))`,",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -540,8 +540,8 @@
   {
     "name": "EGZM-letter-to-a-rehearsal",
     "file": "server-account/src/eg.js",
-    "old": "FROM eg_stakes WHERE state = 'held' AND rh = 0 AND ez IN",
-    "new": "FROM eg_stakes WHERE state = 'held' AND 1 AND ez IN",
+    "old": "      FROM eg_stakes WHERE state = 'held' AND rh = 0 AND ez IN (SELECT value FROM json_each(?1))`,",
+    "new": "      FROM eg_stakes WHERE state = 'held' AND 1 AND ez IN (SELECT value FROM json_each(?1))`,",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -549,8 +549,8 @@
   {
     "name": "EGZM-raced-stake-told",
     "file": "server-account/src/eg.js",
-    "old": "FROM eg_stakes WHERE state = 'held' AND rh = 0 AND ez IN",
-    "new": "FROM eg_stakes WHERE rh = 0 AND ez IN",
+    "old": "      FROM eg_stakes WHERE state = 'held' AND rh = 0 AND ez IN (SELECT value FROM json_each(?1))`,",
+    "new": "      FROM eg_stakes WHERE rh = 0 AND ez IN (SELECT value FROM json_each(?1))`,",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -558,8 +558,8 @@
   {
     "name": "EGZM-letter-holds-the-clock",
     "file": "server-account/src/eg.js",
-    "old": "INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)\n      SELECT",
-    "new": "INSERT INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)\n      SELECT",
+    "old": "        `INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)",
+    "new": "        `INSERT INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -567,8 +567,8 @@
   {
     "name": "EGZM-letter-the-breachs-batch",
     "file": "server-account/src/eg.js",
-    "old": "account, ?2 || ez,",
-    "new": "account, ?2 || b,",
+    "old": "      SELECT lower(hex(randomblob(12))), account, ?2 || ez, ?3, ?4, replace(CASE WHEN EXISTS (SELECT 1 FROM eg_runs r WHERE r.b = eg_stakes.b AND r.account = eg_stakes.account) THEN ?7 ELSE ?5 END, '{day}', strftime('%Y-%m-%d', at, 'unixepoch')), NULL, ?6",
+    "new": "      SELECT lower(hex(randomblob(12))), account, ?2 || b, ?3, ?4, replace(CASE WHEN EXISTS (SELECT 1 FROM eg_runs r WHERE r.b = eg_stakes.b AND r.account = eg_stakes.account) THEN ?7 ELSE ?5 END, '{day}', strftime('%Y-%m-%d', at, 'unixepoch')), NULL, ?6",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -576,8 +576,8 @@
   {
     "name": "EGZM-letter-the-days-unsaid",
     "file": "server-account/src/eg.js",
-    "old": "replace(CASE WHEN EXISTS (SELECT 1 FROM eg_runs r WHERE r.b = eg_stakes.b AND r.account = eg_stakes.account) THEN ?7 ELSE ?5 END, '{day}', strftime('%Y-%m-%d', at, 'unixepoch'))",
-    "new": "CASE WHEN EXISTS (SELECT 1 FROM eg_runs r WHERE r.b = eg_stakes.b AND r.account = eg_stakes.account) THEN ?7 ELSE ?5 END",
+    "old": "      SELECT lower(hex(randomblob(12))), account, ?2 || ez, ?3, ?4, replace(CASE WHEN EXISTS (SELECT 1 FROM eg_runs r WHERE r.b = eg_stakes.b AND r.account = eg_stakes.account) THEN ?7 ELSE ?5 END, '{day}', strftime('%Y-%m-%d', at, 'unixepoch')), NULL, ?6",
+    "new": "      SELECT lower(hex(randomblob(12))), account, ?2 || ez, ?3, ?4, CASE WHEN EXISTS (SELECT 1 FROM eg_runs r WHERE r.b = eg_stakes.b AND r.account = eg_stakes.account) THEN ?7 ELSE ?5 END, NULL, ?6",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -585,8 +585,8 @@
   {
     "name": "EGZM-letter-the-ends-day",
     "file": "server-account/src/eg.js",
-    "old": "END, '{day}', strftime('%Y-%m-%d', at, 'unixepoch'))",
-    "new": "END, '{day}', strftime('%Y-%m-%d', until, 'unixepoch'))",
+    "old": "      SELECT lower(hex(randomblob(12))), account, ?2 || ez, ?3, ?4, replace(CASE WHEN EXISTS (SELECT 1 FROM eg_runs r WHERE r.b = eg_stakes.b AND r.account = eg_stakes.account) THEN ?7 ELSE ?5 END, '{day}', strftime('%Y-%m-%d', at, 'unixepoch')), NULL, ?6",
+    "new": "      SELECT lower(hex(randomblob(12))), account, ?2 || ez, ?3, ?4, replace(CASE WHEN EXISTS (SELECT 1 FROM eg_runs r WHERE r.b = eg_stakes.b AND r.account = eg_stakes.account) THEN ?7 ELSE ?5 END, '{day}', strftime('%Y-%m-%d', until, 'unixepoch')), NULL, ?6",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -594,8 +594,8 @@
   {
     "name": "EGZM-newest-first",
     "file": "server-account/src/eg.js",
-    "old": "ORDER BY until, ez LIMIT ?2",
-    "new": "ORDER BY until DESC, ez LIMIT ?2",
+    "old": "        .prepare(\"SELECT ez FROM eg_stakes WHERE state = 'held' AND until <= ?1 ORDER BY until, ez LIMIT ?2\")",
+    "new": "        .prepare(\"SELECT ez FROM eg_stakes WHERE state = 'held' AND until <= ?1 ORDER BY until DESC, ez LIMIT ?2\")",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -603,8 +603,8 @@
   {
     "name": "EGZM-page-unbounded",
     "file": "server-account/src/eg.js",
-    "old": "ORDER BY until, ez LIMIT ?2",
-    "new": "ORDER BY until, ez LIMIT -1",
+    "old": "        .prepare(\"SELECT ez FROM eg_stakes WHERE state = 'held' AND until <= ?1 ORDER BY until, ez LIMIT ?2\")",
+    "new": "        .prepare(\"SELECT ez FROM eg_stakes WHERE state = 'held' AND until <= ?1 ORDER BY until, ez LIMIT -1\")",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -612,8 +612,8 @@
   {
     "name": "EGZM-count-unsaid",
     "file": "server-account/src/eg.js",
-    "old": "  return Number(spent?.meta?.changes ?? 0);\n}",
-    "new": "  return 0;\n}",
+    "old": "  return Number(spent?.meta?.changes ?? 0);",
+    "new": "  return 0;",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]
@@ -621,8 +621,8 @@
   {
     "name": "EGZM-quiet-hour-writes",
     "file": "server-account/src/eg.js",
-    "old": "  if (!due.length) return 0;\n",
-    "new": "",
+    "old": "  if (!due.length) return 0;\n  const ez = JSON.stringify(due.map((r) => r.ez));",
+    "new": "  const ez = JSON.stringify(due.map((r) => r.ez));",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js",
       "test/net/auditscale.test.js"
@@ -649,8 +649,8 @@
   {
     "name": "EGZM-job-page-of-one",
     "file": "server-account/src/cron.js",
-    "old": "spendLapsedStakes(ctx.db, ctx.nowS, SWEEP_ROWS), SWEEP_ROWS, ctx.budget)],",
-    "new": "spendLapsedStakes(ctx.db, ctx.nowS, 1), SWEEP_ROWS, ctx.budget)],",
+    "old": "  ['eg-stakes', (ctx) => rounds(() => spendLapsedStakes(ctx.db, ctx.nowS, SWEEP_ROWS), SWEEP_ROWS, ctx.budget)],",
+    "new": "  ['eg-stakes', (ctx) => rounds(() => spendLapsedStakes(ctx.db, ctx.nowS, 1), SWEEP_ROWS, ctx.budget)],",
     "tests": [
       "test/net/eliteGates/egz_ends_stake.test.js"
     ]

@@ -322,8 +322,8 @@
   {
     "name": "HOME-VOTE-room-handed-out",
     "file": "server-account/src/decor.js",
-    "old": "  if (!homeShownOf(shown?.results?.[0] ?? null)) return",
-    "new": "  if (false) return",
+    "old": "  if (!homeShownOf(shown?.results?.[0] ?? null))\n    return { mapId, buildingKey, pieces: await shopOf(db, mapId, pieces), hidden: [], rev, cap, ...arms };",
+    "new": "  if (false) return { mapId, buildingKey, pieces: await shopOf(db, mapId, pieces), hidden: [], rev, cap, ...arms };",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -332,8 +332,8 @@
   {
     "name": "HOME-VOTE-trader-withheld",
     "file": "server-account/src/decor.js",
-    "old": "pieces: await shopOf(db, mapId, pieces), hidden: [], rev, cap, ...arms };",
-    "new": "pieces: [], hidden: [], rev, cap, ...arms };",
+    "old": "    return { mapId, buildingKey, pieces: await shopOf(db, mapId, pieces), hidden: [], rev, cap, ...arms };",
+    "new": "    return { mapId, buildingKey, pieces: [], hidden: [], rev, cap, ...arms };",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -562,8 +562,8 @@
   {
     "name": "HOME-VOTE-II-A1-licence-kept",
     "file": "server-account/src/decor.js",
-    "old": "return traders.filter((_, i) => stockedOf(stock[i]?.results?.[0]));",
-    "new": "return traders;",
+    "old": "  return traders.filter((_, i) => stockedOf(stock[i]?.results?.[0]));",
+    "new": "  return traders;",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -953,8 +953,8 @@
   {
     "name": "DECOR-BATCH-the-room-three-trips",
     "file": "server-account/src/decor.js",
-    "old": "const [{ results = [] }, shown, hidden, revRow, capRow, armsRow] = await db.batch([piecesRead, homeShownRead(db, mapId, buildingKey, player?.id), hiddenRead(db, mapId, buildingKey), revRead, capRead, armsRead]);",
-    "new": "const [{ results = [] }, shown, hidden, revRow, capRow, armsRow] = [await piecesRead.all(), { results: [await homeShownRead(db, mapId, buildingKey, player?.id).first()] }, { results: [await hiddenRead(db, mapId, buildingKey).first()] }, { results: [await revRead.first()] }, { results: [await capRead.first()] }, { results: [await armsRead.first()] }];",
+    "old": "  const [{ results = [] }, shown, hidden, revRow, capRow, armsRow] = await db.batch([\n    piecesRead,\n    homeShownRead(db, mapId, buildingKey, player?.id),\n    hiddenRead(db, mapId, buildingKey),\n    revRead,\n    capRead,\n    armsRead,\n  ]);",
+    "new": "  const [{ results = [] }, shown, hidden, revRow, capRow, armsRow] = [\n    await piecesRead.all(),\n    { results: [await homeShownRead(db, mapId, buildingKey, player?.id).first()] },\n    { results: [await hiddenRead(db, mapId, buildingKey).first()] },\n    { results: [await revRead.first()] },\n    { results: [await capRead.first()] },\n    { results: [await armsRead.first()] },\n  ];",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -963,8 +963,8 @@
   {
     "name": "DECOR-BATCH-the-shop-a-trip-a-trader",
     "file": "server-account/src/decor.js",
-    "old": "const stock = await db.batch(traders.map((p) => vendorStockedRead(db, mapId, p.id)));",
-    "new": "const stock = []; for (const p of traders) stock.push({ results: [await vendorStockedRead(db, mapId, p.id).first()] });",
+    "old": "  const stock = await db.batch(traders.map((p) => vendorStockedRead(db, mapId, p.id))); // DECOR-BATCH: every trader's in one request",
+    "new": "  const stock = [];\n  for (const p of traders) stock.push({ results: [await vendorStockedRead(db, mapId, p.id).first()] }); // DECOR-BATCH: every trader's in one request",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -973,8 +973,8 @@
   {
     "name": "DECOR-BATCH-hidden-dropped",
     "file": "server-account/src/decor.js",
-    "old": "return { mapId, buildingKey, pieces, hidden: hiddenListOf(hidden?.results?.[0] ?? null), rev, cap, measured: home?.ground != null, ...arms };",
-    "new": "return { mapId, buildingKey, pieces, hidden: [], rev, cap, measured: home?.ground != null, ...arms };",
+    "old": "  return {\n    mapId,\n    buildingKey,\n    pieces,\n    hidden: hiddenListOf(hidden?.results?.[0] ?? null),\n    rev,\n    cap,\n    measured: home?.ground != null,\n    ...arms,\n  };",
+    "new": "  return { mapId, buildingKey, pieces, hidden: [], rev, cap, measured: home?.ground != null, ...arms };",
     "tests": [
       "test/net/homevote.test.js"
     ],

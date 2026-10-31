@@ -209,8 +209,8 @@
   {
     "name": "GUILD1d-owns-any-member",
     "file": "server-account/src/decor.js",
-    "old": "AND g.char_id = k.c\n      AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}\n      AND EXISTS (SELECT 1 FROM realm_characters rc",
-    "new": "AND g.char_id = k.c\n      AND EXISTS (SELECT 1 FROM realm_characters rc",
+    "old": "      AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}\n      AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p))))`; // AUDIT GUILD1d S2: a realm character's - its moves and stations are paid on its record, never on a client's word",
+    "new": "      AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p))))`; // AUDIT GUILD1d S2: a realm character's - its moves and stations are paid on its record, never on a client's word",
     "tests": [
       "test/net/guild1d_service.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "GUILD1d-hall-takes-an-item",
     "file": "server-account/src/decor.js",
-    "old": "    if (sent.item) return { error: 'hall-item' };\n",
-    "new": "",
+    "old": "    if (sent.item) return { error: 'hall-item' };\n  }",
+    "new": "  }",
     "tests": [
       "test/net/guild1d_service.test.js"
     ],
@@ -229,8 +229,8 @@
   {
     "name": "GUILD1d-the-palace-yard-refused-only-in-the-write",
     "file": "server-account/src/decor.js",
-    "old": "    if (yard === true && S.seat) return { error: 'hall-yard' };\n",
-    "new": "",
+    "old": "    if (yard === true && S.seat) return { error: 'hall-yard' };\n    if (sent.item) return { error: 'hall-item' };",
+    "new": "    if (sent.item) return { error: 'hall-item' };",
     "tests": [
       "test/net/guild1d_service.test.js",
       "test/net/seathall_service.test.js"
@@ -241,8 +241,8 @@
   {
     "name": "GUILD1d-piece-half-to-the-keeper",
     "file": "server-account/src/decor.js",
-    "old": "    const hall = delta > 0 ? await S.guildOf(db, mapId, buildingKey) : null;\n    if (hall) {\n      // GUILD1d: a hall's piece taken out",
-    "new": "    const hall = null;\n    if (hall) {\n      // GUILD1d: a hall's piece taken out",
+    "old": "    const hall = delta > 0 ? await S.guildOf(db, mapId, buildingKey) : null;",
+    "new": "    const hall = null;",
     "tests": [
       "test/net/guild1d_service.test.js"
     ]
@@ -250,8 +250,8 @@
   {
     "name": "GUILD1d-shrink-half-to-the-keeper",
     "file": "server-account/src/decor.js",
-    "old": "  const hall = delta > 0 ? await S.guildOf(db, mapId, buildingKey) : null;\n  if (hall) {\n    // GUILD1d: a hall's piece shrunk",
-    "new": "  const hall = null;\n  if (hall) {\n    // GUILD1d: a hall's piece shrunk",
+    "old": "  const { delta, ledger } = decorGoldMove(was, pl, row.paid); // AUDIT REALM L1-F3: half back of what records paid\n  const hall = delta > 0 ? await S.guildOf(db, mapId, buildingKey) : null;",
+    "new": "  const { delta, ledger } = decorGoldMove(was, pl, row.paid); // AUDIT REALM L1-F3: half back of what records paid\n  const hall = null;",
     "tests": [
       "test/net/guild1d_service.test.js"
     ]

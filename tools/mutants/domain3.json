@@ -92,8 +92,8 @@
   {
     "name": "DOMAIN3-witness-region-tie",
     "file": "server-account/src/domains.js",
-    "old": "if (!s || !d || d.region !== s.region) return 'bad-domain';",
-    "new": "if (!s || !d) return 'bad-domain';",
+    "old": "  if (!s || !d || d.region !== s.region) return 'bad-domain';",
+    "new": "  if (!s || !d) return 'bad-domain';",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "DOMAIN3-witness-agreeing-written",
     "file": "server-account/src/domains.js",
-    "old": "if (domainFacts(rows, ignored).get(d.region) === d.key && agreeing >= DOMAIN_AGREEING_KEPT) return 'agreed';",
-    "new": "if (domainFacts(rows, ignored).get(d.region) === d.key) return 'agreed';",
+    "old": "  if (domainFacts(rows, ignored).get(d.region) === d.key && agreeing >= DOMAIN_AGREEING_KEPT) return 'agreed';",
+    "new": "  if (domainFacts(rows, ignored).get(d.region) === d.key) return 'agreed';",
     "tests": [
       "test/net/domain3_regions.test.js"
     ],
@@ -111,8 +111,8 @@
   {
     "name": "DOMAIN3-facts-ignored",
     "file": "server-account/src/domains.js",
-    "old": "    if (ignored.has(r.account)) continue;\n",
-    "new": "",
+    "old": "    if (ignored.has(r.account)) continue;\n    const list = byRegion.get(r.key) ?? [];",
+    "new": "    const list = byRegion.get(r.key) ?? [];",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "DOMAIN3-facts-own-region",
     "file": "server-account/src/domains.js",
-    "old": "if (factConfirmed(f) && f.domain?.region === Number(k)) out.set",
-    "new": "if (factConfirmed(f)) out.set",
+    "old": "    if (factConfirmed(f) && f.domain?.region === Number(k)) out.set(Number(k), f.domain.key);",
+    "new": "    if (factConfirmed(f)) out.set(Number(k), f.domain.key);",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]

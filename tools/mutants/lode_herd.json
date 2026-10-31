@@ -32,8 +32,8 @@
   {
     "name": "LODEHERD-job-claims",
     "file": "server-account/src/cron.js",
-    "old": "    const lodes = await motherlodesOf(ctx, day, { clock: true });",
-    "new": "    const lodes = await motherlodesOf(ctx, day);",
+    "old": "      const lodes = await motherlodesOf(ctx, day, { clock: true }); // LODE-HERD: the clock picks without the readers' claim",
+    "new": "      const lodes = await motherlodesOf(ctx, day); // LODE-HERD: the clock picks without the readers' claim",
     "tests": [
       "test/server/lode_herd.test.js"
     ],

@@ -146,8 +146,8 @@
   {
     "name": "AUF-L2M2-service-repeat-any-tree",
     "file": "server-account/src/firmament.js",
-    "old": "    if (typeof body.tree !== 'string' || packTree(unpackTree(body.tree)) !== String(prior.tree ?? '')) return { error: 'firm-rid' };\n",
-    "new": "",
+    "old": "    if (typeof body.tree !== 'string' || packTree(unpackTree(body.tree)) !== String(prior.tree ?? ''))\n      return { error: 'firm-rid' };\n    const purses = await pursesOf(ctx, player.id, character);",
+    "new": "    const purses = await pursesOf(ctx, player.id, character);",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -164,7 +164,7 @@
   {
     "name": "AUF-L2M4-switch-not-on-trades",
     "file": "server-account/src/firmament.js",
-    "old": "export const firmStatsFrom = (row, player, env) => (firmamentOpenFor(player, env) ? treeStats(unpackTree(row?.tree ?? '')) : {});",
+    "old": "export const firmStatsFrom = (row, player, env) =>\n  firmamentOpenFor(player, env) ? treeStats(unpackTree(row?.tree ?? '')) : {};",
     "new": "export const firmStatsFrom = (row, player, env) => treeStats(unpackTree(row?.tree ?? ''));",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
@@ -191,8 +191,8 @@
   {
     "name": "AUF-L2L1-respec-free",
     "file": "server-account/src/firmament.js",
-    "old": "  if (!side.at) return { error: 'realm-needed' };\n",
-    "new": "  if (!side.at) return view({ start: null, keys: [] }, await pursesOf(ctx, player.id, character), { respec: true, gold: FIRM_RESPEC_GOLD });\n",
+    "old": "  if (!side.at) return { error: 'realm-needed' };",
+    "new": "  if (!side.at)\n    return view({ start: null, keys: [] }, await pursesOf(ctx, player.id, character), {\n      respec: true,\n      gold: FIRM_RESPEC_GOLD,\n    });",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "AUF-L5H1-set-ignores-switch",
     "file": "server-account/src/firmament.js",
-    "old": "  const closed = shut(player, env);\n  if (closed) return closed;\n  if (typeof body.tree !== 'string'",
-    "new": "  if (typeof body.tree !== 'string'",
+    "old": "  const closed = shut(player, env);\n  if (closed) return closed;\n  if (typeof body.tree !== 'string' || body.tree.length > FIRM_PACKED_MAX) return { error: 'firm-key' };",
+    "new": "  if (typeof body.tree !== 'string' || body.tree.length > FIRM_PACKED_MAX) return { error: 'firm-key' };",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "AUF-L5H1-respec-ignores-switch",
     "file": "server-account/src/firmament.js",
-    "old": "  const closed = shut(player, env);\n  if (closed) return closed;\n  // AUDIT UICALM-FIRM1 L2 L1",
-    "new": "  // AUDIT UICALM-FIRM1 L2 L1",
+    "old": "  const closed = shut(player, env);\n  if (closed) return closed;\n  // AUDIT UICALM-FIRM1 L2 L1: THE GOLD IS THE RECORD'S - a respec with no realm record to pay it is refused, never made",
+    "new": "  // AUDIT UICALM-FIRM1 L2 L1: THE GOLD IS THE RECORD'S - a respec with no realm record to pay it is refused, never made",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "AUF-L5M11-set-no-rate",
     "file": "server-account/src/firmament.js",
-    "old": "  if (await overRate(ctx, `firm:${player.id}`, FIRM_OPS_MAX, FIRM_OPS_WINDOW_S)) return { error: 'firm-rate' };\n  const [row, purses] = await Promise.all([firmStatement(db, player.id, character).first(), pursesOf(ctx, player.id, character)]);\n  const fault",
-    "new": "  const [row, purses] = await Promise.all([firmStatement(db, player.id, character).first(), pursesOf(ctx, player.id, character)]);\n  const fault",
+    "old": "        };\n  if (await overRate(ctx, `firm:${player.id}`, FIRM_OPS_MAX, FIRM_OPS_WINDOW_S)) return { error: 'firm-rate' };\n  const [row, purses] = await Promise.all([",
+    "new": "        };\n  const [row, purses] = await Promise.all([",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "AUF-L5M11-set-no-size-cap",
     "file": "server-account/src/firmament.js",
-    "old": "if (typeof body.tree !== 'string' || body.tree.length > FIRM_PACKED_MAX) return { error: 'firm-key' };",
-    "new": "if (typeof body.tree !== 'string') return { error: 'firm-key' };",
+    "old": "  if (typeof body.tree !== 'string' || body.tree.length > FIRM_PACKED_MAX) return { error: 'firm-key' };",
+    "new": "  if (typeof body.tree !== 'string') return { error: 'firm-key' };",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AUF-L5M11-marks-closed-unchecked",
     "file": "server-account/src/firmament.js",
-    "old": "  if (silver > 0 && !marksOpenFor(player, env)) return { error: 'marks-closed' };\n",
-    "new": "",
+    "old": "  if (silver > 0 && !marksOpenFor(player, env)) return { error: 'marks-closed' };\n  const nonce = mintId(rand);",
+    "new": "  const nonce = mintId(rand);",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "AUF-L5M11-set-stale-lands",
     "file": "server-account/src/firmament.js",
-    "old": "      WHERE ${stillPrev}\n        AND (?6 = 0 OR",
-    "new": "      WHERE 1\n        AND (?6 = 0 OR",
+    "old": "      WHERE ${stillPrev}",
+    "new": "      WHERE 1",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "AUF-L5M11-respec-no-guard",
     "file": "server-account/src/firmament.js",
-    "old": "      mustChange(db),\n      db.prepare(\"UPDATE firmament SET tree = ''",
-    "new": "      db.prepare(\"UPDATE firmament SET tree = ''",
+    "old": "      mustChange(db),\n      db",
+    "new": "      db",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "AUF-L5M11-respec-other-char",
     "file": "server-account/src/firmament.js",
-    "old": "  if (prior) {\n    if (prior.char_id !== character) return { error: 'firm-rid' };\n    const now = await",
-    "new": "  if (prior) {\n    const now = await",
+    "old": "    if (prior.char_id !== character) return { error: 'firm-rid' };\n    const now = await firmStatement(db, player.id, character).first();",
+    "new": "    const now = await firmStatement(db, player.id, character).first();",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]

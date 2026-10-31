@@ -12,8 +12,8 @@
   {
     "name": "ACCT-RATE-MEM-a-past-stamp-resets",
     "file": "server-account/src/accounts.js",
-    "old": "  if (!w || w.start < start) {\n    if (!w && accountWindows.size >= ACCOUNT_RATE_KEYS) {",
-    "new": "  if (!w || w.start !== start) {\n    if (!w && accountWindows.size >= ACCOUNT_RATE_KEYS) {",
+    "old": "  if (!w || w.start < start) {",
+    "new": "  if (!w || w.start !== start) {",
     "tests": [
       "test/server/acctratemem.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "ACCT-RATE-MEM-one-past-the-ceiling",
     "file": "server-account/src/accounts.js",
-    "old": "  w.count++;\n  return w.count > max;",
-    "new": "  w.count++;\n  return w.count > max + 1;",
+    "old": "  return w.count > max;",
+    "new": "  return w.count > max + 1;",
     "tests": [
       "test/server/acctratemem.test.js"
     ],

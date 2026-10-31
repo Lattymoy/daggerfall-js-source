@@ -749,8 +749,8 @@
   {
     "name": "EGZ-svc-first-replaced",
     "file": "server-account/src/eg.js",
-    "old": "UPDATE players SET eg_first = eg_first | ?2 WHERE id = ?1 RETURNING eg_first",
-    "new": "UPDATE players SET eg_first = ?2 WHERE id = ?1 RETURNING eg_first",
+    "old": "    .prepare('UPDATE players SET eg_first = eg_first | ?2 WHERE id = ?1 RETURNING eg_first')",
+    "new": "    .prepare('UPDATE players SET eg_first = ?2 WHERE id = ?1 RETURNING eg_first')",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -767,8 +767,8 @@
   {
     "name": "EGZ-svc-first-unbounded",
     "file": "server-account/src/eg.js",
-    "old": "if (!Number.isSafeInteger(bits) || bits < 0 || bits > EG_FIRST_BITS_MAX) return { error: 'bits' };",
-    "new": "if (!Number.isSafeInteger(bits) || bits < 0) return { error: 'bits' };",
+    "old": "  if (!Number.isSafeInteger(bits) || bits < 0 || bits > EG_FIRST_BITS_MAX) return { error: 'bits' };",
+    "new": "  if (!Number.isSafeInteger(bits) || bits < 0) return { error: 'bits' };",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -776,8 +776,8 @@
   {
     "name": "EGZ-svc-first-unanswered",
     "file": "server-account/src/eg.js",
-    "old": "...(await egRecordOf(db, player.id)), first: int(row?.eg_first) };",
-    "new": "...(await egRecordOf(db, player.id)), first: 0 };",
+    "old": "    first: int(row?.eg_first),",
+    "new": "    first: 0,",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -785,8 +785,8 @@
   {
     "name": "EGZ-svc-no-letter-at-the-keys",
     "file": "server-account/src/eg.js",
-    "old": "  await egFirstPost(db, player, env, nowS);\n",
-    "new": "",
+    "old": "  await egFirstPost(db, player, env, nowS);\n  return {",
+    "new": "  return {",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -794,8 +794,8 @@
   {
     "name": "EGZ-svc-no-standing-on-the-claim",
     "file": "server-account/src/eg.js",
-    "old": "...(await egReliquariesOf({ db, nowS }, player, c)), ...(await egStandingOf(db, player, c)), ...(await egEndSeedOf(db, player, c)) };",
-    "new": "...(await egReliquariesOf({ db, nowS }, player, c)), ...(await egEndSeedOf(db, player, c)) };",
+    "old": "    said = {\n      ...(await egReliquariesOf({ db, nowS }, player, c)),\n      ...(await egStandingOf(db, player, c)),\n      ...(await egEndSeedOf(db, player, c)),\n    }; // EG-E1: the Reliquaries it opens, by the week's pay; EG-ZF: the member's standing - the recap's board line; AUDIT EG V (L8-5): the seed they roll on",
+    "new": "    said = { ...(await egReliquariesOf({ db, nowS }, player, c)), ...(await egEndSeedOf(db, player, c)) }; // EG-E1: the Reliquaries it opens, by the week's pay; EG-ZF: the member's standing - the recap's board line; AUDIT EG V (L8-5): the seed they roll on",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -803,8 +803,8 @@
   {
     "name": "EGZ-svc-a-rehearsal-standing",
     "file": "server-account/src/egHonours.js",
-    "old": "if (c?.q !== 'x' || c.rh === 1 || !(int(c.h) >= 1)) return {};",
-    "new": "if (c?.q !== 'x' || !(int(c.h) >= 1)) return {};",
+    "old": "  if (c?.q !== 'x' || c.rh === 1 || !(int(c.h) >= 1)) return {};",
+    "new": "  if (c?.q !== 'x' || !(int(c.h) >= 1)) return {};",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -812,8 +812,8 @@
   {
     "name": "EGZ-svc-no-hall-standing",
     "file": "server-account/src/egHonours.js",
-    "old": "if (c?.q !== 'x' || c.rh === 1 || !(int(c.h) >= 1)) return {};",
-    "new": "if (c?.q !== 'x' || c.rh === 1) return {};",
+    "old": "  if (c?.q !== 'x' || c.rh === 1 || !(int(c.h) >= 1)) return {};",
+    "new": "  if (c?.q !== 'x' || c.rh === 1) return {};",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -821,8 +821,8 @@
   {
     "name": "EGZ-svc-the-company-mis-keyed",
     "file": "server-account/src/egHonours.js",
-    "old": "const mine = breachesOf(rows).get(c.b), key = mine ? companyKeyOf(mine) : '';",
-    "new": "const mine = breachesOf(rows).get(c.b), key = mine ? [...mine.players].join(',') : '';",
+    "old": "    key = mine ? companyKeyOf(mine) : ''; // '' off the Descent: no company's - AUDIT EG III (lane3 #4): the board's own key",
+    "new": "    key = mine ? [...mine.players].join(',') : ''; // '' off the Descent: no company's - AUDIT EG III (lane3 #4): the board's own key",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -839,8 +839,8 @@
   {
     "name": "EGZ-svc-the-descent-rank-off-by-one",
     "file": "server-account/src/egHonours.js",
-    "old": "if (i >= 0) return { board: { k: 'descent', br, rank: i + 1 } };",
-    "new": "if (i >= 0) return { board: { k: 'descent', br, rank: i } };",
+    "old": "    if (i >= 0) return { board: { k: 'descent', br, rank: i + 1 } };",
+    "new": "    if (i >= 0) return { board: { k: 'descent', br, rank: i } };",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -848,8 +848,8 @@
   {
     "name": "EGZ-svc-the-bracket-wrong",
     "file": "server-account/src/egHonours.js",
-    "old": "if (i >= 0) return { board: { k: 'descent', br, rank: i + 1 } };",
-    "new": "if (i >= 0) return { board: { k: 'descent', br: 'few', rank: i + 1 } };",
+    "old": "    if (i >= 0) return { board: { k: 'descent', br, rank: i + 1 } };",
+    "new": "    if (i >= 0) return { board: { k: 'descent', br: 'few', rank: i + 1 } };",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -857,8 +857,8 @@
   {
     "name": "EGZ-svc-the-depths-rank-off-by-one",
     "file": "server-account/src/egHonours.js",
-    "old": "return i >= 0 ? { board: { k: 'depths', rank: i + 1 } } : {};",
-    "new": "return i >= 0 ? { board: { k: 'depths', rank: i + 2 } } : {};",
+    "old": "  return i >= 0 ? { board: { k: 'depths', rank: i + 1 } } : {};",
+    "new": "  return i >= 0 ? { board: { k: 'depths', rank: i + 2 } } : {};",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -866,8 +866,8 @@
   {
     "name": "EGZ-svc-the-letter-to-everyone",
     "file": "server-account/src/egHonours.js",
-    "old": "  if (!isSpireFirst(player, env)) return false;\n",
-    "new": "",
+    "old": "  if (!isSpireFirst(player, env)) return false;\n  const r = await db",
+    "new": "  const r = await db",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -875,8 +875,8 @@
   {
     "name": "EGZ-svc-the-letter-twice",
     "file": "server-account/src/egHonours.js",
-    "old": "INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)\n    VALUES (lower(hex(randomblob(12))), ?1, ?2,",
-    "new": "INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)\n    VALUES (lower(hex(randomblob(12))), ?1, ?2 || lower(hex(randomblob(2))),",
+    "old": "    VALUES (lower(hex(randomblob(12))), ?1, ?2, ?3, ?4, ?5, NULL, ?6)`,",
+    "new": "    VALUES (lower(hex(randomblob(12))), ?1, ?2 || lower(hex(randomblob(2))), ?3, ?4, ?5, NULL, ?6)`,",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -884,8 +884,8 @@
   {
     "name": "EGZ-svc-the-letter-at-the-dbs-clock",
     "file": "server-account/src/egHonours.js",
-    "old": "?5, NULL, ?6)`)",
-    "new": "?5, NULL, 0)`)",
+    "old": "    VALUES (lower(hex(randomblob(12))), ?1, ?2, ?3, ?4, ?5, NULL, ?6)`,",
+    "new": "    VALUES (lower(hex(randomblob(12))), ?1, ?2, ?3, ?4, ?5, NULL, 0)`,",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]

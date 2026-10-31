@@ -220,8 +220,8 @@
   {
     "name": "AUDIT-SAFE-AI10-flag-unmarked",
     "file": "server-account/src/discord.js",
-    "old": "`${flagged ? '!' : l.sub === c.target ? '>' : ' '}",
-    "new": "`${l.sub === c.target ? '>' : ' '}",
+    "old": "    const row = `${flagged ? '!' : l.sub === c.target ? '>' : ' '} [${l.tab}] ${plain(l.name)}: ${plain(l.text)}`;",
+    "new": "    const row = `${l.sub === c.target ? '>' : ' '} [${l.tab}] ${plain(l.name)}: ${plain(l.text)}`;",
     "tests": [
       "test/server/safe_review.test.js",
       "test/server/safe_audit.test.js"
@@ -230,8 +230,8 @@
   {
     "name": "AUDIT-SAFE-D1-name-first",
     "file": "server-account/src/discord.js",
-    "old": "let row = ID_RE.test(who) ? await findAccount(ctx.db, { target: who }) : { error: 'no-player' };",
-    "new": "let row = { error: 'no-player' };",
+    "old": "  let row = ID_RE.test(who) ? await findAccount(ctx.db, { target: who }) : { error: 'no-player' };",
+    "new": "  let row = { error: 'no-player' };",
     "tests": [
       "test/server/safe_audit.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "AUDIT-SAFE-D2-refused-breaks",
     "file": "server-account/src/discord.js",
-    "old": "    if (!res.ok) { console.warn('[discord] the API refused a card:', res.status); return { refused: res.status }; }",
-    "new": "    if (!res.ok) { console.warn('[discord] the API refused a card:', res.status); return { down: true }; }",
+    "old": "      return { refused: res.status };",
+    "new": "      return { down: true };",
     "tests": [
       "test/server/safe_audit.test.js"
     ]
@@ -248,8 +248,8 @@
   {
     "name": "AUDIT-SAFE-D2-gone-as-refused",
     "file": "server-account/src/discord.js",
-    "old": "    if (res.status === 404 && messageId) return { gone: true };\n",
-    "new": "",
+    "old": "    if (res.status === 404 && messageId) return { gone: true };\n    if (res.status === 429 || res.status >= 500) {",
+    "new": "    if (res.status === 429 || res.status >= 500) {",
     "tests": [
       "test/server/safe_audit.test.js"
     ]
@@ -257,8 +257,8 @@
   {
     "name": "AUDIT-SAFE-D3-no-claim",
     "file": "server-account/src/discord.js",
-    "old": "  if (!claimed?.meta?.changes) return redraw(ctx, caseId);\n",
-    "new": "  if (false) return redraw(ctx, caseId);\n",
+    "old": "  if (!claimed?.meta?.changes) return redraw(ctx, caseId);",
+    "new": "  if (false) return redraw(ctx, caseId);",
     "tests": [
       "test/server/safe_audit.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "AUDIT-SAFE-D4-push-awaited",
     "file": "server-account/src/discord.js",
-    "old": "    { push: (o) => { pushAfter(io, env, o); } });",
-    "new": "    { push: (o) => pushAfter(io, env, o) });",
+    "old": "    {\n      push: (o) => {\n        pushAfter(io, env, o);\n      },\n    },",
+    "new": "    { push: (o) => pushAfter(io, env, o) },",
     "tests": [
       "test/server/safe_audit.test.js"
     ]
@@ -302,8 +302,8 @@
   {
     "name": "AUDIT-SAFE-D7-no-nonce",
     "file": "server-account/src/discord.js",
-    "old": "body: JSON.stringify(!messageId && nonce ? { ...card, nonce, enforce_nonce: true } : card),",
-    "new": "body: JSON.stringify(card),",
+    "old": "      body: JSON.stringify(!messageId && nonce ? { ...card, nonce, enforce_nonce: true } : card),",
+    "new": "      body: JSON.stringify(card),",
     "tests": [
       "test/server/safe_audit.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "AUDIT-SAFE-D9-markdown-unescaped",
     "file": "server-account/src/discord.js",
-    "old": "export const md = (s) => plain(s).replace(",
-    "new": "export const md = (s) => plain(s) ?? plain(s).replace(",
+    "old": "export const md = (s) => plain(s).replace(/([\\\\`*_~|>#\\[\\]()<@:-])/g, '\\\\$1');",
+    "new": "export const md = (s) => plain(s) ?? plain(s).replace(/([\\\\`*_~|>#\\[\\]()<@:-])/g, '\\\\$1');",
     "tests": [
       "test/server/safe_audit.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "AUDIT-SAFE-D10-no-agent",
     "file": "server-account/src/discord.js",
-    "old": "authorization: `Bot ${env.DISCORD_BOT_TOKEN}`, 'user-agent': DISCORD_USER_AGENT },",
-    "new": "authorization: `Bot ${env.DISCORD_BOT_TOKEN}` },",
+    "old": "      headers: {\n        'content-type': 'application/json',\n        authorization: `Bot ${env.DISCORD_BOT_TOKEN}`,\n        'user-agent': DISCORD_USER_AGENT,\n      },",
+    "new": "      headers: { 'content-type': 'application/json', authorization: `Bot ${env.DISCORD_BOT_TOKEN}` },",
     "tests": [
       "test/server/safe_audit.test.js"
     ]
@@ -437,8 +437,8 @@
   {
     "name": "AUDIT-SAFE-S7-login-unchecked",
     "file": "server-account/src/accounts.js",
-    "old": "  // session - told only once the password is right, so the word says nothing to a stranger guessing at a handle\n  if (bannedNow(player, nowS)) return",
-    "new": "  // session - told only once the password is right, so the word says nothing to a stranger guessing at a handle\n  if (false) return",
+    "old": "  // session - told only once the password is right, so the word says nothing to a stranger guessing at a handle\n  if (bannedNow(player, nowS))\n    return { error: 'banned', until: player.banned_until, reason: player.ban_reason ?? null };",
+    "new": "  // session - told only once the password is right, so the word says nothing to a stranger guessing at a handle\n  if (false) return { error: 'banned', until: player.banned_until, reason: player.ban_reason ?? null };",
     "tests": [
       "test/server/safe_audit.test.js"
     ]
@@ -446,8 +446,8 @@
   {
     "name": "AUDIT-SAFE-S7-recover-unchecked",
     "file": "server-account/src/accounts.js",
-    "old": "  // AUDIT SAFE SERVICE-7: a banned account is told so before its code is spent - it is not signed back in\n  if (bannedNow(player, nowS)) return",
-    "new": "  // AUDIT SAFE SERVICE-7: a banned account is told so before its code is spent - it is not signed back in\n  if (false) return",
+    "old": "  // AUDIT SAFE SERVICE-7: a banned account is told so before its code is spent - it is not signed back in\n  if (bannedNow(player, nowS))\n    return { error: 'banned', until: player.banned_until, reason: player.ban_reason ?? null };",
+    "new": "  // AUDIT SAFE SERVICE-7: a banned account is told so before its code is spent - it is not signed back in\n  if (false) return { error: 'banned', until: player.banned_until, reason: player.ban_reason ?? null };",
     "tests": [
       "test/server/safe_audit.test.js"
     ]
@@ -501,8 +501,8 @@
   {
     "name": "AUDIT-SAFE-DOC13-notes-unshown",
     "file": "server-account/src/discord.js",
-    "old": "  if (said.length) fields.push({ name: 'Reporters\\' notes'",
-    "new": "  if (false) fields.push({ name: 'Reporters\\' notes'",
+    "old": "  if (said.length)",
+    "new": "  if (false)",
     "tests": [
       "test/server/safe_audit.test.js"
     ]

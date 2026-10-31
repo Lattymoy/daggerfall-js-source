@@ -2,8 +2,8 @@
   {
     "name": "ACCOUNT-HOMES-OWNS-the-buyer-again",
     "file": "server-account/src/decor.js",
-    "old": "WHERE (h.guild_id IS NULL AND h.player = k.p AND (h.deed = 0 OR h.char_id = k.c))",
-    "new": "WHERE (h.guild_id IS NULL AND h.player = k.p AND h.char_id = k.c)",
+    "old": "  WHERE (h.guild_id IS NULL AND h.player = k.p AND (h.deed = 0 OR h.char_id = k.c))",
+    "new": "  WHERE (h.guild_id IS NULL AND h.player = k.p AND h.char_id = k.c)",
     "tests": [
       "test/server/decor1.test.js",
       "test/server/account_homes.test.js",
@@ -15,8 +15,8 @@
   {
     "name": "ACCOUNT-HOMES-OWNS-a-deed-the-accounts",
     "file": "server-account/src/decor.js",
-    "old": "WHERE (h.guild_id IS NULL AND h.player = k.p AND (h.deed = 0 OR h.char_id = k.c))",
-    "new": "WHERE (h.guild_id IS NULL AND h.player = k.p)",
+    "old": "  WHERE (h.guild_id IS NULL AND h.player = k.p AND (h.deed = 0 OR h.char_id = k.c))",
+    "new": "  WHERE (h.guild_id IS NULL AND h.player = k.p)",
     "tests": [
       "test/server/account_homes.test.js"
     ],

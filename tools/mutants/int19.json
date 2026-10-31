@@ -168,8 +168,8 @@
   {
     "name": "INT19-a-worn-piece-taken",
     "file": "server-account/src/craftedPiece.js",
-    "old": "rec?.provenance === provenance && tradeableRecord(rec)",
-    "new": "rec?.provenance === provenance",
+    "old": "  const at = items.findIndex((rec) => rec?.provenance === provenance && tradeableRecord(rec));",
+    "new": "  const at = items.findIndex((rec) => rec?.provenance === provenance);",
     "tests": [
       "test/server/int19_crafted_record.test.js"
     ]

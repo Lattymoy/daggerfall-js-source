@@ -32,7 +32,7 @@ under the building's scene: the chest stood empty, and the next map pixel's `cle
 THE CHANGE: `homeSceneName` moved to a leaf of its own, `net/homeScene.js`, which both ends read (`onlineHomes.js`
 exports it from there; the account deploy's filter names it). It is not `net/homeLaw.js`, because the relay's law
 hashes that module (`test/net/relayversion.test.js`) and the relay never reads a save's scenes. The pour names it
-(`server-account/src/decorAccess.js:"const name = homeSceneName(mapId, buildingKey);"`). The scene is made permanent in
+(`server-account/src/decorAccess.js:"const name = homeSceneName"`). The scene is made permanent in
 the same write, so a save that had no scene for the home keeps the poured goods across a world move.
 `test/server/decoraccess.test.js` laid its chest under the building's scene, the server's own wrong name; it lays it
 under the home's now.
@@ -65,7 +65,7 @@ scene alone.
 THE CHANGE:
 
 - The pour counts only the home's own list as poured
-  (`server-account/src/decorAccess.js:"const have = new Set(goodsUnder(save, name, id).map((it) => it?.uid));"`), and
+  (`server-account/src/decorAccess.js:"const have = new"`), and
   takes the bin's goods out of every other scene in the same write (`clearGhosts`). Anything else there stays.
 - The client follows the service's moves in its cache (`decorTool.js` `keepChestGoods`, `homeStranded.js`
   `dropGhosts`): a share drops the piece's goods from every cached scene, a pour drops the poured ones.

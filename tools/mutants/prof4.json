@@ -503,7 +503,7 @@
   {
     "name": "PROF4-decor-anyones-id",
     "file": "server-account/src/decor.js",
-    "old": "  const ours = row && row.owner === player.id && Number(row.template) === p.item.t && Number(row.listed) === 0 && !elsewhere;",
+    "old": "  const ours =\n    row && row.owner === player.id && Number(row.template) === p.item.t && Number(row.listed) === 0 && !elsewhere;",
     "new": "  const ours = row && Number(row.template) === p.item.t && Number(row.listed) === 0 && !elsewhere;",
     "tests": [
       "test/net/prof4_service.test.js"
@@ -512,8 +512,8 @@
   {
     "name": "PROF4-decor-unmarked-marked",
     "file": "server-account/src/decor.js",
-    "old": "...(Number(row.marked) === 1 && row.maker ? { mk: row.maker } : {})",
-    "new": "...(row.maker ? { mk: row.maker } : {})",
+    "old": "  return decorPieceOf({\n    ...p,\n    item: ours ? { ...plain, pv, ...(Number(row.marked) === 1 && row.maker ? { mk: row.maker } : {}) } : plain,\n  });",
+    "new": "  return decorPieceOf({ ...p, item: ours ? { ...plain, pv, ...(row.maker ? { mk: row.maker } : {}) } : plain });",
     "tests": [
       "test/net/prof4_service.test.js"
     ]
@@ -521,8 +521,8 @@
   {
     "name": "PROF4-decor-clients-mark",
     "file": "server-account/src/decor.js",
-    "old": "  const p = sent.item?.pv ? await provenOf(db, player, sent, mapId, buildingKey) : sent;",
-    "new": "  const p = sent;",
+    "old": "  const p = sent.item?.pv ? await provenOf(db, player, sent, mapId, buildingKey) : sent; // PROF4: a crafted piece's mark off its own record",
+    "new": "  const p = sent; // PROF4: a crafted piece's mark off its own record",
     "tests": [
       "test/net/prof4_service.test.js",
       "test/systems/prof4_client.test.js"
@@ -531,7 +531,7 @@
   {
     "name": "PROF4-decor-other-template",
     "file": "server-account/src/decor.js",
-    "old": "  const ours = row && row.owner === player.id && Number(row.template) === p.item.t && Number(row.listed) === 0 && !elsewhere;",
+    "old": "  const ours =\n    row && row.owner === player.id && Number(row.template) === p.item.t && Number(row.listed) === 0 && !elsewhere;",
     "new": "  const ours = row && row.owner === player.id && Number(row.listed) === 0 && !elsewhere;",
     "tests": [
       "test/net/prof4_service.test.js"

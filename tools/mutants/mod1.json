@@ -2,8 +2,8 @@
   {
     "name": "MOD1-1-anyone-may-moderate",
     "file": "server-account/src/accounts.js",
-    "old": "  if (!canModerate(actor, env)) return { error: 'not-moderator' };\n",
-    "new": "",
+    "old": "  if (!canModerate(actor, env)) return { error: 'not-moderator' };\n  if (typeof target !== 'string' || !ID_RE.test(target)) return { error: 'no-player' };",
+    "new": "  if (typeof target !== 'string' || !ID_RE.test(target)) return { error: 'no-player' };",
     "tests": [
       "test/net/mod1.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "MOD1-4-a-week-and-a-minute",
     "file": "server-account/src/accounts.js",
-    "old": "minutes > MUTE_MAX_MIN) return { error: 'bad-minutes' };",
-    "new": "minutes > MUTE_MAX_MIN + 1) return { error: 'bad-minutes' };",
+    "old": "  if (!Number.isSafeInteger(minutes) || minutes < 0 || minutes > MUTE_MAX_MIN) return { error: 'bad-minutes' };",
+    "new": "  if (!Number.isSafeInteger(minutes) || minutes < 0 || minutes > MUTE_MAX_MIN + 1) return { error: 'bad-minutes' };",
     "tests": [
       "test/net/mod1.test.js"
     ],

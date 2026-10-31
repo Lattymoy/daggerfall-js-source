@@ -122,8 +122,8 @@
   {
     "name": "CHESTGOLD-svc-lapsed-kept",
     "file": "server-account/src/decorAccess.js",
-    "old": "    .bind(nowS + HOLD_S, mapId, buildingKey, id, player.id, character, nowS).run();",
-    "new": "    .bind(nowS + HOLD_S, mapId, buildingKey, id, player.id, character, -1).run();",
+    "old": "    .bind(nowS + HOLD_S, mapId, buildingKey, id, player.id, character, nowS)",
+    "new": "    .bind(nowS + HOLD_S, mapId, buildingKey, id, player.id, character, -1)",
     "tests": [
       "test/systems/decor/rpt1026_chestgold.test.js"
     ],
@@ -142,7 +142,7 @@
   {
     "name": "CHESTGOLD-svc-settle-lapse-unsaid",
     "file": "server-account/src/decorAccess.js",
-    "old": "  if (!(await ourHold(db, player, character, mapId, buildingKey, id, ctx.nowS))) return { error: await holdLost(db, player, character, mapId, buildingKey, id) };",
+    "old": "  if (!(await ourHold(db, player, character, mapId, buildingKey, id, ctx.nowS)))\n    return { error: await holdLost(db, player, character, mapId, buildingKey, id) };",
     "new": "  if (!(await ourHold(db, player, character, mapId, buildingKey, id, ctx.nowS))) return { error: 'decor-busy' };",
     "tests": [
       "test/systems/decor/rpt1026_chestgold.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "CHESTGOLD-svc-pour-any-row",
     "file": "server-account/src/decorAccess.js",
-    "old": "AND uid = ? AND item = ?').bind(mapId, buildingKey, id, row.uid, row.item),",
-    "new": "AND uid = ?').bind(mapId, buildingKey, id, row.uid),",
+    "old": "              .prepare(\n                'DELETE FROM decor_bin WHERE map_id = ? AND building_key = ? AND piece_id = ? AND uid = ? AND item = ?',\n              )\n              .bind(mapId, buildingKey, id, row.uid, row.item),",
+    "new": "              .prepare('DELETE FROM decor_bin WHERE map_id = ? AND building_key = ? AND piece_id = ? AND uid = ?')\n              .bind(mapId, buildingKey, id, row.uid),",
     "tests": [
       "test/systems/decor/rpt1026_chestgold.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "CHESTGOLD-svc-pour-gone-row",
     "file": "server-account/src/decorAccess.js",
-    "old": "AND uid = ? AND item = ?').bind(mapId, buildingKey, id, row.uid, row.item),\n        mustChange(db),",
-    "new": "AND uid = ? AND item = ?').bind(mapId, buildingKey, id, row.uid, row.item),",
+    "old": "            mustChange(db),\n          ]),",
+    "new": "          ]),",
     "tests": [
       "test/systems/decor/rpt1026_chestgold.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "CHESTGOLD-svc-pour-new-row",
     "file": "server-account/src/decorAccess.js",
-    "old": "      db.prepare('INSERT INTO realm_tx_guard (moved, expected) SELECT 0, 1 WHERE EXISTS (SELECT 1 FROM decor_bin WHERE map_id = ? AND building_key = ? AND piece_id = ?)').bind(mapId, buildingKey, id),",
-    "new": "",
+    "old": "          db\n            .prepare(\n              'INSERT INTO realm_tx_guard (moved, expected) SELECT 0, 1 WHERE EXISTS (SELECT 1 FROM decor_bin WHERE map_id = ? AND building_key = ? AND piece_id = ?)',\n            )\n            .bind(mapId, buildingKey, id),\n        ]",
+    "new": "        ]",
     "tests": [
       "test/systems/decor/rpt1026_chestgold.test.js"
     ],
@@ -182,7 +182,7 @@
   {
     "name": "CHESTGOLD-svc-purse-unchecked",
     "file": "server-account/src/decorAccess.js",
-    "old": "  if (purse !== undefined && (!Number.isSafeInteger(purse) || purse < 0)) { await release.run(); return { error: 'bad-item' }; }",
+    "old": "  if (purse !== undefined && (!Number.isSafeInteger(purse) || purse < 0)) {\n    await release.run();\n    return { error: 'bad-item' };\n  }",
     "new": "",
     "tests": [
       "test/systems/decor/rpt1026_chestgold.test.js"
@@ -192,7 +192,7 @@
   {
     "name": "CHESTGOLD-svc-count-unmatched",
     "file": "server-account/src/decorAccess.js",
-    "old": "  if (purse !== undefined && coin !== purse) { await release.run(); return { error: 'no-item' }; }",
+    "old": "  if (purse !== undefined && coin !== purse) {\n    await release.run();\n    return { error: 'no-item' };\n  }",
     "new": "",
     "tests": [
       "test/systems/decor/rpt1026_chestgold.test.js"

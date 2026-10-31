@@ -533,8 +533,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-sweep-takes-kept",
     "file": "server-account/src/cron.js",
-    "old": "AND (keep_until IS NULL OR keep_until < ?1 + ${REACT_KEEP_S})",
-    "new": "",
+    "old": "            `DELETE FROM encounter_reactions WHERE id IN (SELECT id FROM encounter_reactions WHERE at < ?1 AND (keep_until IS NULL OR keep_until < ?1 + ${REACT_KEEP_S}) LIMIT ?2)`,",
+    "new": "            `DELETE FROM encounter_reactions WHERE id IN (SELECT id FROM encounter_reactions WHERE at < ?1  LIMIT ?2)`,",
     "why": "rows kept as evidence swept at 14 days",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -543,8 +543,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-sweep-batches-kept",
     "file": "server-account/src/cron.js",
-    "old": "'staff_net_batches', 'reaction_batches']",
-    "new": "'staff_net_batches']",
+    "old": "  ['staff_net_rows', 'staff_foe_rows', 'staff_net_batches', 'reaction_batches'].map(",
+    "new": "  ['staff_net_rows', 'staff_foe_rows', 'staff_net_batches'].map(",
     "why": "reaction batch ids kept for ever",
     "tests": [
       "test/server/staffpanel5feeds.test.js"

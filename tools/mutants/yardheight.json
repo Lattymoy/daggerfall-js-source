@@ -22,8 +22,8 @@
   {
     "name": "YARD-HEIGHT-place-unguarded",
     "file": "server-account/src/decor.js",
-    "old": "  if (yard === true && sent && !decorYardHighOk(sent)) return { error: 'yard-high' };",
-    "new": "  if (false && sent && !decorYardHighOk(sent)) return { error: 'yard-high' };",
+    "old": "  if (yard === true && sent && !decorYardHighOk(sent)) return { error: 'yard-high' }; // YARD-HEIGHT: never a tower",
+    "new": "  if (false && sent && !decorYardHighOk(sent)) return { error: 'yard-high' }; // YARD-HEIGHT: never a tower",
     "tests": [
       "test/net/yardheight.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "YARD-HEIGHT-room-capped",
     "file": "server-account/src/decor.js",
-    "old": "  if (yard === true && sent && !decorYardHighOk(sent)) return { error: 'yard-high' };",
-    "new": "  if (sent && !decorYardHighOk(sent)) return { error: 'yard-high' };",
+    "old": "  if (yard === true && sent && !decorYardHighOk(sent)) return { error: 'yard-high' }; // YARD-HEIGHT: never a tower",
+    "new": "  if (sent && !decorYardHighOk(sent)) return { error: 'yard-high' }; // YARD-HEIGHT: never a tower",
     "tests": [
       "test/net/yardheight.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "YARD-HEIGHT-move-unguarded",
     "file": "server-account/src/decor.js",
-    "old": "  if (row.yard === 1 && !decorYardHighOk(pl)) return { error: 'yard-high' };",
-    "new": "  if (false && !decorYardHighOk(pl)) return { error: 'yard-high' };",
+    "old": "  if (row.yard === 1 && !decorYardHighOk(pl)) return { error: 'yard-high' }; // YARD-HEIGHT: nor moved up into a tower",
+    "new": "  if (false && !decorYardHighOk(pl)) return { error: 'yard-high' }; // YARD-HEIGHT: nor moved up into a tower",
     "tests": [
       "test/net/yardheight.test.js"
     ],

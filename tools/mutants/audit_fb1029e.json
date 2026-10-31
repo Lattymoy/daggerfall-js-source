@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-FB1029e-T-HS-set-old-rule",
     "file": "server-account/src/festival.js",
-    "old": "  if (old && old.player === player.id) return { error: 'set' };",
-    "new": "  if (old && old.player === player.id && old.char_id === character) return { error: 'set' };",
+    "old": "  if (old && old.player === player.id) return { error: 'set' }; // AUDIT FB1029e H5: the account's own stands there, whoever set it",
+    "new": "  if (old && old.player === player.id && old.char_id === character) return { error: 'set' }; // AUDIT FB1029e H5: the account's own stands there, whoever set it",
     "tests": [
       "test/server/witch1_festival.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-FB1029e-T-HS-owned-any-player",
     "file": "server-account/src/festival.js",
-    "old": "h.building_key = ?2 AND h.player = ?3 AND h.guild_id IS NULL AND (h.deed = 0",
-    "new": "h.building_key = ?2 AND h.guild_id IS NULL AND (h.deed = 0",
+    "old": "const OWNED_HOME = `EXISTS (SELECT 1 FROM homes h WHERE h.map_id = ?1 AND h.building_key = ?2 AND h.player = ?3 AND h.guild_id IS NULL AND (h.deed = 0 OR h.char_id = ?4))`;",
+    "new": "const OWNED_HOME = `EXISTS (SELECT 1 FROM homes h WHERE h.map_id = ?1 AND h.building_key = ?2 AND h.guild_id IS NULL AND (h.deed = 0 OR h.char_id = ?4))`;",
     "tests": [
       "test/server/witch1_festival.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-FB1029e-T-HS-fill-any-player",
     "file": "server-account/src/festival.js",
-    "old": "JOIN players p ON p.id = o.player WHERE o.map_id = ?1 AND o.building_key = ?2 AND o.player = ?3')",
-    "new": "JOIN players p ON p.id = o.player WHERE o.map_id = ?1 AND o.building_key = ?2')",
+    "old": "      'SELECT o.stock, p.fest_cakes FROM fest_offerings o JOIN players p ON p.id = o.player WHERE o.map_id = ?1 AND o.building_key = ?2 AND o.player = ?3',",
+    "new": "      'SELECT o.stock, p.fest_cakes FROM fest_offerings o JOIN players p ON p.id = o.player WHERE o.map_id = ?1 AND o.building_key = ?2',",
     "tests": [
       "test/server/witch1_festival.test.js"
     ]

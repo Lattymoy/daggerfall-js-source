@@ -12,8 +12,8 @@
   {
     "name": "FB1025D-HOME-POUR-NOT-PERMANENT",
     "file": "server-account/src/decorAccess.js",
-    "old": "      if (!live.sceneCache.permanentScenes.includes(name)) live.sceneCache.permanentScenes.push(name);\n",
-    "new": "",
+    "old": "      if (!live.sceneCache.permanentScenes.includes(name)) live.sceneCache.permanentScenes.push(name);\n      let scene = live.sceneCache.scenes.find((s) => s?.sceneName === name);",
+    "new": "      let scene = live.sceneCache.scenes.find((s) => s?.sceneName === name);",
     "tests": [
       "test/server/fb1025d_homepour.test.js"
     ]

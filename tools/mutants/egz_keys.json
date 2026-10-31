@@ -552,8 +552,8 @@
   {
     "name": "EGZA-svc-company-unkept",
     "file": "server-account/src/eg.js",
-    "old": "  if (c.q === 'x' && Array.isArray(c.co)) return [",
-    "new": "  if (false) return [",
+    "old": "  if (c.q === 'x' && Array.isArray(c.co))",
+    "new": "  if (false)",
     "tests": [
       "test/net/eliteGates/egz_keys.test.js"
     ]
@@ -562,7 +562,7 @@
     "name": "EGZA-descent-by-claimers",
     "file": "server-account/src/egHonours.js",
     "old": "const companyKeyOf = (c) => (c.co ? `co:${c.co}` : [...c.players].sort().join(','));",
-    "new": "const companyKeyOf = (c) => ([...c.players].sort().join(','));",
+    "new": "const companyKeyOf = (c) => [...c.players].sort().join(',');",
     "tests": [
       "test/net/eliteGates/egz_keys.test.js"
     ]

@@ -300,8 +300,8 @@
   {
     "name": "WW7-5-a-book-the-bay-s",
     "file": "server-account/src/cards.js",
-    "old": "import { regionOk } from '../../src/net/nodeLaw.js';",
-    "new": "import { bayRegionOk as regionOk } from '../../src/net/nodeLaw.js';",
+    "old": "import { regionOk } from '../../src/net/nodeLaw.js'; // WW7-5: a town book's region any of the world's",
+    "new": "import { bayRegionOk as regionOk } from '../../src/net/nodeLaw.js'; // WW7-5: a town book's region any of the world's",
     "tests": [
       "test/server/ww7_books.test.js"
     ]

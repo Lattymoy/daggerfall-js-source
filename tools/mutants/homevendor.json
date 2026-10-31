@@ -66,7 +66,7 @@
   {
     "name": "HOMEVENDOR-a-stocked-trader-unmade",
     "file": "server-account/src/decor.js",
-    "old": "  if (was.station === 'vendor' && (pl.station ?? null) !== 'vendor' && await vendorStocked(db, mapId, id)) return { error: 'vendor-stocked' };",
+    "old": "  if (was.station === 'vendor' && (pl.station ?? null) !== 'vendor' && (await vendorStocked(db, mapId, id)))\n    return { error: 'vendor-stocked' };",
     "new": "  void vendorStocked;",
     "tests": [
       "test/net/homevendor_service.test.js"
@@ -75,7 +75,7 @@
   {
     "name": "HOMEVENDOR-a-stocked-trader-removed",
     "file": "server-account/src/decor.js",
-    "old": "    if (was?.station === 'vendor' && await vendorStocked(db, mapId, id)) return { error: 'vendor-stocked' };   // HOME-VENDOR",
+    "old": "    if (was?.station === 'vendor' && (await vendorStocked(db, mapId, id))) return { error: 'vendor-stocked' }; // HOME-VENDOR",
     "new": "    // HOME-VENDOR",
     "tests": [
       "test/net/homevendor_service.test.js"

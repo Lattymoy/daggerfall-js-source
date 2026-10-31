@@ -119,8 +119,8 @@
   {
     "name": "RS-a-spent-code-still-opens",
     "file": "server-account/src/accounts.js",
-    "old": "fresh ? hashRecoverySet(fresh, { subtle, rand }) : joinRecoverySet(rest),",
-    "new": "fresh ? hashRecoverySet(fresh, { subtle, rand }) : player.recovery_hash,",
+    "old": "        : joinRecoverySet(rest),",
+    "new": "        : player.recovery_hash,",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "RS-no-password-asked",
     "file": "server-account/src/accounts.js",
-    "old": "  if (!await verifyPassword(password, player.password, { subtle })) return { error: 'bad-login' };\n  await clearRate({ db }, `login:${player.handle_lc}`);\n  if (recoveryLeft(",
-    "new": "  await clearRate({ db }, `login:${player.handle_lc}`);\n  if (recoveryLeft(",
+    "old": "  if (!(await verifyPassword(password, player.password, { subtle }))) return { error: 'bad-login' };\n  await clearRate({ db }, `login:${player.handle_lc}`);",
+    "new": "  await clearRate({ db }, `login:${player.handle_lc}`);",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "RS-the-old-set-kept",
     "file": "server-account/src/accounts.js",
-    "old": ".bind(rc, player.id, player.recovery_hash ?? null).run();",
-    "new": ".bind(player.recovery_hash ?? null, player.id, player.recovery_hash ?? null).run();",
+    "old": "    .bind(rc, player.id, player.recovery_hash ?? null)",
+    "new": "    .bind(player.recovery_hash ?? null, player.id, player.recovery_hash ?? null)",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "RS-no-rate",
     "file": "server-account/src/accounts.js",
-    "old": "  if (!player.password) return { error: 'not-registered' };\n  if (await overRate({ db, nowS }, `login:${player.handle_lc}`)) return { error: 'rate' };\n  if (!await verifyPassword(password,",
-    "new": "  if (!player.password) return { error: 'not-registered' };\n  if (!await verifyPassword(password,",
+    "old": "  if (await overRate({ db, nowS }, `login:${player.handle_lc}`)) return { error: 'rate' };\n  if (!(await verifyPassword(password, player.password, { subtle }))) return { error: 'bad-login' };",
+    "new": "  if (!(await verifyPassword(password, player.password, { subtle }))) return { error: 'bad-login' };",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "RS-the-write-unguarded",
     "file": "server-account/src/accounts.js",
-    "old": "'UPDATE players SET recovery_hash = ? WHERE id = ? AND recovery_hash IS ?').bind(rc, player.id, player.recovery_hash ?? null)",
-    "new": "'UPDATE players SET recovery_hash = ? WHERE id = ?').bind(rc, player.id)",
+    "old": "  const wrote = await db\n    .prepare('UPDATE players SET recovery_hash = ? WHERE id = ? AND recovery_hash IS ?')\n    .bind(rc, player.id, player.recovery_hash ?? null)\n    .run();",
+    "new": "  const wrote = await db.prepare('UPDATE players SET recovery_hash = ? WHERE id = ?').bind(rc, player.id).run();",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "RS-the-view-says-no-count",
     "file": "server-account/src/accounts.js",
-    "old": "    recoveryLeft: recoveryLeft(player.recovery_hash),\n",
-    "new": "",
+    "old": "    recoveryLeft: recoveryLeft(player.recovery_hash),\n  };",
+    "new": "  };",
     "tests": [
       "test/server/recoveryset.test.js"
     ]

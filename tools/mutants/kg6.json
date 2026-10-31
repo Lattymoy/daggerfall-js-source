@@ -229,8 +229,8 @@
   {
     "name": "KG6-A-arm-table",
     "file": "server-account/src/cards.js",
-    "old": "    if (!holdemGoldTable(table)) return { error: 'bad-table' };\n",
-    "new": "",
+    "old": "    if (!holdemGoldTable(table)) return { error: 'bad-table' };\n    if (topup === true || !gambitStakeOk(amount)) return { error: 'bad-buy-in' };",
+    "new": "    if (topup === true || !gambitStakeOk(amount)) return { error: 'bad-buy-in' };",
     "tests": [
       "test/net/gambit/kg6_gold.test.js"
     ]

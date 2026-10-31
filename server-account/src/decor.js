@@ -31,17 +31,44 @@
 import { accountKind, displayName, overRate } from './accounts.js';
 import { CHAR_ID_RE } from './service.js';
 import { homeMapIdOk, homeBuildingKeyOk } from '../../src/net/homeLaw.js';
-import { DECOR_CAP, DECOR_HALL_CAP, DECOR_CAP_MAX, decorCapOf, DECOR_ID_RE, DECOR_OPS_MAX, DECOR_OPS_WINDOW_S, decorPieceOf, decorPlaceOf, decorHiddenOf, DECOR_YARD_CAP, decorYardPieceOf, decorYardPlaceOf, decorYardHighOk, decorScaleOk, decorGoldMove, decorGoldDelta } from '../../src/net/decorLaw.js';   // HOME-YARD: and a yard's; DECOR-FIGURE: a figure at its own size; a guild hall's interior holds DECOR_HALL_CAP
+import {
+  DECOR_CAP,
+  DECOR_HALL_CAP,
+  DECOR_CAP_MAX,
+  decorCapOf,
+  DECOR_ID_RE,
+  DECOR_OPS_MAX,
+  DECOR_OPS_WINDOW_S,
+  decorPieceOf,
+  decorPlaceOf,
+  decorHiddenOf,
+  DECOR_YARD_CAP,
+  decorYardPieceOf,
+  decorYardPlaceOf,
+  decorYardHighOk,
+  decorScaleOk,
+  decorGoldMove,
+  decorGoldDelta,
+} from '../../src/net/decorLaw.js'; // HOME-YARD: and a yard's; DECOR-FIGURE: a figure at its own size; a guild hall's interior holds DECOR_HALL_CAP
 export { decorGoldMove, decorGoldDelta };
-import { prepareRealmRecord, realmSideOf, realmActFirst, recordMovedOf, mustChange, dropObjects, dropIfUnnamed, REALM_ID_RE } from './realm.js';   // REALM P2.2b; AUDIT REALM L1-F2: the record asked first; AUDIT REALM2 S2/S3
-import { payFromSave, creditSave } from '../../src/net/realm/realmGoldLaw.js';   // REALM P2.2b: the wallet's own order, over the record
-import { GUILD_TREASURY_MAX } from '../../src/net/guild/guildLaw.js';   // GUILD1d: a hall's treasury's cap
-import { guildPowerSql } from './guildPowerSql.js';   // GUILD1d: a hall's keepers; GUILD-RANKS: as the guild set them
-import { SEAT_HALL_DECOR_CAP } from '../../src/net/townSeatLaw.js';   // SEAT-HALL: the Charter Room's pieces
-import { homeShownRead, homeShownOf } from './homeVotes.js';   // AUDIT HOME-VOTE A3: a shunned home's room, its insiders' alone; DECOR-BATCH: its read in the room's one request
-import { decorStaysShunned } from '../../src/net/homeVoteLaw.js';   // AUDIT HOME-VOTE B2: its hired trader stands
-import { guildPieceRule, guildStockGuard, guildStockSpent } from './guildFurniture.js';   // GUILD-SHOP: a guild's own furniture, in its hall
-import { heraldryOfRow } from './halls.js';   // GUILD-SHOP: a hall's arms, said with its pieces
+import {
+  prepareRealmRecord,
+  realmSideOf,
+  realmActFirst,
+  recordMovedOf,
+  mustChange,
+  dropObjects,
+  dropIfUnnamed,
+  REALM_ID_RE,
+} from './realm.js'; // REALM P2.2b; AUDIT REALM L1-F2: the record asked first; AUDIT REALM2 S2/S3
+import { payFromSave, creditSave } from '../../src/net/realm/realmGoldLaw.js'; // REALM P2.2b: the wallet's own order, over the record
+import { GUILD_TREASURY_MAX } from '../../src/net/guild/guildLaw.js'; // GUILD1d: a hall's treasury's cap
+import { guildPowerSql } from './guildPowerSql.js'; // GUILD1d: a hall's keepers; GUILD-RANKS: as the guild set them
+import { SEAT_HALL_DECOR_CAP } from '../../src/net/townSeatLaw.js'; // SEAT-HALL: the Charter Room's pieces
+import { homeShownRead, homeShownOf } from './homeVotes.js'; // AUDIT HOME-VOTE A3: a shunned home's room, its insiders' alone; DECOR-BATCH: its read in the room's one request
+import { decorStaysShunned } from '../../src/net/homeVoteLaw.js'; // AUDIT HOME-VOTE B2: its hired trader stands
+import { guildPieceRule, guildStockGuard, guildStockSpent } from './guildFurniture.js'; // GUILD-SHOP: a guild's own furniture, in its hall
+import { heraldryOfRow } from './halls.js'; // GUILD-SHOP: a hall's arms, said with its pieces
 
 /**
  * REALM P2.2b: WHAT A PIECE'S CHANGE COSTS, as the client's wallet pays it - placed: what it cost (`paid`); grown: the
@@ -65,7 +92,9 @@ function decorSideOf(/** @type {unknown} */ character, /** @type {unknown} */ re
 }
 
 /** REALM P2.2b: the home's region - its bank account is the one the decor wallet pays from. */
-const homeRegionOf = async (db, mapId, buildingKey) => (await db.prepare('SELECT region FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first())?.region ?? null;
+const homeRegionOf = async (db, mapId, buildingKey) =>
+  (await db.prepare('SELECT region FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first())
+    ?.region ?? null;
 
 /**
  * REALM P2.2b: A REALM CHARACTER'S DECOR WRITE AND ITS GOLD, one batch: the record paid or credited `delta` (the
@@ -73,24 +102,29 @@ const homeRegionOf = async (db, mapId, buildingKey) => (await db.prepare('SELECT
  * neither. The record is asked first, so a write sent again because its answer was lost finds it one on (`seq`, which
  * the client reads as landed). `after()` answers the piece as it now stands.
  */
-async function realmDecorWrite(ctx, player, at, { mapId, buildingKey, delta, write, after, refusal, regionOf = homeRegionOf }) {
+async function realmDecorWrite(
+  ctx,
+  player,
+  at,
+  { mapId, buildingKey, delta, write, after, refusal, regionOf = homeRegionOf },
+) {
   const { db, bucket } = ctx;
   const moved = await recordMovedOf(db, player.id, at);
   if (moved) return moved;
-  const region = await regionOf(db, mapId, buildingKey);   // SEAT-HALL: a palace's, its seat's region
-  const prep = await prepareRealmRecord(ctx, player.id, at, (save) => (delta < 0
-    ? (payFromSave(save, -delta, region) ? null : 'realm-gold')
-    : (creditSave(save, delta) ? null : 'no-data')));
+  const region = await regionOf(db, mapId, buildingKey); // SEAT-HALL: a palace's, its seat's region
+  const prep = await prepareRealmRecord(ctx, player.id, at, (save) =>
+    delta < 0 ? (payFromSave(save, -delta, region) ? null : 'realm-gold') : creditSave(save, delta) ? null : 'no-data',
+  );
   if (prep.error) return prep;
   try {
     await db.batch([...prep.steps, write, mustChange(db)]);
   } catch {
-    await dropIfUnnamed(db, bucket, player.id, at.id, prep.key);   // AUDIT REALM2 S3: a batch that landed and lost its answer keeps its save
+    await dropIfUnnamed(db, bucket, player.id, at.id, prep.key); // AUDIT REALM2 S3: a batch that landed and lost its answer keeps its save
     return (await recordMovedOf(db, player.id, at)) || { error: await refusal() };
   }
   await dropObjects(bucket, [prep.prev]);
   const piece = await after();
-  return piece ? { ok: true, piece, gold: delta, realm: { seq: prep.seq } } : { error: 'no-decor' };   // AUDIT REALM L1-F3: the gold the record moved - the client takes it, never its own sum
+  return piece ? { ok: true, piece, gold: delta, realm: { seq: prep.seq } } : { error: 'no-decor' }; // AUDIT REALM L1-F3: the gold the record moved - the client takes it, never its own sum
 }
 
 /** The home is the caller's: map, key, account, character. ACCOUNT-HOMES (2026-10-06, asked: "House ownership should be
@@ -104,9 +138,15 @@ export const OWNS = `EXISTS (SELECT 1 FROM (SELECT ? AS m, ? AS b, ? AS p, ? AS 
   WHERE (h.guild_id IS NULL AND h.player = k.p AND (h.deed = 0 OR h.char_id = k.c))
     OR (h.guild_id IS NOT NULL AND EXISTS (SELECT 1 FROM guild_members g WHERE g.guild_id = h.guild_id AND g.player = k.p AND g.char_id = k.c
       AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}
-      AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p))))`;   // AUDIT GUILD1d S2: a realm character's - its moves and stations are paid on its record, never on a client's word
+      AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p))))`; // AUDIT GUILD1d S2: a realm character's - its moves and stations are paid on its record, never on a client's word
 /** GUILD1d: the guild whose hall a building is, or null (a home, or nobody's). */
-const hallGuildOf = async (db, mapId, buildingKey) => (await db.prepare('SELECT guild_id FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first())?.guild_id ?? null;
+const hallGuildOf = async (db, mapId, buildingKey) =>
+  (
+    await db
+      .prepare('SELECT guild_id FROM homes WHERE map_id = ? AND building_key = ?')
+      .bind(mapId, buildingKey)
+      .first()
+  )?.guild_id ?? null;
 
 /**
  * SEAT-HALL (Seats-Arc 7.2: "the palace interior is the holder's guild hall ... the Charter Room - the palace's largest
@@ -124,21 +164,37 @@ const SEAT_OWNS = `EXISTS (SELECT 1 FROM (SELECT ? AS m, ? AS b, ? AS p, ? AS c)
     AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}
     AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p)))`;
 /** The guild holding the palace seat at `mapId`, or null. */
-const seatHallGuildOf = async (db, mapId) => (await db.prepare("SELECT guild_id FROM town_seat_holds WHERE key = ? AND tier = 'palace'").bind(mapId).first())?.guild_id ?? null;
+const seatHallGuildOf = async (db, mapId) =>
+  (await db.prepare("SELECT guild_id FROM town_seat_holds WHERE key = ? AND tier = 'palace'").bind(mapId).first())
+    ?.guild_id ?? null;
 /** A palace seat's region - its bank account the keeper's record pays from. */
-const seatRegionOf = async (db, mapId) => (await db.prepare('SELECT region FROM town_seat_holds WHERE key = ?').bind(mapId).first())?.region ?? null;
+const seatRegionOf = async (db, mapId) =>
+  (await db.prepare('SELECT region FROM town_seat_holds WHERE key = ?').bind(mapId).first())?.region ?? null;
 /**
  * WHERE A ROOM'S PIECES ARE KEPT: a home's (DECOR1, a guild's hall among them - GUILD1d) or a palace's Charter Room
  * (SEAT-HALL). `owns` binds (map, building, account, character); `count` the cap's scope and its binds; `rule` the hall's
  * rule inside the write (no keeper's own thing; GUILD-YARD: no yard at a palace - hallBars) and its binds.
  */
 const HOME_STORE = Object.freeze({
-  table: 'home_decor', owns: OWNS, guildOf: hallGuildOf, regionOf: homeRegionOf, cap: DECOR_CAP, seat: false,
+  table: 'home_decor',
+  owns: OWNS,
+  guildOf: hallGuildOf,
+  regionOf: homeRegionOf,
+  cap: DECOR_CAP,
+  seat: false,
   count: (mapId, buildingKey, out) => ['map_id = ? AND building_key = ? AND yard = ?', [mapId, buildingKey, out]],
-  rule: (mapId, buildingKey, barred) => ['(? = 0 OR NOT EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND guild_id IS NOT NULL))', [barred, mapId, buildingKey]],
+  rule: (mapId, buildingKey, barred) => [
+    '(? = 0 OR NOT EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND guild_id IS NOT NULL))',
+    [barred, mapId, buildingKey],
+  ],
 });
 const SEAT_STORE = Object.freeze({
-  table: 'seat_hall_decor', owns: SEAT_OWNS, guildOf: seatHallGuildOf, regionOf: seatRegionOf, cap: SEAT_HALL_DECOR_CAP, seat: true,
+  table: 'seat_hall_decor',
+  owns: SEAT_OWNS,
+  guildOf: seatHallGuildOf,
+  regionOf: seatRegionOf,
+  cap: SEAT_HALL_DECOR_CAP,
+  seat: true,
   count: (mapId, _buildingKey, out) => ['map_id = ? AND yard = ?', [mapId, out]],
   rule: (_mapId, _buildingKey, barred) => ['? = 0', [barred]],
 });
@@ -159,9 +215,14 @@ async function hallPieceBack(ctx, player, guildId, { delta, write, after, refusa
   const { db, nowS } = ctx;
   try {
     await db.batch([
-      write, mustChange(db),
-      db.prepare(`UPDATE guilds SET treasury = treasury + ?1, realm_gold = realm_gold + ?1, moved_by = ?2, moved_at = ?3, moved_kind = 'hall-piece'
-        WHERE id = ?4 AND treasury + ?1 <= ?5`).bind(delta, displayName(player), nowS, guildId, GUILD_TREASURY_MAX),
+      write,
+      mustChange(db),
+      db
+        .prepare(
+          `UPDATE guilds SET treasury = treasury + ?1, realm_gold = realm_gold + ?1, moved_by = ?2, moved_at = ?3, moved_kind = 'hall-piece'
+        WHERE id = ?4 AND treasury + ?1 <= ?5`,
+        )
+        .bind(delta, displayName(player), nowS, guildId, GUILD_TREASURY_MAX),
       mustChange(db),
     ]);
   } catch {
@@ -174,20 +235,30 @@ async function hallPieceBack(ctx, player, guildId, { delta, write, after, refusa
 /** GUILD-YARD: WHAT A HALL'S RULE BARS of a placement - a keeper's own thing anywhere, and a yard's piece at a palace
  *  alone (a guild's hall stands its yard); 1 barred, 0 not. */
 const hallBars = (piece, S, out) => (piece.item || (out && S.seat) ? 1 : 0);
-const placeJson = ({ pos, rot, scale, light, storage, paid, station, name }) => JSON.stringify({ pos, rot, scale, light, storage, paid, ...(station ? { station } : {}), ...(name ? { name } : {}) });   // HOME-STATIONS: the craft, when it serves one
+const placeJson = ({ pos, rot, scale, light, storage, paid, station, name }) =>
+  JSON.stringify({ pos, rot, scale, light, storage, paid, ...(station ? { station } : {}), ...(name ? { name } : {}) }); // HOME-STATIONS: the craft, when it serves one
 
 /** A stored row as a piece - projected again on the way out, so a row the law would refuse is never handed out.
  *  DECOR2a: `item` (migration 0012) is the owner's own item's descriptor, or NULL. */
 export function pieceOfRow(row) {
   let place = null;
   let item = null;
-  try { place = JSON.parse(row.place); } catch { place = null; }
+  try {
+    place = JSON.parse(row.place);
+  } catch {
+    place = null;
+  }
   if (!place || typeof place !== 'object') return null;
   if (row.item != null) {
-    try { item = JSON.parse(row.item); } catch { return null; }
+    try {
+      item = JSON.parse(row.item);
+    } catch {
+      return null;
+    }
   }
   return decorPieceOf({
-    ...place, id: row.id,
+    ...place,
+    id: row.id,
     model: row.model ?? null,
     flat: row.model == null ? [row.flat_archive, row.flat_record] : null,
     item,
@@ -217,7 +288,10 @@ export async function vendorStocked(db, mapId, id) {
   return stockedOf(await vendorStockedRead(db, mapId, id).first());
 }
 /** DECOR-BATCH: vendorStocked's read as a statement, and its answer off the row. */
-const vendorStockedRead = (db, mapId, id) => db.prepare(`SELECT COUNT(*) AS n FROM market_listings WHERE vendor_map = ? AND vendor_id = ? AND state = 'open'`).bind(mapId, id);
+const vendorStockedRead = (db, mapId, id) =>
+  db
+    .prepare(`SELECT COUNT(*) AS n FROM market_listings WHERE vendor_map = ? AND vendor_id = ? AND state = 'open'`)
+    .bind(mapId, id);
 const stockedOf = (r) => Number(r?.n ?? 0) > 0;
 
 /** AUDIT HOME-VOTE II A1: WHAT OF A SHUNNED HOME STANDS FOR A STRANGER - its hired traders (decorStaysShunned) with goods
@@ -226,7 +300,7 @@ const stockedOf = (r) => Number(r?.n ?? 0) > 0;
 async function shopOf(db, mapId, pieces) {
   const traders = pieces.filter(decorStaysShunned);
   if (!traders.length) return [];
-  const stock = await db.batch(traders.map((p) => vendorStockedRead(db, mapId, p.id)));   // DECOR-BATCH: every trader's in one request
+  const stock = await db.batch(traders.map((p) => vendorStockedRead(db, mapId, p.id))); // DECOR-BATCH: every trader's in one request
   return traders.filter((_, i) => stockedOf(stock[i]?.results?.[0]));
 }
 
@@ -238,55 +312,116 @@ async function shopOf(db, mapId, pieces) {
  * trips in a row - three waits in the primary's queue for a read every visitor at a door makes (HOMES-SHED's law for
  * homes/town, Scale-Arc). A shunned home's traders, its shop, go as one more (they had been a trip apiece).
  */
-export async function decorOf({ db }, player, { mapId, buildingKey, seat = false, yard = false, revOnly = false } = {}) {
+export async function decorOf(
+  { db },
+  player,
+  { mapId, buildingKey, seat = false, yard = false, revOnly = false } = {},
+) {
   if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey)) return { error: 'bad-home' };
   // A room someone is only standing in asks this, not the pieces. The full list is for a revision that moved.
   if (revOnly === true) {
-    const row = await db.prepare('SELECT rev FROM decor_rev WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first();
+    const row = await db
+      .prepare('SELECT rev FROM decor_rev WHERE map_id = ? AND building_key = ?')
+      .bind(mapId, buildingKey)
+      .first();
     return { mapId, buildingKey, rev: Number(row?.rev) || 0 };
   }
   // HOME-YARD: the street's Confirm reads the yard's pieces and the home's revision. The room's list stays the room's.
   if (yard === true) {
-    const yardRead = db.prepare(`SELECT * FROM home_decor WHERE map_id = ? AND building_key = ? AND yard = 1
-      ORDER BY placed_at, id LIMIT ?`).bind(mapId, buildingKey, DECOR_YARD_CAP);
-    const yardRev = db.prepare('SELECT rev FROM decor_rev WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey);
+    const yardRead = db
+      .prepare(
+        `SELECT * FROM home_decor WHERE map_id = ? AND building_key = ? AND yard = 1
+      ORDER BY placed_at, id LIMIT ?`,
+      )
+      .bind(mapId, buildingKey, DECOR_YARD_CAP);
+    const yardRev = db
+      .prepare('SELECT rev FROM decor_rev WHERE map_id = ? AND building_key = ?')
+      .bind(mapId, buildingKey);
     const [{ results = [] }, revRow] = await db.batch([yardRead, yardRev]);
-    return { mapId, buildingKey, pieces: results.map(pieceOfRow).filter(Boolean), hidden: [], rev: Number(revRow?.results?.[0]?.rev) || 0 };
+    return {
+      mapId,
+      buildingKey,
+      pieces: results.map(pieceOfRow).filter(Boolean),
+      hidden: [],
+      rev: Number(revRow?.results?.[0]?.rev) || 0,
+    };
   }
-  const S = storeOf(seat);   // SEAT-HALL: a palace's Charter Room, its own table - nothing taken out of a palace
-  const piecesRead = db.prepare(`SELECT * FROM ${S.table} WHERE map_id = ? AND building_key = ? AND yard = 0
-    ORDER BY placed_at, id LIMIT ?`).bind(mapId, buildingKey, S.seat ? S.cap : Math.max(DECOR_HALL_CAP, DECOR_CAP_MAX));   // HOME-YARD: the room's alone. A house never passes its own cap (DECOR-ROOMY: decorCapOf, to DECOR_CAP_MAX); a guild hall may hold DECOR_HALL_CAP. The Charter Room keeps its own cap.
-  const revRead = db.prepare('SELECT rev FROM decor_rev WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey);
+  const S = storeOf(seat); // SEAT-HALL: a palace's Charter Room, its own table - nothing taken out of a palace
+  const piecesRead = db
+    .prepare(
+      `SELECT * FROM ${S.table} WHERE map_id = ? AND building_key = ? AND yard = 0
+    ORDER BY placed_at, id LIMIT ?`,
+    )
+    .bind(mapId, buildingKey, S.seat ? S.cap : Math.max(DECOR_HALL_CAP, DECOR_CAP_MAX)); // HOME-YARD: the room's alone. A house never passes its own cap (DECOR-ROOMY: decorCapOf, to DECOR_CAP_MAX); a guild hall may hold DECOR_HALL_CAP. The Charter Room keeps its own cap.
+  const revRead = db
+    .prepare('SELECT rev FROM decor_rev WHERE map_id = ? AND building_key = ?')
+    .bind(mapId, buildingKey);
   const revOf = (row) => Number(row?.rev ?? row?.results?.[0]?.rev) || 0;
   if (S.seat) {
     const [{ results = [] }, revRow] = await db.batch([piecesRead, revRead]);
-    return { mapId, buildingKey, pieces: results.map(pieceOfRow).filter(Boolean), hidden: [], rev: revOf(revRow?.results?.[0]) };
+    return {
+      mapId,
+      buildingKey,
+      pieces: results.map(pieceOfRow).filter(Boolean),
+      hidden: [],
+      rev: revOf(revRow?.results?.[0]),
+    };
   }
-  const capRead = db.prepare('SELECT ground, guild_id FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey);   // DECOR-ROOMY
+  const capRead = db
+    .prepare('SELECT ground, guild_id FROM homes WHERE map_id = ? AND building_key = ?')
+    .bind(mapId, buildingKey); // DECOR-ROOMY
   // GUILD-SHOP: a guild hall's arms, worn by its own pieces (their banners and shields) - in the same request
-  const armsRead = db.prepare(`SELECT g.tag, g.name, g.heraldry, l.id AS logo FROM homes h JOIN guilds g ON g.id = h.guild_id
-    LEFT JOIN guild_logos l ON l.id = g.logo AND l.state = 'approved' WHERE h.map_id = ? AND h.building_key = ?`).bind(mapId, buildingKey);
-  const [{ results = [] }, shown, hidden, revRow, capRow, armsRow] = await db.batch([piecesRead, homeShownRead(db, mapId, buildingKey, player?.id), hiddenRead(db, mapId, buildingKey), revRead, capRead, armsRead]);
+  const armsRead = db
+    .prepare(
+      `SELECT g.tag, g.name, g.heraldry, l.id AS logo FROM homes h JOIN guilds g ON g.id = h.guild_id
+    LEFT JOIN guild_logos l ON l.id = g.logo AND l.state = 'approved' WHERE h.map_id = ? AND h.building_key = ?`,
+    )
+    .bind(mapId, buildingKey);
+  const [{ results = [] }, shown, hidden, revRow, capRow, armsRow] = await db.batch([
+    piecesRead,
+    homeShownRead(db, mapId, buildingKey, player?.id),
+    hiddenRead(db, mapId, buildingKey),
+    revRead,
+    capRead,
+    armsRead,
+  ]);
   const a = armsRow?.results?.[0];
-  const arms = a ? { arms: { tag: a.tag, name: a.name, heraldry: heraldryOfRow(a.heraldry), logo: a.logo ?? null } } : {};
+  const arms = a
+    ? { arms: { tag: a.tag, name: a.name, heraldry: heraldryOfRow(a.heraldry), logo: a.logo ?? null } }
+    : {};
   const pieces = results.map(pieceOfRow).filter(Boolean);
   const rev = revOf(revRow?.results?.[0]);
   const home = capRow?.results?.[0] ?? null;
-  const cap = home?.guild_id != null ? DECOR_HALL_CAP : decorCapOf(home?.ground);   // DECOR-ROOMY: the room's own, said with it
+  const cap = home?.guild_id != null ? DECOR_HALL_CAP : decorCapOf(home?.ground); // DECOR-ROOMY: the room's own, said with it
   // AUDIT HOME-VOTE A3: a home the town voted below zero is handed to anyone but its insiders as Daggerfall furnished it
   // - no placed piece but its hired trader with goods on sale (a shop, never a decoration: B2, II A1), nothing taken out
   // - by the service, so a build from before HOME-VOTE shows no more than the law (homeVotes.js homeShownTo)
-  if (!homeShownOf(shown?.results?.[0] ?? null)) return { mapId, buildingKey, pieces: await shopOf(db, mapId, pieces), hidden: [], rev, cap, ...arms };
-  return { mapId, buildingKey, pieces, hidden: hiddenListOf(hidden?.results?.[0] ?? null), rev, cap, measured: home?.ground != null, ...arms };
+  if (!homeShownOf(shown?.results?.[0] ?? null))
+    return { mapId, buildingKey, pieces: await shopOf(db, mapId, pieces), hidden: [], rev, cap, ...arms };
+  return {
+    mapId,
+    buildingKey,
+    pieces,
+    hidden: hiddenListOf(hidden?.results?.[0] ?? null),
+    rev,
+    cap,
+    measured: home?.ground != null,
+    ...arms,
+  };
 }
 
 /** BASE-HIDE: what the home's owner took out of the room (migration 0015) - projected on the way out, so a list the law
  *  would refuse is handed out as none. */
-const hiddenRead = (db, mapId, buildingKey) => db.prepare('SELECT keys FROM home_hidden WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey);
+const hiddenRead = (db, mapId, buildingKey) =>
+  db.prepare('SELECT keys FROM home_hidden WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey);
 /** DECOR-BATCH: the list off its row (hiddenRead's, in decorOf's batch). */
 function hiddenListOf(row) {
   if (!row) return [];
-  try { return decorHiddenOf(JSON.parse(row.keys)) ?? []; } catch { return []; }
+  try {
+    return decorHiddenOf(JSON.parse(row.keys)) ?? [];
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -296,15 +431,19 @@ function hiddenListOf(row) {
  * @param {{db: any, nowS: number}} ctx
  */
 export async function hideDecorBase(ctx, player, { mapId, buildingKey, character, keys, seat = false } = {}) {
-  if (seat === true) return { error: 'bad-home' };   // SEAT-HALL: the court stays where DFU stands it (7.2)
+  if (seat === true) return { error: 'bad-home' }; // SEAT-HALL: the court stays where DFU stands it (7.2)
   const shut = await writeDoor(ctx, player, { mapId, buildingKey, character });
   if (shut) return { error: shut };
   const hidden = decorHiddenOf(keys);
   if (!hidden) return { error: 'bad-decor' };
   const { db } = ctx;
-  const r = await db.prepare(`INSERT INTO home_hidden (map_id, building_key, keys) SELECT ?, ?, ? WHERE ${OWNS}
-    ON CONFLICT (map_id, building_key) DO UPDATE SET keys = excluded.keys`)
-    .bind(mapId, buildingKey, JSON.stringify(hidden), mapId, buildingKey, player.id, character).run();
+  const r = await db
+    .prepare(
+      `INSERT INTO home_hidden (map_id, building_key, keys) SELECT ?, ?, ? WHERE ${OWNS}
+    ON CONFLICT (map_id, building_key) DO UPDATE SET keys = excluded.keys`,
+    )
+    .bind(mapId, buildingKey, JSON.stringify(hidden), mapId, buildingKey, player.id, character)
+    .run();
   if (!r?.meta?.changes) return { error: 'no-home' };
   return { ok: true, hidden };
 }
@@ -319,14 +458,28 @@ export async function provenOf(db, player, p, mapId, buildingKey) {
   const pv = p.item.pv;
   const plain = { ...p.item };
   delete plain.pv;
-  delete plain.mk;   // never the client's word
-  const row = await db.prepare('SELECT owner, template, maker, marked, listed FROM products WHERE provenance = ?').bind(pv).first();
+  delete plain.mk; // never the client's word
+  const row = await db
+    .prepare('SELECT owner, template, maker, marked, listed FROM products WHERE provenance = ?')
+    .bind(pv)
+    .first();
   // AUDIT 30 S6: one piece stands in one place - not while it is listed, and not where another placement already bears
   // it (a placement asked again is the same piece, the same id)
-  const elsewhere = row ? await db.prepare(`SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = ?1
-    AND NOT (map_id = ?2 AND building_key = ?3 AND id = ?4)`).bind(pv, mapId, buildingKey, p.id).first() : null;
-  const ours = row && row.owner === player.id && Number(row.template) === p.item.t && Number(row.listed) === 0 && !elsewhere;
-  return decorPieceOf({ ...p, item: ours ? { ...plain, pv, ...(Number(row.marked) === 1 && row.maker ? { mk: row.maker } : {}) } : plain });
+  const elsewhere = row
+    ? await db
+        .prepare(
+          `SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = ?1
+    AND NOT (map_id = ?2 AND building_key = ?3 AND id = ?4)`,
+        )
+        .bind(pv, mapId, buildingKey, p.id)
+        .first()
+    : null;
+  const ours =
+    row && row.owner === player.id && Number(row.template) === p.item.t && Number(row.listed) === 0 && !elsewhere;
+  return decorPieceOf({
+    ...p,
+    item: ours ? { ...plain, pv, ...(Number(row.marked) === 1 && row.maker ? { mk: row.maker } : {}) } : plain,
+  });
 }
 
 /**
@@ -334,79 +487,157 @@ export async function provenOf(db, player, p, mapId, buildingKey) {
  * answer was lost finds the same piece standing and is answered as the placement.
  * @param {{db: any, nowS: number}} ctx
  */
-export async function placeDecor(ctx, player, { mapId, buildingKey, character, piece, realm = null, yard = false, seat = false } = {}) {
+export async function placeDecor(
+  ctx,
+  player,
+  { mapId, buildingKey, character, piece, realm = null, yard = false, seat = false } = {},
+) {
   const { db, nowS } = ctx;
-  const S = storeOf(seat);   // SEAT-HALL
+  const S = storeOf(seat); // SEAT-HALL
   if (realm != null) {
-    const first = await realmActFirst(db, player.id, character, realm);   // AUDIT REALM L1-F2: where the record stands, before the door's rate
+    const first = await realmActFirst(db, player.id, character, realm); // AUDIT REALM L1-F2: where the record stands, before the door's rate
     if (first.error) return first;
   }
-  const shut = await writeDoor(ctx, player, { mapId, buildingKey, character }, true);   // AUDIT REALM2 S2: a realm character's
+  const shut = await writeDoor(ctx, player, { mapId, buildingKey, character }, true); // AUDIT REALM2 S2: a realm character's
   if (shut) return { error: shut };
-  const sent = yard === true ? decorYardPieceOf(piece) : decorPieceOf(piece);   // HOME-YARD: outside, the yard's own law
-  if (yard === true && sent && !decorYardHighOk(sent)) return { error: 'yard-high' };   // YARD-HEIGHT: never a tower
-  if (!sent || !decorScaleOk(sent)) return { error: 'bad-decor' };   // DECOR-FIGURE: one of Daggerfall's people at its own size
+  const sent = yard === true ? decorYardPieceOf(piece) : decorPieceOf(piece); // HOME-YARD: outside, the yard's own law
+  if (yard === true && sent && !decorYardHighOk(sent)) return { error: 'yard-high' }; // YARD-HEIGHT: never a tower
+  if (!sent || !decorScaleOk(sent)) return { error: 'bad-decor' }; // DECOR-FIGURE: one of Daggerfall's people at its own size
   // GUILD1d: a hall holds the catalogue's pieces alone - never a keeper's own thing (whose would it be at the sale?);
   // GUILD-YARD (Seats-Arc 8.2): a guild's hall stands a yard, its keepers' as its rooms are - a palace's Charter Room none
-  const guildHall = !S.seat && !!(await hallGuildOf(db, mapId, buildingKey));   // SEAT-HALL: a palace is a hall of its own, not a guild hall
+  const guildHall = !S.seat && !!(await hallGuildOf(db, mapId, buildingKey)); // SEAT-HALL: a palace is a hall of its own, not a guild hall
   if (S.seat || guildHall) {
     if (yard === true && S.seat) return { error: 'hall-yard' };
     if (sent.item) return { error: 'hall-item' };
   }
-  const guildRule = guildPieceRule(sent, { hall: guildHall, yard: yard === true });   // GUILD-SHOP: a guild's own piece, in its hall alone
+  const guildRule = guildPieceRule(sent, { hall: guildHall, yard: yard === true }); // GUILD-SHOP: a guild's own piece, in its hall alone
   if (guildRule) return { error: guildRule };
   const out = yard === true ? 1 : 0;
   // DECOR-ROOMY: a home's room holds its own cap, by its ground
-  const roomCap = S.seat ? S.cap : decorCapOf((await db.prepare('SELECT ground FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first())?.ground);
-  const barred = hallBars(sent, S, out);   // the hall's rule, read again inside the write (AUDIT GUILD1d S3)
-  const p = sent.item?.pv ? await provenOf(db, player, sent, mapId, buildingKey) : sent;   // PROF4: a crafted piece's mark off its own record
+  const roomCap = S.seat
+    ? S.cap
+    : decorCapOf(
+        (
+          await db
+            .prepare('SELECT ground FROM homes WHERE map_id = ? AND building_key = ?')
+            .bind(mapId, buildingKey)
+            .first()
+        )?.ground,
+      );
+  const barred = hallBars(sent, S, out); // the hall's rule, read again inside the write (AUDIT GUILD1d S3)
+  const p = sent.item?.pv ? await provenOf(db, player, sent, mapId, buildingKey) : sent; // PROF4: a crafted piece's mark off its own record
   if (!p) return { error: 'bad-decor' };
   const { delta, ledger } = decorGoldMove(null, p);
-  const side = decorSideOf(character, realm, delta);   // REALM P2.2b
+  const side = decorSideOf(character, realm, delta); // REALM P2.2b
   if (side.error) return side;
   // AUDIT REALM L1-F3: `paid`, what a record paid for it - the price, when a realm character's record pays it; nothing else
   // HOME-YARD: a yard's pieces and a room's are counted apart, each against its own cap
   // AUDIT GUILD1d S3: the hall's own rule (no keeper's own thing; a palace's no yard - GUILD-YARD) inside the write too - a
   // hall bought between the rule's read and this INSERT took them
-  const [countSql, countBinds] = S.count(mapId, buildingKey, out), [ruleSql, ruleBinds] = S.rule(mapId, buildingKey, barred);
+  const [countSql, countBinds] = S.count(mapId, buildingKey, out),
+    [ruleSql, ruleBinds] = S.rule(mapId, buildingKey, barred);
   // AUDIT PROF-541 B2: a piece whose provenance provenOf kept stands only while its products row still bears it out - a
   // disenchant between the read and this INSERT took the row (and the piece) away
   const pv = typeof p.item?.pv === 'string' ? p.item.pv : null;
   const pvSql = pv ? ' AND EXISTS (SELECT 1 FROM products WHERE provenance = ? AND owner = ? AND listed = 0)' : '';
-  const [stockSql, stockBinds] = guildStockGuard(p, mapId, buildingKey);   // GUILD-SHOP: while the guild owns one more than its halls stand
-  const insert = db.prepare(`INSERT OR IGNORE INTO ${S.table} (map_id, building_key, id, model, flat_archive, flat_record, place, placed_at, item, paid, yard)
+  const [stockSql, stockBinds] = guildStockGuard(p, mapId, buildingKey); // GUILD-SHOP: while the guild owns one more than its halls stand
+  const insert = db
+    .prepare(
+      `INSERT OR IGNORE INTO ${S.table} (map_id, building_key, id, model, flat_archive, flat_record, place, placed_at, item, paid, yard)
     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${S.owns} AND (SELECT COUNT(*) FROM ${S.table} WHERE ${countSql}) < ?
-      AND ${ruleSql}${pvSql}${stockSql}`)
-    .bind(mapId, buildingKey, p.id, p.model, p.flat?.[0] ?? null, p.flat?.[1] ?? null, placeJson(p), nowS, p.item ? JSON.stringify(p.item) : null,
-      side.at ? ledger : 0, out, mapId, buildingKey, player.id, character, ...countBinds, out ? DECOR_YARD_CAP : (guildHall ? DECOR_HALL_CAP : roomCap),
-      ...ruleBinds, ...(pv ? [pv, player.id] : []), ...stockBinds);
+      AND ${ruleSql}${pvSql}${stockSql}`,
+    )
+    .bind(
+      mapId,
+      buildingKey,
+      p.id,
+      p.model,
+      p.flat?.[0] ?? null,
+      p.flat?.[1] ?? null,
+      placeJson(p),
+      nowS,
+      p.item ? JSON.stringify(p.item) : null,
+      side.at ? ledger : 0,
+      out,
+      mapId,
+      buildingKey,
+      player.id,
+      character,
+      ...countBinds,
+      out ? DECOR_YARD_CAP : guildHall ? DECOR_HALL_CAP : roomCap,
+      ...ruleBinds,
+      ...(pv ? [pv, player.id] : []),
+      ...stockBinds,
+    );
   /** AUDIT GUILD1d S3: a placement the hall's rule refused, in its own word - or null. AUDIT PROF-541 B2: a kept piece's
    *  row gone between, 'bad-decor' (the piece is not what was sent). */
-  const hallWord = async () => (pv && !(await db.prepare('SELECT 1 FROM products WHERE provenance = ? AND owner = ? AND listed = 0').bind(pv, player.id).first()) ? 'bad-decor'
-    : barred && (S.seat || await hallGuildOf(db, mapId, buildingKey)) ? (out ? 'hall-yard' : 'hall-item') : null);
+  const hallWord = async () =>
+    pv &&
+    !(await db
+      .prepare('SELECT 1 FROM products WHERE provenance = ? AND owner = ? AND listed = 0')
+      .bind(pv, player.id)
+      .first())
+      ? 'bad-decor'
+      : barred && (S.seat || (await hallGuildOf(db, mapId, buildingKey)))
+        ? out
+          ? 'hall-yard'
+          : 'hall-item'
+        : null;
   if (side.at && delta !== 0) {
     // REALM P2.2b: the piece and what it cost, together - a placement sent again found the record one on above
-    const had = await db.prepare(`SELECT * FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ?`).bind(mapId, buildingKey, p.id).first();
-    if (had) return JSON.stringify(pieceOfRow(had)) === JSON.stringify(p) ? { ok: true, repeat: true, piece: pieceOfRow(had), realm: { seq: side.at.seq } } : { error: 'decor-taken' };
+    const had = await db
+      .prepare(`SELECT * FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ?`)
+      .bind(mapId, buildingKey, p.id)
+      .first();
+    if (had)
+      return JSON.stringify(pieceOfRow(had)) === JSON.stringify(p)
+        ? { ok: true, repeat: true, piece: pieceOfRow(had), realm: { seq: side.at.seq } }
+        : { error: 'decor-taken' };
     return realmDecorWrite(ctx, player, side.at, {
-      mapId, buildingKey, delta, write: insert, regionOf: S.regionOf,
-      after: async () => pieceOfRow(await db.prepare(`SELECT * FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ?`).bind(mapId, buildingKey, p.id).first()),
-      refusal: async () => (await hallWord()) ?? ((await db.prepare(`SELECT ${S.owns} AS owns`).bind(mapId, buildingKey, player.id, character).first())?.owns ? capWord(out) : 'no-home'),
+      mapId,
+      buildingKey,
+      delta,
+      write: insert,
+      regionOf: S.regionOf,
+      after: async () =>
+        pieceOfRow(
+          await db
+            .prepare(`SELECT * FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ?`)
+            .bind(mapId, buildingKey, p.id)
+            .first(),
+        ),
+      refusal: async () =>
+        (await hallWord()) ??
+        ((await db.prepare(`SELECT ${S.owns} AS owns`).bind(mapId, buildingKey, player.id, character).first())?.owns
+          ? capWord(out)
+          : 'no-home'),
     });
   }
   const r = await insert.run();
   if (r?.meta?.changes) return { ok: true, piece: p };
   const hallSaid = await hallWord();
   if (hallSaid) return { error: hallSaid };
-  if (await guildStockSpent(db, p, mapId, buildingKey) && !(await db.prepare(`SELECT 1 FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ?`).bind(mapId, buildingKey, p.id).first())) return { error: 'guild-ware-none' };   // GUILD-SHOP
+  if (
+    (await guildStockSpent(db, p, mapId, buildingKey)) &&
+    !(await db
+      .prepare(`SELECT 1 FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ?`)
+      .bind(mapId, buildingKey, p.id)
+      .first())
+  )
+    return { error: 'guild-ware-none' }; // GUILD-SHOP
   const owns = await db.prepare(`SELECT ${S.owns} AS owns`).bind(mapId, buildingKey, player.id, character).first();
   if (!owns?.owns) return { error: 'no-home' };
-  const row = await db.prepare(`SELECT * FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ?`).bind(mapId, buildingKey, p.id).first();
+  const row = await db
+    .prepare(`SELECT * FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ?`)
+    .bind(mapId, buildingKey, p.id)
+    .first();
   if (row) {
     const had = pieceOfRow(row);
-    return had && JSON.stringify(had) === JSON.stringify(p) ? { ok: true, repeat: true, piece: had } : { error: 'decor-taken' };
+    return had && JSON.stringify(had) === JSON.stringify(p)
+      ? { ok: true, repeat: true, piece: had }
+      : { error: 'decor-taken' };
   }
-  return { error: capWord(out) };   // HOME-YARD (AUDIT): a yard's own cap, in its own words
+  return { error: capWord(out) }; // HOME-YARD (AUDIT): a yard's own cap, in its own words
 }
 
 /**
@@ -414,10 +645,14 @@ export async function placeDecor(ctx, player, { mapId, buildingKey, character, p
  * it is. The owner's alone.
  * @param {{db: any, nowS: number}} ctx
  */
-export async function moveDecor(ctx, player, { mapId, buildingKey, character, id, place, realm = null, seat = false } = {}) {
-  const S = storeOf(seat);   // SEAT-HALL
+export async function moveDecor(
+  ctx,
+  player,
+  { mapId, buildingKey, character, id, place, realm = null, seat = false } = {},
+) {
+  const S = storeOf(seat); // SEAT-HALL
   if (realm != null) {
-    const first = await realmActFirst(ctx.db, player.id, character, realm);   // AUDIT REALM L1-F2: where the record stands, before the door's rate
+    const first = await realmActFirst(ctx.db, player.id, character, realm); // AUDIT REALM L1-F2: where the record stands, before the door's rate
     if (first.error) return first;
   }
   const shut = await writeDoor(ctx, player, { mapId, buildingKey, character });
@@ -426,30 +661,54 @@ export async function moveDecor(ctx, player, { mapId, buildingKey, character, id
   const pl = decorPlaceOf(place);
   if (!pl) return { error: 'bad-decor' };
   const { db } = ctx;
-  const row = await db.prepare(`SELECT * FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ? AND ${S.owns}`)
-    .bind(mapId, buildingKey, id, mapId, buildingKey, player.id, character).first();
+  const row = await db
+    .prepare(`SELECT * FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ? AND ${S.owns}`)
+    .bind(mapId, buildingKey, id, mapId, buildingKey, player.id, character)
+    .first();
   if (!row) return { error: 'no-decor' };
   // DECOR2a: the moved piece must be one the law takes, as a placed one must - the owner's own item never comes to cost
   // gold or hold things (a piece the law refuses reads as nothing, and its cost would be owed at a sale)
   const was = pieceOfRow(row);
   if (!was || !decorPieceOf({ ...was, ...pl })) return { error: 'bad-decor' };
-  if (guildPieceRule({ ...was, ...pl }, { hall: true, yard: false })) return { error: 'bad-decor' };   // AUDIT GUILD-SHOP S5: a guild piece moved stays one - nothing held, no station
+  if (guildPieceRule({ ...was, ...pl }, { hall: true, yard: false })) return { error: 'bad-decor' }; // AUDIT GUILD-SHOP S5: a guild piece moved stays one - nothing held, no station
   // DECOR-FIGURE: a figure moved to any size but its own is refused - one grown before this keeps its record's scale on a
   // turn or a station (it is drawn at its own size all the same), and is brought back to it by any move of the placer's
-  if (!decorScaleOk({ ...was, ...pl }) && pl.scale !== was.scale) return { error: 'decor-figure' };   // AUDIT HOME-VOTE II C2: its own word - a stale copy's turn of a figure brought back to 1 on another device
+  if (!decorScaleOk({ ...was, ...pl }) && pl.scale !== was.scale) return { error: 'decor-figure' }; // AUDIT HOME-VOTE II C2: its own word - a stale copy's turn of a figure brought back to 1 on another device
   // HOME-VENDOR: a trader with goods for sale stays one - its stock is bought at it alone (market.js)
-  if (was.station === 'vendor' && (pl.station ?? null) !== 'vendor' && await vendorStocked(db, mapId, id)) return { error: 'vendor-stocked' };
-  if (row.yard === 1 && !decorYardPlaceOf(pl)) return { error: 'bad-decor' };   // HOME-YARD: a yard's piece stays a yard's
-  if (row.yard === 1 && !decorYardHighOk(pl)) return { error: 'yard-high' };   // YARD-HEIGHT: nor moved up into a tower
-  const { delta, ledger } = decorGoldMove(was, pl, row.paid);   // AUDIT REALM L1-F3: half back of what records paid
+  if (was.station === 'vendor' && (pl.station ?? null) !== 'vendor' && (await vendorStocked(db, mapId, id)))
+    return { error: 'vendor-stocked' };
+  if (row.yard === 1 && !decorYardPlaceOf(pl)) return { error: 'bad-decor' }; // HOME-YARD: a yard's piece stays a yard's
+  if (row.yard === 1 && !decorYardHighOk(pl)) return { error: 'yard-high' }; // YARD-HEIGHT: nor moved up into a tower
+  const { delta, ledger } = decorGoldMove(was, pl, row.paid); // AUDIT REALM L1-F3: half back of what records paid
   const hall = delta > 0 ? await S.guildOf(db, mapId, buildingKey) : null;
   if (hall) {
     // GUILD1d: a hall's piece shrunk - its half back to the guild's treasury, never to the keeper who shrank it
     return hallPieceBack(ctx, player, hall, {
       delta,
-      write: db.prepare(`UPDATE ${S.table} SET place = ?, paid = ? WHERE map_id = ? AND building_key = ? AND id = ? AND place = ? AND paid = ? AND ${S.owns}`)
-        .bind(placeJson(pl), ledger, mapId, buildingKey, id, row.place, row.paid, mapId, buildingKey, player.id, character),
-      after: async () => pieceOfRow(await db.prepare(`SELECT * FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ?`).bind(mapId, buildingKey, id).first()),
+      write: db
+        .prepare(
+          `UPDATE ${S.table} SET place = ?, paid = ? WHERE map_id = ? AND building_key = ? AND id = ? AND place = ? AND paid = ? AND ${S.owns}`,
+        )
+        .bind(
+          placeJson(pl),
+          ledger,
+          mapId,
+          buildingKey,
+          id,
+          row.place,
+          row.paid,
+          mapId,
+          buildingKey,
+          player.id,
+          character,
+        ),
+      after: async () =>
+        pieceOfRow(
+          await db
+            .prepare(`SELECT * FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ?`)
+            .bind(mapId, buildingKey, id)
+            .first(),
+        ),
       refusal: async () => 'no-decor',
     });
   }
@@ -458,19 +717,50 @@ export async function moveDecor(ctx, player, { mapId, buildingKey, character, id
   if (side.at && delta !== 0) {
     // REALM P2.2b: a resize or a station, paid or given back on the record with the move - from the row as it was read
     return realmDecorWrite(ctx, player, side.at, {
-      mapId, buildingKey, delta, regionOf: S.regionOf,
-      write: db.prepare(`UPDATE ${S.table} SET place = ?, paid = ? WHERE map_id = ? AND building_key = ? AND id = ? AND place = ? AND paid = ? AND ${S.owns}`)
-        .bind(placeJson(pl), ledger, mapId, buildingKey, id, row.place, row.paid, mapId, buildingKey, player.id, character),
-      after: async () => pieceOfRow(await db.prepare(`SELECT * FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ?`).bind(mapId, buildingKey, id).first()),
+      mapId,
+      buildingKey,
+      delta,
+      regionOf: S.regionOf,
+      write: db
+        .prepare(
+          `UPDATE ${S.table} SET place = ?, paid = ? WHERE map_id = ? AND building_key = ? AND id = ? AND place = ? AND paid = ? AND ${S.owns}`,
+        )
+        .bind(
+          placeJson(pl),
+          ledger,
+          mapId,
+          buildingKey,
+          id,
+          row.place,
+          row.paid,
+          mapId,
+          buildingKey,
+          player.id,
+          character,
+        ),
+      after: async () =>
+        pieceOfRow(
+          await db
+            .prepare(`SELECT * FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ?`)
+            .bind(mapId, buildingKey, id)
+            .first(),
+        ),
       refusal: async () => 'no-decor',
     });
   }
   // AUDIT YARD-HEIGHT Y7: the row as read - a room's piece removed and placed again in the yard under its id between the
   // read and this write took a room's place past the yard's law (its height, its light and its craft)
-  const r = await db.prepare(`UPDATE ${S.table} SET place = ? WHERE map_id = ? AND building_key = ? AND id = ? AND yard = ? AND ${S.owns}`)
-    .bind(placeJson(pl), mapId, buildingKey, id, row.yard, mapId, buildingKey, player.id, character).run();
+  const r = await db
+    .prepare(
+      `UPDATE ${S.table} SET place = ? WHERE map_id = ? AND building_key = ? AND id = ? AND yard = ? AND ${S.owns}`,
+    )
+    .bind(placeJson(pl), mapId, buildingKey, id, row.yard, mapId, buildingKey, player.id, character)
+    .run();
   if (!r?.meta?.changes) return { error: 'no-decor' };
-  const now = await db.prepare(`SELECT * FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ?`).bind(mapId, buildingKey, id).first();
+  const now = await db
+    .prepare(`SELECT * FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ?`)
+    .bind(mapId, buildingKey, id)
+    .first();
   const piece = now ? pieceOfRow(now) : null;
   return piece ? { ok: true, piece } : { error: 'no-decor' };
 }
@@ -480,9 +770,9 @@ export async function moveDecor(ctx, player, { mapId, buildingKey, character, id
  * @param {{db: any, nowS: number}} ctx
  */
 export async function removeDecor(ctx, player, { mapId, buildingKey, character, id, realm = null, seat = false } = {}) {
-  const S = storeOf(seat);   // SEAT-HALL
+  const S = storeOf(seat); // SEAT-HALL
   if (realm != null) {
-    const first = await realmActFirst(ctx.db, player.id, character, realm);   // AUDIT REALM L1-F2: where the record stands, before the door's rate
+    const first = await realmActFirst(ctx.db, player.id, character, realm); // AUDIT REALM L1-F2: where the record stands, before the door's rate
     if (first.error) return first;
   }
   const shut = await writeDoor(ctx, player, { mapId, buildingKey, character });
@@ -490,17 +780,22 @@ export async function removeDecor(ctx, player, { mapId, buildingKey, character, 
   if (typeof id !== 'string' || !DECOR_ID_RE.test(id)) return { error: 'no-decor' };
   const { db } = ctx;
   {
-    const row = await db.prepare(`SELECT * FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ? AND ${S.owns}`)
-      .bind(mapId, buildingKey, id, mapId, buildingKey, player.id, character).first();
+    const row = await db
+      .prepare(`SELECT * FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ? AND ${S.owns}`)
+      .bind(mapId, buildingKey, id, mapId, buildingKey, player.id, character)
+      .first();
     const was = row ? pieceOfRow(row) : null;
-    if (was?.station === 'vendor' && await vendorStocked(db, mapId, id)) return { error: 'vendor-stocked' };   // HOME-VENDOR
-    const delta = was ? decorGoldMove(was, null, row.paid).delta : 0;   // AUDIT REALM L1-F3: half of what records paid
+    if (was?.station === 'vendor' && (await vendorStocked(db, mapId, id))) return { error: 'vendor-stocked' }; // HOME-VENDOR
+    const delta = was ? decorGoldMove(was, null, row.paid).delta : 0; // AUDIT REALM L1-F3: half of what records paid
     const hall = delta > 0 ? await S.guildOf(db, mapId, buildingKey) : null;
     if (hall) {
       // GUILD1d: a hall's piece taken out - its half back to the guild's treasury, never to the keeper who took it out
       return hallPieceBack(ctx, player, hall, {
         delta,
-        write: db.prepare(`DELETE FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ? AND place = ? AND paid = ? AND ${S.owns}`)
+        write: db
+          .prepare(
+            `DELETE FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ? AND place = ? AND paid = ? AND ${S.owns}`,
+          )
           .bind(mapId, buildingKey, id, row.place, row.paid, mapId, buildingKey, player.id, character),
         after: async () => was,
         refusal: async () => 'no-decor',
@@ -511,16 +806,24 @@ export async function removeDecor(ctx, player, { mapId, buildingKey, character, 
     if (side.at && delta > 0) {
       // REALM P2.2b: half of what it cost, into the record's purse with the piece's going
       return realmDecorWrite(ctx, player, side.at, {
-        mapId, buildingKey, delta, regionOf: S.regionOf,
-        write: db.prepare(`DELETE FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ? AND place = ? AND paid = ? AND ${S.owns}`)
+        mapId,
+        buildingKey,
+        delta,
+        regionOf: S.regionOf,
+        write: db
+          .prepare(
+            `DELETE FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ? AND place = ? AND paid = ? AND ${S.owns}`,
+          )
           .bind(mapId, buildingKey, id, row.place, row.paid, mapId, buildingKey, player.id, character),
         after: async () => was,
         refusal: async () => 'no-decor',
       });
     }
   }
-  const row = await db.prepare(`DELETE FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ? AND ${S.owns} RETURNING *`)
-    .bind(mapId, buildingKey, id, mapId, buildingKey, player.id, character).first();
+  const row = await db
+    .prepare(`DELETE FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ? AND ${S.owns} RETURNING *`)
+    .bind(mapId, buildingKey, id, mapId, buildingKey, player.id, character)
+    .first();
   const piece = row ? pieceOfRow(row) : null;
   return piece ? { ok: true, piece } : { error: 'no-decor' };
 }

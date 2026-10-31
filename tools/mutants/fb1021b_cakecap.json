@@ -2,8 +2,8 @@
   {
     "name": "CAKE-CAP-SAID-cap-unsaid",
     "file": "server-account/src/festival.js",
-    "old": "...(today >= FIND_CAKES_PER_DAY ? { capped: true } : {})",
-    "new": "...({})",
+    "old": "  return {\n    found,\n    cakes: await cakesOf(db, player.id),\n    today,\n    ...(today >= FIND_CAKES_PER_DAY ? { capped: true } : {}),\n  };",
+    "new": "  return { found, cakes: await cakesOf(db, player.id), today, ...{} };",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],

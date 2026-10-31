@@ -93,8 +93,8 @@
   {
     "name": "ACC1c-10-the-recovery-code-is-not-spent",
     "file": "server-account/src/accounts.js",
-    "old": "UPDATE players SET password = ?, recovery_hash = ? WHERE id = ? AND recovery_hash = ?').bind(pw, rc, player.id, player.recovery_hash)",
-    "new": "UPDATE players SET password = ? WHERE id = ? AND recovery_hash = ?').bind(pw, player.id, player.recovery_hash)",
+    "old": "    .prepare('UPDATE players SET password = ?, recovery_hash = ? WHERE id = ? AND recovery_hash = ?')\n    .bind(pw, rc, player.id, player.recovery_hash)",
+    "new": "    .prepare('UPDATE players SET password = ? WHERE id = ? AND recovery_hash = ?')\n    .bind(pw, player.id, player.recovery_hash)",
     "tests": [
       "test/server/accountworker.test.js"
     ],
@@ -103,8 +103,8 @@
   {
     "name": "ACC1c-11-recovering-leaves-the-thief-signed-in",
     "file": "server-account/src/accounts.js",
-    "old": "  await db.prepare('DELETE FROM sessions WHERE player_id = ? AND EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)').bind(player.id, player.id, pw).run();\n  await closeStaffSessions({ db }, player.id);   // STAFF-PANEL2-FIX: a new password ends the staff panel's sessions too\n",
-    "new": "  await closeStaffSessions({ db }, player.id);   // STAFF-PANEL2-FIX: a new password ends the staff panel's sessions too\n",
+    "old": "  await db\n    .prepare(\n      'DELETE FROM sessions WHERE player_id = ? AND EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)',\n    )\n    .bind(player.id, player.id, pw)\n    .run();\n  await closeStaffSessions({ db }, player.id); // STAFF-PANEL2-FIX: a new password ends the staff panel's sessions too",
+    "new": "  await closeStaffSessions({ db }, player.id); // STAFF-PANEL2-FIX: a new password ends the staff panel's sessions too",
     "tests": [
       "test/server/accountworker.test.js"
     ],
@@ -113,7 +113,7 @@
   {
     "name": "ACC1c-12-changing-a-password-needs-no-old-one",
     "file": "server-account/src/accounts.js",
-    "old": "  if (!await verifyPassword(oldPassword, player.password, { subtle })) return { error: 'bad-login' };",
+    "old": "  if (!(await verifyPassword(oldPassword, player.password, { subtle }))) return { error: 'bad-login' };",
     "new": "  if (false) return { error: 'bad-login' };",
     "tests": [
       "test/server/accountworker.test.js"
@@ -153,8 +153,8 @@
   {
     "name": "ACC1c-16-registering-mints-a-new-account",
     "file": "server-account/src/accounts.js",
-    "old": "'WHERE id = ? AND handle IS NULL')",
-    "new": "'WHERE id = ?')",
+    "old": "          'WHERE id = ? AND handle IS NULL',",
+    "new": "          'WHERE id = ?',",
     "tests": [
       "test/server/audit68_backend.test.js"
     ],

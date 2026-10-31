@@ -202,8 +202,8 @@
   {
     "name": "DCODE-needs-no-embed",
     "file": "server-account/src/discord.js",
-    "old": "['Send Messages', 1n << 11n], ['Embed Links', 1n << 14n]]",
-    "new": "['Send Messages', 1n << 11n]]",
+    "old": "  ['Embed Links', 1n << 14n],\n]);",
+    "new": "]);",
     "tests": [
       "test/server/discord_setup.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "DCODE-usage-typed-again",
     "file": "server-account/src/discord.js",
-    "old": "default: return say(usageOf('mod'));",
-    "new": "default: return say('Use /mod lookup, mute or unmute.');",
+    "old": "      return say(usageOf('mod')); // DISCORD-CODE: the declared subcommands, named (discordCommands.js)",
+    "new": "      return say('Use /mod lookup, mute or unmute.'); // DISCORD-CODE: the declared subcommands, named (discordCommands.js)",
     "tests": [
       "test/server/discord_setup.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "DCODE-usage-forgets-the-last",
     "file": "server-account/src/discordCommands.js",
-    "old": "`Use /${name} ${subs.slice(0, -1).join(', ')} or ${subs.at(-1)}.`",
-    "new": "`Use /${name} ${subs.slice(0, -1).join(', ')}.`",
+    "old": "    ? `Use /${name} ${subs.slice(0, -1).join(', ')} or ${subs.at(-1)}.`",
+    "new": "    ? `Use /${name} ${subs.slice(0, -1).join(', ')}.`",
     "tests": [
       "test/server/discord_setup.test.js"
     ],

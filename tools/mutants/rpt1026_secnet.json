@@ -2,8 +2,8 @@
   {
     "name": "RPT1026-SECNET-change-password-unchecked",
     "file": "server-account/src/accounts.js",
-    "old": "'UPDATE players SET password = ? WHERE id = ? AND password = ? AND EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?)'",
-    "new": "'UPDATE players SET password = ? WHERE id = ? AND (password = ? OR 1) AND EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?)'",
+    "old": "      'UPDATE players SET password = ? WHERE id = ? AND password = ? AND EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?)',",
+    "new": "      'UPDATE players SET password = ? WHERE id = ? AND (password = ? OR 1) AND EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?)',",
     "tests": [
       "test/server/rpt1026_secnet.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "RPT1026-SECNET-change-session-unchecked",
     "file": "server-account/src/accounts.js",
-    "old": "'UPDATE players SET password = ? WHERE id = ? AND password = ? AND EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?)'",
-    "new": "'UPDATE players SET password = ? WHERE id = ? AND password = ? AND (1 OR EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?))'",
+    "old": "      'UPDATE players SET password = ? WHERE id = ? AND password = ? AND EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?)',",
+    "new": "      'UPDATE players SET password = ? WHERE id = ? AND password = ? AND (1 OR EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?))',",
     "tests": [
       "test/server/rpt1026_secnet.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "RPT1026-SECNET-change-refusal-dropped",
     "file": "server-account/src/accounts.js",
-    "old": "  if (!wrote.meta.changes) return { error: 'bad-login' };\n  // and the sign-out only while",
-    "new": "  // and the sign-out only while",
+    "old": "  if (!wrote.meta.changes) return { error: 'bad-login' };\n  // and the sign-out only while the password is still this change's: a recovery between the two statements signed every",
+    "new": "  // and the sign-out only while the password is still this change's: a recovery between the two statements signed every",
     "tests": [
       "test/server/rpt1026_secnet.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "RPT1026-SECNET-change-signout-unconditional",
     "file": "server-account/src/accounts.js",
-    "old": "'DELETE FROM sessions WHERE player_id = ? AND id != ? AND EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)').bind(player.id, session.id, player.id, pw)",
-    "new": "'DELETE FROM sessions WHERE player_id = ? AND id != ?').bind(player.id, session.id)",
+    "old": "  await db\n    .prepare(\n      'DELETE FROM sessions WHERE player_id = ? AND id != ? AND EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)',\n    )\n    .bind(player.id, session.id, player.id, pw)\n    .run();",
+    "new": "  await db.prepare('DELETE FROM sessions WHERE player_id = ? AND id != ?').bind(player.id, session.id).run();",
     "tests": [
       "test/server/rpt1026_secnet.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "RPT1026-SECNET-login-rehash-by-id",
     "file": "server-account/src/accounts.js",
-    "old": "'UPDATE players SET password = ? WHERE id = ? AND password = ?').bind(fresh, player.id, held)",
-    "new": "'UPDATE players SET password = ? WHERE id = ?').bind(fresh, player.id)",
+    "old": "    const re = await db\n      .prepare('UPDATE players SET password = ? WHERE id = ? AND password = ?')\n      .bind(fresh, player.id, held)\n      .run();",
+    "new": "    const re = await db.prepare('UPDATE players SET password = ? WHERE id = ?').bind(fresh, player.id).run();",
     "tests": [
       "test/server/rpt1026_secnet.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "RPT1026-SECNET-login-row-never-asked-again",
     "file": "server-account/src/accounts.js",
-    "old": "    if (now && await verifyPassword(password, now, { subtle })) session =",
-    "new": "    if (false && now) session =",
+    "old": "    if (now && (await verifyPassword(password, now, { subtle })))",
+    "new": "    if (false && now)",
     "tests": [
       "test/server/rpt1026_secnet.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "RPT1026-SECNET-login-row-unverified",
     "file": "server-account/src/accounts.js",
-    "old": "    if (now && await verifyPassword(password, now, { subtle })) session =",
-    "new": "    if (now) session =",
+    "old": "    if (now && (await verifyPassword(password, now, { subtle })))\n      session = await openSession({ db, subtle, rand, nowS }, player.id, deviceLabel, { password: now });",
+    "new": "    if (now) session = await openSession({ db, subtle, rand, nowS }, player.id, deviceLabel, { password: now });",
     "tests": [
       "test/server/rpt1026_secnet.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "RPT1026-SECNET-recovery-session-unguarded",
     "file": "server-account/src/accounts.js",
-    "old": "openSession({ db, subtle, rand, nowS }, player.id, null, { password: pw })",
-    "new": "openSession({ db, subtle, rand, nowS }, player.id, null)",
+    "old": "  const session = await openSession({ db, subtle, rand, nowS }, player.id, null, { password: pw });",
+    "new": "  const session = await openSession({ db, subtle, rand, nowS }, player.id, null);",
     "tests": [
       "test/server/rpt1026_secnet.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "RPT1026-SECNET-guard-session-ignored",
     "file": "server-account/src/accounts.js",
-    "old": "WHERE EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?)`)",
-    "new": "WHERE 1 OR EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?)`)",
+    "old": "            `${into} SELECT ?, ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?)`,",
+    "new": "            `${into} SELECT ?, ?, ?, ?, ?, ? WHERE 1 OR EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?)`,",
     "tests": [
       "test/server/rpt1026_secnet.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "RPT1026-SECNET-guard-password-ignored",
     "file": "server-account/src/accounts.js",
-    "old": "WHERE EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)`)",
-    "new": "WHERE 1 OR EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)`)",
+    "old": "          .prepare(`${into} SELECT ?, ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)`)",
+    "new": "          .prepare(\n            `${into} SELECT ?, ?, ?, ?, ?, ? WHERE 1 OR EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)`,\n          )",
     "tests": [
       "test/server/rpt1026_secnet.test.js"
     ],

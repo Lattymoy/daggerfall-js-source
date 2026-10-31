@@ -2592,7 +2592,7 @@ Losing the whole company still costs the run.
   Unfallen* and a flame on its board row (section 20). AS BUILT (AUDIT COLLECTIONS-II, 2026-10-22,
   `01-Overview/audits/Audit-Collections-II.md` L1-4): the fall counted is the member's own - a Redoubt receipt's `fl`
   is its member's falls (`egBrain.js:"fl: m.falls ?? 0"`) and egHonourBitsOf grants on it
-  (`egHonours.js:"c.fl === 0 && c.ew === 0"`) - so a member who never fell holds the title whoever else in the company fell. The
+  (`egHonours.js:"if (c.w >= EG_UNFALLEN_REDOUBT && c.fl === 0 && c.ew === 0)"`) - so a member who never fell holds the title whoever else in the company fell. The
   Collections page says what is built; which is meant is the owner's to decide.
 - **The Lone Beacon**: a Court felled by one living member, in a company of four or more, gives that member the title
   *the Lone Beacon* and a herald line (section 20).

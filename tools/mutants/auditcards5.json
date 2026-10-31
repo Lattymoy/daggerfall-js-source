@@ -2824,8 +2824,8 @@
   {
     "name": "AC5-E-A-A1-fresh-minute",
     "file": "server-account/src/cards.js",
-    "old": "stake: await orderOf(prior, player, signingKey, subtle, Number(prior.at)) }",
-    "new": "stake: await orderOf(prior, player, signingKey, subtle, nowS) }",
+    "old": "          stake: await orderOf(prior, player, signingKey, subtle, Number(prior.at)),",
+    "new": "          stake: await orderOf(prior, player, signingKey, subtle, nowS),",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -2847,8 +2847,8 @@
   {
     "name": "AC5-E-A-topup-min-for-sits",
     "file": "server-account/src/cards.js",
-    "old": "(topup === true ? HOLDEM_TOPUP_MIN_BB : HOLDEM_STAKE_MIN_BB)",
-    "new": "HOLDEM_TOPUP_MIN_BB",
+    "old": "    if (\n      !Number.isSafeInteger(amount) ||\n      amount < (topup === true ? HOLDEM_TOPUP_MIN_BB : HOLDEM_STAKE_MIN_BB) * bb ||\n      amount > HOLDEM_STAKE_MAX_BB * bb\n    )",
+    "new": "    if (!Number.isSafeInteger(amount) || amount < HOLDEM_TOPUP_MIN_BB * bb || amount > HOLDEM_STAKE_MAX_BB * bb)",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -2870,8 +2870,8 @@
   {
     "name": "AC5-E-A-E6-paid-first",
     "file": "server-account/src/cards.js",
-    "old": "  if (row.char_id !== character) return { error: 'cards-other-character' };   // the gold goes home to the character that staked it\n",
-    "new": "  if (row.char_id !== character) return { error: 'cards-other-character' };   // the gold goes home to the character that staked it\n  if (row.status === 'paid') return { ok: true, repeat: true, gold: Number(row.paid ?? 0) };\n",
+    "old": "  // AUDIT CARDS-4 E6: where the record stands FIRST (AUDIT REALM L1-F2), then a repeat - a paid stake answered before it",
+    "new": "  if (row.status === 'paid') return { ok: true, repeat: true, gold: Number(row.paid ?? 0) };\n  // AUDIT CARDS-4 E6: where the record stands FIRST (AUDIT REALM L1-F2), then a repeat - a paid stake answered before it",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -2893,8 +2893,8 @@
   {
     "name": "AC5-E-A-A3-expiry",
     "file": "server-account/src/cards.js",
-    "old": "anyAge: true",
-    "new": "anyAge: false",
+    "old": "  const v = await verifyCardReceipt(receipt, publicKey, { subtle, nowS, anyAge: true });",
+    "new": "  const v = await verifyCardReceipt(receipt, publicKey, { subtle, nowS, anyAge: false });",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -2916,7 +2916,7 @@
   {
     "name": "AC5-E-A-whole-back",
     "file": "server-account/src/cards.js",
-    "old": "if ((c.w === 'refused' || c.w === 'void') && c.r !== Number(row.amount)) return { error: 'cards-receipt', why: 'sum' };",
+    "old": "  if ((c.w === 'refused' || c.w === 'void') && c.r !== Number(row.amount))\n    return { error: 'cards-receipt', why: 'sum' };",
     "new": "",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
@@ -2939,8 +2939,8 @@
   {
     "name": "AC5-E-A-A6-failed-paid",
     "file": "server-account/src/cards.js",
-    "old": "    if (done) return { ok: true, gold: 0 };\n",
-    "new": "    return { ok: true, gold: 0 };\n",
+    "old": "    if (done) return { ok: true, gold: 0 };",
+    "new": "    return { ok: true, gold: 0 };",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -2962,8 +2962,8 @@
   {
     "name": "AC5-E-A-A4-no-why",
     "file": "server-account/src/cards.js",
-    "old": "if (!v.ok) return { error: 'cards-receipt', why: v.why };",
-    "new": "if (!v.ok) return { error: 'cards-receipt' };",
+    "old": "  if (!v.ok) return { error: 'cards-receipt', why: v.why };",
+    "new": "  if (!v.ok) return { error: 'cards-receipt' };",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -4115,8 +4115,8 @@
   {
     "name": "AC5-E-A-repeat-paid",
     "file": "server-account/src/cards.js",
-    "old": "if (prior) return prior.status === 'held' ?",
-    "new": "if (prior) return true ?",
+    "old": "    return prior.status === 'held'",
+    "new": "    return true",
     "tests": [
       "test/net/auditcards5_gold.test.js"
     ]
@@ -4124,8 +4124,8 @@
   {
     "name": "AC5-E-A-topup-truthy",
     "file": "server-account/src/cards.js",
-    "old": "(topup === true ? HOLDEM_TOPUP_MIN_BB",
-    "new": "(topup ? HOLDEM_TOPUP_MIN_BB",
+    "old": "      amount < (topup === true ? HOLDEM_TOPUP_MIN_BB : HOLDEM_STAKE_MIN_BB) * bb ||",
+    "new": "      amount < (topup ? HOLDEM_TOPUP_MIN_BB : HOLDEM_STAKE_MIN_BB) * bb ||",
     "tests": [
       "test/net/auditcards5_gold.test.js"
     ]
@@ -4133,8 +4133,8 @@
   {
     "name": "AC5-E-A-settle-held-only",
     "file": "server-account/src/cards.js",
-    "old": "WHERE id = ?1 AND player = ?2 AND status = 'held'`",
-    "new": "WHERE id = ?1 AND player = ?2`",
+    "old": "    .prepare(\n      `UPDATE card_stakes SET status = 'paid', paid = ?3, paid_at = ?4 WHERE id = ?1 AND player = ?2 AND status = 'held'`,\n    )",
+    "new": "    .prepare(`UPDATE card_stakes SET status = 'paid', paid = ?3, paid_at = ?4 WHERE id = ?1 AND player = ?2`)",
     "tests": [
       "test/net/auditcards5_gold.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-EG-IV-net-again-takes-a-key",
     "file": "server-account/src/eg.js",
-    "old": "  if (body?.again === 1) {\n    if (!had) return { error: 'none' };",
-    "new": "  if (false) {\n    if (!had) return { error: 'none' };",
+    "old": "  if (body?.again === 1) {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/eliteGates/egaudit4_net_service.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-EG-IV-net-again-order-as-of-now",
     "file": "server-account/src/eg.js",
-    "old": "ewg: wagerOfRow(had.wg) }, key, { subtle, nowS: int(had.at) });\n    return { order, b: had.b, ez: had.ez, keys: int(row?.eg_keys), until: int(had.until), rh: int(had.rh), at: int(had.at) };",
-    "new": "ewg: wagerOfRow(had.wg) }, key, { subtle, nowS });\n    return { order, b: had.b, ez: had.ez, keys: int(row?.eg_keys), until: int(had.until), rh: int(had.rh), at: int(had.at) };",
+    "old": "        ewg: wagerOfRow(had.wg),\n      },\n      key,\n      { subtle, nowS: int(had.at) },\n    );\n    return {\n      order,",
+    "new": "        ewg: wagerOfRow(had.wg),\n      },\n      key,\n      { subtle, nowS },\n    );\n    return {\n      order,",
     "tests": [
       "test/net/eliteGates/egaudit4_net_service.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "AUDIT-EG-IV-net-held-letter-never",
     "file": "server-account/src/eg.js",
-    "old": "THEN ?7 ELSE ?5 END",
-    "new": "THEN ?5 ELSE ?5 END",
+    "old": "      SELECT lower(hex(randomblob(12))), account, ?2 || ez, ?3, ?4, replace(CASE WHEN EXISTS (SELECT 1 FROM eg_runs r WHERE r.b = eg_stakes.b AND r.account = eg_stakes.account) THEN ?7 ELSE ?5 END, '{day}', strftime('%Y-%m-%d', at, 'unixepoch')), NULL, ?6",
+    "new": "      SELECT lower(hex(randomblob(12))), account, ?2 || ez, ?3, ?4, replace(CASE WHEN EXISTS (SELECT 1 FROM eg_runs r WHERE r.b = eg_stakes.b AND r.account = eg_stakes.account) THEN ?5 ELSE ?5 END, '{day}', strftime('%Y-%m-%d', at, 'unixepoch')), NULL, ?6",
     "tests": [
       "test/net/eliteGates/egaudit4_net_service.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "AUDIT-EG-IV-net-held-letter-always",
     "file": "server-account/src/eg.js",
-    "old": "CASE WHEN EXISTS (SELECT 1 FROM eg_runs r WHERE r.b = eg_stakes.b AND r.account = eg_stakes.account) THEN",
-    "new": "CASE WHEN 1 THEN",
+    "old": "      SELECT lower(hex(randomblob(12))), account, ?2 || ez, ?3, ?4, replace(CASE WHEN EXISTS (SELECT 1 FROM eg_runs r WHERE r.b = eg_stakes.b AND r.account = eg_stakes.account) THEN ?7 ELSE ?5 END, '{day}', strftime('%Y-%m-%d', at, 'unixepoch')), NULL, ?6",
+    "new": "      SELECT lower(hex(randomblob(12))), account, ?2 || ez, ?3, ?4, replace(CASE WHEN 1 THEN ?7 ELSE ?5 END, '{day}', strftime('%Y-%m-%d', at, 'unixepoch')), NULL, ?6",
     "tests": [
       "test/net/eliteGates/egaudit4_net_service.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "AUDIT-EG-IV-net-champions-kept-at-first-read",
     "file": "server-account/src/egHonours.js",
-    "old": "  if (last >= 1 && nowS < arenaSeasonEndsS(last) + EG_RECEIPT_TTL_S) ids =",
-    "new": "  if (false) ids =",
+    "old": "  if (last >= 1 && nowS < arenaSeasonEndsS(last) + EG_RECEIPT_TTL_S)\n    ids = new Set(championsOf((await descentOf(ctx.db, last)).brackets).map(([, p]) => p));",
+    "new": "  if (false) ids = new Set(championsOf((await descentOf(ctx.db, last)).brackets).map(([, p]) => p));",
     "tests": [
       "test/net/eliteGates/egaudit4_net_service.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "AUDIT-EG-IV-net-champions-grace-short",
     "file": "server-account/src/egHonours.js",
-    "old": "nowS < arenaSeasonEndsS(last) + EG_RECEIPT_TTL_S)",
-    "new": "nowS < arenaSeasonEndsS(last) + 3600)",
+    "old": "  if (last >= 1 && nowS < arenaSeasonEndsS(last) + EG_RECEIPT_TTL_S)",
+    "new": "  if (last >= 1 && nowS < arenaSeasonEndsS(last) + 3600)",
     "tests": [
       "test/net/eliteGates/egaudit4_net_service.test.js"
     ]
@@ -443,7 +443,7 @@
   {
     "name": "AUDIT-EG-IV-net-weir-never-in-the-batch",
     "file": "server-account/src/accounts.js",
-    "old": "  const roll = c.x === 'rite' ? null : weir?.(c) ?? null;",
+    "old": "  const roll = c.x === 'rite' ? null : (weir?.(c) ?? null);",
     "new": "  const roll = null;",
     "tests": [
       "test/net/eliteGates/egaudit4_net_service.test.js"
@@ -452,8 +452,8 @@
   {
     "name": "AUDIT-EG-IV-net-weir-on-a-claim-that-wrote-no-row",
     "file": "server-account/src/eg.js",
-    "old": "    WHERE id = ?1 AND changes() > 0 RETURNING eg_keys, eg_key_miss",
-    "new": "    WHERE id = ?1 RETURNING eg_keys, eg_key_miss",
+    "old": "    WHERE id = ?1 AND changes() > 0 RETURNING eg_keys, eg_key_miss`,",
+    "new": "    WHERE id = ?1 RETURNING eg_keys, eg_key_miss`,",
     "tests": [
       "test/net/eliteGates/egaudit4_net_service.test.js"
     ]

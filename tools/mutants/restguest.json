@@ -11,8 +11,8 @@
   {
     "name": "RESTGUEST-any-id",
     "file": "server-account/src/decorAccess.js",
-    "old": "  if ((kind === 'rest') !== (id === DECOR_REST_ID)) return { error: 'bad-decor' };",
-    "new": "",
+    "old": "  if ((kind === 'rest') !== (id === DECOR_REST_ID)) return { error: 'bad-decor' }; // REST-GUEST: the home's row is the rest's alone",
+    "new": "  // REST-GUEST: the home's row is the rest's alone",
     "tests": [
       "test/server/decoraccess.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RESTGUEST-grant-unsaid",
     "file": "server-account/src/decorAccess.js",
-    "old": "    if (row.kind === 'rest') rest = true;\n    else if",
-    "new": "    if (row.kind === 'rest') rest = rest;\n    else if",
+    "old": "    if (row.kind === 'rest') rest = true;",
+    "new": "    if (row.kind === 'rest') rest = rest;",
     "tests": [
       "test/server/decoraccess.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RESTGUEST-rest-a-station",
     "file": "server-account/src/decorAccess.js",
-    "old": "    if (row.kind === 'rest') rest = true;\n    else if (row.kind === 'storage')",
-    "new": "    if (row.kind === 'rest') rest = true;\n    if (row.kind === 'storage')",
+    "old": "    else if (row.kind === 'storage') storage.push(row.piece_id);",
+    "new": "    if (row.kind === 'storage') storage.push(row.piece_id);",
     "tests": [
       "test/server/decoraccess.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RESTGUEST-hall-set",
     "file": "server-account/src/decorAccess.js",
-    "old": "  if (kind === 'rest' && home?.guild_id != null) return { error: 'bad-decor' };\n",
-    "new": "",
+    "old": "  if (kind === 'rest' && home?.guild_id != null) return { error: 'bad-decor' };\n  if (home?.guild_id != null) {",
+    "new": "  if (home?.guild_id != null) {",
     "tests": [
       "test/server/decoraccess.test.js"
     ]

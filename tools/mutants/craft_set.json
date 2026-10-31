@@ -1,52 +1,52 @@
 [
- {
-  "name": "CRAFTSET-eligible-decor-scanned",
-  "file": "server-account/src/writs.js",
-  "old": "AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = +p.provenance)",
-  "new": "AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = p.provenance)",
-  "tests": [
-   "test/server/craft_set.test.js"
-  ],
-  "note": "the column's affinity back: the whole decor index scanned once a piece"
- },
- {
-  "name": "CRAFTSET-eligible-crafts-a-piece",
-  "file": "server-account/src/writs.js",
-  "old": "AND p.provenance IN ${craftedBySql('?1')}",
-  "new": "AND EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND (provenance = p.provenance OR provenance2 = p.provenance))",
-  "tests": [
-   "test/server/craft_set.test.js"
-  ],
-  "note": "the account's every craft scanned once a piece"
- },
- {
-  "name": "CRAFTSET-second-piece-lost",
-  "file": "server-account/src/professions.js",
-  "old": "\n    UNION ALL SELECT provenance2 FROM prof_crafts WHERE player = ${p} AND provenance2 IS NOT NULL)`;",
-  "new": ")`;",
-  "tests": [
-   "test/server/craft_set.test.js"
-  ],
-  "note": "a craft of two's second piece no longer of this make"
- },
- {
-  "name": "CRAFTSET-writ-piece-decor-scanned",
-  "file": "server-account/src/craftWrits.js",
-  "old": "json_extract(item, '$.pv') = +pk.provenance",
-  "new": "json_extract(item, '$.pv') = pk.provenance",
-  "tests": [
-   "test/server/craft_set.test.js"
-  ],
-  "note": "a crafting writ's piece check scans the decor index"
- },
- {
-  "name": "CRAFTSET-ways-decor-scanned",
-  "file": "server-account/src/market.js",
-  "old": "json_extract(h.item, '$.pv') = +p.provenance",
-  "new": "json_extract(h.item, '$.pv') = p.provenance",
-  "tests": [
-   "test/server/craft_set.test.js"
-  ],
-  "note": "the market's piece ways scan the decor index"
- }
+  {
+    "name": "CRAFTSET-eligible-decor-scanned",
+    "file": "server-account/src/writs.js",
+    "old": "AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = +p.provenance)",
+    "new": "AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = p.provenance)",
+    "tests": [
+      "test/server/craft_set.test.js"
+    ],
+    "note": "the column's affinity back: the whole decor index scanned once a piece"
+  },
+  {
+    "name": "CRAFTSET-eligible-crafts-a-piece",
+    "file": "server-account/src/writs.js",
+    "old": "AND p.provenance IN ${craftedBySql('?1')}",
+    "new": "AND EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND (provenance = p.provenance OR provenance2 = p.provenance))",
+    "tests": [
+      "test/server/craft_set.test.js"
+    ],
+    "note": "the account's every craft scanned once a piece"
+  },
+  {
+    "name": "CRAFTSET-second-piece-lost",
+    "file": "server-account/src/professions.js",
+    "old": "\n    UNION ALL SELECT provenance2 FROM prof_crafts WHERE player = ${p} AND provenance2 IS NOT NULL)`;",
+    "new": ")`;",
+    "tests": [
+      "test/server/craft_set.test.js"
+    ],
+    "note": "a craft of two's second piece no longer of this make"
+  },
+  {
+    "name": "CRAFTSET-writ-piece-decor-scanned",
+    "file": "server-account/src/craftWrits.js",
+    "old": "    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = +pk.provenance))`; // AUDIT CRAFT-WRITS S2: its own alias (`pk`) - the board's outer `pr` named here made the check its own piece's",
+    "new": "    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = pk.provenance))`; // AUDIT CRAFT-WRITS S2: its own alias (`pk`) - the board's outer `pr` named here made the check its own piece's",
+    "tests": [
+      "test/server/craft_set.test.js"
+    ],
+    "note": "a crafting writ's piece check scans the decor index"
+  },
+  {
+    "name": "CRAFTSET-ways-decor-scanned",
+    "file": "server-account/src/market.js",
+    "old": "json_extract(h.item, '$.pv') = +p.provenance",
+    "new": "json_extract(h.item, '$.pv') = p.provenance",
+    "tests": [
+      "test/server/craft_set.test.js"
+    ],
+    "note": "the market's piece ways scan the decor index"
+  }
 ]

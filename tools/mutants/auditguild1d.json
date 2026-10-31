@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-GUILD1d-S2-keeper-on-a-clients-word",
     "file": "server-account/src/decor.js",
-    "old": "\n      AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p))))`;",
-    "new": "))))`;",
+    "old": "      AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}\n      AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p))))`; // AUDIT GUILD1d S2: a realm character's - its moves and stations are paid on its record, never on a client's word",
+    "new": "      AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}))))`; // AUDIT GUILD1d S2: a realm character's - its moves and stations are paid on its record, never on a client's word",
     "tests": [
       "test/net/auditguild1d.test.js",
       "test/net/guild1d_service.test.js"
@@ -21,8 +21,8 @@
   {
     "name": "AUDIT-GUILD1d-S3-insert-takes-a-hall-item",
     "file": "server-account/src/decor.js",
-    "old": "building_key = ? AND guild_id IS NOT NULL))', [barred",
-    "new": "building_key = ? AND guild_id IS NULL))', [barred",
+    "old": "    '(? = 0 OR NOT EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND guild_id IS NOT NULL))',",
+    "new": "    '(? = 0 OR NOT EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND guild_id IS NULL))',",
     "tests": [
       "test/net/auditguild1d.test.js",
       "test/net/guild1d_service.test.js"
@@ -31,8 +31,8 @@
   {
     "name": "AUDIT-GUILD1d-S3-hall-word-unsaid",
     "file": "server-account/src/decor.js",
-    "old": "  if (hallSaid) return { error: hallSaid };\n",
-    "new": "",
+    "old": "  if (hallSaid) return { error: hallSaid };\n  if (",
+    "new": "  if (",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "AUDIT-GUILD1d-S9-piece-half-past-the-cap",
     "file": "server-account/src/decor.js",
-    "old": "moved_kind = 'hall-piece'\n        WHERE id = ?4 AND treasury + ?1 <= ?5`)",
-    "new": "moved_kind = 'hall-piece'\n        WHERE id = ?4 AND ?5 IS NOT NULL`)",
+    "old": "        WHERE id = ?4 AND treasury + ?1 <= ?5`,",
+    "new": "        WHERE id = ?4 AND ?5 IS NOT NULL`,",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "AUDIT-GUILD1d-S9-piece-half-lost-silently",
     "file": "server-account/src/decor.js",
-    "old": "      mustChange(db),\n    ]);\n  } catch {\n    const g = await db.prepare('SELECT treasury FROM guilds WHERE id = ?').bind(guildId).first();",
-    "new": "    ]);\n  } catch {\n    const g = await db.prepare('SELECT treasury FROM guilds WHERE id = ?').bind(guildId).first();",
+    "old": "      mustChange(db),\n    ]);",
+    "new": "    ]);",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "AUDIT-GUILD1d-S9-piece-half-outside-realm-gold",
     "file": "server-account/src/decor.js",
-    "old": "SET treasury = treasury + ?1, realm_gold = realm_gold + ?1, moved_by = ?2, moved_at = ?3, moved_kind = 'hall-piece'",
-    "new": "SET treasury = treasury + ?1, moved_by = ?2, moved_at = ?3, moved_kind = 'hall-piece'",
+    "old": "          `UPDATE guilds SET treasury = treasury + ?1, realm_gold = realm_gold + ?1, moved_by = ?2, moved_at = ?3, moved_kind = 'hall-piece'",
+    "new": "          `UPDATE guilds SET treasury = treasury + ?1, moved_by = ?2, moved_at = ?3, moved_kind = 'hall-piece'",
     "tests": [
       "test/net/auditguild1d.test.js",
       "test/net/guild1d_service.test.js"

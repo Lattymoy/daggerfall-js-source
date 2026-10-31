@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-B1-tax-not-running",
     "file": "server-account/src/contracts.js",
-    "old": "const deedTaxSql = `(((c.deeds - c.left_deeds + 1) * c.pay * ${TAX_PCT}) / 100",
-    "new": "const deedTaxSql = `(((c.deeds - c.left_deeds) * c.pay * ${TAX_PCT}) / 100",
+    "old": "const deedTaxSql = `(((c.deeds - c.left_deeds + 1) * c.pay * ${TAX_PCT}) / 100 - ((c.deeds - c.left_deeds) * c.pay * ${TAX_PCT}) / 100)`;",
+    "new": "const deedTaxSql = `(((c.deeds - c.left_deeds) * c.pay * ${TAX_PCT}) / 100 - ((c.deeds - c.left_deeds) * c.pay * ${TAX_PCT}) / 100)`;",
     "tests": [
       "test/net/auditsilver_service.test.js",
       "test/net/silverways_service.test.js"
@@ -67,8 +67,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-B1-paid-max-unread",
     "file": "server-account/src/contracts.js",
-    "old": "AND (SELECT COUNT(*) FROM guild_contract_pays p WHERE p.event = ?3 AND p.account = ?1) < ?10`)",
-    "new": "AND (SELECT COUNT(*) FROM guild_contract_pays p WHERE p.event = ?3 AND p.account = ?1) < ?10 + 5`)",
+    "old": "          AND (SELECT COUNT(*) FROM guild_contract_pays p WHERE p.event = ?3 AND p.account = ?1) < ?10`,",
+    "new": "          AND (SELECT COUNT(*) FROM guild_contract_pays p WHERE p.event = ?3 AND p.account = ?1) < ?10 + 5`,",
     "tests": [
       "test/net/auditsilver_service.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-B2-read-ignores-posters",
     "file": "server-account/src/contracts.js",
-    "old": " AND left_deeds >= 1 AND NOT ${posters('guild_contracts.guild_id')}",
-    "new": " AND left_deeds >= 1 AND (${posters('guild_contracts.guild_id')} OR 1)",
+    "old": "    WHERE region = ?1 AND kind = 'raid' AND state = 'open' AND expires_at > ?2 AND left_deeds >= 1 AND NOT ${posters('guild_contracts.guild_id')}",
+    "new": "    WHERE region = ?1 AND kind = 'raid' AND state = 'open' AND expires_at > ?2 AND left_deeds >= 1 AND (${posters('guild_contracts.guild_id')} OR 1)",
     "tests": [
       "test/net/auditsilver_service.test.js"
     ]

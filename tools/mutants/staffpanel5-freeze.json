@@ -282,8 +282,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-beat-credits",
     "file": "server-account/src/accounts.js",
-    "old": "AND COALESCE(frozen_until, 0) <= ?1",
-    "new": "AND 1",
+    "old": "       AND COALESCE(frozen_until, 0) <= ?1   -- STAFF-PANEL5-FREEZE: a frozen account's beat credits nothing (a pass minted before the freeze)",
+    "new": "       AND 1   -- STAFF-PANEL5-FREEZE: a frozen account's beat credits nothing (a pass minted before the freeze)",
     "why": "a frozen beat credits play",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"

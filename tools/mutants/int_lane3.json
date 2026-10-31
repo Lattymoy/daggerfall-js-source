@@ -707,8 +707,8 @@
   {
     "name": "INT14-GATE-CLAIM-DROPS-BODY",
     "file": "server-account/src/accounts.js",
-    "old": "embers, c.m ? JSON.stringify(c.m) : null);",
-    "new": "embers, null);",
+    "old": "    .bind(\n      c.d,\n      player.id,\n      c.b,\n      c.x,\n      nowS,\n      c.x !== 'rite' && gateRegionOk(c.d, region) ? region : null,\n      embers,\n      c.m ? JSON.stringify(c.m) : null,\n    ); // INT14: the relay's count, kept; WW2: a region the Bay's lane's alone - no gate past the Bay stands in a Bay region",
+    "new": "    .bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && gateRegionOk(c.d, region) ? region : null, embers, null); // INT14: the relay's count, kept; WW2: a region the Bay's lane's alone - no gate past the Bay stands in a Bay region",
     "tests": [
       "test/net/int12_body_relay.test.js"
     ]

@@ -172,8 +172,8 @@
   {
     "name": "INT17-the-hours-kept-forever",
     "file": "server-account/src/cron.js",
-    "old": "  ['progress-hours', (ctx) => rounds(() => deleted(ctx.db,",
-    "new": "  ['progress-hours-x', (ctx) => rounds(() => deleted(ctx.db,",
+    "old": "    'progress-hours',",
+    "new": "    'progress-hours-x',",
     "why": "the measure's hours swept under another name - the hourly job's roll moved",
     "tests": [
       "test/net/auditscale.test.js"

@@ -20,8 +20,8 @@
   {
     "name": "REALM6-free-write-needs-record",
     "file": "server-account/src/decor.js",
-    "old": "  if (side.error === 'realm-needed' && realm == null && delta === 0) return { at: null };\n",
-    "new": "",
+    "old": "  if (side.error === 'realm-needed' && realm == null && delta === 0) return { at: null };\n  return side;",
+    "new": "  return side;",
     "tests": [
       "test/server/realm6.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "REALM6-place-unpaid",
     "file": "server-account/src/decor.js",
-    "old": "  if (side.at && delta !== 0) {\n    // REALM P2.2b: the piece and what it cost, together",
-    "new": "  if (false) {\n    // REALM P2.2b: the piece and what it cost, together",
+    "old": "        : null;\n  if (side.at && delta !== 0) {",
+    "new": "        : null;\n  if (false) {",
     "tests": [
       "test/server/realm6.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "REALM6-removal-half-unpaid",
     "file": "server-account/src/decor.js",
-    "old": "    if (side.at && delta > 0) {\n      // REALM P2.2b: half of what it cost",
-    "new": "    if (false) {\n      // REALM P2.2b: half of what it cost",
+    "old": "    if (side.at && delta > 0) {",
+    "new": "    if (false) {",
     "tests": [
       "test/server/realm6.test.js"
     ]

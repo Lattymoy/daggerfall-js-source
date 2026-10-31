@@ -92,8 +92,8 @@
   {
     "name": "BASEHIDE-a-stranger-clears",
     "file": "server-account/src/decor.js",
-    "old": "  const r = await db.prepare(`INSERT INTO home_hidden (map_id, building_key, keys) SELECT ?, ?, ? WHERE ${OWNS}",
-    "new": "  const r = await db.prepare(`INSERT INTO home_hidden (map_id, building_key, keys) SELECT ?, ?, ? WHERE ${OWNS} OR 1",
+    "old": "      `INSERT INTO home_hidden (map_id, building_key, keys) SELECT ?, ?, ? WHERE ${OWNS}",
+    "new": "      `INSERT INTO home_hidden (map_id, building_key, keys) SELECT ?, ?, ? WHERE ${OWNS} OR 1",
     "tests": [
       "test/server/basehide.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "BASEHIDE-a-bad-list-kept",
     "file": "server-account/src/decor.js",
-    "old": "  if (!hidden) return { error: 'bad-decor' };\n  const { db } = ctx;\n  const r = await db.prepare(`INSERT INTO home_hidden",
-    "new": "  const { db } = ctx;\n  const r = await db.prepare(`INSERT INTO home_hidden",
+    "old": "  if (!hidden) return { error: 'bad-decor' };\n  const { db } = ctx;",
+    "new": "  const { db } = ctx;",
     "tests": [
       "test/server/basehide.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "BASEHIDE-the-list-unread",
     "file": "server-account/src/decor.js",
-    "old": "return { mapId, buildingKey, pieces, hidden: hiddenListOf(hidden?.results?.[0] ?? null), rev, cap, measured: home?.ground != null, ...arms };",
-    "new": "return { mapId, buildingKey, pieces, hidden: [], rev, cap, measured: home?.ground != null, ...arms };",
+    "old": "  return {\n    mapId,\n    buildingKey,\n    pieces,\n    hidden: hiddenListOf(hidden?.results?.[0] ?? null),\n    rev,\n    cap,\n    measured: home?.ground != null,\n    ...arms,\n  };",
+    "new": "  return { mapId, buildingKey, pieces, hidden: [], rev, cap, measured: home?.ground != null, ...arms };",
     "tests": [
       "test/server/basehide.test.js"
     ],

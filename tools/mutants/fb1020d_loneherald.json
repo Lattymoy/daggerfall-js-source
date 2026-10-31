@@ -212,8 +212,8 @@
   {
     "name": "FB1020D-letter-says-company",
     "file": "server-account/src/egHonours.js",
-    "old": "'You were the first ever to take Redoubt 10",
-    "new": "'Your company was the first ever to take Redoubt 10",
+    "old": "    'You were the first ever to take Redoubt 10 of the Battlespire. The Spire remembers.', // AUDIT FB1020d L1-4: a company's words or one's - the first company came alone (SPIRE-FIRST)",
+    "new": "    'Your company was the first ever to take Redoubt 10 of the Battlespire. The Spire remembers.', // AUDIT FB1020d L1-4: a company's words or one's - the first company came alone (SPIRE-FIRST)",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ],

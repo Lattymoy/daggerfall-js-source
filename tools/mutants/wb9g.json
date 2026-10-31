@@ -111,8 +111,8 @@
   {
     "name": "WB9g-the-gates-never-counted",
     "file": "server-account/src/accounts.js",
-    "old": "         AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3${rid ? `",
-    "new": "         ${rid ? `",
+    "old": "         AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3${",
+    "new": "         ${",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ],
@@ -121,8 +121,8 @@
   {
     "name": "WB9g-the-spend-never-added",
     "file": "server-account/src/accounts.js",
-    "old": "insignia_spent = insignia_spent + ?3, last_seen",
-    "new": "insignia_spent = insignia_spent, last_seen",
+    "old": "         insignia_spent = insignia_spent + ?3, last_seen = ?4",
+    "new": "         insignia_spent = insignia_spent, last_seen = ?4",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "WB9g-the-update-sells-an-owned-piece",
     "file": "server-account/src/accounts.js",
-    "old": "       AND (' ' || COALESCE(insignia, '') || ' ') NOT LIKE ('% ' || ?2 || ' %')\n",
-    "new": "",
+    "old": "         AND (' ' || COALESCE(insignia, '') || ' ') NOT LIKE ('% ' || ?2 || ' %')\n         AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3${\n           rid\n             ? `\n         AND ${brokerRidFreeSql('?1', '?5')}`\n             : ''\n         }",
+    "new": "           AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3${\n             rid\n               ? `\n         AND ${brokerRidFreeSql('?1', '?5')}`\n               : ''\n           }",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "WB9g-a-guest-served",
     "file": "server-account/src/accounts.js",
-    "old": "  if (!player?.handle) return { error: 'guest' };\n",
-    "new": "",
+    "old": "  if (!player?.handle) return { error: 'guest' };\n  // AUDIT FB1024 (BROKER-RID, brokerSales.js): a press with a request id - a fenced id writes nothing, the same press asked",
+    "new": "  // AUDIT FB1024 (BROKER-RID, brokerSales.js): a press with a request id - a fenced id writes nothing, the same press asked",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]

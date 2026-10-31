@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-SCALE-LANED-metric-throw-costs-job",
     "file": "server-account/src/cron.js",
-    "old": "    } catch { /* a metric never costs a job */ }",
-    "new": "    } finally { /* a metric never costs a job */ }",
+    "old": "    } catch {",
+    "new": "    } finally {",
     "tests": [
       "test/net/auditscale.test.js",
       "test/server/scale4b.test.js"
@@ -13,8 +13,8 @@
   {
     "name": "AUDIT-SCALE-LANED-lodes-behind-dev",
     "file": "server-account/src/cron.js",
-    "old": "    if (profSwitchOf(env?.PROFESSIONS_OPEN) !== 'on' || lodesPicked === day) return 0;",
-    "new": "    if (lodesPicked === day) return 0;",
+    "old": "      if (profSwitchOf(env?.PROFESSIONS_OPEN) !== 'on' || lodesPicked === day) return 0;",
+    "new": "      if (lodesPicked === day) return 0;",
     "tests": [
       "test/net/auditscale.test.js",
       "test/server/scale4b.test.js"
@@ -401,8 +401,8 @@
   {
     "name": "AUDIT-SCALE-LANED-auctions-one-page",
     "file": "server-account/src/cron.js",
-    "old": "  ['auctions', (ctx, env) => rounds(() => closeAuctions(ctx, null, env), SETTLE_MAX, ctx.budget)],",
-    "new": "  ['auctions', (ctx, env) => closeAuctions(ctx, null, env)],",
+    "old": "  ['auctions', (ctx, env) => rounds(() => closeAuctions(ctx, null, env), SETTLE_MAX, ctx.budget)], // DOMAIN3: the region law's Tithe",
+    "new": "  ['auctions', (ctx, env) => closeAuctions(ctx, null, env)], // DOMAIN3: the region law's Tithe",
     "tests": [
       "test/net/auditscale.test.js",
       "test/server/scale4b.test.js"
@@ -589,8 +589,8 @@
   {
     "name": "AUDIT-SCALE-A4-counted-every-time",
     "file": "server-account/src/cron.js",
-    "old": "      if (last?.at == null || Number(last.at) < Number(kept.at)) {",
-    "new": "      if (false) {",
+    "old": "        if (last?.at == null || Number(last.at) < Number(kept.at)) {",
+    "new": "        if (false) {",
     "tests": [
       "test/server/scale4b.test.js"
     ],

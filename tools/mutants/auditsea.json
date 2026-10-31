@@ -245,8 +245,8 @@
   {
     "name": "AUDIT-SEA-B5-never-swept",
     "file": "server-account/src/cron.js",
-    "old": "    for (const [sql, cutoff] of seaSweeps(ctx.nowS)) n += await rounds(() => deleted(ctx.db, sql, cutoff), SWEEP_ROWS, ctx.budget);",
-    "new": "    void seaSweeps;",
+    "old": "      for (const [sql, cutoff] of seaSweeps(ctx.nowS))\n        n += await rounds(() => deleted(ctx.db, sql, cutoff), SWEEP_ROWS, ctx.budget);",
+    "new": "      void seaSweeps;",
     "tests": [
       "test/systems/sea/auditsea.test.js",
       "test/net/auditscale.test.js"

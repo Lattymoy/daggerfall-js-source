@@ -132,8 +132,8 @@
   {
     "name": "DECOR-FIGURE-place-unguarded",
     "file": "server-account/src/decor.js",
-    "old": "  if (!sent || !decorScaleOk(sent)) return { error: 'bad-decor' };",
-    "new": "  if (!sent) return { error: 'bad-decor' };",
+    "old": "  if (!sent || !decorScaleOk(sent)) return { error: 'bad-decor' }; // DECOR-FIGURE: one of Daggerfall's people at its own size",
+    "new": "  if (!sent) return { error: 'bad-decor' }; // DECOR-FIGURE: one of Daggerfall's people at its own size",
     "tests": [
       "test/systems/decor/decorfigure.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "DECOR-FIGURE-move-unguarded",
     "file": "server-account/src/decor.js",
-    "old": "  if (!decorScaleOk({ ...was, ...pl }) && pl.scale !== was.scale) return { error: 'decor-figure' };",
-    "new": "",
+    "old": "  if (!decorScaleOk({ ...was, ...pl }) && pl.scale !== was.scale) return { error: 'decor-figure' }; // AUDIT HOME-VOTE II C2: its own word - a stale copy's turn of a figure brought back to 1 on another device",
+    "new": "  // AUDIT HOME-VOTE II C2: its own word - a stale copy's turn of a figure brought back to 1 on another device",
     "tests": [
       "test/systems/decor/decorfigure.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "DECOR-FIGURE-old-turn-refused",
     "file": "server-account/src/decor.js",
-    "old": "&& pl.scale !== was.scale) return { error: 'decor-figure' };",
-    "new": ") return { error: 'decor-figure' };",
+    "old": "  if (!decorScaleOk({ ...was, ...pl }) && pl.scale !== was.scale) return { error: 'decor-figure' }; // AUDIT HOME-VOTE II C2: its own word - a stale copy's turn of a figure brought back to 1 on another device",
+    "new": "  if (!decorScaleOk({ ...was, ...pl })) return { error: 'decor-figure' }; // AUDIT HOME-VOTE II C2: its own word - a stale copy's turn of a figure brought back to 1 on another device",
     "tests": [
       "test/systems/decor/decorfigure.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "HOME-VOTE-II-C2-word-unsaid",
     "file": "server-account/src/decor.js",
-    "old": "pl.scale !== was.scale) return { error: 'decor-figure' };",
-    "new": "pl.scale !== was.scale) return { error: 'bad-decor' };",
+    "old": "  if (!decorScaleOk({ ...was, ...pl }) && pl.scale !== was.scale) return { error: 'decor-figure' }; // AUDIT HOME-VOTE II C2: its own word - a stale copy's turn of a figure brought back to 1 on another device",
+    "new": "  if (!decorScaleOk({ ...was, ...pl }) && pl.scale !== was.scale) return { error: 'bad-decor' }; // AUDIT HOME-VOTE II C2: its own word - a stale copy's turn of a figure brought back to 1 on another device",
     "tests": [
       "test/systems/decor/decorfigure.test.js"
     ],

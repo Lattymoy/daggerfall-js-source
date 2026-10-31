@@ -508,7 +508,7 @@ pays well for it.*), the Soul Cake's shape, in the classic info box and on the e
 
 **An answer lost after the batch (AUDIT STARFALL B3, AS BUILT).** The claim's one batch is the whole of its money: the
 row, the Renown, the silver and INT5's fill of the playing character's budget, which ran after the batch as the raid's
-does and was lost with any failure between the two (`server-account/src/budget.js:"export function spoilsGrantStatement(db, playerId, pieces = 0, guard = null, ...binds) {"`,
+does and was lost with any failure between the two (`server-account/src/budget.js:"export function spoilsGrantStatement"`,
 held to the claim's own row by its nonce). What still runs after it is no credit: INT17's measure (a debit a lost answer
 only spares), the Renown order (signed again), the silver's answer (struck in the batch). The row carries the device's
 claim id (`stars_held.cid`, migration 0141), so a retry of an answer lost after the commit - a 5xx past the batch, a

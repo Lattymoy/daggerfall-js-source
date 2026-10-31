@@ -260,7 +260,7 @@ the interiors 44, the hub's shards 17, everything else under 10.
 | the gate read at a wake | ~$0 | a row read an instance life ($0.001 a million) |
 | province channels (PROVINCE-SLEEP) | ~$0 past the lines' own time | one object a province, its sockets hibernated between lines |
 | new messages, timers, alarms, rooms | none | no new send on the client's wire; the relay's timers counted (R4-1); the gates' lanes past the Bay stand none (`GATE_LANES_OPEN` the Bay's); the serpent's agreed site said to a hub's sockets when it moves (a few a day) and to a hello |
-| the account service | ~$0 | the new routes are a player's acts (a castle bought or sold, a gift, a witness); the seats' list reads the region law's rows from an isolate's minute cache (`server-account/src/domains.js:"export const DOMAIN_ROWS_KEPT_S = 60;"`) |
+| the account service | ~$0 | the new routes are a player's acts (a castle bought or sold, a gift, a witness); the seats' list reads the region law's rows from an isolate's minute cache (`server-account/src/domains.js:"export const DOMAIN_ROWS_KEPT_S"`) |
 
 So **the release adds some $2,300 a month per 1,000 concurrent players if a third of them roam past the Bay alone**, and
 the per-player bound is the spread's: ~$7.8 a month for a concurrent player alone past the Bay against ~$0.6 for one in

@@ -506,8 +506,8 @@
   {
     "name": "EGECO3-find-proof-unasked",
     "file": "server-account/src/eg.js",
-    "old": "  if (!(await proven(db, player.id))) return { error: 'unproven' };\n  const day = utcDay(nowS), wk",
-    "new": "  const day = utcDay(nowS), wk",
+    "old": "  if (!(await proven(db, player.id))) return { error: 'unproven' };\n  const day = utcDay(nowS),",
+    "new": "  const day = utcDay(nowS),",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "EGECO3-find-any-tier",
     "file": "server-account/src/eg.js",
-    "old": "if (typeof tier !== 'string' || !Object.hasOwn(EG_FIND_ODDS, tier)) return { error: 'tier' };",
-    "new": "if (typeof tier !== 'string') return { error: 'tier' };",
+    "old": "  if (typeof tier !== 'string' || !Object.hasOwn(EG_FIND_ODDS, tier)) return { error: 'tier' };",
+    "new": "  if (typeof tier !== 'string') return { error: 'tier' };",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "EGECO3-abyss-odds-moved",
     "file": "server-account/src/eg.js",
-    "old": "super: 1 / 60,",
-    "new": "super: 1 / 61,",
+    "old": "export const EG_FIND_ODDS = Object.freeze({ super: 1 / 60, elite: 1 / 150, regular: 1 / 400 });",
+    "new": "export const EG_FIND_ODDS = Object.freeze({ super: 1 / 61, elite: 1 / 150, regular: 1 / 400 });",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "EGECO3-elite-odds-moved",
     "file": "server-account/src/eg.js",
-    "old": "elite: 1 / 150,",
-    "new": "elite: 1 / 149,",
+    "old": "export const EG_FIND_ODDS = Object.freeze({ super: 1 / 60, elite: 1 / 150, regular: 1 / 400 });",
+    "new": "export const EG_FIND_ODDS = Object.freeze({ super: 1 / 60, elite: 1 / 149, regular: 1 / 400 });",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "EGECO3-regular-odds-moved",
     "file": "server-account/src/eg.js",
-    "old": "regular: 1 / 400 }",
-    "new": "regular: 1 / 401 }",
+    "old": "export const EG_FIND_ODDS = Object.freeze({ super: 1 / 60, elite: 1 / 150, regular: 1 / 400 });",
+    "new": "export const EG_FIND_ODDS = Object.freeze({ super: 1 / 60, elite: 1 / 150, regular: 1 / 401 });",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "EGECO3-the-key-never-added",
     "file": "server-account/src/eg.js",
-    "old": "UPDATE players SET eg_keys = eg_keys + 1 WHERE id = ?1 AND (SELECT",
-    "new": "UPDATE players SET eg_keys = eg_keys + 0 WHERE id = ?1 AND (SELECT",
+    "old": "          'UPDATE players SET eg_keys = eg_keys + 1 WHERE id = ?1 AND (SELECT COALESCE(SUM(found), 0) FROM eg_finds WHERE account = ?1 AND wk = ?2) < ?3 RETURNING eg_keys',",
+    "new": "          'UPDATE players SET eg_keys = eg_keys + 0 WHERE id = ?1 AND (SELECT COALESCE(SUM(found), 0) FROM eg_finds WHERE account = ?1 AND wk = ?2) < ?3 RETURNING eg_keys',",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "EGECO3-day-cap-off-by-one",
     "file": "server-account/src/eg.js",
-    "old": "ON CONFLICT (account, day, tier) DO UPDATE SET asks = asks + 1 WHERE asks < ?5 RETURNING asks",
-    "new": "ON CONFLICT (account, day, tier) DO UPDATE SET asks = asks + 1 WHERE asks <= ?5 RETURNING asks",
+    "old": "    ON CONFLICT (account, day, tier) DO UPDATE SET asks = asks + 1 WHERE asks < ?5 RETURNING asks`,",
+    "new": "    ON CONFLICT (account, day, tier) DO UPDATE SET asks = asks + 1 WHERE asks <= ?5 RETURNING asks`,",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "EGECO3-one-cap-every-tier",
     "file": "server-account/src/eg.js",
-    "old": ".bind(player.id, day, tier, wk, EG_FIND_PER_DAY).first();",
-    "new": ".bind(player.id, day, 'all', wk, EG_FIND_PER_DAY).first();",
+    "old": "    .bind(player.id, day, tier, wk, EG_FIND_PER_DAY)",
+    "new": "    .bind(player.id, day, 'all', wk, EG_FIND_PER_DAY)",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "EGECO3-day-never-turning",
     "file": "server-account/src/eg.js",
-    "old": "  const day = utcDay(nowS), wk = arenaWeekOf(nowS);",
-    "new": "  const day = 0, wk = arenaWeekOf(nowS);",
+    "old": "  const day = utcDay(nowS),",
+    "new": "  const day = 0,",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -587,8 +587,8 @@
   {
     "name": "EGECO3-week-never-turning",
     "file": "server-account/src/eg.js",
-    "old": "  const day = utcDay(nowS), wk = arenaWeekOf(nowS);",
-    "new": "  const day = utcDay(nowS), wk = 0;",
+    "old": "    wk = arenaWeekOf(nowS);",
+    "new": "    wk = 0;",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "EGECO3-capped-yes-marked",
     "file": "server-account/src/eg.js",
-    "old": "      db.prepare('UPDATE eg_finds SET found = found + 1 WHERE account = ?1 AND day = ?2 AND tier = ?3 AND (SELECT COALESCE(SUM(found), 0) FROM eg_finds WHERE account = ?1 AND wk = ?4) < ?5')",
-    "new": "      db.prepare('UPDATE eg_finds SET found = found + 1 WHERE account = ?1 AND day = ?2 AND tier = ?3 AND ?4 = ?4 AND ?5 = ?5')",
+    "old": "          'UPDATE eg_finds SET found = found + 1 WHERE account = ?1 AND day = ?2 AND tier = ?3 AND (SELECT COALESCE(SUM(found), 0) FROM eg_finds WHERE account = ?1 AND wk = ?4) < ?5',",
+    "new": "          'UPDATE eg_finds SET found = found + 1 WHERE account = ?1 AND day = ?2 AND tier = ?3 AND ?4 = ?4 AND ?5 = ?5',",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]
@@ -614,8 +614,8 @@
   {
     "name": "EGECO3-capped-yes-paid",
     "file": "server-account/src/eg.js",
-    "old": "      db.prepare('UPDATE players SET eg_keys = eg_keys + 1 WHERE id = ?1 AND (SELECT COALESCE(SUM(found), 0) FROM eg_finds WHERE account = ?1 AND wk = ?2) < ?3 RETURNING eg_keys')",
-    "new": "      db.prepare('UPDATE players SET eg_keys = eg_keys + 1 WHERE id = ?1 AND ?2 = ?2 AND ?3 = ?3 RETURNING eg_keys')",
+    "old": "        .prepare(\n          'UPDATE players SET eg_keys = eg_keys + 1 WHERE id = ?1 AND (SELECT COALESCE(SUM(found), 0) FROM eg_finds WHERE account = ?1 AND wk = ?2) < ?3 RETURNING eg_keys',\n        )",
+    "new": "        .prepare('UPDATE players SET eg_keys = eg_keys + 1 WHERE id = ?1 AND ?2 = ?2 AND ?3 = ?3 RETURNING eg_keys')",
     "tests": [
       "test/systems/eliteGates/egeco_find.test.js"
     ]

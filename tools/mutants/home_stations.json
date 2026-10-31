@@ -122,8 +122,8 @@
   {
     "name": "HOME-STATIONS-service-drops-the-craft",
     "file": "server-account/src/decor.js",
-    "old": "JSON.stringify({ pos, rot, scale, light, storage, paid, ...(station ? { station } : {}), ...(name ? { name } : {}) });   // HOME-STATIONS: the craft, when it serves one",
-    "new": "JSON.stringify({ pos, rot, scale, light, storage, paid, ...(name ? { name } : {}) });   // HOME-STATIONS: the craft, when it serves one",
+    "old": "  JSON.stringify({ pos, rot, scale, light, storage, paid, ...(station ? { station } : {}), ...(name ? { name } : {}) }); // HOME-STATIONS: the craft, when it serves one",
+    "new": "  JSON.stringify({ pos, rot, scale, light, storage, paid, ...(name ? { name } : {}) }); // HOME-STATIONS: the craft, when it serves one",
     "tests": [
       "test/ui/homestations.test.js"
     ]

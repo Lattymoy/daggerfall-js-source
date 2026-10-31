@@ -130,7 +130,7 @@
   {
     "name": "SILVER-WAYS-svc-gate-deed-none",
     "file": "server-account/src/accounts.js",
-    "old": "  const deed = c.x === 'rite' ? null : deeds?.(c.d) ?? null;",
+    "old": "  const deed = c.x === 'rite' ? null : (deeds?.(c.d) ?? null);",
     "new": "  const deed = null;",
     "tests": [
       "test/net/silverways_service.test.js"
@@ -139,8 +139,8 @@
   {
     "name": "SILVER-WAYS-svc-contract-any-region",
     "file": "server-account/src/contracts.js",
-    "old": "WHERE region = ?1 AND kind = 'raid' AND state = 'open'",
-    "new": "WHERE ?1 = ?1 AND kind = 'raid' AND state = 'open'",
+    "old": "    WHERE region = ?1 AND kind = 'raid' AND state = 'open' AND expires_at > ?2 AND left_deeds >= 1 AND NOT ${posters('guild_contracts.guild_id')}",
+    "new": "    WHERE ?1 = ?1 AND kind = 'raid' AND state = 'open' AND expires_at > ?2 AND left_deeds >= 1 AND NOT ${posters('guild_contracts.guild_id')}",
     "tests": [
       "test/net/silverways_service.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "SILVER-WAYS-svc-contract-escrow-undrawn",
     "file": "server-account/src/contracts.js",
-    "old": "SET left_deeds = left_deeds - 1, escrow = escrow - pay,",
-    "new": "SET left_deeds = left_deeds - 1, escrow = escrow,",
+    "old": "          `UPDATE guild_contracts SET left_deeds = left_deeds - 1, escrow = escrow - pay,",
+    "new": "          `UPDATE guild_contracts SET left_deeds = left_deeds - 1, escrow = escrow,",
     "tests": [
       "test/net/silverways_service.test.js"
     ]

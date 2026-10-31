@@ -2,8 +2,8 @@
   {
     "name": "ACC4-1-credit-every-gap",
     "file": "server-account/src/accounts.js",
-    "old": "WHEN played_at IS NOT NULL AND ?1 > played_at AND ?1 - played_at <= ?2 THEN ?1 - played_at",
-    "new": "WHEN played_at IS NOT NULL AND ?1 > played_at THEN ?1 - played_at",
+    "old": "         WHEN played_at IS NOT NULL AND ?1 > played_at AND ?1 - played_at <= ?2 THEN ?1 - played_at",
+    "new": "         WHEN played_at IS NOT NULL AND ?1 > played_at THEN ?1 - played_at",
     "tests": [
       "test/server/acc4played.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "ACC4-2-grace-exclusive",
     "file": "server-account/src/accounts.js",
-    "old": "?1 - played_at <= ?2 THEN",
-    "new": "?1 - played_at < ?2 THEN",
+    "old": "         WHEN played_at IS NOT NULL AND ?1 > played_at AND ?1 - played_at <= ?2 THEN ?1 - played_at",
+    "new": "         WHEN played_at IS NOT NULL AND ?1 > played_at AND ?1 - played_at < ?2 THEN ?1 - played_at",
     "tests": [
       "test/server/acc4played.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "ACC4-3-clock-goes-backwards",
     "file": "server-account/src/accounts.js",
-    "old": "played_at = MAX(COALESCE(played_at, ?1), ?1)",
-    "new": "played_at = ?1",
+    "old": "       played_at = MAX(COALESCE(played_at, ?1), ?1)",
+    "new": "       played_at = ?1",
     "tests": [
       "test/server/acc4played.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "ACC4-4-late-beat-credits-negative-or-zero-gap",
     "file": "server-account/src/accounts.js",
-    "old": "WHEN played_at IS NOT NULL AND ?1 > played_at AND",
-    "new": "WHEN played_at IS NOT NULL AND",
+    "old": "         WHEN played_at IS NOT NULL AND ?1 > played_at AND ?1 - played_at <= ?2 THEN ?1 - played_at",
+    "new": "         WHEN played_at IS NOT NULL AND ?1 - played_at <= ?2 THEN ?1 - played_at",
     "tests": [
       "test/server/acc4played.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "ACC4-5-read-then-write",
     "file": "server-account/src/accounts.js",
-    "old": "export async function creditPlay({ db, nowS }, playerId, sessionId = null) {\n",
-    "new": "export async function creditPlay({ db, nowS }, playerId, sessionId = null) {\n  const was = await db.prepare('SELECT played_at FROM players WHERE id = ?').bind(playerId).first();\n  const gap = Number.isSafeInteger(was?.played_at) ? nowS - was.played_at : -1;\n  await db.prepare('UPDATE players SET played_s = played_s + ?, played_at = MAX(COALESCE(played_at, 0), ?) WHERE id = ?').bind(gap > 0 && gap <= PLAY_GRACE_S ? gap : 0, nowS, playerId).run();\n  if (playerId) return { playedS: (await db.prepare('SELECT played_s FROM players WHERE id = ?').bind(playerId).first()).played_s };\n",
+    "old": "  // SESSION-SIGN (AUDIT PLAN-1000 E3; sessionPass.js): a beat is a write, and asks in its own statement that the session it",
+    "new": "  const was = await db.prepare('SELECT played_at FROM players WHERE id = ?').bind(playerId).first();\n  const gap = Number.isSafeInteger(was?.played_at) ? nowS - was.played_at : -1;\n  await db\n    .prepare('UPDATE players SET played_s = played_s + ?, played_at = MAX(COALESCE(played_at, 0), ?) WHERE id = ?')\n    .bind(gap > 0 && gap <= PLAY_GRACE_S ? gap : 0, nowS, playerId)\n    .run();\n  if (playerId)\n    return { playedS: (await db.prepare('SELECT played_s FROM players WHERE id = ?').bind(playerId).first()).played_s };\n  // SESSION-SIGN (AUDIT PLAN-1000 E3; sessionPass.js): a beat is a write, and asks in its own statement that the session it",
     "tests": [
       "test/server/acc4played.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "ACC4-6-first-beat-measured-from-epoch",
     "file": "server-account/src/accounts.js",
-    "old": "WHEN played_at IS NOT NULL AND ?1 > played_at AND ?1 - played_at <= ?2 THEN ?1 - played_at",
-    "new": "WHEN ?1 > COALESCE(played_at, ?1 - ?2) AND ?1 - COALESCE(played_at, ?1 - ?2) <= ?2 THEN ?1 - COALESCE(played_at, ?1 - ?2)",
+    "old": "         WHEN played_at IS NOT NULL AND ?1 > played_at AND ?1 - played_at <= ?2 THEN ?1 - played_at",
+    "new": "         WHEN ?1 > COALESCE(played_at, ?1 - ?2) AND ?1 - COALESCE(played_at, ?1 - ?2) <= ?2 THEN ?1 - COALESCE(played_at, ?1 - ?2)",
     "tests": [
       "test/server/acc4played.test.js"
     ],

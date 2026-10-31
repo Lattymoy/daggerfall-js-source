@@ -2,8 +2,8 @@
   {
     "name": "WB5b-the-account-not-checked",
     "file": "server-account/src/accounts.js",
-    "old": "  if (c.s !== player.id) return { error: 'not-yours' };\n",
-    "new": "",
+    "old": "  if (c.s !== player.id) return { error: 'not-yours' };\n  if (!player.handle) return { recorded: false, why: 'guest', ...(await gateRecordOf({ db }, player.id)) };",
+    "new": "  if (!player.handle) return { recorded: false, why: 'guest', ...(await gateRecordOf({ db }, player.id)) };",
     "tests": [
       "test/net/gate/wb5b_gate_claim.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WB5b-the-guest-counted",
     "file": "server-account/src/accounts.js",
-    "old": "  if (!player.handle) return { recorded: false, why: 'guest', ...(await gateRecordOf({ db }, player.id)) };\n",
-    "new": "",
+    "old": "  if (!player.handle) return { recorded: false, why: 'guest', ...(await gateRecordOf({ db }, player.id)) };\n  // WB12d: the row's embers - an ember more for the faithful's rite broken (`r`); a rite's own receipt is one.",
+    "new": "  // WB12d: the row's embers - an ember more for the faithful's rite broken (`r`); a rite's own receipt is one.",
     "tests": [
       "test/net/gate/wb5b_gate_claim.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WB5b-counted-twice",
     "file": "server-account/src/accounts.js",
-    "old": "'INSERT OR IGNORE INTO gate_kills (day, account, boss, earned, at, region, stones, body) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)'",
-    "new": "'INSERT OR REPLACE INTO gate_kills (day, account, boss, earned, at, region, stones, body) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)'",
+    "old": "      'INSERT OR IGNORE INTO gate_kills (day, account, boss, earned, at, region, stones, body) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)',",
+    "new": "      'INSERT OR REPLACE INTO gate_kills (day, account, boss, earned, at, region, stones, body) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)',",
     "tests": [
       "test/net/gate/wb5b_gate_claim.test.js"
     ],
@@ -30,8 +30,8 @@
   {
     "name": "WB5b-no-key-no-refusal",
     "file": "server-account/src/accounts.js",
-    "old": "{ strike = null, region = null, deeds = null, weir = null } = {}) {\n  if (!publicKey) return { error: 'no-gate-key' };\n",
-    "new": "{ strike = null, region = null, deeds = null, weir = null } = {}) {\n",
+    "old": "  if (!publicKey) return { error: 'no-gate-key' };\n  const v = await verifyReceipt(receipt, publicKey, { subtle, nowS });",
+    "new": "  const v = await verifyReceipt(receipt, publicKey, { subtle, nowS });",
     "tests": [
       "test/net/gate/wb5b_gate_claim.test.js"
     ]

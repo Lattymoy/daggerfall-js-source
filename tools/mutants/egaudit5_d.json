@@ -369,8 +369,8 @@
   {
     "name": "EG5D-L4-5-re-signed-as-of-now",
     "file": "server-account/src/eg.js",
-    "old": "ewg: wagerOfRow(had.wg) }, key, { subtle, nowS: int(had.at) });\n    return { order, b: had.b, ez: had.ez, keys: int(row?.eg_keys), until: int(had.until), rh: int(had.rh) };",
-    "new": "ewg: wagerOfRow(had.wg) }, key, { subtle, nowS });\n    return { order, b: had.b, ez: had.ez, keys: int(row?.eg_keys), until: int(had.until), rh: int(had.rh) };",
+    "old": "      },\n      key,\n      { subtle, nowS: int(had.at) },\n    );\n    return { order, b: had.b, ez: had.ez, keys: int(row?.eg_keys), until: int(had.until), rh: int(had.rh) };",
+    "new": "      },\n      key,\n      { subtle, nowS },\n    );\n    return { order, b: had.b, ez: had.ez, keys: int(row?.eg_keys), until: int(had.until), rh: int(had.rh) };",
     "tests": [
       "test/net/eliteGates/egaudit5_d_service.test.js"
     ]
@@ -428,8 +428,8 @@
   {
     "name": "EG5D-L8-5-the-answer-the-receipts",
     "file": "server-account/src/egEconomy.js",
-    "old": "seed: egSpoilsSeed(c.c, r?.nonce),",
-    "new": "seed: c.c,",
+    "old": "      seed: egSpoilsSeed(c.c, r?.nonce), // AUDIT EG V (lane8 L8-5): what the spoils roll on - the row's own claim's draw",
+    "new": "      seed: c.c, // AUDIT EG V (lane8 L8-5): what the spoils roll on - the row's own claim's draw",
     "tests": [
       "test/net/eliteGates/egaudit5_d_service.test.js",
       "test/net/eliteGates/egplay_service.test.js"
@@ -438,8 +438,8 @@
   {
     "name": "EG5D-L8-5-the-pity-on-the-receipts",
     "file": "server-account/src/egEconomy.js",
-    "old": "egPanoplyHit(egSpoilsSeed(c.c, nonce), w, p)",
-    "new": "egPanoplyHit(c.c, w, p)",
+    "old": "  const hits = Array.from({ length: egSpoilsPasses(w) }, (_, p) => egPanoplyHit(egSpoilsSeed(c.c, nonce), w, p));",
+    "new": "  const hits = Array.from({ length: egSpoilsPasses(w) }, (_, p) => egPanoplyHit(c.c, w, p));",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
     ]
@@ -447,8 +447,8 @@
   {
     "name": "EG5D-L8-5-an-ends-seed-the-receipts",
     "file": "server-account/src/eg.js",
-    "old": "return r ? { seed: egSpoilsSeed(c.c, r.nonce) } : {};",
-    "new": "return r ? { seed: c.c } : {};",
+    "old": "  return r ? { seed: egSpoilsSeed(c.c, r.nonce) } : {};",
+    "new": "  return r ? { seed: c.c } : {};",
     "tests": [
       "test/net/eliteGates/egaudit5_d_service.test.js"
     ]
@@ -456,8 +456,8 @@
   {
     "name": "EG5D-L8-5-an-ends-draw-one-for-all",
     "file": "server-account/src/eg.js",
-    "old": "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)').bind(c.b, player.id, c.h, c.why, c.t, nowS, hex(rand(new Uint8Array(8)))),",
-    "new": "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)').bind(c.b, player.id, c.h, c.why, c.t, nowS, '0123456789abcdef'),",
+    "old": "        .bind(c.b, player.id, c.h, c.why, c.t, nowS, hex(rand(new Uint8Array(8)))),",
+    "new": "        .bind(c.b, player.id, c.h, c.why, c.t, nowS, '0123456789abcdef'),",
     "tests": [
       "test/net/eliteGates/egaudit5_d_service.test.js"
     ]
@@ -493,8 +493,8 @@
   {
     "name": "EG5D-L8-4-every-end-writes-it",
     "file": "server-account/src/egEconomy.js",
-    "old": "'INSERT OR IGNORE INTO eg_reliqs (account, wk, w, b) VALUES (?1, ?2, ?3, ?4)'",
-    "new": "'INSERT OR REPLACE INTO eg_reliqs (account, wk, w, b) VALUES (?1, ?2, ?3, ?4)'",
+    "old": "            .prepare('INSERT OR IGNORE INTO eg_reliqs (account, wk, w, b) VALUES (?1, ?2, ?3, ?4)')",
+    "new": "            .prepare('INSERT OR REPLACE INTO eg_reliqs (account, wk, w, b) VALUES (?1, ?2, ?3, ?4)')",
     "tests": [
       "test/net/eliteGates/egaudit5_d_service.test.js"
     ]
@@ -511,8 +511,8 @@
   {
     "name": "EG5D-L8-4-no-week",
     "file": "server-account/src/egEconomy.js",
-    "old": "    const wk = arenaWeekOf(nowS);\n    const week = await db.prepare",
-    "new": "    const wk = 0;\n    const week = await db.prepare",
+    "old": "    const wk = arenaWeekOf(nowS);",
+    "new": "    const wk = 0;",
     "tests": [
       "test/net/eliteGates/egaudit5_d_service.test.js"
     ]
@@ -529,8 +529,8 @@
   {
     "name": "EG5D-L8-9-the-decrees-unkept",
     "file": "server-account/src/egHonours.js",
-    "old": "arenaSeasonOf(c.i), wagerText(c)),",
-    "new": "arenaSeasonOf(c.i), ''),",
+    "old": "        wagerText(c),",
+    "new": "        '',",
     "tests": [
       "test/net/eliteGates/egaudit5_d_service.test.js"
     ]
@@ -538,8 +538,8 @@
   {
     "name": "EG5D-L8-9-the-row-unread",
     "file": "server-account/src/egHonours.js",
-    "old": "wagered: int(r.wg) === 1, wg: wagerOfText(r.wgs) }));",
-    "new": "wagered: int(r.wg) === 1, wg: [] }));",
+    "old": "      wg: wagerOfText(r.wgs),",
+    "new": "      wg: [],",
     "tests": [
       "test/net/eliteGates/egaudit5_d_service.test.js"
     ]
@@ -584,8 +584,8 @@
   {
     "name": "EG5D-L9-6-the-rite-the-kills",
     "file": "server-account/src/eg.js",
-    "old": "drawUnder(rand, c.r === 1 ? EG_KEY_ODDS_RITE : c.p > 0 ? EG_KEY_ODDS_PORTENT : EG_KEY_ODDS)",
-    "new": "drawUnder(rand, c.p > 0 ? EG_KEY_ODDS_PORTENT : EG_KEY_ODDS)",
+    "old": "      .bind(\n        player.id,\n        c.d,\n        drawUnder(rand, c.r === 1 ? EG_KEY_ODDS_RITE : c.p > 0 ? EG_KEY_ODDS_PORTENT : EG_KEY_ODDS) ? 1 : 0,\n        EG_KEY_PITY,\n      ); // WB14g: a portent night's at the rite's",
+    "new": "      .bind(player.id, c.d, drawUnder(rand, c.p > 0 ? EG_KEY_ODDS_PORTENT : EG_KEY_ODDS) ? 1 : 0, EG_KEY_PITY); // WB14g: a portent night's at the rite's",
     "tests": [
       "test/net/eliteGates/egaudit5_d_service.test.js"
     ]

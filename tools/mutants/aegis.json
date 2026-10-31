@@ -152,8 +152,8 @@
   {
     "name": "AEGIS-the-aura-door-without-the-config",
     "file": "server-account/src/accounts.js",
-    "old": "  const why = auraRefusal(aura, player, env);",
-    "new": "  const why = auraRefusal(aura, player);",
+    "old": "  const why = auraRefusal(aura, player, env); // AEGIS: a list's aura is held off the config",
+    "new": "  const why = auraRefusal(aura, player); // AEGIS: a list's aura is held off the config",
     "tests": [
       "test/net/aegis.test.js"
     ],

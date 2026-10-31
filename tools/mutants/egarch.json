@@ -614,8 +614,8 @@
   {
     "name": "EGF-the-open-s-start-unchecked",
     "file": "server-account/src/eg.js",
-    "old": "  if (ew > 0 && !egMayStart(await egStartsFor(db, player.id, nowS), ew)) return { error: 'start', w: ew };   // EG-F",
-    "new": "  // unchecked",
+    "old": "  if (ew > 0 && !egMayStart(await egStartsFor(db, player.id, nowS), ew)) return { error: 'start', w: ew }; // EG-F: no carries, the opener's own start too",
+    "new": "  // unchecked: no carries, the opener's own start too",
     "tests": [
       "test/net/eliteGates/egarch_service.test.js"
     ]
@@ -623,8 +623,8 @@
   {
     "name": "EGF-an-admission-carried",
     "file": "server-account/src/eg.js",
-    "old": "  if (ew > 0 && !egMayStart(await egStartsFor(db, player.id, nowS), ew)) return { error: 'start', w: ew };\n  const took",
-    "new": "  const took",
+    "old": "  if (ew > 0 && !egMayStart(await egStartsFor(db, player.id, nowS), ew)) return { error: 'start', w: ew };\n  const took = await db",
+    "new": "  const took = await db",
     "tests": [
       "test/net/eliteGates/egarch_service.test.js"
     ]
@@ -632,8 +632,8 @@
   {
     "name": "EGF-the-admission-s-order-at-hall-1",
     "file": "server-account/src/eg.js",
-    "old": "eb: b, ez: hex(rand(new Uint8Array(12))), ew }, key, { subtle, nowS });",
-    "new": "eb: b, ez: hex(rand(new Uint8Array(12))), ew: 0 }, key, { subtle, nowS });",
+    "old": "  const order = await mintEgOrder({ o: 'egadmit', s: player.id, eb: b, ez: hex(rand(new Uint8Array(12))), ew }, key, {\n    subtle,\n    nowS,\n  });",
+    "new": "  const order = await mintEgOrder(\n    { o: 'egadmit', s: player.id, eb: b, ez: hex(rand(new Uint8Array(12))), ew: 0 },\n    key,\n    { subtle, nowS },\n  );",
     "tests": [
       "test/net/eliteGates/egarch_service.test.js"
     ]
@@ -641,8 +641,8 @@
   {
     "name": "EGF-the-order-s-wager-dropped",
     "file": "server-account/src/eg.js",
-    "old": "ew, rh: rh ? 1 : undefined, ewg: wg.length ? wg : undefined }, key, { subtle, nowS });",
-    "new": "ew, rh: rh ? 1 : undefined }, key, { subtle, nowS });",
+    "old": "  const order = await mintEgOrder(\n    { o: 'egopen', s: player.id, eb: b, ez, ew, rh: rh ? 1 : undefined, ewg: wg.length ? wg : undefined },\n    key,\n    { subtle, nowS },\n  );",
+    "new": "  const order = await mintEgOrder({ o: 'egopen', s: player.id, eb: b, ez, ew, rh: rh ? 1 : undefined }, key, {\n    subtle,\n    nowS,\n  });",
     "tests": [
       "test/net/eliteGates/egarch_service.test.js"
     ]
@@ -650,8 +650,8 @@
   {
     "name": "EGF-the-stake-keeping-neither",
     "file": "server-account/src/eg.js",
-    "old": ".bind(ez, player.id, b, rq, rh, nowS, until, ew, wg.join(',')),",
-    "new": ".bind(ez, player.id, b, rq, rh, nowS, until, 0, ''),",
+    "old": "      .bind(ez, player.id, b, rq, rh, nowS, until, ew, wg.join(',')), // EG-F: the stake keeps its start and its Wager",
+    "new": "      .bind(ez, player.id, b, rq, rh, nowS, until, 0, ''), // EG-F: the stake keeps its start and its Wager",
     "tests": [
       "test/net/eliteGates/egarch_service.test.js"
     ]
@@ -659,8 +659,8 @@
   {
     "name": "EGF-last-season-counted",
     "file": "server-account/src/egStarts.js",
-    "old": ".bind(id, egSeasonStartS(nowS)).all();",
-    "new": ".bind(id, 0).all();",
+    "old": "    .bind(id, egSeasonStartS(nowS))",
+    "new": "    .bind(id, 0)",
     "tests": [
       "test/net/eliteGates/egarch_service.test.js"
     ]

@@ -409,8 +409,8 @@
   {
     "name": "SERPENT-SET-purse-gates-alone",
     "file": "server-account/src/accounts.js",
-    "old": "const EMBERS_EARNED_SQL = '((SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM serpent_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM eg_redoubts WHERE account = ?1))';",
-    "new": "const EMBERS_EARNED_SQL = '((SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM eg_redoubts WHERE account = ?1))';",
+    "old": "  '((SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM serpent_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM eg_redoubts WHERE account = ?1))';",
+    "new": "  '((SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM eg_redoubts WHERE account = ?1))';",
     "why": "the sea's embers refused at the counter",
     "note": "EG-E1 (PIN MOVED): the Spire's embers join the one sum - re-aimed by content; the sea's term alone dropped.",
     "tests": [
@@ -420,8 +420,8 @@
   {
     "name": "SERPENT-SET-the-sale-apart",
     "file": "server-account/src/accounts.js",
-    "old": "         AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3${rid ? `",
-    "new": "         AND (SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) - insignia_spent >= ?3${rid ? `",
+    "old": "         AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3${",
+    "new": "         AND (SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) - insignia_spent >= ?3${",
     "why": "the purse says yes and the sale no",
     "tests": [
       "test/net/serpent/serpentset_service.test.js"

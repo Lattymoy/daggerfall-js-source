@@ -36,7 +36,14 @@
 // ═════════════════════════════════════════════════════════════════════
 import { witnessedFact, factConfirmed } from '../../src/net/nodeLaw.js';
 import { seatReportOf } from '../../src/net/townSeatLaw.js';
-import { domainReportOf, domainReportText, parseDomainReport, domainSeats, domainsWeekOf, domainsRule } from '../../src/net/domainLaw.js';
+import {
+  domainReportOf,
+  domainReportText,
+  parseDomainReport,
+  domainSeats,
+  domainsWeekOf,
+  domainsRule,
+} from '../../src/net/domainLaw.js';
 import { confirmedSeats, seatIgnored, witnessSeat } from './townSeats.js';
 import { DB_ROOT } from './service.js';
 
@@ -50,7 +57,8 @@ export const DOMAIN_AGREEING_KEPT = 12;
 
 /** The database binding -> the rows this isolate last read `{ at, rows }`, and its writes counted (a read begun before a
  *  write here is never kept). */
-const domainRowsKept = new WeakMap(), domainRowWrites = new WeakMap();
+const domainRowsKept = new WeakMap(),
+  domainRowWrites = new WeakMap();
 const rootOf = (/** @type {any} */ db) => db?.[DB_ROOT] ?? db;
 
 async function domainRowsOf(db, nowS, fresh) {
@@ -59,7 +67,12 @@ async function domainRowsOf(db, nowS, fresh) {
   if (!fresh && kept && nowS - kept.at < DOMAIN_ROWS_KEPT_S) return kept.rows;
   const gen = domainRowWrites.get(root) ?? 0;
   const { results = [] } = await db.prepare(DOMAIN_ROWS_SQL).all();
-  const rows = results.map((r) => ({ key: String(r.region), account: String(r.account), report: String(r.report), at: Number(r.at) }));
+  const rows = results.map((r) => ({
+    key: String(r.region),
+    account: String(r.account),
+    report: String(r.report),
+    at: Number(r.at),
+  }));
   if ((domainRowWrites.get(root) ?? 0) === gen) domainRowsKept.set(root, { at: nowS, rows });
   return rows;
 }
@@ -89,7 +102,11 @@ export function domainFacts(rows, ignored = new Set()) {
 /** THE CHARTERS' SEATS OF POWER - region -> its seat (`{ key, name, region, tier, pixel, state }`), each a confirmed
  *  seat of its region (domainSeats). `fresh` reads both tables as they stand - the Turning's. */
 export async function confirmedDomains(db, nowS, { fresh = false } = {}) {
-  const [seats, rows, ignored] = await Promise.all([confirmedSeats(db, nowS, { fresh }), domainRowsOf(db, nowS, fresh), seatIgnored(db, nowS)]);
+  const [seats, rows, ignored] = await Promise.all([
+    confirmedSeats(db, nowS, { fresh }),
+    domainRowsOf(db, nowS, fresh),
+    seatIgnored(db, nowS),
+  ]);
   return domainSeats(seats, domainFacts(rows, ignored));
 }
 
@@ -105,7 +122,11 @@ export async function domainsBoard(db, nowS, env, week) {
   const from = domainsWeekOf(env?.DOMAINS_WEEK);
   if (from == null) return null;
   const d = await confirmedDomains(db, nowS);
-  return { from, rule: domainsRule(week, from), seats: [...d].map(([region, s]) => [region, s.key]).sort((a, b) => a[0] - b[0]) };
+  return {
+    from,
+    rule: domainsRule(week, from),
+    seats: [...d].map(([region, s]) => [region, s.key]).sort((a, b) => a[0] - b[0]),
+  };
 }
 
 /**
@@ -121,11 +142,19 @@ export async function witnessDomain({ db, nowS }, player, seat, raw) {
   if (!s || !d || d.region !== s.region) return 'bad-domain';
   const report = domainReportText(d);
   const [rows, ignored] = await Promise.all([domainRowsOf(db, nowS, false), seatIgnored(db, nowS)]);
-  const agreeing = rows.filter((r) => r.key === String(d.region) && r.report === report && !ignored.has(r.account)).length;
+  const agreeing = rows.filter(
+    (r) => r.key === String(d.region) && r.report === report && !ignored.has(r.account),
+  ).length;
   if (domainFacts(rows, ignored).get(d.region) === d.key && agreeing >= DOMAIN_AGREEING_KEPT) return 'agreed';
-  const put = await db.prepare('INSERT OR IGNORE INTO town_domain_witness (region, account, report, at) VALUES (?, ?, ?, ?)')
-    .bind(d.region, player.id, report, nowS).run();
-  if (Number(put?.meta?.changes) !== 0) { const root = rootOf(db); domainRowsKept.delete(root); domainRowWrites.set(root, (domainRowWrites.get(root) ?? 0) + 1); }
+  const put = await db
+    .prepare('INSERT OR IGNORE INTO town_domain_witness (region, account, report, at) VALUES (?, ?, ?, ?)')
+    .bind(d.region, player.id, report, nowS)
+    .run();
+  if (Number(put?.meta?.changes) !== 0) {
+    const root = rootOf(db);
+    domainRowsKept.delete(root);
+    domainRowWrites.set(root, (domainRowWrites.get(root) ?? 0) + 1);
+  }
   return 'counted';
 }
 

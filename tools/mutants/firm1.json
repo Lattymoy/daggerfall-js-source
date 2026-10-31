@@ -134,8 +134,8 @@
   {
     "name": "FIRM1-respec-free",
     "file": "server-account/src/firmament.js",
-    "old": "(payFromSave(save, FIRM_RESPEC_GOLD, region ?? null) ? null : 'realm-gold')",
-    "new": "(payFromSave(save, 0, region ?? null) ? null : 'realm-gold')",
+    "old": "    payFromSave(save, FIRM_RESPEC_GOLD, region ?? null) ? null : 'realm-gold',",
+    "new": "    payFromSave(save, 0, region ?? null) ? null : 'realm-gold',",
     "tests": [
       "test/net/firm1_service.test.js"
     ]

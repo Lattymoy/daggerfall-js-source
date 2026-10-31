@@ -72,7 +72,7 @@
   {
     "name": "SCALE4d-budget-kept-by-proxy",
     "file": "server-account/src/budget.js",
-    "old": "const keyOf = (/** @type {any} */ db) => (db && typeof db === 'object' ? db[DB_ROOT] ?? db : null);",
+    "old": "const keyOf = (/** @type {any} */ db) => (db && typeof db === 'object' ? (db[DB_ROOT] ?? db) : null);",
     "new": "const keyOf = (/** @type {any} */ db) => (db && typeof db === 'object' ? db : null);",
     "tests": [
       "test/server/scale4d.test.js"

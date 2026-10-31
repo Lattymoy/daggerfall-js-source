@@ -263,8 +263,8 @@
   {
     "name": "AUDIT-WB14-WIRE-6-the-fill-a-plain-receipt-s",
     "file": "server-account/src/budget.js",
-    "old": "SPOILS_GRANT_PIECE * Math.max(0, Math.min(3, Math.trunc(Number(pieces) || 0)))",
-    "new": "0",
+    "old": "    .bind(\n      playerId,\n      SPOILS_GRANT_BASE,\n      SPOILS_GRANT_PER_LEVEL,\n      SPOILS_GRANT_PIECE * Math.max(0, Math.min(3, Math.trunc(Number(pieces) || 0))),\n      ...binds,\n    ); // AUDIT WB14 (WIRE-6): and a portent's pieces",
+    "new": "    .bind(playerId, SPOILS_GRANT_BASE, SPOILS_GRANT_PER_LEVEL, 0, ...binds); // AUDIT WB14 (WIRE-6): and a portent's pieces",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AUDIT-WB14-WIRE-6-the-pieces-miscounted",
     "file": "server-account/src/budget.js",
-    "old": "[1, 2, 4].filter((b) => (/** @type {number} */ (p) & b) !== 0).length",
-    "new": "Math.min(3, /** @type {number} */ (p))",
+    "old": "  Number.isSafeInteger(p) && /** @type {number} */ (p) > 0\n    ? [1, 2, 4].filter((b) => /** @type {number} */ (p & b) !== 0).length\n    : 0;",
+    "new": "  Number.isSafeInteger(p) && /** @type {number} */ (p) > 0 ? Math.min(3, /** @type {number} */ (p)) : 0;",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "AUDIT-WB14-WIRE-6-the-claim-forgets-them",
     "file": "server-account/src/accounts.js",
-    "old": "...(c.p > 0 ? { portent: c.p } : {}), ...(c.x === 'rite'",
-    "new": "...(c.x === 'rite'",
+    "old": "      ...(c.p > 0 ? { portent: c.p } : {}),\n      ...(c.x === 'rite' ? { rite: true } : {}),",
+    "new": "      ...(c.x === 'rite' ? { rite: true } : {}),",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]

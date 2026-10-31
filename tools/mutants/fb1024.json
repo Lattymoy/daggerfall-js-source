@@ -210,7 +210,7 @@
   {
     "name": "RID4-no-fence",
     "file": "server-account/src/brokerSales.js",
-    "old": "    db.prepare(\"INSERT INTO broker_sales (account, rid, kind, item, at) VALUES (?1, ?2, 'fence', NULL, ?3) ON CONFLICT (account, rid) DO NOTHING\").bind(player.id, rid, nowS),",
+    "old": "    db\n      .prepare(\n        \"INSERT INTO broker_sales (account, rid, kind, item, at) VALUES (?1, ?2, 'fence', NULL, ?3) ON CONFLICT (account, rid) DO NOTHING\",\n      )\n      .bind(player.id, rid, nowS),",
     "new": "    db.prepare('SELECT 1'),",
     "tests": [
       "test/server/fb1024_brokersales.test.js",
@@ -220,8 +220,8 @@
   {
     "name": "RID4-the-latest-ask-as-by",
     "file": "server-account/src/brokerSales.js",
-    "old": "asked_by = COALESCE(asked_by, ?3)",
-    "new": "asked_by = ?3",
+    "old": "        'UPDATE broker_sales SET settled = settled + 1, asked_by = COALESCE(asked_by, ?3) WHERE account = ?1 AND rid = ?2 RETURNING kind, item, at, asked_by',",
+    "new": "        'UPDATE broker_sales SET settled = settled + 1, asked_by = ?3 WHERE account = ?1 AND rid = ?2 RETURNING kind, item, at, asked_by',",
     "tests": [
       "test/server/fb1024_brokersales.test.js",
       "test/systems/fb1024_embersowed.test.js"
@@ -249,7 +249,7 @@
   {
     "name": "RID4-the-guard-always-free",
     "file": "server-account/src/brokerSales.js",
-    "old": "export const brokerRidFreeSql = (acc, rid) => `NOT EXISTS (SELECT 1 FROM broker_sales WHERE account = ${acc} AND rid = ${rid})`;",
+    "old": "export const brokerRidFreeSql = (acc, rid) =>\n  `NOT EXISTS (SELECT 1 FROM broker_sales WHERE account = ${acc} AND rid = ${rid})`;",
     "new": "export const brokerRidFreeSql = (acc, rid) => `${rid} = ${rid}`;",
     "tests": [
       "test/server/fb1024_brokersales.test.js",
@@ -259,8 +259,8 @@
   {
     "name": "RID4-panoply-row-unwritten",
     "file": "server-account/src/egEconomy.js",
-    "old": "    ...(rid ? [brokerSaleWrite(db, { account: player.id, rid, kind: 'panoply', item: piece, nowS })] : []),\n",
-    "new": "",
+    "old": "    ...(rid ? [brokerSaleWrite(db, { account: player.id, rid, kind: 'panoply', item: piece, nowS })] : []),\n  ]);",
+    "new": "  ]);",
     "tests": [
       "test/server/fb1024_brokersales.test.js",
       "test/systems/fb1024_embersowed.test.js"
@@ -269,8 +269,8 @@
   {
     "name": "RID4-panoply-asked-again-sold-again",
     "file": "server-account/src/egEconomy.js",
-    "old": "    if (sold?.kind === 'panoply') return { ok: true, piece: sold.item, week: arenaWeekOf(sold.at), purse: await purseOf(db, player.id), again: true };\n",
-    "new": "",
+    "old": "    if (sold?.kind === 'panoply')\n      return {\n        ok: true,\n        piece: sold.item,\n        week: arenaWeekOf(sold.at),\n        purse: await purseOf(db, player.id),\n        again: true,\n      };\n    const had = await egSinkOf({ db, nowS }, player);",
+    "new": "    const had = await egSinkOf({ db, nowS }, player);",
     "tests": [
       "test/server/fb1024_brokersales.test.js"
     ]
@@ -278,8 +278,8 @@
   {
     "name": "RID4-panoply-fence-unsaid",
     "file": "server-account/src/egEconomy.js",
-    "old": "    if (sold?.kind === 'fence') return { error: 'fenced' };\n",
-    "new": "",
+    "old": "    if (sold?.kind === 'fence') return { error: 'fenced' };\n    if (sold?.kind === 'panoply')",
+    "new": "    if (sold?.kind === 'panoply')",
     "tests": [
       "test/server/fb1024_brokersales.test.js",
       "test/systems/fb1024_embersowed.test.js"
@@ -288,8 +288,8 @@
   {
     "name": "RID4-insignia-row-unwritten",
     "file": "server-account/src/accounts.js",
-    "old": "    ...(rid ? [brokerSaleWrite(db, { account: player.id, rid, kind: 'insignia', item: offer.id, nowS })] : []),\n",
-    "new": "",
+    "old": "    ...(rid ? [brokerSaleWrite(db, { account: player.id, rid, kind: 'insignia', item: offer.id, nowS })] : []),\n  ]);",
+    "new": "  ]);",
     "tests": [
       "test/server/fb1024_brokersales.test.js"
     ]
@@ -297,8 +297,8 @@
   {
     "name": "RID4-insignia-asked-again-owned",
     "file": "server-account/src/accounts.js",
-    "old": "  if (had?.kind === 'insignia' && had.item === offer.id) return",
-    "new": "  if (false) return",
+    "old": "  if (had?.kind === 'insignia' && had.item === offer.id)",
+    "new": "  if (false)",
     "tests": [
       "test/server/fb1024_brokersales.test.js"
     ]

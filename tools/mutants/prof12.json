@@ -1861,8 +1861,8 @@
   {
     "name": "PROF-541-B2-decor",
     "file": "server-account/src/decor.js",
-    "old": "' AND EXISTS (SELECT 1 FROM products WHERE provenance = ? AND owner = ? AND listed = 0)'",
-    "new": "' AND ? IS NOT NULL AND ? IS NOT NULL'",
+    "old": "  const pvSql = pv ? ' AND EXISTS (SELECT 1 FROM products WHERE provenance = ? AND owner = ? AND listed = 0)' : '';",
+    "new": "  const pvSql = pv ? ' AND ? IS NOT NULL AND ? IS NOT NULL' : '';",
     "tests": [
       "test/net/prof12_service.test.js"
     ]

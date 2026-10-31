@@ -33,8 +33,8 @@
   {
     "name": "WITCH1-the-asks-cap-off-by-one",
     "file": "server-account/src/festival.js",
-    "old": "ON CONFLICT (account, day) DO UPDATE SET asks = asks + 1 WHERE asks < ?3 RETURNING asks, found",
-    "new": "ON CONFLICT (account, day) DO UPDATE SET asks = asks + 1 WHERE asks <= ?3 RETURNING asks, found",
+    "old": "    ON CONFLICT (account, day) DO UPDATE SET asks = asks + 1 WHERE asks < ?3 RETURNING asks, found`,",
+    "new": "    ON CONFLICT (account, day) DO UPDATE SET asks = asks + 1 WHERE asks <= ?3 RETURNING asks, found`,",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],
@@ -43,8 +43,8 @@
   {
     "name": "WITCH1-the-cakes-cap-ignored",
     "file": "server-account/src/festival.js",
-    "old": "const want = Math.min(findCount(source, skyDayAt(nowS), nowS * 1000), left);",
-    "new": "const want = findCount(source, skyDayAt(nowS), nowS * 1000);",
+    "old": "  const want = Math.min(findCount(source, skyDayAt(nowS), nowS * 1000), left);",
+    "new": "  const want = findCount(source, skyDayAt(nowS), nowS * 1000);",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],
@@ -53,8 +53,8 @@
   {
     "name": "WITCH1-owned-unsaid",
     "file": "server-account/src/festival.js",
-    "old": ".first())?.fest_wares).includes(w.id)) return { error: 'owned' };",
-    "new": ".first())?.fest_wares).includes('none')) return { error: 'owned' };",
+    "old": "    ).includes(w.id)",
+    "new": "    ).includes('none')",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],
@@ -63,8 +63,8 @@
   {
     "name": "WITCH1-ones-own-bowl",
     "file": "server-account/src/festival.js",
-    "old": "  if (o.player === player.id) return { error: 'own' };\n",
-    "new": "",
+    "old": "  if (o.player === player.id) return { error: 'own' };\n  const day = utcDay(nowS);",
+    "new": "  const day = utcDay(nowS);",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],
@@ -73,8 +73,8 @@
   {
     "name": "WITCH1-the-orphan-keeps-its-cakes",
     "file": "server-account/src/festival.js",
-    "old": "UPDATE players SET fest_cakes = fest_cakes + (SELECT COALESCE(SUM(stock), 0) FROM fest_offerings WHERE ${ORPHAN}),",
-    "new": "UPDATE players SET fest_cakes = fest_cakes + 0 * (SELECT COALESCE(SUM(stock), 0) FROM fest_offerings WHERE ${ORPHAN}),",
+    "old": "        `UPDATE players SET fest_cakes = fest_cakes + (SELECT COALESCE(SUM(stock), 0) FROM fest_offerings WHERE ${ORPHAN}),",
+    "new": "        `UPDATE players SET fest_cakes = fest_cakes + 0 * (SELECT COALESCE(SUM(stock), 0) FROM fest_offerings WHERE ${ORPHAN}),",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],
@@ -83,8 +83,8 @@
   {
     "name": "WITCH1-a-hall-is-a-home",
     "file": "server-account/src/festival.js",
-    "old": "h.player = ?3 AND h.guild_id IS NULL AND (h.deed = 0 OR h.char_id = ?4))`;",
-    "new": "h.player = ?3 AND (h.deed = 0 OR h.char_id = ?4))`;",
+    "old": "const OWNED_HOME = `EXISTS (SELECT 1 FROM homes h WHERE h.map_id = ?1 AND h.building_key = ?2 AND h.player = ?3 AND h.guild_id IS NULL AND (h.deed = 0 OR h.char_id = ?4))`;",
+    "new": "const OWNED_HOME = `EXISTS (SELECT 1 FROM homes h WHERE h.map_id = ?1 AND h.building_key = ?2 AND h.player = ?3 AND (h.deed = 0 OR h.char_id = ?4))`;",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],
@@ -93,8 +93,8 @@
   {
     "name": "WITCH1-no-take-in-after",
     "file": "server-account/src/festival.js",
-    "old": "  if (!player?.handle) return { error: 'guest' };\n  if (overAccountRate(`fest:${player.id}`, ctx.nowS, FEST_OPS_MAX, FEST_OPS_WINDOW_S)) return { error: 'rate' };\n  const { db } = ctx;",
-    "new": "  if (!player?.handle) return { error: 'guest' };\n  if (!inDays(ctx.nowS)) return { error: 'closed' };\n  if (overAccountRate(`fest:${player.id}`, ctx.nowS, FEST_OPS_MAX, FEST_OPS_WINDOW_S)) return { error: 'rate' };\n  const { db } = ctx;",
+    "old": "  if (!player?.handle) return { error: 'guest' };\n  if (overAccountRate(`fest:${player.id}`, ctx.nowS, FEST_OPS_MAX, FEST_OPS_WINDOW_S)) return { error: 'rate' };",
+    "new": "  if (!player?.handle) return { error: 'guest' };\n  if (!inDays(ctx.nowS)) return { error: 'closed' };\n  if (overAccountRate(`fest:${player.id}`, ctx.nowS, FEST_OPS_MAX, FEST_OPS_WINDOW_S)) return { error: 'rate' };",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],
@@ -394,8 +394,8 @@
   {
     "name": "WITCH1-AUDIT-set-out-blind-to-the-row",
     "file": "server-account/src/festival.js",
-    "old": "WHERE id = ?5 AND EXISTS (SELECT 1 FROM fest_offerings WHERE ${prev}) AND ${may}`)",
-    "new": "WHERE id = ?5 AND ${may}`)",
+    "old": "      WHERE id = ?5 AND EXISTS (SELECT 1 FROM fest_offerings WHERE ${prev}) AND ${may}`,",
+    "new": "      WHERE id = ?5 AND ${may}`,",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],
@@ -404,8 +404,8 @@
   {
     "name": "WITCH1-AUDIT-no-bowl-spent",
     "file": "server-account/src/festival.js",
-    "old": "    db.prepare(`UPDATE players SET fest_bowls = fest_bowls - 1 WHERE id = ?3 AND ${may}",
-    "new": "    db.prepare(`UPDATE players SET fest_bowls = fest_bowls - 0 WHERE id = ?3 AND ${may}",
+    "old": "        `UPDATE players SET fest_bowls = fest_bowls - 1 WHERE id = ?3 AND ${may}",
+    "new": "        `UPDATE players SET fest_bowls = fest_bowls - 0 WHERE id = ?3 AND ${may}",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],
@@ -414,8 +414,8 @@
   {
     "name": "WITCH1-AUDIT-take-any-owner",
     "file": "server-account/src/festival.js",
-    "old": "WHERE o.map_id = ?1 AND o.building_key = ?2 AND o.player = ?6 AND o.player <> ?3) >= ?5",
-    "new": "WHERE o.map_id = ?1 AND o.building_key = ?2) >= ?5",
+    "old": "        WHERE o.map_id = ?1 AND o.building_key = ?2 AND o.player = ?6 AND o.player <> ?3) >= ?5 ON CONFLICT DO NOTHING RETURNING taker`,",
+    "new": "        WHERE o.map_id = ?1 AND o.building_key = ?2) >= ?5 ON CONFLICT DO NOTHING RETURNING taker`,",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],
@@ -424,8 +424,8 @@
   {
     "name": "WITCH1-AUDIT-closed-town-shows-all",
     "file": "server-account/src/festival.js",
-    "old": "WHERE o.map_id = ?1${open ? '' : ' AND o.player = ?2'}`",
-    "new": "WHERE o.map_id = ?1`",
+    "old": "    WHERE o.map_id = ?1${open ? '' : ' AND o.player = ?2'}`,",
+    "new": "    WHERE o.map_id = ?1`,",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],
@@ -434,8 +434,8 @@
   {
     "name": "WITCH1-AUDIT-orphan-read-writes",
     "file": "server-account/src/festival.js",
-    "old": "WHERE id = ?1 AND EXISTS (SELECT 1 FROM fest_offerings WHERE ${ORPHAN})`).bind(id),",
-    "new": "WHERE id = ?1`).bind(id),",
+    "old": "    fest_bowls = fest_bowls + (SELECT COUNT(*) FROM fest_offerings WHERE ${ORPHAN}) WHERE id = ?1 AND EXISTS (SELECT 1 FROM fest_offerings WHERE ${ORPHAN})`,",
+    "new": "    fest_bowls = fest_bowls + (SELECT COUNT(*) FROM fest_offerings WHERE ${ORPHAN}) WHERE id = ?1`,",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],

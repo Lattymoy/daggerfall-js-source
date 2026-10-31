@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-REALM2-S2-any-id-places-a-piece",
     "file": "server-account/src/decor.js",
-    "old": "  if (realmOnly && !REALM_ID_RE.test(character)) return 'realm-only';\n",
-    "new": "",
+    "old": "  if (realmOnly && !REALM_ID_RE.test(character)) return 'realm-only';\n  if (await overRate({ db, nowS }, `decor:${player.id}`, DECOR_OPS_MAX, DECOR_OPS_WINDOW_S)) return 'decor-rate';",
+    "new": "  if (await overRate({ db, nowS }, `decor:${player.id}`, DECOR_OPS_MAX, DECOR_OPS_WINDOW_S)) return 'decor-rate';",
     "tests": [
       "test/systems/auditrealm2_service.test.js"
     ]

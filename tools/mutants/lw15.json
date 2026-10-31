@@ -335,8 +335,8 @@
   {
     "name": "LW15-faucet-n",
     "file": "server-account/src/budget.js",
-    "old": "n = realm_faucets.n + 1',",
-    "new": "n = realm_faucets.n',",
+    "old": "      'INSERT INTO realm_faucets (hour, kind, gold, n) VALUES (?1, ?2, ?3, 1) ON CONFLICT (hour, kind) DO UPDATE SET gold = realm_faucets.gold + excluded.gold, n = realm_faucets.n + 1',",
+    "new": "      'INSERT INTO realm_faucets (hour, kind, gold, n) VALUES (?1, ?2, ?3, 1) ON CONFLICT (hour, kind) DO UPDATE SET gold = realm_faucets.gold + excluded.gold, n = realm_faucets.n',",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "LW15-cron-job",
     "file": "server-account/src/cron.js",
-    "old": "['patrons', async (ctx, env) => (marketOpenFor(null, env) ? (await reckonPatrons(ctx, {}, env)).sold : markPatronsShut(ctx))]",
-    "new": "['patrons', async () => 0]",
+    "old": "  [\n    'patrons',\n    async (ctx, env) => (marketOpenFor(null, env) ? (await reckonPatrons(ctx, {}, env)).sold : markPatronsShut(ctx)),\n  ],",
+    "new": "  ['patrons', async () => 0],",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -745,8 +745,8 @@
   {
     "name": "LW15-AUDIT-P8-switch",
     "file": "server-account/src/cron.js",
-    "old": "(marketOpenFor(null, env) ? (await reckonPatrons(ctx, {}, env)).sold : markPatronsShut(ctx))",
-    "new": "(await reckonPatrons(ctx, {}, env)).sold",
+    "old": "  [\n    'patrons',\n    async (ctx, env) => (marketOpenFor(null, env) ? (await reckonPatrons(ctx, {}, env)).sold : markPatronsShut(ctx)),\n  ],",
+    "new": "  ['patrons', async (ctx, env) => (await reckonPatrons(ctx, {}, env)).sold],",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js",
       "test/systems/auditlwii2_service.test.js"

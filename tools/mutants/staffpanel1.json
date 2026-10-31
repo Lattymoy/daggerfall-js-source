@@ -223,8 +223,8 @@
   {
     "name": "STAFF-PANEL1-the-month-unkept",
     "file": "server-account/src/cron.js",
-    "old": "ctx.nowS - STAFF_AUDIT_KEEP_S)",
-    "new": "0)",
+    "old": "          deleted(\n            ctx.db,\n            'DELETE FROM staff_audit WHERE id IN (SELECT id FROM staff_audit WHERE at < ?1 LIMIT ?2)',\n            ctx.nowS - STAFF_AUDIT_KEEP_S,\n          ),",
+    "new": "          deleted(ctx.db, 'DELETE FROM staff_audit WHERE id IN (SELECT id FROM staff_audit WHERE at < ?1 LIMIT ?2)', 0),",
     "why": "the log grows for ever: the hourly job deletes nothing",
     "tests": [
       "test/server/staffpanel1.test.js"
@@ -233,8 +233,8 @@
   {
     "name": "STAFF-PANEL1-the-job-deleting-the-month",
     "file": "server-account/src/cron.js",
-    "old": "ctx.nowS - STAFF_AUDIT_KEEP_S)",
-    "new": "ctx.nowS)",
+    "old": "            ctx.nowS - STAFF_AUDIT_KEEP_S,",
+    "new": "            ctx.nowS,",
     "why": "the hourly job asks to delete the month too: refused whole, it deletes nothing",
     "tests": [
       "test/server/staffpanel1.test.js"

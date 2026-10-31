@@ -182,8 +182,8 @@
   {
     "name": "STAFF-PANEL2-FIX-mute-admin-lost",
     "file": "server-account/src/accounts.js",
-    "old": "until ? (admin || adminHeld ? 1 : 0) : null",
-    "new": "until ? (admin ? 1 : 0) : null",
+    "old": "    .bind(until, until ? actor.id : null, until ? (admin || adminHeld ? 1 : 0) : null, target);",
+    "new": "    .bind(until, until ? actor.id : null, until ? (admin ? 1 : 0) : null, target);",
     "why": "an Admin's mute a Moderator lengthened is the Moderator's",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -433,8 +433,8 @@
   {
     "name": "STAFF-PANEL2-FIX-password-keeps-panel",
     "file": "server-account/src/accounts.js",
-    "old": "  await closeStaffSessions({ db }, player.id);   // STAFF-PANEL2-FIX: and every staff panel session\n",
-    "new": "",
+    "old": "  await closeStaffSessions({ db }, player.id); // STAFF-PANEL2-FIX: and every staff panel session\n  return { ok: true };",
+    "new": "  return { ok: true };",
     "why": "a new password leaves the panel signed in",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -443,8 +443,8 @@
   {
     "name": "STAFF-PANEL2-FIX-recover-keeps-panel",
     "file": "server-account/src/accounts.js",
-    "old": "  await closeStaffSessions({ db }, player.id);   // STAFF-PANEL2-FIX: a new password ends the staff panel's sessions too\n",
-    "new": "",
+    "old": "  await closeStaffSessions({ db }, player.id); // STAFF-PANEL2-FIX: a new password ends the staff panel's sessions too\n  await clearRate({ db }, `recover:${lc}`);",
+    "new": "  await clearRate({ db }, `recover:${lc}`);",
     "why": "a recovery leaves the panel signed in",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -663,8 +663,8 @@
   {
     "name": "STAFF-PANEL2-FIX-R3-press-door",
     "file": "server-account/src/discord.js",
-    "old": "(Discord)`, from: 'Discord', keepLonger: true",
-    "new": "(Discord)`, keepLonger: true",
+    "old": "      from: 'Discord',\n      keepLonger: true,",
+    "new": "      keepLonger: true,",
     "why": "a Discord press's row names no door",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -673,8 +673,8 @@
   {
     "name": "STAFF-PANEL2-FIX-R3-mod-mute-door",
     "file": "server-account/src/discord.js",
-    "old": "actorName: by, from: 'Discord', resolution: () =>",
-    "new": "actorName: by, resolution: () =>",
+    "old": "          from: 'Discord',\n          resolution: () => `muted ${minutesWord(minutes)} (/mod)`,",
+    "new": "          resolution: () => `muted ${minutesWord(minutes)} (/mod)`,",
     "why": "a /mod mute's row names no door",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -683,8 +683,8 @@
   {
     "name": "STAFF-PANEL2-FIX-R3-mod-ban-door",
     "file": "server-account/src/discord.js",
-    "old": "{ act: 'ban', target: row.id, days, reason, actorName: by, from: 'Discord',",
-    "new": "{ act: 'ban', target: row.id, days, reason, actorName: by,",
+    "old": "              from: 'Discord',\n              resolution: (/** @type {any} */ x) => `banned ${banWord(x.until)} (/mod)`,",
+    "new": "              resolution: (/** @type {any} */ x) => `banned ${banWord(x.until)} (/mod)`,",
     "why": "a /mod ban's row names no door",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -693,8 +693,8 @@
   {
     "name": "STAFF-PANEL2-FIX-R3-mod-unban-door",
     "file": "server-account/src/discord.js",
-    "old": "{ act: 'unban', target: row.id, actorName: by, from: 'Discord' }",
-    "new": "{ act: 'unban', target: row.id, actorName: by }",
+    "old": "          ? { act: 'unban', target: row.id, actorName: by, from: 'Discord' }",
+    "new": "          ? { act: 'unban', target: row.id, actorName: by }",
     "why": "a /mod unban's row names no door",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -724,7 +724,7 @@
     "name": "STAFF-PANEL2-FIX-B1-mute-apart",
     "file": "server-account/src/accounts.js",
     "old": "  await (also ? db.batch([write, ...also(done)]) : write.run());",
-    "new": "  await write.run(); if (also) for (const st of also(done)) await st.run();",
+    "new": "  await write.run();\n  if (also) for (const st of also(done)) await st.run();",
     "why": "a mute, its strike and its case's close written one by one - a throw between leaves a struck case open",
     "tests": [
       "test/server/staffpanel2fix.test.js"

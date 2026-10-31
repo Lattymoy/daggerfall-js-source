@@ -4,21 +4,41 @@
 // A palace keeps the one-piece writes (seat-batch).
 import { accountKind, displayName } from './accounts.js';
 import { guildPieceRule, guildStockGuard, guildStockSpent, guildStockLeft } from './guildFurniture.js';
-import { guildWareOfModel } from '../../src/net/guild/guildShopLaw.js';   // GUILD-SHOP: a guild's own furniture, in its hall
+import { guildWareOfModel } from '../../src/net/guild/guildShopLaw.js'; // GUILD-SHOP: a guild's own furniture, in its hall
 import { GUILD_TREASURY_MAX } from '../../src/net/guild/guildLaw.js';
 import { CHAR_ID_RE } from './service.js';
 import { homeMapIdOk, homeBuildingKeyOk } from '../../src/net/homeLaw.js';
 import {
-  DECOR_BATCH_OPS, decorCapOf, DECOR_HALL_CAP, DECOR_ID_RE, DECOR_OPS_MAX, DECOR_OPS_WINDOW_S, DECOR_TXN_RE, DECOR_YARD_CAP,
-  decorGoldMove, decorPieceOf, decorScaleOk, decorYardHighOk, decorYardPieceOf,
+  DECOR_BATCH_OPS,
+  decorCapOf,
+  DECOR_HALL_CAP,
+  DECOR_ID_RE,
+  DECOR_OPS_MAX,
+  DECOR_OPS_WINDOW_S,
+  DECOR_TXN_RE,
+  DECOR_YARD_CAP,
+  decorGoldMove,
+  decorPieceOf,
+  decorScaleOk,
+  decorYardHighOk,
+  decorYardPieceOf,
 } from '../../src/net/decorLaw.js';
 import { OWNS, provenOf, vendorStocked } from './decor.js';
 import {
-  dropIfUnnamed, dropObjects, getRealmBlob, mustChange, prepareRealmRecord, realmActFirst, realmSaveTextOf, realmSideOf, REALM_ID_RE,
+  dropIfUnnamed,
+  dropObjects,
+  getRealmBlob,
+  mustChange,
+  prepareRealmRecord,
+  realmActFirst,
+  realmSaveTextOf,
+  realmSideOf,
+  REALM_ID_RE,
 } from './realm.js';
 import { payFromSave, creditSave } from '../../src/net/realm/realmGoldLaw.js';
 
-const placeJson = ({ pos, rot, scale, light, storage, paid, station, name }) => JSON.stringify({ pos, rot, scale, light, storage, paid, ...(station ? { station } : {}), ...(name ? { name } : {}) });
+const placeJson = ({ pos, rot, scale, light, storage, paid, station, name }) =>
+  JSON.stringify({ pos, rot, scale, light, storage, paid, ...(station ? { station } : {}), ...(name ? { name } : {}) });
 
 /** Ids in `save` whose storage still holds something. The record is the authority, not the client's word. */
 export function decorHeldBlocks(save, ids) {
@@ -42,7 +62,11 @@ function stripDecorItems(save, ids) {
   let n = 0;
   for (const scene of save?.sceneCache?.scenes ?? []) {
     if (!scene?.decorItems || typeof scene.decorItems !== 'object') continue;
-    for (const id of want) if (Object.prototype.hasOwnProperty.call(scene.decorItems, id)) { delete scene.decorItems[id]; n += 1; }
+    for (const id of want)
+      if (Object.prototype.hasOwnProperty.call(scene.decorItems, id)) {
+        delete scene.decorItems[id];
+        n += 1;
+      }
   }
   return n;
 }
@@ -50,22 +74,47 @@ function stripDecorItems(save, ids) {
 function rowPiece(row) {
   let place = null;
   let item = null;
-  try { place = JSON.parse(row.place); } catch { return null; }
-  if (row.item != null) { try { item = JSON.parse(row.item); } catch { return null; } }
-  return decorPieceOf({ ...place, id: row.id, model: row.model ?? null, flat: row.model == null ? [row.flat_archive, row.flat_record] : null, item });
+  try {
+    place = JSON.parse(row.place);
+  } catch {
+    return null;
+  }
+  if (row.item != null) {
+    try {
+      item = JSON.parse(row.item);
+    } catch {
+      return null;
+    }
+  }
+  return decorPieceOf({
+    ...place,
+    id: row.id,
+    model: row.model ?? null,
+    flat: row.model == null ? [row.flat_archive, row.flat_record] : null,
+    item,
+  });
 }
 
 function sameWhat(was, now) {
-  return was.model === now.model && (was.flat?.[0] ?? null) === (now.flat?.[0] ?? null) && (was.flat?.[1] ?? null) === (now.flat?.[1] ?? null);
+  return (
+    was.model === now.model &&
+    (was.flat?.[0] ?? null) === (now.flat?.[0] ?? null) &&
+    (was.flat?.[1] ?? null) === (now.flat?.[1] ?? null)
+  );
 }
 
 async function chargeOps(db, nowS, playerId, n) {
   const start = Math.floor(nowS / DECOR_OPS_WINDOW_S) * DECOR_OPS_WINDOW_S;
-  const row = await db.prepare(`INSERT INTO rate_limits (key, window_start, count) VALUES (?, ?, ?)
+  const row = await db
+    .prepare(
+      `INSERT INTO rate_limits (key, window_start, count) VALUES (?, ?, ?)
     ON CONFLICT(key) DO UPDATE SET
       count = CASE WHEN rate_limits.window_start >= excluded.window_start THEN rate_limits.count + excluded.count ELSE excluded.count END,
       window_start = MAX(rate_limits.window_start, excluded.window_start)
-    RETURNING count`).bind(`decor:${playerId}`, start, n).first();
+    RETURNING count`,
+    )
+    .bind(`decor:${playerId}`, start, n)
+    .first();
   return (row?.count ?? 0) > DECOR_OPS_MAX;
 }
 
@@ -81,7 +130,8 @@ export async function commitDecorBatch(ctx, player, body = {}) {
   if (body.seat === true) return { error: 'seat-batch' };
   if (accountKind(player) !== 'linked') return { error: 'homes-need-account' };
   if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey)) return { error: 'bad-home' };
-  if (typeof character !== 'string' || !CHAR_ID_RE.test(character) || !REALM_ID_RE.test(character)) return { error: 'realm-only' };
+  if (typeof character !== 'string' || !CHAR_ID_RE.test(character) || !REALM_ID_RE.test(character))
+    return { error: 'realm-only' };
   if (typeof txn !== 'string' || !DECOR_TXN_RE.test(txn)) return { error: 'bad-decor' };
   if (!Number.isSafeInteger(rev) || rev < 0) return { error: 'decor-rev' };
   const putIn = Array.isArray(body.put) ? body.put : null;
@@ -89,13 +139,24 @@ export async function commitDecorBatch(ctx, player, body = {}) {
   if (!putIn || !dropIn) return { error: 'bad-decor' };
   if (putIn.length + dropIn.length > DECOR_BATCH_OPS) return { error: 'decor-ops' };
 
-  const prior = await db.prepare('SELECT player, map_id, building_key, result FROM decor_batch_receipt WHERE txn = ?').bind(txn).first();
+  const prior = await db
+    .prepare('SELECT player, map_id, building_key, result FROM decor_batch_receipt WHERE txn = ?')
+    .bind(txn)
+    .first();
   if (prior) {
-    if (prior.player !== player.id || prior.map_id !== mapId || prior.building_key !== buildingKey) return { error: 'decor-txn' };
-    try { return { ...JSON.parse(prior.result), repeat: true }; } catch { return { error: 'decor-txn' }; }
+    if (prior.player !== player.id || prior.map_id !== mapId || prior.building_key !== buildingKey)
+      return { error: 'decor-txn' };
+    try {
+      return { ...JSON.parse(prior.result), repeat: true };
+    } catch {
+      return { error: 'decor-txn' };
+    }
   }
 
-  const home = await db.prepare('SELECT guild_id, region, ground FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first();   // DECOR-ROOMY: and its ground
+  const home = await db
+    .prepare('SELECT guild_id, region, ground FROM homes WHERE map_id = ? AND building_key = ?')
+    .bind(mapId, buildingKey)
+    .first(); // DECOR-ROOMY: and its ground
   if (!home) return { error: 'no-home' };
   const hall = home.guild_id != null;
 
@@ -123,17 +184,25 @@ export async function commitDecorBatch(ctx, player, body = {}) {
     puts.push(p);
   }
   if (hall) for (const p of puts) if (p.item) return { error: 'hall-item' };
-  for (const p of puts) { const g = guildPieceRule(p, { hall, yard }); if (g) return { error: g }; }   // GUILD-SHOP: a guild's own piece, in its hall alone
+  for (const p of puts) {
+    const g = guildPieceRule(p, { hall, yard });
+    if (g) return { error: g };
+  } // GUILD-SHOP: a guild's own piece, in its hall alone
 
   const out = yard ? 1 : 0;
-  const { results = [] } = await db.prepare('SELECT * FROM home_decor WHERE map_id = ? AND building_key = ? AND yard = ?')
-    .bind(mapId, buildingKey, out).all();
+  const { results = [] } = await db
+    .prepare('SELECT * FROM home_decor WHERE map_id = ? AND building_key = ? AND yard = ?')
+    .bind(mapId, buildingKey, out)
+    .all();
   const have = new Map();
   for (const row of results) {
     const piece = rowPiece(row);
     if (piece) have.set(piece.id, { row, piece });
   }
-  const revRow = await db.prepare('SELECT rev FROM decor_rev WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first();
+  const revRow = await db
+    .prepare('SELECT rev FROM decor_rev WHERE map_id = ? AND building_key = ?')
+    .bind(mapId, buildingKey)
+    .first();
   const curRev = Number(revRow?.rev) || 0;
   if (curRev !== rev) return { error: 'decor-rev' };
   if (!puts.length && !drops.length) return { ok: true, rev: curRev, gold: 0 };
@@ -142,37 +211,49 @@ export async function commitDecorBatch(ctx, player, body = {}) {
   let net = 0;
   let pay = 0;
   let refund = 0;
-  const addGold = (d) => { net += d; if (d > 0) refund += d; else if (d < 0) pay -= d; };
+  const addGold = (d) => {
+    net += d;
+    if (d > 0) refund += d;
+    else if (d < 0) pay -= d;
+  };
   const next = new Map(have);
   for (const id of drops) {
     const had = have.get(id);
     if (!had) return { error: 'no-decor' };
-    if (had.piece.station === 'vendor' && await vendorStocked(db, mapId, id)) return { error: 'vendor-stocked' };
+    if (had.piece.station === 'vendor' && (await vendorStocked(db, mapId, id))) return { error: 'vendor-stocked' };
     addGold(decorGoldMove(had.piece, null, had.row.paid).delta);
     next.delete(id);
   }
-  const cap = yard ? DECOR_YARD_CAP : (hall ? DECOR_HALL_CAP : decorCapOf(home.ground));   // DECOR-ROOMY: a wider house holds more
+  const cap = yard ? DECOR_YARD_CAP : hall ? DECOR_HALL_CAP : decorCapOf(home.ground); // DECOR-ROOMY: a wider house holds more
   /** @type {{ p: any, had: any }[]} */
   const writes = [];
   for (const p of puts) {
     const had = have.get(p.id) ?? null;
     if (had && !sameWhat(had.piece, p)) return { error: 'bad-decor' };
-    if (had?.piece.station === 'vendor' && p.station !== 'vendor' && await vendorStocked(db, mapId, p.id)) return { error: 'vendor-stocked' };
+    if (had?.piece.station === 'vendor' && p.station !== 'vendor' && (await vendorStocked(db, mapId, p.id)))
+      return { error: 'vendor-stocked' };
     if (had && had.piece.storage && p.storage === false) {
       /* emptying the flag does not empty the chest; the drop path is the one that can lose goods */
     }
     const move = decorGoldMove(had?.piece ?? null, p, had ? had.row.paid : 0);
     addGold(move.delta);
-    writes.push({ p: { ...p, paid: had ? move.ledger : (move.ledger || p.paid) }, had, ledger: move.ledger });
+    writes.push({ p: { ...p, paid: had ? move.ledger : move.ledger || p.paid }, had, ledger: move.ledger });
     next.set(p.id, { piece: p });
   }
   if (next.size > cap) return { error: yard ? 'yard-cap' : 'decor-cap' };
   // GUILD-SHOP: the guild's own pieces this batch stands new, against what its stock has left (each INSERT's guard holds a race)
   const wanted = new Map();
-  for (const w of writes) if (!w.had && guildWareOfModel(w.p.model)) wanted.set(w.p.model, { p: w.p, n: (wanted.get(w.p.model)?.n ?? 0) + 1 });
+  for (const w of writes)
+    if (!w.had && guildWareOfModel(w.p.model))
+      wanted.set(w.p.model, { p: w.p, n: (wanted.get(w.p.model)?.n ?? 0) + 1 });
   // AUDIT GUILD-SHOP S6: and the batch's own drops of the same piece give theirs back - a swap is no new piece
-  for (const id of drops) { const m = have.get(id)?.piece.model; const w = wanted.get(m); if (w) w.n--; }
-  for (const { p, n } of wanted.values()) if (n > 0 && (await guildStockLeft(db, p, mapId, buildingKey)) < n) return { error: 'guild-ware-none' };
+  for (const id of drops) {
+    const m = have.get(id)?.piece.model;
+    const w = wanted.get(m);
+    if (w) w.n--;
+  }
+  for (const { p, n } of wanted.values())
+    if (n > 0 && (await guildStockLeft(db, p, mapId, buildingKey)) < n) return { error: 'guild-ware-none' };
   const delta = hall ? -pay : net;
   if (hall && refund > 0) {
     const g = await db.prepare('SELECT treasury FROM guilds WHERE id = ?').bind(home.guild_id).first();
@@ -181,7 +262,12 @@ export async function commitDecorBatch(ctx, player, body = {}) {
 
   if (drops.length) {
     const marks = drops.map(() => '?').join(', ');
-    const heldBin = await db.prepare(`SELECT piece_id FROM decor_bin WHERE map_id = ? AND building_key = ? AND piece_id IN (${marks}) LIMIT 1`).bind(mapId, buildingKey, ...drops).first();
+    const heldBin = await db
+      .prepare(
+        `SELECT piece_id FROM decor_bin WHERE map_id = ? AND building_key = ? AND piece_id IN (${marks}) LIMIT 1`,
+      )
+      .bind(mapId, buildingKey, ...drops)
+      .first();
     if (heldBin) return { error: 'decor-holds' };
   }
   const clears = writes.filter((w) => w.had?.piece.storage && !w.p.storage).map((w) => w.p.id);
@@ -190,7 +276,11 @@ export async function commitDecorBatch(ctx, player, body = {}) {
     const blob = await getRealmBlob(ctx, player.id, character);
     if (!blob.ok) return blob;
     let save = null;
-    try { save = JSON.parse(await realmSaveTextOf(blob.object)); } catch { save = null; }
+    try {
+      save = JSON.parse(await realmSaveTextOf(blob.object));
+    } catch {
+      save = null;
+    }
     if (!save) return { error: 'no-data' };
     if (decorHeldBlocks(save, [...drops, ...clears]).length) return { error: 'decor-holds' };
     saveNote = save;
@@ -214,58 +304,153 @@ export async function commitDecorBatch(ctx, player, body = {}) {
     if (prep.error) return prep;
   } else if (delta !== 0) return { error: 'realm-needed' };
 
-  const answer = { ok: true, rev: curRev + 1, gold: delta, ...(hall && refund > 0 ? { treasury: refund } : {}), ...(prep ? { realm: { seq: prep.seq } } : {}) };
+  const answer = {
+    ok: true,
+    rev: curRev + 1,
+    gold: delta,
+    ...(hall && refund > 0 ? { treasury: refund } : {}),
+    ...(prep ? { realm: { seq: prep.seq } } : {}),
+  };
   const steps = [];
   if (prep) steps.push(...prep.steps);
   const ownsTail = [mapId, buildingKey, player.id, character];
   for (const id of drops) {
     const had = have.get(id);
-    steps.push(db.prepare(`DELETE FROM home_decor WHERE map_id = ? AND building_key = ? AND id = ? AND yard = ? AND place = ? AND paid = ? AND ${OWNS}`)
-      .bind(mapId, buildingKey, id, out, had.row.place, had.row.paid, ...ownsTail));
+    steps.push(
+      db
+        .prepare(
+          `DELETE FROM home_decor WHERE map_id = ? AND building_key = ? AND id = ? AND yard = ? AND place = ? AND paid = ? AND ${OWNS}`,
+        )
+        .bind(mapId, buildingKey, id, out, had.row.place, had.row.paid, ...ownsTail),
+    );
     steps.push(mustChange(db));
-    steps.push(db.prepare('DELETE FROM decor_access WHERE map_id = ? AND building_key = ? AND piece_id = ?').bind(mapId, buildingKey, id));
+    steps.push(
+      db
+        .prepare('DELETE FROM decor_access WHERE map_id = ? AND building_key = ? AND piece_id = ?')
+        .bind(mapId, buildingKey, id),
+    );
   }
   for (const w of writes) {
     if (w.had) {
-      steps.push(db.prepare(`UPDATE home_decor SET place = ?, paid = ? WHERE map_id = ? AND building_key = ? AND id = ? AND yard = ? AND place = ? AND paid = ? AND ${OWNS}`)
-        .bind(placeJson(w.p), w.ledger, mapId, buildingKey, w.p.id, out, w.had.row.place, w.had.row.paid, ...ownsTail));
+      steps.push(
+        db
+          .prepare(
+            `UPDATE home_decor SET place = ?, paid = ? WHERE map_id = ? AND building_key = ? AND id = ? AND yard = ? AND place = ? AND paid = ? AND ${OWNS}`,
+          )
+          .bind(
+            placeJson(w.p),
+            w.ledger,
+            mapId,
+            buildingKey,
+            w.p.id,
+            out,
+            w.had.row.place,
+            w.had.row.paid,
+            ...ownsTail,
+          ),
+      );
     } else {
       const pv = typeof w.p.item?.pv === 'string' ? w.p.item.pv : null;
       const pvSql = pv ? ' AND EXISTS (SELECT 1 FROM products WHERE provenance = ? AND owner = ? AND listed = 0)' : '';
-      const [stockSql, stockBinds] = guildStockGuard(w.p, mapId, buildingKey);   // GUILD-SHOP: each one the guild owns, counted as the batch stands them
-      steps.push(db.prepare(`INSERT OR IGNORE INTO home_decor (map_id, building_key, id, model, flat_archive, flat_record, place, placed_at, item, paid, yard)
-        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${OWNS} AND (SELECT COUNT(*) FROM home_decor WHERE map_id = ? AND building_key = ? AND yard = ?) < ?${pvSql}${stockSql}`)
-        .bind(mapId, buildingKey, w.p.id, w.p.model, w.p.flat?.[0] ?? null, w.p.flat?.[1] ?? null, placeJson(w.p), nowS,
-          w.p.item ? JSON.stringify(w.p.item) : null, w.ledger, out, ...ownsTail, mapId, buildingKey, out, cap, ...(pv ? [pv, player.id] : []), ...stockBinds));
+      const [stockSql, stockBinds] = guildStockGuard(w.p, mapId, buildingKey); // GUILD-SHOP: each one the guild owns, counted as the batch stands them
+      steps.push(
+        db
+          .prepare(
+            `INSERT OR IGNORE INTO home_decor (map_id, building_key, id, model, flat_archive, flat_record, place, placed_at, item, paid, yard)
+        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${OWNS} AND (SELECT COUNT(*) FROM home_decor WHERE map_id = ? AND building_key = ? AND yard = ?) < ?${pvSql}${stockSql}`,
+          )
+          .bind(
+            mapId,
+            buildingKey,
+            w.p.id,
+            w.p.model,
+            w.p.flat?.[0] ?? null,
+            w.p.flat?.[1] ?? null,
+            placeJson(w.p),
+            nowS,
+            w.p.item ? JSON.stringify(w.p.item) : null,
+            w.ledger,
+            out,
+            ...ownsTail,
+            mapId,
+            buildingKey,
+            out,
+            cap,
+            ...(pv ? [pv, player.id] : []),
+            ...stockBinds,
+          ),
+      );
     }
     steps.push(mustChange(db));
   }
   if (hall && refund > 0) {
-    steps.push(db.prepare(`UPDATE guilds SET treasury = treasury + ?1, realm_gold = realm_gold + ?1, moved_by = ?2, moved_at = ?3, moved_kind = 'hall-piece'
-      WHERE id = ?4 AND treasury + ?1 <= ?5`).bind(refund, displayName(player), nowS, home.guild_id, GUILD_TREASURY_MAX));
+    steps.push(
+      db
+        .prepare(
+          `UPDATE guilds SET treasury = treasury + ?1, realm_gold = realm_gold + ?1, moved_by = ?2, moved_at = ?3, moved_kind = 'hall-piece'
+      WHERE id = ?4 AND treasury + ?1 <= ?5`,
+        )
+        .bind(refund, displayName(player), nowS, home.guild_id, GUILD_TREASURY_MAX),
+    );
     steps.push(mustChange(db));
   }
-  steps.push(db.prepare('INSERT INTO decor_rev (map_id, building_key, rev) VALUES (?, ?, 0) ON CONFLICT(map_id, building_key) DO NOTHING').bind(mapId, buildingKey));
-  steps.push(db.prepare('UPDATE decor_rev SET rev = rev + 1 WHERE map_id = ? AND building_key = ? AND rev = ?').bind(mapId, buildingKey, curRev));
+  steps.push(
+    db
+      .prepare(
+        'INSERT INTO decor_rev (map_id, building_key, rev) VALUES (?, ?, 0) ON CONFLICT(map_id, building_key) DO NOTHING',
+      )
+      .bind(mapId, buildingKey),
+  );
+  steps.push(
+    db
+      .prepare('UPDATE decor_rev SET rev = rev + 1 WHERE map_id = ? AND building_key = ? AND rev = ?')
+      .bind(mapId, buildingKey, curRev),
+  );
   steps.push(mustChange(db));
-  steps.push(db.prepare('INSERT INTO decor_batch_receipt (txn, player, map_id, building_key, rev, result, at) VALUES (?, ?, ?, ?, ?, ?, ?)')
-    .bind(txn, player.id, mapId, buildingKey, curRev + 1, JSON.stringify(answer), nowS));
+  steps.push(
+    db
+      .prepare(
+        'INSERT INTO decor_batch_receipt (txn, player, map_id, building_key, rev, result, at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      )
+      .bind(txn, player.id, mapId, buildingKey, curRev + 1, JSON.stringify(answer), nowS),
+  );
   steps.push(mustChange(db));
   try {
     await db.batch(steps);
   } catch {
     if (prep) {
       const landed = await dropIfUnnamed(db, ctx.bucket, player.id, at.id, prep.key);
-      if (landed) return (await db.prepare('SELECT result FROM decor_batch_receipt WHERE txn = ?').bind(txn).first())?.result
-        ? JSON.parse((await db.prepare('SELECT result FROM decor_batch_receipt WHERE txn = ?').bind(txn).first()).result)
-        : { error: 'seq', seq: prep.seq };
+      if (landed)
+        return (await db.prepare('SELECT result FROM decor_batch_receipt WHERE txn = ?').bind(txn).first())?.result
+          ? JSON.parse(
+              (await db.prepare('SELECT result FROM decor_batch_receipt WHERE txn = ?').bind(txn).first()).result,
+            )
+          : { error: 'seq', seq: prep.seq };
     }
     const again = await db.prepare('SELECT result FROM decor_batch_receipt WHERE txn = ?').bind(txn).first();
-    if (again?.result) { try { return JSON.parse(again.result); } catch { /* the row is the refusal below */ } }
-    const nowRev = Number((await db.prepare('SELECT rev FROM decor_rev WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first())?.rev) || 0;
+    if (again?.result) {
+      try {
+        return JSON.parse(again.result);
+      } catch {
+        /* the row is the refusal below */
+      }
+    }
+    const nowRev =
+      Number(
+        (
+          await db
+            .prepare('SELECT rev FROM decor_rev WHERE map_id = ? AND building_key = ?')
+            .bind(mapId, buildingKey)
+            .first()
+        )?.rev,
+      ) || 0;
     if (nowRev !== curRev) return { error: 'decor-rev' };
-    const owns = await db.prepare(`SELECT ${OWNS} AS owns`).bind(...ownsTail).first();
-    for (const w of writes) if (!w.had && await guildStockSpent(db, w.p, mapId, buildingKey)) return { error: 'guild-ware-none' };   // GUILD-SHOP: the guild's stock spent
+    const owns = await db
+      .prepare(`SELECT ${OWNS} AS owns`)
+      .bind(...ownsTail)
+      .first();
+    for (const w of writes)
+      if (!w.had && (await guildStockSpent(db, w.p, mapId, buildingKey))) return { error: 'guild-ware-none' }; // GUILD-SHOP: the guild's stock spent
     return { error: owns?.owns ? 'decor-cap' : 'no-home' };
   }
   if (prep) await dropObjects(ctx.bucket, [prep.prev]);

@@ -2,8 +2,8 @@
   {
     "name": "EGA3S-a-void-gives-back-a-held-stake-alone",
     "file": "server-account/src/eg.js",
-    "old": "const from = mercy ? \"state = 'held'\" : \"state IN ('held', 'spent')\";",
-    "new": "const from = \"state = 'held'\";",
+    "old": "  const from = mercy ? \"state = 'held'\" : \"state IN ('held', 'spent')\";",
+    "new": "  const from = \"state = 'held'\";",
     "why": "lane3 #1: a force deploy's void after the company's Redoubt left the opener's key spent",
     "tests": [
       "test/net/eliteGates/egaudit3_service.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "EGA3S-a-void-end-after-a-redoubt-unread",
     "file": "server-account/src/eg.js",
-    "old": "if (c.why === 'void') { if (stake?.state === 'held' || stake?.state === 'spent') settle = returnStake(db, c.z); }",
-    "new": "if (c.why === 'void') { if (stake?.state === 'held') settle = returnStake(db, c.z); }",
+    "old": "      if (stake?.state === 'held' || stake?.state === 'spent') settle = returnStake(db, c.z);",
+    "new": "      if (stake?.state === 'held') settle = returnStake(db, c.z);",
     "why": "lane3 #1: the opener's own void end, after a Redoubt, gives nothing back",
     "tests": [
       "test/net/eliteGates/egaudit3_service.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "EGA3S-the-mercy-on-the-openers-early-end",
     "file": "server-account/src/eg.js",
-    "old": "settle = may && c.nr === 1 ? returnStake(db, c.z, true) : may ? [] : [spendStake(db, c.z)];",
-    "new": "settle = may ? returnStake(db, c.z, true) : [spendStake(db, c.z)];",
+    "old": "      settle = may && c.nr === 1 ? returnStake(db, c.z, true) : may ? [] : [spendStake(db, c.z)];",
+    "new": "      settle = may ? returnStake(db, c.z, true) : [spendStake(db, c.z)];",
     "why": "lane3 #6: the opener's forsaking in Hall 1 paid the mercy, and the company took Redoubt 1 after",
     "tests": [
       "test/net/eliteGates/egaudit3_service.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "EGA3S-the-ends-word-never-read",
     "file": "server-account/src/eg.js",
-    "old": "else if (stake?.state === 'held' && (c.nr === 1 || stake.account === player.id)) {",
-    "new": "else if (stake?.state === 'held' && stake.account === player.id) {",
+    "old": "    } else if (stake?.state === 'held' && (c.nr === 1 || stake.account === player.id)) {",
+    "new": "    } else if (stake?.state === 'held' && stake.account === player.id) {",
     "why": "lane3 #6: the member's end that closed the opener's first breach settles nothing - the key never comes back",
     "tests": [
       "test/net/eliteGates/egaudit3_service.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "EGA3S-a-void-counted-as-the-first",
     "file": "server-account/src/eg.js",
-    "old": "AND rh = 0 AND state != 'returned' AND rowid <",
-    "new": "AND rh = 0 AND rowid <",
+    "old": "      EXISTS (SELECT 1 FROM eg_stakes WHERE account = ?2 AND rh = 0 AND state != 'returned' AND rowid < (SELECT rowid FROM eg_stakes WHERE ez = ?1)) AS before`,",
+    "new": "      EXISTS (SELECT 1 FROM eg_stakes WHERE account = ?2 AND rh = 0 AND rowid < (SELECT rowid FROM eg_stakes WHERE ez = ?1)) AS before`,",
     "why": "lane3 #6: a first breach a void gave back whole made the next no first",
     "tests": [
       "test/net/eliteGates/egaudit3_service.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "EGA3S-first-by-the-second",
     "file": "server-account/src/eg.js",
-    "old": "AND rh = 0 AND state != 'returned' AND rowid < (SELECT rowid FROM eg_stakes WHERE ez = ?1)",
-    "new": "AND rh = 0 AND state != 'returned' AND rowid > (SELECT rowid FROM eg_stakes WHERE ez = ?1)",
+    "old": "      EXISTS (SELECT 1 FROM eg_stakes WHERE account = ?2 AND rh = 0 AND state != 'returned' AND rowid < (SELECT rowid FROM eg_stakes WHERE ez = ?1)) AS before`,",
+    "new": "      EXISTS (SELECT 1 FROM eg_stakes WHERE account = ?2 AND rh = 0 AND state != 'returned' AND rowid > (SELECT rowid FROM eg_stakes WHERE ez = ?1)) AS before`,",
     "why": "lane3 #6: \"before\" read backwards - the second breach in one second read as the first",
     "tests": [
       "test/net/eliteGates/egaudit3_service.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "EGA3S-the-rehearsals-day-never-given-back",
     "file": "server-account/src/eg.js",
-    "old": "...(mercy ? [] : [db.prepare(`UPDATE players SET eg_rh_day = -1",
-    "new": "...(true ? [] : [db.prepare(`UPDATE players SET eg_rh_day = -1",
+    "old": "    ...(mercy",
+    "new": "    ...(true",
     "why": "lane3 #14: a voided Rehearsal consumed the day's Rehearsal",
     "tests": [
       "test/net/eliteGates/egaudit3_service.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "EGA3S-any-rehearsal-day-given-back",
     "file": "server-account/src/eg.js",
-    "old": "AND eg_rh_day = (SELECT at / ${DAY_S} FROM eg_stakes WHERE ez = ?1)",
-    "new": "AND 1 = 1",
+    "old": "      AND eg_rh_day = (SELECT at / ${DAY_S} FROM eg_stakes WHERE ez = ?1)`,",
+    "new": "      AND 1 = 1`,",
     "why": "lane3 #14: yesterday's void gave back today's Rehearsal",
     "tests": [
       "test/net/eliteGates/egaudit3_service.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "EGA3S-admit-the-window-unchecked",
     "file": "server-account/src/eg.js",
-    "old": "if (st.state !== 'held' || nowS > int(st.at) + EG_ADMIT_WINDOW_S) return { error: 'spent' };",
-    "new": "if (st.state !== 'held') return { error: 'spent' };",
+    "old": "  if (st.state !== 'held' || nowS > int(st.at) + EG_ADMIT_WINDOW_S) return { error: 'spent' };",
+    "new": "  if (st.state !== 'held') return { error: 'spent' };",
     "why": "lane3 #15: a late ask locked its asker out for three hours",
     "tests": [
       "test/net/eliteGates/egaudit3_service.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "EGA3S-admit-a-settled-stake",
     "file": "server-account/src/eg.js",
-    "old": "if (st.state !== 'held' || nowS > int(st.at) + EG_ADMIT_WINDOW_S) return { error: 'spent' };",
-    "new": "if (nowS > int(st.at) + EG_ADMIT_WINDOW_S) return { error: 'spent' };",
+    "old": "  if (st.state !== 'held' || nowS > int(st.at) + EG_ADMIT_WINDOW_S) return { error: 'spent' };",
+    "new": "  if (nowS > int(st.at) + EG_ADMIT_WINDOW_S) return { error: 'spent' };",
     "why": "lane3 #15: a voided breach still admitting",
     "tests": [
       "test/net/eliteGates/egaudit3_service.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "EGA3S-admit-the-asks-own-bound",
     "file": "server-account/src/eg.js",
-    "old": ".bind(player.id, b, nowS, int(st.until)).first();",
-    "new": ".bind(player.id, b, nowS, nowS + EG_LIVE_S).first();",
+    "old": "    .bind(player.id, b, nowS, int(st.until))",
+    "new": "    .bind(player.id, b, nowS, nowS + EG_LIVE_S)",
     "why": "lane3 #15: an admission's live breach the ask plus 3 h 20, past its stake's own",
     "tests": [
       "test/net/eliteGates/egaudit3_service.test.js"
@@ -133,7 +133,7 @@
     "name": "EGA3S-admit-no-stake-a-hall-1-start",
     "file": "server-account/src/eg.js",
     "old": "  if (!st) return { error: 'breach' };",
-    "new": "  if (!st) { const order = await mintEgOrder({ o: 'egadmit', s: player.id, eb: b, ez: hex(rand(new Uint8Array(12))), ew: 0 }, key, { subtle, nowS }); return { order, b }; }",
+    "new": "  if (!st) {\n    const order = await mintEgOrder(\n      { o: 'egadmit', s: player.id, eb: b, ez: hex(rand(new Uint8Array(12))), ew: 0 },\n      key,\n      { subtle, nowS },\n    );\n    return { order, b };\n  }",
     "why": "lane3 #9: an id no open staked signed a Hall 1 order any room took",
     "tests": [
       "test/net/eliteGates/egaudit3_service.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "EGA3S-the-boards-never-kept",
     "file": "server-account/src/egHonours.js",
-    "old": "if (_ranks.v && _ranks.season === season && nowS >= _ranks.at && nowS - _ranks.at < EG_BOARD_CACHE_S) return _ranks.v;",
-    "new": "if (false) return _ranks.v;",
+    "old": "  if (_ranks.v && _ranks.season === season && nowS >= _ranks.at && nowS - _ranks.at < EG_BOARD_CACHE_S) return _ranks.v;",
+    "new": "  if (false) return _ranks.v;",
     "why": "lane3 #18: every look at the board read the season's ends, depths and every Redoubt ever taken",
     "tests": [
       "test/net/eliteGates/egaudit3_service.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "EGA3S-the-boards-kept-for-ever",
     "file": "server-account/src/egHonours.js",
-    "old": "nowS - _ranks.at < EG_BOARD_CACHE_S) return _ranks.v;",
-    "new": "nowS - _ranks.at < Infinity) return _ranks.v;",
+    "old": "  if (_ranks.v && _ranks.season === season && nowS >= _ranks.at && nowS - _ranks.at < EG_BOARD_CACHE_S) return _ranks.v;",
+    "new": "  if (_ranks.v && _ranks.season === season && nowS >= _ranks.at && nowS - _ranks.at < Infinity) return _ranks.v;",
     "why": "lane3 #18: a Worker's rankings never read again",
     "tests": [
       "test/net/eliteGates/egaudit3_service.test.js"
@@ -172,8 +172,8 @@
   {
     "name": "EGA3S-the-boards-never-forgotten-at-a-claim",
     "file": "server-account/src/eg.js",
-    "old": "  if (recorded && c.q !== 'v') egBoardsMoved();",
-    "new": "  if (false) egBoardsMoved();",
+    "old": "  if (recorded && c.q !== 'v') egBoardsMoved(); // AUDIT EG III (lane3 #18): a Redoubt or an end moved the boards this Worker keeps",
+    "new": "  if (false) egBoardsMoved(); // AUDIT EG III (lane3 #18): a Redoubt or an end moved the boards this Worker keeps",
     "why": "lane3 #18: a Redoubt claimed here stood off its own board for a minute",
     "tests": [
       "test/net/eliteGates/egaudit3_service.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "EGA3S-one-callers-row-on-anothers",
     "file": "server-account/src/egHonours.js",
-    "old": "copy = (rows) => rows.map((r) => ({ ...r }));",
-    "new": "copy = (rows) => rows;",
+    "old": "    copy = (rows) => rows.map((r) => ({ ...r })); // AUDIT EG III (lane3 #18): kept a minute",
+    "new": "    copy = (rows) => rows; // AUDIT EG III (lane3 #18): kept a minute",
     "why": "lane3 #18: the kept rows marked with the caller's own row, read by another board in flight",
     "tests": [
       "test/net/eliteGates/egaudit3_service.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "EGA3S-the-standing-by-its-claimers",
     "file": "server-account/src/egHonours.js",
-    "old": "const mine = breachesOf(rows).get(c.b), key = mine ? companyKeyOf(mine) : '';",
-    "new": "const mine = breachesOf(rows).get(c.b), key = mine ? [...mine.players].sort().join(',') : '';",
+    "old": "    key = mine ? companyKeyOf(mine) : ''; // '' off the Descent: no company's - AUDIT EG III (lane3 #4): the board's own key",
+    "new": "    key = mine ? [...mine.players].sort().join(',') : ''; // '' off the Descent: no company's - AUDIT EG III (lane3 #4): the board's own key",
     "why": "lane3 #4: the recap's standing found no row for a company the relay tagged",
     "tests": [
       "test/net/eliteGates/egaudit3_service.test.js"

@@ -20,8 +20,8 @@
   {
     "name": "NAMEAS-an-unknown-word-read-as-the-character",
     "file": "server-account/src/accounts.js",
-    "old": "(row?.name_as === 'character' ? 'character' : 'account')",
-    "new": "(row?.name_as ? 'character' : 'account')",
+    "old": "export const nameAsOf = (/** @type {any} */ row) => (row?.name_as === 'character' ? 'character' : 'account');",
+    "new": "export const nameAsOf = (/** @type {any} */ row) => (row?.name_as ? 'character' : 'account');",
     "tests": [
       "test/net/nameas_service.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "NAMEAS-an-email-worn",
     "file": "server-account/src/accounts.js",
-    "old": "  if (handleLooksLikeEmail(s)) return { why: 'email' };\n",
-    "new": "",
+    "old": "  if (handleLooksLikeEmail(s)) return { why: 'email' };\n  if (nameIsIssuable(s)) return null;",
+    "new": "  if (nameIsIssuable(s)) return null;",
     "tests": [
       "test/net/nameas_service.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "NAMEAS-the-long-refusal-unread",
     "file": "server-account/src/accounts.js",
-    "old": "  if (s.length > NAME_MAX) return { why: 'long' };\n",
-    "new": "",
+    "old": "  if (s.length > NAME_MAX) return { why: 'long' };\n  const verdict = checkName(s);",
+    "new": "  const verdict = checkName(s);",
     "tests": [
       "test/net/nameas_service.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "NAMEAS-the-caught-word-dropped",
     "file": "server-account/src/accounts.js",
-    "old": "return { why: 'refused', word: verdict.word };",
-    "new": "return { why: 'refused' };",
+    "old": "  if (!verdict.ok && verdict.kind !== 'empty') return { why: 'refused', word: verdict.word };",
+    "new": "  if (!verdict.ok && verdict.kind !== 'empty') return { why: 'refused' };",
     "tests": [
       "test/net/nameas_service.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "NAMEAS-the-guard-blind-to-case",
     "file": "server-account/src/accounts.js",
-    "old": ".bind(character.toLowerCase(), player.id)",
-    "new": ".bind(character, player.id)",
+    "old": "      .bind(character.toLowerCase(), player.id)",
+    "new": "      .bind(character, player.id)",
     "tests": [
       "test/net/nameas_service.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "NAMEAS-my-own-username-taken",
     "file": "server-account/src/accounts.js",
-    "old": ".bind(character.toLowerCase(), player.id)",
-    "new": ".bind(character.toLowerCase(), '')",
+    "old": "      .bind(character.toLowerCase(), player.id)",
+    "new": "      .bind(character.toLowerCase(), '')",
     "tests": [
       "test/net/nameas_service.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "NAMEAS-the-choice-unwritten",
     "file": "server-account/src/accounts.js",
-    "old": "await db.prepare('UPDATE players SET name_as = ?, last_seen = ? WHERE id = ?').bind(as === 'character' ? 'character' : null, nowS, player.id).run();",
-    "new": "void db;",
+    "old": "  await db\n    .prepare('UPDATE players SET name_as = ?, last_seen = ? WHERE id = ?')\n    .bind(as === 'character' ? 'character' : null, nowS, player.id)\n    .run();",
+    "new": "  void db;",
     "tests": [
       "test/net/nameas_service.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "NAMEAS-the-account-stored-as-a-word",
     "file": "server-account/src/accounts.js",
-    "old": ".bind(as === 'character' ? 'character' : null, nowS, player.id)",
-    "new": ".bind(as, nowS, player.id)",
+    "old": "  await db\n    .prepare('UPDATE players SET name_as = ?, last_seen = ? WHERE id = ?')\n    .bind(as === 'character' ? 'character' : null, nowS, player.id)\n    .run();",
+    "new": "  await db.prepare('UPDATE players SET name_as = ?, last_seen = ? WHERE id = ?').bind(as, nowS, player.id).run();",
     "tests": [
       "test/net/nameas_service.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "NAMEAS-the-account-view-silent",
     "file": "server-account/src/accounts.js",
-    "old": "    nameAs: nameAsOf(player),\n",
-    "new": "",
+    "old": "    nameAs: nameAsOf(player),\n    // RECOVERY-SET: how many recovery codes still open this account - a COUNT, never a code or its hash (null for a guest)",
+    "new": "    // RECOVERY-SET: how many recovery codes still open this account - a COUNT, never a code or its hash (null for a guest)",
     "tests": [
       "test/net/nameas_service.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "GUILD-YARD-hall-yard-refused-at-the-read",
     "file": "server-account/src/decor.js",
-    "old": "    if (yard === true && S.seat) return { error: 'hall-yard' };\n",
-    "new": "    if (yard === true) return { error: 'hall-yard' };\n",
+    "old": "    if (yard === true && S.seat) return { error: 'hall-yard' };",
+    "new": "    if (yard === true) return { error: 'hall-yard' };",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "GUILD-YARD-keepers-any-rank",
     "file": "server-account/src/decor.js",
-    "old": "      AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}\n      AND EXISTS",
-    "new": "      AND g.rank >= 0\n      AND EXISTS",
+    "old": "      AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}",
+    "new": "      AND g.rank >= 0",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "GUILD-YARD-a-yard-pieces-half-to-the-record",
     "file": "server-account/src/decor.js",
-    "old": "    const hall = delta > 0 ? await S.guildOf(db, mapId, buildingKey) : null;\n    if (hall) {\n      // GUILD1d: a hall's piece taken out",
-    "new": "    const hall = delta > 0 && row.yard !== 1 ? await S.guildOf(db, mapId, buildingKey) : null;\n    if (hall) {\n      // GUILD1d: a hall's piece taken out",
+    "old": "    const hall = delta > 0 ? await S.guildOf(db, mapId, buildingKey) : null;",
+    "new": "    const hall = delta > 0 && row.yard !== 1 ? await S.guildOf(db, mapId, buildingKey) : null;",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -304,8 +304,8 @@
   {
     "name": "AUDIT-GUILD-YARD-the-hall-word-for-every-yard",
     "file": "server-account/src/decor.js",
-    "old": "    : barred && (S.seat",
-    "new": "    : (sent.item || out) && (S.seat",
+    "old": "      : barred && (S.seat || (await hallGuildOf(db, mapId, buildingKey)))",
+    "new": "      : (sent.item || out) && (S.seat || (await hallGuildOf(db, mapId, buildingKey)))",
     "tests": [
       "test/net/guild_yard.test.js",
       "test/net/guild1d_service.test.js",

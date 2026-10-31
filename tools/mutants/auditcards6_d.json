@@ -52,8 +52,8 @@
   {
     "name": "AC6-D3-arena-honours-unread",
     "file": "server-account/src/boardNames.js",
-    "old": "    if (!own.arena) rows = await withArenaHonoursAll(ctx, rows, nowS);\n",
-    "new": "",
+    "old": "    if (!own.arena) rows = await withArenaHonoursAll(ctx, rows, nowS);\n    if (!own.iliac) rows = await withIliacHonoursAll(ctx, rows, nowS);",
+    "new": "    if (!own.iliac) rows = await withIliacHonoursAll(ctx, rows, nowS);",
     "tests": [
       "test/net/iliac/auditcards6_d.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "AC6-D3-iliac-honours-unread",
     "file": "server-account/src/boardNames.js",
-    "old": "    if (!own.iliac) rows = await withIliacHonoursAll(ctx, rows, nowS);\n",
-    "new": "",
+    "old": "    if (!own.iliac) rows = await withIliacHonoursAll(ctx, rows, nowS);\n    rows = await withEgHonoursAll(ctx, rows, nowS); // EG-E2: and the last season's Spire Champions, the Worker's kept word on every board",
+    "new": "    rows = await withEgHonoursAll(ctx, rows, nowS); // EG-E2: and the last season's Spire Champions, the Worker's kept word on every board",
     "tests": [
       "test/net/iliac/auditcards6_d.test.js"
     ],

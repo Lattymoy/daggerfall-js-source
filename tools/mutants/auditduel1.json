@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-DUEL1-A1-guests-counted",
     "file": "server-account/src/accounts.js",
-    "old": "WHERE EXISTS (SELECT 1 FROM players WHERE id = ?1 AND handle IS NOT NULL)",
-    "new": "WHERE EXISTS (SELECT 1 FROM players WHERE id = ?1)",
+    "old": "     WHERE EXISTS (SELECT 1 FROM players WHERE id = ?1 AND handle IS NOT NULL)",
+    "new": "     WHERE EXISTS (SELECT 1 FROM players WHERE id = ?1)",
     "tests": [
       "test/server/duel_record.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-DUEL1-A1-the-winner-bound-unread",
     "file": "server-account/src/accounts.js",
-    "old": "AND at > ?3 - ?5) < ?7`,",
-    "new": "AND at > ?3 - ?5) < ?7 + 1000`,",
+    "old": "       AND (SELECT COUNT(*) FROM duel_results WHERE winner = ?2 AND at > ?3 - ?5) < ?7`,",
+    "new": "       AND (SELECT COUNT(*) FROM duel_results WHERE winner = ?2 AND at > ?3 - ?5) < ?7 + 1000`,",
     "tests": [
       "test/server/duel_record.test.js"
     ]

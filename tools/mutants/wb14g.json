@@ -94,8 +94,8 @@
   {
     "name": "WB14g-a-portent-receipt-at-the-plain-odds",
     "file": "server-account/src/eg.js",
-    "old": "c.r === 1 ? EG_KEY_ODDS_RITE : c.p > 0 ? EG_KEY_ODDS_PORTENT : EG_KEY_ODDS",
-    "new": "c.r === 1 ? EG_KEY_ODDS_RITE : EG_KEY_ODDS",
+    "old": "      .bind(\n        player.id,\n        c.d,\n        drawUnder(rand, c.r === 1 ? EG_KEY_ODDS_RITE : c.p > 0 ? EG_KEY_ODDS_PORTENT : EG_KEY_ODDS) ? 1 : 0,\n        EG_KEY_PITY,\n      ); // WB14g: a portent night's at the rite's",
+    "new": "      .bind(player.id, c.d, drawUnder(rand, c.r === 1 ? EG_KEY_ODDS_RITE : EG_KEY_ODDS) ? 1 : 0, EG_KEY_PITY); // WB14g: a portent night's at the rite's",
     "tests": [
       "test/net/gate/wb14g_pays.test.js"
     ]

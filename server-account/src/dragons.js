@@ -24,7 +24,9 @@ const int = (v) => (Number.isSafeInteger(Number(v)) ? Number(v) : 0);
 const hex = (b) => [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
 /** The statements that write a (watch, account)'s hoard row for `cid` if none is yet, and read whose it is. */
 const hoardOf = (db, w, account, cid, nowS) => [
-  db.prepare('INSERT OR IGNORE INTO dragon_spoils (watch, account, cid, at) VALUES (?1, ?2, ?3, ?4)').bind(w, account, cid, nowS),
+  db
+    .prepare('INSERT OR IGNORE INTO dragon_spoils (watch, account, cid, at) VALUES (?1, ?2, ?3, ?4)')
+    .bind(w, account, cid, nowS),
   db.prepare('SELECT cid FROM dragon_spoils WHERE watch = ?1 AND account = ?2').bind(w, account),
 ];
 const hoardAnswer = (res, cid) => res?.results?.[0]?.cid === cid;
@@ -43,7 +45,10 @@ export async function dragonRecordOf({ db }, playerId) {
 }
 /** An account's tamed dragons: `[{ id, character, look, watch }]` - the mount's provenance (DRAGON5). */
 export async function dragonMountsOf({ db }, playerId) {
-  const r = await db.prepare('SELECT id, char_id, look, watch FROM dragon_mounts WHERE account = ?1 ORDER BY at').bind(playerId).all();
+  const r = await db
+    .prepare('SELECT id, char_id, look, watch FROM dragon_mounts WHERE account = ?1 ORDER BY at')
+    .bind(playerId)
+    .all();
   return (r?.results ?? []).map((m) => ({ id: m.id, character: m.char_id, look: int(m.look), watch: int(m.watch) }));
 }
 
@@ -62,7 +67,8 @@ export async function claimDragon({ db, nowS, subtle, rand }, player, { receipt,
   const c = v.claims;
   if (c.s !== player.id) return { error: 'not-yours' };
   const hoard = typeof cid === 'string' && DRAGON_CID_RE.test(cid);
-  if (!player.handle) {   // a guest: never counted and never tamed - but given its hoard, once
+  if (!player.handle) {
+    // a guest: never counted and never tamed - but given its hoard, once
     const spoils = hoard ? hoardAnswer((await db.batch(hoardOf(db, c.q, player.id, cid, nowS)))[1], cid) : false;
     return { recorded: false, why: 'guest', ...(await dragonRecordOf({ db }, player.id)), spoils, tamed: null };
   }
@@ -75,16 +81,20 @@ export async function claimDragon({ db, nowS, subtle, rand }, player, { receipt,
   const mine = 'EXISTS (SELECT 1 FROM dragon_kills WHERE watch = ?1 AND account = ?2 AND nonce = ?3)';
   const res = await db.batch([
     // THE ROW, stamped with this claim's nonce - RETURNING it only when it was written
-    db.prepare(
-      `INSERT OR IGNORE INTO dragon_kills (watch, account, look, char_id, earned, level, nonce, at, body, tame)
+    db
+      .prepare(
+        `INSERT OR IGNORE INTO dragon_kills (watch, account, look, char_id, earned, level, nonce, at, body, tame)
        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10) RETURNING nonce`,
-    ).bind(c.q, player.id, c.b, character, c.x, c.l, nonce, nowS, c.m ? JSON.stringify(c.m) : null, tame ? 1 : 0),
+      )
+      .bind(c.q, player.id, c.b, character, c.x, c.l, nonce, nowS, c.m ? JSON.stringify(c.m) : null, tame ? 1 : 0),
     // THE TAME, by THIS claim's row alone, for a character that holds no dragon
-    db.prepare(
-      `INSERT INTO dragon_mounts (id, account, char_id, look, watch, at)
+    db
+      .prepare(
+        `INSERT INTO dragon_mounts (id, account, char_id, look, watch, at)
        SELECT ?4, ?2, ?5, ?6, ?1, ?7 WHERE ?8 = 1 AND ${mine}
          AND NOT EXISTS (SELECT 1 FROM dragon_mounts WHERE account = ?2 AND char_id = ?5)`,
-    ).bind(c.q, player.id, nonce, id, character, c.b, nowS, tame ? 1 : 0),
+      )
+      .bind(c.q, player.id, nonce, id, character, c.b, nowS, tame ? 1 : 0),
     db.prepare('SELECT COUNT(*) AS n FROM dragon_kills WHERE account = ?1').bind(player.id),
     db.prepare('SELECT id, look, char_id FROM dragon_mounts WHERE account = ?1 AND watch = ?2').bind(player.id, c.q),
     ...(hoard ? hoardOf(db, c.q, player.id, cid, nowS) : []),
