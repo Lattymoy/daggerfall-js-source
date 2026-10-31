@@ -218,8 +218,8 @@
   {
     "name": "IT1-22-dock-table-drift",
     "file": "src/systems/immersiveTravelTables.js",
-    "old": "export const DOCK_PIXEL_IDS = Object.freeze([\n  5222,",
-    "new": "export const DOCK_PIXEL_IDS = Object.freeze([\n  5223,",
+    "old": "  5222, 5224, 5229, 8219, 11215, 14210, 22763, 23240, 29347, 34162, 35152, 35449, 38152, 40361, 41483, 42127, 45124,",
+    "new": "  5223, 5224, 5229, 8219, 11215, 14210, 22763, 23240, 29347, 34162, 35152, 35449, 38152, 40361, 41483, 42127, 45124,",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js"
     ],

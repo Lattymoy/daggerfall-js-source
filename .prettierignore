@@ -1180,6 +1180,8 @@
 /src/systems/iliac/*/
 !/src/systems/immersiveFootsteps.js
 !/src/systems/immersiveTravel.js
+!/src/systems/immersiveTravelTables.js
+!/src/systems/improvedInteriorLighting.js
 !/src/systems/item/
 /src/systems/item/*
 !/src/systems/item/foundMark.js
