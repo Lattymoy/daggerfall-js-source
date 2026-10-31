@@ -15,6 +15,7 @@
 // cleanly and the raw (permanent) stat is never mutated.
 
 import { mentoredStat } from './mentorMode.js';   // SOFTCAP1: mentor mode's overlay - a leaf, so this file stays cycle-free
+import { spellKill } from './pve/pveSpellRank.js';   // SPELL-RANK: a ranked template foe is immune (a leaf)
 export const STAT_KEYS_ORDER = Object.freeze([
   'strength', 'intelligence', 'willpower', 'agility',
   'endurance', 'personality', 'speed', 'luck',
@@ -162,6 +163,7 @@ export function killIfAnyLiveStatZero(entity, sinks, dt = 0) {
     // of them on their first frame.
     if (entity.stats?.[stat] == null) continue;
     if (liveStat(entity, stat) !== 0) continue;
+    if (!spellKill(entity, entity.health)) return false;   // SPELL-RANK: a ranked template foe is immune
     sinks?.hurt?.(entity.health, { whole: true });   // AUDIT PSCALE1 DOORS-1: DFU's CurrentHealth = 0 - a kill, never divided by a party's toughness
     return true;
   }

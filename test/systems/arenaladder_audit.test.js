@@ -720,7 +720,7 @@ test('AUDIT ARENA-LADDER 2 S4: the client - a guest is told the ladder takes a r
 
 test('AUDIT ARENA-LADDER 2 B1: the kit law\'s holes - every fighter is pacify-immune (a Calm through a weapon refused too), an elite fighter never flees as a revenant, a held ring\'s stripped effect comes back after the bout (mutants: the immunity unset; the revenant gate dropped; the held effect unmarked)', () => {
   assert.match(rd('src/scenes/arena/arenaBouts.js'), /foe\.entity\.bout = tags\.get\(f\.id\); foe\.entity\.items = \[\]; foe\.entity\.pacifyImmune = true; \}/);
-  assert.match(rd('src/systems/effects.js'), /if \(target\.pacifyImmune\) \{ out\.swayRefused = /, 'the one sway door refuses an immune target, whatever cast it');
+  assert.match(rd('src/systems/effects.js'), /if \(target\.pacifyImmune \|\| spellSwayRefused\(target\)\) \{ out\.swayRefused = /, 'the one sway door refuses an immune target, whatever cast it');
   const elite = { level: 12, eliteFoe: true, unquiet: true, mobileType: M.Barbarian };   // UNQUIET (Revenants.md section 46): a marked elite - only one may rise
   assert.equal(revenantCandidate(elite), true, 'an elite in the street may come back');
   assert.equal(revenantCandidate({ ...elite, bout: { id: 'b', side: 1 } }), false, 'never one on the sand');

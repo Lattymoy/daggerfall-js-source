@@ -821,6 +821,7 @@ import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../sy
 import { createWeatherFront, blendTerms, soundWeather, fallTerms, phaseTerms } from '../systems/weather/weatherFront.js';   // WX2: the front reaches the ground; RAIN-SPRINKLE: the look of what falls; AUDIT PRECIP FALL-3: the deck's light and the fall's fog
 import { fetchBytes, loadMagicRegistries, seasonOverride, createSkyController, createPlayerTicker, createRestDeps, plainLines, wireInfectionVideos, createMusicDirector, motorStats, climbingDeps, parkourDeps, createDetectFeed, foeNearbyRecord, nearbyLootRecords, claimFrame, frameAlive, frameHeld, applyFallLanding, ensureAudio, applyMotorEffectFlags, adjustFallStart, offsetArrows, populatesWanderingNpcs, endRunToTitleMenu, exitToTitleMenu, subscribeFoePools, sensesContext, routeMouseDrag , raisePlayerSkills, liveEnchantFoes, liveEnchantFoeSinks, enchantFoeHost, liveCastEngine, realmSaveSink, setRealmSaveSink, setBeforeTitleExit } from './shared.js';   // TP1: PlayerEntity.RaiseSkills   // EC1: the live enchant pool + its sinks router; AUDIT 58: the membership question the Wabbajack door asks too
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
+import { spellDispel } from '../systems/pve/pveSpellRank.js';   // SPELL-RANK: a Dispel kills a template foe, held to its rank
 import { dispelNearby, liveBundles, attemptSoulTrap, SOUL_TRAP_TEXT } from '../systems/mysticism.js';   // X9: the destroy law (destroyed, not killed); WBX7: the kill's soul trap roll, for the court's boss
 import { climbRigInput } from '../player/climb/climbPose.js';   // CLIMB6: the body's limbs on the climb
 import { PlayerMotor, BLOW_PUSH_DECAY, startRestGroundedCheck, motionBagOf, climbPoseOf, MAX_FRAME_DT, CAPSULE_HEIGHT, CAPSULE_RADIUS, RIDE_EYE_HEIGHT, afloatMessageStep, CANNOT_FLOAT_HUD_SECONDS } from '../player/motor.js';   // SPELLFX1: a peer's eye when its body has not said its height
@@ -11638,7 +11639,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     onDispel: ({ group, chance }) => {
       const list = getNearbyObjects(detectFeed.scanNow(), group) ?? [];
       const gone = dispelNearby(list.map((no) => no.ref).filter((f) => !inBout(f)), () => Math.floor(Math.random() * 100) < chance);   // AUDIT ARENA-LADDER A2: an exhibition's fighter is its bout's
-      for (const f of gone) exteriorFoes.removeFoe(f);
+      for (const f of gone) spellDispel(f, exteriorFoes, player.pos);   // SPELL-RANK: a template foe dies with its loot
       if (gone.length) townTalk.say(`${gone.length} dispelled.`);
     },
     // X10: the Dispel Magic picker, routed like onIdentify.

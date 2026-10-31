@@ -276,3 +276,12 @@ The heart's inner ring (`pveZones.js` `PARTY_ZONE_FROM`, 0.9 of the road to the 
 party zone: the owner, "they need to grind lvl 50 monsters in group as 45", "an area they have to group", "groups need
 to be able to do high packs". Every foe there stands whole at level 50 (`PARTY_FOE`: a level 45's health half again, its
 blow a quarter more) and the zone warns. Four level 45 players grind any group there, three sometimes, two never. Daggerfall Unity has no groups. The tests: `pve_grant.test.js`, `pve_population.test.js`.
+
+## 17. A killing or holding spell lands on Normals only (SPELL-RANK, 2026-10-31)
+
+The owner: "we need to get all custom spells ready", naming "disentigrate", then "Normals only". Daggerfall's
+Disintegrate, a stat drained to zero and Dispel Undead or Daedra end any foe whole, and Paralyze, Pacify and Charm
+hold any foe, so a custom spell could skip a boss. On a template foe (`pve/pveSpellRank.js`) a Normal keeps
+Daggerfall's law. A ranked one (Strong, Elite, Champion, an elite or a boss) is immune to all six. A Dispel kills a
+Normal template foe, so it drops its loot, where Daggerfall destroys it. Other targets keep Daggerfall's law. The
+tests: `pve_spellrank.test.js`.

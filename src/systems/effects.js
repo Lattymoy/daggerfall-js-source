@@ -38,6 +38,7 @@ import { castSchool } from './spellcost.js';   // SCHOOLS3: the school an effect
 import { castLevels, isSpellDamage, budgetEffect, skillCasts, oneDamagePerKind } from './spell/castLevel.js';   // SPELL-SKILL: a player's effect reads its school
 import { noteFeudHarm, elementFeudClass } from './feudLedger.js';   // RVN1: my spell's round, in its fight's ledger (a leaf)
 import { raceById, raceByKey } from './races.js';   // L2-slice (magic-10): the racial immunity arm
+import { spellKill, spellHold, spellSwayRefused } from './pve/pveSpellRank.js';   // SPELL-RANK: a kill or a hold answers to a template foe's rank
 import { STAT_KEYS_ORDER, FATIGUE_MULTIPLIER, maxFatigue, increaseDrainMagnitude, liveStat } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
 import { tryAbsorption, absorbRefund } from './absorption.js';
@@ -1144,7 +1145,8 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
         out.saved = (out.saved ?? 0) + 1;
         continue;
       }
-      const left = target?.health ?? 0;
+      const left = spellKill(target, target?.health ?? 0);   // SPELL-RANK: a ranked template foe is immune
+      if (!(left > 0) && (target?.health ?? 0) > 0) { out.saved = (out.saved ?? 0) + 1; continue; }
       out.disintegrated = (out.disintegrated ?? 0) + 1;
       if (left > 0 && sinks.hurt) { out.damage += left; sinks.hurt(left, { whole: true }); }   // AUDIT PSCALE1 DOORS-1: a Disintegrate is a kill - no fighters' toughness divides it
       continue;
@@ -1353,7 +1355,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       // instance needs the chance, then (no-magnitude effects,
       // non-CasterOnly) the entity saves against the ENTIRE effect
       // on a FULL save. Flags = Paralysis | the spell's element.
-      const rounds = rollDuration(e, timeLvl(e));
+      const rounds = spellHold(target, rollDuration(e, timeLvl(e)));   // SPELL-RANK: a ranked template foe is never held
       const chanceOk = ctx.bypassChance === true || dice100(chanceValue(e, timeLvl(e)), rolls());   // E2: AssignBundleFlags.BypassChance (CastWhenUsed's CasterOnly arm)
       if (!chanceOk) out.chanceFailed = (out.chanceFailed ?? 0) + 1;   // "Spell effect failed."/"Save versus spell made."
       if (rounds > 0) {
@@ -1645,7 +1647,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
       if (mt == null) continue;                 // not an enemy: IsGroupMatch/IsEnemyClass both refuse
       // WB8a (2026-09-28, Mac: "Make the oblivion gate boss not be able to be pacified"): a target that cannot be swayed
       // (world/gate/gateBoss.js bossStandIn - the gate's Warden) refuses it before any roll: no chance, no save, no flag
-      if (target.pacifyImmune) { out.swayRefused = (out.swayRefused ?? 0) + 1; continue; }
+      if (target.pacifyImmune || spellSwayRefused(target)) { out.swayRefused = (out.swayRefused ?? 0) + 1; continue; }
       const matches = isCharmEffect(e)
         ? isClassEnemyId(mt)                    // IsClassEnemyId - Charm is enemy CLASSES only
         : enemyGroupOf(mt) === PACIFY_GROUP[classicSub(e)];

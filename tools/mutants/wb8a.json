@@ -11,7 +11,7 @@
   {
     "name": "WB8a-the-arm-sways-the-warden",
     "file": "src/systems/effects.js",
-    "old": "      if (target.pacifyImmune) { out.swayRefused = (out.swayRefused ?? 0) + 1; continue; }\n",
+    "old": "      if (target.pacifyImmune || spellSwayRefused(target)) { out.swayRefused = (out.swayRefused ?? 0) + 1; continue; }\n",
     "new": "",
     "tests": [
       "test/systems/wb8a_never_swayed.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "WB8a-the-arm-refuses-silently",
     "file": "src/systems/effects.js",
-    "old": "      if (target.pacifyImmune) { out.swayRefused = (out.swayRefused ?? 0) + 1; continue; }",
-    "new": "      if (target.pacifyImmune) { continue; }",
+    "old": "      if (target.pacifyImmune || spellSwayRefused(target)) { out.swayRefused = (out.swayRefused ?? 0) + 1; continue; }",
+    "new": "      if (target.pacifyImmune || spellSwayRefused(target)) { continue; }",
     "tests": [
       "test/systems/wb8a_never_swayed.test.js"
     ]
