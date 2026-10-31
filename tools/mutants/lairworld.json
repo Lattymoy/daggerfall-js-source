@@ -175,8 +175,8 @@
   {
     "name": "LW-marks-unshifted",
     "file": "src/ui/bounty/bountyMapMark.js",
-    "old": "{ ...m, cx: m.cx - box.x0, cy: m.cy - box.y0 }",
-    "new": "{ ...m, cx: m.cx, cy: m.cy }",
+    "old": "    return Array.isArray(l)\n      ? l.map((m) => (m && typeof m === 'object' ? { ...m, cx: m.cx - box.x0, cy: m.cy - box.y0 } : m))\n      : l;",
+    "new": "    return Array.isArray(l) ? l.map((m) => (m && typeof m === 'object' ? { ...m, cx: m.cx, cy: m.cy } : m)) : l;",
     "tests": [
       "test/systems/revenant/lairworld.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "SPAMTAKE-card-stays",
     "file": "src/ui/bounty/bountyWindow.js",
-    "old": "landed = next === at ? p.slotKey : null; picked = next; }",
-    "new": "landed = next === at ? p.slotKey : null; }",
+    "old": "            picked = next;\n          }",
+    "new": "          }",
     "tests": [
       "test/ui/fb1010_spamtake.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SPAMTAKE-give-up-once",
     "file": "src/ui/bounty/bountyWindow.js",
-    "old": "        if (armed !== heldId) { armed = heldId; render(); return; }",
-    "new": "",
+    "old": "          if (armed !== heldId) {\n            armed = heldId;\n            render();\n            return;\n          }\n          armed = null;",
+    "new": "          armed = null;",
     "tests": [
       "test/ui/fb1010_spamtake.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SPAMTAKE-pick-keeps-arm",
     "file": "src/ui/bounty/bountyWindow.js",
-    "old": "      const pick = () => { picked = i; word = null; armed = null; landed = null; render(); };",
-    "new": "      const pick = () => { picked = i; word = null; landed = null; render(); };",
+    "old": "        armed = null;\n        landed = null;",
+    "new": "        landed = null;",
     "tests": [
       "test/ui/fb1010_spamtake.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "AUDIT-A1-never-landed",
     "file": "src/ui/bounty/bountyWindow.js",
-    "old": "landed = next === at ? p.slotKey : null;",
-    "new": "landed = null;",
+    "old": "            landed = next === at ? p.slotKey : null;",
+    "new": "            landed = null;",
     "tests": [
       "test/ui/fb1010_spamtake.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "AUDIT-A1-pick-keeps-landed",
     "file": "src/ui/bounty/bountyWindow.js",
-    "old": "      const pick = () => { picked = i; word = null; armed = null; landed = null; render(); };",
-    "new": "      const pick = () => { picked = i; word = null; armed = null; render(); };",
+    "old": "        landed = null;\n        render();",
+    "new": "        render();",
     "tests": [
       "test/ui/fb1010_spamtake.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "AUDIT-A2-focus-dropped",
     "file": "src/ui/bounty/bountyWindow.js",
-    "old": "        armed = null;\n        render(keep);",
-    "new": "        armed = null;\n        render();",
+    "old": "          render(keep);",
+    "new": "          render();",
     "tests": [
       "test/ui/fb1010_spamtake.test.js"
     ]
