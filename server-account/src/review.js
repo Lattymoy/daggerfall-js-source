@@ -241,7 +241,10 @@ export async function reviewAct(ctx, player, env, act, body = {}) {
     const moved = await db.prepare(
       'UPDATE realm_characters SET seq = seq + 1, obj = clean_obj, prev = obj, bytes = ?, lease = NULL, judged_seq = seq + 1, clean_seq = seq + 1,'
       + " held = CASE WHEN held = 'staff' THEN 'staff' END, held_at = CASE WHEN held = 'staff' THEN held_at END,"
-      + ' held_until = NULL, strikes = 0, law_holds = 0, law_at = NULL, law_sig = NULL, wealth = ?, witnessed = 0, judge_rev = judge_rev + 1, updated_at = ? WHERE id = ? AND clean_obj = ? AND seq = ? AND dead_at IS NULL',
+      + ' held_until = NULL, strikes = 0, law_holds = 0, law_at = NULL, law_sig = NULL, wealth = ?, witnessed = 0, judge_rev = judge_rev + 1, updated_at = ?,'
+      // AUDIT POTION-MIGHT A4: the arms and the might the rolled-away save was judged with go too - the next join signs none
+      // until the clean save's next checkpoint judges them again
+      + ' arms_top = NULL, arms_bow = NULL, might = NULL WHERE id = ? AND clean_obj = ? AND seq = ? AND dead_at IS NULL',
     ).bind(new TextEncoder().encode(text ?? '').byteLength, wealthOf(save), nowS, row.id, row.clean_obj, row.seq).run();
     if (!moved.meta.changes) return { error: 'no-clean' };
     await staffFinding(db, row, nowS, { act: 'rollback', by, note, from: row.seq, to: row.clean_seq }).run();

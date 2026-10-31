@@ -19,9 +19,9 @@
   },
   {
     "name": "LOOT5-any-tier-wakes-it",
-    "file": "src/systems/loot/lootPowers.js",
-    "old": "const powerIds = (it) => [it?.rarity === 'legendary' ? it.legendary : null, it?.rarity === 'rare' ? it.imprint : null, it?.rarity === 'gilded' ? it.gilded : null];",
-    "new": "const powerIds = (it) => [it?.legendary, it?.rarity === 'rare' ? it.imprint : null, it?.rarity === 'gilded' ? it.gilded : null];",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "export const powerIdsOf = (/** @type {any} */ it) => [it?.rarity === 'legendary' ? it.legendary : null, it?.rarity === 'rare' ? it.imprint : null, it?.rarity === 'gilded' ? it.gilded : null];",
+    "new": "export const powerIdsOf = (/** @type {any} */ it) => [it?.legendary, it?.rarity === 'rare' ? it.imprint : null, it?.rarity === 'gilded' ? it.gilded : null];",
     "tests": [
       "test/systems/loot5_powers.test.js"
     ]

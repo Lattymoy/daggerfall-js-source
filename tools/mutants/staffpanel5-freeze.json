@@ -262,8 +262,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-token-no-fz",
     "file": "server-account/src/index.js",
-    "old": "...(wa ? { wa } : {}), ...(fz ? { fz } : {}), ...(rc && facts.vl > 0 ? { vl: facts.vl } : {}) };",
-    "new": "...(wa ? { wa } : {}), ...(rc && facts.vl > 0 ? { vl: facts.vl } : {}) };",
+    "old": "...(wa ? { wa } : {}), ...(mg != null ? { mg } : {}), ...(fz ? { fz } : {}), ...(rc && facts.vl > 0 ? { vl: facts.vl } : {}) };",
+    "new": "...(wa ? { wa } : {}), ...(mg != null ? { mg } : {}), ...(rc && facts.vl > 0 ? { vl: facts.vl } : {}) };",
     "why": "a reload sheds the freeze",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"

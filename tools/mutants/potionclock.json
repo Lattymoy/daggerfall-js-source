@@ -1,0 +1,155 @@
+[
+  {
+    "name": "POTION-CLOCK-the-spire-counts-nothing",
+    "file": "src/systems/madeLevel.js",
+    "old": "regen: 'held', potions: 'timed',",
+    "new": "regen: 'held', potions: null,",
+    "tests": [
+      "test/systems/eliteGates/potionclock.test.js"
+    ]
+  },
+  {
+    "name": "POTION-CLOCK-the-law-not-asked",
+    "file": "src/systems/eliteGates/spireKit.js",
+    "old": "export const spirePotionsTimed = () => madeRuleHere('potions') === 'timed';",
+    "new": "export const spirePotionsTimed = () => madeRuleHere('potions') !== 'timed';",
+    "tests": [
+      "test/systems/eliteGates/potionclock.test.js"
+    ]
+  },
+  {
+    "name": "POTION-CLOCK-the-door-never-registered",
+    "file": "src/systems/eliteGates/spireKit.js",
+    "old": "registerPotionClockHere(spirePotionsTimed, (kinds) => _told?.(kinds));\n",
+    "new": "",
+    "tests": [
+      "test/systems/eliteGates/potionclock.test.js"
+    ]
+  },
+  {
+    "name": "POTION-CLOCK-the-door-not-asked",
+    "file": "src/combat/pvpPotions.js",
+    "old": "try { return !!timedHere(); } catch { return false; }",
+    "new": "return false;",
+    "tests": [
+      "test/systems/eliteGates/potionclock.test.js"
+    ]
+  },
+  {
+    "name": "POTION-CLOCK-the-clock-everywhere",
+    "file": "src/combat/pvpPotions.js",
+    "old": "try { return !!timedHere(); } catch { return false; }",
+    "new": "return true;",
+    "tests": [
+      "test/systems/eliteGates/potionclock.test.js"
+    ]
+  },
+  {
+    "name": "POTION-CLOCK-the-fight-clock-lost",
+    "file": "src/combat/pvpPotions.js",
+    "old": "const clockRuns = () => { if (fight) return true;",
+    "new": "const clockRuns = () => {",
+    "tests": [
+      "test/systems/eliteGates/potionclock.test.js"
+    ]
+  },
+  {
+    "name": "POTION-CLOCK-one-clock-for-every-kind",
+    "file": "src/combat/pvpPotions.js",
+    "old": "  for (const k of kinds) last.set(k, now);\n",
+    "new": "  for (const k of kinds) last.set('health', now);\n",
+    "tests": [
+      "test/systems/eliteGates/potionclock.test.js"
+    ]
+  },
+  {
+    "name": "POTION-CLOCK-the-referee-told-in-the-spire",
+    "file": "src/combat/pvpPotions.js",
+    "old": "  if (fight) declarePotion(kinds[0]);\n",
+    "new": "  if (true) declarePotion(kinds[0]);\n",
+    "tests": [
+      "test/systems/eliteGates/potionclock.test.js"
+    ]
+  },
+  {
+    "name": "POTION-CLOCK-the-first-effect-alone-in-the-spire",
+    "file": "src/combat/pvpPotions.js",
+    "old": "export const pvpPotionBundle = (bundle) => (fight && bundle?.effects?.length > 1",
+    "new": "export const pvpPotionBundle = (bundle) => (clockRuns() && bundle?.effects?.length > 1",
+    "tests": [
+      "test/systems/eliteGates/potionclock.test.js"
+    ]
+  },
+  {
+    "name": "POTION-CLOCK-the-wait-shortened",
+    "file": "src/combat/pvpPotions.js",
+    "old": "export const PVP_POTION_MS = 15_000;",
+    "new": "export const PVP_POTION_MS = 10_000;",
+    "tests": [
+      "test/systems/eliteGates/potionclock.test.js"
+    ]
+  },
+  {
+    "name": "POTION-CLOCK-the-pip-with-no-clock",
+    "file": "src/combat/pvpPotions.js",
+    "old": "  if (!clockRuns()) return [];\n",
+    "new": "",
+    "tests": [
+      "test/systems/eliteGates/potionclock.test.js"
+    ]
+  },
+  {
+    "name": "POTION-CLOCK-the-seconds-floored",
+    "file": "src/combat/pvpPotions.js",
+    "old": "([k, Math.ceil(leftOf(k, now) / 1000)])",
+    "new": "([k, Math.floor(leftOf(k, now) / 1000)])",
+    "tests": [
+      "test/systems/eliteGates/potionclock.test.js"
+    ]
+  },
+  {
+    "name": "POTION-CLOCK-a-kind-left-out",
+    "file": "src/combat/pvpPotions.js",
+    "old": "export const POTION_KINDS = Object.freeze(['health', 'magicka', 'other']);",
+    "new": "export const POTION_KINDS = Object.freeze(['health', 'magicka']);",
+    "tests": [
+      "test/systems/eliteGates/potionclock.test.js"
+    ]
+  },
+  {
+    "name": "POTION-CLOCK-the-pip-run-together",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": ".replace(/ /g, '\\u00a0')).join(' · ');",
+    "new": ".replace(/ /g, '\\u00a0')).join(' ');",
+    "tests": [
+      "test/systems/eliteGates/potionclock.test.js"
+    ]
+  },
+  {
+    "name": "POTION-CLOCK-the-client-hands-no-waits",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "potions: potionWaits(), gain:",
+    "new": "potions: [], gain:",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "POTION-CLOCK-the-tile-line-dropped",
+    "file": "src/ui/hud/statusTips.js",
+    "old": "  if (r('potions') === 'timed') out.push(",
+    "new": "  if (r('potions') === 'counted') out.push(",
+    "tests": [
+      "test/systems/eliteGates/potionclock.test.js"
+    ]
+  },
+  {
+    "name": "POTION-CLOCK-the-tile-seconds-not-the-clock",
+    "file": "src/ui/hud/statusTips.js",
+    "old": "{ s: PVP_POTION_MS / 1000 }",
+    "new": "{ s: PVP_POTION_MS / 1500 }",
+    "tests": [
+      "test/systems/eliteGates/potionclock.test.js"
+    ]
+  }
+]

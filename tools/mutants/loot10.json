@@ -319,7 +319,7 @@
   },
   {
     "name": "LOOT10-power-sleeps",
-    "file": "src/systems/loot/lootPowers.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "it?.rarity === 'rare' ? it.imprint : null, it?.rarity",
     "new": "null, it?.rarity",
     "tests": [

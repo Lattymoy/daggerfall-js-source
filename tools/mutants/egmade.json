@@ -214,15 +214,6 @@
     ]
   },
   {
-    "name": "EGMADE-the-count-everywhere",
-    "file": "src/systems/eliteGates/spireKit.js",
-    "old": "if (madeRuleHere('potions') !== 'counted' || !_law || !isRestoringPotion(item)) return null;",
-    "new": "if (!_law || !isRestoringPotion(item)) return null;",
-    "tests": [
-      "test/systems/eliteGates/egmade_law.test.js"
-    ]
-  },
-  {
     "name": "EGMADE-no-buffer",
     "file": "src/player/motor.js",
     "old": "const jBuffered = fBuf > 0 && this.grounded && this._jfBuf <= fBuf;",

@@ -859,7 +859,7 @@
   {
     "name": "INT7-AUDIT-RELAY-THE-ARMS-UNSTAMPED",
     "file": "server/src/index.js",
-    "old": "ci: c.ci, wa: c.wa };",
+    "old": "ci: c.ci, wa: c.wa, mg: c.mg };",
     "new": "ci: c.ci };",
     "tests": [
       "test/net/arena/int7_arms.test.js",
