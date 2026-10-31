@@ -1,18 +1,10 @@
 // @ts-check
-// A PRIVATE SERVER, hosted on a player's own PC (app/lib/privateHost.mjs). The desktop shell's launcher
-// hosts one or joins a friend's, and tells the page its address before any game script runs (app/preload.cjs
-// `daggerShell.privateServer`). Then a local character loaded this run plays online there: the relay is the game's
-// own, run on the host's PC, and the sign-in is the host's - its front mints the token this asks for, signed with the
-// host's own key. Nothing of a private run reaches the main relay or the account service (accountClient.js
-// serviceBase answers none once the boot starts the run), so nothing made there can reach the realm.
-//
-// A realm character comes along as a copy: the title menu still reaches the service (the run starts at the world's
-// boot, and a return to the title reloads the page), so the Online pane's Copy to offline writes it as a local
-// character, which then plays here. The copy never goes back: a realm boot on a private run is refused.
-//
-// The address is always a loopback one: the host's own game connects to its front, and a guest's to the bridge its
-// shell runs to the host - so wire.js relayUrl's one plain ws:// door (localhost) is the only one it needs.
+// A private server on a player's own PC (app/lib/privateHost.mjs). The shell's launcher hosts or joins one and
+// hands the page its loopback address (app/preload.cjs). A local character then plays online there, signed in by
+// the host's own key. From the world's boot the page reaches no account service, so nothing reaches the realm.
+// A realm character comes as a copy: the title menu still reaches the service, so Copy to offline works there.
 import { relayUrl, sanitizeName } from './wire.js';
+import { appStorage } from '../systems/appStorage.js';
 
 /** The private server this page plays on - `{ url }` - or null for the main servers.
  *  @param {any} [shell] the desktop shell's bridge (window.daggerShell) */
@@ -61,4 +53,21 @@ export function privateMinter(server, { fetch, subject, name }) {
       return typeof got?.tok === 'string' ? got.tok : null;
     } catch { return null; }
   };
+}
+
+/**
+ * The world's boot on a private server: starts the run and takes a local character online. Answers
+ * `{ url, mint, refusal }` (`refusal` is a realm boot's answer when a realm character was opened), or null.
+ * @param {URLSearchParams} params  the boot's
+ * @param {(p: URLSearchParams) => void} publish  the lane's publishBootParams
+ * @param {() => unknown} name  the character's name, read at each mint
+ */
+export function privateBoot(params, publish, name) {
+  const server = privateServer();
+  if (!server) return null;
+  startPrivateRun();
+  const realm = params.has('realm') || params.has('realmnew');
+  if (!realm && !params.has('online')) { params.set('online', ''); publish(params); }
+  const mint = privateMinter(server, { fetch: (u, i) => globalThis.fetch(u, i), subject: () => privateSubject(appStorage()), name });
+  return { url: server.url, mint, refusal: realm ? { ok: false, error: 'private' } : null };
 }

@@ -64,8 +64,8 @@
   {
     "name": "DA7-9-the-updater-becomes-a-dev-dependency-and-is-not-packed",
     "file": "app/package.json",
-    "old": "  \"dependencies\": {\n    \"electron-updater\": \"^6.8.9\"\n  }\n",
-    "new": "  \"devDependencies2\": {\n    \"electron-updater\": \"^6.8.9\"\n  }\n",
+    "old": "  \"dependencies\": {\n    \"electron-updater\": \"^6.8.9\",\n",
+    "new": "  \"devDependencies2\": {\n    \"electron-updater\": \"^6.8.9\",\n",
     "tests": ["test/tooling/autoupdate.test.js"]
   }
 ]
