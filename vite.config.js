@@ -9,7 +9,7 @@ import { limitOpenFiles } from './scripts/openFileLimit.mjs';   // FOUNDATION F5
 
 limitOpenFiles();
 
-/** Soft URL `/2d-playground` → the flora playground page (artists' sprite preview). */
+/** Soft URL `/2d-playground` → folder index (Pages + Vite; artists' sprite preview). */
 function floraPlaygroundAlias() {
   return {
     name: 'flora-playground-alias',
@@ -17,7 +17,7 @@ function floraPlaygroundAlias() {
       server.middlewares.use((req, _res, next) => {
         if (!req.url) return next();
         const q = req.url.indexOf('?'), path = q < 0 ? req.url : req.url.slice(0, q), qs = q < 0 ? '' : req.url.slice(q);
-        if (path === '/2d-playground' || path === '/2d-playground/') req.url = `/2d-playground.html${qs}`;
+        if (path === '/2d-playground') req.url = `/2d-playground/${qs}`;
         next();
       });
     },
@@ -304,8 +304,8 @@ export default defineConfig({
         // artists' own pictures beside them (src/tools/studioLab.js; public/art/studio/README.md). No game data.
         studio: 'studio.html',
         // SKYRIM-FLORA: artist preview — biome ground + one sprite (catalog or uploaded PNG) as crossed cards / hang.
-        // Soft path `/2d-playground` (floraPlaygroundAlias). Nothing the game path imports.
-        floraPlayground: '2d-playground.html',
+        // Folder entry so Pages serves `/2d-playground/` (floraPlaygroundAlias softens the bare path in dev).
+        floraPlayground: '2d-playground/index.html',
       },
     },
   },
