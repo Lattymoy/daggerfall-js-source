@@ -518,7 +518,7 @@ app.on('will-quit', () => gpuGone.flush());
 // GPU-BACKEND: a chosen backend's GPU process gone in its first minute is that backend failing to start
 app.on('child-process-gone', (_e, details) => { if (details?.type === 'GPU') backendGuard.onGpuGone(details); });
 const { RELEASES_URL, latestDownloadUrl, releaseAssetUrl, manualDownloadFile } = require('./lib/downloads.cjs');
-const { assetCheck, swapPlan, swapScript } = require('./lib/selfSwap.cjs');   // UPDATE-SWAP: the Mac app and the portable exe update themselves
+const { assetCheck, swapPlan, swapScript, swapStarterVbs } = require('./lib/selfSwap.cjs');   // UPDATE-SWAP: the Mac app and the portable exe update themselves
 const {
   CHECK_TIMEOUT_MS, RECHECK_MS, INSTALL_NOTICE_MS, INSTALL_GIVEUP_MS, DOWNLOAD_STALL_MS, DETECT_DEADLINE_MS, JUDGE_DEADLINE_MS, PICK_DEADLINE_MS,
   initialState, reduce, nextStep, viewOf, newsFrom, cachedNews, notArena2Detail, installAttemptFor, directPlay, PLAY_SWITCH,
@@ -818,6 +818,19 @@ const SWAP_DIR = () => path.join(app.getPath('userData'), 'Update');
 /** The swap in flight - { version } - one at a time; and the versions a swap failed on, told by hand instead. */
 let swapJob = null;
 const swapFailedOn = new Set();
+/** UPDATE-SWAP-HIDDEN: a staged portable exe still beside this one at launch means the last swap could not move it in
+ *  and this is the old copy started again. It does not swap this run (the update is the player's to download), so a
+ *  swap that cannot finish never restarts the app over and over. */
+const swapLeftover = (() => {
+  const exe = process.env.PORTABLE_EXECUTABLE_FILE;
+  if (process.platform !== 'win32' || !exe) return false;
+  try {
+    if (!fs.existsSync(`${exe}.new`)) return false;
+    fs.rmSync(`${exe}.new`, { force: true });
+  } catch { /* the leftover stays: this run still does not swap */ }
+  console.warn('[update] the last swap did not finish - this run does not swap');
+  return true;
+})();
 /** Whether a swap is bringing `version` (or already brought it): the notice waits for it. */
 const swapping = (version) => (swapJob?.version === version || (updateReady?.swap && updateReady.version === version)) && !swapFailedOn.has(version);
 
@@ -864,6 +877,7 @@ function startSwap(version, latest) {
   if (swapJob || swapFailedOn.has(version) || (updateReady?.swap && updateReady.version === version)) return;
   const plan = swapPlanHere(latest.file);
   if (!plan.kind || !latest.asset || !latest.download) return;
+  if (plan.kind === 'portable' && swapLeftover) return;
   swapJob = { version };
   if (updateReady?.swap) { updateReady = null; buildMenu(); }   // an older staged copy is written over: it is not swapped in half-written
   const dest = path.join(SWAP_DIR(), plan.kind === 'mac' ? 'update.dmg' : 'update.exe');
@@ -899,8 +913,13 @@ app.on('will-quit', () => {
     const win = plan.kind === 'portable';
     const script = path.join(os.tmpdir(), `dfo-swap-${process.pid}.${win ? 'cmd' : 'sh'}`);
     fs.writeFileSync(script, swapScript(plan, { pid: process.pid, relaunch: swapRelaunch, args: swapRelaunch ? [PLAY_SWITCH] : [] }), { mode: 0o700 });
-    const child = win ? spawn('cmd.exe', ['/d', '/c', script], { detached: true, stdio: 'ignore', windowsHide: true })
-      : spawn('/bin/sh', [script], { detached: true, stdio: 'ignore' });
+    let child;
+    if (win) {   // UPDATE-SWAP-HIDDEN: wscript starts cmd in one hidden console (lib/selfSwap.cjs swapStarterVbs)
+      const starter = script.replace(/\.cmd$/, '.vbs');
+      fs.writeFileSync(starter, swapStarterVbs(script));
+      const wscript = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'wscript.exe');
+      child = spawn(wscript, ['//B', '//NoLogo', starter], { detached: true, stdio: 'ignore', windowsHide: true });
+    } else child = spawn('/bin/sh', [script], { detached: true, stdio: 'ignore' });
     child.unref();
   } catch (err) { console.warn('[update] the swap could not be started:', err?.message ?? err); }
 });

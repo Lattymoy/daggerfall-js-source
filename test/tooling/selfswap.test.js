@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { assetCheck, swapPlan, swapScript, shq, cmdq } = require('../../app/lib/selfSwap.cjs');
+const { assetCheck, swapPlan, swapScript, swapStarterVbs, shq, cmdq } = require('../../app/lib/selfSwap.cjs');
 const yes = () => true;
 const no = () => false;
 
@@ -39,6 +39,8 @@ test('UPDATE-SWAP: the scripts wait for the app to end, keep the old copy until 
   assert.match(win, /tasklist \/FI "PID eq 42"/);
   assert.match(win, /move \/y "C:\\Games\\100%%\\p\.exe\.new" "C:\\Games\\100%%\\p\.exe"/, 'a percent sign is doubled');
   assert.match(win, /if %tries% geq 60 goto done/, 'the move is tried for a minute');
+  assert.doesNotMatch(win, /timeout/, 'timeout quits at once with no console input, so its waits were no wait');
+  assert.equal(win.match(/ping -n 2 127\.0\.0\.1 >nul/g).length, 2, 'both waits are a second, by ping');
   assert.match(win, /start "" "C:\\Games\\100%%\\p\.exe" "--play"/);
   assert.match(swapScript({ kind: 'portable', target: 'C:\\p.exe', staged: 'C:\\p.exe.new' }, { pid: 42, relaunch: false }), /rem no restart/);
   const mac = swapScript({ kind: 'mac', bundle: "/Applications/Player's DFO.app", staged: "/Applications/.Player's DFO.app.new" }, { pid: 7, relaunch: true, args: ['--play'] });
@@ -61,4 +63,11 @@ test('UPDATE-SWAP: the wiring - a notice starts the swap, the game is told it ca
   assert.match(main, /app\.on\('will-quit', \(\) => \{\s*const plan = updateReady\?\.swap;/, 'at will-quit: a quit called off swaps nothing');
   assert.match(main, /if \(size !== check\.size\) throw/);
   assert.match(main, /if \(check\.sha256 && hash\.digest\('hex'\) !== check\.sha256\) throw/);
+});
+
+test('UPDATE-SWAP-HIDDEN: the Windows script starts in one hidden console, and its starter deletes itself', () => {
+  const vbs = swapStarterVbs('C:\\Users\\A B\\Temp\\dfo-swap-42.cmd');
+  assert.ok(vbs.includes('.Run "cmd.exe /d /c ""C:\\Users\\A B\\Temp\\dfo-swap-42.cmd""", 0, False'), 'window style 0, not waited on');
+  assert.ok(vbs.includes('DeleteFile WScript.ScriptFullName'));
+  assert.throws(() => swapStarterVbs('C:\\a"b.cmd'));
 });

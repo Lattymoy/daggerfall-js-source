@@ -65,13 +65,14 @@ function swapScript(plan, { pid, relaunch, args = [] }) {
     return [
       '@echo off',
       ':wait',
-      `tasklist /FI "PID eq ${pid}" 2>nul | find "${pid}" >nul && (timeout /t 1 /nobreak >nul & goto wait)`,
+      // the one-second waits are ping's: timeout quits at once when the script has no console input to read
+      `tasklist /FI "PID eq ${pid}" 2>nul | find "${pid}" >nul && (ping -n 2 127.0.0.1 >nul & goto wait)`,
       'set tries=0',
       ':move',
       `move /y ${cmdq(plan.staged)} ${cmdq(exe)} >nul 2>&1 && goto done`,
       'set /a tries+=1',
       'if %tries% geq 60 goto done',
-      'timeout /t 1 /nobreak >nul',
+      'ping -n 2 127.0.0.1 >nul',
       'goto move',
       ':done',
       run,
@@ -96,4 +97,19 @@ function swapScript(plan, { pid, relaunch, args = [] }) {
   ].join('\n');
 }
 
-module.exports = { assetCheck, swapPlan, swapScript, shq, cmdq };
+/**
+ * UPDATE-SWAP-HIDDEN: the Windows script's starter, run by wscript. A detached cmd.exe gets no console, so every tool
+ * its script ran (tasklist, find, timeout) opened a console window of its own; Run with window style 0 gives cmd one
+ * hidden console that they all share. The starter deletes itself once cmd is going.
+ * @param {string} script the .cmd file's path (a Windows path holds no double quote)
+ */
+function swapStarterVbs(script) {
+  if (String(script).includes('"')) throw new Error('a Windows path holds no double quote');
+  return [
+    `CreateObject("WScript.Shell").Run "cmd.exe /d /c ""${script}""", 0, False`,
+    'CreateObject("Scripting.FileSystemObject").DeleteFile WScript.ScriptFullName',
+    '',
+  ].join('\r\n');
+}
+
+module.exports = { assetCheck, swapPlan, swapScript, swapStarterVbs, shq, cmdq };
