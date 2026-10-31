@@ -9,6 +9,21 @@ import { limitOpenFiles } from './scripts/openFileLimit.mjs';   // FOUNDATION F5
 
 limitOpenFiles();
 
+/** Soft URL `/2d-playground` → the flora playground page (artists' sprite preview). */
+function floraPlaygroundAlias() {
+  return {
+    name: 'flora-playground-alias',
+    configureServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        if (!req.url) return next();
+        const q = req.url.indexOf('?'), path = q < 0 ? req.url : req.url.slice(0, q), qs = q < 0 ? '' : req.url.slice(q);
+        if (path === '/2d-playground' || path === '/2d-playground/') req.url = `/2d-playground.html${qs}`;
+        next();
+      });
+    },
+  };
+}
+
 // Dev-only: serve ARENA2 game data at /arena2/*. The data is freeware but
 // never committed or bundled (Port-Doctrine); builds contain no game files.
 function arena2DevServer() {
@@ -288,8 +303,11 @@ export default defineConfig({
         // STUDIO1: THE STUDIO - every picture the port paints itself, as worn, each with its template to download, and the
         // artists' own pictures beside them (src/tools/studioLab.js; public/art/studio/README.md). No game data.
         studio: 'studio.html',
+        // SKYRIM-FLORA: artist preview — biome ground + one sprite (catalog or uploaded PNG) as crossed cards / hang.
+        // Soft path `/2d-playground` (floraPlaygroundAlias). Nothing the game path imports.
+        floraPlayground: '2d-playground.html',
       },
     },
   },
-  plugins: [arena2DevServer(), buildTagMeta(), landingHtml(), studioArtIndex(), firstVisitPinsPlugin(), noImportedTopLevelAwait()],
+  plugins: [arena2DevServer(), buildTagMeta(), landingHtml(), studioArtIndex(), firstVisitPinsPlugin(), noImportedTopLevelAwait(), floraPlaygroundAlias()],
 });
