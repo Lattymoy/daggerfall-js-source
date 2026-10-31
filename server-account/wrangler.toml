@@ -495,13 +495,15 @@ SHOP_ON_SALE = "title:genesis,glyph:origin,aura:eternal,armory:eternalset,armory
 # days, the last day inside; `limited` after it sells the ware only inside that window. A ware is never sold before its
 # first window opens. One drop a fortnight, as the developer asked ("every step in Donate Shop should be rethinked 5
 # times before ship and in exact right moment").
+# PORTALS-NOW (2026-10-31, the owner: "Lets make the first phase live today"): the portal skins from 31 October, not
+# 13 November. Their window still ends 26 November, so the drops after them keep their days.
 SHOP_FEATURED = """
 kill:ashen 2026-10-30 2026-11-12
 kill:voidrend 2026-10-30 2026-11-12
 kill:pyre 2026-10-30 2026-11-12
-portal:runic 2026-11-13 2026-11-26
-portal:daedric 2026-11-13 2026-11-26
-portal:aetheric 2026-11-13 2026-11-26
+portal:runic 2026-10-31 2026-11-26
+portal:daedric 2026-10-31 2026-11-26
+portal:aetheric 2026-10-31 2026-11-26
 title:dawnbringer 2026-11-27 2026-12-10
 title:voidwalker 2026-11-27 2026-12-10
 title:eternalchampion 2026-11-27 2026-12-10
