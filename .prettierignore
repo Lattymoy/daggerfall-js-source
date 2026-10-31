@@ -1343,13 +1343,7 @@
 !/src/systems/studioArt/
 /src/systems/studioArt/*/
 !/src/systems/superDungeon/
-/src/systems/superDungeon/*
-!/src/systems/superDungeon/sdOmen.js
-!/src/systems/superDungeon/sdRiftSound.js
-!/src/systems/superDungeon/sdScore.js
-!/src/systems/superDungeon/sdSite.js
-!/src/systems/superDungeon/sdSlots.js
-!/src/systems/superDungeon/sdSpoils.js
+/src/systems/superDungeon/*/
 !/src/systems/tamrielFauna.js
 !/src/systems/tavern.js
 !/src/systems/teleportAnchor.js
