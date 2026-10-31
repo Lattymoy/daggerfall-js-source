@@ -78,7 +78,14 @@ try {
   const hear = (m) => said.push(`${m.type()}: ${m.text()}`.slice(0, 200));
   page.on('console', hear);
   const doorsSeen = await page.evaluate(() => { const d = window.__doors?.() ?? []; return { n: d.length, last: JSON.stringify(d.slice(-2)).slice(0, 400) }; });
-  const entered = await page.evaluate(async () => { try { return String(await window.__enter?.()); } catch (e) { return `threw ${e?.message}`; } });   // the modes' own tryEnter, from the eye
+  // the modes' own tryEnter, from the eye; re-posed and asked again, a step nearer each time, while the eye meets no door
+  let entered = 'false';
+  for (let k = 0; k < 5 && entered === 'false'; k++) {
+    const r = 1.6 - k * 0.2;
+    await page.evaluate(([a, b, c, yaw]) => window.__pose(a, b, c, yaw, 0), [d.at[0] + back[0] * r, d.at[1] + 0.1, d.at[2] + back[1] * r, Math.atan2(-back[0], -back[1])]);
+    await frames(12);
+    entered = await page.evaluate(async () => { try { return String(await window.__enter?.()); } catch (e) { return `threw ${e?.message}`; } });
+  }
   console.log(JSON.stringify({ doorsSeen, entered }));
   const after = await until(() => (window.__mode?.() === 'interior' ? 'interior' : null), 180000) ?? await page.evaluate(() => window.__mode?.() ?? null);
   await drain(); await frames(20);
