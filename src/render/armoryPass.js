@@ -615,7 +615,8 @@ export function armoryDraws(key, w, eye, near, right = null) {
     for (const arm of /** @type {const} */ (['left', 'right'])) {
       const u = upperArm(arm, key === 'ashbound' ? 0.06 : 0.064);
       if (!u) continue;   // ARMORY-MIRROR: an arm the picture hides behind the body
-      const a = pose.arm > 0 ? pose.arm : 1, { sh, el } = u, k = u.k * a, wa = pt(`wa${u.side}`);   // WOLF-KIT: the wolf's arms wider
+      const a = pose.arm > 0 ? pose.arm : 1;   // WOLF-KIT: the wolf's arms wider
+      const { sh, el } = u, k = u.k * a, wa = pt(`wa${u.side}`);
       if (key === 'ashbound') {
         tube(0, sh, el, 0.065 * k, 0.056 * k);
         if (full) tube(0, el, wa, 0.054 * a, 0.046 * a);
