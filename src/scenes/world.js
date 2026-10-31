@@ -398,7 +398,7 @@ import { openEgStartWindow, egStartAsk, egStartListDoors } from '../ui/eliteGate
 import { gateClearMemo } from '../world/gate/gateClearance.js';   // EG-F: the gate's clearing and every standing arch's, one set - STAR-CLEAR: and every fallen star's
 import { EG_LAST_WORD_MIN } from '../net/eliteGates/egLaw.js';   // EG-F: a quest falling due inside a breach's last word
 import { createEgFight } from './eliteGates/egFight.js';   // EG-PLAY: a hall's fight
-import { registerSpirePotionLaw, registerSpireFooting, registerSpireWake, registerSpireObjs, registerSpireAct } from '../systems/eliteGates/spireKit.js';   // EG-FULL: THE POTION LAW (two restoring potions a hall); Iron Footing on the spans
+import { registerSpireFooting, registerSpireWake, registerSpireObjs, registerSpireAct } from '../systems/eliteGates/spireKit.js';   // EG-FULL: Iron Footing on the spans (POTION-CLOCK: the potions' law is the made level's - spireKit.js)
 import { accountEg } from '../net/accountClient.js';   // EG-PLAY: the Weir Keys, the open, the admission, the claims
 import { accountKetch } from '../net/accountClient.js';   // KETCH: the Ketchmaster's hold - a Tonal Warden's receipt carried to the service
 import { createKetchClient } from './ketch/ketchClient.js';   // KETCH (HOST-SPLIT): the sky-ketch on this screen - the sky over Daggerfall, the anchor-lift, the ship aboard, the hold
@@ -23163,7 +23163,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   registerMadeLevelHere(() => modes?.madeLevel?.() ?? null, () => !!egClient?.onTraverse?.() || !!ketch?.onTraverse?.());   // KETCH: and the Sailwalk   // EG-H2 (Elite-Gates.md section 24): where the player stands, for the made level's doors with no host in reach (an item, a technique, the motor) - and the Spire's traversal ground (section 10.7)
   registerJumpForgiveness(() => madeRuleHere('jumpBuffer'), () => madeRuleHere('latePress'));   // EG-H2 (section 10.8): THE FORGIVENESS - the Spire's jump buffer and late press; elsewhere none, DFU's motor
   registerPlayerDamageMod('eg-witness', (e, d) => (egClient?.witnessing() ? 0 : d));   // EG-FULL: no blow reaches a witness
-  registerSpirePotionLaw(egClient ? { allowed: () => egClient.potionAllowed(), used: () => egClient.potionUsed() } : null);   // EG-FULL: THE POTION LAW's count
   registerSpireFooting(egClient ? () => egClient.footing() : null);   // EG-FULL LAYER TWO: Iron Footing against the spans' Gust and Pendulum
   registerSpireWake(egClient ? () => { const E = egClient.state(); return { h: E.h | 0, hw: E.hw || 0, tm: E.tm || 0 }; } : null);   // EG-FULL LAYER TWO: a Falling Wall falls from its hall's wake; EG-PERFECT: a routed hall's tube from the company at its mouth
   registerSpireObjs(egClient ? () => egClient.objs() : null);   // EG-FULL LAYER THREE: Grath's islands fall, the false walls stand, as the relay says

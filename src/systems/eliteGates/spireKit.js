@@ -1,38 +1,15 @@
 // @ts-check
-// EG-FULL (2026-10-11, the Elite Gates arc; bible/11-Multiplayer/Elite-Gates.md section 17.4, THE POTION LAW): "No
-// natural regeneration" is what makes one life matter, and the port has no potion cooldown anywhere - with fifty potions
-// there is no attrition. So in an Elite Breach a member drinks at most two RESTORING potions a hall (a Healing, a Heal
-// True, a Purification - the recipes that heal health), refilled at each wake and at the rest; every other potion, and
-// every spell, is untouched. Client-enforced like the Burning Court's no-regeneration rule: systems/useItem.js's potion
-// arm asks first (the bottle is kept on a refusal) and tells after. The count is the breach client's (scenes/eliteGates/egClient.js
-// potionAllowed / potionUsed), registered by the world host. A departure from DFU: Ledger A (ELITE-GATES).
-import { POTION_RECIPES, potionRecipeKey } from '../potionRecipes.js';
-import { madeRuleHere } from '../madeLevel.js';   // EG-H2 (Elite-Gates.md section 24): THE POTION LAW is a made level's rule - the Spire's ('counted')
+// POTION-CLOCK (2026-10-31, the owner: "Allow potions in Elite Breach"; asked, "Cooldown per kind"; bible/11-Multiplayer/
+// Elite-Gates.md section 17.4): in an Elite Breach every potion is drunk, and each kind (health, magicka, other) waits 15 s
+// after the last of its kind - the PvP fight's own clock (combat/pvpPotions.js), run here by the made level's law
+// (`potions: 'timed'`). It replaced EG-FULL's count of two restoring potions a hall. The bag is the attrition now, and the
+// relay's count believes a mend only out of its line (net/bossBody.js). A departure from DFU: Ledger A (ELITE-GATES).
+import { madeRuleHere } from '../madeLevel.js';   // EG-H2 (Elite-Gates.md section 24): the made level's law says where potions are timed
+import { registerPotionClockHere } from '../../combat/pvpPotions.js';
 
-/** The classic Heal-Health effect key (HealHealth.cs - group 10, subgroup 8). */
-export const SPIRE_RESTORING_EFFECT = '10,8';
-/** The refusal's words. */
-export const SPIRE_POTION_TEXT = 'You can drink 2 restoring potions a hall. They refill when the next hall wakes or at a Redoubt.';
-
-/** The restoring recipes' keys (the effect or a secondary heals health). */
-const RESTORING_KEYS = new Set(/** @type {any[]} */ (POTION_RECIPES).filter((r) => r.effect === SPIRE_RESTORING_EFFECT || (r.secondary ?? []).includes(SPIRE_RESTORING_EFFECT)).map((r) => potionRecipeKey(r.ingredients)));
-/** Is this potion a restoring one? Pure. */
-export const isRestoringPotion = (item) => RESTORING_KEYS.has(item?.potionRecipeKey ?? 0);
-
-/** @type {{ allowed: () => boolean, used: () => void } | null} */
-let _law = null;
-/** The breach's count, registered by the world host (null removes it). */
-export function registerSpirePotionLaw(law) { _law = law && typeof law.allowed === 'function' ? law : null; }
-/** The refusal of this potion now, or null - asked only where the made level's law counts restoring potions (the Spire). */
-export function spirePotionRefusal(item) {
-  if (madeRuleHere('potions') !== 'counted' || !_law || !isRestoringPotion(item)) return null;
-  try { return _law.allowed() ? null : SPIRE_POTION_TEXT; } catch { return null; }
-}
-/** A potion drunk: a restoring one counted (where the law counts them). */
-export function spirePotionDrunk(item) {
-  if (madeRuleHere('potions') !== 'counted' || !_law || !isRestoringPotion(item)) return;
-  try { _law.used(); } catch { /* the count is not the bottle's problem */ }
-}
+/** Where the made level under the player times potions (the Spire's row). */
+export const spirePotionsTimed = () => madeRuleHere('potions') === 'timed';
+registerPotionClockHere(spirePotionsTimed);
 
 /** EG-FULL LAYER TWO: Iron Footing's share off a push on this screen (net/eliteGates/egVestige.js - by: 'client'), registered by the
  *  world host from the breach's client, read by the spans (scenes/eliteGates/egSpan.js - the Gust's push, the Pendulum's touch). */

@@ -775,7 +775,7 @@ course's. The void punishes in time and health. It does not take the one life.
 (`src/systems/courtRules.js`, WBX6), as the Hour does. Health comes back from:
 
 - a Redoubt's rest;
-- the member's own potions, at most two a hall (THE POTION LAW, section 17.4), and spells;
+- the member's own potions, each kind every 15 s (THE POTION CLOCK, section 17.4), and spells;
 - Vestiges (Rally, Second Wind, Mender's Grace);
 - the Low Road's Battlemage's niche (section 11.4), a cache's Spire Tonic and the Mending Cantrip (section 17);
 - the Scriptorium twist.
@@ -2638,7 +2638,7 @@ something the company can see coming; none of it outlives the breach.
 ### 17.1 Caches and Vestige shards
 
 - **A cache** stands on every trial hall's end plate. Its kind is shown on the door's plaque during the trial: a
-  **Vestige shard**, a **Spire Tonic** (restores 25% of health and of magicka, outside THE POTION LAW, held two at
+  **Vestige shard**, a **Spire Tonic** (restores 25% of health and of magicka, outside THE POTION CLOCK, held two at
   most), a **Cantrip**, or **lumen**.
 - It gives one to each member who touches it during the closing, from a fair trail (section 21). The hall's budget
   (section 9) weighs it, and the relay records what each member took.
@@ -2666,18 +2666,26 @@ where no hall's fight stands, since there is nothing to show:
 - **The Sutler**, a chained Kyn quartermaster (a twist, section 8.7), stands on an arrival plate and sells for lumen:
   a Cantrip (20), a Spire Tonic (15), a Vestige shard (30).
 
-### 17.4 THE POTION LAW
+### 17.4 THE POTION CLOCK (POTION-CLOCK, 2026-10-31)
 
-"No natural regeneration" is what makes one life matter, and the port has no potion cooldown anywhere: with fifty
-potions there is no attrition, and without them there is nothing else. So the Spire keeps a `MADE_LEVEL_RULES` row
-(section 24), client-enforced like the Burning Court's no-regeneration rule:
+The owner, 2026-10-31: "Allow potions in Elite Breach". Asked how, the owner chose a cooldown for each kind.
 
-- at most `EG_POTIONS_PER_HALL` (2) restoring potions a hall, refilled at each wake and at the rest; the count is kept
-  on the device by its breach, hall and stage (`eg.potions`), so a reload refills nothing (AUDIT EG V);
-- a *Potions 2/2* pip on the HUD;
-- spells are untouched, and magicka comes back at the rest, from a Spire Tonic and from the member's own potions.
+Every potion is drunk in an Elite Breach. Each kind (health, magicka, other - the first effect of its recipe) waits 15 s
+after the last of its kind (`PVP_POTION_MS`). It is the PvP fight's own clock (`combat/pvpPotions.js`), run where the
+made level's law says `potions: 'timed'` (section 24; `systems/eliteGates/spireKit.js` registers it). A refused bottle is
+kept and says its wait. The bottle lands whole: the first effect alone is a fight's. No referee hears of it.
 
-It is a departure from DFU, in the Ledger A row.
+- On the desk's HUD the potion pip says each kind still waiting: *Health potion 12 s*. Nothing waiting, no pip.
+- The made-level tile says the rule: *Each kind of potion waits 15 seconds after the last one.*
+- A Spire Tonic stands outside the clock.
+
+It replaced THE POTION LAW (EG-FULL, 2026-10-11): two restoring potions a hall, the rest free, the count kept on the
+device so a reload refilled nothing. Players read two a hall as no potions. The attrition is the bag now. The relay's
+body count believes a member's own mend only out of its line (`net/bossBody.js` BODY_DEFAULT: a whole body held, one
+more every 20 s). A potion heals a whole body at most, so only a member drinking from near death every 15 s for
+minutes outruns it, and the count then fells them. A reload starts the clock fresh; a reload takes longer than the
+wait. Natural regeneration stays held (EVENT-RULES). Pinned by `test/systems/eliteGates/potionclock.test.js`;
+mutants `tools/mutants/potionclock.json`. A departure from DFU, in the Ledger A row.
 
 ## 18. Depth - what grows, and the wall
 
@@ -3595,7 +3603,7 @@ The Burning Court and the Hour are re-plugged with their behaviour unchanged.
 | the Portal Stone | refused | refused | refused |
 | companions (GATE-ALONE, SD-ALONE) | kept out | kept out | kept out |
 | natural regeneration (`courtRules`) | held (EVENT-RULES) | held | held |
-| restoring potions | as today | as today | two a hall (THE POTION LAW) |
+| potions | as today | as today | each kind every 15 s (THE POTION CLOCK; was THE POTION LAW's two a hall) |
 | Levitate | as today | banned | banned |
 | Slowfall | as today | as today | banned |
 | a technique's flight on traversal ground | as today | as today | refused |

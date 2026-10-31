@@ -51,8 +51,8 @@ test('EVENT-RULES THE TIP: every rule the level holds, said off its own row - th
   assert.ok(has(hour, /Mark and Recall/));
   assert.ok(has(court, /casts you out before the gate/));
   assert.ok(has(hour, /final for this Abyss Dungeon - unless a party member raises you within 60 seconds/));   // PIN MOVED (AUDIT WORLD-EVENTS L1-5): the body's minute
-  assert.ok(has(spire, /2 restoring potions a hall/));
-  assert.ok(!has(hour, /potions/), 'the Hour counts none');
+  assert.ok(has(spire, /Each kind of potion waits 15 seconds after the last one\./), 'PIN MOVED (POTION-CLOCK): the Spire times each kind');
+  assert.ok(!has(hour, /potion/), 'the Hour times none');
   assert.ok(has(spire, /No Levitate and no Slowfall/) && has(hour, /^No Levitate\.$/));
   assert.ok(has(spire, /weapon technique cannot carry you/) && !has(court, /technique/));
   assert.ok(has(ketch, /A death lays you down for 60 seconds: a party member can raise you there\. Past it, you fall\./) && has(spire, /lays you down for 60 seconds/));   // PIN MOVED (AUDIT WORLD-EVENTS L1-4): raise before the fall

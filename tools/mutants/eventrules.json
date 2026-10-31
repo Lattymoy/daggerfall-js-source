@@ -105,7 +105,7 @@
   {
     "name": "EVENT-RULES-the-potions-everywhere",
     "file": "src/ui/hud/statusTips.js",
-    "old": "  if (r('potions') === 'counted') out.push(",
+    "old": "  if (r('potions') === 'timed') out.push(",
     "new": "  if (true) out.push(",
     "tests": [
       "test/ui/hud/eventrules_tile.test.js"

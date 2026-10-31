@@ -60,7 +60,7 @@ import { EG_ROLE, EG_FL } from '../../net/eliteGates/egBodies.js';
 import { EG_BOSS_KEYS, egBossName, egTtkRef } from '../../net/eliteGates/egLords.js';
 import { egMarkynazDecree } from '../../net/eliteGates/egLords.js';   // EG-ZS (section 8.5): the decree the Markynaz lays, named on his card
 import { EG_CHAMPIONS } from '../../net/eliteGates/egLaw.js';   // EG-ZS: the champion's signature's title
-import { egProgressText, EG_MARK_NAMES, EG_POTIONS_PER_HALL } from './egHud.js';
+import { egProgressText, EG_MARK_NAMES, egPotionPip } from './egHud.js';
 import { egNextCircleText } from './egHud.js';   // AUDIT EG V (L2-11): a rest's beacon - the next circle's decrees and lord
 import { egObjectiveText } from './egHud.js';   // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: the objective as the screen says it (the Gauntlet's in the player's language)
 import { egTwistShown } from '../../net/eliteGates/egRun.js';   // AUDIT EG V (L2-4): no Bargain's line when no family is free
@@ -400,9 +400,9 @@ export function egRestLine(E, run, restP = 1) {
  * watches (`{ numeral, name, pct }` - their health's share, null unknown) and `ping` what is left of my ping's cooldown (ms),
  * both on a witness's stage line, the ping's on its button too. AUDIT EG V (c, L2-9, NEW-1): `restP` the rest's heal share
  * (the room's `eheal`), its line and the stake's on the rest card.
- * @param {{ ff?: string, witness?: boolean, potions?: number, gain?: { text: string, blue?: boolean }|null, first?: string, door?: any, live?: string, touch?: boolean, foldOpen?: boolean, held?: { k: string, text: string }[], bridge?: boolean, watch?: { numeral: string, name: string, pct: number|null }|null, ping?: number, restP?: number }} [o]
+ * @param {{ ff?: string, witness?: boolean, potions?: [string, number][], gain?: { text: string, blue?: boolean }|null, first?: string, door?: any, live?: string, touch?: boolean, foldOpen?: boolean, held?: { k: string, text: string }[], bridge?: boolean, watch?: { numeral: string, name: string, pct: number|null }|null, ping?: number, restP?: number }} [o]
  */
-export function egSpireHudModel(E, me, now, { ff = 'desktop', witness = false, potions = EG_POTIONS_PER_HALL, gain = null, first = '', door = null, live = '', touch = false, foldOpen = false, held = [], bridge = false, watch = null, ping = 0, restP = 1 } = {}) {
+export function egSpireHudModel(E, me, now, { ff = 'desktop', witness = false, potions = [], gain = null, first = '', door = null, live = '', touch = false, foldOpen = false, held = [], bridge = false, watch = null, ping = 0, restP = 1 } = {}) {
   if (!E?.b || !(E.h > 0) || E.end) return null;
   const L = EG_LAYOUTS[ff] ?? EG_LAYOUTS.desktop;
   const spec = egHallOf(E.seed, E.h, E.geo ?? 0);
@@ -416,7 +416,7 @@ export function egSpireHudModel(E, me, now, { ff = 'desktop', witness = false, p
   return {
     ff, chip: egCountChip(E, now), rel: run ? EG_PRES_TEXT.reliquaries(run.rel) : '', relInChip: L.relInChip,
     standing: L.standing && n > 1 ? EG_PRES_TEXT.standing(egLivingCount(E), n) : '',
-    potion: L.potion ? `${potions}/${EG_POTIONS_PER_HALL}` : '',
+    potion: L.potion ? egPotionPip(potions) : '',   // POTION-CLOCK: each kind still waiting (section 17.4)
     recall: mine && mine.alive && !mine.home && !mine.recall ? EG_PRES_TEXT.recallSpent : '',   // my last life (PARTY8-B's law: a fact when it is actionable)
     dec, decFold: L.dec === 'fold' && dec.length > 0 ? EG_PRES_TEXT.decrees(dec.length) : '', foldOpen,
     objective: E.sg === 'trial' && !watching ? egObjectiveText(spec) : '', progress: E.sg === 'trial' && !watching ? egProgressText(spec, E.fight?.pg) : '',

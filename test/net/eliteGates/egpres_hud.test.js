@@ -107,7 +107,8 @@ test('EG-G1 THE LAYOUTS (section 27.1): a desk at 1280x720, a phone held upright
   const desk = egSpireHudModel(E, ME, now, { ff: 'desktop' }), up = egSpireHudModel(E, ME, now, { ff: 'upright' }), side = egSpireHudModel(E, ME, now, { ff: 'sideways' });
   assert.deepEqual(desk.dec, ['Hunting Pack', 'Ashfall II']);
   assert.equal(desk.decFold, '');
-  assert.equal(desk.potion, '2/2');
+  assert.equal(desk.potion, '', 'PIN MOVED (POTION-CLOCK): no kind waiting, no pip');
+  assert.equal(egSpireHudModel(E, ME, now, { ff: 'desktop', potions: [['health', 12], ['magicka', 3]] }).potion, 'Health potion 12 s · Magicka potion 3 s', 'each kind still waiting, its seconds');
   assert.equal(desk.standing, '2 of 2');
   assert.equal(desk.rel, 'Reliquaries 3');
   assert.equal(desk.recall, '', 'the recall in hand says nothing');
@@ -115,6 +116,7 @@ test('EG-G1 THE LAYOUTS (section 27.1): a desk at 1280x720, a phone held upright
   assert.equal(up.decFold, '2 decrees', 'folded to a press');
   assert.equal(up.relInChip, true);
   assert.equal(up.potion, '');
+  assert.equal(egSpireHudModel(E, ME, now, { ff: 'upright', potions: [['health', 12]] }).potion, '', 'a phone shows no pip, waiting or not');
   assert.equal(side.decFold, '2 decrees', 'folded to a press, and on the card');   // PIN MOVED (AUDIT EG V, c: L7-22)
   assert.equal(side.lordH, 44);
   assert.equal(desk.objective, egHallOf(77, 3).objective);
