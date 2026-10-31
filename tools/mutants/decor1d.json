@@ -66,8 +66,8 @@
   {
     "name": "DECOR1d-the-turn-unwrapped",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "      s.yaw = wrapTurn(round(s.yaw + deg, 1));",
-    "new": "      s.yaw = round(s.yaw + deg, 1);",
+    "old": "      else s.yaw = wrapTurn(round(s.yaw + deg, 1));",
+    "new": "      else s.yaw = round(s.yaw + deg, 1);",
     "tests": [
       "test/scenes/decor/decor1d.test.js"
     ]

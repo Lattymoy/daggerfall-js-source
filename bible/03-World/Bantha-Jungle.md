@@ -21,6 +21,12 @@ through those lands.
   Understorey: young trees, thicker in light gaps. Mid storey: the rainforest's palms. Floor: the rainforest's cover.
   Every draw is a hash of a world tile, so trees stand in the same place on every client and on the worker, and
   Logging's trees stand where the room sees them.
+- **Trunks hold foes out** (`src/world/propBodies.js` `jungleBody`, `src/characters/foeSpacing.js`
+  `keepFoesOffBodies`). A trunk's body, its measured girth up to where its crown begins, keeps a foe out as it keeps the
+  player: a foe in one is put at its edge in that frame, and steps round it where its way lies past. A line of sight or
+  a missile to a body standing in a trunk or a crown stops only where it crosses that cover's middle inside it
+  (`src/ai/cover.js`): a body in front of the middle is seen and struck, one behind it is hidden, both ways. A young
+  banyan's or flame tree's crown begins at 1.1-1.9 m. The bodies are the species', so every jungle stands them.
 - **The floor carpet** (`src/scenes/jungleFloorHost.js`). A second field of the grass system wearing grass, ferns and
   broad leaves on crossed cards (`src/render/jungleFloorArt.js`), so no earth shows. The meadow's grass keeps out of it.
 - **Roadside pairs and trails** (`src/world/jungle/jungleRoadside.js`, `src/world/jungle/jungleTrails.js`). Pairs of
@@ -57,7 +63,7 @@ culling what the haze hides.
 - `src/scenes/jungleHost.js`, `src/scenes/jungleFloorHost.js`, `src/scenes/treesHost.js` - the hosts
 - `test/world/bantha1_jungle.test.js`, `test/world/bantha2_area.test.js`, `test/world/bantha2_floor.test.js`,
   `test/world/junglegrass.test.js`, `test/world/jungleroadside.test.js`, `test/world/junglespread.test.js`,
-  `test/world/jungletrails.test.js`
+  `test/world/jungletrails.test.js`, `test/characters/trunkfoes.test.js`
 
 ## Open
 

@@ -97,6 +97,15 @@ its owner says who may enter (`HOME_ENTRIES`: private, party, public, guild). Th
 (`bible/11-Multiplayer/Yard-Cells.md`) and hire vendors. A guild may own one home as its hall (`src/net/hallLaw.js`).
 A home bought offline stays offline.
 
+**The yard's height.** A yard piece stands at most `DECOR_YARD_HIGH` (8 m) up, at both ends (`src/net/decorLaw.js`
+`decorYardHighOk`). Above `YARD_FREE_HIGH` (4 m) the client takes a piece only on or against its house: its place or
+its footprint over what the house covers seen from above (inside its walls, and every level roof past them, a porch's
+or a balcony's), or touching an upright face of it, and its foot no higher than the house's top
+(`src/scenes/homeYards.js` `yardByHouse`). Free of the house, 4 m holds. An Imperial City court stands off its house's
+back wall and holds none of its roof, so it keeps 4 m. A catalogue picture set on a yard's wall hangs flat on it
+(`src/systems/decor/decorPlacer.js`). Its place carries `hung`, so every client draws it flat. The service refuses
+`hung` on a model, a person, a tree or a plant, or the player's own item (`decorPieceOf`).
+
 ### Everything else online
 
 Each has its own page: parties and friends (`bible/06-Systems/Social-Party-Arc.md`), guilds
@@ -125,6 +134,7 @@ professions and silver (`bible/06-Systems/Professions-Arc.md`), the update notic
   offline stays offline (Mac). A character may hold `HOME_CAP` homes in a region (the owner).
 - A home's price is held to `HOME_PRICE_MIN`..`HOME_PRICE_MAX` by the service (`homePriceOk`); a sale refunds
   `HOME_SALE_SHARE`.
+- A yard piece free of its house stands at most 4 m, so no tower stands in a yard (Mac).
 
 ## Daggerfall Unity
 
@@ -143,14 +153,19 @@ DFU has no multiplayer. Where online play changes a single-player law: death res
 - `src/systems/dungeon/dungeonRespawn.js` - respawn times
 - `src/systems/deathRespawn.js`, `src/systems/deathPenalty.js` - the online death
 - `src/net/homeLaw.js`, `src/net/decorLaw.js`, `src/net/hallLaw.js` - homes, decor, guild halls
+- `src/scenes/homeYards.js`, `src/systems/decor/decorPlacer.js` - a yard's lot and height, a picture hung on a wall
 - `server/src/index.js` - the Worker and the `Room` Durable Object
 - `test/server/online_relay.test.js` - the wire's law and the Room over fake sockets
 - `test/net/online.test.js` - the session over a fake socket, room keys, easing
 - `test/net/world1.test.js` to `test/net/world4.test.js` - room memory, foes, acts, loot
 - `test/net/oneseat.test.js` - the seat
 - `test/scenes/donline1_respawn.test.js` - the online respawn
+- `test/net/yardheight.test.js`, `test/scenes/yardwalls.test.js`, `test/scenes/fb1031_yard.test.js` - the yard's
+  height, a house's walls and roofs, a hung picture
 
 ## Open
 
 - The relay is one Durable Object per room or cell node; interest management filters what is sent, not what is
   iterated.
+- The service knows no lot, road or house, so it holds a yard piece to 8 m alone. A crafted client can stand a free
+  piece anywhere in a yard to 8 m. The 4 m free of the house, the lot's edge and the road are the client's.

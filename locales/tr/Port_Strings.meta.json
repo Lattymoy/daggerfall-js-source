@@ -1999,6 +1999,21 @@
   "tr": "14c5b34646d4",
   "by": "claude-in-session"
  },
+ "features.realWindows.light": {
+  "en": "33064adf0f79",
+  "tr": "afa2becfaecf",
+  "by": "claude-in-session"
+ },
+ "features.realWindows.light.day": {
+  "en": "2afe02177426",
+  "tr": "9027a2103d53",
+  "by": "claude-in-session"
+ },
+ "features.realWindows.light.on": {
+  "en": "e0049a66519c",
+  "tr": "2b7ced2726d2",
+  "by": "claude-in-session"
+ },
  "features.tamrielLand.note": {
   "en": "c4201ee9109a",
   "tr": "0ea38fb34c16",

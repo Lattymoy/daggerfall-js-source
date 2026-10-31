@@ -95,6 +95,7 @@ import { createChiselAct } from '../../systems/chiselAct.js';   // PROF11
 import { createPanAct } from '../../systems/panAct.js';   // PROF9
 import { createFacetAct } from '../../systems/facetAct.js';   // PROF10
 import { templateByIndex } from '../../systems/item/itemTemplates.js';   // PROF10: a piece's DFU template - its enchantment points
+import { RRI_CLASSES, customItemClass } from '../../systems/roleplayRealismItems/rriItems.js';   // SMITH-RRI: a mod's weapon, made while its class stands
 import { itemLongName } from '../../systems/item/itemInfo.js';   // DISENCHANT-SAID: a piece the station lists, named as the pack names it
 import { tradeRefusal } from '../../systems/tradePack.js';   // DISENCHANT-SAID: a piece that may not leave the pack is not the station's (PROF12)
 import { isLocked } from '../../systems/item/itemLock.js';   // DISENCHANT-SAID: nor a locked one (PROF5)
@@ -285,13 +286,14 @@ let _armedFree = false;
 /** The Professions page's last refusal, said under the cards. */
 let _profWord = null;
 /** The Stores page's filter, search, sort, the material chosen and the quantity to withdraw. */
-const _stores = { family: null, query: '', sort: 'tier', picked: null, qty: 1, word: null, busy: false, settledAt: -Infinity, awayPick: null };   // MENU-ORDER: the away station whose words are shown
+const _stores = { family: null, query: '', sort: 'tier', picked: null, qty: 1, word: null, benchWord: null, benchAt: null, busy: false, settledAt: -Infinity, awayPick: null };   // MENU-ORDER: the away station whose words are shown
 /** BAG1: the Stores page's own words for a carrying book. */
 export const BAG_PAGE_WORDS = Object.freeze({
   noBag: 'You have no Materials Bag: what you gather goes into your pack. Every General Store sells one.',
   // AUDIT2 BAG1 U11: the pack takes what the bag has no room for too, and a deposit takes from the wagon last
   takenNote: 'A material you take out goes into your Materials Bag, then your pack. Put it back from your bag, pack or wagon in any town.',
-  allIn: 'Put everything in',
+  /** AUDIT FB1031 III I2: the bench bar draws it too (STORES-AT-BENCH), so it is the catalog's */
+  get allIn() { return t('prof.page.stores.allIn', 'Put everything in'); },
   /** AUDIT2 BAG1 H1/U2: the bag emptied into the pack - the classic inventory draws no bag, and a food rotted in it held it */
   emptyBag: 'Empty your bag into your pack',
   emptied: (moved, left) => `${moved.toLocaleString('en-US')} moved into your pack.${left > 0 ? ` ${left.toLocaleString('en-US')} stay in your bag: your pack can carry no more.` : ''}`,
@@ -303,8 +305,8 @@ export const BAG_PAGE_WORDS = Object.freeze({
   /** AUDIT BAG1: what went in, and each material that would not with its reason - a refusal partway said only itself, and
    *  the units that had gone in were never said; `stop` the counting-house's silence, which ends the run */
   allInDone: (n, refused = [], stop = null) => [
-    `${n.toLocaleString('en-US')} put in the Stores.`,
-    ...refused.map((r) => `${r.name}: ${r.text ?? 'not put in.'}`),
+    t('prof.page.stores.allInDone', '{n, number} put in the Stores.', { n }),
+    ...refused.map((r) => `${r.name}: ${r.text ?? t('prof.page.stores.notPutIn', 'not put in.')}`),
     ...(stop ? [stop] : []),
   ].join(' '),
   /** UNCOUNTED (FIELD BUGS 2026-10-09c, "Some ingredients won't let you store them": Troll's Blood and Orc's Blood from a
@@ -497,7 +499,8 @@ export function setDownProfAct() {
 export const profActUnderWay = () => !!(_anvil.act || _bench.act || _loom.act || _mason.act || _cook.act || _jewel.act);   // PROF11: the chisel; PROF9: the pan; PROF10: the facet
 /** A fresh visit starts plain (the menu calls it with its own reset). */
 export function resetProfPages() {
-  _armed = null; _profWord = null; _stores.word = null; _stores.picked = null; _stores.qty = 1; _forge.word = null; _forge.counts = {};
+  _armed = null; _profWord = null; _stores.word = null; _stores.benchWord = null; _stores.benchAt = null; _stores.picked = null;   // AUDIT FB1031 P2: and the bench bar's
+  _stores.qty = 1; _forge.word = null; _forge.counts = {};
   endHeat(); _anvil.word = null; _anvil.picked = null; _anvil.heartwood = false;
   _bench.act?.cancel(); _bench.act = null; _bench.actRecipe = null; _bench.word = null; _bench.picked = null; _bench.counts = {}; _bench.heartwood = false;   // PROF4
   endStitch(); _loom.word = null; _loom.picked = null; _loom.counts = {}; _loom.dye = null;   // PROF7
@@ -1006,7 +1009,7 @@ export function drawCraftingPage(detail, rerender, kit) {
   const key = kit.keyName?.('Professions') ?? null;
   if (!stationHere()) detail.append(el('p', 'px-note', key ? t('prof.page.crafting.away', 'Stand at a station to craft. Press {key} there to open this page on it.', { key })
     : t('prof.page.crafting.awayKeyless', 'Stand at a station to craft. Your Professions key opens this page on it.')));
-  drawStations(detail, rerender, kit);
+  drawStations(detail, rerender, kit, { benchStores: true });
   if (kit.go) {
     const doors = el('div', 'prof-doors');
     const profs = el('button', 'act', t('prof.page.crafting.professions', 'Your professions'));
@@ -1136,8 +1139,8 @@ export function drawStoresPage(detail, rerender, kit) {
   drawStations(detail, rerender, kit);
 }
 /** Every station, tiled (MENU-ORDER). One list for both the Stores page and the Crafting page (CRAFT-HALL). */
-function drawStations(detail, rerender, kit) {
-  drawStationTiles(detail, rerender, kit, [
+function drawStations(detail, rerender, kit, opts = {}) {
+  drawStationTiles(detail, rerender, kit, opts, [
     ['forge', (d) => drawForge(d, rerender, kit)],
     ['anvil', (d) => drawAnvil(d, rerender, kit)],   // PROF3
     ['temper-anvil', (d) => drawTemper(d, rerender, kit, 'anvil')],   // CRAFT4: the smith's temper
@@ -1203,7 +1206,7 @@ const holdsHead = (node, id) => {
  * section is kept, hidden, so nothing it says is lost - where nine "is done at" paragraphs stood one after another. A
  * station a press asked the page to land on (STATION-DOOR) is shown.
  */
-function drawStationTiles(detail, rerender, kit, list) {
+function drawStationTiles(detail, rerender, kit, opts, list) {
   const { el } = kit;
   const focus = _storesFocus;   // stationHead spends it as it draws
   const drawn = [];
@@ -1241,7 +1244,92 @@ function drawStationTiles(detail, rerender, kit, list) {
     if (!away.some((d) => d.id === _stores.awayPick) && !drawn.some((d) => d.here)) notes.append(el('p', 'prof-stile-hint', STATION_TILE_WORDS.hint));
     detail.append(notes);
   }
-  for (const { box, here } of drawn) if (here) detail.append(box);
+  const worked = drawn.filter((d) => d.here);
+  // STORES-AT-BENCH: the bench's Stores bar stands over the station the press landed on (else the first worked here)
+  const landed = focus ? worked.find((d) => holdsHead(d.box, `prof-station-${focus}`)) : null;
+  // AUDIT FB1031 P1: the press spends the focus on its first draw - a repaint (the bar's own put-in) keeps its station
+  if (landed) _stores.benchAt = landed.id;
+  const at = landed ?? worked.find((d) => d.id === _stores.benchAt) ?? worked[0];
+  const bar = opts.benchStores && worked.length ? benchStoresBar(kit, rerender, !!landed) : null;
+  for (const d of worked) { if (bar && d === at) detail.append(bar); detail.append(d.box); }
+}
+/** STORES-AT-BENCH (2026-10-29, its_WiKeD: "when you open up a bench you need to scroll all the way down, click stores,
+ *  then scroll all the way up top just to store stuff"): at a station the Crafting page offers Put everything in and the
+ *  Stores' door where the press lands, as the Stores page did before CRAFT-HALL. A press lands on the bar. */
+function benchStoresBar(kit, rerender, land) {
+  const { el } = kit;
+  if (land) _stores.benchWord = null;   // a new press: the last put-in's line is spent
+  const bar = el('div', 'prof-doors prof-benchstores');
+  bar.id = 'prof-bench-stores';
+  const allIn = putAllButton(kit, rerender, 'benchWord');
+  if (allIn) bar.append(allIn);
+  if (kit.go) {
+    const door = el('button', 'act', t('prof.page.crafting.stores', 'Your Stores'));
+    door.type = 'button';
+    door.onclick = () => kit.go?.('stores');
+    bar.append(door);
+  }
+  if (!bar.children?.length) return null;
+  const out = el('div', 'prof-benchstores-wrap');
+  out.append(bar);
+  if (_stores.benchWord) out.append(el('p', 'prof-word', _stores.benchWord));
+  // after stationHead's own landing in the same frame, so the bar and the station's head are both in view
+  if (land) globalThis.requestAnimationFrame?.(() => globalThis.document?.getElementById('prof-bench-stores')?.scrollIntoView?.({ block: 'start' }));
+  return out;
+}
+
+/** BAG1: Put everything in - what is carried into the Stores at once, or null when nothing is carried (a book that does
+ *  not carry has no put-in). AUDIT BAG1: whatever the filter shows, so a search never hides it. STORES-AT-BENCH: the
+ *  Stores page and the Crafting page at a station both draw it, each with its own line for the answer (`wordKey`). */
+function putAllButton(kit, rerender, wordKey = 'word') {
+  const p = /** @type {ProfPagesProvider} */ (_provider);
+  const { el } = kit;
+  const book = p?.book;
+  if (book?.carrying?.() !== true) return null;
+  const town = p.inTown?.() === true;
+  const all = carryRows(book, p.carriedHeld, p.heldKeys);
+  const carriedAny = [...all.values()].some((r) => r.carried + (r.uncounted | 0) > 0);   // LOOT-LOOSE: and the loose
+  if (!carriedAny) return null;
+  const allIn = el('button', 'act', _stores.busy ? t('prof.page.stores.sending', 'Sending...') : BAG_PAGE_WORDS.allIn);
+  allIn.type = 'button';
+  allIn.disabled = _stores.busy || !town || !p.deposit;
+  if (!town) allIn.title = BAG_WORDS.town;
+  allIn.onclick = async () => {
+    if (_stores.busy || !p.deposit) return;
+    _stores.busy = true; rerender();
+    // AUDIT BAG1: a material refused (its Stores full) is said and passed over - the rest still go in; the counting-house
+    // silent (a deposit kept) ends the run, its goods on their way
+    // FB1020c ONE-SAVE: every put-in planned first, then ONE batch (the provider's deposit - profBook.js depositMany): one
+    // save for them all, where a put-in a material each waited on a save of the whole game, in series, every button held
+    const refused = [], plan = [];
+    for (const r of storesRows(carryRows(book, p.carriedHeld, p.heldKeys), {}, p.name)) {
+      // AUDIT2 BAG1 U1: as many as the Stores have room for - a material whose Stores are full is said, never asked
+      let room = storesRoomOf(book, r);
+      const held = r.carried + (r.uncounted | 0);
+      if (held > 0 && room < 1) { refused.push({ name: r.name, text: BAG_PAGE_WORDS.storesFull }); continue; }
+      // LOOT-LOOSE: what the service counts by `all` (every origin as it was), then the rest held as loose (`work`)
+      for (const [n, order] of /** @type {[number, string][]} */ ([[r.carried, 'all'], [r.uncounted | 0, 'work']])) {
+        for (let left = Math.min(n, room); left > 0; left -= DEPOSIT_MAX) {
+          const qty = Math.min(left, DEPOSIT_MAX);
+          plan.push({ material: r.material, qty, order, name: r.name });
+          room -= qty;
+        }
+      }
+    }
+    const answers = plan.length ? await p.deposit(plan) : [];
+    let moved = 0, stop = null;
+    const said = new Set();
+    for (const [i, res] of answers.entries()) {
+      if (res?.ok) moved += plan[i].qty;
+      else if (res?.kept) stop ??= res.text ?? null;
+      else if (!said.has(plan[i].material)) { said.add(plan[i].material); refused.push({ name: plan[i].name, text: res?.text ?? null }); }
+    }
+    _stores.busy = false;
+    // AUDIT FB1031 P2: the bench's answer is the Stores page's too, so one followed there mid-flight still reads it
+    _stores[wordKey] = _stores.word = BAG_PAGE_WORDS.allInDone(moved, refused, stop);
+    rerender();
+  };
+  return allIn;
 }
 
 /**
@@ -1275,50 +1363,8 @@ function drawCarryStores(detail, rerender, kit) {
   }
   const all = carryRows(book, p.carriedHeld, p.heldKeys);
   const rows = storesRows(all, _stores, p.name);
-  // AUDIT BAG1: whatever the filter shows - the button puts in everything carried, and a search that hid the carried
-  // materials hid the button with them
-  const carriedAny = [...all.values()].some((r) => r.carried + (r.uncounted | 0) > 0);   // LOOT-LOOSE: and the loose
-  if (carriedAny) {
-    const allIn = el('button', 'act', _stores.busy ? 'Sending...' : BAG_PAGE_WORDS.allIn);
-    allIn.type = 'button';
-    allIn.disabled = _stores.busy || !town || !p.deposit;
-    if (!town) allIn.title = BAG_WORDS.town;
-    allIn.onclick = async () => {
-      if (_stores.busy || !p.deposit) return;
-      _stores.busy = true; rerender();
-      // AUDIT BAG1: a material refused (its Stores full) is said and passed over - the rest still go in; the counting-house
-      // silent (a deposit kept) ends the run, its goods on their way
-      // FB1020c ONE-SAVE: every put-in planned first, then ONE batch (the provider's deposit - profBook.js depositMany): one
-      // save for them all, where a put-in a material each waited on a save of the whole game, in series, every button held
-      const refused = [], plan = [];
-      for (const r of storesRows(carryRows(book, p.carriedHeld, p.heldKeys), {}, p.name)) {
-        // AUDIT2 BAG1 U1: as many as the Stores have room for - a material whose Stores are full is said, never asked
-        let room = storesRoomOf(book, r);
-        const held = r.carried + (r.uncounted | 0);
-        if (held > 0 && room < 1) { refused.push({ name: r.name, text: BAG_PAGE_WORDS.storesFull }); continue; }
-        // LOOT-LOOSE: what the service counts by `all` (every origin as it was), then the rest held as loose (`work`)
-        for (const [n, order] of /** @type {[number, string][]} */ ([[r.carried, 'all'], [r.uncounted | 0, 'work']])) {
-          for (let left = Math.min(n, room); left > 0; left -= DEPOSIT_MAX) {
-            const qty = Math.min(left, DEPOSIT_MAX);
-            plan.push({ material: r.material, qty, order, name: r.name });
-            room -= qty;
-          }
-        }
-      }
-      const answers = plan.length ? await p.deposit(plan) : [];
-      let moved = 0, stop = null;
-      const said = new Set();
-      for (const [i, res] of answers.entries()) {
-        if (res?.ok) moved += plan[i].qty;
-        else if (res?.kept) stop ??= res.text ?? null;
-        else if (!said.has(plan[i].material)) { said.add(plan[i].material); refused.push({ name: plan[i].name, text: res?.text ?? null }); }
-      }
-      _stores.busy = false;
-      _stores.word = BAG_PAGE_WORDS.allInDone(moved, refused, stop);
-      rerender();
-    };
-    detail.append(allIn);
-  }
+  const allIn = putAllButton(kit, rerender);
+  if (allIn) detail.append(allIn);
   const grid = el('div', 'prof-grid');
   if (!rows.length) grid.append(el('p', 'px-note', all.size ? t('prof.page.stores.noMatch', 'Nothing in the Stores matches.') : storesEmptyCarryLine()));
   for (const r of rows) {
@@ -1540,9 +1586,12 @@ const daedricWord = () => t('prof.page.forge.daedric', DAEDRIC_LINE);
 const toolsWord = () => t('prof.page.family.tools', 'Tools');
 export const ANVIL_FAMILIES = Object.freeze([wordRow('weapons', () => t('prof.page.family.weapons', 'Weapons')), wordRow('armour', () => t('prof.page.family.armour', 'Armour')),
   wordRow('tools', toolsWord), wordRow('kits', () => t('prof.page.family.kits', 'Repair Kits'))]);
+/** SMITH-RRI: a mod's weapon (RRI's Light Flail and Archer's Axe) is made only while its class stands - unregistered,
+ *  the piece swings as nothing (fpsWeapon.js weaponTypeForItem). Online it always stands (onlineLane.js newWeapons). */
+const anvilMakes = (r) => !RRI_CLASSES[r.templateIndex] || !!customItemClass(r.templateIndex);
 /** The recipes the anvil makes for a family - at a metal where one is named (the tools are Iron's alone; the chain is
  *  Steel's). CRAFT2: the anvil lists them as patterns (patternsOf), every metal under its piece. */
-export const anvilRecipes = (family, metal = null) => RECIPES.filter((r) => r.profession === 'smithing' && r.family === family && (metal == null || family === 'tools' || r.metal === metal));
+export const anvilRecipes = (family, metal = null) => RECIPES.filter((r) => r.profession === 'smithing' && r.family === family && (metal == null || family === 'tools' || r.metal === metal) && anvilMakes(r));
 /** PROF4: what a craft spends as this character would spend it - a Joiner's half the planks, a Heartwood for one. */
 const spendsOf = (r, book, heartwood) => recipeInputs(r, { heartwood: heartwood && takesHeartwood(r), joiner: book.track(r.profession)?.specs?.[50] === 'joiner' });
 /** Whether the Stores make a recipe now - its inputs, or (PROF4) what it would spend (`inputs`). */

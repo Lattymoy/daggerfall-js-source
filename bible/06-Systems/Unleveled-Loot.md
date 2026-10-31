@@ -31,6 +31,9 @@ in the Mods pane.
 - **METAL-RAMP** (Mac: "Level ramp"): a Daedric or Orcish drop below level 20 is that metal only on a draw of
   `Range(0, 20)` under the killer's level, else the level's middle metal (`rampMetal`: Elven, Dwarven, Mithril,
   Adamantium, Ebony as the level rises). The level and Luck are the raiser's, so a room's clients roll alike.
+- **Daedric is rare**: a granted Daedra drop that would be Daedric keeps it on a draw under `DAEDRIC_KEEP` (a tenth),
+  at any level and after METAL-RAMP's draw, and is Ebony otherwise, through the Mods pane's Ebony switch
+  (`daedricKept`). Whether a Daedra drops at all, and every Orcish drop, stay the mod's.
 - A death drop records its rolled condition as `foundCondition`, so online a mended drop sells as it fell
   (`bible/06-Systems/Economy-Arc.md`).
 - A dropped armour piece's condition is never above its own maximum.
@@ -39,10 +42,19 @@ in the Mods pane.
 
 The mod overrides DFU's `FormulaHelper` RandomMaterial and RandomArmorMaterial and handles `EnemyDeath`. The 1.1.2
 DLL is the law where it differs from the repository's 1.1.1 source. Departures: METAL-RAMP and `foundCondition` (both
-because a new character could farm Orcish gear outside), and the armour condition cap.
+because a new character could farm Orcish gear outside), the armour condition cap, and `DAEDRIC_KEEP`. Online the mod
+is on, shops never stock Daedric and random pieces almost never roll it, so the mod's Daedra drop is the game's main
+Daedric source. Without the keep, every granted drop from level 20 would be Daedric.
 
 ## Code and tests
 
 - `src/systems/unleveledLoot.js` - the overrides, the selectors, the death handler, `rampMetal`
 - `vendor/unleveledLoot/` - the manifest, modsettings and README
 - `test/systems/unleveledLoot.test.js` - the tables, the transitions, the corpse drops, the dead hook, the seams
+- `test/systems/daedricrare.test.js` - the Daedric keep and its Ebony
+
+## Open
+
+- The Oblivion Gate Warden's spoils (`src/systems/gate/gateSpoils.js` `rollSpoils`: Ruhn's Regalia and the kill's
+  ordinary pieces) and the Delve vault (`src/systems/delve/delveVault.js`) roll Daedric outside this mod, so
+  `DAEDRIC_KEEP` does not reach them. They stand until the owner decides.

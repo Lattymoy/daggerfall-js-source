@@ -19,6 +19,7 @@ import { magicResist } from '../combat/formulas.js'; // U10
 import { raceById, raceByKey } from './races.js'; // AUDIT 18: the racial saving-throw block
 import { getInt } from './settings/settings.js'; // ROAD-H H1c: Controls/Handedness, the screen weapon's FlipHorizontal (DaggerfallMissile.cs:546)
 import { CAPSULE_RADIUS } from '../player/motor.js'; // AUDIT 65 CV-2: the PLAYER's own CharacterController radius, imported rather than restated
+import { CAPSULE_HEIGHT } from '../player/motor.js'; // TRUNK-FOES: a struck body's standing height where it states none (struckPoints)
 
 // ---- DaggerfallMissile constants, verbatim ----
 export const MISSILE_SPEED = 25.0;
@@ -506,6 +507,63 @@ export function missileReach(dir, step) {
     unit: len === 1 ? dir : [dir[0] / len, dir[1] / len, dir[2] / len],
     reach: step * len + MISSILE_COLLIDER_RADIUS,
   };
+}
+
+/** TRUNK-FOES: the bodies a flight may strike - the live foes' controllers (each foe's `ai`) and the player's capsule
+ *  (none for `playerFeet` null). AUDIT FB1031 F2: each flight hands the ones its missile may strike, and no other. */
+export function flightBodies(foes, playerFeet, playerHeight) {
+  const out = [];
+  for (const f of foes ?? []) if (f && !f.dead && f.ai?.feet) out.push(f.ai);
+  if (playerFeet) out.push({ feet: playerFeet, height: playerHeight, radius: PLAYER_BODY_RADIUS });
+  return out;
+}
+/** AUDIT FB1031 F2: the bodies a dungeon missile `m` may strike, and no other (dungeonContext.js's flight: both sides'
+ *  shafts, the foes' spells, a peer's drawn ones) - a body it flies through held cover open for it. A drawn one stops on
+ *  any body; mine on a foe but a companion and one my technique struck, never me; a foe's shaft on me and every foe but
+ *  its shooter; a foe's spell on the foe it was loosed at while that stands, else on me (never at a peer's word).
+ *  AUDIT FB1031 II K4: mine on `standIns` too - the bodies the relay runs that the flight strikes (the court's boss, his
+ *  crystals and host, my opponent on the sand): none but one my technique struck, and the opponent never for a
+ *  technique's (TECH law 3). Unlisted, the boss at a flat's middle was shielded from my shaft. */
+export function dungeonMissileBodies(m, foes, playerFeet, playerHeight, standIns = null) {
+  if (m.visual) return flightBodies(foes, playerFeet, playerHeight);
+  if (m.fromPlayer) {
+    const struck = (f) => !!m.technique?.struck?.includes(f);
+    const out = flightBodies(
+      foes?.filter((f) => f.companion == null && !struck(f)),
+      null,
+      playerHeight,
+    );
+    for (const b of standIns ?? [])
+      if (b && !b.dead && b.ai?.feet && !struck(b) && !(m.technique && b.rival != null)) out.push(b.ai);
+    return out;
+  }
+  if (m.arrow)
+    return flightBodies(
+      foes?.filter((f) => f !== m.shooterFoe),
+      playerFeet,
+      playerHeight,
+    );
+  if (m.aimFoe && !m.aimFoe.dead) return flightBodies([m.aimFoe], null, playerHeight);
+  return flightBodies(null, m.aimFoe?.isPeer ? null : playerFeet, playerHeight);
+}
+const _at = [0, 0, 0];
+/** TRUNK-FOES: where the line of a missile at `pos` along the unit `unit` strikes each of `bodies` (flightBodies') - the
+ *  point on the body's axis at the line's nearest pass, by missileHitsCapsule's law there - as flat x, y, z into `out`.
+ *  Cover that holds one is no wall in front of it (ai/cover.js coverDistance's `holds`). */
+export function struckPoints(pos, unit, bodies, out = []) {
+  out.length = 0;
+  const a = unit[0] * unit[0] + unit[2] * unit[2];
+  for (const b of bodies ?? []) {
+    const f = b?.feet;
+    if (!f) continue;
+    const s = a > 1e-12 ? Math.max(0, ((f[0] - pos[0]) * unit[0] + (f[2] - pos[2]) * unit[2]) / a) : 0;
+    _at[0] = pos[0] + unit[0] * s;
+    _at[1] = pos[1] + unit[1] * s;
+    _at[2] = pos[2] + unit[2] * s;
+    if (!missileHitsCapsule(_at, f, b.height, b.radius ?? BODY_CAPSULE_RADIUS)) continue;
+    out.push(f[0], Math.min(Math.max(_at[1], f[1]), f[1] + (b.height ?? CAPSULE_HEIGHT)), f[2]);
+  }
+  return out;
 }
 
 /** The same test against a foe's controller (enemyAnchor's height). */

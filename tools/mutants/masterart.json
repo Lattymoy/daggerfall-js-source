@@ -30,8 +30,8 @@
   {
     "name": "MASTER-ART-wand-let-in",
     "file": "src/net/masterLaw.js",
-    "old": "export const masterRecipe = (r) => !!r && MASTER_KINDS.includes(r.kind) && rollsQuality(r) && wearableItem(shapeOf(r));",
-    "new": "export const masterRecipe = (r) => !!r && MASTER_KINDS.includes(r.kind) && rollsQuality(r);",
+    "old": "&& rollsQuality(r) && wearableItem(shapeOf(r));",
+    "new": "&& rollsQuality(r);",
     "tests": [
       "test/net/masterart_law.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "MASTER-ART-count-at-most",
     "file": "src/net/masterLaw.js",
-    "old": "  if (!Array.isArray(keys) || keys.length !== MASTER_LINES) return 'count';",
-    "new": "  if (!Array.isArray(keys) || keys.length > MASTER_LINES) return 'count';",
+    "old": "keys.length !== MASTER_LINES) return 'count';",
+    "new": "keys.length > MASTER_LINES) return 'count';",
     "tests": [
       "test/net/masterart_law.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "MASTER-ART-twice-let-through",
     "file": "src/net/masterLaw.js",
-    "old": "  if (new Set(keys).size !== keys.length) return 'twice';",
-    "new": "  if (new Set(keys).size < 0) return 'twice';",
+    "old": "if (new Set(keys).size !== keys.length) return 'twice';",
+    "new": "if (new Set(keys).size < 0) return 'twice';",
     "tests": [
       "test/net/masterart_law.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "MASTER-ART-effects-unread",
     "file": "src/net/masterLaw.js",
-    "old": "  if (lines.filter((l) => l?.proc).length > MASTER_PROCS_MAX) return 'procs';",
-    "new": "  if (lines.filter((l) => l?.proc).length > MASTER_PROCS_MAX + 1) return 'procs';",
+    "old": "> MASTER_PROCS_MAX) return 'procs';",
+    "new": "> MASTER_PROCS_MAX + 1) return 'procs';",
     "tests": [
       "test/net/masterart_law.test.js",
       "test/net/masterart_service.test.js"
@@ -67,8 +67,8 @@
   {
     "name": "MASTER-ART-roll-past-the-top",
     "file": "src/net/masterLaw.js",
-    "old": "    const value = lo + Math.floor(rolls() * (hi + 1 - lo));",
-    "new": "    const value = lo + Math.floor(rolls() * (hi + 2 - lo));",
+    "old": "const value = lo + Math.floor(rolls() * (hi + 1 - lo));",
+    "new": "const value = lo + Math.floor(rolls() * (hi + 2 - lo));",
     "tests": [
       "test/net/masterart_law.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "MASTER-ART-roll-short-of-the-top",
     "file": "src/net/masterLaw.js",
-    "old": "    const value = lo + Math.floor(rolls() * (hi + 1 - lo));",
-    "new": "    const value = lo + Math.floor(rolls() * (hi - lo));",
+    "old": "const value = lo + Math.floor(rolls() * (hi + 1 - lo));",
+    "new": "const value = lo + Math.floor(rolls() * (hi - lo));",
     "tests": [
       "test/net/masterart_law.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "MASTER-ART-record-lines-any-version",
     "file": "src/net/productRecord.js",
-    "old": "  if (c.l !== undefined && !(c.q === MASTERWORK && c.v >= MINT_V_MASTER && masterRecordLinesValid(c.l))) return false; // MASTER-ART: a Master's lines; AUDIT HORIZONTAL B1: their shape, never today's pool",
-    "new": "  if (c.l !== undefined && !(c.q === MASTERWORK && masterRecordLinesValid(c.l))) return false; // MASTER-ART: a Master's lines; AUDIT HORIZONTAL B1: their shape, never today's pool",
+    "old": "if (c.l !== undefined && !(c.q === MASTERWORK && c.v >= MINT_V_MASTER && masterRecordLinesValid(c.l))) return false;",
+    "new": "if (c.l !== undefined && !(c.q === MASTERWORK && masterRecordLinesValid(c.l))) return false;",
     "tests": [
       "test/net/masterart_law.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "MASTER-ART-record-lines-any-quality",
     "file": "src/net/productRecord.js",
-    "old": "  if (c.l !== undefined && !(c.q === MASTERWORK && c.v >= MINT_V_MASTER && masterRecordLinesValid(c.l))) return false; // MASTER-ART: a Master's lines; AUDIT HORIZONTAL B1: their shape, never today's pool",
-    "new": "  if (c.l !== undefined && !(c.v >= MINT_V_MASTER && masterRecordLinesValid(c.l))) return false; // MASTER-ART: a Master's lines; AUDIT HORIZONTAL B1: their shape, never today's pool",
+    "old": "if (c.l !== undefined && !(c.q === MASTERWORK && c.v >= MINT_V_MASTER && masterRecordLinesValid(c.l))) return false;",
+    "new": "if (c.l !== undefined && !(c.v >= MINT_V_MASTER && masterRecordLinesValid(c.l))) return false;",
     "tests": [
       "test/net/masterart_law.test.js"
     ]
@@ -154,8 +154,8 @@
   {
     "name": "MASTER-ART-pieces-without-lines",
     "file": "src/systems/smithItems.js",
-    "old": "    .map((p) => mintPiece({ ...data, version: mintVersionOf(p.record), lines: masterLinesOf(p.record) }, p.provenance))",
-    "new": "    .map((p) => mintPiece({ ...data, version: mintVersionOf(p.record) }, p.provenance))",
+    "old": "version: mintVersionOf(p.record), lines: masterLinesOf(p.record) }",
+    "new": "version: mintVersionOf(p.record) }",
     "tests": [
       "test/net/masterart_service.test.js",
       "test/ui/professions/masterart_ui.test.js"
@@ -219,8 +219,8 @@
   {
     "name": "MASTER-ART-maker-takes-a-legendary",
     "file": "src/systems/enchanting.js",
-    "old": "  if (item?.rarity === 'legendary') return null; // MASTER-ART: a Master's work carries no rows, and is refused with every Legendary",
-    "new": "  if (item?.rarity === 'artifact') return null; // MASTER-ART: a Master's work carries no rows, and is refused with every Legendary",
+    "old": "if (item?.rarity === 'legendary') return null;",
+    "new": "if (item?.rarity === 'artifact') return null;",
     "tests": [
       "test/net/masterart_law.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "MASTER-ART-service-rank-99",
     "file": "server-account/src/masterWork.js",
-    "old": "  if (rank < MASTER_RANK || !recipeOpen(r, rank)) return { error: 'prof-rank' };",
-    "new": "  if (rank < MASTER_RANK - 1 || !recipeOpen(r, rank)) return { error: 'prof-rank' };",
+    "old": "if (rank < MASTER_RANK || !recipeOpen(r, rank)) return { error: 'prof-rank' };",
+    "new": "if (rank < MASTER_RANK - 1 || !recipeOpen(r, rank)) return { error: 'prof-rank' };",
     "tests": [
       "test/net/masterart_service.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "MASTER-ART-service-loose-catalysts",
     "file": "server-account/src/masterWork.js",
-    "old": "    return `${workableSql('?1', '?2', k)} >= ${n} + ${c} AND ${spendableSql('?1', '?2', k)} >= ${c} + MAX(0, ${n} - ${loose})`;",
-    "new": "    return `${workableSql('?1', '?2', k)} >= ${n} + ${c} AND ${workableSql('?1', '?2', k)} >= ${c} + MAX(0, ${n} - ${loose})`;",
+    "old": "AND ${spendableSql('?1', '?2', k)} >= ${c} + MAX(0, ${n} - ${loose})`;",
+    "new": "AND ${workableSql('?1', '?2', k)} >= ${c} + MAX(0, ${n} - ${loose})`;",
     "tests": [
       "test/net/masterart_service.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "MASTER-ART-service-shared-key-read-once",
     "file": "server-account/src/masterWork.js",
-    "old": "    by.set(c.key, { key: c.key, in: was?.in ?? 0, cat: (was?.cat ?? 0) + c.n });",
-    "new": "    by.set(c.key, { key: c.key, in: 0, cat: (was?.cat ?? 0) + c.n });",
+    "old": "by.set(c.key, { key: c.key, in: was?.in ?? 0, cat: (was?.cat ?? 0) + c.n });",
+    "new": "by.set(c.key, { key: c.key, in: 0, cat: (was?.cat ?? 0) + c.n });",
     "tests": [
       "test/net/masterart_service.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "MASTER-ART-progress-route-unseated",
     "file": "server-account/src/progress.js",
-    "old": "  '/v1/prof/master': Object.freeze(['prof', true]), // MASTER-ART: a Master's work - a piece of the seated character's",
-    "new": "  '/v1/prof/mastr': Object.freeze(['prof', true]), // MASTER-ART: a Master's work - a piece of the seated character's",
+    "old": "  '/v1/prof/master': Object.freeze(['prof', true]),",
+    "new": "  '/v1/prof/mastr': Object.freeze(['prof', true]),",
     "tests": [
       "test/net/masterart_service.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "MASTER-ART-box-below-master",
     "file": "src/ui/professions/masterBox.js",
-    "old": "  if (!masterRecipe(r) || (book?.track?.(masterTrackOf(r))?.rank ?? 0) < MASTER_RANK) return null;",
-    "new": "  if (!masterRecipe(r) || (book?.track?.(masterTrackOf(r))?.rank ?? 0) < MASTER_RANK - 1) return null;",
+    "old": "if (!masterRecipe(r) || (book?.track?.(masterTrackOf(r))?.rank ?? 0) < MASTER_RANK) return null;",
+    "new": "if (!masterRecipe(r) || (book?.track?.(masterTrackOf(r))?.rank ?? 0) < MASTER_RANK - 1) return null;",
     "tests": [
       "test/ui/professions/masterart_ui.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "MASTER-ART-box-catalysts-unread",
     "file": "src/ui/professions/masterBox.js",
-    "old": "    needs.every((c) => c.have >= c.need) &&",
-    "new": "    needs.every((c) => c.have >= 0) &&",
+    "old": "needs.every((c) => c.have >= c.need)",
+    "new": "needs.every((c) => c.have >= 0)",
     "tests": [
       "test/ui/professions/masterart_ui.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "MASTER-ART-box-shared-key-unread",
     "file": "src/ui/professions/masterBox.js",
-    "old": "    have: Math.max(0, workOf(book, i.key) - cat(i.key)),",
-    "new": "    have: Math.max(0, workOf(book, i.key) - 0 * cat(i.key)),",
+    "old": "have: Math.max(0, workOf(book, i.key) - cat(i.key))",
+    "new": "have: Math.max(0, workOf(book, i.key) - 0 * cat(i.key))",
     "tests": [
       "test/ui/professions/masterart_ui.test.js"
     ]
@@ -355,8 +355,8 @@
   {
     "name": "MASTER-ART-box-lines-unhanded",
     "file": "src/ui/professions/masterBox.js",
-    "old": "    const res = await go([...picks]);",
-    "new": "    const res = await go([]);",
+    "old": "const res = await go([...picks]);",
+    "new": "const res = await go([]);",
     "tests": [
       "test/ui/professions/masterart_ui.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "AUDIT-HB1-values-read-at-the-band",
     "file": "src/net/masterLaw.js",
-    "old": "  return /** @type {any[][]} */ (l).map(([id, value, ...p]) => (p.length ? { id, param: p[0], value } : { id, value }));",
-    "new": "  return /** @type {any[][]} */ (l).map(([id, value, ...p]) =>\n    p.length ? { id, param: p[0], value: masterBand(id)?.[1] ?? value } : { id, value: masterBand(id)?.[1] ?? value },\n  );",
+    "old": "(l).map(([id, value, ...p]) => (p.length ? { id, param: p[0], value } : { id, value }));",
+    "new": "(l).map(([id, value, ...p]) => (p.length ? { id, param: p[0], value: masterBand(id)?.[1] ?? value } : { id, value: masterBand(id)?.[1] ?? value }));",
     "tests": [
       "test/net/masterart_law.test.js",
       "test/net/masterart_service.test.js"
@@ -410,8 +410,8 @@
   {
     "name": "AUDIT-HB1-row-keeps-the-keys",
     "file": "server-account/src/masterWork.js",
-    "old": "  const binds = [player.id, character, rid, day, r.id, provenance, JSON.stringify(signed), seed, nowS, nonce];",
-    "new": "  const binds = [player.id, character, rid, day, r.id, provenance, JSON.stringify(lines), seed, nowS, nonce];",
+    "old": "JSON.stringify(signed), seed, nowS, nonce];",
+    "new": "JSON.stringify(lines), seed, nowS, nonce];",
     "tests": [
       "test/net/masterart_service.test.js"
     ]
@@ -419,8 +419,8 @@
   {
     "name": "AUDIT-HB1-record-two-lines",
     "file": "src/net/masterLaw.js",
-    "old": "  if (!Array.isArray(l) || l.length !== MASTER_LINES) return false;",
-    "new": "  if (!Array.isArray(l) || l.length > MASTER_LINES) return false;",
+    "old": "if (!Array.isArray(l) || l.length !== MASTER_LINES) return false;",
+    "new": "if (!Array.isArray(l) || l.length > MASTER_LINES) return false;",
     "tests": [
       "test/net/masterart_law.test.js"
     ]
@@ -428,8 +428,8 @@
   {
     "name": "AUDIT-HB1-record-line-twice",
     "file": "src/net/masterLaw.js",
-    "old": "  return seen.size === l.length;",
-    "new": "  return seen.size > 0;",
+    "old": "return seen.size === l.length;",
+    "new": "return seen.size > 0;",
     "tests": [
       "test/net/masterart_law.test.js"
     ]
@@ -464,8 +464,8 @@
   {
     "name": "AUDIT-HB3-goods-unheld",
     "file": "server-account/src/masterWork.js",
-    "old": "  const held = spends.map((s, i) => {\n    const [k, n, c] = [`?${11 + 3 * i}`, `?${12 + 3 * i}`, `?${13 + 3 * i}`];\n    binds.push(s.key, s.in, s.cat);\n    const loose = `COALESCE((SELECT qty FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ${k} AND origin = '${LOOSE_ORIGIN}'), 0)`;\n    return `${workableSql('?1', '?2', k)} >= ${n} + ${c} AND ${spendableSql('?1', '?2', k)} >= ${c} + MAX(0, ${n} - ${loose})`;\n  });",
-    "new": "  const held = spends\n    .filter((s) => s.cat > 0)\n    .map((s, i) => {\n      const [k, n, c] = [`?${11 + 3 * i}`, `?${12 + 3 * i}`, `?${13 + 3 * i}`];\n      binds.push(s.key, s.in, s.cat);\n      const loose = `COALESCE((SELECT qty FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ${k} AND origin = '${LOOSE_ORIGIN}'), 0)`;\n      return `${workableSql('?1', '?2', k)} >= ${n} + ${c} AND ${spendableSql('?1', '?2', k)} >= ${c} + MAX(0, ${n} - ${loose})`;\n    });",
+    "old": "const held = spends.map((s, i) => {",
+    "new": "const held = spends.filter((s) => s.cat > 0).map((s, i) => {",
     "tests": [
       "test/net/masterart_service.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "AUDIT-HB3-rank-off-smithing",
     "file": "server-account/src/masterWork.js",
-    "old": "  const track = await trackRow(db, player.id, character, craft);",
-    "new": "  const track = await trackRow(db, player.id, character, 'smithing');",
+    "old": "const track = await trackRow(db, player.id, character, craft);",
+    "new": "const track = await trackRow(db, player.id, character, 'smithing');",
     "tests": [
       "test/net/masterart_service.test.js"
     ]

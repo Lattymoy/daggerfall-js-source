@@ -42,6 +42,7 @@ import { textureReplacementEnabled, hasTextureReplacement } from '../systems/tex
 import { flatFieldFor, sowField } from './flatFields.js'; // WD3: a scene model that is a field of flats (the town mods' crops)
 import { PROPS_OFFSET_Y } from './rmbLayout.js'; // FIELD BUGS 2026-10-04d CROPS: a field's batch stands where its misc model does
 import { quarterOf } from '../ui/town/townQuarters.js'; // HOUSE-BUSH: an automap byte's building, by the town map's own ladder
+import { NATURE_ARCHIVE_MIN, NATURE_ARCHIVE_MAX, isNatureArchive } from './natureArchives.js'; // TREES-SEATED: a leaf (AUDIT FB1031 Y6)
 
 /** RMBLayout's blockFlatsOffsetY: a block's flats stand this far (native units) below their records - and their lights
  *  do not (AddLight hangs at the record's -YPos plus the picture's height - world/city/cityLights.js). */
@@ -49,12 +50,7 @@ export const BLOCK_FLATS_OFFSET_Y = -6;
 const NATURE_FLATS_OFFSET_Y = -2;
 export const EDITOR_FLATS_ARCHIVE = 199;
 export const LIGHTS_ARCHIVE = 210;
-const NATURE_ARCHIVE_MIN = 500; // ClimateTextureSet.Nature_RainForest
-const NATURE_ARCHIVE_MAX = 511; // ClimateTextureSet.Nature_Mountains_Snow
-/** TREES-SEATED: an archive in the nature range - AddExteriorBlockFlats' own test (RMBLayout.cs:421, master), which swaps such a
- *  sub-record flat to the climate's archive. A MISC flat in the range keeps the archive it names (AddMiscBlockFlats,
- *  :326-380, swaps nothing), so a block's tree can be a nature archive that is not the pixel's. */
-export const isNatureArchive = (archive) => archive >= NATURE_ARCHIVE_MIN && archive <= NATURE_ARCHIVE_MAX;
+export { isNatureArchive }; // AUDIT FB1031 Y6: its home is the leaf world/natureArchives.js, the decor law's too
 /** TREES-SEATED: where a nature flat stands on the location's plane - AddNatureFlats' `natureFlatsOffsetY`, scaled
  *  (the ground scenery's y below). */
 export const NATURE_FLATS_Y = NATURE_FLATS_OFFSET_Y * GLOBAL_SCALE;

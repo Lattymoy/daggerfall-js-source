@@ -53,8 +53,12 @@ footprint.
 
 - **Street, night:** a lit mock room's lamp shines out, 1.8 m behind the glass, reaching 12 m (`WL_LAMP_RANGE`). A dark
   room throws nothing; a curtain narrows the shape and passes 0.3 of the glow.
-- **Inside:** the sun or moon shines in through glass that faces it, through the sun map where the lane draws one.
-- **Every pane** glows as a small area light out to 6 m (`WL_SPILL_REACH`).
+- **Inside:** the sun or moon shines in through glass that faces it, through the sun map where the lane draws one. The
+  moon's gain (`WL_MOON_GAIN` 0.3) is a third of the sun's (`WL_SUN_GAIN` 0.9).
+- **Every pane** glows as a small area light out to 6 m (`WL_SPILL_REACH`), at 0.5 of the outside's ambient by day
+  (`WL_SKY_GAIN`) and 0.1 by night (`WL_SKY_NIGHT_GAIN`). The glow eases between the two over the sun's first 0.15 of
+  height (`wlDayShare`, `wlGlowGain`). So a full Masser's patch at night adds about 1.1 times a room's own ambient on
+  the Enhanced lane and 0.4 on the classic set: a dim patch, the room's dark kept round it.
 - The lights ride a uniform block of 128 (`WL_MAX_LIGHTS`, binding 3) and a band of the light grid; masks are an R8
   array of 64 layers of 128 x 128 on unit 24, evicting the least recently read.
 - Glass is filed in 24 m cells (`src/render/windowApertures.js`), so a frame walks only cells near the eye; cells build
@@ -69,7 +73,11 @@ footprint.
 - Windows outside and in are see-through, and their light shows on the ground by time of day.
 - The switch is **Real windows** (Settings, Graphics): Full, Rooms only (no street pass), Off; pref `realWindows`,
   default Full, the player's own online. Presets: Low Off, Medium Rooms only, High and Ultra Full. `?windows=` is the
-  kill door (`realWindowsMode`); an unknown value is ignored. `?windowlight=off` turns off the light alone.
+  kill door (`realWindowsMode`); an unknown value is ignored.
+- The card's **Window light** part chooses the light the glass throws (pref `windowLight`, `windowLightMode`, the
+  player's own online): On, the default, Day only and Off. Off lights no window. Day only lights a building's glass
+  while the day has a share, faded by it, and takes no moon and no street lamp (`src/render/windowLight.js`
+  `wlKindFor`). Neither drops the view out or the rooms. `?windowlight=off` is the light's kill door.
 - No ARENA2 raster ships: the rooms are painted from numbers.
 
 ## Code and tests
@@ -84,8 +92,9 @@ footprint.
   wagons but not the one the player stands in
 - `test/render/windows1_rooms.test.js`, `test/render/windows1_view.test.js` - rooms, view out and glass (a corpus test
   gated on `ARENA2_PATH`)
-- `test/render/wl1_windowlight.test.js`, `test/render/lightreach.test.js`, `test/render/audit_lightreach.test.js` - the
-  light
+- `test/render/wl1_windowlight.test.js`, `test/render/lightreach.test.js`, `test/render/audit_lightreach.test.js`,
+  `test/render/windownight.test.js`, `test/render/fb1031_light.test.js` - the light, its night gains and the Window
+  light part
 - `tools/realWindowsProbe.mjs`, `tools/windowLightProbe.mjs`, `tools/windowGlassScan.mjs` - probes
 
 ## Open

@@ -122,6 +122,28 @@ export const RING_HAZE_HOLD = 0.85;
 export const RING_RIM_END = (RING_RADIUS - RING_REBUILD_DRIFT) * TERRAIN_SIZE * 0.95;
 export const RING_RIM_START = RING_RIM_END * 0.6;
 
+/** RED-MOUNTAIN-SEEN (FIELD FEEDBACK 2026-10-31, "Red Mountain doesn't always render"): how the far views stand under the
+ *  frame's fog row, or null where they stand not. A linear row is the draw distance's haze: its ramp, held at
+ *  RING_HAZE_HOLD, the summits in thinner air. An exp row is weather: under a sky drawn clear (`excludeSky`: rain, snow,
+ *  ash, Dynamic Skies' overcast) the land past the grid fogs by the row's own law, as the streamed ground does - its shape
+ *  against the sky where the fog has closed, as the streamed ground's far hills stand. Where the fog covers the sky too
+ *  (the heavy fog, the sandstorm) there is no shape to see. */
+export function ringFogOf(row) {
+  if (row?.mode !== 'linear') {
+    if (!row?.excludeSky || (row.mode !== 'exp' && row.mode !== 'exp2')) return null;
+    // AUDIT FB1031 L2: the row's own law and density (horizonHaze.js horizonHazeOf) - wholly the fog's colour had stood
+    // a seam at the grid's edge wherever the ground still showed through (a sprinkle, a near Land View)
+    _weatherAir.law = row.mode === 'exp2' ? 2 : 1; _weatherAir.density = row.density;
+    return _weatherAir;
+  }
+  _clearAir.start = row.start ?? 0; _clearAir.end = row.end;   // one scratch, read in the frame it is asked
+  return _clearAir;
+}
+const _weatherAir = { start: 0, end: 0, hold: 1, weather: true, law: 1, density: 0 };
+const _clearAir = { start: 0, end: 0, hold: RING_HAZE_HOLD, weather: false, law: 0, density: 0 };
+/** RED-MOUNTAIN-SEEN: the summits' thinner air past no distance - under weather nothing stands through. */
+const NO_SUMMIT = 1e9;
+
 /** The streamed law's own macro height for one map-pixel byte, world units, at the byte's own NODE (where the kernel stands
  *  it). RELIEF-PEAKS: world/landforms.js nodeGround - the kernel's two terms (the large map by its law of the small: it had
  *  been left out, and the horizon stood the Bay's Dragontails some 470 m under the ground it hands over to) and, LANDFORM1,
@@ -545,7 +567,7 @@ void main() {
   if (sea > 0.0) lit = mix(lit, ringSea(uAmbient, uSunColor, uMoonColor, sun), sea);
   // the world fog's own ramp, capped at the hold - silhouettes read
   // through the haze - then closed to 1 at the rim (FAR-SEA1: the horizon's one law)
-  outColor = vec4(mix(lit, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist)))), 1.0);   // BANTHA1: and the jungle's haze
+  outColor = vec4(mix(lit, uFogColor, ringHaze(horizonHazeOf(uFogLaw, vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist)))), 1.0);   // BANTHA1: and the jungle's haze
 }`;
 // SHADER-EASE MOUNT-START (2026-10-29): what the constructor builds, started at page load (render/mountPrograms.js).
 /** @param {any} lane the installed lane (renderer.lightingLane), or null */
@@ -625,7 +647,7 @@ export class FarRingRenderer {
     this.u = {};
     for (const name of ['uProj', 'uView', 'uOrigin', 'uLightDir', 'uAmbient', 'uSunScale', 'uSunColor',
       'uMoonDir', 'uMoonScale', 'uMoonColor',
-      'uFogColor', 'uFogStart', 'uFogEnd', 'uRimStart', 'uRimEnd', 'uHazeHold', 'uSummitFrom',   // RED-MOUNTAIN F6: the summits' thinner air past the grid's edge
+      'uFogColor', 'uFogStart', 'uFogEnd', 'uRimStart', 'uRimEnd', 'uHazeHold', 'uSummitFrom', 'uFogLaw',   // RED-MOUNTAIN F6: the summits' thinner air past the grid's edge; AUDIT FB1031 L2: the weather's law
       'uSkyZenith', 'uSkyHorizon', 'uSeaF0', 'uSeaLook',   // FAR-SEA1: the sea's sky, its Fresnel, and whether it has one
       'uEye', 'uSeaTiles', 'uSeaTint', 'uSeaAmbient', 'uSeaSunColor', 'uSeaMoonColor',   // AUDIT FAR-SEA1 L1: the water's body, its light (the lane's in the water's own space)
       'uELExposure', 'uAdapt', 'uJungleHaze', 'uHazeEye',   // BANTHA1: the jungle's haze and the eye it is measured from
@@ -940,7 +962,7 @@ export class FarRingRenderer {
       proj: this._proj, view, origin: o, radius: this._floraRadius, viewportH: this.renderer?.worldViewportPx?.[3] ?? gl.drawingBufferHeight,
       hazeFrom: this.renderer?.focus ?? NO_FOCUS, ambient: dec(f.ambient, a), sunScale: f.sunScale, sunColor: dec(f.sunColor, s),
       moonScale: f.moonScale, moonColor: dec(f.moonColor ?? FLAT_WHITE, m), fogColor: f.fogColor, fogStart: f.fogStart, fogEnd: f.fogEnd,
-      rimStart: f.farField ? FAR_RIM_START : RING_RIM_START, rimEnd: f.farField ? FAR_RIM_END : RING_RIM_END, hold: RING_HAZE_HOLD,
+      rimStart: f.farField ? FAR_RIM_START : RING_RIM_START, rimEnd: f.farField ? FAR_RIM_END : RING_RIM_END, hold: f.hold, law: f.law, density: f.density,
       haze: f.haze ?? NO_HAZE, hazeEye: f.hazeEye, cloudFar: farSun, cloudRect: f.deck?.map ? f.deck.rect : NO_RECT, cloudUnit: RING_CLOUD_UNIT, exposure: f.exposure,
       ground: this._bandGround(origin),   // HORIZON-TREES: the middle ring's heights, the band's trees cut at its skyline
     });
@@ -1008,9 +1030,12 @@ export class FarRingRenderer {
    * the streamed world paints over it); its OWN projection, because
    * the world's 6000-unit far plane is 7.3 map pixels.
    */
-  draw(view, { origin, lightDir, ambient, sunScale, sunColor, moonDir, moonScale = 0, moonColor, fogColor, fogStart = 0, fogEnd, fovY, aspect, exposure = 1, adaptTex = null,
+  draw(view, { origin, lightDir, ambient, sunScale, sunColor, moonDir, moonScale = 0, moonColor, fogColor, fogStart = 0, fogEnd, fog = null, fovY, aspect, exposure = 1, adaptTex = null,
     skyZenith = null, skyHorizon = null, eye = null, worldProj = null, seaTiles = null, seaTint = null, haze = null, hazeEye = null }) {   // BANTHA1: the jungle's haze and its eye; FAR-SEA1: the sky the sea reflects (the water's); AUDIT FAR-SEA1: the eye and the world's lens the fill is counted from (P1), the water's tiles and tint (L1)
     if (!this._built || !this.indexCount) return;
+    const rf = ringFogOf(fog ?? { mode: 'linear', start: fogStart, end: fogEnd });   // RED-MOUNTAIN-SEEN: the frame's row (`fog`), or its ramp
+    if (!rf) return;
+    fogStart = rf.start; fogEnd = rf.end;
     const gl = this.gl;
     const farField = this._far?.built ? this._far : null;   // FAR-FIELD: the land past this ring, while it stands
     const far = farField ? FAR_LENS_FAR : (RING_RADIUS + 1) * TERRAIN_SIZE * 1.5;
@@ -1051,8 +1076,10 @@ export class FarRingRenderer {
     // directions; only the corners actually dissolved.
     gl.uniform1f(this.u.uRimStart, farField ? FAR_RIM_START : RING_RIM_START);   // FAR-FIELD: the land runs on past this ring to the far field's rim
     gl.uniform1f(this.u.uRimEnd, farField ? FAR_RIM_END : RING_RIM_END);
-    gl.uniform1f(this.u.uHazeHold, RING_HAZE_HOLD);
+    gl.uniform1f(this.u.uHazeHold, rf.hold);
+    gl.uniform2f(this.u.uFogLaw, rf.law, rf.density);   // AUDIT FB1031 L2: a weather's own factor at the far views' distance
     gl.uniform1f(this.u.uSummitFrom, summitFromOf(this._floraRadius));
+    if (rf.weather) gl.uniform1f(this.u.uSummitFrom, NO_SUMMIT);   // RED-MOUNTAIN-SEEN: no summit through the weather
     gl.uniform3f(this.u.uFlora, this._floraOf() ? 1 : 0, FLORA_CROWN_M, FLORA_GROVE_M);   // FAR-FLORA: the crowns' grain while the woods stand
     // FAR-TREES: under the band its own trees stand, the canopy over its dithered rim - measured from the band's base pixel
     const bandOn = !!(this._band?.count && this._floraOf()), bd = this._band?.drawn;
@@ -1135,15 +1162,17 @@ export class FarRingRenderer {
     } else {
       for (const { lm } of near) this._drawLandmark(lm, origin);   // no middle ring: the near ones after this ring
     }
-    if (this._band?.count && this._floraOf()) this._drawBand(view, origin, { ambient, sunScale, sunColor, moonScale, moonColor, fogColor, fogStart, fogEnd, exposure, haze, hazeEye: hazeEye ?? eye ?? FLAT_UP, farField: !!farField, deck: this.renderer?.cloudShadow ?? null });   // FAR-TREES: the near trees past the grid, nearest of the pass
+    if (this._band?.count && this._floraOf()) this._drawBand(view, origin, { ambient, sunScale, sunColor, moonScale, moonColor, fogColor, fogStart, fogEnd, hold: rf.hold, law: rf.law, density: rf.density, exposure, haze, hazeEye: hazeEye ?? eye ?? FLAT_UP, farField: !!farField, deck: this.renderer?.cloudShadow ?? null });   // FAR-TREES: the near trees past the grid, nearest of the pass
     // RED-MOUNTAIN: the volcano's lava and plume, then GHOSTFENCE's curtain and halos - each hidden by the cone where no
-    // depth stands, both hazed by this ring's own law
+    // depth stands, both hazed by this ring's own law. AUDIT FB1031 II G1: through the weather too, by its law from the
+    // world fog's own point (TV1: the traveller under the travel view), no summit in thinner air - they had been dropped
+    // whole under every weather row, no lava even at the crater's rim
     const cone = eye && worldProj ? this._coneNow() : null, fire = cone ? this._fireNow(cone) : null, fence = eye && worldProj ? this._fenceNow() : null;
     if (fire || fence) {
       const focus = this.renderer?.focus;
       const pass = { ringOrigin: origin, baseX: this.baseX, baseY: this.baseY, view, worldProj, worldFar: worldProj[14] / (worldProj[10] + 1), fovY, aspect, far, eye,
-        fog: { color: fogColor, start: fogStart, end: fogEnd }, rim: farField ? [FAR_RIM_START, FAR_RIM_END] : [RING_RIM_START, RING_RIM_END], hold: RING_HAZE_HOLD,
-        summitFrom: summitFromOf(this._floraRadius), depth: this._depthBox(origin), light: Math.max(ambient[0], ambient[1], ambient[2]) + 0.6 * sunScale, lightDir, seconds: this._now() / 1000,
+        fog: { color: fogColor, start: fogStart, end: fogEnd, law: rf.law, density: rf.density }, rim: farField ? [FAR_RIM_START, FAR_RIM_END] : [RING_RIM_START, RING_RIM_END], hold: RING_HAZE_HOLD,
+        summitFrom: rf.weather ? NO_SUMMIT : summitFromOf(this._floraRadius), hazeFrom: rf.weather && focus && focus[3] > 0.5 ? focus : eye, depth: this._depthBox(origin), light: Math.max(ambient[0], ambient[1], ambient[2]) + 0.6 * sunScale, lightDir, seconds: this._now() / 1000,
         cone: cone ? coneIn(cone.at, origin, this.baseX, this.baseY) : null,
         ground: { feet: fenceFeet(), built: this._builtNow, mid: mid?.built ? this._midGround : null, ring: this._ringY },
         morph: { from: focus && focus[3] > 0.5 ? focus : eye, start: MID_MORPH_START, end: MID_MORPH_END } };

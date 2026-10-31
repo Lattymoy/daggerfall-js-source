@@ -12,7 +12,7 @@ import { SIGHT_RADIUS, EnemyAI } from '../../src/characters/enemy/enemyMotor.js'
 import { foeAlerted, foeHostile } from '../../src/systems/encounters.js';
 import { isLocalPlayerTarget, PLAYER_TARGET, getTargets, runTargetMachine } from '../../src/characters/enemy/enemyTargets.js';
 import { PACK_SPACING, PACK_ALERT_RADIUS } from '../../src/systems/campEncounters.js';
-import { BAND_STAND_MIN_M } from '../../src/systems/travel/travelBands.js';
+import { BAND_STAND_MIN_M, bandStandBearing } from '../../src/systems/travel/travelBands.js';
 
 const W = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
 const EF = readFileSync(new URL('../../src/scenes/exteriorFoes.js', import.meta.url), 'utf8');
@@ -90,6 +90,8 @@ test('WILD-ALERT-FIX a band that caught the traveller stands ON them - each memb
   let asked = 0;
   const scope = {
     bandRoom: () => true, player: { feetAt: () => [3, 0, 4] }, BAND_STAND_MIN_M, PACK_SPACING, PACK_ALERT_RADIUS, wildFoes, performance: { now: () => 0 },
+    bandStandBearing, cam: { yaw: Math.PI / 4 }, fieldOfView: () => 0.5, travelView: { active: false }, renderer: { _camPos: [0, 0, 0] },   // AUDIT FB1031 B1: the view down, turned off every bearing tried (PIN MOVED)
+    largeHudWorldAspect: (w, h) => w / h, canvas: { clientWidth: 16, clientHeight: 9 },   // AUDIT FB1031 II K6: the frame's shape (PIN MOVED)
     exteriorFoes: { noticedPlayer: (f, feet) => told.push([f, feet]) },
     _standCampEncounter: () => (asked++ === 0 ? null : { foes: Promise.resolve([fa, null, fb]), anchorFeet: [0, 0, 0] }),
   };

@@ -25,6 +25,11 @@ it stands as a picture of the same tree, so the woods look the same to the horiz
   reach. The far rings read the flat's own height, so they stand the same trees as before.
 - **Handover.** Across the band the picture and the tree are complementary screen-door shares over one `bayer4`
   (`src/render/lowPolyTreesGlsl.js`): every pixel shows one of the two.
+- **Seen through from the travel view** (`src/render/lowPolyTreesGlsl.js` `TREE_SEE`). Under the travel view a 3D tree
+  between the eye and the traveller keeps a quarter of its fragments by the same screen-door, so the traveller is seen
+  under the canopy. The cut is a narrow cone about the sight line, whole again 2 m short of the traveller and below
+  its head, and opens as the eye climbs from 12 to 30 m off. It holds for every 3D tree the mesh mode draws: the mod's,
+  the jungle's and the graht-oaks'.
 - **Light.** A face is lit by the sky's light from straight above (`LPT_IMPOSTOR_LIGHT` `[0, 1, 0]`), crossfaded to the
   sun's by its share of the day. The far picture is drawn under the same light, so at night the tree and its picture
   match from every side, and the eye's position never enters a face's light. Faces are matte, as DFU's nature batch is.
@@ -68,6 +73,7 @@ Departures:
 - We stand the mod's own far picture past the near radius instead of the classic flat, so the wood is one look to the
   horizon. The picture faces the eye as a flat does.
 - The crossfade band is ours; DFU's models simply appear at the terrain's edge.
+- The see-through under the travel view is ours: DFU has no travel view.
 - The atlases keep a mip chain where 23 of the mod's 30 textures have none, so a distant Point texture does not shimmer.
 - A town tree is turned by where it stands; DFU seeds every tree in a block's column alike.
 - Fills are near the author's texels, not his: the one place our tree is not the author's to the texel.
@@ -82,6 +88,7 @@ Departures:
 - `tools/lowPolyTreesExtract.mjs` - writes the spec from the `.dfmod` and an ARENA2, checking every copied texel
 - `test/systems/lpt1_lowpolytrees.test.js` - the module, the vendored data, the far picture, the shader's mesh mode,
   light, sway and handover, the door's ownership and seasons, the hosts' wiring
+- `test/render/canopysee.test.js` - the travel view's see-through
 
 ## Open
 

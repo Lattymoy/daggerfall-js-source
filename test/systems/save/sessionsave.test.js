@@ -51,6 +51,7 @@ test('composeSessionState: bridge + trio -> {quest, talk}; absent halves -> null
       filterDungeons: false, filterTemples: false, filterHomes: false, filterTowns: false,
       filterRoads: false, filterTracks: false,   // ROADS 12
       filterRivers: false, filterStreams: false,   // ROADS 24
+      filterWitnessed: false,   // PIN MOVED (WITNESS-MAP)
       sleepInn: true, speedCautious: true, travelShip: true,
     },
     // FE1 added a FOURTH half the same way: SaveData_v1.escortingFaces

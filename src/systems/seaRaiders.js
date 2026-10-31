@@ -79,10 +79,11 @@ const seedOf = (cx, cy, life) =>
 
 /**
  * THE RAIDER of a cell in a life, or null: the chance rolled, its birth pixel drawn in the cell and its place within
- * that pixel, refused unless `open(px, py)` (the host's open sea: the pixel and all about it water, the ocean's).
- * @param {{ cx: number, cy: number, life: number, open: (px: number, py: number) => boolean }} q
+ * that pixel, refused unless `open(px, py)` (the host's open sea: the pixel and all about it water, the ocean's) and
+ * its place `sea(x, z)` where that is handed (the kernel's ground: a place on its land lay to there).
+ * @param {{ cx: number, cy: number, life: number, open: (px: number, py: number) => boolean, sea?: ((x: number, z: number) => boolean) | null }} q
  */
-export function raiderOf({ cx, cy, life, open }) {
+export function raiderOf({ cx, cy, life, open, sea = null }) {
   const seed = seedOf(cx, cy, life);
   const r = seededRng(seed);
   if (r() >= RAIDER_CHANCE) return null;
@@ -90,13 +91,15 @@ export function raiderOf({ cx, cy, life, open }) {
     py = cy * RAIDER_CELL_PX + Math.floor(r() * RAIDER_CELL_PX);
   if (!open(px, py)) return null;
   const o = nativeOfPixel(px, py);
+  const born = { x: o.x + r() * NATIVE_PIXEL, z: o.z + r() * NATIVE_PIXEL };
+  if (sea && !sea(born.x, born.z)) return null;
   return {
     id: `r${cx}.${cy}.${life}`,
     cx,
     cy,
     life,
     seed,
-    born: { x: o.x + r() * NATIVE_PIXEL, z: o.z + r() * NATIVE_PIXEL },
+    born,
     bornMs: life * RAIDER_LIFE_MS,
     heading0: r() * Math.PI * 2,
   };
@@ -161,7 +164,7 @@ export function raidersNear({ at, ms, open, sea, reach = RAIDER_REACH_PX }) {
   const out = [];
   for (let cy = c0y; cy <= c1y; cy++) {
     for (let cx = c0x; cx <= c1x; cx++) {
-      const raider = raiderOf({ cx, cy, life, open });
+      const raider = raiderOf({ cx, cy, life, open, sea }); // born on the sea it sails
       if (raider) out.push({ ...raider, ...raiderAt(raider, ms, sea) });
     }
   }

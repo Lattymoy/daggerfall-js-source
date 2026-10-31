@@ -305,8 +305,8 @@
   {
     "name": "P7-reach-the-bays",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "      beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true);",
-    "new": "      beyondList = laneNetwork(ports.list(), worldOpen, undefined, true);",
+    "old": "      beyondList = longLanes(\n        loneLanes(laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX)),\n      );",
+    "new": "      beyondList = longLanes(loneLanes(laneNetwork(ports.list(), worldOpen, undefined, true, BEYOND_LANE_PATH_PX)));",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -332,11 +332,13 @@
   {
     "name": "P7-corner-cut",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "        if (!sea(nx, ny) || (dx && dy && (!sea(x + dx, y) || !sea(x, y + dy)))) continue; // no corner cut past land",
-    "new": "        if (!sea(nx, ny)) continue; // no corner cut past land",
+    "old": "        if (!sea(nx, ny) || (dx && dy && (!sea(x + dx, y) || !sea(x, y + dy)) && !cornerHolds(k, x, y, dx, dy)))\n          continue;",
+    "new": "        if (!sea(nx, ny)) continue;",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "AUDIT SEA PATHS O2: a corner cut is let where the Bay's scale holds the step (a channel a cell wide on the slant), so on the freeware's world the rule and its absence lay the same ways - the rule still holds every raw diagonal past land that scale refuses, and AUDIT-SEA-PATHS-O2-the-corner-unasked-at-the-bays-scale pins the scale's half."
   },
   {
     "name": "P7-leg-unasked",
@@ -350,8 +352,8 @@
   {
     "name": "P7-bay-rect-sailed",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "  return (x, y) =>\n    x >= 0 &&\n    y >= 0 &&\n    x < w &&\n    y < h &&\n    landLabelAt(L, x + 0.5, y + 0.5) === 0 &&\n    !lakes[y * w + x] &&\n    !(x + 1 > bay.x0 && x < bay.x1 && y + 1 > bay.y0 && y < bay.y1);",
-    "new": "  return (x, y) => x >= 0 && y >= 0 && x < w && y < h && landLabelAt(L, x + 0.5, y + 0.5) === 0 && !lakes[y * w + x];",
+    "old": "    !lakes[y * w + x] &&\n    !(x + 1 > bay.x0 && x < bay.x1 && y + 1 > bay.y0 && y < bay.y1);",
+    "new": "    !lakes[y * w + x];",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -370,8 +372,8 @@
   {
     "name": "P7-no-picture-no-way",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "        way = onBay\n          ? laneWay(lane, bayOpen, bayOpenNative)\n          : tamrielTrace()\n            ? beyondLaneWay(lane, worldOpenNative)\n            : laneWay(lane, worldOpen, worldOpenNative);",
-    "new": "        way = onBay ? laneWay(lane, bayOpen, bayOpenNative) : beyondLaneWay(lane, worldOpenNative);",
+    "old": "      way = tamrielTrace()\n        ? beyondLaneWay(lane, worldOpenNative, kernel)\n        : laneWay(lane, worldOpen, worldOpenNative, kernel);",
+    "new": "      way = beyondLaneWay(lane, worldOpenNative, kernel);",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]

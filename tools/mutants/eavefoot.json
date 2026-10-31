@@ -11,7 +11,7 @@
   {
     "name": "EAVEFOOT-every-wall",
     "file": "src/scenes/homeYards.js",
-    "old": "    if (Math.min(ay, by, cy) >= YARD_ROOF_Y || seen.has(key)) continue;",
+    "old": "    if (y0 >= YARD_ROOF_Y || seen.has(key)) continue;",
     "new": "    if (seen.has(key)) continue;",
     "tests": [
       "test/world/eavefoot.test.js"

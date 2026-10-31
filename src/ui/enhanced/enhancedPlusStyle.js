@@ -1831,6 +1831,7 @@ button.prof-track:hover, button.prof-track:focus-visible { border-color: var(--b
 .prof-owed-row::before { content: '★ '; color: #f3cf86; }
 .prof-times { display: flex; align-items: center; gap: 6px; }
 .prof-doors { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
+.prof-benchstores { margin: 12px 0 8px; }   /* STORES-AT-BENCH: the bench's Stores bar over the station worked here */
 @media (pointer: coarse) { .prof-show, button.prof-track { min-height: 40px; } }
 /* MASTER-ART: a Master's work in a craft box - its three line pickers and its press 40px for a finger and a key, the
    catalysts as inputs, the last work's card in the Legendary orange (lootRarity.js RARITIES.legendary.colour) */

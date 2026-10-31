@@ -67,6 +67,13 @@ Panoply piece for 20 embers, recorded by the account service (`server-account/sr
 are bound: never traded, dropped or sold to a counter. A ware can be dismantled in the pack for `BROKER_DISMANTLE_SHARE`
 of its price.
 
+**Destroy** (`src/systems/item/itemDiscard.js` `discardRefusal`). A bound piece that Dismantle does not pay for can be
+destroyed: the Wyrd's Raiment, an unpriced ware, or a copy the realm locked, which the Broker refuses. Both packs offer
+**Destroy** and ask first. The classic pack offers it when the piece is put on the ground, in DFU's own Yes/No box. A
+worn, locked or quest piece is refused. The game's tokens are kept: the Embers, Shards and Portal Stones, the Wallet,
+the Card Binder, the Dwarven Dragon, the Portal Book and a Weir Key. The festival's Soul Cakes and Hearth Offerings are
+the account service's counts and go through it (`bible/06-Systems/Witches-Festival.md`).
+
 ## Rules
 
 - Sets come from any source, like weapons; boss kills may drop a boss-themed Aetheric set; the Broker trades embers for
@@ -81,9 +88,9 @@ of its price.
 
 ## Daggerfall Unity
 
-DFU has no sets, no Aetheric rarity and no Broker. Set pieces are built on DFU's own item templates and materials, and
-Eventide casts DFU's own Chameleon effect. Departure: the Broker's stock reads fixed tables, never the player's level or
-registered custom items, so every player sees the same shop.
+DFU has no sets, no Aetheric rarity, no Broker and no bound piece, so Destroy is DFO's own. Set pieces are built on
+DFU's own item templates and materials, and Eventide casts DFU's own Chameleon effect. Departure: the Broker's stock
+reads fixed tables, never the player's level or registered custom items, so every player sees the same shop.
 
 ## Code and tests
 
@@ -91,10 +98,13 @@ registered custom items, so every player sees the same shop.
 - `src/systems/sigil/sigilSets.js`, `src/systems/sigil/setReach.js` - every set's tiers and numbers, counting, catch-up
 - `src/systems/aetheric.js` - Aetheric records and each event set's roll
 - `src/systems/sigil/sigilBroker.js`, `src/ui/brokerWindow.js` - the Broker's stock, sales and dismantling
+- `src/systems/item/itemDiscard.js` - Destroy for a bound piece nothing else takes
 - `test/systems/sigil/set1_law.test.js`, `test/systems/set3_powers.test.js` - the law, the powers
 - `test/systems/set4_drops_growth.test.js`, `test/systems/sigil/setcatchup.test.js` - drops, growth, catch-up
 - `test/systems/set6_aetheric.test.js`, `test/systems/item/set7_broker.test.js` - Aetheric, the Broker
 - `test/systems/auditsetsonline.test.js` - sets online, asleep in duels
+- `test/systems/item/bound_destroy.test.js`, `test/server/bound_destroy_service.test.js` - Destroy, in the pack and at
+  the service
 
 ## Open
 

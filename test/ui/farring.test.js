@@ -180,7 +180,7 @@ test('EV8: the wiring - enhanced-gated, weather-gated, inside the sky\'s foreign
   const skyAt = world.indexOf('sky.draw(tvf ? tvf.yaw : cam.yaw');   // TV1: the sky turns to the travel view's eye
   const markAt = world.indexOf('renderer.markForeignPass();', skyAt);
   const span = world.slice(skyAt, markAt);
-  assert.ok(span.includes("fogNow.mode === 'linear'"), 'exp fog (weather) hides the ring');   // WX2: the row on the front
+  assert.ok(span.includes('if (farRing && ringFogOf(fogNow)) {'), 'the fog row says how the ring stands - a weather that covers the sky hides it');   // WX2: the row on the front; PIN MOVED (RED-MOUNTAIN-SEEN): exp fog under a clear sky stands it in the fog's colour (render/farRing.js ringFogOf)
   assert.ok(span.includes('farRing.draw(view, {'), 'drawn while the depth buffer is still the sky\'s');
   assert.ok(span.includes('state.pixelTranslation(farRing.baseX, farRing.baseY'),
     'one translation places the whole mesh - recenters are free');

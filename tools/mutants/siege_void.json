@@ -299,8 +299,8 @@
   {
     "name": "SIEGE-VOID-chronicle-words",
     "file": "src/net/townSeatLaw.js",
-    "old": "      return `${when}, ${d.battle === 'tourney' ? `the Tourney for ${seat.name}` : d.battle === 'revolt' ? `the revolt at ${seat.name}` : `the siege of ${seat.name}`} was voided by the Moderators${d.restored ? `, and ${c} went back to ${guildWords(d.holder)}` : ''}.`;",
-    "new": "      return `${when}, ${d.battle === 'tourney' ? `the Tourney for ${seat.name}` : d.battle === 'revolt' ? `the revolt at ${seat.name}` : `the siege of ${seat.name}`} was voided${d.restored ? `, and ${c} went back to ${guildWords(d.holder)}` : ''}.`;",
+    "old": "} was voided by the Moderators${d.restored ?",
+    "new": "} was voided${d.restored ?",
     "tests": [
       "test/net/siege_void.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "SIEGE-VOID-chronicle-tourney",
     "file": "src/net/townSeatLaw.js",
-    "old": "      return `${when}, ${d.battle === 'tourney' ? `the Tourney for ${seat.name}` : d.battle === 'revolt' ? `the revolt at ${seat.name}` : `the siege of ${seat.name}`} was voided by the Moderators${d.restored ? `, and ${c} went back to ${guildWords(d.holder)}` : ''}.`;",
-    "new": "      return `${when}, ${d.battle === 'tourney ' ? `the Tourney for ${seat.name}` : d.battle === 'revolt' ? `the revolt at ${seat.name}` : `the siege of ${seat.name}`} was voided by the Moderators${d.restored ? `, and ${c} went back to ${guildWords(d.holder)}` : ''}.`;",
+    "old": "${d.battle === 'tourney' ? `the Tourney for ${seat.name}` :",
+    "new": "${d.battle === 'tourney ' ? `the Tourney for ${seat.name}` :",
     "tests": [
       "test/net/siege_void.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "SIEGE-VOID-parse-op",
     "file": "src/net/townSeatBook.js",
-    "old": "  if (String(op ?? '').toLowerCase() !== 'void' || !/^\\d+$/.test(key ?? '') || !seatKeyOk(k) || more.length)",
-    "new": "  if (String(op ?? '').toLowerCase() === 'strike' || !/^\\d+$/.test(key ?? '') || !seatKeyOk(k) || more.length)",
+    "old": "  if (String(op ?? '').toLowerCase() !== 'void' ||",
+    "new": "  if (String(op ?? '').toLowerCase() === 'strike' ||",
     "tests": [
       "test/net/siege_void.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "SIEGE-VOID-book-refusal",
     "file": "src/net/townSeatBook.js",
-    "old": "      }\n      if (!r?.ok) return { ok: false, text: accountRefusalText(r?.error) };",
-    "new": "      }\n      if (!r?.ok) return { ok: false, text: accountRefusalText('server') };",
+    "old": "      if (!r?.ok) return { ok: false, text: accountRefusalText(r?.error) };\n      at = -Infinity;",
+    "new": "      if (!r?.ok) return { ok: false, text: accountRefusalText('server') };\n      at = -Infinity;",
     "tests": [
       "test/net/siege_void.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "AUDIT529-V2-held-unreturned",
     "file": "server-account/src/seatForts.js",
-    "old": "            `INSERT INTO town_seat_fort_held (key, work, material, qty) SELECT ?1, ?2, ?5, MIN(?6, qty) FROM town_seat_stockpile",
-    "new": "            `INSERT INTO town_seat_fort_held (key, work, material, qty) SELECT ?1, ?2, ?5, 0 FROM town_seat_stockpile",
+    "old": "SELECT ?1, ?2, ?5, MIN(?6, qty) FROM town_seat_stockpile",
+    "new": "SELECT ?1, ?2, ?5, 0 FROM town_seat_stockpile",
     "tests": [
       "test/net/siege_void.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "AUDIT529-V2-day-never-short",
     "file": "server-account/src/seatForts.js",
-    "old": "        WHERE h.key = ?1 AND h.work = ?2 AND h.material = json_extract(j.value, '$[0]')), 0) < json_extract(j.value, '$[1]'))`,",
-    "new": "        WHERE h.key = ?1 AND h.work = ?2 AND h.material = json_extract(j.value, '$[0]')), 0) < 0)`,",
+    "old": "h.material = json_extract(j.value, '$[0]')), 0) < json_extract(j.value, '$[1]'))",
+    "new": "h.material = json_extract(j.value, '$[0]')), 0) < 0)",
     "tests": [
       "test/net/siege_void.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "AUDIT529-V2-day-forgotten",
     "file": "server-account/src/seatForts.js",
-    "old": "          `UPDATE town_seat_forts SET stands_at = ?5 WHERE key = ?1 AND work = ?2 AND building = ?3 AND guild_id = ?4 AND stands_at IS NULL AND ?5 IS NOT NULL",
-    "new": "          `UPDATE town_seat_forts SET stands_at = NULL WHERE key = ?1 AND work = ?2 AND building = ?3 AND guild_id = ?4 AND stands_at IS NULL AND ?5 IS NOT NULL",
+    "old": "UPDATE town_seat_forts SET stands_at = ?5 WHERE",
+    "new": "UPDATE town_seat_forts SET stands_at = NULL WHERE",
     "tests": [
       "test/net/siege_void.test.js"
     ]

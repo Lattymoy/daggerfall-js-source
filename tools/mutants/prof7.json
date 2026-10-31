@@ -506,8 +506,8 @@
   {
     "name": "PROF7-leatherworker-armour",
     "file": "src/net/recipeLaw.js",
-    "old": "(spec50 === 'leatherworker' && r.family === 'leather')",
-    "new": "(spec50 === 'leatherworker' && r.family === 'armour')",
+    "old": "    (spec50 === 'leatherworker' && r.family === 'leather')",
+    "new": "    (spec50 === 'leatherworker' && r.family === 'armour')",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "PROF7-tailor-furnishings",
     "file": "src/net/recipeLaw.js",
-    "old": "(spec50 === 'tailor' && r.family === 'clothing')",
-    "new": "(spec50 === 'tailor' && r.family === 'furnishings')",
+    "old": "    (spec50 === 'tailor' && r.family === 'clothing') ||",
+    "new": "    (spec50 === 'tailor' && r.family === 'furnishings') ||",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "PROF7-hardened-no-step",
     "file": "src/net/recipeLaw.js",
-    "old": "r.leather === HARDENED_LEATHER.key ||",
-    "new": "r.leather === CURED_LEATHER.key ||",
+    "old": "  if (r.metal === WARFORGED || r.leather === HARDENED_LEATHER.key || (heartwood && takesHeartwood(r))) steps++;",
+    "new": "  if (r.metal === WARFORGED || r.leather === CURED_LEATHER.key || (heartwood && takesHeartwood(r))) steps++;",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "PROF7-dye-on-undyed",
     "file": "src/net/recipeLaw.js",
-    "old": "r.kind === 'garment' && r.dyes === true && Number.isInteger(dye)",
-    "new": "r.kind === 'garment' && Number.isInteger(dye)",
+    "old": "  dye == null\n    ? true\n    : !!r && r.kind === 'garment' && r.dyes === true && Number.isInteger(dye) && GARMENT_DYES.includes(dye);",
+    "new": "  dye == null ? true : !!r && r.kind === 'garment' && Number.isInteger(dye) && GARMENT_DYES.includes(dye);",
     "tests": [
       "test/net/prof7_law.test.js",
       "test/net/prof7_service.test.js"
@@ -555,8 +555,8 @@
   {
     "name": "PROF7-boots-no-leather",
     "file": "src/net/recipeLaw.js",
-    "old": "...(size === 'b' ? [[CURED_LEATHER.key, 1]] : [])",
-    "new": "...[]",
+    "old": "        inputs: [\n          [c.key, GARMENT_BOLTS[/** @type {string} */ (size)]],\n          ...(size === 'b' ? [[CURED_LEATHER.key, 1]] : []),\n        ],",
+    "new": "        inputs: [[c.key, GARMENT_BOLTS[/** @type {string} */ (size)]], ...[]],",
     "tests": [
       "test/net/prof7_law.test.js",
       "test/net/prof7_service.test.js"
@@ -601,8 +601,8 @@
   {
     "name": "PROF7-knife-two-ingots",
     "file": "src/net/recipeLaw.js",
-    "old": "SKINNING_KNIFE.templateIndex, 1, [[PINE, 1]])",
-    "new": "SKINNING_KNIFE.templateIndex, 2, [[PINE, 1]])",
+    "old": "  product('knife', 'Skinning Knife', 'tool', SKINNING_KNIFE.templateIndex, 1, [[PINE, 1]]),",
+    "new": "  product('knife', 'Skinning Knife', 'tool', SKINNING_KNIFE.templateIndex, 2, [[PINE, 1]]),",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -637,8 +637,8 @@
   {
     "name": "PROF7-stitch-band-agility",
     "file": "src/net/recipeLaw.js",
-    "old": "actBand(Math.trunc((agility + speed) / 2))",
-    "new": "actBand(Math.trunc((agility + agility) / 2))",
+    "old": "export const stitchBand = ({ agility, speed }) => actBand(Math.trunc((agility + speed) / 2));",
+    "new": "export const stitchBand = ({ agility, speed }) => actBand(Math.trunc((agility + agility) / 2));",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -874,12 +874,12 @@
   {
     "name": "PROF7-gather-extra-uncounted",
     "file": "src/scenes/gatherHost.js",
-    "old": "${n > 1 ? `${n} ` : ''}${materialCountLabel(d.extra, n)}",
-    "new": "${materialCountLabel(d.extra, n)}",
+    "old": "${xn > 1 ? `${xn} ` : ''}${materialCountLabel(d.extra, xn)}",
+    "new": "${materialCountLabel(d.extra, xn)}",
     "tests": [
       "test/systems/prof7_client.test.js"
     ],
-    "note": "GATHER-SAID (PIN MOVED): the butchery's count said in the goods' one line (gatherHost.js storesLine), re-aimed by content."
+    "note": "GATHER-SAID (PIN MOVED): the butchery's count said in the goods' one line (gatherHost.js storesLine), re-aimed by content. BUTCHER-STORES (PIN MOVED): re-aimed by content."
   },
   {
     "name": "PROF7-book-foe-dropped",

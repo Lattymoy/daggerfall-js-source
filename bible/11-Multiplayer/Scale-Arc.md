@@ -90,13 +90,21 @@ Writes, sign-ins and acts are never held.
 at once.
 
 **The service's own clock.** `wrangler.toml` names two crons (`server-account/src/cron.js` `runCron`): every minute the
-settlements (auctions, writs, contracts, the seats' Turning, the day's Motherlodes); every hour the sweeps and retention
-(rate windows, idle sessions, old invitations). The reads still settle on their own path, so a read never answers from a
-world the clock has not caught up with. Act receipts, `world_witness` and guests with no session are not pruned.
+settlements (auctions, writs, contracts, the seats' Turning, the day's Motherlodes and the held map's tiles); every
+hour the sweeps and retention (rate windows, idle sessions, old invitations). The reads still settle on their own path,
+so a read never answers from a world the clock has not caught up with. Act receipts, `world_witness` and guests with no session are not pruned.
 
 **Kept reads.** Some hot reads are kept in the isolate instead of asked every time: a region's witnessed ground
 (`server-account/src/professions.js`), and the day's Motherlodes pick, which one read a window claims
 (`server-account/src/motherlodes.js`).
+
+**The held map's ground in tiles** (`server-account/src/witnessTiles.js`). The day's Motherlodes pick already scans
+every pixel confirmed before the day began, and its batch lays them as 64-pixel tiles keyed by the world pixel,
+dropping earlier days' (`server-account/migrations/0207_witness_tiles.sql`). A day picked before its tiles is laid by
+the minute's job with one scan of its own. The map's read, `POST /v1/prof/ground`, names up to `WITNESS_TILES_ASK`
+(64) tiles: two primary-key reads in one round trip, on a replica, and a busy read. It never touches `world_witness`.
+Before the day is laid it says so, and the client asks again later. A laying statement binds at most
+`TILES_LAID_CHARS` characters of pixels.
 
 ### Metrics and load tools
 
@@ -148,6 +156,7 @@ costs it there, and where D1 says its primary is (`account-deploy.yml`; `test/bi
 - `src/net/online.js`, `src/net/loneSleep.js`, `src/net/reconnectWave.js` - the client's halos, lone pose and reconnect spread
 - `src/net/busyLaw.js`, `src/net/heartbeat.js`, `src/net/accountClient.js` - the busy gate, the heartbeat, token reuse and bookmarks
 - `server-account/src/service.js`, `server-account/src/admit.js`, `server-account/src/sessionPass.js`, `server-account/src/cron.js`, `server-account/src/metrics.js` - replicas, the sign-in line, the pass, the clock, the metrics
+- `server-account/src/witnessTiles.js`, `src/net/witnessTileLaw.js` - the held map's tiles, laid and read
 - `test/net/scale5c.test.js`, `test/net/hubpull.test.js` - the shards and the bus
 - `test/net/celltree.test.js`, `test/net/cellrepartition.test.js`, `test/server/cellmoves.test.js` - the cell tree
 - `test/net/scale5d.test.js`, `test/net/halothin.test.js`, `test/net/lonesleep.test.js`, `test/net/scale5b.test.js`, `test/net/slimframe.test.js` - layers, halos, the lone pose, the second wire
@@ -155,6 +164,7 @@ costs it there, and where D1 says its primary is (`account-deploy.yml`; `test/bi
 - `test/net/scale2c.test.js`, `test/net/busy_gate.test.js`, `test/server/scale4g.test.js`, `test/server/sessionsign.test.js` - reconnect spread, busy gate, replicas, the pass
 - `test/net/sleepcost.test.js`, `test/server/cost1_drain.test.js` - what a sleeping room costs, the drain
 - `test/tooling/scale4e.test.js`, `test/bible/d1near.test.js` - the account deploy's retry and placement report
+- `test/ui/fb1031_witness.test.js` - the tiles' laying and read
 
 ## Open
 

@@ -33,9 +33,9 @@ test('AUDIT 31 L2: a listable piece of a material nothing yields yet is never co
   assert.deepEqual(unmade.filter((r) => r.kind !== 'jewel'), [], 'no piece of a metal waits');
   assert.ok(unmade.every((r) => looseOnly(r.gem)) && unmade.length === 384);
   const daedric = listable.filter((r) => /:daedric$/.test(r.id));
-  assert.equal(daedric.length, 27, 'every Daedric work the anvil makes');
+  assert.equal(daedric.length, 29, 'every Daedric work the anvil makes');   // PIN MOVED (SMITH-RRI): the Light Flail and the Archer's Axe
   for (const r of daedric) assert.equal(commissionable(r.id), true, r.id);
-  assert.equal(listable.filter((r) => /:(warforged|standard)$/.test(r.id) && !commissionUnyielded(r.id)).length, 26 + 76, 'the Spoils\' pieces are commissioned');
+  assert.equal(listable.filter((r) => /:(warforged|standard)$/.test(r.id) && !commissionUnyielded(r.id)).length, 28 + 76, 'the Spoils\' pieces are commissioned');   // PIN MOVED (SMITH-RRI): two Warforged weapons more
   for (const r of unmade) assert.equal(commissionable(r.id), false, r.id);
   for (const r of listable.filter((x) => !commissionUnyielded(x.id))) assert.equal(commissionable(r.id), true, r.id);
   // a recipe asking what nothing yields, or a loose door's material, still waits - the heart's, were one ever to ask it

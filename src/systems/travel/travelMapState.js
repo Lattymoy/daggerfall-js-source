@@ -27,7 +27,8 @@ const DEFAULT_FILTERS = Object.freeze({
   tracks: false,
   rivers: false,
   streams: false,
-}); // ROADS 24: water too
+  witnessed: false,
+}); // ROADS 24: water too; WITNESS-MAP: the held map's witnessed ground
 const DEFAULT_POPUP = Object.freeze({ speedCautious: true, sleepModeInn: true, travelShip: true });
 
 let _filters = { ...DEFAULT_FILTERS };
@@ -81,6 +82,7 @@ export function travelMapSaveData(live = null) {
     filterTracks: _filters.tracks,
     filterRivers: _filters.rivers,
     filterStreams: _filters.streams, // ROADS 24
+    filterWitnessed: _filters.witnessed, // WITNESS-MAP
     sleepInn: p.sleepModeInn,
     speedCautious: p.speedCautious,
     travelShip: p.travelShip,
@@ -100,6 +102,7 @@ export function restoreTravelMapSaveData(data) {
     tracks: !!d.filterTracks, // ROADS 12: absent in an older save -> shown
     rivers: !!d.filterRivers,
     streams: !!d.filterStreams, // ROADS 24
+    witnessed: !!d.filterWitnessed, // WITNESS-MAP: absent in an older save -> shown
   };
   _popUp = {
     speedCautious: d.speedCautious ?? true,

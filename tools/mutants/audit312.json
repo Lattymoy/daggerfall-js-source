@@ -73,8 +73,8 @@
   {
     "name": "A312-8-the-delete-takes-the-local-save-too",
     "file": "src/systems/cloudSaves.js",
-    "old": "  ask(io, slotPath(characterId, saveName), { method: 'DELETE' });",
-    "new": "  ask(io, slotPath(characterId, saveName), { method: 'DELETE' }).then((r) => {\n    io.storage?.removeItem?.(`x${characterId}`);\n    return r;\n  });",
+    "old": "export const removeCloudSlot = (io, { characterId, saveName }) =>\n  ask(io, slotPath(characterId, saveName), { method: 'DELETE' });",
+    "new": "export const removeCloudSlot = (io, { characterId, saveName }) =>\n  ask(io, slotPath(characterId, saveName), { method: 'DELETE' }).then((r) => { io.storage?.removeItem?.(`x${characterId}`); return r; });",
     "tests": [
       "test/ui/savetile.test.js"
     ],
