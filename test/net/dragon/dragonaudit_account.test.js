@@ -22,7 +22,9 @@ test('AUDIT DRAGON the service\'s tames read back: `/v1/dragon/tames` behind a s
   const who = await S.registered('Wyrmward');
   const r = await mintDragonReceipt({ q: W, b: 1, s: who.id, c: 5, x: 'dealt', l: 12 }, S.gatePriv, { subtle, nowS: Math.floor(Date.now() / 1000) });
   assert.equal((await S.call('/v1/dragon/claim', { receipt: r, character: who.character, cid: 'a1b2c3d4e5f60718' }, who.secret)).status, 200);
-  // the tame as the claim's draw writes it (a draw is one in a hundred: written here, so the read is always asked)
+  // the tame as the claim's draw writes it (a draw is one in a hundred: written here, so the read is always asked). The
+  // claim's own draw, when it tamed, is cleared first: its random id beside this one failed the pin one run in a hundred.
+  S.env.DB._raw.prepare('DELETE FROM dragon_mounts WHERE account = ?').run(who.id);
   S.env.DB._raw.prepare('INSERT OR IGNORE INTO dragon_mounts (id, account, char_id, look, watch, at) VALUES (?, ?, ?, ?, ?, ?)').run('dg0123456789abcdef', who.id, who.character, 1, W, 1);
   assert.equal((await S.call('/v1/dragon/tames', {}, null)).status, 401, 'behind a session');
   const tames = await S.call('/v1/dragon/tames', {}, who.secret);

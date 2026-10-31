@@ -74,10 +74,11 @@ export const CATEGORIES = Object.freeze([
       'feat:mod-heat-haze',
       'feat:mod-snowfall',
     ]),
-    sec('plants', 'Plants, trees & wind', [
+    sec('plants', 'Plants, wind & wildlife', [
       'feat:grass',
       'feat:wind',
       'feat:mod-windfall',
+      'feat:wildlife',
       'feat:mod-low-poly-trees',
       'feat:mod-seasons-iliac-bay',
     ]),

@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-STOREFRONT-a-bad-line-opening-the-sale",
     "file": "src/net/shopLaw.js",
-    "old": "  if (mine.some((e) => e.bad)) return false;\n  if (mine.length && nowMs < Math.min(...mine.map((e) => e.fromMs))) return false;",
-    "new": "  if (mine.length && nowMs < Math.min(...mine.map((e) => e.fromMs))) return false;",
+    "old": "  if (mine.some((e) => e.bad)) return false;\n  const limits = mine.filter((e) => e.limited);",
+    "new": "  const limits = mine.filter((e) => e.limited);",
     "tests": [
       "test/server/storefront_service.test.js"
     ]
@@ -38,7 +38,7 @@
   {
     "name": "AUDIT-STOREFRONT-a-drop-to-come-told",
     "file": "src/net/shopLaw.js",
-    "old": "  return !mine.some((e) => e.bad) && (!mine.length || nowMs >= Math.min(...mine.map((e) => e.fromMs)));",
+    "old": "  return !mine.some((e) => e.bad) && (!limits.length || nowMs >= Math.min(...limits.map((e) => e.fromMs)));",
     "new": "  return true;",
     "tests": [
       "test/server/storefront_service.test.js"

@@ -285,7 +285,7 @@ added since it began, in folders not yet on the list: 71 of main's, and three of
 `bootWorld`, kept in the host's own layout, which their pins read through `hostText`.
 
 **The relay.** 150 of the relay's 181 files are formatted, so its bytes changed though nothing it does did:
-world298 (`test/net/relayversion.test.js`). The 312 formatting commits are in `.git-blame-ignore-revs`.
+world299, world298 until main's LITANY-STAND took it (`test/net/relayversion.test.js`). The 312 formatting commits are in `.git-blame-ignore-revs`.
 
 **The audit's tool findings** (2026-10-31, an independent read of the tools; each fixed with its tests and mutants,
 all dead). `.prettierignore` opened every file of a listed folder, so format-on-save rewrote two READMEs `--check`

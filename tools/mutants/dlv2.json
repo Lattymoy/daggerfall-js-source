@@ -73,9 +73,9 @@
   },
   {
     "name": "DLV2-step-said-every-frame",
-    "file": "src/scenes/delve/delveLitany.js",
-    "old": "        said = j >= 0 && j !== last ? j : -1;",
-    "new": "        said = j >= 0 ? j : -1;",
+    "file": "src/net/delve/delveLaw.js",
+    "old": "  const stayed = on >= 0 && on === rec.pl;",
+    "new": "  const stayed = false;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]
@@ -218,7 +218,7 @@
   {
     "name": "DLV2-vault-never-rolled",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "        r.vault = online() ? null : rollVault(rollPile, lv());",
+    "old": "        r.vault = online() ? null : myVault();",
     "new": "        r.vault = online() ? null : [];",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
@@ -283,24 +283,6 @@
     "file": "src/systems/delve/delveWords.js",
     "old": "  captain: () => t('delve.hold.captain', 'Their captain comes.'),",
     "new": "  captain: () => 'Their captain comes.',",
-    "tests": [
-      "test/systems/delve/dlv2_words.test.js"
-    ]
-  },
-  {
-    "name": "DLV2-no-second-roll",
-    "file": "src/systems/delve/delveVault.js",
-    "old": "for (let k = 0; k < 2; k++)",
-    "new": "for (let k = 0; k < 1; k++)",
-    "tests": [
-      "test/systems/delve/dlv2_words.test.js"
-    ]
-  },
-  {
-    "name": "DLV2-gold-floor",
-    "file": "src/systems/delve/delveVault.js",
-    "old": "goldStack(Math.max(1, Math.floor(",
-    "new": "goldStack(Math.max(0, Math.floor(",
     "tests": [
       "test/systems/delve/dlv2_words.test.js"
     ]

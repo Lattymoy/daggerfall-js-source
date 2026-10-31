@@ -48,7 +48,7 @@ import {
   holdCaptainTraits,
 } from '../../net/delve/delveLaw.js';
 import { createHoldFoes, HOLD_RANK_STEP_M } from './delveHold.js';
-import { plateLooks, shownPlate, createPlateSteps, DELVE_SOUNDS } from './delveLitany.js';
+import { plateLooks, shownPlate, DELVE_SOUNDS } from './delveLitany.js';
 import { createDelvePieces, siteShapes, DELVE_DRAW_M } from './delvePieces.js';
 import {
   createDelveProps,
@@ -83,7 +83,7 @@ import {
   DELVE_SAY_S,
   DELVE_SAY_LONG_S,
 } from '../../systems/delve/delveWords.js';
-import { rollVault } from '../../systems/delve/delveVault.js';
+import { rollVault, vaultSource } from '../../systems/delve/delveVault.js';
 import { delveWireReady, sendDelveWord, attachDelveHearer } from '../../net/delve/delveLink.js';
 import { DELVE_ACTS, DELVE_NO, DELVE_HIT_MAX } from '../../net/wire.js';
 import {
@@ -322,6 +322,9 @@ export function createDelveHost({
   /** My machine stands this site's foes: offline always, online while the room names it. */
   const foesMine = (r) => !online() || !!r.me?.fm;
   const lv = () => effectiveLevel(player());
+  /** My vault: the dungeon's pile, its piece and gold at my level (DELVE-VAULT). */
+  const myVault = () =>
+    rollVault(rollPile, lv(), vaultSource(location?.mapTableData?.dungeonType, tier === 'elite', lv()));
   const foeHost = {
     spawn: (type, at, opts) => api.spawnLooseFoe(type, at, linked() ? { ...opts, delve: true } : opts), // DLV3: online, the encounter's own grant kind
     remove: (f) => api.removeLooseFoe(f),
@@ -355,7 +358,6 @@ export function createDelveHost({
           : null,
       wakers: site.kind === 'litany' ? createHoldFoes(site, foeHost) : null,
       plates: site.kind === 'litany' || site.kind === 'weighing' ? delvePlates(site) : null,
-      steps: site.kind === 'litany' ? createPlateSteps() : null,
       wrong: /** @type {{ j: number, at: number }|null} */ (null),
       shown: -1,
       // kept for the frame: the word, the fold's context, the looks, the marks and the pass's entry, filled in place
@@ -377,15 +379,14 @@ export function createDelveHost({
       driftAt: 0,
       lowSaid: false,
       crystals: /** @type {any[]} */ ([]),
-      // DLV3: online, the room's last state of it and my part (`me`), my word's key and moment, my last act's, the step
-      // said while the room's pose catches up, and whether my machine stood its foes
+      // DLV3: online, the room's last state of it and my part (`me`), my word's key and moment, my last act's, and whether
+      // my machine stood its foes
       st: /** @type {any} */ (null),
       me: /** @type {any} */ (null),
       wordKey: '',
       wordAt: -Infinity,
       actKey: '',
       actAt: -Infinity,
-      step: { p: -1, until: 0 },
       fm: false,
       apart: /** @type {any} */ (null),
       heldAt: -Infinity,
@@ -495,7 +496,6 @@ export function createDelveHost({
         r.wakers?.crumble();
         r.foes?.crumble();
         r.led = null;
-        r.steps?.reset();
         r.wrong = null;
         carry.set(false);
         break;
@@ -553,7 +553,7 @@ export function createDelveHost({
         r.foes?.on(ev);
         r.wakers?.crumble();
         r.won = true;
-        r.vault = online() ? null : rollVault(rollPile, lv());
+        r.vault = online() ? null : myVault();
         carry.set(false);
         say(wonLine(kind), DELVE_SAY_LONG_S);
         sound(DELVE_SOUNDS.won, site);
@@ -623,8 +623,8 @@ export function createDelveHost({
     const plate = r.plates ? plateAt(r.plates, feet[0], feet[1], feet[2]) : -1;
     const w = r.word;
     w.lv = lv();
-    w.st = r.steps ? r.steps.at(iw ? plate : -1) : -1;
-    w.hb = r.hb;
+    w.st = site.kind === 'litany' && iw ? plate : -1;
+    w.hb = r.hb; // LITANY-STAND: the plate I stand on, judged once by the law
     r.foes?.frame();
     r.wakers?.frame();
     if (r.foes) r.foes.word(w);
@@ -651,8 +651,8 @@ export function createDelveHost({
   }
   /** DLV3: A SITE A FRAME, ONLINE - the room's ledger read (its view, r.led), my machine taking up the foes the room names
    *  it for (the rest of a running wave, the captain) or letting its own go, and my word said: every DELVE_WORD_MS while I
-   *  am near, stand its foes or carry its piece, at once when it changes. A step on a plate is said a second, while the
-   *  room's pose of me catches up. With no foes' machine heard, a word from the ward offers mine. */
+   *  am near, stand its foes or carry its piece, at once when it changes. The plate I stand on is said where the room
+   *  hears me. With no foes' machine heard, a word from the ward offers mine. */
   function frameSiteOnline(r, feet) {
     const { site } = r;
     const near = nearSite(r, feet);
@@ -680,9 +680,10 @@ export function createDelveHost({
     w.kn = 0;
     w.wc = 0;
     w.cf = 0;
-    const stepped = r.steps ? r.steps.at(iw ? plate : -1) : -1;
-    if (stepped >= 0) r.step = { p: stepped, until: now + 1_000 };
-    w.st = r.step.p >= 0 && now < r.step.until && plate === r.step.p ? r.step.p : -1;
+    w.st =
+      site.kind === 'litany' && holds(site, heardFeet)
+        ? plateAt(r.plates, heardFeet[0], heardFeet[1], heardFeet[2])
+        : -1; // LITANY-STAND: where the room hears me (WEIGH-POSE)
     if (fm) {
       if (r.foes) handedWord(r, w);
       else w.o = 1;
@@ -944,7 +945,7 @@ export function createDelveHost({
         api.hudSay?.(DELVE_VAULT_TEXT.notYours());
         return;
       }
-      r.vault = rollVault(rollPile, lv()); // my share: the pile's own roll, on my machine (PARTY-LOOT's base)
+      r.vault = myVault(); // my share: the pile's own roll, on my machine (PARTY-LOOT's base)
       if (
         !quickLootTake(`${DELVE_KEY}vault:${r.site.i}`, { items: () => r.vault }, player(), setMidScreenText, {
           took: showPickups,
@@ -1163,7 +1164,6 @@ export function createDelveHost({
         r.said = false;
         r.away = false;
         r.dark = false;
-        r.steps?.reset();
         r.wrong = null;
         r.shown = -1;
         r.rest = 0;

@@ -1,8 +1,8 @@
 // @ts-check
 // DELVE II (bible/03-World/Delve-II.md section 5.2): THE LITANY SEEN AND HEARD - each plate's state off the ledger (the
-// order shown a plate a second, the lit ones lit as they are worked), a step said once as a plate is stepped onto (a
-// player standing on a plate as its order plays again says nothing until they step off and on), and the chime that
-// rises with each numeral (the Examination's, ui/eliteGates/egBeats.js EG_RUNE_CHIME). Not a DFU member (Ledger A: DELVE II).
+// order shown a plate a second, the lit ones lit as they are worked) and the chime that rises with each numeral (the
+// Examination's, ui/eliteGates/egBeats.js EG_RUNE_CHIME). The law judges a step (LITANY-STAND). Not a DFU member (Ledger A:
+// DELVE II).
 import { DP, LITANY_SHOW_STEP_MS } from '../../net/delve/delveLaw.js';
 import { SOUND } from '../../systems/soundClips.js';
 import { CRYSTAL_CLIPS } from '../../world/gate/gateBoss.js';
@@ -37,22 +37,6 @@ export function shownPlate(led) {
   if (!led || led.p !== DP.show) return -1;
   const step = Math.floor((led.ec - led.sh) / LITANY_SHOW_STEP_MS);
   return step >= 0 && step < led.order.length ? led.order[step] : -1;
-}
-
-/** A step said once: `at(plate)` the plate stood on this frame (-1 none) - answers it the frame it is stepped onto, else -1. */
-export function createPlateSteps() {
-  let last = -1;
-  return {
-    at(plate) {
-      const j = Number.isInteger(plate) ? plate : -1,
-        said = j >= 0 && j !== last ? j : -1;
-      last = j;
-      return said;
-    },
-    reset() {
-      last = -1;
-    },
-  };
 }
 
 /** THE SOUNDS: a plate's chime rising with its numeral (1 the first of the order), the wrong plate's drum, the ward's toll

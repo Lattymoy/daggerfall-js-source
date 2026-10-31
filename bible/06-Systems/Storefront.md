@@ -79,11 +79,13 @@ so a bundle's price can be weighed, and is never sold alone.
 
 The owner times every ware. `SHOP_ON_SALE` (wrangler.toml) still names what is sold. `SHOP_FEATURED` names what the
 carousel shows and when: an entry a line, `<ware> <from> <to>`, the days in UTC, and `limited` after it for a ware sold
-ONLY inside that window. Nothing is featured outside its window, and nothing upcoming is told: a drop is news when it
-lands.
+ONLY inside that window. Nothing is featured outside its window.
 
-A ware whose first window has not opened is not on the account's card at all, and Collections says it is not yet
-available (AUDIT-STOREFRONT S2). The dates read strictly: 31 November is no date, never 1 December. A line that names a
+**Open all** (OPEN-ALL, 2026-10-31, the owner: "Why not just open everything?"). A window only features its ware: it
+never holds a sale back (`shopLaw.js` shopSellable). Only `limited` does, and the deploy marks no ware limited, so every
+ware on `SHOP_ON_SALE` sells now and the carousel spotlights each drop on its date. A limited ware whose first window
+has not opened is not on the account's card at all, and Collections says it is not yet available (AUDIT-STOREFRONT S2,
+`shopDropped`). `test/server/storefront_service.test.js`; `tools/mutants/open_all.json`. The dates read strictly: 31 November is no date, never 1 December. A line that names a
 ware but does not read whole shuts that ware's sale (S4), and a test reads every line of the deploy's own schedule.
 PASS-PANELS retired the season's wares, and with them S6 and S10 (sold only while `PASS_OPEN` is on; stopped before the
 season ends).
@@ -244,6 +246,13 @@ At the launch the game's new build went out 13 minutes before the account servic
 that gap was shown the older service's card - no Aurum, no Folios ("The Folios are not open yet"). Every press of the
 gem now reads the account again, as the window's focus does (`enhancedShop.js` shopReread), so a card from a deploy's
 gap mends at the next open. `test/ui/shop_hide.test.js`; `tools/mutants/shop_hide.json`.
+
+**Only the card's wares** (SHOP-UNTOLD, 2026-10-31, a player's report: portal skins, mounts and bundles "vanish after a
+second of opening up the shop"). With no card read - the account still reading, the service out of reach, or no one
+signed in - the window listed every ware, ones not on sale among them, then took them away when the card landed. The
+client cannot see the service's sale, so it lists only the card's wares (`enhancedShop.js` shopListed). With no card the
+Folios stand alone, and a signed-in window says the shop could not be read. `test/ui/shop_untold.test.js`;
+`tools/mutants/shop_untold.json`.
 
 ## 10. Online
 

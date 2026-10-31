@@ -321,6 +321,7 @@ const DEED_TEXT = Object.freeze({
 export function shopWhoText(/** @type {any} */ flow) {
   if (!flow || flow.stage === 'loading') return t('shop.who.reading', 'Reading your account...');
   if (flow.stage !== 'in') return t('shop.who.out', 'Sign in from your profile to buy.');
+  if (!flow.shop) return t('shop.who.unread', 'The shop could not be read. Open it again when you are online.'); // SHOP-UNTOLD: offline, no card
   if (!flow.account?.handle)
     return t('shop.who.guest', 'A guest account cannot buy. Add a username from your profile first.');
   if (!flow.shop?.on && !flow.aurum?.open) return t('shop.who.closed', 'The shop does not take payments yet.'); // AURUM-ONLY: a ware is bought with Aurum
@@ -362,11 +363,15 @@ export const shopBundleRows = (/** @type {any} */ flow, /** @type {{ gives: Read
       part: !held && shopClosure(id).some((x) => x !== id && shopHeldAny(flow, x)),
     };
   });
-/** STOREFRONT: the sections the window shows - each with a ware the card lists (every one sold alone with no card);
- *  PASS-PANELS: the Folios' always; AURUM: the day's deals after the Folios while Aurum is open to the account. Pure. */
+/** SHOP-UNTOLD (2026-10-31): whether the window lists a ware - sold alone and on the card. With no card (loading,
+ *  offline, signed out) nothing: the client cannot see the schedule, and a drop not out yet is not told (S2). Pure. */
+export const shopListed = (/** @type {any} */ flow, /** @type {any} */ w) => !!w?.alone && !!rowOf(flow, w.id);
+/** STOREFRONT: the sections the window shows - each with a ware the card lists (shopListed); PASS-PANELS: the Folios'
+ *  always; AURUM: the day's deals after the Folios while Aurum is open to the account. Pure. */
 export function shopSections(/** @type {any} */ flow) {
-  const listed = (/** @type {any} */ w) => w.alone && (!flow?.shop || !!rowOf(flow, w.id));
-  const out = SHOP_CATEGORIES.filter((c) => c === 'pass' || SHOP_WARES.some((w) => w.category === c && listed(w)));
+  const out = SHOP_CATEGORIES.filter(
+    (c) => c === 'pass' || SHOP_WARES.some((w) => w.category === c && shopListed(flow, w)),
+  );
   if (flow?.aurum?.open && flow.aurum.daily?.wares?.length) out.splice(out[0] === 'pass' ? 1 : 0, 0, 'daily');
   return out;
 }
@@ -948,9 +953,7 @@ export function shopWindow(
     dailyKey = '';
   /** The wares a section lists: the day's for the deals, else each sold alone that the card lists. */
   const waresOf = (/** @type {string} */ c, /** @type {any} */ fl) =>
-    c === 'daily'
-      ? dailyWares(fl)
-      : SHOP_WARES.filter((x) => x.category === c && x.alone && (!fl?.shop || !!rowOf(fl, x.id)));
+    c === 'daily' ? dailyWares(fl) : SHOP_WARES.filter((x) => x.category === c && shopListed(fl, x));
   const buildPanels = () => {
     stopLive();
     drawn = new Map();

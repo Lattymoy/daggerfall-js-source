@@ -407,8 +407,8 @@
   {
     "name": "DLV1-a-plate-said-not-stood",
     "file": "src/net/delve/delveLaw.js",
-    "old": "  if (led.p !== DP.work || !Number.isInteger(w.st) || w.st !== plate || plate < 0 || plate >= led.k) return ev;",
-    "new": "  if (led.p !== DP.work || !Number.isInteger(w.st) || plate < 0 || plate >= led.k) return ev;",
+    "old": "  const on = Number.isInteger(w.st) && w.st === plate && plate >= 0 && plate < led.k ? plate : -1;",
+    "new": "  const on = Number.isInteger(w.st) && plate >= 0 && plate < led.k ? plate : -1;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]

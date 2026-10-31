@@ -389,8 +389,8 @@ export function shopFeaturedNow(
   return out;
 }
 /** WHETHER A WARE IS SOLD AT `nowMs` (AURUM-ONLY: a pack for money, any other for Aurum): sold alone, named on sale,
- *  never before its first featured window (a drop is news when it lands), and - for a ware the schedule marks limited -
- *  inside one of its limited windows. Pure. */
+ *  and - for a ware the schedule marks limited - inside one of its limited windows. OPEN-ALL (2026-10-31, the owner): a
+ *  window that is not limited only features a ware, it never holds its sale back. Pure. */
 export function shopSellable(
   /** @type {any} */ w,
   /** @type {ReadonlyArray<string>} */ onSale,
@@ -400,22 +400,22 @@ export function shopSellable(
   if (!w?.alone || !onSale.includes(w.id)) return false;
   const mine = featured.filter((e) => e.id === w.id);
   if (mine.some((e) => e.bad)) return false;
-  if (mine.length && nowMs < Math.min(...mine.map((e) => e.fromMs))) return false;
   const limits = mine.filter((e) => e.limited);
   return !limits.length || limits.some((e) => nowMs >= e.fromMs && nowMs < e.toMs);
 }
 
-/** AUDIT-STOREFRONT S2: WHETHER A WARE MAY BE TOLD at `nowMs` - its first featured window open (a drop is news when it
- *  lands); a ware the schedule cannot read has no date to tell. One told and not sold now is no longer sold; one not
- *  told is not on the card at all. Pure. */
+/** AUDIT-STOREFRONT S2: WHETHER A WARE MAY BE TOLD at `nowMs` - a limited ware once its first limited window opens (a
+ *  drop is news when it lands; OPEN-ALL: any other at once); a ware the schedule cannot read has no date to tell. One told
+ *  and not sold now is no longer sold; one not told is not on the card at all. Pure. */
 export function shopDropped(
   /** @type {any} */ w,
   /** @type {ReadonlyArray<any>} */ featured,
   /** @type {number} */ nowMs,
 ) {
   if (!w?.alone) return false;
-  const mine = featured.filter((e) => e.id === w.id);
-  return !mine.some((e) => e.bad) && (!mine.length || nowMs >= Math.min(...mine.map((e) => e.fromMs)));
+  const mine = featured.filter((e) => e.id === w.id),
+    limits = mine.filter((e) => e.limited);
+  return !mine.some((e) => e.bad) && (!limits.length || nowMs >= Math.min(...limits.map((e) => e.fromMs)));
 }
 
 /** A price in words, in the player's own form where the platform can say it ("$5.00"). Pure but for Intl. */

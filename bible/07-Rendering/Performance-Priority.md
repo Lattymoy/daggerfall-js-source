@@ -158,9 +158,14 @@ TESA14 (2026-10-24, `03-World/Arena-Provinces.md` TESA14): the frame stood at 46
 the weather's drain - the `!weatherOverride` block - is the twenty-third closure (`frameWeatherDrain`), lines inserted
 only, and the frame is 45,242.
 
+AMBIENT-LIFE (2026-10-31, at its merge into main): the frame stood at 46,158 bytes against the 3/4 tripwire's 46,080 -
+the creatures' frame, draw and lights calls (`ambientLife`) - and main's deploy failed on it. The head bob's block
+(AUDIT 28 W10: `headBobber.update` and the bob's offset) is a closure of its own, `frameHeadBob`, lines inserted only,
+and the frame is 45,563.
+
 Pins: `test/scenes/perfv8.test.js` (2) - every `frame` in the world host's graph and every closure moved out of one under the
 ceiling and under three quarters of it (the tripwire: move the next statement out before the cliff, not after); over
-the parse, the closures by name in order (26 since `frameSnowCover`), each made in the frame and called once - a plain call, the statement after
+the parse, the closures by name in order (30 since `frameHeadBob`), each made in the frame and called once - a plain call, the statement after
 its close - holding one statement, no `return`, no `var`. Mutants: `tools/mutants/perfv8.json`, 8, all dead.
 
 ## PERF-YARD — a yard's pieces are culled as the town's own models are
