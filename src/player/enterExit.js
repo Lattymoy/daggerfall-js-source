@@ -499,7 +499,7 @@ export function heldInSolid(collider, feet, height = CAPSULE_HEIGHT) {
   );
 }
 
-/** PACK-OPEN (mob 2026-10-26: "make sure they dont spawn in houses", "or building"): whether a raid's or a staff event's
+/** PACK-OPEN (as the owner asked): whether a raid's or a staff event's
  *  monster may stand at `spot` ({ x, y, z }, its feet) - not held in a static solid (a closed building's shell, a rock)
  *  and no solid over its head within RAID_SPOT_ROOF_M (a roof: a shell open below, a porch, an arch). Pure over the
  *  collider's queries. */

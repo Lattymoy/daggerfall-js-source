@@ -63,8 +63,7 @@ test('STAFF-PANEL5-FOLLOW law: the note\'s pace, its room, its place, the frames
   assert.equal(validPartyPose(note('interior:m12.345')).rk, 'interior:m12.345');
   assert.equal('rk' in validPartyPose(note('owned:abc.m1.2')), false);
   assert.equal('rk' in validPartyPose(note('chat:world')), false);
-  // STAFF-PANEL5-FOLLOW-FIX (finding 2): a home, a boat's cabin and a caravan are rooms a follow enters (mob: "ANY player
-  // ANYWHERE (homes too)") - the note keeps them, and names them
+  // STAFF-PANEL5-FOLLOW-FIX (finding 2): a home, a boat's cabin and a caravan are rooms a follow enters (as the owner asked) - the note keeps them, and names them
   const bk = (5 << 16) + (9 << 8) + 42, owner = `owned:${'a'.repeat(32)}.${'b'.repeat(16)}`;
   for (const rk of [`${owner}:1291010263.${bk}`, `${owner}:boat.77`, `caravan:${'c'.repeat(24)}`]) {
     assert.equal(validPartyPose(note(rk, { in: 2, bk })).rk, rk, rk);

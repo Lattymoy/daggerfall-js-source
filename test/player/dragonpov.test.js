@@ -1,4 +1,4 @@
-// DRAGON-POV (2026-10-30, mob: "can we get a 3rd person dragon for scrolling its brokewn"): the wheel out of the head on a
+// DRAGON-POV (2026-10-30, as the owner asked): the wheel out of the head on a
 // dragon shows the dragon. A tamed dragon is a ride, and RIDE-POV held every ride but the 3D horse in the head; an Admin's
 // /dragon left the head onto my own body standing in the air under the saddle's picture. On a dragon (the host's `dragon`)
 // the wheel leaves the head, the camera starts at the foot's far end and reaches past it, my body is not drawn, and the
@@ -111,7 +111,7 @@ test('DRAGON-POV: the saddle over the view is first person\'s alone, on both rid
   assert.match(w, /dragonView\.drawInto\(allBatches\);/, 'the street\'s billboard pass draws my dragon');
 });
 
-test('DRAGON-POV (mob: "saddle over lay is in alot of uis"): the saddle is not painted while a panel covers the view', async () => {
+test('DRAGON-POV (as the owner asked): the saddle is not painted while a panel covers the view', async () => {
   const { createDragonSaddle, setDragonSaddleCovered } = await import('../../src/player/dragonSaddle.js');
   let drawn = 0;
   const renderer = { uploadTexture: () => ({}), drawScreenQuad: () => { drawn++; } };
@@ -131,7 +131,7 @@ test('DRAGON-POV (mob: "saddle over lay is in alot of uis"): the saddle is not p
   assert.match(rd('src/scenes/world.js'), /setDragonSaddleCovered\(\(\) => pointerSurfaces\.size > 0 \|\| !!townTalk\.hudHidden/);
 });
 
-test('AURA-SEAT (mob: "aura floating"): a dragon rider\'s aura sits where the art seats the rider, under the camera\'s pivot, lower in the hover', async () => {
+test('AURA-SEAT (as the owner asked): a dragon rider\'s aura sits where the art seats the rider, under the camera\'s pivot, lower in the hover', async () => {
   const { dragonAuraLift, dragonSeatOver, dragonRiderSeatShare, DRAGON_AURA_DROP_M, DRAGON_RIDER_SEAT, DRAGON_RIDER_SEAT_HOVER } = await import('../../src/scenes/dragonViewHost.js');
   const h = 262 / 40;   // the pictures' height at Daggerfall's 40 pixels a metre
   assert.equal(dragonRiderSeatShare('0#3'), DRAGON_RIDER_SEAT, 'walking: the walk records seat the rider near 0.6');

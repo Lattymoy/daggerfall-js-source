@@ -43,10 +43,10 @@
 //                            and what the character is owed given as one letter of credit (net/repairLaw.js), the
 //                            repair's way and once a ticket with it - and the law's hold lifted when the purse was all
 //                            it held on (`realm-findings` says the purse a mend is reckoned from)
-//   `letter`                 GUILD-LETTER-FIX (2026-10-25, mob: "do it"): a crime guild's letter sent again or called off
+//   `letter`                 GUILD-LETTER-FIX (2026-10-25, as the owner asked): a crime guild's letter sent again or called off
 //                            (net/repairLaw.js applyGuildLetter), the repair's way and once a ticket with it - the Staff
 //                            Panel's act alone (staffRealm.js /v1/staff/fix/letter), no door here
-//   `bank`                   STAFF-SET-BANK (2026-10-23, mob: "we need a set bank setting"): a character's bank, still the
+//   `bank`                   STAFF-SET-BANK (2026-10-23, as the owner asked): a character's bank, still the
 //                            total staff read, set to the gold they name (net/repairLaw.js), the repair's way and once a
 //                            ticket with it - the Staff Panel's act alone (staffRealm.js /v1/staff/fix/bank), no door here
 //
@@ -563,7 +563,7 @@ async function mendAct(ctx, row, by, note, body) {
 }
 
 /**
- * STAFF-SET-BANK (2026-10-23, mob: "we need a set bank setting"): A REALM CHARACTER'S BANK, SET BY STAFF (net/repairLaw.js)
+ * STAFF-SET-BANK (2026-10-23, as the owner asked): A REALM CHARACTER'S BANK, SET BY STAFF (net/repairLaw.js)
  * - `{ ticket, was, gold }` as the body names them, checked by the law: the record's bank, still the total `was` staff
  * read, made the Empire's account holding `gold` with no other branch holding any, every loan where it stands - the
  * repair's machinery (staffMend), its row in `realm_repairs` naming BANK_SET_FACTION and no bit, `was` the total it found
@@ -636,7 +636,7 @@ const letterAnswer = (/** @type {any} */ r, /** @type {boolean} */ repeat) => ({
 });
 
 /**
- * GUILD-LETTER-FIX (2026-10-25, mob: a player's Dark Brotherhood letter that never came, "do it"): A CRIME GUILD'S LETTER
+ * GUILD-LETTER-FIX (2026-10-25, a player's Dark Brotherhood letter that never came; the owner gave the go): A CRIME GUILD'S LETTER
  * SENT AGAIN OR CALLED OFF BY STAFF (net/repairLaw.js applyGuildLetter) - `{ ticket, guild, op }` as the body names them,
  * checked by the law - the repair's machinery (staffMend): the record seized one sequence on, so the playing tab's next
  * checkpoint is refused and its next join plays the fixed record, which sends the letter the next minute it is outside.

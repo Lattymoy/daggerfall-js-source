@@ -402,8 +402,7 @@ function lettersTenth(/** @type {any[][]} */ lists, /** @type {(item: any) => bo
     }
   return out;
 }
-/** PVP-NO-TENTH (the owner: "=10% if they domt have initem to roll on", "Letter only pay out 10% if they have not enough
- *  gold"): THE LAST ROLL - a tenth of the purse and the letters together, out of the purse first, the letters (bag order,
+/** PVP-NO-TENTH (as the owner asked): THE LAST ROLL - a tenth of the purse and the letters together, out of the purse first, the letters (bag order,
  *  each kept where it lies) paying only what the purse cannot. `letters` false (a tab from before the word): the purse
  *  alone. Answers `{ pile, gold }` - `gold` as takeWildDeath's (`purse`, `letters` by id); `pile` null when nothing. */
 export function takeWildLastRoll(

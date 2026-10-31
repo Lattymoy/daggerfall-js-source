@@ -1,4 +1,4 @@
-// STAFF-UNSEEN (2026-10-24, mob: "staff in overworld and flat need to stay in it and not have mobs pull them out"; the
+// STAFF-UNSEEN (2026-10-24, as the owner asked; the
 // card's pick "Monsters ignore hidden staff"): a hidden staff member is no one to a foe - never seen, heard or
 // stealth-detected, a seer included, the blind pursuit given up - and the page's follow says so on the player entity
 // each online frame (scenes/staffFollowHost.js staffFollowOnPage), which the senses context reads.

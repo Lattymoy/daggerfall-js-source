@@ -1,4 +1,4 @@
-// STAFF-PANEL5-FREEZE (2026-10-22, mob: "the player can only look around"; design doc "DFO Staff Panel: design", Freeze
+// STAFF-PANEL5-FREEZE (2026-10-22, as the owner asked; design doc "DFO Staff Panel: design", Freeze
 // player, and its weak spots) - FREEZE PLAYER AND THE STAFF CHAT, the account service's half (server-account/src/
 // staffFreeze.js), driven through the real Worker on the node:sqlite database every account pin stands on
 // (test/accountDb.mjs): an Admin's freeze with its reason, who set it and its order to the relay, the token's `fz`, ONE

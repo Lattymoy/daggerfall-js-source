@@ -1,5 +1,4 @@
--- STAFF-HIDE-TOGGLE (2026-10-23, mob: "i cant talk in chat?", "i need to be bale to talk in chat", "need hide to be a
--- toggle"): HIDE ME OFF BY DEFAULT - for every staff member, the accounts that stand today included
+-- STAFF-HIDE-TOGGLE (2026-10-23, as the owner asked): HIDE ME OFF BY DEFAULT - for every staff member, the accounts that stand today included
 -- (server-account/src/staffHidden.js).
 --
 --   npx wrangler d1 migrations apply daggerfall-accounts --remote

@@ -662,7 +662,7 @@ test('SOC3: a roster row is a DOOR - the menu is the host\'s answers, a refused 
   assert.equal(find(eroot, 'dfchat-rowmenu').length, 0, 'nothing to offer, nothing opens');
 });
 
-test('ROSTER-STAFF (mob, 2026-10-24: "need to add follor to find a player in chat as well", over the Find a player list): a roster row\'s menu opens a row\'s own `menu` in place, as a line\'s does - a staff member\'s mute lengths and ban levels - and titles a row; a leaf runs and closes it (mutants: the level run as an act; the title dropped)', () => {
+test('ROSTER-STAFF (as the owner asked, over the Find a player list): a roster row\'s menu opens a row\'s own `menu` in place, as a line\'s does - a staff member\'s mute lengths and ban levels - and titles a row; a leaf runs and closes it (mutants: the level run as an act; the title dropped)', () => {
   const doc = fakeDocument(), win = fakeWindow();
   const peers = new Map([['peer-Zed', { id: 'peer-Zed', name: 'Zed' }]]);
   const ran = [];

@@ -1,4 +1,4 @@
--- STAFF-PANEL3-PLAYERS (2026-10-22, mob: "do all 6"; design doc "DFO Staff Panel: design", build step 3, "Players and
+-- STAFF-PANEL3-PLAYERS (2026-10-22, as the owner asked; design doc "DFO Staff Panel: design", build step 3, "Players and
 -- nameplates" and "Server load"): THE INDEXES THE PANEL'S PLAYER SEARCH AND PROFILE READ BY (server-account/src/staffPlayers.js).
 --
 --   npx wrangler d1 migrations apply daggerfall-accounts --remote
@@ -12,7 +12,7 @@
 -- whole table. A trade is written twice in its life (its first half, its settling), so the two cost little.
 CREATE INDEX IF NOT EXISTS realm_trades_a_player ON realm_trades (a_player, created_at);
 CREATE INDEX IF NOT EXISTS realm_trades_b_player ON realm_trades (b_player, created_at) WHERE b_player IS NOT NULL;
--- THE SEARCH BY A CHARACTER'S NAME (mob, 03:23Z: "by handle or character name"), a prefix in any case - a name is written
+-- THE SEARCH BY A CHARACTER'S NAME (as the owner asked), a prefix in any case - a name is written
 -- at a character's making and a staff rename, never by a checkpoint, so the index costs a save nothing.
 CREATE INDEX IF NOT EXISTS realm_characters_name ON realm_characters (name COLLATE NOCASE);
 -- THE HISTORY TAB'S REPORTS, against the account (every case, closed ones too - 0126's mod_cases_open holds the open one

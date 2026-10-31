@@ -915,7 +915,7 @@ export const SAGE_RGB = Object.freeze({
   leaf: Object.freeze(NIRN_LEAF.slice(0, 3)), glow: Object.freeze(NIRN_GLOW.slice(0, 3)), haze: Object.freeze(NIRN_HAZE.slice(0, 3)),
   deep: Object.freeze(NIRN_DEEP.slice(0, 3)), smoke: Object.freeze(NIRN_SMOKE.slice(0, 3)),
 });
-/** NIRN-LEAF (2026-10-29, the owner: "nicer nirnroot more marijuana style", after Skyrim's pale teal nirnroot): a
+/** NIRN-LEAF (2026-10-29, as the owner asked, after Skyrim's pale teal nirnroot): a
  *  nirnroot leaf's own colours, RGB 0..1 - a cool TEAL at the fan's heart, out to a pale MINT at the leaflets' tips. */
 export const SAGE_LEAF_RGB = Object.freeze({ heart: Object.freeze([0.2, 0.66, 0.52]), tip: Object.freeze([0.66, 0.97, 0.84]) });
 /** Where the leaflets meet in the glyph's 16-unit box (GLYPH_PATH.nirnrootsage), and the tallest one's reach from it -

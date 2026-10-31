@@ -1,6 +1,5 @@
 // @ts-check
-// PVP-REWARD (the PvP rework, 2026-10-29 - the owner: "they only get a piece that isnt insured", "random roll on uninsure
-// peices", "random policy gold", "if gold will ovrweight a player u get a letter of credit", "get rid of the bag drop"):
+// PVP-REWARD (the PvP rework, 2026-10-29 - as the owner asked):
 // WHAT A KILL IN THE ZONE GIVES ITS KILLER. The account service rolls it on the fallen's record (server-account/src/
 // wild.js), never the killer's game: one random worn piece no policy and no ledger hold keeps; else, every worn piece
 // insured, the gold of one random policy, that policy spent and its piece kept. A leaf the account Worker bundles.

@@ -1,4 +1,4 @@
-// PVP-BAR (bible/11-Multiplayer/PvP-Rework.md; the owner: "How does the health and shield bar look", then "Perfect" to its
+// PVP-BAR (bible/11-Multiplayer/PvP-Rework.md; as the owner asked to its
 // mockup; "So a hidden player u only see the skull and hp bar", "They always have some body just fiant"): a flagged
 // player's health, with a thin Shield strip, over the head between the skull and the name - the referee's word to the
 // room, the wire's projection, the page's mask and the name tag's drawing.

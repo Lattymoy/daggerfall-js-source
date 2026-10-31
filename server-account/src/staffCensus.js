@@ -32,7 +32,7 @@
 // found - and whether a staff member has checked its trail. A Remove of a contested piece needs that check (trail_at);
 // the Remove itself is the realm builder's. Copies and census jumps are how dupes are hunted; neither proves one.
 //
-// EVERY LIST PAGES (mob, 19:25Z: "put inf scroll in anything that pull lists"): `from`, answered as `next`.
+// EVERY LIST PAGES (as the owner asked): `from`, answered as `next`.
 // ═══════════════════════════════════════════════════════════════════
 
 import { displayName } from './accounts.js';
@@ -131,7 +131,7 @@ export function censusTally(save) {
   let banks = 0;
   for (const a of Array.isArray(save.bankAccounts) ? save.bankAccounts : []) banks += goldOf(a?.accountGold);
   const gold = goldOf(save.goldPieces) + banks;
-  // ECON-WORTH (mob, 2026-10-25: "hover break down on gold held bank held and item total"): the banks' share of `g` as
+  // ECON-WORTH (as the owner asked): the banks' share of `g` as
   // well, so the economy tells a purse from a bank - never a kind of its own (censusDay and the reads ask `g` and `t`s)
   /** @type {Record<string, number>} */
   const out = { g: Math.min(Number.MAX_SAFE_INTEGER, gold), b: Math.min(Number.MAX_SAFE_INTEGER, banks) };

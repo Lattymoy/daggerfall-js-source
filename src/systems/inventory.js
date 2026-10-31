@@ -677,7 +677,7 @@ export const carriedWeight = (entity) =>
 /** CARRY-CLAIMS: what `n` of a piece weighs in the pack - coin by the purse's own weight. */
 export const pieceKg = (item, n) => Math.max(0, n) * (isGoldPieces(item) ? GOLD_PIECE_WEIGHT_KG : effectiveUnitWeightInKg(item));
 
-// CARRY-CLAIMS (2026-10-30, the owner: "u can pick stuff up past your carry weight"): WHAT A SHARED PILE'S TAKES IN
+// CARRY-CLAIMS (2026-10-30, as the owner asked): WHAT A SHARED PILE'S TAKES IN
 // FLIGHT WEIGH. A take off a shared pile - a room's chest or body (scenes/roomLootHost.js), a peer's foe or a building's
 // cupboard (systems/loot/claimLedger.js), a fallen player's remains (net/wild/wildRemains.js) - is lifted back OUT of the
 // pack until the pile's authority grants it. The carry gate (item/itemTransfer.js planTake) read a pack that did not hold

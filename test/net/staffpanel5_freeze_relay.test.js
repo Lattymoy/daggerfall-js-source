@@ -1,4 +1,4 @@
-// STAFF-PANEL5-FREEZE (2026-10-22, mob: "the player can only look around"; design doc "DFO Staff Panel: design", Freeze
+// STAFF-PANEL5-FREEZE (2026-10-22, as the owner asked; design doc "DFO Staff Panel: design", Freeze
 // player, Server load leases, and their weak spots) - FREEZE PLAYER AND THE STAFF CHAT, the relay's half
 // (server/src/staffFreeze.js and its hooks in server/src/index.js), over the pins' fake objects (test/fakeRoom.mjs): the
 // service's signed `freeze` order through the Worker's law door to the hub and its stored book; the token's `fz` at every

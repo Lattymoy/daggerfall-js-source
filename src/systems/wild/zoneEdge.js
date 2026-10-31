@@ -1,6 +1,5 @@
 // @ts-check
-// PVP-EDGE (the PvP rework, 2026-10-29 - the owner: "only from outside the zone u get a safe poassage", "only from ebterin
-// from the edge", "if u tp in no safe passage"): my word that I stood in the zone again by WALKING over its edge - the
+// PVP-EDGE (the PvP rework, 2026-10-29 - as the owner asked): my word that I stood in the zone again by WALKING over its edge - the
 // last frame outside within ZONE_EDGE.ms and ZONE_EDGE.m of my first inside. A teleport, a carriage, a town's streets left
 // or a rise is no walk. The referee grants an entry's safe passage on this word alone (net/wild/wildRef.js wildZone).
 // `here` is the zone's pixel alone (AUDIT TAMRIEL-WIDE III P2): a building or a dungeon in it is in it, so its door is no edge.

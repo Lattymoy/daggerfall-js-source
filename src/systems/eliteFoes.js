@@ -354,8 +354,7 @@ export function promoteRaidLeader(entity, { own = true, name = '' } = {}) {
 }
 
 // ═══ STAFF-EVENT: A STAFF EVENT'S MINI BOSS ═══════════════════════════════════════════════════════
-// (2026-10-24, mob: "mini boss need to be a single enlarges version of the mob spawns / instead of the blue elite glow
-// lets make the mini boss have a yellow glow", "also let staff pick the miniboss"; net/staffEvent/staffEventLaw.js.) The
+// (2026-10-24, as the owner asked; net/staffEvent/staffEventLaw.js.) The
 // one foe a staff event's full meter calls: an ELITE underneath - every surface that draws, names, sizes and loots an
 // elite draws this one - at its event's size (net/staffEvent/staffEventLaw.js STAFF_BOSS_SIZE_*), ten times its kind's
 // health and an elite's blows, its glow yellow (STAFF_BOSS_GLOW: the pulse past it - systems/hitFlash.js reads it).
@@ -364,7 +363,7 @@ export function promoteRaidLeader(entity, { own = true, name = '' } = {}) {
 export const STAFF_BOSS_GLOW = 2;
 export const STAFF_BOSS_HEALTH_MULT = 10;
 export const STAFF_BOSS_DAMAGE_MULT = ELITE_FOE_DAMAGE_MULT;
-// BOSS-HARD (2026-10-25, mob: "apply this logic to all mini bosses we spawn we want them to be very hard for the players"):
+// BOSS-HARD (2026-10-25, as the owner asked):
 // every mini boss is held to the Enemy Expansion Troll's rules (MonsterBase.mdb.csv row 272) - MinMetalToHit Silver, so a
 // blade below Silver does nothing (combat/formulas.js dropWeaponIfTargetImmune; hand-to-hand still lands, as DFU's does),
 // and ArmorValue 2, so its every part is at least as hard to hit as a Troll's (EnemyEntity.cs:264-267: ArmorValue x 5).
@@ -372,12 +371,11 @@ export const STAFF_BOSS_DAMAGE_MULT = ELITE_FOE_DAMAGE_MULT;
 export const STAFF_BOSS_MIN_METAL = WEAPON_MATERIALS.Silver;
 /** A mini boss's worst armour on any part (the Troll's ArmorValue 2 x 5; lower is harder to hit). */
 export const STAFF_BOSS_ARMOR = 10;
-/** BOSS-SPELL-WARD (mob 2026-10-25: "use crazy spell reduction on mini bosses like 90%", "of all spell damage"): the share of
+/** BOSS-SPELL-WARD (as the owner asked): the share of
  *  a spell's damage a mini boss takes - every spell's, its rounds and a strike's too, and a whole-health one (a
  *  Disintegrate) is a tenth of its health, never a kill. */
 export const STAFF_BOSS_SPELL_TAKEN = 0.1;
-/** BOSS-HIT-SHARE (mob 2026-10-25: "needs to scal with players", "1% per heaslth with 40 player ins much", "magfic and
- *  melee"): the most one hit takes off a mini boss is this share of its maximum, split among the players fighting it -
+/** BOSS-HIT-SHARE (as the owner asked): the most one hit takes off a mini boss is this share of its maximum, split among the players fighting it -
  *  forty fighting, a four-hundredth each, so a crowd's every round of hits takes about 1% whatever its size. */
 export const STAFF_BOSS_HIT_SHARE = 0.01;
 /** The fighters the split counts at most (a town's whole crowd). */

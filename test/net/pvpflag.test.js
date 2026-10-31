@@ -1,5 +1,4 @@
-// PVP-FLAG (the PvP rework, 2026-10-28/29 - the owner: "flagging gives a skull above your head", "need to be instant",
-// "make it a min", "u flag and un flag instanly", "u cant flag on a party member"; bible/11-Multiplayer/PvP-Rework.md):
+// PVP-FLAG (the PvP rework, 2026-10-28/29 - as the owner asked; bible/11-Multiplayer/PvP-Rework.md):
 // in the open zone a blow lands only between two flagged players. The flag goes up at once from level 30 and comes down at
 // once, never within PVP_FLAG.lockMs of the last PvP blow given or taken - on the client (systems/wild/pvpFlag.js) and
 // at the referee (net/wild/wildRef.js wildZone, wildBlow), which says each flag to the room (`wref` `flag`).
@@ -136,7 +135,7 @@ test('PVP-FLAG THE PAGE (scenes/pvpFlagHost.js): Caps Lock or the button toggles
   const world = rd('src/scenes/world.js'), stone = rd('src/scenes/portalStoneHost.js');
   assert.ok(world.includes('return pvpFlag.fair(peerId) && (modes?.mode'), 'the host asks it of every target');
   assert.ok(world.includes('const wildRefIn = pvpFlag.wrap((g, room) => {'));
-  assert.ok(stone.includes('const teleportRefused = (to) => host.veilRefused(to) || !host.wildTravelGate(to, 0, teleportJourney).ok;'), 'the stone asks no zone law (PVP-PORTAL, the owner: "they need to work all over")');
+  assert.ok(stone.includes('const teleportRefused = (to) => host.veilRefused(to) || !host.wildTravelGate(to, 0, teleportJourney).ok;'), 'the stone asks no zone law (PVP-PORTAL, as the owner asked)');
   assert.doesNotMatch(stone, /wildTeleportRefused|pvpFlagOn/, 'flagged or not');
 });
 
@@ -281,7 +280,7 @@ test('PVP-30 THE ASK (ui/levelUp/pvp30Ask.js, ui/charSheetDoor.js, ui/growth/gro
   assert.match(tab, /if \(owed && pvp30Asks\(entity\)\) \{ pvp30Page\(detail, ctx\); return; \}/);
 });
 
-test('PVP-SKULL THE OVERWORLD (scenes/travelViewMarks.js, scenes/travelView.js, ui/travel/travelViewHud.js; the owner: "overwold should show skulls"): a player\'s mark on the Overworld carries the skull the page holds for them - near, a stranger, or a region traveller - and the readout draws it over their name (mutants: the door shut; a mark bare; the carry dropped; the drawing undrawn)', () => {
+test('PVP-SKULL THE OVERWORLD (scenes/travelViewMarks.js, scenes/travelView.js, ui/travel/travelViewHud.js; as the owner asked): a player\'s mark on the Overworld carries the skull the page holds for them - near, a stranger, or a region traveller - and the readout draws it over their name (mutants: the door shut; a mark bare; the carry dropped; the drawing undrawn)', () => {
   const f = createPvpFlagHost(() => ({ id: 'peer-me', wildOk: true, setWildFlag: () => {} }), { level: 30 }, () => {}, { say: () => {} }, { doc: null, now: () => 0, zone: () => true });
   f.heard({ k: 'flag', id: 'peer-x', f: 1, a: 5000 });
   assert.deepEqual([pvpSkullOf('peer-x'), pvpSkullOf('peer-z')], ['gold', null]);
@@ -293,7 +292,7 @@ test('PVP-SKULL THE OVERWORLD (scenes/travelViewMarks.js, scenes/travelView.js, 
   assert.ok(hud.includes("q.m.color ?? '', q.m.skull ?? '');"), 'a skull up or down draws the picture again');
 });
 
-test('PVP-EDGE (systems/wild/zoneEdge.js, net/online.js, net/wire.js, net/wild/wildRef.js, relay; the owner: "only from ebterin from the edge", "if u tp in no safe passage"): safe passage only for a walk in over the zone\'s edge - a step outside close and just now; a teleport, a town\'s streets left or a rise is none; the word rides the entry alone, the wire and the relay carry it, the referee asks it (mutants: the distance unread; the time unread; the word on every keepalive; the wire\'s `ed` dropped; the relay\'s unpassed; the referee unasking)', async () => {
+test('PVP-EDGE (systems/wild/zoneEdge.js, net/online.js, net/wire.js, net/wild/wildRef.js, relay; as the owner asked): safe passage only for a walk in over the zone\'s edge - a step outside close and just now; a teleport, a town\'s streets left or a rise is none; the word rides the entry alone, the wire and the relay carry it, the referee asks it (mutants: the distance unread; the time unread; the word on every keepalive; the wire\'s `ed` dropped; the relay\'s unpassed; the referee unasking)', async () => {
   resetZoneEdge();
   assert.deepEqual(ZONE_EDGE, { m: 60, ms: 5_000, keepMs: 15_000 });
   zoneEdgeSee(false, [0, 0, 0], 0);
@@ -341,7 +340,7 @@ test('PVP-EDGE (systems/wild/zoneEdge.js, net/online.js, net/wire.js, net/wild/w
   } finally { Date.now = realNow; }
 });
 
-test('PVP-FLAG-ZONE (scenes/pvpFlagHost.js; the owner: "or i can flag anywerte"): the flag goes up in the zone alone - Cyrodiil, the open sea, their halls; out of it the key and the button do nothing and a raised flag comes down once the lock lets it; PVP-FLAG-SPOT ("left center or right center"): the button at the middle of the right edge (mutants: the zone unasked; the flag kept outside)', () => {
+test('PVP-FLAG-ZONE (scenes/pvpFlagHost.js; as the owner asked): the flag goes up in the zone alone - Cyrodiil, the open sea, their halls; out of it the key and the button do nothing and a raised flag comes down once the lock lets it; PVP-FLAG-SPOT ("left center or right center"): the button at the middle of the right edge (mutants: the zone unasked; the flag kept outside)', () => {
   const realInterval = globalThis.setInterval, ticks = [];
   globalThis.setInterval = (fn) => { ticks.push(fn); return 0; };
   try {

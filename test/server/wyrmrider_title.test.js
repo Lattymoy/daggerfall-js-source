@@ -1,5 +1,4 @@
-// WYRM-RIDER (2026-10-30, the owner: "we need a title thats basd ass for this DRAGON TAMER", "perfect titles", "DONT COUNT
-// ADMINS"): a tamed brass Dwarven Dragon holds Wyrm Rider, a tamed Aetherbright Aether Rider; the earliest tame of each
+// WYRM-RIDER (2026-10-30, as the owner asked): a tamed brass Dwarven Dragon holds Wyrm Rider, a tamed Aetherbright Aether Rider; the earliest tame of each
 // look - a developer's never counted - holds its First. Derived from the service's own rows (dragon_mounts) as the Marks of
 // Mastery are - held on the wardrobe, worn, signed into the token - and worn on a metal plate (ui/titleFlame.js plateCss).
 import { test } from 'node:test';

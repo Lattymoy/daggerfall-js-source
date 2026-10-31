@@ -1,5 +1,4 @@
--- STAFF-BANNED (2026-10-23, mob: "player that are banned need to be taken out of staff panel list of players we need a tab
--- for banned players as well", "add a ban status as well to player list", "so we can filter them"): THE BANNED READS ON AN
+-- STAFF-BANNED (2026-10-23, as the owner asked): THE BANNED READS ON AN
 -- INDEX OF THEIR OWN (server-account/src/staffCases.js /v1/staff/banned, the Banned tab; server-account/src/staffPlayers.js
 -- /v1/staff/players with `ban: 'banned'`).
 --

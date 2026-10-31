@@ -48,7 +48,7 @@ export function listenForShellUpdates(shell, say) {
   return true;
 }
 
-// UPDATE-RESTART (2026-10-30, the owner: "we should close the desktop app instead of reload it does not update" /
+// UPDATE-RESTART (2026-10-30, as the owner asked /
 // "make sure it updates"): the website's update screen (ui/updateScreen.js) reloads the page, and in the app a reload
 // plays the app's own copy again - the build poll there reads that copy, never the site. So in the app the update screen
 // is started by the app's own word: an update it has HERE, whole (a version the game channel brought, or an installer

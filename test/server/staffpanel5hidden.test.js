@@ -1,5 +1,4 @@
-// STAFF-PANEL5-HIDDEN (2026-10-22, mob: "no tag no faint outline nothing just nothing", "true invis not lattys invis", "we
-// want the player to have no idea we are wathcing them"; design doc "DFO Staff Panel: design", Invisible follow and Flat
+// STAFF-PANEL5-HIDDEN (2026-10-22, as the owner asked; design doc "DFO Staff Panel: design", Invisible follow and Flat
 // map's Hide me) - THE ACCOUNT SERVICE'S HALF (server-account/src/staffHidden.js), driven through the real Worker on the
 // node:sqlite database every account pin stands on (test/accountDb.mjs): Hide me and Show myself (off by default since
 // STAFF-HIDE-TOGGLE, migration 0165, the tests at the end; the rest press Hide me first, in stand()); the game's
@@ -447,8 +446,7 @@ test('STAFF-PANEL5-HIDDEN-R2: A MODERATOR REMOVED AND A STAFF MEMBER CUT ARE ORD
   } finally { s.restore(); }
 });
 
-// ═══ STAFF-HIDE-TOGGLE (2026-10-23, mob: "i cant talk in chat?", "i need to be bale to talk in chat", "need hide to be a
-// toggle") - Hide me off by default for every staff member, the accounts that stand today included (migration 0165), and a
+// ═══ STAFF-HIDE-TOGGLE (2026-10-23, as the owner asked) - Hide me off by default for every staff member, the accounts that stand today included (migration 0165), and a
 // press that takes effect at the very next mint (the game remakes its links at once: test/net/staffpanel5hook.test.js).
 // tools/mutants/staff-hide-toggle.json ═══
 

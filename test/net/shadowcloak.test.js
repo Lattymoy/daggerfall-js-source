@@ -83,7 +83,7 @@ test('SHADOW-CLOAK grant: SHADOW_FANG_HANDLES still names SirMcMobdon, and the l
   assert.equal(TIER_AURA.shadowfang, 'shadowcloak', 'the third list to grant an aura');
   for (const h of ['SirMcMobdon', 'sirmcmobdon', 'SIRMCMOBDON']) {
     const p = row(h);
-    // STAFF-PANEL1 (PIN MOVED, mob, 06:33Z: "add me to the dev and my shadow fang just becomes vanity"): each beside the developer's
+    // STAFF-PANEL1 (PIN MOVED, as the owner asked): each beside the developer's
     assert.deepEqual(titlesHeld(p, ENV).slice(0, 2), ['developer', 'shadowfang'], `${h}: the title, by name, case-folded`);   // ADMIN-ALL (PIN MOVED): an Admin holds every cosmetic after these (test/server/admin_all.test.js) - the head is what is earned
     assert.ok(['dev', 'shadowfang'].every((g) => glyphsOf(p, ENV, LATER).includes(g)), 'and its glyph');   // ADMIN-ALL (PIN MOVED): an Admin holds every paint glyph (test/server/admin_all.test.js); PIN MOVED (STOREFRONT): in GLYPHS' order, the mask's (identityToken.js glyphsInOrder), so no longer at the head
     assert.deepEqual(aurasHeld(p, ENV).slice(0, 2), ['shadowcloak', 'seraphwings'], 'and the cloak, first');   // ADMIN-ALL (PIN MOVED): an Admin holds every aura after these (test/server/admin_all.test.js)
