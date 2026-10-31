@@ -89,8 +89,21 @@ circle's damage or by activity in three of its five halls (`egActiveIn`) - gets 
 by pressing the way home. The rest holds the count (`EG_REST_MS`).
 
 **Every hall pays.** A cache on every trial's end plate: a Vestige shard, a Spire Tonic, a Cantrip (up to three held:
-Sight, Stillness, Mending, Severance, Long Step) or lumen for the Sutler. Two restoring potions a hall
-(`src/systems/eliteGates/spireKit.js`).
+Sight, Stillness, Mending, Severance, Long Step) or lumen for the Sutler.
+
+**The potion clock** (`src/combat/pvpPotions.js`, registered by `src/systems/eliteGates/spireKit.js`). Every potion is
+drunk, but each kind (health, magicka, other) waits `PVP_POTION_MS` (15 s) after the last of its kind. A bottle lands
+whole, so it counts as every kind its effects are (`potionKindsOf`). A refused bottle is kept and the pip says the wait.
+A Spire Tonic stands outside the clock. A health bottle is told to the room (`pot`), which believes at most a Heal
+True's heal at the member's level once in its own 15 s (`src/net/eliteGates/egBrain.js` `egPotion`).
+
+**The kit's might** (`src/net/kitMight.js` `kitMightOf`, `src/net/mightLaw.js`). The account service's judge reads what
+the lawful kit worn at once can add to one blow or one spell, in whole per cent from 100 to `MIGHT_MOST` (1000), and the
+mint signs it (`mg`). The relay grows a member's purse (depth, rate and one-blow cap) by `mg / 100` beside the Vestiges'
+factor, and the member's share of every body's health by the might's square root (`src/net/eliteGates/egMight.js`
+`EG_MIGHT_HEALTH_EXP`). A geared company lands its real numbers and kills faster. Receipts judge damage at the
+reference (`egRefDealt`), so a bare member of a geared company earns the same. A character with no signed might lands
+as one of none.
 
 **Depth.** Depth adds decrees, kinds, pieces, waves and strata; it never shortens a wind-up, a piece's timing or a
 crumble. The wall is the count and the last word, not a multiplier; a Court in progress may finish.
@@ -110,13 +123,14 @@ and the Deepest Redoubts, all time. Each bracket's top `EG_CHAMPIONS_TOP` hold S
 The herald (`src/net/eliteGates/egHerald.js`) posts firsts.
 
 **Integrity.** Every blow on a lord or the legion goes through the gate's hand and purse, by the level claim times the
-Vestiges' capped factor, from a pose on the current fight floor; the striker's screen shows what the room says landed.
-The lords' blows are judged on members' poses (`src/net/bossRef.js`). A span crossing is proven by its route
-(`src/net/eliteGates/egRouteProof.js`); the relay believes no member faster than the fastest build runs. The room is
-durable across restarts (`src/net/eliteGates/egDurable.js`).
+Vestiges' capped factor and the kit's signed might, from a pose on the current fight floor; the striker's screen shows
+what the room says landed. The lords' blows are judged on members' poses (`src/net/bossRef.js`). A span crossing is
+proven by its route (`src/net/eliteGates/egRouteProof.js`); the relay believes no member faster than the fastest
+build runs. The room is durable across restarts (`src/net/eliteGates/egDurable.js`).
 
 **The made level's rules** (`src/systems/madeLevel.js`, row `spire`). No save, rest, automap, Mark, Recall, Portal Stone or
-companions; regeneration held; potions counted; no Levitate or Slowfall.
+companions; regeneration held; potions timed (`potions: 'timed'`); no Levitate or Slowfall, and their bottles are
+refused too.
 
 **Readable by everyone.** Five lights with five meanings: gold the way and safety, Dagon red his blows (every Spire
 telegraph line is `TELEGRAPH_EDGE_DAGON`), Battlemage blue yours, white the place's timed hazard, and the band's own
@@ -133,6 +147,8 @@ are `src/systems/eliteGates/egScore.js` and `src/scenes/eliteGates/egAir.js`.
 - Nothing gets faster with depth (Mac).
 - Run-only powers: yes, capped; death saves recover only at a Redoubt (Mac left it to the record).
 - Every hall pays something; none of it outlives the breach.
+- Potions are allowed, each kind on its own cooldown (the owner).
+- Gear counts: a member's purse grows with its kit (the owner).
 - The chance, not the promise: rewards pay once a week a Redoubt.
 - Lords and champions are Daggerfall sprites drawn oversized, never models (Mac).
 - Lore: the Battlespire's fall in 3E 398 is canon; the torn halls the Kyn hold as a proving ground are the port's own.
@@ -141,8 +157,8 @@ are `src/systems/eliteGates/egScore.js` and `src/scenes/eliteGates/egAir.js`.
 
 Daggerfall has no Elite Breach, no torn halls and no other players; none of this is a DFU member (Ledger A,
 ELITE-GATES). The departures inside: Resurrect refused, Levitate and Slowfall banned, a technique's flight refused on
-traversal ground, Stendarr's AvoidDeath refused, two potions a hall, a jump buffer and a late press, and no death
-penalty inside.
+traversal ground, Stendarr's AvoidDeath refused, a 15-second clock on each kind of potion, a jump buffer and a late
+press, and no death penalty inside.
 
 ## Code and tests
 

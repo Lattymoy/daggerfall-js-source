@@ -36,9 +36,15 @@ shared with the Overworld, `playersOnMaps`) hides other players. Kinds the curre
 
 **Tamriel.** The world sheet zooms out past the Bay onto the whole continent (`src/ui/tamrielInk.js`, Features
 `tamriel-map`, `tamrielMapOn`). Every mark reader reads one box (`_marksBox`: the continent's frame when shown, else
-the Bay's). Waypoints stand anywhere on the world grid. The Find box lists every place past the Bay while the continent
-shows (`tamrielFindRows`), found or not, and a pick there is a journey as on the Bay. Ports past the Bay carry their
-anchor, and the Ports filter works there too.
+the Bay's). Waypoints stand anywhere on the world grid. Ports past the Bay carry their anchor, and the Ports filter
+works there too.
+
+**Find past the Bay.** While the continent shows, the Find box lists every listed place past the Bay
+(`tamrielFindRows`), found or not, and a pick there is a journey as on the Bay. The countryside's places and the lairs
+are rolled, not listed, so the box finds one once the player has found it, as the Bay's box finds a discovered place
+(`src/systems/discovery.js` `foundMadePlaces`, `tamrielFoundRows`). A place found with the sheet open is in the box at
+once. One name can stand for many places past the Bay: they come nearest first, each with its way from the player
+("8.2 km E", `src/systems/eventBoard.js` `eventWay`).
 
 **Scale.** `src/ui/map/mapScale.js` `mapUiScale`: Auto is the screen's height over 1080, held to 1 to 2; the player
 may set 0.75 to 2 ("Map text and icons", pref `mapScale`).
@@ -84,6 +90,7 @@ Travel Options' additions. The classic skin keeps DFU's window and Travel Option
 - `test/ui/eventtip.test.js` - event hover cards
 - `test/ui/mappan.test.js` - the marks layer
 - `test/ui/bayleft_marks.test.js`, `test/ui/bayleft_find.test.js` - marks, waypoints and Find past the Bay
+- `test/ui/findfound.test.js` - found places past the Bay in the Find box, and their order
 - `test/combat/map3_heldpose.test.js` - the held pose and weapon gate
 - `test/ui/rpt1026_client_capture.test.js` - pointer capture
 - `tools/heldMapProbe.mjs`, `tools/heldMapArtProbe.mjs` - Chromium probe and the sprite's measurements

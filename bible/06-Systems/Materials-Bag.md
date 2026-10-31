@@ -75,8 +75,9 @@ Two tabs mint a kept harvest once.
   the guild Stores or the market; a lie about `held` can only cut the count, never raise it.
 - Counting looted or bought units toward a writ, and letting the count travel with a trade, are the owner's calls,
   not made.
-- Hosts: `world.js` holds the book's hands, the Stores page and the save; `exterior.js` and `dungeonContext.js` show
-  the bag pane; `worldModes.js`'s potion maker reads the bag.
+- Hosts: `world.js` holds the book's hands and the save, and wires the Stores page through
+  `src/scenes/professionsHost.js` `createProfessionsHost` (its Put in asks `depositMany` with one plan); `exterior.js`
+  and `dungeonContext.js` show the bag pane; `worldModes.js`'s potion maker reads the bag.
 
 ## Code and tests
 
