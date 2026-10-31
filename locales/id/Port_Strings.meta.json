@@ -31999,6 +31999,111 @@
   "tr": "0eb8f76c2628",
   "by": "claude-in-session"
  },
+ "portal.book.close": {
+  "en": "3305e25fb67b",
+  "tr": "0e9c6801fbb9",
+  "by": "claude-in-session"
+ },
+ "portal.book.empty": {
+  "en": "b0159deb9f25",
+  "tr": "76fc757d2416",
+  "by": "claude-in-session"
+ },
+ "portal.book.forget": {
+  "en": "4a0da9b0a114",
+  "tr": "e08bbffa1c35",
+  "by": "claude-in-session"
+ },
+ "portal.book.forgetWhich": {
+  "en": "1d790f9d7695",
+  "tr": "69dca3a75e01",
+  "by": "claude-in-session"
+ },
+ "portal.book.forgot": {
+  "en": "42e097638814",
+  "tr": "d008b00c8220",
+  "by": "claude-in-session"
+ },
+ "portal.book.friend": {
+  "en": "d72d8e7c8a4b",
+  "tr": "0ab73a916db7",
+  "by": "claude-in-session"
+ },
+ "portal.book.full": {
+  "en": "dcd52c78a7d1",
+  "tr": "8f19b534a0e6",
+  "by": "claude-in-session"
+ },
+ "portal.book.hall": {
+  "en": "8dc319216de9",
+  "tr": "9744889b3d2e",
+  "by": "claude-in-session"
+ },
+ "portal.book.home": {
+  "en": "058e409f84de",
+  "tr": "c905fec89ed1",
+  "by": "claude-in-session"
+ },
+ "portal.book.indoors": {
+  "en": "fb00cb79a345",
+  "tr": "b82d6158163f",
+  "by": "claude-in-session"
+ },
+ "portal.book.keep": {
+  "en": "218965319562",
+  "tr": "05ba66bf29b5",
+  "by": "claude-in-session"
+ },
+ "portal.book.kept": {
+  "en": "0157543ff62d",
+  "tr": "03edccf14fd1",
+  "by": "claude-in-session"
+ },
+ "portal.book.line1": {
+  "en": "f10396e24f50",
+  "tr": "b49fccdeb5d3",
+  "by": "claude-in-session"
+ },
+ "portal.book.line2": {
+  "en": "22059361d3a5",
+  "tr": "d510234c63fd",
+  "by": "claude-in-session"
+ },
+ "portal.book.line3": {
+  "en": "a31518fb9807",
+  "tr": "9eadbabb33a8",
+  "by": "claude-in-session"
+ },
+ "portal.book.moved": {
+  "en": "fe69a85e9617",
+  "tr": "d173f10496c1",
+  "by": "claude-in-session"
+ },
+ "portal.book.myHall": {
+  "en": "547600fccbfc",
+  "tr": "2dea1ba98fce",
+  "by": "claude-in-session"
+ },
+ "portal.book.noHouse": {
+  "en": "95db298655df",
+  "tr": "b46e7132e020",
+  "by": "claude-in-session"
+ },
+ "portal.book.noStone": {
+  "en": "50469da898c5",
+  "tr": "39299a16b19a",
+  "by": "claude-in-session"
+ },
+ "portal.book.stones": {
+  "en": "20f010a3904c",
+  "tr": "1fc430fa653f",
+  "by": "claude-in-session"
+ },
+ "portal.book.title": {
+  "en": "6e3b089578bb",
+  "tr": "e23604aeb50e",
+  "by": "claude-in-session"
+ },
  "portal.buy.ask": {
   "en": "da8ce194bdac",
   "tr": "513372e74bf3",

@@ -1248,6 +1248,7 @@ import { createWildSeizeHost } from './wildSeizeHost.js';   // HOST-SPLIT
 import { createWildRejoin } from '../systems/wild/wildRejoin.js';   // WILD-REJOIN: a fall that outlives its page
 import { windowHoldsDungeon } from './windowWorld.js';   // RPT1026-FIGHTS (WINDOW-ONLINE): a dungeon's window holds its foes offline alone
 import { createPortalStoneHost } from './portalStoneHost.js';   // HOST-SPLIT
+import { createPortalBookHost } from './portalBookHost.js'; import { isPortalBook } from '../systems/gate/gateSpoils.js';   // PORTAL-BOOK: the kept house doors
 import { createWildDropHost } from './wildDropHost.js';   // HOST-SPLIT
 import { createWildInsureBook, setWildInsureBook } from '../net/wild/wildInsureBook.js';   // WILD-INSURE: my policies on my gear
 import { createWildGrace } from '../systems/wild/wildGrace.js';   // ZONE-GRACE: safe passage, as the referee says it
@@ -12360,7 +12361,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const packDoors = {
     openBook: openBookHook,   // B1: the use-mode book arm
     placeCamp: (item, list) => camps.placeItem(item, list ?? playerEntity.items ?? []),   // SURV3: Camping Equipment and the Campfire Kit are placed on this host's ground - AUDIT SURV-TIERS: off the list they were used from (the pack or the wagon)
-    openPortal: (item, list) => openPortalStone(item, list),   // PORTAL1: a Portal Stone - the travel map in teleport mode, a portal where the player stands (a building's pack is this one too, and says why not)
+    openPortal: (item, list) => (isPortalBook(item) ? portalBook.open() : openPortalStone(item, list)),   // PORTAL-BOOK: the book's window; PORTAL1: a Portal Stone - the travel map in teleport mode, a portal where the player stands (a building's pack is this one too, and says why not)
     // U42: USING the Spellbook item opens the book
     // (DaggerfallInventoryWindow.cs:1748-1764). showOverlay REPLACES
     // the slot, so this bypasses toggleSpellbook's already-open guard
@@ -15652,7 +15653,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     win?.activateTeleportationTravel();
     return win;
   }
-  const { openPortalStone, portalArrive, portalHoldNow } = createPortalStoneHost({   // HOST-SPLIT: src/scenes/portalStoneHost.js
+  const { openPortalStone, portalArrive, portalHoldNow, openToSpot } = createPortalStoneHost({   // HOST-SPLIT: src/scenes/portalStoneHost.js
     _mode, buildTravelMapWindow, cam, cityGuards, collider, csaBoatUnderMe, duelEnemyNear, exteriorFoes,
     hccRuntimeOn, navalHostileNear, player, playerTravelPixel, portalGates, teleportTo, townTalk, walkMode,
     worldMoveBusy,
@@ -15664,6 +15665,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     get travelView() { return travelView; },
     get veilRefused() { return veilRefused; },
     get wildTravelGate() { return wildTravelGate; },   // PORTAL-BAY: the teleport's gate, asked at the pick and the step
+    get modes() { return modes; }, campToScene: (p) => campToScene(p),   // PORTAL-BOOK: the landing at a kept door
+  });
+  const portalBook = createPortalBookHost({   // PORTAL-BOOK (scenes/portalBookHost.js): the Portal Book's window
+    townTalk, playerEntity, mode: _mode, house: () => modes?.portalBookHere?.() ?? null, pixel: () => playerTravelPixel(),
+    townName: (px) => portalGates.destOf(px.x, px.y)?.name ?? null, campToWire: (p) => campToWire(p),
+    openToSpot: (spot) => openToSpot(spot), saved: () => saveSoon.changed(),
   });
 
   // ── TO1: TRAVEL OPTIONS ────────────────────────────────────────────
