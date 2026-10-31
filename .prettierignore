@@ -789,11 +789,7 @@
 !/src/systems/armorMaterials.js
 !/src/systems/artifactEffects.js
 !/src/systems/automap/
-/src/systems/automap/*
-!/src/systems/automap/automap.js
-!/src/systems/automap/automapFloors.js
-!/src/systems/automap/automapModel.js
-!/src/systems/automap/automapPick.js
+/src/systems/automap/*/
 !/src/systems/ayleidStones.js
 !/src/systems/beltLantern.js
 !/src/systems/betterAmbience.js
