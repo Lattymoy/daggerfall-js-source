@@ -281,6 +281,25 @@ test('LITANY-STAND: the plate a member stands on is in every word and judged onc
   assert.deepEqual(say(led, 'B', word({ st: 0 }), t += 6_000), [{ k: 'work' }, { k: 'lit', j: 0, next: 1 }], 'each member their own');
 });
 
+test('AUDIT LITANY-STAND: a party - a member who stays on a lit plate through another\'s wrong one has it lit again as the work begins, and the next plate lights under whoever stands there; a wrong plate stood on through the show is not judged until stepped onto (mutants: stayed plates never heard; stayed plates always judged)', () => {
+  const led = newDelveLedger(site({ kind: 'litany', tier: 'elite' }), 'A', 1, T0);
+  const order = led.order;
+  say(led, 'A', word({ st: order[0] }), T0);
+  say(led, 'B', word({ st: order[1] }), T0 + 1_000);
+  assert.deepEqual(say(led, 'A', word({ st: order[0] }), T0 + 6_000), [{ k: 'work' }, { k: 'lit', j: order[0], next: 1 }]);
+  assert.deepEqual(say(led, 'B', word({ st: order[1] }), T0 + 6_100), [{ k: 'lit', j: order[1], next: 2 }], 'stood on through the show, lit when its turn comes');
+  let t = T0 + 6_200;
+  assert.deepEqual(say(led, 'C', word({ st: order[3] }), t), [{ k: 'wrong', j: order[3] }, { k: 'wake', n: LITANY_WAKE }, { k: 'show', order }], 'C out of turn');
+  assert.deepEqual(say(led, 'A', word({ st: order[0] }), t += 6_000), [{ k: 'work' }, { k: 'lit', j: order[0], next: 1 }], 'A never moved: lit again');
+  assert.deepEqual(say(led, 'B', word({ st: order[1] }), t += 100), [{ k: 'lit', j: order[1], next: 2 }], 'B never moved: lit in its turn');
+  assert.deepEqual(say(led, 'C', word({ st: order[3] }), t += 100), [], 'C never moved: no second wrong, no more foes');
+  assert.deepEqual(say(led, 'D', word({ st: order[4] }), t += 100), [{ k: 'wrong', j: order[4] }, { k: 'wake', n: LITANY_WAKE }, { k: 'show', order }], 'a step onto a wrong plate is judged');
+  assert.deepEqual(say(led, 'E', word({ st: order[2] }), t += 2_000), [], 'E steps onto a plate as the order shows');
+  assert.deepEqual(say(led, 'D', word({ st: order[4] }), t += 4_000), [{ k: 'work' }], 'D stood on through the show: not judged again');
+  assert.deepEqual(say(led, 'E', word({ st: order[2] }), t += 100), [], 'E still on it, out of turn, as the work begins: nothing');
+  assert.equal(led.next, 0);
+});
+
 test('DLV1 THE LITANY IN AN ELITE DUNGEON: five plates, a wrong one wakes two foes; a party silent 60 s lets it go, and the next word shows it from the start (mutants: the wake in every dungeon; the let-go window; a let-go Litany keeping its lit plates)', () => {
   const led = newDelveLedger(site({ kind: 'litany', tier: 'elite' }), 'A', 1, T0);
   assert.equal(led.k, 5);

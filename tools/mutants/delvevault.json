@@ -88,5 +88,23 @@
     "tests": [
       "test/systems/delve/delvevault.test.js"
     ]
+  },
+  {
+    "name": "AUDIT-DELVE-VAULT-piece-never-marked",
+    "file": "src/systems/delve/delveVault.js",
+    "old": "    piece.untaken = true;\n",
+    "new": "",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-DELVE-VAULT-online-unstamped",
+    "file": "src/systems/delve/delveVault.js",
+    "old": "    stampWonWeapons([piece], 1, { rolls });\n",
+    "new": "",
+    "tests": [
+      "test/systems/delve/delvevault.test.js"
+    ]
   }
 ]

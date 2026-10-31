@@ -74,8 +74,8 @@
   {
     "name": "DLV2-step-said-every-frame",
     "file": "src/net/delve/delveLaw.js",
-    "old": "if (led.p !== DP.work || on < 0 || on === rec.pl) return ev;",
-    "new": "if (led.p !== DP.work || on < 0) return ev;",
+    "old": "const stayed = on >= 0 && on === rec.pl;",
+    "new": "const stayed = false;",
     "tests": [
       "test/scenes/delve/dlv2_host.test.js"
     ]

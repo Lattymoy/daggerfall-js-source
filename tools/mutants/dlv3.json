@@ -2,8 +2,8 @@
   {
     "name": "DLV3-wire-relay-min-moved",
     "file": "src/net/wire.js",
-    "old": "export const DELVE_RELAY_MIN = 292;",
-    "new": "export const DELVE_RELAY_MIN = 291;",
+    "old": "export const DELVE_RELAY_MIN = 298;",
+    "new": "export const DELVE_RELAY_MIN = 297;",
     "tests": [
       "test/net/delve/dlv3_relay.test.js"
     ]

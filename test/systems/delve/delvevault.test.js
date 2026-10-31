@@ -13,6 +13,8 @@ import { pileSource, dungeonRarityTier, dungeonFamily } from '../../../src/syste
 import { ELITE_LOOT_QUALITY_MULT } from '../../../src/world/spawnedDungeons.js';
 import { DUNGEON_TYPES } from '../../../src/formats/mapsFile.js';
 import { setPref } from '../../../src/systems/uiPrefs.js';
+import { noteTaken, droughtOf, _setDroughtForTests } from '../../../src/systems/loot/lootDrought.js';
+import { setSigilOnline } from '../../../src/systems/sigil/sigil.js';
 
 const LADDER = ['magic', 'rare', 'legendary'];
 
@@ -72,4 +74,21 @@ test('DELVE-VAULT THE HOST\'S DOOR: the host rolls my vault - offline at the win
   const host = readFileSync(new URL('../../../src/scenes/delve/delveHost.js', import.meta.url), 'utf8');
   assert.match(host, /const myVault = \(\) => rollVault\(rollPile, lv\(\), vaultSource\(location\?\.mapTableData\?\.dungeonType, tier === 'elite', lv\(\)\)\);/);
   assert.equal(host.match(/myVault\(\)/g).length, 2, 'the win\'s roll and the share\'s');
+});
+
+test('AUDIT DELVE-VAULT: the piece is a pile\'s piece to the drought - taken, a Legendary empties it - and online a weapon\'s sigil is rolled at the mint, as the pile\'s are (mutants: the piece never marked; online unstamped)', () => {
+  setPref('lootRarity', true);
+  const pieces = Array.from({ length: 300 }, (_, s) => vaultPiece(30, vaultSource(DUNGEON_TYPES.Crypt, false, 30), seededRng(s + 1)));
+  assert.ok(pieces.every((p) => p.untaken === true), 'marked, as a source door marks its pieces');
+  const leg = pieces.find((p) => p.rarity === 'legendary');
+  _setDroughtForTests(60);
+  assert.equal(noteTaken(leg), true);
+  assert.equal(droughtOf(), 0, 'a Legendary from a vault empties the drought');
+  assert.equal(pieces.filter((p) => p.sigil).length, 0, 'offline: no sigil');
+  setSigilOnline(true);
+  try {
+    const online = Array.from({ length: 300 }, (_, s) => vaultPiece(30, vaultSource(DUNGEON_TYPES.Crypt, false, 30), seededRng(s + 1)));
+    assert.ok(online.some((p) => p.group === 'Weapons' && p.sigil), 'online: a weapon\'s sigil');
+    assert.ok(online.every((p) => !p.sigil || p.group === 'Weapons' || p.sigil.set), 'only what the pile\'s law stamps');
+  } finally { setSigilOnline(false); _setDroughtForTests(0); }
 });

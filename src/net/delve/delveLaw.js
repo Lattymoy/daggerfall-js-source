@@ -477,14 +477,15 @@ function relicBlows(led, rec, w, nowMs, ev) {
   led.lt = Math.max(0, led.lt - credit * VIGIL_BLOW_LIGHT);
   if (led.lt <= 0) reset(led, 'failed', ev, false, { dark: true, rest: VIGIL_REST_MS });
 }
-/** LITANY-STAND (2026-10-31): `st` is the plate a member stands on, said in every word. It is judged once, and again only
- *  after they step off it (`rec.pl` the plate judged). A plate stood on through the show counts when the work begins, and
- *  a word the room's pose of them does not bear out yet counts on the next one: a step said once was lost online. */
+/** LITANY-STAND (2026-10-31): `st` is the plate a member stands on, said in every word. A step onto it is judged; while
+ *  they stay (`rec.pl`, kept through a showing) it is heard again only when it would light - so a wrong plate stood on
+ *  wakes nothing twice, and the next plate lights under whoever stands there. A word the room's pose of them does not
+ *  bear out yet counts on the next one: a step said once was lost online. */
 function litanyWord(led, rec, w, plate, nowMs, ev) {
   const on = Number.isInteger(w.st) && w.st === plate && plate >= 0 && plate < led.k ? plate : -1;
-  if (on !== rec.pl) rec.pl = -1;
-  if (led.p !== DP.work || on < 0 || on === rec.pl) return ev;
+  const stayed = on >= 0 && on === rec.pl;
   rec.pl = on;
+  if (led.p !== DP.work || on < 0 || (stayed && on !== led.order[led.next])) return ev;
   if (plate === led.order[led.next]) {
     led.next++; ev.push({ k: 'lit', j: plate, next: led.next });
     if (led.next >= led.k) win(led, nowMs, ev);

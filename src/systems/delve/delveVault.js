@@ -7,7 +7,7 @@
 // (Ledger A: DELVE II).
 import { goldStack } from '../inventory.js';
 import { spoilsBase, magicOrBetter } from '../gate/gateSpoils.js';
-import { applyRarity, lastPass, techniquePass, pileSource, dungeonRarityTier, dungeonFamily, lootRarityOn } from '../loot/lootRarity.js';
+import { applyRarity, lastPass, techniquePass, stampWonWeapons, pileSource, dungeonRarityTier, dungeonFamily, lootRarityOn } from '../loot/lootRarity.js';
 import { ELITE_LOOT_QUALITY_MULT } from '../../world/spawnedDungeons.js';
 
 /** Gold a level of the opener's, before the roll's variation (0.8 to 1.2 of it): half a raided town's thanks. */
@@ -22,13 +22,16 @@ export function vaultSource(dungeonType, elite, level) {
 }
 
 /** One known piece - a weapon, a piece of armour or a jewel, never arrows - Magic or better at `source` (the ladder off,
- *  a plain one). @param {number} level @param {any} source @param {() => number} rolls */
+ *  a plain one). As a pile's piece it counts for the drought when taken, and online a weapon's sigil is rolled at the mint;
+ *  as the raids' spoils, no curse, socket, finder or luck. @param {number} level @param {any} source @param {() => number} rolls */
 export function vaultPiece(level, source, rolls = Math.random) {
   const piece = spoilsBase(levelOf(level), rolls);
   if (lootRarityOn()) {
     applyRarity(piece, magicOrBetter(rolls, source), rolls, null, { family: source?.family ?? null });
     lastPass([piece], rolls);
     techniquePass([piece], rolls);
+    piece.untaken = true;
+    stampWonWeapons([piece], 1, { rolls });
   }
   piece.isIdentified = true;
   return piece;

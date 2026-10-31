@@ -141,9 +141,8 @@ ends the attempt: its foes crumble wherever they are, nothing is earned, and the
 
 - **THE LITANY** (runes in order - the Examination's law). Four plates 2.5 m round the disc's heart, five in an
   Elite dungeon. They light one at a time, a second each, with a numeral and a chime, then go dark. Step on each in
-  that order (within 1.2 m). A plate counts while a member stands on it, once until they step off: one stood on as the
-  order plays counts when it ends (LITANY-STAND, section 16). A lit plate may be stood on again; a wrong one darkens all
-  and the order plays again. Untimed; in an Elite dungeon a wrong plate also wakes two foes of the table. A party silent at the site for 60 s lets
+  that order (within 1.2 m). A plate stood on counts once; it counts again only when it would light (LITANY-STAND,
+  section 16). A lit plate may be stood on again; a wrong one darkens all and the order plays again. Untimed; in an Elite dungeon a wrong plate also wakes two foes of the table. A party silent at the site for 60 s lets
   it go.
 The Brazier Rite and the Seals rise 3 s after the first step in, and count the party in the ward then.
 
@@ -176,7 +175,8 @@ No puzzle hurts a player for a wrong answer, and none is the clock: no dial, no 
 - Its roll is `rollPileItems`: the dungeon's tables at its type, its Elite odds, LOOT-GATE's rarity. With it, since
   DELVE-VAULT (section 16): one known piece Magic or better (a weapon, armour or a jewel), laddered at the dungeon's own
   pile source and the opener's level, and gold, 40 a level (0.8 to 1.2 of it). `systems/delve/delveVault.js`; each
-  earner's share is rolled on its own machine.
+  earner's share is rolled on its own machine. As a pile's piece it counts for the drought and online a weapon's sigil
+  is rolled; as the raids' spoils, it takes no curse, socket, finder or the opener's luck.
 - One vault a site a respawn (law 8). Online, each earner opens its own share once.
 - POWER-CEILING (`05-Combat/Power-Ceiling.md`): nothing here is a new line, rung or band.
   The pile and the piece are laddered by `applyRarity` at rungs `test/combat/powerceiling_walk.test.js` walks. Patch
@@ -212,7 +212,7 @@ session's door (`net/online.js` sendDelve), the one link (`net/delve/delveLink.j
 - **THE VAULT.** Won, the ledger names its earners: the owning party's members who stood at the site in its last 15 s.
   Each asks the room for its share once; the share is rolled on the earner's machine when the room says yes.
 - **INSTANCES.** An instanced dungeon (`Instances.md`) is a room like any other: the ledger lives in it.
-- `world292` (DELVE_RELAY_MIN; world284, world288 then world289 on its branch, renumbered past main at the merges): a page at an older relay stands no site online. Online a window does not hold the
+- `world292` (DELVE_RELAY_MIN; world284, world288 then world289 on its branch, renumbered past main at the merges): a page at an older relay stands no site online. DELVE_RELAY_MIN is `world298` since AUDIT LITANY-STAND (section 16). Online a window does not hold the
   world (WINDOW-ONLINE), and the encounters run on under it.
 
 Strangers in the room may fight a wave's foes (they are hostile to all) and earn nothing; they may not work another
@@ -308,7 +308,7 @@ foes. Online none stands until DLV3, and the row's note says so.
 | The count | each foe carries a stamp (`_delve`); a body that takes its place takes it (the Wabbajack's change, a rebuild in its slot); the pool is read once a frame - a kill is a foe downed (killed, executed, spared, put to flight), a foe removed by another hand is out of its wave and no kill |
 | The captain | an elite where elites stand (`elitesAllowed`), its boss traits the ledger's count (`giveBossTraits`); one gone without its fall stands again after 2 s; alive 5 minutes, it outlasts the ward |
 | An ended attempt | its living foes crumble (`removeLooseFoe`), wherever they are; one that stands after is taken back; the ward wakes again to a step back in |
-| The plates | shown a second each, a chime rising with the numeral; a step said once as a plate is stepped onto |
+| The plates | shown a second each, a chime rising with the numeral; a step said once as a plate is stepped onto (until LITANY-STAND, section 16) |
 | The marks | the gate's telegraph pass in its lit grammar (a bright line, a dark keyline, filled where live), under the frame's fog, kept and filled in place: the ward's ring and gates, the plates by their looks, the vault's seal |
 | The vault | Daggerfall's chest (41811), in the mesh list and the collider, offline from the first frame; its roll the dungeon's own `rollPileItems`, rolled once at the win; listed on the plaque, taken by quick loot, a find to the look round |
 | A save | in the dungeon's world record (the envelope keeps only what it names): the plan's hash and each won site's vault; a running attempt is never saved, and a load takes every living foe a site stood |
@@ -329,7 +329,7 @@ its state back. The row's note says a party wins an encounter together online.
 |---|---|
 | The frame | `dv`. From a page: `pl` its plan, `w` a word at a site, `a` an act, `x` a blow, `v` a vault's ask - 8 a second at most (the relay's bucket 16 deep). From the room: `dl` a site's state with my own part (`me`), `ev` what moved it, `v` a vault's answer, `pl?`, `no` |
 | The view | the room's state made a ledger-shaped view (`delveView`), so the looks read it as they read a ledger offline: each phase from 0 on its own clock, run on between states |
-| The word | every second near a site, at once when it changes: my screen's ward (`iw`), the plate I stand on where the room hears me (LITANY-STAND, section 16), the Vigil's blows on my machine |
+| The word | every second near a site, at once when it changes: my screen's ward (`iw`), the plate stepped (said a second while the room's pose catches up - it never did: LITANY-STAND, section 16), the Vigil's blows on my machine |
 | Acts and blows | said to the room, never folded at home; an act said again after 600 ms unmoved |
 | The machine | the room's word (`me.fm`); named mid-wave it stands the rest, named no more its own crumble |
 | The vault | an earner's press asks the room; its yes rolls the share on my machine (PARTY-LOOT's base) |
@@ -396,10 +396,13 @@ the same day: "the rewards for these are really really bad".
 **LITANY-STAND.** Online the page said a step once, on the frame its player reached a plate. The room judges a word at
 the pose it last heard, which is the frame before (WEIGH-POSE), so the player was not yet on the plate there and the
 step was lost. The word is said again a second later, when its one-second window had already closed. Offline, a plate
-walked onto while the order played was spent before the work began. Now every word says the plate its member stands on,
-read where the room hears them, and the law judges it once, and again only after they step off (`delveLaw.js`
-litanyWord, the account's `pl`). `world298`. The site may deploy first: an older relay judges every word's plate, so a
-member who stays on a wrong plate hears it again after each showing.
+walked onto while the order played was spent before the work began.
+
+Now every word says the plate its member stands on,
+read where the room hears them. The law judges a step onto a plate; a plate the member stays on is heard again only
+when it would light (`delveLaw.js` litanyWord, the account's `pl`). `world298`, and DELVE_RELAY_MIN with it: an older
+relay judges every word's plate, so an Elite Litany would wake two foes at each showing while a member stood on a wrong
+plate. Deploy the relay first.
 
 **DELVE-VAULT.** A vault was one treasure pile - often a few coins or an ingredient - for minutes of work. It now holds
 one known piece Magic or better, the pile, and gold at 40 a level (0.8 to 1.2 of it, half a raided town's thanks). The
@@ -409,9 +412,11 @@ at the opener's level. With the ladder off it comes plain (`systems/delve/delveV
 
 | Pin | What |
 |---|---|
-| `test/net/delve/dlv1_law.test.js` LITANY-STAND | stood on through the show, lit as the work begins; a word the room does not bear out counts on the next; a wrong plate stood on is judged once until stepped off |
+| `test/net/delve/dlv1_law.test.js` LITANY-STAND, AUDIT LITANY-STAND | stood on through the show, lit as the work begins; a word the room does not bear out counts on the next; a wrong plate stood on is judged once until stepped off; a party through another's wrong plate |
 | `test/scenes/delve/dlv2_host.test.js` LITANY-STAND OFFLINE | the same in the host, offline |
 | `test/scenes/delve/dlv3_e2e.test.js` LITANY-STAND E2E | the real host on the real Room, the room one frame behind as the page is: won, the vault my share. On the old code the first plate never lit |
-| `test/systems/delve/delvevault.test.js` | the piece, the pile and the gold; the source; LOOT-GATE's hold on a young opener; the ladder off |
-| `tools/mutants/litanystand.json`, `tools/mutants/delvevault.json` | 15 mutants, all dead; five records of `dlv1`-`dlv3` re-aimed by content, and the two of the old vault's second roll and its gold floor retired with that law |
+| `test/systems/delve/delvevault.test.js` | the piece, the pile and the gold; the source; LOOT-GATE's hold on a young opener; the ladder off; the drought's mark and the online sigil |
+| `tools/mutants/litanystand.json`, `tools/mutants/delvevault.json` | 17 mutants, all dead; six records of `dlv1`-`dlv3` re-aimed by content, and the two of the old vault's second roll and its gold floor retired with that law |
 | Won in the real game | `tools/delveProbe.mjs` over the freeware's data, offline: The Agryn Prison's Litany, each plate lit as it was walked onto, 126 s, the vault 8 items; Bedard Laboratory's Hold (444 s, 4 items) and Seals (375 s, 5 items). No page error |
+
+AUDIT LITANY-STAND (2026-10-31) read the two commits cold: `01-Overview/audits/Audit-Delve-II.md` section I.

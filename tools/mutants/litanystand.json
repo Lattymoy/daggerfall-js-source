@@ -2,8 +2,8 @@
   {
     "name": "LITANY-STAND-judged-every-word",
     "file": "src/net/delve/delveLaw.js",
-    "old": "if (led.p !== DP.work || on < 0 || on === rec.pl) return ev;",
-    "new": "if (led.p !== DP.work || on < 0) return ev;",
+    "old": "(stayed && on !== led.order[led.next])",
+    "new": "false",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -11,17 +11,17 @@
   {
     "name": "LITANY-STAND-never-stepped-off",
     "file": "src/net/delve/delveLaw.js",
-    "old": "  if (on !== rec.pl) rec.pl = -1;\n",
-    "new": "",
+    "old": "  rec.pl = on;\n  if (led.p !== DP.work",
+    "new": "  if (on >= 0) rec.pl = on;\n  if (led.p !== DP.work",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
   },
   {
-    "name": "LITANY-STAND-show-takes-the-step",
+    "name": "LITANY-STAND-stayed-never-heard",
     "file": "src/net/delve/delveLaw.js",
-    "old": "  if (on !== rec.pl) rec.pl = -1;\n",
-    "new": "  if (on !== rec.pl) rec.pl = led.p === DP.show ? on : -1;\n",
+    "old": "(stayed && on !== led.order[led.next])",
+    "new": "stayed",
     "tests": [
       "test/net/delve/dlv1_law.test.js",
       "test/scenes/delve/dlv2_host.test.js"
