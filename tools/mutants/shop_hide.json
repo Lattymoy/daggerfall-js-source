@@ -19,5 +19,19 @@
     "old": "    sec(\"shop\", \"Shop\", [\"port:shopHidden\"]),   // SHOP-HIDE\n",
     "new": "",
     "tests": ["test/ui/shop_hide.test.js"]
+  },
+  {
+    "name": "SHOP-REREAD-the-gem-reads-nothing",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "shopFocusIn = true; shopReread(shopFlow); render(); }",
+    "new": "shopFocusIn = true; render(); }",
+    "tests": ["test/ui/shop_hide.test.js"]
+  },
+  {
+    "name": "SHOP-REREAD-the-stage-unread",
+    "file": "src/ui/enhanced/enhancedShop.js",
+    "old": "  if (fl?.stage !== 'in' || typeof fl.refresh !== 'function') return false;",
+    "new": "  if (typeof fl?.refresh !== 'function') return false;",
+    "tests": ["test/ui/shop_hide.test.js"]
   }
 ]

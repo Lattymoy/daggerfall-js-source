@@ -7,6 +7,8 @@
 // arms carry the key there; world.js and exterior.js (the street) stand none. Not a DFU member. Ledger A (AURUM-CACHES).
 import { aurumCacheDungeonKey, aurumCacheIdOk, aurumCacheSpotOf, AURUM_CACHE_AURUM } from '../net/aurumCacheLaw.js';
 import { AURUM_COFFER_ARCHIVE, AURUM_COFFER_ART, AURUM_COFFER_SIZE, registerAurumCofferArt } from '../world/aurumCofferArt.js';
+import { AURUM_COFFER_MODELS } from '../world/chestModel.js';
+import { trs } from '../world/mat4.js';
 import { addVendorTextures } from '../systems/textureReplacement.js';
 import { accountAurumCache, accountRefusalText, storedSession } from '../net/accountClient.js';
 import { cacheProofFor } from '../net/cacheProof.js';
@@ -136,6 +138,14 @@ function footBeside(/** @type {any} */ pile, /** @type {number} */ bearing, /** 
 const walled = (/** @type {any} */ collider, /** @type {number[]} */ f) => Number.isFinite(collider.raycast([f[0], f[1] + 0.02, f[2]], UP, COFFER_H, MESH_ONLY))
   || [AURUM_CACHE_SHIN_M, AURUM_CACHE_KNEE_M].some((h) => EIGHT.some((d) => Number.isFinite(collider.raycast([f[0], f[1] + h, f[2]], d, AURUM_CACHE_SIDE_M, MESH_ONLY))));
 
+/** CHEST3D: the coffer's facing (degrees about up, mat4.js trs's): its front away from the pile it stands beside, the
+ *  nearest - every client the same. Pure. */
+export function aurumCofferYaw(/** @type {{ pos: number[] }[]} */ piles, /** @type {number[]} */ foot) {
+  let near = null, nd = Infinity;
+  for (const p of piles ?? []) { const d = (p.pos[0] - foot[0]) ** 2 + (p.pos[2] - foot[2]) ** 2; if (d < nd) { nd = d; near = p; } }
+  return near ? (Math.atan2(foot[0] - near.pos[0], foot[2] - near.pos[2]) * 180) / Math.PI : 0;
+}
+
 /** The ids an account emptied, as this device keeps them. */
 function keptIds(/** @type {any} */ storage, /** @type {string} */ account) {
   const v = noteOf(storage)[account];
@@ -189,10 +199,23 @@ export function standAurumCache(ctx, loc, piles, deps = {}) {
   const claim = deps.claim ?? accountAurumCache({ fetch: (/** @type {any} */ u, /** @type {any} */ i) => globalThis.fetch(u, i), storage }).claim;
   const say = (/** @type {string} */ line) => ctx.hudSay?.(line);
   let batch = /** @type {any} */ (null), stood = 0, asking = false, gone = false, away = false;
-  const coffer = { id, foot, open: kept.includes(id), press };
-  /** The billboard for the coffer as it is now - the last asked wins, an older one landing late is dropped. */
+  const coffer = { id, foot, open: kept.includes(id), yaw: aurumCofferYaw(piles, foot), press };
+  // CHEST3D (bible/03-World/Chests.md): the owner's chest in gold (world/chestModel.js), in the level's draws where the
+  // host hands the mesh door, its lid open once emptied, its front away from its pile; else its picture
+  const meshes = deps.meshes ?? null, draws = Array.isArray(ctx.dynamicDraws) ? ctx.dynamicDraws : null;
+  let entry = /** @type {any} */ (null);
+  const unstand = () => { if (entry && draws) { const k = draws.indexOf(entry); if (k >= 0) draws.splice(k, 1); } entry = null; if (batch) ctx.dropProfFlats?.(batch); batch = null; };
+  /** The coffer as it is now - the model, else its picture; the last asked wins, an older one landing late is dropped. */
   const stand = async () => {
     const mine = ++stood;
+    const gpu = meshes?.getGpuMesh && draws ? await Promise.resolve(meshes.getGpuMesh(coffer.open ? AURUM_COFFER_MODELS.open : AURUM_COFFER_MODELS.shut)).catch(() => null) : null;
+    if (gone || away || mine !== stood) return;
+    if (gpu && draws) {
+      unstand();
+      entry = { gpu, object: { matrix: trs(foot[0], foot[1], foot[2], 0, coffer.yaw, 0) } };
+      draws.push(entry);
+      return;
+    }
     const b = await ctx.standProfFlats?.(AURUM_COFFER_ARCHIVE, coffer.open ? AURUM_COFFER_ART.open : AURUM_COFFER_ART.shut, 1, [foot]);
     if (gone || away || mine !== stood) { if (b) ctx.dropProfFlats?.(b); return; }
     if (batch) ctx.dropProfFlats?.(batch);
@@ -200,7 +223,7 @@ export function standAurumCache(ctx, loc, piles, deps = {}) {
   };
   const opened = () => { coffer.open = true; stand(); };
   /** AUDIT-STOREFRONT III D4: a coffer the service does not know (a page and a service of two laws) goes. */
-  const takeAway = () => { away = true; stood++; if (batch) ctx.dropProfFlats?.(batch); batch = null; if (_last === coffer) _last = null; };
+  const takeAway = () => { away = true; stood++; unstand(); if (_last === coffer) _last = null; };
   /** A press on the coffer: an open one says it is empty; a shut one asks the service once - a second press while the
    *  ask is out is the same ask (ASYNC NEVER DROPS). */
   function press(/** @type {unknown} */ key) {
@@ -230,7 +253,7 @@ export function standAurumCache(ctx, loc, piles, deps = {}) {
   const target = Object.freeze([{ key: AURUM_CACHE_KEY, aabb: aurumCofferBox(foot), distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE }]);
   ctx.addActivationTargets?.(() => (away ? NO_TARGETS : target));
   ctx.addActivationNamer?.((/** @type {unknown} */ key) => (key === AURUM_CACHE_KEY && !away ? { title: coffer.open ? AURUM_CACHE_TEXT.emptyName() : AURUM_CACHE_TEXT.name() } : null));
-  ctx.addTeardown?.(() => { gone = true; if (_last === coffer) _last = null; });
+  ctx.addTeardown?.(() => { gone = true; unstand(); if (_last === coffer) _last = null; });
   stand();
   if (!coffer.open) say(AURUM_CACHE_TEXT.here());
   return (_last = coffer);

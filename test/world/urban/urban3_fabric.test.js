@@ -189,7 +189,7 @@ test('URBANIZER U3 the steps: planSteps yields between its fields, its main stre
   const it = planSteps(g, o);
   let r = it.next(), n = 0;
   while (!r.done) { n++; r = it.next(); }
-  assert.equal(n, 4);
+  assert.equal(n, 5);   // PIN MOVED (AUDIT PROP-GROUND): a breath before the street under the props (propGround)
   const p = fabricPlan(g, o);
   assert.deepEqual([...r.value.kind], [...p.kind]);
   assert.deepEqual(r.value.counts, p.counts);

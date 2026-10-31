@@ -118,7 +118,7 @@ export function createAuraHost(deps) {
   /** The pose of my own body as drawn - the rig's bones, the sprite's figure, or the rest pose pressed to my height. */
   function selfPose(/** @type {any} */ pose, /** @type {any} */ player, aloft = false) {
     if (aloft) { poseAtRest(pose, player.height / CAPSULE_HEIGHT, true); return; }   // AURA-ON-DRAGON: no body of mine drawn - the dragon's rider wears it
-    if (poseFromBones(mwViewBodyBones(ARMORY_BONES), pose)) return;
+    if (poseFromBones(mwViewBodyBones(ARMORY_BONES), pose, selfKit.torn >= 0)) return;   // WOLF-KIT: turned, the wolf's rig
     if (poseFromFigure(mwViewSpriteFigure(), pose)) return;
     poseAtRest(pose, player.height / CAPSULE_HEIGHT, !!player.riding);
   }
@@ -126,7 +126,7 @@ export function createAuraHost(deps) {
    *  the wearer where it is drawn, as the cape's auraCapeStep does), its sprite's figure, or the rest pose (a rider's saddled). */
   function peerPose(/** @type {string} */ id, /** @type {any} */ w, /** @type {any[]} */ layers) {
     const body = deps.bodies()?.bonesOf?.(id, ARMORY_BONES);
-    if (body && poseFromBones(body.bones, w.pose)) {
+    if (body && poseFromBones(body.bones, w.pose, w.torn >= 0)) {   // WOLF-KIT: a turned peer's wolf
       if (body.feet && Number.isFinite(body.yaw)) { w.at[0] = body.feet[0]; w.at[1] = body.feet[1]; w.at[2] = body.feet[2]; w.yaw = body.yaw; }
       return;
     }
