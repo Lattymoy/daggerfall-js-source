@@ -44,7 +44,9 @@ import { tamrielFit } from '../../world/tamriel/tamrielFrame.js';
 import { apartPastBay, apartExact } from './landPieces.js';   // FAST-REFUSAL: the land's pieces past the Bay; EXACT-PIECES: at the pixel
 import { roadLineLegs } from './roadLine.js';   // ROAD-FOLLOW: a road past the Bay walked and drawn on its curves
 import { ghostfenceShuts } from '../../world/tamriel/ghostfence.js';
-import { inEther, ETHER_BOX } from '../../world/ethericSea.js';   // AUDIT SEA PATHS PL-2: the Veil crossed by the crossing alone   // AUDIT RED-MOUNTAIN G2: the Ghostfence crossed only at Ghostgate
+import { inEther, ETHER_BOX } from '../../world/ethericSea.js';   // AUDIT SEA PATHS PL-2: the Veil crossed by the crossing alone
+import { SCALED_OCEAN_ELEVATION, BASE_HEIGHT_SCALE } from '../../world/terrain/terrainSampler.js';   // AUDIT SEA PATHS O4: the sea's own height
+import { mendSeaLegs } from './seaLegsMend.js';   // AUDIT SEA PATHS O4: a sailed leg round the kernel's land   // AUDIT RED-MOUNTAIN G2: the Ghostfence crossed only at Ghostgate
 
 /** What a step costs, by what it walks on. The open ground's 3.5 makes a road worth a detour of up to three and a half
  *  times its length - Travel Options' reckless (road) and cautious (open) multipliers are 1 and 0.8 by default, so the
@@ -57,6 +59,15 @@ export const ROUTE_COST = Object.freeze({ road: 1, track: 1.6, open: 3.5 });
  *  out of the water to save a step). A sailed step costs little more than a road's: the boat makes its way about as
  *  fast as the road walks, and the heuristic's road cost stays under every step (admissible). */
 export const SEA_COST = Object.freeze({ sea: 1.2, coast: 1.5, shore: 6 });
+/** AUDIT SEA PATHS O4: a byte over this stands over the sea in the ground the game builds (the sea at 3.4, the beach to
+ *  WATER_BYTE): in the Eltheric Ocean the planner reads it as land (routeGround) - an isle stood a pixel past its last land
+ *  byte, and every approach to it ran over its beach. */
+export const DEEP_BYTE = Math.floor(SCALED_OCEAN_ELEVATION / BASE_HEIGHT_SCALE);
+/** AUDIT SEA PATHS O4: the kernel's sea and the planner's water at a map pixel the host registers (setSeaLegKernel), with
+ *  which routeLegs mends a journey's sailed legs round the kernel's land (seaLegsMend.js); none: the legs as planned. */
+let _legKernel = null, _legWater = null;
+/** @param {((x: number, z: number) => boolean) | null} kernel @param {((px: number, py: number) => boolean) | null} waterPx */
+export function setSeaLegKernel(kernel, waterPx) { _legKernel = kernel; _legWater = waterPx; }
 /** OWS2: the kinds a crossing's steps are. */
 export const SEA_KINDS = Object.freeze(['sea', 'embark', 'landfall']);
 /** PASSAGE (AUDIT PASSAGE A1, bible/03-World/Passage.md): a booked voyage (`sea.voyage`) comes ashore only this near its
@@ -135,7 +146,7 @@ export function routeGround(climateAt, heightAt, waterByte, width = MAP_W, heigh
     let dry = dryBeyond.get(k);
     if (dry === undefined) {
       if (dryBeyond.size >= BEYOND_CACHE_MAX) dryBeyond.clear();
-      dry = !!beyond(x, y);
+      dry = !!beyond(x, y) || (inEther(x, y) && heightAt(x, y) > DEEP_BYTE);   // AUDIT SEA PATHS O4: an isle's beach its land
       dryBeyond.set(k, dry);
     }
     return dry;
@@ -442,6 +453,16 @@ export const PLAN_YIELD_CELLS = 1024;
  * @returns {Generator<void, ReturnType<typeof planRoute>, void>}
  */
 export function* planRouteSteps(from, to, opts = {}) {
+  if (from && to && inEther(from.x, from.y) !== inEther(to.x, to.y)) return null;   // AUDIT SEA PATHS PL-2 (below)
+  // AUDIT SEA PATHS O5: A BOAT TO HAND ASHORE WITH AN END PAST THE BAY'S TABLE also walks to the nearest shore and sails the
+  // sea lanes from it (shoreLanesSteps) - the lanes were asked from a helm alone, and the box's search with the boat spent
+  // its count (Rihad to Woodhearth, Wayrest to Northpoint: no plan). The cheaper of that and the box's plan is the plan.
+  const sea0 = opts.sea, offT = (/** @type {{ x: number, y: number }} */ p) => p.x < 0 || p.y < 0 || p.x >= (opts.width ?? MAP_W) || p.y >= (opts.height ?? MAP_H);
+  if ((opts.lanes ?? true) && from && to && sea0?.start === 'land' && sea0.goal !== 'sea' && !sea0.voyage && !opts.costLaw && (offT(from) || offT(to))) {
+    const viaLanes = yield* shoreLanesSteps(from, to, opts);
+    const boxed = yield* planRouteSteps(from, to, { ...opts, lanes: false });
+    return viaLanes && (!boxed || viaLanes.cost < boxed.cost) ? viaLanes : boxed;
+  }
   const { roads = null, tracks = null, isWater = () => false, width = MAP_W, height = MAP_H, margins = ROUTE_MARGINS, maxExpansions = ROUTE_MAX_EXPANSIONS, openBlocked = null, goalExempt = true, peakAt = null, apart = null, sea = null, lanes = true, endPad = 0, pathsBeyond = null } = opts;
   // VOYAGER2.1: the roads past the Bay are walked as roads where the planner is handed the Bay's (the ROADS mode's net) -
   // FREE, handed none, walks across country there too
@@ -557,6 +578,30 @@ export function* planRouteSteps(from, to, opts = {}) {
 function etherBox(ether, b) {
   return ether ? { x0: Math.max(b.x0, ETHER_BOX.x0), x1: Math.min(b.x1, ETHER_BOX.x1 - 1), y0: Math.max(b.y0, ETHER_BOX.y0), y1: Math.min(b.y1, ETHER_BOX.y1 - 1) } : b;
 }
+/** AUDIT SEA PATHS O5: how far from a traveller ashore (map pixels, the longest axis) the shore a boat is launched at for
+ *  the sea lanes is sought, and how many of its water pixels (nearest first) are tried. */
+export const LAUNCH_PX = 8;
+export const LAUNCH_TRIES = 4;
+/** AUDIT SEA PATHS O5: ashore with a boat to hand - the walk to one of the LAUNCH_TRIES nearest water pixels within
+ *  LAUNCH_PX (its last step the launch) and a helm's voyage from there (the sea lanes, then the box), one plan; or null. */
+function* shoreLanesSteps(from, to, opts) {
+  const water = opts.seaWater ?? opts.isWater ?? (() => false), sea = opts.sea;
+  let tried = 0;
+  for (let r = 1; r <= LAUNCH_PX && tried < LAUNCH_TRIES; r++) {
+    for (let dy = -r; dy <= r && tried < LAUNCH_TRIES; dy++) for (let dx = -r; dx <= r && tried < LAUNCH_TRIES; dx++) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) !== r || !water(from.x + dx, from.y + dy)) continue;
+      tried++;
+      const shore = { x: from.x + dx, y: from.y + dy };
+      const walk = yield* planRouteSteps(from, shore, { ...opts, sea: { ...sea, goal: 'sea' }, lanes: false, margins: [LAUNCH_PX * 2] });
+      if (!walk) continue;
+      // afloat there, planned as a helm's voyage is (the sea lanes, then the box) - never the box's ladder it was handed
+      const sail = yield* planRouteSteps(shore, to, { ...opts, margins: undefined, sea: { ...sea, start: 'sea' } });
+      if (sail) return { pixels: [...walk.pixels, ...sail.pixels.slice(1)], kinds: [...walk.kinds, ...sail.kinds], cost: walk.cost + sail.cost };
+    }
+  }
+  return null;
+}
+
 /** ROAD-BEYOND: the ladder's whole spend past the Bay's table, cells expanded over every rung (an op count, never a clock). */
 export const BEYOND_MAX_EXPANSIONS = 100000;
 /** ROAD-BEYOND: the widest rung past the table, pixels about the ends - a box no wider than the ladder's spend walks (the
@@ -1348,7 +1393,9 @@ export function routeLegs(pixels, kinds = [], { ringAt = null, start: start0 = n
     if (!same) { while (ix.length < legs.length) ix.push(-1); legs.push({ x: pixels[i].x, y: pixels[i].y, kind }); ix.push(i); }
   }
   while (ix.length < legs.length) ix.push(-1);
-  return roadLineLegs(legs, ix, pixels, kinds, { byteAt: roadBytes });   // ROAD-FOLLOW: on the curves past the Bay
+  const out = roadLineLegs(legs, ix, pixels, kinds, { byteAt: roadBytes });   // ROAD-FOLLOW: on the curves past the Bay
+  // AUDIT SEA PATHS O4: its sailed legs round the kernel's land, where the host registered it (setSeaLegKernel)
+  return _legKernel && _legWater && kinds.includes('sea') ? mendSeaLegs(out, start ?? { x: (pixels[0].x + 0.5) * 32768, z: (499 - pixels[0].y + 0.5) * 32768 }, _legKernel, _legWater) : out;
 }
 
 /**

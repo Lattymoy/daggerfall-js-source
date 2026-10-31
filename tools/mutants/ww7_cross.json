@@ -702,8 +702,8 @@
   {
     "name": "WW7-10-book-the-way-unkept",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "crossLaneWay(lane, { bayOpen, openNative: worldOpenNative, mouths: s.mouths }) : null; crossWays.set(lane.key, way); }",
-    "new": "crossLaneWay(lane, { bayOpen, openNative: worldOpenNative, mouths: s.mouths }) : null; }",
+    "old": "crossLaneWay(lane, { bayOpen, openNative: worldOpenNative, mouths: s.mouths, kernel }) : null; crossWays.set(lane.key, way); }",
+    "new": "crossLaneWay(lane, { bayOpen, openNative: worldOpenNative, mouths: s.mouths, kernel }) : null; }",
     "tests": [
       "test/world/worldWide/ww7_cross.test.js"
     ],

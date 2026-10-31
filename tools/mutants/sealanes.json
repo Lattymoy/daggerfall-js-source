@@ -150,8 +150,8 @@
   {
     "name": "STRAIGHT-never",
     "file": "src/systems/naval/seaLanes.js",
-    "old": "    while (j > i + 1 && !holds(pts[i], pts[j], waterNative)) j--;",
-    "new": "    j = i + 1;",
+    "old": "    for (let i = lo; i < hi;) { let j = hi; while (j > i + 1 && !ok(i, j)) j--; at.push(j); i = j; }",
+    "new": "    for (let i = lo; i < hi;) { const j = i + 1; at.push(j); i = j; }",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ]
@@ -596,8 +596,8 @@
   {
     "name": "FEED-way-sounded-again",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "      if (way === undefined) { way = onBay ? laneWay(lane, bayOpen, bayOpenNative) : tamrielTrace() ? beyondLaneWay(lane, worldOpenNative) : laneWay(lane, worldOpen, worldOpenNative); ways.set(lane.key, way); }",
-    "new": "      way = onBay ? laneWay(lane, bayOpen, bayOpenNative) : tamrielTrace() ? beyondLaneWay(lane, worldOpenNative) : laneWay(lane, worldOpen, worldOpenNative); ways.set(lane.key, way);",
+    "old": "      if (way === undefined) { way = laneWay(lane, bayOpen, bayOpenNative, kernel); bayWays.set(lane.key, way); }",
+    "new": "      way = laneWay(lane, bayOpen, bayOpenNative, kernel); bayWays.set(lane.key, way);",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ],

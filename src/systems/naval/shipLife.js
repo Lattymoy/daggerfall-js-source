@@ -100,6 +100,13 @@ export const gridClearOf = (hull, cell = WATER_CELL) => Math.max(cell * WATER_CL
  *  m) fell between two cells' eight soundings and a step across it was taken; spoke to spoke, the line between two open
  *  cells is sounded every 4.3 m at the most. */
 export const SPOKE_STEP_M = 3;
+/** AUDIT SEA PATHS O1: a way the grid's own search spends PATH_NODES on is sought again over cells this many of its own
+ *  a side (a peninsula of 1.5 km spent them), and each of that way's steps found again in the grid's own cells. */
+export const COARSE_K = 4;
+/** AUDIT SEA PATHS O1: one way's whole spend, in PATH_NODES - the grid's search, the coarse one, every step found again -
+ *  and how hard the coarse search leans on its goal (a weighted A*: its way at most this much dearer; straightened after). */
+export const PATH_BUDGET_K = 3;
+export const COARSE_GREED = 1.5;
 /** A straightened leg keeps this much water either side of it (m) - the captains' lookout swings off land nearer than
  *  that - save within LEG_END_M of its own ends (a berth lies by the shore). */
 export const LEG_MARGIN = 45;
@@ -417,22 +424,55 @@ export function createWaterGrid({ isWater, hull = 0, cell = WATER_CELL, nodeCap 
     for (let a = 0; a < 8; a++) { const t = (a / 8) * TAU; if (!water(p[0] + Math.sin(t) * rc, p[1] + Math.cos(t) * rc)) return false; }
     return true;
   }
+  // AUDIT SEA PATHS O3: the host's tiles where it has them (`isWater.tile()`: { size, x0, z0 }, the built ground's lattice -
+  // scenes/world.js navalIsWater) - a line is asked of every tile it crosses, so no leg clips a corner between soundings
+  const tileOf = typeof isWater.tile === 'function' ? isWater.tile : null;
+  /** Whether the water holds the line a-b: every tile of the host's lattice it crosses (its middle asked; through a corner
+   *  both tiles beside it), or with no lattice every `step` m. */
+  function holds(a, b, step) {
+    const t = tileOf?.();
+    if (!t || !(t.size > 0)) {
+      const d = dist2(a, b), n = Math.max(1, Math.ceil(d / step));
+      for (let q = 0; q <= n; q++) { const u = q / n; if (!water(a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u)) return false; }
+      return true;
+    }
+    const S = t.size, ax = (a[0] - t.x0) / S, az = (a[1] - t.z0) / S, bx = (b[0] - t.x0) / S, bz = (b[1] - t.z0) / S;
+    const dx = bx - ax, dz = bz - az, sx = Math.sign(dx), sz = Math.sign(dz), ex = Math.floor(bx), ez = Math.floor(bz);
+    let cx = Math.floor(ax), cz = Math.floor(az);
+    const tdx = sx ? 1 / Math.abs(dx) : Infinity, tdz = sz ? 1 / Math.abs(dz) : Infinity;
+    let tx = sx ? (sx > 0 ? cx + 1 - ax : ax - cx) * tdx : Infinity, tz = sz ? (sz > 0 ? cz + 1 - az : az - cz) * tdz : Infinity;
+    const at = (/** @type {number} */ i, /** @type {number} */ k) => water(t.x0 + (i + 0.5) * S, t.z0 + (k + 0.5) * S);
+    if (!at(cx, cz)) return false;
+    for (let left = Math.abs(ex - cx) + Math.abs(ez - cz); left > 0; left--) {
+      if (Math.abs(tx - tz) < 1e-9) {
+        if (!at(cx + sx, cz) || !at(cx, cz + sz)) return false;
+        cx += sx; cz += sz; tx += tdx; tz += tdz; left--;
+      } else if (tx < tz) { cx += sx; tx += tdx; } else { cz += sz; tz += tdz; }
+      if (!at(cx, cz)) return false;
+    }
+    return true;
+  }
   function clear(a, b) {
     // AUDIT SHIP-LIFE A3: sampled every quarter cell - at 0.4 a straightened leg clipped a 10 m spit's corner
+    if (!holds(a, b, cell * CLEAR_STEP)) return false;
     const d = dist2(a, b), n = Math.max(1, Math.ceil(d / (cell * CLEAR_STEP)));
     const sx = d > 0 ? (b[1] - a[1]) / d : 0, sz = d > 0 ? -(b[0] - a[0]) / d : 0;
     for (let s = 0; s <= n; s++) {
       const t = s / n, x = a[0] + (b[0] - a[0]) * t, z = a[1] + (b[1] - a[1]) * t;
-      if (!water(x, z)) return false;
       if (Math.min(t, 1 - t) * d > LEG_END_M && !(water(x + sx * LEG_MARGIN, z + sz * LEG_MARGIN) && water(x - sx * LEG_MARGIN, z - sz * LEG_MARGIN))) return false;
     }
     return true;
   }
   /** The water straight between two points, no margin (a way's first and last legs, to and from the grid). */
-  function wet(a, b) {
-    const d = dist2(a, b), n = Math.max(1, Math.ceil(d / (cell * 0.25)));
-    for (let s = 0; s <= n; s++) { const t = s / n; if (!water(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)) return false; }
-    return true;
+  const wet = (a, b) => holds(a, b, cell * 0.25);
+  /** AUDIT SEA PATHS O3: a step between two cells' centres, asked of the host's tiles once (none: the spokes stand for it). */
+  const steps = new Map();
+  function stepOk(i, k, ni, nk) {
+    if (!tileOf) return true;
+    const sk = i < ni || (i === ni && k < nk) ? `${i},${k}>${ni},${nk}` : `${ni},${nk}>${i},${k}`;
+    let v = steps.get(sk);
+    if (v === undefined) { v = holds(centre(i, k), centre(ni, nk), cell * 0.25); steps.set(sk, v); }
+    return v;
   }
   /** AUDIT SEA PATHS AI-1: how far (m, `max` at most) the water carries her straight from `from` on bearing `a`, by the
    *  law of `clear` (LEG_MARGIN abeam past LEG_END_M) - a voyage's mark is drawn where it ends, never past it. */
@@ -467,11 +507,38 @@ export function createWaterGrid({ isWater, hull = 0, cell = WATER_CELL, nodeCap 
     if (clear(from, to)) return [[from[0], from[1]], [to[0], to[1]]];
     const s = nearestOpen(from), g = nearestOpen(to);
     if (!s || !g) return null;
-    const cells = search(s, g);
+    let cells = search(s, g, open, stepOk);
+    if (!cells && capped) cells = coarse(s, g);   // AUDIT SEA PATHS O1
     return cells ? straightened(from, to, cells.map((c) => centre(c[0], c[1]))) : null;
   }
-  /** A* over the open cells from cell `s` to cell `g`: the cells [i, k] in order, or null. */
-  function search(s, g) {
+  let capped = false;
+  /** AUDIT SEA PATHS O1: THE WAY SOUGHT OVER COARSE CELLS - COARSE_K of the grid's a side, a coarse cell stood for by the
+   *  grid's cell at its middle and a coarse step by the grid's cells along it - then each coarse step found again over
+   *  the grid's own cells (a short search each). The cells [i, k] in order, or null. */
+  function coarse(s, g) {
+    const K = COARSE_K, S = [Math.floor(s[0] / K), Math.floor(s[1] / K)], G = [Math.floor(g[0] / K), Math.floor(g[1] / K)];
+    const rep = (I, M) => (I === S[0] && M === S[1] ? s : I === G[0] && M === G[1] ? g : [I * K + (K >> 1), M * K + (K >> 1)]);
+    const cOpen = (I, M) => { const r = rep(I, M); return open(r[0], r[1]); };
+    const cStep = (I, M, NI, NM) => {
+      const a = rep(I, M), b = rep(NI, NM), n = 2 * K;
+      for (let q = 1; q < n; q++) { const u = q / n; if (!open(Math.round(a[0] + (b[0] - a[0]) * u), Math.round(a[1] + (b[1] - a[1]) * u))) return false; }
+      return holds(centre(a[0], a[1]), centre(b[0], b[1]), cell * 0.25);
+    };
+    const route = search(S, G, cOpen, cStep, K, COARSE_GREED);
+    if (!route) return null;
+    const out = [s];
+    for (let q = 1; q < route.length; q++) {
+      const leg = search(out[out.length - 1], rep(route[q][0], route[q][1]), open, stepOk);
+      if (!leg) return null;
+      out.push(...leg.slice(1));
+    }
+    return out;
+  }
+  /** A* from cell `s` to cell `g` over the cells `isOpen` opens, each step `stepOk` lets (`size` the grid's cells a cell):
+   *  the cells [i, k] in order, or null - `capped` when PATH_NODES ran out first. */
+  function search(s, g, isOpen, stepOk, size = 1, greed = 1) {
+    capped = false;
+    let spent = 0;
     const gk = key(g[0], g[1]);
     const cost = new Map([[key(s[0], s[1]), 0]]), prev = new Map(), shut = new Set();
     const heap = [[dist2(centre(s[0], s[1]), centre(g[0], g[1])), s[0], s[1]]];
@@ -484,15 +551,16 @@ export function createWaterGrid({ isWater, hull = 0, cell = WATER_CELL, nodeCap 
       if (shut.has(kk)) continue;
       shut.add(kk);
       if (kk === gk) { found = true; break; }
-      if (++expansions > nodeCap) return null;
+      if (++spent > nodeCap || ++expansions > nodeCap * PATH_BUDGET_K) { capped = true; return null; }
       const c0 = cost.get(kk);
       for (let di = -1; di <= 1; di++) for (let dk = -1; dk <= 1; dk++) {
         if (!di && !dk) continue;
         const ni = i + di, nk = k + dk, nkey = key(ni, nk);
-        if (shut.has(nkey) || !open(ni, nk)) continue;
-        if (di && dk && !(open(i + di, k) && open(i, k + dk))) continue;   // no corner cut past a closed cell
-        const c = c0 + (di && dk ? Math.SQRT2 : 1) * cell;
-        if (c < (cost.get(nkey) ?? Infinity)) { cost.set(nkey, c); prev.set(nkey, kk); push([c + dist2(centre(ni, nk), centre(g[0], g[1])), ni, nk]); }
+        if (shut.has(nkey) || (nkey !== gk && !isOpen(ni, nk))) continue;
+        if (di && dk && !(isOpen(i + di, k) && isOpen(i, k + dk))) continue;   // no corner cut past a closed cell
+        if (!stepOk(i, k, ni, nk)) continue;   // AUDIT SEA PATHS O3: the host's tiles across the step
+        const c = c0 + (di && dk ? Math.SQRT2 : 1) * cell * size;
+        if (c < (cost.get(nkey) ?? Infinity)) { cost.set(nkey, c); prev.set(nkey, kk); push([c + dist2(centre(ni, nk), centre(g[0], g[1])) * size * greed, ni, nk]); }
       }
     }
     if (!found) return null;
@@ -504,18 +572,45 @@ export function createWaterGrid({ isWater, hull = 0, cell = WATER_CELL, nodeCap 
   function straightened(from, to, cells) {
     const raw = [[from[0], from[1]], ...cells, [to[0], to[1]]];
     // the corners straightened: from each point, the farthest ahead the water between lets her sail straight to
-    const out = [raw[0]];
+    // AUDIT SEA PATHS O6: galloped out from each point and halved back (a way's points asked in their logarithm, where a
+    // look back from its end asked them all - 31,000 to 60,000 soundings a way down a channel)
+    const out = [raw[0]], last = raw.length - 1;
     let at = 0;
-    while (at < raw.length - 1) {
-      let next = at + 1;
-      for (let q = raw.length - 1; q > at + 1; q--) if (clear(raw[at], raw[q])) { next = q; break; }
-      out.push(raw[next]);
-      at = next;
+    while (at < last) {
+      if (clear(raw[at], raw[last])) { out.push(raw[last]); break; }   // the end in view: no point between is wanted
+      let ok = at + 1, step = 1;
+      while (ok + step < last && clear(raw[at], raw[ok + step])) { ok += step; step *= 2; }
+      let hi = Math.min(ok + step, last);
+      if (hi > ok && clear(raw[at], raw[hi])) ok = hi;
+      else while (hi - ok > 1) { const mid = (ok + hi) >> 1; if (clear(raw[at], raw[mid])) ok = mid; else hi = mid; }
+      out.push(raw[ok]);
+      at = ok;
     }
     return out;
   }
   return { path, clear, open, run, room, get expansions() { return expansions; }, cell };
 }
+
+/** AUDIT SEA PATHS O3: A COURSE SAILED BY THE WATER'S WAY - a ship sailing for a point of her own (a packet's lane ahead, a
+ *  raider's seeded course) sails straight for it where the water carries her (`clear`), else by the grid's way to it,
+ *  kept while the point moves under VIA_KEEP_M and the grid is the one it was planned on (`ship.via`). Her lookout alone
+ *  took her at a bulge of land a lane's leg crossed, for good. The point she steers for, [x, z]. */
+export const VIA_KEEP_M = 150;
+export function courseVia(grid, ship, to) {
+  if (!grid || !to) return to;
+  const here = flat(ship.pos);
+  if (grid.clear(here, to)) { ship.via = null; return to; }
+  let v = ship.via;
+  if (!v || v.grid !== grid || dist2(v.to, to) > VIA_KEEP_M) {
+    const way = grid.path(here, to);
+    v = ship.via = { grid, to: [to[0], to[1]], path: way ? way.map((q) => [q[0], q[1]]) : null, i: 1 };
+  }
+  return v.path ? follow(ship, v, grid.clear) : to;
+}
+
+/** AUDIT SEA PATHS O3: a host's water reader asked afresh at each sounding (`get()` - a reader swapped later is the one
+ *  read), its tiles with it (`tile`). */
+export const waterOf = (get) => Object.assign((x, z, h) => get()(x, z, h), { tile: () => get()?.tile?.() ?? null });
 
 /** Her errand's own stream: off her seed, never her captain's. */
 export const errandRng = (seed) => mulberry32(hash32(seed >>> 0, ERRAND_SALT));

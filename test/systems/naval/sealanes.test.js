@@ -420,7 +420,7 @@ function feedOn({ at = { x: 200, y: 200 }, clock = 1.7e12 } = {}) {
     CLIMATES: { Ocean: OCEAN }, RAID_NATIVE_PIXEL: NATIVE_PIXEL, pixelOfNative,
     // PIN MOVED (AUDIT SEA PATHS LN-1): the Bay's lane water a square's four corners (worldLanes.js bayLaneWater), its climate
     // CLIMATE.PAK's own - this map dilates nothing, so its own climate is the map's
-    bayLaneWater, inBay, undilatedClimateIndex: (m, px, py) => m.getClimateIndex(px, py),
+    bayLaneWater, inBay, undilatedClimateIndex: (m, px, py) => m.getClimateIndex(px, py), kernelSea: null,   // PIN MOVED (AUDIT SEA PATHS O3): no kernel here
     PORT_LOCATION_IDS: [...PORTS.map((p) => p.id), PORTS[0].id, 5],   // a repeat, and an id the map has not
     mapDict: new Map(PORTS.map((p, k) => [p.id & 0xfffff, { id: p.y * 1000 + p.x, regionIndex: 1, mapIndex: k }])),
     getPixelFromPixelID: (id) => ({ x: id % 1000, y: Math.floor(id / 1000) }),

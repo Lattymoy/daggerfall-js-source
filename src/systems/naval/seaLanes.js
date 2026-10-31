@@ -30,6 +30,7 @@ import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { classFor, HULL } from './navalShips.js';
 import { nativeOfPixel, NATIVE_PIXEL } from '../seaRaiders.js';
 import { worldPixelKey, worldPixelOfKey, inWorldGrid } from '../../world/worldWide/worldGrid.js';   // WW3: a lane's pixels the world's
+import { kernelLine } from '../../world/water/kernelSea.js';   // AUDIT SEA PATHS O3: the ground the game builds
 
 /** How far from its town a port's roadstead may lie (map pixels), and how many ports a port runs packets to, within how
  *  far of it (map pixels between roadsteads: about 25 km). */
@@ -140,20 +141,42 @@ export function holdsLine(a, b, waterNative) {
   }
   return true;
 }
-const holds = holdsLine;
-/** A pixel way straightened: from each point, on to the farthest the water holds a line to. Native points. */
-export function straighten(pixels, waterNative) {
+/** A pixel way straightened: from each point, on to the farthest the water holds a line to - AUDIT SEA PATHS O3: and the
+ *  kernel's sea (`kernel`, world/water/kernelSea.js) asked of each leg kept, a leg it refuses straightened again over its
+ *  own stretch with the kernel asked of every reach (asked of every reach of the whole way, a book of lanes took 8 s).
+ *  Native points. */
+export function straighten(pixels, waterNative, kernel = null) {
   const pts = pixels.map(centreOf);
   if (pts.length <= 2) return pts;
-  const out = [pts[0]];
-  let i = 0;
-  while (i < pts.length - 1) {
-    let j = pts.length - 1;
-    while (j > i + 1 && !holds(pts[i], pts[j], waterNative)) j--;
-    out.push(pts[j]);
-    i = j;
+  const wet = (/** @type {number} */ i, /** @type {number} */ j) => holdsLine(pts[i], pts[j], waterNative);
+  const sea = (/** @type {number} */ i, /** @type {number} */ j) => kernelLine(pts[i], pts[j], kernel, true, true) === true;
+  const cut = (/** @type {number} */ lo, /** @type {number} */ hi, /** @type {(i: number, j: number) => boolean} */ ok) => {
+    const at = [lo];
+    for (let i = lo; i < hi;) { let j = hi; while (j > i + 1 && !ok(i, j)) j--; at.push(j); i = j; }
+    return at;
+  };
+  // the kernel's re-cut galloped out and halved back (its every reach asked from the far end, one crossing's way took 0.3 s)
+  const gallop = (/** @type {number} */ lo, /** @type {number} */ hi, /** @type {(i: number, j: number) => boolean} */ ok) => {
+    const at = [lo];
+    for (let i = lo; i < hi;) {
+      let good = i + 1, step = 1;
+      if (ok(i, hi)) good = hi;
+      else {
+        while (good + step < hi && ok(i, good + step)) { good += step; step *= 2; }
+        let bad = Math.min(good + step, hi);
+        while (bad - good > 1) { const mid = (good + bad) >> 1; if (ok(i, mid)) good = mid; else bad = mid; }
+      }
+      at.push(good); i = good;
+    }
+    return at;
+  };
+  const coarse = cut(0, pts.length - 1, wet), out = [0];
+  for (let q = 1; q < coarse.length; q++) {
+    const i = coarse[q - 1], j = coarse[q];
+    if (!kernel || j === i + 1 || sea(i, j)) out.push(j);
+    else out.push(...gallop(i, j, (a, b) => wet(a, b) && sea(a, b)).slice(1));
   }
-  return out;
+  return out.map((i) => pts[i]);
 }
 
 /**
@@ -205,14 +228,91 @@ export function laneNetwork(ports, open, maxPx = LANE_MAX_PX, roomy = false, far
   return [...pairs.values()];
 }
 
-/** A lane's way in native points, a to b (straightened), and its length (m) - or null where the water joins them not. */
-export function laneWay(lane, water, waterNative) {
-  const px = lanePixels(lane.a.road, lane.b.road, water);
-  if (!px) return null;
-  const pts = straighten(px, waterNative);
-  let len = 0;
-  for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z) * M_PER_NATIVE;
-  return { pts, len };
+/** AUDIT SEA PATHS O3: the times a lane's way is searched again round a pixel the kernel's land stands in; a leg over the
+ *  kernel's land is first sought through its own pixels' water over cells this share of a pixel (102 m), SUB_REACH pixels
+ *  about it at most. */
+export const KERNEL_RETRIES = 12;
+export const SUB_CELL = 1 / 8;
+export const SUB_REACH = 1;
+/** AUDIT SEA PATHS O3: a leg's way through the kernel's sea at SUB_CELL of a pixel - A* over the cells about the leg whose
+ *  middle is the kernel's sea and the lanes' water, each step held by the kernel - straightened over the kernel. Native
+ *  points from `a` to `b`, or null. */
+export function subWay(a, b, water, kernel) {
+  const S = NATIVE_PIXEL * SUB_CELL, pad = NATIVE_PIXEL * SUB_REACH;
+  const x0 = Math.min(a.x, b.x) - pad, z0 = Math.min(a.z, b.z) - pad;
+  const w = Math.ceil((Math.abs(a.x - b.x) + 2 * pad) / S), h = Math.ceil((Math.abs(a.z - b.z) + 2 * pad) / S);
+  const mid = (/** @type {number} */ i, /** @type {number} */ k) => ({ x: x0 + (i + 0.5) * S, z: z0 + (k + 0.5) * S });
+  const cellOf = (/** @type {{ x: number, z: number }} */ p) => [Math.min(w - 1, Math.max(0, Math.floor((p.x - x0) / S))), Math.min(h - 1, Math.max(0, Math.floor((p.z - z0) / S)))];
+  const ok = new Int8Array(w * h);   // 0 unasked, 1 sea, -1 not
+  const open = (/** @type {number} */ i, /** @type {number} */ k) => {
+    if (i < 0 || k < 0 || i >= w || k >= h) return false;
+    const q = k * w + i;
+    if (!ok[q]) { const m = mid(i, k); ok[q] = water(m.x, m.z) && kernel(m.x, m.z) ? 1 : -1; }
+    return ok[q] === 1;
+  };
+  const [si, sk] = cellOf(a), [gi, gk] = cellOf(b);
+  const g = new Float64Array(w * h).fill(Infinity), came = new Int32Array(w * h).fill(-1), shut = new Uint8Array(w * h);
+  const heap = [[0, si, sk]];
+  g[sk * w + si] = 0;
+  const push = (/** @type {number[]} */ n) => { heap.push(n); let i = heap.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (heap[p][0] <= heap[i][0]) break; [heap[p], heap[i]] = [heap[i], heap[p]]; i = p; } };
+  const pop = () => { const top = heap[0], last = /** @type {number[]} */ (heap.pop()); if (heap.length) { heap[0] = last; let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === i) break; [heap[m], heap[i]] = [heap[i], heap[m]]; i = m; } } return top; };
+  let found = false;
+  while (heap.length) {
+    const [, i, k] = pop(), q = k * w + i;
+    if (shut[q]) continue;
+    shut[q] = 1;
+    if (i === gi && k === gk) { found = true; break; }
+    for (let dk = -1; dk <= 1; dk++) for (let di = -1; di <= 1; di++) {
+      if (!di && !dk) continue;
+      const ni = i + di, nk = k + dk;
+      if (!open(ni, nk) && !(ni === gi && nk === gk)) continue;
+      if (di && dk && !(open(i + di, k) && open(i, k + dk))) continue;
+      const nq = nk * w + ni, ng = g[q] + (di && dk ? Math.SQRT2 : 1);
+      if (ng >= g[nq]) continue;
+      if (kernelLine(i === si && k === sk ? a : mid(i, k), ni === gi && nk === gk ? b : mid(ni, nk), kernel, true, true) !== true) continue;   // the step itself the kernel's sea
+      g[nq] = ng; came[nq] = q; push([ng + Math.hypot(ni - gi, nk - gk), ni, nk]);
+    }
+  }
+  if (!found) return null;
+  const cells = [];
+  for (let q = gk * w + gi; q >= 0; q = came[q]) cells.push(mid(q % w, Math.floor(q / w)));
+  cells.reverse();
+  const pts = [a, ...cells.slice(1, -1), b];
+  const out = [pts[0]];
+  for (let i = 0; i < pts.length - 1;) { let j = pts.length - 1; while (j > i + 1 && kernelLine(pts[i], pts[j], kernel, true, true) !== true) j--; out.push(pts[j]); i = j; }
+  for (let i = 1; i < out.length; i++) if (kernelLine(out[i - 1], out[i], kernel, true, true) !== true) return null;
+  return out;
+}
+/** AUDIT SEA PATHS O3: the first point of a way the kernel's sea does not hold (its two roadsteads its own), or null. */
+export function wayOffSea(pts, kernel) {
+  for (let i = 1; i < pts.length; i++) { const r = kernelLine(pts[i - 1], pts[i], kernel, i === 1, i === pts.length - 1); if (r !== true) return r; }
+  return null;
+}
+/** A lane's way in native points, a to b (straightened), and its length (m) - or null where the water joins them not.
+ *  AUDIT SEA PATHS O3: `kernel` the kernel's sea - a way over its land is searched again without the pixel that land
+ *  stands in, KERNEL_RETRIES times at most (a square whose four corners are sea can hold land: 307 m of a leg). */
+export function laneWay(lane, water, waterNative, kernel = null) {
+  const shut = new Set();
+  for (let tries = 0; tries <= KERNEL_RETRIES; tries++) {
+    const open = shut.size ? (/** @type {number} */ x, /** @type {number} */ y) => water(x, y) && !shut.has(worldPixelKey(x, y)) : water;
+    const px = lanePixels(lane.a.road, lane.b.road, open);
+    if (!px) return null;
+    let pts = straighten(px, waterNative, kernel);
+    // a corner of the way on the kernel's land let go (a pixel's middle on an islet), and a leg the kernel's land stands
+    // across sailed through its pixels' own water where that water joins (subWay)
+    if (kernel) {
+      const kept = pts.filter((p, i) => i === 0 || i === pts.length - 1 || kernel(p.x, p.z));
+      pts = kept.flatMap((p, i) => { if (!i) return [p]; const q = kept[i - 1]; if (kernelLine(q, p, kernel, i === 1, i === kept.length - 1) === true) return [p]; const sub = subWay(q, p, waterNative, kernel); return sub ? sub.slice(1) : [p]; });
+    }
+    const off = kernel ? wayOffSea(pts, kernel) : null;
+    if (!off) {
+      let len = 0;
+      for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z) * M_PER_NATIVE;
+      return { pts, len };
+    }
+    shut.add(worldPixelKey(Math.floor(off.x / NATIVE_PIXEL), 499 - Math.floor(off.z / NATIVE_PIXEL)));
+  }
+  return null;
 }
 
 /** The lane's own seed (its two ports'). */

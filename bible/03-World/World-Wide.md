@@ -552,9 +552,12 @@ harbour board), and an area's people are read off the continent's geography, whi
 ### AUDIT SEA PATHS (2026-10-31) - the lanes' reach past the Bay
 
 A port past the Bay with no port within BEYOND_LANE_MAX_PX now runs to its nearest within its way's cap,
-BEYOND_LANE_PATH_PX (`systems/naval/seaLanes.js` laneNetwork's `farPx`): Blacklight, Lilmoth and Soulrest run packets, and
-Vivec through Blacklight. Left out: Necrom and Ebonheart, whose water joins no port's within the cap. The Bay's own lane
-water is now CLIMATE.PAK's undilated climate under the four-corner law. Record: `01-Overview/audits/Audit-Sea-Paths.md`.
+BEYOND_LANE_PATH_PX (`systems/naval/seaLanes.js` laneNetwork's `farPx`), and one with no lane that has a way looks out to
+BEYOND_LONE_PX (`scenes/naval/worldLanes.js` loneLanes): every port past the Bay a lane holds is served, Necrom among them,
+and Vivec to Ebonheart by their channel. Five lanes whose ports' waters do not join carry no packet (Necrom to Vivec and
+to Ebonheart, Winterhold and Windhelm to the Imperial City, Senchal to Torval). The Bay's own lane water is CLIMATE.PAK's
+undilated climate under the four-corner law, and every way holds on the kernel's own ground. Record:
+`01-Overview/audits/Audit-Sea-Paths.md`.
 
 ## WW-R - the provinces as regions (BUILT, 2026-10-24)
 

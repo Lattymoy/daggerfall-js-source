@@ -305,8 +305,8 @@
   {
     "name": "P7-reach-the-bays",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX);",
-    "new": "beyondList = laneNetwork(ports.list(), worldOpen, undefined, true, BEYOND_LANE_PATH_PX);",
+    "old": "beyondList = loneLanes(laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX));",
+    "new": "beyondList = loneLanes(laneNetwork(ports.list(), worldOpen, undefined, true, BEYOND_LANE_PATH_PX));",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -332,11 +332,13 @@
   {
     "name": "P7-corner-cut",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "      if (!sea(nx, ny) || (dx && dy && (!sea(x + dx, y) || !sea(x, y + dy)))) continue;",
+    "old": "      if (!sea(nx, ny) || (dx && dy && (!sea(x + dx, y) || !sea(x, y + dy)) && !holdsLine(native([x + 0.5, y + 0.5]), native([nx + 0.5, ny + 0.5]), openNative))) continue;",
     "new": "      if (!sea(nx, ny)) continue;",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "AUDIT SEA PATHS O2: a corner cut is let where the Bay's scale holds the step (a channel a cell wide on the slant), so on the freeware's world the rule and its absence lay the same ways - the rule still holds every raw diagonal past land that scale refuses, and AUDIT-SEA-PATHS-O2-the-corner-unasked-at-the-bays-scale pins the scale's half."
   },
   {
     "name": "P7-leg-unasked",
@@ -370,8 +372,8 @@
   {
     "name": "P7-no-picture-no-way",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "tamrielTrace() ? beyondLaneWay(lane, worldOpenNative) : laneWay(lane, worldOpen, worldOpenNative);",
-    "new": "beyondLaneWay(lane, worldOpenNative);",
+    "old": "way = tamrielTrace() ? beyondLaneWay(lane, worldOpenNative, kernel) : laneWay(lane, worldOpen, worldOpenNative, kernel);",
+    "new": "way = beyondLaneWay(lane, worldOpenNative, kernel);",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]

@@ -182,8 +182,8 @@
   {
     "name": "WW3-the-beyond-lanes-in-the-bays-water",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX);",
-    "new": "beyondList = laneNetwork(ports.list(), bayOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX);",
+    "old": "beyondList = loneLanes(laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX));",
+    "new": "beyondList = loneLanes(laneNetwork(ports.list(), bayOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX));",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "WW3-the-bay-way-in-the-worlds-water",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "way = onBay ? laneWay(lane, bayOpen, bayOpenNative) : tamrielTrace() ? beyondLaneWay(lane, worldOpenNative) : laneWay(lane, worldOpen, worldOpenNative);",
-    "new": "way = onBay ? laneWay(lane, worldOpen, worldOpenNative) : tamrielTrace() ? beyondLaneWay(lane, worldOpenNative) : laneWay(lane, worldOpen, worldOpenNative);",
+    "old": "way = laneWay(lane, bayOpen, bayOpenNative, kernel); bayWays.set",
+    "new": "way = laneWay(lane, worldOpen, worldOpenNative, kernel); bayWays.set",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "WW3-the-beyond-lanes-unmade-again",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "    if (v !== beyondOf) { beyondOf = v;",
-    "new": "    if (beyondOf === null) { beyondOf = v;",
+    "old": "    if (v !== beyondOf || t !== beyondTrace) { beyondOf = v; beyondTrace = t;",
+    "new": "    if (beyondOf === null) { beyondOf = v; beyondTrace = t;",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]

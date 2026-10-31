@@ -20,8 +20,8 @@
   {
     "name": "OWS3-born-outside-its-pixel",
     "file": "src/systems/seaRaiders.js",
-    "old": "return { id: `r${cx}.${cy}.${life}`, cx, cy, life, seed, born: { x: o.x + r() * NATIVE_PIXEL, z: o.z + r() * NATIVE_PIXEL }",
-    "new": "return { id: `r${cx}.${cy}.${life}`, cx, cy, life, seed, born: { x: o.x + r() * NATIVE_PIXEL, z: o.z - r() * NATIVE_PIXEL }",
+    "old": "  const born = { x: o.x + r() * NATIVE_PIXEL, z: o.z + r() * NATIVE_PIXEL };",
+    "new": "  const born = { x: o.x + r() * NATIVE_PIXEL, z: o.z - r() * NATIVE_PIXEL };",
     "tests": [
       "test/systems/ows3_raiders.test.js"
     ]

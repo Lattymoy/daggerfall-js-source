@@ -8,17 +8,20 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   createWaterGrid, errandFor, stepErrand, gridClearOf, reachOf, WATER_CELL, WATER_CLEAR, REACH_M, VOYAGE_DIST, OUTBOUND_MIN,
-  PROGRESS_S, GRID_MARGIN, CLEAR_STEP,
+  PROGRESS_S, GRID_MARGIN, CLEAR_STEP, PATH_NODES, PATH_BUDGET_K, courseVia, waterOf,
 } from '../../../src/systems/naval/shipLife.js';
 import { hullBuild } from '../../../src/systems/naval/navalShips.js';
 import { SWEEP_WAY } from '../../../src/systems/naval/navalAI.js';
-import { holdsLine, laneNetwork, laneWay } from '../../../src/systems/naval/seaLanes.js';
+import { holdsLine, laneNetwork, laneWay, wayOffSea, subWay } from '../../../src/systems/naval/seaLanes.js';
+import { kernelLine, createKernelSea } from '../../../src/world/water/kernelSea.js';
+import { mendSeaLegs } from '../../../src/systems/travel/seaLegsMend.js';
+import { raiderOf } from '../../../src/systems/seaRaiders.js';
 import { bayLaneWater, bayLanePorts } from '../../../src/scenes/naval/worldLanes.js';
 import { undilatedClimateIndex } from '../../../src/world/terrain/terrainHelper.js';
 import { NATIVE_PIXEL, pixelOfNative } from '../../../src/systems/seaRaiders.js';
 import { TravelAutopilot } from '../../../src/systems/travel/travelAutopilot.js';
 import { mapPixelWorldOrigin, MP_WORLD_UNITS } from '../../../src/systems/travel/travelPaths.js';
-import { planRoute } from '../../../src/systems/travel/travelRoute.js';
+import { planRoute, routeGround, routeLegs, setSeaLegKernel, DEEP_BYTE } from '../../../src/systems/travel/travelRoute.js';
 import { tvMooredDry } from '../../../src/systems/travel/seaAsk.js';
 import { seaNoWay, SEA_WAY, createSeaHelm } from '../../../src/systems/seaHelm.js';
 import { inEther, ETHER_BOX } from '../../../src/world/ethericSea.js';
@@ -333,4 +336,216 @@ test('AUDIT SEA PATHS PL-5: the no-way clock follows her while she steers off la
   for (let t = 1; t < 2000 && ended < 0; t++) if (seaNoWay(trap, 1000 + (t % 50), 1)) ended = t;
   assert.ok(ended > SEA_WAY.detourS - 2 && ended <= SEA_WAY.detourS + 2, `a dead end: stopped at ${ended}`);
   assert.match(WORLD, /if \(seaNoWay\(tvSea, dist, gs\)\) \{ tvSeaStop\(TRAVEL_VIEW_TEXT\.noWayAtSea\); return; \}/);
+});
+
+// ── the follow-ups: the six left open, each closed (O1-O6) ──────────────────────────────────────────────────────────────
+
+const lerpOver = (p, w) => { for (let i = 1; i < p.length; i++) for (let t = 0; t <= 1; t += 0.005) if (!w(p[i - 1][0] + (p[i][0] - p[i - 1][0]) * t, p[i - 1][1] + (p[i][1] - p[i - 1][1]) * t)) return true; return false; };
+
+test('AUDIT SEA PATHS O1: a way the grid\'s search spends PATH_NODES on is sought again over coarse cells, each step found again in the grid\'s own - round a headland 2 km deep; one way\'s whole spend PATH_BUDGET_K of PATH_NODES (mutants: the coarse search gone; its steps unasked; the spend unbounded)', () => {
+  const w = (x, z) => !(x > -100 && x < 100 && z > -1000);
+  const g = createWaterGrid({ isWater: w, hull: 2 });
+  const p = g.path([-600, 1000], [600, 1000]);
+  assert.ok(p, 'round the headland');
+  assert.ok(Math.min(...p.map((q) => q[1])) < -1000, 'round its end');
+  assert.equal(lerpOver(p, w), false, 'never over land');
+  assert.ok(g.expansions <= PATH_NODES * PATH_BUDGET_K + 1, `spent ${g.expansions}`);
+  // a way of many coarse steps, each found again: its whole spend held to PATH_BUDGET_K of a small cap (unbounded, 249)
+  const islet = (x, z) => Math.hypot(x - 1500, z) > 30;
+  const gb = createWaterGrid({ isWater: islet, hull: 1, nodeCap: 50 });
+  gb.path([0, 0], [3000, 0]);
+  assert.ok(gb.expansions <= 50 * PATH_BUDGET_K + 1, `a small cap's spend ${gb.expansions}`);
+  const lake = (x, z) => Math.hypot(x, z - 800) > 60 || Math.hypot(x, z - 800) < 40;   // a ring of land: no way in
+  const gl = createWaterGrid({ isWater: lake, hull: 2 });
+  assert.equal(gl.path([0, 0], [0, 800]), null);
+  assert.ok(gl.expansions <= PATH_NODES * PATH_BUDGET_K + 1, `no way, spent ${gl.expansions}`);
+});
+
+test('AUDIT SEA PATHS O3: handed the host\'s tiles, a leg is asked of every tile it crosses - a corner clipped by under a metre is no leg; without them every quarter cell, where it slips by (mutants: the tiles unwalked)', () => {
+  const T = 6.4, land = (x, z) => x >= 5 * T && x < 6 * T && z >= 5 * T && z < 6 * T;   // one tile
+  const tiled = Object.assign((x, z) => !land(x, z), { tile: () => ({ size: T, x0: 0, z0: 0 }) });
+  const a = [20, 44.3], b = [44.3, 20];   // x + z = 64.3: 0.3 across the tile's corner
+  assert.equal(createWaterGrid({ isWater: (x, z) => !land(x, z), hull: 0 }).clear(a, b), true, 'the soundings step past it');
+  assert.equal(createWaterGrid({ isWater: tiled, hull: 0 }).clear(a, b), false, 'the tile walked');
+  assert.equal(createWaterGrid({ isWater: waterOf(() => tiled), hull: 0 }).clear(a, b), false, 'a host\'s reader asked afresh carries its tiles');
+  let reader = () => true;
+  const lazy = waterOf(() => reader);
+  reader = (x, z) => !land(x, z);
+  assert.equal(lazy(33, 33, 0), false, 'the reader swapped in is the one read');
+  assert.match(WORLD, /navalIsWater\.tile = \(\) => \(\{ size: TERRAIN_SIZE \/ 128, x0: state\.compensation\[0\], z0: state\.compensation\[2\] \}\);/, 'the host hands its tiles');
+});
+
+test('AUDIT SEA PATHS O3: a ship sailing for a point of her own (a packet\'s lane, a raider\'s course) sails the grid\'s way to it where the water does not carry her straight, straight where it does, the way kept while the point moves little (mutants: straight over the land; planned again every call)', () => {
+  const w = (x, z) => !(x > -60 && x < 60 && z > 200 && z < 400);
+  const grid = createWaterGrid({ isWater: w, hull: 2 });
+  const ship = shipAt(0, 0, { errand: null });
+  const aim = courseVia(grid, ship, [0, 600]);
+  assert.notDeepEqual(aim, [0, 600], 'not straight over the islet');
+  assert.ok(grid.clear([0, 0], aim), 'her next point one the water carries her to');
+  const v = ship.via;
+  courseVia(grid, ship, [10, 610]);
+  assert.equal(ship.via, v, 'the way kept');
+  assert.deepEqual(courseVia(grid, shipAt(300, 0), [300, 600]), [300, 600], 'straight where the water carries her');
+  const NH = readFileSync(new URL('../../../src/scenes/naval/navalHost.js', import.meta.url), 'utf8');
+  assert.match(NH, /s\.course = courseVia\(gridOf\(s\.hull\), s, \[p\.x, p\.z\]\);/, 'a packet');
+  assert.match(NH, /e\.ship\.course = r\?\.ahead \? courseVia\(gridOf\(e\.ship\.hull\), e\.ship, \[r\.ahead\[0\], r\.ahead\[2\]\]\) : null;/, 'a raider');
+});
+
+test('AUDIT SEA PATHS O3: a lane\'s way holds on the kernel\'s sea - a corner on an islet let go, a leg across the kernel\'s land sailed through its pixels\' own water (subWay), each of that way\'s steps the kernel\'s (mutants: the kernel unasked; subWay gone; the corner kept; a sub-step unasked)', () => {
+  const P = NATIVE_PIXEL;
+  const water = (x, y) => y === 0 && x >= 0 && x <= 8;   // a channel one pixel wide: no way round the islet's pixel but through it
+  const waterN = (x, z) => { const q = pixelOfNative(x, z); return water(q.x, q.y); };
+  const kernel = (x, z) => waterN(x, z) && Math.hypot(x - 3.5 * P, z - 499.5 * P) > 0.2 * P;   // an islet at pixel 3's middle
+  const lane = { a: { road: { x: 0, y: 0 } }, b: { road: { x: 8, y: 0 } } };
+  const plain = laneWay(lane, water, waterN);
+  assert.notEqual(wayOffSea(plain.pts, kernel), null, 'without the kernel: over the islet');
+  const way = laneWay(lane, water, waterN, kernel);
+  assert.ok(way, 'a way');
+  assert.equal(wayOffSea(way.pts, kernel), null, 'every leg the kernel\'s sea');
+  // the kernel's land across a channel three pixels wide, no way round within its pixels: no way at all (asked again
+  // without each pixel its land stands in), never one over it
+  const wide = (x, y) => y >= -1 && y <= 1 && x >= 0 && x <= 8, wideN = (x, z) => { const q = pixelOfNative(x, z); return wide(q.x, q.y); };
+  const barred = (x, z) => wideN(x, z) && Math.abs(x - 3.5 * P) > 0.45 * P;
+  assert.equal(laneWay(lane, wide, wideN, barred), null, 'barred: no way');
+  const sub = subWay({ x: 2.5 * P, z: 499.5 * P }, { x: 4.5 * P, z: 499.5 * P }, waterN, kernel);
+  assert.ok(sub && sub.length > 2, 'round it');
+  for (let i = 1; i < sub.length; i++) assert.equal(kernelLine(sub[i - 1], sub[i], kernel), true);
+  assert.deepEqual(kernelLine({ x: 0, z: 0 }, { x: 4096, z: 0 }, (x) => x < 100, true, true), { x: 512, z: 0 }, 'the first point off its sea (every KERNEL_SEA_STEP), its ends its own');
+  // a raider is born only on the sea it is handed
+  let some = 0;
+  for (let cx = 0; cx < 40; cx++) {
+    if (raiderOf({ cx, cy: 1, life: 7, open: () => true })) some++;
+    assert.equal(raiderOf({ cx, cy: 1, life: 7, open: () => true, sea: () => false }), null, `cell ${cx}: never ashore`);
+  }
+  assert.ok(some > 5, `${some} raiders on an open sea`);
+});
+
+test('AUDIT SEA PATHS O3 with ARENA2: the kernel\'s sea answers the ground the game builds - the islet at Stuld Hall\'s roadstead its land, the Bay\'s lanes round it, every way the kernel\'s sea; a raider born only on it (mutants: the pixel proven sea by its bound alone; a raider born ashore)', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
+  const bytes = (n) => new Uint8Array(readFileSync(join(ARENA2, n)));
+  const { MapsFile, CLIMATES } = await import('../../../src/formats/mapsFile.js');
+  const { WoodsFile } = await import('../../../src/formats/woodsFile.js');
+  const { dilateCoastalClimate, smoothLocationNeighbourhood } = await import('../../../src/world/terrain/terrainHelper.js');
+  const { buildMapDict } = await import('../../../src/systems/map/mapDirectory.js');
+  const { PORT_LOCATION_IDS } = await import('../../../src/systems/travel/travelPorts.js');
+  const { WATER_BYTE } = await import('../../../src/world/roadsProducer.js');
+  const maps = new MapsFile(); maps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK'));
+  const woods = new WoodsFile(); woods.load(bytes('WOODS.WLD'));
+  const dict = buildMapDict(maps);
+  dilateCoastalClimate(maps, 2);
+  smoothLocationNeighbourhood(dict, woods);
+  const tvWater = (px, py) => woods.getHeightMapValue(px, py) <= WATER_BYTE;
+  const law = bayLaneWater(tvWater, (px, py) => inBay(px, py) && undilatedClimateIndex(maps, px, py) === CLIMATES.Ocean);
+  const lawN = (x, z) => { const q = pixelOfNative(x, z); return law(q.x, q.y); };
+  const kernel = createKernelSea(() => woods);
+  const P = NATIVE_PIXEL, isletAt = { x: (748 + 3.5 / 8) * P, z: (499 - 278 + 1 - 4.5 / 8) * P };
+  assert.equal(law(748, 278), true, 'the four-corner law calls its pixel lane water');
+  assert.equal(kernel(isletAt.x, isletAt.z), false, 'the kernel stands an islet there');
+  assert.equal(kernel(748.05 * P, (499 - 278 + 0.05) * P), true, 'and sea about it');
+  const ports = bayLanePorts(dict, maps, PORT_LOCATION_IDS), net = laneNetwork(ports, law);
+  const stuld = net.filter((l) => l.a.name === 'Stuld Hall' || l.b.name === 'Stuld Hall');
+  assert.ok(stuld.length >= 2);
+  for (const l of stuld) {
+    const way = laneWay(l, law, lawN, kernel);
+    assert.ok(way, `${l.a.name}-${l.b.name}: a way`);
+    assert.equal(wayOffSea(way.pts, kernel), null, `${l.a.name}-${l.b.name}: every leg the kernel's sea`);
+  }
+  assert.ok(stuld.some((l) => wayOffSea(laneWay(l, law, lawN).pts, kernel)), 'without the kernel one ran over the islet');
+  let born = 0, ashore = 0;
+  for (let cx = 100; cx < 140; cx++) for (let cy = 40; cy < 60; cy++) {
+    const open = (px, py) => law(px, py), sea = (x, z) => kernel(x, z);
+    const r = raiderOf({ cx, cy, life: 1001, open, sea });
+    if (r) { born++; if (!kernel(r.born.x, r.born.z)) ashore++; }
+  }
+  assert.ok(born > 0 && ashore === 0, `${born} raiders born, ${ashore} ashore`);
+});
+
+test('AUDIT SEA PATHS O2 with ARENA2: past the Bay a channel a picture cell wide on the slant is sailed where the Bay\'s scale holds the step (Vivec to Ebonheart), and a port with none in its reach and no way runs farther to one that has (Necrom); every port past the Bay with a roadstead is served (mutants: the corner unasked at the Bay\'s scale; the lone search gone)', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
+  const bytes = (n) => new Uint8Array(readFileSync(join(ARENA2, n)));
+  const { DFPalette } = await import('../../../src/formats/dfPalette.js');
+  const { preloadTamrielTrace } = await import('../../../src/ui/tamrielTrace.js');
+  const { setTamrielTrace } = await import('../../../src/world/tamriel/tamrielLand.js');
+  const { setTamrielFit } = await import('../../../src/world/tamriel/tamrielFrame.js');
+  const { MapsFile, CLIMATES } = await import('../../../src/formats/mapsFile.js');
+  const { WoodsFile } = await import('../../../src/formats/woodsFile.js');
+  const { groundMaps, groundWoods } = await import('../../../src/world/tamriel/tamrielGround.js');
+  const { isWaterPixel } = await import('../../../src/ui/overworldModel.js');
+  const { WATER_BYTE } = await import('../../../src/world/roadsProducer.js');
+  const { pastBayLakeAt, arenaPixels } = await import('../../../src/world/arenaPlaces.js');
+  const { rumareSeaPixel } = await import('../../../src/world/rumareWaters.js');
+  const { createWorldPlaces } = await import('../../../src/world/worldWide/worldPlaces.js');
+  const { createWorldPorts } = await import('../../../src/world/worldWide/worldPorts.js');
+  const { pastBayPlaceRows } = await import('../../../src/world/pastBayRows.js');
+  const { buildMapDict } = await import('../../../src/systems/map/mapDirectory.js');
+  const { PORT_LOCATION_IDS } = await import('../../../src/systems/travel/travelPorts.js');
+  const { createWorldLanes } = await import('../../../src/scenes/naval/worldLanes.js');
+  const { openSeaOf } = await import('../../../src/world/portSites.js');
+  const pal = new DFPalette(); pal.load(bytes('ART_PAL.COL'), 'ART_PAL.COL');
+  setTamrielTrace(await preloadTamrielTrace({ fetchBytes: async (n) => bytes(n), palette: pal, indexedDBRef: null }));
+  setTamrielFit({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 });
+  const maps = new MapsFile(); maps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK'));
+  const bayWoods = new WoodsFile(); bayWoods.load(bytes('WOODS.WLD'));
+  const woods = groundWoods(bayWoods);
+  groundMaps(maps);
+  const tvWater = (px, py) => woods.getHeightMapValue(px, py) <= WATER_BYTE;
+  const laneOpen = bayLaneWater(tvWater, (px, py) => (inBay(px, py) ? undilatedClimateIndex(maps, px, py) : maps.getClimateIndex(px, py)) === CLIMATES.Ocean);
+  const laneOpenNative = (x, z) => { const q = pixelOfNative(x, z); return laneOpen(q.x, q.y); };
+  const seaPixel = (x, y) => isWaterPixel(maps.getClimateIndex(x, y), woods.getHeightMapValue(x, y));
+  let bayOpenSea = null;
+  const openSea = (x, y) => (inBay(x, y) ? (bayOpenSea ??= openSeaOf(seaPixel, 1000, 500))[y * 1000 + x] === 1 : (seaPixel(x, y) && !pastBayLakeAt(x, y)) || rumareSeaPixel(x, y));
+  const places = createWorldPlaces();
+  places.register('tesa', pastBayPlaceRows({ pixels: arenaPixels(), templateOf: () => ({ exterior: { exteriorData: { width: 1, height: 1 } } }), capitals: true }));
+  const ports = createWorldPorts({ places, openSea, regionAt: (x, y) => maps.getRegionIndexAt(x, y) });
+  const wl = createWorldLanes({ mapDict: () => buildMapDict(maps), maps, portIds: PORT_LOCATION_IDS, ports, bayOpen: laneOpen, bayOpenNative: laneOpenNative, water: tvWater, beyond: () => true, kernel: createKernelSea(() => woods) });
+  const past = wl.beyond(), served = new Set();
+  for (const l of past) if (wl.way(l)) { served.add(l.a.name); served.add(l.b.name); }
+  const byName = (a, b) => past.find((l) => (l.a.name === a && l.b.name === b) || (l.a.name === b && l.b.name === a));
+  assert.ok(wl.way(byName('Vivec', 'Ebonheart')), 'Vivec to Ebonheart: the channel sailed');
+  assert.ok(served.has('Necrom') && served.has('Blacklight') && served.has('Lilmoth') && served.has('Soulrest'), [...served].join(', '));
+  const roadsteaded = ports.list().filter((p) => past.some((l) => l.a.id === p.id || l.b.id === p.id)).map((p) => p.name);
+  assert.deepEqual(roadsteaded.filter((n) => !served.has(n)), [], 'every port past the Bay a lane holds is served');
+});
+
+test('AUDIT SEA PATHS O4: in the Eltheric Ocean a byte over the sea\'s own height is the planner\'s land (the beach the ground builds), on the Bay and past it water as ever; a journey\'s sailed legs mended round the kernel\'s land where the host registers it (mutants: the beach water; the legs unmended; a mended leg aimed at its window)', () => {
+  assert.equal(DEEP_BYTE, 3);
+  const g = routeGround(() => 223, () => 10, 5, 4, 4, () => false, undefined, null);
+  const heightAt = (x, y) => (x === 5000 ? 4 : x === 5001 ? 3 : 4);
+  const g2 = routeGround(() => 223, heightAt, 5, 4, 4, () => false, undefined, null);
+  assert.equal(g2.isWater(5000, -5000), false, 'an Eltheric beach: land');
+  assert.equal(g2.isWater(5001, -5000), true, 'under the sea\'s height: water');
+  assert.equal(g2.isWater(1500, 100), true, 'past the Bay, out of the box: as ever');
+  assert.ok(g, 'a ground');
+  const P = NATIVE_PIXEL;
+  const kernel = (x, z) => Math.hypot(x - 3005.5 * P, z - 5500 * P) > 0.3 * P;   // an islet on the legs' line (their marks the bytes' points, z 5500 pixels)
+  const legs = [{ x: 3001, y: -5001, kind: 'sea' }, { x: 3008, y: -5001, kind: 'sea' }];
+  const mended = mendSeaLegs(legs, { x: 3000.5 * P, z: (499 + 5001 + 0.5) * P }, kernel, () => true);
+  assert.ok(mended.length > legs.length && mended.some((l) => l.at), 'marks of its own round the islet');
+  for (const l of mended.filter((q) => q.at)) assert.equal(kernel(l.at.x, l.at.z), true);
+  setSeaLegKernel(kernel, () => true);
+  try {
+    const px = []; for (let x = 3000; x <= 3008; x++) px.push({ x, y: -5001 });
+    const viaLegs = routeLegs(px, px.slice(1).map(() => 'sea'));
+    assert.ok(viaLegs.some((l) => l.at), 'routeLegs mends where the host registered the kernel');
+  } finally { setSeaLegKernel(null, null); }
+  assert.match(readFileSync(new URL('../../../src/systems/travel/travelOptions.js', import.meta.url), 'utf8'), /: leg\.kind === 'sea' && leg\.at \? rectOf\(leg\.at\.x - SEA_LEG_SIZE \/ 2, leg\.at\.z - SEA_LEG_SIZE \/ 2, SEA_LEG_SIZE, SEA_LEG_SIZE\)/);
+  assert.match(WORLD, /setSeaLegKernel\(kernelSea, tvWater\);/);
+});
+
+test('AUDIT SEA PATHS O5: ashore with a boat to hand and an end past the Bay, the plan may walk to the nearest shore and sail the sea lanes from it - where the box\'s search finds none (mutants: the shore\'s lanes unasked)', () => {
+  const isWater = (x, y) => x >= 1201 && x < 1600 && !(x >= 1390 && x <= 1410 && y >= 90 && y <= 110);   // one sea between two shores, an isle across the straight way
+  const plan = planRoute({ x: 1199, y: 100 }, { x: 1610, y: 100 }, { isWater, sea: { start: 'land', again: false }, margins: [1] });   // a boat left where it lands: no relaunch across the isle
+  assert.ok(plan, 'a plan');
+  const k = plan.kinds;
+  assert.ok(k.includes('embark') && k.includes('sea') && k.includes('landfall'), k.join(' '));
+  assert.ok(k.indexOf('embark') < k.indexOf('landfall'));
+});
+
+test('AUDIT SEA PATHS O6: a way\'s straightening galloped out and halved back - a zigzag channel of twelve reaches straightened in under 30,000 soundings, its whole search with it (the look back from each end asked 43,777) (mutants: the look back from the end)', () => {
+  const segs = []; let x = 0, z = 0;
+  for (let i = 0; i < 12; i++) { const nx = x + (i % 2 ? 0 : 300), nz = z + (i % 2 ? 300 : 0); segs.push([x, z, nx, nz]); x = nx; z = nz; }
+  const near = (px, pz) => segs.some(([ax, az, bx, bz]) => { const dx = bx - ax, dz = bz - az, L2 = dx * dx + dz * dz, t = Math.max(0, Math.min(1, ((px - ax) * dx + (pz - az) * dz) / L2)); return Math.hypot(px - ax - dx * t, pz - az - dz * t) < 40; });
+  let n = 0;
+  const g = createWaterGrid({ isWater: (a, b) => { n++; return near(a, b); }, hull: 1, nodeCap: 60000 });
+  const p = g.path([0, 0], [x, z]);
+  assert.ok(p && p.length <= 30, `a way of ${p?.length} points`);
+  assert.ok(n < 30000, `${n} soundings`);
 });

@@ -412,7 +412,7 @@ test('AUDIT BAY A19: THE FEED HANDS EVERY PACKET OF THE LANES ABOUT THE PLAYER -
   const env = {
     tvWater: water, maps: { getClimateIndex: (px, py) => (water(px, py) ? OCEAN : 1), getRegion: () => ({ mapNames: PORTS.map((p) => p.name) }) },
     CLIMATES: { Ocean: OCEAN }, RAID_NATIVE_PIXEL: NATIVE_PIXEL, pixelOfNative,
-    bayLaneWater, inBay, undilatedClimateIndex: (m, px, py) => m.getClimateIndex(px, py),   // PIN MOVED (AUDIT SEA PATHS LN-1): the host's lane law
+    bayLaneWater, inBay, undilatedClimateIndex: (m, px, py) => m.getClimateIndex(px, py), kernelSea: null,   // PIN MOVED (AUDIT SEA PATHS LN-1, O3): the host's lane law, no kernel here
     PORT_LOCATION_IDS: PORTS.map((p) => p.id),
     mapDict: new Map(PORTS.map((p, k) => [p.id & 0xfffff, { id: p.y * 1000 + p.x, regionIndex: 7 + k, mapIndex: k }])),
     getPixelFromPixelID: (id) => ({ x: id % 1000, y: Math.floor(id / 1000) }),

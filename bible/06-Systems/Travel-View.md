@@ -3788,9 +3788,9 @@ faults, both past the Bay; the Bay's plans were 100% on the road and are unchang
 - **The walk on the curves** (`systems/travel/roadLine.js`): a route's pixel past the Bay that it turns in, one road (or
   one track) in and out, is walked on the curve its byte paints between the two edges it crosses
   (`roadLine.js:"export function routeCurveAt(pixels, kinds, i, {"`): the leg that ends there ends at the curve's apex,
-  and the next walks the curve's second half before its straight run - each such leg carries its `line`, the painted
+  and the next walks the curve's second half before its straight run - each carries its `line`, the painted
   road's native points (`roadLine.js:"export function roadLineLegs(legs, ix, pixels, kinds, o = {}) {"`, from
-  `travelRoute.js:"return roadLineLegs(legs, ix, pixels, kinds, { byteAt: roadBytes });"`). Travel Options walks a
+  `travelRoute.js:"const out = roadLineLegs(legs, ix, pixels, kinds, { byteAt: roadBytes });"`). Travel Options walks a
   line's points as its lane (`travelOptions.js:"...(leg.line && !leg.ring ? { pts: [[a.x, a.z], ...leg.line] } : {})"`,
   the autopilot's `path`, OW-ROAD-TRUE's pursuit), aims a leg at its line's end (`legEnd`), rejoins a curve at its
   nearest point (`travelOptions.js:"const near = lane?.pts ? nearestOnLine(lane.pts, me) : null;"`) and walks a last

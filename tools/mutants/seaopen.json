@@ -578,7 +578,7 @@
   {
     "name": "QUAY-C3-the-host-water",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "createPassageQuay({ harbours, isWater: (x, z, hull) => deps.isWater(x, z, hull),",
+    "old": "createPassageQuay({ harbours, isWater: waterOf(() => deps.isWater),",
     "new": "createPassageQuay({ harbours, isWater: () => true,",
     "tests": [
       "test/scenes/naval/passagequay.test.js"

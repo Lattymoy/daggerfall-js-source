@@ -264,8 +264,8 @@ THE LAW NOW.
   dial and Leave on it, and the pad's prompts say those two (AUDIT FB1021d PS-7); the passenger's autorun is let go at her
   helm (PS-4).
 - PASSAGE-IN: (a) a sailed leg is aimed at its pixel's middle where the built ground floats her there, else at the nearest
-  water that does - a block of 5 by 5 tiles, room for her hull (`seaMark.js:"export function seaLegMark(origin, waterAt) {"`,
-  `travelOptions.js:"const read = leg.kind === 'sea' ? seaLegMark(w, deps.seaWaterAt) : null;"` - the autopilot's rect,
+  water that does - 5 by 5 tiles, room for her hull (`seaMark.js:"export function seaLegMark(origin, waterAt) {"`,
+  `travelOptions.js:"const read = leg.kind === 'sea' && !leg.at ? seaLegMark(w, deps.seaWaterAt) : null;"` - the autopilot's rect,
   so the hand's mark and the arrival are that point; the host hands the journey its built water, one entry). AUDIT
   FB1021d PS-1: a pixel built dry is passed for the next leg, and one not built when its leg begins (a leg folds a
   straight run) is aimed again once it is (`travelOptions.js:"st.route.seaUnbuilt === st.route.i"`; the host's reader

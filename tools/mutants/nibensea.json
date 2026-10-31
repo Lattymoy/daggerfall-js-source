@@ -140,8 +140,8 @@
   {
     "name": "LANES-way-cap-the-lanes",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "export const beyondPathPx = (lane) => Math.max(BEYOND_LANE_PATH_PX, 2 * Math.max(lane.a.reach ?? 0, lane.b.reach ?? 0));",
-    "new": "export const beyondPathPx = (lane) => BEYOND_LANE_PATH_PX + 0 * (lane.a.reach ?? 0);",
+    "old": "export const beyondPathPx = (lane) => Math.max(BEYOND_LANE_PATH_PX, 2 * Math.max(lane.a.reach ?? 0, lane.b.reach ?? 0), lane.path ?? 0);",
+    "new": "export const beyondPathPx = (lane) => Math.max(BEYOND_LANE_PATH_PX, lane.path ?? 0) + 0 * (lane.a.reach ?? 0);",
     "tests": [
       "test/world/nibensea.test.js"
     ]

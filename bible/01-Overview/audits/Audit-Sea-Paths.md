@@ -13,8 +13,9 @@ composes them):
 
 Every finding below was reproduced before a line changed, and each fix carries an `AUDIT SEA PATHS <ID>` comment. The
 pins are `test/systems/naval/auditseapaths.test.js`, beside the pins they moved (`PIN MOVED` where each stands). The
-mutants are `tools/mutants/auditseapaths.json`: 39, 38 dead, one equivalent as recorded. Fifteen records of earlier
-lists aimed at lines these fixes moved; each was re-aimed by content and dies again.
+mutants are `tools/mutants/auditseapaths.json`: 63, 62 dead, one equivalent as recorded. Thirty-four records of earlier
+lists aimed at lines these fixes moved; each was re-aimed by content and dies again, but `P7-corner-cut`, now equivalent
+as recorded (O2).
 
 ## Fixed - AI ships in the scene
 
@@ -76,22 +77,37 @@ lists aimed at lines these fixes moved; each was re-aimed by content and dies ag
   stopped her behind it. While the hand steers off land the clock follows her, the way back counts, and a separate
   900 s budget ends a dead end (`seaNoWay`). Every hull now rounds bars of 400 m to 3 km in every wind.
 
-## Open, with the reason
+## Fixed - the six left open (O1-O6)
 
-- **Long voyages past the grid's reach.** `PATH_NODES` (6,000 cells) does not find a way round a peninsula of 1.5 km
-  or more: Pallaton to Sentinel and Jalonia to Naresa still sail out of the world rather than harbour to harbour. A
-  coarse first search would lift it; it is a design choice for the owner, not a defect left.
-- **Necrom and Ebonheart run no packet.** Their water joins no port's within the 800 pixel cap.
-- **Corner clips under a point sampler's floor.** A straightened leg sounded every 5 m can clip a corner by under that
-  (0.6 m at Aldwall Rock); a lane leg can cross the kernel's land inside a square whose four corners are water (307 m
-  at worst, 0.75% of the Bay's lane length), and 37 raider positions stand on it so. The captains' lookout keeps a
-  hull off all of these.
-- **The planner's water at bytes 4 and 5.** The planner calls them water; the built ground stands them just over the
-  sea. Eltheric legs run beside isles there and the hand steers round them (no hull touched land in the lane's runs).
-- **A packed boat past the Bay never sails the lanes.** The lanes are asked from a helm alone; from the shore the
-  search walks or sails the box. PL-4 lets the walk through; walking to the shore and then the lanes is a slice.
-- **The straightening's cost** grows with the square of a way's points (31,000 to 60,000 soundings in a long
-  channel); it is a cost, not a wrong way.
+The owner, of the six the first pass left open: *"Take care of all the open item"*. Each is closed below, under its id.
+
+- **O1, voyages past the grid's reach.** A way the grid's search spends `PATH_NODES` on is sought again over cells four
+  of its own a side (a weighted search), and each coarse step found again in the grid's own cells; one way's whole spend
+  is three of `PATH_NODES`. Harbour to harbour on the real map, 0 of 50 pairs fail (19 did): Pallaton to Sentinel and
+  Jalonia to Naresa sail harbour to harbour.
+- **O2, Necrom and Ebonheart.** Vivec and Ebonheart share a channel a picture cell wide on the slant, and the lane search
+  refused every diagonal past a cell's corner: it now takes one where the Bay's scale holds the step. A port past the
+  Bay with no port in reach and no lane with a way looks out to 1,600 pixels, a way allowed twice the distance (Necrom).
+  Every port past the Bay a lane holds is served.
+- **O3, corner clips.** The scene's grid walks the host's own tiles (`navalIsWater.tile`), so no leg clips a tile's
+  corner, and a packet or a raider sailing for a point of her own takes the grid's way to it (`courseVia`). The world's
+  lanes and raiders read the kernel's own ground (`world/water/kernelSea.js`, 99.3% of a coast's tiles agree): a lane
+  leg over its land goes round through its pixels' own water at an eighth of a pixel, and a raider is born and sails
+  only on it. All 398 ways hold on it, the count they had, and the book's first build is 0.5 s (0.2 s before).
+
+- **O4, the Eltheric's beach.** Its isles stood a pixel past their last land byte: a byte over the sea's own height (4
+  and 5) is the planner's land there, and a journey's sailed legs are mended round the kernel's land with marks of
+  their own (`systems/travel/seaLegsMend.js`). The worst sailed run over land in the auditor's twelve voyages fell from
+  1,210 m to 20 m, the kernel's own beach tiles.
+- **O5, a packed boat past the Bay.** Ashore with a boat to hand, the plan may walk to the nearest shore and sail the
+  sea lanes from it, the cheaper of that and the box's plan kept. Rihad to Woodhearth plans (none did); Sentinel to
+  Hegathe costs 665 (1,033) and Woodhearth to Haven 675 (851), what the helm's own voyages cost.
+- **O6, the straightening's cost.** Galloped out from each point and halved back, the end asked first: a zigzag
+  channel's way in 21,962 soundings, where the look back from each end asked 43,777.
+
+Left as they are, by the water itself: five lanes past the Bay whose ports' waters do not join (Necrom to Vivec and to
+Ebonheart, Winterhold and Windhelm to the Imperial City, Senchal to Torval) carry no packet; each of those ports is
+served by another lane.
 
 The lanes change where a packet sails and where the serpent rises (its site is rolled over the lanes): every client of
 one version agrees, and a client of the last version disagrees until it updates, as with every lane change before.
