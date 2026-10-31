@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { rollAffixes } from '../../../src/systems/loot/lootRarity.js';
-import { leanLinesAt, withSkillLean, skillLean, registerLeanSkills, SKILL_LEAN_GROUPS } from '../../../src/systems/loot/lootSkillLean.js';
+import { leanLinesAt, withSkillLean, skillLean, registerLeanSkills, SKILL_LEAN_GROUPS, SKILL_LEAN_CHANCE } from '../../../src/systems/loot/lootSkillLean.js';
 import { bestSkills } from '../../../src/systems/loot/lootPowers.js';
 import { seededRng } from '../../../src/systems/wind/wind.js';
 import { SKILLS } from '../../../src/systems/skills.js';
@@ -29,10 +29,10 @@ test('SKILL-LEAN: weapons, armour, jewellery and clothing; one line to level 11,
 test('SKILL-LEAN: inside the lean a piece\'s first lines are the roller\'s best skills, in order; outside, nothing leans', () => {
   for (const [group, item] of Object.entries(pieces)) {
     for (let s = 0; s < 40; s++) {
-      const out = withSkillLean(45, () => rollAffixes(item, 'rare', seededRng(s)), BEST);
+      const out = withSkillLean(45, () => rollAffixes(item, 'rare', seededRng(s)), BEST, 1);
       const lines = Math.min(3, out.length);
       assert.deepEqual(out.slice(0, lines).map((a) => [a.id, a.param]), BEST.slice(0, lines).map((p) => ['skill', p]), `${group} seed ${s}`);
-      const low = withSkillLean(5, () => rollAffixes(item, 'rare', seededRng(s)), BEST);
+      const low = withSkillLean(5, () => rollAffixes(item, 'rare', seededRng(s)), BEST, 1);
       assert.deepEqual([low[0].id, low[0].param], ['skill', BEST[0]]);
       assert.notDeepEqual(low.slice(1, 3).map((a) => a.param), BEST.slice(1, 3), 'one line only to 11');
     }
@@ -46,10 +46,22 @@ test('SKILL-LEAN: inside the lean a piece\'s first lines are the roller\'s best 
   for (let s = 0; s < 10; s++) assert.deepEqual(withSkillLean(45, () => rollAffixes(shield, 'rare', seededRng(s)), BEST), rollAffixes(shield, 'rare', seededRng(s)), 'a group outside the five never leans');
 });
 
+test('LEAN-CHANCE: a leaning line lands on a best skill SKILL_LEAN_CHANCE of the time, else rolls as ever; at 0 nothing leans', () => {
+  assert.equal(SKILL_LEAN_CHANCE, 0.25);
+  let first = 0, none = 0;
+  const N = 400;
+  for (let s = 0; s < N; s++) {
+    if (skillsOf(withSkillLean(5, () => rollAffixes(pieces.Armor, 'magic', seededRng(s)), BEST))[0] === BEST[0]) first++;
+    if (skillsOf(withSkillLean(5, () => rollAffixes(pieces.Armor, 'magic', seededRng(s)), BEST, 0))[0] === BEST[0]) none++;
+  }
+  assert.ok(first / N > 0.18 && first / N < 0.35, `one leaning line on the best skill ${first}/${N}`);
+  assert.ok(none / N < 0.1, `no lean at chance 0 (${none}/${N})`);
+});
+
 test('SKILL-LEAN: the registered roller answers when no skills are handed in; a rollerless scope leans nothing', () => {
   registerLeanSkills(() => [SKILLS.Archery]);
   try {
-    assert.deepEqual(withSkillLean(20, () => skillLean()), { lines: 2, skills: [SKILLS.Archery] });
+    assert.deepEqual(withSkillLean(20, () => skillLean()), { lines: 2, skills: [SKILLS.Archery], chance: SKILL_LEAN_CHANCE });
     registerLeanSkills(() => { throw new Error('no player'); });
     assert.equal(withSkillLean(30, () => skillLean()), null);
   } finally { registerLeanSkills(null); }

@@ -249,7 +249,9 @@ carries a template, so nothing leans. Daggerfall Unity's items have no lines. Th
 
 The steps sit a band ahead (the owner: "adjust lean so player start farming gear for the nest area tto pushj up").
 Players craft gear to about 30 ("we want them to make gear for say 30"), then better it with leaned drops from harder
-zones and honing. Only drops lean: an Imbue stays random (the owner: "its a random"). The reference gear skill
+zones and honing. Only drops lean: an Imbue stays random (the owner: "its a random"). Each leaning line lands a quarter of the time,
+else it rolls as ever (`SKILL_LEAN_CHANCE`; the owner: "maybe lean less for doubl tim to grind"), which about doubles
+the farming from the base kit to level 45 gear. The reference gear skill
 (`pveBuilds.js` `TIERS`) is the plain enchanted base kit, +375, at 30 ("base kit need tuned fro lvl 30"), +650 at 40 and
 +800 at 45, close to best gear's +875 ("45 shoud need almost top gear").
 

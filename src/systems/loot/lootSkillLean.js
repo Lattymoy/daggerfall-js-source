@@ -6,6 +6,9 @@
 /** [below this foe level, lines that lean]: a band ahead, so a band's drops make the next band's gear (the owner,
  *  2026-10-31) - one to 11, two to 27, three from 28. */
 export const SKILL_LEAN_STEPS = Object.freeze([Object.freeze([12, 1]), Object.freeze([28, 2]), Object.freeze([Infinity, 3])]);
+/** LEAN-CHANCE (the owner, 2026-10-31: "seem little hgard", "maybe lean less for doubl tim to grind"): each leaning line
+ *  lands on a best skill this share of the time, else it rolls as ever - farming to top gear takes about twice as long. */
+export const SKILL_LEAN_CHANCE = 0.25;
 /** The groups whose skill lines lean. */
 export const SKILL_LEAN_GROUPS = Object.freeze(['Weapons', 'Armor', 'Jewellery', 'MensClothing', 'WomensClothing']);   // clothing: the owner, 2026-10-31
 
@@ -19,17 +22,18 @@ export function registerLeanSkills(fn) { _skills = typeof fn === 'function' ? fn
 
 /**
  * Run `fn` with a foe of `level`'s lean: its first lines on the roller's best skills (`skills`, else the registered
- * roller's). Nests; synchronous. @param {number} level @param {() => any} fn @param {number[]|null} [skills]
+ * roller's), each line at `chance`. Nests; synchronous. @param {number} level @param {() => any} fn
+ * @param {number[]|null} [skills] @param {number} [chance]
  */
-export function withSkillLean(level, fn, skills = null) {
+export function withSkillLean(level, fn, skills = null, chance = SKILL_LEAN_CHANCE) {
   const was = _scoped;
   let best = skills;
   if (!best && _skills) { try { best = _skills(); } catch { best = null; } }
-  _scoped = Array.isArray(best) && best.length ? { lines: leanLinesAt(level), skills: Object.freeze(best.slice()) } : null;
+  _scoped = Array.isArray(best) && best.length ? { lines: leanLinesAt(level), skills: Object.freeze(best.slice()), chance } : null;
   let out;
   try { out = fn(); } finally { _scoped = was; }
   if (out && typeof out.then === 'function') throw new TypeError('withSkillLean: the body must be synchronous');
   return out;
 }
-/** The lean now - `{ lines, skills }` inside withSkillLean, else null. */
+/** The lean now - `{ lines, skills, chance }` inside withSkillLean, else null. */
 export const skillLean = () => _scoped;

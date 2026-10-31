@@ -888,11 +888,12 @@ export function rollAffixes(item, tier, rolls = Math.random, { byLines = true, l
   for (let i = 0; i < count; i++) {
     let pool = open();
     if (!pool.length) break;
-    const best = sl && leaned < sl.lines && pool.includes('skill') ? sl.skills.find((p) => !taken.has(`skill:${p}`) && kindParams('skill', item).includes(p)) : undefined;
+    const tries = !!sl && leaned < sl.lines && pool.includes('skill');
+    if (tries) leaned++;   // LEAN-CHANCE: a leaning line spends its try whether it lands or not
+    const best = tries && rolls() < sl.chance ? sl.skills.find((p) => !taken.has(`skill:${p}`) && kindParams('skill', item).includes(p)) : undefined;
     if (best != null) {
       const [lo, hi] = AFFIX_RANGES.skill[tier];
       taken.add(`skill:${best}`);
-      leaned++;
       out.push({ id: 'skill', param: best, value: rangeInt(lo, hi, rolls) });
       continue;
     }
