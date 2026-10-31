@@ -282,8 +282,8 @@
   {
     "name": "SD26-T9-the-marks-line-dashed",
     "file": "src/systems/superDungeon/sdOmen.js",
-    "old": "${E.stone}, its ${E.sig.replace(/^The /, '')}, under",
-    "new": "${E.stone} - ${sdNameIn(E.sig)} - under",
+    "old": "    ? `${name || 'The Abyss Dungeon'} keeps the Ending of ${E.stone}, its ${E.sig.replace(/^The /, '')}, under ${O.map((o) => sdNameIn(o.name)).join(' and ')}.`",
+    "new": "    ? `${name || 'The Abyss Dungeon'} keeps the Ending of ${E.stone} - ${sdNameIn(E.sig)} - under ${O.map((o) => sdNameIn(o.name)).join(' and ')}.`",
     "tests": [
       "test/ui/gate/sd26_text.test.js",
       "test/scenes/superDungeon/sd11d_words.test.js"

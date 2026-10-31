@@ -110,8 +110,8 @@
   {
     "name": "SD18C-the-card-silent",
     "file": "src/systems/superDungeon/sdOmen.js",
-    "old": "...(E ? [`It keeps the Ending of ${E.stone}`] : []), ",
-    "new": "",
+    "old": "    ...(E ? [`It keeps the Ending of ${E.stone}`] : []),\n    ...(rec.fb ? [`Found by ${rec.fb}`] : []),",
+    "new": "    ...(rec.fb ? [`Found by ${rec.fb}`] : []),",
     "tests": [
       "test/scenes/superDungeon/sd18c_endings.test.js",
       "test/ui/enhanced/sd2c_omen.test.js"

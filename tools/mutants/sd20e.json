@@ -2,8 +2,8 @@
   {
     "name": "SD20E-T1-what-it-is-back",
     "file": "src/systems/superDungeon/sdOmen.js",
-    "old": "`${name || 'An Abyss Dungeon'}${w ? ` - ${w}` : ''}`",
-    "new": "`${name ? `${name} - an Abyss Dungeon` : 'An Abyss Dungeon'}${w ? ` - ${w}` : ''}`",
+    "old": "  return `${name || 'An Abyss Dungeon'}${w ? ` - ${w}` : ''}`;",
+    "new": "  return `${name ? `${name} - an Abyss Dungeon` : 'An Abyss Dungeon'}${w ? ` - ${w}` : ''}`;",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "SD20E-T11-the-capitals-back",
     "file": "src/systems/superDungeon/sdOmen.js",
-    "old": ", under ${O.map((o) => sdNameIn(o.name)).join(' and ')}.",
-    "new": ", under ${O.map((o) => o.name).join(' and ')}.",
+    "old": "    ? `${name || 'The Abyss Dungeon'} keeps the Ending of ${E.stone}, its ${E.sig.replace(/^The /, '')}, under ${O.map((o) => sdNameIn(o.name)).join(' and ')}.`",
+    "new": "    ? `${name || 'The Abyss Dungeon'} keeps the Ending of ${E.stone}, its ${E.sig.replace(/^The /, '')}, under ${O.map((o) => o.name).join(' and ')}.`",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "SD20E-T12-toward-it",
     "file": "src/systems/superDungeon/sdOmen.js",
-    "old": "turn their heads toward the walls',",
-    "new": "turn their heads toward it',",
+    "old": "  underking: 'the dead in their barrows turn their heads toward the walls', // AUDIT SD III (T12): \"toward it\" - toward the air, the walls, the city?",
+    "new": "  underking: 'the dead in their barrows turn their heads toward it', // AUDIT SD III (T12): \"toward it\" - toward the air, the walls, the city?",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -355,8 +355,8 @@
     "name": "SD20E-T19-the-hour-unwhere",
     "file": "src/systems/superDungeon/sdOmen.js",
     "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
-    "old": "${sdWhere(near, region, province)} will fade within the hour.",
-    "new": "near ${near || 'the Iliac Bay'} will fade within the hour.",
+    "old": "  `${name || 'The Abyss Dungeon'} ${sdWhere(near, region, province)} will fade within the hour.`; // AUDIT SD III (T19): where, as the find's line says it",
+    "new": "  `${name || 'The Abyss Dungeon'} near ${near || 'the Iliac Bay'} will fade within the hour.`; // AUDIT SD III (T19): where, as the find's line says it",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]

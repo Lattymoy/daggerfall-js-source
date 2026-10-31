@@ -263,8 +263,8 @@
   {
     "name": "SD20C-V15-a-list-at-nought",
     "file": "src/systems/superDungeon/sdOmen.js",
-    "old": "(!(w > 0) && rgb instanceof Float32Array ? rgb : new Float32Array(",
-    "new": "(false ? rgb : new Float32Array(",
+    "old": "  !(w > 0) && rgb instanceof Float32Array\n    ? rgb\n    : new Float32Array([0, 1, 2].map((i) => rgb[i] * (1 + (SD_BRASS_TINT[i] - 1) * clamp01(w || 0))));",
+    "new": "  false ? rgb : new Float32Array([0, 1, 2].map((i) => rgb[i] * (1 + (SD_BRASS_TINT[i] - 1) * clamp01(w || 0))));",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]

@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-TW-C4-the-mapid-read-again",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "(Number.isInteger(city?.px) && Number.isInteger(city?.py) ? { px: city.px, py: city.py } : pixelOfLoc(city))",
-    "new": "pixelOfLoc(city)",
+    "old": "export const cityPixelOf = (city) =>\n  Number.isInteger(city?.px) && Number.isInteger(city?.py) ? { px: city.px, py: city.py } : pixelOfLoc(city);",
+    "new": "export const cityPixelOf = (city) => pixelOfLoc(city);",
     "tests": [
       "test/world/worldWide/audit_tamrielwide.test.js"
     ],

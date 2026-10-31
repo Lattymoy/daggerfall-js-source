@@ -47,8 +47,8 @@
   {
     "name": "SD9E-the-brass-before-the-last-pass",
     "file": "src/systems/superDungeon/sdSpoils.js",
-    "old": "  lastPass(pieces.map((p) => p.item), rolls);\n  // SD9d: THE BRASS OF NUMIDIUM - rolled after every piece, so every spoils before it is what it was for its seed\n  const brass = rollNumidiumPiece(rolls);\n",
-    "new": "  // SD9d: THE BRASS OF NUMIDIUM - rolled after every piece, so every spoils before it is what it was for its seed\n  const brass = rollNumidiumPiece(rolls);\n  lastPass(pieces.map((p) => p.item), rolls);\n",
+    "old": "  lastPass(\n    pieces.map((p) => p.item),\n    rolls,\n  );\n  // SD9d: THE BRASS OF NUMIDIUM - rolled after every piece, so every spoils before it is what it was for its seed\n  const brass = rollNumidiumPiece(rolls);",
+    "new": "  // SD9d: THE BRASS OF NUMIDIUM - rolled after every piece, so every spoils before it is what it was for its seed\n  const brass = rollNumidiumPiece(rolls);\n  lastPass(\n    pieces.map((p) => p.item),\n    rolls,\n  );",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD9E-the-two-before-the-first",
     "file": "src/systems/superDungeon/sdSpoils.js",
-    "old": "  pieces.push(graded(spoilsBase(lv, rolls), rolls() < SD_SPOILS_LEGENDARY ? 'legendary' : 'rare', rolls));\n  for (let i = 0; i < 2; i++) pieces.push(graded(spoilsBase(lv, rolls), rareOrBetter(rolls), rolls));\n",
-    "new": "  for (let i = 0; i < 2; i++) pieces.push(graded(spoilsBase(lv, rolls), rareOrBetter(rolls), rolls));\n  pieces.push(graded(spoilsBase(lv, rolls), rolls() < SD_SPOILS_LEGENDARY ? 'legendary' : 'rare', rolls));\n",
+    "old": "  pieces.push(graded(spoilsBase(lv, rolls), rolls() < SD_SPOILS_LEGENDARY ? 'legendary' : 'rare', rolls));\n  for (let i = 0; i < 2; i++) pieces.push(graded(spoilsBase(lv, rolls), rareOrBetter(rolls), rolls));",
+    "new": "  for (let i = 0; i < 2; i++) pieces.push(graded(spoilsBase(lv, rolls), rareOrBetter(rolls), rolls));\n  pieces.push(graded(spoilsBase(lv, rolls), rolls() < SD_SPOILS_LEGENDARY ? 'legendary' : 'rare', rolls));",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SD9E-the-hourlock-before-the-brass",
     "file": "src/systems/superDungeon/sdSpoils.js",
-    "old": "  const brass = rollNumidiumPiece(rolls);\n  if (brass) pieces.push({ item: brass, tier: brass.rarity });\n  // GILDED1: THE HOURLOCK - one draw more, LAST of all, so every spoils before it (the Brass's own) is what it was\n  const hourlock = rollHourlock(rolls);\n",
-    "new": "  // GILDED1: THE HOURLOCK - one draw more, LAST of all, so every spoils before it (the Brass's own) is what it was\n  const hourlock = rollHourlock(rolls);\n  const brass = rollNumidiumPiece(rolls);\n  if (brass) pieces.push({ item: brass, tier: brass.rarity });\n",
+    "old": "  const brass = rollNumidiumPiece(rolls);\n  if (brass) pieces.push({ item: brass, tier: brass.rarity });\n  // GILDED1: THE HOURLOCK - one draw more, LAST of all, so every spoils before it (the Brass's own) is what it was\n  const hourlock = rollHourlock(rolls);",
+    "new": "  // GILDED1: THE HOURLOCK - one draw more, LAST of all, so every spoils before it (the Brass's own) is what it was\n  const hourlock = rollHourlock(rolls);\n  const brass = rollNumidiumPiece(rolls);\n  if (brass) pieces.push({ item: brass, tier: brass.rarity });",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SD9E-no-brass",
     "file": "src/systems/superDungeon/sdSpoils.js",
-    "old": "  if (brass) pieces.push({ item: brass, tier: brass.rarity });\n",
-    "new": "",
+    "old": "  if (brass) pieces.push({ item: brass, tier: brass.rarity });\n  // GILDED1: THE HOURLOCK - one draw more, LAST of all, so every spoils before it (the Brass's own) is what it was",
+    "new": "  // GILDED1: THE HOURLOCK - one draw more, LAST of all, so every spoils before it (the Brass's own) is what it was",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD9E-a-level-unfloored",
     "file": "src/systems/superDungeon/sdSpoils.js",
-    "old": "  const lv = Math.max(1, Math.floor(Number(level) || 1));\n  const gold = Math.round(SD_SPOILS",
-    "new": "  const lv = Math.floor(Number(level) || 1);\n  const gold = Math.round(SD_SPOILS",
+    "old": "  const lv = Math.max(1, Math.floor(Number(level) || 1));",
+    "new": "  const lv = Math.floor(Number(level) || 1);",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SD9E-the-list-gold-first",
     "file": "src/systems/superDungeon/sdSpoils.js",
-    "old": "  return [\n    ...pieces,\n    ...card,   // CARDS9: the Remnant's card, after the pieces\n    ...gems,   // GEM2: the Remnant's gems, after the card\n    gold,\n  ];",
-    "new": "  return [\n    gold,\n    ...pieces,\n    ...card,   // CARDS9: the Remnant's card, after the pieces\n    ...gems,   // GEM2: the Remnant's gems, after the card\n  ];",
+    "old": "    ...pieces,\n    ...card, // CARDS9: the Remnant's card, after the pieces\n    ...gems, // GEM2: the Remnant's gems, after the card\n    gold,",
+    "new": "    gold,\n    ...pieces,\n    ...card, // CARDS9: the Remnant's card, after the pieces\n    ...gems, // GEM2: the Remnant's gems, after the card",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SD9E-a-piece-undressed",
     "file": "src/systems/superDungeon/sdSpoils.js",
-    "old": "  const pieces = s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier, record: flat() }));\n  const gold = { kind: 'gold'",
-    "new": "  const pieces = s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier }));\n  const gold = { kind: 'gold'",
+    "old": "  const pieces = s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier, record: flat() }));",
+    "new": "  const pieces = s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier }));",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SD9E-a-slot-misread",
     "file": "src/systems/superDungeon/sdSpoils.js",
-    "old": "/^sd:(\\d{1,9})$/",
-    "new": "/^sd:(\\d+)/",
+    "old": "  const m = typeof day === 'string' ? /^sd:(\\d{1,9})$/.exec(day) : null;",
+    "new": "  const m = typeof day === 'string' ? /^sd:(\\d+)/.exec(day) : null;",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]

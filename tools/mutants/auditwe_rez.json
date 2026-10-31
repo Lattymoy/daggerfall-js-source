@@ -103,8 +103,8 @@
   {
     "name": "AUDIT-WE-L1-6-stamped-every-frame",
     "file": "src/systems/superDungeon/sdSlots.js",
-    "old": "if (last?.s !== s) last = { s, at: clock() };",
-    "new": "last = { s, at: clock() };",
+    "old": "      if (last?.s !== s) last = { s, at: clock() }; // AUDIT WORLD-EVENTS L1-6: the death's own moment - the world host adds the slot every frame of the death screen, and the window it stamped never shut (a rise clears it, so a second death stamps its own)",
+    "new": "      last = { s, at: clock() }; // AUDIT WORLD-EVENTS L1-6: the death's own moment - the world host adds the slot every frame of the death screen, and the window it stamped never shut (a rise clears it, so a second death stamps its own)",
     "tests": [
       "test/net/superDungeon/auditwe_rez.test.js",
       "test/net/superDungeon/sd12_onelife.test.js"

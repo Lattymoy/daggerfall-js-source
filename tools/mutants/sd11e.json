@@ -294,8 +294,8 @@
   {
     "name": "SD11E-C4-the-salts-comment-as-it-was",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "a slot's own until the 2047th Hollow after it",
-    "new": "a slot's own until the 2048th Hollow after it",
+    "old": "/** A slot's map-id salt: 2049..4095, a slot's own until the 2047th Hollow after it (AUDIT SD II, L4 C4: the period is",
+    "new": "/** A slot's map-id salt: 2049..4095, a slot's own until the 2048th Hollow after it (AUDIT SD II, L4 C4: the period is",
     "tests": [
       "test/net/superDungeon/sd11e_laws.test.js"
     ]
@@ -331,8 +331,8 @@
   {
     "name": "SD11E-docs-the-largest-cities",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "the Bay's first\n//      SD_GREAT_CITIES cities by that same claim (one named for its region, then the most blocks, then the most\n//      buildings), and the slot's roll picks one.",
-    "new": "the Bay's SD_GREAT_CITIES\n//      largest cities, and the slot's roll picks one.",
+    "old": "//      most\" in its second sense). With no region (-1, nobody to count) the candidates are the Bay's first\n//      SD_GREAT_CITIES cities by that same claim (one named for its region, then the most blocks, then the most\n//      buildings), and the slot's roll picks one.",
+    "new": "//      most\" in its second sense). With no region (-1, nobody to count) the candidates are the Bay's SD_GREAT_CITIES\n//      largest cities, and the slot's roll picks one.",
     "tests": [
       "test/net/superDungeon/sd11e_laws.test.js"
     ]

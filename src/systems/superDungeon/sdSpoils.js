@@ -23,12 +23,19 @@
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { seededRng } from '../wind/wind.js';
 import { spoilsBase } from '../gate/gateSpoils.js';
-import { applyRarity, rarityChances, lastPass, socketPass, weaponSocketPass, techniquePass } from '../loot/lootRarity.js';   // GEM1: the sockets' passes; TECH1: the technique pass, a door's last draw
-import { bossGems } from '../gems.js';   // GEM2: the Brass Remnant's gems
-import { rollNumidiumPiece } from '../aetheric.js';   // SD9d: the Brass Remnant's own set
-import { rollHourlock } from '../gilded.js';   // GILDED1: the Hourlock - the spoils' last roll
+import {
+  applyRarity,
+  rarityChances,
+  lastPass,
+  socketPass,
+  weaponSocketPass,
+  techniquePass,
+} from '../loot/lootRarity.js'; // GEM1: the sockets' passes; TECH1: the technique pass, a door's last draw
+import { bossGems } from '../gems.js'; // GEM2: the Brass Remnant's gems
+import { rollNumidiumPiece } from '../aetheric.js'; // SD9d: the Brass Remnant's own set
+import { rollHourlock } from '../gilded.js'; // GILDED1: the Hourlock - the spoils' last roll
 import { RANDOM_TREASURE_ICONS } from '../loot/loot.js';
-import { bossCardRoll } from '../bossCards.js';   // CARDS9: the Brass Remnant's own card, the hoard's last draw
+import { bossCardRoll } from '../bossCards.js'; // CARDS9: the Brass Remnant's own card, the hoard's last draw
 
 /** Gold a level of the player's, before the seed's variation (0.8 to 1.2 of it) - over half again a gate boss's. */
 export const SD_SPOILS_GOLD_PER_LEVEL = 400;
@@ -46,8 +53,8 @@ export const SD_SPOILS_TEXT = Object.freeze({
   spilled: 'Your spoils spill across the arena floor.',
   none: 'No spoils. Your part in the fight was too small.',
   gathered: 'The spoils of the Last Moment are in your pack.',
-  granted: 'Your share of the Brass Remnant\'s spoils is in your pack.',
-  recovered: 'The Brass Remnant\'s spoils are in your pack.',
+  granted: "Your share of the Brass Remnant's spoils is in your pack.",
+  recovered: "The Brass Remnant's spoils are in your pack.",
 });
 /** An Hour's receipt as the pool keys it spent: its slot, never a gate's bare day. */
 export const sdSpoilsDay = (d) => `sd:${d}`;
@@ -85,7 +92,10 @@ export function rollSdSpoils(seed, level) {
   const pieces = [];
   pieces.push(graded(spoilsBase(lv, rolls), rolls() < SD_SPOILS_LEGENDARY ? 'legendary' : 'rare', rolls));
   for (let i = 0; i < 2; i++) pieces.push(graded(spoilsBase(lv, rolls), rareOrBetter(rolls), rolls));
-  lastPass(pieces.map((p) => p.item), rolls);
+  lastPass(
+    pieces.map((p) => p.item),
+    rolls,
+  );
   // SD9d: THE BRASS OF NUMIDIUM - rolled after every piece, so every spoils before it is what it was for its seed
   const brass = rollNumidiumPiece(rolls);
   if (brass) pieces.push({ item: brass, tier: brass.rarity });
@@ -97,10 +107,19 @@ export function rollSdSpoils(seed, level) {
   const card = bossCardRoll('abyss', rolls);
   // GEM1/GEM2 (bible/06-Systems/Gem-Sockets.md section 4): the sockets' passes over the pieces (the Gilded Hourlock never
   // takes one - socketCap answers none for its rung), then the Remnant's two gems, LAST of all (after the card)
-  socketPass(pieces.map((p) => p.item), rolls);
-  weaponSocketPass(pieces.map((p) => p.item), rolls);
+  socketPass(
+    pieces.map((p) => p.item),
+    rolls,
+  );
+  weaponSocketPass(
+    pieces.map((p) => p.item),
+    rolls,
+  );
   const gems = bossGems('abyss', rolls);
-  techniquePass(pieces.map((p) => p.item), rolls);   // TECH1: a weapon's technique - after even the Remnant's gems (law 9); a fixed record (the Brass, the Hourlock) takes none
+  techniquePass(
+    pieces.map((p) => p.item),
+    rolls,
+  ); // TECH1: a weapon's technique - after even the Remnant's gems (law 9); a fixed record (the Brass, the Hourlock) takes none
   return { gold, pieces, card, gems };
 }
 
@@ -118,8 +137,8 @@ export function sdSpoilsList(seed, level) {
   const gems = s.gems.map((g) => ({ kind: 'item', item: g, tier: 'common', record: flat() }));
   return [
     ...pieces,
-    ...card,   // CARDS9: the Remnant's card, after the pieces
-    ...gems,   // GEM2: the Remnant's gems, after the card
+    ...card, // CARDS9: the Remnant's card, after the pieces
+    ...gems, // GEM2: the Remnant's gems, after the card
     gold,
   ];
 }

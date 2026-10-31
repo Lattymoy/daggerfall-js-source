@@ -201,8 +201,8 @@
   {
     "name": "SD4B-not-under-water",
     "file": "src/systems/superDungeon/sdRiftSound.js",
-    "old": "distanceModel: 'linear', lowpass: RIFT_BELL_LOWPASS_HZ })",
-    "new": "distanceModel: 'linear', lowpass: 0 })",
+    "old": "    return (\n      audio.loop3d(RIFT_BELL_KEY, at, 1, {\n        ...RIFT_BELL_RANGE,\n        distanceModel: 'linear',\n        lowpass: RIFT_BELL_LOWPASS_HZ,\n      }) ?? null\n    );",
+    "new": "    return audio.loop3d(RIFT_BELL_KEY, at, 1, { ...RIFT_BELL_RANGE, distanceModel: 'linear', lowpass: 0 }) ?? null;",
     "tests": [
       "test/world/superDungeon/sd4b_rift.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "SD4B-the-bell-undarkened",
     "file": "src/systems/superDungeon/sdRiftSound.js",
-    "old": "  lowpassLoop(out, rate, S.darkHz);   // AUDIT SD III (A3): its seam whole\n",
-    "new": "",
+    "old": "  lowpassLoop(out, rate, S.darkHz); // AUDIT SD III (A3): its seam whole\n  // the swell: a whole number of slow waves in the loop, so its end meets its start",
+    "new": "  // the swell: a whole number of slow waves in the loop, so its end meets its start",
     "tests": [
       "test/world/superDungeon/sd4b_rift.test.js"
     ]

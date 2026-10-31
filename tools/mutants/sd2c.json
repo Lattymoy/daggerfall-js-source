@@ -38,8 +38,8 @@
   {
     "name": "SD2C-a-euclid-ring",
     "file": "src/systems/superDungeon/sdOmen.js",
-    "old": "Math.max(Math.abs(x - site.px), Math.abs(y - site.py)) <= SD_OMEN_PX;",
-    "new": "Math.hypot(x - site.px, y - site.py) <= SD_OMEN_PX;",
+    "old": "export const sdOmenSeen = (site, x, y) =>\n  !!site && Math.max(Math.abs(x - site.px), Math.abs(y - site.py)) <= SD_OMEN_PX;",
+    "new": "export const sdOmenSeen = (site, x, y) => !!site && Math.hypot(x - site.px, y - site.py) <= SD_OMEN_PX;",
     "tests": [
       "test/ui/enhanced/sd2c_omen.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD2C-one-axis-read",
     "file": "src/systems/superDungeon/sdOmen.js",
-    "old": "Math.max(Math.abs(x - site.px), Math.abs(y - site.py)) <= SD_OMEN_PX;",
-    "new": "Math.abs(x - site.px) <= SD_OMEN_PX;",
+    "old": "export const sdOmenSeen = (site, x, y) =>\n  !!site && Math.max(Math.abs(x - site.px), Math.abs(y - site.py)) <= SD_OMEN_PX;",
+    "new": "export const sdOmenSeen = (site, x, y) => !!site && Math.abs(x - site.px) <= SD_OMEN_PX;",
     "tests": [
       "test/ui/enhanced/sd2c_omen.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SD2C-the-centre-off-the-pixel",
     "file": "src/systems/superDungeon/sdOmen.js",
-    "old": "cx: hollow.site.px + 0.5, cy: hollow.site.py + 0.5,",
-    "new": "cx: hollow.site.px, cy: hollow.site.py,",
+    "old": "    cx: hollow.site.px + 0.5,\n    cy: hollow.site.py + 0.5,",
+    "new": "    cx: hollow.site.px,\n    cy: hollow.site.py,",
     "tests": [
       "test/ui/enhanced/sd2c_omen.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SD2C-told-anywhere",
     "file": "src/systems/superDungeon/sdOmen.js",
-    "old": "  if (here.px !== c.px || here.py !== c.py) return null;\n",
-    "new": "",
+    "old": "  if (here.px !== c.px || here.py !== c.py) return null;\n  if (!((session.numAnswersGivenTellMeAboutOrRumors | 0) < MAX_ANSWERS_TELL_ME_ABOUT_OR_RUMORS || session.isSpyMaster))",
+    "new": "  if (!((session.numAnswersGivenTellMeAboutOrRumors | 0) < MAX_ANSWERS_TELL_ME_ABOUT_OR_RUMORS || session.isSpyMaster))",
     "tests": [
       "test/ui/enhanced/sd2c_omen.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SD2C-told-after-the-kill",
     "file": "src/systems/superDungeon/sdOmen.js",
-    "old": "(phase !== 'risen' && phase !== 'found')",
-    "new": "!sdStands(phase)",
+    "old": "  if (\n    !rec ||\n    (phase !== 'risen' && phase !== 'found') ||\n    !hollow?.site?.city ||\n    hollow.s !== rec.s ||\n    !here ||\n    !session\n  )\n    return null;",
+    "new": "  if (!rec || !sdStands(phase) || !hollow?.site?.city || hollow.s !== rec.s || !here || !session) return null;",
     "tests": [
       "test/ui/enhanced/sd2c_omen.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SD2C-the-answer-unspent",
     "file": "src/systems/superDungeon/sdOmen.js",
-    "old": "  session.numAnswersGivenTellMeAboutOrRumors = (session.numAnswersGivenTellMeAboutOrRumors | 0) + 1;\n  return sdRumorLine",
-    "new": "  return sdRumorLine",
+    "old": "  session.numAnswersGivenTellMeAboutOrRumors = (session.numAnswersGivenTellMeAboutOrRumors | 0) + 1;\n  return sdRumorLine(hollow.site.cityName || 'the city', sdMarksOf(rec.s)[0]);",
+    "new": "  return sdRumorLine(hollow.site.cityName || 'the city', sdMarksOf(rec.s)[0]);",
     "tests": [
       "test/ui/enhanced/sd2c_omen.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SD2C-the-cap-unread",
     "file": "src/systems/superDungeon/sdOmen.js",
-    "old": "  if (!((session.numAnswersGivenTellMeAboutOrRumors | 0) < MAX_ANSWERS_TELL_ME_ABOUT_OR_RUMORS || session.isSpyMaster)) return null;\n",
-    "new": "",
+    "old": "  if (!((session.numAnswersGivenTellMeAboutOrRumors | 0) < MAX_ANSWERS_TELL_ME_ABOUT_OR_RUMORS || session.isSpyMaster))\n    return null;\n  if (!(rolls() < SD_RUMOR_CHANCE)) return null;",
+    "new": "  if (!(rolls() < SD_RUMOR_CHANCE)) return null;",
     "tests": [
       "test/ui/enhanced/sd2c_omen.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SD2C-the-chance-unrolled",
     "file": "src/systems/superDungeon/sdOmen.js",
-    "old": "  if (!(rolls() < SD_RUMOR_CHANCE)) return null;\n",
-    "new": "",
+    "old": "  if (!(rolls() < SD_RUMOR_CHANCE)) return null;\n  session.numAnswersGivenTellMeAboutOrRumors = (session.numAnswersGivenTellMeAboutOrRumors | 0) + 1;",
+    "new": "  session.numAnswersGivenTellMeAboutOrRumors = (session.numAnswersGivenTellMeAboutOrRumors | 0) + 1;",
     "tests": [
       "test/ui/enhanced/sd2c_omen.test.js"
     ]

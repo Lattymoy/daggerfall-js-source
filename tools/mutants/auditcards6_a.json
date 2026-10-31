@@ -164,8 +164,8 @@
   {
     "name": "AC6-A8-abyss-card-before-gold",
     "file": "src/systems/superDungeon/sdSpoils.js",
-    "old": "  const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: flat() };\n",
-    "new": "  const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: s.card ? (flat(), flat()) : flat() };\n",
+    "old": "  const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: flat() };",
+    "new": "  const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: s.card ? (flat(), flat()) : flat() };",
     "tests": [
       "test/systems/auditcards6_a.test.js"
     ]

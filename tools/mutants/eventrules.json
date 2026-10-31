@@ -187,8 +187,8 @@
   {
     "name": "SD-REZ-the-page-keeps-the-slot",
     "file": "src/systems/superDungeon/sdSlots.js",
-    "old": "      own.get(k)?.delete(s);\n",
-    "new": "",
+    "old": "      own.get(k)?.delete(s);\n      const now = stored(k);",
+    "new": "      const now = stored(k);",
     "tests": [
       "test/net/superDungeon/sd12_onelife.test.js"
     ]
@@ -196,8 +196,8 @@
   {
     "name": "SD-REZ-a-rise-past-the-window",
     "file": "src/systems/superDungeon/sdSlots.js",
-    "old": "      if (s == null || last?.s !== s || clock() - last.at > SD_REZ_MS - SD_REZ_PAGE_SLACK_MS) return;",
-    "new": "      if (s == null || last?.s !== s) return;",
+    "old": "      if (s == null || last?.s !== s || clock() - last.at > SD_REZ_MS - SD_REZ_PAGE_SLACK_MS) return; // past the window the realm keeps the death - so does the page",
+    "new": "      if (s == null || last?.s !== s) return; // past the window the realm keeps the death - so does the page",
     "tests": [
       "test/net/superDungeon/sd12_onelife.test.js"
     ]

@@ -65,8 +65,8 @@
   {
     "name": "SD20D-A10-no-hold",
     "file": "src/systems/superDungeon/sdScore.js",
-    "old": "(was === 'arena' ? SD_SCORE_HOLD_M : 0)",
-    "new": "0",
+    "old": "  if (\n    Math.hypot(x - SD_ARENA.x, z - SD_ARENA.z) <=\n    SD_ARENA.r + SD_BAR_NEAR_M + (was === 'arena' ? SD_SCORE_HOLD_M : 0)\n  )\n    return 'arena';",
+    "new": "  if (Math.hypot(x - SD_ARENA.x, z - SD_ARENA.z) <= SD_ARENA.r + SD_BAR_NEAR_M + 0) return 'arena';",
     "tests": [
       "test/scenes/superDungeon/sd20d_audio.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SD20D-A10-the-steps-unheld",
     "file": "src/systems/superDungeon/sdScore.js",
-    "old": "(was === 'steps' || was === 'arena' ? SD_SCORE_HOLD_M : 0)",
-    "new": "0",
+    "old": "  return z >= SD_FIRST_STEP.z - SD_FIRST_STEP.r - (was === 'steps' || was === 'arena' ? SD_SCORE_HOLD_M : 0)\n    ? 'steps'\n    : 'hall';",
+    "new": "  return z >= SD_FIRST_STEP.z - SD_FIRST_STEP.r - 0 ? 'steps' : 'hall';",
     "tests": [
       "test/scenes/superDungeon/sd20d_audio.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD20D-A10-the-steps-over-the-end",
     "file": "src/systems/superDungeon/sdScore.js",
-    "old": "  if (ending) return SD_SCORE_SILENCE;   // the End: nothing over it\n  if (lastMinute) return HOUR_SONGS.last;\n  if (place === 'hall') return HOUR_SONGS.hall;\n  if (place !== 'arena' || !fight) return HOUR_SONGS.steps;\n",
-    "new": "  if (place === 'hall') return HOUR_SONGS.hall;\n  if (place !== 'arena' || !fight) return HOUR_SONGS.steps;\n  if (ending) return SD_SCORE_SILENCE;   // the End: nothing over it\n  if (lastMinute) return HOUR_SONGS.last;\n",
+    "old": "  if (ending) return SD_SCORE_SILENCE; // the End: nothing over it\n  if (lastMinute) return HOUR_SONGS.last;\n  if (place === 'hall') return HOUR_SONGS.hall;\n  if (place !== 'arena' || !fight) return HOUR_SONGS.steps;",
+    "new": "  if (place === 'hall') return HOUR_SONGS.hall;\n  if (place !== 'arena' || !fight) return HOUR_SONGS.steps;\n  if (ending) return SD_SCORE_SILENCE; // the End: nothing over it\n  if (lastMinute) return HOUR_SONGS.last;",
     "tests": [
       "test/scenes/superDungeon/sd20d_audio.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "SD20D-A8-the-hours-merge-undone",
     "file": "src/systems/superDungeon/sdScore.js",
-    "old": "      if (was) { was.velocity = Math.max(was.velocity, v); was.duration = Math.max(was.duration, duration); return; }\n",
-    "new": "",
+    "old": "      if (was) {\n        was.velocity = Math.max(was.velocity, v);\n        was.duration = Math.max(was.duration, duration);\n        return;\n      }\n      const e = { tick: at, type: 'noteOn', channel, note, velocity: v, duration };",
+    "new": "      const e = { tick: at, type: 'noteOn', channel, note, velocity: v, duration };",
     "tests": [
       "test/scenes/superDungeon/sd20d_audio.test.js"
     ]

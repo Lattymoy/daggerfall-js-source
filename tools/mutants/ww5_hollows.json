@@ -281,8 +281,8 @@
   {
     "name": "WW5-SD-the-claims-order",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "  rows.sort((a, b) => (outranks(a.claim, b.claim) ? -1 : outranks(b.claim, a.claim) ? 1 : 0));\n",
-    "new": "",
+    "old": "  rows.sort((a, b) => (outranks(a.claim, b.claim) ? -1 : outranks(b.claim, a.claim) ? 1 : 0));\n  return (r < 0 ? rows.slice(0, SD_GREAT_CITIES) : rows).map((x) => x.p);",
+    "new": "  return (r < 0 ? rows.slice(0, SD_GREAT_CITIES) : rows).map((x) => x.p);",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "WW5-SD-the-claims-tie",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "return claim ? [...claim.slice(0, 4), -(p.mapId >>> 0)] : null;",
-    "new": "return claim ? [...claim.slice(0, 4)] : null;",
+    "old": "  return claim ? [...claim.slice(0, 4), -(p.mapId >>> 0)] : null;",
+    "new": "  return claim ? [...claim.slice(0, 4)] : null;",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "WW5-SD-the-great-cities-any-town",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "    if (r < 0 && p.type !== LOCATION_TYPES.TownCity) continue;\n",
-    "new": "",
+    "old": "    if (r < 0 && p.type !== LOCATION_TYPES.TownCity) continue;\n    rows.push({ p, claim });",
+    "new": "    rows.push({ p, claim });",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "WW5-SD-the-dry-ground",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "      if (!ground(px, py)) continue;\n      return { s: rec.s, px, py, city,",
-    "new": "      return { s: rec.s, px, py, city,",
+    "old": "      if (!ground(px, py)) continue;\n      return {",
+    "new": "      return {",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "WW5-SD-the-map-ids-lane",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": " | ((sdLaneOf(s) & 0xf) << 15)",
-    "new": "",
+    "old": "export const sdWorldMapId = (s) =>\n  ((SD_WORLD_LANE << 20) | 0x80000 | ((sdLaneOf(s) & 0xf) << 15) | ((s % SD_LANE_SPAN) & 0x7fff)) >>> 0;",
+    "new": "export const sdWorldMapId = (s) => ((SD_WORLD_LANE << 20) | 0x80000 | ((s % SD_LANE_SPAN) & 0x7fff)) >>> 0;",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "WW5-SD-the-bays-id-moved",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "mapId: inBay(site.px, site.py) ? null : sdWorldMapId(rec.s)",
-    "new": "mapId: sdWorldMapId(rec.s)",
+    "old": "    mapId: inBay(site.px, site.py) ? null : sdWorldMapId(rec.s),",
+    "new": "    mapId: sdWorldMapId(rec.s),",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "WW5-SD-a-provinces-id-a-bay-pixels",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "mapId: inBay(site.px, site.py) ? null : sdWorldMapId(rec.s)",
-    "new": "mapId: null",
+    "old": "    mapId: inBay(site.px, site.py) ? null : sdWorldMapId(rec.s),",
+    "new": "    mapId: null,",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]

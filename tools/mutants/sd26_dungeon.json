@@ -183,8 +183,8 @@
   {
     "name": "SD26-F37-the-ground-unasked",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "      if (!ground(id % W, Math.floor(id / W))) continue;\n",
-    "new": "",
+    "old": "      if (!ground(id % W, Math.floor(id / W))) continue;\n      return {",
+    "new": "      return {",
     "tests": [
       "test/world/sd26_dungeon.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "SD26-F37-a-wet-city-ends-it",
     "file": "src/systems/superDungeon/sdSite.js",
-    "old": "cityRegion: city.regionIndex, region: rec.r };\n    }\n  }",
-    "new": "cityRegion: city.regionIndex, region: rec.r };\n    }\n    return null;\n  }",
+    "old": "        region: rec.r,\n      };\n    }\n  }\n  return null;\n}",
+    "new": "        region: rec.r,\n      };\n    }\n    return null;\n  }\n  return null;\n}",
     "tests": [
       "test/world/sd26_dungeon.test.js"
     ]
