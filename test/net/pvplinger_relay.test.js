@@ -1,4 +1,4 @@
-// PVP-LINGER (the owner, 2026-10-29: "keep their body in game if they login in the window of cooldown";
+// PVP-LINGER (;
 // bible/11-Multiplayer/PvP-Rework.md PVP-LINGER): a fighter whose socket closes inside its PvP lock leaves its body in the
 // zone - struck and killed under the referee's law, its fall signed for its killer to carry - until the lock runs out. A
 // close outside the lock is a leave at once; a log-in takes the body back.

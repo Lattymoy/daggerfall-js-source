@@ -7466,6 +7466,7 @@ realm.locked.named,"El reino ha bloqueado tu «{name}»: encontró la misma piez
 realm.locked.one,"El reino ha bloqueado una de tus piezas: encontró la misma pieza también en otro lugar. Se queda contigo y no se puede intercambiar, vender, tirar ni guardar donde otros puedan cogerla. Tus demás piezas y tu comercio no se ven afectados."
 realm.locked.refusal,"«{name}» está bloqueada por el reino porque se encontró la misma pieza también en otro lugar. Se queda contigo y no se puede tirar, intercambiar, vender ni guardar donde otros puedan cogerla."
 realm.locked.trade,"Una pieza que el reino ha bloqueado no se puede intercambiar."
+realm.private,"Estás en un servidor privado. Para traer un personaje en línea, usa primero «Copiar sin conexión» en él y luego carga la copia. Tu personaje en línea no cambia."
 realm.roll.stopped,"El reino no está oyendo tu reputación con los gremios en esta sesión. Lo que ganes ahora se guarda en tu partida, y el reino lo recibirá la próxima vez que juegues con este personaje en línea."
 realm.stranded,"Este dispositivo guardó una partida de este personaje que no llegó al reino, y desde entonces el personaje se ha jugado en otro lugar. Esa partida puede contener progreso que ahora no tienes. Queda apartada en este dispositivo y no se juega."
 realm.strandedWayBack,"Para conservarla, recupérala desde la ficha de este personaje en la puerta En línea."

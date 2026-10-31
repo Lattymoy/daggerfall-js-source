@@ -184,8 +184,8 @@
   {
     "name": "DA10-26-a-held-play-still-sends",
     "file": "app/launcher/launcher.js",
-    "old": "    if (act && !act.disabled) bridge.act(act.dataset.act);\n",
-    "new": "    if (act) bridge.act(act.dataset.act);\n",
+    "old": "    if (act && !act.disabled) bridge.act(act.dataset.act, act.dataset.act === 'private-join' ? $('private-address').value : undefined);\n",
+    "new": "    if (act) bridge.act(act.dataset.act, act.dataset.act === 'private-join' ? $('private-address').value : undefined);\n",
     "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {

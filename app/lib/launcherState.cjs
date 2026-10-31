@@ -188,6 +188,7 @@ function initialState({
     },
     news: { status: checkEnabled ? 'loading' : 'off', items: Array.isArray(news) ? news : [] },
     launch: null,
+    priv: { status: 'off' },   // The private server this launch hosts or joins (privateView)
     backend: backend && typeof backend === 'object'
       ? { chosen: backend.chosen === 'vulkan' ? 'vulkan' : 'default', held: !!backend.held, running: !!backend.running, once: !!backend.once, refused: false }
       : null,
@@ -217,6 +218,10 @@ function reduce(state, ev) {
   const s = { ...state, update: { ...state.update }, setup: { ...state.setup }, news: { ...state.news } };
   const u = s.update, st = s.setup;
   switch (ev?.type) {
+    case 'private':
+      // The shell's word on the private server - hosting, joined, or why not (app/main.cjs privateAct)
+      s.priv = { status: 'off', ...ev.priv };
+      break;
     case 'check-start':
       // the player turned the check on from the launcher
       if (u.status === 'skipped') u.status = 'checking';
@@ -604,6 +609,20 @@ function graphicsView(s) {
   return { on, enabled: !s.launch, note, restart };
 }
 
+/** The Private server option. Chosen before Play: the game reads it as it boots, and a local character
+ *  loaded then plays online on that server. `addresses` are this PC's own, for the host to give their friends. */
+function privateView(s) {
+  const p = s.priv ?? { status: 'off' };
+  const busy = p.status === 'starting' || p.status === 'joining';
+  const note = p.status === 'hosting' ? `Hosting on port ${p.port} - ${p.players ?? 0} of ${p.max} players. Friends join at ${(p.addresses ?? []).map((a) => `${a}:${p.port}`).join(' or ') || `this PC's address, port ${p.port}`}.`
+    : p.status === 'joined' ? `Joined ${p.address}. Load a character in the game to play on it.`
+      : p.status === 'starting' ? 'Starting the server...'
+        : p.status === 'joining' ? `Reaching ${p.address}...`
+          : p.status === 'failed' ? p.error || 'That did not work.'
+            : 'Host a game for 2-10 friends on this PC, or join a friend\'s.';
+  return { status: p.status, note, enabled: !s.launch && !busy, on: p.status === 'hosting' || p.status === 'joined' };
+}
+
 /** The launcher window's whole content, from the state. */
 function viewOf(s) {
   const u = s.update, st = s.setup;
@@ -625,6 +644,7 @@ function viewOf(s) {
           : { path: '', note: 'Not set yet', label: 'Choose folder' },
       checkOnLaunch: s.checkOnLaunch,
       graphics: graphicsView(s),
+      privateServer: privateView(s),
     },
   };
   if (v.panel === 'setup') v.setup = setupView(st, s.platform);

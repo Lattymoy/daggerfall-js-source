@@ -1,4 +1,4 @@
-// UPDATE-SWAP (2026-10-30, the owner: "make sure to have it update"): THE COPIES THAT CANNOT INSTALL, UPDATED ANYWAY.
+// UPDATE-SWAP (2026-10-30): THE COPIES THAT CANNOT INSTALL, UPDATED ANYWAY.
 //
 // electron-updater replaces only an installed Windows copy and an AppImage (lib/autoUpdate.cjs). The macOS app
 // (unsigned: Squirrel.Mac refuses it) and the Windows portable exe (a bare file, no install) were told to download

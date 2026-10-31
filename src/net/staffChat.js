@@ -15,7 +15,7 @@
 // The thread's first answer carries the server's Discord invite (DISCORD_INVITE_URL on the service), said on the tab
 // as a line with a Copy button (ui/chatPanel.js `copy`).
 //
-// OFFLINE ONLY until mob tries it live.
+// Offline only, not tried live yet.
 // ═══════════════════════════════════════════════════════════════════
 
 import { t } from '../systems/textManager.js';

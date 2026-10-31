@@ -169,6 +169,16 @@
       document.querySelector('[data-act="restart"]').hidden = !g.restart;
     }
 
+    // The Private server option - Host and Join while off, Stop while on
+    const pv = v.options.privateServer;
+    if (pv) {
+      setText($('private-note'), pv.note);
+      $('private-off').hidden = pv.on;
+      $('private-stop').hidden = !pv.on;
+      for (const b of document.querySelectorAll('#private button')) b.disabled = !pv.enabled;
+      $('private-address').disabled = !pv.enabled;
+    }
+
     // Enter takes the screen's own answer - the first run's card's, or PLAY once it can be pressed -
     // and only that: "Play without updating" under a download is the way out, not the way on
     const focusKey = v.panel === 'setup' ? `setup:${JSON.stringify(v.setup)}` : `play:${v.play.enabled}`;
@@ -185,7 +195,8 @@
 
   document.addEventListener('click', (e) => {
     const act = e.target.closest('[data-act]');
-    if (act && !act.disabled) bridge.act(act.dataset.act);
+    // Join carries the address typed beside it
+    if (act && !act.disabled) bridge.act(act.dataset.act, act.dataset.act === 'private-join' ? $('private-address').value : undefined);
     const link = e.target.closest('[data-open]');
     if (link) bridge.act('open', link.dataset.open);
   });

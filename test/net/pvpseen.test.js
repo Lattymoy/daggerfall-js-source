@@ -1,5 +1,4 @@
-// PVP-SEEN (the owner, 2026-10-30: "show no name in hidden like sahdow incs", "concealded or incvis still have a health
-// bar", "always health bar", "for pvp zone"): in the open zone every player's name shows in 3D; a concealed or invisible
+// PVP-SEEN: in the open zone every player's name shows in 3D; a concealed or invisible
 // flagged player shows its skull and bar, never its name.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

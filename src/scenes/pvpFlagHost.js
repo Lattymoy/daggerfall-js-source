@@ -45,7 +45,7 @@ const nameless = (p) => ({
   tint: null,
 });
 
-// PVP-FLAG-LOOK (the owner: "The green one looks bad the other r perfect"): flag down, a dim skull in a bronze frame
+// PVP-FLAG-LOOK: flag down, a dim skull in a bronze frame
 // as big as the others, never a small green ring.
 const SKULL_EDGE = Object.freeze({ off: '#5a4a30', white: '#8a7246', gold: '#e8b62c', red: '#d42a1e' });
 
@@ -101,7 +101,7 @@ export function createPvpFlagHost(
     if (names.size > 64) names.delete(names.keys().next().value);
   };
   const me = () => online()?.id ?? null;
-  /** PVP-FLAG-ZONE (the owner: "or i can flag anywerte"): the flag is the zone's alone - Cyrodiil, the open sea, their halls. */
+  /** PVP-FLAG-ZONE: the flag is the zone's alone - Cyrodiil, the open sea, their halls. */
   const here = () => !!online()?.wildOk && !!zone();
   /** PVP-SKULL: a skull's kind - none unflagged, red a villain, gold in aggro, white else. */
   const skullOf = (id) => (peers.has(id) ? (reds.has(id) ? 'red' : peers.get(id) > now() ? 'gold' : 'white') : null);
@@ -231,7 +231,7 @@ export function createPvpFlagHost(
       )
         toggle();
     });
-    // PVP-FLAG-SPOT (the owner: "left center or right center"): the screen's right edge, just over its middle -
+    // PVP-FLAG-SPOT: the screen's right edge, just over its middle -
     // clear of the Decorate button centred there (ui/decorPanel.js .dfdecor-open).
     button = doc.createElement('button');
     button.type = 'button';
@@ -311,7 +311,7 @@ export function createPvpFlagHost(
         const bar = bars.get(p.id);
         return { ...shown, ...(party ? {} : { skull: k }), ...(bar ? { bar } : {}), ...(near ? { near } : {}) }; // PVP-HUD: my party, green with its bar, no skull
       },
-    /** PVP-BAR (the owner: "They always have some body just fiant"): a concealed peer in a PvP fight (its skull gold) is
+    /** PVP-BAR: a concealed peer in a PvP fight (its skull gold) is
      *  drawn faint, never nowhere - `look` is combatVisuals.js peerDraw's answer for its pose's `cv`. */
     look: (id, bits, look) => {
       const k = skullOf(id);

@@ -822,8 +822,8 @@
   {
     "name": "PROF10-maker-reads-the-template",
     "file": "src/systems/enchanting.js",
-    "old": "const basePower = craftedJewelPoints(item) ?? lookup(",
-    "new": "const basePower = lookup(",
+    "old": "  const basePower = craftedJewelPoints(item) ?? lookup(item.templateIndex)?.enchantmentPoints ?? 0;",
+    "new": "  const basePower = lookup(item.templateIndex)?.enchantmentPoints ?? 0;",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -831,8 +831,8 @@
   {
     "name": "PROF10-maker-any-group",
     "file": "src/systems/enchanting.js",
-    "old": "item?.group !== 'Jewellery' || !/^[0-9a-f]{16}$/.test(",
-    "new": "!/^[0-9a-f]{16}$/.test(",
+    "old": "  if (item?.group !== 'Jewellery' || !/^[0-9a-f]{16}$/.test(item.provenance ?? '') || typeof item.recipe !== 'string')\n    return null;",
+    "new": "  if (!/^[0-9a-f]{16}$/.test(item.provenance ?? '') || typeof item.recipe !== 'string') return null;",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -840,8 +840,8 @@
   {
     "name": "PROF10-maker-any-provenance",
     "file": "src/systems/enchanting.js",
-    "old": "|| !/^[0-9a-f]{16}$/.test(item.provenance ?? '') ||",
-    "new": "||",
+    "old": "  if (item?.group !== 'Jewellery' || !/^[0-9a-f]{16}$/.test(item.provenance ?? '') || typeof item.recipe !== 'string')\n    return null;",
+    "new": "  if (item?.group !== 'Jewellery' || typeof item.recipe !== 'string') return null;",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -849,8 +849,8 @@
   {
     "name": "PROF10-maker-negative-points",
     "file": "src/systems/enchanting.js",
-    "old": "|| item.enchantmentPoints < 0) return null;",
-    "new": ") return null;",
+    "old": "  if (!r || !Number.isSafeInteger(item.enchantmentPoints) || item.enchantmentPoints < 0) return null;",
+    "new": "  if (!r || !Number.isSafeInteger(item.enchantmentPoints)) return null;",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1301,8 +1301,8 @@
   {
     "name": "AUDIT-PROF10-J1-any-recipe-kind",
     "file": "src/systems/enchanting.js",
-    "old": "return r?.kind === 'jewel' && r.templateIndex === item.templateIndex ? r : null;",
-    "new": "return r ? r : null;",
+    "old": "  return r?.kind === 'jewel' && r.templateIndex === item.templateIndex ? r : null;",
+    "new": "  return r ? r : null;",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1310,8 +1310,8 @@
   {
     "name": "AUDIT-PROF10-J1-any-template",
     "file": "src/systems/enchanting.js",
-    "old": "return r?.kind === 'jewel' && r.templateIndex === item.templateIndex ? r : null;",
-    "new": "return r?.kind === 'jewel' ? r : null;",
+    "old": "  return r?.kind === 'jewel' && r.templateIndex === item.templateIndex ? r : null;",
+    "new": "  return r?.kind === 'jewel' ? r : null;",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1319,8 +1319,8 @@
   {
     "name": "AUDIT-PROF10-J1-no-cap",
     "file": "src/systems/enchanting.js",
-    "old": "return Math.min(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? null));",
-    "new": "return item.enchantmentPoints;",
+    "old": "  return Math.min(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? null));",
+    "new": "  return item.enchantmentPoints;",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1328,8 +1328,8 @@
   {
     "name": "AUDIT-PROF10-J1-cap-max",
     "file": "src/systems/enchanting.js",
-    "old": "return Math.min(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? null));",
-    "new": "return Math.max(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? null));",
+    "old": "  return Math.min(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? null));",
+    "new": "  return Math.max(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? null));",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1337,8 +1337,8 @@
   {
     "name": "AUDIT-PROF-541-J6-hand-ignored",
     "file": "src/systems/enchanting.js",
-    "old": "jewelPoints(r, tpl, item.hand ?? null)",
-    "new": "jewelPoints(r, tpl, null)",
+    "old": "  return Math.min(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? null));",
+    "new": "  return Math.min(item.enchantmentPoints, jewelPoints(r, tpl, null));",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1346,8 +1346,8 @@
   {
     "name": "AUDIT-PROF-541-J6-goldsmith-assumed",
     "file": "src/systems/enchanting.js",
-    "old": "jewelPoints(r, tpl, item.hand ?? null)",
-    "new": "jewelPoints(r, tpl, item.hand ?? 1)",
+    "old": "  return Math.min(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? null));",
+    "new": "  return Math.min(item.enchantmentPoints, jewelPoints(r, tpl, item.hand ?? 1));",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1355,8 +1355,8 @@
   {
     "name": "AUDIT-PROF10-J2-filter-refuses-crafted",
     "file": "src/ui/item/itemMakerWindow.js",
-    "old": "if (!keptEnchantments(item) || item.group === 'UselessItems2') return false;",
-    "new": "if (item.enchantments?.length || item.group === 'UselessItems2') return false;",
+    "old": "  if (!keptEnchantments(item) || item.group === 'UselessItems2') return false;",
+    "new": "  if (item.enchantments?.length || item.group === 'UselessItems2') return false;",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1374,8 +1374,8 @@
   {
     "name": "AUDIT-PROF10-J2-kept-skips-uncostable",
     "file": "src/systems/enchanting.js",
-    "old": "    if (!row) return null;\n    out.push({ ...row, kept: true });",
-    "new": "    if (!row) continue;\n    out.push({ ...row, kept: true });",
+    "old": "    if (!row) return null;",
+    "new": "    if (!row) continue;",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1383,8 +1383,8 @@
   {
     "name": "AUDIT-PROF10-J2-kept-never-forced",
     "file": "src/systems/enchanting.js",
-    "old": "const parent = typeof e?.parentEnchantment === 'string' ? e.parentEnchantment : 0;",
-    "new": "const parent = 0;",
+    "old": "    const parent = typeof e?.parentEnchantment === 'string' ? e.parentEnchantment : 0;",
+    "new": "    const parent = 0;",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1392,8 +1392,8 @@
   {
     "name": "AUDIT-PROF10-J2-decision-kept-free",
     "file": "src/systems/enchanting.js",
-    "old": "const cost = totalEnchantmentCost(powers, sideEffects) + enchantmentListCost(keptEnchantments(item) ?? []);",
-    "new": "const cost = totalEnchantmentCost(powers, sideEffects);",
+    "old": "  const cost = totalEnchantmentCost(powers, sideEffects) + enchantmentListCost(keptEnchantments(item) ?? []);",
+    "new": "  const cost = totalEnchantmentCost(powers, sideEffects);",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1410,8 +1410,8 @@
   {
     "name": "AUDIT-PROF10-J2-apply-overwrites",
     "file": "src/systems/enchanting.js",
-    "old": "item.enchantments = [...kept, ...applied.map(",
-    "new": "item.enchantments = [...applied.map(",
+    "old": "  item.enchantments = [...kept, ...applied.map((e) => ({ ...e, type: classicEnchantmentType(e.type) }))];",
+    "new": "  item.enchantments = [...applied.map((e) => ({ ...e, type: classicEnchantmentType(e.type) }))];",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1419,8 +1419,8 @@
   {
     "name": "AUDIT-PROF10-J2-kept-row-removable",
     "file": "src/ui/item/itemMakerWindow.js",
-    "old": "if (hit && !hit.entry.kept && (hit.entry.parentEnchantment ?? 0) === 0) this._removeRow(hit.entry);",
-    "new": "if (hit && (hit.entry.parentEnchantment ?? 0) === 0) this._removeRow(hit.entry);",
+    "old": "      if (hit && !hit.entry.kept && (hit.entry.parentEnchantment ?? 0) === 0) this._removeRow(hit.entry);",
+    "new": "      if (hit && (hit.entry.parentEnchantment ?? 0) === 0) this._removeRow(hit.entry);",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1437,8 +1437,8 @@
   {
     "name": "AUDIT-PROF10-J2-lists-no-kept",
     "file": "src/ui/item/itemMakerWindow.js",
-    "old": "return { powers: [...k.powers, ...this.powers], sideEffects: [...k.sideEffects, ...this.sideEffects] };",
-    "new": "return { powers: this.powers, sideEffects: this.sideEffects };",
+    "old": "    return { powers: [...k.powers, ...this.powers], sideEffects: [...k.sideEffects, ...this.sideEffects] };",
+    "new": "    return { powers: this.powers, sideEffects: this.sideEffects };",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]
@@ -1601,8 +1601,8 @@
   {
     "name": "PROF-541-R2-C5-uncapped",
     "file": "src/systems/enchanting.js",
-    "old": "  applied.length = Math.min(applied.length, Math.max(0, MAX_ENCHANTMENTS + 1 - kept.length));\n",
-    "new": "",
+    "old": "  applied.length = Math.min(applied.length, Math.max(0, MAX_ENCHANTMENTS + 1 - kept.length));\n  doEnchantedPayloads(item, applied, { entity: owner, ctx, nowMinutes });",
+    "new": "  doEnchantedPayloads(item, applied, { entity: owner, ctx, nowMinutes });",
     "tests": [
       "test/systems/prof10_client.test.js"
     ]

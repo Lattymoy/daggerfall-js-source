@@ -114,7 +114,7 @@ export const PREF_DEFAULTS = Object.freeze({
   // so a player who never does sees no new tab.
   chatTrade: false,
   chatLfg: false,
-  // STAFF-CHAT-RED (2026-10-23, mob: "give me a option next to chat to chat as /red or myself at all times"): the voice an
+  // STAFF-CHAT-RED (2026-10-23): the voice an
   // Admin's chat lines go out in - 'me' (as themselves) or 'red' (each as /red would say it, net/chatVoice.js) - kept
   chatAs: 'me',
   packPhoneDoll: false, // PACK-PHONE (FIELD BUGS 2026-09-30): the pack's body on a phone - hidden until the header's Body shows it

@@ -36,7 +36,7 @@ export function createPortalStoneHost(host) {
   /** PORTAL-BAY (bible/06-Systems/Portal-Stone.md): THE TELEPORT'S GATE, asked where a refusal still costs nothing - the
    *  pick (before a stone is spent) and the step (before the black): the Veil's, and the journey under the teleport's
    *  law past the Bay (pastBayTravel.js teleportJourney), each said where it refuses. True when refused. PVP-PORTAL
-   *  (2026-10-30, the owner: "they need to work all over", held only by "agro or flag time cool down"): the zone's
+   *  (2026-10-30, held only by the aggro or flag cooldown): the zone's
    *  city-only law is not a stone's, flagged or not, and of its foes only one alerted to me holds it (the owner's pick: "Only
    *  one attacking me") - with the combat lock (lockRefused). */
   const teleportRefused = (to) => host.veilRefused(to) || !host.wildTravelGate(to, 0, teleportJourney).ok;
