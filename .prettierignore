@@ -289,6 +289,16 @@
 !/src/formats/derivedTexture.js
 !/src/formats/dfRandom.js
 !/src/formats/dotnetResources.js
+!/src/formats/dxt.js
+!/src/formats/faceUVTool.js
+!/src/formats/factionFile.js
+!/src/formats/fileProxy.js
+!/src/formats/flatsFile.js
+!/src/formats/flcFile.js
+!/src/formats/fntFile.js
+!/src/formats/fnv1a.js
+!/src/formats/gfxFile.js
+!/src/formats/hmiFile.js
 !/src/formats/imgFile.js
 !/src/formats/lz4.js
 !/src/formats/magicDef.js

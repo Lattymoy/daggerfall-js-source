@@ -43,12 +43,34 @@ export const FLIC_FORMAT = Object.freeze({ FLI: -20719, FLIC: -20718 });
 export const CINEMATIC_SPEED = Object.freeze({ FLI: 70, FLIC: 1000 });
 
 export const CHUNK_TYPE = Object.freeze({
-  None: 0, CEL_DATA: 3, COLOR_256: 4, DELTA_FLC: 7, COLOR_64: 11,
-  DELTA_FLI: 12, BLACK: 13, BYTE_RUN: 15, FLI_COPY: 16, PSTAMP: 18,
-  DTA_BRUN: 25, DTA_COPY: 26, DTA_LC: 27, LABEL: 31, BMP_MASK: 32,
-  MLEV_MASK: 33, SEGMENT: 34, KEY_IMAGE: 35, KEY_PAL: 36, REGION: 37,
-  WAVE: 38, USERSTRING: 39, RGN_MASK: 40, LABELEX: 41, SHIFT: 42,
-  PATHMAP: 43, PREFIX_TYPE: -3600, FRAME_TYPE: -3590,
+  None: 0,
+  CEL_DATA: 3,
+  COLOR_256: 4,
+  DELTA_FLC: 7,
+  COLOR_64: 11,
+  DELTA_FLI: 12,
+  BLACK: 13,
+  BYTE_RUN: 15,
+  FLI_COPY: 16,
+  PSTAMP: 18,
+  DTA_BRUN: 25,
+  DTA_COPY: 26,
+  DTA_LC: 27,
+  LABEL: 31,
+  BMP_MASK: 32,
+  MLEV_MASK: 33,
+  SEGMENT: 34,
+  KEY_IMAGE: 35,
+  KEY_PAL: 36,
+  REGION: 37,
+  WAVE: 38,
+  USERSTRING: 39,
+  RGN_MASK: 40,
+  LABELEX: 41,
+  SHIFT: 42,
+  PATHMAP: 43,
+  PREFIX_TYPE: -3600,
+  FRAME_TYPE: -3590,
 });
 const CHUNK_VALUES = new Set(Object.values(CHUNK_TYPE));
 
@@ -61,25 +83,49 @@ class Cursor {
     this.view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
     this.pos = 0;
   }
-  get length() { return this.bytes.length; }
-  seek(p) { this.pos = p; }
-  skip(n) { this.pos += n; }
-  u8() { return this.bytes[this.pos++]; }
-  i8() { const v = this.view.getInt8(this.pos); this.pos += 1; return v; }
-  u16() { const v = this.view.getUint16(this.pos, true); this.pos += 2; return v; }
-  i16() { const v = this.view.getInt16(this.pos, true); this.pos += 2; return v; }
-  i32() { const v = this.view.getInt32(this.pos, true); this.pos += 4; return v; }
+  get length() {
+    return this.bytes.length;
+  }
+  seek(p) {
+    this.pos = p;
+  }
+  skip(n) {
+    this.pos += n;
+  }
+  u8() {
+    return this.bytes[this.pos++];
+  }
+  i8() {
+    const v = this.view.getInt8(this.pos);
+    this.pos += 1;
+    return v;
+  }
+  u16() {
+    const v = this.view.getUint16(this.pos, true);
+    this.pos += 2;
+    return v;
+  }
+  i16() {
+    const v = this.view.getInt16(this.pos, true);
+    this.pos += 2;
+    return v;
+  }
+  i32() {
+    const v = this.view.getInt32(this.pos, true);
+    this.pos += 4;
+    return v;
+  }
 }
 
 export class FlcFile {
   constructor() {
     this.header = null;
     this.frameHeaders = [];
-    this.palette = null;        // Uint32Array, ColorCount entries
-    this.frameBuffer = null;    // Uint32Array, Width*Height (BOTTOM-UP)
+    this.palette = null; // Uint32Array, ColorCount entries
+    this.frameBuffer = null; // Uint32Array, Width*Height (BOTTOM-UP)
     this.currentFrame = 0;
     this.colorCount = 0;
-    this.frameDelay = 0;        // seconds
+    this.frameDelay = 0; // seconds
     this.flicType = 0;
     this.readyToPlay = false;
     // Transparency (DFU's per-instance switch): a palette entry whose
@@ -90,8 +136,12 @@ export class FlcFile {
     this.transparentBlue = 0;
   }
 
-  get width() { return this.header?.width ?? 0; }
-  get height() { return this.header?.height ?? 0; }
+  get width() {
+    return this.header?.width ?? 0;
+  }
+  get height() {
+    return this.header?.height ?? 0;
+  }
 
   /** Load(filePath)'s extension gate + Read(). Name is checked as DFU
    *  checks it: .FLC or .CEL only. */
@@ -114,8 +164,12 @@ export class FlcFile {
     // refused a missing header instead STALLED the frame counter, so
     // a non-looping player could never reach NumOfFrames and its
     // OnAnimEnd never fired (AUDIT F-P2 - caught by the player pin).
-    this.frameHeaders = Array.from({ length: this.header.numOfFrames + 1 },
-      () => ({ posInFile: 0, size: 0, type: CHUNK_TYPE.None, numSubChunks: 0 }));
+    this.frameHeaders = Array.from({ length: this.header.numOfFrames + 1 }, () => ({
+      posInFile: 0,
+      size: 0,
+      type: CHUNK_TYPE.None,
+      numSubChunks: 0,
+    }));
     if (!this._readFrameHeaders()) {
       console.warn('[flc] Incompatible format, cannot read');
       this.readyToPlay = false;
@@ -208,10 +262,10 @@ export class FlcFile {
    *  key frame and the ring frame loops back to the second. */
   bufferNextFrame(frameNum = -1) {
     if (!this.readyToPlay) return false;
-    let n = (frameNum >= 0 && frameNum <= this.header.numOfFrames) ? frameNum : this.currentFrame;
+    let n = frameNum >= 0 && frameNum <= this.header.numOfFrames ? frameNum : this.currentFrame;
     const fh = this.frameHeaders[n];
     const c = this._c;
-    c.seek(fh.posInFile + FRAME_HEADER_SIZE);   // skip over the frame header
+    c.seek(fh.posInFile + FRAME_HEADER_SIZE); // skip over the frame header
     for (let i = 0; i < fh.numSubChunks; i++) {
       const ch = this._readChunkHeader();
       if (!ch) {
@@ -219,12 +273,24 @@ export class FlcFile {
         return false;
       }
       switch (ch.type) {
-        case CHUNK_TYPE.COLOR_256: this._decodeColor(false); break;
-        case CHUNK_TYPE.COLOR_64: this._decodeColor(true); break;
-        case CHUNK_TYPE.DELTA_FLC: this._decodeDeltaFlc(); break;
-        case CHUNK_TYPE.DELTA_FLI: this._decodeDeltaFli(); break;
-        case CHUNK_TYPE.BYTE_RUN: this._decodeByteRun(); break;
-        case CHUNK_TYPE.PSTAMP: c.skip(ch.size - CHUNK_HEADER_SIZE); break;   // a thumbnail
+        case CHUNK_TYPE.COLOR_256:
+          this._decodeColor(false);
+          break;
+        case CHUNK_TYPE.COLOR_64:
+          this._decodeColor(true);
+          break;
+        case CHUNK_TYPE.DELTA_FLC:
+          this._decodeDeltaFlc();
+          break;
+        case CHUNK_TYPE.DELTA_FLI:
+          this._decodeDeltaFli();
+          break;
+        case CHUNK_TYPE.BYTE_RUN:
+          this._decodeByteRun();
+          break;
+        case CHUNK_TYPE.PSTAMP:
+          c.skip(ch.size - CHUNK_HEADER_SIZE);
+          break; // a thumbnail
         default: {
           // BUG-FOR-BUG (see the header): an ABSOLUTE position is
           // computed and then applied as a RELATIVE skip.
@@ -239,7 +305,7 @@ export class FlcFile {
         }
       }
     }
-    this.currentFrame = (++n <= this.header.numOfFrames) ? n : 1;
+    this.currentFrame = ++n <= this.header.numOfFrames ? n : 1;
     return true;
   }
 
@@ -249,11 +315,13 @@ export class FlcFile {
     const numOfPackets = c.i16();
     let colorInd = 0;
     for (let i = 0; i < numOfPackets; i++) {
-      c.skip(c.u8() * 3);                       // colour skip count
+      c.skip(c.u8() * 3); // colour skip count
       let numOfColorsToChange = c.u8();
       if (numOfColorsToChange === 0) numOfColorsToChange = 256;
       for (let cc = 0; cc < numOfColorsToChange; cc++) {
-        const r = c.u8() * scale, g = c.u8() * scale, b = c.u8() * scale;
+        const r = c.u8() * scale,
+          g = c.u8() * scale,
+          b = c.u8() * scale;
         // AUDIT 24 formats: colorInd runs across ALL packets and C#
         // never bounds it, so a chunk carrying more entries than
         // ColorCount raises IndexOutOfRangeException out of Load
@@ -261,10 +329,10 @@ export class FlcFile {
         // same reason _put throws: a typed array would drop the write
         // and let the malformed chunk "succeed".
         this._palIndex(colorInd);
-        this.palette[colorInd] = (this.transparency
-          && r === this.transparentRed && g === this.transparentGreen && b === this.transparentBlue)
-          ? rgba(0, 0, 0, 0)
-          : rgba(r & 0xff, g & 0xff, b & 0xff, 255);
+        this.palette[colorInd] =
+          this.transparency && r === this.transparentRed && g === this.transparentGreen && b === this.transparentBlue
+            ? rgba(0, 0, 0, 0)
+            : rgba(r & 0xff, g & 0xff, b & 0xff, 255);
         colorInd++;
       }
     }
@@ -274,14 +342,16 @@ export class FlcFile {
   _decodeByteRun() {
     const c = this._c;
     for (let y = 0; y < this.header.height; y++) {
-      c.u8();                                   // packet count, unused (as DFU notes)
+      c.u8(); // packet count, unused (as DFU notes)
       let x = 0;
       while (x < this.header.width) {
         let sizeType = c.i8();
-        if (sizeType < 0) {                     // negative: a literal run
+        if (sizeType < 0) {
+          // negative: a literal run
           sizeType = -sizeType;
           this._screenCopySeg(x, y, sizeType);
-        } else if (sizeType > 0) {              // positive: one pixel repeated
+        } else if (sizeType > 0) {
+          // positive: one pixel repeated
           this._screenRepeatOne(x, y, sizeType);
         }
         x += sizeType;
@@ -292,13 +362,16 @@ export class FlcFile {
   _decodeDeltaFlc() {
     const c = this._c;
     const lineCount = c.u16();
-    let x = 0, y = 0, packetCount = 0;
+    let x = 0,
+      y = 0,
+      packetCount = 0;
     for (let i = 0; i < lineCount; i++) {
       for (;;) {
         const opcode = c.i16();
         if ((opcode & (1 << 15)) !== 0) {
-          if ((opcode & (1 << 14)) !== 0) y += Math.abs(opcode);   // line skip (DFU's Math.abs, kept)
-          else break;                                             // last pixel
+          if ((opcode & (1 << 14)) !== 0)
+            y += Math.abs(opcode); // line skip (DFU's Math.abs, kept)
+          else break; // last pixel
         } else if ((opcode & (1 << 14)) === 0) {
           packetCount = opcode;
           break;
@@ -309,7 +382,10 @@ export class FlcFile {
         let sizeType = c.i8();
         x += colSkipCount;
         if (sizeType > 0) this._screenCopyTwoSeg(x, y, sizeType);
-        else if (sizeType < 0) { sizeType = -sizeType; this._screenRepeatTwo(x, y, sizeType); }
+        else if (sizeType < 0) {
+          sizeType = -sizeType;
+          this._screenRepeatTwo(x, y, sizeType);
+        }
         x += sizeType * 2;
       }
       y++;
@@ -330,14 +406,19 @@ export class FlcFile {
         x += colSkip;
         // REVERSED from BYTE_RUN: positive copies a segment here
         if (sizeType > 0) this._screenCopySeg(x, y, sizeType);
-        else if (sizeType < 0) { sizeType = -sizeType; this._screenRepeatOne(x, y, sizeType); }
+        else if (sizeType < 0) {
+          sizeType = -sizeType;
+          this._screenRepeatOne(x, y, sizeType);
+        }
         x += sizeType;
       }
     }
   }
 
   /** The BOTTOM-UP address (see the header). */
-  _pos(x, y) { return x + (this.header.height - 1) * this.header.width - y * this.header.width; }
+  _pos(x, y) {
+    return x + (this.header.height - 1) * this.header.width - y * this.header.width;
+  }
 
   /** Writes one pixel, THROWING past the frame buffer as C#'s
    *  Color32[] indexer does (IndexOutOfRangeException). AUDIT F-P1:
@@ -354,7 +435,9 @@ export class FlcFile {
     return i;
   }
 
-  _pal(i) { return this.palette[this._palIndex(i)]; }
+  _pal(i) {
+    return this.palette[this._palIndex(i)];
+  }
 
   _put(pos, color) {
     if (pos < 0 || pos >= this.frameBuffer.length) {
@@ -375,7 +458,8 @@ export class FlcFile {
   }
 
   _screenRepeatTwo(x, y, count) {
-    const c1 = this._pal(this._c.u8()), c2 = this._pal(this._c.u8());
+    const c1 = this._pal(this._c.u8()),
+      c2 = this._pal(this._c.u8());
     let pos = this._pos(x, y);
     for (let i = 0; i < count; i++) {
       this._put(pos, c1);

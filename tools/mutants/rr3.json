@@ -132,8 +132,8 @@
   {
     "name": "RR3-15-a-second-registration-overwrites",
     "file": "src/formats/factionFile.js",
-    "old": "  if (_customFactions.has(factionId)) return false;\n  _customFactions.set",
-    "new": "  _customFactions.set",
+    "old": "  if (_customFactions.has(factionId)) return false;\n  _customFactions.set(factionId, Object.freeze({ ...newFaction(), ...factionData, id: factionId }));",
+    "new": "  _customFactions.set(factionId, Object.freeze({ ...newFaction(), ...factionData, id: factionId }));",
     "tests": [
       "test/systems/quest/rr3_questline.test.js"
     ]
