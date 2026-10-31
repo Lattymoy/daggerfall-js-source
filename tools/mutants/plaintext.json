@@ -63,7 +63,7 @@
     "name": "PLAIN-TEXT-PT3-sentence-of-whole-text",
     "file": "tools/plainText.mjs",
     "old": "  const s = Math.max(0, ...all.flatMap((r) => r.split(/(?<=[.!?])\\s+/).map(count)));",
-    "new": "  const s = Math.max(0, ...String(text).split(/(?<=[.!?])\\s+/).map(count));",
+    "new": "  const s = Math.max(\n    0,\n    ...String(text)\n      .split(/(?<=[.!?])\\s+/)\n      .map(count),\n  );",
     "tests": [
       "test/tooling/plaintext.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "PLAIN-TEXT-comment-block-off-by-one",
     "file": "tools/plainText.mjs",
-    "old": "  const end = () => { n += Math.max(0, run - COMMENT_LINES_MAX); run = 0; };",
-    "new": "  const end = () => { n += Math.max(0, run - COMMENT_LINES_MAX + 1); run = 0; };",
+    "old": "    n += Math.max(0, run - COMMENT_LINES_MAX);",
+    "new": "    n += Math.max(0, run - COMMENT_LINES_MAX + 1);",
     "tests": [
       "test/tooling/plaintext.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "PLAIN-TEXT-PT1-excess-a-count",
     "file": "tools/plainText.mjs",
-    "old": "  const end = () => { n += Math.max(0, run - COMMENT_LINES_MAX); run = 0; };",
-    "new": "  const end = () => { n += run > COMMENT_LINES_MAX ? 1 : 0; run = 0; };",
+    "old": "    n += Math.max(0, run - COMMENT_LINES_MAX);",
+    "new": "    n += run > COMMENT_LINES_MAX ? 1 : 0;",
     "tests": [
       "test/tooling/plaintext.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "PLAIN-TEXT-PT1-paragraph-excess-a-count",
     "file": "tools/plainText.mjs",
-    "old": "reduce((n, p) => n + Math.max(0, count(p) - PARAGRAPH_WORDS_MAX), 0);",
-    "new": "reduce((n, p) => n + (count(p) > PARAGRAPH_WORDS_MAX ? 1 : 0), 0);",
+    "old": "    .reduce((n, p) => n + Math.max(0, count(p) - PARAGRAPH_WORDS_MAX), 0);",
+    "new": "    .reduce((n, p) => n + (count(p) > PARAGRAPH_WORDS_MAX ? 1 : 0), 0);",
     "tests": [
       "test/tooling/plaintext.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "PLAIN-TEXT-block-comment-unread",
     "file": "tools/plainText.mjs",
-    "old": "    else if (t.startsWith('/*')) { c = true; if (!t.includes('*/')) inBlock = true; }",
-    "new": "    else if (t.startsWith('/*')) { c = true; }",
+    "old": "      if (!t.includes('*/')) inBlock = true;\n    }",
+    "new": "    }",
     "tests": [
       "test/tooling/plaintext.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "PLAIN-TEXT-table-counted",
     "file": "tools/plainText.mjs",
-    "old": "  return String(text).split(/\\n\\s*\\n/).filter((p) => !/^\\s*(\\||```)/.test(p)).flatMap(",
-    "new": "  return String(text).split(/\\n\\s*\\n/).flatMap(",
+    "old": "    .filter((p) => !/^\\s*(\\||```)/.test(p))\n    .flatMap((p) => p.split(/\\n(?=(?:[-*+]|\\d+\\.) )/))",
+    "new": "    .flatMap((p) => p.split(/\\n(?=(?:[-*+]|\\d+\\.) )/))",
     "tests": [
       "test/tooling/plaintext.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "PLAIN-TEXT-PT4-sentences-unrecorded",
     "file": "tools/plainText.mjs",
-    "old": "put('sentences', k, b.sentence - SENTENCE_WORDS_MAX);",
-    "new": "put('sentences', k, 0);",
+    "old": "      put('sentences', k, b.sentence - SENTENCE_WORDS_MAX);",
+    "new": "      put('sentences', k, 0);",
     "tests": [
       "test/tooling/plaintext.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "PLAIN-TEXT-PT4-padding-unrecorded",
     "file": "tools/plainText.mjs",
-    "old": "put('padding', k, b.padding.length);",
-    "new": "put('padding', k, 0);",
+    "old": "      put('padding', k, b.padding.length);",
+    "new": "      put('padding', k, 0);",
     "tests": [
       "test/tooling/plaintext.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "PLAIN-TEXT-over-unread",
     "file": "tools/plainText.mjs",
-    "old": "    for (const [k, n] of Object.entries(n0)) if (n > (b[k] ?? 0)) over.push(",
-    "new": "    for (const [k, n] of Object.entries(n0)) if (n > (b[k] ?? Infinity)) over.push(",
+    "old": "      if (n > (b[k] ?? 0)) over.push(`${part} ${k}: ${n} (allowed ${b[k] ?? 0})`);",
+    "new": "      if (n > (b[k] ?? Infinity)) over.push(`${part} ${k}: ${n} (allowed ${b[k] ?? 0})`);",
     "tests": [
       "test/tooling/plaintext.test.js"
     ],
@@ -192,7 +192,7 @@
   {
     "name": "PLAIN-TEXT-PT4-ref-unread",
     "file": "tools/plainText.mjs",
-    "old": "  try { execFileSync('git', ['cat-file', '-e', `${ref}:${BASELINE}`], { cwd: root, stdio: 'ignore' }); return true; } catch { return false; }",
+    "old": "  try {\n    execFileSync('git', ['cat-file', '-e', `${ref}:${BASELINE}`], { cwd: root, stdio: 'ignore' });\n    return true;\n  } catch {\n    return false;\n  }",
     "new": "  return false;",
     "tests": [
       "test/tooling/plaintext.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "PLAIN-TEXT-PT4-refusal-gone",
     "file": "tools/plainText.mjs",
-    "old": "  return holdsLaw(ref, root) ? null : seeded(",
-    "new": "  return false ? null : seeded(",
+    "old": "  return holdsLaw(ref, root) ? null : seeded(base, now, measure(root, gitTree(ref, root)));",
+    "new": "  return false ? null : seeded(base, now, measure(root, gitTree(ref, root)));",
     "tests": [
       "test/tooling/plaintext.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "PLAIN-TEXT-PT5-list-one-paragraph",
     "file": "tools/plainText.mjs",
-    "old": ".flatMap((p) => p.split(/\\n(?=(?:[-*+]|\\d+\\.) )/))",
-    "new": ".flatMap((p) => [p])",
+    "old": "    .flatMap((p) => p.split(/\\n(?=(?:[-*+]|\\d+\\.) )/))",
+    "new": "    .flatMap((p) => [p])",
     "tests": [
       "test/tooling/plaintext.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "PLAIN-TEXT-PT6-log-entry-counted",
     "file": "tools/plainText.mjs",
-    "old": "    if (c && !inBlock && VERSION_LOG_LINE.test(t)) { end(); continue; }",
-    "new": "    if (false) { end(); continue; }",
+    "old": "    if (c && !inBlock && VERSION_LOG_LINE.test(t)) {",
+    "new": "    if (false) {",
     "tests": [
       "test/tooling/plaintext.test.js"
     ],

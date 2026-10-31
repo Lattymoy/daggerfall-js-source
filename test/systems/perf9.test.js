@@ -38,7 +38,7 @@ test('PERF9 pins: the probe boots the three scenes on the shot door, waits for t
   assert.match(p, /dungeon: `\/play\/\?shot&class=0&fps`/);
   assert.match(p, /waitForFunction\(\(\) => window\.__shotReady === true/, 'settled means the stream is done');
   assert.match(p, /window\.__fpsStats \? window\.__fpsStats\(\) : null/, 'reads the counter\'s own numbers');
-  assert.match(p, /HEADED\n\s+\? \{ headless: false \}\n\s+: \{ args: \['--use-gl=angle', '--use-angle=swiftshader'/, 'headed is the real GPU; headless is software and only relative');
+  assert.match(p, /HEADED \? \{ headless: false \} : \{ args: \['--use-gl=angle', '--use-angle=swiftshader'/, 'headed is the real GPU; headless is software and only relative');
   assert.match(p, /const ROOT = fileURLToPath\(new URL\('\.\.', import\.meta\.url\)\);/, 'the repo root, not a machine\'s path');
   assert.match(read('package.json'), /"perf": "node tools\/perfProbe\.mjs"/);
 });

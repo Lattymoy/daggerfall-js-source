@@ -307,8 +307,8 @@
   {
     "name": "PAT-right-hand-unflipped-point",
     "file": "tools/pistoletArt.mjs",
-    "old": "point && (flip ? [level.width - point[0], point[1]] : point)",
-    "new": "point",
+    "old": "  return rotSprite(\n    flip ? flipAcross(level) : level,\n    turn,\n    point && (flip ? [level.width - point[0], point[1]] : point),\n  );",
+    "new": "  return rotSprite(flip ? flipAcross(level) : level, turn, point);",
     "tests": [
       "test/systems/pistolet.test.js"
     ]

@@ -40,11 +40,12 @@
 // ═══════════════════════════════════════════════════════════════════
 import { PeerBodies, BODIES_MAX, POSE_CADENCE } from '../src/net/peer/peerBodies.js';
 import { createFpArm } from '../src/combat/fpArm.js';
-import { fixtureBodyDeps, countingRenderer } from '../test/fixtures/mw/bodyRig.mjs';   // PEER-CADENCE: the fixture rig, shared with the pins
+import { fixtureBodyDeps, countingRenderer } from '../test/fixtures/mw/bodyRig.mjs'; // PEER-CADENCE: the fixture rig, shared with the pins
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
 const toScene = (p) => [p.x, p.y, p.z];
-const W = 1600, H = 900;
+const W = 1600,
+  H = 900;
 const CANVAS = { clientWidth: W, clientHeight: H, width: W, height: H };
 /** a looking-down-the-road view, the eye at the origin */
 const view = new Float64Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
@@ -54,13 +55,37 @@ async function run(n, frames = 600) {
   const deps = fixtureBodyDeps();
   const renderer = countingRenderer();
   let now = 1000;
-  const pb = new PeerBodies({ renderer, createRig: createFpArm, buildOpts: () => ({ race: 'fprace', deps }), now: () => now });
+  const pb = new PeerBodies({
+    renderer,
+    createRig: createFpArm,
+    buildOpts: () => ({ race: 'fprace', deps }),
+    now: () => now,
+  });
   // n peers strung out ahead of the eye, 4..(4+6n) metres, walking
-  const peers = Array.from({ length: n }, (_, i) => ({ id: `p${i}`, told: true, look: { race: 'fprace', gender: 'male', faceIndex: 0, items: [] },
-    shown: { x: (i % 2 ? 1.5 : -1.5), y: 0, z: -(4 + i * 6), yaw: 0, pitch: 0, mv: 1, wd: 0, an: 0, as: 0, am: 0, sr: 0, cn: 0, cr: 0 } }));
+  const peers = Array.from({ length: n }, (_, i) => ({
+    id: `p${i}`,
+    told: true,
+    look: { race: 'fprace', gender: 'male', faceIndex: 0, items: [] },
+    shown: {
+      x: i % 2 ? 1.5 : -1.5,
+      y: 0,
+      z: -(4 + i * 6),
+      yaw: 0,
+      pitch: 0,
+      mv: 1,
+      wd: 0,
+      an: 0,
+      as: 0,
+      am: 0,
+      sr: 0,
+      cn: 0,
+      cr: 0,
+    },
+  }));
   // build them all (one at a time is the module's law; wait it out)
   for (let i = 0; i < 40 && !peers.every((p) => pb.has(p.id)); i++) {
-    pb.sync(peers, toScene, 1 / 60, [0, 0, 0]); now += 16;
+    pb.sync(peers, toScene, 1 / 60, [0, 0, 0]);
+    now += 16;
     for (let k = 0; k < 8; k++) await flush();
   }
   for (const p of peers) if (!pb.has(p.id)) throw new Error(`body ${p.id} never stood`);
@@ -68,7 +93,8 @@ async function run(n, frames = 600) {
   const t0 = performance.now();
   for (let fr = 0; fr < frames; fr++) {
     // the wire: a pose every 6 frames (POSE_HZ 10 at 60 fps), walking on
-    if (fr % 6 === 0) for (const p of peers) p.shown = { ...p.shown, z: p.shown.z - 0.2 * 6 / 10, yaw: p.shown.yaw + 0.02 };
+    if (fr % 6 === 0)
+      for (const p of peers) p.shown = { ...p.shown, z: p.shown.z - (0.2 * 6) / 10, yaw: p.shown.yaw + 0.02 };
     pb.sync(peers, toScene, 1 / 60, [0, 0, 0]);
     pb.draw(CANVAS, { proj, view, eye: [0, 0, 0] });
     now += 16;
@@ -78,9 +104,13 @@ async function run(n, frames = 600) {
   return { n, ms, posesPerBody: c.uploads / frames / n, spritesPerBody: c.sprites / frames / n };
 }
 
-console.log(`\nTHE PEER BODIES - what one body costs a frame, over 600 frames of peers walking past 4..50 m (fixture rig: four small pieces, so the ms understate a retail body; the counts are exact)\n  cadence ${POSE_CADENCE.map(([m, n]) => `${m}m:${n}`).join(' ')} (within metres: frames between poses)\n`);
+console.log(
+  `\nTHE PEER BODIES - what one body costs a frame, over 600 frames of peers walking past 4..50 m (fixture rig: four small pieces, so the ms understate a retail body; the counts are exact)\n  cadence ${POSE_CADENCE.map(([m, n]) => `${m}m:${n}`).join(' ')} (within metres: frames between poses)\n`,
+);
 console.log('bodies   ms/frame   poses+uploads/body/frame   sprite renders/body/frame');
 for (const n of [1, 4, BODIES_MAX]) {
   const r = await run(n);
-  console.log(`${String(r.n).padStart(6)}   ${r.ms.toFixed(3).padStart(8)}   ${r.posesPerBody.toFixed(2).padStart(24)}   ${r.spritesPerBody.toFixed(2).padStart(26)}`);
+  console.log(
+    `${String(r.n).padStart(6)}   ${r.ms.toFixed(3).padStart(8)}   ${r.posesPerBody.toFixed(2).padStart(24)}   ${r.spritesPerBody.toFixed(2).padStart(26)}`,
+  );
 }
