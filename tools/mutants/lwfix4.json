@@ -46,8 +46,8 @@
   {
     "name": "LW-FIX4-arrival-unheld",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "  if (!turned && enc.leg === 'out' && enc.t1 > trip.outT1) return { ...trip, enc, halt, fallen, turned: false, outT1: Math.min(enc.t1, trip.backT0), ...robbed };\n",
-    "new": "",
+    "old": "  if (!turned && enc.leg === 'out' && enc.t1 > trip.outT1)\n    return { ...trip, enc, halt, fallen, turned: false, outT1: Math.min(enc.t1, trip.backT0), ...robbed };\n  if (!turned && enc.leg === 'back' && enc.t1 > trip.backT1)",
+    "new": "  if (!turned && enc.leg === 'back' && enc.t1 > trip.backT1)",
     "tests": [
       "test/systems/livingWorld/lwfix4_turns.test.js",
       "test/systems/livingWorld/lw4b_roadFights.test.js",
@@ -57,8 +57,8 @@
   {
     "name": "LW-FIX4-homecoming-unheld",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "  if (!turned && enc.leg === 'back' && enc.t1 > trip.backT1) return { ...trip, enc, halt, fallen, turned: false, backT1: enc.t1, ...robbed };\n",
-    "new": "",
+    "old": "  if (!turned && enc.leg === 'back' && enc.t1 > trip.backT1)\n    return { ...trip, enc, halt, fallen, turned: false, backT1: enc.t1, ...robbed };\n  if (!turned) return { ...trip, enc, halt, fallen, turned: false, ...robbed };",
+    "new": "  if (!turned) return { ...trip, enc, halt, fallen, turned: false, ...robbed };",
     "tests": [
       "test/systems/livingWorld/lwfix4_turns.test.js",
       "test/systems/livingWorld/lw4b_roadFights.test.js",

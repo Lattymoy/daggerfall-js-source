@@ -188,7 +188,7 @@ already there (`legacyHost.js` ownDay) - one conversation counted "a day" on two
 regard's day as the sky's; that row is gone. Offline the three clocks are one: nothing changes there. Also measured, not a
 fault: townsfolk take Polite ill (TONE-TASTE), so a Polite word nets -3 a day; the badge said so.
 
-THE LAW NOW. The relations are made in one place (`regardClock.js:"export function characterRelations(record, own, online = false, sky = () => skyMinutes()) {"`)
+THE LAW NOW. The relations are made in one place (`regardClock.js:"export function characterRelations"`)
 and count every regard in the character's own day, whatever living day a caller hands in - the street, the roads, the
 dives and the caravans keep their sky for everything else (LW0 decision 2: the world is shared; decision 6: how it feels
 about you is yours). Online, a record from before (no `clock: 'own'`) is rebased once at load: each regard as last

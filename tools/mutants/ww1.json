@@ -184,8 +184,8 @@
   {
     "name": "WW1-hideout-theatre",
     "file": "src/systems/livingWorld/outlaws.js",
-    "old": "        if (theatre === BAY_THEATRE ? !inBay(px, py) : !inWorldGrid(px, py) || theatreAt(px, py) !== theatre) continue;",
-    "new": "        if (!inWorldGrid(px, py)) continue;",
+    "old": "        if (theatre === BAY_THEATRE ? !inBay(px, py) : !inWorldGrid(px, py) || theatreAt(px, py) !== theatre) continue; // WW1: a band keeps its own theatre - the Bay's on the Bay's map, as it always did; AUDIT WW F9: a province's in its province (a road by the border never puts its band over it - in Cyrodiil's open zone, or another province)",
+    "new": "        if (!inWorldGrid(px, py)) continue; // WW1: a band keeps its own theatre - the Bay's on the Bay's map, as it always did; AUDIT WW F9: a province's in its province (a road by the border never puts its band over it - in Cyrodiil's open zone, or another province)",
     "tests": [
       "test/world/worldWide/ww1_world.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "WW1-census-bank",
     "file": "src/systems/livingWorld/census.js",
-    "old": "people ? folkNameBank(race) : nameBankOfArea(town.area ?? town.region ?? -1)",
-    "new": "nameBankOfArea(town.region ?? -1)",
+    "old": "    name: seededPersonName(\n      seed ^ 0x5eed1e55,\n      people ? folkNameBank(race) : nameBankOfArea(town.area ?? town.region ?? -1),\n      gender,\n      { race, region: town.area ?? town.region ?? -1, home: folkKeyOf(people) },\n    ), // WW1: the region's bank on the Bay; PROVINCE-FOLK: past it their own people's; REGION-NAMES: their customs, their town's region's",
+    "new": "    name: seededPersonName(seed ^ 0x5eed1e55, nameBankOfArea(town.region ?? -1), gender, {\n      race,\n      region: town.area ?? town.region ?? -1,\n      home: folkKeyOf(people),\n    }), // WW1: the region's bank on the Bay; PROVINCE-FOLK: past it their own people's; REGION-NAMES: their customs, their town's region's",
     "tests": [
       "test/world/worldWide/ww1_world.test.js"
     ]

@@ -92,7 +92,7 @@
   {
     "name": "STAND-LIFE-still-filter-off",
     "file": "src/systems/livingWorld/looks.js",
-    "old": "  const list = STILL_FLATS[role][res.sex === 'female' ? 'female' : 'male'].filter(([a, r]) => MOVING_STILLS.has(`${a}.${r}`));",
+    "old": "  const list = STILL_FLATS[role][res.sex === 'female' ? 'female' : 'male'].filter(([a, r]) =>\n    MOVING_STILLS.has(`${a}.${r}`),\n  );",
     "new": "  const list = STILL_FLATS[role][res.sex === 'female' ? 'female' : 'male'];",
     "tests": [
       "test/systems/livingWorld/standlife_street.test.js",

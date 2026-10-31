@@ -39,7 +39,7 @@
     "name": "WATCH-DAY-no-clothes",
     "file": "src/systems/livingWorld/census.js",
     "old": "    ...(guard ? { civvies: tables.male[lwSeed(seed, 0x63697673) % tables.male.length] } : {}),",
-    "new": "    ...({}),",
+    "new": "    ...{},",
     "tests": [
       "test/systems/livingWorld/watchday_watch.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WATCH-DAY-company-halved",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  const company = res.slot % WATCH_ROTATION, rank = Math.floor(res.slot / WATCH_ROTATION);",
-    "new": "  const company = res.slot % 2, rank = Math.floor(res.slot / WATCH_ROTATION);",
+    "old": "  const company = res.slot % WATCH_ROTATION,",
+    "new": "  const company = res.slot % 2,",
     "tests": [
       "test/systems/livingWorld/watchday_watch.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WATCH-DAY-gates-never-turn",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "    const turn = lwSeed(res.town, 0x706f7374, company, day) % exits.length;   // 'post'",
-    "new": "    const turn = 0;   // 'post'",
+    "old": "    const turn = lwSeed(res.town, 0x706f7374, company, day) % exits.length; // 'post'",
+    "new": "    const turn = 0; // 'post'",
     "tests": [
       "test/systems/livingWorld/watchday_watch.test.js"
     ]
@@ -83,7 +83,7 @@
   {
     "name": "WATCH-DAY-no-pairs",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  return { shift, company, rank, kind: 'patrol', post: null, patrol: Math.floor(i / 2), pair: alone ? null : /** @type {0|1} */ (i % 2) };",
+    "old": "  return {\n    shift,\n    company,\n    rank,\n    kind: 'patrol',\n    post: null,\n    patrol: Math.floor(i / 2),\n    pair: alone ? null : /** @type {0|1} */ (i % 2),\n  };",
     "new": "  return { shift, company, rank, kind: 'patrol', post: null, patrol: i, pair: null };",
     "tests": [
       "test/systems/livingWorld/watchday_watch.test.js"
@@ -101,7 +101,7 @@
   {
     "name": "WATCH-DAY-no-hold",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "    if (out.length) { const last = out[out.length - 1]; last.dur = until - last.from; }",
+    "old": "    if (out.length) {\n      const last = out[out.length - 1];\n      last.dur = until - last.from;\n    }",
     "new": "    void out;",
     "tests": [
       "test/systems/livingWorld/watchday_watch.test.js"
@@ -119,8 +119,8 @@
   {
     "name": "WATCH-DAY-start-home",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  let at = start?.at ?? home, atKind = start?.kind ?? 'home', cursor = D0;",
-    "new": "  let at = home, atKind = start?.kind ?? 'home', cursor = D0;",
+    "old": "  let at = start?.at ?? home,",
+    "new": "  let at = home,",
     "tests": [
       "test/systems/livingWorld/watchday_watch.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "WATCH-DAY-walk-unmarked",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "{ from: at, to, ...(atMark ?? {}), ...(arriveMark ?? {}), ...extra }",
-    "new": "{ from: at, to, ...extra }",
+    "old": "      push('walk', to, cursor, cursor + m, { from: at, to, ...(atMark ?? {}), ...(arriveMark ?? {}), ...extra });",
+    "new": "      push('walk', to, cursor, cursor + m, { from: at, to, ...extra });",
     "tests": [
       "test/systems/livingWorld/watchday_watch.test.js"
     ]
@@ -182,7 +182,7 @@
   {
     "name": "WATCH-DAY-walk-early-for-all",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  return t0 < day * DAY_MIN + DAY_START_MIN ? { from: home, to, t0, t1, kind: d.kind === 'post' ? 'post' : 'watch', mark: { duty: true, pair: d.pair } } : null;",
+    "old": "  return t0 < day * DAY_MIN + DAY_START_MIN\n    ? { from: home, to, t0, t1, kind: d.kind === 'post' ? 'post' : 'watch', mark: { duty: true, pair: d.pair } }\n    : null;",
     "new": "  return { from: home, to, t0, t1, kind: d.kind === 'post' ? 'post' : 'watch', mark: { duty: true, pair: d.pair } };",
     "tests": [
       "test/systems/livingWorld/watchday_watch.test.js"
@@ -200,7 +200,7 @@
   {
     "name": "WATCH-DAY-beat-across-town",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  const near = pool.map((sp) => ({ sp, d: gap(sp) })).sort((a, b) => a.d - b.d || (a.sp.key < b.sp.key ? -1 : a.sp.key > b.sp.key ? 1 : 0)).slice(0, n).map((x) => x.sp);",
+    "old": "  const near = pool\n    .map((sp) => ({ sp, d: gap(sp) }))\n    .sort((a, b) => a.d - b.d || (a.sp.key < b.sp.key ? -1 : a.sp.key > b.sp.key ? 1 : 0))\n    .slice(0, n)\n    .map((x) => x.sp);",
     "new": "  const near = pool.filter((_, k) => k % Math.max(1, Math.floor(pool.length / n)) === 0).slice(0, n);",
     "tests": [
       "test/systems/livingWorld/watchday_watch.test.js"
@@ -209,7 +209,7 @@
   {
     "name": "WATCH-DAY-post-not-out",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch', 'post', 'gate']));",
+    "old": "export const OUTDOOR = Object.freeze(\n  new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch', 'post', 'gate']),\n);",
     "new": "export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch', 'gate']));",
     "tests": [
       "test/systems/livingWorld/watchday_watch.test.js"

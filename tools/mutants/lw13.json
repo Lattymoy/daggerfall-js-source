@@ -92,8 +92,8 @@
   {
     "name": "LW13-head",
     "file": "src/systems/livingWorld/companies.js",
-    "old": "(!a || (m.level ?? 1) > (a.level ?? 1) ? m : a)",
-    "new": "(!a || (m.level ?? 1) >= (a.level ?? 1) ? m : a)",
+    "old": "export const headOf = (members) => members.reduce((a, m) => (!a || (m.level ?? 1) > (a.level ?? 1) ? m : a), null);",
+    "new": "export const headOf = (members) => members.reduce((a, m) => (!a || (m.level ?? 1) >= (a.level ?? 1) ? m : a), null);",
     "tests": [
       "test/systems/livingWorld/lw13_companies.test.js"
     ]
@@ -101,7 +101,7 @@
   {
     "name": "LW13-holy-region",
     "file": "src/systems/livingWorld/companies.js",
-    "old": "    if (!row || row.region === 0xFF) continue;   // never a day every region keeps",
+    "old": "    if (!row || row.region === 0xff) continue; // never a day every region keeps",
     "new": "    if (!row) continue;",
     "tests": [
       "test/systems/livingWorld/lw13_companies.test.js"
@@ -335,8 +335,8 @@
   {
     "name": "LW13-people",
     "file": "src/systems/livingWorld/people.js",
-    "old": "      fate: fates.get(`${placeKeyOf(res)}|${res.name}`) ?? null, words: '', company: companyOf(res, town) };",
-    "new": "      fate: fates.get(`${placeKeyOf(res)}|${res.name}`) ?? null, words: '', company: '' };",
+    "old": "      company: companyOf(res, town),",
+    "new": "      company: '',",
     "tests": [
       "test/systems/livingWorld/lw13_companies.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "LW13-pilgrim-visit",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "res.job === 'pilgrim' ? 'pilgrim-visit' : 'visitor'",
-    "new": "'visitor'",
+    "old": "        : res.job === 'pilgrim'\n          ? 'pilgrim-visit'\n          : 'visitor'",
+    "new": "        : 'visitor'",
     "tests": [
       "test/systems/livingWorld/lw13_companies.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "LW13-greet-name",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "  stranger: Object.freeze(['{company} - you\\'ve heard of us?', 'Make way for {company}.', 'Good road. We\\'re {company}.']),",
-    "new": "  stranger: Object.freeze(['You\\'ve heard of us?', 'Make way for {company}.', 'Good road. We\\'re {company}.']),",
+    "old": "  stranger: Object.freeze([\n    \"{company} - you've heard of us?\",\n    'Make way for {company}.',\n    \"Good road. We're {company}.\",\n  ]),",
+    "new": "  stranger: Object.freeze([\"You've heard of us?\", 'Make way for {company}.', \"Good road. We're {company}.\"]),",
     "tests": [
       "test/systems/livingWorld/lw13_companies.test.js"
     ]

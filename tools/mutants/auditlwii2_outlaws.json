@@ -432,8 +432,8 @@
   {
     "name": "AUDITLWII2-P11-LW12P-take-counter-kinds",
     "file": "src/systems/livingWorld/outlaws.js",
-    "old": "(tr.kind === 'merchant' || tr.kind === 'carter' || tr.kind === 'pedlar' ?",
-    "new": "(tr.kind === 'merchant' ?",
+    "old": "    (a, tr) =>\n      a +\n      (tr.kind === 'merchant' || tr.kind === 'carter' || tr.kind === 'pedlar'\n        ? Math.round(purseOf(CARAVAN_QUALITY(tr)) * TAKE_PURSE_SHARE)\n        : ROB_GOLD),",
+    "new": "    (a, tr) => a + (tr.kind === 'merchant' ? Math.round(purseOf(CARAVAN_QUALITY(tr)) * TAKE_PURSE_SHARE) : ROB_GOLD),",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
     ],
@@ -442,7 +442,7 @@
   {
     "name": "AUDITLWII2-P11-LW12P-trouble-nearest",
     "file": "src/systems/livingWorld/outlaws.js",
-    "old": "    .sort((a, b) => Math.max(Math.abs(a.px - px), Math.abs(a.py - py)) - Math.max(Math.abs(b.px - px), Math.abs(b.py - py)) || (a.key < b.key ? -1 : 1));",
+    "old": "    .sort(\n      (a, b) =>\n        Math.max(Math.abs(a.px - px), Math.abs(a.py - py)) - Math.max(Math.abs(b.px - px), Math.abs(b.py - py)) ||\n        (a.key < b.key ? -1 : 1),\n    );",
     "new": "    .sort((a, b) => (a.key < b.key ? -1 : 1));",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"
@@ -462,7 +462,7 @@
   {
     "name": "AUDITLWII2-P11-LW12P-leader-classes",
     "file": "src/systems/livingWorld/outlaws.js",
-    "old": "    const cls = i === 0 ? pickOf(rng, [MOBILE_TYPES.Nightblade, MOBILE_TYPES.Barbarian, MOBILE_TYPES.Rogue]) : pickOf(rng, OUTLAW_CLASSES);",
+    "old": "    const cls =\n      i === 0\n        ? pickOf(rng, [MOBILE_TYPES.Nightblade, MOBILE_TYPES.Barbarian, MOBILE_TYPES.Rogue])\n        : pickOf(rng, OUTLAW_CLASSES);",
     "new": "    const cls = pickOf(rng, OUTLAW_CLASSES);",
     "tests": [
       "test/systems/livingWorld/auditlwii2_outlaws.test.js"

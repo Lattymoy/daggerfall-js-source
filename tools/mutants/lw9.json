@@ -65,8 +65,8 @@
   {
     "name": "LW9-more-courier",
     "file": "src/systems/livingWorld/census.js",
-    "old": "    courier: b >= 9 ? 1 : 0,\n  };",
-    "new": "    courier: b >= 4 ? 1 : 0,\n  };",
+    "old": "    courier: b >= 9 ? 1 : 0,",
+    "new": "    courier: b >= 4 ? 1 : 0,",
     "tests": [
       "test/systems/livingWorld/lw9_traffic.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "LW9-patrol-knight",
     "file": "src/systems/livingWorld/census.js",
-    "old": "  else if (job === 'patrol') { cls = MOBILE_TYPES.Knight; level = rollInt(rng, 6, 14); }",
-    "new": "  else if (job === 'patrol') { cls = MOBILE_TYPES.Warrior; level = rollInt(rng, 6, 14); }",
+    "old": "    cls = MOBILE_TYPES.Knight;",
+    "new": "    cls = MOBILE_TYPES.Warrior;",
     "tests": [
       "test/systems/livingWorld/lw9_traffic.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "LW9-hazard-hunter",
     "file": "src/systems/livingWorld/lives.js",
-    "old": "export const ROAD_HAZARD = Object.freeze({ carter: 0.003, hunter: 0.01,",
-    "new": "export const ROAD_HAZARD = Object.freeze({ carter: 0.003, hunter: 0.001,",
+    "old": "  hunter: 0.01,",
+    "new": "  hunter: 0.001,",
     "tests": [
       "test/systems/livingWorld/lw9_traffic.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "LW9-cover-risk",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "(world.covered?.(trip) ? PATROL_RISK : 1);",
-    "new": "(world.covered?.(trip) ? 1 : 1);",
+    "old": "  const risk = Math.min(RISK_MAX, RISK_PER_DAY * 2 * days * ground) * (world.covered?.(trip) ? PATROL_RISK : 1); // LW9: a patrol keeps the road",
+    "new": "  const risk = Math.min(RISK_MAX, RISK_PER_DAY * 2 * days * ground) * (world.covered?.(trip) ? 1 : 1); // LW9: a patrol keeps the road",
     "tests": [
       "test/systems/livingWorld/lw9_traffic.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "LW9-carter-stall",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  const job = visitor ? (res.job === 'carter' ? 'carter-visit' : res.job === 'minstrel' ? 'minstrel-visit' : res.job === 'pilgrim' ? 'pilgrim-visit' : 'visitor') : res.job;",
-    "new": "  const job = visitor ? (res.job === 'minstrel' ? 'minstrel-visit' : res.job === 'pilgrim' ? 'pilgrim-visit' : 'visitor') : res.job;",
+    "old": "    ? res.job === 'carter'\n      ? 'carter-visit'\n      : res.job === 'minstrel'\n        ? 'minstrel-visit'\n        : res.job === 'pilgrim'\n          ? 'pilgrim-visit'\n          : 'visitor'",
+    "new": "    ? res.job === 'minstrel'\n      ? 'minstrel-visit'\n      : res.job === 'pilgrim'\n        ? 'pilgrim-visit'\n        : 'visitor'",
     "tests": [
       "test/systems/livingWorld/lw9_traffic.test.js"
     ]

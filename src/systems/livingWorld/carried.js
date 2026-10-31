@@ -54,9 +54,10 @@ export function carriedNews(visits, t, { own = [], deedsAt = () => [], here = nu
     const items = toldAt(v);
     if (v.courier) {
       for (const r of v.relay ?? []) {
-        if (!(r.inT <= v.outT0 && v.outT0 - r.inT < NEWS_DAYS * DAY_MIN)) continue;   // heard at home before the courier set out
-        if (here != null && (r.from?.mapId ?? null) === here) continue;   // AUDIT LW-II B8: its own word come back
-        for (const it of toldAt(r)) items.push({ ...it, key: carriedKey(it), from: it.from || (r.from?.name ?? ''), t: r.inT });
+        if (!(r.inT <= v.outT0 && v.outT0 - r.inT < NEWS_DAYS * DAY_MIN)) continue; // heard at home before the courier set out
+        if (here != null && (r.from?.mapId ?? null) === here) continue; // AUDIT LW-II B8: its own word come back
+        for (const it of toldAt(r))
+          items.push({ ...it, key: carriedKey(it), from: it.from || (r.from?.name ?? ''), t: r.inT });
       }
     }
     for (const it of items) {

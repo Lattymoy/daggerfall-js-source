@@ -214,8 +214,8 @@
   {
     "name": "LW2-switch-skin-unread",
     "file": "src/systems/livingWorld/livingSwitch.js",
-    "old": "(isEnhanced() && getPref(LIVING_WORLD_KEY) !== false)",
-    "new": "(getPref(LIVING_WORLD_KEY) !== false)",
+    "old": "export const livingWorldOn = () =>\n  LIVING_WORLD_TUNING.override ?? (isEnhanced() && getPref(LIVING_WORLD_KEY) !== false);",
+    "new": "export const livingWorldOn = () => LIVING_WORLD_TUNING.override ?? getPref(LIVING_WORLD_KEY) !== false;",
     "tests": [
       "test/systems/livingWorld/lw2_livingTown.test.js"
     ]

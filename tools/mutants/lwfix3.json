@@ -76,8 +76,8 @@
   {
     "name": "LW-FIX3-trim-eased",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "(Math.abs(eased(a[1], day)) - Math.abs(eased(b[1], day)))",
-    "new": "(Math.abs(a[1].r) - Math.abs(b[1].r))",
+    "old": "      .sort((a, b) => Math.abs(eased(a[1], day)) - Math.abs(eased(b[1], day)) || a[1].seen - b[1].seen);",
+    "new": "      .sort((a, b) => Math.abs(a[1].r) - Math.abs(b[1].r) || a[1].seen - b[1].seen);",
     "tests": [
       "test/systems/livingWorld/lwfix3_town.test.js",
       "test/systems/livingWorld/lw2_livingTown.test.js"
@@ -86,8 +86,8 @@
   {
     "name": "LW-FIX3-trim-keep",
     "file": "src/systems/livingWorld/relations.js",
-    "old": ".filter(([id]) => id !== keep)",
-    "new": ".filter(() => true)",
+    "old": "      .filter(([id]) => id !== keep)",
+    "new": "      .filter(() => true)",
     "tests": [
       "test/systems/livingWorld/lwfix3_town.test.js",
       "test/systems/livingWorld/lw2_livingTown.test.js"
@@ -106,8 +106,8 @@
   {
     "name": "LW-FIX3-walk-held",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "    if (back > 0 && Math.max(cursor, t1) + halt + back > D1) t1 = D1;\n",
-    "new": "",
+    "old": "    if (back > 0 && Math.max(cursor, t1) + halt + back > D1) t1 = D1;\n    if (t1 > cursor) push('away', exit ?? home, cursor, t1, { armed: !!w.armed });",
+    "new": "    if (t1 > cursor) push('away', exit ?? home, cursor, t1, { armed: !!w.armed });",
     "tests": [
       "test/systems/livingWorld/lwfix3_town.test.js",
       "test/systems/livingWorld/lw2_livingTown.test.js"

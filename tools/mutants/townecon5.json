@@ -383,8 +383,8 @@
   {
     "name": "TOWNECON-AUDIT2-LIV12-every-ask",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "  if (_econNews && textRevision() === _econRev) return _econNews;\n  _econRev = textRevision();",
-    "new": "  if (_econNews && textRevision() === _econRev && false) return _econNews;\n  _econRev = textRevision();",
+    "old": "  if (_econNews && textRevision() === _econRev) return _econNews;",
+    "new": "  if (_econNews && textRevision() === _econRev && false) return _econNews;",
     "tests": [
       "test/systems/livingWorld/townecon_living.test.js"
     ],

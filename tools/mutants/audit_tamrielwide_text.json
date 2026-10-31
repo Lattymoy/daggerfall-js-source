@@ -160,8 +160,8 @@
   {
     "name": "AUDIT-TW-D6-the-taverns-bay",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "every tavern in the land.'",
-    "new": "every tavern in the Bay.'",
+    "old": "    S('They say a dragon was seen over {region}.', 'They say that after the fourth cup in every tavern in the land.'),",
+    "new": "    S('They say a dragon was seen over {region}.', 'They say that after the fourth cup in every tavern in the Bay.'),",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js"
     ],
@@ -170,8 +170,8 @@
   {
     "name": "AUDIT-TW-D6-the-seas-share",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "'The sea takes its share.'",
-    "new": "'The Bay takes its share.'",
+    "old": "    Object.freeze(['{who} was lost at sea, on the crossing to {place}.', 'The sea takes its share.']),",
+    "new": "    Object.freeze(['{who} was lost at sea, on the crossing to {place}.', 'The Bay takes its share.']),",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js"
     ],

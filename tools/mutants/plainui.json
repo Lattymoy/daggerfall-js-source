@@ -137,8 +137,8 @@
   {
     "name": "PLAINUI-badge-share",
     "file": "src/systems/livingWorld/people.js",
-    "old": "share: (r + REGARD_MAX) / (2 * REGARD_MAX),",
-    "new": "share: r / REGARD_MAX,",
+    "old": "    share: (r + REGARD_MAX) / (2 * REGARD_MAX),",
+    "new": "    share: r / REGARD_MAX,",
     "tests": [
       "test/systems/legacy/plainui.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PLAINUI-badge-neutral-name",
     "file": "src/systems/livingWorld/people.js",
-    "old": "neutral: 'Known',",
-    "new": "neutral: 'Neutral',",
+    "old": "export const STANDING_NAMES = Object.freeze({ friend: 'Friend', neutral: 'Known', enemy: 'Enemy', hostile: 'Hostile' }); // the Chronicle's People page's words",
+    "new": "export const STANDING_NAMES = Object.freeze({\n  friend: 'Friend',\n  neutral: 'Neutral',\n  enemy: 'Enemy',\n  hostile: 'Hostile',\n}); // the Chronicle's People page's words",
     "tests": [
       "test/systems/legacy/plainui.test.js"
     ]

@@ -400,8 +400,8 @@
   {
     "name": "LW3-ways-both-ways",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "      const flip = a.mapId > b.mapId;",
-    "new": "      const flip = false;",
+    "old": "      if (keeping) return undefined;\n      const flip = a.mapId > b.mapId;",
+    "new": "      if (keeping) return undefined;\n      const flip = false;",
     "tests": [
       "test/systems/livingWorld/lw3_roads.test.js"
     ]
@@ -409,8 +409,8 @@
   {
     "name": "LW3-ways-budget-unspent",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "        if (budget <= 0 && !(spent < spendMs && asked < WAYS_MAX_PER_FRAME)) return undefined;",
-    "new": "        if (budget < -99 && !(spent < spendMs && asked < WAYS_MAX_PER_FRAME)) return undefined;",
+    "old": "        if (budget <= 0 && !(spent < spendMs && asked < WAYS_MAX_PER_FRAME)) return undefined; // PERF-WAYS1: the floor spent, and the frame's time or its cap",
+    "new": "        if (budget < -99 && !(spent < spendMs && asked < WAYS_MAX_PER_FRAME)) return undefined; // PERF-WAYS1: the floor spent, and the frame's time or its cap",
     "tests": [
       "test/systems/livingWorld/lw3_roads.test.js"
     ]
@@ -418,7 +418,7 @@
   {
     "name": "LW3-ways-network-kept",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "        if (net !== null) { book.clear(); generation++; }",
+    "old": "        if (net !== null) {\n          book.clear();\n          generation++;\n        }",
     "new": "        void 0;",
     "tests": [
       "test/systems/livingWorld/lw3_roads.test.js"

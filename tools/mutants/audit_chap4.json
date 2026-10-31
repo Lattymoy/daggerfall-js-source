@@ -375,8 +375,8 @@
   {
     "name": "AUDIT-CHAP4-C4-NEWS",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "Object.freeze(['The chapter of {guild} here is doing well, they say.', 'Good for {town}.']),",
-    "new": "Object.freeze(['{guild} here is doing well, they say.', 'Good for {town}.']),",
+    "old": "    Object.freeze(['The chapter of {guild} here is doing well, they say.', 'Good for {town}.']),",
+    "new": "    Object.freeze(['{guild} here is doing well, they say.', 'Good for {town}.']),",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]
@@ -619,8 +619,8 @@
   {
     "name": "AUDIT-CHAP4-T10-NEWS-SWAP",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "Object.freeze(['The hall of {guild} is half empty of an evening.', 'Hard times for them.']),",
-    "new": "Object.freeze(['Have you seen the hall of {guild} of an evening? Full to the door.', 'Hard times for them.']),",
+    "old": "    Object.freeze(['The hall of {guild} is half empty of an evening.', 'Hard times for them.']),",
+    "new": "    Object.freeze(['Have you seen the hall of {guild} of an evening? Full to the door.', 'Hard times for them.']),",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]

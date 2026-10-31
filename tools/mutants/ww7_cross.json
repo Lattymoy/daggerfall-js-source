@@ -182,8 +182,8 @@
   {
     "name": "WW7-9-ways-the-bays-first-unasked",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "      if ((pastA || pastB) && beyond) { const flip",
-    "new": "      if (pastA && beyond) { const flip",
+    "old": "      if ((pastA || pastB) && beyond) {",
+    "new": "      if (pastA && beyond) {",
     "tests": [
       "test/world/worldWide/ww7_cross.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "WW7-9-ways-the-edge-unsaid",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "farWayOf(flip ? b : a, flip ? a : b, flip, pastA !== pastB); }",
-    "new": "farWayOf(flip ? b : a, flip ? a : b, flip, false); }",
+    "old": "        return farWayOf(flip ? b : a, flip ? a : b, flip, pastA !== pastB);",
+    "new": "        return farWayOf(flip ? b : a, flip ? a : b, flip, false);",
     "tests": [
       "test/world/worldWide/ww7_cross.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "WW7-9-ways-no-network-no-wait",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "    if (cross && !raw) return undefined;\n",
-    "new": "",
+    "old": "    if (cross && !raw) return undefined;\n    if (raw && raw.roads !== edgeNet) {",
+    "new": "    if (raw && raw.roads !== edgeNet) {",
     "tests": [
       "test/world/worldWide/ww7_cross.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "WW7-9-ways-the-edges-kept",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "if (edgeNet !== null) { edge.clear(); generation++; }",
-    "new": "if (edgeNet !== null) { generation++; }",
+    "old": "        edge.clear();\n        generation++;",
+    "new": "        generation++;",
     "tests": [
       "test/world/worldWide/ww7_cross.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "WW7-9-ways-the-edges-generation",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "if (edgeNet !== null) { edge.clear(); generation++; }",
-    "new": "if (edgeNet !== null) { edge.clear(); }",
+    "old": "        edge.clear();\n        generation++;\n      }",
+    "new": "        edge.clear();\n      }",
     "tests": [
       "test/world/worldWide/ww7_cross.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "WW7-9-ways-the-builds-edge",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "if (farAt) { far.clear(); edge.clear(); beyond?.clear?.(); generation++; }",
-    "new": "if (farAt) { far.clear(); beyond?.clear?.(); generation++; }",
+    "old": "        edge.clear();\n        beyond?.clear?.();",
+    "new": "        beyond?.clear?.();",
     "tests": [
       "test/world/worldWide/ww7_cross.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "WW7-9-ways-one-book",
     "file": "src/systems/livingWorld/ways.js",
-    "old": "    const book = cross ? edge : far, key",
-    "new": "    const book = far, key",
+    "old": "    const book = cross ? edge : far,",
+    "new": "    const book = far,",
     "tests": [
       "test/world/worldWide/ww7_cross.test.js"
     ],
@@ -272,8 +272,8 @@
   {
     "name": "WW7-9-planner-the-bays-water",
     "file": "src/systems/livingWorld/beyondWays.js",
-    "old": "        t.water[i] = b.isWater(X, Y) ? 1 : 0;",
-    "new": "        t.water[i] = 0;",
+    "old": "          t.water[i] = b.isWater(X, Y) ? 1 : 0;",
+    "new": "          t.water[i] = 0;",
     "tests": [
       "test/world/worldWide/ww7_cross.test.js"
     ],
@@ -282,8 +282,8 @@
   {
     "name": "WW7-9-planner-the-bays-roads",
     "file": "src/systems/livingWorld/beyondWays.js",
-    "old": "        t.roads[i] = (b.roads?.[k] ?? 0) | layerByte(net, 'join', X, Y);",
-    "new": "        t.roads[i] = layerByte(net, 'join', X, Y);",
+    "old": "          t.roads[i] = (b.roads?.[k] ?? 0) | layerByte(net, 'join', X, Y);",
+    "new": "          t.roads[i] = layerByte(net, 'join', X, Y);",
     "tests": [
       "test/world/worldWide/ww7_cross.test.js"
     ],
@@ -292,8 +292,8 @@
   {
     "name": "WW7-9-planner-the-joins",
     "file": "src/systems/livingWorld/beyondWays.js",
-    "old": "        t.roads[i] = (b.roads?.[k] ?? 0) | layerByte(net, 'join', X, Y);",
-    "new": "        t.roads[i] = b.roads?.[k] ?? 0;",
+    "old": "          t.roads[i] = (b.roads?.[k] ?? 0) | layerByte(net, 'join', X, Y);",
+    "new": "          t.roads[i] = b.roads?.[k] ?? 0;",
     "tests": [
       "test/world/worldWide/ww7_cross.test.js"
     ],
@@ -302,8 +302,8 @@
   {
     "name": "WW7-9-planner-the-bays-tracks",
     "file": "src/systems/livingWorld/beyondWays.js",
-    "old": "        t.tracks[i] = b.tracks?.[k] ?? 0;",
-    "new": "        t.tracks[i] = 0;",
+    "old": "          t.tracks[i] = b.tracks?.[k] ?? 0;",
+    "new": "          t.tracks[i] = 0;",
     "tests": [
       "test/world/worldWide/ww7_cross.test.js"
     ],
@@ -312,8 +312,8 @@
   {
     "name": "WW7-9-planner-the-land-unwaited",
     "file": "src/systems/livingWorld/beyondWays.js",
-    "old": "    if (!landedIn(x0, y0, x0 + w, y0 + h)) return undefined;\n",
-    "new": "",
+    "old": "    if (!landedIn(x0, y0, x0 + w, y0 + h)) return undefined;\n    const win = windowOf(x0, y0, w, h, cross);",
+    "new": "    const win = windowOf(x0, y0, w, h, cross);",
     "tests": [
       "test/world/worldWide/ww7_cross.test.js"
     ],
@@ -332,8 +332,8 @@
   {
     "name": "WW7-9-planner-another-network",
     "file": "src/systems/livingWorld/beyondWays.js",
-    "old": "    if (b.roads !== edgeNet) { edgeTiles.clear(); edgeNet = b.roads; }",
-    "new": "    if (b.roads !== edgeNet) { edgeNet = b.roads; }",
+    "old": "      edgeTiles.clear();\n      edgeNet = b.roads;",
+    "new": "      edgeNet = b.roads;",
     "tests": [
       "test/world/worldWide/ww7_cross.test.js"
     ],
@@ -492,8 +492,8 @@
   {
     "name": "WW7-9-readers-hideouts",
     "file": "src/systems/livingWorld/outlaws.js",
-    "old": "  if (world.waitingArea?.(area)) return undefined;   // WW7-9: the land past the Bay under its bands still being laid: asked again\n",
-    "new": "",
+    "old": "  if (world.waitingArea?.(area)) return undefined; // WW7-9: the land past the Bay under its bands still being laid: asked again\n  const towns = [...(world.townsIn?.(area) ?? [])].sort((p, q) => p.mapId - q.mapId);",
+    "new": "  const towns = [...(world.townsIn?.(area) ?? [])].sort((p, q) => p.mapId - q.mapId);",
     "tests": [
       "test/world/worldWide/ww7_cross.test.js"
     ],

@@ -2,8 +2,8 @@
   {
     "name": "WATCH-KNOWS-band-honoured",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "return rep > 40 ? 'honoured'",
-    "new": "return rep > 50 ? 'honoured'",
+    "old": "  return rep > 40 ? 'honoured' : rep > 10 ? 'respected' : rep >= 0 ? 'citizen' : 'watched';",
+    "new": "  return rep > 50 ? 'honoured' : rep > 10 ? 'respected' : rep >= 0 ? 'citizen' : 'watched';",
     "tests": [
       "test/systems/livingWorld/watchknows_watch.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "WATCH-KNOWS-band-respected",
     "file": "src/systems/livingWorld/lines.js",
-    "old": ": rep > 10 ? 'respected'",
-    "new": ": rep > 20 ? 'respected'",
+    "old": "  return rep > 40 ? 'honoured' : rep > 10 ? 'respected' : rep >= 0 ? 'citizen' : 'watched';",
+    "new": "  return rep > 40 ? 'honoured' : rep > 20 ? 'respected' : rep >= 0 ? 'citizen' : 'watched';",
     "tests": [
       "test/systems/livingWorld/watchknows_watch.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "WATCH-KNOWS-band-citizen",
     "file": "src/systems/livingWorld/lines.js",
-    "old": ": rep >= 0 ? 'citizen'",
-    "new": ": rep > 0 ? 'citizen'",
+    "old": "  return rep > 40 ? 'honoured' : rep > 10 ? 'respected' : rep >= 0 ? 'citizen' : 'watched';",
+    "new": "  return rep > 40 ? 'honoured' : rep > 10 ? 'respected' : rep > 0 ? 'citizen' : 'watched';",
     "tests": [
       "test/systems/livingWorld/watchknows_watch.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "WATCH-KNOWS-known-ignored",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "  if (known) return 'known';\n",
-    "new": "",
+    "old": "  if (known) return 'known';\n  return rep > 40 ? 'honoured' : rep > 10 ? 'respected' : rep >= 0 ? 'citizen' : 'watched';",
+    "new": "  return rep > 40 ? 'honoured' : rep > 10 ? 'respected' : rep >= 0 ? 'citizen' : 'watched';",
     "tests": [
       "test/systems/livingWorld/watchknows_watch.test.js"
     ],

@@ -119,8 +119,8 @@
   {
     "name": "LEGACYNAME-news-doubles-the-surname",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "    Object.freeze(['{who}, gone. I saw them in the market not a week past.', 'Arkay keeps no calendar.']),",
-    "new": "    Object.freeze(['{who} {house}, gone. I saw them in the market not a week past.', 'Arkay keeps no calendar.']),",
+    "old": "    Object.freeze(['{who}, gone. I saw them in the market not a week past.', 'Arkay keeps no calendar.']), // LEGACY-NAME: \"{who} {house}\" read \"Tlist Sentinel\" for a seat's house ({who} the first name, meetups.js firstNameOf - AUDIT LEGACY III A16)",
+    "new": "    Object.freeze(['{who} {house}, gone. I saw them in the market not a week past.', 'Arkay keeps no calendar.']), // LEGACY-NAME: \"{who} {house}\" read \"Tlist Sentinel\" for a seat's house ({who} the first name, meetups.js firstNameOf - AUDIT LEGACY III A16)",
     "tests": [
       "test/systems/legacy/legacyname.test.js"
     ]

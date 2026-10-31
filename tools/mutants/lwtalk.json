@@ -137,8 +137,8 @@
   {
     "name": "LW-TALK-morning-any-hour",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "  if (!road && !own && hour >= 5 && hour < 11) pools.push(MORNING_TALKS);",
-    "new": "  if (!road && !own) pools.push(MORNING_TALKS);",
+    "old": "  if (!road && !own && hour >= 5 && hour < 11) pools.push(MORNING_TALKS); // LW-TALK: the street's - a room keeps its own two shares of three",
+    "new": "  if (!road && !own) pools.push(MORNING_TALKS); // LW-TALK: the street's - a room keeps its own two shares of three",
     "tests": [
       "test/systems/livingWorld/lwtalk_town.test.js"
     ]

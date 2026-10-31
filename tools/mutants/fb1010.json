@@ -137,8 +137,8 @@
   {
     "name": "RFOLK-census-climate",
     "file": "src/systems/livingWorld/census.js",
-    "old": "  const climate = walkerRace(town.people, town.area ?? town.region);",
-    "new": "  const climate = walkerRace(town.people, null);",
+    "old": "  const climate = walkerRace(town.people, town.area ?? town.region); // REGIONAL-FOLK: a Redguard region's residents are Redguards (WW1: an area's - Hammerfell's past the Bay too)",
+    "new": "  const climate = walkerRace(town.people, null); // REGIONAL-FOLK: a Redguard region's residents are Redguards (WW1: an area's - Hammerfell's past the Bay too)",
     "tests": [
       "test/systems/livingWorld/fb1010_regionalfolk.test.js"
     ]

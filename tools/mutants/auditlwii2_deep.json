@@ -202,8 +202,8 @@
   {
     "name": "AUDITLWII2-D8-inside",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "  if (trip.enc?.inside) return null;",
-    "new": "  if (trip.enc) return null;",
+    "old": "  if (trip.enc?.inside) return null; // a fated trouble is the dive's own (trouble.js diveTrouble) - AUDIT LW-II-2 D8: one met INSIDE; a road's trouble on the way there or back takes nothing from the deep",
+    "new": "  if (trip.enc) return null; // a fated trouble is the dive's own (trouble.js diveTrouble) - AUDIT LW-II-2 D8: one met INSIDE; a road's trouble on the way there or back takes nothing from the deep",
     "tests": [
       "test/scenes/auditlwii2_deep.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "AUDITLWII2-D9-farthest",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "if (Math.hypot(l.stop.x - o.x, l.stop.z - o.z) < Math.hypot(best.x - o.x, best.z - o.z)) best = l.stop;",
-    "new": "if (Math.hypot(l.stop.x - o.x, l.stop.z - o.z) > Math.hypot(best.x - o.x, best.z - o.z)) best = l.stop;",
+    "old": "      if (Math.hypot(l.stop.x - o.x, l.stop.z - o.z) < Math.hypot(best.x - o.x, best.z - o.z)) best = l.stop;",
+    "new": "      if (Math.hypot(l.stop.x - o.x, l.stop.z - o.z) > Math.hypot(best.x - o.x, best.z - o.z)) best = l.stop;",
     "tests": [
       "test/scenes/auditlwii2_deep.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "AUDITLWII2-D13-no-trim",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "      for (let j = i + 1; j < legs.length; j++) { legs[j].tIn += DEEP_FIGHT_MIN; legs[j].tOut += DEEP_FIGHT_MIN; }\n",
-    "new": "      for (let j = i + 1; j < legs.length; j++) { legs[j].tIn += DEEP_FIGHT_MIN; legs[j].tOut += DEEP_FIGHT_MIN; }\n      while (legs.length && legs[legs.length - 1].tOut > mid) legs.pop();\n",
+    "old": "      // AUDIT LW-II-2 D13: no trim after it - the whole reach comes after the fight (section 7.1); the trim that stood",
+    "new": "      while (legs.length && legs[legs.length - 1].tOut > mid) legs.pop();\n      // AUDIT LW-II-2 D13: no trim after it - the whole reach comes after the fight (section 7.1); the trim that stood",
     "tests": [
       "test/scenes/auditlwii2_deep.test.js"
     ],
@@ -302,8 +302,8 @@
   {
     "name": "AUDITLWII2-P10-LW14P-fight-shift",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "      for (let j = i + 1; j < legs.length; j++) { legs[j].tIn += DEEP_FIGHT_MIN; legs[j].tOut += DEEP_FIGHT_MIN; }\n",
-    "new": "",
+    "old": "      for (let j = i + 1; j < legs.length; j++) {\n        legs[j].tIn += DEEP_FIGHT_MIN;\n        legs[j].tOut += DEEP_FIGHT_MIN;\n      }\n      // AUDIT LW-II-2 D13: no trim after it - the whole reach comes after the fight (section 7.1); the trim that stood",
+    "new": "      // AUDIT LW-II-2 D13: no trim after it - the whole reach comes after the fight (section 7.1); the trim that stood",
     "tests": [
       "test/scenes/auditlwii2_deep.test.js"
     ],

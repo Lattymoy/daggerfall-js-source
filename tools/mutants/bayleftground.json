@@ -2,8 +2,8 @@
   {
     "name": "BAY-LEFT-GROUND-D2-pixel-left-out-of-the-query",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "world.foesOf({ climateIndex: world.climateAt(px, py), px, py, minute: t0, level, size, rolls: rng })",
-    "new": "world.foesOf({ climateIndex: world.climateAt(px, py), minute: t0, level, size, rolls: rng })",
+    "old": "    : (world.foesOf({ climateIndex: world.climateAt(px, py), px, py, minute: t0, level, size, rolls: rng }) ?? []); // BAY-LEFT-GROUND (D2): and the place, so the group is the land's own wild there - past the Bay its zone's",
+    "new": "    : (world.foesOf({ climateIndex: world.climateAt(px, py), minute: t0, level, size, rolls: rng }) ?? []); // BAY-LEFT-GROUND (D2): and the place, so the group is the land's own wild there - past the Bay its zone's",
     "tests": [
       "test/systems/livingWorld/bayleftground_trouble.test.js"
     ]

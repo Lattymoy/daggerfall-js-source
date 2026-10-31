@@ -413,8 +413,8 @@
   {
     "name": "GUILD3e-the-decline-talk-lost",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "    Object.freeze(['They say the chapter of {guild} here is in decline.', 'It needs its members, and soon.']),   // GUILD3e: a Decline's, the band's now\n",
-    "new": "",
+    "old": "    Object.freeze(['They say the chapter of {guild} here is in decline.', 'It needs its members, and soon.']), // GUILD3e: a Decline's, the band's now\n  ]),",
+    "new": "  ]),",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -422,8 +422,8 @@
   {
     "name": "GUILD3e-the-ascendancy-talk-lost",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "    Object.freeze(['The chapter of {guild} here is in its ascendancy, they say.', 'Everyone wants to be seen in that hall.']),   // GUILD3e: an Ascendancy's, the band's now\n",
-    "new": "",
+    "old": "    Object.freeze([\n      'The chapter of {guild} here is in its ascendancy, they say.',\n      'Everyone wants to be seen in that hall.',\n    ]), // GUILD3e: an Ascendancy's, the band's now\n  ]),",
+    "new": "  ]),",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]

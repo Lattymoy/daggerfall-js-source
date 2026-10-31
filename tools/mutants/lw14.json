@@ -2,8 +2,8 @@
   {
     "name": "LW14-stop-fixed",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "    .filter((m) => !m.archive && (m.record === STOP_FOE || m.record === STOP_TREASURE))",
-    "new": "    .filter((m) => m.record === STOP_FOE || m.record === STOP_TREASURE || m.record === 16)",
+    "old": "      .filter((m) => !m.archive && (m.record === STOP_FOE || m.record === STOP_TREASURE))",
+    "new": "      .filter((m) => m.record === STOP_FOE || m.record === STOP_TREASURE || m.record === 16)",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "LW14-stop-216",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "    .filter((m) => !m.archive && (m.record === STOP_FOE || m.record === STOP_TREASURE))",
-    "new": "    .filter((m) => (m.record === STOP_FOE || m.record === STOP_TREASURE))",
+    "old": "      .filter((m) => !m.archive && (m.record === STOP_FOE || m.record === STOP_TREASURE))",
+    "new": "      .filter((m) => m.record === STOP_FOE || m.record === STOP_TREASURE)",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LW14-bfs-order",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "    for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {",
-    "new": "    for (const [dx, dz] of [[0, 1], [1, 0], [-1, 0], [0, -1]]) {",
+    "old": "      [1, 0],\n      [-1, 0],\n      [0, 1],",
+    "new": "      [0, 1],\n      [1, 0],\n      [-1, 0],",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LW14-start-block",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "  let first = blocks.findIndex((b) => from.x >= b.originX",
-    "new": "  let first = 0 * blocks.findIndex((b) => from.x >= b.originX",
+    "old": "  let first = blocks.findIndex(\n    (b) => from.x >= b.originX && from.x < b.originX + side && from.z >= b.originZ && from.z < b.originZ + side,\n  );",
+    "new": "  let first =\n    0 *\n    blocks.findIndex(\n      (b) => from.x >= b.originX && from.x < b.originX + side && from.z >= b.originZ && from.z < b.originZ + side,\n    );",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LW14-fight-fated",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "  if (trip.enc?.inside) return null;",
-    "new": "  if (false) return null;",
+    "old": "  if (trip.enc?.inside) return null; // a fated trouble is the dive's own (trouble.js diveTrouble) - AUDIT LW-II-2 D8: one met INSIDE; a road's trouble on the way there or back takes nothing from the deep",
+    "new": "  if (false) return null; // a fated trouble is the dive's own (trouble.js diveTrouble) - AUDIT LW-II-2 D8: one met INSIDE; a road's trouble on the way there or back takes nothing from the deep",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "LW14-clear-at",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "for (const l of r?.legs ?? []) if (l.tOut <= t && t - l.tOut < DIVE_CLEAR_MIN) out.add(l.stop.key);",
-    "new": "for (const l of r?.legs ?? []) if (l.tIn <= t && t - l.tOut < DIVE_CLEAR_MIN) out.add(l.stop.key);",
+    "old": "    for (const l of r?.legs ?? []) if (l.tOut <= t && t - l.tOut < DIVE_CLEAR_MIN) out.add(l.stop.key);",
+    "new": "    for (const l of r?.legs ?? []) if (l.tIn <= t && t - l.tOut < DIVE_CLEAR_MIN) out.add(l.stop.key);",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -137,7 +137,7 @@
   {
     "name": "LW14-way-out",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "  const path = [...legs.map((l) => ({ x: l.stop.x, z: l.stop.z, ...yOf(l.stop) })).reverse(), { x: entry.x, z: entry.z, ...yOf(entry) }];",
+    "old": "  const path = [\n    ...legs.map((l) => ({ x: l.stop.x, z: l.stop.z, ...yOf(l.stop) })).reverse(),\n    { x: entry.x, z: entry.z, ...yOf(entry) },\n  ];",
     "new": "  const path = [...legs.map((l) => ({ x: l.stop.x, z: l.stop.z, ...yOf(l.stop) })).reverse()];",
     "tests": [
       "test/scenes/lw14_deep.test.js"
@@ -147,8 +147,8 @@
   {
     "name": "LW14-stop-nearer",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "return s.f >= 0.5 || !a.key ? b : a;",
-    "new": "return b;",
+    "old": "    return s.f >= 0.5 || !a.key ? b : a;",
+    "new": "    return b;",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "LW14-poached-once",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "kind === 'poached' ? 'poach' : DEED_STAMPS[",
-    "new": "DEED_STAMPS[",
+    "old": "            : kind === 'poached'\n              ? 'poach'\n              : (DEED_STAMPS[/** @type {keyof typeof DEED_STAMPS} */ (kind)] ?? null); // LW14: a find taken, once a day; COURT-DEEDS: a deed",
+    "new": "            : (DEED_STAMPS[/** @type {keyof typeof DEED_STAMPS} */ (kind)] ?? null); // LW14: a find taken, once a day; COURT-DEEDS: a deed",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -338,8 +338,8 @@
   {
     "name": "LW14-poached-kept",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "        if (e.poach != null) people[id].poach = e.poach;   // LW14: only once counted\n",
-    "new": "",
+    "old": "        if (e.poach != null) people[id].poach = e.poach; // LW14: only once counted\n        for (const k of Object.values(DEED_STAMPS))",
+    "new": "        for (const k of Object.values(DEED_STAMPS))",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "LW14-poached-cost",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "  poached: -4,",
-    "new": "  poached: -2,",
+    "old": "  poached: -4, // LW14: a find of theirs taken before them in the deep (once a day, as a tone)",
+    "new": "  poached: -2, // LW14: a find of theirs taken before them in the deep (once a day, as a tone)",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -540,8 +540,8 @@
   {
     "name": "LW14-AUDIT-D7-out-y",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "return s.out ? { x: s.out.x, z: s.out.z, y: s.out.y } : null;",
-    "new": "return s.out ? { x: s.out.x, z: s.out.z, y: undefined } : null;",
+    "old": "  return s.out ? { x: s.out.x, z: s.out.z, y: s.out.y } : null;",
+    "new": "  return s.out ? { x: s.out.x, z: s.out.z, y: undefined } : null;",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]

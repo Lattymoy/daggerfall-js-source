@@ -20,8 +20,8 @@
   {
     "name": "LW7c-watch-job",
     "file": "src/systems/livingWorld/people.js",
-    "old": "roll === 'w' ? 'guard' : 'resident'",
-    "new": "'resident'",
+    "old": "  return mintResident(town, roll, Number(m[3]), roll === 'w' ? 'guard' : 'resident', {\n    gen: m[4] != null ? Number(m[4]) : null,\n  });",
+    "new": "  return mintResident(town, roll, Number(m[3]), 'resident', { gen: m[4] != null ? Number(m[4]) : null });",
     "tests": [
       "test/systems/livingWorld/lw7c_people.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "LW7c-gen-lost",
     "file": "src/systems/livingWorld/people.js",
-    "old": "{ gen: m[4] != null ? Number(m[4]) : null }",
-    "new": "{ gen: null }",
+    "old": "  return mintResident(town, roll, Number(m[3]), roll === 'w' ? 'guard' : 'resident', {\n    gen: m[4] != null ? Number(m[4]) : null,\n  });",
+    "new": "  return mintResident(town, roll, Number(m[3]), roll === 'w' ? 'guard' : 'resident', { gen: null });",
     "tests": [
       "test/systems/livingWorld/lw7c_people.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LW7c-town-unknown",
     "file": "src/systems/livingWorld/people.js",
-    "old": "  const town = townOf(Number(m[1]));\n  if (!town) return null;",
-    "new": "  const town = townOf(Number(m[1]));",
+    "old": "  if (!town) return null;\n  const roll = /** @type {'h'|'t'|'w'} */ (m[2] || 'h');",
+    "new": "  const roll = /** @type {'h'|'t'|'w'} */ (m[2] || 'h');",
     "tests": [
       "test/systems/livingWorld/lw7c_people.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LW7c-enemies-order",
     "file": "src/systems/livingWorld/people.js",
-    "old": ".sort((a, b) => a.regard - b.regard || a.days - b.days);",
-    "new": ".sort((a, b) => b.regard - a.regard || a.days - b.days);",
+    "old": "    .sort((a, b) => a.regard - b.regard || a.days - b.days);",
+    "new": "    .sort((a, b) => b.regard - a.regard || a.days - b.days);",
     "tests": [
       "test/systems/livingWorld/lw7c_people.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LW7c-hostile-unlisted",
     "file": "src/systems/livingWorld/people.js",
-    "old": "rows.filter((p) => p.standing === 'enemy' || p.standing === 'hostile')",
-    "new": "rows.filter((p) => p.standing === 'enemy')",
+    "old": "  const enemies = rows\n    .filter((p) => p.standing === 'enemy' || p.standing === 'hostile')\n    .sort((a, b) => a.regard - b.regard || a.days - b.days);",
+    "new": "  const enemies = rows.filter((p) => p.standing === 'enemy').sort((a, b) => a.regard - b.regard || a.days - b.days);",
     "tests": [
       "test/systems/livingWorld/lw7c_people.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "LW7c-known-order",
     "file": "src/systems/livingWorld/people.js",
-    "old": ".sort((a, b) => a.days - b.days || (a.name < b.name ? -1 : 1));",
-    "new": ".sort((a, b) => b.days - a.days || (a.name < b.name ? -1 : 1));",
+    "old": "    .sort((a, b) => a.days - b.days || (a.name < b.name ? -1 : 1));",
+    "new": "    .sort((a, b) => b.days - a.days || (a.name < b.name ? -1 : 1));",
     "tests": [
       "test/systems/livingWorld/lw7c_people.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "LW7c-days",
     "file": "src/systems/livingWorld/people.js",
-    "old": "days: Math.max(0, day - e.seen),",
-    "new": "days: 0,",
+    "old": "      days: Math.max(0, day - e.seen),",
+    "new": "      days: 0,",
     "tests": [
       "test/systems/livingWorld/lw7c_people.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LW7c-fate-unread",
     "file": "src/systems/livingWorld/people.js",
-    "old": "      fate: fates.get(`${placeKeyOf(res)}|${res.name}`) ?? null, words: '', company: companyOf(res, town) };",
-    "new": "      fate: null, words: '', company: companyOf(res, town) };",
+    "old": "      fate: fates.get(`${placeKeyOf(res)}|${res.name}`) ?? null,",
+    "new": "      fate: null,",
     "tests": [
       "test/systems/livingWorld/lw7c_people.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LW7c-cap",
     "file": "src/systems/livingWorld/people.js",
-    "old": "known: known.slice(0, PEOPLE_MAX), companies:",
-    "new": "known, companies:",
+    "old": "    known: known.slice(0, PEOPLE_MAX),",
+    "new": "    known,",
     "tests": [
       "test/systems/livingWorld/lw7c_people.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "LW7c-words-today",
     "file": "src/systems/livingWorld/people.js",
-    "old": "  const seen = p.days === 0 ? 'Seen today.'",
-    "new": "  const seen = p.days <= 1 ? 'Seen today.'",
+    "old": "  const seen = p.days === 0 ? 'Seen today.' : p.days === 1 ? 'Last seen yesterday.' : `Last seen ${p.days} days ago.`;",
+    "new": "  const seen = p.days <= 1 ? 'Seen today.' : p.days === 1 ? 'Last seen yesterday.' : `Last seen ${p.days} days ago.`;",
     "tests": [
       "test/systems/livingWorld/lw7c_people.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "LW7c-words-hostile",
     "file": "src/systems/livingWorld/people.js",
-    "old": "p.standing === 'hostile' ? 'Hostile. They mean you harm.'",
-    "new": "p.standing === 'friend' ? 'Hostile. They mean you harm.'",
+    "old": "      : p.standing === 'hostile'",
+    "new": "      : p.standing === 'friend'",
     "tests": [
       "test/systems/livingWorld/lw7c_people.test.js"
     ]

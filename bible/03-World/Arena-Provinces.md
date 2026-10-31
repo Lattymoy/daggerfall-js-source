@@ -1910,7 +1910,7 @@ watch and its travellers, the 200 with Daggerfall's blocks people only about tho
   stands in the next slice splits it, and the one net left the other side's streets empty. A capital's slice
   (`livingTown.js`: its town's map id a capital's) walks every component QUARTER_MIN (3) of its buildings open onto, each
   a QUARTER: the town's places over its own street alone (its square, corners, shops, exits), its people its own
-  households (`src/systems/livingWorld/census.js:"export function quarterCensus(town, buildings, opens) {"` - the town's own quarter's as
+  households (`src/systems/livingWorld/census.js:"export function quarterCensus"` - the town's own quarter's as
   townCensus mints them, each other quarter's on slots of their own), and every one's day planned over its home's
   quarter (`livingTown.js` `_placesFor`), so every walk has its way. A Bay town is one town on one net, as the field's
   law keeps it (no quarters asked).

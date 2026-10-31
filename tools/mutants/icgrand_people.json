@@ -92,8 +92,8 @@
   {
     "name": "IC-QUARTERS-slots-shared",
     "file": "src/systems/livingWorld/census.js",
-    "old": "quarter * QUARTER_SLOTS + slot, p.job",
-    "new": "slot, p.job",
+    "old": "    mintResident(town, quarter ? 'q' : 'h', quarter * QUARTER_SLOTS + slot, p.job, {\n      home: p.home,\n      work: p.work,\n      faction: p.faction,\n    }),",
+    "new": "    mintResident(town, quarter ? 'q' : 'h', slot, p.job, { home: p.home, work: p.work, faction: p.faction }),",
     "tests": [
       "test/world/icgrand_living.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "IC-QUARTERS-min-unread",
     "file": "src/systems/livingWorld/places.js",
-    "old": "id !== main && keys.size >= QUARTER_MIN)",
-    "new": "id !== main && keys.size >= 1000)",
+    "old": "    .filter(([id, keys]) => id !== main && keys.size >= QUARTER_MIN)",
+    "new": "    .filter(([id, keys]) => id !== main && keys.size >= 1000)",
     "tests": [
       "test/world/icgrand_living.test.js"
     ]

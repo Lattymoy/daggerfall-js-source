@@ -509,8 +509,8 @@
   {
     "name": "CHAP6C-POOL",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "(/** @type {Record<string, any>} */ (CHAPTER_EVENT_NEWS)[item.kind] ?? CHAPTER_NEWS[",
-    "new": "(CHAPTER_NEWS[",
+    "old": "      ? /** @type {Record<string, any>} */ (\n          CHAPTER_EVENT_NEWS[item.kind] ?? CHAPTER_NEWS[/** @type {keyof typeof CHAPTER_NEWS} */ (item.kind)]\n        ) // CHAP5b: a chapter's standing; CHAP6c: its Season",
+    "new": "      ? CHAPTER_NEWS[/** @type {keyof typeof CHAPTER_NEWS} */ (item.kind)] // CHAP5b: a chapter's standing; CHAP6c: its Season",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -518,8 +518,8 @@
   {
     "name": "CHAP6C-POOL-SHUT",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "  shut: Object.freeze([\n",
-    "new": "  closed: Object.freeze([\n",
+    "old": "  shut: Object.freeze([",
+    "new": "  closed: Object.freeze([",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]

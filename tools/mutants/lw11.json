@@ -2,8 +2,8 @@
   {
     "name": "LW11-counter-pedlar",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "pedlar: BUILDING_TYPES.PawnShop });",
-    "new": "pedlar: BUILDING_TYPES.GeneralStore });",
+    "old": "  pedlar: BUILDING_TYPES.PawnShop,",
+    "new": "  pedlar: BUILDING_TYPES.GeneralStore,",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "LW11-counter-carter",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "carter: BUILDING_TYPES.GeneralStore, pedlar",
-    "new": "pedlar",
+    "old": "export const COUNTERS = Object.freeze({\n  merchant: BUILDING_TYPES.GeneralStore,\n  carter: BUILDING_TYPES.GeneralStore,\n  pedlar: BUILDING_TYPES.PawnShop,\n});",
+    "new": "export const COUNTERS = Object.freeze({ merchant: BUILDING_TYPES.GeneralStore, pedlar: BUILDING_TYPES.PawnShop });",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LW11-quality",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "6 + Math.floor((trip.from?.blocks | 0) / 4)",
-    "new": "6 + Math.floor((trip.from?.blocks | 0) / 5)",
+    "old": "export const CARAVAN_QUALITY = (trip) => Math.max(1, Math.min(20, 6 + Math.floor((trip.from?.blocks | 0) / 4)));",
+    "new": "export const CARAVAN_QUALITY = (trip) => Math.max(1, Math.min(20, 6 + Math.floor((trip.from?.blocks | 0) / 5)));",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "LW11-quality-cap",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "Math.min(20, 6 +",
-    "new": "Math.min(19, 6 +",
+    "old": "export const CARAVAN_QUALITY = (trip) => Math.max(1, Math.min(20, 6 + Math.floor((trip.from?.blocks | 0) / 4)));",
+    "new": "export const CARAVAN_QUALITY = (trip) => Math.max(1, Math.min(19, 6 + Math.floor((trip.from?.blocks | 0) / 4)));",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "LW11-purse-floor",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "PURSE_PER_QUALITY * Math.max(1, quality)",
-    "new": "PURSE_PER_QUALITY * quality",
+    "old": "export const purseOf = (quality) => PURSE_PER_QUALITY * Math.max(1, quality);",
+    "new": "export const purseOf = (quality) => PURSE_PER_QUALITY * quality;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LW11-keeper-leader",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "if (!counterOf(trip) || res?.id !== trip.leader?.id) return false;",
-    "new": "if (!counterOf(trip)) return false;",
+    "old": "  if (!counterOf(trip) || res?.id !== trip.leader?.id) return false;",
+    "new": "  if (!counterOf(trip)) return false;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LW11-keeper-phase",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "if ((at.phase !== 'out' && at.phase !== 'back') || at.fight) return false;",
-    "new": "if (at.phase === 'home' || at.fight) return false;",
+    "old": "  if ((at.phase !== 'out' && at.phase !== 'back') || at.fight) return false;",
+    "new": "  if (at.phase === 'home' || at.fight) return false;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "LW11-keeper-home",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "if ((at.phase !== 'out' && at.phase !== 'back') || at.fight) return false;",
-    "new": "if (at.phase !== 'out' || at.fight) return false;",
+    "old": "  if ((at.phase !== 'out' && at.phase !== 'back') || at.fight) return false;",
+    "new": "  if (at.phase !== 'out' || at.fight) return false;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LW11-report-cut",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "(t < trip.outT1 && !trip.turned && !trip.wild ? trip.outT1 : trip.backT1)",
-    "new": "(t <= trip.outT1 && !trip.turned && !trip.wild ? trip.outT1 : trip.backT1)",
+    "old": "export const reportAt = (trip, t) => (t < trip.outT1 && !trip.turned && !trip.wild ? trip.outT1 : trip.backT1);",
+    "new": "export const reportAt = (trip, t) => (t <= trip.outT1 && !trip.turned && !trip.wild ? trip.outT1 : trip.backT1);",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "LW11-report-turned",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "(t < trip.outT1 && !trip.turned && !trip.wild ? trip.outT1 : trip.backT1)",
-    "new": "(t < trip.outT1 && !trip.wild ? trip.outT1 : trip.backT1)",
+    "old": "export const reportAt = (trip, t) => (t < trip.outT1 && !trip.turned && !trip.wild ? trip.outT1 : trip.backT1);",
+    "new": "export const reportAt = (trip, t) => (t < trip.outT1 && !trip.wild ? trip.outT1 : trip.backT1);",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LW11-yield-armed",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "  if (!left.some((m) => m.cls != null)) return false;\n",
-    "new": "\n",
+    "old": "  if (!left.some((m) => m.cls != null)) return false;",
+    "new": "",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "LW11-yield-leader",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "return !standing.some((m) => m.cls != null) && standing.some((m) => m.id === trip.leader?.id);",
-    "new": "return !standing.some((m) => m.cls != null);",
+    "old": "  return !standing.some((m) => m.cls != null) && standing.some((m) => m.id === trip.leader?.id);",
+    "new": "  return !standing.some((m) => m.cls != null);",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "LW11-yield-word",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "const standing = left.filter((m) => !down(m));",
-    "new": "const standing = left;",
+    "old": "  const standing = left.filter((m) => !down(m));",
+    "new": "  const standing = left;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "LW11-offer-window",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "t >= trip.outT0 - ESCORT_OFFER_MIN && t < trip.outT1",
-    "new": "t >= trip.outT0 && t < trip.outT1",
+    "old": "  return trip?.kind === 'merchant' && !trip.sea && t >= trip.outT0 - ESCORT_OFFER_MIN && t < trip.outT1;",
+    "new": "  return trip?.kind === 'merchant' && !trip.sea && t >= trip.outT0 && t < trip.outT1;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "LW11-offer-in",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "t >= trip.outT0 - ESCORT_OFFER_MIN && t < trip.outT1",
-    "new": "t >= trip.outT0 - ESCORT_OFFER_MIN && t <= trip.outT1",
+    "old": "  return trip?.kind === 'merchant' && !trip.sea && t >= trip.outT0 - ESCORT_OFFER_MIN && t < trip.outT1;",
+    "new": "  return trip?.kind === 'merchant' && !trip.sea && t >= trip.outT0 - ESCORT_OFFER_MIN && t <= trip.outT1;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "LW11-offer-turned",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "t >= trip.outT0 - ESCORT_OFFER_MIN && t < trip.outT1;",
-    "new": "t >= trip.outT0 - ESCORT_OFFER_MIN && (t < trip.outT1 || !!trip.turned);",
+    "old": "  return trip?.kind === 'merchant' && !trip.sea && t >= trip.outT0 - ESCORT_OFFER_MIN && t < trip.outT1;",
+    "new": "  return (\n    trip?.kind === 'merchant' && !trip.sea && t >= trip.outT0 - ESCORT_OFFER_MIN && (t < trip.outT1 || !!trip.turned)\n  );",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "LW11-offer-kind",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "return trip?.kind === 'merchant' &&",
-    "new": "return !!trip &&",
+    "old": "  return trip?.kind === 'merchant' && !trip.sea && t >= trip.outT0 - ESCORT_OFFER_MIN && t < trip.outT1;",
+    "new": "  return !!trip && !trip.sea && t >= trip.outT0 - ESCORT_OFFER_MIN && t < trip.outT1;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "LW11-pay-days",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "const days = Math.max(1, Math.ceil(walk / ((WALK_TO_H - WALK_FROM_H) * 60)));",
-    "new": "const days = Math.max(1, Math.round(walk / ((WALK_TO_H - WALK_FROM_H) * 60)));",
+    "old": "  const days = Math.max(1, Math.ceil(walk / ((WALK_TO_H - WALK_FROM_H) * 60)));",
+    "new": "  const days = Math.max(1, Math.round(walk / ((WALK_TO_H - WALK_FROM_H) * 60)));",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "LW11-pay-fight",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "+ ESCORT_FIGHT * Math.max(0, foes | 0);",
-    "new": ";",
+    "old": "  return (\n    Math.round(days * (ESCORT_GOLD_DAY + ESCORT_GOLD_LEVEL * Math.max(1, level | 0)) * ahead) +\n    ESCORT_FIGHT * Math.max(0, foes | 0)\n  );",
+    "new": "  return Math.round(days * (ESCORT_GOLD_DAY + ESCORT_GOLD_LEVEL * Math.max(1, level | 0)) * ahead);",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "LW11-pay-trim",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "trip.way.len - trip.trim0 - trip.trim1",
-    "new": "trip.way.len",
+    "old": "  const len = Math.max(0, trip.way.len - trip.trim0 - trip.trim1);",
+    "new": "  const len = Math.max(0, trip.way.len);",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "LW11-road-addonly",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "return { v: 1, people, ...t, ...(Object.keys(roadOut).length ? { road: roadOut } : {}) };",
-    "new": "return { v: 1, people, ...t, road: roadOut };",
+    "old": "      return { v: 1, people, ...t, ...(Object.keys(roadOut).length ? { road: roadOut } : {}) };",
+    "new": "      return { v: 1, people, ...t, road: roadOut };",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "LW11-road-read",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "if (Array.isArray(road.escort)) {",
-    "new": "if (Array.isArray(road.escort) && false) {",
+    "old": "    if (Array.isArray(road.escort)) {",
+    "new": "    if (Array.isArray(road.escort) && false) {",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "LW11-gone-sorted",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "const goneOut = (w) => [...[...w.gone].sort((a, b) => a - b), ",
-    "new": "const goneOut = (w) => [...[...w.gone], ",
+    "old": "const goneOut = (w) => [...[...w.gone].sort((a, b) => a - b), ...[...w.left].sort((a, b) => a[0] - b[0])];",
+    "new": "const goneOut = (w) => [...[...w.gone], ...[...w.left].sort((a, b) => a[0] - b[0])];",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -650,8 +650,8 @@
   {
     "name": "LW11-AUDIT-C5a-share",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "const at = from > trip.outT0 ? partyAt(trip, from) : null;",
-    "new": "const at = null;",
+    "old": "  const at = from > trip.outT0 ? partyAt(trip, from) : null;",
+    "new": "  const at = null;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -767,8 +767,8 @@
   {
     "name": "LW11-AUDIT-C7-evict",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "const out = robbedIds.length > WARES_MAX / 2 ? robbedIds[0] : [...wares].find(([, w]) => w.robbed == null)?.[0];",
-    "new": "const out = null;",
+    "old": "        const out = robbedIds.length > WARES_MAX / 2 ? robbedIds[0] : [...wares].find(([, w]) => w.robbed == null)?.[0];",
+    "new": "        const out = null;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -776,8 +776,8 @@
   {
     "name": "LW11-AUDIT-C7-half",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "const out = robbedIds.length > WARES_MAX / 2 ? robbedIds[0] : [...wares]",
-    "new": "const out = [...wares]",
+    "old": "        const out = robbedIds.length > WARES_MAX / 2 ? robbedIds[0] : [...wares].find(([, w]) => w.robbed == null)?.[0];",
+    "new": "        const out = [...wares].find(([, w]) => w.robbed == null)?.[0];",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -812,8 +812,8 @@
   {
     "name": "LW11-AUDIT-C10-crime",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "const reportOk = (crime, region) => CRIME_KINDS.has(crime) &&",
-    "new": "const reportOk = (crime, region) => Number.isSafeInteger(crime) &&",
+    "old": "  CRIME_KINDS.has(crime) && Number.isSafeInteger(region) && region >= 0 && region < REGION_COUNT;",
+    "new": "  Number.isSafeInteger(crime) && Number.isSafeInteger(region) && region >= 0 && region < REGION_COUNT;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -821,8 +821,8 @@
   {
     "name": "LW11-AUDIT-C10-region-low",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "&& region >= 0 && region < REGION_COUNT;",
-    "new": "&& region < REGION_COUNT;",
+    "old": "const reportOk = (crime, region) =>\n  CRIME_KINDS.has(crime) && Number.isSafeInteger(region) && region >= 0 && region < REGION_COUNT;",
+    "new": "const reportOk = (crime, region) => CRIME_KINDS.has(crime) && Number.isSafeInteger(region) && region < REGION_COUNT;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -830,8 +830,8 @@
   {
     "name": "LW11-AUDIT-C10-region-high",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "&& region >= 0 && region < REGION_COUNT;",
-    "new": "&& region >= 0;",
+    "old": "const reportOk = (crime, region) =>\n  CRIME_KINDS.has(crime) && Number.isSafeInteger(region) && region >= 0 && region < REGION_COUNT;",
+    "new": "const reportOk = (crime, region) => CRIME_KINDS.has(crime) && Number.isSafeInteger(region) && region >= 0;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -857,8 +857,8 @@
   {
     "name": "LW11-AUDIT-fight",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "if ((at.phase !== 'out' && at.phase !== 'back') || at.fight) return false;",
-    "new": "if (at.phase !== 'out' && at.phase !== 'back') return false;",
+    "old": "  if ((at.phase !== 'out' && at.phase !== 'back') || at.fight) return false;",
+    "new": "  if (at.phase !== 'out' && at.phase !== 'back') return false;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -866,8 +866,8 @@
   {
     "name": "LW11-AUDIT-C5b-throughout",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "    if (m - last > ESCORT_LOST_MIN) return last;\n",
-    "new": "",
+    "old": "    if (m - last > ESCORT_LOST_MIN) return last;\n    if (near(m)) last = Math.max(last, m);",
+    "new": "    if (near(m)) last = Math.max(last, m);",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]
@@ -875,8 +875,8 @@
   {
     "name": "LW11-AUDIT-C5b-inn",
     "file": "src/systems/livingWorld/caravanDoor.js",
-    "old": "    if (at.inn && Math.floor(here.x / NATIVE_PIXEL) === at.inn.px && 499 - Math.floor(here.z / NATIVE_PIXEL) === at.inn.py) return true;",
-    "new": "    if (at.inn && Math.floor(here.x / NATIVE_PIXEL) === at.inn.px && 499 - Math.floor(here.z / NATIVE_PIXEL) === at.inn.py) return false;",
+    "old": "      return true;",
+    "new": "      return false;",
     "tests": [
       "test/systems/livingWorld/lw11_caravan.test.js"
     ]

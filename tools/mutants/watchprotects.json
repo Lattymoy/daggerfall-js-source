@@ -122,8 +122,8 @@
   {
     "name": "WATCH-PROTECTS-blow-twice",
     "file": "src/systems/livingWorld/quarry.js",
-    "old": "      if (q.entity.health <= 0) return 0;\n",
-    "new": "",
+    "old": "      if (q.entity.health <= 0) return 0;\n      q.entity.health = 0; // the target machine lets go of a body at no health (enemyTargets.js targetHealth)",
+    "new": "      q.entity.health = 0; // the target machine lets go of a body at no health (enemyTargets.js targetHealth)",
     "tests": [
       "test/systems/livingWorld/watchprotects_watch.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "WATCH-PROTECTS-body-lives",
     "file": "src/systems/livingWorld/quarry.js",
-    "old": "      q.entity.health = 0;   // the target machine lets go",
-    "new": "      void 0;   // the target machine lets go",
+    "old": "      q.entity.health = 0; // the target machine lets go of a body at no health (enemyTargets.js targetHealth)",
+    "new": "      void 0; // the target machine lets go of a body at no health (enemyTargets.js targetHealth)",
     "tests": [
       "test/systems/livingWorld/watchprotects_watch.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "WATCH-PROTECTS-unheard",
     "file": "src/systems/livingWorld/quarry.js",
-    "old": "      struck(q, striker);\n",
-    "new": "",
+    "old": "      struck(q, striker);\n      return 1;",
+    "new": "      return 1;",
     "tests": [
       "test/systems/livingWorld/watchprotects_watch.test.js"
     ],

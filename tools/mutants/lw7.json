@@ -47,8 +47,8 @@
   {
     "name": "LW7-hand-version",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "        if (hand.size > TURNS_MAX) hand.delete(/** @type {string} */ (hand.keys().next().value));\n        turnsVersion++;",
-    "new": "        if (hand.size > TURNS_MAX) hand.delete(/** @type {string} */ (hand.keys().next().value));",
+    "old": "        if (hand.size > TURNS_MAX) hand.delete(/** @type {string} */ (hand.keys().next().value));\n        turnsVersion++;\n        return true;",
+    "new": "        if (hand.size > TURNS_MAX) hand.delete(/** @type {string} */ (hand.keys().next().value));\n        return true;",
     "tests": [
       "test/systems/livingWorld/lw7_deeds.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LW7-record-seen-dropped",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "[key, h.t, h.seen ? 1 : 0, h.who]",
-    "new": "[key, h.t, 0, h.who]",
+    "old": "        HAND_KINDS.filter((k) => hands[k].size).map((k) => [\n          k,\n          [...hands[k]].map(([key, h]) => [key, h.t, h.seen ? 1 : 0, h.who]),\n        ]),",
+    "new": "        HAND_KINDS.filter((k) => hands[k].size).map((k) => [k, [...hands[k]].map(([key, h]) => [key, h.t, 0, h.who])]),",
     "tests": [
       "test/systems/livingWorld/lw7_deeds.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LW7-record-who-dropped",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "[key, h.t, h.seen ? 1 : 0, h.who]",
-    "new": "[key, h.t, h.seen ? 1 : 0, '']",
+    "old": "          [...hands[k]].map(([key, h]) => [key, h.t, h.seen ? 1 : 0, h.who]),",
+    "new": "          [...hands[k]].map(([key, h]) => [key, h.t, h.seen ? 1 : 0, '']),",
     "tests": [
       "test/systems/livingWorld/lw7_deeds.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "LW7-record-old-kinds",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "HAND_KINDS.filter((k) => hands[k].size).map((k) =>",
-    "new": "HAND_KINDS.map((k) =>",
+    "old": "        HAND_KINDS.filter((k) => hands[k].size).map((k) => [\n          k,\n          [...hands[k]].map(([key, h]) => [key, h.t, h.seen ? 1 : 0, h.who]),\n        ]),",
+    "new": "        HAND_KINDS.map((k) => [k, [...hands[k]].map(([key, h]) => [key, h.t, h.seen ? 1 : 0, h.who])]),",
     "tests": [
       "test/systems/livingWorld/lw7_deeds.test.js"
     ]
@@ -83,7 +83,7 @@
   {
     "name": "LW7-record-load-unread",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "        if (turnOk(key) && Number.isFinite(Number(t))) hands[k].set(key, { t: Number(t), seen: !!seen, who: nameOk(who) });",
+    "old": "        if (turnOk(key) && Number.isFinite(Number(t)))\n          hands[k].set(key, { t: Number(t), seen: !!seen, who: nameOk(who) });",
     "new": "        if (false) hands[k].set(key, { t: Number(t), seen: !!seen, who: nameOk(who) });",
     "tests": [
       "test/systems/livingWorld/lw7_deeds.test.js"
@@ -92,7 +92,7 @@
   {
     "name": "LW7-record-bad-kept",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "        if (turnOk(key) && Number.isFinite(Number(t))) hands[k].set(key, { t: Number(t), seen: !!seen, who: nameOk(who) });",
+    "old": "        if (turnOk(key) && Number.isFinite(Number(t)))\n          hands[k].set(key, { t: Number(t), seen: !!seen, who: nameOk(who) });",
     "new": "        if (turnOk(key)) hands[k].set(key, { t: Number(t), seen: !!seen, who: nameOk(who) });",
     "tests": [
       "test/systems/livingWorld/lw7_deeds.test.js"
@@ -101,8 +101,8 @@
   {
     "name": "LW7-tone-twice",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "      if (tone) { if (/** @type {any} */ (e)[tone] === day) delta = 0; else /** @type {any} */ (e)[tone] = day; }",
-    "new": "      if (tone) { /** @type {any} */ (e)[tone] = day; }",
+    "old": "        if (/** @type {any} */ (e)[tone] === day) delta = 0;\n        else /** @type {any} */ (e)[tone] = day;",
+    "new": "        /** @type {any} */ (e)[tone] = day;",
     "tests": [
       "test/systems/livingWorld/lw7_deeds.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LW7-tone-shared",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "kind === 'insulted' ? 'blunt' : kind === 'poached'",
-    "new": "kind === 'insulted' ? 'polite' : kind === 'poached'",
+    "old": "            ? 'blunt'",
+    "new": "            ? 'polite'",
     "tests": [
       "test/systems/livingWorld/lw7_deeds.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "LW7-tone-unsaved",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "        if (e.polite != null) people[id].polite = e.polite;   // LW7: only once counted",
-    "new": "        void 0;   // LW7: only once counted",
+    "old": "        if (e.polite != null) people[id].polite = e.polite; // LW7: only once counted",
+    "new": "        void 0; // LW7: only once counted",
     "tests": [
       "test/systems/livingWorld/lw7_deeds.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "LW7-tone-unloaded",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "const d = Number(/** @type {any} */ (e)[tone]); if (Number.isFinite(d)) /** @type {any} */ (got)[tone] = d; }",
-    "new": "const d = Number(/** @type {any} */ (e)[tone]); if (false) /** @type {any} */ (got)[tone] = d; }",
+    "old": "        if (Number.isFinite(d)) /** @type {any} */ (got)[tone] = d;",
+    "new": "        if (false) /** @type {any} */ (got)[tone] = d;",
     "tests": [
       "test/systems/livingWorld/lw7_deeds.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "LW7-slain-weight",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "  slain: -75,",
-    "new": "  slain: -60,",
+    "old": "  slain: -75, // one of their own - their household, their party - struck down by the player",
+    "new": "  slain: -60, // one of their own - their household, their party - struck down by the player",
     "tests": [
       "test/systems/livingWorld/lw7_deeds.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "LW7-hand-made-road",
     "file": "src/systems/livingWorld/lives.js",
-    "old": "  const dies = roadHits(res, k, turns) && (",
-    "new": "  const dies = fateHits(res, k, turns) && (",
+    "old": "  const dies = roadHits(res, k, turns) && (!!turns?.fallen?.has(turnKey(res, k)) || quiet);",
+    "new": "  const dies = fateHits(res, k, turns) && (!!turns?.fallen?.has(turnKey(res, k)) || quiet);",
     "tests": [
       "test/systems/livingWorld/lw7_deeds.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "LW7-slain-unseen-words",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "  : item.kind === 'slain' ? SLAIN_NEWS[item.seen ? 'seen' : 'unseen']",
-    "new": "  : item.kind === 'slain' ? SLAIN_NEWS.seen",
+    "old": "          ? SLAIN_NEWS[item.seen ? 'seen' : 'unseen']",
+    "new": "          ? SLAIN_NEWS.seen",
     "tests": [
       "test/systems/livingWorld/lw7_deeds.test.js"
     ],
@@ -275,8 +275,8 @@
   {
     "name": "LW7-died-words",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "  : item.kind === 'died' ? DIED_NEWS",
-    "new": "  : item.kind === 'died' ? null",
+    "old": "            ? DIED_NEWS",
+    "new": "            ? null",
     "tests": [
       "test/systems/livingWorld/lw7_deeds.test.js"
     ]
@@ -284,8 +284,8 @@
   {
     "name": "LW7-helped-words",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "    : item.helped && HELPED_NEWS[",
-    "new": "    : false && HELPED_NEWS[",
+    "old": "                    : item.helped && HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]",
+    "new": "                    : false && HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]",
     "tests": [
       "test/systems/livingWorld/lw7_deeds.test.js"
     ]
@@ -293,8 +293,8 @@
   {
     "name": "LW7-helped-no-fallback",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "    : item.helped && HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)] ? HELPED_NEWS",
-    "new": "    : item.helped ? HELPED_NEWS",
+    "old": "                    : item.helped && HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]",
+    "new": "                    : item.helped",
     "tests": [
       "test/systems/livingWorld/lw7_deeds.test.js"
     ]

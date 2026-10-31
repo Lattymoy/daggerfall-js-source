@@ -232,8 +232,8 @@
   {
     "name": "ICS-places-rows-unbroken",
     "file": "src/systems/livingWorld/places.js",
-    "old": "    if (y && y % PLACES_ROWS_A_STEP === 0) yield;\n",
-    "new": "",
+    "old": "    if (y && y % PLACES_ROWS_A_STEP === 0) yield;\n    let row = 0;",
+    "new": "    let row = 0;",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "ICS-places-flood-in-one",
     "file": "src/systems/livingWorld/places.js",
-    "old": "      if (++flooded % PLACES_CELLS_A_STEP === 0) yield;\n",
-    "new": "",
+    "old": "      if (++flooded % PLACES_CELLS_A_STEP === 0) yield;\n      const c = stack[--sp];",
+    "new": "      const c = stack[--sp];",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "ICS-places-doors-in-one",
     "file": "src/systems/livingWorld/places.js",
-    "old": "  let net = streets.label;\n  yield;\n",
-    "new": "  let net = streets.label;\n",
+    "old": "  yield;\n  const netId = forced ?? doorsNet(nav, ordered, streets); // FIELD 2026-10-06: the street its doors open onto",
+    "new": "  const netId = forced ?? doorsNet(nav, ordered, streets); // FIELD 2026-10-06: the street its doors open onto",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "ICS-places-quarters-whole",
     "file": "src/systems/livingWorld/places.js",
-    "old": "  for (let q = 0; q < quarterIds.length; q++) each.push(yield* townPlacesSteps(nav, byQ[q], buildings, { streets, netId: quarterIds[q], tag: q ? `q${q}.` : '' }));",
-    "new": "  for (let q = 0; q < quarterIds.length; q++) each.push(townPlaces(nav, byQ[q], buildings, { streets, netId: quarterIds[q], tag: q ? `q${q}.` : '' }));",
+    "old": "    each.push(\n      yield* townPlacesSteps(nav, byQ[q], buildings, { streets, netId: quarterIds[q], tag: q ? `q${q}.` : '' }),\n    );",
+    "new": "    each.push(townPlaces(nav, byQ[q], buildings, { streets, netId: quarterIds[q], tag: q ? `q${q}.` : '' }));",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],

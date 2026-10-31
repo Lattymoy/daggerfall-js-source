@@ -114,8 +114,8 @@
   {
     "name": "LW6-deep-on-the-road",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "  if (trip.dive && (fated.length || dead.length)) return diveTrouble(trip, dead, world, fated);",
-    "new": "  void diveTrouble;",
+    "old": "  if (trip.dive && (fated.length || dead.length)) return diveTrouble(trip, dead, world, fated); // LW6: a dive's fated meet their end inside",
+    "new": "  void diveTrouble; // LW6: a dive's fated meet their end inside",
     "tests": [
       "test/systems/livingWorld/lw6_deep.test.js"
     ]
@@ -123,8 +123,8 @@
   {
     "name": "LW6-deep-table-unread",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "dungeonType: /** @type {any} */ (trip.to).dungeonType ?? 0,",
-    "new": "dungeonType: 0,",
+    "old": "      dungeonType: /** @type {any} */ (trip.to).dungeonType ?? 0,",
+    "new": "      dungeonType: 0,",
     "tests": [
       "test/systems/livingWorld/lw6_deep.test.js"
     ]
@@ -132,8 +132,8 @@
   {
     "name": "LW6-deep-leader-unread",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "  const kind = dead.includes(trip.leader.id) ? 'fell' : 'won';",
-    "new": "  const kind = 'won';",
+    "old": "  const kind = dead.includes(trip.leader.id) ? 'fell' : 'won'; // the character's turns are read in the lives (a member spared is no death)",
+    "new": "  const kind = 'won'; // the character's turns are read in the lives (a member spared is no death)",
     "tests": [
       "test/systems/livingWorld/lw6_deep.test.js"
     ]
@@ -159,7 +159,7 @@
   {
     "name": "LW6-deep-fallen-outside",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "    const fallen = enc.dead.map((id) => ({ res: byId.get(id), t: fallAt, s: enc.s, inside: true })).filter((f) => f.res);",
+    "old": "    const fallen = enc.dead\n      .map((id) => ({ res: byId.get(id), t: fallAt, s: enc.s, inside: true }))\n      .filter((f) => f.res);",
     "new": "    const fallen = enc.dead.map((id) => ({ res: byId.get(id), t: fallAt, s: enc.s })).filter((f) => f.res);",
     "tests": [
       "test/systems/livingWorld/lw6_deep.test.js"
@@ -168,8 +168,8 @@
   {
     "name": "LW6-news-the-road",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "      : (item.dive ? DIVE_NEWS : ROAD_NEWS)[",
-    "new": "      : (ROAD_NEWS)[",
+    "old": "                        : (item.dive ? DIVE_NEWS : ROAD_NEWS)[/** @type {keyof typeof ROAD_NEWS} */ (item.kind)];",
+    "new": "                        : ROAD_NEWS[/** @type {keyof typeof ROAD_NEWS} */ (item.kind)];",
     "tests": [
       "test/systems/livingWorld/lw6_deep.test.js"
     ]

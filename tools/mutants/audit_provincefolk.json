@@ -191,8 +191,8 @@
   {
     "name": "APF-B6-the-census's-zone-unread",
     "file": "src/systems/livingWorld/census.js",
-    "old": "  const people = withZone(town.area != null ? folkOfArea(town.area) : folkOfRegion(town.region ?? -1), town.px, town.py);",
-    "new": "  const people = town.area != null ? folkOfArea(town.area) : folkOfRegion(town.region ?? -1);",
+    "old": "  const people = withZone(\n    town.area != null ? folkOfArea(town.area) : folkOfRegion(town.region ?? -1),\n    town.px,\n    town.py,\n  ); // AUDIT PROVINCE-FOLK B6: its zone's",
+    "new": "  const people = town.area != null ? folkOfArea(town.area) : folkOfRegion(town.region ?? -1); // AUDIT PROVINCE-FOLK B6: its zone's",
     "tests": [
       "test/scenes/audit_provincefolk.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "APF-C-census-folk-salt",
     "file": "src/systems/livingWorld/census.js",
-    "old": "lwSeed(seed, 0x666f6c6b)) ?? climate;",
-    "new": "lwSeed(seed, 0x666f6c6c)) ?? climate;",
+    "old": "  const race = folkRace(people, lwSeed(seed, 0x666f6c6b)) ?? climate; // 'folk'",
+    "new": "  const race = folkRace(people, lwSeed(seed, 0x666f6c6c)) ?? climate; // 'folk'",
     "tests": [
       "test/characters/provincefolk.test.js"
     ]
@@ -382,8 +382,8 @@
   {
     "name": "APF-C-census-name-the-climate's",
     "file": "src/systems/livingWorld/census.js",
-    "old": "people ? folkNameBank(race) : nameBankOfArea(",
-    "new": "people ? folkNameBank(climate) : nameBankOfArea(",
+    "old": "      people ? folkNameBank(race) : nameBankOfArea(town.area ?? town.region ?? -1),",
+    "new": "      people ? folkNameBank(climate) : nameBankOfArea(town.area ?? town.region ?? -1),",
     "tests": [
       "test/characters/provincefolk.test.js",
       "test/world/worldWide/ww1_world.test.js"

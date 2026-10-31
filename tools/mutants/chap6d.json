@@ -92,8 +92,8 @@
   {
     "name": "CHAP6D-GUILD-DAYS-SHUT",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  if (band === 'shut') return GUILD_DAYS_SHUT;   // CHAP6d: a hall a Crackdown shut keeps no evenings\n",
-    "new": "",
+    "old": "  if (band === 'shut') return GUILD_DAYS_SHUT; // CHAP6d: a hall a Crackdown shut keeps no evenings\n  return /** @type {Record<string, number>} */ (GUILD_DAYS_BY_BAND)[band ?? ''] ?? GUILD_DAYS;",
+    "new": "  return /** @type {Record<string, number>} */ (GUILD_DAYS_BY_BAND)[band ?? ''] ?? GUILD_DAYS;",
     "tests": [
       "test/systems/livingWorld/chap6d_halls.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "CHAP6D-GUILDSMAN-HOME",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "const at = job === 'guildsman' && work && hallGuildDays(places, work, bandOf) === GUILD_DAYS_SHUT ? home : work ?? home;",
-    "new": "const at = work ?? home;",
+    "old": "      const at =\n        job === 'guildsman' && work && hallGuildDays(places, work, bandOf) === GUILD_DAYS_SHUT ? home : (work ?? home);",
+    "new": "      const at = work ?? home;",
     "tests": [
       "test/systems/livingWorld/chap6d_halls.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "CHAP6D-MERCENARY",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "      if (hallGuildDays(places, fav.guild, bandOf) !== GUILD_DAYS_SHUT) I('guild', fav.guild, h(15), stay);",
-    "new": "      I('guild', fav.guild, h(15), stay);",
+    "old": "      if (hallGuildDays(places, fav.guild, bandOf) !== GUILD_DAYS_SHUT) I('guild', fav.guild, h(15), stay); // CHAP6d: never a shut hall",
+    "new": "      I('guild', fav.guild, h(15), stay); // CHAP6d: never a shut hall",
     "tests": [
       "test/systems/livingWorld/chap6d_halls.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "CHAP6D-ADVENTURER",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "      if (hallGuildDays(places, fav.guild, bandOf) !== GUILD_DAYS_SHUT) I('guild', fav.guild, h(11.5), 60);",
-    "new": "      I('guild', fav.guild, h(11.5), 60);",
+    "old": "      if (hallGuildDays(places, fav.guild, bandOf) !== GUILD_DAYS_SHUT) I('guild', fav.guild, h(11.5), 60); // CHAP6d: never a shut hall",
+    "new": "      I('guild', fav.guild, h(11.5), 60); // CHAP6d: never a shut hall",
     "tests": [
       "test/systems/livingWorld/chap6d_halls.test.js"
     ]

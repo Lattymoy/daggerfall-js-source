@@ -65,8 +65,8 @@
   {
     "name": "LEGACY6-inherit-counts-a-word",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "      const e = map.get(id) ?? { r: 0, met: day, seen: day, talked: -1 };\n      e.r = clamp(eased(e, day) + amount);",
-    "new": "      const e = map.get(id) ?? { r: 0, met: day, seen: day, talked: day };\n      e.r = clamp(eased(e, day) + amount);",
+    "old": "      /** @type {Regard} */\n      const e = map.get(id) ?? { r: 0, met: day, seen: day, talked: -1 };\n      e.r = clamp(eased(e, day) + amount);",
+    "new": "      /** @type {Regard} */\n      const e = map.get(id) ?? { r: 0, met: day, seen: day, talked: day };\n      e.r = clamp(eased(e, day) + amount);",
     "tests": [
       "test/systems/livingWorld/legacy6_influence.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "LEGACY6-kin-words-the-roads",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "const newsPool = (item) => (item.kin ? KIN_NEWS[/** @type {keyof typeof KIN_NEWS} */ (item.kind)]",
-    "new": "const newsPool = (item) => (false ? KIN_NEWS[/** @type {keyof typeof KIN_NEWS} */ (item.kind)]",
+    "old": "  item.kin",
+    "new": "  false",
     "tests": [
       "test/systems/livingWorld/legacy6_influence.test.js"
     ]

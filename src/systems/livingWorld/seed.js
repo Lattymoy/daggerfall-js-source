@@ -5,7 +5,7 @@
 // living world's own salt, and the port's one small generator (`systems/wind/wind.js seededRng`, mulberry32) over it - so no
 // part of the living world rolls on Math.random or on DFRandom's global stream (a name draw puts that stream back as it
 // stood, `census.js residentName`).
-import { hash32 } from '../../world/blockHash.js';   // AUDIT BAY-LEFT (its packages merged): the mix's own leaf - spawnedDungeons.js re-exports it, and SPAWN-WORLD's imports would ride into the account Worker's bundle through here
+import { hash32 } from '../../world/blockHash.js'; // AUDIT BAY-LEFT (its packages merged): the mix's own leaf - spawnedDungeons.js re-exports it, and SPAWN-WORLD's imports would ride into the account Worker's bundle through here
 import { seededRng } from '../wind/wind.js';
 
 /** The living world's salt: changing it re-rolls every resident in the world. */
@@ -44,6 +44,9 @@ export function pickWeighted(rng, weights) {
 /** A short string as a small integer (a building key, a place key) - FNV-1a over its char codes. @param {string} s */
 export function textSeed(s) {
   let h = 0x811c9dc5;
-  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
   return h >>> 0;
 }
