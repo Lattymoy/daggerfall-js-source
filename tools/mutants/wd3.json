@@ -92,8 +92,8 @@
   {
     "name": "WD3-STAMP-UNSORTED",
     "file": "src/systems/layoutPins.js",
-    "old": "const list = [...vendors].filter((v) => LAYOUT_MODS.includes(v)).sort().map(",
-    "new": "const list = [...vendors].filter((v) => LAYOUT_MODS.includes(v)).map(",
+    "old": "  const list = [...vendors]\n    .filter((v) => LAYOUT_MODS.includes(v))\n    .sort()\n    .map((v) => `${v}@${_vendorVersion(v) || '?'}`);",
+    "new": "  const list = [...vendors].filter((v) => LAYOUT_MODS.includes(v)).map((v) => `${v}@${_vendorVersion(v) || '?'}`);",
     "tests": [
       "test/systems/wd3_layoutPins.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "WD3-WEAKEST-RECORD",
     "file": "src/systems/layoutPins.js",
-    "old": "if (!b || w > b.w) best.set(r.locationKey, { w, r });",
-    "new": "if (!b || w < b.w) best.set(r.locationKey, { w, r });",
+    "old": "    if (!b || w > b.w) best.set(r.locationKey, { w, r });",
+    "new": "    if (!b || w < b.w) best.set(r.locationKey, { w, r });",
     "tests": [
       "test/systems/wd3_layoutPins.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "WD3-PIN-OUT-UNTOUCHED",
     "file": "src/systems/layoutPins.js",
-    "old": "if (on && !want.has(v) && layoutModTouches(v, key)) out.add(v);",
-    "new": "if (on && !want.has(v)) out.add(v);",
+    "old": "      if (on && !want.has(v) && layoutModTouches(v, key)) out.add(v); // a mod that changes nothing here needs no pin",
+    "new": "      if (on && !want.has(v)) out.add(v); // a mod that changes nothing here needs no pin",
     "tests": [
       "test/systems/wd3_layoutPins.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "WD3-ANCHOR-OUTDOORS",
     "file": "src/systems/layoutPins.js",
-    "old": "if (anchor?.insideBuilding && anchor.pixel) out.push(",
-    "new": "if (anchor?.pixel) out.push(",
+    "old": "  if (anchor?.insideBuilding && anchor.pixel)",
+    "new": "  if (anchor?.pixel)",
     "tests": [
       "test/systems/wd3_layoutPins.test.js"
     ]

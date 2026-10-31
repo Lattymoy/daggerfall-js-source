@@ -57,8 +57,8 @@
   {
     "name": "AWD3-QUESTOR-UNPINNED",
     "file": "src/systems/layoutPins.js",
-    "old": "  for (const q of questors ?? []) if (q && q.buildingKey > 0 && q.mapID) out.push",
-    "new": "  for (const q of []) if (q && q.buildingKey > 0 && q.mapID) out.push",
+    "old": "  for (const q of questors ?? [])",
+    "new": "  for (const q of [])",
     "tests": [
       "test/systems/wd3_layoutPins.test.js"
     ]
@@ -215,8 +215,8 @@
   {
     "name": "AWD3-CURATED-BASELINE-IGNORED",
     "file": "src/systems/layoutPins.js",
-    "old": "      const on = servesUnpinned(v, key);",
-    "new": "      const on = !!_vendorOn(v);",
+    "old": "      const on = servesUnpinned(v, key); // AUDIT WD3 G2: a curated town's baseline is Daggerfall's own",
+    "new": "      const on = !!_vendorOn(v); // AUDIT WD3 G2: a curated town's baseline is Daggerfall's own",
     "tests": [
       "test/systems/wd3_layoutPins.test.js"
     ]

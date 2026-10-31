@@ -240,8 +240,8 @@
   {
     "name": "AUDIT-BODY-MOTION-lantern-in-the-facing",
     "file": "src/systems/lanternSwing.js",
-    "old": "      const ch = Math.cos(Number(hipYaw) || 0), sh = Math.sin(Number(hipYaw) || 0);",
-    "new": "      const ch = 1, sh = 0;",
+    "old": "      const ch = Math.cos(Number(hipYaw) || 0),\n        sh = Math.sin(Number(hipYaw) || 0);",
+    "new": "      const ch = 1,\n        sh = 0;",
     "tests": [
       "test/characters/bodyMotion/bodymotion_audit.test.js"
     ]

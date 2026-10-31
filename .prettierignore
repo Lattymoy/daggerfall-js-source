@@ -1211,6 +1211,10 @@
 /src/systems/ketch/*/
 !/src/systems/keyCodes.js
 !/src/systems/knightlyGifts.js
+!/src/systems/lampKeeper.js
+!/src/systems/landsSwitch.js
+!/src/systems/lanternSwing.js
+!/src/systems/layoutPins.js
 !/src/systems/legacy/
 /src/systems/legacy/*
 !/src/systems/legacy/age.js
@@ -1232,6 +1236,12 @@
 !/src/systems/legacy/unionKin.js
 !/src/systems/legacy/unionKinLaw.js
 !/src/systems/legacy/waitingHouses.js
+!/src/systems/legalBands.js
+!/src/systems/levelCap.js
+!/src/systems/levelClimb.js
+!/src/systems/levelEven.js
+!/src/systems/lightSource.js
+!/src/systems/lightning.js
 !/src/systems/livingWorld/
 /src/systems/livingWorld/*
 !/src/systems/livingWorld/beyondWays.js

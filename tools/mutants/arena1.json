@@ -167,8 +167,8 @@
   {
     "name": "ARENA1-RECORD-STANDS",
     "file": "src/systems/layoutPins.js",
-    "old": "  if (_displaced(rec)) return false;\n",
-    "new": "",
+    "old": "  if (_displaced(rec)) return false;\n  return layoutsMatch(rec.layout, layoutStampOfMapId(rec.mapId));",
+    "new": "  return layoutsMatch(rec.layout, layoutStampOfMapId(rec.mapId));",
     "tests": [
       "test/systems/arena1_move.test.js"
     ]

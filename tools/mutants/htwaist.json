@@ -159,8 +159,8 @@
   {
     "name": "HT-WAIST-swing-leads-the-hip",
     "file": "src/systems/lanternSwing.js",
-    "old": "    const aF = P.drive * (s.vFore - pf) / step + swayF;",
-    "new": "    const aF = -P.drive * (s.vFore - pf) / step + swayF;",
+    "old": "    const aF = (P.drive * (s.vFore - pf)) / step + swayF;",
+    "new": "    const aF = (-P.drive * (s.vFore - pf)) / step + swayF;",
     "tests": [
       "test/systems/htwaist_swing.test.js",
       "test/combat/htwaist_mwbody.test.js"
@@ -169,8 +169,8 @@
   {
     "name": "HT-WAIST-swing-no-gravity",
     "file": "src/systems/lanternSwing.js",
-    "old": "    s.foreVel += (-w2 * Math.sin(s.fore)",
-    "new": "    s.foreVel += (-0 * Math.sin(s.fore)",
+    "old": "    s.foreVel += (-w2 * Math.sin(s.fore) - (aF / P.length) * Math.cos(s.fore) - P.damping * s.foreVel) * step;",
+    "new": "    s.foreVel += (-0 * Math.sin(s.fore) - (aF / P.length) * Math.cos(s.fore) - P.damping * s.foreVel) * step;",
     "tests": [
       "test/systems/htwaist_swing.test.js"
     ]
@@ -178,8 +178,8 @@
   {
     "name": "HT-WAIST-swing-no-damping",
     "file": "src/systems/lanternSwing.js",
-    "old": " - P.damping * s.sideVel) * step;",
-    "new": ") * step;",
+    "old": "    s.sideVel += (-w2 * Math.sin(s.side) - (aS / P.length) * Math.cos(s.side) - P.damping * s.sideVel) * step;",
+    "new": "    s.sideVel += (-w2 * Math.sin(s.side) - (aS / P.length) * Math.cos(s.side)) * step;",
     "tests": [
       "test/systems/htwaist_swing.test.js"
     ]
@@ -205,8 +205,8 @@
   {
     "name": "HT-WAIST-swing-no-turn",
     "file": "src/systems/lanternSwing.js",
-    "old": " - yr * yr * P.turnRadius)",
-    "new": ")",
+    "old": "    const aS = P.drive * ((s.vSide - ps) / step - yr * yr * P.turnRadius) + swayS;",
+    "new": "    const aS = P.drive * ((s.vSide - ps) / step) + swayS;",
     "tests": [
       "test/systems/htwaist_swing.test.js"
     ]
@@ -214,8 +214,8 @@
   {
     "name": "HT-WAIST-swing-no-clamp",
     "file": "src/systems/lanternSwing.js",
-    "old": "    if (s.fore > P.maxAngle) { s.fore = P.maxAngle; if (s.foreVel > 0) s.foreVel = 0; }\n    else if (s.fore < -P.maxAngle) { s.fore = -P.maxAngle; if (s.foreVel < 0) s.foreVel = 0; }\n",
-    "new": "",
+    "old": "    if (s.fore > P.maxAngle) {\n      s.fore = P.maxAngle;\n      if (s.foreVel > 0) s.foreVel = 0;\n    } else if (s.fore < -P.maxAngle) {\n      s.fore = -P.maxAngle;\n      if (s.foreVel < 0) s.foreVel = 0;\n    }\n    if (s.side > P.maxAngle) {",
+    "new": "    if (s.side > P.maxAngle) {",
     "tests": [
       "test/systems/htwaist_swing.test.js"
     ]
@@ -241,8 +241,8 @@
   {
     "name": "HT-WAIST-swing-matrix-sign",
     "file": "src/systems/lanternSwing.js",
-    "old": "out[5] = -sf * cs;",
-    "new": "out[5] = sf * cs;",
+    "old": "  out[5] = -sf * cs;",
+    "new": "  out[5] = sf * cs;",
     "tests": [
       "test/systems/htwaist_swing.test.js",
       "test/combat/htwaist_mwbody.test.js"

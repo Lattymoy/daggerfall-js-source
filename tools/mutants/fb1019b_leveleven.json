@@ -22,8 +22,8 @@
   {
     "name": "LEVEL-EVEN-floor-of-one",
     "file": "src/systems/levelEven.js",
-    "old": "(Math.trunc(level) - 1) * Math.max(1, averageLevelHp(h, endurance)));",
-    "new": "(Math.trunc(level) - 1) * averageLevelHp(h, endurance));",
+    "old": "  return Math.floor(25 + h + (Math.trunc(level) - 1) * Math.max(1, averageLevelHp(h, endurance)));",
+    "new": "  return Math.floor(25 + h + (Math.trunc(level) - 1) * averageLevelHp(h, endurance));",
     "tests": [
       "test/systems/fb1019b_leveleven.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "LEVEL-EVEN-level-one-body",
     "file": "src/systems/levelEven.js",
-    "old": "  return Math.floor(25 + h + (Math.trunc(level) - 1)",
-    "new": "  return Math.floor(25 + (Math.trunc(level) - 1)",
+    "old": "  return Math.floor(25 + h + (Math.trunc(level) - 1) * Math.max(1, averageLevelHp(h, endurance)));",
+    "new": "  return Math.floor(25 + (Math.trunc(level) - 1) * Math.max(1, averageLevelHp(h, endurance)));",
     "tests": [
       "test/systems/fb1019b_leveleven.test.js"
     ],

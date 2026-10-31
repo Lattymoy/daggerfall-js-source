@@ -309,8 +309,8 @@
   {
     "name": "EVENT1-field-colour-dropped",
     "file": "src/systems/lightning.js",
-    "old": "bolts.push(b.color ? { segs: b.segs, bright, color: b.color } : { segs: b.segs, bright });",
-    "new": "bolts.push({ segs: b.segs, bright });",
+    "old": "        if (b.segs) bolts.push(b.color ? { segs: b.segs, bright, color: b.color } : { segs: b.segs, bright }); // EVENT1: a strike's own colour rides to its channel",
+    "new": "        if (b.segs) bolts.push({ segs: b.segs, bright }); // EVENT1: a strike's own colour rides to its channel",
     "tests": [
       "test/render/event1_live_event.test.js"
     ]
@@ -318,8 +318,8 @@
   {
     "name": "EVENT1-field-flash-colour-ignored",
     "file": "src/systems/lightning.js",
-    "old": "const fc = b.flashColor ?? FLASH_COLOR;",
-    "new": "const fc = FLASH_COLOR;",
+    "old": "          const fc = b.flashColor ?? FLASH_COLOR; // EVENT1: and to the light it throws",
+    "new": "          const fc = FLASH_COLOR; // EVENT1: and to the light it throws",
     "tests": [
       "test/render/event1_live_event.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "EVENT1-lights-distant-colour-dropped",
     "file": "src/systems/lightning.js",
-    "old": ", ...(s.color ? { color: s.color } : {})",
-    "new": "",
+    "old": "          ...(s.color ? { color: s.color } : {}),\n          ...(s.flashColor ? { flashColor: s.flashColor } : {}),",
+    "new": "          ...(s.flashColor ? { flashColor: s.flashColor } : {}),",
     "tests": [
       "test/render/event1_live_event.test.js"
     ]
