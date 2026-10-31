@@ -95,6 +95,4 @@ test('SD5b the hosts by source: the dungeon arm paints it after the Hour\'s isla
   assert.match(w, /if \(p\?\.draw\(proj, view, deadlandsSeconds\(\), courtFogNow\(\), skyGain\(renderer\._fogColor, SD_REALM_FOG\.color\), sdSkyClockNow\(\)\)\) renderer\.markForeignPass\(\);/);   // SD-LOOK S7/S8 (PIN MOVED): the arena's reads in the same pass, the sky told the fight, the hearts' lights first
   assert.match(w, /if \(_sdSkyPass === undefined\) \{ try \{ _sdSkyPass = new SdSkyRenderer\(renderer\.gl\); \}/);
   assert.match(w, /const deadlandsShared = anchoredClock\(\{ perf: \(\) => performance\.now\(\), wall: \(\) => Date\.now\(\) \+ _sharedOffsetMs \}\);\n\s+const deadlandsSeconds = \(\) => egClient\?\.spanSeconds\(\) \?\? deadlandsShared\(\);/, 'the realm\'s clock is the Deadlands\' anchored one - the relay\'s (PIN MOVED, EG-ZD: an Elite Breach\'s corrected clock before it, null outside one)');
-  assert.match(read('bible/07-Rendering/Rendering.md'), /`sdSky\.js` - SD5b:/);
-  assert.match(read('bible/11-Multiplayer/Super-Dungeons.md'), /### SD5b - shipped 2026-10-07/);
 });

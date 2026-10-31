@@ -128,7 +128,7 @@
   {
     "name": "TELL1-no-cooldown",
     "file": "src/ai/tactics.js",
-    "old": "  s.blowReady = now + blowCooldown(ent); // TELL7: by its tier",
+    "old": "  s.blowReady = now + blowCooldown(ent); // By its tier",
     "new": "  s.blowReady = now;",
     "tests": [
       "test/systems/tell1_poise.test.js"

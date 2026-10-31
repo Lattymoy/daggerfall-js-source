@@ -218,8 +218,8 @@
   {
     "name": "RVN1-a-perfect-dodge-uncounted",
     "file": "src/ai/tactics.js",
-    "old": "    if (perfect) noteFeud(ent, 'perfect');\n  } // RVN1 (Feud-Arc.md 12): my dodge - a peer's is its own fight",
-    "new": "  } // RVN1 (Feud-Arc.md 12): my dodge - a peer's is its own fight",
+    "old": "    if (perfect) noteFeud(ent, 'perfect');\n  } // My dodge - a peer's is its own fight",
+    "new": "  } // My dodge - a peer's is its own fight",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]

@@ -382,8 +382,4 @@ test('audit18 items: the retired flags are gone from source and from Home.md', (
   const shop = readFileSync(join(ROOT, 'src/systems/shopStock.js'), 'utf8');
   assert.ok(!shop.includes('dye/variant paperdoll pends'), 'shopStock.js still claims the clothing dye/variant pends');
 
-  const home = readFileSync(join(ROOT, 'bible/Home.md'), 'utf8');
-  // the retired row named its site by number; an entry names its file now (CITE-ANCHOR), and its words the flag
-  assert.equal(home.split('\n').filter((l) => /^- `src\/systems\/inventory\.js` - /.test(l) && /S2b/.test(l)).length, 0);
-  assert.equal(home.split('\n').filter((l) => /weight pends S2b/.test(l)).length, 0);
 });

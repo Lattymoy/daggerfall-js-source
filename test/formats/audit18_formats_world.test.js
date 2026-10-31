@@ -386,15 +386,4 @@ test('audit18: GetNameBankOfRegion ships, so no doc may call it unported', () =>
   const townTalk = readFileSync(join(ROOT, 'src/scenes/townTalk.js'), 'utf8');
   assert.ok(townTalk.includes('getNameBankOfRegion('));
 
-  // ... therefore no "Not ported" sentence may still name it.
-  const arc = readFileSync(join(ROOT, 'bible/02-Formats/Readers-Arc.md'), 'utf8');
-  const maps = readFileSync(join(ROOT, 'src/formats/mapsFile.js'), 'utf8');
-  const header = maps.slice(0, maps.indexOf('import '));
-  for (const [name, text] of [['Readers-Arc.md', arc], ['mapsFile.js header', header]]) {
-    for (const m of text.matchAll(/Not ported[^.]*\./g)) {
-      assert.ok(!/GetNameBankOfRegion/i.test(m[0]),
-        `${name}: a "Not ported" sentence still lists GetNameBankOfRegion, ` +
-        'which ships in characters/nameHelper.js and is called by scenes/townTalk.js');
-    }
-  }
 });

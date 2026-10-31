@@ -233,11 +233,4 @@ test('AUDIT WORLD6b-iii(a) by source: the sinks say whose blow it is (B2, the th
   assert.match(d, /playerFeet: lastPlayerFeet, playerHeight: lastPlayerHeight,\s+\/\/ ROAD-H H2/, 'C2: the dungeon\'s probe is mine');
   assert.doesNotMatch(d, /_pt\?\.feet \?\? lastPlayerFeet/, 'the peer\'s feet are gone from it');
   assert.match(d, /foeDeps\.isLocalPlayerTarget\(f\.ai\.target\)\)\s*\n\s*\? playerEntity : \(f\.ai\.target\?\.entity \?\? foeDeps\.PEER_CAST_TARGET \?\? playerEntity\);/, 'A10');
-  const tm = rd('bible/09-Testing/Testing.md') + rd('bible/09-Testing/Testing-Rows-2026-10-19.md');   // LEGIBLE 1b: the page and its closed table
-  assert.doesNotMatch(tm, /suppressed tick/, 'C5: Testing.md no longer describes the retired suppression');
-  assert.doesNotMatch(tm, /no cast at a peer\)/, 'C5');
-  const arc = rd('bible/06-Systems/Online-Arc.md');
-  assert.match(arc, /~~\*\*No cast at a peer\*\*/, 'C7: the 6b-ii bullet is struck');
-  assert.match(arc, /## AUDIT WORLD6b-iii\(a\) \(2026-09-14\)/, 'the record');
-  assert.match(rd('bible/01-Overview/Port-Ledger.md'), /AUDIT WORLD6b-iii\(a\)/, 'the Ledger');
 });

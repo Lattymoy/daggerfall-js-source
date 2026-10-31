@@ -41,8 +41,8 @@
   {
     "name": "TELL7-rank-ignored",
     "file": "src/ai/tells.js",
-    "old": "  return (\n    (lo + (hi - lo) * roll) *\n    (rank > 0 ? 1 - TELL.COOLDOWN_RANK * rank : 1) *\n    (ent?.revenant?.p2?.cooldown > 0 ? ent.revenant.p2.cooldown : 1)\n  ); // RVN4: phase two's x0.7",
-    "new": "  return (lo + (hi - lo) * roll) * 1 * (ent?.revenant?.p2?.cooldown > 0 ? ent.revenant.p2.cooldown : 1); // RVN4: phase two's x0.7",
+    "old": "  return (\n    (lo + (hi - lo) * roll) *\n    (rank > 0 ? 1 - TELL.COOLDOWN_RANK * rank : 1) *\n    (ent?.revenant?.p2?.cooldown > 0 ? ent.revenant.p2.cooldown : 1)\n  ); // Phase two's x0.7",
+    "new": "  return (lo + (hi - lo) * roll) * 1 * (ent?.revenant?.p2?.cooldown > 0 ? ent.revenant.p2.cooldown : 1); // Phase two's x0.7",
     "tests": [
       "test/characters/enemy/tell7_tier.test.js"
     ]
@@ -141,8 +141,8 @@
   {
     "name": "TELL7-brain-ordinary-clock",
     "file": "src/ai/tactics.js",
-    "old": "  const cooled = now + blowCooldown(ai.vitals?.()); // TELL7: by its tier",
-    "new": "  const cooled = now + blowCooldown(null); // TELL7: by its tier",
+    "old": "  const cooled = now + blowCooldown(ai.vitals?.()); // By its tier",
+    "new": "  const cooled = now + blowCooldown(null); // By its tier",
     "tests": [
       "test/characters/enemy/tell7_tier.test.js"
     ]

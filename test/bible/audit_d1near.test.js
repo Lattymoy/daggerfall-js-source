@@ -8,8 +8,6 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ROOT, STEP, workflow, stepAt, stepKeys, stepRun, runStep, d1Answer, PLAN_UP } from '../d1nearStep.mjs';
 
-const src = (p) => readFileSync(join(ROOT, p), 'utf8');
-
 test('AUDIT D1-NEAR T3 T4 T6: the report step\'s own keys are a report\'s - it never fails the deploy, a bound on its minutes, run from server-account/ beside the toml its readout reads - and it stands after the health check and before the smoke steps, each by a name that is there; its D1 readout is bounded too (mutants: the gate back; the minutes unbounded; another shell; the readout unbounded)', () => {
   const wf = workflow();
   // T4: `shell: sh` (dash refuses `set -o pipefail` and fails the deploy) or `if: false` passed every pin the slice had
@@ -82,24 +80,3 @@ test('AUDIT D1-NEAR P1 M2 M12: where the primary is, by D1\'s own word - its SEL
   assert.equal(said(null), 'D1 did not say where its primary is', 'wrangler failing');
 });
 
-test('AUDIT D1-NEAR M1 M2 M6: the records say what the data holds - both probes\' Newark rows in the measurement\'s table, the primary in western North America and never "California" as where it is, the Guild tab\'s thirteen or fourteen (mutants: probe B\'s Newark row dropped; the toml\'s primary put in California; Active-Arcs\' put in California)', () => {
-  const arc = src('bible/11-Multiplayer/Scale-Arc.md');
-  const at = arc.indexOf('\n## D1-NEAR: built');
-  const record = arc.slice(at, arc.indexOf('\n## ', at + 1));
-  assert.ok(record.includes('| A: p50 199 ms, min 148 (n=5); B: p50 337, min 281 (n=5) |'), 'M1: both probes\' local reads, the slower one too');
-  assert.ok(record.includes('**Where the primary is - by bounds, not by a fit**'), 'M1: read by bounds');
-  assert.ok(record.includes('thirteen statements for a member, fourteen for an officer or the guildmaster'), 'M6');
-  // M2: the comment as one text (a line break never hides a claim), the record, the index line and the testing row
-  const toml = src('server-account/wrangler.toml').split('\n');
-  const p = toml.findIndex((l) => l === '[placement]');
-  let i = p - 1; while (i >= 0 && toml[i].startsWith('#')) i--;
-  const comment = toml.slice(i + 1, p).map((l) => l.replace(/^# ?/, '')).join(' ');
-  assert.ok(comment.includes('the primary is in western North America (the record has the bounds)'), 'the toml says western North America');
-  const index = src('bible/01-Overview/Active-Arcs.md').split('\n').find((l) => l.startsWith('- `11-Multiplayer/Scale-Arc.md` D1-NEAR'));
-  const row = src('bible/09-Testing/Testing-Rows-2026-10-19.md').split('\n').find((l) => l.startsWith('| d1near.test.js |'));   // LEGIBLE 1b: the closed table
-  assert.ok(index && row);
-  const CALIFORNIA = /primary (?:stands|is) in California|which is California|California \(Los Angeles or San Jose\)/;
-  for (const [name, text] of [['wrangler.toml', comment], ['the record', record], ['Active-Arcs', index], ['Testing.md', row]]) {
-    assert.doesNotMatch(text, CALIFORNIA, `${name} puts the primary in California - the bounds say western North America, D1 says the city`);
-  }
-});

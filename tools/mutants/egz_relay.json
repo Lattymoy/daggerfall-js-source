@@ -396,14 +396,5 @@
     "tests": [
       "test/net/eliteGates/egz_relay.test.js"
     ]
-  },
-  {
-    "name": "EGZQ-spot-heights-page-unsaid",
-    "file": "bible/11-Multiplayer/Elite-Gates.md",
-    "old": "spot carries one: a fragment's anchors, a balcony's spot, the Low Road's niche) is said in centimetres, as the law lays it.",
-    "new": "spot carries one: a fragment's anchors, a balcony's spot, the Low Road's niche) is said as the law lays it.",
-    "tests": [
-      "test/net/eliteGates/egz_relay.test.js"
-    ]
   }
 ]

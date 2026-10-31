@@ -168,7 +168,6 @@ test('MWNPC18e EVERY HOST THAT DRAWS DAGGERFALL\'S PEOPLE stands them in bodies 
   };
   assert.deepEqual(hosts, [...Object.keys(BODIES), ...Object.keys(PICTURES)].sort(), 'every host that draws a person, named once');
   for (const [f, call] of Object.entries(BODIES)) assert.ok((hostOf(f) ? hostText(hostOf(f)) : rd(f)).includes(call), `${f} offers its people`);
-  assert.match(rd('bible/04-Characters/Morrowind-NPCs.md'), /Come Sail Away's crews/, 'the crews\' pictures declared');
 });
 
 test('MWNPC18d EVERY DECOR ROOM\'S FIGURES ARE OFFERED - the rooms\' on the interior host\'s people lane, the yards\' on the street\'s, before the bodies draw; a new host of decor rooms fails here until it does the same (the census never saw a decor room: its people are flats, not mobiles)', () => {

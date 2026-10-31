@@ -20,8 +20,8 @@ import { idbStore } from '../../world/roadsCache.js';
 /** Bumped BY HAND whenever the bake's output for the same input changes
  *  (roadsCache.js's GENERATOR_VERSION rule) - a cached bake under an old
  *  version is a wrong bake served forever per dungeon. AUDIT 62 F3: 1 had
- *  outlived the y-anchor fix (2026-09-03) and now the stacked-floor weld
- *  and the serialised vertex heights (F1). 3: DUNGEON-SEAMS moved the
+ *  outlived the y-anchor fix and now the stacked-floor weld
+ *  and the serialised vertex heights. 3: DUNGEON-SEAMS moved the
  *  corners of 32 dungeon models (world/arch3dSeams.js) under the collider
  *  a bake reads - same triangle count, and in most dungeons the same
  *  height bounds, so the key could not tell a bake of the old corners.
@@ -31,7 +31,7 @@ import { idbStore } from '../../world/roadsCache.js';
  *  one that sealed its doorways, and a v3 of either change lacks the other. */
 export const NAV_BAKE_VERSION = 4;
 
-/** AUDIT 62 F3: the key carries the ANCHOR's cell too - buildRegions keeps
+/** The key carries the ANCHOR's cell too - buildRegions keeps
  *  the anchor's foot-connected component and culls the rest, so a bake taken
  *  from a save loaded in a teleporter pocket must never be a cache hit for the
  *  front-door entry (or vice versa). */
@@ -84,7 +84,7 @@ export class NavClient {
     this._nextId = 1;
     if (WorkerCtor) {
       try {
-        // AUDIT 59 F1: THE WORKER NEVER SHIPPED. Vite bundles a module
+        // THE WORKER NEVER SHIPPED. Vite bundles a module
         // worker only from the literal spelling `new Worker(new
         // URL('./x.js', import.meta.url), { type: 'module' })` - the
         // same rule terrainGenClient.js:"Worker(new URL(...))" records for the terrain
@@ -144,9 +144,9 @@ export class NavClient {
           return null;
         })
       : null;
-    if (m) return m.cols; // INDOOR-WATCH AUDIT W2: packed, as they landed - the height layer indexes them so (navmesh.js buildPackedIndex)
+    if (m) return m.cols; // Packed, as they landed - the height layer indexes them so (navmesh.js buildPackedIndex)
     if (this._hadWorker && input.tris >= DEGENERATE_MIN_TRIS) {
-      // AUDIT PRE-MERGE 0928 N5: the bake path's rule on a cache hit too - a dead worker's large soup is not re-cut here (2.8 s on 25k triangles at the soup's cell)
+      // The bake path's rule on a cache hit too - a dead worker's large soup is not re-cut here (2.8 s on 25k triangles at the soup's cell)
       console.warn(
         `[enhanced-ai] the nav worker failed on ${input.tris} triangles - not re-cutting a cached bake on the main thread; the classic motor stands (the worker: ${workerWord(failed)})`,
       );
@@ -177,10 +177,10 @@ export class NavClient {
       const m = await this._ask({ t: 'bake', floor: input.minY - 10, anchor, anchors, agent }, input).catch((e) => {
         failed = e;
         return null;
-      }); // AUDIT PRE-MERGE 0928 N4: the worker's own word is kept for the console
+      }); // The worker's own word is kept for the console
       if (m) result = m; // its boxes packed, as they landed (INDOOR-WATCH AUDIT W2: unpacking them was the landing's hitch)
     }
-    // A WORKER THAT DIED IS NOT A REASON TO FREEZE THE PAGE (2026-09-27). The soup bake keeps its own cell now, so a
+    // A WORKER THAT DIED IS NOT A REASON TO FREEZE THE PAGE. The soup bake keeps its own cell now, so a
     // large dungeon is 5-11 s and up to ~1.3 GB (the corpus's largest) - AUDIT 59 F1's main-thread freeze, several
     // times over. Here the bake runs only where there never was a worker (node, a test) or the soup is small; a worker
     // that failed on a large one leaves the classic motor standing, which is where a degenerate bake left it too.
@@ -193,7 +193,7 @@ export class NavClient {
     if (!result && this._hadWorker)
       console.warn(
         `[enhanced-ai] the nav worker failed - baking ${input.tris} triangles on the main thread (the worker: ${workerWord(failed)})`,
-      ); // AUDIT PRE-MERGE 0928 N4: a small soup's fallback says so
+      ); // A small soup's fallback says so
     if (!result) result = bakeHere(input, anchor, agent, anchors);
     // DEGENERATE-BAKE GUARD (2026-09-20, Mac's patch - a report of foes
     // standing idle across most of a dungeon, with the console showing a
