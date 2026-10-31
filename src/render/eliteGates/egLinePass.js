@@ -21,14 +21,28 @@
 // A foreign pass: it owns its program and its state; the host marks it. Not a DFU member. Ledger A (ELITE-GATES).
 import { buildProgram } from '../glProgram.js';
 import { FOG_FACTOR_GLSL } from '../labGrass.js';
-import { EG_LINE_KIND, EG_TRACK, EG_FOG_FLOOR, EG_TRAIL, egEdgeLineColor, egEdgeLinePx } from '../../world/eliteGates/egLook.js';
+import {
+  EG_LINE_KIND,
+  EG_TRACK,
+  EG_FOG_FLOOR,
+  EG_TRAIL,
+  egEdgeLineColor,
+  egEdgeLinePx,
+} from '../../world/eliteGates/egLook.js';
 
 /** Floats a vertex: aA xyz, aB xyz, aM (side, end, kind, alpha). */
 export const EG_LINE_FLOATS = 10;
 /** The streamers' room (segments) - a hall's sections' worth, written a frame. */
 export const EG_STREAMERS_MAX = 64;
 /** The six corners of a segment's quad: [side, end]. */
-const CORNERS = Object.freeze([[-1, 0], [1, 0], [1, 1], [-1, 0], [1, 1], [-1, 1]]);
+const CORNERS = Object.freeze([
+  [-1, 0],
+  [1, 0],
+  [1, 1],
+  [-1, 0],
+  [1, 1],
+  [-1, 1],
+]);
 
 /**
  * Segments (six floats each - two ends) as the pass's vertices: six a segment, `kind` (EG_LINE_KIND) and an alpha each
@@ -40,8 +54,16 @@ export function egLineVertices(segs, kind, alphas = null, n = segs.length / 6, o
   for (let i = 0; i < n; i++) {
     const a = alphas ? alphas[i] : 1;
     for (const [side, end] of CORNERS) {
-      v[o++] = segs[i * 6]; v[o++] = segs[i * 6 + 1]; v[o++] = segs[i * 6 + 2]; v[o++] = segs[i * 6 + 3]; v[o++] = segs[i * 6 + 4]; v[o++] = segs[i * 6 + 5];
-      v[o++] = side; v[o++] = end; v[o++] = kind; v[o++] = a;
+      v[o++] = segs[i * 6];
+      v[o++] = segs[i * 6 + 1];
+      v[o++] = segs[i * 6 + 2];
+      v[o++] = segs[i * 6 + 3];
+      v[o++] = segs[i * 6 + 4];
+      v[o++] = segs[i * 6 + 5];
+      v[o++] = side;
+      v[o++] = end;
+      v[o++] = kind;
+      v[o++] = a;
     }
   }
   return v;
@@ -113,7 +135,9 @@ void main() {
 
 /** FIRST-USE (#1144): the pass's one program, as its constructor builds it - what the hall's load starts and the
  *  look's door waits on (render/glProgram.js startPrograms, compiledPass). */
-export const EG_LINE_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[EG_LINE_VS, EG_LINE_FS]]));
+export const EG_LINE_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (
+  Object.freeze([[EG_LINE_VS, EG_LINE_FS]])
+);
 
 /** The pass. */
 export class EgLinePass {
@@ -123,22 +147,42 @@ export class EgLinePass {
     const [[vs, fs]] = EG_LINE_PROGRAMS;
     this.program = buildProgram(gl, vs, fs, 'eg lines');
     this.u = {};
-    for (const n of ['uVP', 'uViewport', 'uWidth', 'uGold', 'uWhite', 'uFogColor', 'uFogFloor', 'uTime', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.u[n] = gl.getUniformLocation(this.program, n);
+    for (const n of [
+      'uVP',
+      'uViewport',
+      'uWidth',
+      'uGold',
+      'uWhite',
+      'uFogColor',
+      'uFogFloor',
+      'uTime',
+      'uFogMode',
+      'uFogDensity',
+      'uFogRange',
+      'uCamPos',
+    ])
+      this.u[n] = gl.getUniformLocation(this.program, n);
     const mk = (usage, bytes) => {
-      const vao = gl.createVertexArray(), vbo = gl.createBuffer();
-      gl.bindVertexArray(vao); gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+      const vao = gl.createVertexArray(),
+        vbo = gl.createBuffer();
+      gl.bindVertexArray(vao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
       gl.bufferData(gl.ARRAY_BUFFER, bytes, usage);
       const S = EG_LINE_FLOATS * 4;
-      gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, S, 0);
-      gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 3, gl.FLOAT, false, S, 12);
-      gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 4, gl.FLOAT, false, S, 24);
+      gl.enableVertexAttribArray(0);
+      gl.vertexAttribPointer(0, 3, gl.FLOAT, false, S, 0);
+      gl.enableVertexAttribArray(1);
+      gl.vertexAttribPointer(1, 3, gl.FLOAT, false, S, 12);
+      gl.enableVertexAttribArray(2);
+      gl.vertexAttribPointer(2, 4, gl.FLOAT, false, S, 24);
       gl.bindVertexArray(null);
       return { vao, vbo };
     };
-    this._static = null; this.staticCount = 0;
+    this._static = null;
+    this.staticCount = 0;
     this._dyn = mk(gl.DYNAMIC_DRAW, EG_STREAMERS_MAX * 6 * EG_LINE_FLOATS * 4);
     this._dynData = new Float32Array(EG_STREAMERS_MAX * 6 * EG_LINE_FLOATS);
-    this._trail = mk(gl.DYNAMIC_DRAW, EG_TRAIL.max * 6 * EG_LINE_FLOATS * 4);   // AUDIT EG V (h): THE TRAIL's own
+    this._trail = mk(gl.DYNAMIC_DRAW, EG_TRAIL.max * 6 * EG_LINE_FLOATS * 4); // AUDIT EG V (h): THE TRAIL's own
     this._trailData = new Float32Array(EG_TRAIL.max * 6 * EG_LINE_FLOATS);
     this._mk = mk;
     this._vp = new Float32Array(16);
@@ -160,9 +204,18 @@ export class EgLinePass {
   /** The circle's edges and tracks (world/eliteGates/egLook.js egCircleEdges), made the static buffer - once a circle. */
   setCircle(edges) {
     const gl = this.gl;
-    if (this._static) { gl.deleteBuffer(this._static.vbo); gl.deleteVertexArray(this._static.vao); this._static = null; }
-    if (!edges) { this.staticCount = 0; return; }
-    const ne = edges.edge.length / 6, nt = edges.track.length / 6, v = new Float32Array((ne + nt) * 6 * EG_LINE_FLOATS);
+    if (this._static) {
+      gl.deleteBuffer(this._static.vbo);
+      gl.deleteVertexArray(this._static.vao);
+      this._static = null;
+    }
+    if (!edges) {
+      this.staticCount = 0;
+      return;
+    }
+    const ne = edges.edge.length / 6,
+      nt = edges.track.length / 6,
+      v = new Float32Array((ne + nt) * 6 * EG_LINE_FLOATS);
     egLineVertices(edges.edge, EG_LINE_KIND.edge, null, ne, v, 0);
     egLineVertices(edges.track, EG_LINE_KIND.track, null, nt, v, ne * 6);
     this._static = this._mk(gl.STATIC_DRAW, v);
@@ -173,11 +226,32 @@ export class EgLinePass {
    * - `fog` the frame's ({ mode, density, range, color, camPos }), `seconds` any clock, `vw` x `vh` the world image (px).
    * AUDIT EG V (h): and THE TRAIL's `tn` segments `trail` (six floats a segment). Answers whether anything drew.
    */
-  draw(proj, view, eye, seconds, fog = null, streamers = null, n = 0, alphas = null, vw = 0, vh = 0, trail = null, tn = 0) {
+  draw(
+    proj,
+    view,
+    eye,
+    seconds,
+    fog = null,
+    streamers = null,
+    n = 0,
+    alphas = null,
+    vw = 0,
+    vh = 0,
+    trail = null,
+    tn = 0,
+  ) {
     this.drawn = 0;
     if (!this.staticCount && !(n > 0) && !(tn > 0 && trail)) return false;
-    const gl = this.gl, U = this.u, V = this._vp;
-    for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) V[c * 4 + r] = proj[r] * view[c * 4] + proj[4 + r] * view[c * 4 + 1] + proj[8 + r] * view[c * 4 + 2] + proj[12 + r] * view[c * 4 + 3];
+    const gl = this.gl,
+      U = this.u,
+      V = this._vp;
+    for (let c = 0; c < 4; c++)
+      for (let r = 0; r < 4; r++)
+        V[c * 4 + r] =
+          proj[r] * view[c * 4] +
+          proj[4 + r] * view[c * 4 + 1] +
+          proj[8 + r] * view[c * 4 + 2] +
+          proj[12 + r] * view[c * 4 + 3];
     const h = vh || gl.drawingBufferHeight;
     gl.useProgram(this.program);
     gl.uniformMatrix4fv(U.uVP, false, V);
@@ -193,13 +267,21 @@ export class EgLinePass {
     gl.uniform1f(U.uFogDensity, fog?.density ?? 0);
     gl.uniform2fv(U.uFogRange, fog?.range ?? NO_FOG_RANGE);
     gl.uniform3fv(U.uCamPos, fog?.camPos ?? eye ?? NO_FOG_COLOR);
-    gl.enable(gl.DEPTH_TEST); gl.depthMask(false); gl.disable(gl.CULL_FACE);
-    gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
-    if (this.staticCount) { gl.bindVertexArray(this._static.vao); gl.drawArrays(gl.TRIANGLES, 0, this.staticCount); this.drawn++; }
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthMask(false);
+    gl.disable(gl.CULL_FACE);
+    gl.enable(gl.BLEND);
+    gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
+    if (this.staticCount) {
+      gl.bindVertexArray(this._static.vao);
+      gl.drawArrays(gl.TRIANGLES, 0, this.staticCount);
+      this.drawn++;
+    }
     if (n > 0 && streamers) {
       const k = Math.min(n, EG_STREAMERS_MAX);
       egLineVertices(streamers, EG_LINE_KIND.streamer, alphas, k, this._dynData, 0);
-      gl.bindVertexArray(this._dyn.vao); gl.bindBuffer(gl.ARRAY_BUFFER, this._dyn.vbo);
+      gl.bindVertexArray(this._dyn.vao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this._dyn.vbo);
       gl.bufferSubData(gl.ARRAY_BUFFER, 0, this._dynData, 0, k * 6 * EG_LINE_FLOATS);
       gl.drawArrays(gl.TRIANGLES, 0, k * 6);
       this.drawn++;
@@ -207,20 +289,26 @@ export class EgLinePass {
     if (tn > 0 && trail) {
       const k = Math.min(tn, EG_TRAIL.max);
       egLineVertices(trail, EG_LINE_KIND.trail, null, k, this._trailData, 0);
-      gl.bindVertexArray(this._trail.vao); gl.bindBuffer(gl.ARRAY_BUFFER, this._trail.vbo);
+      gl.bindVertexArray(this._trail.vao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this._trail.vbo);
       gl.bufferSubData(gl.ARRAY_BUFFER, 0, this._trailData, 0, k * 6 * EG_LINE_FLOATS);
       gl.drawArrays(gl.TRIANGLES, 0, k * 6);
       this.drawn++;
     }
     gl.bindVertexArray(null);
-    gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+    gl.enable(gl.CULL_FACE);
     return this.drawn > 0;
   }
   destroy() {
     const gl = this.gl;
     this.setCircle(null);
-    gl.deleteBuffer(this._dyn.vbo); gl.deleteVertexArray(this._dyn.vao); gl.deleteProgram(this.program);
-    gl.deleteBuffer(this._trail.vbo); gl.deleteVertexArray(this._trail.vao);   // AUDIT EG V (h): THE TRAIL's
+    gl.deleteBuffer(this._dyn.vbo);
+    gl.deleteVertexArray(this._dyn.vao);
+    gl.deleteProgram(this.program);
+    gl.deleteBuffer(this._trail.vbo);
+    gl.deleteVertexArray(this._trail.vao); // AUDIT EG V (h): THE TRAIL's
   }
 }
 const NO_FOG_RANGE = new Float32Array([0, 1]);

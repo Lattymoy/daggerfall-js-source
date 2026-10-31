@@ -190,47 +190,83 @@ export function createTravelSteer(params = TRAVEL_STEER) {
   const P = params;
   const N = P.offsets.length;
   const s = {
-    key: null,              // the autopilot the line belongs to - a new one is a new journey
-    tx: NaN, tz: NaN,       // the target's centre the line runs to - a new one is a new leg
-    ox: 0, oz: 0,           // where the line begins
-    hasLast: false, lastX: 0, lastZ: 0, lastYaw: 0,
-    episode: false,         // a detour is running
-    ref: 0,                 // the way wanted when it began: the fan's zero
-    side: 0,                // +1 right (yaw increasing), -1 left, 0 still being chosen
-    sideK: 0,               // how far the side search has got
-    k: NONE,                // the fan offset held: REF, an index, or NONE
-    scanNext: -1,           // an outward scan to resume from, or -1
-    scanBest: -1, scanBestC: 0,
-    flipped: false,         // this detour has already tried the other side
-    sBlock: 0,              // where on the line the blocking face stood
-    sStart: 0,              // where on the line the detour began
-    goStart: 0,             // ...and how far from the target (AUDIT TRAVEL-STRAFE 2)
-    walked: 0,              // metres walked since
-    commitSide: 0, commitLeft: 0,
-    winAsked: 0, winMoved: 0, grind: 0,
-    bestDist: Infinity,     // TRAVEL-NAV2: the nearest this leg has come to its target
-    noGain: 0,              // ...and the metres walked since it came a metre nearer
-    lastReach: 0,           // TRAVEL-NAV2: the most the last frame could carry the body
-    probes: 0,              // feelers cast this frame
-    episodes: 0, flips: 0, holds: 0,   // counted, for the pins
+    key: null, // the autopilot the line belongs to - a new one is a new journey
+    tx: NaN,
+    tz: NaN, // the target's centre the line runs to - a new one is a new leg
+    ox: 0,
+    oz: 0, // where the line begins
+    hasLast: false,
+    lastX: 0,
+    lastZ: 0,
+    lastYaw: 0,
+    episode: false, // a detour is running
+    ref: 0, // the way wanted when it began: the fan's zero
+    side: 0, // +1 right (yaw increasing), -1 left, 0 still being chosen
+    sideK: 0, // how far the side search has got
+    k: NONE, // the fan offset held: REF, an index, or NONE
+    scanNext: -1, // an outward scan to resume from, or -1
+    scanBest: -1,
+    scanBestC: 0,
+    flipped: false, // this detour has already tried the other side
+    sBlock: 0, // where on the line the blocking face stood
+    sStart: 0, // where on the line the detour began
+    goStart: 0, // ...and how far from the target (AUDIT TRAVEL-STRAFE 2)
+    walked: 0, // metres walked since
+    commitSide: 0,
+    commitLeft: 0,
+    winAsked: 0,
+    winMoved: 0,
+    grind: 0,
+    bestDist: Infinity, // TRAVEL-NAV2: the nearest this leg has come to its target
+    noGain: 0, // ...and the metres walked since it came a metre nearer
+    lastReach: 0, // TRAVEL-NAV2: the most the last frame could carry the body
+    probes: 0, // feelers cast this frame
+    episodes: 0,
+    flips: 0,
+    holds: 0, // counted, for the pins
   };
   /** The caller-owned shapes, made once (steerDrive fills `input`). */
-  const input = { key: null, x: 0, z: 0, tx: 0, tz: 0, yaw: 0, goal: Infinity, reach: 0, quantum: 0, asked: 0, manual: false, pathed: false };
+  const input = {
+    key: null,
+    x: 0,
+    z: 0,
+    tx: 0,
+    tz: 0,
+    yaw: 0,
+    goal: Infinity,
+    reach: 0,
+    quantum: 0,
+    asked: 0,
+    manual: false,
+    pathed: false,
+  };
   const output = { yaw: 0, forward: 1, stop: null, deflected: false };
   /** This frame's reading of the line - scratch, so the helpers below are
    *  made once rather than closed over afresh every frame. */
   const f = { probe: null, want: 0, ux: 0, uz: 1, along: 0, lat: 0, reachFan: 0 };
 
   function endEpisode() {
-    s.episode = false; s.k = NONE; s.side = 0; s.scanNext = -1;
+    s.episode = false;
+    s.k = NONE;
+    s.side = 0;
+    s.scanNext = -1;
   }
 
   function reset() {
-    s.key = null; s.tx = NaN; s.tz = NaN; s.hasLast = false;
-    endEpisode(); s.flipped = false; s.walked = 0;
-    s.commitSide = 0; s.commitLeft = 0;
-    s.winAsked = 0; s.winMoved = 0; s.grind = 0;
-    s.bestDist = Infinity; s.noGain = 0;
+    s.key = null;
+    s.tx = NaN;
+    s.tz = NaN;
+    s.hasLast = false;
+    endEpisode();
+    s.flipped = false;
+    s.walked = 0;
+    s.commitSide = 0;
+    s.commitLeft = 0;
+    s.winAsked = 0;
+    s.winMoved = 0;
+    s.grind = 0;
+    s.bestDist = Infinity;
+    s.noGain = 0;
   }
 
   /** One feeler, counted, clamped to `dist`. */
@@ -307,8 +343,8 @@ export function createTravelSteer(params = TRAVEL_STEER) {
 
   function stopWith(out, inp, why) {
     out.stop = why;
-    out.yaw = inp.yaw;          // the journey ends facing the mod's own bearing, as InterruptTravel leaves it
-    out.forward = 0;            // and the frame that stops it moves nothing
+    out.yaw = inp.yaw; // the journey ends facing the mod's own bearing, as InterruptTravel leaves it
+    out.forward = 0; // and the frame that stops it moves nothing
     out.deflected = false;
     endEpisode();
     return out;
@@ -327,11 +363,19 @@ export function createTravelSteer(params = TRAVEL_STEER) {
     out.deflected = false;
     s.probes = 0;
     f.probe = probe;
-    if (inp.key !== s.key) { reset(); s.key = inp.key; s.lastYaw = inp.yaw; }
+    if (inp.key !== s.key) {
+      reset();
+      s.key = inp.key;
+      s.lastYaw = inp.yaw;
+    }
     if (inp.tx !== s.tx || inp.tz !== s.tz) {
-      s.tx = inp.tx; s.tz = inp.tz; s.ox = inp.x; s.oz = inp.z;
+      s.tx = inp.tx;
+      s.tz = inp.tz;
+      s.ox = inp.x;
+      s.oz = inp.z;
       endEpisode();
-      s.bestDist = Infinity; s.noGain = 0;   // TRAVEL-NAV2: headway is measured a leg at a time
+      s.bestDist = Infinity;
+      s.noGain = 0; // TRAVEL-NAV2: headway is measured a leg at a time
     }
 
     // 1. WHAT THE LAST FRAME DID. `asked` is the travel the host really
@@ -349,9 +393,14 @@ export function createTravelSteer(params = TRAVEL_STEER) {
         // after it, mile upon mile. The line starts again from here, and
         // nothing the jump covered counts as walked, grinding or headway.
         moved = 0;
-        s.ox = inp.x; s.oz = inp.z;
+        s.ox = inp.x;
+        s.oz = inp.z;
         endEpisode();
-        s.commitLeft = 0; s.winAsked = 0; s.winMoved = 0; s.bestDist = Infinity; s.noGain = 0;
+        s.commitLeft = 0;
+        s.winAsked = 0;
+        s.winMoved = 0;
+        s.bestDist = Infinity;
+        s.noGain = 0;
       }
       if (s.episode) s.walked += moved;
       s.commitLeft -= moved;
@@ -359,19 +408,25 @@ export function createTravelSteer(params = TRAVEL_STEER) {
       s.winMoved += moved;
       if (s.winAsked >= Math.max(P.grindWindow, P.grindSteps * inp.quantum)) {
         s.grind = s.winMoved < P.grindRatio * s.winAsked ? s.grind + 1 : 0;
-        s.winAsked = 0; s.winMoved = 0;
+        s.winAsked = 0;
+        s.winMoved = 0;
       }
     }
-    s.hasLast = true; s.lastX = inp.x; s.lastZ = inp.z; s.lastReach = Math.max(0, inp.reach);
+    s.hasLast = true;
+    s.lastX = inp.x;
+    s.lastZ = inp.z;
+    s.lastReach = Math.max(0, inp.reach);
     if (s.grind >= P.grindWindows) return stopWith(out, inp, 'stuck');
     // TRAVEL-STRAFE: THE HAND'S SIDESTEP. The line begins under the body
     // while the strafe is held, so BACK TO THE LINE has nothing to pull
     // back; a detour running is the hand's now; and what the hand walks is
     // no measure of headway.
     if (inp.manual) {
-      s.ox = inp.x; s.oz = inp.z;
+      s.ox = inp.x;
+      s.oz = inp.z;
       if (s.episode) endEpisode();
-      s.bestDist = Infinity; s.noGain = 0;
+      s.bestDist = Infinity;
+      s.noGain = 0;
     }
     // TRAVEL-NAV2: NO HEADWAY. Grinding asks whether the body MOVES; this
     // asks whether it gets anywhere. A detour that ends and begins again
@@ -381,17 +436,21 @@ export function createTravelSteer(params = TRAVEL_STEER) {
     // slice's brief named it: stuck detection as the distance to the
     // target not shrinking over a window.
     const toGo = Math.hypot(s.tx - inp.x, s.tz - inp.z);
-    if (toGo < s.bestDist - P.headwayGain) { s.bestDist = toGo; s.noGain = 0; }
-    else s.noGain += moved;
+    if (toGo < s.bestDist - P.headwayGain) {
+      s.bestDist = toGo;
+      s.noGain = 0;
+    } else s.noGain += moved;
     if (s.noGain > P.headwayBudget) return stopWith(out, inp, 'stuck');
 
     // 2. THE LINE. From where the leg began to the target's centre; the
     // progress along it and the signed distance off it (right positive).
-    const lx = s.tx - s.ox, lz = s.tz - s.oz;
+    const lx = s.tx - s.ox,
+      lz = s.tz - s.oz;
     const len = Math.hypot(lx, lz);
     f.ux = len > 1e-6 ? lx / len : Math.sin(inp.yaw);
     f.uz = len > 1e-6 ? lz / len : Math.cos(inp.yaw);
-    const rx = inp.x - s.ox, rz = inp.z - s.oz;
+    const rx = inp.x - s.ox,
+      rz = inp.z - s.oz;
     f.along = rx * f.ux + rz * f.uz;
     f.lat = rx * f.uz - rz * f.ux;
 
@@ -404,7 +463,8 @@ export function createTravelSteer(params = TRAVEL_STEER) {
     f.want = inp.yaw;
     if (!inp.pathed && (s.episode || Math.abs(f.lat) > P.onLine)) {
       const ahead = len > 1e-6 ? Math.min(len, f.along + P.pursuit) : f.along + P.pursuit;
-      const ax = s.ox + f.ux * ahead - inp.x, az = s.oz + f.uz * ahead - inp.z;
+      const ax = s.ox + f.ux * ahead - inp.x,
+        az = s.oz + f.uz * ahead - inp.z;
       if (ax * ax + az * az > 1e-8) f.want = Math.atan2(ax, az);
     }
 
@@ -415,7 +475,7 @@ export function createTravelSteer(params = TRAVEL_STEER) {
     const reach = Math.max(0, inp.reach);
     const need = reach + P.standoff;
     const look = Math.max(P.minLook, P.lookFrames * reach) + P.standoff;
-    const lookWant = Math.min(look, Math.max(0, inp.goal) + (inp.pathed ? 0 : P.standoff));   // AUDIT OW-REVISITED L1-3: a line's run is walked TO its end
+    const lookWant = Math.min(look, Math.max(0, inp.goal) + (inp.pathed ? 0 : P.standoff)); // AUDIT OW-REVISITED L1-3: a line's run is walked TO its end
     f.reachFan = Math.min(look, P.feelerMax);
     const pass = P.standoff + P.minStep;
     const keep = Math.max(pass, 0.5 * Math.min(need, f.reachFan));
@@ -436,23 +496,40 @@ export function createTravelSteer(params = TRAVEL_STEER) {
       // frame the key is let go walks straight on under the hand's cap,
       // and an edge feeler never cast was a corner walked into
       const cw = corridor(f.want, Math.max(openWant, need), inp.manual ? 0 : openWant);
-      if (inp.manual) return go(out, inp, f.want, cw, reach);   // TRAVEL-STRAFE: the hand steers - the bearing, stopped short, never a detour
+      if (inp.manual) return go(out, inp, f.want, cw, reach); // TRAVEL-STRAFE: the hand steers - the bearing, stopped short, never a detour
       // TRAVEL-STRAFE: a detour ends at or past where it began - never
       // on a view caught while the body stands behind its start.
       // AUDIT TRAVEL-STRAFE 2: or no farther from the target than where it
       // began - one begun off the line, or past the target at a hitching
       // pace, could otherwise not end at all, and stopped on its budget
       if (cw >= openWant && (!s.episode || f.along >= s.sStart || toGo <= s.goStart)) {
-        if (s.episode) { s.commitSide = s.side || s.commitSide; s.commitLeft = P.commitMetres; endEpisode(); }
+        if (s.episode) {
+          s.commitSide = s.side || s.commitSide;
+          s.commitLeft = P.commitMetres;
+          endEpisode();
+        }
         return go(out, inp, f.want, cw, reach);
       }
       if (!s.episode) {
-        s.episode = true; s.episodes++;
-        s.walked = 0; s.sStart = f.along; s.goStart = toGo; s.flipped = false;
-        s.ref = f.want; s.k = NONE; s.scanNext = -1;
+        s.episode = true;
+        s.episodes++;
+        s.walked = 0;
+        s.sStart = f.along;
+        s.goStart = toGo;
+        s.flipped = false;
+        s.ref = f.want;
+        s.k = NONE;
+        s.scanNext = -1;
         s.sBlock = f.along + cw * Math.max(0, Math.sin(f.want) * f.ux + Math.cos(f.want) * f.uz);
-        if (s.commitLeft > 0 && s.commitSide) { s.side = s.commitSide; s.scanNext = 0; s.scanBest = -1; s.scanBestC = 0; }
-        else { s.side = 0; s.sideK = 0; }
+        if (s.commitLeft > 0 && s.commitSide) {
+          s.side = s.commitSide;
+          s.scanNext = 0;
+          s.scanBest = -1;
+          s.scanBestC = 0;
+        } else {
+          s.side = 0;
+          s.sideK = 0;
+        }
       }
     }
 
@@ -461,18 +538,26 @@ export function createTravelSteer(params = TRAVEL_STEER) {
     // the line, and a tie on the line turns right - a rule, so a replay
     // walks the same way). Neither within SIDE_SPAN: the outward scan
     // takes the right from there, and the flip the left.
-    let chosen = NONE, cc = 0;
+    let chosen = NONE,
+      cc = 0;
     if (s.side === 0) {
       for (; s.sideK < Math.min(P.sideSpan, N); s.sideK++) {
         if (s.probes + 6 > P.maxFeelers) return hold(out, inp);
-        const r = openAt(s.sideK, 1), l = openAt(s.sideK, -1);
+        const r = openAt(s.sideK, 1),
+          l = openAt(s.sideK, -1);
         if (r >= 0 || l >= 0) {
-          s.side = r >= 0 && l >= 0 ? (f.lat > P.onLine ? -1 : 1) : (r >= 0 ? 1 : -1);
-          chosen = s.sideK; cc = s.side > 0 ? r : l;
+          s.side = r >= 0 && l >= 0 ? (f.lat > P.onLine ? -1 : 1) : r >= 0 ? 1 : -1;
+          chosen = s.sideK;
+          cc = s.side > 0 ? r : l;
           break;
         }
       }
-      if (s.side === 0) { s.side = 1; s.scanNext = s.sideK; s.scanBest = -1; s.scanBestC = 0; }
+      if (s.side === 0) {
+        s.side = 1;
+        s.scanNext = s.sideK;
+        s.scanBest = -1;
+        s.scanBestC = 0;
+      }
       s.k = NONE;
     }
 
@@ -483,16 +568,24 @@ export function createTravelSteer(params = TRAVEL_STEER) {
     if (chosen === NONE && s.scanNext < 0) {
       if (s.k !== REF) {
         const c = openAt(REF, s.side);
-        if (c >= 0) { chosen = REF; cc = c; }
+        if (c >= 0) {
+          chosen = REF;
+          cc = c;
+        }
       }
       if (chosen === NONE && s.k >= 1) {
         const c = openAt(s.k - 1, s.side);
-        if (c >= 0) { chosen = s.k - 1; cc = c; }
+        if (c >= 0) {
+          chosen = s.k - 1;
+          cc = c;
+        }
       }
       if (chosen === NONE && s.k !== NONE) {
         const c = corridor(headingAt(s.k), Math.max(f.reachFan, need), keep);
-        if (c >= keep) { chosen = s.k; cc = c; }
-        else if (s.k === REF) {
+        if (c >= keep) {
+          chosen = s.k;
+          cc = c;
+        } else if (s.k === REF) {
           // AUDIT TRAVEL-STRAFE 3: the way the detour began, held, has met
           // a face - the one to get past now, so REF must be seen past IT
           // before it is taken again. Seen only past the first, it opened
@@ -502,21 +595,37 @@ export function createTravelSteer(params = TRAVEL_STEER) {
           if (fw > 0.05) s.sBlock = Math.max(s.sBlock, f.along + c * fw);
         }
       }
-      if (chosen === NONE) { s.scanNext = s.k >= 0 ? s.k + 1 : 0; s.scanBest = -1; s.scanBestC = 0; }
+      if (chosen === NONE) {
+        s.scanNext = s.k >= 0 ? s.k + 1 : 0;
+        s.scanBest = -1;
+        s.scanBestC = 0;
+      }
     }
     if (chosen === NONE) {
       for (; s.scanNext < N; s.scanNext++) {
         if (s.probes + 3 > P.maxFeelers) return hold(out, inp);
-        const k = s.scanNext, h = headingAt(k), req = Math.max(f.reachFan, past(h, false));
+        const k = s.scanNext,
+          h = headingAt(k),
+          req = Math.max(f.reachFan, past(h, false));
         const c = corridor(h, req, req);
-        if (c >= req) { chosen = k; cc = c; break; }
-        if (c > s.scanBestC) { s.scanBest = k; s.scanBestC = c; }
+        if (c >= req) {
+          chosen = k;
+          cc = c;
+          break;
+        }
+        if (c > s.scanBestC) {
+          s.scanBest = k;
+          s.scanBestC = c;
+        }
       }
       if (chosen === NONE && s.scanBest >= 0 && s.scanBestC >= pass) {
         // nothing open: the most room there is, measured exactly
         if (s.probes + 3 > P.maxFeelers) return hold(out, inp);
         const c = corridor(headingAt(s.scanBest), Math.max(f.reachFan, need), pass);
-        if (c >= pass) { chosen = s.scanBest; cc = c; }
+        if (c >= pass) {
+          chosen = s.scanBest;
+          cc = c;
+        }
       }
       s.scanNext = -1;
     }
@@ -525,8 +634,13 @@ export function createTravelSteer(params = TRAVEL_STEER) {
       // the body holds for the frame the scan changes hands - and after
       // that there is no way round: stop, short of it.
       if (s.flipped) return stopWith(out, inp, 'blocked');
-      s.flipped = true; s.flips++; s.side = -s.side; s.k = NONE;
-      s.scanNext = 0; s.scanBest = -1; s.scanBestC = 0;
+      s.flipped = true;
+      s.flips++;
+      s.side = -s.side;
+      s.k = NONE;
+      s.scanNext = 0;
+      s.scanBest = -1;
+      s.scanBestC = 0;
       return hold(out, inp);
     }
     s.k = chosen;
@@ -551,15 +665,19 @@ export function steerDrive(steer, drive, worldX, worldZ, autopilot, frame, probe
   const r = frame.ratio;
   const inp = steer.input;
   inp.key = autopilot;
-  inp.x = worldX / r; inp.z = worldZ / r;
-  const to = autopilot.steerTarget ?? autopilot.destinationCentre;   // OW-TOWN-WALK: a line's leg, the run it is on
+  inp.x = worldX / r;
+  inp.z = worldZ / r;
+  const to = autopilot.steerTarget ?? autopilot.destinationCentre; // OW-TOWN-WALK: a line's leg, the run it is on
   inp.tx = to.x / r;
   inp.tz = to.z / r;
-  inp.pathed = !!autopilot.path;   // OW-ROAD-TRUE / OW-TOWN-WALK: the drive's bearing already keeps the line
+  inp.pathed = !!autopilot.path; // OW-ROAD-TRUE / OW-TOWN-WALK: the drive's bearing already keeps the line
   // AUDIT OW-REVISITED L1-3: a line's leg asks its corridor to the run's end - a street turns BECAUSE a building stands
   // at the corner, and nine metres asked along the run's bearing past it was a detour begun at every corner
-  inp.goal = (inp.pathed ? Math.hypot(to.x - worldX, to.z - worldZ) : rectDistance(autopilot.destinationWorldRect, worldX, worldZ)) / r;
-  inp.manual = !!frame.strafe;   // TRAVEL-STRAFE: the hand's sidestep, kept
+  inp.goal =
+    (inp.pathed
+      ? Math.hypot(to.x - worldX, to.z - worldZ)
+      : rectDistance(autopilot.destinationWorldRect, worldX, worldZ)) / r;
+  inp.manual = !!frame.strafe; // TRAVEL-STRAFE: the hand's sidestep, kept
   // AUDIT OW-REVISITED L2-5: TRAVEL-STRAFE ON A LINE'S LEG - the leg pursues its line every frame, so a held strafe was
   // pulled back toward it before the steering ever saw the hand (TRAVEL-STRAFE's own bug again: a dozen metres out at
   // most). While the key is held the run's own bearing is walked, the body beside the line where the hand put it; let go,
@@ -623,46 +741,62 @@ export function createColliderProbe({ collider, feet, height = FEELER_HEIGHT, le
   const hit = { dist: Infinity, key: null, normal: [0, 0, 0] };
   return function probe(dirX, dirZ, lateral, maxDist) {
     const at = feet();
-    const sx = at[0] + dirZ * lateral, sz = at[2] - dirX * lateral;   // right of (dirX, dirZ) is (dirZ, -dirX): motor.js's screen-right
+    const sx = at[0] + dirZ * lateral,
+      sz = at[2] - dirX * lateral; // right of (dirX, dirZ) is (dirZ, -dirX): motor.js's screen-right
     const g0 = collider.heightAt(at[0], at[2]);
-    const level = !(at[1] - g0 <= ON_STRUCTURE);   // no ground under the feet (NaN, -Infinity) reads as a structure too
+    const level = !(at[1] - g0 <= ON_STRUCTURE); // no ground under the feet (NaN, -Infinity) reads as a structure too
     let y0 = at[1] + height;
     let a = 0;
     while (a < maxDist) {
       const b = Math.min(maxDist, a + leg);
-      const x1 = sx + dirX * b, z1 = sz + dirZ * b;
+      const x1 = sx + dirX * b,
+        z1 = sz + dirZ * b;
       let y1 = y0;
       if (!level) {
         const g1 = collider.heightAt(x1, z1);
         if (Number.isFinite(g1)) y1 = g1 + height;
       }
       // the leg, from `a` - or on from the last face it rode - to `b`
-      let ox = sx + dirX * a, oy = y0, oz = sz + dirZ * a;
+      let ox = sx + dirX * a,
+        oy = y0,
+        oz = sz + dirZ * a;
       for (let rides = 0; ; rides++) {
-        const ex = x1 - ox, ey = y1 - oy, ez = z1 - oz;
+        const ex = x1 - ox,
+          ey = y1 - oy,
+          ez = z1 - oz;
         const span = Math.hypot(ex, ey, ez);
         if (!(span > 1e-9)) break;
-        o[0] = ox; o[1] = oy; o[2] = oz;
-        d[0] = ex / span; d[1] = ey / span; d[2] = ez / span;
+        o[0] = ox;
+        o[1] = oy;
+        o[2] = oz;
+        d[0] = ex / span;
+        d[1] = ey / span;
+        d[2] = ez / span;
         collider.raycastHit(o, d, span, null, hit);
-        if (!(hit.dist <= span)) break;   // clear to the leg's end
-        const hx = ox + d[0] * hit.dist, hy = oy + d[1] * hit.dist, hz = oz + d[2] * hit.dist;
-        const along = (hx - sx) * dirX + (hz - sz) * dirZ;   // metres out along the feeler, level
-        if (Math.abs(hit.normal[1]) < WALKABLE_NY) return along;   // a wall
-        if (rides >= FEELER_RIDES || along + RIDE_NUDGE >= b) break;   // the rest of the leg taken as seen
+        if (!(hit.dist <= span)) break; // clear to the leg's end
+        const hx = ox + d[0] * hit.dist,
+          hy = oy + d[1] * hit.dist,
+          hz = oz + d[2] * hit.dist;
+        const along = (hx - sx) * dirX + (hz - sz) * dirZ; // metres out along the feeler, level
+        if (Math.abs(hit.normal[1]) < WALKABLE_NY) return along; // a wall
+        if (rides >= FEELER_RIDES || along + RIDE_NUDGE >= b) break; // the rest of the leg taken as seen
         if (hit.normal[1] > 0) {
           // ground facing up the feeler: ride on it, FEELER_HEIGHT over it,
           // to the leg's end - where the next leg starts, and meets the
           // face's top again if the structure goes on
           oy = hy + height;
           if (y1 < oy) y1 = oy;
-          ox = hx + dirX * RIDE_NUDGE; oz = hz + dirZ * RIDE_NUDGE;
+          ox = hx + dirX * RIDE_NUDGE;
+          oz = hz + dirZ * RIDE_NUDGE;
         } else {
           // a face met from beneath: on under it, along the same line
-          ox = hx + d[0] * RIDE_NUDGE; oy = hy + d[1] * RIDE_NUDGE; oz = hz + d[2] * RIDE_NUDGE;
+          ox = hx + d[0] * RIDE_NUDGE;
+          oy = hy + d[1] * RIDE_NUDGE;
+          oz = hz + d[2] * RIDE_NUDGE;
         }
       }
-      a = b; y0 = y1;
+      a = b;
+      y0 = y1;
     }
     return Infinity;
   };

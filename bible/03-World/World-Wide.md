@@ -1650,7 +1650,7 @@ an interior - WW7-4; each province's crown a kingdom of its own, its own icon an
   `list` and pixel test are made again.
 - **The laws**: a seat's region any of the 71 (`seatRegionOk`), its pixel the world's grid's (`SEAT_PIXEL_SPAN`, the
   services' bundle reading no map), a crown's name its capital's; a gate's kill counts at its own lane's province alone
-  (`townSeatLaw.js:"export const gateRegionOk = (day, region) => {"` - the account service's ledger and influence read
+  (`townSeatLaw.js:"export const gateRegionOk"` - the account service's ledger and influence read
   it, so a province's gate is its own seats' and no other's). The domain tables' CHECKs (migrations 0178-0180, 0177-0179 until main's WOVEN-PAYS took 0177, - 0167-0169 before main's own took those numbers - not yet
   deployed) take regions to 70; the renown tracker with them.
 - Relay world256 and account acct182 changed in place (neither deployed). Mutant records re-aimed by content (7).

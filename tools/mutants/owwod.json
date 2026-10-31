@@ -72,8 +72,8 @@
   {
     "name": "MOUNTAINS-WALKABLE-rocks-refused",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  const openBlocked = (_ax, _ay, bx, by) => ghostfenceShuts(bx, by);",
-    "new": "  const openBlocked = (ax, ay, bx, by, leaving = false) => ghostfenceShuts(bx, by) || (!leaving && rocks !== null && rocks[by * width + bx] === 1);",
+    "old": "  const openBlocked = (_ax, _ay, bx, by) => ghostfenceShuts(bx, by); // MOUNTAINS WALKABLE; AUDIT RED-MOUNTAIN G2: the fence's line is not",
+    "new": "  const openBlocked = (ax, ay, bx, by, leaving = false) =>\n    ghostfenceShuts(bx, by) || (!leaving && rocks !== null && rocks[by * width + bx] === 1); // MOUNTAINS WALKABLE; AUDIT RED-MOUNTAIN G2: the fence's line is not",
     "tests": [
       "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],
@@ -82,7 +82,7 @@
   {
     "name": "MOUNTAINS-WALKABLE-rock-peaks",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  const peak = (_x, _y) => false;   // MOUNTAINS WALKABLE: no pixel is a peak, so \"the mountains cannot be crossed\" never fires",
+    "old": "  const peak = (_x, _y) => false; // MOUNTAINS WALKABLE: no pixel is a peak, so \"the mountains cannot be crossed\" never fires",
     "new": "  const peak = (x, y) => rocks !== null && rocks[y * width + x] === 1;",
     "tests": [
       "test/world/worldOfDaggerfall/ow_wod.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "OW-TOWN-RING-legs-ignore-ring",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "    if (pts && pts.length) {\n      for (const at of pts)",
-    "new": "    if (false) {\n      for (const at of pts)",
+    "old": "    if (pts && pts.length) {",
+    "new": "    if (false) {",
     "tests": [
       "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "OW-TOWN-RING-fold-through-town",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "    const same = next && !(rings[i + 1]?.length) && !(i + 1",
-    "new": "    const same = next && !(i + 1",
+    "old": "      !rings[i + 1]?.length &&\n      !(i + 1 === n - 1 && ringEnd.length) &&",
+    "new": "      !(i + 1 === n - 1 && ringEnd.length) &&",
     "tests": [
       "test/world/worldOfDaggerfall/ow_wod.test.js"
     ],

@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-STOREFRONT-II-E1-tab-a-press",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "      const tb = /** @type {HTMLButtonElement} */ (el('button', 'sh-tab'));",
-    "new": "      const tb = /** @type {HTMLButtonElement} */ (el('button', 'act sh-tab'));",
+    "old": "      const tb = /** @type {HTMLButtonElement} */ (el('button', 'sh-tab')); // AUDIT-STOREFRONT II (lane E 1): a tab, never the kit's press too",
+    "new": "      const tb = /** @type {HTMLButtonElement} */ (el('button', 'act sh-tab')); // AUDIT-STOREFRONT II (lane E 1): a tab, never the kit's press too",
     "tests": [
       "test/ui/storefront_audit2_window.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-STOREFRONT-II-E1-shop-role-dropped",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "'.px-shopwin .sh-deed', '.px-shopwin .sh-pspent'],",
-    "new": "'.px-shopwin .sh-deed'],",
+    "old": "    '.px-shopwin .sh-pspent',\n  ], // AUDIT-STOREFRONT II: the shop's readouts   // EG-PLUS: a breach window's readouts, and the Spire HUD's chips   // RVN-ERRAND: an errand's odds - a readout",
+    "new": "  ], // AUDIT-STOREFRONT II: the shop's readouts   // EG-PLUS: a breach window's readouts, and the Spire HUD's chips   // RVN-ERRAND: an errand's odds - a readout",
     "tests": [
       "test/ui/storefront_audit2_window.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "AUDIT-STOREFRONT-II-E6-tab-panels-below-fold",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "    if (typeof panels.offsetTop === 'number') scroll.scrollTop = panels.offsetTop;",
-    "new": "",
+    "old": "    if (typeof panels.offsetTop === 'number') scroll.scrollTop = panels.offsetTop; // AUDIT-STOREFRONT II (lane E 6): the section's own panels in sight, the featured above them",
+    "new": "    // AUDIT-STOREFRONT II (lane E 6): the section's own panels in sight, the featured above them",
     "tests": [
       "test/ui/storefront_audit2_window.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "AUDIT-STOREFRONT-II-E16-stages-at-once",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "    if (!sight) { go(); return; }",
-    "new": "    { go(); return; }",
+    "old": "    if (!sight) {",
+    "new": "    {",
     "tests": [
       "test/ui/storefront_audit2_window.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "AUDIT-STOREFRONT-II-E16-turning-out-of-sight",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "!c.focusedIn && !c.hidden && nowMs - c.since",
-    "new": "!c.focusedIn && nowMs - c.since",
+    "old": ") =>\n  c.n > 1 && !c.paused && !c.reduced && !c.hovered && !c.focusedIn && !c.hidden && nowMs - c.since >= CAROUSEL_TURN_MS; // AUDIT-STOREFRONT II (lane E 16): never scrolled out of sight",
+    "new": ") => c.n > 1 && !c.paused && !c.reduced && !c.hovered && !c.focusedIn && nowMs - c.since >= CAROUSEL_TURN_MS; // AUDIT-STOREFRONT II (lane E 16): never scrolled out of sight",
     "tests": [
       "test/ui/storefront_audit2_window.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "AUDIT-STOREFRONT-II-E13-pause-shown-still",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "    pauseB.hidden = reduced;",
-    "new": "    pauseB.hidden = false;",
+    "old": "    pauseB.hidden = reduced; // AUDIT-STOREFRONT II (lane E 13): for less motion it never turns, so nothing to pause",
+    "new": "    pauseB.hidden = false; // AUDIT-STOREFRONT II (lane E 13): for less motion it never turns, so nothing to pause",
     "tests": [
       "test/ui/storefront_audit2_window.test.js"
     ]
@@ -94,7 +94,7 @@
   {
     "name": "AUDIT-STOREFRONT-II-E12-held-price-full",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "    d.buyrow.className = 'sh-buyrow sh-buyrow-' + st.state;   // AUDIT-STOREFRONT II (lane E 12): held, its price dimmed under its state",
+    "old": "    d.buyrow.className = 'sh-buyrow sh-buyrow-' + st.state; // AUDIT-STOREFRONT II (lane E 12): held, its price dimmed under its state",
     "new": "",
     "tests": [
       "test/ui/storefront_audit2_window.test.js"
@@ -103,8 +103,8 @@
   {
     "name": "AUDIT-STOREFRONT-II-E8-effect-how-missing",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "(WARDROBE[kind] ?? EFFECT_WARDROBE[kind])",
-    "new": "(WARDROBE[kind])",
+    "old": "  const of = /** @type {Record<string, WardrobeEntry> | undefined} */ (WARDROBE[kind] ?? EFFECT_WARDROBE[kind]);",
+    "new": "  const of = /** @type {Record<string, WardrobeEntry> | undefined} */ (WARDROBE[kind]);",
     "tests": [
       "test/ui/storefront_audit2_window.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "AUDIT-STOREFRONT-II-medallion-mark-left-out",
     "file": "src/ui/profileIcons.js",
-    "old": "  if (inner) pic.append(inner);\n",
-    "new": "",
+    "old": "  if (inner) pic.append(inner);\n  svg.append(",
+    "new": "  svg.append(",
     "tests": [
       "test/ui/storefront_badges.test.js"
     ]

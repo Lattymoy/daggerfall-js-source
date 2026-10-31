@@ -4,24 +4,47 @@
 // person of kind 'union' under the couple: never played there, never carrying its mantle, never standing in its world.
 import { personOf, newPerson, touch, fullNameOf } from './family.js';
 import { kinCard, UNION_KIN_MAX } from './unionKinLaw.js';
-import { stampRevived, revivedOf, dropRevived } from './revived.js';   // AUDIT FB1029 E-S1: the bearer's revival, heard
+import { stampRevived, revivedOf, dropRevived } from './revived.js'; // AUDIT FB1029 E-S1: the bearer's revival, heard
 import { houseWord } from './houseName.js';
 import { RACES, RACE_KEYS } from '../races.js';
 import { t } from '../textManager.js';
 
 /** The children of union `sid` this house has heard of. */
-export const unionKinOf = (/** @type {any} */ family, /** @type {string} */ sid) => (family?.people ?? []).filter((/** @type {any} */ p) => p.kind === 'union' && p.union?.sid === sid);
+export const unionKinOf = (/** @type {any} */ family, /** @type {string} */ sid) =>
+  (family?.people ?? []).filter((/** @type {any} */ p) => p.kind === 'union' && p.union?.sid === sid);
 
 /** The card's word on a recorded child. A death is added, and taken back only by the bearer's own revival stamp (the
  *  card's `revived`, dropped by dropRevived - the realm's law takes it on a union child alone). */
 function takeCard(/** @type {any} */ p, /** @type {import('./unionKinLaw.js').KinCard} */ c) {
   const race = RACE_KEYS.includes(/** @type {any} */ (c.race)) ? /** @type {string} */ (c.race) : p.race;
-  const next = { given: c.given || p.given, surname: c.surname || p.surname, gender: c.gender, race, raceId: RACES[race] ?? p.raceId, face: c.face, minor: c.minor };
+  const next = {
+    given: c.given || p.given,
+    surname: c.surname || p.surname,
+    gender: c.gender,
+    race,
+    raceId: RACES[race] ?? p.raceId,
+    face: c.face,
+    minor: c.minor,
+  };
   let changed = false;
-  for (const [k, v] of Object.entries(next)) if (p[k] !== v) { p[k] = v; changed = true; }
-  if (c.house && p.union.house !== c.house) { p.union.house = c.house; changed = true; }
-  for (const at of c.revived) if (!revivedOf(p).includes(at)) { stampRevived(p, at); changed = true; }
-  if (c.died && !p.died && !revivedOf(p).includes(c.died.at)) { p.died = { at: c.died.at, cause: c.died.cause, place: null, by: null }; changed = true; }
+  for (const [k, v] of Object.entries(next))
+    if (p[k] !== v) {
+      p[k] = v;
+      changed = true;
+    }
+  if (c.house && p.union.house !== c.house) {
+    p.union.house = c.house;
+    changed = true;
+  }
+  for (const at of c.revived)
+    if (!revivedOf(p).includes(at)) {
+      stampRevived(p, at);
+      changed = true;
+    }
+  if (c.died && !p.died && !revivedOf(p).includes(c.died.at)) {
+    p.died = { at: c.died.at, cause: c.died.cause, place: null, by: null };
+    changed = true;
+  }
   return changed;
 }
 
@@ -43,7 +66,13 @@ export function unionKinHeard(family, spouse, cards) {
     let p = unionKinOf(family, sid).find((x) => x.union.key === c.key);
     if (!p) {
       p = newPerson(family.nextId++);
-      Object.assign(p, { kind: 'union', union: { sid, key: c.key, house: c.house }, gen: (member.gen | 0) + 1, parents: [member.id, spouse.id], born: c.born });
+      Object.assign(p, {
+        kind: 'union',
+        union: { sid, key: c.key, house: c.house },
+        gen: (member.gen | 0) + 1,
+        parents: [member.id, spouse.id],
+        born: c.born,
+      });
       family.people.push(p);
       for (const par of [member, spouse]) if (!par.children.includes(p.id)) par.children.push(p.id);
       out.added.push(p);
@@ -58,8 +87,13 @@ export function unionKinHeard(family, spouse, cards) {
 /** The card's chip: the house that raises them. */
 export function raisedWord(/** @type {any} */ p) {
   const house = houseWord(p?.union?.house);
-  return house ? t('legacy.union.raised', 'Raised in the house of {house}', { house }) : t('legacy.union.raisedAway', 'Raised in another house');
+  return house
+    ? t('legacy.union.raised', 'Raised in the house of {house}', { house })
+    : t('legacy.union.raisedAway', 'Raised in another house');
 }
 /** The HUD's word when this house first hears of such a child. */
-export const kinBornLine = (/** @type {any} */ child, /** @type {any} */ spouse) => t('legacy.union.born', 'Word reaches you: {child} is born to you and {spouse}.',
-  { child: fullNameOf(child.given, child.surname), spouse: spouse.given });
+export const kinBornLine = (/** @type {any} */ child, /** @type {any} */ spouse) =>
+  t('legacy.union.born', 'Word reaches you: {child} is born to you and {spouse}.', {
+    child: fullNameOf(child.given, child.surname),
+    spouse: spouse.given,
+  });

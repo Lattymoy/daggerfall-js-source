@@ -12,7 +12,13 @@ import { getPref, setPref } from '../systems/uiPrefs.js';
 import { APP_ROOT } from '../systems/appRoot.js';
 
 export const TEXT_FONT_STYLE_ID = 'dfo-text-font';
-export const TEXT_FONTS = Object.freeze({ game: 'Game', sans: 'Sans', mono: 'Monospace', dyslexic: 'Dyslexic', system: 'My font' });
+export const TEXT_FONTS = Object.freeze({
+  game: 'Game',
+  sans: 'Sans',
+  mono: 'Monospace',
+  dyslexic: 'Dyslexic',
+  system: 'My font',
+});
 export const DYSLEXIC_FAMILY = 'OpenDyslexic';
 export const DYSLEXIC_DIR = 'fonts/opendyslexic';
 /** The stacks: each names what the common systems carry, so a machine without the first still lands on its kind. */
@@ -26,7 +32,12 @@ export const KEEP_SELECTORS = Object.freeze(['.px-wordmark', '.shell .brand h1',
 
 /** A typed font name made safe to stand in a quoted CSS family: no quote, backslash, brace, angle or semicolon, and
  *  never longer than a family name has reason to be. */
-export const cleanFamily = (name) => String(name ?? '').replace(/["'\\{}<>;\n\r]/g, '').replace(/\s+/g, ' ').trim().slice(0, 64);
+export const cleanFamily = (name) =>
+  String(name ?? '')
+    .replace(/["'\\{}<>;\n\r]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 64);
 
 export const textFont = () => (Object.hasOwn(TEXT_FONTS, getPref('textFont')) ? getPref('textFont') : 'game');
 export const textFontSystem = () => cleanFamily(getPref('textFontSystem'));
@@ -38,7 +49,8 @@ export function wordStack(id = textFont(), system = textFontSystem()) {
   return TEXT_STACKS[id] ?? null;
 }
 
-const fontUrl = (file, root = APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/') => new URL(`${DYSLEXIC_DIR}/${file}`, root).href;
+const fontUrl = (file, root = APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/') =>
+  new URL(`${DYSLEXIC_DIR}/${file}`, root).href;
 
 /** The sheet, for the choice in hand. */
 export function textFontCss(id = textFont(), system = textFontSystem()) {
@@ -64,9 +76,12 @@ export function mountTextFont(doc = globalThis.document) {
   const root = doc.documentElement;
   if (root?.dataset) root.dataset.textFont = textFont();
   let st = doc.getElementById(TEXT_FONT_STYLE_ID);
-  if (!st) { st = doc.createElement('style'); st.id = TEXT_FONT_STYLE_ID; }
+  if (!st) {
+    st = doc.createElement('style');
+    st.id = TEXT_FONT_STYLE_ID;
+  }
   st.textContent = textFontCss();
-  doc.head.append(st);   // last, every time: after the skin's and the dress's sheets
+  doc.head.append(st); // last, every time: after the skin's and the dress's sheets
   return true;
 }
 
@@ -89,7 +104,9 @@ export async function installedFamilies(win = globalThis) {
   try {
     const fonts = await win.queryLocalFonts();
     return [...new Set(fonts.map((f) => f.family).filter(Boolean))].sort((a, b) => a.localeCompare(b));
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 export const canListFonts = (win = globalThis) => typeof win?.queryLocalFonts === 'function';
 
@@ -101,9 +118,16 @@ export const canListFonts = (win = globalThis) => typeof win?.queryLocalFonts ==
  * @param {string[]} families @param {string} typed
  */
 export function fontMatches(families, typed) {
-  const q = String(typed ?? '').trim().toLowerCase();
+  const q = String(typed ?? '')
+    .trim()
+    .toLowerCase();
   if (!q || families.some((f) => f.toLowerCase() === q)) return [...families];
-  const starts = [], holds = [];
-  for (const f of families) { const n = f.toLowerCase(); if (n.startsWith(q)) starts.push(f); else if (n.includes(q)) holds.push(f); }
+  const starts = [],
+    holds = [];
+  for (const f of families) {
+    const n = f.toLowerCase();
+    if (n.startsWith(q)) starts.push(f);
+    else if (n.includes(q)) holds.push(f);
+  }
   return [...starts, ...holds];
 }

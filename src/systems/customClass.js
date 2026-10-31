@@ -3,18 +3,24 @@
 // window itself draws in ui/chargenArt.js; everything a test can pin
 // without art lives here.
 
-import { SKILL_NAMES, SKILL_COUNT, MAGIC_SKILLS } from './skills.js';   // DFCareer.MagicSkills lives there
+import { SKILL_NAMES, SKILL_COUNT, MAGIC_SKILLS } from './skills.js'; // DFCareer.MagicSkills lives there
 import {
-  ADVANTAGE_KEYS, DISADVANTAGE_KEYS, ONLY_ONE_KEYS, MAX_ITEMS, secondaryListFor, advDisAdjustment, cannotAdd,
-} from './specialAdvantages.js';   // UXB1-H: an imported pick passes the window's own gates
-import { localizedStrings } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+  ADVANTAGE_KEYS,
+  DISADVANTAGE_KEYS,
+  ONLY_ONE_KEYS,
+  MAX_ITEMS,
+  secondaryListFor,
+  advDisAdjustment,
+  cannotAdd,
+} from './specialAdvantages.js'; // UXB1-H: an imported pick passes the window's own gates
+import { localizedStrings } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 
 // CreateCharCustomClass.cs:29-34
-export const HP_MIN = 4;                  // minHpPerLevel
-export const HP_MAX = 30;                 // maxHpPerLevel
-export const HP_DEFAULT = 8;              // defaultHpPerLevel
-export const DIFFICULTY_MIN = -12;        // minDifficultyPoints
-export const DIFFICULTY_MAX = 40;         // maxDifficultyPoints
+export const HP_MIN = 4; // minHpPerLevel
+export const HP_MAX = 30; // maxHpPerLevel
+export const HP_DEFAULT = 8; // defaultHpPerLevel
+export const DIFFICULTY_MIN = -12; // minDifficultyPoints
+export const DIFFICULTY_MAX = 40; // maxDifficultyPoints
 
 // StatsRollout.cs:234,260 - the freeEdit clamp band, and
 // DaggerfallStats.cs:28 - every attribute starts at the default 50.
@@ -39,9 +45,9 @@ export function advancementMultiplier(points) {
 /** The difficulty dagger's Y (:500-511): up from 115 toward 46 for
  *  positive points, down toward 186 for negative - C#'s (int) casts
  *  truncate. The dagger is CUST08I0 (24x9) at x 220. */
-export const DAGGER_Y_MIN = 46;       // minDaggerY - the top of the gauge, the hardest class the art can show
-export const DAGGER_Y_MAX = 186;      // maxDaggerY - the bottom, the easiest
-export const DAGGER_Y_DEFAULT = 115;  // defaultDaggerY
+export const DAGGER_Y_MIN = 46; // minDaggerY - the top of the gauge, the hardest class the art can show
+export const DAGGER_Y_MAX = 186; // maxDaggerY - the bottom, the easiest
+export const DAGGER_Y_DEFAULT = 115; // defaultDaggerY
 export function daggerY(points) {
   if (points >= 0) return Math.max(DAGGER_Y_MIN, Math.trunc(DAGGER_Y_DEFAULT - 37 * (points / 40)));
   return Math.min(DAGGER_Y_MAX, Math.trunc(DAGGER_Y_DEFAULT + 41 * (-points / 12)));
@@ -62,7 +68,7 @@ export const daggerFraction = (points) => (DAGGER_Y_MAX - daggerY(points)) / (DA
  *  position is an identical sprite over an identical sprite -
  *  invisible - which is why detecting the y CHANGE at draw time is
  *  observationally DFU's spawn-on-every-UpdateDifficulty. */
-export const DAGGER_TRAIL_LINGER_S = 1.0;   // daggerTrailLingerTime (:35)
+export const DAGGER_TRAIL_LINGER_S = 1.0; // daggerTrailLingerTime (:35)
 
 /** Advance the trail set for this frame's dagger position. `state` is
  *  the caller's bag ({} to start); `now` in seconds, any monotonic
@@ -106,12 +112,18 @@ export function availableSkills(assigned) {
  *  what the value was for the whole of U20a. */
 export function buildCustomCareer({ name, hp, skills, stats, points = null }) {
   return {
-    resistanceFlags: 0, immunityFlags: 0, lowToleranceFlags: 0,
+    resistanceFlags: 0,
+    immunityFlags: 0,
+    lowToleranceFlags: 0,
     criticalWeaknessFlags: 0,
-    abilityFlagsAndSpellPointsBitfield: 20 << 8,   // SpellPointMultipliers.Times_0_50
-    rapidHealing: 0, regeneration: 0, unknown1: 0,
-    spellAbsorptionFlags: 0, attackModifierFlags: 0,
-    forbiddenMaterialsFlags: 0, weaponArmorShieldsBitfield: 0,
+    abilityFlagsAndSpellPointsBitfield: 20 << 8, // SpellPointMultipliers.Times_0_50
+    rapidHealing: 0,
+    regeneration: 0,
+    unknown1: 0,
+    spellAbsorptionFlags: 0,
+    attackModifierFlags: 0,
+    forbiddenMaterialsFlags: 0,
+    weaponArmorShieldsBitfield: 0,
     primarySkills: skills.slice(0, 3),
     majorSkills: skills.slice(3, 6),
     minorSkills: skills.slice(6, 12),
@@ -120,10 +132,14 @@ export function buildCustomCareer({ name, hp, skills, stats, points = null }) {
     advancementMultiplier: advancementMultiplier(points ?? difficultyPoints(hp)),
     // the wizard copies the builder's WORKING stats onto the career's
     // base attributes (DaggerfallStartNewGameWizard.cs:392-399)
-    strength: stats.strength, intelligence: stats.intelligence,
-    willpower: stats.willpower, agility: stats.agility,
-    endurance: stats.endurance, personality: stats.personality,
-    speed: stats.speed, luck: stats.luck,
+    strength: stats.strength,
+    intelligence: stats.intelligence,
+    willpower: stats.willpower,
+    agility: stats.agility,
+    endurance: stats.endurance,
+    personality: stats.personality,
+    speed: stats.speed,
+    luck: stats.luck,
   };
 }
 
@@ -139,12 +155,13 @@ export function classAffinityIndex(customSkills, careers) {
     const classSkills = new Set([...c.primarySkills, ...c.majorSkills, ...c.minorSkills]);
     let affinity = 0;
     for (const s of customSkills) if (classSkills.has(s)) affinity++;
-    if (affinity > highestAffinity) { highestAffinity = affinity; selectedIndex = i; }
+    if (affinity > highestAffinity) {
+      highestAffinity = affinity;
+      selectedIndex = i;
+    }
   }
   return selectedIndex;
 }
-
-
 
 /** SetStartingSpells' custom arm (StartGameBehaviour.cs:809-823): a
  *  custom class with at least one MAGIC skill among its primaries or
@@ -159,24 +176,36 @@ export function customSpellSetIndex(career) {
  *  L10N3d: each [title, id] pair's title is read by its DFU key, in
  *  the player's language, when the picker lists it. */
 const HELP_TITLES = localizedStrings({
-  helpAttributes: 'Attributes', helpClassName: 'Class Name', helpGeneral: 'General',
-  helpReputations: 'Reputations', helpSkillAdvancement: 'Skill Advancement', helpSkills: 'Skills',
-  helpSpecialAdvantages: 'Special Advantages', helpSpecialDisadvantages: 'Special Disadvantages',
+  helpAttributes: 'Attributes',
+  helpClassName: 'Class Name',
+  helpGeneral: 'General',
+  helpReputations: 'Reputations',
+  helpSkillAdvancement: 'Skill Advancement',
+  helpSkills: 'Skills',
+  helpSpecialAdvantages: 'Special Advantages',
+  helpSpecialDisadvantages: 'Special Disadvantages',
 });
 const helpTopic = (key, id) => Object.freeze(Object.defineProperty([key, id], 0, { get: () => HELP_TITLES[key] }));
 export const HELP_TOPICS = Object.freeze([
-  helpTopic('helpAttributes', 2402), helpTopic('helpClassName', 2401), helpTopic('helpGeneral', 2400),
-  helpTopic('helpReputations', 2406), helpTopic('helpSkillAdvancement', 2407), helpTopic('helpSkills', 2403),
-  helpTopic('helpSpecialAdvantages', 2404), helpTopic('helpSpecialDisadvantages', 2405),
+  helpTopic('helpAttributes', 2402),
+  helpTopic('helpClassName', 2401),
+  helpTopic('helpGeneral', 2400),
+  helpTopic('helpReputations', 2406),
+  helpTopic('helpSkillAdvancement', 2407),
+  helpTopic('helpSkills', 2403),
+  helpTopic('helpSpecialAdvantages', 2404),
+  helpTopic('helpSpecialDisadvantages', 2405),
 ]);
 
 // ---- CreateCharReputationWindow (CUST03I0) ----
 
 // :36-41 - the bar geometry and its own colours (DFU literals).
-export const REP_BAR_TOP = 24, REP_BAR_BOTTOM = 128, REP_BAR_MIDDLE = 76;
+export const REP_BAR_TOP = 24,
+  REP_BAR_BOTTOM = 128,
+  REP_BAR_MIDDLE = 76;
 export const REP_GREEN = [0.388, 0.549, 0.223, 1];
-export const REP_RED = [0.580, 0.031, 0, 1];
-export const REP_EXIT = Object.freeze([129, 165, 33, 14]);   // exitButtonRect
+export const REP_RED = [0.58, 0.031, 0, 1];
+export const REP_EXIT = Object.freeze([129, 165, 33, 14]); // exitButtonRect
 export const REP_GROUPS = Object.freeze(['merchants', 'peasants', 'scholars', 'nobility', 'underworld']);
 /** CC-REP: the ledger's reach - a bar is 0..50px in 5px steps, so a
  *  group's reputation is -10..+10 (UpdateRep's `height / 5`). */
@@ -208,7 +237,8 @@ export function roundNearestBarHeight(number) {
  *  the click fell. Returns null outside the band. */
 export function repClick(x, y) {
   if (y < REP_BAR_TOP || y > REP_BAR_BOTTOM) return null;
-  const group = x >= 134 ? 'underworld' : x >= 101 ? 'nobility' : x >= 68 ? 'scholars' : x >= 35 ? 'peasants' : 'merchants';
+  const group =
+    x >= 134 ? 'underworld' : x >= 101 ? 'nobility' : x >= 68 ? 'scholars' : x >= 35 ? 'peasants' : 'merchants';
   // UpdateRep computes repVal from the rounded height on EVERY click:
   // a click exactly on the middle line matches neither of its two
   // strict ifs, so no bar changes - but repVal is still sign 1 * 0 / 5
@@ -245,14 +275,21 @@ export function repPointsToDistribute(reps) {
 
 export const CLASS_FILE_FORMAT = 'daggerfall-enhanced/custom-class';
 export const CLASS_FILE_VERSION = 1;
-const SKILL_GROUP_SIZES = Object.freeze([['primary', 3], ['major', 3], ['minor', 6]]);
+const SKILL_GROUP_SIZES = Object.freeze([
+  ['primary', 3],
+  ['major', 3],
+  ['minor', 6],
+]);
 
 /** The builder's state as a document (plain JSON). `c` is ChargenFlow.custom. */
 export function customClassDoc(c) {
   const skillName = (id) => (id == null ? null : (SKILL_NAMES[id] ?? null));
   let at = 0;
   const skills = {};
-  for (const [group, n] of SKILL_GROUP_SIZES) { skills[group] = c.skills.slice(at, at + n).map(skillName); at += n; }
+  for (const [group, n] of SKILL_GROUP_SIZES) {
+    skills[group] = c.skills.slice(at, at + n).map(skillName);
+    at += n;
+  }
   const picks = (list) => list.map(({ primary, secondary }) => (secondary ? { primary, secondary } : { primary }));
   return {
     format: CLASS_FILE_FORMAT,
@@ -267,7 +304,16 @@ export function customClassDoc(c) {
   };
 }
 
-const STAT_KEYS = Object.freeze(['strength', 'intelligence', 'willpower', 'agility', 'endurance', 'personality', 'speed', 'luck']);
+const STAT_KEYS = Object.freeze([
+  'strength',
+  'intelligence',
+  'willpower',
+  'agility',
+  'endurance',
+  'personality',
+  'speed',
+  'luck',
+]);
 
 /**
  * A class document read back: `{ ok: true, value, skipped }` - the builder's fields, every one through its law -
@@ -279,26 +325,39 @@ export function parseCustomClassDoc(input) {
   const fail = (error) => ({ ok: false, error });
   let doc = input;
   if (typeof input === 'string') {
-    try { doc = JSON.parse(input); } catch { return fail('That is not a class file. It could not be read.'); }
+    try {
+      doc = JSON.parse(input);
+    } catch {
+      return fail('That is not a class file. It could not be read.');
+    }
   }
-  if (!doc || typeof doc !== 'object' || doc.format !== CLASS_FILE_FORMAT) return fail('That is not a DFO Online class file.');
+  if (!doc || typeof doc !== 'object' || doc.format !== CLASS_FILE_FORMAT)
+    return fail('That is not a DFO Online class file.');
   if (!Number.isInteger(doc.version) || doc.version < 1) return fail('That class file has no valid version number.');
   if (doc.version > CLASS_FILE_VERSION) return fail('That class file was made by a newer version of the game.');
   // AUDIT UXB1: the name box types printable characters alone; a file could carry anything - a line break into the
   // classic font's one-line label, or a bidi override that turns the name around wherever another player reads it
   const name = typeof doc.name === 'string' ? doc.name.replace(/[\p{Cc}\p{Cf}]/gu, '').trim() : '';
   const hp = doc.hitPointsPerLevel;
-  if (!Number.isInteger(hp) || hp < HP_MIN || hp > HP_MAX) return fail(`Hit points per level must be a whole number from ${HP_MIN} to ${HP_MAX}.`);
+  if (!Number.isInteger(hp) || hp < HP_MIN || hp > HP_MAX)
+    return fail(`Hit points per level must be a whole number from ${HP_MIN} to ${HP_MAX}.`);
   // the twelve skills: by name (any case) or by id, all distinct - the picker never offers a skill twice
   const byName = new Map(SKILL_NAMES.map((n, i) => [String(n).toLowerCase(), i]));
-  const skillId = (v) => (Number.isInteger(v) && v >= 0 && v < SKILL_COUNT ? v
-    : typeof v === 'string' && byName.has(v.trim().toLowerCase()) ? byName.get(v.trim().toLowerCase()) : undefined);
+  const skillId = (v) =>
+    Number.isInteger(v) && v >= 0 && v < SKILL_COUNT
+      ? v
+      : typeof v === 'string' && byName.has(v.trim().toLowerCase())
+        ? byName.get(v.trim().toLowerCase())
+        : undefined;
   const skills = [];
   for (const [group, n] of SKILL_GROUP_SIZES) {
     const row = doc.skills?.[group];
     if (!Array.isArray(row) || row.length !== n) return fail(`A class has ${n} ${group} skills.`);
     for (const v of row) {
-      if (v == null) { skills.push(null); continue; }
+      if (v == null) {
+        skills.push(null);
+        continue;
+      }
       const id = skillId(v);
       if (id === undefined) return fail(`"${v}" is not a skill.`);
       skills.push(id);
@@ -310,19 +369,24 @@ export function parseCustomClassDoc(input) {
   const stats = {};
   for (const k of STAT_KEYS) {
     const v = doc.attributes?.[k];
-    if (!Number.isInteger(v) || v < FREE_EDIT_MIN || v > FREE_EDIT_MAX) return fail(`${k[0].toUpperCase()}${k.slice(1)} must be a whole number from ${FREE_EDIT_MIN} to ${FREE_EDIT_MAX}.`);
+    if (!Number.isInteger(v) || v < FREE_EDIT_MIN || v > FREE_EDIT_MAX)
+      return fail(
+        `${k[0].toUpperCase()}${k.slice(1)} must be a whole number from ${FREE_EDIT_MIN} to ${FREE_EDIT_MAX}.`,
+      );
     stats[k] = v;
   }
   // the reputations, each in the bar's reach
   const reps = {};
   for (const g of REP_GROUPS) {
     const v = doc.reputations?.[g] ?? 0;
-    if (!Number.isInteger(v) || Math.abs(v) > REP_MAX) return fail(`A reputation is a whole number from -${REP_MAX} to ${REP_MAX}.`);
+    if (!Number.isInteger(v) || Math.abs(v) > REP_MAX)
+      return fail(`A reputation is a whole number from -${REP_MAX} to ${REP_MAX}.`);
     reps[g] = v || 0;
   }
   // the special picks, through the windows' own gates, in order
   const skipped = [];
-  const advantages = [], disadvantages = [];
+  const advantages = [],
+    disadvantages = [];
   const take = (entries, keys, list, other) => {
     for (const e of Array.isArray(entries) ? entries : []) {
       const primary = e?.primary;
@@ -330,9 +394,15 @@ export function parseCustomClassDoc(input) {
       const second = keys.includes(primary) ? secondaryListFor(primary) : null;
       const valid = keys.includes(primary) && (second ? second.includes(secondary) : secondary === '');
       const item = valid ? { primary, secondary, difficulty: advDisAdjustment(primary, secondary) } : null;
-      if (!item || list.length >= MAX_ITEMS
-        || (ONLY_ONE_KEYS.includes(primary) && list.some((x) => x.primary === primary))
-        || cannotAdd(item, list, other)) { skipped.push(e); continue; }
+      if (
+        !item ||
+        list.length >= MAX_ITEMS ||
+        (ONLY_ONE_KEYS.includes(primary) && list.some((x) => x.primary === primary)) ||
+        cannotAdd(item, list, other)
+      ) {
+        skipped.push(e);
+        continue;
+      }
       list.push(item);
     }
   };

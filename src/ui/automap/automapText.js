@@ -35,34 +35,44 @@
 // drifts.
 
 import { shortcutBinding, sequenceString, hotkeySequence } from '../../systems/dialogShortcuts.js';
-import { localizedStrings } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedStrings } from '../../systems/textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** DaggerfallAutomapWindow.fallbackKey (:75). */
 export const AUTOMAP_FALLBACK_KEY = 'Home';
 
 /** Internal_Strings.csv:874-890, byte for byte. */
 export const AUTOMAP_STRINGS = localizedStrings({
-  automapToolTipTextGridButton: "left click: switch between 2D top view and 3D view (hotkey: {0})\\rright click: reset rot. axis to player pos (hotkey: {1})\\rmouse wheel up while over btn: inc. perspective (only 3D mode)\\rmouse wheel down while over btn: dec. perspective (only 3D mode)",
-  automapToolTipForwardButton: "left click: move viewpoint forward (hotkey: {0})\\rright click: move rotation axis forward (hotkey: {1})",
-  automapToolTipBackwardButton: "left click: move viewpoint backwards (hotkey: {0})\\rright click: move rotation axis backwards (hotkey: {1})",
-  automapToolTipLeftButton: "left click: move viewpoint to the left (hotkey: {0})\\rright click: move rotation axis to the left (hotkey: {1})",
-  automapToolTipRightButton: "left click: move viewpoint to the right (hotkey: {0})\\rright click: move rotation axis to the right (hotkey: {1})",
-  automapToolTipRotateLeftButton: "left click: rotate dungeon to the left (hotkey: {0})\\rright click: rotate camera to the left (hotkey: {1})",
-  automapToolTipRotateRightButton: "left click: rotate dungeon to the right (hotkey: {0})\\rright click: rotate camera to the right (hotkey: {1})",
-  automapToolTipUpstairsButton: "left click: increase viewpoint (hotkey: {0})\\rright click: increase slice level (hotkey: {1})\\rslice level can also be adjusted by holding down middle mouse btn\\r\\rhint: different render modes may show hidden geometry:\\rhotkey {2}: cutout mode\\rhotkey {3}: wireframe mode\\rhotkey {4}: transparent mode\\rswitch between modes with return key\\r",
-  automapToolTipDownstairsButton: "left click: decrease viewpoint (hotkey: {0})\\rright click: decrease slice level (hotkey: {1})\\rslice level can also be adjusted by holding down middle mouse btn\\r\\rhint: different render modes may show hidden geometry:\\rhotkey {2}: cutout mode\\rhotkey {3}: wireframe mode\\rhotkey {4}: transparent mode\\rswitch between modes with return key\\r",
-  automapToolTipPanelCompass: "left click: toggle focus (hotkey: {0})\\rbeacons: red ... player, green ... entrance, blue ... rotation axis\\r\\rright click: reset view (hotkey: {1})\\r\\rdouble-click left mouse btn in window to create+edit marker note\\rdouble-click left mouse btn (+Ctrl key) in window to create marker\\rdouble-click left mouse btn on a marker to add/edit a note\\rdouble-click right mouse btn on a marker to delete it\\rdouble-click right mouse btn in window to position rotation axis\\rdouble-click middle mouse btn in window to center view\\rdouble-click left mouse btn on discovered portal marker to jump\\rto connected teleporter portal",
-  automapPlayerPositionBeacon: "player position beacon",
-  automapRotationPivotAxis: "rotation pivot axis",
-  automapEntranceExitPositionBeacon: "entrance/exit position beacon",
-  automapEntranceExit: "entrance/exit",
-  automapPlayerMarker: "player marker",
-  automapTeleporterEntrance: "teleporter (entrance)",
-  automapTeleporterExit: "teleporter (exit)",
+  automapToolTipTextGridButton:
+    'left click: switch between 2D top view and 3D view (hotkey: {0})\\rright click: reset rot. axis to player pos (hotkey: {1})\\rmouse wheel up while over btn: inc. perspective (only 3D mode)\\rmouse wheel down while over btn: dec. perspective (only 3D mode)',
+  automapToolTipForwardButton:
+    'left click: move viewpoint forward (hotkey: {0})\\rright click: move rotation axis forward (hotkey: {1})',
+  automapToolTipBackwardButton:
+    'left click: move viewpoint backwards (hotkey: {0})\\rright click: move rotation axis backwards (hotkey: {1})',
+  automapToolTipLeftButton:
+    'left click: move viewpoint to the left (hotkey: {0})\\rright click: move rotation axis to the left (hotkey: {1})',
+  automapToolTipRightButton:
+    'left click: move viewpoint to the right (hotkey: {0})\\rright click: move rotation axis to the right (hotkey: {1})',
+  automapToolTipRotateLeftButton:
+    'left click: rotate dungeon to the left (hotkey: {0})\\rright click: rotate camera to the left (hotkey: {1})',
+  automapToolTipRotateRightButton:
+    'left click: rotate dungeon to the right (hotkey: {0})\\rright click: rotate camera to the right (hotkey: {1})',
+  automapToolTipUpstairsButton:
+    'left click: increase viewpoint (hotkey: {0})\\rright click: increase slice level (hotkey: {1})\\rslice level can also be adjusted by holding down middle mouse btn\\r\\rhint: different render modes may show hidden geometry:\\rhotkey {2}: cutout mode\\rhotkey {3}: wireframe mode\\rhotkey {4}: transparent mode\\rswitch between modes with return key\\r',
+  automapToolTipDownstairsButton:
+    'left click: decrease viewpoint (hotkey: {0})\\rright click: decrease slice level (hotkey: {1})\\rslice level can also be adjusted by holding down middle mouse btn\\r\\rhint: different render modes may show hidden geometry:\\rhotkey {2}: cutout mode\\rhotkey {3}: wireframe mode\\rhotkey {4}: transparent mode\\rswitch between modes with return key\\r',
+  automapToolTipPanelCompass:
+    'left click: toggle focus (hotkey: {0})\\rbeacons: red ... player, green ... entrance, blue ... rotation axis\\r\\rright click: reset view (hotkey: {1})\\r\\rdouble-click left mouse btn in window to create+edit marker note\\rdouble-click left mouse btn (+Ctrl key) in window to create marker\\rdouble-click left mouse btn on a marker to add/edit a note\\rdouble-click right mouse btn on a marker to delete it\\rdouble-click right mouse btn in window to position rotation axis\\rdouble-click middle mouse btn in window to center view\\rdouble-click left mouse btn on discovered portal marker to jump\\rto connected teleporter portal',
+  automapPlayerPositionBeacon: 'player position beacon',
+  automapRotationPivotAxis: 'rotation pivot axis',
+  automapEntranceExitPositionBeacon: 'entrance/exit position beacon',
+  automapEntranceExit: 'entrance/exit',
+  automapPlayerMarker: 'player marker',
+  automapTeleporterEntrance: 'teleporter (entrance)',
+  automapTeleporterExit: 'teleporter (exit)',
   // c2/S8 - Internal_Strings.csv:1057, the note editor's prompt
   // (EditUserNote's SetTextBoxLabel, Automap.cs:1596). The trailing
   // space is in the CSV.
-  youNote: "You note: ",
+  youNote: 'You note: ',
 });
 
 /**
@@ -97,16 +107,24 @@ export function shortcutOrFallback(button, automapBinding) {
  * systems/dialogShortcuts.js.
  */
 export const EXTERIOR_AUTOMAP_STRINGS = localizedStrings({
-  exteriorAutomapToolTipTextGridButton: "left click: switch to next view mode (hotkey: {0})\\ravailable view modes are:\\r- original (hotkey {1})\\r- extra: includes extra buildings (hotkey {2})\\r- all: includes extra buildings, ground flats (hotkey {3})\\rswitch background texture with {4}, {5}, {6}, {7}",
-  exteriorAutomapToolTipForwardButton: "left click: move up (hotkey: {0})\\rright click: move to north location border (hotkey: {1})",
-  exteriorAutomapToolTipBackwardButton: "left click: move down (hotkey: {0})\\rright click: move to south location border (hotkey: {1})",
-  exteriorAutomapToolTipLeftButton: "left click: move to the left (hotkey: {0})\\rright click: move to west location border (hotkey: {1})",
-  exteriorAutomapToolTipRightButton: "left click: move to the right (hotkey: {0})\\rright click: move to east location border (hotkey: {1})",
-  exteriorAutomapToolTipRotateLeftButton: "left click: rotate map to the left (hotkey: {0})\\rright click: rotate map around the player position\\rto the left  (hotkey: {1})",
-  exteriorAutomapToolTipRotateRightButton: "left click: rotate map to the right (hotkey: {0})\\rright click: rotate map around the player position\\rto the right (hotkey: {1})",
-  exteriorAutomapToolTipUpstairsButton: "left click: zoom in (hotkey: {0})\\rright click: apply maximum zoom)",
-  exteriorAutomapToolTipDownstairsButton: "left click: zoom out (hotkey: {0}\\rright click: apply minimum zoom)",
-  exteriorAutomapToolTipPanelCompass: "left click: focus player position (hotkey: {0})\\rright click: reset view (hotkey: {1})",
+  exteriorAutomapToolTipTextGridButton:
+    'left click: switch to next view mode (hotkey: {0})\\ravailable view modes are:\\r- original (hotkey {1})\\r- extra: includes extra buildings (hotkey {2})\\r- all: includes extra buildings, ground flats (hotkey {3})\\rswitch background texture with {4}, {5}, {6}, {7}',
+  exteriorAutomapToolTipForwardButton:
+    'left click: move up (hotkey: {0})\\rright click: move to north location border (hotkey: {1})',
+  exteriorAutomapToolTipBackwardButton:
+    'left click: move down (hotkey: {0})\\rright click: move to south location border (hotkey: {1})',
+  exteriorAutomapToolTipLeftButton:
+    'left click: move to the left (hotkey: {0})\\rright click: move to west location border (hotkey: {1})',
+  exteriorAutomapToolTipRightButton:
+    'left click: move to the right (hotkey: {0})\\rright click: move to east location border (hotkey: {1})',
+  exteriorAutomapToolTipRotateLeftButton:
+    'left click: rotate map to the left (hotkey: {0})\\rright click: rotate map around the player position\\rto the left  (hotkey: {1})',
+  exteriorAutomapToolTipRotateRightButton:
+    'left click: rotate map to the right (hotkey: {0})\\rright click: rotate map around the player position\\rto the right (hotkey: {1})',
+  exteriorAutomapToolTipUpstairsButton: 'left click: zoom in (hotkey: {0})\\rright click: apply maximum zoom)',
+  exteriorAutomapToolTipDownstairsButton: 'left click: zoom out (hotkey: {0}\\rright click: apply minimum zoom)',
+  exteriorAutomapToolTipPanelCompass:
+    'left click: focus player position (hotkey: {0})\\rright click: reset view (hotkey: {1})',
 });
 
 /** String.Format over the row: {0}, {1}, ... take the named buttons'
@@ -128,22 +146,58 @@ export function automapText(key, buttons = [], automapBinding = null, strings = 
  * rect names are ui/automap/automapChrome.js's.
  */
 export const AUTOMAP_TOOLTIPS = Object.freeze({
-  grid: Object.freeze({ key: 'automapToolTipTextGridButton', buttons: Object.freeze(['AutomapSwitchAutomapGridMode', 'AutomapResetRotationPivotAxisView']) }),
-  forward: Object.freeze({ key: 'automapToolTipForwardButton', buttons: Object.freeze(['AutomapMoveForward', 'AutomapMoveRotationPivotAxisForward']) }),
-  backward: Object.freeze({ key: 'automapToolTipBackwardButton', buttons: Object.freeze(['AutomapMoveBackward', 'AutomapMoveRotationPivotAxisBackward']) }),
-  left: Object.freeze({ key: 'automapToolTipLeftButton', buttons: Object.freeze(['AutomapMoveLeft', 'AutomapMoveRotationPivotAxisLeft']) }),
-  right: Object.freeze({ key: 'automapToolTipRightButton', buttons: Object.freeze(['AutomapMoveRight', 'AutomapMoveRotationPivotAxisRight']) }),
-  rotateLeft: Object.freeze({ key: 'automapToolTipRotateLeftButton', buttons: Object.freeze(['AutomapRotateLeft', 'AutomapRotateCameraLeft']) }),
-  rotateRight: Object.freeze({ key: 'automapToolTipRotateRightButton', buttons: Object.freeze(['AutomapRotateRight', 'AutomapRotateCameraRight']) }),
+  grid: Object.freeze({
+    key: 'automapToolTipTextGridButton',
+    buttons: Object.freeze(['AutomapSwitchAutomapGridMode', 'AutomapResetRotationPivotAxisView']),
+  }),
+  forward: Object.freeze({
+    key: 'automapToolTipForwardButton',
+    buttons: Object.freeze(['AutomapMoveForward', 'AutomapMoveRotationPivotAxisForward']),
+  }),
+  backward: Object.freeze({
+    key: 'automapToolTipBackwardButton',
+    buttons: Object.freeze(['AutomapMoveBackward', 'AutomapMoveRotationPivotAxisBackward']),
+  }),
+  left: Object.freeze({
+    key: 'automapToolTipLeftButton',
+    buttons: Object.freeze(['AutomapMoveLeft', 'AutomapMoveRotationPivotAxisLeft']),
+  }),
+  right: Object.freeze({
+    key: 'automapToolTipRightButton',
+    buttons: Object.freeze(['AutomapMoveRight', 'AutomapMoveRotationPivotAxisRight']),
+  }),
+  rotateLeft: Object.freeze({
+    key: 'automapToolTipRotateLeftButton',
+    buttons: Object.freeze(['AutomapRotateLeft', 'AutomapRotateCameraLeft']),
+  }),
+  rotateRight: Object.freeze({
+    key: 'automapToolTipRotateRightButton',
+    buttons: Object.freeze(['AutomapRotateRight', 'AutomapRotateCameraRight']),
+  }),
   upstairs: Object.freeze({
     key: 'automapToolTipUpstairsButton',
-    buttons: Object.freeze(['AutomapUpstairs', 'AutomapIncreaseSliceLevel', 'AutomapSwitchToAutomapRenderModeCutout', 'AutomapSwitchToAutomapRenderModeWireframe', 'AutomapSwitchToAutomapRenderModeTransparent']),
+    buttons: Object.freeze([
+      'AutomapUpstairs',
+      'AutomapIncreaseSliceLevel',
+      'AutomapSwitchToAutomapRenderModeCutout',
+      'AutomapSwitchToAutomapRenderModeWireframe',
+      'AutomapSwitchToAutomapRenderModeTransparent',
+    ]),
   }),
   downstairs: Object.freeze({
     key: 'automapToolTipDownstairsButton',
-    buttons: Object.freeze(['AutomapDownstairs', 'AutomapDecreaseSliceLevel', 'AutomapSwitchToAutomapRenderModeCutout', 'AutomapSwitchToAutomapRenderModeWireframe', 'AutomapSwitchToAutomapRenderModeTransparent']),
+    buttons: Object.freeze([
+      'AutomapDownstairs',
+      'AutomapDecreaseSliceLevel',
+      'AutomapSwitchToAutomapRenderModeCutout',
+      'AutomapSwitchToAutomapRenderModeWireframe',
+      'AutomapSwitchToAutomapRenderModeTransparent',
+    ]),
   }),
-  compass: Object.freeze({ key: 'automapToolTipPanelCompass', buttons: Object.freeze(['AutomapSwitchFocusToNextBeaconObject', 'AutomapResetView']) }),
+  compass: Object.freeze({
+    key: 'automapToolTipPanelCompass',
+    buttons: Object.freeze(['AutomapSwitchFocusToNextBeaconObject', 'AutomapResetView']),
+  }),
 });
 
 /** The tooltip a named chrome rect shows, or null - the EXIT button and
@@ -179,15 +233,42 @@ export const EXTERIOR_AUTOMAP_TOOLTIPS = Object.freeze({
       'ExtAutomapSwitchToExteriorAutomapBackgroundAlternative3',
     ]),
   }),
-  forward: Object.freeze({ key: 'exteriorAutomapToolTipForwardButton', buttons: Object.freeze(['ExtAutomapMoveForward', 'ExtAutomapMoveToNorthLocationBorder']) }),
-  backward: Object.freeze({ key: 'exteriorAutomapToolTipBackwardButton', buttons: Object.freeze(['ExtAutomapMoveBackward', 'ExtAutomapMoveToSouthLocationBorder']) }),
-  left: Object.freeze({ key: 'exteriorAutomapToolTipLeftButton', buttons: Object.freeze(['ExtAutomapMoveLeft', 'ExtAutomapMoveToWestLocationBorder']) }),
-  right: Object.freeze({ key: 'exteriorAutomapToolTipRightButton', buttons: Object.freeze(['ExtAutomapMoveRight', 'ExtAutomapMoveToEastLocationBorder']) }),
-  rotateLeft: Object.freeze({ key: 'exteriorAutomapToolTipRotateLeftButton', buttons: Object.freeze(['ExtAutomapRotateLeft', 'ExtAutomapRotateAroundPlayerPosLeft']) }),
-  rotateRight: Object.freeze({ key: 'exteriorAutomapToolTipRotateRightButton', buttons: Object.freeze(['ExtAutomapRotateRight', 'ExtAutomapRotateAroundPlayerPosRight']) }),
-  upstairs: Object.freeze({ key: 'exteriorAutomapToolTipUpstairsButton', buttons: Object.freeze(['ExtAutomapZoomIn']) }),
-  downstairs: Object.freeze({ key: 'exteriorAutomapToolTipDownstairsButton', buttons: Object.freeze(['ExtAutomapZoomOut']) }),
-  compass: Object.freeze({ key: 'exteriorAutomapToolTipPanelCompass', buttons: Object.freeze(['ExtAutomapFocusPlayerPosition', 'ExtAutomapResetView']) }),
+  forward: Object.freeze({
+    key: 'exteriorAutomapToolTipForwardButton',
+    buttons: Object.freeze(['ExtAutomapMoveForward', 'ExtAutomapMoveToNorthLocationBorder']),
+  }),
+  backward: Object.freeze({
+    key: 'exteriorAutomapToolTipBackwardButton',
+    buttons: Object.freeze(['ExtAutomapMoveBackward', 'ExtAutomapMoveToSouthLocationBorder']),
+  }),
+  left: Object.freeze({
+    key: 'exteriorAutomapToolTipLeftButton',
+    buttons: Object.freeze(['ExtAutomapMoveLeft', 'ExtAutomapMoveToWestLocationBorder']),
+  }),
+  right: Object.freeze({
+    key: 'exteriorAutomapToolTipRightButton',
+    buttons: Object.freeze(['ExtAutomapMoveRight', 'ExtAutomapMoveToEastLocationBorder']),
+  }),
+  rotateLeft: Object.freeze({
+    key: 'exteriorAutomapToolTipRotateLeftButton',
+    buttons: Object.freeze(['ExtAutomapRotateLeft', 'ExtAutomapRotateAroundPlayerPosLeft']),
+  }),
+  rotateRight: Object.freeze({
+    key: 'exteriorAutomapToolTipRotateRightButton',
+    buttons: Object.freeze(['ExtAutomapRotateRight', 'ExtAutomapRotateAroundPlayerPosRight']),
+  }),
+  upstairs: Object.freeze({
+    key: 'exteriorAutomapToolTipUpstairsButton',
+    buttons: Object.freeze(['ExtAutomapZoomIn']),
+  }),
+  downstairs: Object.freeze({
+    key: 'exteriorAutomapToolTipDownstairsButton',
+    buttons: Object.freeze(['ExtAutomapZoomOut']),
+  }),
+  compass: Object.freeze({
+    key: 'exteriorAutomapToolTipPanelCompass',
+    buttons: Object.freeze(['ExtAutomapFocusPlayerPosition', 'ExtAutomapResetView']),
+  }),
 });
 
 /** The exterior window's tooltip for a named chrome rect, or null -

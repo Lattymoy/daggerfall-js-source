@@ -31,7 +31,11 @@
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
 /** Mathf.SmoothStep. */
-const smoothStep = (from, to, t) => { t = clamp01(t); t = -2 * t * t * t + 3 * t * t; return to * t + from * (1 - t); };
+const smoothStep = (from, to, t) => {
+  t = clamp01(t);
+  t = -2 * t * t * t + 3 * t * t;
+  return to * t + from * (1 - t);
+};
 
 export const SWIM_ENTER_CLEARANCE = 0.1;
 export const SWIM_EXIT_CLEARANCE = 0.75;
@@ -47,9 +51,28 @@ export const WATER_CONTACT_MINIMUM_DEPTH = 0.5;
 export const WATER_CONTACT_GRACE_SECONDS = 1.25;
 export const DESCEND_WATER_CONTACT_ALLOWANCE = 1.5;
 /** OutdoorShoreExitAssist. */
-export const SHORE_EXIT = Object.freeze({ probeHeightAboveOcean: 13, probeDistance: 18, minForwardInput: 0.02, minLandingNormalY: 0.45, landingWaterMargin: 0.25, maxLandingAboveOcean: 8, minOpenWaterColumnDepth: 2 });
+export const SHORE_EXIT = Object.freeze({
+  probeHeightAboveOcean: 13,
+  probeDistance: 18,
+  minForwardInput: 0.02,
+  minLandingNormalY: 0.45,
+  landingWaterMargin: 0.25,
+  maxLandingAboveOcean: 8,
+  minOpenWaterColumnDepth: 2,
+});
 /** OutdoorSwimMovementController. */
-export const STROKE = Object.freeze({ duration: 0.48, cooldown: 0.9, extraSpeed: 2.65, fatigueFraction: 0.025, minFatigue: 24, tempoExponent: 0.35, surfaceUpwardCameraClearance: 0.35, seafloorClearance: 0.18, maxShoreClampCorrection: 2.5, maxMoveDelta: 0.1 });
+export const STROKE = Object.freeze({
+  duration: 0.48,
+  cooldown: 0.9,
+  extraSpeed: 2.65,
+  fatigueFraction: 0.025,
+  minFatigue: 24,
+  tempoExponent: 0.35,
+  surfaceUpwardCameraClearance: 0.35,
+  seafloorClearance: 0.18,
+  maxShoreClampCorrection: 2.5,
+  maxMoveDelta: 0.1,
+});
 
 /** PlayerSwimCheckY: the capsule centre + 50 * GlobalScale - 0.95. */
 export const swimCheckY = (centreY) => centreY + 1.25 - 0.95;
@@ -58,7 +81,11 @@ export const headUnderwater = (centreY, oceanY) => centreY + 1.9 - 0.95 < oceanY
 /** IsPlayerHeadClearOfSurface. */
 export const headClearOfSurface = (centreY, oceanY) => centreY + 1.9 - 0.95 > oceanY;
 /** Mathf.Round: the .5 tie to the even integer (System.Math.Round's default), never JS's toward +Infinity. */
-const roundHalfEven = (v) => { const f = Math.floor(v); const r = v - f; return r > 0.5 ? f + 1 : r < 0.5 ? f : (f % 2 === 0 ? f : f + 1); };
+const roundHalfEven = (v) => {
+  const f = Math.floor(v);
+  const r = v - f;
+  return r > 0.5 ? f + 1 : r < 0.5 ? f : f % 2 === 0 ? f : f + 1;
+};
 /** NoWaterSentinel: PlayerEnterExit.blockWaterLevel with no water (the forge's Restore writes it back). */
 export const NO_WATER_LEVEL = 10000;
 /** WorldYToBlockWaterLevel: DFU's blockWaterLevel for a world height - (short)Mathf.Clamp(Mathf.Round(-y / 0.025), -32768, 32767). */
@@ -79,7 +106,8 @@ export function forgedSwimWaterLineY(oceanY, isSwimming, centreY) {
 export const surfaceAscentCeiling = (oceanY) => oceanY + SWIM_PHYSICS_SURFACE_OFFSET - 1.25 + 0.93;
 
 /** PresentationWaterLevelForFog: the height DFU's UnderwaterFog is fed - the sea, or the camera's own check point less 0.65 when that is higher. */
-export const presentationWaterLineForFog = (oceanY, cameraY) => Math.max(oceanY, cameraY + 1.25 - 0.95 - FOG_CAMERA_CLEARANCE);
+export const presentationWaterLineForFog = (oceanY, cameraY) =>
+  Math.max(oceanY, cameraY + 1.25 - 0.95 - FOG_CAMERA_CLEARANCE);
 
 /**
  * The per-frame state machine: the contact grace, the forge, the
@@ -95,11 +123,14 @@ export class DeepWaterSwimState {
     this.swimming = false;
     this.headSubmerged = false;
     this.underwater = false;
-    this.wasForged = false;   // the host's half of Restore: the frame the forge ends
+    this.wasForged = false; // the host's half of Restore: the frame the forge ends
   }
 
   /** ResetHeadWaterState. */
-  resetHead(underwater = false) { this._presentationUnderwater = underwater; this._headInit = false; }
+  resetHead(underwater = false) {
+    this._presentationUnderwater = underwater;
+    this._headInit = false;
+  }
 
   /** ClearOutdoorWaterState / ClearState. */
   clear() {
@@ -114,7 +145,10 @@ export class DeepWaterSwimState {
    */
   presentationUnderwater(oceanY, cameraY, centreY) {
     const flag = cameraY < oceanY + CAMERA_ENTER_UNDERWATER_CLEARANCE || headUnderwater(centreY, oceanY);
-    if (!this._headInit) { this._presentationUnderwater = flag; this._headInit = true; }
+    if (!this._headInit) {
+      this._presentationUnderwater = flag;
+      this._headInit = true;
+    }
     if (this._presentationUnderwater) {
       if (!flag && cameraY > oceanY + CAMERA_EXIT_UNDERWATER_CLEARANCE) this._presentationUnderwater = false;
     } else if (flag) this._presentationUnderwater = true;
@@ -126,13 +160,19 @@ export class DeepWaterSwimState {
    * @param {object} f - {now, oceanY, centreY, descend, onShore, grounded, usableColumnHere}
    */
   recentContact(f) {
-    if (!f.descend && f.onShore) { this.waterContactUntil = 0; return false; }
+    if (!f.descend && f.onShore) {
+      this.waterContactUntil = 0;
+      return false;
+    }
     const allowance = f.descend ? DESCEND_WATER_CONTACT_ALLOWANCE : SWIM_EXIT_CLEARANCE;
     if (!(swimCheckY(f.centreY) > f.oceanY + allowance) && f.usableColumnHere) {
       this.waterContactUntil = f.now + WATER_CONTACT_GRACE_SECONDS;
       return true;
     }
-    if (!f.descend && f.grounded) { this.waterContactUntil = 0; return false; }
+    if (!f.descend && f.grounded) {
+      this.waterContactUntil = 0;
+      return false;
+    }
     return f.now < this.waterContactUntil;
   }
 
@@ -149,16 +189,21 @@ export class DeepWaterSwimState {
     const underwater = contact && this.presentationUnderwater(f.oceanY, f.cameraY, f.centreY);
     const headSubmerged = contact && headUnderwater(f.centreY, f.oceanY);
     if (onShore) this.resetHead(false);
-    this.inWater = contact; this.swimming = swimming; this.headSubmerged = headSubmerged; this.underwater = underwater;
+    this.inWater = contact;
+    this.swimming = swimming;
+    this.headSubmerged = headSubmerged;
+    this.underwater = underwater;
     return { inWater: contact, swimming, headSubmerged, underwater, onShore };
   }
 }
 
 /** CurrentStrokeTempoScale. */
-export const strokeTempoScale = (swimSpeedMultiplier) => Math.max(0.5, Math.pow(clamp(swimSpeedMultiplier, 0.25, 30), STROKE.tempoExponent));
+export const strokeTempoScale = (swimSpeedMultiplier) =>
+  Math.max(0.5, Math.pow(clamp(swimSpeedMultiplier, 0.25, 30), STROKE.tempoExponent));
 
 /** The stroke's fatigue: max(24, ceil(MaxFatigue * 0.025)). */
-export const strokeFatigueCost = (maxFatigue) => Math.max(STROKE.minFatigue, Math.ceil(maxFatigue * STROKE.fatigueFraction));
+export const strokeFatigueCost = (maxFatigue) =>
+  Math.max(STROKE.minFatigue, Math.ceil(maxFatigue * STROKE.fatigueFraction));
 
 /**
  * TryResolveStrokeDirection: the move keys through the CAMERA's transform
@@ -174,8 +219,10 @@ export function strokeDirection(i) {
   let d;
   const moving = Math.abs(i.strafe) > 0.001 || Math.abs(i.forward) > 0.001;
   if (moving) {
-    const k = i.strafe !== 0 && i.forward !== 0 ? 0.7071 : 1;   // limitDiagonalSpeed
-    const sin = Math.sin(i.yaw), cos = Math.cos(i.yaw), cp = Math.cos(i.pitch ?? 0);
+    const k = i.strafe !== 0 && i.forward !== 0 ? 0.7071 : 1; // limitDiagonalSpeed
+    const sin = Math.sin(i.yaw),
+      cos = Math.cos(i.yaw),
+      cp = Math.cos(i.pitch ?? 0);
     // HANDEDNESS (mat4's law): forward (sin cp, sin pitch, cos cp), right (cos, 0, -sin); y then zeroed
     d = [(sin * cp * i.forward + cos * i.strafe) * k, 0, (cos * cp * i.forward - sin * i.strafe) * k];
   } else d = [i.lookDir[0], i.lookDir[1], i.lookDir[2]];
@@ -214,22 +261,38 @@ export const SWIM_SOUND_DISTANCE = 2.5;
  * footsteps' EV1 law; Unity's would bill the recentre as a stroke).
  */
 export class SwimSoundOdometer {
-  constructor() { this.tracking = false; this.last = [0, 0, 0]; this.distance = 0; }
+  constructor() {
+    this.tracking = false;
+    this.last = [0, 0, 0];
+    this.distance = 0;
+  }
   /** ResetSwimTracking. */
-  reset() { this.tracking = false; this.distance = 0; }
+  reset() {
+    this.tracking = false;
+    this.distance = 0;
+  }
   /** The world moved under the mark. */
-  rebase(offset) { if (this.tracking) for (let i = 0; i < 3; i++) this.last[i] += offset[i]; }
+  rebase(offset) {
+    if (this.tracking) for (let i = 0; i < 3; i++) this.last[i] += offset[i];
+  }
   /** @param {number[]} pos @returns {boolean} a splash is due this frame */
   step(pos) {
     if (!this.tracking) {
-      this.last[0] = pos[0]; this.last[1] = pos[1]; this.last[2] = pos[2];
+      this.last[0] = pos[0];
+      this.last[1] = pos[1];
+      this.last[2] = pos[2];
       this.distance = 0;
       this.tracking = true;
       return false;
     }
     this.distance += Math.hypot(pos[0] - this.last[0], pos[1] - this.last[1], pos[2] - this.last[2]);
-    this.last[0] = pos[0]; this.last[1] = pos[1]; this.last[2] = pos[2];
-    if (!(this.distance < SWIM_SOUND_DISTANCE)) { this.distance = 0; return true; }
+    this.last[0] = pos[0];
+    this.last[1] = pos[1];
+    this.last[2] = pos[2];
+    if (!(this.distance < SWIM_SOUND_DISTANCE)) {
+      this.distance = 0;
+      return true;
+    }
     return false;
   }
 }

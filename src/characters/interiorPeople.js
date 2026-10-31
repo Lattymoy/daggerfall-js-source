@@ -40,7 +40,9 @@ export function collectInteriorPeople(recordData) {
       flags: obj.flags,
       // IC-INTERIORS: a person a made interior stands again keeps the position its own record gave it (`castPos` - its
       // name's and its identity's, world/interior/interiorLayout.js interiorCast), wherever the room stands it
-      rawX: obj.castPos?.[0] ?? obj.xPos, rawY: obj.castPos?.[1] ?? obj.yPos, rawZ: obj.castPos?.[2] ?? obj.zPos,
+      rawX: obj.castPos?.[0] ?? obj.xPos,
+      rawY: obj.castPos?.[1] ?? obj.yPos,
+      rawZ: obj.castPos?.[2] ?? obj.zPos,
       // Q4-v: the record's stream position - DFU's obj.Position, the
       // StaticNPC nameSeed's identity component.
       position: obj.position,
@@ -82,10 +84,10 @@ export function collectInteriorPeople(recordData) {
  * @param ctx.guildForBuilding(factionId) -> { hallAccessAnytime, isMember }
  * @returns true if the person stands and is wired to the quest machine
  */
-export function peopleAreVisible(building, {
-  hour = 12, insideOpenShop = false,
-  isHouseOwned = null, guildForBuilding = null,
-} = {}) {
+export function peopleAreVisible(
+  building,
+  { hour = 12, insideOpenShop = false, isHouseOwned = null, guildForBuilding = null } = {},
+) {
   const type = building?.buildingType ?? BUILDING_TYPES.None;
   const factionId = building?.factionId ?? 0;
   const g = guildForBuilding?.(factionId) ?? null;
@@ -100,12 +102,14 @@ export function peopleAreVisible(building, {
   // ...and every other building up to House4 keeps its hours, unless
   // it is a guild hall the player may enter at any time, or a TG/DB
   // house they are a member of (:1216-1220).
-  const isTGDBHouseMember = type === BUILDING_TYPES.House2
-    && factionId !== 0 && (g?.isMember ?? false);
-  if (type <= BUILDING_TYPES.House4
-    && !isBuildingOpen(type, hour)
-    && !(type === BUILDING_TYPES.GuildHall && (g?.hallAccessAnytime ?? false))
-    && !isTGDBHouseMember) return false;
+  const isTGDBHouseMember = type === BUILDING_TYPES.House2 && factionId !== 0 && (g?.isMember ?? false);
+  if (
+    type <= BUILDING_TYPES.House4 &&
+    !isBuildingOpen(type, hour) &&
+    !(type === BUILDING_TYPES.GuildHall && (g?.hallAccessAnytime ?? false)) &&
+    !isTGDBHouseMember
+  )
+    return false;
 
   return true;
 }
@@ -155,8 +159,9 @@ export function peopleAreVisible(building, {
  */
 export function updateNpcPresence(buildingType, { hour = 12, insideOpenShop = false } = {}) {
   const type = buildingType ?? BUILDING_TYPES.None;
-  const gate = (isShop(type) && !insideOpenShop)
-    || (!isShop(type) && type <= BUILDING_TYPES.House4 && type !== BUILDING_TYPES.HouseForSale);
+  const gate =
+    (isShop(type) && !insideOpenShop) ||
+    (!isShop(type) && type <= BUILDING_TYPES.House4 && type !== BUILDING_TYPES.HouseForSale);
   if (!gate) return false;
   return isBuildingOpen(type, hour);
 }

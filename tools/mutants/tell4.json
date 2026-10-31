@@ -2,8 +2,8 @@
   {
     "name": "TELL4-punish-slam",
     "file": "src/ai/tells.js",
-    "old": "slam: 1.2, ring: 1.0, charge: 1.4, leap: 1.2 }),   // a missed blow's overreach",
-    "new": "slam: 1.0, ring: 1.0, charge: 1.4, leap: 1.2 }),   // a missed blow's overreach",
+    "old": "  PUNISH_S: Object.freeze({ lunge: 1.0, sweep: 0.8, slam: 1.2, ring: 1.0, charge: 1.4, leap: 1.2 }), // a missed blow's overreach",
+    "new": "  PUNISH_S: Object.freeze({ lunge: 1.0, sweep: 0.8, slam: 1.0, ring: 1.0, charge: 1.4, leap: 1.2 }), // a missed blow's overreach",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js",
       "test/systems/tell1_poise.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "TELL4-punish-iron",
     "file": "src/ai/tells.js",
-    "old": "  PUNISH_IRON: 0.3,",
-    "new": "  PUNISH_IRON: 0.2,",
+    "old": "  PUNISH_IRON: 0.3, // ...an iron one's, this much longer",
+    "new": "  PUNISH_IRON: 0.2, // ...an iron one's, this much longer",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js",
       "test/systems/tell1_poise.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "TELL4-punish-taken",
     "file": "src/ai/tells.js",
-    "old": "  PUNISH_TAKEN: 1.3,",
-    "new": "  PUNISH_TAKEN: 1.25,",
+    "old": "  PUNISH_TAKEN: 1.3, // every blow an overreached foe takes",
+    "new": "  PUNISH_TAKEN: 1.25, // every blow an overreached foe takes",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js",
       "test/systems/tell1_poise.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "TELL4-late",
     "file": "src/ai/tells.js",
-    "old": "  TELL_LATE: 0.25,",
-    "new": "  TELL_LATE: 0.1,",
+    "old": "  TELL_LATE: 0.25, // the feet sampled this long before the landing: inside then, outside at it, a perfect dodge",
+    "new": "  TELL_LATE: 0.1, // the feet sampled this long before the landing: inside then, outside at it, a perfect dodge",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js",
       "test/systems/tell1_poise.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "TELL4-perfect-window",
     "file": "src/ai/tells.js",
-    "old": "  PERFECT_WINDOW: 1.5,",
-    "new": "  PERFECT_WINDOW: 1.25,",
+    "old": "  PERFECT_WINDOW: 1.5, // ...whose window is this much longer",
+    "new": "  PERFECT_WINDOW: 1.25, // ...whose window is this much longer",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js",
       "test/systems/tell1_poise.test.js"
@@ -79,8 +79,8 @@
   {
     "name": "TELL4-never-overreach",
     "file": "src/ai/tactics.js",
-    "old": "  if (!verdict) { const tfo = targetFeet(ai, b.key !== undefined ? b.key : targetKey(ai)); beginOverreach(ai, s, b, now, b.lateIn === true && !(tfo && inBlow(b, tfo[0], tfo[2])), atMe); return true; }",
-    "new": "",
+    "old": "  if (!verdict) {\n    const tfo = targetFeet(ai, b.key !== undefined ? b.key : targetKey(ai));\n    beginOverreach(ai, s, b, now, b.lateIn === true && !(tfo && inBlow(b, tfo[0], tfo[2])), atMe);\n    return true;\n  } // AUDIT TELL O5: a peer's perfect dodge is the peer's to see",
+    "new": "  // AUDIT TELL O5: a peer's perfect dodge is the peer's to see",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]
@@ -88,8 +88,8 @@
   {
     "name": "TELL4-every-landing",
     "file": "src/ai/tactics.js",
-    "old": "  if (!verdict) { const tfo = targetFeet(ai, b.key !== undefined ? b.key : targetKey(ai)); beginOverreach(ai, s, b, now, b.lateIn === true && !(tfo && inBlow(b, tfo[0], tfo[2])), atMe); return true; }",
-    "new": "  { const tfo = targetFeet(ai, b.key !== undefined ? b.key : targetKey(ai)); beginOverreach(ai, s, b, now, b.lateIn === true && !(tfo && inBlow(b, tfo[0], tfo[2])), atMe); return true; }",
+    "old": "  if (!verdict) {",
+    "new": "  {",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]
@@ -97,8 +97,8 @@
   {
     "name": "TELL4-never-perfect",
     "file": "src/ai/tactics.js",
-    "old": "beginOverreach(ai, s, b, now, b.lateIn === true && !(tfo && inBlow(b, tfo[0], tfo[2])), atMe); return true; }",
-    "new": "beginOverreach(ai, s, b, now, false, atMe); return true; }",
+    "old": "    beginOverreach(ai, s, b, now, b.lateIn === true && !(tfo && inBlow(b, tfo[0], tfo[2])), atMe);",
+    "new": "    beginOverreach(ai, s, b, now, false, atMe);",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]
@@ -106,7 +106,7 @@
   {
     "name": "TELL4-sample-never",
     "file": "src/ai/tactics.js",
-    "old": "  if (tf && s.blow.lateIn == null && now >= s.blow.land - TELL.TELL_LATE && now < s.blow.land) s.blow.lateIn = inBlow(s.blow, tf[0], tf[2]);",
+    "old": "  if (tf && s.blow.lateIn == null && now >= s.blow.land - TELL.TELL_LATE && now < s.blow.land)\n    s.blow.lateIn = inBlow(s.blow, tf[0], tf[2]);",
     "new": "",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
@@ -116,8 +116,8 @@
   {
     "name": "TELL4-sample-every-tick",
     "file": "src/ai/tactics.js",
-    "old": "  if (tf && s.blow.lateIn == null && now >= s.blow.land - TELL.TELL_LATE && now < s.blow.land) s.blow.lateIn",
-    "new": "  if (tf && now >= s.blow.land - TELL.TELL_LATE && now < s.blow.land) s.blow.lateIn",
+    "old": "  if (tf && s.blow.lateIn == null && now >= s.blow.land - TELL.TELL_LATE && now < s.blow.land)\n    s.blow.lateIn = inBlow(s.blow, tf[0], tf[2]);",
+    "new": "  if (tf && now >= s.blow.land - TELL.TELL_LATE && now < s.blow.land) s.blow.lateIn = inBlow(s.blow, tf[0], tf[2]);",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ],
@@ -126,8 +126,8 @@
   {
     "name": "TELL4-no-lock-field",
     "file": "src/ai/tactics.js",
-    "old": "  ai.overreachUntil = s.until;\n",
-    "new": "",
+    "old": "  ai.overreachUntil = s.until;\n  const ent = ai.vitals?.();",
+    "new": "  const ent = ai.vitals?.();",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]
@@ -135,8 +135,8 @@
   {
     "name": "TELL4-no-entity-field",
     "file": "src/ai/tactics.js",
-    "old": "  if (ent) ent.overreachUntil = s.until;\n",
-    "new": "",
+    "old": "  if (ent) ent.overreachUntil = s.until;\n  ai._blowHold = 'spent'; // the strike goes out; then its follow-through stands (characters/mobile/mobileUnit.js)",
+    "new": "  ai._blowHold = 'spent'; // the strike goes out; then its follow-through stands (characters/mobile/mobileUnit.js)",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]
@@ -144,8 +144,8 @@
   {
     "name": "TELL4-no-spent",
     "file": "src/ai/tactics.js",
-    "old": "  ai._blowHold = 'spent';   // the strike goes out",
-    "new": "  ai._blowHold = false;   // the strike goes out",
+    "old": "  ai._blowHold = 'spent'; // the strike goes out; then its follow-through stands (characters/mobile/mobileUnit.js)",
+    "new": "  ai._blowHold = false; // the strike goes out; then its follow-through stands (characters/mobile/mobileUnit.js)",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]
@@ -153,8 +153,8 @@
   {
     "name": "TELL4-no-stamp",
     "file": "src/ai/tactics.js",
-    "old": "  if (perfect && atMe) ai._perfectAt = now;",
-    "new": "",
+    "old": "  if (perfect && atMe) ai._perfectAt = now; // the tag's and the bright ring's (scenes/hostCombat.js tellCues) - mine alone (AUDIT TELL O5)",
+    "new": "  // the tag's and the bright ring's (scenes/hostCombat.js tellCues) - mine alone (AUDIT TELL O5)",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]
@@ -162,8 +162,8 @@
   {
     "name": "TELL4-window-forever",
     "file": "src/ai/tactics.js",
-    "old": "    if (now < s.until) { ai._tacStrike = false; ai._tacShoot = false; ai.moving = false; return true; }\n    endOverreach(ai);",
-    "new": "    if (true) { ai._tacStrike = false; ai._tacShoot = false; ai.moving = false; return true; }\n    endOverreach(ai);",
+    "old": "  if (s.state === 'overreach') {\n    if (now < s.until) {",
+    "new": "  if (s.state === 'overreach') {\n    if (true) {",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]
@@ -171,8 +171,8 @@
   {
     "name": "TELL4-token-kept-after",
     "file": "src/ai/tactics.js",
-    "old": "    s.backUntil = now + TACT.RECOVER_HOP;\n    handOn(ai, s, now);\n  }",
-    "new": "    s.backUntil = now + TACT.RECOVER_HOP;\n  }",
+    "old": "    handOn(ai, s, now);\n  }",
+    "new": "  }",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]
@@ -180,8 +180,8 @@
   {
     "name": "TELL4-punish-no-stagger",
     "file": "src/ai/tactics.js",
-    "old": "  if (overreachOpen(ai)) return punishStruck(ai, ent, weight);",
-    "new": "  if (overreachOpen(ai)) return null;",
+    "old": "  if (overreachOpen(ai)) return punishStruck(ai, ent, weight); // TELL4: an overreached foe - the first blow staggers it",
+    "new": "  if (overreachOpen(ai)) return null; // TELL4: an overreached foe - the first blow staggers it",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]
@@ -189,8 +189,8 @@
   {
     "name": "TELL4-guard-ignored",
     "file": "src/ai/tactics.js",
-    "old": "  const s = ai._tac, now = clock();\n  if (now < (s.staggerReady ?? -Infinity)) return null;\n  endOverreach(ai);",
-    "new": "  const s = ai._tac, now = clock();\n  endOverreach(ai);",
+    "old": "  if (now < (s.staggerReady ?? -Infinity)) return null;\n  endOverreach(ai);",
+    "new": "  endOverreach(ai);",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]
@@ -198,8 +198,8 @@
   {
     "name": "TELL4-stagger-keeps-window",
     "file": "src/ai/tactics.js",
-    "old": "  if (now < (s.staggerReady ?? -Infinity)) return null;\n  endOverreach(ai);\n",
-    "new": "  if (now < (s.staggerReady ?? -Infinity)) return null;\n",
+    "old": "  endOverreach(ai);\n  handOn(ai, s, now);",
+    "new": "  handOn(ai, s, now);",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]
@@ -216,8 +216,8 @@
   {
     "name": "TELL4-release-keeps",
     "file": "src/ai/tactics.js",
-    "old": "  if (ai._tac?.state === 'overreach') { ai._tac.state = 'wait'; endOverreach(ai); }",
-    "new": "",
+    "old": "  if (ai._tac?.state === 'overreach') {\n    ai._tac.state = 'wait';\n    endOverreach(ai);\n  } // TELL4: its window goes with its place",
+    "new": "  // TELL4: its window goes with its place",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]
@@ -234,8 +234,8 @@
   {
     "name": "TELL4-end-keeps-pose",
     "file": "src/ai/tactics.js",
-    "old": "  if (ai._blowHold === 'spent') dropSwing(ai);",
-    "new": "",
+    "old": "  if (ai._blowHold === 'spent') dropSwing(ai);\n}",
+    "new": "}",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]
@@ -262,8 +262,8 @@
   {
     "name": "TELL4-pose-not-held",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "      if (this.state === 'attack' && this._heldSwing && this._struck && this._hold === 'spent') return;   // TELL4: the follow-through stands\n",
-    "new": "",
+    "old": "      if (this.state === 'attack' && this._heldSwing && this._struck && this._hold === 'spent') return; // TELL4: the follow-through stands\n      if (this._iter >= this._attackFrames.length) {",
+    "new": "      if (this._iter >= this._attackFrames.length) {",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]
@@ -271,8 +271,8 @@
   {
     "name": "TELL4-pose-never-let-go",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "    if (this._heldSwing && this._struck && this.state === 'attack' && this._hold === 'spent' && hold !== 'spent') { this._heldSwing = false; this._change('idle'); }\n",
-    "new": "",
+    "old": "    if (this._heldSwing && this._struck && this.state === 'attack' && this._hold === 'spent' && hold !== 'spent') {\n      this._heldSwing = false;\n      this._change('idle');\n    }\n    this._hold = hold;",
+    "new": "    this._hold = hold;",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]
@@ -280,8 +280,8 @@
   {
     "name": "TELL4-dfu-swing-spent",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "      this._heldSwing = this._underHold; this._struck = false;",
-    "new": "      this._heldSwing = true; this._struck = false;",
+    "old": "      this._heldSwing = this._underHold;",
+    "new": "      this._heldSwing = true;",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]
@@ -289,8 +289,8 @@
   {
     "name": "TELL4-never-struck",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "this._underHold = false; this._struck = this._heldSwing; }",
-    "new": "this._underHold = false; }",
+    "old": "          this._struck = this._heldSwing;\n        } // C16: the scene resolves on it, then clears it",
+    "new": "        } // C16: the scene resolves on it, then clears it",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]

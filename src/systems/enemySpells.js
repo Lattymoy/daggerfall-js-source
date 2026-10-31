@@ -11,42 +11,46 @@ import { SKILLS, MAGIC_SKILLS } from './skills.js';
 
 // EnemyEntity.cs static spell lists - classic SPELLS.STD record
 // indices, byte-for-byte.
-const IMP_SPELLS = Object.freeze([0x07, 0x0A, 0x1D, 0x2C]);
+const IMP_SPELLS = Object.freeze([0x07, 0x0a, 0x1d, 0x2c]);
 const GHOST_SPELLS = Object.freeze([0x22]);
-const ORC_SHAMAN_SPELLS = Object.freeze([0x06, 0x07, 0x16, 0x19, 0x1F]);
-const WRAITH_SPELLS = Object.freeze([0x1C, 0x1F]);
+const ORC_SHAMAN_SPELLS = Object.freeze([0x06, 0x07, 0x16, 0x19, 0x1f]);
+const WRAITH_SPELLS = Object.freeze([0x1c, 0x1f]);
 const FROST_DAEDRA_SPELLS = Object.freeze([0x10, 0x14]);
-const FIRE_DAEDRA_SPELLS = Object.freeze([0x0E, 0x19]);
-const DAEDROTH_SPELLS = Object.freeze([0x16, 0x17, 0x1F]);
+const FIRE_DAEDRA_SPELLS = Object.freeze([0x0e, 0x19]);
+const DAEDROTH_SPELLS = Object.freeze([0x16, 0x17, 0x1f]);
 const VAMPIRE_SPELLS = Object.freeze([0x33]);
 const SEDUCER_SPELLS = Object.freeze([0x34, 0x43]);
 const VAMPIRE_ANCIENT_SPELLS = Object.freeze([0x08, 0x32]);
-const DAEDRA_LORD_SPELLS = Object.freeze([0x08, 0x0A, 0x0E, 0x3C, 0x43]);
-const LICH_SPELLS = Object.freeze([0x08, 0x0A, 0x0E, 0x22, 0x3C]);
-const ANCIENT_LICH_SPELLS = Object.freeze([0x08, 0x0A, 0x0E, 0x1D, 0x1F, 0x22, 0x3C]);
+const DAEDRA_LORD_SPELLS = Object.freeze([0x08, 0x0a, 0x0e, 0x3c, 0x43]);
+const LICH_SPELLS = Object.freeze([0x08, 0x0a, 0x0e, 0x22, 0x3c]);
+const ANCIENT_LICH_SPELLS = Object.freeze([0x08, 0x0a, 0x0e, 0x1d, 0x1f, 0x22, 0x3c]);
 
 /** MonsterCareers id -> spell list (SetEnemyCareer's assignment
  *  chain, all thirteen casters). */
 export const MONSTER_SPELL_LISTS = Object.freeze({
-  1: IMP_SPELLS,              // Imp
-  18: GHOST_SPELLS,           // Ghost
-  21: ORC_SHAMAN_SPELLS,      // OrcShaman
-  23: WRAITH_SPELLS,          // Wraith
-  25: FROST_DAEDRA_SPELLS,    // FrostDaedra
-  26: FIRE_DAEDRA_SPELLS,     // FireDaedra
-  27: DAEDROTH_SPELLS,        // Daedroth
-  28: VAMPIRE_SPELLS,         // Vampire
-  29: SEDUCER_SPELLS,         // DaedraSeducer
+  1: IMP_SPELLS, // Imp
+  18: GHOST_SPELLS, // Ghost
+  21: ORC_SHAMAN_SPELLS, // OrcShaman
+  23: WRAITH_SPELLS, // Wraith
+  25: FROST_DAEDRA_SPELLS, // FrostDaedra
+  26: FIRE_DAEDRA_SPELLS, // FireDaedra
+  27: DAEDROTH_SPELLS, // Daedroth
+  28: VAMPIRE_SPELLS, // Vampire
+  29: SEDUCER_SPELLS, // DaedraSeducer
   30: VAMPIRE_ANCIENT_SPELLS, // VampireAncient
-  31: DAEDRA_LORD_SPELLS,     // DaedraLord
-  32: LICH_SPELLS,            // Lich
-  33: ANCIENT_LICH_SPELLS,    // AncientLich
+  31: DAEDRA_LORD_SPELLS, // DaedraLord
+  32: LICH_SPELLS, // Lich
+  33: ANCIENT_LICH_SPELLS, // AncientLich
 });
 
 /** EnemyClassSpells - indexed by min(6, level / 3), verbatim order. */
 export const ENEMY_CLASS_SPELLS = Object.freeze([
-  FROST_DAEDRA_SPELLS, DAEDROTH_SPELLS, ORC_SHAMAN_SPELLS,
-  VAMPIRE_ANCIENT_SPELLS, DAEDRA_LORD_SPELLS, LICH_SPELLS,
+  FROST_DAEDRA_SPELLS,
+  DAEDROTH_SPELLS,
+  ORC_SHAMAN_SPELLS,
+  VAMPIRE_ANCIENT_SPELLS,
+  DAEDRA_LORD_SPELLS,
+  LICH_SPELLS,
   ANCIENT_LICH_SPELLS,
 ]);
 
@@ -98,7 +102,9 @@ export function registerEnemySpellbook(fn) {
   _spellbooks.push(fn);
 }
 /** The test seam. */
-export function _resetEnemySpellbooks() { _spellbooks.length = 0; }
+export function _resetEnemySpellbooks() {
+  _spellbooks.length = 0;
+}
 
 /** The SetEnemyCareer spell-assignment tail as indices: monsters take
  *  their per-career list; class enemies with CastsMagic take

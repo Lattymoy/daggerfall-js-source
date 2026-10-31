@@ -7,7 +7,11 @@ import { guildPowerRanks } from '../../src/net/guild/guildLaw.js';
 
 /** Whether `rankExpr` holds `power` in the guild `guildExpr`, as SQL: a guildmaster always; a power the guild never set,
  *  the law's default list. Both expressions qualified - json_each has an `id` column of its own. */
-export function guildPowerSql(/** @type {string} */ power, /** @type {string} */ rankExpr, /** @type {string} */ guildExpr) {
+export function guildPowerSql(
+  /** @type {string} */ power,
+  /** @type {string} */ rankExpr,
+  /** @type {string} */ guildExpr,
+) {
   const def = JSON.stringify(guildPowerRanks(power));
   return `(${rankExpr} = 0 OR EXISTS (SELECT 1 FROM guilds pg, json_each(COALESCE(json_extract(pg.powers, '$.${power}'), '${def}')) pj
     WHERE pg.id = ${guildExpr} AND pj.value = ${rankExpr}))`;

@@ -22,8 +22,8 @@
   {
     "name": "MWHEADS1-the-pools-out-of-order",
     "file": "src/characters/ownModels/ownHeadModels.js",
-    "old": "['breton_m_head_h04', 'breton_m_head_h0411', 'breton_m_head_h0423']",
-    "new": "['breton_m_head_h0411', 'breton_m_head_h04', 'breton_m_head_h0423']",
+    "old": "      ['breton_m_head_h04', 'breton_m_head_h0411', 'breton_m_head_h0423'],",
+    "new": "      ['breton_m_head_h0411', 'breton_m_head_h04', 'breton_m_head_h0423'],",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "MWHEADS1-a-hair-is-a-head",
     "file": "src/characters/ownModels/ownHeadModels.js",
-    "old": "id, model: `${id}.nif`, race, part: PART[slot], female,",
-    "new": "id, model: `${id}.nif`, race, part: 0, female,",
+    "old": "    part: PART[slot],",
+    "new": "    part: 0,",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "MWHEADS1-the-face-read-as-the-hair",
     "file": "tools/bakeHeads.mjs",
-    "old": "part('breton_m_head_h04', 'breton', 'head', 'b_n_breton_m_hair_widow', 1,",
-    "new": "part('breton_m_head_h04', 'breton', 'head', 'b_n_breton_m_hair_widow', 0,",
+    "old": "  part('breton_m_head_h04', 'breton', 'head', 'b_n_breton_m_hair_widow', 1, 'tx_b_n_breton_m_h04.png', [",
+    "new": "  part('breton_m_head_h04', 'breton', 'head', 'b_n_breton_m_hair_widow', 0, 'tx_b_n_breton_m_h04.png', [",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "MWHEADS1-every-polygon-baked",
     "file": "tools/fbxMesh.mjs",
-    "old": "    if (wears && wears(pi) !== material) continue;   // MW-HEADS1: another picture's polygon",
-    "new": "    if (wears && wears(pi) === -1) continue;   // MW-HEADS1: another picture's polygon",
+    "old": "    if (wears && wears(pi) !== material) continue; // MW-HEADS1: another picture's polygon",
+    "new": "    if (wears && wears(pi) === -1) continue; // MW-HEADS1: another picture's polygon",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "MWHEADS1-the-viewer-sheets-the-data",
     "file": "src/tools/mwViewer.js",
-    "old": "      if (ownFacePools(race.id, female)) { own.push(`${race.id} ${female ? 'female' : 'male'}`); continue; }\n",
-    "new": "",
+    "old": "      if (ownFacePools(race.id, female)) {\n        own.push(`${race.id} ${female ? 'female' : 'male'}`);\n        continue;\n      }\n      const heads = pool(race.id, female, 0);",
+    "new": "      const heads = pool(race.id, female, 0);",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "MWHEADS1-two-eyepatches",
     "file": "tools/bakeHeads.mjs",
-    "old": "  breton_m_head_h04: 'src/assets/mw/source/Breton_Head_H04.png',",
-    "new": "  breton_m_head_h04: 'src/assets/mw/source/Breton_Head_H0411.png',",
+    "old": "  breton_m_head_h04: 'src/assets/mw/source/Breton_Head_H04.png', // tx_b_n_breton_m_h04.png",
+    "new": "  breton_m_head_h04: 'src/assets/mw/source/Breton_Head_H0411.png', // tx_b_n_breton_m_h04.png",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],
@@ -193,8 +193,8 @@
   {
     "name": "MWHEADS1-AUDIT-hairs-named-heads",
     "file": "src/characters/ownModels/ownHeadModels.js",
-    "old": "  hairs: Object.freeze(hairs.map((id) => record(race, female, 'hair', id))),",
-    "new": "  hairs: Object.freeze(hairs.map((id) => record(race, female, 'head', id))),",
+    "old": "    hairs: Object.freeze(hairs.map((id) => record(race, female, 'hair', id))),",
+    "new": "    hairs: Object.freeze(hairs.map((id) => record(race, female, 'head', id))),",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],
@@ -203,8 +203,8 @@
   {
     "name": "MWHEADS1-AUDIT-box-minimum-only",
     "file": "tools/bakeHeads.mjs",
-    "old": "Math.abs(mesh.bounds.max[k] - p.box[1][k])]);",
-    "new": "0]);",
+    "old": "  const off = [0, 1, 2].flatMap((k) => [\n    Math.abs(mesh.bounds.min[k] - p.box[0][k]),\n    Math.abs(mesh.bounds.max[k] - p.box[1][k]),\n  ]);",
+    "new": "  const off = [0, 1, 2].flatMap((k) => [Math.abs(mesh.bounds.min[k] - p.box[0][k]), 0]);",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],
@@ -213,8 +213,8 @@
   {
     "name": "MWHEADS1-AUDIT-paths-heads-only",
     "file": "src/characters/ownModels/ownHeadModels.js",
-    "old": "  .flatMap((p) => [...p.heads, ...p.hairs])",
-    "new": "  .flatMap((p) => [...p.heads])",
+    "old": "    .flatMap((p) => [...p.heads, ...p.hairs])",
+    "new": "    .flatMap((p) => [...p.heads])",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],
@@ -223,8 +223,8 @@
   {
     "name": "MWHEADS1-AUDIT-a-material-reads-its-first-texture",
     "file": "tools/fbxMesh.mjs",
-    "old": "node(texs.find((c) => c.props[3] === 'DiffuseColor') ?? texs[0])",
-    "new": "node(texs[0])",
+    "old": "    const tex = texs.length ? node(texs.find((c) => c.props[3] === 'DiffuseColor') ?? texs[0]) : null; // the base colour's picture",
+    "new": "    const tex = texs.length ? node(texs[0]) : null; // the base colour's picture",
     "tests": [
       "test/tooling/fbxmesh.test.js"
     ],
@@ -233,8 +233,8 @@
   {
     "name": "MWHEADS1-AUDIT-any-mapping-read-as-one",
     "file": "tools/fbxMesh.mjs",
-    "old": "throw new Error(`LayerElementMaterial: MappingInformationType ${map} is not ByPolygon or AllSame`);",
-    "new": "return () => ids[0];",
+    "old": "  throw new Error(`LayerElementMaterial: MappingInformationType ${map} is not ByPolygon or AllSame`);",
+    "new": "  return () => ids[0];",
     "tests": [
       "test/tooling/fbxmesh.test.js"
     ],
@@ -243,8 +243,8 @@
   {
     "name": "MWHEADS1-AUDIT-no-layer-read-as-material-0",
     "file": "tools/fbxMesh.mjs",
-    "old": "if (!layer) throw new Error('the Geometry carries no LayerElementMaterial - there is no material to bake alone');",
-    "new": "if (!layer) return () => 0;",
+    "old": "  if (!layer) throw new Error('the Geometry carries no LayerElementMaterial - there is no material to bake alone');",
+    "new": "  if (!layer) return () => 0;",
     "tests": [
       "test/tooling/fbxmesh.test.js"
     ],
@@ -253,8 +253,8 @@
   {
     "name": "MWHEADS1-AUDIT-a-short-material-list-read",
     "file": "tools/fbxMesh.mjs",
-    "old": "    if (ids.length !== polygons) throw",
-    "new": "    if (false) throw",
+    "old": "    if (ids.length !== polygons)\n      throw new Error(`LayerElementMaterial: ${ids.length} material indices for ${polygons} polygons`);",
+    "new": "    if (false) throw new Error(`LayerElementMaterial: ${ids.length} material indices for ${polygons} polygons`);",
     "tests": [
       "test/tooling/fbxmesh.test.js"
     ],

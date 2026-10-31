@@ -29,8 +29,8 @@
   {
     "name": "HTWN-bit-for-any-light",
     "file": "src/systems/playerTorch.js",
-    "old": "(lanternAtWaist(light) ? 1 : undefined)",
-    "new": "(light ? 1 : undefined)",
+    "old": "export const waistLanternPoseBit = (light) => (lanternAtWaist(light) ? 1 : undefined);",
+    "new": "export const waistLanternPoseBit = (light) => (light ? 1 : undefined);",
     "tests": [
       "test/net/htwaistnet_peers.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "HTWN-bit-zero-not-absent",
     "file": "src/systems/playerTorch.js",
-    "old": "(lanternAtWaist(light) ? 1 : undefined)",
-    "new": "(lanternAtWaist(light) ? 1 : 0)",
+    "old": "export const waistLanternPoseBit = (light) => (lanternAtWaist(light) ? 1 : undefined);",
+    "new": "export const waistLanternPoseBit = (light) => (lanternAtWaist(light) ? 1 : 0);",
     "tests": [
       "test/net/htwaistnet_peers.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "HTWN-peer-body-never-asks",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    b.rig.setHipLight?.(!b.wolf && !!shown.hl);   // WEREWOLF1: and hangs nothing at the hip\n",
-    "new": "",
+    "old": "    b.rig.setHipLight?.(!b.wolf && !!shown.hl); // WEREWOLF1: and hangs nothing at the hip\n    const an = shown.an | 0,",
+    "new": "    const an = shown.an | 0,",
     "tests": [
       "test/net/htwaistnet_peers.test.js",
       "test/combat/htwaist_mwbody.test.js"
@@ -66,8 +66,8 @@
   {
     "name": "HTWN-peer-bit-inverted",
     "file": "src/net/peer/peerBodies.js",
-    "old": "b.rig.setHipLight?.(!b.wolf && !!shown.hl);",
-    "new": "b.rig.setHipLight?.(!b.wolf && !shown.hl);",
+    "old": "    b.rig.setHipLight?.(!b.wolf && !!shown.hl); // WEREWOLF1: and hangs nothing at the hip",
+    "new": "    b.rig.setHipLight?.(!b.wolf && !shown.hl); // WEREWOLF1: and hangs nothing at the hip",
     "tests": [
       "test/net/htwaistnet_peers.test.js"
     ]

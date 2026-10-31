@@ -12,8 +12,8 @@
   {
     "name": "TESA11-market-west",
     "file": "src/world/imperialCity.js",
-    "old": "  ['Market District', 0], ['Arena District', 60], ['Arboretum', 120],",
-    "new": "  ['Arena District', 0], ['Market District', 60], ['Arboretum', 120],",
+    "old": "      ['Market District', 0],\n      ['Arena District', 60],",
+    "new": "      ['Arena District', 0],\n      ['Market District', 60],",
     "tests": [
       "test/tesa11_imperial.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "TESA11-sector-off-by-one",
     "file": "src/world/imperialCity.js",
-    "old": "  if (r < I.cityWall.r) { const b = imperialBearing(x, z); return IMPERIAL_SECTORS[Math.min(5, Math.floor(b / 60))][0]; }",
-    "new": "  if (r < I.cityWall.r) { const b = imperialBearing(x, z); return IMPERIAL_SECTORS[Math.min(5, Math.floor(b / 60 + 0.5)) % 6][0]; }",
+    "old": "    return IMPERIAL_SECTORS[Math.min(5, Math.floor(b / 60))][0];",
+    "new": "    return IMPERIAL_SECTORS[Math.min(5, Math.floor(b / 60 + 0.5)) % 6][0];",
     "tests": [
       "test/tesa11_imperial.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "TESA11-bearing-anticlockwise",
     "file": "src/world/imperialCity.js",
-    "old": "export const imperialBearing = (x, z) => { const b = (Math.atan2(x, -z) * 180) / Math.PI; return b < 0 ? b + 360 : b; };",
-    "new": "export const imperialBearing = (x, z) => { const b = (Math.atan2(-x, -z) * 180) / Math.PI; return b < 0 ? b + 360 : b; };",
+    "old": "  const b = (Math.atan2(x, -z) * 180) / Math.PI;",
+    "new": "  const b = (Math.atan2(-x, -z) * 180) / Math.PI;",
     "tests": [
       "test/tesa11_imperial.test.js"
     ]
@@ -58,7 +58,7 @@
   {
     "name": "TESA11-district-walls-unreserved",
     "file": "src/world/imperialCity.js",
-    "old": "  if (lines.district.some(([a, b]) => segRect(a, b, x0, z0, x1, z1, I.districtWall.thick / 2 + 3) < I.districtWall.thick / 2 + 3)) return true;",
+    "old": "  if (\n    lines.district.some(\n      ([a, b]) => segRect(a, b, x0, z0, x1, z1, I.districtWall.thick / 2 + 3) < I.districtWall.thick / 2 + 3,\n    )\n  )\n    return true;",
     "new": "",
     "tests": [
       "test/tesa11_imperial.test.js",
@@ -68,8 +68,8 @@
   {
     "name": "TESA11-colosseum-unreserved",
     "file": "src/world/imperialCity.js",
-    "old": "  if (r === ar && c === ac) return IMPERIAL_ARENA_CODE;\n",
-    "new": "",
+    "old": "  if (r === ar && c === ac) return IMPERIAL_ARENA_CODE;\n  return imperialCode(r, c);",
+    "new": "  return imperialCode(r, c);",
     "tests": [
       "test/tesa11_imperial.test.js",
       "test/world/icgrand_arena.test.js"
@@ -99,8 +99,8 @@
   {
     "name": "TESA11-colosseum-gates-shut",
     "file": "src/world/imperialFabric.js",
-    "old": "[g.arena, B / 2 + C.arena]",
-    "new": "[g.arena, B / 2]",
+    "old": "    [g.arena, B / 2 + C.arena],",
+    "new": "    [g.arena, B / 2],",
     "tests": [
       "test/world/icgrand_arena.test.js",
       "test/tesa11_imperial.test.js"
@@ -120,8 +120,8 @@
   {
     "name": "TESA11-trees-on-stone",
     "file": "src/world/imperialCity.js",
-    "old": "  if (imperialTile(x, z, I) !== 2) return -1;",
-    "new": "",
+    "old": "  if (imperialTile(x, z, I) !== 2) return -1;\n  const r = Math.hypot(x, z),",
+    "new": "  const r = Math.hypot(x, z),",
     "tests": [
       "test/tesa11_imperial.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "TESA11-colosseum-carried-centre",
     "file": "src/world/imperialCity.js",
-    "old": "return [Math.floor(z / BLOCK_M + HALF), Math.floor(x / BLOCK_M + HALF)]; };",
-    "new": "return [Math.floor(x / BLOCK_M + HALF), Math.floor(z / BLOCK_M + HALF)]; };",
+    "old": "  return [Math.floor(z / BLOCK_M + HALF), Math.floor(x / BLOCK_M + HALF)];",
+    "new": "  return [Math.floor(x / BLOCK_M + HALF), Math.floor(z / BLOCK_M + HALF)];",
     "tests": [
       "test/tesa11_imperial.test.js",
       "test/world/icgrand_arena.test.js"
@@ -332,8 +332,8 @@
   {
     "name": "TESA11-tower-short",
     "file": "src/world/imperialCity.js",
-    "old": "crownTop: 1210, spireTop: 1360,",
-    "new": "crownTop: 1210, spireTop: 1300,",
+    "old": "    spireTop: 1360,",
+    "new": "    spireTop: 1300,",
     "tests": [
       "test/tesa11_imperial.test.js"
     ],
@@ -342,8 +342,8 @@
   {
     "name": "TESA11-gate-shut",
     "file": "src/world/capitalImperial.js",
-    "old": "ringRuns(W.r, W.towerEvery, W.gates, half)",
-    "new": "ringRuns(W.r, W.towerEvery, [], half)",
+    "old": "  for (const [p, q] of ringRuns(W.r, W.towerEvery, W.gates, half))",
+    "new": "  for (const [p, q] of ringRuns(W.r, W.towerEvery, [], half))",
     "tests": [
       "test/tesa11_imperial.test.js",
       "test/audit_tesa.test.js"
@@ -353,8 +353,8 @@
   {
     "name": "TESA11-no-lintel",
     "file": "src/world/capitalImperial.js",
-    "old": "    if (only(a, c)) translated(mb, 0, W.gateH, 0, () => wallRun(mb, STONE, a, c, W.thick, W.h - W.gateH, 0));\n",
-    "new": "",
+    "old": "    if (only(a, c)) translated(mb, 0, W.gateH, 0, () => wallRun(mb, STONE, a, c, W.thick, W.h - W.gateH, 0));\n    for (const side of [1, -1]) {",
+    "new": "    for (const side of [1, -1]) {",
     "tests": [
       "test/tesa11_imperial.test.js"
     ],
@@ -363,8 +363,8 @@
   {
     "name": "TESA11-palace-gates-shut",
     "file": "src/world/capitalImperial.js",
-    "old": "ringRuns(W.r, 360 / W.sides, gates, half)",
-    "new": "ringRuns(W.r, 360 / W.sides, [], half)",
+    "old": "  for (const [p, q] of ringRuns(W.r, 360 / W.sides, gates, half))",
+    "new": "  for (const [p, q] of ringRuns(W.r, 360 / W.sides, [], half))",
     "tests": [
       "test/tesa11_imperial.test.js",
       "test/audit_tesa.test.js"
@@ -395,8 +395,8 @@
   {
     "name": "TESA11-bridge-short",
     "file": "src/world/capitalImperial.js",
-    "old": "x1 = bridgeLine(I)[1][0], xr = -I.isle,",
-    "new": "x1 = bridgeLine(I)[1][0] + 102.4, xr = -I.isle,",
+    "old": "    x1 = bridgeLine(I)[1][0],",
+    "new": "    x1 = bridgeLine(I)[1][0] + 102.4,",
     "tests": [
       "test/tesa11_imperial.test.js"
     ]
@@ -413,8 +413,8 @@
   {
     "name": "TESA11-piers-ashore",
     "file": "src/world/imperialCity.js",
-    "old": "piers: Object.freeze(Array.from({ length: 21 }, (_, i) => 160 + i * 2)), pierTo: 8450,",
-    "new": "piers: Object.freeze(Array.from({ length: 21 }, (_, i) => 160 + i * 2)), pierTo: 7800,",
+    "old": "    pierTo: 8450,",
+    "new": "    pierTo: 7800,",
     "tests": [
       "test/tesa11_imperial.test.js"
     ],

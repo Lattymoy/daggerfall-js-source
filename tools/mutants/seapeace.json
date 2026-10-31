@@ -29,8 +29,8 @@
   {
     "name": "SEAPEACE-the-share-edge",
     "file": "src/systems/naval/navalAI.js",
-    "old": "() < bold ? TEMPERS.bold : TEMPERS.wary;",
-    "new": "() >= bold ? TEMPERS.bold : TEMPERS.wary;",
+    "old": "  return mulberry32(((seed >>> 0) ^ TEMPER_SALT) >>> 0)() < bold ? TEMPERS.bold : TEMPERS.wary;",
+    "new": "  return mulberry32(((seed >>> 0) ^ TEMPER_SALT) >>> 0)() >= bold ? TEMPERS.bold : TEMPERS.wary;",
     "tests": [
       "test/systems/naval/seapeace.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SEAPEACE-the-salt-dropped",
     "file": "src/systems/naval/navalAI.js",
-    "old": "mulberry32(((seed >>> 0) ^ TEMPER_SALT) >>> 0)()",
-    "new": "mulberry32(seed >>> 0)()",
+    "old": "  return mulberry32(((seed >>> 0) ^ TEMPER_SALT) >>> 0)() < bold ? TEMPERS.bold : TEMPERS.wary;",
+    "new": "  return mulberry32(seed >>> 0)() < bold ? TEMPERS.bold : TEMPERS.wary;",
     "tests": [
       "test/systems/naval/seapeace.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SEAPEACE-the-flagship-wary",
     "file": "src/systems/naval/navalAI.js",
-    "old": "  if (cls.flagship) return TEMPERS.bold;\n",
-    "new": "",
+    "old": "  if (cls.flagship) return TEMPERS.bold;\n  return mulberry32(((seed >>> 0) ^ TEMPER_SALT) >>> 0)() < bold ? TEMPERS.bold : TEMPERS.wary;",
+    "new": "  return mulberry32(((seed >>> 0) ^ TEMPER_SALT) >>> 0)() < bold ? TEMPERS.bold : TEMPERS.wary;",
     "tests": [
       "test/systems/naval/seapeace.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SEAPEACE-the-port-side-twice",
     "file": "src/systems/naval/navalAI.js",
-    "old": "    const balls = bat.muzzles.length / sides.length / (",
-    "new": "    const balls = 2 * bat.muzzles.length / sides.length / (",
+    "old": "      bat.muzzles.length /",
+    "new": "      (2 * bat.muzzles.length) /",
     "tests": [
       "test/systems/naval/seapeace.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SEAPEACE-the-hull-share-unread",
     "file": "src/systems/naval/navalAI.js",
-    "old": "  const byHull = hull > 0 ? b.hullHp * Math.max(0, b.hullShare - STRUCK_AT) / hull : Infinity;",
-    "new": "  const byHull = hull > 0 ? b.hullHp * (1 - STRUCK_AT) / hull : Infinity;",
+    "old": "  const byHull = hull > 0 ? (b.hullHp * Math.max(0, b.hullShare - STRUCK_AT)) / hull : Infinity;",
+    "new": "  const byHull = hull > 0 ? (b.hullHp * (1 - STRUCK_AT)) / hull : Infinity;",
     "tests": [
       "test/systems/naval/seapeace.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SEAPEACE-a-blow-unanswered-by-the-wary",
     "file": "src/systems/naval/navalAI.js",
-    "old": "  if ((ship.provoked.get(contact.id) ?? -Infinity) > now - PROVOKED_S) return true;",
-    "new": "  if (ship.temper !== TEMPERS.wary && (ship.provoked.get(contact.id) ?? -Infinity) > now - PROVOKED_S) return true;",
+    "old": "  if ((ship.provoked.get(contact.id) ?? -Infinity) > now - PROVOKED_S) return true; // a blow, answered by every temper",
+    "new": "  if (ship.temper !== TEMPERS.wary && (ship.provoked.get(contact.id) ?? -Infinity) > now - PROVOKED_S) return true; // a blow, answered by every temper",
     "tests": [
       "test/systems/naval/seapeace.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SEAPEACE-the-wary-flight-dropped",
     "file": "src/systems/naval/navalAI.js",
-    "old": "    || (ship.cls.faction === 'pirate' && ship.temper === TEMPERS.wary && !!threat && outguns(threat, ship));",
-    "new": "    || false;",
+    "old": "    (ship.cls.faction === 'pirate' && ship.temper === TEMPERS.wary && !!threat && outguns(threat, ship)); // SEA-PEACE: a wary pirate runs from a stronger ship",
+    "new": "    false; // SEA-PEACE: a wary pirate runs from a stronger ship",
     "tests": [
       "test/systems/naval/seapeace.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SEAPEACE-the-chase-pace-unread",
     "file": "src/systems/naval/navalAI.js",
-    "old": "away > CHASE_AWAY * own)",
-    "new": "away > CHASE_AWAY * ev)",
+    "old": "    if (((enemy.ship?.mode === 'flee' && away > 0) || away > CHASE_AWAY * own) && offBow > ABAFT_DEG * DEG) {",
+    "new": "    if (((enemy.ship?.mode === 'flee' && away > 0) || away > CHASE_AWAY * ev) && offBow > ABAFT_DEG * DEG) {",
     "tests": [
       "test/systems/naval/seapeace.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SEAPEACE-the-sheer-at-any-range",
     "file": "src/systems/naval/navalAI.js",
-    "old": "const out = d > range * CHASE_SHEER ? 0 : range;",
-    "new": "const out = range;",
+    "old": "      const out = d > range * CHASE_SHEER ? 0 : range;",
+    "new": "      const out = range;",
     "tests": [
       "test/systems/naval/seapeace.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SEAPEACE-the-abaft-test-dropped",
     "file": "src/systems/naval/navalAI.js",
-    "old": " && offBow > ABAFT_DEG * DEG) {",
-    "new": ") {",
+    "old": "    if (((enemy.ship?.mode === 'flee' && away > 0) || away > CHASE_AWAY * own) && offBow > ABAFT_DEG * DEG) {",
+    "new": "    if ((enemy.ship?.mode === 'flee' && away > 0) || away > CHASE_AWAY * own) {",
     "tests": [
       "test/systems/naval/seapeace.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SEAPEACE-the-prize-never-boarded",
     "file": "src/systems/naval/navalAI.js",
-    "old": "} else if (prize && ship.damage.crew > 0 && ship.cls.faction !== 'merchant') {",
-    "new": "} else if (false) {",
+    "old": "  } else if (prize && ship.damage.crew > 0 && ship.cls.faction !== 'merchant') {",
+    "new": "  } else if (false) {",
     "tests": [
       "test/systems/naval/seapeace.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "SEAPEACE-the-report-age-unread",
     "file": "src/systems/naval/navalAI.js",
-    "old": "if (g.by === ship.id || !(world.now - g.at <= HEAR_S)) continue;",
-    "new": "if (g.by === ship.id) continue;",
+    "old": "    if (g.by === ship.id || !(world.now - g.at <= HEAR_S)) continue;",
+    "new": "    if (g.by === ship.id) continue;",
     "tests": [
       "test/systems/naval/seapeace.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SEAPEACE-her-own-guns-answered",
     "file": "src/systems/naval/navalAI.js",
-    "old": "if (g.by === ship.id || !(world.now - g.at <= HEAR_S)) continue;",
-    "new": "if (!(world.now - g.at <= HEAR_S)) continue;",
+    "old": "    if (g.by === ship.id || !(world.now - g.at <= HEAR_S)) continue;",
+    "new": "    if (!(world.now - g.at <= HEAR_S)) continue;",
     "tests": [
       "test/systems/naval/seapeace.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SEAPEACE-the-hearing-unbounded",
     "file": "src/systems/naval/navalAI.js",
-    "old": "if (d > HEAR_GUNS_M || d < near || d >= bestD) continue;",
-    "new": "if (d < near || d >= bestD) continue;",
+    "old": "    if (d > HEAR_GUNS_M || d < near || d >= bestD) continue;",
+    "new": "    if (d < near || d >= bestD) continue;",
     "tests": [
       "test/systems/naval/seapeace.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "SEAPEACE-the-pair-always",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "if (!(r() < ENCOUNTER_CHANCE)) return null;",
-    "new": "if (!(r() < 1)) return null;",
+    "old": "    if (!(r() < ENCOUNTER_CHANCE)) return null;",
+    "new": "    if (!(r() < 1)) return null;",
     "tests": [
       "test/systems/naval/seapeace.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SEAPEACE-the-plunder-odds-unread",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "odds(classPower(pirate), classPower(c)) >= WARY_ODDS);",
-    "new": "true);",
+    "old": "  const prey = SHIP_CLASSES.filter(\n    (c) => c.faction === 'merchant' && c.minLevel <= lv && odds(classPower(pirate), classPower(c)) >= WARY_ODDS,\n  );",
+    "new": "  const prey = SHIP_CLASSES.filter((c) => c.faction === 'merchant' && c.minLevel <= lv && true);",
     "tests": [
       "test/systems/naval/seapeace.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "SEAPEACE-a-pair-with-room-for-one",
     "file": "src/systems/naval/navalDirector.js",
-    "old": "if (alive + 2 <= (ctx.density ?? 0)) {",
-    "new": "if (alive + 1 <= (ctx.density ?? 0)) {",
+    "old": "      if (alive + 2 <= (ctx.density ?? 0)) {",
+    "new": "      if (alive + 1 <= (ctx.density ?? 0)) {",
     "tests": [
       "test/systems/naval/seapeace.test.js"
     ]

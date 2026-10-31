@@ -2,8 +2,8 @@
   {
     "name": "REALM4-worn-leaves",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "  if (rec.equipSlot != null) return false;                       // worn (equip.js isEquipped)\n",
-    "new": "",
+    "old": "  if (rec.equipSlot != null) return false; // worn (equip.js isEquipped)\n  if (rec.questItem) return false; // the quest's",
+    "new": "  if (rec.questItem) return false; // the quest's",
     "tests": [
       "test/net/realm4.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "REALM4-bound-leaves",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "  if (boundRecord(rec)) return false;                            // bound (itemBound.js isBound): its mark or its row's - AUDIT REALM F1\n",
-    "new": "",
+    "old": "  if (boundRecord(rec)) return false; // bound (itemBound.js isBound): its mark or its row's - AUDIT REALM F1\n  if (rec.group === 'Currency' && rec.templateIndex === GOLD_PIECES_TEMPLATE) return false; // gold (inventory.js isGoldPieces)",
+    "new": "  if (rec.group === 'Currency' && rec.templateIndex === GOLD_PIECES_TEMPLATE) return false; // gold (inventory.js isGoldPieces)",
     "tests": [
       "test/net/realm4.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "REALM4-no-template-matches",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "  if (!Number.isSafeInteger(offered?.templateIndex)) return false;\n",
-    "new": "",
+    "old": "  if (!Number.isSafeInteger(offered?.templateIndex)) return false;\n  for (const k of new Set([...Object.keys(offered), ...(plain(rec) ? Object.keys(rec) : [])])) {",
+    "new": "  for (const k of new Set([...Object.keys(offered), ...(plain(rec) ? Object.keys(rec) : [])])) {",
     "tests": [
       "test/net/realm4.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "REALM4-stack-overdrawn",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "    left[at] -= n;\n",
-    "new": "",
+    "old": "    left[at] -= n;\n    picks.push({ at, n });",
+    "new": "    picks.push({ at, n });",
     "tests": [
       "test/net/realm4.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "REALM4-thin-purse",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "  if (side.gold > purse) return null;\n",
-    "new": "",
+    "old": "  if (side.gold > purse) return null;\n  const left = items.map((rec) => (tradeableRecord(rec) ? recordCount(rec) : 0)); // what each record may still give",
+    "new": "  const left = items.map((rec) => (tradeableRecord(rec) ? recordCount(rec) : 0)); // what each record may still give",
     "tests": [
       "test/net/realm4.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "REALM4-marks-ride",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "    for (const k of RECEIVER_MARKS) delete rec[k];\n",
-    "new": "",
+    "old": "    for (const k of RECEIVER_MARKS) delete rec[k];\n    return rec;",
+    "new": "    return rec;",
     "tests": [
       "test/net/realm4.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "REALM4-halves-unchecked",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "  if (!halvesAgree(halfA, halfB)) return { why: 'mismatch' };\n",
-    "new": "",
+    "old": "  if (!halvesAgree(halfA, halfB)) return { why: 'mismatch' };\n  const a = JSON.parse(JSON.stringify(saveA)),",
+    "new": "  const a = JSON.parse(JSON.stringify(saveA)),",
     "tests": [
       "test/net/realm4.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "REALM4-prev-never-kept",
     "file": "server-account/src/realm.js",
-    "old": "'UPDATE realm_characters SET seq = ?, bytes = ?, obj = ?, prev = obj, lease_at = ?,",
-    "new": "'UPDATE realm_characters SET seq = ?, bytes = ?, obj = ?, lease_at = ?,",
+    "old": "          'UPDATE realm_characters SET seq = ?, bytes = ?, obj = ?, prev = obj, lease_at = ?, summary = COALESCE(?, summary), updated_at = ? WHERE id = ? AND player = ? AND lease = ? AND seq = ?',",
+    "new": "          'UPDATE realm_characters SET seq = ?, bytes = ?, obj = ?, lease_at = ?, summary = COALESCE(?, summary), updated_at = ? WHERE id = ? AND player = ? AND lease = ? AND seq = ?',",
     "tests": [
       "test/server/realm1.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "REALM4-lost-checkpoint-keeps-object",
     "file": "server-account/src/realm.js",
-    "old": "  await dropObjects(bucket, [key]);\n  return false;\n",
-    "new": "  return false;\n",
+    "old": "  await dropObjects(bucket, [key]);\n  return false;",
+    "new": "  return false;",
     "tests": [
       "test/net/realm4.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "REALM4-commit-frame-obeyed",
     "file": "src/net/tradeSession.js",
-    "old": "    if (this._escrow) return;\n    // a commit is only ever sent",
-    "new": "    // a commit is only ever sent",
+    "old": "    if (this._escrow) return;\n    // a commit is only ever sent by a side that has seen both confirms, on the revisions both hold",
+    "new": "    // a commit is only ever sent by a side that has seen both confirms, on the revisions both hold",
     "tests": [
       "test/net/realm4.test.js"
     ]
@@ -173,7 +173,7 @@
   {
     "name": "REALM4-older-build-trades",
     "file": "src/net/tradeSession.js",
-    "old": "    if (this._escrow && this.phase === 'open' && ['offer', 'lock', 'confirm'].includes(d.k) && !(d.r >= REALM_TRADE_REV_BASE)) {",
+    "old": "    if (\n      this._escrow &&\n      this.phase === 'open' &&\n      ['offer', 'lock', 'confirm'].includes(d.k) &&\n      !(d.r >= REALM_TRADE_REV_BASE)\n    ) {",
     "new": "    if (false) {",
     "tests": [
       "test/net/realm4.test.js"
@@ -191,8 +191,8 @@
   {
     "name": "REALM4-unknown-restores",
     "file": "src/net/tradeSession.js",
-    "old": "    if (r?.unknown) { this._finish('done', 'The realm did not answer. Your trade stands as the realm recorded it.'); return; }\n",
-    "new": "",
+    "old": "    if (r?.unknown) {\n      this._finish('done', 'The realm did not answer. Your trade stands as the realm recorded it.');\n      return;\n    }\n    if (handle) this.pack.restore(handle);",
+    "new": "    if (handle) this.pack.restore(handle);",
     "tests": [
       "test/net/realm4.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "REALM4-settled-gives-nothing",
     "file": "src/net/tradeSession.js",
-    "old": "      this.pack.give(items, r.gold ?? 0);\n",
-    "new": "",
+    "old": "      this.pack.give(items, r.gold ?? 0);\n      this._finish('done', `Trade with ${this.peerName} complete.`);",
+    "new": "      this._finish('done', `Trade with ${this.peerName} complete.`);",
     "tests": [
       "test/net/realm4.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "REALM4-escrow-skipped",
     "file": "src/net/tradeSession.js",
-    "old": "    if (this._escrow) { this._settle(); return; }\n",
-    "new": "",
+    "old": "    if (this._escrow) {\n      this._settle();\n      return;\n    }\n    const handle = this.pack.take(this.mine.entries, this.mine.gold);",
+    "new": "    const handle = this.pack.take(this.mine.entries, this.mine.gold);",
     "tests": [
       "test/net/realm4.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "REALM4-hold-never-released",
     "file": "src/net/tradeSession.js",
-    "old": "    if (!handle) { ticket.release?.(); this._end('refused');",
-    "new": "    if (!handle) { this._end('refused');",
+    "old": "      ticket.release?.();\n      this._end('refused');",
+    "new": "      this._end('refused');",
     "tests": [
       "test/net/realm4.test.js"
     ]

@@ -27,19 +27,19 @@
 import { getBinding, isCombo, getCombo } from '../systems/inputActions.js';
 import { buttonText } from '../systems/controlsConfig.js';
 import { unityButtonGlyph, padFamily } from './padGlyphs.js';
-import { controllerLook } from '../player/lookFilter.js';   // AUDIT DUEL1 D3: GP1's latch - the chip a pad player sees is a glyph
-import { bindings } from './input.js';   // DISC21-C: the live store, for quickslotHand's default
-import { hdGlyphName } from './padGlyphsHD.js';   // FINAL AUDIT (TECH-CARD): a pad button's name in words, for a line that says it
+import { controllerLook } from '../player/lookFilter.js'; // AUDIT DUEL1 D3: GP1's latch - the chip a pad player sees is a glyph
+import { bindings } from './input.js'; // DISC21-C: the live store, for quickslotHand's default
+import { hdGlyphName } from './padGlyphsHD.js'; // FINAL AUDIT (TECH-CARD): a pad button's name in words, for a line that says it
 
 /** Which action each cell of the diamond announces. The off hand's is
  *  decided by what is IN it, so it is a function of the kind rather
  *  than a constant - see `quickslotOffAction`. */
 export const CELL_ACTIONS = Object.freeze({
-  main: 'ReadyWeapon',   // draw / sheathe: the one thing the main hand's cell does
+  main: 'ReadyWeapon', // draw / sheathe: the one thing the main hand's cell does
   c1: 'QuickUse1',
   c2: 'QuickUse2',
   swap: 'QuickSwap',
-  off: 'QuickOffHand',   // QS4: light or douse - what an off hand does
+  off: 'QuickOffHand', // QS4: light or douse - what an off hand does
 });
 
 /* KB1: `torchTag` - the chip read off Handheld Torches' own TextKey store - is gone with that store. The toggle is
@@ -58,7 +58,10 @@ export function tagText(code) {
   // tight - `LSHIFT+1` - because `buttonText`'s short form caps the
   // joined classic string at ten characters and a chip reading '...'
   // says nothing at all.
-  if (isCombo(code)) { const [mod, key] = getCombo(code); return `${tagText(mod)}+${tagText(key)}`; }
+  if (isCombo(code)) {
+    const [mod, key] = getCombo(code);
+    return `${tagText(mod)}+${tagText(key)}`;
+  }
   const digit = /^Digit([0-9])$/.exec(code);
   if (digit) return digit[1];
   const pad = /^Numpad([0-9])$/.exec(code);
@@ -92,7 +95,10 @@ export function quickslotTag(action, { bindings = null, controller = false, fami
  *  secondary - the primary alone said "no key bound" of a key that answers), and the pad's button while a pad is in
  *  hand, named in words (padGlyphsHD.js hdGlyphName - "A", "Triangle", "RB"; a pad player was told to hold MOUSE3).
  *  '' when nothing is bound. */
-export function actionKeyWord(action, { bindings: store = bindings(), controller = controllerLook(), family = padFamily() ?? 'xbox' } = {}) {
+export function actionKeyWord(
+  action,
+  { bindings: store = bindings(), controller = controllerLook(), family = padFamily() ?? 'xbox' } = {},
+) {
   const tag = quickslotTag(action, { bindings: store, controller, family });
   return !tag ? '' : tag.kind === 'key' ? tag.text : hdGlyphName(tag.family, tag.code);
 }
@@ -132,10 +138,18 @@ export const tagKey = (t) => (t ? (t.kind === 'glyph' ? `g:${t.family}:${t.code}
 /** DISC21-C: what an empty quickslot press reads of the hand (systems/quickslots.js emptySlotLine) - the weapon the
  *  rig holds, whether it is still sheathed, and the key that readies it, named exactly as the main cell's chip names
  *  it. A pad glyph is not a word a line can say, so a pad-only binding names nothing. */
-export function quickslotHand(rig, store = bindings(), pad = { controller: controllerLook() && !!padFamily(), family: padFamily() ?? 'xbox' }) {
+export function quickslotHand(
+  rig,
+  store = bindings(),
+  pad = { controller: controllerLook() && !!padFamily(), family: padFamily() ?? 'xbox' },
+) {
   const pw = rig?.playerWeapon ?? null;
   // AUDIT DUEL1 D3: the chip's own options (enhancedHud.js) - with the pad live the main cell shows a GLYPH, and naming
   // the keyboard's key to a pad player told them a key they were not holding
-  const tag = quickslotTag(CELL_ACTIONS.main, { bindings: store, controller: !!pad?.controller, family: pad?.family ?? 'xbox' });
+  const tag = quickslotTag(CELL_ACTIONS.main, {
+    bindings: store,
+    controller: !!pad?.controller,
+    family: pad?.family ?? 'xbox',
+  });
   return { weapon: pw?.weapon ?? null, sheathed: !!pw?.sheathed, readyKey: tag?.kind === 'key' ? tag.text : null };
 }

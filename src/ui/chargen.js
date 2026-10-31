@@ -1637,7 +1637,7 @@ export class ChargenFlow {
         // two things and the port had conflated them. Every AddButton
         // binds a HOTKEY unconditionally (DaggerfallMessageBox.cs:377,
         // `DaggerfallShortcut.GetBinding(ToShortcutButton(...))` -
-        // Yes 'Y', No 'N', dialogShortcuts.js:"Accept: 'A', Reject"), and RETURN clicks
+        // Yes 'Y', No 'N', dialogShortcuts.js:"Accept: 'A',"), and RETURN clicks
         // the DEFAULT button, if there is one (:318-324 through
         // GetDefaultButton :394-403). This box is built with two bare
         // `AddButton(Yes)`/`AddButton(No)` calls

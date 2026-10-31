@@ -22,8 +22,13 @@ export function setLightSource(entity, item) {
   entity.lightSource = now;
   if (was === now) return;
   for (const f of [...listeners]) {
-    try { f(entity, now, was); } catch (e) {
-      if (!_faultSaid) { _faultSaid = true; console.warn(`[light-source] a listener threw and was skipped: ${e?.message ?? e}`); }
+    try {
+      f(entity, now, was);
+    } catch (e) {
+      if (!_faultSaid) {
+        _faultSaid = true;
+        console.warn(`[light-source] a listener threw and was skipped: ${e?.message ?? e}`);
+      }
     }
   }
 }
@@ -31,7 +36,9 @@ export function setLightSource(entity, item) {
 /** Hear every change of any entity's light in hand. Returns the unsubscribe. */
 export function addLightSourceListener(f) {
   listeners.add(f);
-  return () => { listeners.delete(f); };
+  return () => {
+    listeners.delete(f);
+  };
 }
 
 /** For tests: how many are listening. */

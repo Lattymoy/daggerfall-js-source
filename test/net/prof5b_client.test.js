@@ -220,7 +220,7 @@ test('PROF5b tab: Auctions - each Masterwork\'s standing bid, bids and end, wher
 
 test('PROF5b wiring: the two routes behind a session and in the Worker\'s table, their refusals\' statuses; the door\'s two calls; the auction row dressed', () => {
   const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
-  assert.match(src('server-account/src/service.js'), /'\/v1\/market\/remove', '\/v1\/market\/auction', '\/v1\/market\/bid',/);
+  assert.match(src('server-account/src/service.js'), /'\/v1\/market\/remove',\n\s*'\/v1\/market\/auction',\n\s*'\/v1\/market\/bid',/);
   const idx = src('server-account/src/index.js');
   assert.match(idx, /'\/v1\/market\/auction': \(\) => marketAuction\(mctx, who\.player, env, body\)/);   // PIN MOVED (INT19): its Masterwork out of the seller's record, in R2
   assert.match(idx, /'\/v1\/market\/bid': \(\) => marketBid\(ctx, who\.player, env, body\)/);

@@ -66,8 +66,8 @@
   {
     "name": "SEATS3-C4-towers-guild-unkeyed",
     "file": "src/net/townSeatBook.js",
-    "old": "if (data !== _towersOf || guild !== _towersGuild) {",
-    "new": "if (data !== _towersOf) {",
+    "old": "    if (data !== _towersOf || guild !== _towersGuild) {",
+    "new": "    if (data !== _towersOf) {",
     "tests": [
       "test/net/audit_seats3_client.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "SEATS3-C5-failure-unmarked",
     "file": "src/net/townSeatBook.js",
-    "old": "      failed = !r?.ok && !SHUT.includes(r?.error);",
-    "new": "      failed = false;",
+    "old": "      failed = !r?.ok && !SHUT.includes(r?.error); // AUDIT SEATS-3 C5",
+    "new": "      failed = false; // AUDIT SEATS-3 C5",
     "tests": [
       "test/net/audit_seats3_client.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "SEATS3-C5-refusal-retried",
     "file": "src/net/townSeatBook.js",
-    "old": "      failed = !r?.ok && !SHUT.includes(r?.error);",
-    "new": "      failed = !r?.ok;",
+    "old": "      failed = !r?.ok && !SHUT.includes(r?.error); // AUDIT SEATS-3 C5",
+    "new": "      failed = !r?.ok; // AUDIT SEATS-3 C5",
     "tests": [
       "test/net/audit_seats3_client.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "SEATS3-C5-no-backoff",
     "file": "src/net/townSeatBook.js",
-    "old": "(failed ? SEAT_LIST_RETRY_MS : SEAT_RED_READ_MS)",
-    "new": "(failed ? 0 : SEAT_RED_READ_MS)",
+    "old": "      if (!pending && (open === true || failed) && nowMs() - at >= (failed ? SEAT_LIST_RETRY_MS : SEAT_RED_READ_MS))",
+    "new": "      if (!pending && (open === true || failed) && nowMs() - at >= (failed ? 0 : SEAT_RED_READ_MS))",
     "tests": [
       "test/net/audit_seats3_client.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "SEATS3-D2-the-static-cap",
     "file": "src/ui/marketTab.js",
-    "old": "const listingsMax = m.book.state.listingsMax ?? MARKET_LISTINGS_MAX;",
-    "new": "const listingsMax = MARKET_LISTINGS_MAX;",
+    "old": "    const listingsMax = m.book.state.listingsMax ?? MARKET_LISTINGS_MAX; // AUDIT SEATS-3 D2: the board's own cap, as the service says it",
+    "new": "    const listingsMax = MARKET_LISTINGS_MAX; // AUDIT SEATS-3 D2: the board's own cap, as the service says it",
     "tests": [
       "test/net/audit_seats3_client.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "SEATS3-D2-board-unsent",
     "file": "src/ui/marketTab.js",
-    "old": "      ...at(),   // AUDIT SEATS-3 D2",
-    "new": "      // AUDIT SEATS-3 D2",
+    "old": "      ...at(), // AUDIT SEATS-3 D2: the board read from - the listings its Market Hall allows answered with the counts",
+    "new": "      // AUDIT SEATS-3 D2: the board read from - the listings its Market Hall allows answered with the counts",
     "tests": [
       "test/net/audit_seats3_client.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "SEATS3-D2-bad-cap-kept",
     "file": "src/net/marketBook.js",
-    "old": "Number.isSafeInteger(d.listingsMax) && d.listingsMax > 0",
-    "new": "d.listingsMax != null",
+    "old": "    if (Number.isSafeInteger(d.listingsMax) && d.listingsMax > 0) state.listingsMax = d.listingsMax; // AUDIT SEATS-3 D2",
+    "new": "    if (d.listingsMax != null) state.listingsMax = d.listingsMax; // AUDIT SEATS-3 D2",
     "tests": [
       "test/net/audit_seats3_client.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "SEATS3-D2-boards-one-cache",
     "file": "src/net/marketBook.js",
-    "old": ", (q.pieces ?? []).join(','), (q.board ?? []).join(','),\n",
-    "new": ", (q.pieces ?? []).join(','),\n",
+    "old": "      (q.board ?? []).join(','),\n      q.page ?? 0,",
+    "new": "      q.page ?? 0,",
     "tests": [
       "test/net/audit_seats3_client.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "SEATS3-D3-tithe-over-its-cap",
     "file": "src/net/townSeatLaw.js",
-    "old": "Math.min(Math.trunc(pct), seatTitheCap(seat))",
-    "new": "Math.trunc(pct)",
+    "old": "  return seat?.holder && pct > 0 ? Math.min(Math.trunc(pct), seatTitheCap(seat)) : 0;",
+    "new": "  return seat?.holder && pct > 0 ? Math.trunc(pct) : 0;",
     "tests": [
       "test/net/audit_seats3_client.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "SEATS3-D3-the-tithe-unsaid",
     "file": "src/ui/marketTab.js",
-    "old": "pct > 0 ? `${saleTax(100)}% tax and the ${pct}% Tithe` :",
-    "new": "pct > 0 ? `${saleTax(100)}% tax` :",
+    "old": "      const less = pct > 0 ? `${saleTax(100)}% tax and the ${pct}% Tithe` : `${saleTax(100)}% tax`;",
+    "new": "      const less = pct > 0 ? `${saleTax(100)}% tax` : `${saleTax(100)}% tax`;",
     "tests": [
       "test/net/audit_seats3_client.test.js"
     ]

@@ -28,7 +28,8 @@
 // MELEE_REACH of its body, from the fight floor (or, for an object off it - a pillar, a perch - from beside it).
 //
 // Pure: a record and a beat in, frames out. In the relay bundle. Not a DFU member. Ledger A (ELITE-GATES).
-import { HIT_KINDS, MELEE_REACH, POSE_SLACK, MOVE_RESAY_M, MOVE_RESAY_MS, HP_SEND_MS, HOST_HP_MIN, dpsRef, spendBlow, spendPurse } from '../gate/gateBrain.js';
+import { HIT_KINDS, MELEE_REACH, POSE_SLACK, MOVE_RESAY_M, MOVE_RESAY_MS, HP_SEND_MS, HOST_HP_MIN, spendBlow, spendPurse } from '../gate/gateBrain.js';
+import { egHealthRef } from './egMight.js';   // EG-MIGHT: a member's health share counted at its might's root
 import { egKeepOnFight, egOnFight, egFloorTest, EG_BANDS } from './egLaw.js';
 import { egBlowOf, egInBlow, egBlowOn, EG_BLOWS_MAX, EG_OUTLINE_MAX_MS } from './egShape.js';
 import { egUnionHolds, egPlaceLandings, egBlowNear, EG_UNION_HOLD_TICKS } from './egFloor.js';
@@ -65,12 +66,14 @@ const dist = (ax, az, bx, bz) => Math.hypot(ax - bx, az - bz);
  * A HALL'S FIGHT, fresh at its wake: its hall, kind, circle and band, the living company that sizes it (`n`, their levels,
  * the company's reference damage `team` and its mean), its depth's weight, and nothing yet standing. EG-ZQ (section 13.2):
  * `subs` the company's accounts, in the order of their levels - each lord's fighters (net/eliteGates/egLords.js egLordsShare).
- * @param {any} spec @param {number} now @param {number[]} lvs @param {string[]} [subs]
+ * EG-MIGHT (section 21.1): `mgs` each one's kit's might, in the same order - its reference grown by the might's root
+ * (net/eliteGates/egMight.js egHealthRef), so the company's `team` and every share of it are counted so.
+ * @param {any} spec @param {number} now @param {number[]} lvs @param {string[]} [subs] @param {(number|null)[]} [mgs]
  */
-export function egFightNew(spec, now, lvs, subs = []) {
-  const L = lvs.length ? lvs : [1], team = L.reduce((s, lv) => s + dpsRef(lv), 0);
+export function egFightNew(spec, now, lvs, subs = [], mgs = []) {
+  const L = lvs.length ? lvs : [1], M = lvs.length ? L.map((_, j) => mgs[j] ?? null) : [null], team = L.reduce((s, lv, j) => s + egHealthRef(lv, M[j]), 0);
   return egFightBind({
-    h: spec.h, kind: spec.kind, variant: spec.variant, c: spec.c, band: spec.band, el: EG_BANDS[spec.band]?.el ?? 'fire', n: L.length, lvs: L, subs: lvs.length ? [...subs] : [], team, mean: team / L.length, X: egDepthX(spec.c),
+    h: spec.h, kind: spec.kind, variant: spec.variant, c: spec.c, band: spec.band, el: EG_BANDS[spec.band]?.el ?? 'fire', n: L.length, lvs: L, mgs: M, subs: lvs.length ? [...subs] : [], team, mean: team / L.length, X: egDepthX(spec.c),
     wokeAt: now, seq: 0, bl: 0, bodies: [], blows: [], held: [], tethers: [], marks: [], pg: {}, hSent: '', hAt: 0, stateAt: now, moves: [],
     /** a lord's or a hall's own memory (the brains keep their state here) */
     mem: {},

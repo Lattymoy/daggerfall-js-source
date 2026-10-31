@@ -13,12 +13,16 @@
 const _listeners = [];
 let _climate, _inRect;
 /** Where PlayerGPS.Start leaves its trackers. */
-const start = () => { _climate = 0; _inRect = false; };
+const start = () => {
+  _climate = 0;
+  _inRect = false;
+};
 start();
 
 /** Listen: `{ climateIndexChanged?(climateIndex), enterLocationRect?(climateIndex), exitLocationRect?(climateIndex) }`. */
 export function onPlayerGpsEvents(listener) {
-  if (!listener || typeof listener !== 'object') throw new Error('onPlayerGpsEvents: { climateIndexChanged, enterLocationRect, exitLocationRect }');
+  if (!listener || typeof listener !== 'object')
+    throw new Error('onPlayerGpsEvents: { climateIndexChanged, enterLocationRect, exitLocationRect }');
   _listeners.push(listener);
 }
 
@@ -44,7 +48,12 @@ const RESET_ON = new Set(['load', 'travel']);
  *  lastClimateIndex). A jump that names neither (a Recall, a guild's teleport, a respawn) keeps the flag, as DFU does.
  *  AUDIT DEX C1: the port's jump core hands every jump's kind here, where the host's own rect flag drops; which of them
  *  reset is this module's, so the host plays the event and holds no rule of PlayerGPS's (HOST-SPLIT). */
-export function resetPlayerGpsState(jump) { if (RESET_ON.has(jump)) _inRect = false; }
+export function resetPlayerGpsState(jump) {
+  if (RESET_ON.has(jump)) _inRect = false;
+}
 
 /** The test seam: no listener, and the trackers where PlayerGPS.Start leaves them. */
-export function _resetPlayerGps() { _listeners.length = 0; start(); }
+export function _resetPlayerGps() {
+  _listeners.length = 0;
+  start();
+}

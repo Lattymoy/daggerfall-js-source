@@ -1,52 +1,453 @@
 [
-  { "name": "KTE-the-open-zone-a-station", "file": "src/net/ketch/ketchLaw.js", "old": "export const KT_THEATRES = Object.freeze([0, 2, 3, 4, 5, 6, 7, 8]);", "new": "export const KT_THEATRES = Object.freeze([0, 2, 3, 4, 5, 6, 7, 8, 9]);", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-a-city-not-its-crowns-seat", "file": "src/net/ketch/ketchLaw.js", "old": "(KT_STATION_CROWNS[t] ? kingdomSeatName(KT_STATION_CROWNS[t]) : null)", "new": "(KT_STATION_CROWNS[t] ? KT_STATION_CROWNS[t] : null)", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-stagger-none", "file": "src/net/ketch/ketchLaw.js", "old": "const at = KT_EPOCH_MS + ketchStationSlot(th) * KT_THEATRE_STAGGER_MS + k * KT_EVERY_MS;", "new": "const at = KT_EPOCH_MS + k * KT_EVERY_MS;", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-high-rock-past-the-bay-a-station", "file": "src/net/ketch/ketchLaw.js", "old": "export const KT_THEATRES = Object.freeze([0, 2, 3, 4, 5, 6, 7, 8]);", "new": "export const KT_THEATRES = Object.freeze([0, 1, 2, 3, 4, 5, 6, 7, 8]);", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-hammerfells-crown-wayrest", "file": "src/net/ketch/ketchLaw.js", "old": "2: 'sentinel', 3: 'skyrim'", "new": "2: 'wayrest', 3: 'skyrim'", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-stagger-a-ninth", "file": "src/net/ketch/ketchLaw.js", "old": "export const KT_THEATRE_STAGGER_MS = KT_EVERY_MS / KT_THEATRES.length;", "new": "export const KT_THEATRE_STAGGER_MS = KT_EVERY_MS / 9;", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-slot-the-lane", "file": "src/net/ketch/ketchLaw.js", "old": "const at = KT_EPOCH_MS + ketchStationSlot(th) * KT_THEATRE_STAGGER_MS + k * KT_EVERY_MS;", "new": "const at = KT_EPOCH_MS + th * KT_THEATRE_STAGGER_MS + k * KT_EVERY_MS;", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-clocks-slot-the-lane", "file": "src/net/ketch/ketchLaw.js", "old": "const n = Math.floor((t - ketchStationSlot(theatre) * KT_THEATRE_STAGGER_MS - (KT_EPOCH_MS - KT_SIGHT_MS)) / KT_EVERY_MS);", "new": "const n = Math.floor((t - theatre * KT_THEATRE_STAGGER_MS - (KT_EPOCH_MS - KT_SIGHT_MS)) / KT_EVERY_MS);", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-a-lane-with-no-station-before-the-bay", "file": "src/net/ketch/ketchLaw.js", "old": "export const ketchStationSlot = (theatre) => Math.max(0, KT_THEATRES.indexOf(theatre));", "new": "export const ketchStationSlot = (theatre) => KT_THEATRES.indexOf(theatre);", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-bays-crown-unread", "file": "src/scenes/ketch/ketchStanding.js", "old": "lane = k != null ? BAY_CROWN_LANE[k] ?? null : null;", "new": "lane = null;", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-wayrest-hammerfells", "file": "src/scenes/ketch/ketchStanding.js", "old": "wayrest: LANE_OF_CROWN.get('daggerfall')", "new": "wayrest: LANE_OF_CROWN.get('sentinel')", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-reader-not-the-standings", "file": "src/scenes/ketch/ketchStanding.js", "old": "export function ketchStationHere(px, py, regionAt = _regionAt) {", "new": "export function ketchStationHere(px, py, regionAt = null) {", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-sentinels-row", "file": "src/scenes/ketch/ketchStations.js", "old": "2: Object.freeze({ region: 20, location: 6,", "new": "2: Object.freeze({ region: 20, location: 7,", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-sentinels-pixel", "file": "src/scenes/ketch/ketchStations.js", "old": "px: Object.freeze({ x: 397, y: 343 })", "new": "px: Object.freeze({ x: 398, y: 343 })", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-a-bay-station-looked-for-past-the-bay", "file": "src/scenes/ketch/ketchStations.js", "old": "  if (row) return row.px;\n", "new": "", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-reader-unhanded", "file": "src/scenes/ketch/ketchClient.js", "old": "setKetchStationsStanding(on, bayRegionAt);", "new": "setKetchStationsStanding(on);", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-politic-band-off-by-one", "file": "src/scenes/ketch/ketchClient.js", "old": "return Number.isInteger(p) && p >= 128 ? p - 128 : -1;", "new": "return Number.isInteger(p) && p >= 128 ? p - 127 : -1;", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-lifts-default-the-bays", "file": "src/scenes/ketch/ketchClient.js", "old": "return (provincesOn() && h && ketchStationHere(h.x, h.y, bayRegionAt)) || 0;", "new": "return 0;", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-lifts-default-on-an-older-relay", "file": "src/scenes/ketch/ketchClient.js", "old": "return (provincesOn() && h && ketchStationHere(h.x, h.y, bayRegionAt)) || 0;", "new": "return (h && ketchStationHere(h.x, h.y, bayRegionAt)) || 0;", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-frames-crown-unread", "file": "src/scenes/ketch/ketchClient.js", "old": "here = on && h ? ketchStationHere(h.x, h.y, bayRegionAt) : null;", "new": "here = on && h ? ketchStationHere(h.x, h.y, null) : null;", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-number-names-no-theatre", "file": "src/net/ketch/ketchLaw.js", "old": "th = Math.floor(m / KT_THEATRE_SPAN), k = m - th * KT_THEATRE_SPAN;", "new": "th = 0, k = m - th * KT_THEATRE_SPAN;", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-voyage-at-the-bays", "file": "src/net/ketch/ketchLaw.js", "old": "const t = Number(now), base = ketchVoyageNumber(0, theatre);", "new": "const t = Number(now), base = 0;", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-open-zone-held", "file": "src/net/ketch/ketchLaw.js", "old": "return ketchStationOk(ketchTheatreOf(n)) && now >= v.at && now < v.endAt; };", "new": "return now >= v.at && now < v.endAt; };", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-open-zone-boarded", "file": "src/net/ketch/ketchLaw.js", "old": "return ketchStationOk(ketchTheatreOf(n)) && now >= v.at && now < v.departAt; };", "new": "return now >= v.at && now < v.departAt; };", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-heralds-city-the-bays", "file": "src/net/ketch/ketchHerald.js", "old": "const cityOf = (n) => KT_STATION_CITIES[ketchTheatreOf(n)] ?? KT_STATION_CITIES[0];", "new": "const cityOf = (n) => KT_STATION_CITIES[0];", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-heralds-state-the-bays", "file": "src/net/ketch/ketchHerald.js", "old": "export const ketchHeraldKey = (theatre = 0) => (theatre ? `ktherald:${theatre}` : 'ktherald');", "new": "export const ketchHeraldKey = (theatre = 0) => 'ktherald';", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-heralds-due-the-bays", "file": "src/net/ketch/ketchHerald.js", "old": "  const v = ketchVoyageAt(now, theatre);", "new": "  const v = ketchVoyageAt(now);", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-hubs-beat-the-bays", "file": "server/src/index.js", "old": "for (const theatre of KT_THEATRES) await this._ktHeraldStationBeat(h, theatre, now);", "new": "await this._ktHeraldStationBeat(h, 0, now);", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-a-receipts-key-the-bays", "file": "src/net/wire.js", "old": "export const ketchReceiptKey = (sub, theatre = 0) => (theatre ? `${KT_RC_PREFIX}${sub}.${theatre}` : `${KT_RC_PREFIX}${sub}`);", "new": "export const ketchReceiptKey = (sub, theatre = 0) => `${KT_RC_PREFIX}${sub}`;", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-hub-keeps-on-the-bays-key", "file": "server/src/index.js", "old": "const th = ketchTheatreOf(c.n);   // KETCH-EVERYWHERE: kept on its station's key", "new": "const th = 0;   // KETCH-EVERYWHERE: kept on its station's key", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-a-hello-hands-the-bays-alone", "file": "server/src/index.js", "old": "const keys = KT_THEATRES.map((theatre) => ketchReceiptKey(sub, theatre));", "new": "const keys = [ketchReceiptKey(sub)];", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-open-zones-spent-word-kept", "file": "server/src/index.js", "old": "if (!ketchStationOk(th) || !(n <= ketchVoyageAt(now, th).n)) return;", "new": "if (!(n <= ketchVoyageAt(now, th).n)) return;", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-spent-word-the-bays-clock", "file": "server/src/index.js", "old": "if (!ketchStationOk(th) || !(n <= ketchVoyageAt(now, th).n)) return;", "new": "if (!ketchStationOk(th) || !(n <= ketchVoyageAt(now).n)) return;", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-timers-province-unasked", "file": "src/systems/eventTimers.js", "old": "  if (kHere) ketchRows(now, coming, live, kHere);", "new": "", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-timers-standing-unread", "file": "src/systems/eventTimers.js", "old": "const kHere = ketchStationsStanding() && src?.pixel ?", "new": "const kHere = src?.pixel ?", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-timers-where-the-bays", "file": "src/systems/eventTimers.js", "old": "kWhere = theatre ? t('ketch.timers.whereAt',", "new": "kWhere = false ? t('ketch.timers.whereAt',", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-sighting-the-bays-words", "file": "src/systems/ketch/ketchWords.js", "old": "sighted: (theatre = 0) => (theatre ? t('ketch.sightedAt',", "new": "sighted: (theatre = 0) => (false ? t('ketch.sightedAt',", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-docked-line-the-bays", "file": "src/systems/ketch/ketchWords.js", "old": "return theatre ? t('ketch.left.dockedAt',", "new": "return false ? t('ketch.left.dockedAt',", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-ship-laid-in-daggerfall", "file": "src/scenes/ketch/ketchDeckHost.js", "old": "(isProvinceRegion(site?.regionIndex) ? REGION_NAMES[site.regionIndex] : 'Daggerfall')", "new": "'Daggerfall'", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-skies-one-bucket", "file": "src/scenes/ketch/ketchSky.js", "old": "export const ketchSkyBucket = (theatre = 0) => (theatre ? `${KT_SKY_BUCKET}:${theatre}` : KT_SKY_BUCKET);", "new": "export const ketchSkyBucket = (theatre = 0) => KT_SKY_BUCKET;", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-sky-the-bays-voyage", "file": "src/scenes/ketch/ketchSky.js", "old": "const v = ketchVoyageAt(now, theatre), S = KT_SKY;", "new": "const v = ketchVoyageAt(now), S = KT_SKY;", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-stations-pixel", "file": "src/scenes/ketch/ketchStations.js", "old": "_at.set(theatre, p ? Object.freeze({ x: p.bx, y: p.by }) : null);", "new": "_at.set(theatre, p ? Object.freeze({ x: p.bx + 1, y: p.by }) : null);", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-reach", "file": "src/scenes/ketch/ketchStations.js", "old": "export const KT_STATION_REACH_PX = 17;", "new": "export const KT_STATION_REACH_PX = 16;", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-a-province-framed-anywhere", "file": "src/scenes/ketch/ketchClient.js", "old": "if (on && h && ketchStationNear(st.theatre, h.x, h.y)) {", "new": "if (on && h) {", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-provinces-words-unsaid", "file": "src/scenes/ketch/ketchClient.js", "old": "      if (mine) voyageWords(t, mine);\n", "new": "", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-rings-on-an-older-relay", "file": "src/scenes/ketch/ketchClient.js", "old": "      if (!provincesOn()) return out;\n", "new": "", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-bays-voyage-boarded", "file": "src/scenes/ketch/ketchClient.js", "old": "const o = online(), t = now(), v = ketchVoyageAt(t, th);", "new": "const o = online(), t = now(), v = ketchVoyageAt(t);", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-session-unwelcomed", "file": "src/net/online.js", "old": "      if (primary) this.ktTheatresOk = relaySupportsKetchTheatres(relayV);", "new": "      if (primary) this.ktTheatresOk = true;", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-held-maps-list-read-as-one", "file": "src/ui/heldMap.js", "old": "const v = this.deps.ketch?.(); return Array.isArray(v) ? v : v ? [v] : [];", "new": "const v = this.deps.ketch?.(); return v ? [Array.isArray(v) ? v[0] : v] : [];", "note": "Re-aimed by content (AUDIT BAY-LEFT, its packages merged): WW5's Hollows and KETCH-EVERYWHERE's stations read the host's list with the same line - each record aimed at its own getter's.", "tests": ["test/net/ketch/ketch_everywhere.test.js"] },
-  { "name": "KTE-the-ink-maps-rings-past-the-first", "file": "src/ui/ink/inkMap.js", "old": "for (const k of opts.ketches ?? (opts.ketch ? [opts.ketch] : []))", "new": "for (const k of (opts.ketches ?? (opts.ketch ? [opts.ketch] : [])).slice(0, 1))", "tests": ["test/net/ketch/ketch_everywhere.test.js"] }
+  {
+    "name": "KTE-the-open-zone-a-station",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "export const KT_THEATRES = Object.freeze([0, 2, 3, 4, 5, 6, 7, 8]);",
+    "new": "export const KT_THEATRES = Object.freeze([0, 2, 3, 4, 5, 6, 7, 8, 9]);",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-a-city-not-its-crowns-seat",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "  Array.from({ length: 9 }, (_, t) => (KT_STATION_CROWNS[t] ? kingdomSeatName(KT_STATION_CROWNS[t]) : null)),",
+    "new": "  Array.from({ length: 9 }, (_, t) => (KT_STATION_CROWNS[t] ? KT_STATION_CROWNS[t] : null)),",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-stagger-none",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "  const at = KT_EPOCH_MS + ketchStationSlot(th) * KT_THEATRE_STAGGER_MS + k * KT_EVERY_MS;",
+    "new": "  const at = KT_EPOCH_MS + k * KT_EVERY_MS;",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-high-rock-past-the-bay-a-station",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "export const KT_THEATRES = Object.freeze([0, 2, 3, 4, 5, 6, 7, 8]);",
+    "new": "export const KT_THEATRES = Object.freeze([0, 1, 2, 3, 4, 5, 6, 7, 8]);",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-hammerfells-crown-wayrest",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "  2: 'sentinel',",
+    "new": "  2: 'wayrest',",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-stagger-a-ninth",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "export const KT_THEATRE_STAGGER_MS = KT_EVERY_MS / KT_THEATRES.length;",
+    "new": "export const KT_THEATRE_STAGGER_MS = KT_EVERY_MS / 9;",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-slot-the-lane",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "  const at = KT_EPOCH_MS + ketchStationSlot(th) * KT_THEATRE_STAGGER_MS + k * KT_EVERY_MS;",
+    "new": "  const at = KT_EPOCH_MS + th * KT_THEATRE_STAGGER_MS + k * KT_EVERY_MS;",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-clocks-slot-the-lane",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "  const n = Math.floor(\n    (t - ketchStationSlot(theatre) * KT_THEATRE_STAGGER_MS - (KT_EPOCH_MS - KT_SIGHT_MS)) / KT_EVERY_MS,\n  );",
+    "new": "  const n = Math.floor((t - theatre * KT_THEATRE_STAGGER_MS - (KT_EPOCH_MS - KT_SIGHT_MS)) / KT_EVERY_MS);",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-a-lane-with-no-station-before-the-bay",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "export const ketchStationSlot = (theatre) => Math.max(0, KT_THEATRES.indexOf(theatre));",
+    "new": "export const ketchStationSlot = (theatre) => KT_THEATRES.indexOf(theatre);",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-bays-crown-unread",
+    "file": "src/scenes/ketch/ketchStanding.js",
+    "old": "    lane = k != null ? (BAY_CROWN_LANE[k] ?? null) : null;",
+    "new": "    lane = null;",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-wayrest-hammerfells",
+    "file": "src/scenes/ketch/ketchStanding.js",
+    "old": "  wayrest: LANE_OF_CROWN.get('daggerfall'),",
+    "new": "  wayrest: LANE_OF_CROWN.get('sentinel'),",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-reader-not-the-standings",
+    "file": "src/scenes/ketch/ketchStanding.js",
+    "old": "export function ketchStationHere(px, py, regionAt = _regionAt) {",
+    "new": "export function ketchStationHere(px, py, regionAt = null) {",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-sentinels-row",
+    "file": "src/scenes/ketch/ketchStations.js",
+    "old": "  2: Object.freeze({ region: 20, location: 6, px: Object.freeze({ x: 397, y: 343 }) }), // Sentinel",
+    "new": "  2: Object.freeze({ region: 20, location: 7, px: Object.freeze({ x: 397, y: 343 }) }), // Sentinel",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-sentinels-pixel",
+    "file": "src/scenes/ketch/ketchStations.js",
+    "old": "  2: Object.freeze({ region: 20, location: 6, px: Object.freeze({ x: 397, y: 343 }) }), // Sentinel",
+    "new": "  2: Object.freeze({ region: 20, location: 6, px: Object.freeze({ x: 398, y: 343 }) }), // Sentinel",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-a-bay-station-looked-for-past-the-bay",
+    "file": "src/scenes/ketch/ketchStations.js",
+    "old": "  if (row) return row.px;\n  if (!arenaStanding()) return null;",
+    "new": "  if (!arenaStanding()) return null;",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-reader-unhanded",
+    "file": "src/scenes/ketch/ketchClient.js",
+    "old": "      setKetchStationsStanding(on, bayRegionAt);",
+    "new": "      setKetchStationsStanding(on);",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-politic-band-off-by-one",
+    "file": "src/scenes/ketch/ketchClient.js",
+    "old": "      return Number.isInteger(p) && p >= 128 ? p - 128 : -1;",
+    "new": "      return Number.isInteger(p) && p >= 128 ? p - 127 : -1;",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-lifts-default-the-bays",
+    "file": "src/scenes/ketch/ketchClient.js",
+    "old": "      return (provincesOn() && h && ketchStationHere(h.x, h.y, bayRegionAt)) || 0;",
+    "new": "      return 0;",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-lifts-default-on-an-older-relay",
+    "file": "src/scenes/ketch/ketchClient.js",
+    "old": "      return (provincesOn() && h && ketchStationHere(h.x, h.y, bayRegionAt)) || 0;",
+    "new": "      return (h && ketchStationHere(h.x, h.y, bayRegionAt)) || 0;",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-frames-crown-unread",
+    "file": "src/scenes/ketch/ketchClient.js",
+    "old": "        here = on && h ? ketchStationHere(h.x, h.y, bayRegionAt) : null;",
+    "new": "        here = on && h ? ketchStationHere(h.x, h.y, null) : null;",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-number-names-no-theatre",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "    th = Math.floor(m / KT_THEATRE_SPAN),",
+    "new": "    th = 0,",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-voyage-at-the-bays",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "    base = ketchVoyageNumber(0, theatre);",
+    "new": "    base = 0;",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-open-zone-held",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "  return ketchStationOk(ketchTheatreOf(n)) && now >= v.at && now < v.endAt;",
+    "new": "  return now >= v.at && now < v.endAt;",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-open-zone-boarded",
+    "file": "src/net/ketch/ketchLaw.js",
+    "old": "  return ketchStationOk(ketchTheatreOf(n)) && now >= v.at && now < v.departAt;",
+    "new": "  return now >= v.at && now < v.departAt;",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-heralds-city-the-bays",
+    "file": "src/net/ketch/ketchHerald.js",
+    "old": "const cityOf = (n) => KT_STATION_CITIES[ketchTheatreOf(n)] ?? KT_STATION_CITIES[0];",
+    "new": "const cityOf = (n) => KT_STATION_CITIES[0];",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-heralds-state-the-bays",
+    "file": "src/net/ketch/ketchHerald.js",
+    "old": "export const ketchHeraldKey = (theatre = 0) => (theatre ? `ktherald:${theatre}` : 'ktherald');",
+    "new": "export const ketchHeraldKey = (theatre = 0) => 'ktherald';",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-heralds-due-the-bays",
+    "file": "src/net/ketch/ketchHerald.js",
+    "old": "  const v = ketchVoyageAt(now, theatre);",
+    "new": "  const v = ketchVoyageAt(now);",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-hubs-beat-the-bays",
+    "file": "server/src/index.js",
+    "old": "for (const theatre of KT_THEATRES) await this._ktHeraldStationBeat(h, theatre, now);",
+    "new": "await this._ktHeraldStationBeat(h, 0, now);",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-a-receipts-key-the-bays",
+    "file": "src/net/wire.js",
+    "old": "export const ketchReceiptKey = (sub, theatre = 0) => (theatre ? `${KT_RC_PREFIX}${sub}.${theatre}` : `${KT_RC_PREFIX}${sub}`);",
+    "new": "export const ketchReceiptKey = (sub, theatre = 0) => `${KT_RC_PREFIX}${sub}`;",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-hub-keeps-on-the-bays-key",
+    "file": "server/src/index.js",
+    "old": "const th = ketchTheatreOf(c.n);   // KETCH-EVERYWHERE: kept on its station's key",
+    "new": "const th = 0;   // KETCH-EVERYWHERE: kept on its station's key",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-a-hello-hands-the-bays-alone",
+    "file": "server/src/index.js",
+    "old": "const keys = KT_THEATRES.map((theatre) => ketchReceiptKey(sub, theatre));",
+    "new": "const keys = [ketchReceiptKey(sub)];",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-open-zones-spent-word-kept",
+    "file": "server/src/index.js",
+    "old": "if (!ketchStationOk(th) || !(n <= ketchVoyageAt(now, th).n)) return;",
+    "new": "if (!(n <= ketchVoyageAt(now, th).n)) return;",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-spent-word-the-bays-clock",
+    "file": "server/src/index.js",
+    "old": "if (!ketchStationOk(th) || !(n <= ketchVoyageAt(now, th).n)) return;",
+    "new": "if (!ketchStationOk(th) || !(n <= ketchVoyageAt(now).n)) return;",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-timers-province-unasked",
+    "file": "src/systems/eventTimers.js",
+    "old": "  if (kHere) ketchRows(now, coming, live, kHere);\n",
+    "new": "",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-timers-standing-unread",
+    "file": "src/systems/eventTimers.js",
+    "old": "  const kHere = ketchStationsStanding() && src?.pixel ? ketchStationHere(src.pixel.x, src.pixel.y) : null;",
+    "new": "  const kHere = src?.pixel ? ketchStationHere(src.pixel.x, src.pixel.y) : null;",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-timers-where-the-bays",
+    "file": "src/systems/eventTimers.js",
+    "old": "    kWhere = theatre",
+    "new": "    kWhere = false",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-sighting-the-bays-words",
+    "file": "src/systems/ketch/ketchWords.js",
+    "old": "  sighted: (theatre = 0) =>\n    theatre",
+    "new": "  sighted: (theatre = 0) =>\n    false",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-docked-line-the-bays",
+    "file": "src/systems/ketch/ketchWords.js",
+    "old": "    return theatre",
+    "new": "    return false",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-ship-laid-in-daggerfall",
+    "file": "src/scenes/ketch/ketchDeckHost.js",
+    "old": "  const regionName =\n    site?.regionName || (isProvinceRegion(site?.regionIndex) ? REGION_NAMES[site.regionIndex] : 'Daggerfall');",
+    "new": "  const regionName = site?.regionName || 'Daggerfall';",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-skies-one-bucket",
+    "file": "src/scenes/ketch/ketchSky.js",
+    "old": "export const ketchSkyBucket = (theatre = 0) => (theatre ? `${KT_SKY_BUCKET}:${theatre}` : KT_SKY_BUCKET);",
+    "new": "export const ketchSkyBucket = (theatre = 0) => KT_SKY_BUCKET;",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-sky-the-bays-voyage",
+    "file": "src/scenes/ketch/ketchSky.js",
+    "old": "  const v = ketchVoyageAt(now, theatre),",
+    "new": "  const v = ketchVoyageAt(now),",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-stations-pixel",
+    "file": "src/scenes/ketch/ketchStations.js",
+    "old": "    _at.set(theatre, p ? Object.freeze({ x: p.bx, y: p.by }) : null);",
+    "new": "    _at.set(theatre, p ? Object.freeze({ x: p.bx + 1, y: p.by }) : null);",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-reach",
+    "file": "src/scenes/ketch/ketchStations.js",
+    "old": "export const KT_STATION_REACH_PX = 17;",
+    "new": "export const KT_STATION_REACH_PX = 16;",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-a-province-framed-anywhere",
+    "file": "src/scenes/ketch/ketchClient.js",
+    "old": "            if (on && h && ketchStationNear(st.theatre, h.x, h.y)) {",
+    "new": "            if (on && h) {",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-provinces-words-unsaid",
+    "file": "src/scenes/ketch/ketchClient.js",
+    "old": "      if (mine) voyageWords(t, mine);\n      const aboard = onShip();",
+    "new": "      const aboard = onShip();",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-rings-on-an-older-relay",
+    "file": "src/scenes/ketch/ketchClient.js",
+    "old": "      if (!provincesOn()) return out;\n      const t = now();",
+    "new": "      const t = now();",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-bays-voyage-boarded",
+    "file": "src/scenes/ketch/ketchClient.js",
+    "old": "      v = ketchVoyageAt(t, th);",
+    "new": "      v = ketchVoyageAt(t);",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-session-unwelcomed",
+    "file": "src/net/online.js",
+    "old": "      if (primary) this.ktTheatresOk = relaySupportsKetchTheatres(relayV);",
+    "new": "      if (primary) this.ktTheatresOk = true;",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-held-maps-list-read-as-one",
+    "file": "src/ui/heldMap.js",
+    "old": "const v = this.deps.ketch?.(); return Array.isArray(v) ? v : v ? [v] : [];",
+    "new": "const v = this.deps.ketch?.(); return v ? [Array.isArray(v) ? v[0] : v] : [];",
+    "note": "Re-aimed by content (AUDIT BAY-LEFT, its packages merged): WW5's Hollows and KETCH-EVERYWHERE's stations read the host's list with the same line - each record aimed at its own getter's.",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  },
+  {
+    "name": "KTE-the-ink-maps-rings-past-the-first",
+    "file": "src/ui/ink/inkMap.js",
+    "old": "  for (const k of opts.ketches ?? (opts.ketch ? [opts.ketch] : []))",
+    "new": "  for (const k of (opts.ketches ?? (opts.ketch ? [opts.ketch] : [])).slice(0, 1))",
+    "tests": [
+      "test/net/ketch/ketch_everywhere.test.js"
+    ]
+  }
 ]

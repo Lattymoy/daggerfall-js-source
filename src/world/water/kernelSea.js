@@ -9,7 +9,7 @@
 import { sampleKernel, HEIGHTMAP_DIMENSION, SCALED_OCEAN_ELEVATION } from '../terrain/terrainSampler.js';
 import { isWaterHeight, sampleHeight } from '../terrain/terrainTiles.js';
 import { createLandforms, groundTopOf } from '../landforms.js';
-import { rumareSeaPixel } from '../rumareWaters.js';   // RUMARE-WATER: the Imperial City's lake, the sea's by its own stamp
+import { rumareSeaPixel } from '../rumareWaters.js'; // RUMARE-WATER: the Imperial City's lake, the sea's by its own stamp
 
 const NP = 32768;
 /** The pixels whose kernels are kept at once. */
@@ -21,32 +21,47 @@ export const KERNEL_SEA_PIXELS = 4096;
  * @param {() => any} woodsOf
  */
 export function createKernelSea(woodsOf) {
-  let woods = null, landform = null;
+  let woods = null,
+    landform = null;
   const kernels = new Map();
   // AUDIT SEA PATHS C1: the last pixel asked kept to hand - a leg asks one pixel 64 times running (kernelLine)
-  let lastPx = NaN, lastRow = NaN, lastK = null;
+  let lastPx = NaN,
+    lastRow = NaN,
+    lastK = null;
   return (/** @type {number} */ x, /** @type {number} */ z) => {
     const w = woodsOf();
     if (!w) return true;
-    if (w !== woods) { woods = w; landform = createLandforms({ woods: w }); kernels.clear(); lastPx = NaN; }
-    const px = Math.floor(x / NP), row = Math.floor(z / NP);
+    if (w !== woods) {
+      woods = w;
+      landform = createLandforms({ woods: w });
+      kernels.clear();
+      lastPx = NaN;
+    }
+    const px = Math.floor(x / NP),
+      row = Math.floor(z / NP);
     let k = px === lastPx && row === lastRow ? lastK : null;
     if (!k) k = lastK = kernelOf(px, row);
-    lastPx = px; lastRow = row;
+    lastPx = px;
+    lastRow = row;
     if (k === true) return true;
-    const c = Math.round(((HEIGHTMAP_DIMENSION - 1) * (x - px * NP)) / NP), r = Math.round(((HEIGHTMAP_DIMENSION - 1) * (z - row * NP)) / NP);
+    const c = Math.round(((HEIGHTMAP_DIMENSION - 1) * (x - px * NP)) / NP),
+      r = Math.round(((HEIGHTMAP_DIMENSION - 1) * (z - row * NP)) / NP);
     return isWaterHeight(sampleHeight(Math.fround(k(c, r))));
   };
   /** A pixel's kernel, or true: the sea whole. @param {number} px @param {number} row */
   function kernelOf(px, row) {
-    const py = 499 - row, key = `${px},${py}`;
-    if (rumareSeaPixel(px, py)) return true;   // its ground stamped the sea's (world/rumareWaters.js), past the kernel's word
+    const py = 499 - row,
+      key = `${px},${py}`;
+    if (rumareSeaPixel(px, py)) return true; // its ground stamped the sea's (world/rumareWaters.js), past the kernel's word
     let k = kernels.get(key);
     if (!k) {
       if (kernels.size >= KERNEL_SEA_PIXELS) kernels.clear();
       // a pixel whose DFU ground is bounded at the sea (landforms.js groundTopOf) is the sea whole - the landforms lift no
       // ground that low (reliefLift's zero; none of 12,658 such pixels held land, sampled under them)
-      k = groundTopOf(woods, px, py, null) <= SCALED_OCEAN_ELEVATION ? true : sampleKernel(woods, px, py, HEIGHTMAP_DIMENSION, true, landform);
+      k =
+        groundTopOf(woods, px, py, null) <= SCALED_OCEAN_ELEVATION
+          ? true
+          : sampleKernel(woods, px, py, HEIGHTMAP_DIMENSION, true, landform);
       kernels.set(key, k);
     }
     return k;
@@ -67,7 +82,8 @@ export function kernelLine(a, b, sea, skipA = false, skipB = false) {
   if (!sea) return true;
   const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / KERNEL_SEA_STEP));
   for (let i = skipA ? 1 : 0; i <= (skipB ? n - 1 : n); i++) {
-    const x = a.x + ((b.x - a.x) * i) / n, z = a.z + ((b.z - a.z) * i) / n;
+    const x = a.x + ((b.x - a.x) * i) / n,
+      z = a.z + ((b.z - a.z) * i) / n;
     if (!sea(x, z)) return { x, z };
   }
   return true;

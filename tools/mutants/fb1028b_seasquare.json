@@ -1,17 +1,154 @@
 [
-  {"name": "SEA-SQUARE-byte-law", "file": "src/scenes/naval/worldLanes.js", "old": "(rumareSeaPixel(px, py) || squareCornersAll(sea, px, py)));", "new": "(rumareSeaPixel(px, py) || sea(px, py)));", "tests": ["test/world/worldWide/fb1028b_seasquare.test.js"], "why": "the report's law: a byte read as its square's middle - a one-byte channel open, the roadsteads on land"},
-  {"name": "SEA-SQUARE-city-corner", "file": "src/scenes/naval/worldLanes.js", "old": "=> (water(px, py) && climateAt(px, py) === CLIMATES.Ocean) || rumareSeaPixel(px, py);", "new": "=> (water(px, py) && climateAt(px, py) === CLIMATES.Ocean);", "tests": ["test/world/rumarewater.test.js", "test/world/nibensea.test.js"], "why": "the Imperial City's mouth no corner of the sea: its canal shut a row short of the city, its lanes to Senchal and Torval none (ARENA2)"},
-  {"name": "SEA-SQUARE-beyond-nearest", "file": "src/scenes/naval/worldLanes.js", "old": "beyondList = longLanes(loneLanes(laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX)));", "new": "beyondList = longLanes(loneLanes(laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, false, BEYOND_LANE_PATH_PX)));", "tests": ["test/scenes/audittesa2p_hosts.test.js"], "why": "the lanes past the Bay moor off the first nearest roadstead - the Imperial City's on the canal's bank"},
-  {"name": "SEA-SQUARE-cross-nearest", "file": "src/scenes/naval/worldLanes.js", "old": "const road = roadsteadOf(f, open, true);", "new": "const road = roadsteadOf(f, open);", "tests": ["test/world/worldWide/fb1028b_seasquare.test.js"], "why": "a crossing lane's far port moors off another roadstead than its lanes past the Bay"},
-  {"name": "SEA-SQUARE-corner-unasked", "file": "src/world/terrain/terrainSampler.js", "old": "export const squareCornersAll = (byteIs, x, y) => byteIs(x - 1, y - 1) && byteIs(x, y - 1)", "new": "export const squareCornersAll = (byteIs, x, y) => byteIs(x, y - 1)", "tests": ["test/world/worldWide/fb1028b_seasquare.test.js"], "why": "a square open with its north-west corner land"},
-  {"name": "SEA-SQUARE-corners-next", "file": "src/world/terrain/terrainSampler.js", "old": "byteIs(x - 1, y - 1) && byteIs(x, y - 1) && byteIs(x - 1, y) && byteIs(x, y);", "new": "byteIs(x, y) && byteIs(x + 1, y) && byteIs(x, y + 1) && byteIs(x + 1, y + 1);", "tests": ["test/world/worldWide/fb1028b_seasquare.test.js"], "why": "the corners the next square's - the byte read as its square's north-west corner, the kernel's grid turned"},
-  {"name": "SEA-SQUARE-room-unread", "file": "src/systems/naval/seaLanes.js", "old": "n = roomy ? room(x, y) : 0;", "new": "n = 0;", "tests": ["test/world/worldWide/fb1028b_seasquare.test.js"], "why": "past the Bay the first nearest roadstead again, a lone pixel of water by the shore"},
-  {"name": "SEA-SQUARE-bay-roomy", "file": "src/systems/naval/seaLanes.js", "old": "road: roadsteadOf(p, open, roomy) })", "new": "road: roadsteadOf(p, open, true) })", "tests": ["test/world/worldWide/fb1028b_seasquare.test.js"], "why": "the Bay's roadsteads moved - its lanes are the Bay's as they were"},
-  {"name": "SEA-SQUARE-window-square", "file": "src/systems/travel/seaMark.js", "old": "return inBay(x, y) ? o : { x: o.x + MP_WORLD_UNITS / 2, z: o.z - MP_WORLD_UNITS / 2 };", "new": "return o;", "tests": ["test/world/worldWide/fb1028b_seasquare.test.js"], "why": "the report's aim: a leg past the Bay at its square's middle, kilometres of its runs ashore"},
-  {"name": "SEA-SQUARE-built-one-square", "file": "src/systems/travel/seaMark.js", "old": "for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) if (waterAt(origin.x + c", "new": "for (const [a, b] of [[1, -1]]) if (waterAt(origin.x + c", "tests": ["test/world/worldWide/fb1028b_seasquare.test.js"], "why": "a byte's point aimed while a square about it is not built - its mark read on ground that is not there"},
-  {"name": "SEA-SQUARE-launch-middle", "file": "src/systems/travel/travelOptions.js", "old": "const w = leg.kind === 'sea' || leg.kind === 'embark' ? seaLegWindow(leg.x, leg.y) : o;", "new": "const w = leg.kind === 'sea' ? seaLegWindow(leg.x, leg.y) : o;", "tests": ["test/world/worldWide/fb1028b_seasquare.test.js"], "why": "a launch past the Bay aimed at its square's middle, on the shore's land"},
-  {"name": "SEA-SQUARE-rect-square", "file": "src/systems/travel/travelOptions.js", "old": "rectOf(w.x + SEA_LEG_LO, w.z + SEA_LEG_LO, SEA_LEG_SIZE, SEA_LEG_SIZE)", "new": "rectOf(o.x + SEA_LEG_LO, o.z + SEA_LEG_LO, SEA_LEG_SIZE, SEA_LEG_SIZE)", "tests": ["test/world/worldWide/fb1028b_seasquare.test.js"], "why": "the autopilot's square the pixel's own where the mark is its byte's"},
-  {"name": "SEA-SQUARE-rebuilt-middle", "file": "src/systems/travel/travelOptions.js", "old": "return seaLegBuiltAt(seaLegWindow(leg.x, leg.y), deps.seaWaterAt);", "new": "const m = legMiddle(leg); return deps.seaWaterAt(m.x, m.z) !== null;", "tests": ["test/world/worldWide/fb1028b_seasquare.test.js"], "why": "a leg aimed again a frame at a time while a square about its byte is unbuilt"},
-  {"name": "COAST-PORT-ring-unread", "file": "src/world/arenaPlaces.js", "old": "...(onShore || seaBears(at[0], at[1], openSea) ? { port: true } : {}) };", "new": "...(onShore ? { port: true } : {}) };", "tests": ["test/world/worldWide/fb1028b_seasquare.test.js", "test/tesa12_places.test.js"], "why": "the report: a coastal city the lore never flagged stands no port"},
-  {"name": "COAST-PORT-lake-sea", "file": "src/world/arenaPlaces.js", "old": "return !(ix >= 0 && iy >= 0 && ix < trace.w && iy < trace.h && lakes[iy * trace.w + ix] === 1);", "new": "return true;", "tests": ["test/world/worldWide/fb1028b_seasquare.test.js"], "why": "a town by a lake made a port of the sea"}
+  {
+    "name": "SEA-SQUARE-byte-law",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "      : beyond() &&\n        inWorldGrid(px, py) &&\n        !inEther(px, py) &&\n        (rumareSeaPixel(px, py) || squareCornersAll(sea, px, py));",
+    "new": "      : beyond() && inWorldGrid(px, py) && !inEther(px, py) && (rumareSeaPixel(px, py) || sea(px, py));",
+    "tests": [
+      "test/world/worldWide/fb1028b_seasquare.test.js"
+    ],
+    "why": "the report's law: a byte read as its square's middle - a one-byte channel open, the roadsteads on land"
+  },
+  {
+    "name": "SEA-SQUARE-city-corner",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "    (water(px, py) && climateAt(px, py) === CLIMATES.Ocean) || rumareSeaPixel(px, py);",
+    "new": "    water(px, py) && climateAt(px, py) === CLIMATES.Ocean;",
+    "tests": [
+      "test/world/rumarewater.test.js",
+      "test/world/nibensea.test.js"
+    ],
+    "why": "the Imperial City's mouth no corner of the sea: its canal shut a row short of the city, its lanes to Senchal and Torval none (ARENA2)"
+  },
+  {
+    "name": "SEA-SQUARE-beyond-nearest",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "        loneLanes(laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX)),",
+    "new": "        loneLanes(laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, false, BEYOND_LANE_PATH_PX)),",
+    "tests": [
+      "test/scenes/audittesa2p_hosts.test.js"
+    ],
+    "why": "the lanes past the Bay moor off the first nearest roadstead - the Imperial City's on the canal's bank"
+  },
+  {
+    "name": "SEA-SQUARE-cross-nearest",
+    "file": "src/scenes/naval/worldLanes.js",
+    "old": "    const road = roadsteadOf(f, open, true); // SEA-SQUARE: the roomiest, as the lanes past the Bay's",
+    "new": "    const road = roadsteadOf(f, open); // SEA-SQUARE: the roomiest, as the lanes past the Bay's",
+    "tests": [
+      "test/world/worldWide/fb1028b_seasquare.test.js"
+    ],
+    "why": "a crossing lane's far port moors off another roadstead than its lanes past the Bay"
+  },
+  {
+    "name": "SEA-SQUARE-corner-unasked",
+    "file": "src/world/terrain/terrainSampler.js",
+    "old": "export const squareCornersAll = (byteIs, x, y) => byteIs(x - 1, y - 1) && byteIs(x, y - 1)",
+    "new": "export const squareCornersAll = (byteIs, x, y) => byteIs(x, y - 1)",
+    "tests": [
+      "test/world/worldWide/fb1028b_seasquare.test.js"
+    ],
+    "why": "a square open with its north-west corner land"
+  },
+  {
+    "name": "SEA-SQUARE-corners-next",
+    "file": "src/world/terrain/terrainSampler.js",
+    "old": "byteIs(x - 1, y - 1) && byteIs(x, y - 1) && byteIs(x - 1, y) && byteIs(x, y);",
+    "new": "byteIs(x, y) && byteIs(x + 1, y) && byteIs(x, y + 1) && byteIs(x + 1, y + 1);",
+    "tests": [
+      "test/world/worldWide/fb1028b_seasquare.test.js"
+    ],
+    "why": "the corners the next square's - the byte read as its square's north-west corner, the kernel's grid turned"
+  },
+  {
+    "name": "SEA-SQUARE-room-unread",
+    "file": "src/systems/naval/seaLanes.js",
+    "old": "          n = roomy ? room(x, y) : 0;",
+    "new": "          n = 0;",
+    "tests": [
+      "test/world/worldWide/fb1028b_seasquare.test.js"
+    ],
+    "why": "past the Bay the first nearest roadstead again, a lone pixel of water by the shore"
+  },
+  {
+    "name": "SEA-SQUARE-bay-roomy",
+    "file": "src/systems/naval/seaLanes.js",
+    "old": "    .map((p) => ({ ...p, road: roadsteadOf(p, open, roomy) }))",
+    "new": "    .map((p) => ({ ...p, road: roadsteadOf(p, open, true) }))",
+    "tests": [
+      "test/world/worldWide/fb1028b_seasquare.test.js"
+    ],
+    "why": "the Bay's roadsteads moved - its lanes are the Bay's as they were"
+  },
+  {
+    "name": "SEA-SQUARE-window-square",
+    "file": "src/systems/travel/seaMark.js",
+    "old": "  return inBay(x, y) ? o : { x: o.x + MP_WORLD_UNITS / 2, z: o.z - MP_WORLD_UNITS / 2 };",
+    "new": "  return o;",
+    "tests": [
+      "test/world/worldWide/fb1028b_seasquare.test.js"
+    ],
+    "why": "the report's aim: a leg past the Bay at its square's middle, kilometres of its runs ashore"
+  },
+  {
+    "name": "SEA-SQUARE-built-one-square",
+    "file": "src/systems/travel/seaMark.js",
+    "old": "  for (const [a, b] of [\n    [-1, -1],\n    [1, -1],\n    [-1, 1],\n    [1, 1],\n  ])",
+    "new": "  for (const [a, b] of [[1, -1]])",
+    "tests": [
+      "test/world/worldWide/fb1028b_seasquare.test.js"
+    ],
+    "why": "a byte's point aimed while a square about it is not built - its mark read on ground that is not there"
+  },
+  {
+    "name": "SEA-SQUARE-launch-middle",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "const w = leg.kind === 'sea' || leg.kind === 'embark' ? seaLegWindow(leg.x, leg.y) : o;",
+    "new": "const w = leg.kind === 'sea' ? seaLegWindow(leg.x, leg.y) : o;",
+    "tests": [
+      "test/world/worldWide/fb1028b_seasquare.test.js"
+    ],
+    "why": "a launch past the Bay aimed at its square's middle, on the shore's land"
+  },
+  {
+    "name": "SEA-SQUARE-rect-square",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "rectOf(w.x + SEA_LEG_LO, w.z + SEA_LEG_LO, SEA_LEG_SIZE, SEA_LEG_SIZE)",
+    "new": "rectOf(o.x + SEA_LEG_LO, o.z + SEA_LEG_LO, SEA_LEG_SIZE, SEA_LEG_SIZE)",
+    "tests": [
+      "test/world/worldWide/fb1028b_seasquare.test.js"
+    ],
+    "why": "the autopilot's square the pixel's own where the mark is its byte's"
+  },
+  {
+    "name": "SEA-SQUARE-rebuilt-middle",
+    "file": "src/systems/travel/travelOptions.js",
+    "old": "return seaLegBuiltAt(seaLegWindow(leg.x, leg.y), deps.seaWaterAt);",
+    "new": "const m = legMiddle(leg); return deps.seaWaterAt(m.x, m.z) !== null;",
+    "tests": [
+      "test/world/worldWide/fb1028b_seasquare.test.js"
+    ],
+    "why": "a leg aimed again a frame at a time while a square about its byte is unbuilt"
+  },
+  {
+    "name": "COAST-PORT-ring-unread",
+    "file": "src/world/arenaPlaces.js",
+    "old": "...(onShore || seaBears(at[0], at[1], openSea) ? { port: true } : {}) };",
+    "new": "...(onShore ? { port: true } : {}) };",
+    "tests": [
+      "test/world/worldWide/fb1028b_seasquare.test.js",
+      "test/tesa12_places.test.js"
+    ],
+    "why": "the report: a coastal city the lore never flagged stands no port"
+  },
+  {
+    "name": "COAST-PORT-lake-sea",
+    "file": "src/world/arenaPlaces.js",
+    "old": "return !(ix >= 0 && iy >= 0 && ix < trace.w && iy < trace.h && lakes[iy * trace.w + ix] === 1);",
+    "new": "return true;",
+    "tests": [
+      "test/world/worldWide/fb1028b_seasquare.test.js"
+    ],
+    "why": "a town by a lake made a port of the sea"
+  }
 ]

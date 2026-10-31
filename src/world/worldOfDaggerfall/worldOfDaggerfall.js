@@ -41,7 +41,11 @@ import { modSetting } from '../../systems/modSettings.js';
 import { loadLocationPrefab, validateValue } from './wodLocationData.js';
 import { decodeRegionPack } from './wodLocationPack.js';
 import {
-  LocationSession, pickLocations, placeObjects, WOD_AWAKE_REGION, WOD_REFUSED_REGION,
+  LocationSession,
+  pickLocations,
+  placeObjects,
+  WOD_AWAKE_REGION,
+  WOD_REFUSED_REGION,
 } from './wodLocationLoader.js';
 import { classifyObject, objectMatrix, objectNormalMatrix } from './wodLocationObjects.js';
 
@@ -59,7 +63,11 @@ const IN_BROWSER = typeof window !== 'undefined';
 // out of the JS), the prefabs as text, each its own lazy chunk. Node
 // sees empty tables and the tests feed the same files off the disk.
 const PACK_URLS = IN_BROWSER
-  ? import.meta.glob('../../../vendor/world-of-daggerfall/Locations/*.bin', { eager: true, query: '?url', import: 'default' })
+  ? import.meta.glob('../../../vendor/world-of-daggerfall/Locations/*.bin', {
+      eager: true,
+      query: '?url',
+      import: 'default',
+    })
   : {};
 const PREFAB_TEXT = IN_BROWSER
   ? import.meta.glob('../../../vendor/world-of-daggerfall/LocationPrefab/*.txt', { query: '?raw', import: 'default' })
@@ -81,13 +89,24 @@ export const WOD_PACK_ATTEMPTS = 3;
  * @param {{fetchFn?:typeof fetch, stallMs?:number, attempts?:number, sleep?:(ms:number) => Promise<void>}} [opts]
  * @returns {Promise<Uint8Array>}
  */
-export async function fetchPackBytes(url, { fetchFn = globalThis.fetch, stallMs = WOD_PACK_STALL_MS, attempts = WOD_PACK_ATTEMPTS, sleep = (ms) => new Promise((r) => setTimeout(r, ms)) } = {}) {
+export async function fetchPackBytes(
+  url,
+  {
+    fetchFn = globalThis.fetch,
+    stallMs = WOD_PACK_STALL_MS,
+    attempts = WOD_PACK_ATTEMPTS,
+    sleep = (ms) => new Promise((r) => setTimeout(r, ms)),
+  } = {},
+) {
   let last = null;
   for (let a = 0; a < attempts; a++) {
     if (a) await sleep(1000 * a);
     const ctl = new globalThis.AbortController();
     let timer = null;
-    const poke = () => { clearTimeout(timer); timer = setTimeout(() => ctl.abort(new Error(`no byte in ${stallMs} ms`)), stallMs); };
+    const poke = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => ctl.abort(new Error(`no byte in ${stallMs} ms`)), stallMs);
+    };
     try {
       poke();
       const r = await fetchFn(url, { signal: ctl.signal });
@@ -105,7 +124,10 @@ export async function fetchPackBytes(url, { fetchFn = globalThis.fetch, stallMs 
       }
       const out = new Uint8Array(n);
       let o = 0;
-      for (const part of parts) { out.set(part, o); o += part.length; }
+      for (const part of parts) {
+        out.set(part, o);
+        o += part.length;
+      }
       return out;
     } catch (e) {
       last = e;
@@ -120,19 +142,26 @@ export async function fetchPackBytes(url, { fetchFn = globalThis.fetch, stallMs 
  *  mod does not ship) and every prefab's text by name (null for one
  *  whose chunk did not load - AUDIT BRANCH (WoD) M2). */
 export const browserWodSources = Object.freeze({
-  regions: () => Object.keys(PACK_URLS).map((p) => Number(baseName(p).replace(/\.bin$/, ''))).sort((a, b) => a - b),
+  regions: () =>
+    Object.keys(PACK_URLS)
+      .map((p) => Number(baseName(p).replace(/\.bin$/, '')))
+      .sort((a, b) => a - b),
   pack: async (region) => {
     const url = Object.entries(PACK_URLS).find(([p]) => baseName(p) === `${region}.bin`)?.[1];
     if (!url) return null;
-    try { return await fetchPackBytes(url); } catch (e) {
+    try {
+      return await fetchPackBytes(url);
+    } catch (e) {
       throw new Error(`World of Daggerfall: region ${region} pack: ${e?.message ?? e}`);
     }
   },
   prefabs: async () => {
     const out = new Map();
-    await Promise.all(Object.entries(PREFAB_TEXT).map(async ([p, load]) => {
-      out.set(baseName(p).replace(/\.txt$/, ''), await load().catch(() => null));
-    }));
+    await Promise.all(
+      Object.entries(PREFAB_TEXT).map(async ([p, load]) => {
+        out.set(baseName(p).replace(/\.txt$/, ''), await load().catch(() => null));
+      }),
+    );
     return out;
   },
 });
@@ -140,11 +169,12 @@ export const browserWodSources = Object.freeze({
 /** WOD6: a region whose pack failed every try the chain gave it is tried again in the background - 5 s after, then
  *  doubling to a minute between tries - and given up after this many more. */
 export const WOD_RETRY_MAX = 12;
-const FAILED = Symbol('failed');   // a fetch that failed, as against `null`: a region the mod ships no folder for
+const FAILED = Symbol('failed'); // a fetch that failed, as against `null`: a region the mod ships no folder for
 
 /** OW-WOD-PATH: the map's pixels, and the prefabs that are a massif - never the Rocks fields, on a tenth of the map:
  *  a boulder field is walked through (its pieces within ~350 m of the site, the traveller's steering rounds them). */
-const WOD_MAP_W = 1000, WOD_MAP_H = 500;
+const WOD_MAP_W = 1000,
+  WOD_MAP_H = 500;
 export const WOD_MOUNTAIN_PREFAB = /^WOD_Mountain_/;
 
 export class WodWorld {
@@ -153,25 +183,35 @@ export class WodWorld {
    *   prefabs:() => Promise<Map<string,?string>>}} sources
    * @param {{online?:boolean, warn?:(m:string) => void, schedule?:(fn:() => void, ms:number) => void}} [opts]
    */
-  constructor(sources, { online = false, mountains = false, warn = (m) => console.warn(m), schedule = (fn, ms) => { setTimeout(fn, ms); } } = {}) {
+  constructor(
+    sources,
+    {
+      online = false,
+      mountains = false,
+      warn = (m) => console.warn(m),
+      schedule = (fn, ms) => {
+        setTimeout(fn, ms);
+      },
+    } = {},
+  ) {
     this.sources = sources;
     this.online = online;
-    this.mountains = !!mountains;   // WOD-PEAKS: the Mountains layouts stood (off by default - the landforms' rounded peaks stand instead)
+    this.mountains = !!mountains; // WOD-PEAKS: the Mountains layouts stood (off by default - the landforms' rounded peaks stand instead)
     this.warn = warn;
     this.session = new LocationSession();
     /** name -> LocationPrefab, or null for a file that failed to read */
     this.prefabs = new Map();
-    this._chain = Promise.resolve();   // folder appends, in announcement order
+    this._chain = Promise.resolve(); // folder appends, in announcement order
     this._announced = new Set();
-    this._lastRegion = WOD_AWAKE_REGION;   // PlayerGPS.Start's seed: the title screen's region
+    this._lastRegion = WOD_AWAKE_REGION; // PlayerGPS.Start's seed: the title screen's region
     this._opened = null;
-    this._awake = false;   // AUDIT BRANCH (WoD) M2: Awake's folder announced - a region heard before it waits
+    this._awake = false; // AUDIT BRANCH (WoD) M2: Awake's folder announced - a region heard before it waits
     this._early = [];
     // WOD6: A REGION THAT FAILED IS NOT LOST. The list's ORDER is the law (the first valid instance naming a pixel
     // takes it), so a region that lands late is not appended where it lands: the list is built again with every
     // region in the order it was announced, and the host is told which pixels the region names, to build them again.
-    this._order = [];          // every region announced, in the list's order (the events'; online, 17 then ascending)
-    this._bytes = new Map();   // region -> its pack, once read - what a list rebuilt around a late region is made of
+    this._order = []; // every region announced, in the list's order (the events'; online, 17 then ascending)
+    this._bytes = new Map(); // region -> its pack, once read - what a list rebuilt around a late region is made of
     this._schedule = schedule;
     /** @type {?(region:number, pixelKeys:Set<string>) => void} */
     this.onLate = null;
@@ -182,8 +222,14 @@ export class WodWorld {
     this._opened ??= (async () => {
       const texts = await this.sources.prefabs();
       for (const [name, text] of texts) {
-        if (text == null) { this.warn(`[wod] prefab ${name} did not load`); this.prefabs.set(name, null); continue; }   // AUDIT BRANCH (WoD) M2
-        try { this.prefabs.set(name, loadLocationPrefab(text)); } catch (e) {
+        if (text == null) {
+          this.warn(`[wod] prefab ${name} did not load`);
+          this.prefabs.set(name, null);
+          continue;
+        } // AUDIT BRANCH (WoD) M2
+        try {
+          this.prefabs.set(name, loadLocationPrefab(text));
+        } catch (e) {
           // LoadLocationPrefab throws on a broken file; AddLocation would
           // throw with it at every pixel naming it. The shipped 65 all read.
           this.warn(`[wod] prefab ${name} failed to read: ${e?.message ?? e}`);
@@ -208,7 +254,7 @@ export class WodWorld {
   _announce(region) {
     if (this._announced.has(region)) return;
     this._announced.add(region);
-    this._order.push(region);   // WOD6
+    this._order.push(region); // WOD6
     // Fetch now, append in order: a later region's bytes may land first.
     const bytes = this.sources.pack(region).catch((e) => {
       this.warn(`[wod] region ${region} did not load: ${e?.message ?? e}`);
@@ -216,16 +262,22 @@ export class WodWorld {
     });
     this._chain = this._chain.then(async () => {
       const b = await bytes;
-      if (b === FAILED) { this._retryLater(region, 0); return; }   // WOD6: tried again, off the chain
+      if (b === FAILED) {
+        this._retryLater(region, 0);
+        return;
+      } // WOD6: tried again, off the chain
       if (!b) return;
       // AUDIT BRANCH (WoD) n: one decode a task - an online page's 44 packs landed back to back in one block of up
       // to 88 ms; each is at most ~15 ms alone
       await new Promise((r) => setTimeout(r, 0));
       // AUDIT BRANCH (WoD) M2: a pack that will not decode is that region lost, never the chain - a throw here left
       // `_chain` rejected for good, so every later settle() rejected and every pixel build after it failed
-      try { this.session.appendRegion(region, decodeRegionPack(b)); this._bytes.set(region, b); } catch (e) {
+      try {
+        this.session.appendRegion(region, decodeRegionPack(b));
+        this._bytes.set(region, b);
+      } catch (e) {
         this.warn(`[wod] region ${region} did not read: ${e?.message ?? e}`);
-        this._retryLater(region, 0);   // WOD6: a body that would not read may be a proxy's page, not the pack
+        this._retryLater(region, 0); // WOD6: a body that would not read may be a proxy's page, not the pack
       }
     });
   }
@@ -237,17 +289,25 @@ export class WodWorld {
       this.warn(`[wod] region ${region} gave up after ${tries} more tries - its sites stay unstood for this page`);
       return;
     }
-    this._schedule(() => {
-      this.sources.pack(region).then(
-        (b) => { if (b) this._chain = this._chain.then(() => this._landLate(region, b, tries + 1)); },
-        () => this._retryLater(region, tries + 1));
-    }, Math.min(60000, 5000 * 2 ** tries));
+    this._schedule(
+      () => {
+        this.sources.pack(region).then(
+          (b) => {
+            if (b) this._chain = this._chain.then(() => this._landLate(region, b, tries + 1));
+          },
+          () => this._retryLater(region, tries + 1),
+        );
+      },
+      Math.min(60000, 5000 * 2 ** tries),
+    );
   }
 
   /** WOD6: a late region lands - the list built again in its order, the host told what the region names. */
   async _landLate(region, b, tries) {
     let pack;
-    try { pack = decodeRegionPack(b); } catch (e) {
+    try {
+      pack = decodeRegionPack(b);
+    } catch (e) {
       this.warn(`[wod] region ${region} did not read: ${e?.message ?? e}`);
       this._retryLater(region, tries);
       return;
@@ -257,10 +317,10 @@ export class WodWorld {
     for (const r of this._order) {
       const rb = this._bytes.get(r);
       if (!rb) continue;
-      await new Promise((res) => setTimeout(res, 0));   // one decode a task, as the first landing
+      await new Promise((res) => setTimeout(res, 0)); // one decode a task, as the first landing
       session.appendRegion(r, r === region ? pack : decodeRegionPack(rb));
     }
-    this.session = session;   // swapped whole: a pick reads one list or the other, never half of one
+    this.session = session; // swapped whole: a pick reads one list or the other, never half of one
     const keys = new Set();
     for (let i = 0; i < pack.count; i++) keys.add(`${pack.worldX[i]},${pack.worldY[i]}`);
     this.warn(`[wod] region ${region} landed late - the list is in its order again (${keys.size} pixel(s) named)`);
@@ -277,14 +337,19 @@ export class WodWorld {
   noteRegion(region) {
     if (region === this._lastRegion) return;
     this._lastRegion = region;
-    if (region === WOD_REFUSED_REGION) return;   // :76-80
-    if (this.online) return;                     // the room's list holds every folder already
-    if (!this._awake) { this._early.push(region); return; }   // AUDIT BRANCH (WoD) M2: after Awake's folder
+    if (region === WOD_REFUSED_REGION) return; // :76-80
+    if (this.online) return; // the room's list holds every folder already
+    if (!this._awake) {
+      this._early.push(region);
+      return;
+    } // AUDIT BRANCH (WoD) M2: after Awake's folder
     this._announce(region);
   }
 
   /** Every folder announced so far has landed. */
-  settle() { return this._chain; }
+  settle() {
+    return this._chain;
+  }
 
   /**
    * AddLocation's decision for one pixel (wodLocationLoader.pickLocations).
@@ -299,9 +364,15 @@ export class WodWorld {
     const session = this.session;
     // WOD-PEAKS: with the Mountains layouts off, one is no prefab at all - the pick refuses it as a missing file, so it
     // neither levels the ground nor stands a piece, and the instance's pixel takes the rest of its list as it would
-    const prefabOf = this.mountains ? (name) => this.prefabs.get(name) ?? null : (name) => (WOD_MOUNTAIN_PREFAB.test(name ?? '') ? null : this.prefabs.get(name) ?? null);
-    return pickLocations(tile, session, prefabOf, pathsPoint, siteClear)
-      .map((pick) => ({ ...pick, locationID: session.locationID[pick.index], name: session.name[pick.index], prefabName: session.prefab[pick.index] }));   // FOREST1: and its prefab's name - a site or a rock field   // PROF2: the instance's name - its Rocks and Mountains pieces anchor Mining's nodes
+    const prefabOf = this.mountains
+      ? (name) => this.prefabs.get(name) ?? null
+      : (name) => (WOD_MOUNTAIN_PREFAB.test(name ?? '') ? null : (this.prefabs.get(name) ?? null));
+    return pickLocations(tile, session, prefabOf, pathsPoint, siteClear).map((pick) => ({
+      ...pick,
+      locationID: session.locationID[pick.index],
+      name: session.name[pick.index],
+      prefabName: session.prefab[pick.index],
+    })); // FOREST1: and its prefab's name - a site or a rock field   // PROF2: the instance's name - its Rocks and Mountains pieces anchor Mining's nodes
   }
 
   /**
@@ -322,12 +393,14 @@ export class WodWorld {
    *  the list it was read from, and read again when a region lands. */
   mountainPixels() {
     const s = this.session;
-    if (this._mountains && this._mountains.session === s && this._mountains.count === s.count) return this._mountains.table;
+    if (this._mountains && this._mountains.session === s && this._mountains.count === s.count)
+      return this._mountains.table;
     const table = new Uint8Array(WOD_MAP_W * WOD_MAP_H);
     for (let i = 0; i < s.count; i++) {
-      if (!this.mountains) break;   // WOD-PEAKS: no spires stood, none for the route to go round
+      if (!this.mountains) break; // WOD-PEAKS: no spires stood, none for the route to go round
       if (!WOD_MOUNTAIN_PREFAB.test(s.prefab[i] ?? '')) continue;
-      const x = s.worldX[i], y = s.worldY[i];
+      const x = s.worldX[i],
+        y = s.worldY[i];
       if (x >= 0 && y >= 0 && x < WOD_MAP_W && y < WOD_MAP_H) table[x + y * WOD_MAP_W] = 1;
     }
     this._mountains = { session: s, count: s.count, table };
@@ -341,10 +414,16 @@ export class WodWorld {
       for (const { obj, pos } of placeObjects(pick, averages[i], validateValue)) {
         const c = classifyObject(obj);
         if (c.kind === 'model') {
-          if (c.modelId == null) { out.stopped = true; return; }
+          if (c.modelId == null) {
+            out.stopped = true;
+            return;
+          }
           out.models.push({
-            modelId: c.modelId, matrix: objectMatrix(pos, obj.rot, obj.scale),
-            normalMatrix: objectNormalMatrix(obj.rot, obj.scale), objectID: obj.objectID, pick: i,   // PROF2: the pick it came from
+            modelId: c.modelId,
+            matrix: objectMatrix(pos, obj.rot, obj.scale),
+            normalMatrix: objectNormalMatrix(obj.rot, obj.scale),
+            objectID: obj.objectID,
+            pick: i, // PROF2: the pick it came from
           });
           continue;
         }
@@ -354,8 +433,14 @@ export class WodWorld {
         if (c.animal) out.animals.push(flat);
         for (const s of c.spawners) {
           out.spawners.push({
-            ...s, archive: c.archive, record: c.record, base: pos, scaleY: obj.scale.y, treasure: c.treasure,
-            locationID: pick.locationID, objectID: obj.objectID,
+            ...s,
+            archive: c.archive,
+            record: c.record,
+            base: pos,
+            scaleY: obj.scale.y,
+            treasure: c.treasure,
+            locationID: pick.locationID,
+            objectID: obj.objectID,
           });
         }
       }
@@ -379,7 +464,11 @@ export class WodWorld {
 export function wodLightColors(count, nPlayer, selColors, shared) {
   const out = new Float32Array(count * 3);
   const lead = Math.min(nPlayer, count);
-  for (let i = 0; i < lead; i++) { out[i * 3] = shared[0]; out[i * 3 + 1] = shared[1]; out[i * 3 + 2] = shared[2]; }
+  for (let i = 0; i < lead; i++) {
+    out[i * 3] = shared[0];
+    out[i * 3 + 1] = shared[1];
+    out[i * 3 + 2] = shared[2];
+  }
   out.set(selColors.subarray(0, (count - lead) * 3), lead * 3);
   return out;
 }
@@ -388,6 +477,7 @@ let _world = null;
 /** The page's one loader (LocationModLoader's GameObject), made on the
  *  first world that mounts with the mod on and kept for the page. */
 export function openWodWorld({ online = false, sources = browserWodSources, mountains = wodMountainsOn() } = {}) {
-  if (!_world || _world.online !== online || _world.mountains !== !!mountains) _world = new WodWorld(sources, { online, mountains });   // WOD-PEAKS: a flip of the Mountains switch is a new list's world
+  if (!_world || _world.online !== online || _world.mountains !== !!mountains)
+    _world = new WodWorld(sources, { online, mountains }); // WOD-PEAKS: a flip of the Mountains switch is a new list's world
   return _world;
 }

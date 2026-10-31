@@ -102,22 +102,37 @@ const ESCAPED_ANCHOR = /[\w.-]+\\\.m?js:"([^"\n]+)"/g;
 export function maskAnchors(text) {
   if (!text.includes(':"')) return text;
   const blank = (m, q) => m.slice(0, m.length - q.length - 1) + '\u0001'.repeat(q.length) + '"';
-  return text.replace(ANCHOR, (m, p, q, after) => {
-    if (after == null) return blank(m, q);
-    const head = m.slice(0, m.length - after.length - 4);   // up to the first quote's close
-    return blank(head, q) + '..' + '"' + '\u0001'.repeat(after.length) + '"';
-  }).replace(ESCAPED_ANCHOR, blank);
+  return text
+    .replace(ANCHOR, (m, p, q, after) => {
+      if (after == null) return blank(m, q);
+      const head = m.slice(0, m.length - after.length - 4); // up to the first quote's close
+      return blank(head, q) + '..' + '"' + '\u0001'.repeat(after.length) + '"';
+    })
+    .replace(ESCAPED_ANCHOR, blank);
 }
 
 /** For each line of a Markdown text, whether code is open at its start: a fenced block, or a code span that opened
  *  on an earlier line of its paragraph (a span runs to its closing backtick across lines; a blank line ends it). */
 export function codeOpenAt(text) {
   const out = [];
-  let open = false, fence = false;
+  let open = false,
+    fence = false;
   for (const l of text.split('\n')) {
-    if (/^\s*```/.test(l)) { out.push(true); fence = !fence; open = false; continue; }
-    if (fence) { out.push(true); continue; }
-    if (!l.trim()) { out.push(false); open = false; continue; }
+    if (/^\s*```/.test(l)) {
+      out.push(true);
+      fence = !fence;
+      open = false;
+      continue;
+    }
+    if (fence) {
+      out.push(true);
+      continue;
+    }
+    if (!l.trim()) {
+      out.push(false);
+      open = false;
+      continue;
+    }
     out.push(open);
     if ((l.match(/`/g) ?? []).length % 2 === 1) open = !open;
   }
@@ -153,7 +168,9 @@ function bodyStart(raw) {
  *  function there. In a Markdown doc braces are free: no scanner counts them, and a block's `{` or `}` is half the
  *  lines a quote names. */
 export function balanced(q, braces = false) {
-  let paren = 0, square = 0, brace = 0;
+  let paren = 0,
+    square = 0,
+    brace = 0;
   for (const c of q) {
     if (c === '(') paren++;
     else if (c === ')' && --paren < 0) return false;
@@ -180,7 +197,10 @@ function standing(hay, needle) {
  * @param {boolean} [braces]
  */
 export function quoteFor(fileText, lines, n, forbid = FORBID, avoid = null, braces = false) {
-  return (avoid != null ? quoteRun(fileText, lines, n, forbid, avoid, braces) : null) ?? quoteRun(fileText, lines, n, forbid, null, braces);
+  return (
+    (avoid != null ? quoteRun(fileText, lines, n, forbid, avoid, braces) : null) ??
+    quoteRun(fileText, lines, n, forbid, null, braces)
+  );
 }
 
 /** Whether a quote may end before `raw[e]`: at whitespace; a name before its call or index (`(`, `[`) or before a
@@ -188,7 +208,11 @@ export function quoteFor(fileText, lines, n, forbid = FORBID, avoid = null, brac
  *  operator (`=>`, `===`, `//`) or a path or member (`dungeon.js`, `Math.floor`): a quote cut there names its line as
  *  well, and reads as a typo (`nothingText: () =`, `const cy = Math.`). */
 export function tokenEdge(raw, e) {
-  return /\s/.test(raw[e]) || (/[\w$]/.test(raw[e - 1]) && /[([)\]},;:]/.test(raw[e])) || (/[)\]]/.test(raw[e - 1]) && !/[\w$]/.test(raw[e]));
+  return (
+    /\s/.test(raw[e]) ||
+    (/[\w$]/.test(raw[e - 1]) && /[([)\]},;:]/.test(raw[e])) ||
+    (/[)\]]/.test(raw[e - 1]) && !/[\w$]/.test(raw[e]))
+  );
 }
 
 /** quoteFor's search: the first run whose brackets balance (braces too, where `braces`) - or, `open`, that leaves open
@@ -197,17 +221,23 @@ export function tokenEdge(raw, e) {
 function quoteRun(fileText, lines, n, forbid, absentFrom, braces = false, open = false) {
   const raw = lines[n - 1];
   if (raw == null) return null;
-  const end = raw.trimEnd().length, s0 = bodyStart(raw);
+  const end = raw.trimEnd().length,
+    s0 = bodyStart(raw);
   if (s0 >= end) return null;
   const whole = braces && !open && raw[end - 1] === '{' ? raw.slice(0, end - 1).trimEnd().length : end;
   for (let s = s0; s < end; s++) {
-    if (s > s0 && !(/\s/.test(raw[s - 1]) && /\S/.test(raw[s]))) continue;   // a word's start
+    if (s > s0 && !(/\s/.test(raw[s - 1]) && /\S/.test(raw[s]))) continue; // a word's start
     for (let e = s + 1; e <= end; e++) {
       if (e < end && !tokenEdge(raw, e)) continue;
       const q = raw.slice(s, e).trimEnd();
       if (forbid.test(q) || q.length > QUOTE_MAX) break;
-      if (q.length < QUOTE_MIN && !((e === end || e === whole) && s === s0)) continue;   // shorter only as the whole line
-      if ((open ? balanced(q + '}', true) : balanced(q, braces)) && standing(fileText, q) === 1 && (absentFrom == null || !absentFrom.includes(q))) return q;
+      if (q.length < QUOTE_MIN && !((e === end || e === whole) && s === s0)) continue; // shorter only as the whole line
+      if (
+        (open ? balanced(q + '}', true) : balanced(q, braces)) &&
+        standing(fileText, q) === 1 &&
+        (absentFrom == null || !absentFrom.includes(q))
+      )
+        return q;
     }
   }
   return null;
@@ -220,9 +250,14 @@ const afterText = (line, after) => (/^\s/.test(after) ? line.trimEnd() : line.tr
 /** The after-form naming line `n` from quote `q` of line `k`: `n`'s trimmed text when the first line after `k` that
  *  reads so is `n`, else its text as written when that one is; null when neither is. */
 function afterLine(lines, k, n, q) {
-  const raw = lines[n - 1].trimEnd(), t = raw.trim();
+  const raw = lines[n - 1].trimEnd(),
+    t = raw.trim();
   for (const line of raw === t ? [t] : [t, raw]) {
-    for (let j = k + 1; j <= lines.length; j++) if (afterText(lines[j - 1], line) === line) { if (j === n) return { quote: q, line }; break; }
+    for (let j = k + 1; j <= lines.length; j++)
+      if (afterText(lines[j - 1], line) === line) {
+        if (j === n) return { quote: q, line };
+        break;
+      }
   }
   return null;
 }
@@ -261,7 +296,9 @@ export function afterFor(fileText, lines, n, forbid = FORBID, avoid = null, brac
   if (braces && !balanced(t, true)) {
     if (!balanced('{' + t, true)) return null;
     for (let k = openerOf(lines, n); k != null; k = lines[k - 1].trim().startsWith('}') ? openerOf(lines, k) : null) {
-      const q = (avoid != null ? quoteRun(fileText, lines, k, forbid, avoid, true, true) : null) ?? quoteRun(fileText, lines, k, forbid, null, true, true);
+      const q =
+        (avoid != null ? quoteRun(fileText, lines, k, forbid, avoid, true, true) : null) ??
+        quoteRun(fileText, lines, k, forbid, null, true, true);
       if (q) return afterLine(lines, k, n, q);
     }
     return null;
@@ -306,7 +343,8 @@ export const bracesAt = (docPath) => !/\.md$/.test(docPath);
 export function reader(source) {
   const cache = new Map();
   return (f) => {
-    const raw = source(f), hit = cache.get(f);
+    const raw = source(f),
+      hit = cache.get(f);
     if (hit && hit.raw === raw) return hit;
     const entry = { raw, text: maskAnchors(raw), lines: raw.split('\n') };
     cache.set(f, entry);
@@ -317,9 +355,12 @@ export function reader(source) {
 /** The tracked .js/.mjs files, and a resolver from a cite's spelling to one of them (null: none, or more than one). */
 export function makeResolver(codeFiles) {
   const byBase = new Map();
-  for (const f of codeFiles) { const b = f.slice(f.lastIndexOf('/') + 1); (byBase.get(b) ?? byBase.set(b, []).get(b)).push(f); }
+  for (const f of codeFiles) {
+    const b = f.slice(f.lastIndexOf('/') + 1);
+    (byBase.get(b) ?? byBase.set(b, []).get(b)).push(f);
+  }
   return (spelled) => {
-    const p = spelled.replace(/^\/+/, '').replace(/^(\.\.?\/)+/, '');   // a continuation's slash (`a"/world.js:"b"`) is no root
+    const p = spelled.replace(/^\/+/, '').replace(/^(\.\.?\/)+/, ''); // a continuation's slash (`a"/world.js:"b"`) is no root
     const hits = p.includes('/') ? codeFiles.filter((f) => f === p || f.endsWith('/' + p)) : (byBase.get(p) ?? []);
     return hits.length === 1 ? { file: hits[0] } : { file: null, why: hits.length ? 'ambiguous' : 'foreign' };
   };
@@ -360,8 +401,12 @@ const BARE = /^(?:\/\*\*?|\*\/?|\*)?$/;
 
 /** Whether a line opens a block - a brace left open past its last close (`if (x) {`, `} else {`, `_confirmExit() {`). */
 export function opensBlock(t) {
-  let d = 0, low = 0;
-  for (const c of t) { if (c === '{') d++; else if (c === '}') low = Math.min(low, --d); }
+  let d = 0,
+    low = 0;
+  for (const c of t) {
+    if (c === '{') d++;
+    else if (c === '}') low = Math.min(low, --d);
+  }
   return d > low;
 }
 
@@ -373,8 +418,15 @@ export function opensBlock(t) {
  * Null when neither has one.
  */
 export function anchorLine(text, lines, n, end, forbid, braces = false) {
-  const takes = (k) => k >= 1 && k <= lines.length && !BARE.test(lines[k - 1].trim()) && (quoteFor(text, lines, k, forbid, null, braces) != null || afterFor(text, lines, k, forbid, null, braces) != null);   // whether a line takes one at all: `avoid` only chooses among them
-  if (end != null && end >= n) { for (let k = n; k <= end; k++) if (takes(k)) return { n: k, nudged: false }; return { n: null }; }
+  const takes = (k) =>
+    k >= 1 &&
+    k <= lines.length &&
+    !BARE.test(lines[k - 1].trim()) &&
+    (quoteFor(text, lines, k, forbid, null, braces) != null || afterFor(text, lines, k, forbid, null, braces) != null); // whether a line takes one at all: `avoid` only chooses among them
+  if (end != null && end >= n) {
+    for (let k = n; k <= end; k++) if (takes(k)) return { n: k, nudged: false };
+    return { n: null };
+  }
   if (takes(n)) return { n, nudged: false };
   const t = lines[n - 1].trim();
   if (!BARE.test(t) && !(braces && opensBlock(t))) return { n: null };
@@ -395,7 +447,7 @@ export function planDoc({ docPath, docText, resolve, read, relay = null }) {
   const out = [];
   const held = relay?.has(docPath) ? 'relay' : null;
   const braces = bracesAt(docPath);
-  let ownText = null;   // the citing file as a quote must avoid it (quoteFor), read once
+  let ownText = null; // the citing file as a quote must avoid it (quoteFor), read once
   const foreign = new Set(FOREIGN.filter(([d]) => d === docPath).map(([, b]) => b));
   const code = /\.md$/.test(docPath) ? codeOpenAt(docText) : [];
   docText.split('\n').forEach((l, i) => {
@@ -404,36 +456,75 @@ export function planDoc({ docPath, docText, resolve, read, relay = null }) {
     const struckAt = (col) => spans === null || spans.some(([a, b]) => col >= a && col < b);
     // a chain's head is a numeric cite, or an anchor already written - whose bare continuations are still its own to
     // convert (a person who anchors a head by hand leaves its `/:N` to the next run, and the gate sees it)
-    const heads = [...l.matchAll(NUM_CITE)].map((m) => ({ m, numeric: true }))
+    const heads = [...l.matchAll(NUM_CITE)]
+      .map((m) => ({ m, numeric: true }))
       .concat([...l.matchAll(ANCHOR)].map((m) => ({ m, numeric: false })))
       .sort((a, b) => a.m.index - b.m.index);
     if (!heads.length) return;
     const stops = [...regionStops(l), ...heads.filter((h) => !h.numeric).map((h) => h.m.index)].sort((a, b) => a - b);
     for (const { m, numeric } of heads) {
       const spelled = m[1];
-      const items = numeric ? [{ col: m.index, len: m[0].length, text: m[0], n: +m[2], end: m[3] ? +m[3] : null, sep: '' }] : [];
-      const from = m.index + m[0].length, to = stops.find((x) => x >= from) ?? l.length;
-      for (const { m: c, at } of continuationsIn(l, from, to)) items.push({ col: at, len: c[0].length, text: c[0], n: +c[2], end: c[3] ? +c[3] : null, sep: c[1].replace(/:$/, '') });
+      const items = numeric
+        ? [{ col: m.index, len: m[0].length, text: m[0], n: +m[2], end: m[3] ? +m[3] : null, sep: '' }]
+        : [];
+      const from = m.index + m[0].length,
+        to = stops.find((x) => x >= from) ?? l.length;
+      for (const { m: c, at } of continuationsIn(l, from, to))
+        items.push({
+          col: at,
+          len: c[0].length,
+          text: c[0],
+          n: +c[2],
+          end: c[3] ? +c[3] : null,
+          sep: c[1].replace(/:$/, ''),
+        });
       if (!items.length) continue;
       const bare = spelled.replace(/^\/+/, '');
       const r = foreign.has(bare.slice(bare.lastIndexOf('/') + 1)) ? { file: null, why: 'foreign' } : resolve(spelled);
-      let before = numeric ? null : true;   // whether the chain's last element is an anchor (written, or to be)
+      let before = numeric ? null : true; // whether the chain's last element is an anchor (written, or to be)
       for (const it of items) {
         const base = { line: i + 1, col: it.col, len: it.len, text: it.text };
-        const push = (p) => { out.push({ ...base, ...p }); before = p.status === 'anchor' || p.status === 'nudged'; };
-        if (struckAt(it.col) || held) { push({ to: null, status: held ?? 'struck' }); continue; }
-        if (!r.file) { push({ to: null, status: r.why }); continue; }
-        if (!headOwns(l.slice(from, it.col), r.file)) { push({ to: null, status: 'unclear', file: r.file, n: it.n }); continue; }   // a head's own slice is empty
+        const push = (p) => {
+          out.push({ ...base, ...p });
+          before = p.status === 'anchor' || p.status === 'nudged';
+        };
+        if (struckAt(it.col) || held) {
+          push({ to: null, status: held ?? 'struck' });
+          continue;
+        }
+        if (!r.file) {
+          push({ to: null, status: r.why });
+          continue;
+        }
+        if (!headOwns(l.slice(from, it.col), r.file)) {
+          push({ to: null, status: 'unclear', file: r.file, n: it.n });
+          continue;
+        } // a head's own slice is empty
         // a slash's continuation after a number that stays a number would read as that number's directory
-        if (before === false && it.sep.startsWith('/')) { push({ to: null, status: 'chain', file: r.file, n: it.n }); continue; }
+        if (before === false && it.sep.startsWith('/')) {
+          push({ to: null, status: 'chain', file: r.file, n: it.n });
+          continue;
+        }
         const { text, lines } = read(r.file);
-        if (it.n < 1 || it.n > lines.length) { push({ to: null, status: 'past-end', file: r.file, n: it.n }); continue; }
+        if (it.n < 1 || it.n > lines.length) {
+          push({ to: null, status: 'past-end', file: r.file, n: it.n });
+          continue;
+        }
         const forbid = forbidAt(docPath, l, it.col, code[i]);
-        if (!forbid) { push({ to: null, status: 'in-code', file: r.file, n: it.n }); continue; }
+        if (!forbid) {
+          push({ to: null, status: 'in-code', file: r.file, n: it.n });
+          continue;
+        }
         const { n, nudged } = anchorLine(text, lines, it.n, it.end, forbid, braces);
         const avoid = r.file === docPath ? null : (ownText ??= maskAnchors(docText));
         const a = n == null ? null : anchorFor(bare, text, lines, n, forbid, avoid, braces);
-        push({ to: a == null ? null : it.sep + a, status: a == null ? 'unquotable' : nudged ? 'nudged' : 'anchor', file: r.file, n: n ?? it.n, cited: it.n });
+        push({
+          to: a == null ? null : it.sep + a,
+          status: a == null ? 'unquotable' : nudged ? 'nudged' : 'anchor',
+          file: r.file,
+          n: n ?? it.n,
+          cited: it.n,
+        });
       }
     }
   });
@@ -444,7 +535,9 @@ export function planDoc({ docPath, docText, resolve, read, relay = null }) {
 export function applyPlan(docText, plan) {
   const lines = docText.split('\n');
   const byLine = new Map();
-  for (const p of plan) if (p.status === 'anchor' || p.status === 'nudged') (byLine.get(p.line) ?? byLine.set(p.line, []).get(p.line)).push(p);
+  for (const p of plan)
+    if (p.status === 'anchor' || p.status === 'nudged')
+      (byLine.get(p.line) ?? byLine.set(p.line, []).get(p.line)).push(p);
   for (const [ln, ps] of byLine) {
     let l = lines[ln - 1];
     for (const p of ps.sort((x, y) => y.col - x.col)) l = l.slice(0, p.col) + p.to + l.slice(p.col + p.len);
@@ -460,7 +553,10 @@ export function checkDoc({ docText, resolve, read }) {
     if (!l.includes(':"')) return;
     for (const m of l.matchAll(ANCHOR)) {
       const r = resolve(m[1]);
-      if (!r.file) { out.push({ line: i + 1, text: m[0], file: null, error: r.why }); continue; }
+      if (!r.file) {
+        out.push({ line: i + 1, text: m[0], file: null, error: r.why });
+        continue;
+      }
       const { text, lines } = read(r.file);
       const v = resolveAnchor(text, lines, m[2], m[3] ?? null);
       out.push({ line: i + 1, text: m[0], file: r.file, ...v });
@@ -477,21 +573,36 @@ export function checkDoc({ docText, resolve, read }) {
 export function citedLines(text, target, root = ROOT) {
   const base = target.slice(target.lastIndexOf('/') + 1);
   const raw = readFileSync(join(root, target), 'utf8');
-  const masked = maskAnchors(raw), lines = raw.split('\n');
+  const masked = maskAnchors(raw),
+    lines = raw.split('\n');
   const out = [];
   for (const m of text.matchAll(ANCHOR)) {
     const spelled = m[1].replace(/^\/+/, '').replace(/^(\.\.?\/)+/, '');
     if (spelled !== target && spelled !== base && !target.endsWith('/' + spelled)) continue;
     const v = resolveAnchor(masked, lines, m[2], m[3] ?? null);
-    out.push({ quote: m[2], after: m[3] ?? null, line: v.line ?? null, text: v.line ? lines[v.line - 1] : null, ...(v.error ? { error: v.error } : {}) });
+    out.push({
+      quote: m[2],
+      after: m[3] ?? null,
+      line: v.line ?? null,
+      text: v.line ? lines[v.line - 1] : null,
+      ...(v.error ? { error: v.error } : {}),
+    });
   }
   return out;
 }
 
 /** The docs a cite can stand in, and the code it can point at - git's tracked files, as citeShift reads them. */
 export function trackedSets(root = ROOT) {
-  const files = execFileSync('git', ['ls-files', 'bible', 'test', 'src', 'tools'], { cwd: root, encoding: 'utf8', maxBuffer: GIT_MAX_BUFFER }).split('\n').filter(Boolean);
-  const all = execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8', maxBuffer: GIT_MAX_BUFFER }).split('\n').filter(Boolean);
+  const files = execFileSync('git', ['ls-files', 'bible', 'test', 'src', 'tools'], {
+    cwd: root,
+    encoding: 'utf8',
+    maxBuffer: GIT_MAX_BUFFER,
+  })
+    .split('\n')
+    .filter(Boolean);
+  const all = execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8', maxBuffer: GIT_MAX_BUFFER })
+    .split('\n')
+    .filter(Boolean);
   return {
     docs: files.filter((f) => /\.(js|mjs|md|sh)$/.test(f) && !SELF_DOCS.includes(f)),
     code: all.filter((f) => /\.m?js$/.test(f)),
@@ -507,13 +618,15 @@ export function trackedSets(root = ROOT) {
  */
 export function convertAll(texts, { resolve, readFile, relay = null }) {
   const read = reader((f) => texts.get(f) ?? readFile(f));
-  const plans = new Map(), placed = [];
+  const plans = new Map(),
+    placed = [];
   for (const [d, docText] of texts) plans.set(d, planDoc({ docPath: d, docText, resolve, read, relay }));
   for (const [d, plan] of plans) {
     const anchors = plan.filter((p) => p.status === 'anchor' || p.status === 'nudged');
     if (!anchors.length) continue;
     texts.set(d, applyPlan(texts.get(d), plan));
-    for (const p of anchors) placed.push({ doc: d, line: p.line, col: p.col, to: p.to, file: p.file, n: p.n, text: p.text, entry: p });
+    for (const p of anchors)
+      placed.push({ doc: d, line: p.line, col: p.col, to: p.to, file: p.file, n: p.n, text: p.text, entry: p });
   }
   let requoted = 0;
   for (let round = 0; round < 10; round++) {
@@ -526,7 +639,15 @@ export function convertAll(texts, { resolve, readFile, relay = null }) {
       if (v.line === a.n) continue;
       const docLines = texts.get(a.doc).split('\n');
       const open = /\.md$/.test(a.doc) ? codeOpenAt(texts.get(a.doc))[a.line - 1] : false;
-      const next = anchorFor(m[2], text, lines, a.n, forbidAt(a.doc, docLines[a.line - 1], a.col, open) ?? FORBID, a.file === a.doc ? null : maskAnchors(texts.get(a.doc)), bracesAt(a.doc));
+      const next = anchorFor(
+        m[2],
+        text,
+        lines,
+        a.n,
+        forbidAt(a.doc, docLines[a.line - 1], a.col, open) ?? FORBID,
+        a.file === a.doc ? null : maskAnchors(texts.get(a.doc)),
+        bracesAt(a.doc),
+      );
       const at = docLines[a.line - 1].indexOf(a.to);
       if (at < 0) throw new Error(`citeAnchor: cannot settle ${a.doc}:${a.line} ${a.to} (${a.file}:${a.n})`);
       // the line its number named holds nothing quotable once its own cites are anchors (`(save.js:520 out, :587
@@ -535,8 +656,14 @@ export function convertAll(texts, { resolve, readFile, relay = null }) {
       if (next == null) Object.assign(a.entry, { status: 'unquotable', to: null });
       docLines[a.line - 1] = docLines[a.line - 1].slice(0, at) + to + docLines[a.line - 1].slice(at + a.to.length);
       texts.set(a.doc, docLines.join('\n'));
-      if (next == null) { a.held = true; moved++; continue; }
-      a.to = to; moved++; requoted++;
+      if (next == null) {
+        a.held = true;
+        moved++;
+        continue;
+      }
+      a.to = to;
+      moved++;
+      requoted++;
     }
     if (!moved) return { plans, requoted };
   }
@@ -544,16 +671,21 @@ export function convertAll(texts, { resolve, readFile, relay = null }) {
 }
 
 function main(argv) {
-  const apply = argv.includes('--apply'), check = argv.includes('--check');
+  const apply = argv.includes('--apply'),
+    check = argv.includes('--check');
   const { docs, code } = trackedSets();
   const resolve = makeResolver(code);
   const readFile = (f) => readFileSync(join(ROOT, f), 'utf8');
   if (check) {
     const read = reader(readFile);
-    let bad = 0, good = 0;
+    let bad = 0,
+      good = 0;
     for (const d of docs) {
       for (const a of checkDoc({ docText: readFile(d), resolve, read })) {
-        if (a.error) { bad++; console.log(`  ${a.error.toUpperCase().padEnd(10)} ${d}:${a.line}  ${a.text}`); } else good++;
+        if (a.error) {
+          bad++;
+          console.log(`  ${a.error.toUpperCase().padEnd(10)} ${d}:${a.line}  ${a.text}`);
+        } else good++;
       }
     }
     console.log(`${good + bad} anchor(s): ${good} resolve, ${bad} do not`);
@@ -561,24 +693,63 @@ function main(argv) {
   }
   const before = new Map(docs.map((d) => [d, readFile(d)]));
   const texts = new Map(before);
-  const { plans, requoted } = convertAll(texts, { resolve, readFile, relay: argv.includes('--relay') ? null : relayFiles() });
-  const tally = { anchor: 0, nudged: 0, struck: 0, relay: 0, foreign: 0, ambiguous: 0, unquotable: 0, 'past-end': 0, 'in-code': 0, chain: 0, unclear: 0 };
-  let escaped = 0, changedDocs = 0;
+  const { plans, requoted } = convertAll(texts, {
+    resolve,
+    readFile,
+    relay: argv.includes('--relay') ? null : relayFiles(),
+  });
+  const tally = {
+    anchor: 0,
+    nudged: 0,
+    struck: 0,
+    relay: 0,
+    foreign: 0,
+    ambiguous: 0,
+    unquotable: 0,
+    'past-end': 0,
+    'in-code': 0,
+    chain: 0,
+    unclear: 0,
+  };
+  let escaped = 0,
+    changedDocs = 0;
   for (const [d, plan] of plans) {
     for (const p of plan) {
       tally[p.status]++;
-      if (p.status === 'anchor') console.log(`  ${apply ? 'anchored' : 'ANCHOR  '} ${d}:${p.line}  ${p.text} -> ${p.to}`);
-      else if (p.status === 'nudged') console.log(`  NUDGED     ${d}:${p.line}  ${p.text} -> ${p.to}  (${p.file}:${p.cited} ${JSON.stringify((readFile(p.file).split('\n')[p.cited - 1] ?? '').trim())} -> :${p.n})`);
+      if (p.status === 'anchor')
+        console.log(`  ${apply ? 'anchored' : 'ANCHOR  '} ${d}:${p.line}  ${p.text} -> ${p.to}`);
+      else if (p.status === 'nudged')
+        console.log(
+          `  NUDGED     ${d}:${p.line}  ${p.text} -> ${p.to}  (${p.file}:${p.cited} ${JSON.stringify((readFile(p.file).split('\n')[p.cited - 1] ?? '').trim())} -> :${p.n})`,
+        );
       else if (p.status !== 'struck' && p.status !== 'relay') {
         const at = p.file ? (readFile(p.file).split('\n')[p.n - 1] ?? '').trim().slice(0, 60) : '';
-        console.log(`  ${p.status.toUpperCase().padEnd(10)} ${d}:${p.line}  ${p.text}${p.file ? `  (${p.file}:${p.n} ${JSON.stringify(at)})` : ''}`);
+        console.log(
+          `  ${p.status.toUpperCase().padEnd(10)} ${d}:${p.line}  ${p.text}${p.file ? `  (${p.file}:${p.n} ${JSON.stringify(at)})` : ''}`,
+        );
       }
     }
-    for (const m of before.get(d).matchAll(ESCAPED_NUM_CITE)) { escaped++; console.log(`  ESCAPED    ${d}:${before.get(d).slice(0, m.index).split('\n').length}  ${m[0]}`); }
-    if (apply && texts.get(d) !== before.get(d)) { writeFileSync(join(ROOT, d), texts.get(d)); changedDocs++; }
+    for (const m of before.get(d).matchAll(ESCAPED_NUM_CITE)) {
+      escaped++;
+      console.log(`  ESCAPED    ${d}:${before.get(d).slice(0, m.index).split('\n').length}  ${m[0]}`);
+    }
+    if (apply && texts.get(d) !== before.get(d)) {
+      writeFileSync(join(ROOT, d), texts.get(d));
+      changedDocs++;
+    }
   }
-  console.log(`${tally.anchor + tally.nudged} cite(s) ${apply ? 'anchored' : 'to anchor'} (${tally.nudged} nudged off a bare line; ${apply ? changedDocs + ' doc(s) written, ' : ''}${requoted} re-quoted after the conversion); held: ${tally.struck} struck, ${tally.relay} in the relay's bundle, ${tally.foreign} foreign; for a person: ${tally.ambiguous} ambiguous, ${tally.unquotable} unquotable, ${tally['past-end']} past the end, ${tally['in-code']} in code, ${tally.chain} behind a head left as a number, ${tally.unclear} after prose naming other code, ${escaped} escaped`);
-  const open = tally.ambiguous + tally.unquotable + tally['past-end'] + tally['in-code'] + tally.chain + tally.unclear + escaped + (apply ? 0 : tally.anchor + tally.nudged);
+  console.log(
+    `${tally.anchor + tally.nudged} cite(s) ${apply ? 'anchored' : 'to anchor'} (${tally.nudged} nudged off a bare line; ${apply ? changedDocs + ' doc(s) written, ' : ''}${requoted} re-quoted after the conversion); held: ${tally.struck} struck, ${tally.relay} in the relay's bundle, ${tally.foreign} foreign; for a person: ${tally.ambiguous} ambiguous, ${tally.unquotable} unquotable, ${tally['past-end']} past the end, ${tally['in-code']} in code, ${tally.chain} behind a head left as a number, ${tally.unclear} after prose naming other code, ${escaped} escaped`,
+  );
+  const open =
+    tally.ambiguous +
+    tally.unquotable +
+    tally['past-end'] +
+    tally['in-code'] +
+    tally.chain +
+    tally.unclear +
+    escaped +
+    (apply ? 0 : tally.anchor + tally.nudged);
   return open ? 1 : 0;
 }
 

@@ -111,8 +111,8 @@
   {
     "name": "AUDIT-NAV2-F1-k-dropped",
     "file": "src/systems/naval/navalWire.js",
-    "old": "  if (k.length) out.k = k;\n",
-    "new": "",
+    "old": "  if (k.length) out.k = k;\n  if (me && int(me.crew, 0, 0xffff) && int(me.boatHull, 0, HULL_NAMES.length - 1))",
+    "new": "  if (me && int(me.crew, 0, 0xffff) && int(me.boatHull, 0, HULL_NAMES.length - 1))",
     "tests": [
       "test/systems/naval/auditnav2_online.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "AUDIT-NAV2-F2-m-dropped",
     "file": "src/systems/naval/navalWire.js",
-    "old": "out.m = [me.crew, me.battle ? 1 : 0, me.boatHull];",
-    "new": "void 0;",
+    "old": "  if (me && int(me.crew, 0, 0xffff) && int(me.boatHull, 0, HULL_NAMES.length - 1))\n    out.m = [me.crew, me.battle ? 1 : 0, me.boatHull]; // AUDIT NAV2 F2/F3",
+    "new": "  if (me && int(me.crew, 0, 0xffff) && int(me.boatHull, 0, HULL_NAMES.length - 1)) void 0; // AUDIT NAV2 F2/F3",
     "tests": [
       "test/systems/naval/auditnav2_online.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "AUDIT-NAV2-F3-mode-bound",
     "file": "src/systems/naval/navalWire.js",
-    "old": "!int(w[2], 0, MODE_CODES.length - 1)",
-    "new": "!int(w[2], 0, 99)",
+    "old": "      !int(w[2], 0, MODE_CODES.length - 1) ||",
+    "new": "      !int(w[2], 0, 99) ||",
     "tests": [
       "test/systems/naval/auditnav2_online.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "AUDIT-NAV2-F1-temper-bound",
     "file": "src/systems/naval/navalWire.js",
-    "old": "!int(w[1], 0, TEMPER_CODES.length - 1)",
-    "new": "!int(w[1], 0, 99)",
+    "old": "      !int(w[1], 0, TEMPER_CODES.length - 1) ||",
+    "new": "      !int(w[1], 0, 99) ||",
     "tests": [
       "test/systems/naval/auditnav2_online.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "AUDIT-NAV2-F2-m-hull-bound",
     "file": "src/systems/naval/navalWire.js",
-    "old": "!int(raw.m[2], 0, HULL_NAMES.length - 1)",
-    "new": "!int(raw.m[2], 0, 99)",
+    "old": "    if (\n      !Array.isArray(raw.m) ||\n      !int(raw.m[0], 0, 0xffff) ||\n      !int(raw.m[1], 0, 1) ||\n      !int(raw.m[2], 0, HULL_NAMES.length - 1)\n    )",
+    "new": "    if (!Array.isArray(raw.m) || !int(raw.m[0], 0, 0xffff) || !int(raw.m[1], 0, 1) || !int(raw.m[2], 0, 99))",
     "tests": [
       "test/systems/naval/auditnav2_online.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "AUDIT-NAV2-F2-m-longer-refused",
     "file": "src/systems/naval/navalWire.js",
-    "old": "if (!Array.isArray(raw.m) || !int(raw.m[0], 0, 0xffff)",
-    "new": "if (!Array.isArray(raw.m) || raw.m.length !== 3 || !int(raw.m[0], 0, 0xffff)",
+    "old": "      !int(raw.m[0], 0, 0xffff) ||",
+    "new": "      raw.m.length !== 3 ||\n      !int(raw.m[0], 0, 0xffff) ||",
     "tests": [
       "test/systems/naval/auditnav2_online.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "AUDIT-NAV2-F1-k-longer-refused",
     "file": "src/systems/naval/navalWire.js",
-    "old": "if (!Array.isArray(w) || !int(w[0], 0, 0xffff) || !int(w[1], 0, TEMPER_CODES.length - 1)",
-    "new": "if (!Array.isArray(w) || w.length !== 4 || !int(w[0], 0, 0xffff) || !int(w[1], 0, TEMPER_CODES.length - 1)",
+    "old": "      !Array.isArray(w) ||\n      !int(w[0], 0, 0xffff) ||",
+    "new": "      !Array.isArray(w) ||\n      w.length !== 4 ||\n      !int(w[0], 0, 0xffff) ||",
     "tests": [
       "test/systems/naval/auditnav2_online.test.js"
     ]

@@ -33,9 +33,9 @@
 // runs the mints and pins that no undeclared key appears.
 
 import { GROUP_TEMPLATE_INDICES } from './itemTemplatesData.js';
-import { validAffix, RARITY_ORDER, SOCKET_VALUES, REFORGES_MAX } from '../loot/lootRarity.js';   // REFORGE-REPLACE: the count's bound
-import { validSigil } from '../sigil/sigil.js';   // SIGIL1
-import { validAppearanceField } from '../../net/appearanceLaw.js';   // APPEARANCES: a worn piece's look
+import { validAffix, RARITY_ORDER, SOCKET_VALUES, REFORGES_MAX } from '../loot/lootRarity.js'; // REFORGE-REPLACE: the count's bound
+import { validSigil } from '../sigil/sigil.js'; // SIGIL1
+import { validAppearanceField } from '../../net/appearanceLaw.js'; // APPEARANCES: a worn piece's look
 
 /** The longest string a field carries; the wire's own bound (loot.js LOOT_STR_MAX reads it). */
 export const ITEM_STR_MAX = 128;
@@ -51,18 +51,28 @@ const list = (of) => ({ kind: 'array', of });
 const rec = (check) => ({ kind: 'object', check });
 
 /** An enchantment as the port carries it (formats/magicDef.js): two small integers. */
-export const validEnchantment = (e) => !!e && typeof e === 'object' && !Array.isArray(e)
-  && Number.isInteger(e.type) && Number.isInteger(e.param);
+export const validEnchantment = (e) =>
+  !!e && typeof e === 'object' && !Array.isArray(e) && Number.isInteger(e.type) && Number.isInteger(e.param);
 /** A repair ticket (repairService.js): the shop's key and two minutes. */
-export const validRepairData = (r) => !!r && typeof r === 'object' && !Array.isArray(r)
-  && (typeof r.buildingKey === 'string' || Number.isInteger(r.buildingKey))   // INT1: the shop's key as makeBuildingKey mints it - a number
-  && Number.isInteger(r.timeStarted) && Number.isInteger(r.repairTime);
+export const validRepairData = (r) =>
+  !!r &&
+  typeof r === 'object' &&
+  !Array.isArray(r) &&
+  (typeof r.buildingKey === 'string' || Number.isInteger(r.buildingKey)) && // INT1: the shop's key as makeBuildingKey mints it - a number
+  Number.isInteger(r.timeStarted) &&
+  Number.isInteger(r.repairTime);
 
 /** CARDS8: a Card Binder's deck (systems/iliac/iliacItems.js) - a name and the catalog ids of its cards, a deck's worth. */
 export const BINDER_DECK_NAME_MAX = 40;
-export const validBinderDeck = (d) => !!d && typeof d === 'object' && !Array.isArray(d)
-  && typeof d.name === 'string' && d.name.length <= BINDER_DECK_NAME_MAX && Array.isArray(d.cards) && d.cards.length <= 40
-  && d.cards.every((c) => typeof c === 'string' && c.length > 0 && c.length <= 40);
+export const validBinderDeck = (d) =>
+  !!d &&
+  typeof d === 'object' &&
+  !Array.isArray(d) &&
+  typeof d.name === 'string' &&
+  d.name.length <= BINDER_DECK_NAME_MAX &&
+  Array.isArray(d.cards) &&
+  d.cards.length <= 40 &&
+  d.cards.every((c) => typeof c === 'string' && c.length > 0 && c.length <= 40);
 
 /** The declared fields, by name. Frozen: a new field is a new line here, not a reader's private knowledge. */
 export const ITEM_FIELDS = Object.freeze({
@@ -70,11 +80,11 @@ export const ITEM_FIELDS = Object.freeze({
   templateIndex: int({ min: 0, max: 65535 }),
   group: oneOf(Object.keys(GROUP_TEMPLATE_INDICES)),
   name: str(),
-  material: int(),                 // nativeMaterialValue: weapons 0..9, armor 0x0200-flagged
+  material: int(), // nativeMaterialValue: weapons 0..9, armor 0x0200-flagged
   dye: int({ min: 0 }),
   variant: int({ min: 0 }),
   flags: int(),
-  value: num(),                    // the wire's floor (itemBaseValue) runs after the kind check
+  value: num(), // the wire's floor (itemBaseValue) runs after the kind check
   currentCondition: int({ min: 0 }),
   maxCondition: int({ min: 0 }),
   minDamage: int(),
@@ -99,7 +109,7 @@ export const ITEM_FIELDS = Object.freeze({
   customEnchantments: list(validEnchantment),
   poisonType: int({ min: -1 }),
   trappedSoulType: int(),
-  soulBoundReleased: bool(),       // a Soulbound item's break release is spent; repair does not refill it
+  soulBoundReleased: bool(), // a Soulbound item's break release is spent; repair does not refill it
   timeForItemToDisappear: int({ min: 0 }),
   timeHealthLeechLastUsed: int({ min: 0 }),
   timeEffectsLastRerolled: int({ min: 0 }),
@@ -111,25 +121,25 @@ export const ITEM_FIELDS = Object.freeze({
   questItem: bool(),
   questUID: int({ min: 0 }),
   questSymbol: rec((s) => typeof s.name === 'string'),
-  questClone: bool(),   // HEART-KEPT (FIELD BUGS 2026-10-25i): a foe's clone of a quest's item (quest/foe.js getClonedItemQueue) - CloneAll's UID of its own
+  questClone: bool(), // HEART-KEPT (FIELD BUGS 2026-10-25i): a foe's clone of a quest's item (quest/foe.js getClonedItemQueue) - CloneAll's UID of its own
   // the port's own (loot rarity, LR1-LR4)
   rarity: oneOf(RARITY_ORDER),
   legendary: str(),
-  aetheric: str(),   // SET6: an Aetheric piece's record (systems/aetheric.js) - Ruhn's Regalia
-  gilded: str(),   // GILDED1: a Gilded piece's record (systems/gilded.js) - the Hourlock
+  aetheric: str(), // SET6: an Aetheric piece's record (systems/aetheric.js) - Ruhn's Regalia
+  gilded: str(), // GILDED1: a Gilded piece's record (systems/gilded.js) - the Hourlock
   affixes: list(validAffix),
-  qlNamed: bool(),   // AUDIT QUESTLINES REWARD-5: a questline's named piece - its name stands without a metal before it (itemInfo.js withholdsMaterialPrefix)
-  exalted: bool(),   // LOOT2 (bible/06-Systems/Loot-Arc.md section 4): a Legendary minted Exalted - one line more, true or absent
-  untaken: bool(),   // LOOT8 (bible/06-Systems/Loot-Arc.md section 10): a piece a source door rolled that no player has taken - true or absent; its first take clears it and counts for the drought
-  reforged: int({ min: 0, max: 15 }),   // LOOT9 (bible/06-Systems/Loot-Arc.md section 11): the one line the Reforge had rolled again (its index) - REFORGE-REPLACE: an old piece's, read as one reforge taken (lootRarity.js reforgeCount), never a lock; a reforge folds it into `reforges`
-  reforges: int({ min: 1, max: REFORGES_MAX }),   // REFORGE-REPLACE (Loot-Arc.md section 11): the reforges a piece has taken - what the next costs (reforge.js reforgePrice, temperLaw.js reforgeEssence), or absent
-  imprint: str(),   // LOOT10 (bible/06-Systems/Loot-Arc.md section 12): a Rare's imprinted power - a Legendary record's id of its own group (loot.js validLootItem: lootRarity.js validImprint)
-  imbued: bool(),   // LOOT-GATE: a piece whose tier the Reforge's Imbue raised (reforge.js imbuePiece) - a counter pays for the piece it was, true or absent
-  imbueWorth: int({ min: 0 }),   // AUDIT UPDATE L5: the price the Imbue added (reforge.js imbuePiece) - what a counter takes off (lootRarity.js craftedRarityWorth), or absent
-  honed: int({ min: 1, max: 63 }),   // LOOT17 (bible/06-Systems/Loot-II-Arc.md section 9): the hones a piece has taken - what the next costs (reforge.js honePrice), or absent
-  cursed: rec(validEnchantment),   // LOOT16 (bible/06-Systems/Loot-II-Arc.md section 8): a cursed find's drawback - the enchantment the temple lifts, or absent (loot.js validLootItem: lootRarity.js validCurse)
-  socket: oneOf(SOCKET_VALUES),   // LOOT20 (bible/06-Systems/Loot-II-Arc.md section 12): a piece's socket - 'empty' or the gem set in it, or absent (loot.js validLootItem: lootRarity.js validSocket)
-  sockets: list((v) => SOCKET_VALUES.includes(v)),   // GEM1 (bible/06-Systems/Gem-Sockets.md section 6): a piece's sockets in order, each 'empty' or the gem set in it, or absent - LOOT20's `socket` is still read (lootRarity.js socketsOf; validSocket: never both, never past its socketCap)
+  qlNamed: bool(), // AUDIT QUESTLINES REWARD-5: a questline's named piece - its name stands without a metal before it (itemInfo.js withholdsMaterialPrefix)
+  exalted: bool(), // LOOT2 (bible/06-Systems/Loot-Arc.md section 4): a Legendary minted Exalted - one line more, true or absent
+  untaken: bool(), // LOOT8 (bible/06-Systems/Loot-Arc.md section 10): a piece a source door rolled that no player has taken - true or absent; its first take clears it and counts for the drought
+  reforged: int({ min: 0, max: 15 }), // LOOT9 (bible/06-Systems/Loot-Arc.md section 11): the one line the Reforge had rolled again (its index) - REFORGE-REPLACE: an old piece's, read as one reforge taken (lootRarity.js reforgeCount), never a lock; a reforge folds it into `reforges`
+  reforges: int({ min: 1, max: REFORGES_MAX }), // REFORGE-REPLACE (Loot-Arc.md section 11): the reforges a piece has taken - what the next costs (reforge.js reforgePrice, temperLaw.js reforgeEssence), or absent
+  imprint: str(), // LOOT10 (bible/06-Systems/Loot-Arc.md section 12): a Rare's imprinted power - a Legendary record's id of its own group (loot.js validLootItem: lootRarity.js validImprint)
+  imbued: bool(), // LOOT-GATE: a piece whose tier the Reforge's Imbue raised (reforge.js imbuePiece) - a counter pays for the piece it was, true or absent
+  imbueWorth: int({ min: 0 }), // AUDIT UPDATE L5: the price the Imbue added (reforge.js imbuePiece) - what a counter takes off (lootRarity.js craftedRarityWorth), or absent
+  honed: int({ min: 1, max: 63 }), // LOOT17 (bible/06-Systems/Loot-II-Arc.md section 9): the hones a piece has taken - what the next costs (reforge.js honePrice), or absent
+  cursed: rec(validEnchantment), // LOOT16 (bible/06-Systems/Loot-II-Arc.md section 8): a cursed find's drawback - the enchantment the temple lifts, or absent (loot.js validLootItem: lootRarity.js validCurse)
+  socket: oneOf(SOCKET_VALUES), // LOOT20 (bible/06-Systems/Loot-II-Arc.md section 12): a piece's socket - 'empty' or the gem set in it, or absent (loot.js validLootItem: lootRarity.js validSocket)
+  sockets: list((v) => SOCKET_VALUES.includes(v)), // GEM1 (bible/06-Systems/Gem-Sockets.md section 6): a piece's sockets in order, each 'empty' or the gem set in it, or absent - LOOT20's `socket` is still read (lootRarity.js socketsOf; validSocket: never both, never past its socketCap)
   // SIGIL1: an online win's sigil (systems/sigil/sigil.js) - its power, the fight that won it, what it has drunk
   sigil: rec(validSigil),
   // LOCK1: the player's lock (systems/item/itemLock.js) - true, or absent
@@ -182,8 +192,15 @@ export const ITEM_FIELDS = Object.freeze({
   // AUDIT TOWN-ECON 2 PRICE-2: the sockets whose gem an NPC counter sold online - `[socket, paid a piece or null]` pairs
   // (systems/reforge.js setGemPiece): the gem's sale on its piece held to what it cost, and an extraction gives it back
   // marked. Never a receiver's mark
-  socketBought: list((v) => Array.isArray(v) && v.length === 2 && Number.isSafeInteger(v[0]) && v[0] >= 0 && v[0] < 8
-    && (v[1] === null || (Number.isSafeInteger(v[1]) && v[1] >= 0))),
+  socketBought: list(
+    (v) =>
+      Array.isArray(v) &&
+      v.length === 2 &&
+      Number.isSafeInteger(v[0]) &&
+      v[0] >= 0 &&
+      v[0] < 8 &&
+      (v[1] === null || (Number.isSafeInteger(v[1]) && v[1] >= 0)),
+  ),
   // STOLEN-GOODS (FIELD BUGS 2026-10-16b): a piece taken from someone else's keeping (systems/stolenGoods.js) - true, or
   // absent: a counter's sale is rid of it, never shelved, and a guilty verdict takes it (court.js confiscateStolen).
   // Never a receiver's mark: it rides the wire and a realm trade with the piece, so a hand-off launders nothing
@@ -206,7 +223,9 @@ export const ITEM_FIELDS = Object.freeze({
   // WAGONS1/WAGONS2 (bible/06-Systems/Wagons.md): which wagon a Small Cart item is (systems/wagon/wagonKinds.js - absent, the
   // cart) and its paint (systems/wagon/wagonLooks.js: `{ o, w, f, c }`, each one of six - absent, as built)
   wagonKind: oneOf(['cart', 'openWagon', 'caravan']),
-  wagonLook: rec((l) => Object.keys(l).every((k) => ['o', 'w', 'f', 'c'].includes(k) && Number.isInteger(l[k]) && l[k] >= 0 && l[k] < 6)),
+  wagonLook: rec((l) =>
+    Object.keys(l).every((k) => ['o', 'w', 'f', 'c'].includes(k) && Number.isInteger(l[k]) && l[k] >= 0 && l[k] < 6),
+  ),
   // WAGONS2-VISIT: who may enter a caravan (systems/caravanVisit.js - an online home's entries, net/homeLaw.js
   // HOME_ENTRIES; absent, its owner alone)
   wagonEntry: oneOf(['private', 'party', 'public', 'guild']),
@@ -230,7 +249,21 @@ export const ITEM_FIELDS = Object.freeze({
   appearance: rec(validAppearanceField),
   // GLOW-SET (bible/05-Combat/Weapon-Glow.md law 9): a staff's pick of glow, one of the wire's words (net/wire.js
   // LOOK_GLOW_RE, test/systems/glowset.test.js holds the two equal). The piece's own, so it rides a trade
-  glowSet: oneOf(['fire1', 'fire2', 'fire3', 'frost1', 'frost2', 'frost3', 'shock1', 'shock2', 'shock3', 'arcane2', 'brand2', 'edge2', 'gilded2']),
+  glowSet: oneOf([
+    'fire1',
+    'fire2',
+    'fire3',
+    'frost1',
+    'frost2',
+    'frost3',
+    'shock1',
+    'shock2',
+    'shock3',
+    'arcane2',
+    'brand2',
+    'edge2',
+    'gilded2',
+  ]),
 });
 
 /** The declared names, and those of one kind. */
@@ -254,14 +287,20 @@ export function validItemField(name, v) {
       return v;
     case 'number':
       if (typeof v !== 'number' || !Number.isFinite(v)) return undefined;
-      if (d.min != null && v < d.min) return undefined;   // AUDIT-RR2 G6: a stored weight is honoured now (AUDIT-RR F5) - a peer's negative one is refused
+      if (d.min != null && v < d.min) return undefined; // AUDIT-RR2 G6: a stored weight is honoured now (AUDIT-RR F5) - a peer's negative one is refused
       return v;
-    case 'bool': return typeof v === 'boolean' ? v : undefined;
-    case 'string': return typeof v === 'string' ? (v.length > d.max ? v.slice(0, d.max) : v) : undefined;
-    case 'enum': return d.values.includes(v) ? v : undefined;
-    case 'array': return Array.isArray(v) && v.every(d.of) ? v : undefined;
-    case 'object': return !!v && typeof v === 'object' && !Array.isArray(v) && d.check(v) ? v : undefined;
-    default: return undefined;
+    case 'bool':
+      return typeof v === 'boolean' ? v : undefined;
+    case 'string':
+      return typeof v === 'string' ? (v.length > d.max ? v.slice(0, d.max) : v) : undefined;
+    case 'enum':
+      return d.values.includes(v) ? v : undefined;
+    case 'array':
+      return Array.isArray(v) && v.every(d.of) ? v : undefined;
+    case 'object':
+      return !!v && typeof v === 'object' && !Array.isArray(v) && d.check(v) ? v : undefined;
+    default:
+      return undefined;
   }
 }
 

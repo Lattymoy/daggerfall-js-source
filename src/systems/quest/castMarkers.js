@@ -16,12 +16,15 @@
 // cast's order) - the marker's old spot kept (`curatedFrom`, as the town packs' curation keeps it: a quest foe a save
 // stood there follows it - markerCuration.js mendedFoeSpot). A site whose markers stand there already is left as it is.
 
-const UNIT = 0.025;   // MeshReader.GlobalScale
-const EDITOR_FLATS = 199, SPAWN = 11, ITEM = 18;
-const BUILDING_SITE = 3;   // place.js SITE_TYPES.Building
+const UNIT = 0.025; // MeshReader.GlobalScale
+const EDITOR_FLATS = 199,
+  SPAWN = 11,
+  ITEM = 18;
+const BUILDING_SITE = 3; // place.js SITE_TYPES.Building
 
 const at = (f) => ({ x: f.xPos * UNIT, y: -f.yPos * UNIT, z: f.zPos * UNIT });
-const same = (a, b) => !!a && !!b && Math.abs(a.x - b.x) < 1e-6 && Math.abs(a.y - b.y) < 1e-6 && Math.abs(a.z - b.z) < 1e-6;
+const same = (a, b) =>
+  !!a && !!b && Math.abs(a.x - b.x) < 1e-6 && Math.abs(a.y - b.y) < 1e-6 && Math.abs(a.z - b.z) < 1e-6;
 
 /**
  * A SITE'S MARKERS LAID ON ITS MADE INTERIOR (`interior` - its records, world/imperialFabricBuildings.js): each of the site's
@@ -31,8 +34,12 @@ const same = (a, b) => !!a && !!b && Math.abs(a.x - b.x) < 1e-6 && Math.abs(a.y 
  */
 export function layCastMarkers(siteDetails, interior) {
   const own = { [SPAWN]: [], [ITEM]: [] };
-  for (const f of interior?.blockFlatObjectRecords ?? []) if (f.textureArchive === EDITOR_FLATS && own[f.textureRecord]) own[f.textureRecord].push(at(f));
-  const lists = [[siteDetails?.questSpawnMarkers ?? [], own[SPAWN]], [siteDetails?.questItemMarkers ?? [], own[ITEM]]];
+  for (const f of interior?.blockFlatObjectRecords ?? [])
+    if (f.textureArchive === EDITOR_FLATS && own[f.textureRecord]) own[f.textureRecord].push(at(f));
+  const lists = [
+    [siteDetails?.questSpawnMarkers ?? [], own[SPAWN]],
+    [siteDetails?.questItemMarkers ?? [], own[ITEM]],
+  ];
   if (lists.some(([held, laid]) => held.length !== laid.length)) return 0;
   let moved = 0;
   const move = (m, p) => {
@@ -47,10 +54,16 @@ export function layCastMarkers(siteDetails, interior) {
   if (sel?.flatPosition) {
     for (const [held, laid] of lists) {
       const n = held.findIndex((m) => same(m?.flatPosition, sel.flatPosition));
-      if (n >= 0) { selTo = laid[n]; break; }
+      if (n >= 0) {
+        selTo = laid[n];
+        break;
+      }
     }
   }
-  for (const [held, laid] of lists) held.forEach((m, n) => { if (m?.flatPosition) move(m, laid[n]); });
+  for (const [held, laid] of lists)
+    held.forEach((m, n) => {
+      if (m?.flatPosition) move(m, laid[n]);
+    });
   if (selTo) move(sel, selTo);
   return moved;
 }
@@ -72,8 +85,10 @@ export function layMadeBuildingMarkers(machine, world, mapId, buildingKey) {
     if (!sd || sd.siteType !== BUILDING_SITE || sd.buildingKey !== buildingKey || seen.has(sd)) continue;
     seen.add(sd);
     const location = place.siteTown?.(world);
-    const name = location ? world.maps.getRmbBlockName?.(location, (buildingKey >> 16) & 0xff, (buildingKey >> 8) & 0xff) : null;
-    const dfBlock = name ? world.questBlock?.(name) ?? world.getBlock?.(name) : null;
+    const name = location
+      ? world.maps.getRmbBlockName?.(location, (buildingKey >> 16) & 0xff, (buildingKey >> 8) & 0xff)
+      : null;
+    const dfBlock = name ? (world.questBlock?.(name) ?? world.getBlock?.(name)) : null;
     const interior = dfBlock?.rmbBlock?.subRecords?.[buildingKey & 0xff]?.interior;
     if (interior?.made) moved += layCastMarkers(sd, interior);
   }

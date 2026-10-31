@@ -16,12 +16,21 @@ const _listeners = new Map();
 /** Register a listener by name: `fn(entity, { kind, fx })` - the killed foe's entity, the blow's kind ('melee',
  *  'arrow', 'spell', 'remote' for a puppet's owner's word) and (STOREFRONT) where its body falls, for a kill effect
  *  (killFxOf), or null. A name re-registered replaces; `null` removes. */
-export function registerPlayerKillListener(name, fn) { if (typeof fn === 'function') _listeners.set(name, fn); else _listeners.delete(name); }
+export function registerPlayerKillListener(name, fn) {
+  if (typeof fn === 'function') _listeners.set(name, fn);
+  else _listeners.delete(name);
+}
 /** A pool's word: the player's own blow killed this foe. Every listener is told; one that throws is skipped. */
 export function reportPlayerKill(entity, info = {}) {
   const kind = typeof info?.kind === 'string' ? info.kind : 'melee';
   const fx = info?.fx ?? null;
-  for (const fn of _listeners.values()) { try { fn(entity, { kind, fx }); } catch { /* a set is not the death's problem */ } }
+  for (const fn of _listeners.values()) {
+    try {
+      fn(entity, { kind, fx });
+    } catch {
+      /* a set is not the death's problem */
+    }
+  }
 }
 /** STOREFRONT (bible/06-Systems/Storefront.md section 4): WHERE A FOE RECORD'S BODY FALLS, for a kill effect - its feet,
  *  height and width (m), and the flat it stood in while one is drawn (a Morrowind body's, a concealed foe's or a released

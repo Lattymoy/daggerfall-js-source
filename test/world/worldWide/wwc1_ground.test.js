@@ -162,7 +162,7 @@ test('WW-C1 the service: a Cyrodiil vein past the Woodlands\' four is refused on
 test('WW-C1 both ends: the client stands the pixel\'s region into every kind, the service bounds every slot by nodeSlots (mutants: a host without the region; the service\'s old ternary)', () => {
   const src = (f) => readFileSync(new URL(`../../../${f}`, import.meta.url), 'utf8');
   assert.match(src('src/scenes/treeHost.js'), /standTrees\(\{ px, py, day, climate: info\.climate, region: info\.region, confirmed,/);
-  assert.match(src('src/scenes/herbHost.js'), /px, py, day, climate: info\.climate, region: info\.region, confirmed, seasonalEye:/);
+  assert.match(src('src/scenes/herbHost.js'), /px,\n\s*py,\n\s*day,\n\s*climate: info\.climate,\n\s*region: info\.region,\n\s*confirmed,\n\s*seasonalEye:/);
   assert.match(src('src/scenes/mineHost.js'), /boulders\(\{ x: px, y: py, day, climate, region, confirmed \}\)/);
   const svc = src('server-account/src/professions.js');
   // PIN MOVED (AUDIT TESA II J5, bible/06-Systems/Professions-Arc.md JUNGLE-WOODS PAST THE BAY): and the witnesses' jungle word

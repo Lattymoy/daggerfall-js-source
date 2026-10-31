@@ -347,7 +347,7 @@ test('SD26 A HOLLOW STANDS ON DRY GROUND (AUDIT SD IV F37): every spawned dungeo
   // the world host hands the spawns' own test through
   assert.match(W, /\n {4}ground: \(px, py\) => _spawnGround\(px, py\),/);
   assert.match(read('src/scenes/superDungeon/sdHost.js'), /findSite\(at, sc, near, ground\)/);   // PIN MOVED (WW5): by its lane's own site law, the Bay's findSdSite by default
-  assert.match(read('src/scenes/superDungeon/sdHost.js'), /ground = \(\) => true, findSite = findSdSite, province = '', rescan = false \}\) \{/);   // PIN MOVED (WW5): the Bay's site law by default, a lane's own `rescan` beside it; PIN MOVED (SD-SEA): the record's region, or the great cities for one with no town (fb1020b_sdsea.test.js)
+  assert.match(read('src/scenes/superDungeon/sdHost.js'), /ground = \(\) => true,\n\s*findSite = findSdSite,\n\s*province = '',\n\s*rescan = false,\n\s*\}\) \{/);   // PIN MOVED (WW5): the Bay's site law by default, a lane's own `rescan` beside it; PIN MOVED (SD-SEA): the record's region, or the great cities for one with no town (fb1020b_sdsea.test.js)
 });
 
 // ── F38: the end out of the water ─────────────────────────────────────

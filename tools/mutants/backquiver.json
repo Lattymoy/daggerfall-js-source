@@ -209,8 +209,8 @@
   {
     "name": "QUIVER-B-kept-at-stand-down",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "standDown() { dropLantern(); dropHolster(); dropQuiver(); }",
-    "new": "standDown() { dropLantern(); dropHolster(); }",
+    "old": "standDown() { dropLantern(); dropHolster(); dropQuiver(); dropBackShield(); }",
+    "new": "standDown() { dropLantern(); dropHolster(); dropBackShield(); }",
     "tests": [
       "test/player/eyeOfTheBeholder/backquiver.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "QUIVER-P-the-origin-shift-misses-it",
     "file": "src/net/peer/peerRiders.js",
-    "old": "r.holster?.batch?.origin, r.quiver?.batch?.origin, r.paceFeet]",
-    "new": "r.holster?.batch?.origin, r.paceFeet]",
+    "old": "r.holster?.batch?.origin, r.quiver?.batch?.origin, r.backShield?.batch?.origin, r.paceFeet]",
+    "new": "r.holster?.batch?.origin, r.backShield?.batch?.origin, r.paceFeet]",
     "tests": [
       "test/player/eyeOfTheBeholder/backquiver.test.js"
     ]

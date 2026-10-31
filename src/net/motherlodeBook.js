@@ -23,7 +23,13 @@
 //     pixel again (`onChange`).
 // ═══════════════════════════════════════════════════════════════════
 import { readWatchReceipt } from './watchReceipt.js';
-import { motherlodeOpen, motherlodeWarnS, motherlodeWatchOk, MOTHERLODE_STRIKERS, MOTHERLODE_SILVER } from './motherlodeLaw.js';
+import {
+  motherlodeOpen,
+  motherlodeWarnS,
+  motherlodeWatchOk,
+  MOTHERLODE_STRIKERS,
+  MOTHERLODE_SILVER,
+} from './motherlodeLaw.js';
 import { marksText } from './marksLaw.js';
 
 /** The day's Motherlodes read again this often (ms) - their strikers move. */
@@ -42,11 +48,14 @@ export const MOTHERLODE_ME_MS = 1000;
 
 /** The words. `where` a region's name, `ore` the ore's. */
 export const MOTHERLODE_TEXT = Object.freeze({
-  warn: (ore, where, minutes) => `The surveyors report a Motherlode of ${ore} will break ground in ${where} in ${minutes} minutes. Look for it on your compass.`,
-  risen: (ore, where) => `A Motherlode of ${ore} has broken ground in ${where}. The first ${MOTHERLODE_STRIKERS} miners to strike it each find ${marksText(MOTHERLODE_SILVER)}.`,
+  warn: (ore, where, minutes) =>
+    `The surveyors report a Motherlode of ${ore} will break ground in ${where} in ${minutes} minutes. Look for it on your compass.`,
+  risen: (ore, where) =>
+    `A Motherlode of ${ore} has broken ground in ${where}. The first ${MOTHERLODE_STRIKERS} miners to strike it each find ${marksText(MOTHERLODE_SILVER)}.`,
   // AUDIT SILVER-WAYS D3: the relay marks a pose that MOVED in its last five minutes (watchReceipt.js watchDue) - a
   // miner standing still at the rock was told to stand, and was never seen
-  watch: 'The Watch has not seen you on the Motherlode lately. Keep moving on its ground: the Watch checks every 2 minutes.',
+  watch:
+    'The Watch has not seen you on the Motherlode lately. Keep moving on its ground: the Watch checks every 2 minutes.',
   found: 'You have found your Motherlode today. Another breaks ground tomorrow.',
   full: 'Its twenty miners have struck it. The Motherlode is spent.',
 });
@@ -62,20 +71,35 @@ export const MOTHERLODE_TEXT = Object.freeze({
  *   the shared clock's seconds; `onChange` a Motherlode's standing changed (the host stands its pixel again); `rand`
  *   this device's moment in the day's turn (MOTHERLODE_TURN_SPREAD_MS)
  */
-export function createMotherlodeBook({ door, character, me, nowS, onChange = () => {}, say = () => {}, regionName = (r) => `region ${r}`, oreName = (m) => m, nowMs = () => Date.now(), rand = Math.random }) {
+export function createMotherlodeBook({
+  door,
+  character,
+  me,
+  nowS,
+  onChange = () => {},
+  say = () => {},
+  regionName = (r) => `region ${r}`,
+  oreName = (m) => m,
+  nowMs = () => Date.now(),
+  rand = Math.random,
+}) {
   const state = {
     /** today's UTC day as read, its Motherlodes (`struck` each), this account's find today (a key) */
     day: /** @type {number|null} */ (null),
     lodes: /** @type {any[]} */ ([]),
     found: /** @type {string|null} */ (null),
   };
-  let readAt = -Infinity, busy = false, readMe = /** @type {string|null} */ (null), readChar = /** @type {string|null} */ (null);
+  let readAt = -Infinity,
+    busy = false,
+    readMe = /** @type {string|null} */ (null),
+    readChar = /** @type {string|null} */ (null);
   /** AUDIT SILVER-WAYS D1: when a read was last asked (ms) - the day's turn asks again no sooner than its retry - and
    *  this device's moment in the turn */
   let askedAt = -Infinity;
   const turnMs = Math.floor(Math.max(0, Math.min(1, rand())) * MOTHERLODE_TURN_SPREAD_MS);
   /** AUDIT SILVER-WAYS D7: the account, read again once a MOTHERLODE_ME_MS; D6: another account's receipts let go */
-  let meNowV = /** @type {string|null} */ (null), meAt = -Infinity;
+  let meNowV = /** @type {string|null} */ (null),
+    meAt = -Infinity;
   function meNow(force = false) {
     const t = nowMs();
     if (!force && t - meAt < MOTHERLODE_ME_MS) return meNowV;
@@ -95,7 +119,13 @@ export function createMotherlodeBook({ door, character, me, nowS, onChange = () 
   const stood = new Map();
   /** pixel `x,y` -> { r, i, s } - the newest Watch receipt for each pixel this account stood in */
   const watches = new Map();
-  const hear = (fn, ...a) => { try { fn(...a); } catch (e) { console.warn('[motherlode]', e?.message ?? e); } };
+  const hear = (fn, ...a) => {
+    try {
+      fn(...a);
+    } catch (e) {
+      console.warn('[motherlode]', e?.message ?? e);
+    }
+  };
 
   /** Whether a Motherlode stands for this account now - risen, not gone, not spent, not the day's find made. */
   const standing = (l, t) => motherlodeOpen(l, t) && (l.struck ?? 0) < MOTHERLODE_STRIKERS && !state.found;
@@ -103,7 +133,10 @@ export function createMotherlodeBook({ door, character, me, nowS, onChange = () 
   function settle(t) {
     for (const l of state.lodes) {
       const now = standing(l, t);
-      if (stood.get(l.key) !== now) { stood.set(l.key, now); hear(onChange, l); }
+      if (stood.get(l.key) !== now) {
+        stood.set(l.key, now);
+        hear(onChange, l);
+      }
     }
   }
 
@@ -115,12 +148,20 @@ export function createMotherlodeBook({ door, character, me, nowS, onChange = () 
     askedAt = nowMs();
     try {
       let r;
-      try { r = await door.motherlodes(c); } catch { r = { ok: false, error: 'offline' }; }
+      try {
+        r = await door.motherlodes(c);
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
       // A request belongs to the account and character that started it. A late
       // answer must not pin their found marker to whoever is signed in now.
       if (meNow(true) !== m || character() !== c) return null;
-      readMe = m; readChar = c;
-      if (!r?.ok) { readAt = nowMs() - MOTHERLODE_READ_MS + MOTHERLODE_RETRY_MS; return r; }
+      readMe = m;
+      readChar = c;
+      if (!r?.ok) {
+        readAt = nowMs() - MOTHERLODE_READ_MS + MOTHERLODE_RETRY_MS;
+        return r;
+      }
       readAt = nowMs();
       const d = r.data ?? {};
       state.day = Number.isSafeInteger(d.day) ? d.day : null;
@@ -128,7 +169,9 @@ export function createMotherlodeBook({ door, character, me, nowS, onChange = () 
       state.found = typeof d.found === 'string' ? d.found : null;
       settle(nowS());
       return r;
-    } finally { busy = false; }
+    } finally {
+      busy = false;
+    }
   }
 
   return {
@@ -143,11 +186,16 @@ export function createMotherlodeBook({ door, character, me, nowS, onChange = () 
     tick({ sense = false } = {}) {
       const t = nowS();
       const today = Math.floor(t / 86400);
-      const m = meNow(), c = character();
+      const m = meNow(),
+        c = character();
       // AUDIT SILVER-WAYS D1: the day's turn asked at this device's moment in it, and again no sooner than a retry - a
       // turn whose read failed (offline over midnight, a refusal) or answered yesterday (the clocks a little apart) was
       // asked again every frame
-      const turned = state.day != null && state.day !== today && (t - today * 86400) * 1000 >= turnMs && nowMs() - askedAt >= MOTHERLODE_RETRY_MS;
+      const turned =
+        state.day != null &&
+        state.day !== today &&
+        (t - today * 86400) * 1000 >= turnMs &&
+        nowMs() - askedAt >= MOTHERLODE_RETRY_MS;
       if (!busy && (nowMs() - readAt >= MOTHERLODE_READ_MS || turned || m !== readMe || c !== readChar)) void read();
       const ahead = motherlodeWarnS(sense);
       for (const l of state.lodes) {
@@ -157,7 +205,13 @@ export function createMotherlodeBook({ door, character, me, nowS, onChange = () 
         if (state.found) break;
         if (t >= l.opensAt - ahead && t < l.opensAt && !said.has(`warn|${l.key}`)) {
           said.add(`warn|${l.key}`);
-          say(MOTHERLODE_TEXT.warn(oreName(l.material), regionName(l.region), Math.max(1, Math.ceil((l.opensAt - t) / 60))));
+          say(
+            MOTHERLODE_TEXT.warn(
+              oreName(l.material),
+              regionName(l.region),
+              Math.max(1, Math.ceil((l.opensAt - t) / 60)),
+            ),
+          );
         }
         if (motherlodeOpen(l, t) && (l.struck ?? 0) < MOTHERLODE_STRIKERS && !said.has(`risen|${l.key}`)) {
           said.add(`risen|${l.key}`);
@@ -191,7 +245,9 @@ export function createMotherlodeBook({ door, character, me, nowS, onChange = () 
     standingOn(px, py) {
       meNow(true);
       const t = nowS();
-      return state.lodes.filter((l) => l.x === px && l.y === py && state.day === Math.floor(t / 86400) && standing(l, t));
+      return state.lodes.filter(
+        (l) => l.x === px && l.y === py && state.day === Math.floor(t / 86400) && standing(l, t),
+      );
     },
     /** Every Motherlode standing now, wherever it is - the compass's, every frame: AUDIT SILVER-WAYS D7, into `out` (the
      *  caller's own list, emptied first) where one is handed, so the frame makes none. */
@@ -212,7 +268,8 @@ export function createMotherlodeBook({ door, character, me, nowS, onChange = () 
       const t = nowS();
       if (state.day !== Math.floor(t / 86400) || state.found) return out;
       for (const l of state.lodes) {
-        if (standing(l, t) || (said.has(`warn|${l.key}`) && t < l.opensAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS)) out.push(l);
+        if (standing(l, t) || (said.has(`warn|${l.key}`) && t < l.opensAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS))
+          out.push(l);
       }
       return out;
     },
@@ -230,7 +287,10 @@ export function createMotherlodeBook({ door, character, me, nowS, onChange = () 
     /** A lode by its node key. */
     lodeOf: (key) => state.lodes.find((l) => l.key === key) ?? null,
     /** Whether this account's Motherlode today is found. */
-    found: () => { meNow(); return state.found; },   // AUDIT SILVER-WAYS D7: the gather host's marks ask it every frame
+    found: () => {
+      meNow();
+      return state.found;
+    }, // AUDIT SILVER-WAYS D7: the gather host's marks ask it every frame
     /** A strike's answer heard: the find, the count - and the change of standing handed on; then read again. */
     heard(data) {
       if (!data?.motherlode) return;
@@ -247,8 +307,9 @@ export function createMotherlodeBook({ door, character, me, nowS, onChange = () 
      */
     refused(key, error) {
       const l = state.lodes.find((x) => x.key === key) ?? null;
-      if (error === 'motherlode-full') { if (l) l.struck = Math.max(l.struck ?? 0, MOTHERLODE_STRIKERS); }
-      else if (error === 'motherlode-found') state.found = state.found ?? key;
+      if (error === 'motherlode-full') {
+        if (l) l.struck = Math.max(l.struck ?? 0, MOTHERLODE_STRIKERS);
+      } else if (error === 'motherlode-found') state.found = state.found ?? key;
       else if (error !== 'motherlode-closed' && error !== 'bad-node' && error !== 'prof-day') return false;
       settle(nowS());
       if (error !== 'motherlode-full') void read();

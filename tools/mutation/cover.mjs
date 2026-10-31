@@ -13,7 +13,10 @@ const COVROOT = path.join(OUT, 'v8cov');
 fs.rmSync(COVROOT, { recursive: true, force: true });
 fs.mkdirSync(COVROOT, { recursive: true });
 
-const tests = fs.readdirSync(path.join(ROOT, 'test'), { recursive: true }).filter(f => f.endsWith('.test.js')).sort();
+const tests = fs
+  .readdirSync(path.join(ROOT, 'test'), { recursive: true })
+  .filter((f) => f.endsWith('.test.js'))
+  .sort();
 
 const srcCache = new Map();
 function getSrc(abs) {
@@ -26,8 +29,13 @@ function getSrc(abs) {
   return srcCache.get(abs);
 }
 function offToLine(ls, off) {
-  let lo = 0, hi = ls.length - 1;
-  while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (ls[mid] <= off) lo = mid; else hi = mid - 1; }
+  let lo = 0,
+    hi = ls.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if (ls[mid] <= off) lo = mid;
+    else hi = mid - 1;
+  }
   return lo + 1;
 }
 
@@ -38,22 +46,40 @@ for (const t of tests) {
   const dir = path.join(COVROOT, String(i));
   fs.mkdirSync(dir, { recursive: true });
   const r = spawnSync(process.execPath, ['--test', path.join('test', t)], {
-    cwd: ROOT, encoding: 'utf8', timeout: 180000, maxBuffer: 1 << 28,   // AUDIT 68: the 1 MiB default is a ceiling a big file's TAP can reach
+    cwd: ROOT,
+    encoding: 'utf8',
+    timeout: 180000,
+    maxBuffer: 1 << 28, // AUDIT 68: the 1 MiB default is a ceiling a big file's TAP can reach
     env: { ...process.env, NODE_V8_COVERAGE: dir, ARENA2_PATH: process.env.ARENA2_PATH },
   });
   // a file the harness lost would leave its lines "executed by no test" - loud, never a partial map
-  if (r.error || r.status === null) { console.error(`${t}: HARNESS ERROR (${r.error?.code ?? r.signal}) - coverage would be partial`); process.exit(2); }
+  if (r.error || r.status === null) {
+    console.error(`${t}: HARNESS ERROR (${r.error?.code ?? r.signal}) - coverage would be partial`);
+    process.exit(2);
+  }
   // gather all ranges per src file across all coverage json shards
   const ranges = {};
   let files = [];
-  try { files = fs.readdirSync(dir).filter(f => f.endsWith('.json')); } catch { /* ignore */ }
+  try {
+    files = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
+  } catch {
+    /* ignore */
+  }
   for (const f of files) {
     let j;
-    try { j = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')); } catch { continue; }
+    try {
+      j = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+    } catch {
+      continue;
+    }
     for (const sc of j.result || []) {
       if (!sc.url || !sc.url.startsWith('file://')) continue;
       let abs;
-      try { abs = fileURLToPath(sc.url); } catch { continue; }
+      try {
+        abs = fileURLToPath(sc.url);
+      } catch {
+        continue;
+      }
       if (!abs.startsWith(path.join(ROOT, 'src') + path.sep)) continue;
       const rel = path.relative(ROOT, abs);
       const acc = (ranges[rel] ||= []);
@@ -63,12 +89,17 @@ for (const t of tests) {
   const covered = {};
   for (const [rel, rs] of Object.entries(ranges)) {
     let s;
-    try { s = getSrc(path.join(ROOT, rel)); } catch { continue; }
+    try {
+      s = getSrc(path.join(ROOT, rel));
+    } catch {
+      continue;
+    }
     const n = s.text.length;
-    const paint = new Int32Array(n);           // 0 = not seen / not executed
-    rs.sort((a, b) => (b.endOffset - b.startOffset) - (a.endOffset - a.startOffset));
+    const paint = new Int32Array(n); // 0 = not seen / not executed
+    rs.sort((a, b) => b.endOffset - b.startOffset - (a.endOffset - a.startOffset));
     for (const rng of rs) {
-      const a = Math.max(0, rng.startOffset), b = Math.min(n, rng.endOffset);
+      const a = Math.max(0, rng.startOffset),
+        b = Math.min(n, rng.endOffset);
       const v = rng.count > 0 ? 1 : -1;
       paint.fill(v, a, b);
     }

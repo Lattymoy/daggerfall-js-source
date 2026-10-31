@@ -2,8 +2,8 @@
   {
     "name": "WB9g-the-title-at-a-ware-price",
     "file": "src/net/insignia.js",
-    "old": "Object.freeze({ id: 'title:gatebreaker', kind: 'title', key: 'gatebreaker', price: 30 })",
-    "new": "Object.freeze({ id: 'title:gatebreaker', kind: 'title', key: 'gatebreaker', price: 3 })",
+    "old": "  Object.freeze({ id: 'title:gatebreaker', kind: 'title', key: 'gatebreaker', price: 30 }),",
+    "new": "  Object.freeze({ id: 'title:gatebreaker', kind: 'title', key: 'gatebreaker', price: 3 }),",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WB9g-the-column-unbounded",
     "file": "src/net/insignia.js",
-    "old": " || column.length > INSIGNIA_COLUMN_MAX) return [];",
-    "new": ") return [];",
+    "old": "  if (typeof column !== 'string' || !column || column.length > INSIGNIA_COLUMN_MAX) return [];",
+    "new": "  if (typeof column !== 'string' || !column) return [];",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB9g-an-owned-piece-offered-again",
     "file": "src/net/insignia.js",
-    "old": "  if (Array.isArray(held) && held.includes(offer.id)) return 'owned';\n",
-    "new": "",
+    "old": "  if (Array.isArray(held) && held.includes(offer.id)) return 'owned';\n  if (!online) return 'offline';",
+    "new": "  if (!online) return 'offline';",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WB9g-an-offline-sale",
     "file": "src/net/insignia.js",
-    "old": "  if (!online) return 'offline';\n",
-    "new": "",
+    "old": "  if (!online) return 'offline';\n  if (!(stones >= offer.price)) return 'stones';",
+    "new": "  if (!(stones >= offer.price)) return 'stones';",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WB9g-a-short-purse-served",
     "file": "src/net/insignia.js",
-    "old": "  if (!(stones >= offer.price)) return 'stones';\n",
-    "new": "",
+    "old": "  if (!(stones >= offer.price)) return 'stones';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WB9g-the-mint-drops-the-aura",
     "file": "src/net/identityToken.js",
-    "old": "  if (who?.au !== undefined) claims.au = who.au;",
-    "new": "",
+    "old": "  if (who?.au !== undefined) claims.au = who.au; // WB9g: only while an aura is worn - a player wearing none mints the bytes they always did",
+    "new": "  // WB9g: only while an aura is worn - a player wearing none mints the bytes they always did",
     "tests": [
       "test/net/wb9g_insignia.test.js",
       "test/net/identitytoken.test.js"
@@ -66,8 +66,8 @@
   {
     "name": "WB9g-an-unknown-aura-signed",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.au !== undefined && !AURAS.includes(c.au)) return false;",
-    "new": "",
+    "old": "  if (c.au !== undefined && !AURAS.includes(c.au)) return false; // WB9g: the aura worn, the title's law - absent for none, one of the known or refused",
+    "new": "  // WB9g: the aura worn, the title's law - absent for none, one of the known or refused",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "WB9g-the-title-bought-not-held",
     "file": "server-account/src/titles.js",
-    "old": "  for (const t of insigniaKeys(player?.insignia, 'title')) if (!held.includes(t)) held.push(t);\n",
-    "new": "",
+    "old": "  for (const t of insigniaKeys(player?.insignia, 'title')) if (!held.includes(t)) held.push(t);\n  // SEAT1c (Seats-Arc 7.4): AND A CHARTER'S - \"Warden of <Town>\", \"Protector of <Kingdom>\" - derived from the seats the",
+    "new": "  // SEAT1c (Seats-Arc 7.4): AND A CHARTER'S - \"Warden of <Town>\", \"Protector of <Kingdom>\" - derived from the seats the",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "WB9g-the-client-decides-the-aura",
     "file": "src/ui/accountFlow.js",
-    "old": "      self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };\n      self.busy = false;\n      self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want }) : t('account.flow.auraRemoved', 'Aura removed.');",
-    "new": "      self.wardrobe = { ...self.wardrobe, aura: want };\n      self.busy = false;\n      self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want }) : t('account.flow.auraRemoved', 'Aura removed.');",
+    "old": "      const r = await ask(() => equipAura(door(), want));\n      if (!r) return false;\n      if (!r.ok) return refuse(accountRefusalText(r.error));\n      self.wardrobe = {\n        ...(self.wardrobe ?? {}),\n        titles: r.data.titles,\n        title: r.data.title,\n        glyphs: r.data.glyphs,\n        ...glyphHalf(r.data),\n        ...auraHalf(r.data),\n      };\n      self.busy = false;\n      self.note = want",
+    "new": "      const r = await ask(() => equipAura(door(), want));\n      if (!r) return false;\n      if (!r.ok) return refuse(accountRefusalText(r.error));\n      self.wardrobe = { ...self.wardrobe, aura: want };\n      self.busy = false;\n      self.note = want",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "WB9g-the-aura-refusal-writes-anyway",
     "file": "src/ui/accountFlow.js",
-    "old": "      const r = await ask(() => equipAura(door(), want));\n      if (!r) return false;\n      if (!r.ok) return refuse(accountRefusalText(r.error));",
-    "new": "      const r = await ask(() => equipAura(door(), want));\n      if (!r) return false;\n      if (!r.ok) { self.wardrobe = { ...self.wardrobe, aura: want }; return refuse(accountRefusalText(r.error)); }",
+    "old": "      const r = await ask(() => equipAura(door(), want));\n      if (!r) return false;\n      if (!r.ok) return refuse(accountRefusalText(r.error));\n      self.wardrobe = {",
+    "new": "      const r = await ask(() => equipAura(door(), want));\n      if (!r) return false;\n      if (!r.ok) {\n        self.wardrobe = { ...self.wardrobe, aura: want };\n        return refuse(accountRefusalText(r.error));\n      }\n      self.wardrobe = {",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -355,8 +355,8 @@
   {
     "name": "WB9g-my-feet-never-told",
     "file": "src/ui/accountFlow.js",
-    "old": "      self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want }) : t('account.flow.auraRemoved', 'Aura removed.');   // SHADOW-CLOAK (AUDIT): the aura's name, never its key\n      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), armory: armoryStated(r.data), effects: effectsStated(r.data), icon: iconStated(r.data), secret: asked });\n      changed();",
-    "new": "      self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want }) : t('account.flow.auraRemoved', 'Aura removed.');   // SHADOW-CLOAK (AUDIT): the aura's name, never its key\n      changed();",
+    "old": "        : t('account.flow.auraRemoved', 'Aura removed.'); // SHADOW-CLOAK (AUDIT): the aura's name, never its key\n      adoptIdentity(storage, {\n        glyphs: r.data.glyphs,\n        glyphsOff: r.data.glyphsOff,\n        aura: auraStated(r.data),\n        armory: armoryStated(r.data),\n        effects: effectsStated(r.data),\n        icon: iconStated(r.data),\n        secret: asked,\n      });\n      changed();",
+    "new": "        : t('account.flow.auraRemoved', 'Aura removed.'); // SHADOW-CLOAK (AUDIT): the aura's name, never its key\n      changed();",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -382,8 +382,8 @@
   {
     "name": "WB9g-the-aura-button-wears-a-title",
     "file": "src/ui/characterSlots.js",
-    "old": "() => flow.wearAura(key)));",
-    "new": "() => flow.equip(key)));",
+    "old": "        row.append(choice(b, { slot: 'aura', key }, () => flow.wearAura(key)));",
+    "new": "        row.append(choice(b, { slot: 'aura', key }, () => flow.equip(key)));",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -427,7 +427,7 @@
   {
     "name": "WB9g-the-wardrobe-never-asked",
     "file": "src/ui/brokerWindow.js",
-    "old": "  if (deps.insigniaLoad) Promise.resolve().then(() => deps.insigniaLoad()).catch(() => null).then(() => render());",
+    "old": "  if (deps.insigniaLoad)\n    Promise.resolve()\n      .then(() => deps.insigniaLoad())\n      .catch(() => null)\n      .then(() => render());",
     "new": "",
     "tests": [
       "test/net/wb9g_insignia.test.js"
@@ -436,8 +436,8 @@
   {
     "name": "WB9g-the-insignia-rows-unreachable",
     "file": "src/ui/brokerWindow.js",
-    "old": "        pressable(row, () => { pickedInsig = g.id; render({ reveal: true }); });",
-    "new": "        row.onclick = () => { pickedInsig = g.id; render({ reveal: true }); };",
+    "old": "        pressable(row, () => {\n          pickedInsig = g.id;\n          render({ reveal: true });\n        });",
+    "new": "        row.onclick = () => {\n          pickedInsig = g.id;\n          render({ reveal: true });\n        };",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]

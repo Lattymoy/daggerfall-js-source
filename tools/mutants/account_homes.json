@@ -158,8 +158,8 @@
   {
     "name": "ACCOUNT-HOMES-delete-stock-unasked",
     "file": "server-account/src/realm.js",
-    "old": "  if (Number((await db.prepare(HOME_VENDOR_STOCK_SQL).bind(playerId, id).first())?.n ?? 0) > 0) return { error: 'home-vendor-stocked' };\n",
-    "new": "",
+    "old": "  if (Number((await db.prepare(HOME_VENDOR_STOCK_SQL).bind(playerId, id).first())?.n ?? 0) > 0)\n    return { error: 'home-vendor-stocked' };\n  // AUDIT CARDS-4 A3: a card table's stake still held comes home to this character first (cards.js cashoutCards)",
+    "new": "  // AUDIT CARDS-4 A3: a card table's stake still held comes home to this character first (cards.js cashoutCards)",
     "tests": [
       "test/server/account_homes.test.js"
     ],
@@ -198,7 +198,7 @@
   {
     "name": "ACCOUNT-HOMES-sweep-held-unread",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    if (!at || keep.has(`${at.mapId}:${at.buildingKey}`) || homeInArenaCell(at.mapId, at.buildingKey) || ownNow(at.mapId, at.buildingKey)) continue;",
+    "old": "    if (\n      !at ||\n      keep.has(`${at.mapId}:${at.buildingKey}`) ||\n      homeInArenaCell(at.mapId, at.buildingKey) ||\n      ownNow(at.mapId, at.buildingKey)\n    )\n      continue;",
     "new": "    if (!at || homeInArenaCell(at.mapId, at.buildingKey) || ownNow(at.mapId, at.buildingKey)) continue;",
     "tests": [
       "test/server/account_homes.test.js"
@@ -208,7 +208,7 @@
   {
     "name": "ACCOUNT-HOMES-sweep-arena-unskipped",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    if (!at || keep.has(`${at.mapId}:${at.buildingKey}`) || homeInArenaCell(at.mapId, at.buildingKey) || ownNow(at.mapId, at.buildingKey)) continue;",
+    "old": "    if (\n      !at ||\n      keep.has(`${at.mapId}:${at.buildingKey}`) ||\n      homeInArenaCell(at.mapId, at.buildingKey) ||\n      ownNow(at.mapId, at.buildingKey)\n    )\n      continue;",
     "new": "    if (!at || keep.has(`${at.mapId}:${at.buildingKey}`) || ownNow(at.mapId, at.buildingKey)) continue;",
     "tests": [
       "test/server/account_homes.test.js"
@@ -218,7 +218,7 @@
   {
     "name": "ACCOUNT-HOMES-sweep-ownNow-unread",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    if (!at || keep.has(`${at.mapId}:${at.buildingKey}`) || homeInArenaCell(at.mapId, at.buildingKey) || ownNow(at.mapId, at.buildingKey)) continue;",
+    "old": "    if (\n      !at ||\n      keep.has(`${at.mapId}:${at.buildingKey}`) ||\n      homeInArenaCell(at.mapId, at.buildingKey) ||\n      ownNow(at.mapId, at.buildingKey)\n    )\n      continue;",
     "new": "    if (!at || keep.has(`${at.mapId}:${at.buildingKey}`) || homeInArenaCell(at.mapId, at.buildingKey)) continue;",
     "tests": [
       "test/server/account_homes.test.js"
@@ -228,8 +228,8 @@
   {
     "name": "ACCOUNT-HOMES-sweep-mark-kept",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  for (const name of gone) removePermanentScene(cache, name);\n",
-    "new": "",
+    "old": "  for (const name of gone) removePermanentScene(cache, name);\n  return { own, gone: [...gone] };",
+    "new": "  return { own, gone: [...gone] };",
     "tests": [
       "test/server/account_homes.test.js"
     ],
@@ -248,8 +248,8 @@
   {
     "name": "ACCOUNT-HOMES-sweep-ownNow-unwired",
     "file": "src/scenes/homesBootHost.js",
-    "old": "r.data.homes, { ownNow: (m, k) => !!onlineHomes?.homeAt(m, k)?.own });",
-    "new": "r.data.homes, {});",
+    "old": "      const swept = homesGoneFrom((p.sceneCache ??= createSceneCache()), r.data.homes, {\n        ownNow: (m, k) => !!onlineHomes?.homeAt(m, k)?.own,\n      }); // never one bought while the list was read",
+    "new": "      const swept = homesGoneFrom((p.sceneCache ??= createSceneCache()), r.data.homes, {}); // never one bought while the list was read",
     "tests": [
       "test/server/account_homes.test.js"
     ],
@@ -258,8 +258,8 @@
   {
     "name": "ACCOUNT-HOMES-boot-stand-in-swept",
     "file": "src/scenes/homesBootHost.js",
-    "old": "    if (!await standing()) { goneAsked = false; return null; }",
-    "new": "    await standing();",
+    "old": "    if (!(await standing())) {\n      goneAsked = false;\n      return null;\n    } // never the boot's stand-in character - asked again at the next landing",
+    "new": "    await standing(); // never the boot's stand-in character - asked again at the next landing",
     "tests": [
       "test/server/account_homes.test.js"
     ],
@@ -268,8 +268,8 @@
   {
     "name": "ACCOUNT-HOMES-boot-latch-unset",
     "file": "src/scenes/homesBootHost.js",
-    "old": "    goneAsked = true;\n",
-    "new": "",
+    "old": "    goneAsked = true;\n    if (!(await standing())) {",
+    "new": "    if (!(await standing())) {",
     "tests": [
       "test/server/account_homes.test.js"
     ],
@@ -288,8 +288,8 @@
   {
     "name": "ACCOUNT-HOMES-line-whole-unread",
     "file": "src/systems/legacy/household.js",
-    "old": "    } else if (!took(h)) { if (!whole || holds(h)) next.push(h); }",
-    "new": "    } else if (!took(h)) { if (true) next.push(h); }",
+    "old": "      if (!whole || holds(h)) next.push(h);",
+    "new": "      if (true) next.push(h);",
     "tests": [
       "test/systems/legacy/legacy7_homes.test.js"
     ],

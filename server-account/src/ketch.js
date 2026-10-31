@@ -56,17 +56,31 @@ export async function claimKetch({ db, nowS, subtle, rand }, player, receipt, pu
   if (!v.ok) return { error: 'receipt', why: v.why };
   const c = v.claims;
   if (c.s !== player.id) return { error: 'not-yours' };
-  const nonce = hex(rand(new Uint8Array(8))), mine = typeof cid === 'string' && KT_CID_RE.test(cid) ? cid : null;
+  const nonce = hex(rand(new Uint8Array(8))),
+    mine = typeof cid === 'string' && KT_CID_RE.test(cid) ? cid : null;
   const [row, kept, count] = await db.batch([
-    db.prepare('INSERT OR IGNORE INTO ketch_voyages (voyage, account, owner, earned, lv, nonce, at, body, cid) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)')
+    db
+      .prepare(
+        'INSERT OR IGNORE INTO ketch_voyages (voyage, account, owner, earned, lv, nonce, at, body, cid) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)',
+      )
       .bind(c.d, player.id, c.o, c.x, c.l, nonce, nowS, c.m ? JSON.stringify(c.m) : null, mine),
     db.prepare('SELECT owner, nonce, cid FROM ketch_voyages WHERE voyage = ?1 AND account = ?2').bind(c.d, player.id),
     db.prepare('SELECT COUNT(*) AS n FROM ketch_voyages WHERE account = ?1').bind(player.id),
     // INT5's FILL - a signed win's spoils, the playing character's bucket - by THIS claim's row alone, in the batch
-    spoilsGrantStatement(db, player.id, 0, 'EXISTS (SELECT 1 FROM ketch_voyages WHERE voyage = ?5 AND account = ?1 AND nonce = ?6)', c.d, nonce),
+    spoilsGrantStatement(
+      db,
+      player.id,
+      0,
+      'EXISTS (SELECT 1 FROM ketch_voyages WHERE voyage = ?5 AND account = ?1 AND nonce = ?6)',
+      c.d,
+      nonce,
+    ),
   ]);
-  const sailed = int(count?.results?.[0]?.n), guest = !player.handle ? { guest: true } : {};
+  const sailed = int(count?.results?.[0]?.n),
+    guest = !player.handle ? { guest: true } : {};
   if (Number(row?.meta?.changes ?? 0) > 0) return { recorded: true, voyage: c.d, share: true, sailed, ...guest };
   const k = kept?.results?.[0] ?? null;
-  return k?.owner === c.o ? { recorded: false, why: 'claimed', share: mine != null && k.cid === mine, sailed, ...guest } : { recorded: false, why: 'taken', share: false, sailed, ...guest };
+  return k?.owner === c.o
+    ? { recorded: false, why: 'claimed', share: mine != null && k.cid === mine, sailed, ...guest }
+    : { recorded: false, why: 'taken', share: false, sailed, ...guest };
 }

@@ -2,7 +2,7 @@
   {
     "name": "TEMPLE-HOME-the-key-unasked",
     "file": "src/systems/layoutPins.js",
-    "old": "    let out = CURATED_TOWNS.has(locationKey) ? new Set(CURATED_TOWNS.get(locationKey)) : null;   // TEMPLE-HOME: by the town's key",
+    "old": "    let out = CURATED_TOWNS.has(locationKey) ? new Set(CURATED_TOWNS.get(locationKey)) : null; // TEMPLE-HOME: by the town's key",
     "new": "    let out = null;",
     "tests": [
       "test/systems/fb1004d_templehome.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "TEMPLE-HOME-a-temple-dropped",
     "file": "src/systems/layoutPins.js",
-    "old": "Object.freeze([4401, 4501, ",
-    "new": "Object.freeze([4501, ",
+    "old": "      4401, 4501, 6442, 6801, 7001, 7842, 10142, 10801, 17760, 19442, 20301, 20701, 22901, 26201, 27201, 28560, 29401,\n      31360, 35801, 41901, 43660, 46060, 46101, 46801, 48201, 51501, 51901, 57801, 62601, 63001, 67301, 85801, 88701,\n      89701,",
+    "new": "      4501, 6442, 6801, 7001, 7842, 10142, 10801, 17760, 19442, 20301, 20701, 22901, 26201, 27201, 28560, 29401, 31360,\n      35801, 41901, 43660, 46060, 46101, 46801, 48201, 51501, 51901, 57801, 62601, 63001, 67301, 85801, 88701, 89701,",
     "tests": [
       "test/systems/fb1004d_templehome.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "TEMPLE-HOME-the-wrong-mod",
     "file": "src/systems/layoutPins.js",
-    "old": "    vendor: 'beautiful-villages', why: 'a temple with no house',",
-    "new": "    vendor: 'beautiful-cities', why: 'a temple with no house',",
+    "old": "  Object.freeze({\n    vendor: 'beautiful-villages',\n    why: 'a temple with no house',",
+    "new": "  Object.freeze({\n    vendor: 'beautiful-cities',\n    why: 'a temple with no house',",
     "tests": [
       "test/systems/fb1004d_templehome.test.js"
     ],

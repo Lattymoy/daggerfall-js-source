@@ -21,6 +21,7 @@ import { itemLongName } from '../../src/systems/item/itemInfo.js';
 import { setProfessionsPages, drawStoresPage } from '../../src/ui/professions/profPages.js';
 import { setPref } from '../../src/systems/uiPrefs.js';
 import { PROF_CSS } from '../../src/ui/enhanced/enhancedPlusStyle.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const noWait = () => Promise.resolve();
@@ -87,7 +88,7 @@ test('AUDIT 30 C5 + U4: one act at a time - another press while one is under way
   assert.equal(await first, await same, 'the same press is that act');
   assert.equal(book.busy, false);
   // the tab's opening settle is an act through the window's door
-  assert.match(src('src/ui/marketTab.js'), /const settle = \(\) => ui\.run\(async \(\) => \{\n\s*const r = await m\.book\.settle\(/);
+  assert.match(src('src/ui/marketTab.js'), /const settle = \(\) =>\n\s*ui\.run\(async \(\) => \{\n\s*const r = await m\.book\.settle\(/);
 });
 
 test('AUDIT 30 C6: a read an act\'s answer overtook tells nothing - its older balance is never the last the Marks book hears, its view never cached', async () => {
@@ -147,10 +148,10 @@ test('AUDIT 30 U1 + U6 + U9 + U11: every answer\'s Stores told to the profession
   const prof = createProfBook({ door: { account: () => 'acct-1' }, storage: memStorage(), character: () => 'c', sleep: noWait });
   prof.applyStore({ material: 'ore:iron', own: 5, bought: 0 });
   assert.equal(prof.held('ore:iron'), 0, 'never read: nothing told');
-  assert.match(src('src/scenes/world.js'), /stores: \{ apply: \(st\) => profBook\?\.applyStore\(st\) \},/);   // AUDIT 31: its holds beside it
+  assert.match(hostText('src/scenes/world.js'), /stores: \{ apply: \(st\) => profBook\?\.applyStore\(st\) \},/);   // AUDIT 31: its holds beside it
   // AUDIT 32 B3: one door for every counter's balance - the Bank's book and the market's
-  assert.match(src('src/scenes/world.js'), /const toldBalance = \(balance\) => \{ if \(Number\.isSafeInteger\(balance\)\) \{ marksBook\?\.set\(balance\); marketBook\?\.told\(balance\); \} \};/);
-  assert.equal((src('src/scenes/world.js').match(/toldBalance\(r\?\.data\?\.balance\);/g) ?? []).length, 2, 'the Stores page\'s counters and the Market tab\'s Weavers\'');
+  assert.match(hostText('src/scenes/world.js'), /const toldBalance = \(balance\) => \{ if \(Number\.isSafeInteger\(balance\)\) \{ marksBook\?\.set\(balance\); marketBook\?\.told\(balance\); \} \};/);
+  assert.equal((hostText('src/scenes/world.js').match(/toldBalance\(r\?\.data\?\.balance\);/g) ?? []).length, 2, 'the Stores page\'s counters and the Market tab\'s Weavers\'');
 });
 
 // ─── THE TAB ─────────────────────────────────────────────────────────
@@ -286,7 +287,7 @@ test('AUDIT 30 U5 + U12 + U14 + U21: the market\'s rows at a phone\'s width, its
   assert.doesNotMatch(PROF_CSS, /\.notice-hint/, 'TOAST-SPLIT: the popup\'s hint is the toasts\' own, never the market\'s to undo');
   const w = src('src/ui/noticeWindow.js');
   assert.match(w, /busy: \(\) => marketBusy \|\| !!marketHost\.book\?\.busy,\n\s*run: async \(start\) => \{\n\s*if \(marketBusy\) return;/);
-  assert.match(src('src/scenes/world.js'), /nowS: \(\) => Math\.floor\(\(Date\.now\(\) \+ _sharedOffsetMs\) \/ 1000\),/);
+  assert.match(hostText('src/scenes/world.js'), /nowS: \(\) => Math\.floor\(\(Date\.now\(\) \+ _sharedOffsetMs\) \/ 1000\),/);
 });
 
 // ─── THE STATIONS' PAGES ─────────────────────────────────────────────
@@ -409,7 +410,7 @@ test('AUDIT 30 C4 + A4: a kept craft keeps its station\'s fee and hands it to th
   online = true;
   await book.settle(() => {}, mint);
   assert.deepEqual(paid, [25], 'a kept craft settled later paid the smith nothing');
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const profMintCraft = \(data, kept = null\) => \{\n\s*if \(kept\?\.fee > 0\) \{ deductGold\(playerEntity, Math\.min\(kept\.fee, totalGoldAmount\(playerEntity\)\)\); saveSoon\.changed\(\); \}/);
   // PROF7 moved it: each station its own kept word, the loom's too (craftStation)
   assert.match(w, /if \(!r\?\.ok\) return \{ ok: false, text: r\?\.kept \? `\$\{st\.kept\}\$\{chain \? ` \$\{chain\}` : ''\}` : `\$\{accountRefusalText\(r\?\.error\)\}\$\{movedFirstText\(r\)\}\$\{chain \? ` \$\{chain\}` : ''\}` \};/, 'a workbench\'s kept craft said "The anvil rang" (AUDIT 32 B4; AUDIT PROF-541 R2-C2: the busy word the book\'s, naming no station)');   // PIN MOVED (AUDIT2 BAG1 K8): and what went in first; (CRAFT1) and what the chain refined first - kept or refused (AUDIT CRAFT1 F3)

@@ -2,8 +2,8 @@
   {
     "name": "PS-the-counters-line-restored",
     "file": "src/systems/shopStock.js",
-    "old": "if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n }); }",
-    "new": "if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n }); if (n > 0) add({ ...createWeapon(561, 0, () => 0), stackCount: n }); }",
+    "old": "    if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n });\n  }",
+    "new": "    if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n });\n    if (n > 0) add({ ...createWeapon(561, 0, () => 0), stackCount: n });\n  }",
     "tests": [
       "test/systems/pelletsscarce.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PS-the-curve-the-guns",
     "file": "src/systems/thunderlock.js",
-    "old": "id: 'dwemer-pellets', final: true, minTier: PELLET_FIND_MIN_TIER, weights: PELLET_FIND_WEIGHTS,",
-    "new": "id: 'dwemer-pellets', final: true, minTier: PELLET_FIND_MIN_TIER,",
+    "old": "  weights: PELLET_FIND_WEIGHTS,\n  mint: (rolls = Math.random) => [createPellets(pelletFindStack(rolls))],",
+    "new": "  mint: (rolls = Math.random) => [createPellets(pelletFindStack(rolls))],",
     "tests": [
       "test/systems/pelletsscarce.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PS-the-cap-lifted",
     "file": "src/systems/thunderlock.js",
-    "old": "Object.freeze({ base: 6, perTier: 2.5, cap: 60 });",
-    "new": "Object.freeze({ base: 6, perTier: 2.5, cap: 600 });",
+    "old": "export const PELLET_FIND_WEIGHTS = Object.freeze({ base: 6, perTier: 2.5, cap: 60 });",
+    "new": "export const PELLET_FIND_WEIGHTS = Object.freeze({ base: 6, perTier: 2.5, cap: 600 });",
     "tests": [
       "test/systems/pelletsscarce.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PS-not-final",
     "file": "src/systems/thunderlock.js",
-    "old": "id: 'dwemer-pellets', final: true,",
-    "new": "id: 'dwemer-pellets', final: false,",
+    "old": "  final: true,",
+    "new": "  final: false,",
     "tests": [
       "test/systems/pelletsscarce.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PS-the-stack-one-short",
     "file": "src/systems/thunderlock.js",
-    "old": "PELLET_FIND_STACK.max - PELLET_FIND_STACK.min + 1)))",
-    "new": "PELLET_FIND_STACK.max - PELLET_FIND_STACK.min)))",
+    "old": "    Math.floor(rolls() * (PELLET_FIND_STACK.max - PELLET_FIND_STACK.min + 1)),",
+    "new": "    Math.floor(rolls() * (PELLET_FIND_STACK.max - PELLET_FIND_STACK.min)),",
     "tests": [
       "test/systems/pelletsscarce.test.js"
     ]

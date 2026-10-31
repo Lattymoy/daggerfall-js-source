@@ -30,7 +30,7 @@
     "name": "EOTB-WALL-the-eye-pinned-without-moving-the-smoothed-state",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
     "old": "            posCurrent = [origin[0] + dir[0] * keep, origin[1] + dir[1] * keep, origin[2] + dir[2] * keep];",
-    "new": "            return { eye: [origin[0] + dir[0] * keep, origin[1] + dir[1] * keep, origin[2] + dir[2] * keep], thirdPerson: true, distance: keep, focal: origin };",
+    "new": "            return {\n              eye: [origin[0] + dir[0] * keep, origin[1] + dir[1] * keep, origin[2] + dir[2] * keep],\n              thirdPerson: true,\n              distance: keep,\n              focal: origin,\n            };",
     "tests": [
       "test/systems/eotb_camera.test.js"
     ]

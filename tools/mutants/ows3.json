@@ -11,8 +11,8 @@
   {
     "name": "OWS3-born-on-land",
     "file": "src/systems/seaRaiders.js",
-    "old": "  if (!open(px, py)) return null;\n",
-    "new": "\n",
+    "old": "  if (!open(px, py)) return null;",
+    "new": "",
     "tests": [
       "test/systems/ows3_raiders.test.js"
     ]
@@ -29,7 +29,7 @@
   {
     "name": "OWS3-unseeded",
     "file": "src/systems/seaRaiders.js",
-    "old": "const seedOf = (cx, cy, life) => (Math.imul(cx + 1013, 73856093) ^ Math.imul(cy + 2029, 19349663) ^ Math.imul(life + 7, 83492791) ^ RAIDER_SEED) >>> 0;",
+    "old": "const seedOf = (cx, cy, life) =>\n  (Math.imul(cx + 1013, 73856093) ^ Math.imul(cy + 2029, 19349663) ^ Math.imul(life + 7, 83492791) ^ RAIDER_SEED) >>> 0;",
     "new": "const seedOf = () => (Math.random() * 4294967296) >>> 0;",
     "tests": [
       "test/systems/ows3_raiders.test.js"
@@ -38,8 +38,8 @@
   {
     "name": "OWS3-lives-forever",
     "file": "src/systems/seaRaiders.js",
-    "old": "const t = Math.max(0, Math.min(RAIDER_LIFE_MS, ms - raider.bornMs));",
-    "new": "const t = Math.max(0, ms - raider.bornMs);",
+    "old": "  const t = Math.max(0, Math.min(RAIDER_LIFE_MS, ms - raider.bornMs));",
+    "new": "  const t = Math.max(0, ms - raider.bornMs);",
     "tests": [
       "test/systems/ows3_raiders.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "OWS3-cells-off-by-reach",
     "file": "src/systems/seaRaiders.js",
-    "old": "const c0x = Math.floor((at.x - reach) / RAIDER_CELL_PX), c1x = Math.floor((at.x + reach) / RAIDER_CELL_PX);",
-    "new": "const c0x = Math.floor(at.x / RAIDER_CELL_PX), c1x = Math.floor(at.x / RAIDER_CELL_PX);",
+    "old": "  const c0x = Math.floor((at.x - reach) / RAIDER_CELL_PX),\n    c1x = Math.floor((at.x + reach) / RAIDER_CELL_PX);",
+    "new": "  const c0x = Math.floor(at.x / RAIDER_CELL_PX),\n    c1x = Math.floor(at.x / RAIDER_CELL_PX);",
     "tests": [
       "test/systems/ows3_raiders.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "OWS3-chase-no-scale",
     "file": "src/systems/seaRaiders.js",
-    "old": "const move = Math.min(dist, RAIDER_CHASE_MPS * dt * Math.max(1, scale));",
-    "new": "const move = Math.min(dist, RAIDER_CHASE_MPS * dt);",
+    "old": "  const move = Math.min(dist, RAIDER_CHASE_MPS * dt * Math.max(1, scale));",
+    "new": "  const move = Math.min(dist, RAIDER_CHASE_MPS * dt);",
     "tests": [
       "test/systems/ows3_raiders.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "OWS3-never-alongside",
     "file": "src/systems/seaRaiders.js",
-    "old": "  if (left <= contact) return { state: 'contact', pos: next, left, best: Math.min(best, left), bestAt: now };\n",
-    "new": "\n",
+    "old": "  if (left <= contact) return { state: 'contact', pos: next, left, best: Math.min(best, left), bestAt: now };",
+    "new": "",
     "tests": [
       "test/systems/ows3_raiders.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "OWS3-sails-the-isthmus",
     "file": "src/systems/seaRaiders.js",
-    "old": "  if (!sea(next.x, next.z)) return { state: 'lost', pos, left: dist, best, bestAt };\n",
-    "new": "\n",
+    "old": "  if (!sea(next.x, next.z)) return { state: 'lost', pos, left: dist, best, bestAt };",
+    "new": "",
     "tests": [
       "test/systems/ows3_raiders.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "OWS3-no-leash",
     "file": "src/systems/seaRaiders.js",
-    "old": "if (left > RAIDER_LEASH_M || now - at > RAIDER_GIVE_UP_MS)",
-    "new": "if (now - at > RAIDER_GIVE_UP_MS)",
+    "old": "  if (left > RAIDER_LEASH_M || now - at > RAIDER_GIVE_UP_MS)\n    return { state: 'lost', pos: next, left, best: b, bestAt: at };",
+    "new": "  if (now - at > RAIDER_GIVE_UP_MS) return { state: 'lost', pos: next, left, best: b, bestAt: at };",
     "tests": [
       "test/systems/ows3_raiders.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "OWS3-never-gives-up",
     "file": "src/systems/seaRaiders.js",
-    "old": "if (left > RAIDER_LEASH_M || now - at > RAIDER_GIVE_UP_MS)",
-    "new": "if (left > RAIDER_LEASH_M)",
+    "old": "  if (left > RAIDER_LEASH_M || now - at > RAIDER_GIVE_UP_MS)\n    return { state: 'lost', pos: next, left, best: b, bestAt: at };",
+    "new": "  if (left > RAIDER_LEASH_M) return { state: 'lost', pos: next, left, best: b, bestAt: at };",
     "tests": [
       "test/systems/ows3_raiders.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "OWS3-raid-no-coroutine",
     "file": "src/systems/warmAshesShips.js",
-    "old": "  const armed = armRaid();\n  onPostFastTravel();\n  return armed;",
-    "new": "  const armed = armRaid();\n  return armed;",
+    "old": "  onPostFastTravel();\n  return armed;",
+    "new": "  return armed;",
     "tests": [
       "test/systems/ows3_raiders.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "OWS3-raid-twice",
     "file": "src/systems/warmAshesShips.js",
-    "old": "  if (hasTraveledbyShip || _boardIn !== null || raidRunning()) return 'busy';\n",
-    "new": "\n",
+    "old": "  if (hasTraveledbyShip || _boardIn !== null || raidRunning()) return 'busy';\n  if (tempShip) return 'lent';",
+    "new": "  if (tempShip) return 'lent';",
     "tests": [
       "test/systems/ows3_raiders.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "OWS3-arm-no-lend",
     "file": "src/systems/warmAshesShips.js",
-    "old": "    tempShip = true;\n    h.assignShip?.(SHIP_TYPES.Large);   // \"Temporary ship assigned.\"",
-    "new": "    h.assignShip?.(SHIP_TYPES.Large);   // \"Temporary ship assigned.\"",
+    "old": "    tempShip = true;\n    h.assignShip?.(SHIP_TYPES.Large); // \"Temporary ship assigned.\"",
+    "new": "    h.assignShip?.(SHIP_TYPES.Large); // \"Temporary ship assigned.\"",
     "tests": [
       "test/systems/ows3_raiders.test.js"
     ]

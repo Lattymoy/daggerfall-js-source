@@ -766,7 +766,7 @@ finding closed under the audit.
   CV-2): the enemy prefab's query radius is 0.40; the recorded 0.45
   adds `m_SkinWidth`, which Unity does not. Left standing because AUDIT
   62's record pins it; a separate finding against that record.
-- **`biography.js:"(IMacroContextProvider)this"/biography.js:"for BiogFile.cs:212's"` cite `BiogFile.cs` one line early** (cites)
+- **`biography.js:"(IMacroContextProvider)this"biography.js:"for BiogFile.cs:212's"` cite `BiogFile.cs` one line early** (cites)
   - consistent drift, and the sentence between them says 'one line
   after' where the gap is three; a decision for the biography slice.
 - **`townTalk.js`'s person arm takes no collider** (activation, found

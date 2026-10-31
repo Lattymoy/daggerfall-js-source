@@ -1,237 +1,237 @@
 [
- {
-  "name": "TIDE2-harvest-kinds",
-  "file": "src/net/tideLaw.js",
-  "old": "export const HARVEST_KINDS = Object.freeze(['herb', 'food', 'tree', 'vein', 'boulder']);",
-  "new": "export const HARVEST_KINDS = Object.freeze(['herb', 'food', 'tree', 'boulder']);",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-harvest",
-  "file": "src/net/tideLaw.js",
-  "old": "  if (tide === 'harvest' && HARVEST_KINDS.includes(kind)) return TIDE_EFFECTS.harvestYield;\n",
-  "new": "",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-blight-kind",
-  "file": "src/net/tideLaw.js",
-  "old": "  if (tide === 'blight' && (kind === 'herb' || kind === 'tree')) return",
-  "new": "  if (tide === 'blight' && (kind === 'herb')) return",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-blight",
-  "file": "src/net/tideLaw.js",
-  "old": "  if (tide === 'blight' && (kind === 'herb' || kind === 'tree')) return TIDE_EFFECTS.blightYield;\n",
-  "new": "",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-storms",
-  "file": "src/net/tideLaw.js",
-  "old": "  if (tide === 'storms' && kind === 'haul') return TIDE_EFFECTS.stormsFish;\n",
-  "new": "",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-courier",
-  "file": "src/net/tideLaw.js",
-  "old": "export const tideCourier = (tide) => (tide === 'bandits' ? TIDE_EFFECTS.banditsCourier : 1);",
-  "new": "export const tideCourier = (tide) => 1;",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-yield-treeYield",
-  "file": "src/net/nodeLaw.js",
-  "old": "export function treeYield({ roll, march = false, tideMult = 1 }, chance) {\n  let y = roll;\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;",
-  "new": "export function treeYield({ roll, march = false, tideMult = 1 }, chance) {\n  let y = roll;\n  if (march) y *= MARCH_MULT;\n  y *= 1;",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-yield-haulYield",
-  "file": "src/net/nodeLaw.js",
-  "old": "export function haulYield({ roll, clean = false, march = false, school = false, netter = false, slaughterfish = false, tideMult = 1 }, chance) {\n  let y = roll * (clean ? ACT_YIELD_MAX : 1);\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;",
-  "new": "export function haulYield({ roll, clean = false, march = false, school = false, netter = false, slaughterfish = false, tideMult = 1 }, chance) {\n  let y = roll * (clean ? ACT_YIELD_MAX : 1);\n  if (march) y *= MARCH_MULT;\n  y *= 1;",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-yield-herbYield",
-  "file": "src/net/nodeLaw.js",
-  "old": "export function herbYield({ roll, common = false, gardener = false, seasonMult = 1, offSeason = false, bruised = false, march = false, tideMult = 1 }, chance) {\n  let y = roll + (common && gardener ? 1 : 0);\n  y *= seasonMult;\n  if (offSeason) y *= OFF_SEASON_MULT;\n  if (bruised) y = Math.max(1, y - 1);\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;",
-  "new": "export function herbYield({ roll, common = false, gardener = false, seasonMult = 1, offSeason = false, bruised = false, march = false, tideMult = 1 }, chance) {\n  let y = roll + (common && gardener ? 1 : 0);\n  y *= seasonMult;\n  if (offSeason) y *= OFF_SEASON_MULT;\n  if (bruised) y = Math.max(1, y - 1);\n  if (march) y *= MARCH_MULT;\n  y *= 1;",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-yield-foodYield",
-  "file": "src/net/nodeLaw.js",
-  "old": "export function foodYield({ roll, step = 1, march = false, tideMult = 1 }, chance) {\n  let y = roll * step;\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;",
-  "new": "export function foodYield({ roll, step = 1, march = false, tideMult = 1 }, chance) {\n  let y = roll * step;\n  if (march) y *= MARCH_MULT;\n  y *= 1;",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-yield-veinYield",
-  "file": "src/net/nodeLaw.js",
-  "old": "export function veinYield({ roll, deep = false, deepDelver = false, march = false, tideMult = 1 }, chance) {\n  let y = roll;\n  if (deep && deepDelver) y *= DEEP_DELVER_MULT;\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;",
-  "new": "export function veinYield({ roll, deep = false, deepDelver = false, march = false, tideMult = 1 }, chance) {\n  let y = roll;\n  if (deep && deepDelver) y *= DEEP_DELVER_MULT;\n  if (march) y *= MARCH_MULT;\n  y *= 1;",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-yield-boulderYield",
-  "file": "src/net/nodeLaw.js",
-  "old": "export function boulderYield({ roll, march = false, cut = false, tideMult = 1 }, chance) {\n  let y = roll;\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;",
-  "new": "export function boulderYield({ roll, march = false, cut = false, tideMult = 1 }, chance) {\n  let y = roll;\n  if (march) y *= MARCH_MULT;\n  y *= 1;",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-haul-order",
-  "file": "src/net/nodeLaw.js",
-  "old": "  y *= tideMult;   // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  if (school) y += netter ? SCHOOL_FISH.netter : SCHOOL_FISH.plain;\n  if (slaughterfish) y += 1;\n",
-  "new": "  if (school) y += netter ? SCHOOL_FISH.netter : SCHOOL_FISH.plain;\n  if (slaughterfish) y += 1;\n  y *= tideMult;   // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-pr-confirmed",
-  "file": "server-account/src/professions.js",
-  "old": "  const tide = !deep && !isBody && confirmed ? tideNow(env, nowS, region) : 'calm';",
-  "new": "  const tide = !deep && !isBody ? tideNow(env, nowS, region) : 'calm';",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-pr-calm",
-  "file": "server-account/src/professions.js",
-  "old": "  const tide = !deep && !isBody && confirmed ? tideNow(env, nowS, region) : 'calm';",
-  "new": "  const tide = 'calm';",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-pr-haul",
-  "file": "server-account/src/professions.js",
-  "old": "tideMult: tideYield(tide, 'haul')",
-  "new": "tideMult: tideYield(tide, 'tree')",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-pr-tree",
-  "file": "server-account/src/professions.js",
-  "old": "tideMult: tideYield(tide, 'tree')",
-  "new": "tideMult: tideYield(tide, 'herb')",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-pr-herb",
-  "file": "server-account/src/professions.js",
-  "old": "tideMult: tideYield(tide, 'herb')",
-  "new": "tideMult: tideYield(tide, 'tree')",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-pr-food",
-  "file": "server-account/src/professions.js",
-  "old": "tideMult: tideYield(tide, 'food')",
-  "new": "tideMult: tideYield(tide, 'tree')",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-pr-boulder",
-  "file": "server-account/src/professions.js",
-  "old": "tideMult: tideYield(tide, 'boulder')",
-  "new": "tideMult: tideYield(tide, 'tree')",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-pr-vein",
-  "file": "server-account/src/professions.js",
-  "old": "tideMult: tideYield(tide, 'vein')",
-  "new": "tideMult: tideYield(tide, 'tree')",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-mk-slow",
-  "file": "server-account/src/market.js",
-  "old": "return { courier: courierFee(units, road), seconds: courierSeconds(road) * slow, road };",
-  "new": "return { courier: courierFee(units, road), seconds: courierSeconds(road), road };",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-mk-quote",
-  "file": "server-account/src/market.js",
-  "old": "courierOf(at, Number(l.region), region, unitsOf(l), courierSlow(env, nowS, region))",
-  "new": "courierOf(at, Number(l.region), region, unitsOf(l))",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-mk-buy",
-  "file": "server-account/src/market.js",
-  "old": "const road = courierOf(hubsNow, from, region, units, courierSlow(env, nowS, region));",
-  "new": "const road = courierOf(hubsNow, from, region, units);",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ],
-  "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
- },
- {
-  "name": "TIDE2-mk-bid",
-  "file": "server-account/src/market.js",
-  "old": "courierOf(await hubsAt(db, [from, region], own), from, region, 1, courierSlow(env, nowS, region));",
-  "new": "courierOf(await hubsAt(db, [from, region], own), from, region, 1);",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- },
- {
-  "name": "TIDE2-td-counted",
-  "file": "server-account/src/tides.js",
-  "old": "  return tideAt(week, region, !!seasonOf(week, seasonZeroOf(env?.SEASON_ZERO_WEEK)));",
-  "new": "  return tideAt(week, region, true);",
-  "tests": [
-   "test/net/tide_economy.test.js"
-  ]
- }
+  {
+    "name": "TIDE2-harvest-kinds",
+    "file": "src/net/tideLaw.js",
+    "old": "export const HARVEST_KINDS = Object.freeze(['herb', 'food', 'tree', 'vein', 'boulder']);",
+    "new": "export const HARVEST_KINDS = Object.freeze(['herb', 'food', 'tree', 'boulder']);",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-harvest",
+    "file": "src/net/tideLaw.js",
+    "old": "  if (tide === 'harvest' && HARVEST_KINDS.includes(kind)) return TIDE_EFFECTS.harvestYield;\n  if (tide === 'blight' && (kind === 'herb' || kind === 'tree')) return TIDE_EFFECTS.blightYield;",
+    "new": "  if (tide === 'blight' && (kind === 'herb' || kind === 'tree')) return TIDE_EFFECTS.blightYield;",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-blight-kind",
+    "file": "src/net/tideLaw.js",
+    "old": "  if (tide === 'blight' && (kind === 'herb' || kind === 'tree')) return TIDE_EFFECTS.blightYield;",
+    "new": "  if (tide === 'blight' && kind === 'herb') return TIDE_EFFECTS.blightYield;",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-blight",
+    "file": "src/net/tideLaw.js",
+    "old": "  if (tide === 'blight' && (kind === 'herb' || kind === 'tree')) return TIDE_EFFECTS.blightYield;\n  if (tide === 'storms' && kind === 'haul') return TIDE_EFFECTS.stormsFish;",
+    "new": "  if (tide === 'storms' && kind === 'haul') return TIDE_EFFECTS.stormsFish;",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-storms",
+    "file": "src/net/tideLaw.js",
+    "old": "  if (tide === 'storms' && kind === 'haul') return TIDE_EFFECTS.stormsFish;\n  return 1;",
+    "new": "  return 1;",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-courier",
+    "file": "src/net/tideLaw.js",
+    "old": "export const tideCourier = (tide) => (tide === 'bandits' ? TIDE_EFFECTS.banditsCourier : 1);",
+    "new": "export const tideCourier = (tide) => 1;",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-yield-treeYield",
+    "file": "src/net/nodeLaw.js",
+    "old": "export function treeYield({ roll, march = false, tideMult = 1 }, chance) {\n  let y = roll;\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;",
+    "new": "export function treeYield({ roll, march = false, tideMult = 1 }, chance) {\n  let y = roll;\n  if (march) y *= MARCH_MULT;\n  y *= 1;",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-yield-haulYield",
+    "file": "src/net/nodeLaw.js",
+    "old": "export function haulYield({ roll, clean = false, march = false, school = false, netter = false, slaughterfish = false, tideMult = 1 }, chance) {\n  let y = roll * (clean ? ACT_YIELD_MAX : 1);\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;",
+    "new": "export function haulYield({ roll, clean = false, march = false, school = false, netter = false, slaughterfish = false, tideMult = 1 }, chance) {\n  let y = roll * (clean ? ACT_YIELD_MAX : 1);\n  if (march) y *= MARCH_MULT;\n  y *= 1;",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-yield-herbYield",
+    "file": "src/net/nodeLaw.js",
+    "old": "export function herbYield({ roll, common = false, gardener = false, seasonMult = 1, offSeason = false, bruised = false, march = false, tideMult = 1 }, chance) {\n  let y = roll + (common && gardener ? 1 : 0);\n  y *= seasonMult;\n  if (offSeason) y *= OFF_SEASON_MULT;\n  if (bruised) y = Math.max(1, y - 1);\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;",
+    "new": "export function herbYield({ roll, common = false, gardener = false, seasonMult = 1, offSeason = false, bruised = false, march = false, tideMult = 1 }, chance) {\n  let y = roll + (common && gardener ? 1 : 0);\n  y *= seasonMult;\n  if (offSeason) y *= OFF_SEASON_MULT;\n  if (bruised) y = Math.max(1, y - 1);\n  if (march) y *= MARCH_MULT;\n  y *= 1;",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-yield-foodYield",
+    "file": "src/net/nodeLaw.js",
+    "old": "export function foodYield({ roll, step = 1, march = false, tideMult = 1 }, chance) {\n  let y = roll * step;\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;",
+    "new": "export function foodYield({ roll, step = 1, march = false, tideMult = 1 }, chance) {\n  let y = roll * step;\n  if (march) y *= MARCH_MULT;\n  y *= 1;",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-yield-veinYield",
+    "file": "src/net/nodeLaw.js",
+    "old": "export function veinYield({ roll, deep = false, deepDelver = false, march = false, tideMult = 1 }, chance) {\n  let y = roll;\n  if (deep && deepDelver) y *= DEEP_DELVER_MULT;\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;",
+    "new": "export function veinYield({ roll, deep = false, deepDelver = false, march = false, tideMult = 1 }, chance) {\n  let y = roll;\n  if (deep && deepDelver) y *= DEEP_DELVER_MULT;\n  if (march) y *= MARCH_MULT;\n  y *= 1;",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-yield-boulderYield",
+    "file": "src/net/nodeLaw.js",
+    "old": "export function boulderYield({ roll, march = false, cut = false, tideMult = 1 }, chance) {\n  let y = roll;\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;",
+    "new": "export function boulderYield({ roll, march = false, cut = false, tideMult = 1 }, chance) {\n  let y = roll;\n  if (march) y *= MARCH_MULT;\n  y *= 1;",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-haul-order",
+    "file": "src/net/nodeLaw.js",
+    "old": "  y *= tideMult;   // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  if (school) y += netter ? SCHOOL_FISH.netter : SCHOOL_FISH.plain;\n  if (slaughterfish) y += 1;\n",
+    "new": "  if (school) y += netter ? SCHOOL_FISH.netter : SCHOOL_FISH.plain;\n  if (slaughterfish) y += 1;\n  y *= tideMult;   // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-pr-confirmed",
+    "file": "server-account/src/professions.js",
+    "old": "  const tide = !deep && !isBody && confirmed ? tideNow(env, nowS, region) : 'calm';",
+    "new": "  const tide = !deep && !isBody ? tideNow(env, nowS, region) : 'calm';",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-pr-calm",
+    "file": "server-account/src/professions.js",
+    "old": "  const tide = !deep && !isBody && confirmed ? tideNow(env, nowS, region) : 'calm';",
+    "new": "  const tide = 'calm';",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-pr-haul",
+    "file": "server-account/src/professions.js",
+    "old": "tideMult: tideYield(tide, 'haul')",
+    "new": "tideMult: tideYield(tide, 'tree')",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-pr-tree",
+    "file": "server-account/src/professions.js",
+    "old": "tideMult: tideYield(tide, 'tree')",
+    "new": "tideMult: tideYield(tide, 'herb')",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-pr-herb",
+    "file": "server-account/src/professions.js",
+    "old": "tideMult: tideYield(tide, 'herb')",
+    "new": "tideMult: tideYield(tide, 'tree')",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-pr-food",
+    "file": "server-account/src/professions.js",
+    "old": "tideMult: tideYield(tide, 'food')",
+    "new": "tideMult: tideYield(tide, 'tree')",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-pr-boulder",
+    "file": "server-account/src/professions.js",
+    "old": "tideMult: tideYield(tide, 'boulder')",
+    "new": "tideMult: tideYield(tide, 'tree')",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-pr-vein",
+    "file": "server-account/src/professions.js",
+    "old": "tideMult: tideYield(tide, 'vein')",
+    "new": "tideMult: tideYield(tide, 'tree')",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-mk-slow",
+    "file": "server-account/src/market.js",
+    "old": "return { courier: courierFee(units, road), seconds: courierSeconds(road) * slow, road };",
+    "new": "return { courier: courierFee(units, road), seconds: courierSeconds(road), road };",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-mk-quote",
+    "file": "server-account/src/market.js",
+    "old": "courierOf(at, Number(l.region), region, unitsOf(l), courierSlow(env, nowS, region))",
+    "new": "courierOf(at, Number(l.region), region, unitsOf(l))",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-mk-buy",
+    "file": "server-account/src/market.js",
+    "old": "const road = courierOf(hubsNow, from, region, units, courierSlow(env, nowS, region));",
+    "new": "const road = courierOf(hubsNow, from, region, units);",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ],
+    "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
+  },
+  {
+    "name": "TIDE2-mk-bid",
+    "file": "server-account/src/market.js",
+    "old": "courierOf(await hubsAt(db, [from, region], own), from, region, 1, courierSlow(env, nowS, region));",
+    "new": "courierOf(await hubsAt(db, [from, region], own), from, region, 1);",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  },
+  {
+    "name": "TIDE2-td-counted",
+    "file": "server-account/src/tides.js",
+    "old": "  return tideAt(week, region, !!seasonOf(week, seasonZeroOf(env?.SEASON_ZERO_WEEK)));",
+    "new": "  return tideAt(week, region, true);",
+    "tests": [
+      "test/net/tide_economy.test.js"
+    ]
+  }
 ]

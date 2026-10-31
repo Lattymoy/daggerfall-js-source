@@ -5,7 +5,7 @@
 // (accountAurumCache) and opens on its yes; one this account emptied stands open on every visit. Online and signed in.
 // THE FOUR HOSTS: scenes/dungeonContext.js stands it and its takeLoot presses it, worldModes.js's and dungeon.js's loot
 // arms carry the key there; world.js and exterior.js (the street) stand none. Not a DFU member. Ledger A (AURUM-CACHES).
-import { aurumCacheDungeonKey, aurumCacheIdOk, aurumCacheSpotOf, AURUM_CACHE_AURUM } from '../net/aurumCacheLaw.js';
+import { aurumCacheDungeonKey, aurumCacheIdOk, aurumCacheSpotOf, aurumCacheAurumOf } from '../net/aurumCacheLaw.js';
 import { AURUM_COFFER_ARCHIVE, AURUM_COFFER_ART, AURUM_COFFER_SIZE, registerAurumCofferArt } from '../world/aurumCofferArt.js';
 import { AURUM_COFFER_MODELS } from '../world/chestModel.js';
 import { trs } from '../world/mat4.js';
@@ -235,7 +235,7 @@ export function standAurumCache(ctx, loc, piles, deps = {}) {
       asking = false;
       // AUDIT-STOREFRONT III D5: what the ledger now holds is kept before the level's end is read
       if (r?.ok || r?.error === 'cache-taken') keepId(storage, me.id, id);
-      const found = () => AURUM_CACHE_TEXT.found(Number.isSafeInteger(r.data?.aurum) ? r.data.aurum : AURUM_CACHE_AURUM);
+      const found = () => AURUM_CACHE_TEXT.found(Number.isSafeInteger(r.data?.aurum) ? r.data.aurum : aurumCacheAurumOf(id));
       if (gone) { if (r?.ok) lateSay(found()); return; }
       if (r?.ok) {
         opened();

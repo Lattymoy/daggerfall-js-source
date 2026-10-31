@@ -2,8 +2,8 @@
   {
     "name": "KTP-the-house-drawn-only",
     "file": "src/world/ketch/ketchModel.js",
-    "old": "{ skip: ['bottom', 'top'], recs: { nz: R.stone }, solid: true });",
-    "new": "{ skip: ['bottom', 'top'], recs: { nz: R.stone } });",
+    "old": "  K.box(R.stone, -HO.x, HO.x, 0, HO.eave, HO.z0, HO.z1, {\n    skip: ['bottom', 'top'],\n    recs: { nz: R.stone },\n    solid: true,\n  });",
+    "new": "  K.box(R.stone, -HO.x, HO.x, 0, HO.eave, HO.z0, HO.z1, { skip: ['bottom', 'top'], recs: { nz: R.stone } });",
     "note": "The house's walls walked through: a jump over the bridge's fore rail into the ship.",
     "tests": [
       "test/world/ketch_panels.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "KTP-the-strips-drawn-only",
     "file": "src/world/ketch/ketchModel.js",
-    "old": "[s * KT_HOUSE.x, 0, KT_HOUSE.z1], [0, 1, 0], null, true);",
-    "new": "[s * KT_HOUSE.x, 0, KT_HOUSE.z1], [0, 1, 0]);",
+    "old": "      [0, 1, 0],\n      null,\n      true,\n    );",
+    "new": "      [0, 1, 0],\n    );",
     "note": "A body on the strips beside the house falls through them.",
     "tests": [
       "test/world/ketch_panels.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "KTP-the-soffit-undrawn",
     "file": "src/world/ketch/ketchKit.js",
-    "old": "      quad(soffitRec ?? riserRec ?? rec, [x0, y0, z0], [x1, y0, z0], [x1, y1, z1], [x0, y1, z1], [0, -1, 0]);\n",
-    "new": "",
+    "old": "      quad(soffitRec ?? riserRec ?? rec, [x0, y0, z0], [x1, y0, z0], [x1, y1, z1], [x0, y1, z1], [0, -1, 0]);\n    }",
+    "new": "    }",
     "note": "The invisible ceiling under both stairs.",
     "tests": [
       "test/world/ketch_panels.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "KTP-the-shaft-cast-back",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "  if (Math.abs(x - KT_LIFT.x) <= KT_LIFT.half + 0.5 && Math.abs(z - KT_LIFT.z) <= KT_LIFT.half + 0.5) return false;\n  const W = KT_WAIST",
-    "new": "  const W = KT_WAIST",
+    "old": "  if (Math.abs(x - KT_LIFT.x) <= KT_LIFT.half + 0.5 && Math.abs(z - KT_LIFT.z) <= KT_LIFT.half + 0.5) return false;\n  const W = KT_WAIST,",
+    "new": "  const W = KT_WAIST,",
     "note": "A rider of the mast-lift cast back as its cage passes the lid's height.",
     "tests": [
       "test/world/ketch_panels.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "KTP-the-cabin-keep-dropped",
     "file": "src/scenes/ketch/ketchShares.js",
-    "old": "at, bearing, acct: e.s, keep: KT_SPOILS_KEEP, roll:",
-    "new": "at, bearing, acct: e.s, roll:",
+    "old": "        keep: KT_SPOILS_KEEP,\n        roll: () => ketchSpoilsList(e.c, lv(e)),",
+    "new": "        roll: () => ketchSpoilsList(e.c, lv(e)),",
     "note": "A throw out of the cabin's door and over the bridge's rail.",
     "tests": [
       "test/world/ketch_panels.test.js"

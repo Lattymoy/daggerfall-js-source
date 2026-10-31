@@ -137,8 +137,8 @@
   {
     "name": "MERGE-PLUS-C8-the-slot-blind-to-its-frame",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "      + `|${v.item && v.type !== 'spell' ? `${rarityAttr(v.item) ?? ''}${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}` : ''}`   // SET5: and its set\n",
-    "new": "",
+    "old": "          `|${v.item && v.type !== 'spell' ? `${rarityAttr(v.item) ?? ''}${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}` : ''}` + // SET5: and its set\n          // AUDIT FINAL F2: and the item's own dye - Blue Straps and Red Straps are one name, one kind",
+    "new": "          // AUDIT FINAL F2: and the item's own dye - Blue Straps and Red Straps are one name, one kind",
     "tests": [
       "test/systems/auditmergeplus_pack.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "MERGE-PLUS-C8-the-tier-out-of-the-signature",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "`${rarityAttr(v.item) ?? ''}${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}`",
-    "new": "`${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}`",
+    "old": "          `|${v.item && v.type !== 'spell' ? `${rarityAttr(v.item) ?? ''}${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}` : ''}` + // SET5: and its set",
+    "new": "          `|${v.item && v.type !== 'spell' ? `${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}` : ''}` + // SET5: and its set",
     "tests": [
       "test/systems/auditmergeplus_pack.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "MERGE-PLUS-C8-the-rune-out-of-the-signature",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "`${rarityAttr(v.item) ?? ''}${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}`",
-    "new": "`${rarityAttr(v.item) ?? ''}${setIdOf(v.item) ?? ''}`",
+    "old": "          `|${v.item && v.type !== 'spell' ? `${rarityAttr(v.item) ?? ''}${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}` : ''}` + // SET5: and its set",
+    "new": "          `|${v.item && v.type !== 'spell' ? `${rarityAttr(v.item) ?? ''}${setIdOf(v.item) ?? ''}` : ''}` + // SET5: and its set",
     "tests": [
       "test/systems/auditmergeplus_pack.test.js"
     ]

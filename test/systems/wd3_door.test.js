@@ -289,17 +289,17 @@ test('WD3 the loader: each pack a URL the build emits (never a chunk), fetched o
   const M = src('src/scenes/modWorldData.js');
   assert.match(M, /import\.meta\.glob\('\.\.\/\.\.\/vendor\/\*\/WorldDataPack\/\*\.pack\.json\.gz', \{ eager: true, query: '\?url', import: 'default' \}\)/);
   assert.match(M, /const door = latchWorldDataDoor\(\);/);
-  assert.match(M, /const got = on && door \? await loadPackFrom\(vendor, url, \(\) => true\) : 0;\n {6}latchModLoaded\(vendor, got > 0\);\n {6}if \(on && door && !got\) _missing\.add\(vendor\);/, 'a closed door loads no pack and stamps none (AUDIT WD3 P2); a pack that did not load is a mod not loaded, and said (B1)');
-  assert.match(M, /const counts = await Promise\.all\(Object\.entries\(globPacks\(\)\)\.map\(/, 'the packs fetched side by side (AUDIT WD3 B4)');
+  assert.match(M, /const got = on && door \? await loadPackFrom\(vendor, url, \(\) => true\) : 0;\n\s*latchModLoaded\(vendor, got > 0\);\n\s*if \(on && door && !got\) _missing\.add\(vendor\);/, 'a closed door loads no pack and stamps none (AUDIT WD3 P2); a pack that did not load is a mod not loaded, and said (B1)');
+  assert.match(M, /const counts = await Promise\.all\(\n\s*Object\.entries\(globPacks\(\)\)\.map\(/, 'the packs fetched side by side (AUDIT WD3 B4)');
   assert.match(M, /signal: AbortSignal\.timeout\(PACK_FETCH_TIMEOUT_MS\)/, 'and never held for ever');
-  assert.match(M, /if \(!name\.startsWith\('location-'\) && \(blocks\+\+ % 8\) !== 0\) return;/, 'one block in eight spot-checked');
-  assert.match(src('src/formats/worldData/worldDataPack.js'), /if \(typeof globalThis\.process === 'undefined' \|\| !globalThis\.process\.versions\?\.node\) throw new Error\('this browser cannot inflate the pack \(no DecompressionStream\)'\);/, 'a browser never reaches for node:zlib');
+  assert.match(M, /if \(!name\.startsWith\('location-'\) && blocks\+\+ % 8 !== 0\) return;/, 'one block in eight spot-checked');
+  assert.match(src('src/formats/worldData/worldDataPack.js'), /if \(typeof globalThis\.process === 'undefined' \|\| !globalThis\.process\.versions\?\.node\)\n\s*throw new Error\('this browser cannot inflate the pack \(no DecompressionStream\)'\);/, 'a browser never reaches for node:zlib');
   assert.match(M, /if \(!worldDataDoorOpen\(\)\) return false;/, 'and honours no pin into one');
-  assert.match(M, /configureLayoutPins\(\{ vendorOn: \(v\) => modLatchedOn\(v\) === true, vendorVersion: \(v\) => _packs\.get\(v\)\?\.mod\?\.version \?\? '' \}\);/);
-  assert.match(M, /_pending\.set\(vendor, loadPackFrom\(vendor, entry\[1\], \(\) => false\)\.finally\(\(\) => _pending\.delete\(vendor\)\)\);\n {2}return \(await _pending\.get\(vendor\)\) > 0;/, 'a pinned pack answers only where a pin lets it in, fetched once however many ask');
+  assert.match(M, /configureLayoutPins\(\{\n\s*vendorOn: \(v\) => modLatchedOn\(v\) === true,\n\s*vendorVersion: \(v\) => _packs\.get\(v\)\?\.mod\?\.version \?\? '',\n\s*\}\);/);
+  assert.match(M, /_pending\.set\(\n\s*vendor,\n\s*loadPackFrom\(vendor, entry\[1\], \(\) => false\)\.finally\(\(\) => _pending\.delete\(vendor\)\),\n\s*\);\n\s*return \(await _pending\.get\(vendor\)\) > 0;/, 'a pinned pack answers only where a pin lets it in, fetched once however many ask');
   assert.match(M, /const n = registerWorldDataPack\(pack, isOn, \{ priority: WORLD_DATA_PRIORITY\[vendor\] \?\? 0 \}\);\n(?: {4}\/\/.*\n) {4}installTownStandIns\(townPacksLive\);/);
-  assert.match(M, /const townPacksLive = \(\) => \{ const pinned = vendorsPinnedIn\(\); return \[\.\.\._packs\.keys\(\)\]\.some\(\(v\) => modLatchedOn\(v\) === true \|\| pinned\.has\(v\)\); \};/, 'the stand-ins on while a town pack serves a town (AUDIT WD3 T2)');
-  assert.match(M, /if \(name\.startsWith\('location-'\) && \(locations\+\+ % 64\) !== 0\) return;/, 'one location in 64 (and one block in 8 - AUDIT WD3 B4)');
+  assert.match(M, /const townPacksLive = \(\) => \{\n\s*const pinned = vendorsPinnedIn\(\);\n\s*return \[\.\.\._packs\.keys\(\)\]\.some\(\(v\) => modLatchedOn\(v\) === true \|\| pinned\.has\(v\)\);\n\s*\};/, 'the stand-ins on while a town pack serves a town (AUDIT WD3 T2)');
+  assert.match(M, /if \(name\.startsWith\('location-'\) && locations\+\+ % 64 !== 0\) return;/, 'one location in 64 (and one block in 8 - AUDIT WD3 B4)');
   assert.match(M, /console\.error\(`\[worlddata\] \$\{vendor\}: the pack did not load \(\$\{e\?\.message \?\? e\}\) - its towns stand classic`\);/);
 });
 

@@ -585,7 +585,7 @@ test('WX1: the enhanced precipitation shaders are the lab\u2019s own, verbatim, 
   assert.match(p, /if \(this\.enhanced\) return this\.drawLab\(mode, proj, view, camPos, camRight, timeSeconds\);/);
   assert.match(p, /gl\.uniform3f\(L\.uUp, 0, 1, 0\);/, 'a flake faces the camera about Y only');
   assert.match(p, /gl\.drawArraysInstanced\(gl\.TRIANGLES, 0, 6, count\);/);
-  assert.match(p, /const rnd = \(\) => \{ s2 \^= s2 << 13; s2 \^= s2 >>> 17; s2 \^= s2 << 5; s2 >>>= 0; return s2 \/ 4294967296; \};/, 'the lab\u2019s own scatter');
+  assert.match(p, /const rnd = \(\) => \{\n\s*s2 \^= s2 << 13;\n\s*s2 \^= s2 >>> 17;\n\s*s2 \^= s2 << 5;\n\s*s2 >>>= 0;\n\s*return s2 \/ 4294967296;\n\s*\};/, 'the lab\u2019s own scatter');
   // both hosts: the lab's gust, rate without the gust, travel with it -
   // WIND3: from the ONE mapping (systems/wind/windDrive.js): the lab's stack
   // is its fallback gust (WIND1's envelope answers when the controller

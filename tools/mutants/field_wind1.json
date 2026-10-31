@@ -2,8 +2,8 @@
   {
     "name": "FIELD-WIND1-driver-on-the-riding-loop",
     "file": "src/systems/wind/windAudio.js",
-    "old": "loop = engine.loop(WIND_BED_KEY, gain) ?? null;",
-    "new": "loop = engine.setLoop?.('wind', WIND_BED_KEY, { volume: gain }) ?? null;",
+    "old": "        loop = engine.loop(WIND_BED_KEY, gain) ?? null;",
+    "new": "        loop = engine.setLoop?.('wind', WIND_BED_KEY, { volume: gain }) ?? null;",
     "tests": [
       "test/systems/field_wind1.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "FIELD-WIND1-driver-restarts-every-frame",
     "file": "src/systems/wind/windAudio.js",
-    "old": "      if (!loop) {\n        if (!engine.registerSamples",
-    "new": "      if (true) {\n        if (!engine.registerSamples",
+    "old": "      if (!loop) {",
+    "new": "      if (true) {",
     "tests": [
       "test/systems/field_wind1.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "FIELD-WIND1-driver-bed-never-registered",
     "file": "src/systems/wind/windAudio.js",
-    "old": "if (!engine.registerSamples?.(WIND_BED_KEY, theBed(), WIND_BED_RATE)) return;   // no context yet",
-    "new": "// the bed never registered",
+    "old": "        if (!engine.registerSamples?.(WIND_BED_KEY, theBed(), WIND_BED_RATE)) return; // no context yet",
+    "new": "        // the bed never registered",
     "tests": [
       "test/systems/field_wind1.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "FIELD-WIND1-driver-pitch-not-live",
     "file": "src/systems/wind/windAudio.js",
-    "old": "      loop.setPitch?.(windPitchFor(wd?.strength01 ?? 0));",
-    "new": "",
+    "old": "      loop.setPitch?.(windPitchFor(wd?.strength01 ?? 0));\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/field_wind1.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "FIELD-WIND1-bed-filtered-once-from-rest",
     "file": "src/systems/wind/windAudio.js",
-    "old": "for (let pass = 0; pass < 2; pass++) {",
-    "new": "for (let pass = 0; pass < 1; pass++) {",
+    "old": "  for (let pass = 0; pass < 2; pass++) {",
+    "new": "  for (let pass = 0; pass < 1; pass++) {",
     "tests": [
       "test/systems/field_wind1.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "FIELD-WIND1-bed-no-lowpass",
     "file": "src/systems/wind/windAudio.js",
-    "old": "const l = l0 * b + l1 * b1 + l2 * b2 - l3 * y1 - l4 * y2;",
-    "new": "const l = b;",
+    "old": "      const l = l0 * b + l1 * b1 + l2 * b2 - l3 * y1 - l4 * y2;",
+    "new": "      const l = b;",
     "tests": [
       "test/systems/field_wind1.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "FIELD-WIND1-bed-unlevelled",
     "file": "src/systems/wind/windAudio.js",
-    "old": "const k = acc > 0 ? rms / Math.sqrt(acc / n) : 0;",
-    "new": "const k = 1;",
+    "old": "  const k = acc > 0 ? rms / Math.sqrt(acc / n) : 0;",
+    "new": "  const k = 1;",
     "tests": [
       "test/systems/field_wind1.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "FIELD-WIND1-bed-unseeded",
     "file": "src/systems/wind/windAudio.js",
-    "old": "const next = mulberry32(seed);",
-    "new": "const next = Math.random;",
+    "old": "  const next = mulberry32(seed);",
+    "new": "  const next = Math.random;",
     "tests": [
       "test/systems/field_wind1.test.js"
     ]

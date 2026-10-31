@@ -12,8 +12,8 @@
   {
     "name": "MARK-WIRE-the-moved-record-keeps-the-mark",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "    for (const k of RECEIVER_MARKS) delete rec[k];\n",
-    "new": "    for (const k of RECEIVER_MARKS) if (k !== 'acquired') delete rec[k];\n",
+    "old": "    for (const k of RECEIVER_MARKS) delete rec[k];",
+    "new": "    for (const k of RECEIVER_MARKS) if (k !== 'acquired') delete rec[k];",
     "tests": [
       "test/systems/fb1009b_markwire.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "MARK-WIRE-the-mark-off-the-list",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "export const RECEIVER_MARKS = Object.freeze(['equipSlot', 'questItem', 'acquired', 'wagonEntry', 'horseBond', 'horseFed', 'appearance']);",
-    "new": "export const RECEIVER_MARKS = Object.freeze(['equipSlot', 'questItem', 'wagonEntry', 'horseBond', 'horseFed', 'appearance']);",
+    "old": "  'acquired',\n  'wagonEntry',",
+    "new": "  'wagonEntry',",
     "tests": [
       "test/systems/fb1009b_markwire.test.js"
     ]

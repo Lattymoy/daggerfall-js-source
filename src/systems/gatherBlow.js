@@ -60,7 +60,16 @@ export const landedBlow = (st) => ({ kind: st?.kind ?? null, clean: st?.last ===
  * @param {string} kind @param {boolean} clean
  * @param {{ enhanced?: () => boolean, motion?: () => number, reduced?: () => boolean, kick?: typeof kickFx }} [o]
  */
-export function gatherBlowFeel(kind, clean, { enhanced = () => isEnhanced(), motion = techniqueMotion, reduced = () => prefersReducedMotion(), kick = kickFx } = {}) {
+export function gatherBlowFeel(
+  kind,
+  clean,
+  {
+    enhanced = () => isEnhanced(),
+    motion = techniqueMotion,
+    reduced = () => prefersReducedMotion(),
+    kick = kickFx,
+  } = {},
+) {
   const row = GATHER_BLOW_FEEL[/** @type {keyof typeof GATHER_BLOW_FEEL} */ (kind)]?.[clean ? 'clean' : 'plain'];
   if (!row || !enhanced() || reduced()) return false;
   const m = motion();
@@ -78,12 +87,19 @@ export function gatherBlowFeel(kind, clean, { enhanced = () => isEnhanced(), mot
  *  world's own, m/s^2); a chunk lies `restS` where it fell, then sinks into the ground over `sinkS`, gone; at most
  *  `flyMaxS` in the air (a floor never met). */
 export const VEIN_CHUNKS = f({
-  plain: 3, clean: 5, last: 7,
+  plain: 3,
+  clean: 5,
+  last: 7,
   scale: 0.32,
-  face: 0.35, spread: 0.12,
-  out: f([1.1, 2.4]), up: f([1.4, 3]), side: 1.1,
+  face: 0.35,
+  spread: 0.12,
+  out: f([1.1, 2.4]),
+  up: f([1.4, 3]),
+  side: 1.1,
   gravity: 9.81,
-  restS: 1.2, sinkS: 0.35, flyMaxS: 1.5,
+  restS: 1.2,
+  sinkS: 0.35,
+  flyMaxS: 1.5,
 });
 
 /** How many chunks a landed blow sheds: the last blow (the vein breaking) the most, one on the glint more. Pure. */
@@ -100,14 +116,26 @@ export const chunksFor = (last, clean) => (last ? VEIN_CHUNKS.last : clean ? VEI
  * @param {number} [floor] @param {((x: number, z: number) => number)|null} [ground]
  */
 export function shedChunks(at, eye, n, rand = Math.random, floor = at[1], ground = null) {
-  let dx = eye[0] - at[0], dz = eye[2] - at[2];
+  let dx = eye[0] - at[0],
+    dz = eye[2] - at[2];
   const l = Math.hypot(dx, dz);
-  if (l > 1e-6) { dx /= l; dz /= l; } else { dx = 0; dz = 1; }
-  const sx = -dz, sz = dx;   // across the face
-  const C = VEIN_CHUNKS, out = [];
+  if (l > 1e-6) {
+    dx /= l;
+    dz /= l;
+  } else {
+    dx = 0;
+    dz = 1;
+  }
+  const sx = -dz,
+    sz = dx; // across the face
+  const C = VEIN_CHUNKS,
+    out = [];
   for (let i = 0; i < n; i++) {
-    const across = (2 * rand() - 1) * C.spread, high = (2 * rand() - 1) * C.spread;
-    const o = C.out[0] + rand() * (C.out[1] - C.out[0]), a = (2 * rand() - 1) * C.side, u = C.up[0] + rand() * (C.up[1] - C.up[0]);
+    const across = (2 * rand() - 1) * C.spread,
+      high = (2 * rand() - 1) * C.spread;
+    const o = C.out[0] + rand() * (C.out[1] - C.out[0]),
+      a = (2 * rand() - 1) * C.side,
+      u = C.up[0] + rand() * (C.up[1] - C.up[0]);
     const p = [at[0] + dx * C.face + sx * across, at[1] + high, at[2] + dz * C.face + sz * across];
     const v = [dx * o + sx * a, u, dz * o + sz * a];
     const down = chunkLandingOf(p, v, floor, ground);
@@ -119,7 +147,8 @@ export function shedChunks(at, eye, n, rand = Math.random, floor = at[1], ground
 /** The arc's own height `t` seconds after it left `p` at `v`. */
 const arcY = (p, v, t) => p[1] + v[1] * t - 0.5 * VEIN_CHUNKS.gravity * t * t;
 /** The steps a landing is looked for in along the arc, and the halvings it is found to after (well under a millimetre). */
-const LAND_STEPS = 64, LAND_HALVINGS = 24;
+const LAND_STEPS = 64,
+  LAND_HALVINGS = 24;
 /**
  * WHEN AND HOW HIGH A CHUNK COMES DOWN: thrown from `p` at `v`, onto the flat `floor` (the arc's later root - down onto
  * it), or - AUDIT GATHER-FEEL V3 - onto `ground` ((x, z) => height) where the arc first meets it: found along the arc,
@@ -130,20 +159,25 @@ const LAND_STEPS = 64, LAND_HALVINGS = 24;
  * @param {ArrayLike<number>} p @param {ArrayLike<number>} v @param {number} floor @param {((x: number, z: number) => number)|null} [ground]
  */
 export function chunkLandingOf(p, v, floor, ground = null) {
-  const g = VEIN_CHUNKS.gravity, T = VEIN_CHUNKS.flyMaxS;
+  const g = VEIN_CHUNKS.gravity,
+    T = VEIN_CHUNKS.flyMaxS;
   if (!ground) {
     const disc = v[1] * v[1] + 2 * g * (p[1] - floor);
-    const t = disc > 0 ? (v[1] + Math.sqrt(disc)) / g : 0;   // a start below the floor (never a vein's) lies on it at once
+    const t = disc > 0 ? (v[1] + Math.sqrt(disc)) / g : 0; // a start below the floor (never a vein's) lies on it at once
     return t < T ? { t, y: floor } : { t: T, y: arcY(p, v, T) };
   }
   const over = (t) => arcY(p, v, t) - ground(p[0] + v[0] * t, p[2] + v[2] * t);
-  if (!(over(0) > 0)) return { t: 0, y: Math.max(p[1], ground(p[0], p[2])) };   // struck from under the ground: on it at once
+  if (!(over(0) > 0)) return { t: 0, y: Math.max(p[1], ground(p[0], p[2])) }; // struck from under the ground: on it at once
   let a = 0;
   for (let k = 1; k <= LAND_STEPS; k++) {
     let b = (T * k) / LAND_STEPS;
     if (!(over(b) > 0)) {
-      for (let i = 0; i < LAND_HALVINGS; i++) { const m = (a + b) / 2; if (over(m) > 0) a = m; else b = m; }
-      return { t: b, y: ground(p[0] + v[0] * b, p[2] + v[2] * b) };   // lying on the ground where it came down, exactly
+      for (let i = 0; i < LAND_HALVINGS; i++) {
+        const m = (a + b) / 2;
+        if (over(m) > 0) a = m;
+        else b = m;
+      }
+      return { t: b, y: ground(p[0] + v[0] * b, p[2] + v[2] * b) }; // lying on the ground where it came down, exactly
     }
     a = b;
   }
@@ -160,14 +194,18 @@ export function stepChunk(c, dt) {
   if (c.rest < 0) {
     const g = C.gravity;
     const left = c.land - c.t;
-    const s = left <= dt ? Math.max(0, left) : dt;   // the step's time aloft, at most to its landing
-    c.p[0] += c.v[0] * s; c.p[2] += c.v[2] * s;
+    const s = left <= dt ? Math.max(0, left) : dt; // the step's time aloft, at most to its landing
+    c.p[0] += c.v[0] * s;
+    c.p[2] += c.v[2] * s;
     c.p[1] += c.v[1] * s - 0.5 * g * s * s;
     c.v[1] -= g * s;
-    if (left > dt) { c.t += s; return true; }
+    if (left > dt) {
+      c.t += s;
+      return true;
+    }
     c.t = c.land;
-    c.p[1] = c.floor;   // on the ground it came down on, exactly
-    c.rest = dt - s;   // the rest of the step, lain
+    c.p[1] = c.floor; // on the ground it came down on, exactly
+    c.rest = dt - s; // the rest of the step, lain
     return c.rest < C.restS + C.sinkS;
   }
   c.rest += dt;
@@ -175,7 +213,8 @@ export function stepChunk(c, dt) {
 }
 
 /** How far a lying chunk has sunk, of its height `h` (m): none in the air or at rest, then down to all of it. Pure. */
-export const chunkSink = (c, h) => (c.rest < VEIN_CHUNKS.restS ? 0 : Math.min(1, (c.rest - VEIN_CHUNKS.restS) / VEIN_CHUNKS.sinkS) * h);
+export const chunkSink = (c, h) =>
+  c.rest < VEIN_CHUNKS.restS ? 0 : Math.min(1, (c.rest - VEIN_CHUNKS.restS) / VEIN_CHUNKS.sinkS) * h;
 
 /** The box a burst's chunks can reach (`[x0, y0, z0, x1, y1, z1]`, the burst's own frame): about the node's middle `at`,
  *  as far across as the fastest chunk flies in the longest flight there is (from the face's top at the fastest climb to
@@ -184,7 +223,8 @@ export const chunkSink = (c, h) => (c.rest < VEIN_CHUNKS.restS ? 0 : Math.min(1,
  *  down to the floor and the height `h` of one chunk below it (sunk). The street's pixel walk culls a batch by its box
  *  (scenes/world.js EV3), so a burst's box holds every place a chunk of it can be. Pure. */
 export function chunkBox(at, floor, h, w = 0) {
-  const C = VEIN_CHUNKS, g = C.gravity;
+  const C = VEIN_CHUNKS,
+    g = C.gravity;
   const drop = Math.max(0, at[1] + C.spread - floor);
   const flight = Math.min(C.flyMaxS, (C.up[1] + Math.sqrt(C.up[1] * C.up[1] + 2 * g * drop)) / g);
   const r = C.face + C.spread + Math.hypot(C.out[1], C.side) * flight + w / 2;

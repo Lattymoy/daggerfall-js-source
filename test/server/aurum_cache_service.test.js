@@ -1,7 +1,7 @@
 // AURUM-CACHES (2026-10-30, the owner: "Also Aurum caches"; bible/06-Systems/Aurum.md section 3a): A CACHE CLAIMED, THE
 // SERVICE'S - through the real Worker on node:sqlite over the real migrations (test/accountDb.mjs) and the page's own door
-// (net/accountClient.js accountAurumCache). One ledger line a cache an account, ever (CACHES-ONCE), the day's forgery
-// bound, the balance up by its Aurum; a repeat taken, a forged id, a guest, a closed Aurum and an unseated account
+// (net/accountClient.js accountAurumCache). One ledger line a cache an account, ever (CACHES-ONCE), no day's bound
+// (CACHE-SPREAD), the balance up by the cache's own Aurum; a repeat taken, a forged id, a guest, a closed Aurum and an unseated account
 // refused. A Bay dungeon's cache and a lair's past it alike. tools/mutants/aurum_caches.json.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -12,7 +12,7 @@ import { ROUTES } from '../../server-account/src/service.js';
 import { PROGRESS_ROUTES, progressSpentOf } from '../../server-account/src/progress.js';
 import { claimCache, AURUM_CACHE_STATUS } from '../../server-account/src/aurumCache.js';
 import { accountAurumCache, accountRefusalText, REFUSALS, SESSION_KEY } from '../../src/net/accountClient.js';
-import { AURUM_CACHE_AURUM, AURUM_CACHE_DAY_MAX, aurumCacheDungeonKey } from '../../src/net/aurumCacheLaw.js';
+import { aurumCacheAurumOf, aurumCacheDungeonKey } from '../../src/net/aurumCacheLaw.js';
 import { lairPlaceId } from '../../src/world/tamrielDungeons.js';
 import { utcDay } from '../../src/net/marksLaw.js';
 import { mintCacheProof, CACHE_PROOF_TTL_S } from '../../src/net/cacheProof.js';
@@ -35,43 +35,41 @@ async function stand(env = ON) {
   return { ...s, claim, balance, lines };
 }
 
-test('AURUM-CACHES a cache claimed through the Worker: ten Aurum (PIN MOVED, CACHES-ONCE: twenty-five; AURUM-CACHES BALANCE: fifteen), one ledger line, the balance up by it; the same id again taken and nothing written; another account\'s own claim of the same cache (mutants: the line\'s amount, the repeat answered yes, a repeat called capped)', async (t) => {
+test('AURUM-CACHES a cache claimed through the Worker: its own Aurum, 5 to 10 (PIN MOVED, CACHE-SPREAD: ten; CACHES-ONCE: twenty-five; AURUM-CACHES BALANCE: fifteen), one ledger line, the balance up by it; the same id again taken and nothing written; another account\'s own claim of the same cache (mutants: the line\'s amount, the repeat answered yes, a repeat called capped)', async (t) => {
   t.mock.timers.enable({ apis: ['Date'], now: NOW });
   const s = await stand();
   const me = await s.seated('Finder'), other = await s.seated('Second');
   const [bay] = ids(1), [lair] = ids(1, { lair: true });
   assert.equal(await s.balance(me), 0);
   const yes = await s.claim(me, bay);
-  assert.deepEqual(yes, { status: 200, body: { ok: true, id: bay, aurum: AURUM_CACHE_AURUM, today: 1, max: AURUM_CACHE_DAY_MAX } });
-  assert.equal(await s.balance(me), AURUM_CACHE_AURUM, 'the balance sums the ledger');
+  assert.deepEqual(yes, { status: 200, body: { ok: true, id: bay, aurum: aurumCacheAurumOf(bay) } });
+  assert.equal(await s.balance(me), aurumCacheAurumOf(bay), 'the balance sums the ledger');
   assert.deepEqual(await s.claim(me, bay), { status: 409, body: { error: 'cache-taken' } }, 'one claim an id an account');
-  assert.deepEqual(s.lines(me), [{ ref: bay, amount: AURUM_CACHE_AURUM, day: DAY }], 'one line');
+  assert.deepEqual(s.lines(me), [{ ref: bay, amount: aurumCacheAurumOf(bay), day: DAY }], 'one line');
   assert.equal((await s.claim(other, bay)).status, 200, 'the cache is every account\'s to claim once');
   const past = await s.claim(me, lair);
-  assert.deepEqual([past.status, past.body.today], [200, 2], 'a lair\'s cache past the Bay, alike');
-  assert.equal(await s.balance(me), 2 * AURUM_CACHE_AURUM);
+  assert.deepEqual(past, { status: 200, body: { ok: true, id: lair, aurum: aurumCacheAurumOf(lair) } }, 'a lair\'s cache past the Bay, alike');
+  assert.equal(await s.balance(me), aurumCacheAurumOf(bay) + aurumCacheAurumOf(lair));
   assert.ok(ROUTES.has('/v1/aurum/cache'));
 });
 
-// PIN MOVED (CACHES-ONCE): three a day, the fourth lost to the next day's roll, and a cache's id good for two days
-test('AURUM-CACHES the day\'s forgery bound: ten caches an account a UTC day - the eleventh capped and unwritten, a cache already claimed still taken - and the capped coffer taken the next day, counted then; a cache claimed is taken on every later day (mutants: the bound off by one, the bound ignored, the day not the claim\'s)', async (t) => {
+// PIN MOVED (CACHE-SPREAD): ten caches a UTC day the forgery bound, the eleventh capped until the next day; before
+// CACHES-ONCE three a day, the fourth lost to the next day's roll
+test('CACHE-SPREAD no day\'s bound (Mac: "no daily cap"): thirty caches in one UTC day each pay their own Aurum and are written, a repeat still taken; a cache claimed is taken on every later day (mutants: a bound kept, the amount not the cache\'s, the line\'s day not the claim\'s)', async (t) => {
   t.mock.timers.enable({ apis: ['Date'], now: NOW });
   const s = await stand();
-  const me = await s.seated('Greedy');
-  const day = ids(AURUM_CACHE_DAY_MAX + 1), [next] = ids(1, { lair: true });
-  for (const [i, id] of day.slice(0, -1).entries()) assert.deepEqual([(await s.claim(me, id)).body.today], [i + 1], id);
-  assert.deepEqual(await s.claim(me, day.at(-1)), { status: 429, body: { error: 'cache-capped' } });
-  assert.deepEqual(await s.claim(me, day[0]), { status: 409, body: { error: 'cache-taken' } }, 'a repeat is taken, not capped');
-  assert.equal(s.lines(me).length, AURUM_CACHE_DAY_MAX, 'nothing written past the bound');
-  assert.equal(await s.balance(me), AURUM_CACHE_DAY_MAX * AURUM_CACHE_AURUM);
-  t.mock.timers.setTime(NOW + 86_400_000);
-  const late = await s.claim(me, day.at(-1));
-  assert.deepEqual([late.status, late.body.today], [200, 1], 'the capped coffer waits: taken the next day, counted then');
-  assert.equal((await s.claim(me, next)).status, 200);
+  const me = await s.seated('Delver');
+  const day = [...ids(15), ...ids(15, { lair: true })];
+  for (const id of day) assert.deepEqual(await s.claim(me, id), { status: 200, body: { ok: true, id, aurum: aurumCacheAurumOf(id) } }, id);
+  assert.deepEqual(await s.claim(me, day[0]), { status: 409, body: { error: 'cache-taken' } }, 'a repeat is taken');
+  const sum = day.reduce((a, id) => a + aurumCacheAurumOf(id), 0);
+  assert.ok(new Set(day.map(aurumCacheAurumOf)).size >= 4, 'the amounts differ');
+  assert.equal(await s.balance(me), sum);
+  assert.deepEqual(s.lines(me).map((l) => [l.amount, l.day]), s.lines(me).map((l) => [aurumCacheAurumOf(l.ref), DAY]));
+  assert.equal(s.lines(me).length, day.length);
   t.mock.timers.setTime(NOW + 40 * 86_400_000);
   assert.deepEqual(await s.claim(me, day[0]), { status: 409, body: { error: 'cache-taken' } }, 'once ever');
-  assert.deepEqual(s.lines(me).map((l) => l.day), [...day.slice(0, -1).map(() => DAY), DAY + 1, DAY + 1]);
-  assert.equal(AURUM_CACHE_STATUS['cache-capped'], 429);
+  assert.equal('cache-capped' in AURUM_CACHE_STATUS, false);
 });
 
 // PIN MOVED (CACHES-ONCE): an id was `<day>:d<dungeon>`, refused two days old, a day ahead, or where no cache stood that day
@@ -100,7 +98,7 @@ test('AURUM-CACHES the guards: a guest refused; AURUM_OPEN off closes it, `dev` 
   assert.deepEqual([no.status, no.body?.error], [403, 'progress-seat'], 'a session\'s secret alone, no game played');
   assert.deepEqual(s.lines(bare), []);
   const yes = await s.claim(await s.seated('Played'), id);
-  assert.deepEqual(progressSpentOf('/v1/aurum/cache', yes.body), [], 'the day\'s bound is the bound - no bucket spent');
+  assert.deepEqual(progressSpentOf('/v1/aurum/cache', yes.body), [], 'no bucket spent: the relay\'s proof is the bar');
   const off = await stand({ AURUM_OPEN: 'off' });
   const shut = await off.seated('Shut');
   assert.deepEqual(await off.claim(shut, id), { status: 409, body: { error: 'cache-closed' } });
@@ -109,7 +107,7 @@ test('AURUM-CACHES the guards: a guest refused; AURUM_OPEN off closes it, `dev` 
   assert.equal((await dev.claim(await dev.seated('Lattymoy'), id)).status, 200, 'a developer');
   assert.equal((await dev.claim(await dev.seated('Player'), id)).status, 409, 'and nobody else');
   assert.deepEqual(Object.keys(AURUM_CACHE_STATUS).filter((w) => !(w in REFUSALS)), [], 'every refusal has its sentence');
-  assert.match(accountRefusalText('cache-capped'), new RegExp(`${AURUM_CACHE_DAY_MAX} Aurum coffers`), 'the bound in its sentence');
+  assert.equal('cache-capped' in REFUSALS, false, 'no day\'s bound to be refused by');
 });
 
 test('AURUM-CACHES the page\'s door: its session\'s account asks with the cache\'s id and reads the answer; no session is no ask (mutants: the id unsent)', async (t) => {
@@ -121,7 +119,7 @@ test('AURUM-CACHES the page\'s door: its session\'s account asks with the cache\
   const proof = await proofOf(s, me, id);
   const yes = await accountAurumCache(io).claim(id, proof, me.id);
   assert.equal(yes.ok, true, JSON.stringify(yes));
-  assert.deepEqual([yes.data.id, yes.data.aurum], [id, AURUM_CACHE_AURUM]);
+  assert.deepEqual([yes.data.id, yes.data.aurum], [id, aurumCacheAurumOf(id)]);
   const again = await accountAurumCache(io).claim(id);
   assert.deepEqual([again.ok, again.error, again.status], [false, 'cache-taken', 409], 'a held cache is said held with no proof');
   assert.deepEqual(await accountAurumCache({ fetch: io.fetch, storage: { getItem: () => null } }).claim(id), { ok: false, error: 'no-session' });

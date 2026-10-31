@@ -2,7 +2,7 @@
   {
     "name": "SCALE3-fetch-unguarded",
     "file": "tools/loadHarness.mjs",
-    "old": "    if (!u.startsWith(`${LOAD_SERVICE}/`)) throw new Error(`the load harness reaches its own services only - refused ${u}`);",
+    "old": "    if (!u.startsWith(`${LOAD_SERVICE}/`))\n      throw new Error(`the load harness reaches its own services only - refused ${u}`);",
     "new": "",
     "tests": [
       "test/net/scale3.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "SCALE3-production-through",
     "file": "tools/loadHarness.mjs",
-    "old": "    if (!u.startsWith(`${LOAD_SERVICE}/`)) throw new Error(",
-    "new": "    if (!u.startsWith(`${LOAD_SERVICE}/`) && !u.includes('workers.dev')) throw new Error(",
+    "old": "    if (!u.startsWith(`${LOAD_SERVICE}/`))",
+    "new": "    if (!u.startsWith(`${LOAD_SERVICE}/`) && !u.includes('workers.dev'))",
     "tests": [
       "test/net/scale3.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "SCALE3-socket-unguarded",
     "file": "tools/loadHarness.mjs",
-    "old": "      if (!String(url).startsWith(allowed)) throw new Error(`the load harness reaches its own relay only - refused ${url}`);",
-    "new": "",
+    "old": "      if (!String(url).startsWith(allowed))\n        throw new Error(`the load harness reaches its own relay only - refused ${url}`);\n      super(url, protocols);",
+    "new": "      super(url, protocols);",
     "tests": [
       "test/net/scale3.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "SCALE3-close-unsaid",
     "file": "tools/loadHarness.mjs",
-    "old": "          this.onclose?.({ type: 'close', code: 1006, reason: '', wasClean: false });",
-    "new": "",
+    "old": "          this.onclose?.({ type: 'close', code: 1006, reason: '', wasClean: false });\n        }, 0);",
+    "new": "        }, 0);",
     "tests": [
       "test/net/scale3.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "SCALE3-towns-adjacent",
     "file": "tools/loadHarness.mjs",
-    "old": "  const cx = 13 + 2 * k, cy = 13;",
-    "new": "  const cx = 13 + k, cy = 13;",
+    "old": "  const cx = 13 + 2 * k,",
+    "new": "  const cx = 13 + k,",
     "tests": [
       "test/net/scale3.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "SCALE3-fleet-dropped",
     "file": "tools/loadHarness.mjs",
-    "old": "  for (const f of finals) {\n    bots += f.bots;",
-    "new": "  for (const f of finals.slice(1)) {\n    bots += f.bots;",
+    "old": "    poseSeen = 0;\n  for (const f of finals) {",
+    "new": "    poseSeen = 0;\n  for (const f of finals.slice(1)) {",
     "tests": [
       "test/net/scale3.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "SCALE3-reservoir-unbounded",
     "file": "tools/loadHarness.mjs",
-    "old": "  if (list.length < max) { list.push(v); return; }",
-    "new": "  list.push(v); return;",
+    "old": "  if (list.length < max) {\n    list.push(v);\n    return;\n  }",
+    "new": "  list.push(v);\n  return;",
     "tests": [
       "test/net/scale3.test.js"
     ],

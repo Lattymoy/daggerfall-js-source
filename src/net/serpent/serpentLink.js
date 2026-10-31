@@ -27,8 +27,28 @@ import { serpentSiteKey, sameSerpentSite } from './serpentLaw.js';
  */
 /** The empty state: nothing heard yet. @type {Readonly<SerpentState>} */
 export const SERPENT_STATE_EMPTY = Object.freeze({
-  day: null, boss: null, sx: 0, sz: 0, ph: 1, hp: 0, max: 0, legs: [], modes: [], coil: null, mael: null, atk: null,
-  sh: 0, su: 0, sa: 0, n: 0, op: 0, fell: null, gone: null, heardAt: 0, broke: null, crushed: 0,
+  day: null,
+  boss: null,
+  sx: 0,
+  sz: 0,
+  ph: 1,
+  hp: 0,
+  max: 0,
+  legs: [],
+  modes: [],
+  coil: null,
+  mael: null,
+  atk: null,
+  sh: 0,
+  su: 0,
+  sa: 0,
+  n: 0,
+  op: 0,
+  fell: null,
+  gone: null,
+  heardAt: 0,
+  broke: null,
+  crushed: 0,
 });
 
 /** AUDIT SERPENT S4/M1: a coil still holding let go at `at` - a dead or sounded serpent grips nothing. */
@@ -46,9 +66,28 @@ export function foldSerpent(s, w, now) {
   if (w.k === 'st') {
     const same = s.day === w.d;
     return {
-      day: w.d, boss: w.b, sx: w.sx, sz: w.sz, ph: w.ph, hp: w.h, max: w.m, legs: [...w.legs], modes: [...w.modes],
-      coil: w.coil ? { ...w.coil } : null, mael: w.mael, atk: w.atk, sh: w.sh, su: w.su, sa: w.sa, n: w.n, op: w.op,
-      fell: w.fell, gone: w.gone, heardAt: now, broke: same ? s.broke : null, crushed: same ? s.crushed : 0,
+      day: w.d,
+      boss: w.b,
+      sx: w.sx,
+      sz: w.sz,
+      ph: w.ph,
+      hp: w.h,
+      max: w.m,
+      legs: [...w.legs],
+      modes: [...w.modes],
+      coil: w.coil ? { ...w.coil } : null,
+      mael: w.mael,
+      atk: w.atk,
+      sh: w.sh,
+      su: w.su,
+      sa: w.sa,
+      n: w.n,
+      op: w.op,
+      fell: w.fell,
+      gone: w.gone,
+      heardAt: now,
+      broke: same ? s.broke : null,
+      crushed: same ? s.crushed : 0,
     };
   }
   if (s.day === null) return s;
@@ -67,32 +106,78 @@ export function foldSerpent(s, w, now) {
       if (!onTimeline(modes, { at: w.at, m: w.m }, sameMode)) return s;
       return { ...s, modes: modes.slice(-MODES_KEPT), heardAt: now };
     }
-    case 'atk': return { ...s, atk: { i: w.i, a: w.a, at: w.at, x: w.x, z: w.z, yw: w.yw, tg: w.tg, ...(w.s ? { s: w.s } : {}) }, heardAt: now };
-    case 'hp': return { ...s, hp: w.h, max: w.m, ...(w.n !== undefined ? { n: w.n } : {}), heardAt: now };   // AUDIT 2 XC1: the count with it
-    case 'ph': return { ...s, ph: w.n, sh: w.until, coil: s.coil && !(s.coil.off > 0) ? { ...s.coil, off: now } : s.coil, heardAt: now };
-    case 'coil': return { ...s, coil: { i: w.i, s: w.s, x: w.x, z: w.z, th: w.th, at: w.at, ...(w.w !== undefined ? { w: w.w } : {}), until: w.until, off: s.coil?.i === w.i ? s.coil.off : w.off ?? 0, h: w.h, m: w.m }, heardAt: now };   // AUDIT SHIPS D2: `w`, its winding's drawn moment
-    case 'ch': return s.coil?.i === w.i ? { ...s, coil: { ...s.coil, h: w.h }, heardAt: now } : s;
-    case 'cb': return s.coil?.i === w.i ? { ...s, coil: { ...s.coil, h: 0, off: w.at }, su: w.su, broke: { n: w.n, at: w.at }, heardAt: now } : { ...s, su: w.su, heardAt: now };
-    case 'cr': return s.coil?.i === w.i ? { ...s, coil: { ...s.coil, off: w.at }, crushed: w.at, heardAt: now } : s;
-    case 'cx': return s.coil?.i === w.i ? { ...s, coil: { ...s.coil, off: w.at }, heardAt: now } : s;
-    case 'mael': return { ...s, mael: { at: w.at, x: w.x, z: w.z }, heardAt: now };
+    case 'atk':
+      return {
+        ...s,
+        atk: { i: w.i, a: w.a, at: w.at, x: w.x, z: w.z, yw: w.yw, tg: w.tg, ...(w.s ? { s: w.s } : {}) },
+        heardAt: now,
+      };
+    case 'hp':
+      return { ...s, hp: w.h, max: w.m, ...(w.n !== undefined ? { n: w.n } : {}), heardAt: now }; // AUDIT 2 XC1: the count with it
+    case 'ph':
+      return {
+        ...s,
+        ph: w.n,
+        sh: w.until,
+        coil: s.coil && !(s.coil.off > 0) ? { ...s.coil, off: now } : s.coil,
+        heardAt: now,
+      };
+    case 'coil':
+      return {
+        ...s,
+        coil: {
+          i: w.i,
+          s: w.s,
+          x: w.x,
+          z: w.z,
+          th: w.th,
+          at: w.at,
+          ...(w.w !== undefined ? { w: w.w } : {}),
+          until: w.until,
+          off: s.coil?.i === w.i ? s.coil.off : (w.off ?? 0),
+          h: w.h,
+          m: w.m,
+        },
+        heardAt: now,
+      }; // AUDIT SHIPS D2: `w`, its winding's drawn moment
+    case 'ch':
+      return s.coil?.i === w.i ? { ...s, coil: { ...s.coil, h: w.h }, heardAt: now } : s;
+    case 'cb':
+      return s.coil?.i === w.i
+        ? { ...s, coil: { ...s.coil, h: 0, off: w.at }, su: w.su, broke: { n: w.n, at: w.at }, heardAt: now }
+        : { ...s, su: w.su, heardAt: now };
+    case 'cr':
+      return s.coil?.i === w.i ? { ...s, coil: { ...s.coil, off: w.at }, crushed: w.at, heardAt: now } : s;
+    case 'cx':
+      return s.coil?.i === w.i ? { ...s, coil: { ...s.coil, off: w.at }, heardAt: now } : s;
+    case 'mael':
+      return { ...s, mael: { at: w.at, x: w.x, z: w.z }, heardAt: now };
     case 'fell': {
       if (w.d !== undefined && w.d !== s.day) return s;
       if (s.fell) return w.dm && !s.fell.dm ? { ...s, fell: { ...s.fell, dm: w.dm }, heardAt: now } : s;
-      return { ...s, fell: { at: w.at, top: w.top, n: w.n, ...(w.dm ? { dm: w.dm } : {}) }, hp: 0, atk: null, coil: letGo(s.coil, w.at), heardAt: now };
+      return {
+        ...s,
+        fell: { at: w.at, top: w.top, n: w.n, ...(w.dm ? { dm: w.dm } : {}) },
+        hp: 0,
+        atk: null,
+        coil: letGo(s.coil, w.at),
+        heardAt: now,
+      };
     }
-    case 'gone': return { ...s, gone: w.at, atk: null, coil: letGo(s.coil, w.at), heardAt: now };
-    default: return s;
+    case 'gone':
+      return { ...s, gone: w.at, atk: null, coil: letGo(s.coil, w.at), heardAt: now };
+    default:
+      return s;
   }
 }
 
 /** The cell's refusals' words as the player reads them (net/wire.js SERPENT_NO_WORDS). */
 export const SERPENT_NO_TEXT = Object.freeze({
   'the serpent is gone': 'The serpent is gone into the deep.',
-  'the storm has closed its waters': 'A storm has closed over the serpent\'s waters. No ship can join the fight now.',
+  'the storm has closed its waters': "A storm has closed over the serpent's waters. No ship can join the fight now.",
   'it is already slain': 'The serpent is already slain.',
-  'too far from its waters': 'Sail closer to the serpent\'s waters.',
-  'the waters are full': 'There are too many ships in the serpent\'s waters.',
+  'too far from its waters': "Sail closer to the serpent's waters.",
+  'the waters are full': "There are too many ships in the serpent's waters.",
   reload: 'Your game is out of date. Save, then reload (or update the app) to fight this serpent.',
 });
 /** A kill's key: its day and its site's name. */
@@ -120,29 +205,54 @@ export function createSerpentLink({ now, say = () => {}, onFell = () => {}, onRe
     /** A word from the cell or the hub. */
     word(w) {
       if (!w) return;
-      if (w.k === 'no') { if (!refused.has(w.m)) { refused.add(w.m); say(SERPENT_NO_TEXT[w.m] ?? w.m); } return; }
-      if (w.k === 'at') { if (!told || w.d >= told.d) told = { d: w.d, sx: w.sx, sz: w.sz, pl: w.pl }; return; }   // WW7-12: the hub's, of no fight
-      if (w.k === 'rcpt') { const c = readSerpentReceipt(w.r); if (c && !receipts.has(c.d)) { receipts.set(c.d, w.r); onReceipt(w.r); } return; }
+      if (w.k === 'no') {
+        if (!refused.has(w.m)) {
+          refused.add(w.m);
+          say(SERPENT_NO_TEXT[w.m] ?? w.m);
+        }
+        return;
+      }
+      if (w.k === 'at') {
+        if (!told || w.d >= told.d) told = { d: w.d, sx: w.sx, sz: w.sz, pl: w.pl };
+        return;
+      } // WW7-12: the hub's, of no fight
+      if (w.k === 'rcpt') {
+        const c = readSerpentReceipt(w.r);
+        if (c && !receipts.has(c.d)) {
+          receipts.set(c.d, w.r);
+          onReceipt(w.r);
+        }
+        return;
+      }
       // a kill, any site's, kept by its day and site (the hub's names its day; the cell's is the day of the fight here)
       const mine = site();
       if (w.k === 'fell' && w.sx !== undefined) {
-        const day = w.d ?? (mine && sameSerpentSite(mine, w) ? state.day ?? mine.day : null);
-        if (Number.isSafeInteger(day) && !falls.has(fallKey(day, w))) { const f = { at: w.at, top: w.top, n: w.n }; falls.set(fallKey(day, w), f); onFell(day, f, { sx: w.sx, sz: w.sz }); }
+        const day = w.d ?? (mine && sameSerpentSite(mine, w) ? (state.day ?? mine.day) : null);
+        if (Number.isSafeInteger(day) && !falls.has(fallKey(day, w))) {
+          const f = { at: w.at, top: w.top, n: w.n };
+          falls.set(fallKey(day, w), f);
+          onFell(day, f, { sx: w.sx, sz: w.sz });
+        }
       }
       // a whole state naming a kill this link never heard said (a ship sailing in on a serpent slain while it was away,
       // a hub that missed the word): kept for the omen, unsaid - the bar says it
-      if (w.k === 'st' && w.fell && Number.isSafeInteger(w.d) && !falls.has(fallKey(w.d, w))) falls.set(fallKey(w.d, w), { at: w.fell.at, top: w.fell.top, n: w.fell.n });
+      if (w.k === 'st' && w.fell && Number.isSafeInteger(w.d) && !falls.has(fallKey(w.d, w)))
+        falls.set(fallKey(w.d, w), { at: w.fell.at, top: w.fell.top, n: w.fell.n });
       // a word of no site's fight, another site's, or one this machine knows no site for: not its serpent's
       if (!mine || !sameSerpentSite(mine, w)) return;
       state = foldSerpent(state, w, now());
     },
     state: () => state,
     /** The kill of the serpent at `at` on `day` (its relay time), or null. */
-    fellAt: (day, at) => (at && Number.isFinite(at.sx) && Number.isFinite(at.sz) ? falls.get(fallKey(day, at))?.at ?? null : null),
+    fellAt: (day, at) =>
+      at && Number.isFinite(at.sx) && Number.isFinite(at.sz) ? (falls.get(fallKey(day, at))?.at ?? null) : null,
     receipt: (day) => receipts.get(day) ?? null,
     /** WW7-12: where the hub says the accounts agree the serpent of `day` lies (`{d, sx, sz, pl}` - its `at`), or null. */
     toldAt: (day) => (told && told.d === day ? told : null),
     /** A refusal said again only after the fight is left (a ship turned away from the storm's wall is told once). */
-    leave() { state = SERPENT_STATE_EMPTY; refused.clear(); },
+    leave() {
+      state = SERPENT_STATE_EMPTY;
+      refused.clear();
+    },
   };
 }

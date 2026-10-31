@@ -6,7 +6,8 @@ import { WORLD_MAP_TILE_DIM, isWaterHeight, sampleHeight, outlineOfBasis } from 
 import { MAX_TERRAIN_HEIGHT, SCALED_BEACH_ELEVATION } from './terrainSampler.js';
 import { tileDistance, shapeFieldDistance, TOWN_SHAPE } from '../townShape.js';
 
-const BLEND_TILES = 12, EDGE_TILES = 4;
+const BLEND_TILES = 12,
+  EDGE_TILES = 4;
 const FLOOR = Math.fround((SCALED_BEACH_ELEVATION + 1) / MAX_TERRAIN_HEIGHT);
 
 /** The outline before FB1028's CROP-GROUND - its fields' tiles left out (`shape.basis`, locationShapeField's), or the
@@ -19,11 +20,14 @@ export function shapeBefore(shape, seed) {
  *  water - no edge band. FB1028 YARDS Y2: the yards' ground too, over shapeBefore's outline (terrainGen.js `yardGround`).
  *  @param {Uint8Array} shape @param {ArrayLike<number>} ground @param {number} hDim */
 export function townGroundMaskBefore(shape, ground, hDim) {
-  const D = WORLD_MAP_TILE_DIM, wetAt = (x, y) => isWaterHeight(sampleHeight(ground[Math.min(y, hDim - 1) + Math.min(x, hDim - 1) * hDim]));
+  const D = WORLD_MAP_TILE_DIM,
+    wetAt = (x, y) => isWaterHeight(sampleHeight(ground[Math.min(y, hDim - 1) + Math.min(x, hDim - 1) * hDim]));
   const mask = new Uint8Array(D * D);
   for (let i = 0; i < D * D; i++) {
-    const x = i % D, y = (i - x) / D;
-    if (shape[i]) mask[i] = shapeFieldDistance(shape[i]) <= TOWN_SHAPE.seaMargin || !(wetAt(x, y) || wetAt(x + 1, y + 1)) ? 1 : 0;
+    const x = i % D,
+      y = (i - x) / D;
+    if (shape[i])
+      mask[i] = shapeFieldDistance(shape[i]) <= TOWN_SHAPE.seaMargin || !(wetAt(x, y) || wetAt(x + 1, y + 1)) ? 1 : 0;
   }
   return mask;
 }
@@ -35,25 +39,36 @@ export function townGroundMaskBefore(shape, ground, hDim) {
  * @param {Float32Array} heightmapData @param {Uint8Array} shape @param {ArrayLike<number>} ground @param {number} hDim
  */
 export function blendShapedBefore(heightmapData, shape, ground, hDim) {
-  const D = WORLD_MAP_TILE_DIM, mask = townGroundMaskBefore(shape, ground, hDim);
+  const D = WORLD_MAP_TILE_DIM,
+    mask = townGroundMaskBefore(shape, ground, hDim);
   const inside = new Uint8Array(hDim * hDim);
   const on = (x, y) => x >= 0 && y >= 0 && x < D && y < D && mask[x + y * D] === 1;
-  for (let y = 0; y < hDim; y++) for (let x = 0; x < hDim; x++) inside[y * hDim + x] = on(x, y) || on(x - 1, y) || on(x, y - 1) || on(x - 1, y - 1) ? 1 : 0;
-  let sum = 0, n = 0;
-  for (let y = 0; y < hDim; y++) for (let x = 0; x < hDim; x++) {
-    const idx = y + x * hDim;
-    if (inside[y * hDim + x] && !isWaterHeight(sampleHeight(ground[idx]))) { sum += heightmapData[idx]; n++; }
-  }
+  for (let y = 0; y < hDim; y++)
+    for (let x = 0; x < hDim; x++)
+      inside[y * hDim + x] = on(x, y) || on(x - 1, y) || on(x, y - 1) || on(x - 1, y - 1) ? 1 : 0;
+  let sum = 0,
+    n = 0;
+  for (let y = 0; y < hDim; y++)
+    for (let x = 0; x < hDim; x++) {
+      const idx = y + x * hDim;
+      if (inside[y * hDim + x] && !isWaterHeight(sampleHeight(ground[idx]))) {
+        sum += heightmapData[idx];
+        n++;
+      }
+    }
   if (!n) return null;
-  const target = Math.max(Math.fround(sum / n), FLOOR), dist = tileDistance(inside, hDim, hDim);
-  for (let y = 0; y < hDim; y++) for (let x = 0; x < hDim; x++) {
-    const idx = y + x * hDim, d = dist[y * hDim + x];
-    const edge = Math.min(1, Math.min(x, y, hDim - 1 - x, hDim - 1 - y) / EDGE_TILES);
-    let s = d === 0 ? 1 : Math.max(0, 1 - d / BLEND_TILES);
-    s = s * s * (3 - 2 * s);
-    if (d > TOWN_SHAPE.seaMargin && isWaterHeight(sampleHeight(ground[idx]))) s = 0;
-    s *= edge * edge * (3 - 2 * edge);
-    if (s > 0) heightmapData[idx] = heightmapData[idx] + (target - heightmapData[idx]) * s;
-  }
+  const target = Math.max(Math.fround(sum / n), FLOOR),
+    dist = tileDistance(inside, hDim, hDim);
+  for (let y = 0; y < hDim; y++)
+    for (let x = 0; x < hDim; x++) {
+      const idx = y + x * hDim,
+        d = dist[y * hDim + x];
+      const edge = Math.min(1, Math.min(x, y, hDim - 1 - x, hDim - 1 - y) / EDGE_TILES);
+      let s = d === 0 ? 1 : Math.max(0, 1 - d / BLEND_TILES);
+      s = s * s * (3 - 2 * s);
+      if (d > TOWN_SHAPE.seaMargin && isWaterHeight(sampleHeight(ground[idx]))) s = 0;
+      s *= edge * edge * (3 - 2 * edge);
+      if (s > 0) heightmapData[idx] = heightmapData[idx] + (target - heightmapData[idx]) * s;
+    }
   return target;
 }

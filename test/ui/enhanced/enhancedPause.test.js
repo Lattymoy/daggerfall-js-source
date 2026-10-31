@@ -416,7 +416,7 @@ test('PX22: a quest is filed under its kind, never TITLED by it', () => {
   assert.match(read('src/ui/quest/questRail.js'), /import \{ isMainQuestName as isMainQuest \} from '\.\.\/\.\.\/systems\/quest\/questLists\.js';/);
   // START1: and a start's quest (systems/starts/starts.js), the main quest's prologue - by its own name too
   assert.match(read('src/systems/quest/questLists.js'),
-    /export const isMainQuestName = \(questName\) => \/\^S0000\/\.test\(questName \?\? ''\) \|\| questName === '_BRISIEN' \|\| isStartQuestName\(questName\);/);
+    /export const isMainQuestName = \(questName\) =>\n\s*\/\^S0000\/\.test\(questName \?\? ''\) \|\| questName === '_BRISIEN' \|\| isStartQuestName\(questName\);/);
   assert.match(src, /from '\.\.\/quest\/questRail\.js'/, 'and the pause window takes it from there');
   // The archive is NOT split by kind, and that is the data's shape: the
   // notebook's filed header keeps only the display name, so the
@@ -519,7 +519,7 @@ test('PX25: every host hands the pause window the arms it already had', () => {
       const heads = { 'pauseDoorHooks()': 'const pauseDoorHooks = () => ({', 'interiorPauseHooks()': 'const interiorPauseHooks = () => ({' };
       const from = s.indexOf(heads[spread[1]] ?? 'pauseHooks(setPlayerPos = null) {');
       assert.ok(from > 0, `${host}: the arm the door spreads exists`);
-      call = s.slice(from, s.indexOf(heads[spread[1]] ? '\n  });\n' : '\n      };\n    },\n', from));
+      call = s.slice(from, s.indexOf(heads[spread[1]] ? '\n  });\n' : '};\n    },', from));
     }
     for (const hook of ['openPack', 'openSpellbook', 'openChronicle']) {
       assert.ok(call.includes(`${hook}:`), `${host} hands over ${hook}`);

@@ -18,11 +18,20 @@ const UNLOCK_CSS = `${BUTTON_CSS}background:rgba(224,80,60,0.35);border-color:${
 /** @param {{ doc?: any, onUnlock: () => void, onHide?: (on: boolean) => void }} deps */
 export function createStaffFollowBar({ doc = globalThis.document, onUnlock, onHide = () => {} }) {
   if (!doc?.createElement || !doc.body) return { show() {}, hide() {}, dispose() {} };
-  let bar = /** @type {any} */ (null), words = /** @type {any} */ (null), hideBtn = /** @type {any} */ (null), unlock = /** @type {any} */ (null);
-  let shown = false, hiddenNow = false;
+  let bar = /** @type {any} */ (null),
+    words = /** @type {any} */ (null),
+    hideBtn = /** @type {any} */ (null),
+    unlock = /** @type {any} */ (null);
+  let shown = false,
+    hiddenNow = false;
   /** @type {Record<string, any>} */
   const said = {};
-  const put = (/** @type {string} */ k, /** @type {any} */ v, /** @type {(v: any) => void} */ write) => { if (said[k] !== v) { said[k] = v; write(v); } };
+  const put = (/** @type {string} */ k, /** @type {any} */ v, /** @type {(v: any) => void} */ write) => {
+    if (said[k] !== v) {
+      said[k] = v;
+      write(v);
+    }
+  };
   const button = (/** @type {string} */ css, /** @type {string} */ data, /** @type {() => void} */ run) => {
     const b = doc.createElement('button');
     b.setAttribute('type', 'button');
@@ -32,8 +41,17 @@ export function createStaffFollowBar({ doc = globalThis.document, onUnlock, onHi
     // keyboard, and the space bar - the game's jump - pressed it again; so it is out of the tab order, a press never
     // gives it the focus, and a click lets go of any it had
     b.tabIndex = -1;
-    for (const k of ['pointerdown', 'mousedown']) b.addEventListener?.(k, (/** @type {any} */ e) => { e.stopPropagation?.(); e.preventDefault?.(); });
-    b.addEventListener?.('click', (/** @type {any} */ e) => { e.stopPropagation?.(); e.preventDefault?.(); b.blur?.(); run(); });
+    for (const k of ['pointerdown', 'mousedown'])
+      b.addEventListener?.(k, (/** @type {any} */ e) => {
+        e.stopPropagation?.();
+        e.preventDefault?.();
+      });
+    b.addEventListener?.('click', (/** @type {any} */ e) => {
+      e.stopPropagation?.();
+      e.preventDefault?.();
+      b.blur?.();
+      run();
+    });
     return b;
   };
   function make() {
@@ -55,15 +73,45 @@ export function createStaffFollowBar({ doc = globalThis.document, onUnlock, onHi
     show({ following = false, name = '', hidden = false, asking = false, seeing = true } = {}) {
       if (!bar) make();
       hiddenNow = hidden;
-      const line = following && !seeing ? t('net.staffFollow.finding', 'Following - finding them…')
-        : following ? (name ? t('net.staffFollow.following', 'Following {name}', { name }) : t('net.staffFollow.followingAnon', 'Following'))
-        : hidden ? t('net.staffFollow.hidden', 'Hidden') : t('net.staffFollow.shown', 'Shown to players');
-      put('line', line, (v) => { words.textContent = v; });
-      put('hide', asking ? '…' : hidden ? t('net.staffFollow.showMe', 'Show myself') : t('net.staffFollow.hideMe', 'Hide me'), (v) => { hideBtn.textContent = v; });
-      put('unlock', following, (v) => { unlock.style.display = v ? '' : 'none'; });
-      if (!shown) { shown = true; bar.style.display = 'flex'; }
+      const line =
+        following && !seeing
+          ? t('net.staffFollow.finding', 'Following - finding them…')
+          : following
+            ? name
+              ? t('net.staffFollow.following', 'Following {name}', { name })
+              : t('net.staffFollow.followingAnon', 'Following')
+            : hidden
+              ? t('net.staffFollow.hidden', 'Hidden')
+              : t('net.staffFollow.shown', 'Shown to players');
+      put('line', line, (v) => {
+        words.textContent = v;
+      });
+      put(
+        'hide',
+        asking ? '…' : hidden ? t('net.staffFollow.showMe', 'Show myself') : t('net.staffFollow.hideMe', 'Hide me'),
+        (v) => {
+          hideBtn.textContent = v;
+        },
+      );
+      put('unlock', following, (v) => {
+        unlock.style.display = v ? '' : 'none';
+      });
+      if (!shown) {
+        shown = true;
+        bar.style.display = 'flex';
+      }
     },
-    hide() { if (bar && shown) { shown = false; bar.style.display = 'none'; } },
-    dispose() { bar?.remove(); bar = null; shown = false; for (const k of Object.keys(said)) delete said[k]; },
+    hide() {
+      if (bar && shown) {
+        shown = false;
+        bar.style.display = 'none';
+      }
+    },
+    dispose() {
+      bar?.remove();
+      bar = null;
+      shown = false;
+      for (const k of Object.keys(said)) delete said[k];
+    },
   };
 }

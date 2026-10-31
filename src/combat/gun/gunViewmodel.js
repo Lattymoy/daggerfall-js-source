@@ -36,7 +36,11 @@
 import { placeSprite } from './gunPlacement.js';
 import { unionDrawRect } from './gunSheet.js';
 import {
-  readWidgetSettings, offsetStep, bobStep, inertiaStep, widgetTransformRect,
+  readWidgetSettings,
+  offsetStep,
+  bobStep,
+  inertiaStep,
+  widgetTransformRect,
 } from '../weapon/weaponWidgetMotion.js';
 import { MOD_SETTINGS } from '../../systems/modSettings.js';
 import { WEAPON_WIDGET_VENDOR } from '../weapon/weaponWidgetMotion.js';
@@ -49,11 +53,18 @@ import { walkSpeed, runSpeed, crouchSpeed, DIAGONAL_FACTOR } from '../../player/
 export function createGunRig() {
   return {
     time: 0,
-    position: [0, 0], scale: [1, 1], offset: [0, 0],
-    offsetCurrent: [0, 0], offsetTarget: [0, 0],
-    moveSmooth: 0, bobSmooth: [0, 0],
-    inertiaCurrent: [0, 0], inertiaTarget: [0, 0], inertiaSpeedMod: 1,
-    inertiaForwardCurrent: [0, 0], inertiaForwardTarget: [0, 0],
+    position: [0, 0],
+    scale: [1, 1],
+    offset: [0, 0],
+    offsetCurrent: [0, 0],
+    offsetTarget: [0, 0],
+    moveSmooth: 0,
+    bobSmooth: [0, 0],
+    inertiaCurrent: [0, 0],
+    inertiaTarget: [0, 0],
+    inertiaSpeedMod: 1,
+    inertiaForwardCurrent: [0, 0],
+    inertiaForwardTarget: [0, 0],
   };
 }
 
@@ -84,7 +95,8 @@ export function widgetDefaults() {
 export function gunWidgetSettings(overrides = null, tuning = null, { preset = true } = {}) {
   // AUDIT PISTOLET B2: `preset` false - a lab reading its panel as the game lays a weapon's own tuning, past Diverse
   // Weapons' preset (below), or a profile with the preset on makes the panel's Bob and Inertia sliders do nothing
-  if (overrides) return readWidgetSettings(() => ({ ...widgetDefaults(), 'Modules.Inertia': true, ...overrides }), { preset });
+  if (overrides)
+    return readWidgetSettings(() => ({ ...widgetDefaults(), 'Modules.Inertia': true, ...overrides }), { preset });
   const s = readWidgetSettings();
   const own = s.inertia ? s : { ...s, inertia: true };
   if (!tuning) return own;
@@ -100,8 +112,18 @@ export function gunWidgetSettings(overrides = null, tuning = null, { preset = tr
 /** PISTOLET: the parsed fields a weapon's tuning sets - the Offset slide's speed, Bob's shape and size, Inertia's lag. Never
  *  a module's switch. */
 export const TUNED_FIELDS = Object.freeze([
-  'offsetSpeed', 'bobLength', 'bobSizeXMod', 'bobSizeYMod', 'moveSmoothSpeed', 'bobSmoothSpeed', 'bobShape', 'bobWhileIdle',
-  'inertiaScale', 'inertiaSpeed', 'inertiaForwardScale', 'inertiaForwardSpeed',
+  'offsetSpeed',
+  'bobLength',
+  'bobSizeXMod',
+  'bobSizeYMod',
+  'moveSmoothSpeed',
+  'bobSmoothSpeed',
+  'bobShape',
+  'bobWhileIdle',
+  'inertiaScale',
+  'inertiaSpeed',
+  'inertiaForwardScale',
+  'inertiaForwardSpeed',
 ]);
 
 /**
@@ -112,34 +134,77 @@ export const TUNED_FIELDS = Object.freeze([
  * `idle` is the machine's Idle, which is what the mod gates Bob and
  * Inertia on; `shown` false is the reload lower.
  */
-export function gunRigStep(rig, s, dt, {
-  screenRect, motion, look = [0, 0], flip = false, idle = true,
-  shown = true, hiddenTarget = GUN_FEEL.hiddenTarget, liveSpeed = 50,
-  cursorActive = false, swingHeld = false,
-}) {
+export function gunRigStep(
+  rig,
+  s,
+  dt,
+  {
+    screenRect,
+    motion,
+    look = [0, 0],
+    flip = false,
+    idle = true,
+    shown = true,
+    hiddenTarget = GUN_FEEL.hiddenTarget,
+    liveSpeed = 50,
+    cursorActive = false,
+    swingHeld = false,
+  },
+) {
   rig.time += dt;
-  rig.position = [0, 0]; rig.scale = [1, 1]; rig.offset = [0, 0];
+  rig.position = [0, 0];
+  rig.scale = [1, 1];
+  rig.offset = [0, 0];
   if (s.offset) {
-    const o = offsetStep({
-      offsetCurrent: rig.offsetCurrent, offsetTarget: rig.offsetTarget,
-      animating: false, shown, equipCountdown: 0, hiddenTarget,
-    }, dt, liveSpeed / 100 * s.offsetSpeed);   // get_offsetSpeedLive
-    rig.offsetCurrent = o.offsetCurrent; rig.offsetTarget = o.offsetTarget;
+    const o = offsetStep(
+      {
+        offsetCurrent: rig.offsetCurrent,
+        offsetTarget: rig.offsetTarget,
+        animating: false,
+        shown,
+        equipCountdown: 0,
+        hiddenTarget,
+      },
+      dt,
+      (liveSpeed / 100) * s.offsetSpeed,
+    ); // get_offsetSpeedLive
+    rig.offsetCurrent = o.offsetCurrent;
+    rig.offsetTarget = o.offsetTarget;
     rig.offset = [rig.offset[0] + o.delta[0], rig.offset[1] + o.delta[1]];
   }
   if (s.bob && idle) {
-    const b = bobStep({ moveSmooth: rig.moveSmooth, bobSmooth: rig.bobSmooth, time: rig.time, screenRect }, s, motion, dt);
-    rig.moveSmooth = b.moveSmooth; rig.bobSmooth = b.bobSmooth;
+    const b = bobStep(
+      { moveSmooth: rig.moveSmooth, bobSmooth: rig.bobSmooth, time: rig.time, screenRect },
+      s,
+      motion,
+      dt,
+    );
+    rig.moveSmooth = b.moveSmooth;
+    rig.bobSmooth = b.bobSmooth;
     rig.position = [rig.position[0] + b.delta[0], rig.position[1] + b.delta[1]];
   }
   if (s.inertia && idle) {
-    const i = inertiaStep({
-      inertiaCurrent: rig.inertiaCurrent, inertiaTarget: rig.inertiaTarget,
-      inertiaForwardCurrent: rig.inertiaForwardCurrent, inertiaForwardTarget: rig.inertiaForwardTarget,
-      screenRect, flip, look, cursorActive, swingHeld,
-    }, s, motion, dt);
-    rig.inertiaCurrent = i.inertiaCurrent; rig.inertiaTarget = i.inertiaTarget; rig.inertiaSpeedMod = i.inertiaSpeedMod;
-    rig.inertiaForwardCurrent = i.inertiaForwardCurrent; rig.inertiaForwardTarget = i.inertiaForwardTarget;
+    const i = inertiaStep(
+      {
+        inertiaCurrent: rig.inertiaCurrent,
+        inertiaTarget: rig.inertiaTarget,
+        inertiaForwardCurrent: rig.inertiaForwardCurrent,
+        inertiaForwardTarget: rig.inertiaForwardTarget,
+        screenRect,
+        flip,
+        look,
+        cursorActive,
+        swingHeld,
+      },
+      s,
+      motion,
+      dt,
+    );
+    rig.inertiaCurrent = i.inertiaCurrent;
+    rig.inertiaTarget = i.inertiaTarget;
+    rig.inertiaSpeedMod = i.inertiaSpeedMod;
+    rig.inertiaForwardCurrent = i.inertiaForwardCurrent;
+    rig.inertiaForwardTarget = i.inertiaForwardTarget;
     rig.scale = [rig.scale[0] + i.scale[0], rig.scale[1] + i.scale[1]];
     rig.position = [rig.position[0] + i.delta[0], rig.position[1] + i.delta[1]];
   }
@@ -158,16 +223,26 @@ export function gunRigStep(rig, s, dt, {
  * forward each axis at PlayerMotor's diagonal .7071; `vertical` the eye's climb or fall in the air (a jump), `grounded`
  * false while it lasts. The labs could not strafe or jump at all, so the Inertia their owner tuned had never seen either.
  */
-export function gunMotion({ walking = false, running = false, crouching = false, liveSpeed = 50, strafe = 0, vertical = null } = {}) {
+export function gunMotion({
+  walking = false,
+  running = false,
+  crouching = false,
+  liveSpeed = 50,
+  strafe = 0,
+  vertical = null,
+} = {}) {
   const base = walkSpeed(liveSpeed);
   const moving = walking || strafe !== 0;
   // PlayerMotor.Speed, which the hosts hand the rig as `speedField` (player/motor.js motionBagOf): the walk, the run or
   // the crouch the body is set to, standing or not - never nought
-  const stateSpeed = running ? runSpeed(liveSpeed, 50, crouching) : (crouching ? crouchSpeed(liveSpeed) : base);
+  const stateSpeed = running ? runSpeed(liveSpeed, 50, crouching) : crouching ? crouchSpeed(liveSpeed) : base;
   const speed = moving ? stateSpeed : 0;
   const axis = walking && strafe !== 0 ? speed * DIAGONAL_FACTOR : speed;
   return {
-    grounded: vertical === null, crouching, riding: false, standing: !moving && vertical === null,
+    grounded: vertical === null,
+    crouching,
+    riding: false,
+    standing: !moving && vertical === null,
     speedRatio: base > 0 ? stateSpeed / base : 1,
     baseSpeed: base,
     localVel: [strafe * axis, vertical ?? 0, walking ? axis : 0],
@@ -188,25 +263,44 @@ export function gunMotion({ walking = false, running = false, crouching = false,
  * if it is placing something ON the weapon).
  */
 export function gunFrameRect({
-  canvasW, canvasH, anchor, union, rig, kick = { x: 0, y: 0 }, flip = false,
-  widthPct = GUN_FEEL.widthPct, align = ALIGN.Right, offset = 0, raise = GUN_FEEL.raise,
+  canvasW,
+  canvasH,
+  anchor,
+  union,
+  rig,
+  kick = { x: 0, y: 0 },
+  flip = false,
+  widthPct = GUN_FEEL.widthPct,
+  align = ALIGN.Right,
+  offset = 0,
+  raise = GUN_FEEL.raise,
 }) {
   // Under the mirror the whole composite flips, so the gun's box flips
   // with it inside the union box - otherwise the flash would swap
   // sides and drag the weapon off its alignment.
-  const anc = flip
-    ? { ...anchor, x: 2 * union.x + union.w - anchor.x - anchor.w }
-    : anchor;
+  const anc = flip ? { ...anchor, x: 2 * union.x + union.w - anchor.x - anchor.w } : anchor;
   const offsetHeight = raise * (canvasH / 200);
   const base = placeSprite({
-    canvasW, canvasH, frameW: anchor.w, frameH: anchor.h,
-    widthPct, align, offset, flip, offsetHeight,
+    canvasW,
+    canvasH,
+    frameW: anchor.w,
+    frameH: anchor.h,
+    widthPct,
+    align,
+    offset,
+    flip,
+    offsetHeight,
   });
   const anchorRect = widgetTransformRect(base, {
-    position: rig.position, scale: rig.scale, offset: rig.offset,
-    flip, screenHeight: canvasH, weaponOffsetHeight: offsetHeight,
+    position: rig.position,
+    scale: rig.scale,
+    offset: rig.offset,
+    flip,
+    screenHeight: canvasH,
+    weaponOffsetHeight: offsetHeight,
   });
-  const sx = canvasW / 320, sy = canvasH / 200;
+  const sx = canvasW / 320,
+    sy = canvasH / 200;
   anchorRect.x += kick.x * sx * (flip ? -1 : 1);
   anchorRect.y += kick.y * sy;
   return { rect: unionDrawRect(anchorRect, anc, union), anchorRect };

@@ -2,8 +2,8 @@
   {
     "name": "CRYSTALFIST-the-colour",
     "file": "src/ui/playerBadge.js",
-    "old": "const CRYSTAL_PURPLE = Object.freeze([0.639, 0.286, 0.643, 1]);",
-    "new": "const CRYSTAL_PURPLE = Object.freeze([0.58, 0.365, 0.851, 1]);",
+    "old": "export const CRYSTAL_PURPLE = Object.freeze([0.639, 0.286, 0.643, 1]); // #a349a4",
+    "new": "export const CRYSTAL_PURPLE = Object.freeze([0.58, 0.365, 0.851, 1]); // #a349a4",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "CRYSTALFIST-a-bluer-purple",
     "file": "src/ui/playerBadge.js",
-    "old": "const CRYSTAL_PURPLE = Object.freeze([0.639, 0.286, 0.643, 1]);",
-    "new": "const CRYSTAL_PURPLE = Object.freeze([0.639, 0.286, 0.843, 1]);",
+    "old": "export const CRYSTAL_PURPLE = Object.freeze([0.639, 0.286, 0.643, 1]); // #a349a4",
+    "new": "export const CRYSTAL_PURPLE = Object.freeze([0.639, 0.286, 0.843, 1]); // #a349a4",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "CRYSTALFIST-a-gradient",
     "file": "src/ui/playerBadge.js",
-    "old": "  aegis: Object.freeze([OBLIVION_VOID, OBLIVION_VIOLET, OBLIVION_LILAC]),   // AEGIS: out of the void into the ward's light\n",
-    "new": "  aegis: Object.freeze([OBLIVION_VOID, OBLIVION_VIOLET, OBLIVION_LILAC]),   // AEGIS: out of the void into the ward's light\n  crystalfist: Object.freeze([OBLIVION_VOID, CRYSTAL_PURPLE]),\n",
+    "old": "  coilbreaker: Object.freeze([COIL_SEA, COIL_TIDE, COIL_FOAM]), // SERPENT5: the open sea into the tide into the foam",
+    "new": "  crystalfist: Object.freeze([OBLIVION_VOID, CRYSTAL_PURPLE]),\n  coilbreaker: Object.freeze([COIL_SEA, COIL_TIDE, COIL_FOAM]), // SERPENT5: the open sea into the tide into the foam",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "CRYSTALFIST-glyph-in-another-colour",
     "file": "src/ui/playerBadge.js",
-    "old": "  crystalfist: TITLE_RGBA.crystalfist, // CRYSTAL-FIST:",
-    "new": "  crystalfist: TITLE_RGBA.aegis, // CRYSTAL-FIST:",
+    "old": "  crystalfist: TITLE_RGBA.crystalfist, // CRYSTAL-FIST: the three slashes in the title's purple - the reference's own",
+    "new": "  crystalfist: TITLE_RGBA.aegis, // CRYSTAL-FIST: the three slashes in the title's purple - the reference's own",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "CRYSTALFIST-the-mark",
     "file": "src/ui/playerBadge.js",
-    "old": "  crystalfist: '\\\\',  // CRYSTAL-FIST:",
-    "new": "  crystalfist: '/',  // CRYSTAL-FIST:",
+    "old": "  crystalfist: '\\\\', // CRYSTAL-FIST: a slash the way the reference's three fall, down to the right",
+    "new": "  crystalfist: '/', // CRYSTAL-FIST: a slash the way the reference's three fall, down to the right",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "CRYSTALFIST-the-mark-another-glyphs",
     "file": "src/ui/playerBadge.js",
-    "old": "  crystalfist: '\\\\',  // CRYSTAL-FIST:",
-    "new": "  crystalfist: '|',  // CRYSTAL-FIST:",
+    "old": "  crystalfist: '\\\\', // CRYSTAL-FIST: a slash the way the reference's three fall, down to the right",
+    "new": "  crystalfist: '|', // CRYSTAL-FIST: a slash the way the reference's three fall, down to the right",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "CRYSTALFIST-the-glyph-stroked",
     "file": "src/ui/playerBadge.js",
-    "old": "primarch: false, crystalfist: false, wikimaid: false, nirnrootsage: false,",
-    "new": "primarch: false, crystalfist: true, wikimaid: false, nirnrootsage: false,",
+    "old": "  crystalfist: false,",
+    "new": "  crystalfist: true,",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "CRYSTALFIST-the-words",
     "file": "src/ui/playerBadge.js",
-    "old": "  crystalfist: 'Crystal Fist',       // CRYSTAL-FIST",
-    "new": "  crystalfist: 'Crystal Fists',       // CRYSTAL-FIST",
+    "old": "  crystalfist: 'Crystal Fist', // CRYSTAL-FIST (2026-10-05, the owner: \"Title: Crystal Fist\"): Flylighter's own",
+    "new": "  crystalfist: 'Crystal Fists', // CRYSTAL-FIST (2026-10-05, the owner: \"Title: Crystal Fist\"): Flylighter's own",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "CRYSTALFIST-the-auras-word",
     "file": "src/ui/playerBadge.js",
-    "old": "  resonance: 'Crystal Resonance',",
-    "new": "  resonance: 'Resonance',",
+    "old": "  resonance: 'Crystal Resonance', // CRYSTAL-FIST: the Crystal Fist's ring of purple squares rising and falling, granted with the title",
+    "new": "  resonance: 'Resonance', // CRYSTAL-FIST: the Crystal Fist's ring of purple squares rising and falling, granted with the title",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "CRYSTALFIST-the-resonances-button",
     "file": "src/ui/playerBadge.js",
-    "old": "seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker', vampirichaze: 'coldharbour' });",
-    "new": "seraphwings: 'founder', resonance: 'aegis', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker', vampirichaze: 'coldharbour' });",
+    "old": "  resonance: 'crystalfist',",
+    "new": "  resonance: 'aegis',",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -133,8 +133,8 @@
   {
     "name": "CRYSTALFIST-the-glyphs-word",
     "file": "server-account/src/titles.js",
-    "old": "primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage', coldharbour: 'coldharbour' });",
-    "new": "primarch: 'primarch', crystalfist: 'disciple', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage', coldharbour: 'coldharbour' });",
+    "old": "  crystalfist: 'crystalfist',",
+    "new": "  crystalfist: 'disciple',",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -143,8 +143,8 @@
   {
     "name": "CRYSTALFIST-the-aura-not-granted",
     "file": "server-account/src/titles.js",
-    "old": "shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
-    "new": "shadowfang: 'shadowcloak', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
+    "old": "  crystalfist: 'resonance',\n  wikimaid: 'lilacwarren',",
+    "new": "  wikimaid: 'lilacwarren',",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -153,8 +153,8 @@
   {
     "name": "CRYSTALFIST-the-wrong-aura-granted",
     "file": "server-account/src/titles.js",
-    "old": "shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
-    "new": "shadowfang: 'shadowcloak', crystalfist: 'oblivionward', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
+    "old": "  crystalfist: 'resonance',",
+    "new": "  crystalfist: 'oblivionward',",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -163,8 +163,8 @@
   {
     "name": "CRYSTALFIST-the-vocabularys-aura",
     "file": "src/net/identityToken.js",
-    "old": "'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings', 'vampirichaze']);",
-    "new": "'shadowcloak', 'seraphwings', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings', 'vampirichaze']);",
+    "old": "  'resonance',\n  'turninghour',",
+    "new": "  'turninghour',",
     "tests": [
       "test/net/crystalfist.test.js",
       "test/net/relayversion.test.js"
@@ -214,8 +214,8 @@
   {
     "name": "CRYSTALFIST-a-slash-turned",
     "file": "src/ui/playerBadge.js",
-    "old": "M0.77 6.99L0.77 6.26L1.32 5.71L2.05 5.71L10.11 13.77L10.11 14.5L9.56 15.05L8.82 15.05Z",
-    "new": "M0.77 6.99L0.77 6.26L1.32 5.71L2.05 5.71L10.11 13.77L10.11 14.5L9.56 15.05L9.32 15.05Z",
+    "old": "    'M0.77 6.99L0.77 6.26L1.32 5.71L2.05 5.71L10.11 13.77L10.11 14.5L9.56 15.05L8.82 15.05ZM0.77 2.23L0.77 1.5L1.32 0.95L2.05 0.95L14.5 13.4L14.5 14.13L13.95 14.68L13.22 14.68ZM5.89 2.6L5.89 1.87L6.44 1.32L7.18 1.32L15.23 9.37L15.23 10.11L14.68 10.66L13.95 10.66Z',",
+    "new": "    'M0.77 6.99L0.77 6.26L1.32 5.71L2.05 5.71L10.11 13.77L10.11 14.5L9.56 15.05L9.32 15.05ZM0.77 2.23L0.77 1.5L1.32 0.95L2.05 0.95L14.5 13.4L14.5 14.13L13.95 14.68L13.22 14.68ZM5.89 2.6L5.89 1.87L6.44 1.32L7.18 1.32L15.23 9.37L15.23 10.11L14.68 10.66L13.95 10.66Z',",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -224,8 +224,8 @@
   {
     "name": "CRYSTALFIST-the-middle-short",
     "file": "src/ui/playerBadge.js",
-    "old": "ZM0.77 2.23L0.77 1.5L1.32 0.95L2.05 0.95L14.5 13.4L14.5 14.13L13.95 14.68L13.22 14.68Z",
-    "new": "ZM2.77 4.23L2.77 3.5L3.32 2.95L4.05 2.95L12.5 11.4L12.5 12.13L11.95 12.68L11.22 12.68Z",
+    "old": "    'M0.77 6.99L0.77 6.26L1.32 5.71L2.05 5.71L10.11 13.77L10.11 14.5L9.56 15.05L8.82 15.05ZM0.77 2.23L0.77 1.5L1.32 0.95L2.05 0.95L14.5 13.4L14.5 14.13L13.95 14.68L13.22 14.68ZM5.89 2.6L5.89 1.87L6.44 1.32L7.18 1.32L15.23 9.37L15.23 10.11L14.68 10.66L13.95 10.66Z',",
+    "new": "    'M0.77 6.99L0.77 6.26L1.32 5.71L2.05 5.71L10.11 13.77L10.11 14.5L9.56 15.05L8.82 15.05ZM2.77 4.23L2.77 3.5L3.32 2.95L4.05 2.95L12.5 11.4L12.5 12.13L11.95 12.68L11.22 12.68ZM5.89 2.6L5.89 1.87L6.44 1.32L7.18 1.32L15.23 9.37L15.23 10.11L14.68 10.66L13.95 10.66Z',",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -234,8 +234,8 @@
   {
     "name": "CRYSTALFIST-a-slash-thicker",
     "file": "src/ui/playerBadge.js",
-    "old": "ZM5.89 2.6L5.89 1.87L6.44 1.32L7.18 1.32L15.23 9.37L15.23 10.11L14.68 10.66L13.95 10.66Z",
-    "new": "ZM5.49 3.0L5.49 2.27L6.44 1.32L7.18 1.32L15.23 9.37L15.23 10.11L14.28 11.06L13.55 11.06Z",
+    "old": "    'M0.77 6.99L0.77 6.26L1.32 5.71L2.05 5.71L10.11 13.77L10.11 14.5L9.56 15.05L8.82 15.05ZM0.77 2.23L0.77 1.5L1.32 0.95L2.05 0.95L14.5 13.4L14.5 14.13L13.95 14.68L13.22 14.68ZM5.89 2.6L5.89 1.87L6.44 1.32L7.18 1.32L15.23 9.37L15.23 10.11L14.68 10.66L13.95 10.66Z',",
+    "new": "    'M0.77 6.99L0.77 6.26L1.32 5.71L2.05 5.71L10.11 13.77L10.11 14.5L9.56 15.05L8.82 15.05ZM0.77 2.23L0.77 1.5L1.32 0.95L2.05 0.95L14.5 13.4L14.5 14.13L13.95 14.68L13.22 14.68ZM5.49 3.0L5.49 2.27L6.44 1.32L7.18 1.32L15.23 9.37L15.23 10.11L14.28 11.06L13.55 11.06Z',",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -244,8 +244,8 @@
   {
     "name": "CRYSTALFIST-a-slash-wound-back",
     "file": "src/ui/playerBadge.js",
-    "old": "ZM5.89 2.6L5.89 1.87L6.44 1.32L7.18 1.32L15.23 9.37L15.23 10.11L14.68 10.66L13.95 10.66Z",
-    "new": "ZM13.95 10.66L14.68 10.66L15.23 10.11L15.23 9.37L7.18 1.32L6.44 1.32L5.89 1.87L5.89 2.6Z",
+    "old": "    'M0.77 6.99L0.77 6.26L1.32 5.71L2.05 5.71L10.11 13.77L10.11 14.5L9.56 15.05L8.82 15.05ZM0.77 2.23L0.77 1.5L1.32 0.95L2.05 0.95L14.5 13.4L14.5 14.13L13.95 14.68L13.22 14.68ZM5.89 2.6L5.89 1.87L6.44 1.32L7.18 1.32L15.23 9.37L15.23 10.11L14.68 10.66L13.95 10.66Z',",
+    "new": "    'M0.77 6.99L0.77 6.26L1.32 5.71L2.05 5.71L10.11 13.77L10.11 14.5L9.56 15.05L8.82 15.05ZM0.77 2.23L0.77 1.5L1.32 0.95L2.05 0.95L14.5 13.4L14.5 14.13L13.95 14.68L13.22 14.68ZM13.95 10.66L14.68 10.66L15.23 10.11L15.23 9.37L7.18 1.32L6.44 1.32L5.89 1.87L5.89 2.6Z',",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -254,8 +254,8 @@
   {
     "name": "CRYSTALFIST-a-corner-left-square",
     "file": "src/ui/playerBadge.js",
-    "old": "crystalfist: 'M0.77 6.99L0.77 6.26L1.32 5.71L2.05 5.71L",
-    "new": "crystalfist: 'M0.77 6.99L0.77 5.71L2.05 5.71L",
+    "old": "    'M0.77 6.99L0.77 6.26L1.32 5.71L2.05 5.71L10.11 13.77L10.11 14.5L9.56 15.05L8.82 15.05ZM0.77 2.23L0.77 1.5L1.32 0.95L2.05 0.95L14.5 13.4L14.5 14.13L13.95 14.68L13.22 14.68ZM5.89 2.6L5.89 1.87L6.44 1.32L7.18 1.32L15.23 9.37L15.23 10.11L14.68 10.66L13.95 10.66Z',",
+    "new": "    'M0.77 6.99L0.77 5.71L2.05 5.71L10.11 13.77L10.11 14.5L9.56 15.05L8.82 15.05ZM0.77 2.23L0.77 1.5L1.32 0.95L2.05 0.95L14.5 13.4L14.5 14.13L13.95 14.68L13.22 14.68ZM5.89 2.6L5.89 1.87L6.44 1.32L7.18 1.32L15.23 9.37L15.23 10.11L14.68 10.66L13.95 10.66Z',",
     "tests": [
       "test/net/crystalfist.test.js"
     ],

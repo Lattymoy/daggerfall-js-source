@@ -87,13 +87,19 @@ const LEDGER = 'bible/01-Overview/Port-Ledger.md';
 /** RF3: the cite tools and their pin files carry SYNTHETIC cites - never docs. */
 /** CITE-BUF: the most bytes one git call may answer with - citeMerge's own figure (1 << 28, 256 MiB). */
 export const GIT_MAX_BUFFER = 1 << 28;
-export const SELF_DOCS = Object.freeze(['tools/citeShift.mjs', 'tools/citeMerge.mjs', 'test/tooling/citeshift.test.js', 'test/tooling/citemerge.test.js']);
+export const SELF_DOCS = Object.freeze([
+  'tools/citeShift.mjs',
+  'tools/citeMerge.mjs',
+  'test/tooling/citeshift.test.js',
+  'test/tooling/citemerge.test.js',
+]);
 
 /** A cite of any file on a line - where the continuations after one cite
  *  stop belonging to it. A C# cite stops them too (RF3: the `.cs` arm),
  *  so "(:N)" after `SerializablePlayer.cs:421` is the C#'s, not ours.
  *  AUDIT 68: a test's escaped path (`systems\/spellcast\.js:158`) is one too. */
-export const ANY_CITE = /(?<![\w/])(?:[\w./-]*\/)?(?:[\w.-]+\\\/)*[\w.-]+\\?\.(?:js|mjs|md|sh|cs):\d+|(?:Port-Ledger row|Ledger rows?|ledger rows?) `?:\d+/g;
+export const ANY_CITE =
+  /(?<![\w/])(?:[\w./-]*\/)?(?:[\w.-]+\\\/)*[\w.-]+\\?\.(?:js|mjs|md|sh|cs):\d+|(?:Port-Ledger row|Ledger rows?|ledger rows?) `?:\d+/g;
 /** The bare continuations after a cite: `:N, /:N, / :N, /N, `, :N` and (RF3) `(:N`.
  *  RF4 (2026-09-21): the SPACED slash. "world.js:6548 / :6549 / :6728" is the
  *  same continuation with the separator set off by spaces - the MAC-D shift
@@ -124,7 +130,7 @@ export const CS_MEMBER = /(?<![\w.])[A-Z][A-Za-z0-9]*\.[A-Z][A-Za-z0-9_]*(?=`?\s
 export function regionStops(l) {
   const stops = [...l.matchAll(ANY_CITE)].map((m) => m.index);
   for (const m of l.matchAll(CS_MEMBER)) stops.push(m.index);
-  if (/^\s*\|/.test(l)) for (const m of l.matchAll(/(?<!\\)\|/g)) stops.push(m.index);   // a table row: an unescaped pipe is a cell's edge
+  if (/^\s*\|/.test(l)) for (const m of l.matchAll(/(?<!\\)\|/g)) stops.push(m.index); // a table row: an unescaped pipe is a cell's edge
   return stops.sort((a, b) => a - b);
 }
 
@@ -139,10 +145,10 @@ export function regionStops(l) {
  *  so it is a continuation only where it abuts the cite, or the
  *  continuation before it. One law for both tools, as RF3's regexes are. */
 export function* continuationsIn(l, from, to) {
-  let end = from;   // where the chain so far stops
+  let end = from; // where the chain so far stops
   for (const m of l.slice(from, to).matchAll(CONTINUATION)) {
     const at = from + m.index;
-    if (m[1] === '/' && at !== end) continue;   // a slash after a number of the prose's own
+    if (m[1] === '/' && at !== end) continue; // a slash after a number of the prose's own
     end = at + m[0].length;
     yield { m, at };
   }
@@ -152,8 +158,12 @@ export function* continuationsIn(l, from, to) {
 
 /** Parse a unified diff's hunk headers into {oldStart, oldLen, newStart, newLen}. */
 export function hunksFromDiff(diffText) {
-  return [...diffText.matchAll(/^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/gm)]
-    .map((m) => ({ oldStart: +m[1], oldLen: m[2] == null ? 1 : +m[2], newStart: +m[3], newLen: m[4] == null ? 1 : +m[4] }));
+  return [...diffText.matchAll(/^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/gm)].map((m) => ({
+    oldStart: +m[1],
+    oldLen: m[2] == null ? 1 : +m[2],
+    newStart: +m[3],
+    newLen: m[4] == null ? 1 : +m[4],
+  }));
 }
 
 /** A base line number -> the tree's, or null when the line sits inside an
@@ -163,7 +173,10 @@ export function lineMap(hunks) {
   return (oldLine) => {
     let delta = 0;
     for (const h of hunks) {
-      if (h.oldLen === 0) { if (oldLine > h.oldStart) delta += h.newLen; continue; }
+      if (h.oldLen === 0) {
+        if (oldLine > h.oldStart) delta += h.newLen;
+        continue;
+      }
       if (oldLine < h.oldStart) break;
       if (oldLine <= h.oldStart + h.oldLen - 1) return null;
       delta += h.newLen - h.oldLen;
@@ -177,7 +190,10 @@ const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 /** The path a cite spells before its `:N`, unescaped (`systems\/spellcast\.js`
  *  is systems/spellcast.js) - or null when it names no directory. */
 function citedPath(text) {
-  const p = text.slice(0, text.lastIndexOf(':')).replace(/\\([./])/g, '$1').replace(/^(\.\.?\/)+/, '');
+  const p = text
+    .slice(0, text.lastIndexOf(':'))
+    .replace(/\\([./])/g, '$1')
+    .replace(/^(\.\.?\/)+/, '');
   return p.includes('/') ? p : null;
 }
 
@@ -185,7 +201,9 @@ function citedPath(text) {
  *  number in group 1 and an optional range end in group 2. */
 export function citeSpellings(target) {
   const base = basename(target);
-  const [stem, ext] = base.includes('.') ? [base.slice(0, base.lastIndexOf('.')), base.slice(base.lastIndexOf('.'))] : [base, ''];
+  const [stem, ext] = base.includes('.')
+    ? [base.slice(0, base.lastIndexOf('.')), base.slice(base.lastIndexOf('.'))]
+    : [base, ''];
   const res = [
     // the path or the basename, then :N or :N-M (the path form first so the basename form does not eat it)
     new RegExp(`(?<![\\w/])(?:[\\w./-]*/)?${esc(base)}:(\\d+)(?:-(\\d+))?`, 'g'),
@@ -213,12 +231,22 @@ export function citeSpellings(target) {
  *   status: 'move' | 'struck' | 'inside' | 'mismatch' | 'same' | 'pinned-struck' | 'ambiguous'
  *   spelling: 'path' | 'escaped' | 'ledger'; kind: 'cite' | 'cont'
  */
-export function planDoc({ docText, target, oldLines, newLines, map, moveStruck = false, holdEscaped = null, ambiguousBare = false }) {
+export function planDoc({
+  docText,
+  target,
+  oldLines,
+  newLines,
+  map,
+  moveStruck = false,
+  holdEscaped = null,
+  ambiguousBare = false,
+}) {
   const plan = [];
   const lines = docText.split('\n');
   const same1 = (x, y) => x != null && y != null && x.trim() === y.trim();
   const verdict = (l, a, b, spelling) => {
-    const ma = map(a), mb = b != null ? map(b) : null;
+    const ma = map(a),
+      mb = b != null ? map(b) : null;
     if (ma === a && (b == null || mb === b)) return { status: 'same', ma, mb };
     if (ma == null || (b != null && mb == null)) return { status: 'inside', ma, mb };
     // the same text on both sides, and a line that EXISTS on both -
@@ -241,10 +269,20 @@ export function planDoc({ docText, target, oldLines, newLines, map, moveStruck =
         // cannot tell (a pure shift passes it whatever file the cite names).
         const dir = spelling !== 'ledger' && citedPath(m[0]);
         if (dir && dir !== target && !target.endsWith('/' + dir) && !dir.endsWith('/' + target)) continue;
-        const a = +m[1], b = m[2] ? +m[2] : null;
+        const a = +m[1],
+          b = m[2] ? +m[2] : null;
         const bare = ambiguousBare && spelling !== 'ledger' && !dir;
         const v = bare ? ambiguous(verdict(l, a, b, spelling)) : verdict(l, a, b, spelling);
-        plan.push({ line: i + 1, col: m.index, text: m[0], from: [a, b], to: [v.ma, v.mb], status: v.status, spelling, kind: 'cite' });
+        plan.push({
+          line: i + 1,
+          col: m.index,
+          text: m[0],
+          from: [a, b],
+          to: [v.ma, v.mb],
+          status: v.status,
+          spelling,
+          kind: 'cite',
+        });
         spans.push([m.index + m[0].length, bare]);
       }
     }
@@ -254,9 +292,19 @@ export function planDoc({ docText, target, oldLines, newLines, map, moveStruck =
     for (const [from, bare] of spans.sort((x, y) => x[0] - y[0])) {
       const to = stops.find((x) => x >= from) ?? l.length;
       for (const { m, at } of continuationsIn(l, from, to)) {
-        const a = +m[2], b = m[3] ? +m[3] : null;
+        const a = +m[2],
+          b = m[3] ? +m[3] : null;
         const v = bare ? ambiguous(verdict(l, a, b, 'path')) : verdict(l, a, b, 'path');
-        plan.push({ line: i + 1, col: at, text: m[0], from: [a, b], to: [v.ma, v.mb], status: v.status, spelling: 'path', kind: 'cont' });
+        plan.push({
+          line: i + 1,
+          col: at,
+          text: m[0],
+          from: [a, b],
+          to: [v.ma, v.mb],
+          status: v.status,
+          spelling: 'path',
+          kind: 'cont',
+        });
       }
     }
   });
@@ -272,7 +320,10 @@ export function applyPlan(docText, plan) {
   for (const [ln, ps] of byLine) {
     let l = lines[ln - 1];
     for (const p of ps.sort((x, y) => y.col - x.col)) {
-      const replaced = p.text.replace(/(\d+)(-(\d+))?(`?)$/, (m, a, dash, b, tick) => `${p.to[0]}${b != null ? '-' + p.to[1] : ''}${tick}`);
+      const replaced = p.text.replace(
+        /(\d+)(-(\d+))?(`?)$/,
+        (m, a, dash, b, tick) => `${p.to[0]}${b != null ? '-' + p.to[1] : ''}${tick}`,
+      );
       l = l.slice(0, p.col) + replaced + l.slice(p.col + p.text.length);
     }
     lines[ln - 1] = l;
@@ -284,7 +335,8 @@ export function applyPlan(docText, plan) {
  *  kind 'cont' now, moved under the content check like any cite; this
  *  is the view of them the old report printed). */
 export function continuations(docText, target, map, extra = {}) {
-  const oldLines = extra.oldLines ?? [], newLines = extra.newLines ?? [];
+  const oldLines = extra.oldLines ?? [],
+    newLines = extra.newLines ?? [];
   return planDoc({ docText, target, oldLines, newLines, map, ...extra })
     .filter((p) => p.kind === 'cont' && p.status !== 'same')
     .map((p) => ({ line: p.line, text: p.text, from: p.from[0], to: p.to[0], status: p.status }));
@@ -296,7 +348,8 @@ function main(argv) {
   const opt = (k) => argv.includes(k);
   const val = (k) => (argv.includes(k) ? argv[argv.indexOf(k) + 1] : null);
   const base = val('--base') ?? 'HEAD';
-  const apply = opt('--apply'), moveStruck = opt('--struck');
+  const apply = opt('--apply'),
+    moveStruck = opt('--struck');
   const only = argv.flatMap((a, i) => (a === '--target' ? [argv[i + 1]] : []));
   // CITE-BUF (2026-09-24): execFileSync's default maxBuffer is 1 MiB, and scenes/world.js passed it (1,057,642 bytes):
   // `git show base:world.js` threw, the new-file `catch` below took it for a file with no past, and every cite of the
@@ -305,8 +358,12 @@ function main(argv) {
   const git = (...args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', maxBuffer: GIT_MAX_BUFFER });
   const changed = git('diff', '--name-only', base, '--', 'src', 'bible', 'test', 'tools').split('\n').filter(Boolean);
   const targets = (only.length ? only : changed).filter((f) => /\.(js|mjs|md)$/.test(f));
-  const docs = git('ls-files', 'bible', 'test', 'src', 'tools').split('\n').filter((f) => /\.(js|mjs|md|sh)$/.test(f) && !SELF_DOCS.includes(f));   // RF3: the tools' own fixtures are not docs
-  let moved = 0, applied = 0, held = 0;
+  const docs = git('ls-files', 'bible', 'test', 'src', 'tools')
+    .split('\n')
+    .filter((f) => /\.(js|mjs|md|sh)$/.test(f) && !SELF_DOCS.includes(f)); // RF3: the tools' own fixtures are not docs
+  let moved = 0,
+    applied = 0,
+    held = 0;
   // AUDIT 68: two targets with one basename (src/systems/loot/loot.js and
   // survival/loot.js) - a bare `loot.js:N` is neither's to move, where it was
   // moved once by each, the second time off the first one's rewrite.
@@ -316,14 +373,21 @@ function main(argv) {
     const hunks = hunksFromDiff(git('diff', '-U0', base, '--', target));
     if (!hunks.length) continue;
     const map = lineMap(hunks);
-    let oldLines; try { oldLines = git('show', `${base}:${target}`).split('\n'); } catch (err) { if (err?.status !== 128) throw err; continue; }   // a new file cites nothing yet (git's own 128); anything else - ENOBUFS above all - is loud
-    if (!existsSync(join(ROOT, target))) continue;   // MAC5 (the water revert): a target the change DELETED has no lines to land on; its cites are the record's to strike
+    let oldLines;
+    try {
+      oldLines = git('show', `${base}:${target}`).split('\n');
+    } catch (err) {
+      if (err?.status !== 128) throw err;
+      continue;
+    } // a new file cites nothing yet (git's own 128); anything else - ENOBUFS above all - is loud
+    if (!existsSync(join(ROOT, target))) continue; // MAC5 (the water revert): a target the change DELETED has no lines to land on; its cites are the record's to strike
     const newLines = readFileSync(join(ROOT, target), 'utf8').split('\n');
     // RF3, pass one: plan every doc, and learn which numbers the docs
     // carry on STRUCK lines only - a test's escaped literal of one of
     // those is a quote of the struck row and must stay with it.
     const plans = new Map();
-    const struckNums = new Set(), movedNums = new Set();
+    const struckNums = new Set(),
+      movedNums = new Set();
     for (const doc of docs) {
       if (doc === target) continue;
       const text = readFileSync(join(ROOT, doc), 'utf8');
@@ -337,17 +401,41 @@ function main(argv) {
     }
     const holdEscaped = new Set([...struckNums].filter((n) => !movedNums.has(n)));
     for (const [doc, { text }] of plans) {
-      const plan = planDoc({ docText: text, target, oldLines, newLines, map, moveStruck, holdEscaped, ambiguousBare }).filter((p) => p.status !== 'same');
+      const plan = planDoc({
+        docText: text,
+        target,
+        oldLines,
+        newLines,
+        map,
+        moveStruck,
+        holdEscaped,
+        ambiguousBare,
+      }).filter((p) => p.status !== 'same');
       if (!plan.length) continue;
       for (const p of plan) {
         const arrow = `${p.text} -> ${p.to[0]}${p.from[1] != null ? '-' + p.to[1] : ''}${p.kind === 'cont' ? ' (a continuation)' : ''}`;
-        if (p.status === 'move') { moved++; console.log(`  ${apply ? 'moved  ' : 'MOVE   '} ${doc}:${p.line}  ${arrow}`); }
-        else { held++; console.log(`  ${p.status.toUpperCase().padEnd(8)} ${doc}:${p.line}  ${p.status === 'inside' ? p.text + ' (inside an edited hunk)' : arrow}`); }
+        if (p.status === 'move') {
+          moved++;
+          console.log(`  ${apply ? 'moved  ' : 'MOVE   '} ${doc}:${p.line}  ${arrow}`);
+        } else {
+          held++;
+          console.log(
+            `  ${p.status.toUpperCase().padEnd(8)} ${doc}:${p.line}  ${p.status === 'inside' ? p.text + ' (inside an edited hunk)' : arrow}`,
+          );
+        }
       }
-      if (apply) { const out = applyPlan(text, plan); if (out !== text) { writeFileSync(join(ROOT, doc), out); applied += plan.filter((p) => p.status === 'move').length; } }
+      if (apply) {
+        const out = applyPlan(text, plan);
+        if (out !== text) {
+          writeFileSync(join(ROOT, doc), out);
+          applied += plan.filter((p) => p.status === 'move').length;
+        }
+      }
     }
   }
-  console.log(`${targets.length} target(s) against ${base}: ${moved} cite(s) ${apply ? 'moved' : 'to move'}, ${held} for a person`);
+  console.log(
+    `${targets.length} target(s) against ${base}: ${moved} cite(s) ${apply ? 'moved' : 'to move'}, ${held} for a person`,
+  );
   if (apply) console.log(`applied ${applied}; this base is spent - commit before running again`);
   return moved && !apply ? 1 : 0;
 }

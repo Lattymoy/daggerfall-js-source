@@ -19,8 +19,8 @@
   },
   {
     "name": "HELM-NET-the-guns-forgotten",
-    "file": "src/scenes/world.js",
-    "old": "            busy: () => !!csaRuntime?.isSailing?.() || !!naval?.aiming || !!naval?.boarding,",
+    "file": "src/scenes/professionsHost.js",
+    "old": "            busy: () => !!csaRuntime?.isSailing?.() || !!host.naval?.aiming || !!host.naval?.boarding,",
     "new": "            busy: () => !!csaRuntime?.isSailing?.(),",
     "tests": [
       "test/scenes/fb1002_fieldbugs.test.js"

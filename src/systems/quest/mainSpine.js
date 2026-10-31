@@ -67,7 +67,10 @@ function openerStartedSpine(quest) {
  *  the opener, or the Curse begun beside it (AUDIT FB1026d II A1). @param {any} saved @param {string[]} names */
 export function spineRecord(saved, names) {
   const has = (n) => names.some((x) => String(x ?? '').toUpperCase() === n);
-  return { opened: saved?.opened === true || has(SPINE_OPENER) || has(SPINE_CURSE), ran: saved?.ran === true || has(SPINE) };
+  return {
+    opened: saved?.opened === true || has(SPINE_OPENER) || has(SPINE_CURSE),
+    ran: saved?.ran === true || has(SPINE),
+  };
 }
 
 /**

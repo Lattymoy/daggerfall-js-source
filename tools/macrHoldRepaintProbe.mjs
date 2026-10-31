@@ -86,23 +86,35 @@ const check = (name, ok, detail = '') => {
 // PROBE_PORT=<n> reuses a dev server already listening there (a container's
 // file-watcher budget can refuse a second vite); otherwise one is made here,
 // with its watcher off - the probe changes nothing it would need to see.
-const vite = process.env.PROBE_PORT ? null : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
+const vite = process.env.PROBE_PORT
+  ? null
+  : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
 if (vite) await vite.listen();
 const port = vite ? vite.httpServer.address().port : Number(process.env.PROBE_PORT);
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 try {
   // AUDIT 68 X2-probe-tmp-page-leak: written inside the try, so the finally that unlinks it always runs.
   await writeFile(join(ROOT, `tools/${PAGE_NAME}`), PAGE);
-  const ctx = await browser.newContext({ viewport: { width: 430, height: 860 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 });
+  const ctx = await browser.newContext({
+    viewport: { width: 430, height: 860 },
+    hasTouch: true,
+    isMobile: true,
+    deviceScaleFactor: 2,
+  });
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (er) => errors.push(er.message));
-  await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?nofonts`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?nofonts`, {
+    waitUntil: 'domcontentloaded',
+    timeout: 60000,
+  });
   await page.waitForFunction(() => !!globalThis.__probe, null, { timeout: 30000 });
   const cdp = await ctx.newCDPSession(page);
-  const send = (type, x, y) => cdp.send('Input.dispatchTouchEvent', {
-    type, touchPoints: type === 'touchEnd' ? [] : [{ x, y, radiusX: 14, radiusY: 14, force: 1, id: 1 }],
-  });
+  const send = (type, x, y) =>
+    cdp.send('Input.dispatchTouchEvent', {
+      type,
+      touchPoints: type === 'touchEnd' ? [] : [{ x, y, radiusX: 14, radiusY: 14, force: 1, id: 1 }],
+    });
   const P = (fn, ...a) => page.evaluate(fn, ...a);
   const sleep = (ms) => page.waitForTimeout(ms);
   const settle = async () => {
@@ -118,25 +130,36 @@ try {
   console.log(`   ${await P(() => globalThis.__probe.rows())} tiles`);
 
   // ── THE HOLD UNDER A REPAINT ─────────────────────────────────────
-  let armed = 0, carried = 0, released = 0; const evs = [];
+  let armed = 0,
+    carried = 0,
+    released = 0;
+  const evs = [];
   for (let i = 0; i < TRIALS; i++) {
     const t = await settle();
-    if (!t) { fails.push('no tile to press'); break; }
+    if (!t) {
+      fails.push('no tile to press');
+      break;
+    }
     await send('touchStart', t.x, t.y);
     await sleep(120);
-    await P(() => globalThis.__probe.repaint());   // the row under the finger is detached and rebuilt
+    await P(() => globalThis.__probe.repaint()); // the row under the finger is detached and rebuilt
     await sleep(40);
-    await P(() => globalThis.__probe.repaint());   // and again - two async landings in one hold
+    await P(() => globalThis.__probe.repaint()); // and again - two async landings in one hold
     await sleep(260);
     if (await P(() => globalThis.__probe.ghost())) armed++;
-    for (let k = 1; k <= 6; k++) { await send('touchMove', t.x + k * 14, t.y - k * 10); await sleep(16); }
+    for (let k = 1; k <= 6; k++) {
+      await send('touchMove', t.x + k * 14, t.y - k * 10);
+      await sleep(16);
+    }
     if (await P(() => globalThis.__probe.ghost())) carried++;
     evs.push(await P(() => globalThis.__probe.ev()));
     await send('touchEnd', t.x + 84, t.y - 60);
     await sleep(80);
     if (!(await P(() => globalThis.__probe.ghost()))) released++;
   }
-  console.log(`   hold with two repaints inside it: armed ${armed}/${TRIALS}, carried ${carried}/${TRIALS}, released ${released}/${TRIALS}`);
+  console.log(
+    `   hold with two repaints inside it: armed ${armed}/${TRIALS}, carried ${carried}/${TRIALS}, released ${released}/${TRIALS}`,
+  );
   console.log(`   events of the last trial: ${evs.at(-1)}`);
   check('a hold ARMS through a repaint', armed === TRIALS, `${armed}/${TRIALS}`);
   check('and CARRIES through it', carried === TRIALS, `${carried}/${TRIALS}`);
@@ -147,7 +170,7 @@ try {
   const t2 = await settle();
   if (t2) {
     await send('touchStart', t2.x, t2.y);
-    await sleep(900);   // past Android's long-press
+    await sleep(900); // past Android's long-press
     const ghost = await P(() => globalThis.__probe.ghost());
     const ev = await P(() => globalThis.__probe.ev());
     await send('touchEnd', t2.x, t2.y);
@@ -162,7 +185,11 @@ try {
     const before = await P(() => globalThis.__probe.top());
     await send('touchStart', ft.x, ft.y);
     let sawGhost = false;
-    for (let i = 1; i <= 10; i++) { await sleep(10); await send('touchMove', ft.x, ft.y - i * 14); if (await P(() => globalThis.__probe.ghost())) sawGhost = true; }
+    for (let i = 1; i <= 10; i++) {
+      await sleep(10);
+      await send('touchMove', ft.x, ft.y - i * 14);
+      if (await P(() => globalThis.__probe.ghost())) sawGhost = true;
+    }
     await send('touchEnd', ft.x, ft.y - 140);
     await sleep(160);
     const after = await P(() => globalThis.__probe.top());

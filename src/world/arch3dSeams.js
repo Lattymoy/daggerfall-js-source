@@ -52,17 +52,32 @@ const side = (axis, pairs) => ({ axis, map: Object.fromEntries(pairs) });
 const point = (at, to) => ({ at, to });
 /** THE VAULT CORNER (61004, and its two re-textured twins): two corners off the unit grid by up to a unit - a wedge up
  *  to 13 mm wide along the ceiling's joins with the corridor pieces round it (61003, 61020, 61021, ...). */
-const VAULT_CORNER = [point([128.242, -128, 31.199], [128, -128, 32]), point([-63.996, -95.02, -127.992], [-64, -95.996, -128])];
+const VAULT_CORNER = [
+  point([128.242, -128, 31.199], [128, -128, 32]),
+  point([-63.996, -95.02, -127.992], [-64, -95.996, -128]),
+];
 /** THE SPIRAL's steps, out to the shaft's four walls. */
-const SPIRAL = [side('x', [[120, 122], [-120, -122]]), side('z', [[120, 122], [-120, -122]])];
+const SPIRAL = [
+  side('x', [
+    [120, 122],
+    [-120, -122],
+  ]),
+  side('z', [
+    [120, 122],
+    [-120, -122],
+  ]),
+];
 /** THE SLOPED STAIR (63026): its ramp's four corners onto the floors' edges it joins, its first riser's foot onto the
  *  floor. (Its last tread overhangs the next floor a unit above it - a lip with the floor under it, no hole: moved onto
  *  the floor's edge it butted there with no corner shared and the joint cracked a pixel at a time, AUDIT DUNGEON-SEAMS
  *  3.) */
 const SLOPED_STAIR = [
-  point([2, 4, 64], [0, 0, 64]), point([-130, 4, 64], [-128, 0, 64]),
-  point([2, -124, -192], [0, -128, -192]), point([-130, -124, -192], [-128, -128, -192]),
-  point([-2, -2, 68], [-2, 0, 68]), point([-128, -2, 68], [-128, 0, 68]),
+  point([2, 4, 64], [0, 0, 64]),
+  point([-130, 4, 64], [-128, 0, 64]),
+  point([2, -124, -192], [0, -128, -192]),
+  point([-130, -124, -192], [-128, -128, -192]),
+  point([-2, -2, 68], [-2, 0, 68]),
+  point([-128, -2, 68], [-128, 0, 68]),
 ];
 /** THE ROUND ROOM (63034, and its re-textured twins 63134 and 63234): four corners of its ceiling's rim, off the corridor mouths it
  *  meets (63007 at x -256, 63041 at z 256) by up to two and a half units - each onto the corridor's own corner. */
@@ -81,24 +96,115 @@ const ROUND_ROOM = [
  */
 export const SEAM_RULES = Object.freeze({
   // STAIRS - the treads and risers of the straight flights, one or two units short of their own side walls
-  61017: [side('x', [[62, 64], [-62, -64]])],
-  61018: [side('x', [[62, 64], [-62, -64]])],
-  61117: [side('x', [[62, 64], [-62, -64]])],
-  61118: [side('x', [[62, 64], [-62, -64]])],
-  61218: [side('x', [[62, 64], [-62, -64]])],
-  67016: [side('x', [[63, 64], [-63, -64]])],
-  67025: [side('x', [[63, 64], [-63, -64]])],
-  67116: [side('x', [[63, 64], [-63, -64]])],
-  67125: [side('x', [[63, 64], [-63, -64]])],
-  67225: [side('x', [[63, 64], [-63, -64]])],
-  58008: [side('x', [[48, 50], [-48, -50]])],
-  58009: [side('x', [[358, 360], [154, 152]])],
-  58050: [side('x', [[-358, -360], [-154, -152]])],
-  59002: [side('x', [[-166, -168], [38, 40]]), side('y', [[-2, 0]])],   // and its foot, walls and first riser, two units over the floor it stands on
-  59007: [side('x', [[-358, -360], [102, 104]])],
-  59011: [side('x', [[102, 104], [-102, -104]])],
-  59012: [side('x', [[230, 232], [-230, -232]])],
-  59013: [side('x', [[102, 104], [-102, -104]])],
+  61017: [
+    side('x', [
+      [62, 64],
+      [-62, -64],
+    ]),
+  ],
+  61018: [
+    side('x', [
+      [62, 64],
+      [-62, -64],
+    ]),
+  ],
+  61117: [
+    side('x', [
+      [62, 64],
+      [-62, -64],
+    ]),
+  ],
+  61118: [
+    side('x', [
+      [62, 64],
+      [-62, -64],
+    ]),
+  ],
+  61218: [
+    side('x', [
+      [62, 64],
+      [-62, -64],
+    ]),
+  ],
+  67016: [
+    side('x', [
+      [63, 64],
+      [-63, -64],
+    ]),
+  ],
+  67025: [
+    side('x', [
+      [63, 64],
+      [-63, -64],
+    ]),
+  ],
+  67116: [
+    side('x', [
+      [63, 64],
+      [-63, -64],
+    ]),
+  ],
+  67125: [
+    side('x', [
+      [63, 64],
+      [-63, -64],
+    ]),
+  ],
+  67225: [
+    side('x', [
+      [63, 64],
+      [-63, -64],
+    ]),
+  ],
+  58008: [
+    side('x', [
+      [48, 50],
+      [-48, -50],
+    ]),
+  ],
+  58009: [
+    side('x', [
+      [358, 360],
+      [154, 152],
+    ]),
+  ],
+  58050: [
+    side('x', [
+      [-358, -360],
+      [-154, -152],
+    ]),
+  ],
+  59002: [
+    side('x', [
+      [-166, -168],
+      [38, 40],
+    ]),
+    side('y', [[-2, 0]]),
+  ], // and its foot, walls and first riser, two units over the floor it stands on
+  59007: [
+    side('x', [
+      [-358, -360],
+      [102, 104],
+    ]),
+  ],
+  59011: [
+    side('x', [
+      [102, 104],
+      [-102, -104],
+    ]),
+  ],
+  59012: [
+    side('x', [
+      [230, 232],
+      [-230, -232],
+    ]),
+  ],
+  59013: [
+    side('x', [
+      [102, 104],
+      [-102, -104],
+    ]),
+  ],
   // THE L: two flights about a landing, each two units off the stringer wall beside it (x 24; z -24) - and that wall's
   // foot four units over the landing at its far end, a sliver along the landing's edge
   59004: [side('x', [[26, 24]]), side('z', [[-26, -24]]), point([-256, -2, -24], [-256, 2, -24])],
@@ -111,11 +217,26 @@ export const SEAM_RULES = Object.freeze({
   56301: SPIRAL,
   // ...and the flight that ends on the landing (56000), which every block stands two units off its shaft's centre: its
   // -x ends already on the wall at -120, its +x ends and the landing's edge four and two units short of the wall at 124
-  56000: [side('x', [[120, 124], [122, 124]]), side('z', [[120, 122], [-120, -122]])],
+  56000: [
+    side('x', [
+      [120, 124],
+      [122, 124],
+    ]),
+    side('z', [
+      [120, 122],
+      [-120, -122],
+    ]),
+  ],
   // ...and the wedge under that landing (56002), off the same centre: its +x edge two units short of the wall
   56002: [side('x', [[122, 124]])],
   // THE POSTS: two free-standing posts in a corridor (63022) stopping a unit or two short of its floor and ceiling
-  63022: [side('y', [[-2, 0], [-1, 0], [-124, -126]])],
+  63022: [
+    side('y', [
+      [-2, 0],
+      [-1, 0],
+      [-124, -126],
+    ]),
+  ],
   // CEILINGS - corners off the grid, where the vault or the round room meets the corridor
   61004: VAULT_CORNER,
   61104: VAULT_CORNER,
@@ -136,7 +257,11 @@ function movedPoint(p, rules) {
   let out = p;
   for (const r of rules) {
     if ('at' in r) {
-      if (Math.abs(out.x - r.at[0]) <= STRAY_EPS && Math.abs(out.y - r.at[1]) <= STRAY_EPS && Math.abs(out.z - r.at[2]) <= STRAY_EPS) {
+      if (
+        Math.abs(out.x - r.at[0]) <= STRAY_EPS &&
+        Math.abs(out.y - r.at[1]) <= STRAY_EPS &&
+        Math.abs(out.z - r.at[2]) <= STRAY_EPS
+      ) {
         out = { ...out, x: r.to[0], y: r.to[1], z: r.to[2] };
       }
       continue;

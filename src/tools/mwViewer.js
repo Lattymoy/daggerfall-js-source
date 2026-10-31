@@ -32,12 +32,19 @@ import {
   advanceClip,
   isLoopingAnimation,
 } from '../formats/morrowind/mwAnim.js';
-import { buildSkeleton, poseSkeleton, skeletonSpaceMatrices, skinBatch, accumRootRef, GRAPH_ROOT } from '../formats/morrowind/mwSkin.js';
+import {
+  buildSkeleton,
+  poseSkeleton,
+  skeletonSpaceMatrices,
+  skinBatch,
+  accumRootRef,
+  GRAPH_ROOT,
+} from '../formats/morrowind/mwSkin.js';
 import { bindPart, attachmentTransform } from '../formats/morrowind/mwCharacter.js';
 import { assembleFirstPersonArm, poseAssembly } from '../formats/morrowind/mwFirstPerson.js';
 import { parseEsm } from '../formats/morrowind/mwEsmFile.js';
 import { assembleNpc, indexSkins } from '../formats/morrowind/mwNpc.js';
-import { ownFacePools } from '../characters/ownModels/ownHeadModels.js';   // MW-HEADS1: the race and sex whose faces are the port's own
+import { ownFacePools } from '../characters/ownModels/ownHeadModels.js'; // MW-HEADS1: the race and sex whose faces are the port's own
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('c');
@@ -240,21 +247,21 @@ async function loadNpc(id) {
     }
     parts.push({ slot: part.slot, bones: part.attachBones, bytes: bsa.get(key).slice(), bodyId: part.bodyId });
   }
-  const asm = parts.length
-    ? await assembleFirstPersonArm({ skeletonBytes: bsa.get(baseKey).slice(), parts })
-    : null;
+  const asm = parts.length ? await assembleFirstPersonArm({ skeletonBytes: bsa.get(baseKey).slice(), parts }) : null;
   loaded.npcAsm = null;
   loaded.npcBound = [];
   if (asm && asm.ok) {
-    const group = buildGroup(asm.pieces.map((p) => ({
-      positions: p.positions,
-      normals: null,
-      uvs: p.uvs,
-      colors: p.colors,
-      indices: p.indices,
-      material: p.material || { diffuse: [1, 1, 1], emissive: [0, 0, 0], alpha: 1 },
-      skinned: false,
-    })));
+    const group = buildGroup(
+      asm.pieces.map((p) => ({
+        positions: p.positions,
+        normals: null,
+        uvs: p.uvs,
+        colors: p.colors,
+        indices: p.indices,
+        material: p.material || { diffuse: [1, 1, 1], emissive: [0, 0, 0], alpha: 1 },
+        skinned: false,
+      })),
+    );
     holder.add(group);
     group.children.forEach((mesh, i) => {
       mesh.matrixAutoUpdate = false;
@@ -303,8 +310,14 @@ function poseNpcAsm(opts) {
 // answers can disagree (a group the listing names and the law refuses)
 // and the page shows the refusal instead of freezing on the listing.
 const anim = {
-  tracks: null, groups: null, keys: [], clip: null,
-  accumRoot: null, playing: null, last: 0, seek: null,
+  tracks: null,
+  groups: null,
+  keys: [],
+  clip: null,
+  accumRoot: null,
+  playing: null,
+  last: 0,
+  seek: null,
 };
 const animSel = $('animsel');
 
@@ -319,8 +332,7 @@ function wireAnimation(nif) {
   // Rule 56's pick, made ONCE per track set instead of every frame -
   // the same skeleton and tracks always answer the same ref, so the
   // per-frame recompute was waste wearing a second-home face.
-  anim.accumRoot =
-    loaded && loaded.skeleton ? accumRootRef(loaded.skeleton, anim.tracks) : null;
+  anim.accumRoot = loaded && loaded.skeleton ? accumRootRef(loaded.skeleton, anim.tracks) : null;
   anim.playing = null;
   anim.clip = null;
   anim.seek = null;
@@ -380,13 +392,24 @@ function startGroup(name) {
 function affineToMatrix4(m) {
   // Row-major {a,t} into THREE's column-major Matrix4 via set(row-major).
   return new THREE.Matrix4().set(
-    m.a[0], m.a[1], m.a[2], m.t[0],
-    m.a[3], m.a[4], m.a[5], m.t[1],
-    m.a[6], m.a[7], m.a[8], m.t[2],
-    0, 0, 0, 1,
+    m.a[0],
+    m.a[1],
+    m.a[2],
+    m.t[0],
+    m.a[3],
+    m.a[4],
+    m.a[5],
+    m.t[1],
+    m.a[6],
+    m.a[7],
+    m.a[8],
+    m.t[2],
+    0,
+    0,
+    0,
+    1,
   );
 }
-
 
 // ADD-PART MODE: a character is base_anim + body parts, joined by bone
 // name. With the toggle on, the next mesh picked or dropped BINDS onto
@@ -539,7 +562,7 @@ function resolveTexture(fileName, clampMode) {
   const bytes = textureBytes(name);
   if (bytes) {
     try {
-      const img = decodeTextureImage(name, bytes);   // MW-D34: by extension (imagemanager.cpp:104-118)
+      const img = decodeTextureImage(name, bytes); // MW-D34: by extension (imagemanager.cpp:104-118)
       const mip = img.mips[0];
       tex = new THREE.DataTexture(mip.rgba, mip.width, mip.height, THREE.RGBAFormat);
       // DDS rows are top-down and NIF UVs put v=0 at the top - with
@@ -708,14 +731,11 @@ async function takeFiles(files) {
         esm = parseEsm(bytes);
         esmSkins = indexSkins(esm.bodies);
         refreshNpcList();
-        setStatus(
-          `${f.name}: ${esm.npcs.size} NPCs, ${esm.bodies.size} body parts, ${esm.races.size} races`,
-        );
+        setStatus(`${f.name}: ${esm.npcs.size} NPCs, ${esm.bodies.size} body parts, ${esm.races.size} races`);
       } catch (err) {
         setStatus(`${f.name}\n${err.message}`);
       }
-    }
-    else if (lower.endsWith('.dds')) {
+    } else if (lower.endsWith('.dds')) {
       looseTextures.set(normalizeBsaPath(`textures\\${f.name}`), bytes);
       looseTextures.set(normalizeBsaPath(f.name), bytes);
       textureCache.clear();
@@ -777,9 +797,7 @@ $('twoside').addEventListener('click', () => {
   twoSided = !twoSided;
   $('twoside').classList.toggle('on', twoSided);
   if (loaded)
-    loaded.group.traverse(
-      (o) => o.material && (o.material.side = twoSided ? THREE.DoubleSide : THREE.FrontSide),
-    );
+    loaded.group.traverse((o) => o.material && (o.material.side = twoSided ? THREE.DoubleSide : THREE.FrontSide));
 });
 $('addpart').addEventListener('click', () => {
   addPartMode = !addPartMode;
@@ -825,50 +843,74 @@ requestAnimationFrame(tick);
 // That file is what the curation table (mwFaceTable.json) is authored
 // against.
 async function exportFaceSheet() {
-  if (!esm || !bsa) { setStatus('face sheet needs an .esm and the .bsa attached'); return; }
-  const wasSpinning = spinning; spinning = false;
+  if (!esm || !bsa) {
+    setStatus('face sheet needs an .esm and the .bsa attached');
+    return;
+  }
+  const wasSpinning = spinning;
+  spinning = false;
   const races = [...esm.races.values()].filter((r) => r.playable).sort((a, b) => (a.id < b.id ? -1 : 1));
   const pool = (race, female, part) => {
-    const all = [...esm.bodies.values()].filter((b) => b.kind === 0 && !b.vampire && b.playable
-      && b.race === race && b.part === part && !String(b.id).endsWith('1st'));
+    const all = [...esm.bodies.values()].filter(
+      (b) =>
+        b.kind === 0 && !b.vampire && b.playable && b.race === race && b.part === part && !String(b.id).endsWith('1st'),
+    );
     const sexed = all.filter((b) => b.female === female);
     return (sexed.length ? sexed : all.filter((b) => !b.female)).sort((a, b) => (a.id < b.id ? -1 : 1));
   };
-  const CELL = 112; const LABEL = 26; const PAD = 6;
+  const CELL = 112;
+  const LABEL = 26;
+  const PAD = 6;
   const rows = [];
-  const own = [];   // MW-HEADS1: a race and sex the port's own heads stand for - the archives' are not its pools
+  const own = []; // MW-HEADS1: a race and sex the port's own heads stand for - the archives' are not its pools
   for (const race of races) {
     for (const female of [false, true]) {
-      if (ownFacePools(race.id, female)) { own.push(`${race.id} ${female ? 'female' : 'male'}`); continue; }
-      const heads = pool(race.id, female, 0); const hairs = pool(race.id, female, 1);
+      if (ownFacePools(race.id, female)) {
+        own.push(`${race.id} ${female ? 'female' : 'male'}`);
+        continue;
+      }
+      const heads = pool(race.id, female, 0);
+      const hairs = pool(race.id, female, 1);
       if (!heads.length && !hairs.length) continue;
       rows.push({ title: `${race.id} ${female ? 'female' : 'male'}`, heads, hairs });
     }
   }
-  const cols = Math.max(1, ...rows.flatMap((r) => [r.heads.length, r.hairs.length])) * 2;   // front + back
+  const cols = Math.max(1, ...rows.flatMap((r) => [r.heads.length, r.hairs.length])) * 2; // front + back
   const sheet = document.createElement('canvas');
   sheet.width = PAD + cols * (CELL + PAD);
   sheet.height = rows.reduce((h, r) => h + 22 + 2 * (CELL + LABEL + PAD), PAD);
   const g = sheet.getContext('2d');
-  g.fillStyle = '#17140f'; g.fillRect(0, 0, sheet.width, sheet.height);
+  g.fillStyle = '#17140f';
+  g.fillRect(0, 0, sheet.width, sheet.height);
   g.font = '11px monospace';
   const snap = (rec, x, y, yawOffset) => {
     const key = normalizeBsaPath(`meshes\\${rec.model}`);
-    if (!bsa.has(key)) { g.fillStyle = '#c66'; g.fillText('mesh missing', x + 4, y + CELL / 2); return; }
+    if (!bsa.has(key)) {
+      g.fillStyle = '#c66';
+      g.fillText('mesh missing', x + 4, y + CELL / 2);
+      return;
+    }
     loadNifBytes(bsa.get(key), rec.id);
-    orbit.pitch = 0.05; orbit.yaw = yawOffset;
+    orbit.pitch = 0.05;
+    orbit.yaw = yawOffset;
     frameCamera();
     orbit.dist *= 0.7;
     applyOrbit();
     renderer.setSize(CELL, CELL, false);
-    camera.aspect = 1; camera.updateProjectionMatrix();
+    camera.aspect = 1;
+    camera.updateProjectionMatrix();
     renderer.render(scene, camera);
     g.drawImage(renderer.domElement, 0, 0, renderer.domElement.width, renderer.domElement.height, x, y, CELL, CELL);
   };
   let y = PAD;
   for (const row of rows) {
-    g.fillStyle = '#e0a458'; g.fillText(row.title, PAD, y + 14); y += 22;
-    for (const [kind, list] of [['head', row.heads], ['hair', row.hairs]]) {
+    g.fillStyle = '#e0a458';
+    g.fillText(row.title, PAD, y + 14);
+    y += 22;
+    for (const [kind, list] of [
+      ['head', row.heads],
+      ['hair', row.hairs],
+    ]) {
       let x = PAD;
       for (let i = 0; i < list.length; i++) {
         const rec = list[i];
@@ -889,13 +931,18 @@ async function exportFaceSheet() {
     }
   }
   renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
-  camera.aspect = canvas.clientWidth / Math.max(1, canvas.clientHeight); camera.updateProjectionMatrix();
+  camera.aspect = canvas.clientWidth / Math.max(1, canvas.clientHeight);
+  camera.updateProjectionMatrix();
   spinning = wasSpinning;
   const a = document.createElement('a');
   a.download = 'mw-face-sheet.png';
   a.href = sheet.toDataURL('image/png');
   a.click();
-  setStatus(`face sheet: ${rows.length} race/sex rows exported - upload it back and the table gets written by eye`
-    + (own.length ? ` (the port's own heads stand for ${own.join(', ')} - characters/ownModels/ownHeadModels.js)` : ''));
+  setStatus(
+    `face sheet: ${rows.length} race/sex rows exported - upload it back and the table gets written by eye` +
+      (own.length ? ` (the port's own heads stand for ${own.join(', ')} - characters/ownModels/ownHeadModels.js)` : ''),
+  );
 }
-$('facesheet')?.addEventListener('click', () => { exportFaceSheet(); });
+$('facesheet')?.addEventListener('click', () => {
+  exportFaceSheet();
+});

@@ -22,19 +22,31 @@ import { ARMOR_MATERIAL } from '../armorMaterials.js';
 
 /** ItemHelper.GetArmorDyeColor, verbatim (default: Unchanged). */
 export function armorDyeColor(material) {
-  const M = ARMOR_MATERIAL, D = DYE_COLORS;
+  const M = ARMOR_MATERIAL,
+    D = DYE_COLORS;
   switch (material) {
-    case M.Iron: return D.Iron;
-    case M.Steel: return D.Steel;
-    case M.Silver: return D.Silver;
-    case M.Elven: return D.Elven;
-    case M.Dwarven: return D.Dwarven;
-    case M.Mithril: return D.Mithril;
-    case M.Adamantium: return D.Adamantium;
-    case M.Ebony: return D.Ebony;
-    case M.Orcish: return D.Orcish;
-    case M.Daedric: return D.Daedric;
-    default: return D.Unchanged;
+    case M.Iron:
+      return D.Iron;
+    case M.Steel:
+      return D.Steel;
+    case M.Silver:
+      return D.Silver;
+    case M.Elven:
+      return D.Elven;
+    case M.Dwarven:
+      return D.Dwarven;
+    case M.Mithril:
+      return D.Mithril;
+    case M.Adamantium:
+      return D.Adamantium;
+    case M.Ebony:
+      return D.Ebony;
+    case M.Orcish:
+      return D.Orcish;
+    case M.Daedric:
+      return D.Daedric;
+    default:
+      return D.Unchanged;
   }
 }
 
@@ -51,9 +63,12 @@ export function itemDyeTarget(item) {
 /** The item's dyeColor. */
 export function itemDyeColor(item) {
   if (!item) return DYE_COLORS.Unchanged;
-  if (item.artifact) return DYE_COLORS.Unchanged;   // SetArtifact :611, the last writer
-  if (item.group === 'Weapons') return Number.isFinite(item.dyeColor) ? item.dyeColor : weaponDyeColor(item.material ?? item.nativeMaterialValue);
-  if (item.group === 'Armor') return Number.isFinite(item.dyeColor) ? item.dyeColor : armorDyeColor(item.material ?? item.nativeMaterialValue);
-  if (item.group === 'MensClothing' || item.group === 'WomensClothing') return Number.isFinite(item.dye) ? item.dye : Number.isFinite(item.dyeColor) ? item.dyeColor : DYE_COLORS.Unchanged;
+  if (item.artifact) return DYE_COLORS.Unchanged; // SetArtifact :611, the last writer
+  if (item.group === 'Weapons')
+    return Number.isFinite(item.dyeColor) ? item.dyeColor : weaponDyeColor(item.material ?? item.nativeMaterialValue);
+  if (item.group === 'Armor')
+    return Number.isFinite(item.dyeColor) ? item.dyeColor : armorDyeColor(item.material ?? item.nativeMaterialValue);
+  if (item.group === 'MensClothing' || item.group === 'WomensClothing')
+    return Number.isFinite(item.dye) ? item.dye : Number.isFinite(item.dyeColor) ? item.dyeColor : DYE_COLORS.Unchanged;
   return Number.isFinite(item.dyeColor) ? item.dyeColor : DYE_COLORS.Unchanged;
 }

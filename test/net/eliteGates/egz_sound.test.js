@@ -290,7 +290,7 @@ test('EG-ZH THE PEERS DOWN (net/peer/peerFx.js, systems/eliteGates/egMix.js): wi
   assert.match(RP, /function peerSound\(audio, clip, at, volume\) \{\n  peerHeard\(\(\) => \{/, 'the walkers\' steps and swings');
   assert.match(RP, /if \(falloff > 0\) peerHeard\(\(\) => audio\.playOneShot\(peerDeathSound\(peer\?\.look\), falloff\)\);/, 'a peer\'s cry');
   assert.match(PC, /peerHeard\(\(\) => this\.audio\.play3d\(c\.key, at, Math\.min\(1, vol\)/, 'a peer\'s climb');
-  assert.match(PF, /if \(!dup\) peerHeard\(\(\) => \(q\.hurt \? play\?\.hurt : play\?\.blow\)\?\.\(/, 'the blows and hurts');
+  assert.match(PF, /if \(!dup\)\n\s*peerHeard\(\(\) => \(q\.hurt \? play\?\.hurt : play\?\.blow\)\?\.\(/, 'the blows and hurts');
   setPeerSoundScope(null);
 });
 

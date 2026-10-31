@@ -38,8 +38,8 @@
   {
     "name": "TESA13-key-off-by-one",
     "file": "src/world/arenaRoads.js",
-    "old": "export const beyondPixel = (key) => [(key % 65536) - 32768,",
-    "new": "export const beyondPixel = (key) => [(key % 65536) - 32767,",
+    "old": "export const beyondPixel = (key) => [(key % 65536) - 32768, Math.floor(key / 65536) - 32768];",
+    "new": "export const beyondPixel = (key) => [(key % 65536) - 32767, Math.floor(key / 65536) - 32768];",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "TESA13-atlas-asks-the-bay",
     "file": "src/world/tamrielAtlas.js",
-    "old": "        if (inBay(x, y)) continue;",
-    "new": "",
+    "old": "        if (inBay(x, y)) continue;\n        const p = placeAt(x, y);",
+    "new": "        const p = placeAt(x, y);",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "TESA13-atlas-first-in-first-out",
     "file": "src/world/tamrielAtlas.js",
-    "old": "        tiles.delete(key);   // read again: to the back of the line\n",
-    "new": "",
+    "old": "        tiles.delete(key); // read again: to the back of the line\n        tiles.set(key, tile);",
+    "new": "        tiles.set(key, tile);",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "TESA13-atlas-one-short",
     "file": "src/world/tamrielAtlas.js",
-    "old": "      while (tiles.size > ATLAS_TILES_KEPT)",
-    "new": "      while (tiles.size >= ATLAS_TILES_KEPT)",
+    "old": "      while (tiles.size > ATLAS_TILES_KEPT) tiles.delete(/** @type {string} */ (tiles.keys().next().value));",
+    "new": "      while (tiles.size >= ATLAS_TILES_KEPT) tiles.delete(/** @type {string} */ (tiles.keys().next().value));",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]
@@ -201,7 +201,7 @@
   {
     "name": "TESA13-atlas-stamp-ignored",
     "file": "src/world/tamrielAtlas.js",
-    "old": "      if (!sameStamp(kept, s)) { tiles.clear(); kept = s; }",
+    "old": "      if (!sameStamp(kept, s)) {\n        tiles.clear();\n        kept = s;\n      }",
     "new": "      if (!kept) kept = s;",
     "tests": [
       "test/tesa13_mapink.test.js"
@@ -210,8 +210,8 @@
   {
     "name": "TESA13-atlas-capitals-unstamped",
     "file": "src/world/tamrielAtlas.js",
-    "old": "arenaPlacesVersion(), capitalsVersion()];",
-    "new": "arenaPlacesVersion()];",
+    "old": "export const atlasStamp = () => [tamrielLandVersion(), tamrielFit(), arenaPlacesVersion(), capitalsVersion()];",
+    "new": "export const atlasStamp = () => [tamrielLandVersion(), tamrielFit(), arenaPlacesVersion()];",
     "tests": [
       "test/tesa13_mapink.test.js"
     ]

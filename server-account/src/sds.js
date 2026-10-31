@@ -73,21 +73,35 @@ export async function claimSd({ db, nowS, subtle, rand }, player, receipt, publi
   const c = v.claims;
   if (c.s !== player.id) return { error: 'not-yours' };
   if (!player.handle) return { recorded: false, why: 'guest', ...(await sdRecordOf({ db }, player.id)) };
-  const draw = rand(new Uint8Array(4));   // AUDIT SD III (R4): the claim's own seed - nothing the page can read beforehand
+  const draw = rand(new Uint8Array(4)); // AUDIT SD III (R4): the claim's own seed - nothing the page can read beforehand
   const { title, aura } = sdHonoursRoll(((draw[0] << 24) | (draw[1] << 16) | (draw[2] << 8) | draw[3]) >>> 0);
   const bits = (title ? SD_HONOUR_TITLE : 0) | (aura ? SD_HONOUR_AURA : 0);
-  const prior = Number(player.sd_honours) || 0;   // HONOUR-BANNER (AUDIT FIVE-ASKS E1): what the account held before this claim, off the session's row
+  const prior = Number(player.sd_honours) || 0; // HONOUR-BANNER (AUDIT FIVE-ASKS E1): what the account held before this claim, off the session's row
   const nonce = hex(rand(new Uint8Array(8)));
   const [row, , count] = await db.batch([
     // THE ROW, stamped with this claim's nonce
-    db.prepare('INSERT OR IGNORE INTO sd_kills (slot, account, boss, earned, lv, title, aura, nonce, at, body) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)')
-      .bind(c.d, player.id, c.b, c.x, c.l, title ? 1 : 0, aura ? 1 : 0, nonce, nowS, c.m ? JSON.stringify(c.m) : null),   // INT14: the relay's count, kept
+    db
+      .prepare(
+        'INSERT OR IGNORE INTO sd_kills (slot, account, boss, earned, lv, title, aura, nonce, at, body) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)',
+      )
+      .bind(c.d, player.id, c.b, c.x, c.l, title ? 1 : 0, aura ? 1 : 0, nonce, nowS, c.m ? JSON.stringify(c.m) : null), // INT14: the relay's count, kept
     // THE GRANTS, by THIS claim's row alone - held for good
-    db.prepare('UPDATE players SET sd_honours = sd_honours | ?2 WHERE id = ?1 AND ?2 != 0 AND EXISTS (SELECT 1 FROM sd_kills WHERE slot = ?3 AND account = ?1 AND nonce = ?4)')
+    db
+      .prepare(
+        'UPDATE players SET sd_honours = sd_honours | ?2 WHERE id = ?1 AND ?2 != 0 AND EXISTS (SELECT 1 FROM sd_kills WHERE slot = ?3 AND account = ?1 AND nonce = ?4)',
+      )
       .bind(player.id, bits, c.d, nonce),
     db.prepare('SELECT COUNT(*) AS n FROM sd_kills WHERE account = ?1').bind(player.id),
   ]);
   const broken = int(count?.results?.[0]?.n);
   if (!(Number(row?.meta?.changes ?? 0) > 0)) return { recorded: false, why: 'claimed', broken };
-  return { recorded: true, slot: c.d, title, aura, titleNew: title && !(prior & SD_HONOUR_TITLE), auraNew: aura && !(prior & SD_HONOUR_AURA), broken };
+  return {
+    recorded: true,
+    slot: c.d,
+    title,
+    aura,
+    titleNew: title && !(prior & SD_HONOUR_TITLE),
+    auraNew: aura && !(prior & SD_HONOUR_AURA),
+    broken,
+  };
 }

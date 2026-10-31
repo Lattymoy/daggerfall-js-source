@@ -2,8 +2,8 @@
   {
     "name": "MD-the-repeat-kept",
     "file": "src/world/smallerDungeons.js",
-    "old": "    if (laid.has(b.blockName)) {\n",
-    "new": "    if (false) {\n",
+    "old": "    if (laid.has(b.blockName)) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/quest/mediumdistinct.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "MD-a-second-draw",
     "file": "src/world/smallerDungeons.js",
-    "old": "      const at = pool.findIndex((p) => p.blockName === b.blockName);\n",
-    "new": "      const at = randomRange(0, pool.length);\n",
+    "old": "      const at = pool.findIndex((p) => p.blockName === b.blockName);",
+    "new": "      const at = randomRange(0, pool.length);",
     "tests": [
       "test/systems/quest/mediumdistinct.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "MD-the-walk-backwards",
     "file": "src/world/smallerDungeons.js",
-    "old": "        const other = pool[(at + k) % pool.length];\n",
-    "new": "        const other = pool[(at + pool.length - k) % pool.length];\n",
+    "old": "        const other = pool[(at + k) % pool.length];",
+    "new": "        const other = pool[(at + pool.length - k) % pool.length];",
     "tests": [
       "test/systems/quest/mediumdistinct.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "MD-the-ring-touched",
     "file": "src/world/smallerDungeons.js",
-    "old": "    if (/^b/i.test(b.blockName)) continue;\n    if (laid.has(b.blockName)) {\n",
-    "new": "    if (laid.has(b.blockName)) {\n",
+    "old": "    if (/^b/i.test(b.blockName)) continue;\n    if (laid.has(b.blockName)) {",
+    "new": "    if (laid.has(b.blockName)) {",
     "tests": [
       "test/systems/quest/mediumdistinct.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "MD-a-laid-block-taken",
     "file": "src/world/smallerDungeons.js",
-    "old": "        if (laid.has(other.blockName)) continue;\n",
-    "new": "",
+    "old": "        if (laid.has(other.blockName)) continue;\n        layout[i] = { ...other, x: b.x, z: b.z, isStartingBlock: b.isStartingBlock };",
+    "new": "        layout[i] = { ...other, x: b.x, z: b.z, isStartingBlock: b.isStartingBlock };",
     "tests": [
       "test/systems/quest/mediumdistinct.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "MD-the-clone-unmarked",
     "file": "src/world/smallerDungeons.js",
-    "old": "...(distinct ? { distinct: true } : {})",
-    "new": "...({})",
+    "old": "  return {\n    ...dfLocation,\n    dungeon: { ...dfLocation.dungeon, blocks: layout, [mark]: true, ...(distinct ? { distinct: true } : {}) },\n  };",
+    "new": "  return { ...dfLocation, dungeon: { ...dfLocation.dungeon, blocks: layout, [mark]: true, ...{} } };",
     "tests": [
       "test/systems/quest/mediumdistinct.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "MD-the-stamp-unsplit",
     "file": "src/world/smallerDungeons.js",
-    "old": "if (isMediumDungeon(dfLocation)) return dfLocation.dungeon.distinct === true ? MEDIUM_DISTINCT_STAMP : MEDIUM_DUNGEONS_STATE;",
-    "new": "if (isMediumDungeon(dfLocation)) return MEDIUM_DUNGEONS_STATE;",
+    "old": "  if (isMediumDungeon(dfLocation))\n    return dfLocation.dungeon.distinct === true ? MEDIUM_DISTINCT_STAMP : MEDIUM_DUNGEONS_STATE;",
+    "new": "  if (isMediumDungeon(dfLocation)) return MEDIUM_DUNGEONS_STATE;",
     "tests": [
       "test/systems/quest/mediumdistinct.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "MD-relay-the-compare-skipped",
     "file": "src/systems/quest/questRepair.js",
-    "old": "  if (!relayDungeonPlaces(quest, { only }).moved) return false;\n",
-    "new": "  relayDungeonPlaces(quest, { only });\n",
+    "old": "  if (!relayDungeonPlaces(quest, { only }).moved) return false;",
+    "new": "  relayDungeonPlaces(quest, { only });",
     "tests": [
       "test/systems/quest/mediumdistinct.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "MD-relay-nothing-put-back",
     "file": "src/systems/quest/questRepair.js",
-    "old": "  if (!relayDungeonPlaces(quest, { only }).moved) return false;\n  putBackPlacements(quest, env);\n",
-    "new": "  if (!relayDungeonPlaces(quest, { only }).moved) return false;\n",
+    "old": "  if (!relayDungeonPlaces(quest, { only }).moved) return false;\n  putBackPlacements(quest, env);\n  return true;",
+    "new": "  if (!relayDungeonPlaces(quest, { only }).moved) return false;\n  return true;",
     "tests": [
       "test/systems/quest/mediumdistinct.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "MD-relay-an-unmoved-build-read",
     "file": "src/systems/quest/questRepair.js",
-    "old": "  const only = (sd, location) => location.dungeon?.distinct === true\n    && (",
-    "new": "  const only = (sd, location) => true\n    && (",
+    "old": "    location.dungeon?.distinct === true &&\n    (online || (machine?.getSiteLinks?.(SITE_TYPES.Dungeon, sd.mapId) ?? []).length > 0);",
+    "new": "    true && (online || (machine?.getSiteLinks?.(SITE_TYPES.Dungeon, sd.mapId) ?? []).length > 0);",
     "tests": [
       "test/systems/quest/mediumdistinct.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "MD-relay-an-unlinked-dungeon-read-offline",
     "file": "src/systems/quest/questRepair.js",
-    "old": "    && (online || (machine?.getSiteLinks?.(SITE_TYPES.Dungeon, sd.mapId) ?? []).length > 0);",
-    "new": "    && true;",
+    "old": "  const only = (sd, location) =>\n    location.dungeon?.distinct === true &&\n    (online || (machine?.getSiteLinks?.(SITE_TYPES.Dungeon, sd.mapId) ?? []).length > 0);",
+    "new": "  const only = (sd, location) => location.dungeon?.distinct === true && true;",
     "tests": [
       "test/systems/quest/mediumdistinct.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "MD-relay-online-asks-a-link",
     "file": "src/systems/quest/questRepair.js",
-    "old": "    && (online || (machine?.getSiteLinks?.(SITE_TYPES.Dungeon, sd.mapId) ?? []).length > 0);",
-    "new": "    && ((machine?.getSiteLinks?.(SITE_TYPES.Dungeon, sd.mapId) ?? []).length > 0);",
+    "old": "    location.dungeon?.distinct === true &&\n    (online || (machine?.getSiteLinks?.(SITE_TYPES.Dungeon, sd.mapId) ?? []).length > 0);",
+    "new": "    location.dungeon?.distinct === true && (machine?.getSiteLinks?.(SITE_TYPES.Dungeon, sd.mapId) ?? []).length > 0;",
     "tests": [
       "test/systems/quest/mediumdistinct.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "MD-relay-the-only-ignored",
     "file": "src/systems/quest/questRepair.js",
-    "old": "    if (only && !only(sd, location)) continue;\n",
-    "new": "",
+    "old": "    if (only && !only(sd, location)) continue;\n    let markers;",
+    "new": "    let markers;",
     "tests": [
       "test/systems/quest/mediumdistinct.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "MD-relay-the-share-unlaid",
     "file": "src/systems/quest/questShare.js",
-    "old": "    relayQuestMovedLayout(q, machine, { carriesQuestItem: ctx.carriesQuestItem ?? null }, online);\n",
-    "new": "",
+    "old": "    relayQuestMovedLayout(q, machine, { carriesQuestItem: ctx.carriesQuestItem ?? null }, online);\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/quest/sd20g_delve.test.js"
     ]

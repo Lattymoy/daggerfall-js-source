@@ -42,12 +42,35 @@ export const BRIDGE = Object.freeze({
   minSine: 0.35,
   /** a road's: stone, two tiles wide as the road (roadCurves.js ROAD_HALF), its arches no wider than `span` between piers
    *  `pier` thick, a `parapet` of `wall` thickness, its walls `foot` into the ground */
-  road: Object.freeze({ width: 12.8, clearance: 4.5, deck: 1, bank: 4, ramp: 8, span: 26, pier: 2.4, parapet: 1.1, wall: 0.5, foot: 2.5 }),
+  road: Object.freeze({
+    width: 12.8,
+    clearance: 4.5,
+    deck: 1,
+    bank: 4,
+    ramp: 8,
+    span: 26,
+    pier: 2.4,
+    parapet: 1.1,
+    wall: 0.5,
+    foot: 2.5,
+  }),
   /** a track's: timber, a cart's width, its trestles no further apart than `span` */
-  track: Object.freeze({ width: 4.8, clearance: 2.5, deck: 0.4, bank: 2, ramp: 8, span: 6, pier: 0.35, parapet: 1, wall: 0.2, foot: 1.5 }),
+  track: Object.freeze({
+    width: 4.8,
+    clearance: 2.5,
+    deck: 0.4,
+    bank: 2,
+    ramp: 8,
+    span: 6,
+    pier: 0.35,
+    parapet: 1,
+    wall: 0.2,
+    foot: 1.5,
+  }),
 });
 /** A pixel's side, metres, and a tile's. */
-const PIXEL_M = 819.2, TILE_M = PIXEL_M / CURVE_DIM;
+const PIXEL_M = 819.2,
+  TILE_M = PIXEL_M / CURVE_DIM;
 /** CYRODIIL-WATERS' metres a kernel unit (tamrielWaters.js UNIT_M): a river's level in the terrain's own frame. */
 const UNIT_M = 1.25;
 /** The index's run of segments (tamrielWaters.js RUN). */
@@ -74,22 +97,44 @@ export function crossingsOf(px, py, byteAt, law = tamrielWaters()) {
     for (const q of curvesOf(bits).curves) {
       const p = curvePolyline(q);
       for (let s = 0; s < CURVE_STEPS; s++) {
-        const ax = px + p[2 * s] / CURVE_DIM, ay = py + 1 - p[2 * s + 1] / CURVE_DIM;
-        const bx = px + p[2 * s + 2] / CURVE_DIM, by = py + 1 - p[2 * s + 3] / CURVE_DIM;
+        const ax = px + p[2 * s] / CURVE_DIM,
+          ay = py + 1 - p[2 * s + 1] / CURVE_DIM;
+        const bx = px + p[2 * s + 2] / CURVE_DIM,
+          by = py + 1 - p[2 * s + 3] / CURVE_DIM;
         for (const id of ids) {
-          const ri = Math.floor(id / 65536), i0 = id - ri * 65536, r = law.rivers[ri];
+          const ri = Math.floor(id / 65536),
+            i0 = id - ri * 65536,
+            r = law.rivers[ri];
           for (let i = i0; i <= Math.min(r.n - 2, i0 + RUN - 1); i++) {
-            const cx = r.pts[2 * i], cy = r.pts[2 * i + 1], dx = r.pts[2 * i + 2], dy = r.pts[2 * i + 3];
+            const cx = r.pts[2 * i],
+              cy = r.pts[2 * i + 1],
+              dx = r.pts[2 * i + 2],
+              dy = r.pts[2 * i + 3];
             const den = (bx - ax) * (dy - cy) - (by - ay) * (dx - cx);
             if (den === 0) continue;
-            const t = ((cx - ax) * (dy - cy) - (cy - ay) * (dx - cx)) / den, u = ((cx - ax) * (by - ay) - (cy - ay) * (bx - ax)) / den;
-            if (t < 0 || t > 1 || u < 0 || u >= 1) continue;   // a river's vertex one segment's; a curve's ends both its segments' (the pixel's edge is the curve's end - the owner below, and the merge, make it one)
-            const x = ax + (bx - ax) * t, y = ay + (by - ay) * t;
-            if (Math.floor(x) !== px || Math.floor(y) !== py) continue;   // the pixel that holds the point owns it
-            const rl = Math.sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay)) || 1, vl = Math.sqrt((dx - cx) * (dx - cx) + (dy - cy) * (dy - cy)) || 1;
-            const ux = (bx - ax) / rl, uy = (by - ay) / rl, vx = (dx - cx) / vl, vy = (dy - cy) / vl;
-            found.push({ kind, x, y, ux, uy, sin: Math.abs(ux * vy - uy * vx), width: r.width[i] + (r.width[i + 1] - r.width[i]) * u,
-              level: (r.level[i] + (r.level[i + 1] - r.level[i]) * u) * UNIT_M, river: r.key });
+            const t = ((cx - ax) * (dy - cy) - (cy - ay) * (dx - cx)) / den,
+              u = ((cx - ax) * (by - ay) - (cy - ay) * (bx - ax)) / den;
+            if (t < 0 || t > 1 || u < 0 || u >= 1) continue; // a river's vertex one segment's; a curve's ends both its segments' (the pixel's edge is the curve's end - the owner below, and the merge, make it one)
+            const x = ax + (bx - ax) * t,
+              y = ay + (by - ay) * t;
+            if (Math.floor(x) !== px || Math.floor(y) !== py) continue; // the pixel that holds the point owns it
+            const rl = Math.sqrt((bx - ax) * (bx - ax) + (by - ay) * (by - ay)) || 1,
+              vl = Math.sqrt((dx - cx) * (dx - cx) + (dy - cy) * (dy - cy)) || 1;
+            const ux = (bx - ax) / rl,
+              uy = (by - ay) / rl,
+              vx = (dx - cx) / vl,
+              vy = (dy - cy) / vl;
+            found.push({
+              kind,
+              x,
+              y,
+              ux,
+              uy,
+              sin: Math.abs(ux * vy - uy * vx),
+              width: r.width[i] + (r.width[i + 1] - r.width[i]) * u,
+              level: (r.level[i] + (r.level[i + 1] - r.level[i]) * u) * UNIT_M,
+              river: r.key,
+            });
           }
         }
       }
@@ -98,7 +143,8 @@ export function crossingsOf(px, py, byteAt, law = tamrielWaters()) {
     // one that meets it most nearly square stands, and a track's whose deck meets a road's is carried by the road's
     found.sort((a, b) => b.sin - a.sin || a.y - b.y || a.x - b.x);
     for (const c of found) {
-      const meets = (o) => o.river === c.river && (o.kind === c.kind || o.kind === 'road') && decksMeet(bridgeShape(o), bridgeShape(c));
+      const meets = (o) =>
+        o.river === c.river && (o.kind === c.kind || o.kind === 'road') && decksMeet(bridgeShape(o), bridgeShape(c));
       if (!out.some(meets)) out.push(c);
     }
   }
@@ -107,8 +153,13 @@ export function crossingsOf(px, py, byteAt, law = tamrielWaters()) {
 
 /** Would two bridges' decks (abutment to abutment, parapet to parapet) meet - the separating axes of two rectangles. */
 export function decksMeet(p, q) {
-  const rect = (b) => { const k = b.kind === 'road' ? BRIDGE.road : BRIDGE.track; return { x: b.x * PIXEL_M, y: b.y * PIXEL_M, u: [b.ux, b.uy], v: [-b.uy, b.ux], a: b.abut, w: k.width / 2 }; };
-  const A = rect(p), B = rect(q), d = [B.x - A.x, B.y - A.y];
+  const rect = (b) => {
+    const k = b.kind === 'road' ? BRIDGE.road : BRIDGE.track;
+    return { x: b.x * PIXEL_M, y: b.y * PIXEL_M, u: [b.ux, b.uy], v: [-b.uy, b.ux], a: b.abut, w: k.width / 2 };
+  };
+  const A = rect(p),
+    B = rect(q),
+    d = [B.x - A.x, B.y - A.y];
   for (const L of [A.u, A.v, B.u, B.v]) {
     const r = (R) => R.a * Math.abs(R.u[0] * L[0] + R.u[1] * L[1]) + R.w * Math.abs(R.v[0] * L[0] + R.v[1] * L[1]);
     if (Math.abs(d[0] * L[0] + d[1] * L[1]) > r(A) + r(B)) return false;
@@ -136,10 +187,13 @@ const _memo = new Map();
  */
 export function bridgesOf(px, py, byteAt, law = tamrielWaters()) {
   if (!law) return [];
-  const pk = px * 65536 + py, key = `${byteAt('roads', px, py)},${byteAt('tracks', px, py)}`;
+  const pk = px * 65536 + py,
+    key = `${byteAt('roads', px, py)},${byteAt('tracks', px, py)}`;
   const hit = _memo.get(pk);
   if (hit && hit.law === law && hit.key === key) return hit.list;
-  const list = crossingsOf(px, py, byteAt, law).filter((c) => c.width > BRIDGE.fordMax).map(bridgeShape);
+  const list = crossingsOf(px, py, byteAt, law)
+    .filter((c) => c.width > BRIDGE.fordMax)
+    .map(bridgeShape);
   if (_memo.size > 4096) _memo.clear();
   _memo.set(pk, { law, key, list });
   return list;
@@ -158,16 +212,33 @@ export function inkBridgeLaw(ink) {
   let law = _inkLaws.get(ink);
   if (law) return law;
   const index = new Map();
-  const rivers = ink.rivers.map((r) => ({ key: r.key, name: r.key, n: r.n, pts: r.pts, width: r.width, level: new Float32Array(r.n) }));
+  const rivers = ink.rivers.map((r) => ({
+    key: r.key,
+    name: r.key,
+    n: r.n,
+    pts: r.pts,
+    width: r.width,
+    level: new Float32Array(r.n),
+  }));
   rivers.forEach((r, ri) => {
     for (let i0 = 0; i0 < r.n - 1; i0 += RUN) {
-      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-      for (let i = i0; i <= Math.min(r.n - 1, i0 + RUN); i++) { x0 = Math.min(x0, r.pts[2 * i]); x1 = Math.max(x1, r.pts[2 * i]); y0 = Math.min(y0, r.pts[2 * i + 1]); y1 = Math.max(y1, r.pts[2 * i + 1]); }
-      for (let y = Math.floor(y0) - 1; y <= Math.floor(y1) + 1; y++) for (let x = Math.floor(x0) - 1; x <= Math.floor(x1) + 1; x++) {
-        const k = x * 65536 + y, a = index.get(k) ?? [];
-        if (a[a.length - 1] !== ri * 65536 + i0) a.push(ri * 65536 + i0);
-        index.set(k, a);
+      let x0 = Infinity,
+        y0 = Infinity,
+        x1 = -Infinity,
+        y1 = -Infinity;
+      for (let i = i0; i <= Math.min(r.n - 1, i0 + RUN); i++) {
+        x0 = Math.min(x0, r.pts[2 * i]);
+        x1 = Math.max(x1, r.pts[2 * i]);
+        y0 = Math.min(y0, r.pts[2 * i + 1]);
+        y1 = Math.max(y1, r.pts[2 * i + 1]);
       }
+      for (let y = Math.floor(y0) - 1; y <= Math.floor(y1) + 1; y++)
+        for (let x = Math.floor(x0) - 1; x <= Math.floor(x1) + 1; x++) {
+          const k = x * 65536 + y,
+            a = index.get(k) ?? [];
+          if (a[a.length - 1] !== ri * 65536 + i0) a.push(ri * 65536 + i0);
+          index.set(k, a);
+        }
     }
   });
   law = { version: 0, rivers, lakes: [], index, pixels: new Map() };
@@ -199,20 +270,29 @@ export function unpaveBridges(tilemap, paths, px, py, byteAt, law = tamrielWater
   for (let dy = -1; dy <= 1; dy++) {
     for (let dx = -1; dx <= 1; dx++) {
       for (const b of bridgesOf(px + dx, py + dy, byteAt, law)) {
-        const k = b.kind === 'road' ? BRIDGE.road : BRIDGE.track, f = bridgeFrame(b, px, py);
-        const along = b.half + TILE_M, across = k.width / 2 + TILE_M, r = Math.hypot(along, across);
-        const tx0 = Math.max(0, Math.floor((f.cx - r) / TILE_M)), tx1 = Math.min(CURVE_DIM - 1, Math.floor((f.cx + r) / TILE_M));
-        const ty0 = Math.max(0, Math.floor((f.cz - r) / TILE_M)), ty1 = Math.min(CURVE_DIM - 1, Math.floor((f.cz + r) / TILE_M));
+        const k = b.kind === 'road' ? BRIDGE.road : BRIDGE.track,
+          f = bridgeFrame(b, px, py);
+        const along = b.half + TILE_M,
+          across = k.width / 2 + TILE_M,
+          r = Math.hypot(along, across);
+        const tx0 = Math.max(0, Math.floor((f.cx - r) / TILE_M)),
+          tx1 = Math.min(CURVE_DIM - 1, Math.floor((f.cx + r) / TILE_M));
+        const ty0 = Math.max(0, Math.floor((f.cz - r) / TILE_M)),
+          ty1 = Math.min(CURVE_DIM - 1, Math.floor((f.cz + r) / TILE_M));
         for (let ty = ty0; ty <= ty1; ty++) {
           for (let tx = tx0; tx <= tx1; tx++) {
             const t = ty * CURVE_DIM + tx;
             if (!paths[t]) continue;
-            const ox = (tx + 0.5) * TILE_M - f.cx, oz = (ty + 0.5) * TILE_M - f.cz;
+            const ox = (tx + 0.5) * TILE_M - f.cx,
+              oz = (ty + 0.5) * TILE_M - f.cz;
             if (Math.abs(ox * f.ax + oz * f.az) > along || Math.abs(-ox * f.az + oz * f.ax) > across) continue;
             let wet = false;
-            for (let c = 0; c < 4 && !wet; c++) wet = inChannel(px + (tx + (c & 1)) / CURVE_DIM, py + 1 - (ty + (c >> 1)) / CURVE_DIM);
+            for (let c = 0; c < 4 && !wet; c++)
+              wet = inChannel(px + (tx + (c & 1)) / CURVE_DIM, py + 1 - (ty + (c >> 1)) / CURVE_DIM);
             if (!wet) continue;
-            tilemap[t] = 0; paths[t] = 0; n++;
+            tilemap[t] = 0;
+            paths[t] = 0;
+            n++;
           }
         }
       }

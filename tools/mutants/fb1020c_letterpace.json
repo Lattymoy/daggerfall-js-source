@@ -2,8 +2,8 @@
   {
     "name": "LETTER-PACE-the-wait-unread",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "    return !letterOnItsWay(q) && !(q && machine.questsToInvoke?.includes?.(q) && hasCourier(q));",
-    "new": "    return !(q && machine.questsToInvoke?.includes?.(q) && hasCourier(q));",
+    "old": "      return !letterOnItsWay(q) && !(q && machine.questsToInvoke?.includes?.(q) && hasCourier(q));",
+    "new": "      return !(q && machine.questsToInvoke?.includes?.(q) && hasCourier(q));",
     "tests": [
       "test/systems/questlines/fb1020c_letterpace.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "LETTER-PACE-the-hour-from-the-letter-unread",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "if (r.lettered > 0 && r.lettered > s - STEP_GAP_S) return false;",
-    "new": "if (false) return false;",
+    "old": "      if (r.lettered > 0 && r.lettered > s - STEP_GAP_S) return false; // 0: no letter yet, on any clock",
+    "new": "      if (false) return false; // 0: no letter yet, on any clock",
     "tests": [
       "test/systems/questlines/fb1020c_letterpace.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "LETTER-PACE-the-layer-arm-silent",
     "file": "src/systems/questlines/qlLayer.js",
-    "old": "{ runner.lettered(quest); return; }",
-    "new": "return;",
+    "old": "      if (resource?.itemName === 'letter') {\n        runner.lettered(quest);\n        return;\n      } // FB1020c LETTER-PACE: the next courier waits an hour from it",
+    "new": "      if (resource?.itemName === 'letter') return; // FB1020c LETTER-PACE: the next courier waits an hour from it",
     "tests": [
       "test/systems/questlines/fb1020c_letterpace.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "LETTER-PACE-the-arm-step-guard",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "if (rec && !rec.done && rec.step === at.index) rec.lettered",
-    "new": "if (rec && !rec.done && rec.step !== at.index) rec.lettered",
+    "old": "      if (rec && !rec.done && rec.step === at.index) rec.lettered = Math.max(1, now());",
+    "new": "      if (rec && !rec.done && rec.step !== at.index) rec.lettered = Math.max(1, now());",
     "tests": [
       "test/systems/questlines/fb1020c_letterpace.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "LETTER-PACE-the-step-read",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "const q = r.done ? null : runningStep(lineById(id)?.steps[r.step]?.quest ?? '');",
-    "new": "const q = r.done ? null : runningStep(lineById(id)?.steps[0]?.quest ?? '');",
+    "old": "      const q = r.done ? null : runningStep(lineById(id)?.steps[r.step]?.quest ?? '');",
+    "new": "      const q = r.done ? null : runningStep(lineById(id)?.steps[0]?.quest ?? '');",
     "tests": [
       "test/systems/questlines/fb1020c_letterpace.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "LETTER-PACE-textId",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "a.typeName === 'GivePc' && a.textId && !a.isComplete",
-    "new": "a.typeName === 'GivePc' && !a.textId && !a.isComplete",
+    "old": "  a.typeName === 'GivePc' && a.textId && !a.isComplete && quest.getItem?.(a.itemSymbol)?.itemName === 'letter';",
+    "new": "  a.typeName === 'GivePc' && !a.textId && !a.isComplete && quest.getItem?.(a.itemSymbol)?.itemName === 'letter';",
     "tests": [
       "test/systems/questlines/fb1020c_letterpace.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "LETTER-PACE-isComplete",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "&& a.textId && !a.isComplete &&",
-    "new": "&& a.textId && a.isComplete &&",
+    "old": "  a.typeName === 'GivePc' && a.textId && !a.isComplete && quest.getItem?.(a.itemSymbol)?.itemName === 'letter';",
+    "new": "  a.typeName === 'GivePc' && a.textId && a.isComplete && quest.getItem?.(a.itemSymbol)?.itemName === 'letter';",
     "tests": [
       "test/systems/questlines/fb1020c_letterpace.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "LETTER-PACE-any-item",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "quest.getItem?.(a.itemSymbol)?.itemName === 'letter';",
-    "new": "quest.getItem?.(a.itemSymbol)?.itemName !== 'letter';",
+    "old": "  a.typeName === 'GivePc' && a.textId && !a.isComplete && quest.getItem?.(a.itemSymbol)?.itemName === 'letter';",
+    "new": "  a.typeName === 'GivePc' && a.textId && !a.isComplete && quest.getItem?.(a.itemSymbol)?.itemName !== 'letter';",
     "tests": [
       "test/systems/questlines/fb1020c_letterpace.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "LETTER-PACE-restore-drops-the-letter",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "lettered: Number.isFinite(r.lettered) ? r.lettered : 0, ",
-    "new": "",
+    "old": "          lettered: Number.isFinite(r.lettered) ? r.lettered : 0,\n          stalled: !!r.stalled,",
+    "new": "          stalled: !!r.stalled,",
     "tests": [
       "test/systems/questlines/fb1020c_letterpace.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "LETTER-PACE-QL-OFFERED-an-unsent-courier-held",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "    if (!task.triggered && !(clock?.clockEnabled && !clock.clockFinished)) continue;   // not sent yet\n",
-    "new": "",
+    "old": "    if (!task.triggered && !(clock?.clockEnabled && !clock.clockFinished)) continue; // not sent yet\n    if (task.actions?.some((a) => courierGive(quest, a))) return true;",
+    "new": "    if (task.actions?.some((a) => courierGive(quest, a))) return true;",
     "tests": [
       "test/systems/questlines/fb1020c_letterpace.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "LETTER-PACE-QL-OFFERED-the-set-out-step-unread",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": " && !(q && machine.questsToInvoke?.includes?.(q) && hasCourier(q));",
-    "new": ";",
+    "old": "      return !letterOnItsWay(q) && !(q && machine.questsToInvoke?.includes?.(q) && hasCourier(q));",
+    "new": "      return !letterOnItsWay(q);",
     "tests": [
       "test/systems/questlines/fb1020c_letterpace.test.js"
     ],

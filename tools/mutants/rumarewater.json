@@ -2,8 +2,8 @@
   {
     "name": "RW-PLAN-the-mouth-uncut",
     "file": "src/world/imperialCity.js",
-    "old": "  if (r >= I.lake && z > 0 && Math.abs(x) < I.mouth) return false;   // RUMARE-WATER: the Waterfront's mouth, through the far shore\n",
-    "new": "",
+    "old": "  if (r >= I.lake && z > 0 && Math.abs(x) < I.mouth) return false; // RUMARE-WATER: the Waterfront's mouth, through the far shore\n  if (r <= I.isle || r >= I.lake) return true;",
+    "new": "  if (r <= I.isle || r >= I.lake) return true;",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RW-PLAN-cut-north",
     "file": "src/world/imperialCity.js",
-    "old": "if (r >= I.lake && z > 0 && Math.abs(x) < I.mouth) return false;",
-    "new": "if (r >= I.lake && z < 0 && Math.abs(x) < I.mouth) return false;",
+    "old": "  if (r >= I.lake && z > 0 && Math.abs(x) < I.mouth) return false; // RUMARE-WATER: the Waterfront's mouth, through the far shore",
+    "new": "  if (r >= I.lake && z < 0 && Math.abs(x) < I.mouth) return false; // RUMARE-WATER: the Waterfront's mouth, through the far shore",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "RW-SEA-a-tile's-corner-read-turned",
     "file": "src/world/terrain/capitalSea.js",
-    "old": "(1 << ((1 - dx) + 2 * (1 - dy)))",
-    "new": "(1 << (dx + 2 * dy))",
+    "old": "      if (WATER_DRAW_MASK_TABLE[convertTile(t)] & (1 << (1 - dx + 2 * (1 - dy)))) return true;",
+    "new": "      if (WATER_DRAW_MASK_TABLE[convertTile(t)] & (1 << (dx + 2 * dy))) return true;",
     "tests": [
       "test/world/rumarewater.test.js",
       "test/world/audittesa2c_capitals.test.js"
@@ -167,8 +167,8 @@
   {
     "name": "RW-SEA-the-stamped-unread",
     "file": "src/world/terrain/capitalSea.js",
-    "old": "  const stamped = !!tilemap && stampedWaterAt(tilemap, x, y);",
-    "new": "  const stamped = false;",
+    "old": "      const stamped = !!tilemap && stampedWaterAt(tilemap, x, y);",
+    "new": "      const stamped = false;",
     "tests": [
       "test/world/rumarewater.test.js",
       "test/world/audittesa2c_capitals.test.js"
@@ -177,8 +177,8 @@
   {
     "name": "RW-SEA-the-rim's-sea-unread",
     "file": "src/world/terrain/capitalSea.js",
-    "old": "  else if (!inRect) sea = stamped || natural[i] <= SEA_LINE;",
-    "new": "  else if (!inRect) sea = stamped;",
+    "old": "        sea = stamped || natural[i] <= SEA_LINE; // the rim: the sea reaching in",
+    "new": "        sea = stamped; // the rim: the sea reaching in",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "RW-SEA-the-outer-edge-the-city's",
     "file": "src/world/terrain/capitalSea.js",
-    "old": "      if (outer) { S[i] = natural[i]; continue; }   // the span's outer edge: the land's own, as the pixel past it stands\n",
-    "new": "",
+    "old": "      if (outer) {\n        S[i] = natural[i];\n        continue;\n      } // the span's outer edge: the land's own, as the pixel past it stands\n      const stamped = !!tilemap && stampedWaterAt(tilemap, x, y);",
+    "new": "      const stamped = !!tilemap && stampedWaterAt(tilemap, x, y);",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "RW-SEA-the-sea's-seam-unread",
     "file": "src/world/terrain/capitalSea.js",
-    "old": "  else if (border && seaEdges && ((x === 0 && seaEdges.W) || (x === H - 1 && seaEdges.E) || (y === 0 && seaEdges.S) || (y === H - 1 && seaEdges.N))) sea = true;\n",
-    "new": "",
+    "old": "      else if (\n        border &&\n        seaEdges &&\n        ((x === 0 && seaEdges.W) ||\n          (x === H - 1 && seaEdges.E) ||\n          (y === 0 && seaEdges.S) ||\n          (y === H - 1 && seaEdges.N))\n      )\n        sea = true;\n      else sea = stamped;",
+    "new": "      else sea = stamped;",
     "tests": [
       "test/world/rumarewater.test.js",
       "test/world/audittesa2c_capitals.test.js"
@@ -214,8 +214,8 @@
   {
     "name": "RW-IC-the-seams-the-tiles'",
     "file": "src/world/terrain/capitalSea.js",
-    "old": "sea = rumareSeaAt(bx, by) || (!border && stamped);",
-    "new": "sea = rumareSeaAt(bx, by) || stamped;",
+    "old": "        sea = rumareSeaAt(bx, by) || (!border && stamped); // the Imperial City: its plan's law, the seams the law's alone",
+    "new": "        sea = rumareSeaAt(bx, by) || stamped; // the Imperial City: its plan's law, the seams the law's alone",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -223,8 +223,8 @@
   {
     "name": "RW-IC-the-law-unread",
     "file": "src/world/terrain/capitalSea.js",
-    "old": "sea = rumareSeaAt(bx, by) || (!border && stamped);",
-    "new": "sea = !border && stamped;",
+    "old": "        sea = rumareSeaAt(bx, by) || (!border && stamped); // the Imperial City: its plan's law, the seams the law's alone",
+    "new": "        sea = !border && stamped; // the Imperial City: its plan's law, the seams the law's alone",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -232,8 +232,8 @@
   {
     "name": "RW-IC-the-far-shore-flat",
     "file": "src/world/terrain/capitalSea.js",
-    "old": "      else if (city) S[i] = Math.max(CAPITAL_LAND, rumareLandHeight(bx, by, CAPITAL_LAND, natural[i]));\n",
-    "new": "",
+    "old": "      else if (city) S[i] = Math.max(CAPITAL_LAND, rumareLandHeight(bx, by, CAPITAL_LAND, natural[i]));\n      else S[i] = inRect ? CAPITAL_LAND : Math.max(S[i], CAPITAL_LAND);",
+    "new": "      else S[i] = inRect ? CAPITAL_LAND : Math.max(S[i], CAPITAL_LAND);",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -277,8 +277,8 @@
   {
     "name": "RW-BAKE-the-span's-class-the-bound's",
     "file": "src/world/tamrielWatersBake.js",
-    "old": "c = (rumareSlice(px, py) ? this._cityBits(px, py, 'cls') : null) ?? classifyPixel(this.woods, px, py);",
-    "new": "c = classifyPixel(this.woods, px, py);",
+    "old": "      c = (rumareSlice(px, py) ? this._cityBits(px, py, 'cls') : null) ?? classifyPixel(this.woods, px, py);",
+    "new": "      c = classifyPixel(this.woods, px, py);",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -286,8 +286,8 @@
   {
     "name": "RW-BAKE-the-fine-water-the-plain-sampler's",
     "file": "src/world/tamrielWatersBake.js",
-    "old": "fineAt: (px, py) => (rumareSlice(px, py) ? cityBits(px, py, 'fine') : fineMaskBits(pixelWaterSampler(woods, px, py, null))) });",
-    "new": "fineAt: (px, py) => fineMaskBits(pixelWaterSampler(woods, px, py, null)) });",
+    "old": "    super({\n      woods,\n      global: null,\n      frame,\n      fineAt: (px, py) =>\n        rumareSlice(px, py) ? cityBits(px, py, 'fine') : fineMaskBits(pixelWaterSampler(woods, px, py, null)),\n    }); // RUMARE-WATER: the city's fine water its ground's",
+    "new": "    super({ woods, global: null, frame, fineAt: (px, py) => fineMaskBits(pixelWaterSampler(woods, px, py, null)) }); // RUMARE-WATER: the city's fine water its ground's",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -295,8 +295,8 @@
   {
     "name": "RW-BAKE-the-coarse-water-the-plain-sampler's",
     "file": "src/world/tamrielWatersBake.js",
-    "old": "(x, y) => (rumareSlice(x0 + x, y0 + y) ? this._cityBits(x0 + x, y0 + y, 'coarse') : coarseCandidateBits(pixelWaterSampler(this.woods, x0 + x, y0 + y, null))), seed);",
-    "new": "(x, y) => coarseCandidateBits(pixelWaterSampler(this.woods, x0 + x, y0 + y, null)), seed);",
+    "old": "      (x, y) =>\n        rumareSlice(x0 + x, y0 + y)\n          ? this._cityBits(x0 + x, y0 + y, 'coarse')\n          : coarseCandidateBits(pixelWaterSampler(this.woods, x0 + x, y0 + y, null)),",
+    "new": "      (x, y) => coarseCandidateBits(pixelWaterSampler(this.woods, x0 + x, y0 + y, null)),",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -304,8 +304,8 @@
   {
     "name": "RW-BAKE-the-city's-sea-unseeded",
     "file": "src/world/tamrielWatersBake.js",
-    "old": "      return (pictureOpenSeaAt(X, Y) && cls(X, Y) === PIXEL_SEA) || rumareSeaPixel(X, Y);",
-    "new": "      return (pictureOpenSeaAt(X, Y) && cls(X, Y) === PIXEL_SEA);",
+    "old": "      return (pictureOpenSeaAt(X, Y) && cls(X, Y) === PIXEL_SEA) || rumareSeaPixel(X, Y); // RUMARE-WATER: the city's lake the sea's, through its mouth and the canal",
+    "new": "      return pictureOpenSeaAt(X, Y) && cls(X, Y) === PIXEL_SEA; // RUMARE-WATER: the city's lake the sea's, through its mouth and the canal",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -313,8 +313,8 @@
   {
     "name": "RW-WAYS-the-lanes'-water-unread",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "=> (water(px, py) && climateAt(px, py) === CLIMATES.Ocean) || rumareSeaPixel(px, py);\n  const open = (/** @type {number} */ px, /** @type {number} */ py) => (inBay(px, py) ? bayOpen(px, py)\n    : beyond() && inWorldGrid(px, py) && !inEther(px, py) && (rumareSeaPixel(px, py) || squareCornersAll(sea, px, py)));",
-    "new": "=> (water(px, py) && climateAt(px, py) === CLIMATES.Ocean);\n  const open = (/** @type {number} */ px, /** @type {number} */ py) => (inBay(px, py) ? bayOpen(px, py)\n    : beyond() && inWorldGrid(px, py) && !inEther(px, py) && (squareCornersAll(sea, px, py)));",
+    "old": "    (water(px, py) && climateAt(px, py) === CLIMATES.Ocean) || rumareSeaPixel(px, py);\n  const open = (/** @type {number} */ px, /** @type {number} */ py) =>\n    inBay(px, py)\n      ? bayOpen(px, py)\n      : beyond() &&\n        inWorldGrid(px, py) &&\n        !inEther(px, py) &&\n        (rumareSeaPixel(px, py) || squareCornersAll(sea, px, py));",
+    "new": "    water(px, py) && climateAt(px, py) === CLIMATES.Ocean;\n  const open = (/** @type {number} */ px, /** @type {number} */ py) =>\n    inBay(px, py)\n      ? bayOpen(px, py)\n      : beyond() && inWorldGrid(px, py) && !inEther(px, py) && squareCornersAll(sea, px, py);",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -322,8 +322,8 @@
   {
     "name": "RW-WAYS-the-voyage's-sea-the-land's",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  const isWater = seaWater;",
-    "new": "  const isWater = landWater;",
+    "old": "  const isWater = seaWater; // RUMARE-WATER: the water a boat sails (routeGround's seaWater) - the land's where none is said",
+    "new": "  const isWater = landWater; // RUMARE-WATER: the water a boat sails (routeGround's seaWater) - the land's where none is said",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -331,8 +331,8 @@
   {
     "name": "RW-WAYS-the-sea's-also-unread",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "seaFn = (x, y) => w(x, y) || seaAlso(x, y);",
-    "new": "seaFn = w;",
+    "old": "        seaFn = (x, y) => w(x, y) || seaAlso(x, y);",
+    "new": "        seaFn = w;",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -340,8 +340,8 @@
   {
     "name": "RW-WAYS-the-neighbours-the-lanes'",
     "file": "src/systems/naval/seaLanes.js",
-    "old": ".slice(0, p.neighbours ?? LANE_NEIGHBOURS);",
-    "new": ".slice(0, LANE_NEIGHBOURS);",
+    "old": ".slice(0, p.neighbours ?? LANE_NEIGHBOURS); // RUMARE-WATER: a canal harbour's own count",
+    "new": ".slice(0, LANE_NEIGHBOURS); // RUMARE-WATER: a canal harbour's own count",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -349,8 +349,8 @@
   {
     "name": "RW-WAYS-the-port's-neighbours-unsaid",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "{ reach: CANAL_PORT_REACH_PX, neighbours: CANAL_PORT_NEIGHBOURS }",
-    "new": "{ reach: CANAL_PORT_REACH_PX }",
+    "old": "      ...(cap?.harbour ? { reach: CANAL_PORT_REACH_PX, neighbours: CANAL_PORT_NEIGHBOURS } : {}),",
+    "new": "      ...(cap?.harbour ? { reach: CANAL_PORT_REACH_PX } : {}),",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -387,7 +387,7 @@
   {
     "name": "RW-F1-the-span-all-mixed",
     "file": "src/world/tamrielWatersBake.js",
-    "old": "  return wet === 0 ? { cls: PIXEL_LAND, grid: null } : wet === sea.length ? { cls: PIXEL_SEA, grid: null } : { cls: PIXEL_MIXED, grid: sea };",
+    "old": "  return wet === 0\n    ? { cls: PIXEL_LAND, grid: null }\n    : wet === sea.length\n      ? { cls: PIXEL_SEA, grid: null }\n      : { cls: PIXEL_MIXED, grid: sea };",
     "new": "  return { cls: PIXEL_MIXED, grid: sea };",
     "tests": [
       "test/world/rumarewater.test.js"
@@ -405,8 +405,8 @@
   {
     "name": "RW-F1-the-all-land-test-unread",
     "file": "src/world/tamrielWatersBake.js",
-    "old": "  if (!rimOf(rect) && rumareSliceAllLand(px, py)) return { cls: PIXEL_LAND, grid: null };",
-    "new": "  if (false) return { cls: PIXEL_LAND, grid: null };",
+    "old": "  if (!rimOf(rect) && rumareSliceAllLand(px, py)) return { cls: PIXEL_LAND, grid: null }; // the isle's streets and the far shore: no vertex to ask",
+    "new": "  if (false) return { cls: PIXEL_LAND, grid: null }; // the isle's streets and the far shore: no vertex to ask",
     "tests": [
       "test/world/rumarewater.test.js"
     ],
@@ -436,8 +436,8 @@
   {
     "name": "RW-F1-the-bits-made-again",
     "file": "src/world/tamrielWatersBake.js",
-    "old": "      if (!m[kind]) {\n        const sampler = rumareWaterSampler(",
-    "new": "      if (true) {\n        const sampler = rumareWaterSampler(",
+    "old": "      if (!m[kind]) {",
+    "new": "      if (true) {",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -445,8 +445,8 @@
   {
     "name": "RW-F1-the-compounds-turned",
     "file": "src/world/imperialCity.js",
-    "old": "c = [polar(I.prison.b, I.prison.r), polar(I.university.b, I.university.r)]",
-    "new": "c = [polar(I.university.b, I.university.r), polar(I.prison.b, I.prison.r)]",
+    "old": "  if (!c) _landCompounds.set(I, (c = [polar(I.prison.b, I.prison.r), polar(I.university.b, I.university.r)]));",
+    "new": "  if (!c) _landCompounds.set(I, (c = [polar(I.university.b, I.university.r), polar(I.prison.b, I.prison.r)]));",
     "tests": [
       "test/world/rumarewater.test.js"
     ]

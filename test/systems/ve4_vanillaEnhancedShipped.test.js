@@ -286,5 +286,5 @@ test('VE4 wiring: the store\'s one registration puts the pack in before the atta
   assert.match(src('ui/enhanced/enhancedMenu.js'), /function packsCard\(\) \{\n[^\n]*\n\s+installVanillaEnhancedPack\(\);/);   // PIN MOVED (AUDIT VE R2): after the wait for the store
   // PIN MOVED (AUDIT VE R13): a mod switched on that carries doll art, not any attached mod
   assert.match(src('ui/paperDoll.js'), /const composeScale = \(\) => \(dfmodCarriesDollArt\(\) \? PAPERDOLL_HD_SCALE : 1\);/);
-  assert.match(src('systems/vanillaEnhanced/vanillaEnhanced.js'), /const doorMods = \(\) => \{ installVanillaEnhancedPack\(\); return attachedDfmods\(\); \};/);
+  assert.match(src('systems/vanillaEnhanced/vanillaEnhanced.js'), /const doorMods = \(\) => \{\n\s*installVanillaEnhancedPack\(\);\n\s*return attachedDfmods\(\);\n\s*\};/);
 });

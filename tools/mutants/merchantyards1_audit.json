@@ -1,31 +1,264 @@
 [
-  {"name": "AUDIT-MERCHANT-YARDS-Y1-the-classic-steal-taken", "file": "src/ui/native/nativeTrade.js", "old": "    if (refused) { this.hooks.say?.(refused, 2); return; }", "new": "    void refused;", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-Y1-the-enhanced-steal-kept", "file": "src/ui/enhanced/enhancedTrade.js", "old": "  if (inBuy() && !deps.stealRefusal?.()) {", "new": "  if (inBuy()) {", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-Y1-the-counter-silent", "file": "src/systems/merchantYards.js", "old": "priceIndex: YARD_PRICE_INDEX, noSteal: YARD_TEXT.steal,", "new": "priceIndex: YARD_PRICE_INDEX,", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-Y1-the-window-unhanded", "file": "src/scenes/worldModes.js", "old": "stealRefusal: () => b.noSteal ?? null,", "new": "stealRefusal: () => null,", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-Y2-the-regions-walk", "file": "src/scenes/worldModes.js", "old": "    if (Number.isFinite(b?.priceIndex)) return b.priceIndex;", "new": "    if (Number.isFinite(b?.priceIndex) && false) return b.priceIndex;", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-Y2-the-index-moved", "file": "src/systems/merchantYards.js", "old": "export const YARD_PRICE_INDEX = 1000;", "new": "export const YARD_PRICE_INDEX = 1100;", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-Y3-two-waits", "file": "src/scenes/worldModes.js", "old": "      if (first) {\n        ensureShopFont().then(() => {", "new": "      if (true) {\n        ensureShopFont().then(() => {", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-Y3-opened-anywhere", "file": "src/scenes/worldModes.js", "old": "if (!w || mode !== 'exterior' || townTalk?.overlay) return;", "new": "if (!w) return;", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-Y5-unnamed", "file": "src/scenes/merchantYardsHost.js", "old": "if (!open(p.y.site, trade, p.y.name))", "new": "if (!open(p.y.site, trade))", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-Y5-the-title-unread", "file": "src/systems/merchantYards.js", "old": "name: (typeof name === 'string' && name.trim()) || `The ${YARD_KINDS[k].title}`,", "new": "name: name,", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-Y6-every-town", "file": "src/ui/holdingsPages.js", "old": "A city\\'s or town\\'s Stable sells horses to ride, and its Wagon Yard carts and wagons", "new": "Every city and town has a Stable that sells horses to ride, and a Wagon Yard that sells carts and wagons", "tests": ["test/systems/horse/holdings.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-G1-a-registered-model-unread", "note": "Re-aimed by content (BAY-LEFT-SEA): a capital's landmark is measured by its footprint, every other registered model by its box.", "file": "src/scenes/world.js", "old": "custom: (cid) => (hasCustomModel(cid) && !customModelNeeds(cid).length && !isCapitalLandmark(cid) ? customModelFor(cid)?.positions ?? null : null),", "new": "custom: () => null,", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-G1-an-alias-unread", "file": "src/scenes/world.js", "old": "classic: (cid) => dfMeshSize(classicModelIdOf(cid)),", "new": "classic: (cid) => dfMeshSize(cid),", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-G1-the-field-unread", "file": "src/world/merchantYards/merchantYardSites.js", "old": "if (field) { props.push(fieldRect(field, at)); continue; }", "new": "void field;", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-G1-the-noise-unread", "file": "src/world/merchantYards/merchantYardSites.js", "old": "const n = Number.isFinite(spec?.noise) ? spec.noise : 0;", "new": "const n = 0;", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-G1-the-record-first", "file": "src/world/merchantYards/merchantYardSites.js", "old": "  const p = custom(id);\n  if (p?.length) {", "new": "  const p = classic(id) ? null : custom(id);\n  if (p?.length) {", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-G4-the-markers-dropped", "file": "src/world/merchantYards/merchantYardSites.js", "old": "for (const fl of flatsOf(b) ?? []) flats.push([b.originX + fl.x, b.originZ + fl.z]);", "new": "for (const fl of flatsOf(b) ?? []) if (!fl.editor) flats.push([b.originX + fl.x, b.originZ + fl.z]);", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-R2-every-model-a-prop", "file": "src/world/merchantYards/merchantYardSites.js", "old": "if (box) (m.recordIndex != null ? buildings : props).push(box);", "new": "if (box) props.push(box);", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-R2-the-mill-unread", "file": "src/world/merchantYards/merchantYardSites.js", "old": "for (const w of b.layout?.windmills ?? []) { const box = millBox(multiply(origin, w.matrix)); if (box) buildings.push(box); }", "new": "void millBox;", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-R2-no-block-closed", "file": "src/world/merchantYards/merchantYardSites.js", "old": "    if (closedBlock(b)) closedBlocks.push([b.x, b.y]);", "new": "    void closedBlock;", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-G3-the-garbage-slots", "file": "src/scenes/world.js", "old": "const n = Math.min(list.length, blockBuildingCount(b.dfBlock));", "new": "const n = list.length;", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-G3-the-colosseum-taken", "file": "src/scenes/world.js", "old": "closedBlock: (b) => b.blockName === ARENA_BLOCK || palaceIn(b),", "new": "closedBlock: (b) => palaceIn(b),", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-G2-the-early-skip", "file": "src/world/merchantYards/merchantYardSites.js", "old": "if (d > bestScore) continue;", "new": "if (d >= bestScore) continue;", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-G2-placed-every-build", "file": "src/scenes/world.js", "old": "if (!memo || memo.sig !== sig) {", "new": "if (true) {", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-G5-the-view-out-empty", "file": "src/scenes/world.js", "old": "renderer.outsideViewDraws?.add(({ renderer: r }) => { merchantYards?.draw(r); });", "new": "void 0;", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-R1-every-keeper-a-breton", "file": "src/scenes/merchantYardsHost.js", "old": "const T = PERSON_TEXTURES[spriteRaceOf(site.keeper?.race, site.race)] ?? PERSON_TEXTURES.Breton;", "new": "const T = PERSON_TEXTURES.Breton;", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-R4-the-region-unread", "file": "src/systems/merchantYards.js", "old": "getNameBankOfRegion(Number.isInteger(regionIndex) ? regionIndex : -1)", "new": "getNameBankOfRegion(-1)", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-R4-the-outfits-bits-cut", "file": "src/systems/merchantYards.js", "old": "variant: (seed >>> 11) & 3", "new": "variant: (seed >>> 11) & 1", "tests": ["test/world/merchantyards1.test.js"]},
-  {"name": "AUDIT-MERCHANT-YARDS-R4-the-towns-region-unread", "file": "src/scenes/world.js", "old": "regionIndex = dfLocation.regionIndex ?? 0, race = walkerRace(people, dfLocation.regionIndex), folk", "new": "regionIndex = 0, race = walkerRace(people, dfLocation.regionIndex), folk", "tests": ["test/world/merchantyards1.test.js"]}
+  {
+    "name": "AUDIT-MERCHANT-YARDS-Y1-the-classic-steal-taken",
+    "file": "src/ui/native/nativeTrade.js",
+    "old": "    if (refused) { this.hooks.say?.(refused, 2); return; }",
+    "new": "    void refused;",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-Y1-the-enhanced-steal-kept",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "  if (inBuy() && !deps.stealRefusal?.()) {",
+    "new": "  if (inBuy()) {",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-Y1-the-counter-silent",
+    "file": "src/systems/merchantYards.js",
+    "old": "    noSteal: YARD_TEXT.steal,\n    accepts: (/** @type {any} */ it) => yardBuysItem(k, it),",
+    "new": "    accepts: (/** @type {any} */ it) => yardBuysItem(k, it),",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-Y1-the-window-unhanded",
+    "file": "src/scenes/worldModes.js",
+    "old": "stealRefusal: () => b.noSteal ?? null,",
+    "new": "stealRefusal: () => null,",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-Y2-the-regions-walk",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (Number.isFinite(b?.priceIndex)) return b.priceIndex;",
+    "new": "    if (Number.isFinite(b?.priceIndex) && false) return b.priceIndex;",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-Y2-the-index-moved",
+    "file": "src/systems/merchantYards.js",
+    "old": "export const YARD_PRICE_INDEX = 1000;",
+    "new": "export const YARD_PRICE_INDEX = 1100;",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-Y3-two-waits",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (first) {\n        ensureShopFont().then(() => {",
+    "new": "      if (true) {\n        ensureShopFont().then(() => {",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-Y3-opened-anywhere",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (!w || mode !== 'exterior' || townTalk?.overlay) return;",
+    "new": "if (!w) return;",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-Y5-unnamed",
+    "file": "src/scenes/merchantYardsHost.js",
+    "old": "if (!open(p.y.site, trade, p.y.name))",
+    "new": "if (!open(p.y.site, trade))",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-Y5-the-title-unread",
+    "file": "src/systems/merchantYards.js",
+    "old": "    name: (typeof name === 'string' && name.trim()) || `The ${YARD_KINDS[k].title}`,",
+    "new": "    name: name,",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-Y6-every-town",
+    "file": "src/ui/holdingsPages.js",
+    "old": "        \"You own no horse and no wagon. A city's or town's Stable sells horses to ride, and its Wagon Yard carts and wagons to carry more than you can.\",",
+    "new": "        'You own no horse and no wagon. Every city and town has a Stable that sells horses to ride, and a Wagon Yard that sells carts and wagons to carry more than you can.',",
+    "tests": [
+      "test/systems/horse/holdings.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-G1-a-registered-model-unread",
+    "note": "Re-aimed by content (BAY-LEFT-SEA): a capital's landmark is measured by its footprint, every other registered model by its box.",
+    "file": "src/scenes/world.js",
+    "old": "custom: (cid) => (hasCustomModel(cid) && !customModelNeeds(cid).length && !isCapitalLandmark(cid) ? customModelFor(cid)?.positions ?? null : null),",
+    "new": "custom: () => null,",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-G1-an-alias-unread",
+    "file": "src/scenes/world.js",
+    "old": "classic: (cid) => dfMeshSize(classicModelIdOf(cid)),",
+    "new": "classic: (cid) => dfMeshSize(cid),",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-G1-the-field-unread",
+    "file": "src/world/merchantYards/merchantYardSites.js",
+    "old": "      if (field) {\n        props.push(fieldRect(field, at));\n        continue;\n      }",
+    "new": "      void field;",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-G1-the-noise-unread",
+    "file": "src/world/merchantYards/merchantYardSites.js",
+    "old": "  const n = Number.isFinite(spec?.noise) ? spec.noise : 0;",
+    "new": "  const n = 0;",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-G1-the-record-first",
+    "file": "src/world/merchantYards/merchantYardSites.js",
+    "old": "  const p = custom(id);",
+    "new": "  const p = classic(id) ? null : custom(id);",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-G4-the-markers-dropped",
+    "file": "src/world/merchantYards/merchantYardSites.js",
+    "old": "    for (const fl of flatsOf(b) ?? []) flats.push([b.originX + fl.x, b.originZ + fl.z]);",
+    "new": "    for (const fl of flatsOf(b) ?? []) if (!fl.editor) flats.push([b.originX + fl.x, b.originZ + fl.z]);",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-R2-every-model-a-prop",
+    "file": "src/world/merchantYards/merchantYardSites.js",
+    "old": "      if (box) (m.recordIndex != null ? buildings : props).push(box);",
+    "new": "      if (box) props.push(box);",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-R2-the-mill-unread",
+    "file": "src/world/merchantYards/merchantYardSites.js",
+    "old": "    for (const w of b.layout?.windmills ?? []) {\n      const box = millBox(multiply(origin, w.matrix));\n      if (box) buildings.push(box);\n    }",
+    "new": "    void millBox;",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-R2-no-block-closed",
+    "file": "src/world/merchantYards/merchantYardSites.js",
+    "old": "    if (closedBlock(b)) closedBlocks.push([b.x, b.y]);",
+    "new": "    void closedBlock;",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-G3-the-garbage-slots",
+    "file": "src/scenes/world.js",
+    "old": "const n = Math.min(list.length, blockBuildingCount(b.dfBlock));",
+    "new": "const n = list.length;",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-G3-the-colosseum-taken",
+    "file": "src/scenes/world.js",
+    "old": "closedBlock: (b) => b.blockName === ARENA_BLOCK || palaceIn(b),",
+    "new": "closedBlock: (b) => palaceIn(b),",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-G2-the-early-skip",
+    "file": "src/world/merchantYards/merchantYardSites.js",
+    "old": "        if (d > bestScore) continue; // facing a way only lowers the score to d: a place already further cannot win (one as far may tie, and ties go by the rule below)",
+    "new": "        if (d >= bestScore) continue; // facing a way only lowers the score to d: a place already further cannot win (one as far may tie, and ties go by the rule below)",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-G2-placed-every-build",
+    "file": "src/scenes/world.js",
+    "old": "if (!memo || memo.sig !== sig) {",
+    "new": "if (true) {",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-G5-the-view-out-empty",
+    "file": "src/scenes/world.js",
+    "old": "renderer.outsideViewDraws?.add(({ renderer: r }) => { merchantYards?.draw(r); });",
+    "new": "void 0;",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-R1-every-keeper-a-breton",
+    "file": "src/scenes/merchantYardsHost.js",
+    "old": "const T = PERSON_TEXTURES[spriteRaceOf(site.keeper?.race, site.race)] ?? PERSON_TEXTURES.Breton;",
+    "new": "const T = PERSON_TEXTURES.Breton;",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-R4-the-region-unread",
+    "file": "src/systems/merchantYards.js",
+    "old": "  const name = seededPersonName(\n    seed,\n    race ? folkNameBank(race) : getNameBankOfRegion(Number.isInteger(regionIndex) ? regionIndex : -1),\n    gender,\n    { race, region: Number.isInteger(regionIndex) ? regionIndex : -1, home: folkKeyOf(people) },\n  ); // REGION-NAMES: their people's customs, their region's",
+    "new": "  const name = seededPersonName(seed, race ? folkNameBank(race) : getNameBankOfRegion(-1), gender, {\n    race,\n    region: Number.isInteger(regionIndex) ? regionIndex : -1,\n    home: folkKeyOf(people),\n  }); // REGION-NAMES: their people's customs, their region's",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-R4-the-outfits-bits-cut",
+    "file": "src/systems/merchantYards.js",
+    "old": "    variant: (seed >>> 11) & 3,",
+    "new": "    variant: (seed >>> 11) & 1,",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MERCHANT-YARDS-R4-the-towns-region-unread",
+    "file": "src/scenes/world.js",
+    "old": "regionIndex = dfLocation.regionIndex ?? 0, race = walkerRace(people, dfLocation.regionIndex), folk",
+    "new": "regionIndex = 0, race = walkerRace(people, dfLocation.regionIndex), folk",
+    "tests": [
+      "test/world/merchantyards1.test.js"
+    ]
+  }
 ]

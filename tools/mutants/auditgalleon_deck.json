@@ -12,8 +12,8 @@
   {
     "name": "AUDIT-GALLEON-D1-piece-filter-unread",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "      if (p >= 0 && more.piece[n] !== p) continue;\n",
-    "new": "",
+    "old": "        if (p >= 0 && more.piece[n] !== p) continue;\n        const e = Math.abs(more.y[n] - h);",
+    "new": "        const e = Math.abs(more.y[n] - h);",
     "tests": [
       "test/systems/naval/auditgalleon_deck.test.js",
       "test/systems/naval/auditnav2_deck.test.js",
@@ -24,8 +24,8 @@
   {
     "name": "AUDIT-GALLEON-D1-open-deck-in-every-piece",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "    let best = p > 0 ? NaN : y[j], d = Number.isNaN(best) ? Infinity : Math.abs(best - h);",
-    "new": "    let best = y[j], d = Number.isNaN(best) ? Infinity : Math.abs(best - h);",
+    "old": "    let best = p > 0 ? NaN : y[j],",
+    "new": "    let best = y[j],",
     "tests": [
       "test/systems/naval/auditgalleon_deck.test.js",
       "test/systems/naval/auditnav2_deck.test.js",
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-GALLEON-D2-land-any-level",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "if (!(Math.abs(y[c] - lv) <= DECK_FLOOR)) continue;",
-    "new": "if (Number.isNaN(y[c])) continue;",
+    "old": "          if (!(Math.abs(y[c] - lv) <= DECK_FLOOR)) continue; // (NaN off her deck: never within)",
+    "new": "          if (Number.isNaN(y[c])) continue; // (NaN off her deck: never within)",
     "tests": [
       "test/systems/naval/auditgalleon_deck.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-GALLEON-D2-land-fallback-any-level",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "if (j < 0) j = nearestCell(x, z, 0, lv, DECK_FLOOR);",
-    "new": "if (j < 0) j = nearestCell(x, z, 0);",
+    "old": "      if (j < 0) j = nearestCell(x, z, 0, lv, DECK_FLOOR);",
+    "new": "      if (j < 0) j = nearestCell(x, z, 0);",
     "tests": [
       "test/systems/naval/auditgalleon_deck.test.js"
     ],
@@ -75,8 +75,8 @@
   {
     "name": "AUDIT-GALLEON-D2-land-a-step-band",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "if (!(Math.abs(y[c] - lv) <= DECK_FLOOR)) continue;",
-    "new": "if (!(Math.abs(y[c] - lv) <= DECK_STEP)) continue;",
+    "old": "          if (!(Math.abs(y[c] - lv) <= DECK_FLOOR)) continue; // (NaN off her deck: never within)",
+    "new": "          if (!(Math.abs(y[c] - lv) <= DECK_STEP)) continue; // (NaN off her deck: never within)",
     "tests": [
       "test/systems/naval/auditgalleon_deck.test.js"
     ],
@@ -85,8 +85,8 @@
   {
     "name": "AUDIT-GALLEON-D2-own-floor-unread",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "      if (Math.abs(on - h) <= DECK_STEP) { out[0] = x; out[1] = on; out[2] = z; return out; }\n",
-    "new": "",
+    "old": "      if (Math.abs(on - h) <= DECK_STEP) {\n        out[0] = x;\n        out[1] = on;\n        out[2] = z;\n        return out;\n      }\n      const lv = mainLevel(deck),",
+    "new": "      const lv = mainLevel(deck),",
     "tests": [
       "test/systems/naval/auditgalleon_deck.test.js"
     ],
@@ -95,8 +95,8 @@
   {
     "name": "AUDIT-GALLEON-D2-ring-level-unread",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "    if (Number.isNaN(h) || Math.abs(h - ringLevel) > ringBand) return;",
-    "new": "    if (Number.isNaN(h)) return;",
+    "old": "    if (Number.isNaN(h) || Math.abs(h - ringLevel) > ringBand) return; // (no level asked: NaN, never over)",
+    "new": "    if (Number.isNaN(h)) return; // (no level asked: NaN, never over)",
     "tests": [
       "test/systems/naval/auditgalleon_deck.test.js"
     ],
@@ -165,8 +165,8 @@
   {
     "name": "AUDIT-GALLEON-D5-corner-steps",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "const SIDE_STEPS = Object.freeze([[0, -1], [-1, 0], [1, 0], [0, 1]].map((s) => Object.freeze(s)));",
-    "new": "const SIDE_STEPS = Object.freeze([[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]].map((s) => Object.freeze(s)));",
+    "old": "    [0, -1],\n    [-1, 0],\n    [1, 0],\n    [0, 1],",
+    "new": "    [-1, -1],\n    [0, -1],\n    [1, -1],\n    [-1, 0],\n    [1, 0],\n    [-1, 1],\n    [0, 1],\n    [1, 1],",
     "tests": [
       "test/systems/naval/auditgalleon_deck.test.js"
     ],
@@ -185,7 +185,7 @@
   {
     "name": "AUDIT-GALLEON-D7-cover-a-floor",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "          if (moves) { lids[k * nx + i].push(y); continue; }",
+    "old": "          if (moves) {\n            lids[k * nx + i].push(y);\n            continue;\n          }",
     "new": "          if (moves) lids[k * nx + i].push(y);",
     "tests": [
       "test/systems/naval/auditgalleon_deck.test.js"
@@ -224,8 +224,8 @@
   {
     "name": "AUDIT-GALLEON-D9-looked-up-never",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "      let made = kept.get(n);\n      if (made) return made;\n      if (!spotCells) {",
-    "new": "      let made;\n      if (!spotCells) {",
+    "old": "      let made = kept.get(n);\n      if (made) return made;",
+    "new": "      let made;",
     "tests": [
       "test/systems/naval/auditgalleon_deck.test.js"
     ]
@@ -233,7 +233,7 @@
   {
     "name": "AUDIT-GALLEON-D9-kept-by-count",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "      const kept = level == null ? spotsMade : spotsAt.get(level) ?? spotsAt.set(level, new Map()).get(level);",
+    "old": "      const kept = level == null ? spotsMade : (spotsAt.get(level) ?? spotsAt.set(level, new Map()).get(level));",
     "new": "      const kept = spotsMade;",
     "tests": [
       "test/systems/naval/auditgalleon_deck.test.js"
@@ -304,8 +304,8 @@
   {
     "name": "AUDIT-GALLEON-DWALL-whole-triangle",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "into[k * nx + i].push(bottom, top);",
-    "new": "into[k * nx + i].push(Math.min(ay, by, cy), Math.max(ay, by, cy));",
+    "old": "        into[k * nx + i].push(bottom, top);",
+    "new": "        into[k * nx + i].push(Math.min(ay, by, cy), Math.max(ay, by, cy));",
     "tests": [
       "test/systems/naval/auditgalleon_deck.test.js",
       "test/systems/naval/auditnav2_deck.test.js"
@@ -315,8 +315,8 @@
   {
     "name": "AUDIT-GALLEON-DWALL-near-side-cell-x",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "const i0 = Math.max(0, Math.floor((lo - minX) / cell)), i1 = Math.min(nx - 1, Math.floor((hi - minX) / cell));",
-    "new": "const i0 = Math.max(0, Math.floor((lo - minX) / cell) - 1), i1 = Math.min(nx - 1, Math.floor((hi - minX) / cell));",
+    "old": "      const i0 = Math.max(0, Math.floor((lo - minX) / cell)),",
+    "new": "      const i0 = Math.max(0, Math.floor((lo - minX) / cell) - 1),",
     "tests": [
       "test/systems/naval/auditgalleon_deck.test.js"
     ],
@@ -325,8 +325,8 @@
   {
     "name": "AUDIT-GALLEON-DWALL-near-side-cell-z",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "const k0 = Math.max(0, Math.floor((Math.min(az, bz, cz) - minZ) / cell)), k1 = Math.min(nz - 1, Math.floor((Math.max(az, bz, cz) - minZ) / cell));",
-    "new": "const k0 = Math.max(0, Math.floor((Math.min(az, bz, cz) - minZ) / cell) - 1), k1 = Math.min(nz - 1, Math.floor((Math.max(az, bz, cz) - minZ) / cell));",
+    "old": "    const k0 = Math.max(0, Math.floor((Math.min(az, bz, cz) - minZ) / cell)),",
+    "new": "    const k0 = Math.max(0, Math.floor((Math.min(az, bz, cz) - minZ) / cell) - 1),",
     "tests": [
       "test/systems/naval/auditgalleon_deck.test.js"
     ],
@@ -335,8 +335,8 @@
   {
     "name": "AUDIT-GALLEON-DWALL-cut-row",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "const n = cutTo(R, cutTo(T, 3, R, 2, z0, 1), U, 2, z1, -1);",
-    "new": "const n = cutTo(T, 3, U, 2, z0, 1);",
+    "old": "      const n = cutTo(R, cutTo(T, 3, R, 2, z0, 1), U, 2, z1, -1);",
+    "new": "      const n = cutTo(T, 3, U, 2, z0, 1);",
     "tests": [
       "test/systems/naval/auditgalleon_deck.test.js"
     ],
@@ -345,8 +345,8 @@
   {
     "name": "AUDIT-GALLEON-DWALL-cut-column",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "const m = cutTo(C, cutTo(U, n, C, 0, x0, 1), D, 0, x1, -1);",
-    "new": "const m = cutTo(U, n, D, 0, x0, 1);",
+    "old": "        const m = cutTo(C, cutTo(U, n, C, 0, x0, 1), D, 0, x1, -1);",
+    "new": "        const m = cutTo(U, n, D, 0, x0, 1);",
     "tests": [
       "test/systems/naval/auditgalleon_deck.test.js"
     ],
@@ -355,8 +355,8 @@
   {
     "name": "AUDIT-GALLEON-DWALL-floors-any-way-up",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "for (const q of cand[j]) for (let n = 0; n < up.length; n++) if (Math.abs(up[n] - q) < 1e-3) { floorY.push(q); break; }",
-    "new": "for (const q of cand[j]) floorY.push(q);",
+    "old": "    for (const q of cand[j])\n      for (let n = 0; n < up.length; n++)\n        if (Math.abs(up[n] - q) < 1e-3) {\n          floorY.push(q);\n          break;\n        }",
+    "new": "    for (const q of cand[j]) floorY.push(q);",
     "tests": [
       "test/systems/naval/auditgalleon_deck.test.js"
     ],
@@ -365,8 +365,8 @@
   {
     "name": "AUDIT-GALLEON-DWALL-cells-apart-kept",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "for (let j = 0; j < N; j++) if (comp[j] >= 0 && comp[j] !== big) { y[j] = NaN; top[j] = -1; }",
-    "new": "",
+    "old": "    for (let j = 0; j < N; j++)\n      if (comp[j] >= 0 && comp[j] !== big) {\n        y[j] = NaN;\n        top[j] = -1;\n      }\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/naval/auditgalleon_deck.test.js"
     ],
@@ -375,8 +375,8 @@
   {
     "name": "AUDIT-GALLEON-DWALL-landing-nearest",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "if (k >= 0 && k < nz) {",
-    "new": "if (false) {",
+    "old": "      if (k >= 0 && k < nz) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/naval/auditgalleon_deck.test.js",
       "test/systems/naval/livingcrew.test.js"
@@ -386,8 +386,8 @@
   {
     "name": "AUDIT-GALLEON-DWALL-clamp-level-unread",
     "file": "src/systems/naval/navalDeck.js",
-    "old": "const j = nearestCell(x, z, piece, level);",
-    "new": "const j = nearestCell(x, z, piece);",
+    "old": "      const j = nearestCell(x, z, piece, level);",
+    "new": "      const j = nearestCell(x, z, piece);",
     "tests": [
       "test/systems/naval/auditgalleon_deck.test.js"
     ],

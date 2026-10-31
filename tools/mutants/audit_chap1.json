@@ -2,8 +2,8 @@
   {
     "name": "ACHAP-S1-TAG-MINT",
     "file": "server-account/src/npcRoll.js",
-    "old": "  const tag = mintTag(rand);\n  const lines = changed.filter",
-    "new": "  const tag = 'one-tag-for-all';\n  const lines = changed.filter",
+    "old": "  if (!changed.length) return { roll: viewOf(kseq, rows), credited, paid: drained };\n  const tag = mintTag(rand);",
+    "new": "  if (!changed.length) return { roll: viewOf(kseq, rows), credited, paid: drained };\n  const tag = 'one-tag-for-all';",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "ACHAP-S1-TWIN-REPEAT",
     "file": "server-account/src/npcRoll.js",
-    "old": "    if (now?.last_rid === rid) return { roll: await rollViewOf(db, who.character), repeat: true };",
-    "new": "    if (false) return { roll: await rollViewOf(db, who.character), repeat: true };",
+    "old": "    if (now?.last_rid === rid) return { roll: await rollViewOf(db, who.character), repeat: true }; // its twin landed first",
+    "new": "    if (false) return { roll: await rollViewOf(db, who.character), repeat: true }; // its twin landed first",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -22,7 +22,7 @@
   {
     "name": "ACHAP-S4-HELD-IN-WRITE",
     "file": "server-account/src/npcRoll.js",
-    "old": "const HELD_SQL = 'EXISTS (SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND lease = ? AND dead_at IS NULL)';",
+    "old": "const HELD_SQL =\n  'EXISTS (SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND lease = ? AND dead_at IS NULL)';",
     "new": "const HELD_SQL = '(1 OR ? OR ? OR ?)';",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
@@ -32,8 +32,8 @@
   {
     "name": "ACHAP-S3-NO-DATA",
     "file": "server-account/src/npcRoll.js",
-    "old": "if (!(Number(row.bytes) > 0)) return { error: 'no-data' };",
-    "new": "if (false) return { error: 'no-data' };",
+    "old": "  if (!(Number(row.bytes) > 0)) return { error: 'no-data' };",
+    "new": "  if (false) return { error: 'no-data' };",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "ACHAP-S3-UNDO",
     "file": "server-account/src/realm.js",
-    "old": "as deleteRealm's batch takes the three tables for a character that played\n      db.prepare('DELETE FROM npc_roll WHERE",
-    "new": "as deleteRealm's batch takes the three tables for a character that played\n      db.prepare('DELETE FROM npc_rolx WHERE",
+    "old": "      db.prepare('DELETE FROM npc_roll WHERE player = ? AND char_id = ?').bind(playerId, id),",
+    "new": "      db.prepare('DELETE FROM npc_rolx WHERE player = ? AND char_id = ?').bind(playerId, id),",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "ACHAP-S5-FLOOR",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const need = ranks.has(f) ? rollRankKeepOf(ranks.get(f)) : MIN_REPUTATION;",
-    "new": "const need = false ? rollRankKeepOf(ranks.get(f)) : MIN_REPUTATION;",
+    "old": "    const need = ranks.has(f) ? rollRankKeepOf(ranks.get(f)) : MIN_REPUTATION;",
+    "new": "    const need = false ? rollRankKeepOf(ranks.get(f)) : MIN_REPUTATION;",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js",
@@ -64,8 +64,8 @@
   {
     "name": "ACHAP-S5-RANKCAP-CLAIM",
     "file": "server-account/src/npcRoll.js",
-    "old": "rank: member ? rollBookRankOf(ranks.get(f), line.rep) : null,",
-    "new": "rank: member ? Math.min(/** @type {number} */ (ranks.get(f)), 7) : null,",
+    "old": "        rank: member ? rollBookRankOf(ranks.get(f), line.rep) : null,",
+    "new": "        rank: member ? Math.min(/** @type {number} */ (ranks.get(f)), 7) : null,",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -74,8 +74,8 @@
   {
     "name": "ACHAP-S5-RANKCAP-SEED",
     "file": "server-account/src/npcRoll.js",
-    "old": "rank: member ? rollBookRankOf(reported.get(f), values[f]) : null,",
-    "new": "rank: member ? Math.min(/** @type {number} */ (reported.get(f)), 7) : null,",
+    "old": "      rank: member ? rollBookRankOf(reported.get(f), values[f]) : null,",
+    "new": "      rank: member ? Math.min(/** @type {number} */ (reported.get(f)), 7) : null,",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -84,8 +84,8 @@
   {
     "name": "ACHAP-S5-RANKCAP-FN",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (r >= RANK_REQ_REPUTATION[i]) rank = i;",
-    "new": "if (r > RANK_REQ_REPUTATION[i]) rank = i;",
+    "old": "  for (let i = 0; i < RANK_REQ_REPUTATION.length; i++) if (r >= RANK_REQ_REPUTATION[i]) rank = i;",
+    "new": "  for (let i = 0; i < RANK_REQ_REPUTATION.length; i++) if (r > RANK_REQ_REPUTATION[i]) rank = i;",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -105,8 +105,8 @@
   {
     "name": "ACHAP-S7-NOOP",
     "file": "server-account/src/npcRoll.js",
-    "old": "if (!changed.length) return { roll: viewOf(kseq, rows), credited, paid: drained };",
-    "new": "if (false) return { roll: viewOf(kseq, rows), credited, paid: drained };",
+    "old": "  if (!changed.length) return { roll: viewOf(kseq, rows), credited, paid: drained };",
+    "new": "  if (false) return { roll: viewOf(kseq, rows), credited, paid: drained };",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js",
@@ -117,8 +117,8 @@
   {
     "name": "ACHAP-S7-PRUNE",
     "file": "server-account/src/npcRoll.js",
-    "old": ".bind(who.character, nowS - ROLL_EVENTS_KEEP_S, who.character, tag)",
-    "new": ".bind(who.character, nowS - ROLL_EVENTS_KEEP_S * 2, who.character, tag)",
+    "old": "      .bind(who.character, nowS - ROLL_EVENTS_KEEP_S, who.character, tag),",
+    "new": "      .bind(who.character, nowS - ROLL_EVENTS_KEEP_S * 2, who.character, tag),",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -127,8 +127,8 @@
   {
     "name": "ACHAP-S8-NULL-MEMBERS",
     "file": "server-account/src/npcRoll.js",
-    "old": "const ranks = members === null ? null : new Map(members.map(",
-    "new": "const ranks = new Map((members ?? []).map(",
+    "old": "  const ranks =\n    members === null ? null : new Map(members.map((/** @type {{ f: number, rank: number }} */ m) => [m.f, m.rank]));",
+    "new": "  const ranks = new Map((members ?? []).map((/** @type {{ f: number, rank: number }} */ m) => [m.f, m.rank]));",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -137,8 +137,8 @@
   {
     "name": "ACHAP-S8-SEEDED",
     "file": "server-account/src/npcRoll.js",
-    "old": "if (after.tag === tag) return { roll: viewOf(0, rows), from: 0, seeded: true };",
-    "new": "if (after) return { roll: viewOf(0, rows), from: 0, seeded: true };",
+    "old": "  if (after.tag === tag) return { roll: viewOf(0, rows), from: 0, seeded: true };",
+    "new": "  if (after) return { roll: viewOf(0, rows), from: 0, seeded: true };",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -147,8 +147,8 @@
   {
     "name": "ACHAP-D2-OWED-DROP",
     "file": "src/net/npcChapterLaw.js",
-    "old": "owed: owedUnder(rep, owed + (delta - take))",
-    "new": "owed: owedUnder(rep, owed)",
+    "old": "  return {\n    rep,\n    gainedDay: day,\n    gained: today + (rep - before),\n    owed: owedUnder(rep, owed + (delta - take)),\n    credited: rep - before,\n  };",
+    "new": "  return { rep, gainedDay: day, gained: today + (rep - before), owed: owedUnder(rep, owed), credited: rep - before };",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -167,8 +167,8 @@
   {
     "name": "ACHAP-D2-DRAIN-CLAIM",
     "file": "server-account/src/npcRoll.js",
-    "old": "    if (row.owed > 0) {\n      const d = rollDrain(line, day);",
-    "new": "    if (false) {\n      const d = rollDrain(line, day);",
+    "old": "    if (row.owed > 0) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -177,8 +177,8 @@
   {
     "name": "ACHAP-D2-LOSS-ORDER",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const fromOwed = Math.min(owed, -delta);",
-    "new": "const fromOwed = 0;",
+    "old": "    const fromOwed = Math.min(owed, -delta);",
+    "new": "    const fromOwed = 0;",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -187,8 +187,8 @@
   {
     "name": "ACHAP-D2-OWED-CAP",
     "file": "src/net/npcChapterLaw.js",
-    "old": "Math.max(0, Math.min(MAX_REPUTATION - rep, owed)));",
-    "new": "Math.max(0, owed));",
+    "old": "  rep >= MAX_REPUTATION ? 0 : Math.max(0, Math.min(MAX_REPUTATION - rep, owed));",
+    "new": "  rep >= MAX_REPUTATION ? 0 : Math.max(0, owed);",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -197,8 +197,8 @@
   {
     "name": "ACHAP-D4-NET",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return { rep, gainedDay: day, gained: today + (rep - before), owed: owedUnder(rep, owed - fromOwed), credited: rep - before };",
-    "new": "return { rep, gainedDay: day, gained: today, owed: owedUnder(rep, owed - fromOwed), credited: rep - before };",
+    "old": "    return {\n      rep,\n      gainedDay: day,\n      gained: today + (rep - before),\n      owed: owedUnder(rep, owed - fromOwed),\n      credited: rep - before,\n    };",
+    "new": "    return { rep, gainedDay: day, gained: today, owed: owedUnder(rep, owed - fromOwed), credited: rep - before };",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -207,8 +207,8 @@
   {
     "name": "ACHAP-C1-KEPT",
     "file": "src/net/npcRollTracker.js",
-    "old": "k && k.seq === r.data.from ? k.factions :",
-    "new": "false ? k.factions :",
+    "old": "      : k && k.seq === r.data.from",
+    "new": "      : false",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -217,8 +217,8 @@
   {
     "name": "ACHAP-C1-SEQ",
     "file": "src/net/npcRollTracker.js",
-    "old": "k && k.seq === r.data.from ? k.factions :",
-    "new": "k ? k.factions :",
+    "old": "      : k && k.seq === r.data.from",
+    "new": "      : k",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -227,8 +227,8 @@
   {
     "name": "ACHAP-C1-KEEP",
     "file": "src/net/npcRollTracker.js",
-    "old": "    keep({ seq: roll.seq, factions: a.base });\n",
-    "new": "\n",
+    "old": "    keep({ seq: roll.seq, factions: a.base });",
+    "new": "",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -237,8 +237,8 @@
   {
     "name": "ACHAP-C2-VALUES0",
     "file": "src/net/npcRollTracker.js",
-    "old": "values0 ??= values;",
-    "new": "values0 = values;",
+    "old": "      values0 ??= values;",
+    "new": "      values0 = values;",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -247,8 +247,8 @@
   {
     "name": "ACHAP-C5-ABSENT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (!Object.hasOwn(current, f) || !Object.hasOwn(base, f)) continue;",
-    "new": "if (false) continue;",
+    "old": "    if (!Object.hasOwn(current, f) || !Object.hasOwn(base, f)) continue;",
+    "new": "    if (false) continue;",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -257,8 +257,8 @@
   {
     "name": "ACHAP-C5-ADOPT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (!current || !Object.hasOwn(current, f)) continue;",
-    "new": "if (!current) continue;",
+    "old": "    if (!current || !Object.hasOwn(current, f)) continue;",
+    "new": "    if (!current) continue;",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -267,8 +267,8 @@
   {
     "name": "ACHAP-T4-BUSY",
     "file": "src/net/npcRollTracker.js",
-    "old": "      busy = true;\n",
-    "new": "      busy = false;\n",
+    "old": "      busy = true;",
+    "new": "      busy = false;",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -277,8 +277,8 @@
   {
     "name": "ACHAP-T12-LEASE",
     "file": "src/net/npcRollTracker.js",
-    "old": "if (!id || !ls) return;",
-    "new": "if (!id) return;",
+    "old": "      if (!id || !ls) return;",
+    "new": "      if (!id) return;",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -287,8 +287,8 @@
   {
     "name": "ACHAP-T6-KEY",
     "file": "src/net/npcChapterLaw.js",
-    "old": "list.map((m) => `${m.f}:${m.rank}${m.d === 1 ? 'd' : ''}`)",
-    "new": "list.map((m) => `${m.f}${m.d === 1 ? 'd' : ''}`)",
+    "old": "  list ? list.map((m) => `${m.f}:${m.rank}${m.d === 1 ? 'd' : ''}`).join(',') : null; // AUDIT CHAP4 D1: a book's swap moves it",
+    "new": "  list ? list.map((m) => `${m.f}${m.d === 1 ? 'd' : ''}`).join(',') : null; // AUDIT CHAP4 D1: a book's swap moves it",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -297,8 +297,8 @@
   {
     "name": "ACHAP-T10-CUT",
     "file": "src/net/npcRollTracker.js",
-    "old": "(credited[f] ?? c.deltas[f]) < c.deltas[f]",
-    "new": "(credited[f] ?? c.deltas[f]) <= c.deltas[f]",
+    "old": "      .filter((f) => c.deltas[f] > 0 && (credited[f] ?? c.deltas[f]) < c.deltas[f]);",
+    "new": "      .filter((f) => c.deltas[f] > 0 && (credited[f] ?? c.deltas[f]) <= c.deltas[f]);",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -307,8 +307,8 @@
   {
     "name": "ACHAP-T8-DOUBLE",
     "file": "src/net/npcRollTracker.js",
-    "old": "wait = Math.min(ROLL_RETRY_MAX_MS, wait * 2);",
-    "new": "wait = Math.min(ROLL_RETRY_MAX_MS, wait * 1);",
+    "old": "    wait = Math.min(ROLL_RETRY_MAX_MS, wait * 2);",
+    "new": "    wait = Math.min(ROLL_RETRY_MAX_MS, wait * 1);",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -337,8 +337,8 @@
   {
     "name": "ACHAP-T9-UNSEEDED",
     "file": "src/net/npcRollTracker.js",
-    "old": "if (error === 'roll-unseeded') { base = null; pending = null; }",
-    "new": "if (false) { base = null; pending = null; }",
+    "old": "    if (error === 'roll-unseeded') {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -347,8 +347,8 @@
   {
     "name": "ACHAP-T9-NOROLL",
     "file": "src/net/npcRollTracker.js",
-    "old": "if (!roll) return fail('roll-seed');",
-    "new": "if (!roll) return fail('server');",
+    "old": "    if (!roll) return fail('roll-seed'); // a seed went with it, so the Roll stands - or the service took none",
+    "new": "    if (!roll) return fail('server'); // a seed went with it, so the Roll stands - or the service took none",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -357,8 +357,8 @@
   {
     "name": "ACHAP-T5-READ",
     "file": "src/net/npcRollTracker.js",
-    "old": "read: () => rollValuesOf(entityOf()?.factionRep),",
-    "new": "read: () => rollValuesOf(entityOf()?.factionReps),",
+    "old": "    read: () => rollValuesOf(entityOf()?.factionRep),",
+    "new": "    read: () => rollValuesOf(entityOf()?.factionReps),",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -377,8 +377,8 @@
   {
     "name": "ACHAP-T5-WRITE",
     "file": "src/net/npcRollTracker.js",
-    "old": "setReputation(store, Number(f), rep);",
-    "new": "{ const row = store.dict.get(Number(f)); if (row) row.rep = rep; }",
+    "old": "      if (store) for (const [f, rep] of Object.entries(values)) setReputation(store, Number(f), rep);",
+    "new": "      if (store)\n        for (const [f, rep] of Object.entries(values)) {\n          const row = store.dict.get(Number(f));\n          if (row) row.rep = rep;\n        }",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -387,8 +387,8 @@
   {
     "name": "ACHAP-T7-SEED-MAX",
     "file": "src/net/npcChapterLaw.js",
-    "old": "(x) => x >= MIN_REPUTATION && x <= MAX_REPUTATION",
-    "new": "(x) => x >= MIN_REPUTATION && x < MAX_REPUTATION",
+    "old": "  factionMapOk(v, (x) => x >= MIN_REPUTATION && x <= MAX_REPUTATION);",
+    "new": "  factionMapOk(v, (x) => x >= MIN_REPUTATION && x < MAX_REPUTATION);",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -397,8 +397,8 @@
   {
     "name": "ACHAP-T13-PAD",
     "file": "src/net/npcRollTracker.js",
-    "old": "for (const x of b) out += x.toString(16).padStart(2, '0');",
-    "new": "for (const x of b) out += x.toString(16).padStart(1, '0');",
+    "old": "  for (const x of b) out += x.toString(16).padStart(2, '0');",
+    "new": "  for (const x of b) out += x.toString(16).padStart(1, '0');",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -477,8 +477,8 @@
   {
     "name": "ACHAP-CEILING-LINE",
     "file": "src/scenes/rollNoticeHost.js",
-    "old": "quests cannot raise your standing any further today. {owed} more is owed and arrives over the coming days.",
-    "new": "quests cannot raise your standing any further today.",
+    "old": "          t(\n            'chapters.standing.ceiling',\n            '{name}: quests cannot raise your standing any further today. {owed} more is owed and arrives over the coming days.',\n            { name: standingName(f), owed: standingOwedOf(f) },\n          ),",
+    "new": "          t('chapters.standing.ceiling', '{name}: quests cannot raise your standing any further today.', {\n            name: standingName(f),\n            owed: standingOwedOf(f),\n          }),",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js",
@@ -488,8 +488,8 @@
   {
     "name": "ACHAP-KEPT-SHAPE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (!Number.isSafeInteger(seq) || seq < 0 || !rollSeedOk(factions)) return unheard ? { unheard } : null;",
-    "new": "if (!Number.isSafeInteger(seq)) return unheard ? { unheard } : null;",
+    "old": "  if (!Number.isSafeInteger(seq) || seq < 0 || !rollSeedOk(factions)) return unheard ? { unheard } : null;",
+    "new": "  if (!Number.isSafeInteger(seq)) return unheard ? { unheard } : null;",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"

@@ -2,8 +2,8 @@
   {
     "name": "SD25-HANG-the-skirt-hung-from-the-floor",
     "file": "src/world/superDungeon/sdIslandModel.js",
-    "old": "N = SD_ISLAND_SIDES, top = isl.y + SD_HANG.top,",
-    "new": "N = SD_ISLAND_SIDES, top = isl.y,",
+    "old": "    top = isl.y + SD_HANG.top,",
+    "new": "    top = isl.y,",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SD25-HANG-a-spire-top-through-the-cap",
     "file": "src/world/superDungeon/sdIslandModel.js",
-    "old": "y: foot + 0.05 - s.len * t,",
-    "new": "y: foot + 3 - s.len * t,",
+    "old": "    y: foot + 0.05 - s.len * t,",
+    "new": "    y: foot + 3 - s.len * t,",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SD25-HANG-a-chain-anchor-up-through-the-floor",
     "file": "src/world/superDungeon/sdIslandModel.js",
-    "old": "anchors.push([isl.x + Math.cos(a) * 0.75 * rb, foot + 0.2,",
-    "new": "anchors.push([isl.x + Math.cos(a) * 0.75 * rb, foot + 3.2,",
+    "old": "    anchors.push([isl.x + Math.cos(a) * 0.75 * rb, foot + 0.2, isl.z + Math.sin(a) * 0.75 * rb]);",
+    "new": "    anchors.push([isl.x + Math.cos(a) * 0.75 * rb, foot + 3.2, isl.z + Math.sin(a) * 0.75 * rb]);",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SD25-HANG-a-gear-rim-out-past-the-disc",
     "file": "src/world/superDungeon/sdIslandModel.js",
-    "old": "const ox = cx + Math.cos(g.a) * R * 0.8,",
-    "new": "const ox = cx + Math.cos(g.a) * (R * 0.8 + 6),",
+    "old": "    const ox = cx + Math.cos(g.a) * R * 0.8,",
+    "new": "    const ox = cx + Math.cos(g.a) * (R * 0.8 + 6),",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SD25-HANG-the-strata-over-half-the-depth",
     "file": "src/world/superDungeon/sdIslandModel.js",
-    "old": "depth = -SD_HANG.top + SD_HANG.skirt + L0;",
-    "new": "depth = -SD_HANG.top + SD_HANG.skirt + L0 * 0.5;",
+    "old": "    depth = -SD_HANG.top + SD_HANG.skirt + L0;",
+    "new": "    depth = -SD_HANG.top + SD_HANG.skirt + L0 * 0.5;",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD25-HANG-a-tip-not-hazed",
     "file": "src/world/superDungeon/sdIslandModel.js",
-    "old": "(i === SD_SPIRE.rings - 1 ? Math.max(SD_SPIRE.haze, vOf(p[1])) : vOf(p[1]))",
-    "new": "vOf(p[1])",
+    "old": "      rings.push({\n        c,\n        ring,\n        outer,\n        v: ring.map((p) => (i === SD_SPIRE.rings - 1 ? Math.max(SD_SPIRE.haze, vOf(p[1])) : vOf(p[1]))),\n      }); // the strata by depth; the broken tip into the haze",
+    "new": "      rings.push({ c, ring, outer, v: ring.map((p) => vOf(p[1])) }); // the strata by depth; the broken tip into the haze",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD25-HANG-the-skirt-off-the-lip",
     "file": "src/world/superDungeon/sdIslandModel.js",
-    "old": "const t0 = D(isl.x + Math.cos(a0) * isl.r, top,",
-    "new": "const t0 = D(isl.x + Math.cos(a0) * isl.r * 0.98, top,",
+    "old": "    const t0 = D(isl.x + Math.cos(a0) * isl.r, top, isl.z + Math.sin(a0) * isl.r),",
+    "new": "    const t0 = D(isl.x + Math.cos(a0) * isl.r * 0.98, top, isl.z + Math.sin(a0) * isl.r),",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SD25-HANG-the-phones-spires-all-stood",
     "file": "src/world/superDungeon/sdIslandModel.js",
-    "old": "for (let j = 0; j < outer && !lite; j++) {",
-    "new": "for (let j = 0; j < outer; j++) {",
+    "old": "  for (let j = 0; j < outer && !lite; j++) {",
+    "new": "  for (let j = 0; j < outer; j++) {",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SD25-HANG-a-ledge-facing-up",
     "file": "src/world/superDungeon/sdIslandModel.js",
-    "old": "ctr = D(B.c.x, B.c.y + 50, B.c.z);",
-    "new": "ctr = D(B.c.x, B.c.y - 50, B.c.z);",
+    "old": "        ctr = D(B.c.x, B.c.y + 50, B.c.z);",
+    "new": "        ctr = D(B.c.x, B.c.y - 50, B.c.z);",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD25-HANG-no-ledges",
     "file": "src/world/superDungeon/sdIslandModel.js",
-    "old": "const ledge = i + 1 < rings.length - 1,",
-    "new": "const ledge = false,",
+    "old": "      const ledge = i + 1 < rings.length - 1,",
+    "new": "      const ledge = false,",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SD25-HANG-the-swing-about-the-island-centre",
     "file": "src/world/superDungeon/sdIslandModel.js",
-    "old": "axle: Object.freeze({ p: Object.freeze(D(a[0], a[1], a[2])),",
-    "new": "axle: Object.freeze({ p: Object.freeze(D(isl.x, a[1], isl.z)),",
+    "old": "    axle: Object.freeze({ p: Object.freeze(D(a[0], a[1], a[2])), d: Object.freeze([dx / l, 0, dz / l]) }),",
+    "new": "    axle: Object.freeze({ p: Object.freeze(D(isl.x, a[1], isl.z)), d: Object.freeze([dx / l, 0, dz / l]) }),",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SD25-HANG-the-swing-smooth",
     "file": "src/scenes/superDungeon/sdHang.js",
-    "old": "now[SD_HANG_NOW.swing] = chainSwing(now[SD_HANG_NOW.ticks]);",
-    "new": "now[SD_HANG_NOW.swing] = chainSwing(t);",
+    "old": "      now[SD_HANG_NOW.swing] = chainSwing(now[SD_HANG_NOW.ticks]);",
+    "new": "      now[SD_HANG_NOW.swing] = chainSwing(t);",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SD25-HANG-the-swing-never-alternating",
     "file": "src/world/superDungeon/sdIslandModel.js",
-    "old": "return SD_CHAIN.swing * (s % 2 === 0 ? 1 : -1) * Math.cos(Math.PI * e);",
-    "new": "return SD_CHAIN.swing * Math.cos(Math.PI * e);",
+    "old": "  return SD_CHAIN.swing * (s % 2 === 0 ? 1 : -1) * Math.cos(Math.PI * e);",
+    "new": "  return SD_CHAIN.swing * Math.cos(Math.PI * e);",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SD25-HANG-the-links-never-turned",
     "file": "src/world/superDungeon/sdIslandModel.js",
-    "old": "turned = n % 2 === 1;",
-    "new": "turned = false;",
+    "old": "        turned = n % 2 === 1;",
+    "new": "        turned = false;",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SD25-HANG-a-follower-half-a-tooth-off",
     "file": "src/world/superDungeon/sdWorksModel.js",
-    "old": "phase = b + Math.PI - (d.r * (d.phase - b) + SD_WORKS_PITCH / 2) / r;",
-    "new": "phase = b + Math.PI - (d.r * (d.phase - b)) / r;",
+    "old": "      phase = b + Math.PI - (d.r * (d.phase - b) + SD_WORKS_PITCH / 2) / r;",
+    "new": "      phase = b + Math.PI - (d.r * (d.phase - b)) / r;",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SD25-HANG-a-follower-turning-with-its-driver",
     "file": "src/world/superDungeon/sdWorksModel.js",
-    "old": "w = (-d.w * d.r) / r;",
-    "new": "w = (d.w * d.r) / r;",
+    "old": "      w = (-d.w * d.r) / r;",
+    "new": "      w = (d.w * d.r) / r;",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SD25-HANG-the-teeth-faces-unglinting",
     "file": "src/world/superDungeon/sdWorksModel.js",
-    "old": "[0, tipV[0]], [1, tipV[0]], [1, tipV[1]], [0, tipV[1]], from);",
-    "new": "uv(rg, g0), uv(rg, g1), uv(rt, t1), uv(rt, t0), from);",
+    "old": "        [0, tipV[0]],\n        [1, tipV[0]],\n        [1, tipV[1]],\n        [0, tipV[1]],",
+    "new": "        uv(rg, g0),\n        uv(rg, g1),\n        uv(rt, t1),\n        uv(rt, t0),",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SD25-HANG-the-upper-driver-off-its-axle",
     "file": "src/world/superDungeon/sdWorksModel.js",
-    "old": "x = a.x; z = a.z; w = a.w;",
-    "new": "x = a.x + 2; z = a.z; w = a.w;",
+    "old": "      x = a.x;",
+    "new": "      x = a.x + 2;",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "SD25-HANG-the-driver-two-teeth-a-tick",
     "file": "src/world/superDungeon/sdWorksModel.js",
-    "old": "w = (2 * Math.PI) / s.teeth, phase = 0;",
-    "new": "w = (4 * Math.PI) / s.teeth, phase = 0;",
+    "old": "      w = (2 * Math.PI) / s.teeth,",
+    "new": "      w = (4 * Math.PI) / s.teeth,",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "SD25-HANG-an-island-over-the-edge",
     "file": "src/world/superDungeon/sdIslandModel.js",
-    "old": "[2.5, 300, -54, 5, 12]",
-    "new": "[2.5, 300, -24, 5, 12]",
+    "old": "    [2.5, 300, -54, 5, 12],",
+    "new": "    [2.5, 300, -24, 5, 12],",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "SD25-HANG-the-set-turned-about-the-origin",
     "file": "src/world/superDungeon/sdIslandModel.js",
-    "old": "pz = SD_REALM_ORIGIN[2] + SD_FAR_CENTRE[2];",
-    "new": "pz = SD_REALM_ORIGIN[2];",
+    "old": "    pz = SD_REALM_ORIGIN[2] + SD_FAR_CENTRE[2];",
+    "new": "    pz = SD_REALM_ORIGIN[2];",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SD25-HANG-the-works-face-glowing",
     "file": "src/world/superDungeon/sdHangArt.js",
-    "old": "putTexel(albedo, x, y, ramp(BLACKENED, 0.1 + 0.32 * broad(x, y) + 0.16 * (grain(x, y) - 0.5), x, y)); putTexel(emission, x, y, [0, 0, 0]);",
-    "new": "putTexel(albedo, x, y, ramp(BLACKENED, 0.1 + 0.32 * broad(x, y) + 0.16 * (grain(x, y) - 0.5), x, y)); putTexel(emission, x, y, [4, 3, 1]);",
+    "old": "      putTexel(albedo, x, y, ramp(BLACKENED, 0.1 + 0.32 * broad(x, y) + 0.16 * (grain(x, y) - 0.5), x, y));\n      putTexel(emission, x, y, [0, 0, 0]);",
+    "new": "      putTexel(albedo, x, y, ramp(BLACKENED, 0.1 + 0.32 * broad(x, y) + 0.16 * (grain(x, y) - 0.5), x, y));\n      putTexel(emission, x, y, [4, 3, 1]);",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SD25-HANG-the-art-not-carried",
     "file": "src/world/superDungeon/sdRealmArt.js",
-    "old": "[31, realmCobbleArt()], [32, realmEdgeArt()], [56, realmPillarArt()], ...hangArt(),",
-    "new": "[31, realmCobbleArt()], [32, realmEdgeArt()], [56, realmPillarArt()],",
+    "old": "  ...hangArt(),\n];",
+    "new": "];",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "SD25-HANG-a-draw-casting",
     "file": "src/scenes/superDungeon/sdHang.js",
-    "old": "const drawOf = (gpu, stage) => ({ gpu, object: { matrix: identity() }, noShadow: true,",
-    "new": "const drawOf = (gpu, stage) => ({ gpu, object: { matrix: identity() }, noShadow: false,",
+    "old": "  const drawOf = (gpu, stage) => ({ gpu, object: { matrix: identity() }, noShadow: true, stage, texRemap: null });",
+    "new": "  const drawOf = (gpu, stage) => ({ gpu, object: { matrix: identity() }, noShadow: false, stage, texRemap: null });",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "SD25-HANG-the-phones-chains-swung",
     "file": "src/scenes/superDungeon/sdHang.js",
-    "old": "if (!lite) chains.push({ d, axle });",
-    "new": "chains.push({ d, axle });",
+    "old": "        if (!lite) chains.push({ d, axle }); // the phones' chains hang still",
+    "new": "        chains.push({ d, axle }); // the phones' chains hang still",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "SD25-HANG-the-phones-far-islands",
     "file": "src/scenes/superDungeon/sdHang.js",
-    "old": "      if (!lite) {\n        const gpu = make(buildFarIslandsModel());",
-    "new": "      if (true) {\n        const gpu = make(buildFarIslandsModel());",
+    "old": "      if (!lite) {",
+    "new": "      if (true) {",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "SD25-HANG-the-phones-four-gears",
     "file": "src/scenes/superDungeon/sdHang.js",
-    "old": "if (lite && !g.lite) continue;",
-    "new": "if (false) continue;",
+    "old": "        if (lite && !g.lite) continue;",
+    "new": "        if (false) continue;",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "SD25-HANG-a-mesh-kept-at-clear",
     "file": "src/scenes/superDungeon/sdHang.js",
-    "old": "try { renderer?.destroyMesh?.(m); } catch",
-    "new": "try { void m; } catch",
+    "old": "          renderer?.destroyMesh?.(m);",
+    "new": "          void m;",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "SD25-HANG-stood-twice",
     "file": "src/scenes/superDungeon/sdHang.js",
-    "old": "      if (stood) return;\n",
-    "new": "      if (stood && false) return;\n",
+    "old": "      if (stood) return;",
+    "new": "      if (stood && false) return;",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "SD25-HANG-a-fresh-matrix-a-frame",
     "file": "src/scenes/superDungeon/sdHang.js",
-    "old": "for (let k = 0; k < chains.length; k++) chainMatrix(chains[k].axle, now, chains[k].d.object.matrix);",
-    "new": "for (let k = 0; k < chains.length; k++) chains[k].d.object.matrix = chainMatrix(chains[k].axle, now, new Float32Array(16));",
+    "old": "      for (let k = 0; k < chains.length; k++) chainMatrix(chains[k].axle, now, chains[k].d.object.matrix);",
+    "new": "      for (let k = 0; k < chains.length; k++)\n        chains[k].d.object.matrix = chainMatrix(chains[k].axle, now, new Float32Array(16));",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]

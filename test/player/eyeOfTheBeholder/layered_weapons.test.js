@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import {
   layeredWeaponOf, weaponShownFor, weaponRigOf, WEAPON_SHAPES, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode, removeWeapon,
-  maskTile, fillFrom, weaponLen, WEAPON_SPAN, heldPicture, heldBow, heldImage, drawWeapon, chainWay, heldChain, layeredHands, offRigOf,
+  maskTile, fillFrom, weaponLen, WEAPON_SPAN, STRIKE_SHORT, heldPicture, heldBow, heldImage, drawWeapon, chainWay, heldChain, layeredHands, offRigOf,
   SWING_CUTS, swingCutOf, thrustRigOf, artBowPx, dropSpecks, heldPictureExpected, LOOSE_BOW_FROM,
 } from '../../../src/player/eyeOfTheBeholder/layeredWeapon.js';
 import { worldOrderLayered } from '../../../src/player/eyeOfTheBeholder/eotbSprite.js';
@@ -384,21 +384,31 @@ test('the held picture is drawn on the frame\'s line from the fist; a bow from i
   assert.ok(Math.abs(bottom - top - rig.male.bow * Math.cos(Math.PI / 15)) <= 3, `tip to tip ${bottom - top}: the loose's own bow`);
 });
 
-test('from behind the blade is hidden behind the arm and the pommel shows; from the side the bow is in the near hand', { skip: !PNG && 'no pngjs' }, async () => {
+test('BACK-CARRY: from behind the blade hangs from the fist before the body, edge on; from the side the bow is in the near hand', { skip: !PNG && 'no pngjs' }, async () => {
+  // a player (2026-10-31): "drawn claymore is visually not in character's hand" - the back walk hid the blade forward
   const withPic = { ...opts, heldArt: async () => sword({ handle: 24 }) };
-  for (const [body, frames] of [['male', ['4-0', '4-1', '4-2', '4-3']], ['female', ['4-0', '4-1', '4-2', '4-3']]]) {
-    let pommel = 0;
-    for (const rf of frames) {
-      const armed = await decodeLayered(`LA:${body}:leather_leather_leather:${rf}:lll@ls1`, decodePng, withPic);
-      let red = 0;
-      for (let i = 0; i < armed.width * armed.height; i++) {
-        const [r, g, b] = armed.data.subarray(i * 4, i * 4 + 3);
-        if (r > 200 && g < 60 && b < 60) red++;
-        if (b > 200 && r < 60 && g < 60) pommel++;
-      }
-      assert.equal(red, 0, `${body} ${rf}: no blade from behind`);
+  for (const body of ['male', 'female']) for (const rf of ['4-0', '4-1', '4-2', '4-3']) {
+    const armed = await decodeLayered(`LA:${body}:leather_leather_leather:${rf}:lll@ls1`, decodePng, withPic);
+    const fr = weaponRigOf(body, rf), [gx, gy, ex, ey] = fr.w, D = Math.hypot(ex - gx, ey - gy), nx = -(ey - gy) / D, ny = (ex - gx) / D;
+    assert.ok((ey - gy) / D > 0.7, `${body} ${rf}: the line hangs down`);
+    let red = 0, above = 0, across = 0, guard = 0;
+    for (let i = 0; i < armed.width * armed.height; i++) {
+      const [r, g, b] = armed.data.subarray(i * 4, i * 4 + 3), x = (i % armed.width) + 0.5, y = ((i / armed.width) | 0) + 0.5;
+      if (r > 200 && g < 60 && b < 60) { red++; if (y < gy - 1) above++; }
+      if (g > 200 && r < 60 && b < 60) { guard++; across = Math.max(across, Math.abs((x - gx) * nx + (y - gy) * ny)); }
     }
-    assert.ok(pommel > 0, `${body}: the pommel shows below the fist`);
+    assert.ok(red > 10 && above === 0, `${body} ${rf}: the blade below the fist (${red} px, ${above} above)`);
+    // edge on: the guard's nine picture px reach 4.5 cm px from the line seen flat - well under that here
+    assert.ok(guard > 0 && across <= 4.5 * rig[body].cm * 0.6, `${body} ${rf}: the guard edge on (${across.toFixed(1)} px across)`);
+    // and the drawn shape, where no picture is had: its guard's 12 cm reach edge on too
+    const shape = await decodeLayered(`LA:${body}:leather_leather_leather:${rf}:lll@ls1`, decodePng, { ...opts, heldArt: async () => null });
+    const empty = await decodeLayered(`LA:${body}:leather_leather_leather:${rf}:lll@0`, decodePng, opts);
+    let reach = 0;
+    for (let i = 0; i < shape.width * shape.height; i++) {
+      if ([0, 1, 2, 3].every((c) => shape.data[i * 4 + c] === empty.data[i * 4 + c])) continue;
+      reach = Math.max(reach, Math.abs(((i % shape.width) + 0.5 - gx) * nx + (((i / shape.width) | 0) + 0.5 - gy) * ny));
+    }
+    assert.ok(reach > 0 && reach <= 12 * rig[body].cm * 0.6, `${body} ${rf}: the shape's guard edge on (${reach.toFixed(1)} px)`);
   }
   for (const body of ['male', 'female']) for (const rf of ['2-0', '2-1', '2-2', '2-3', '17-0']) {
     const fr = weaponRigOf(body, rf), [gx, gy] = fr.w ?? fr.q;
@@ -424,7 +434,8 @@ test('a flail\'s chain hangs; a katana is held as its flat picture, not the pack
     }
     assert.ok(red.length > 3, `${frame}: the chain drawn (${red.length} px)`);
     const [gx, gy] = chainWay(fr.cv, { ux, uy }, Number(frame.split('-')[0]) >= 5 && Number(frame.split('-')[0]) <= 9, Number(frame.split('-')[1]));
-    assert.ok(red.every(([x, y]) => Math.abs((x - hx) * gy - (y - hy) * gx) <= 1.6 && (x - hx) * gx + (y - hy) * gy > 0), `${frame}: the chain runs from the head end along (${gx.toFixed(2)}, ${gy.toFixed(2)})`);
+    // PIN MOVED (FLAIL-LINK): the chain starts at the cap, so its first px may sit up to a px short of the head end
+    assert.ok(red.every(([x, y]) => Math.abs((x - hx) * gy - (y - hy) * gx) <= 1.6 && (x - hx) * gx + (y - hy) * gy > -1), `${frame}: the chain runs from the head end along (${gx.toFixed(2)}, ${gy.toFixed(2)})`);
     if (!fr.cv) assert.deepEqual([gx, gy], [0, 1], `${frame}: at rest it hangs plumb`);
   }  const kt = { group: 'Weapons', templateIndex: WEAPONS.Katana, material: 0 }, ls = { group: 'Weapons', templateIndex: WEAPONS.Longsword, material: 0 };
   assert.equal(heldImage(kt, { gender: 'male' }).record, inventoryItemImage(kt, { gender: 'male' }).record - 1);
@@ -502,7 +513,8 @@ test('the doll\'s hand gap carries the handle where no fist of the art covers it
     if (bare.data[(y * bare.width + x) * 4 + 3]) { if (isBlue(x, y)) over++; continue; }
     air++; if ([-1, 0, 1].some((dy) => [-1, 0, 1].some((dx) => isBlue(x + dx, y + dy)))) blue++;   // a line a px wide, unbroken
   }
-  assert.ok(air > 4 && blue === air, `the handle joins guard and pommel in open air (${blue} of ${air})`);
+  // PIN MOVED (the placement audit): 12-0's grip is at the fist's middle now, four px of the gap in the air, not five
+  assert.ok(air >= 4 && blue === air, `the handle joins guard and pommel in open air (${blue} of ${air})`);
   assert.equal(over, 0, 'the bridge is never over the body');
   // the side walk's fist is the art's: the gap under it stays the fist, never the handle over it
   const walk = 'LA:male:leather_leather_leather:2-1:lll', fw = weaponRigOf('male', '2-1'), [wx, wy] = fw.q;
@@ -585,7 +597,9 @@ test('a flail\'s chain swings: in a walk it lags the hand\'s move since the fram
   // a swing that flings the ball off the picture's top, and a walk's toward its side: it stays inside
   const W = 40, H = 80, colors = new Uint8Array(W * H * 4);
   for (let x = 0; x < 30; x++) if (x < 4 || x > 7) colors.set([0, 0, 255, 255], (20 * W + x) * 4);
-  for (let y = 21; y < 70; y++) for (let x = 27; x <= 31; x++) colors.set([255, 0, 0, 255], (y * W + x) * 4);
+  // PIN MOVED (FLAIL-LINK): the chain is drawn from its first link, a little shorter on screen - four px longer, so
+  // a ball not turned back still leaves male 8-1's picture
+  for (let y = 21; y < 74; y++) for (let x = 27; x <= 31; x++) colors.set([255, 0, 0, 255], (y * W + x) * 4);
   for (const [body, rf] of [['male', '8-1'], ['male', '6-1'], ['male', '0-0'], ['female', '0-0']]) {
     const f = await decodeLayered(`LA:${body}:leather_leather_leather:${rf}:lll@fl1`, decodePng, { ...opts, heldArt: async () => ({ width: W, height: H, colors }) });
     let red = 0, edge = 0;
@@ -607,6 +621,28 @@ test('a flail\'s chain swings: in a walk it lags the hand\'s move since the fram
   assert.ok(rows.size >= 8, `the thin chain drawn on ${rows.size} rows`);
 });
 
+test('FLAIL-LINK (the placement audit, 2026-10-31): the chain hangs from the cap - the doll\'s first link sits below it, and the cap\'s px off the axis stay the handle\'s, no speck', () => {
+  const W = 40, H = 80, c = new Uint8Array(W * H * 4);
+  for (let x = 0; x < 30; x++) if (x < 4 || x > 7) c.set([0, 0, 255, 255], (20 * W + x) * 4);
+  for (let y = 16; y < 20; y++) for (let x = 27; x <= 31; x++) c.set([0, 0, 255, 255], (y * W + x) * 4);   // the cap, off the axis
+  for (let y = 25; y < 40; y++) c.set([255, 0, 0, 255], (y * W + 29) * 4);   // the first link four px below the cap
+  const pic = heldChain(heldPicture({ width: W, height: H, colors: c }));
+  assert.ok(pic.chain.lead >= 3, `the chain starts at its first link: lead ${pic.chain.lead}`);
+  const S = 60, out = { width: S, height: S, data: new Uint8Array(S * S * 4) }, along = 0.62 * (20 / 30), qx = 20 - 21 * along;
+  drawWeapon(out, { q: [qx, 10], t: [qx + 20, 10], d: 'f'.repeat(87), side: 1 }, 'fl1', 30, 2, { cm: 0.62, pic, swing: false });
+  const on = (x, y) => x >= 0 && y >= 0 && x < S && y < S && out.data[(y * S + x) * 4 + 3] > 0;
+  const seen = new Uint8Array(S * S); let pieces = 0;
+  for (let i = 0; i < S * S; i++) {
+    if (seen[i] || !on(i % S, (i / S) | 0)) continue;
+    pieces++;
+    for (const st = [i]; st.length;) {
+      const j = st.pop(), x = j % S, y = (j / S) | 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const k = (y + dy) * S + x + dx; if (on(x + dx, y + dy) && !seen[k]) { seen[k] = 1; st.push(k); } }
+    }
+  }
+  assert.equal(pieces, 1, 'the handle, its cap and the chain drawn as one piece');
+});
+
 test('the loose\'s frames hold the art\'s own bow: with no bow in hand they are the ranged stance, hands empty', () => {
   const look = (weapon) => ({ outfit: 'lll', gender: 'male', weapon });
   const sword = layeredSprite('AttackRanged', 0, 1, 4, look('ls3'), false), none = layeredSprite('AttackRanged', 0, 1, 4, look(null), false);
@@ -619,7 +655,7 @@ test('the loose\'s frames hold the art\'s own bow: with no bow in hand they are 
 
 // ── LAYERED-DUAL ───────────────────────────────────────────────────────────────────────────────────────────────────
 test('LAYERED-DUAL (2026-10-30, the owner: "We need to find a way to implement duel wielding perfectly"): a pair is both codes, the line\'s first; the art\'s hammer line holds the right weapon, the left\'s once flipped, the striking hand\'s in a swing; sheathed, a bow or empty hands hold no pair', () => {
-  assert.deepEqual(outfitPieces('p6cl@ls1+dg3'), { head: 'p6', top: 'c', legs: 'l', cloak: null, weapon: 'ls1', offhand: 'dg3', spell: null });
+  assert.deepEqual(outfitPieces('p6cl@ls1+dg3'), { head: 'p6', top: 'c', legs: 'l', cloak: null, shield: null, weapon: 'ls1', offhand: 'dg3', spell: null, stage: null });   // PIN MOVED (LAYERED-SHIELD): a shield and a cast's stage
   assert.equal(outfitPieces('lll@ls1+'), null, 'a pair names its second');
   const look = (o = {}) => ({ outfit: 'lll', gender: 'male', weapon: 'ls1', offhand: 'dg3', ...o });
   const held = (table, o = {}, mirror = false, offset = 2) => layeredSprite(table, offset, 0, 4, look(o), mirror).key.split(':')[4].split('@')[1];
@@ -754,13 +790,20 @@ test('SWING-CUTS a thrust\'s strike points the blade the way the body faces, alo
     assert.ok(side.length > 10 && side.every(([x]) => x < gx) && Math.max(...ys) - Math.min(...ys) <= 6 && Math.abs(side.reduce((t, p) => t + p[1], 0) / side.length - gy) <= 5,
       `${body}: from aside the blade runs forward, level with the fists (${side.length} px)`);
     assert.equal(reds(await decodeLayered(`LA:${body}:leather_leather_leather:9-2:lll@dg1`, decodePng, withPic)).length, 0, `${body}: from behind the blade is hidden`);
+    // PIN MOVED (STRIKE-AHEAD): 7-2's hammer points at the camera - a mace there strikes ahead too, level with the fists
     const chop = reds(await decodeLayered(`LA:${body}:leather_leather_leather:7-2:lll@mc1`, decodePng, withPic));
-    assert.notDeepEqual(chop, side, `${body}: a mace keeps the chop's line`);
+    assert.ok(chop.length > 10 && chop.every(([x]) => x < gx + 1) && Math.abs(chop.reduce((t, p) => t + p[1], 0) / chop.length - gy) <= 5, `${body}: a mace strikes ahead (${chop.length} px)`);
   }
   const t = thrustRigOf(weaponRigOf('male', '7-2'), 'dg1', 2, 2, rig.male.len);
   assert.equal(t.off, undefined, 'PIN MOVED (2026-10-31): no second blade - both fists hold the first');
   assert.equal(thrustRigOf(weaponRigOf('male', '7-3'), 'dg1', 2, 3, rig.male.len), null, 'only the strike');
-  assert.equal(thrustRigOf(weaponRigOf('male', '7-2'), 'ls1', 2, 2, rig.male.len), null, 'only a thrust');
+  // PIN MOVED (STRIKE-AHEAD): a strike whose hammer is not at the camera keeps the chop; one at the camera strikes
+  // ahead, its handle in the fist, none drawn - and from behind three quarters the art's own way, never a stub
+  assert.equal(thrustRigOf(weaponRigOf('male', '6-2'), 'ls1', 1, 2, rig.male.len), null, 'the chop where the hammer is not at the camera');
+  const ahead = thrustRigOf(weaponRigOf('male', '7-2'), 'ls1', 2, 2, rig.male.len);
+  assert.ok(ahead && ahead.w[2] < ahead.w[0] && /^x+bbbf+$/.test(ahead.d), `aside: forward, the handle unseen (${ahead?.d.slice(0, 20)})`);
+  const back = thrustRigOf(weaponRigOf('male', '8-2'), 'mc1', 3, 2, rig.male.len), fr8 = weaponRigOf('male', '8-2');
+  assert.ok(back && Math.hypot(back.w[2] - back.w[0], back.w[3] - back.w[1]) >= STRIKE_SHORT * rig.male.len - 0.01 && (back.w[2] - back.w[0]) * (fr8.t[0] - fr8.q[0]) > 0, 'from behind three quarters: the art\'s way, at its length');
 });
 
 // ── SPELL-BURST ────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -836,7 +879,7 @@ test('AUDIT the hands: a spell hand keeps its weapon readied too; a shot is the 
   assert.equal(layeredSprite('MoveMelee', 1, 0, 4, L({ weapon: 'ls7' }), false).pair, null);
   // the hands as a clip starts, for all of it - mine and a walker's
   const peerSrc = readFileSync(new URL('../../../src/net/peer/peerRiders.js', import.meta.url), 'utf8');
-  assert.match(peerSrc, /i: 0, hands: walkerHeld\(peer\.look, pose\) \}/);
+  assert.match(peerSrc, /i: 0, hands: lgBody \? walkerHeld\(peer\.look, pose\) : null \}/, 'a worn-armour walker\'s alone');
   assert.match(peerSrc, /\.\.\.\(r\.shot\?\.hands \?\? walkerHeld\(peer\.look, pose\)\)/);
   // a walker's cast is the same look as its stance: its pictures go together
   assert.equal(spriteLookOf({ key: 'LA:male:c:7-2:lll@0!3' }), spriteLookOf({ key: 'LA:male:c:2-0:lll@0' }));
@@ -980,10 +1023,62 @@ test('SHEETS a flinch holds the bow in the hammer\'s fist; a frame drawn before 
   // the tool: the rig hands it over, held ready, a blow a stroke; the weapon sheathed stays on the back
   const rigSrc = readFileSync(new URL('../../../src/combat/weapon/weaponRig.js', import.meta.url), 'utf8');
   assert.match(rigSrc, /return tool \? \{ heldWeapon: tool, toolInHand: true, usingBow: false, spellcasting: false, attacking: strike, swingN: -\(2 \* toolBlows \+ 1\)/);
-  assert.match(rigSrc, /\.\.\.layeredTool\(\),/);
-  assert.equal(bodyState({ toolInHand: true }).toolInHand, true);
+  assert.match(rigSrc, /layeredTool: layeredTool\(\),/, 'its own field: the rig\'s state as it is');
+  const tool = { heldWeapon: { group: 'Weapons', templateIndex: 126, material: 0 }, toolInHand: true };
+  assert.deepEqual(bodyState({ layeredTool: tool }).layeredTool, tool);
+  assert.equal(bodyState({ layeredTool: tool }).toolInHand, false, 'not until the layered body takes it');
+  // only the layered body takes it (2026-10-31, the owner: "revert any work done for the skin system ... This is only for layered")
+  assert.match(bodySrc, /if \(cfg\.wornArmour && last\.layeredTool\) last = \{ \.\.\.last, \.\.\.last\.layeredTool \};/);
   assert.match(bodySrc, /chooseTable\(\{ \.\.\.last, sheathed: last\.sheathed && !last\.toolInHand,/);
   assert.match(bodySrc, /const drawn = grow === 1 && !FP && !last\.sheathed && !last\.toolInHand &&/, 'no weapon glow on the tool');
   // a cast's frames are the outfit's with its hands: kept when another outfit goes
-  assert.match(bodySrc, /held = cast\?\.replace\(\/!\\d\$\/, ''\)/);
+  assert.match(bodySrc, /held = cast\?\.replace\(\/!\\d\\d\?\$\/, ''\)/);   // PIN MOVED (LAYERED-SHIELD): and a cast's stage
+});
+
+test('IRON-LEFT (the owner, 2026-10-31: "this glob of texture where the hammer was removed"): the back views leave none of the hammer\'s dark iron', { skip: !PNG && 'no pngjs' }, async () => {
+  // where the iron was, a px each outfit draws alike (the hammer's - the legs behind differ) is never left as the art drew it
+  const skin = (r, g, b) => r > 110 && r > g && g > b && r - b > 40;
+  for (const [body, rf, [x0, y0, x1, y1]] of [['male', '4-0', [41, 56, 49, 65]], ['male', '4-2', [68, 55, 73, 62]], ['male', '3-2', [50, 57, 55, 60]],
+    ['male', '19-0', [38, 40, 45, 43]], ['female', '19-0', [72, 79, 77, 84]]]) {
+    const a = await decodeLayered(`LA:${body}:leather_chain_leather:${rf}:lcl`, decodePng, opts), b = await decodeLayered(`LA:${body}:leather_chain_plate:${rf}:lcp1`, decodePng, opts);
+    const empty = await decodeLayered(`LA:${body}:leather_chain_leather:${rf}:lcl@0`, decodePng, opts);
+    let left = 0;
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+      const i = (y * a.width + x) * 4, px = [...a.data.subarray(i, i + 4)];
+      if (!px[3] || skin(px[0], px[1], px[2]) || !px.every((v, c) => v === b.data[i + c])) continue;
+      if (px.every((v, c) => v === empty.data[i + c])) left++;
+    }
+    assert.equal(left, 0, `${body} ${rf}: the hammer's iron left (${left} px)`);
+  }
+});
+
+test('THE PLACEMENT AUDIT (2026-10-31, the owner: "Ensure placements are perfect including shields"): a weapon held where the trace took the fist, or snapped off it, is drawn in the hand - every piece of it touches the body', { skip: !PNG && 'no pngjs' }, async () => {
+  const piecesOff = (img) => {
+    const W = img.width, H = img.height, held = img.held, op = (i) => img.data[i * 4 + 3] > 0, seen = new Uint8Array(W * H);
+    let off = 0;
+    for (let s = 0; s < W * H; s++) {
+      if (!held?.[s] || seen[s] || !op(s)) continue;
+      let n = 0, touch = false;
+      for (const st = [s], _ = (seen[s] = 1); st.length;) {
+        const i = st.pop(), x = i % W, y = (i / W) | 0; n++;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const X = x + dx, Y = y + dy, j = Y * W + X;
+          if (X < 0 || Y < 0 || X >= W || Y >= H || !op(j)) continue;
+          if (held[j]) { if (!seen[j]) { seen[j] = 1; st.push(j); } } else touch = true;
+        }
+      }
+      if (!touch && n >= 3) off++;
+    }
+    return off;
+  };
+  const cases = [['female', '10-0', 'mc1'], ['female', '10-0', 'sf0'], ['male', '9-0', 'mc1'], ['male', '9-3', 'dg1'], ['female', '8-2', 'dg1'], ['male', '5-1', 'ls1']];
+  for (const [body, rf, w] of cases) for (const outfit of ['lll', 'p2p2p2']) {
+    const img = await decodeLayered(`LA:${body}:${outfitCombo(outfitPieces(outfit))}:${rf}:${outfit}@${w}`, decodePng, opts);
+    assert.equal(piecesOff(img), 0, `${body} ${rf} ${outfit} ${w}: no piece off the body`);
+  }
+  // the fist kept: female 10-0's hand, which the trace took as a piece of the hammer left floating, is drawn empty-handed
+  const bare = await decodeLayered('LA:female:leather_leather_leather:10-0:lll@0', decodePng, opts);
+  let skin = 0;
+  for (let y = 43; y <= 49; y++) for (let x = 29; x <= 34; x++) { const i = (y * bare.width + x) * 4; if (bare.data[i + 3] && bare.data[i] > 180 && bare.data[i] > bare.data[i + 2] + 40) skin++; }
+  assert.ok(skin >= 4, `female 10-0: the hand kept (${skin} px)`);
 });

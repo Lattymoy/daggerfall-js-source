@@ -893,10 +893,10 @@ have no updater at all: a whole download per release, ~240-260 MB.
 same bytes in every pack; and `DFO-Online-game.json.gz`, the manifest - each file's path, size and sha256, its offset,
 length and encoding in the pack, the release's version and update number, the SHELL it was built for and the channel's
 generation (`GAME_CHANNEL`, the one field an old shell can always read). Cut once, by the leg whose dist/ the AppImage
-bundles (`scripts/desktopRelease.mjs:"export function packGame("`); every leg indexes the dist/ it bundles into
-`app/game-seed.json` (`scripts/desktopRelease.mjs:"export function gameSeed("`, never committed), which electron-builder
+bundles (`scripts/desktopRelease.mjs:"export function packGame"`); every leg indexes the dist/ it bundles into
+`app/game-seed.json` (`scripts/desktopRelease.mjs:"export function gameSeed"`, never committed), which electron-builder
 packs into the shell. The shell's id is the sha256 of the git objects of app/ and of every file its build takes from
-outside it, derived from `app/package.json` (`scripts/desktopRelease.mjs:"export function shellInputs("`), resolved once
+outside it, derived from `app/package.json` (`scripts/desktopRelease.mjs:"export function shellInputs"`), resolved once
 by the `version` job - git objects, so a Windows checkout's line endings are not the commit's. Measured on the
 2026-10-14 build: 20,299 files, 187 MB, packed to 145.7 MB with a 1.1 MB manifest; the update between two real
 releases, file by file, is 2.5-6.8 MB (0.1.8540 to 0.1.8542: 56 files; 0.1.8457 to 0.1.8469: 256).
@@ -949,7 +949,7 @@ GAME's files are applied from the release on every platform - macOS and the port
 trust and a sha256 for every file; the SHELL still updates only by its installer, and on macOS and the portable exe
 still by the notice.
 
-**The publish step measures it.** Before a release is staged, `scripts/desktopRelease.mjs:"export function judgeDelta("`
+**The publish step measures it.** Before a release is staged, `scripts/desktopRelease.mjs:"export function judgeDelta"`
 measures the update a player of the current `latest` takes to it, from the two manifests: the files whose content the
 older lacks, their bytes, the share of the pack. It fails the release when the shell's id moved with no shell file
 changed (every update would be the installer's again) or when the channel would re-download more than half the game

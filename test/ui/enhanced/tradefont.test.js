@@ -36,5 +36,5 @@ test('DROPS-FONT: the gold field and the Share button INHERIT - a form control f
   assert.match(rule(ENHANCED_CSS, '.cr-shell .cr-rm'), /font: inherit;/, 'the chronicle\'s Share button (QUEST1 gave it the .cr-rm class) wears the chronicle\'s face');
   assert.match(rd('src/ui/enhanced/enhancedChronicle.js'), /const share = el\('button', 'cr-rm cr-share', 'Share'\);/);
   assert.ok(rule(SOCIAL_MENU_CSS, '.dfpeer').includes(PIXEL_FONT_CSS.trim().split('\n')[0].trim()), 'the F-menu card carries the face, so its Trade row does');
-  assert.match(rd('src/ui/socialMenu.js'), /if \(canTrade !== undefined\) rows\.push\(\{ key: 'trade', label: tradeLabel \|\| 'Trade',/);
+  assert.match(rd('src/ui/socialMenu.js'), /if \(canTrade !== undefined\)\n\s*rows\.push\(\{\n\s*key: 'trade',\n\s*label: tradeLabel \|\| 'Trade',/);
 });

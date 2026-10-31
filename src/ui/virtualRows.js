@@ -55,7 +55,12 @@ const AIM_PASSES = 4;
  * @param {any} container @param {any[]} items @param {(item: any) => any} build
  * @param {{ min?: number, first?: number, onAim?: (() => void) | null, sizes?: { get: (k: any) => any, set: (k: any, v: any) => any } | null }} [opts]
  */
-export function virtualRows(container, items, build, { min = VIRTUAL_MIN, first = VIRTUAL_FIRST, onAim = null, sizes = null } = {}) {
+export function virtualRows(
+  container,
+  items,
+  build,
+  { min = VIRTUAL_MIN, first = VIRTUAL_FIRST, onAim = null, sizes = null } = {},
+) {
   const total = items.length;
   if (total < min) {
     for (const it of items) container.append(build(it));
@@ -70,27 +75,55 @@ export function virtualRows(container, items, build, { min = VIRTUAL_MIN, first 
   const nodes = new Map();
   /** AUDIT TRADE-VIRT: each item's row height as drawn, and the mean of those this list knows (a line never drawn) */
   const sized = sizes ?? new Map();
-  let knownSum = 0, known = 0;
-  for (const it of items) { const h = sized.get(it); if (h > 0) { knownSum += h; known++; } }
-  let start = 0, end = Math.min(total, first);
-  let top = null, foot = null, geo = null, scrollers = null, queued = false;
-  let whole = false, gone = false;
-  for (let i = start; i < end; i++) { const n = build(items[i]); nodes.set(i, n); container.append(n); }
+  let knownSum = 0,
+    known = 0;
+  for (const it of items) {
+    const h = sized.get(it);
+    if (h > 0) {
+      knownSum += h;
+      known++;
+    }
+  }
+  let start = 0,
+    end = Math.min(total, first);
+  let top = null,
+    foot = null,
+    geo = null,
+    scrollers = null,
+    queued = false;
+  let whole = false,
+    gone = false;
+  for (let i = start; i < end; i++) {
+    const n = build(items[i]);
+    nodes.set(i, n);
+    container.append(n);
+  }
 
-  const later = (f) => (typeof globalThis.requestAnimationFrame === 'function' ? globalThis.requestAnimationFrame(f) : setTimeout(f, 16));
-  const onScroll = () => { if (queued || gone) return; queued = true; later(() => { queued = false; sync(); }); };
+  const later = (f) =>
+    typeof globalThis.requestAnimationFrame === 'function' ? globalThis.requestAnimationFrame(f) : setTimeout(f, 16);
+  const onScroll = () => {
+    if (queued || gone) return;
+    queued = true;
+    later(() => {
+      queued = false;
+      sync();
+    });
+  };
   const rect = (i) => nodes.get(i)?.getBoundingClientRect?.();
 
   /** Every row, drawn: what a list that cannot be measured falls back to. */
   const drawAll = () => {
     whole = true;
-    top?.remove(); top = null;
-    foot?.remove(); foot = null;
+    top?.remove();
+    top = null;
+    foot?.remove();
+    foot = null;
     const firstDrawn = nodes.get(start) ?? null;
     for (let i = 0; i < start; i++) container.insertBefore(build(items[i]), firstDrawn);
     for (let i = end; i < total; i++) container.append(build(items[i]));
     nodes.clear();
-    start = 0; end = total;
+    start = 0;
+    end = total;
   };
 
   /** The columns and the gap between lines, off the drawn rows - or null when they do not say. The first drawn row
@@ -99,10 +132,15 @@ export function virtualRows(container, items, build, { min = VIRTUAL_MIN, first 
   const measure = () => {
     const r0 = rect(start);
     if (!r0 || !(r0.height > 0)) return null;
-    let cols = 0, foot0 = r0.bottom;
+    let cols = 0,
+      foot0 = r0.bottom;
     for (let i = start; i < end; i++) {
       const r = rect(i);
-      if (Math.abs(r.top - r0.top) < 1) { cols++; foot0 = Math.max(foot0, r.bottom); continue; }
+      if (Math.abs(r.top - r0.top) < 1) {
+        cols++;
+        foot0 = Math.max(foot0, r.bottom);
+        continue;
+      }
       return r.top - r0.top > 0 ? { cols, gap: Math.max(0, r.top - foot0) } : null;
     }
     return null;
@@ -113,27 +151,45 @@ export function virtualRows(container, items, build, { min = VIRTUAL_MIN, first 
     for (const [i, n] of nodes) {
       const h = n.getBoundingClientRect?.().height;
       if (!(h > 0)) continue;
-      const it = items[i], was = sized.get(it);
-      if (was > 0) { if (was === h) continue; knownSum -= was; known--; }
-      sized.set(it, h); knownSum += h; known++;
+      const it = items[i],
+        was = sized.get(it);
+      if (was > 0) {
+        if (was === h) continue;
+        knownSum -= was;
+        known--;
+      }
+      sized.set(it, h);
+      knownSum += h;
+      known++;
     }
   };
   /** A line's pitch: its tallest row (a row never drawn at the mean of those that were) and the gap after it. */
   const pitchOf = (l) => {
-    const { cols, gap } = geo, guess = known ? knownSum / known : 0;
+    const { cols, gap } = geo,
+      guess = known ? knownSum / known : 0;
     let h = 0;
-    for (let i = l * cols, e = Math.min(total, i + cols); i < e; i++) { const s = sized.get(items[i]); h = Math.max(h, s > 0 ? s : guess); }
+    for (let i = l * cols, e = Math.min(total, i + cols); i < e; i++) {
+      const s = sized.get(items[i]);
+      h = Math.max(h, s > 0 ? s : guess);
+    }
     return h + gap;
   };
   const lineCount = () => Math.ceil(total / geo.cols);
   /** The pitches of lines [a, b), summed. */
-  const span = (a, b) => { let s = 0; for (let l = a; l < b; l++) s += pitchOf(l); return s; };
+  const span = (a, b) => {
+    let s = 0;
+    for (let l = a; l < b; l++) s += pitchOf(l);
+    return s;
+  };
   /** The line `y` below line 0's top stands in (clamped to the list). */
   const lineAt = (y) => {
     const lines = lineCount();
     if (!(y > 0)) return 0;
     let s = 0;
-    for (let l = 0; l < lines; l++) { s += pitchOf(l); if (s > y) return l; }
+    for (let l = 0; l < lines; l++) {
+      s += pitchOf(l);
+      if (s > y) return l;
+    }
     return lines - 1;
   };
 
@@ -144,18 +200,33 @@ export function virtualRows(container, items, build, { min = VIRTUAL_MIN, first 
     if (!scrollers) {
       scrollers = [];
       const doc = container.ownerDocument ?? globalThis.document;
-      for (let a = container; a && a.nodeType === 1 && a !== doc?.body && a !== doc?.documentElement; a = a.parentElement) {
+      for (
+        let a = container;
+        a && a.nodeType === 1 && a !== doc?.body && a !== doc?.documentElement;
+        a = a.parentElement
+      ) {
         const cs = globalThis.getComputedStyle?.(a);
-        if (cs?.overflowY && cs.overflowY !== 'visible') { scrollers.push(a); a.addEventListener('scroll', onScroll, { passive: true }); }
+        if (cs?.overflowY && cs.overflowY !== 'visible') {
+          scrollers.push(a);
+          a.addEventListener('scroll', onScroll, { passive: true });
+        }
         if (cs?.position === 'fixed') break;
       }
     }
-    let lo = 0, hi = globalThis.innerHeight ?? 0;
-    for (const s of scrollers) { const r = s.getBoundingClientRect(); lo = Math.max(lo, r.top); hi = Math.min(hi, r.bottom); }
+    let lo = 0,
+      hi = globalThis.innerHeight ?? 0;
+    for (const s of scrollers) {
+      const r = s.getBoundingClientRect();
+      lo = Math.max(lo, r.top);
+      hi = Math.min(hi, r.bottom);
+    }
     // CUT AWAY WHOLE - a box round the list (a phone's window, below its fold) hides all of it: the window still follows
     // the list's own scroll, so what its scroller holds in view is drawn the moment the list is shown
     const own = ownScroller();
-    if (!(hi > lo) && own) { const r = own.getBoundingClientRect(); return [r.top, r.bottom]; }
+    if (!(hi > lo) && own) {
+      const r = own.getBoundingClientRect();
+      return [r.top, r.bottom];
+    }
     return [lo, hi];
   };
   /** AUDIT VIRT: the box that scrolls the list - the first round it with more to show than it holds. The first that
@@ -173,14 +244,26 @@ export function virtualRows(container, items, build, { min = VIRTUAL_MIN, first 
   };
 
   const spacer = (s, h, atTop) => {
-    if (!(h > 0)) { s?.remove(); return null; }
+    if (!(h > 0)) {
+      s?.remove();
+      return null;
+    }
     if (!s) {
       s = (container.ownerDocument ?? globalThis.document).createElement('div');
       s.className = 'vrows-gap';
       s.setAttribute('aria-hidden', 'true');
       // a whole line in every layout the rows sit in: a flex wrap's line, a grid's row, a block
-      Object.assign(s.style, { flex: '0 0 100%', gridColumn: '1 / -1', width: '100%', margin: '0', padding: '0', border: '0', pointerEvents: 'none' });
-      if (atTop) container.insertBefore(s, container.firstChild); else container.append(s);
+      Object.assign(s.style, {
+        flex: '0 0 100%',
+        gridColumn: '1 / -1',
+        width: '100%',
+        margin: '0',
+        padding: '0',
+        border: '0',
+        pointerEvents: 'none',
+      });
+      if (atTop) container.insertBefore(s, container.firstChild);
+      else container.append(s);
     }
     s.style.height = `${h}px`;
     return s;
@@ -199,7 +282,8 @@ export function virtualRows(container, items, build, { min = VIRTUAL_MIN, first 
   const hold = (i, was) => {
     const r = rect(i);
     if (!r || !Number.isFinite(was)) return;
-    const d = r.top - was, s = ownScroller();
+    const d = r.top - was,
+      s = ownScroller();
     if (s && Math.abs(d) >= 0.5) s.scrollTop += d;
   };
 
@@ -207,9 +291,19 @@ export function virtualRows(container, items, build, { min = VIRTUAL_MIN, first 
   const aim = (ns, ne) => {
     const active = (container.ownerDocument ?? globalThis.document)?.activeElement ?? null;
     let lostFocus = false;
-    for (const [i, n] of nodes) if (i < ns || i >= ne) { if (active && n.contains?.(active)) lostFocus = true; n.remove(); nodes.delete(i); }
-    const keepA = Math.max(ns, start), keepB = Math.min(ne, end);
-    const add = (i, before) => { const n = build(items[i]); nodes.set(i, n); container.insertBefore(n, before); };
+    for (const [i, n] of nodes)
+      if (i < ns || i >= ne) {
+        if (active && n.contains?.(active)) lostFocus = true;
+        n.remove();
+        nodes.delete(i);
+      }
+    const keepA = Math.max(ns, start),
+      keepB = Math.min(ne, end);
+    const add = (i, before) => {
+      const n = build(items[i]);
+      nodes.set(i, n);
+      container.insertBefore(n, before);
+    };
     if (keepA < keepB) {
       const anchor = nodes.get(keepA);
       for (let i = ns; i < keepA; i++) add(i, anchor);
@@ -217,7 +311,8 @@ export function virtualRows(container, items, build, { min = VIRTUAL_MIN, first 
     } else {
       for (let i = ns; i < ne; i++) add(i, foot);
     }
-    start = ns; end = ne;
+    start = ns;
+    end = ne;
     place();
     if (lostFocus) keepFocus();
     onAim?.();
@@ -231,24 +326,38 @@ export function virtualRows(container, items, build, { min = VIRTUAL_MIN, first 
     // line 0's top is the content's top - the top spacer's, or the first row's when nothing stands above it
     const origin = (top ?? nodes.get(start))?.getBoundingClientRect().top;
     const [lo, hi] = band();
-    if (!Number.isFinite(origin) || !(hi > lo)) { place(); return false; }
-    const v0 = lineAt(lo - origin), v1 = lineAt(hi - origin);
+    if (!Number.isFinite(origin) || !(hi > lo)) {
+      place();
+      return false;
+    }
+    const v0 = lineAt(lo - origin),
+      v1 = lineAt(hi - origin);
     const line = (l) => Math.max(0, Math.min(lines - 1, l));
     // a line either side of the band still drawn, on this layout's own columns: the window stands
     const aligned = start % cols === 0 && (end === total || end % cols === 0);
-    if (aligned && start <= line(v0 - 1) * cols && end >= Math.min(total, (line(v1 + 1) + 1) * cols)) { place(); return false; }
+    if (aligned && start <= line(v0 - 1) * cols && end >= Math.min(total, (line(v1 + 1) + 1) * cols)) {
+      place();
+      return false;
+    }
     const over = Math.max(OVERSCAN_LINES, Math.ceil(((hi - lo) * OVERSCAN) / (pitchOf(v0) || 1)));
     // the row the eye is on: the first drawn row in the band, where it stands before the aim (the aim's own spacers move
     // it as much as what it draws measures) - or, a jump that left none of them, the band's first line where the aim
     // first draws it
-    let eye = -1, was = NaN;
+    let eye = -1,
+      was = NaN;
     for (const [i, n] of nodes) {
       if (eye >= 0 && i > eye) continue;
       const r = n.getBoundingClientRect();
-      if (r.bottom > lo && r.top < hi) { eye = i; was = r.top; }
+      if (r.bottom > lo && r.top < hi) {
+        eye = i;
+        was = r.top;
+      }
     }
     aim(line(v0 - over) * cols, Math.min(total, (line(v1 + over) + 1) * cols));
-    if (eye < 0 || !nodes.has(eye)) { eye = v0 * cols; was = rect(eye)?.top; }
+    if (eye < 0 || !nodes.has(eye)) {
+      eye = v0 * cols;
+      was = rect(eye)?.top;
+    }
     learn();
     place();
     hold(eye, was);
@@ -259,21 +368,31 @@ export function virtualRows(container, items, build, { min = VIRTUAL_MIN, first 
     if (whole || gone || container.isConnected === false) return;
     if (remeasure || !geo) {
       const g = measure();
-      if (!g) { if (!geo) drawAll(); return; }   // never measured: drawn whole; measured once: kept as it was
-      if (remeasure && geo) {   // another layout: every height kept was this one's
+      if (!g) {
+        if (!geo) drawAll();
+        return;
+      } // never measured: drawn whole; measured once: kept as it was
+      if (remeasure && geo) {
+        // another layout: every height kept was this one's
         for (const it of items) sized.set?.(it, 0);
-        knownSum = 0; known = 0;
+        knownSum = 0;
+        known = 0;
       }
       geo = g;
       learn();
     }
-    if (!draw) { place(); return; }
+    if (!draw) {
+      place();
+      return;
+    }
     for (let pass = 0; pass < AIM_PASSES && steer(); pass++);
   }
 
   return {
     container,
-    get whole() { return whole; },
+    get whole() {
+      return whole;
+    },
     sync,
     dispose() {
       gone = true;

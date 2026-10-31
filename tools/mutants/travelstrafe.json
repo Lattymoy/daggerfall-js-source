@@ -2,8 +2,8 @@
   {
     "name": "TRAVEL-STRAFE-the-line-kept-under-the-hand",
     "file": "src/systems/travel/travelSteer.js",
-    "old": "    if (inp.manual) {\n      s.ox = inp.x; s.oz = inp.z;\n",
-    "new": "    if (inp.manual) {\n",
+    "old": "      s.ox = inp.x;\n      s.oz = inp.z;\n      if (s.episode) endEpisode();",
+    "new": "      if (s.episode) endEpisode();",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TRAVEL-STRAFE-the-hand-counted-as-no-headway",
     "file": "src/systems/travel/travelSteer.js",
-    "old": "      if (s.episode) endEpisode();\n      s.bestDist = Infinity; s.noGain = 0;\n    }\n",
-    "new": "      if (s.episode) endEpisode();\n    }\n",
+    "old": "      s.bestDist = Infinity;\n      s.noGain = 0;\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "TRAVEL-STRAFE-the-detour-left-running",
     "file": "src/systems/travel/travelSteer.js",
-    "old": "      s.ox = inp.x; s.oz = inp.z;\n      if (s.episode) endEpisode();\n",
-    "new": "      s.ox = inp.x; s.oz = inp.z;\n",
+    "old": "      if (s.episode) endEpisode();\n      s.bestDist = Infinity;",
+    "new": "      s.bestDist = Infinity;",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TRAVEL-STRAFE-a-detour-under-the-hand",
     "file": "src/systems/travel/travelSteer.js",
-    "old": "      if (inp.manual) return go(out, inp, f.want, cw, reach);",
-    "new": "      if (false) return go(out, inp, f.want, cw, reach);",
+    "old": "      if (inp.manual) return go(out, inp, f.want, cw, reach); // TRAVEL-STRAFE: the hand steers - the bearing, stopped short, never a detour",
+    "new": "      if (false) return go(out, inp, f.want, cw, reach); // TRAVEL-STRAFE: the hand steers - the bearing, stopped short, never a detour",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TRAVEL-STRAFE-a-detour-ended-behind-its-start",
     "file": "src/systems/travel/travelSteer.js",
-    "old": "if (cw >= openWant && (!s.episode || f.along >= s.sStart || toGo <= s.goStart)) {",
-    "new": "if (cw >= openWant) {",
+    "old": "      if (cw >= openWant && (!s.episode || f.along >= s.sStart || toGo <= s.goStart)) {",
+    "new": "      if (cw >= openWant) {",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "TRAVEL-STRAFE-the-door-drops-it",
     "file": "src/systems/travel/travelSteer.js",
-    "old": "inp.manual = !!frame.strafe;",
-    "new": "inp.manual = false;",
+    "old": "  inp.manual = !!frame.strafe; // TRAVEL-STRAFE: the hand's sidestep, kept",
+    "new": "  inp.manual = false; // TRAVEL-STRAFE: the hand's sidestep, kept",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]

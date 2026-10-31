@@ -322,7 +322,7 @@ test('S7 THE HOSTS BY SOURCE: the world host draws the pillars\' watch in the ar
   assert.match(M, /realmLightsWith\(_dgLit, host\.sdRealmLights\?\.\(\) \?\? NO_LIGHTS, cam\.pos, host\.sdLampDim\?\.\(\) \?\? null\)/);
   const B = read('src/scenes/superDungeon/sdRemnantBlows.js');
   assert.match(B, /const under = bodyMarks\(\);\n\s+if \(!shapes\.length && !under\.length\) return false;/);
-  assert.match(B, /for \(let i = 0; i < under\.length; i\+\+\) \{ pass\.draw\(under\[i\], [^\n]*\n\s+for \(const sh of shapes\) \{ pass\.draw\(sh,/);
+  assert.match(B, /for \(let i = 0; i < under\.length; i\+\+\) \{\n\s*pass\.draw\(under\[i\], proj, view, eye, seconds, fog, SD_ARENA_CENTRE, null, SD_TELEGRAPH_FLOOR\);\n\s*drew = drew \|\| pass\.drawn > 0;\n\s*\}\n\s*for \(const sh of shapes\) \{\n\s*pass\.draw\(sh,/);
   const L = read('src/tools/abyssLab.js');
   assert.match(L, /if \(pillarPass\.draw\(proj, view, sdPillarLookAt\(labS, clock \* 1000, _pillarLook, _glowMemo\)/);
   assert.match(L, /for \(const m of sdArenaMarksAt\(labS, clock \* 1000\)\) \{ telegraph\.draw\(m,/);

@@ -199,7 +199,7 @@ test('STAR6 THE MASTER\'S BAR: the gate\'s bar in the star\'s theme - its name a
   assert.equal(m.warded, true);
   assert.deepEqual([m.wardedText, m.fallenText], ['Warded', 'Felled'], 'AUDIT STAR U3: its own words, through the text core - the gate\'s were English alone');
   assert.deepEqual([m.wardedText, m.fallenText], [STAR_CARD_TEXT.warded(), STAR_CARD_TEXT.felled()]);
-  assert.match(read('src/ui/gate/gateBossBar.js'), /model\.warded \? model\.wardedText \?\? BOSS_BAR_TEXT\.warded/, 'the bar says the model\'s ward');
+  assert.match(read('src/ui/gate/gateBossBar.js'), /model\.warded\n\s*\? \(model\.wardedText \?\? BOSS_BAR_TEXT\.warded/, 'the bar says the model\'s ward');
   assert.equal(m.host, '3 of her circle stand');
   assert.equal(m.fightersLine, '4 defenders');
   const open = starBarModel({ ...b, circle: 0 }, 0);

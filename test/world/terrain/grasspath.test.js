@@ -317,6 +317,6 @@ test('WATER-DRAW1: the draw and the feet ask different questions, and only the d
 test('WATER-DRAW1: the tile probe names the record under the player', () => {
   const w = hostText('src/scenes/world.js');
   assert.match(w, /window\.__tileHere = \(\) => \{/);
-  assert.match(w, /record: byte >> 2, transform: byte & 3, byte,/, 'the number a screenshot cannot give');
-  assert.match(w, /drawnWet: waterCorners\(byte, WATER_DRAW_MASK_TABLE\), feetWet: waterCorners\(byte\),/, 'and both answers, so the two questions can be told apart');
+  assert.match(w, /record: byte >> 2,\n\s*transform: byte & 3,\n\s*byte,/, 'the number a screenshot cannot give');
+  assert.match(w, /drawnWet: waterCorners\(byte, WATER_DRAW_MASK_TABLE\),\n\s*feetWet: waterCorners\(byte\),/, 'and both answers, so the two questions can be told apart');
 });

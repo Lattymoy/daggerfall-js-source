@@ -33,7 +33,17 @@ export function portSitesStamp(g, field) {
   return `${W}x${H}:${field.kind ?? ''}:${h.toString(36)}`;
 }
 
-const isSites = (v) => Array.isArray(v) && v.every((s) => s && typeof s.kind === 'string' && Number.isInteger(s.gx) && Number.isInteger(s.gy) && Number.isInteger(s.nx) && Number.isInteger(s.nz));
+const isSites = (v) =>
+  Array.isArray(v) &&
+  v.every(
+    (s) =>
+      s &&
+      typeof s.kind === 'string' &&
+      Number.isInteger(s.gx) &&
+      Number.isInteger(s.gy) &&
+      Number.isInteger(s.nx) &&
+      Number.isInteger(s.nz),
+  );
 const isRecord = (v) => v instanceof Map && [...v.values()].every(isSites);
 
 /** Fetch every kept town's sites. Answers how many towns were found. */
@@ -58,7 +68,7 @@ export function keptPortSitesOn(g, field, near = null) {
   const sites = kept.towns.get(key);
   if (sites) {
     kept.towns.delete(key);
-    kept.towns.set(key, sites);   // the most recent last
+    kept.towns.set(key, sites); // the most recent last
     for (const s of sites) closeSite(g, s);
     return structuredClone(sites);
   }
@@ -72,15 +82,24 @@ export function keptPortSitesOn(g, field, near = null) {
 function scheduleSave() {
   const k = kept;
   if (!k?.store || k.timer) return;
-  k.timer = setTimeout(() => { k.timer = null; keepAnswer(k.store, portSitesKey(), k.towns, PORT_SITES_SCOPE); }, SAVE_AFTER_MS);
+  k.timer = setTimeout(() => {
+    k.timer = null;
+    keepAnswer(k.store, portSitesKey(), k.towns, PORT_SITES_SCOPE);
+  }, SAVE_AFTER_MS);
 }
 
 /** Tests: write what was added now. */
 export async function _flushPortSites() {
   const k = kept;
   if (!k?.store) return;
-  if (k.timer) { clearTimeout(k.timer); k.timer = null; }
+  if (k.timer) {
+    clearTimeout(k.timer);
+    k.timer = null;
+  }
   await keepAnswer(k.store, portSitesKey(), k.towns, PORT_SITES_SCOPE);
 }
 /** Tests: forget the fetched record. */
-export function _resetPortSites() { if (kept?.timer) clearTimeout(kept.timer); kept = null; }
+export function _resetPortSites() {
+  if (kept?.timer) clearTimeout(kept.timer);
+  kept = null;
+}

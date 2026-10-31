@@ -33,7 +33,7 @@ matrix/draw path (GC spikes riding the beat).
 
 FOUND ON THE WAY, both real: a recenter injects 819.2 units into
 footsteps' stride accumulator (a spurious footstep at every map-pixel
-crossing, footsteps.js:"if (this.ignoreLostGrounding)".."const clip = this.alternate ? set[1] : set[0];"), and `_playerStill` reads one moving
+crossing, footsteps.js:"this.ignoreLostGrounding = false".."const clip = this.alternate ? set[1] : set[0];"), and `_playerStill` reads one moving
 frame per crossing (questWorld.js:"getLocationByName:").
 
 frame per crossing (world.js:"INDIRECT_LIGHT_COLOR[0]").

@@ -2,8 +2,8 @@
   {
     "name": "SD-ONLINE-the-weights-flat",
     "file": "src/world/smallerDungeons.js",
-    "old": "Object.freeze([['small', 1], ['medium', 2], ['full', 1]]",
-    "new": "Object.freeze([['small', 1], ['medium', 1], ['full', 1]]",
+    "old": "    ['medium', 2],",
+    "new": "    ['medium', 1],",
     "tests": [
       "test/systems/sdonline.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "SD-ONLINE-the-last-size-never-drawn",
     "file": "src/world/smallerDungeons.js",
-    "old": "    if (u < w) return size;\n    u -= w;",
-    "new": "    if (u < w) return size === 'full' ? 'medium' : size;\n    u -= w;",
+    "old": "    if (u < w) return size;",
+    "new": "    if (u < w) return size === 'full' ? 'medium' : size;",
     "tests": [
       "test/systems/sdonline.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "SD-ONLINE-a-quest-stamped-online-ignored",
     "file": "src/world/smallerDungeons.js",
-    "old": "    if (quest && quest.smallerDungeonsState === ONLINE_DUNGEONS_STATE) return onlineDungeonSize(dfLocation);   // SD-ONLINE: the world's, as its markers know it\n",
-    "new": "",
+    "old": "    if (quest && quest.smallerDungeonsState === ONLINE_DUNGEONS_STATE) return onlineDungeonSize(dfLocation); // SD-ONLINE: the world's, as its markers know it\n    if (quest && quest.smallerDungeonsState === SMALLER_DUNGEONS_STATE.Disabled) return 'full';",
+    "new": "    if (quest && quest.smallerDungeonsState === SMALLER_DUNGEONS_STATE.Disabled) return 'full';",
     "tests": [
       "test/systems/sdonline.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "SD-ONLINE-the-world-ask-ignored",
     "file": "src/world/smallerDungeons.js",
-    "old": "  if (world) return onlineDungeonSize(dfLocation);   // SD-ONLINE: offline, the world's sizes asked for\n",
-    "new": "",
+    "old": "  if (world) return onlineDungeonSize(dfLocation); // SD-ONLINE: offline, the world's sizes asked for\n  return medium ? 'medium' : 'full';",
+    "new": "  return medium ? 'medium' : 'full';",
     "tests": [
       "test/systems/sdonline.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "SD-ONLINE-the-stamp-ignores-the-ask",
     "file": "src/world/smallerDungeons.js",
-    "old": "  if (world) return ONLINE_DUNGEONS_STATE;\n",
-    "new": "",
+    "old": "  if (world) return ONLINE_DUNGEONS_STATE;\n  return medium ? MEDIUM_DUNGEONS_STATE : SMALLER_DUNGEONS_STATE.Disabled;",
+    "new": "  return medium ? MEDIUM_DUNGEONS_STATE : SMALLER_DUNGEONS_STATE.Disabled;",
     "tests": [
       "test/systems/sdonline.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "SD-ONLINE-adopt-blind-to-the-world",
     "file": "src/world/smallerDungeons.js",
-    "old": "const portSize = (state) => state === MEDIUM_DUNGEONS_STATE || state === ONLINE_DUNGEONS_STATE;",
-    "new": "const portSize = (state) => state === MEDIUM_DUNGEONS_STATE;",
+    "old": "export const portSize = (state) => state === MEDIUM_DUNGEONS_STATE || state === ONLINE_DUNGEONS_STATE;",
+    "new": "export const portSize = (state) => state === MEDIUM_DUNGEONS_STATE;",
     "tests": [
       "test/systems/quest/dsize1_mediumdungeons.test.js"
     ],

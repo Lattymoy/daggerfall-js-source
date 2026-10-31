@@ -2,8 +2,8 @@
   {
     "name": "LEGACY7-house-any-claim",
     "file": "src/net/houseLaw.js",
-    "old": "  if (!houseNameOk(c.hn)) return false;\n",
-    "new": "",
+    "old": "  if (!houseNameOk(c.hn)) return false;\n  if (c.hc !== undefined && !houseGivenOk(c.hc)) return false;",
+    "new": "  if (c.hc !== undefined && !houseGivenOk(c.hc)) return false;",
     "tests": [
       "test/net/legacy7_house.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LEGACY7-numeral-from-one",
     "file": "src/net/houseLaw.js",
-    "old": "before > 0 && houseGivenOk(given) ? { hg:",
-    "new": "before >= 0 && houseGivenOk(given) ? { hg:",
+    "old": "    ...(before > 0 && houseGivenOk(given) ? { hg: Math.min(HOUSE_GEN_MAX, before + 1) } : {}),",
+    "new": "    ...(before >= 0 && houseGivenOk(given) ? { hg: Math.min(HOUSE_GEN_MAX, before + 1) } : {}),",
     "tests": [
       "test/net/legacy7_house.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "LEGACY7-numeral-counts-the-wed",
     "file": "src/net/houseLaw.js",
-    "old": "x.id < p.id && (x.kind ?? 'member') === 'member' &&",
-    "new": "x.id < p.id &&",
+    "old": "  const before = people.filter(\n    (x) => x && x.id < p.id && (x.kind ?? 'member') === 'member' && String(x.given ?? '').trim() === given,\n  ).length;",
+    "new": "  const before = people.filter((x) => x && x.id < p.id && String(x.given ?? '').trim() === given).length;",
     "tests": [
       "test/net/legacy7_house.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LEGACY7-no-skull",
     "file": "src/net/houseLaw.js",
-    "old": "return `${h.hb === 1 ? `${BLOODLINE_MARK} ` : ''}${who}${house}`;",
-    "new": "return `${who}${house}`;",
+    "old": "  return `${h.hb === 1 ? `${BLOODLINE_MARK} ` : ''}${who}${house}`;",
+    "new": "  return `${who}${house}`;",
     "tests": [
       "test/net/legacy7_house.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LEGACY7-token-unchecked",
     "file": "src/net/identityToken.js",
-    "old": "  if (!houseClaimOk(c)) return false;   // LEGACY7",
-    "new": "  if (false) return false;   // LEGACY7",
+    "old": "  if (!houseClaimOk(c)) return false; // LEGACY7: the house - absent for none, each field of its shape or refused",
+    "new": "  if (false) return false; // LEGACY7: the house - absent for none, each field of its shape or refused",
     "tests": [
       "test/net/legacy7_house.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LEGACY7-token-unsigned",
     "file": "src/net/identityToken.js",
-    "old": "  if (who?.hn !== undefined) { claims.hn = who.hn;",
-    "new": "  if (false) { claims.hn = who.hn;",
+    "old": "  if (who?.hn !== undefined) {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/legacy7_house.test.js"
     ]
@@ -113,8 +113,8 @@
   {
     "name": "LEGACY7-tile-no-house",
     "file": "server-account/src/realm.js",
-    "old": "    house: r.line ? houseOn(r.line, r.person_id) : null,",
-    "new": "    house: null,",
+    "old": "    house: r.line ? houseOn(r.line, r.person_id) : null, // LEGACY7 part two: its house, for the tile (net/houseLaw.js)",
+    "new": "    house: null, // LEGACY7 part two: its house, for the tile (net/houseLaw.js)",
     "tests": [
       "test/net/legacy7_house.test.js"
     ]
@@ -122,8 +122,8 @@
   {
     "name": "LEGACY7-card-no-house",
     "file": "src/ui/profileWindow.js",
-    "old": "    house: houseLine(peer?.house),",
-    "new": "    house: null,",
+    "old": "    house: houseLine(peer?.house), // LEGACY7: the house the relay stamped - \"☠ Ysolde II of House Hlaalu\", or null",
+    "new": "    house: null, // LEGACY7: the house the relay stamped - \"☠ Ysolde II of House Hlaalu\", or null",
     "tests": [
       "test/net/legacy7_house.test.js"
     ]

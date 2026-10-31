@@ -23,9 +23,16 @@ import { bezier, icosphere, blobJitter, grahtRng } from './jungle/grahtOakMesh.j
 const sub = (/** @type {V3} */ a, /** @type {V3} */ b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 const add = (/** @type {V3} */ a, /** @type {V3} */ b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 const scale = (/** @type {V3} */ a, /** @type {number} */ k) => [a[0] * k, a[1] * k, a[2] * k];
-const cross = (/** @type {V3} */ a, /** @type {V3} */ b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const cross = (/** @type {V3} */ a, /** @type {V3} */ b) => [
+  a[1] * b[2] - a[2] * b[1],
+  a[2] * b[0] - a[0] * b[2],
+  a[0] * b[1] - a[1] * b[0],
+];
 const dot = (/** @type {V3} */ a, /** @type {V3} */ b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-const unit = (/** @type {V3} */ a) => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+const unit = (/** @type {V3} */ a) => {
+  const l = Math.hypot(a[0], a[1], a[2]) || 1;
+  return [a[0] / l, a[1] / l, a[2] / l];
+};
 const lerp = (/** @type {number} */ a, /** @type {number} */ b, /** @type {number} */ t) => a + (b - a) * t;
 export { bezier, grahtRng as treeRng };
 
@@ -59,14 +66,24 @@ export function facet3(mb, tex, a, b, c, from) {
 export function column(mb, tex, levels, { sides, flute = () => 1, twist = 0, axis = () => [0, 0], crown = 0 }) {
   const rings = levels.map(([y, r]) => {
     const [ax, az] = axis(y);
-    return Array.from({ length: sides }, (_, i) => { const a = (i / sides) * Math.PI * 2 + twist * y, rr = r * flute(i, y); return [ax + Math.cos(a) * rr, y, az + Math.sin(a) * rr]; });
+    return Array.from({ length: sides }, (_, i) => {
+      const a = (i / sides) * Math.PI * 2 + twist * y,
+        rr = r * flute(i, y);
+      return [ax + Math.cos(a) * rr, y, az + Math.sin(a) * rr];
+    });
   });
   for (let l = 0; l + 1 < rings.length; l++) {
-    const y = (levels[l][0] + levels[l + 1][0]) / 2, [ax, az] = axis(y), from = [ax, y, az];
-    for (let i = 0; i < sides; i++) facet(mb, tex, rings[l][i], rings[l][(i + 1) % sides], rings[l + 1][(i + 1) % sides], rings[l + 1][i], from);
+    const y = (levels[l][0] + levels[l + 1][0]) / 2,
+      [ax, az] = axis(y),
+      from = [ax, y, az];
+    for (let i = 0; i < sides; i++)
+      facet(mb, tex, rings[l][i], rings[l][(i + 1) % sides], rings[l + 1][(i + 1) % sides], rings[l + 1][i], from);
   }
   if (crown > 0) {
-    const top = levels[levels.length - 1][0], [ax, az] = axis(top), tip = [ax, top + crown, az], last = rings[rings.length - 1];
+    const top = levels[levels.length - 1][0],
+      [ax, az] = axis(top),
+      tip = [ax, top + crown, az],
+      last = rings[rings.length - 1];
     for (let i = 0; i < sides; i++) facet3(mb, tex, last[i], last[(i + 1) % sides], tip, [ax, top, az]);
   }
   return rings;
@@ -84,18 +101,32 @@ export function tube(mb, tex, path, r0, r1, { sides = 8, segs = 6, tip = 0, radi
   const rings = [];
   let e1 = null;
   for (let k = 0; k <= segs; k++) {
-    const t = k / segs, p = bezier(path, t), dir = unit(sub(bezier(path, Math.min(1, t + 0.01)), bezier(path, Math.max(0, t - 0.01))));
+    const t = k / segs,
+      p = bezier(path, t),
+      dir = unit(sub(bezier(path, Math.min(1, t + 0.01)), bezier(path, Math.max(0, t - 0.01))));
     // the ring's frame: the last ring's first axis, laid onto the plane square to the path (no twist down the limb)
     const ref = e1 ?? (Math.abs(dir[1]) > 0.9 ? [1, 0, 0] : [0, 1, 0]);
     e1 = unit(sub(ref, scale(dir, dot(ref, dir))));
-    const e2 = cross(dir, e1), r = radius ? radius(t) : lerp(r0, r1, t);
-    rings.push({ c: p, dir, pts: Array.from({ length: sides }, (_, i) => { const a = (i / sides) * Math.PI * 2; return add(p, add(scale(e1, Math.cos(a) * r), scale(e2, Math.sin(a) * r))); }) });
+    const e2 = cross(dir, e1),
+      r = radius ? radius(t) : lerp(r0, r1, t);
+    rings.push({
+      c: p,
+      dir,
+      pts: Array.from({ length: sides }, (_, i) => {
+        const a = (i / sides) * Math.PI * 2;
+        return add(p, add(scale(e1, Math.cos(a) * r), scale(e2, Math.sin(a) * r)));
+      }),
+    });
   }
   for (let k = 0; k < segs; k++) {
-    const A = rings[k], B = rings[k + 1], from = scale(add(A.c, B.c), 0.5);
-    for (let i = 0; i < sides; i++) facet(mb, tex, A.pts[i], A.pts[(i + 1) % sides], B.pts[(i + 1) % sides], B.pts[i], from);
+    const A = rings[k],
+      B = rings[k + 1],
+      from = scale(add(A.c, B.c), 0.5);
+    for (let i = 0; i < sides; i++)
+      facet(mb, tex, A.pts[i], A.pts[(i + 1) % sides], B.pts[(i + 1) % sides], B.pts[i], from);
   }
-  const E = rings[segs], end = add(E.c, scale(E.dir, tip));
+  const E = rings[segs],
+    end = add(E.c, scale(E.dir, tip));
   for (let i = 0; i < sides; i++) facet3(mb, tex, E.pts[i], E.pts[(i + 1) % sides], end, sub(E.c, scale(E.dir, 1)));
   return rings.map((g) => g.c);
 }
@@ -110,20 +141,41 @@ export function tube(mb, tex, path, r0, r1, { sides = 8, segs = 6, tip = 0, radi
  * @param {{ x?: number, z?: number, angle: number, inner: number, reach: number, top: number, sink?: number, thick: ReadonlyArray<number>, snake?: number, steps?: number }} o
  */
 export function buttress(mb, tex, { x = 0, z = 0, angle, inner, reach, top, sink = 2, thick, snake = 0, steps = 8 }) {
-  const rad = [Math.cos(angle), 0, Math.sin(angle)], tan = [-Math.sin(angle), 0, Math.cos(angle)];
+  const rad = [Math.cos(angle), 0, Math.sin(angle)],
+    tan = [-Math.sin(angle), 0, Math.cos(angle)];
   const topAt = (s) => top * Math.pow(1 - s, 1.6) - sink * s;
   const sec = [];
   for (let k = 0; k <= steps; k++) {
-    const s = k / steps, d = lerp(inner, reach, s), t = lerp(thick[0], thick[1], s) / 2, sn = snake * Math.sin(Math.PI * Math.min(1, s * 1.15));
+    const s = k / steps,
+      d = lerp(inner, reach, s),
+      t = lerp(thick[0], thick[1], s) / 2,
+      sn = snake * Math.sin(Math.PI * Math.min(1, s * 1.15));
     const P = (side, y) => [x + rad[0] * d + tan[0] * (side * t + sn), y, z + rad[2] * d + tan[2] * (side * t + sn)];
-    sec.push({ lo: [P(-1, -sink), P(1, -sink)], hi: [P(-1, Math.max(-sink, topAt(s))), P(1, Math.max(-sink, topAt(s)))], d });
+    sec.push({
+      lo: [P(-1, -sink), P(1, -sink)],
+      hi: [P(-1, Math.max(-sink, topAt(s))), P(1, Math.max(-sink, topAt(s)))],
+      d,
+    });
   }
   for (let k = 0; k < steps; k++) {
-    const A = sec[k], B = sec[k + 1];
-    for (const side of [0, 1]) facet(mb, tex, A.lo[side], B.lo[side], B.hi[side], A.hi[side], [x + rad[0] * (A.d + B.d) / 2 + tan[0] * (side ? -50 : 50), 0, z + rad[2] * (A.d + B.d) / 2 + tan[2] * (side ? -50 : 50)]);
-    facet(mb, tex, A.hi[0], B.hi[0], B.hi[1], A.hi[1], [x + rad[0] * (A.d + B.d) / 2, -1e3, z + rad[2] * (A.d + B.d) / 2]);   // its top, facing up and out
+    const A = sec[k],
+      B = sec[k + 1];
+    for (const side of [0, 1])
+      facet(mb, tex, A.lo[side], B.lo[side], B.hi[side], A.hi[side], [
+        x + (rad[0] * (A.d + B.d)) / 2 + tan[0] * (side ? -50 : 50),
+        0,
+        z + (rad[2] * (A.d + B.d)) / 2 + tan[2] * (side ? -50 : 50),
+      ]);
+    facet(mb, tex, A.hi[0], B.hi[0], B.hi[1], A.hi[1], [
+      x + (rad[0] * (A.d + B.d)) / 2,
+      -1e3,
+      z + (rad[2] * (A.d + B.d)) / 2,
+    ]); // its top, facing up and out
   }
-  return { foot: [x + rad[0] * reach, z + rad[2] * reach], topAt: (/** @type {number} */ d) => topAt(Math.min(1, Math.max(0, (d - inner) / (reach - inner)))) };
+  return {
+    foot: [x + rad[0] * reach, z + rad[2] * reach],
+    topAt: (/** @type {number} */ d) => topAt(Math.min(1, Math.max(0, (d - inner) / (reach - inner)))),
+  };
 }
 
 /**
@@ -134,8 +186,13 @@ export function buttress(mb, tex, { x = 0, z = 0, angle, inner, reach, top, sink
  * @param {{ squash?: number, under?: number, push?: number, detail?: number, seed?: number }} [o]
  */
 export function mass(mb, tex, c, r, { squash = 0.5, under = 0.62, push = 0.14, detail = 1, seed = 1 } = {}) {
-  const point = (/** @type {V3} */ d, /** @type {number} */ j) => { const k = 1 + push * j, y = d[1] < 0 ? d[1] * under : d[1]; return [c[0] + d[0] * r * k, c[1] + y * r * squash * k, c[2] + d[2] * r * k]; };
-  const sph = icosphere(detail), pts = sph.v.map((d, i) => point(d, blobJitter(seed >>> 0, i)));
+  const point = (/** @type {V3} */ d, /** @type {number} */ j) => {
+    const k = 1 + push * j,
+      y = d[1] < 0 ? d[1] * under : d[1];
+    return [c[0] + d[0] * r * k, c[1] + y * r * squash * k, c[2] + d[2] * r * k];
+  };
+  const sph = icosphere(detail),
+    pts = sph.v.map((d, i) => point(d, blobJitter(seed >>> 0, i)));
   for (const [i, j, k] of sph.f) facet3(mb, tex, pts[i], pts[j], pts[k], c);
   return { c, r, squash, under, seed, point, faces: sph.f.length };
 }
@@ -151,21 +208,49 @@ export function mass(mb, tex, c, r, { squash = 0.5, under = 0.62, push = 0.14, d
  * @param {any} mb @param {any} tex @param {{ point: Function, seed: number }} m
  * @param {{ n: number, size: ReadonlyArray<number>, aspect?: number, elev?: ReadonlyArray<number>, hang?: number, base?: number, u?: ReadonlyArray<number>, seed?: number, crossed?: boolean, keep?: (corners: number[][]) => boolean }} o
  */
-export function cards(mb, tex, m, { n, size, aspect = 1, elev = [-1.05, 0.35], hang = 0.35, base = 0.28, u = [0, 1], seed = 0, crossed = false, keep = null }) {
+export function cards(
+  mb,
+  tex,
+  m,
+  {
+    n,
+    size,
+    aspect = 1,
+    elev = [-1.05, 0.35],
+    hang = 0.35,
+    base = 0.28,
+    u = [0, 1],
+    seed = 0,
+    crossed = false,
+    keep = null,
+  },
+) {
   const r = grahtRng((m.seed ^ 0x5bd1e995 ^ seed) >>> 0);
   let hung = 0;
   for (let i = 0; i < n; i++) {
-    const az = r() * Math.PI * 2, el = within(r, elev), s = within(r, size), tilt = (r() - 0.5) * 0.6;
+    const az = r() * Math.PI * 2,
+      el = within(r, elev),
+      s = within(r, size),
+      tilt = (r() - 0.5) * 0.6;
     const d = [Math.cos(az) * Math.cos(el), Math.sin(el), Math.sin(az) * Math.cos(el)];
-    const at = m.point(d, 0.6), out = unit([d[0], d[1] - hang, d[2]]), t0 = [-Math.sin(az), tilt, Math.cos(az)], tg = unit(sub(t0, scale(out, dot(t0, out))));   // square to its length: its texels square
+    const at = m.point(d, 0.6),
+      out = unit([d[0], d[1] - hang, d[2]]),
+      t0 = [-Math.sin(az), tilt, Math.cos(az)],
+      tg = unit(sub(t0, scale(out, dot(t0, out)))); // square to its length: its texels square
     const c0 = sub(at, scale(out, s * base));
     const spray = (crossed ? [tg, unit(cross(out, tg))] : [tg]).map((side) => {
-      const P = (/** @type {number} */ x, /** @type {number} */ y) => add(c0, add(scale(side, x * s * aspect), scale(out, y * s)));
+      const P = (/** @type {number} */ x, /** @type {number} */ y) =>
+        add(c0, add(scale(side, x * s * aspect), scale(out, y * s)));
       return { side, corners: [P(-0.5, 0), P(0.5, 0), P(0.5, 1), P(-0.5, 1)] };
     });
-    if (keep && !spray.every(({ corners }) => keep(corners))) continue;   // a spray hung whole or not at all
+    if (keep && !spray.every(({ corners }) => keep(corners))) continue; // a spray hung whole or not at all
     for (const { side, corners } of spray) {
-      mb.sheet(tex, corners[0], corners[1], corners[2], corners[3], unit(cross(side, out)), [[u[0], 0], [u[1], 0], [u[1], 1], [u[0], 1]]);
+      mb.sheet(tex, corners[0], corners[1], corners[2], corners[3], unit(cross(side, out)), [
+        [u[0], 0],
+        [u[1], 0],
+        [u[1], 1],
+        [u[0], 1],
+      ]);
       hung++;
     }
   }
@@ -181,7 +266,22 @@ export function cards(mb, tex, m, { n, size, aspect = 1, elev = [-1.05, 0.35], h
 export function liana(mb, tex, top, length, width, turn, { u, per }) {
   const rep = length / per;
   for (const a of [turn, turn + Math.PI / 2]) {
-    const dx = Math.cos(a) * width / 2, dz = Math.sin(a) * width / 2, b = [top[0], top[1] - length, top[2]];
-    mb.sheet(tex, [b[0] - dx, b[1], b[2] - dz], [b[0] + dx, b[1], b[2] + dz], [top[0] + dx, top[1], top[2] + dz], [top[0] - dx, top[1], top[2] - dz], unit([-dz, 0, dx]), [[u[0], 0], [u[1], 0], [u[1], rep], [u[0], rep]]);
+    const dx = (Math.cos(a) * width) / 2,
+      dz = (Math.sin(a) * width) / 2,
+      b = [top[0], top[1] - length, top[2]];
+    mb.sheet(
+      tex,
+      [b[0] - dx, b[1], b[2] - dz],
+      [b[0] + dx, b[1], b[2] + dz],
+      [top[0] + dx, top[1], top[2] + dz],
+      [top[0] - dx, top[1], top[2] - dz],
+      unit([-dz, 0, dx]),
+      [
+        [u[0], 0],
+        [u[1], 0],
+        [u[1], rep],
+        [u[0], rep],
+      ],
+    );
   }
 }

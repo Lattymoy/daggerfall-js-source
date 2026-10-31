@@ -2,8 +2,8 @@
   {
     "name": "PURSE-MEND-the-purse-kept",
     "file": "src/net/repairLaw.js",
-    "old": "  save.goldPieces = 0;\n",
-    "new": "",
+    "old": "  save.goldPieces = 0;\n  if (gold > 0) creditSave(save, gold, { letter: true });",
+    "new": "  if (gold > 0) creditSave(save, gold, { letter: true });",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PURSE-MEND-the-purse-asked-not-below-nothing",
     "file": "src/net/repairLaw.js",
-    "old": "  if (!Number.isSafeInteger(purse) || purse >= 0) return 'mend-not-negative';\n",
-    "new": "",
+    "old": "  if (!Number.isSafeInteger(purse) || purse >= 0) return 'mend-not-negative';\n  if (purse !== was) return 'mend-moved';",
+    "new": "  if (purse !== was) return 'mend-moved';",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PURSE-MEND-the-purse-asked-not-the-one",
     "file": "src/net/repairLaw.js",
-    "old": "  if (purse !== was) return 'mend-moved';\n",
-    "new": "",
+    "old": "  if (purse !== was) return 'mend-moved';\n  save.goldPieces = 0;",
+    "new": "  save.goldPieces = 0;",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PURSE-MEND-the-act-unwired",
     "file": "server-account/src/review.js",
-    "old": "  if (act === 'mend') return mendAct(ctx, row, by, note, body);   // PURSE-MEND\n",
-    "new": "",
+    "old": "  if (act === 'mend') return mendAct(ctx, row, by, note, body); // PURSE-MEND\n  if (act === 'bank') return bankAct(ctx, row, by, note, body); // STAFF-SET-BANK",
+    "new": "  if (act === 'bank') return bankAct(ctx, row, by, note, body); // STAFF-SET-BANK",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "PURSE-MEND-the-signature-unread",
     "file": "server-account/src/review.js",
-    "old": "row.held === 'law' && row.law_sig === PURSE_SIG && ",
-    "new": "row.held === 'law' && ",
+    "old": "  const lift = row.held === 'law' && row.law_sig === PURSE_SIG && !(row.held_until > nowS);",
+    "new": "  const lift = row.held === 'law' && !(row.held_until > nowS);",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PURSE-MEND-the-timed-hold-unread",
     "file": "server-account/src/review.js",
-    "old": " && !(row.held_until > nowS);",
-    "new": ";",
+    "old": "  const lift = row.held === 'law' && row.law_sig === PURSE_SIG && !(row.held_until > nowS);",
+    "new": "  const lift = row.held === 'law' && row.law_sig === PURSE_SIG;",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PURSE-MEND-the-holds-kind-unread",
     "file": "server-account/src/review.js",
-    "old": "  const lift = row.held === 'law' && ",
-    "new": "  const lift = row.held != null && ",
+    "old": "  const lift = row.held === 'law' && row.law_sig === PURSE_SIG && !(row.held_until > nowS);",
+    "new": "  const lift = row.held != null && row.law_sig === PURSE_SIG && !(row.held_until > nowS);",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "PURSE-MEND-the-signature-kept",
     "file": "server-account/src/review.js",
-    "old": "SET held = NULL, held_at = NULL, law_sig = NULL, judge_rev = judge_rev + 1 WHERE id = ? AND judge_rev = ? AND judged_seq IS ?",
-    "new": "SET held = NULL, held_at = NULL, judge_rev = judge_rev + 1 WHERE id = ? AND judge_rev = ? AND judged_seq IS ?",
+    "old": "                'UPDATE realm_characters SET held = NULL, held_at = NULL, law_sig = NULL, judge_rev = judge_rev + 1 WHERE id = ? AND judge_rev = ? AND judged_seq IS ?',",
+    "new": "                'UPDATE realm_characters SET held = NULL, held_at = NULL, judge_rev = judge_rev + 1 WHERE id = ? AND judge_rev = ? AND judged_seq IS ?',",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PURSE-MEND-the-hold-lifted-with-its-strike",
     "file": "server-account/src/review.js",
-    "old": "SET held = NULL, held_at = NULL, law_sig = NULL, judge_rev",
-    "new": "SET held = NULL, held_at = NULL, law_sig = NULL, strikes = 0, judge_rev",
+    "old": "                'UPDATE realm_characters SET held = NULL, held_at = NULL, law_sig = NULL, judge_rev = judge_rev + 1 WHERE id = ? AND judge_rev = ? AND judged_seq IS ?',",
+    "new": "                'UPDATE realm_characters SET held = NULL, held_at = NULL, law_sig = NULL, strikes = 0, judge_rev = judge_rev + 1 WHERE id = ? AND judge_rev = ? AND judged_seq IS ?',",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PURSE-MEND-no-finding",
     "file": "server-account/src/review.js",
-    "old": "    staffFinding(db, row, nowS, { act: 'mend', by, note, ticket: mend.ticket, was: mend.was, gold: mend.gold, lifted: lift, from: row.seq, to: seq }),\n",
-    "new": "",
+    "old": "      staffFinding(db, row, nowS, {\n        act: 'mend',\n        by,\n        note,\n        ticket: mend.ticket,\n        was: mend.was,\n        gold: mend.gold,\n        lifted: lift,\n        from: row.seq,\n        to: seq,\n      }),\n      ...(mend.gold > 0 ? [faucetStatement(db, 'repair', Math.floor(nowS / 3600), mend.gold)] : []),",
+    "new": "      ...(mend.gold > 0 ? [faucetStatement(db, 'repair', Math.floor(nowS / 3600), mend.gold)] : []),",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PURSE-MEND-the-row-out-of-the-batch",
     "file": "server-account/src/review.js",
-    "old": "    db.prepare('INSERT INTO realm_repairs (char_id, ticket, player, by_handle, at, faction, flag, was, gold, seq, note) VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?, ?, ?)')\n      .bind(row.id, mend.ticket, row.player, by, nowS, mend.was, mend.gold, seq, note),\n",
-    "new": "",
+    "old": "      db\n        .prepare(\n          'INSERT INTO realm_repairs (char_id, ticket, player, by_handle, at, faction, flag, was, gold, seq, note) VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?, ?, ?)',\n        )\n        .bind(row.id, mend.ticket, row.player, by, nowS, mend.was, mend.gold, seq, note),\n      staffFinding(db, row, nowS, {",
+    "new": "      staffFinding(db, row, nowS, {",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "PURSE-MEND-no-faucet",
     "file": "server-account/src/review.js",
-    "old": "    ...(mend.gold > 0 ? [faucetStatement(db, 'repair', Math.floor(nowS / 3600), mend.gold)] : []),\n",
-    "new": "",
+    "old": "      ...(mend.gold > 0 ? [faucetStatement(db, 'repair', Math.floor(nowS / 3600), mend.gold)] : []),\n    ],",
+    "new": "    ],",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PURSE-MEND-a-ticket-of-either-kind",
     "file": "server-account/src/review.js",
-    "old": "(rowKindOf(r) === kind ? answer(r, repeat) : { error: 'repair-ticket' })",
-    "new": "answer(r, repeat)",
+    "old": "  const said = (/** @type {any} */ r, /** @type {boolean} */ repeat) =>\n    rowKindOf(r) === kind ? answer(r, repeat) : { error: 'repair-ticket' };",
+    "new": "  const said = (/** @type {any} */ r, /** @type {boolean} */ repeat) => answer(r, repeat);",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "PURSE-MEND-the-purse-unread",
     "file": "server-account/src/review.js",
-    "old": "purse: record?.goldPieces ?? null },",
-    "new": "purse: null },",
+    "old": "        purse: record?.goldPieces ?? null,",
+    "new": "        purse: null,",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "PURSE-MEND-the-purse-it-names-read-loosely",
     "file": "tools/realmReview.mjs",
-    "old": "was: /^-[0-9]+$/.test(was) ? Number(was) : NaN",
-    "new": "was: Number(was)",
+    "old": "    const mend = purseMendOf({\n      ticket,\n      was: /^-[0-9]+$/.test(was) ? Number(was) : NaN,\n      gold: /^[0-9]+$/.test(gold) ? Number(gold) : NaN,\n    });",
+    "new": "    const mend = purseMendOf({ ticket, was: Number(was), gold: /^[0-9]+$/.test(gold) ? Number(gold) : NaN });",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -174,7 +174,7 @@
     "name": "PURSE-MEND-the-halves-shifted-back",
     "file": "src/systems/guild/guildServiceActions.js",
     "old": "  if (Math.floor(costBeforeBargaining / 2) <= cost) {",
-    "new": "  if ((costBeforeBargaining >> 1) <= cost) {",
+    "new": "  if (costBeforeBargaining >> 1 <= cost) {",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "PURSE-MEND-the-quarter-shifted-back",
     "file": "src/systems/guild/guildServiceActions.js",
-    "old": "(costBeforeBargaining - Math.floor(costBeforeBargaining / 4)) <= cost",
-    "new": "(costBeforeBargaining - (costBeforeBargaining >> 2)) <= cost",
+    "old": "    return costBeforeBargaining - Math.floor(costBeforeBargaining / 4) <= cost ? 2 : 1;",
+    "new": "    return costBeforeBargaining - (costBeforeBargaining >> 2) <= cost ? 2 : 1;",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "AUDIT-FB1019f-A2-the-lift-guard-unenforced",
     "file": "server-account/src/review.js",
-    "old": "        .bind(row.id, row.judge_rev, row.judged_seq),\n      mustChange(db),\n",
-    "new": "        .bind(row.id, row.judge_rev, row.judged_seq),\n",
+    "old": "            mustChange(db),\n          ]",
+    "new": "          ]",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "AUDIT-FB1019f-A2-the-lift-guard-unread",
     "file": "server-account/src/review.js",
-    "old": "WHERE id = ? AND judge_rev = ? AND judged_seq IS ?')",
-    "new": "WHERE id = ? AND (judge_rev = ? OR 1) AND (judged_seq IS ? OR 1)')",
+    "old": "                'UPDATE realm_characters SET held = NULL, held_at = NULL, law_sig = NULL, judge_rev = judge_rev + 1 WHERE id = ? AND judge_rev = ? AND judged_seq IS ?',",
+    "new": "                'UPDATE realm_characters SET held = NULL, held_at = NULL, law_sig = NULL, judge_rev = judge_rev + 1 WHERE id = ? AND (judge_rev = ? OR 1) AND (judged_seq IS ? OR 1)',",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "AUDIT-FB1019f-A3-a-letter-of-nothing",
     "file": "src/net/repairLaw.js",
-    "old": "  save.goldPieces = 0;\n  if (gold > 0) creditSave",
-    "new": "  save.goldPieces = 0;\n  if (gold >= 0) creditSave",
+    "old": "  save.goldPieces = 0;\n  if (gold > 0) creditSave(save, gold, { letter: true });",
+    "new": "  save.goldPieces = 0;\n  if (gold >= 0) creditSave(save, gold, { letter: true });",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "AUDIT-FB1019f-A3-a-faucet-row-of-nothing",
     "file": "server-account/src/review.js",
-    "old": "    ...(mend.gold > 0 ? [faucetStatement",
-    "new": "    ...(mend.gold >= 0 ? [faucetStatement",
+    "old": "      ...(mend.gold > 0 ? [faucetStatement(db, 'repair', Math.floor(nowS / 3600), mend.gold)] : []),",
+    "new": "      ...(mend.gold >= 0 ? [faucetStatement(db, 'repair', Math.floor(nowS / 3600), mend.gold)] : []),",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]

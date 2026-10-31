@@ -2,8 +2,8 @@
   {
     "name": "TOTEMCAGE-not-unique",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "      if (found) return null;\n",
-    "new": "",
+    "old": "      if (found) return null;\n      found = { index, marker };",
+    "new": "      found = { index, marker };",
     "tests": [
       "test/systems/quest/fb1003b_totem.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TOTEMCAGE-any-record",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "      if (marker.record !== MARKER_TYPES.QuestSpawn && marker.record !== MARKER_TYPES.QuestItem) continue;\n",
-    "new": "",
+    "old": "      if (marker.record !== MARKER_TYPES.QuestSpawn && marker.record !== MARKER_TYPES.QuestItem) continue;\n      if (marker.loadID !== markerID) continue;",
+    "new": "      if (marker.loadID !== markerID) continue;",
     "tests": [
       "test/systems/quest/fb1003b_totem.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "TOTEMCAGE-no-id",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "      if (marker.loadID !== markerID) continue;\n",
-    "new": "",
+    "old": "      if (marker.loadID !== markerID) continue;\n      if (found) return null;",
+    "new": "      if (found) return null;",
     "tests": [
       "test/systems/quest/fb1003b_totem.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "TOTEMCAGE-ride-no-off",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "  stand.off = offset;\n",
-    "new": "",
+    "old": "  stand.off = offset;\n  if (stand.batch) stand.batch.origin = offset;",
+    "new": "  if (stand.batch) stand.batch.origin = offset;",
     "tests": [
       "test/systems/quest/fb1003b_totem.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TOTEMCAGE-ride-no-origin",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "  if (stand.batch) stand.batch.origin = offset;\n",
-    "new": "",
+    "old": "  if (stand.batch) stand.batch.origin = offset;\n}",
+    "new": "}",
     "tests": [
       "test/systems/quest/fb1003b_totem.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "TOTEMCAGE-box-placed",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "  const o = s.off;\n  const x = o ?",
-    "new": "  const o = null;\n  const x = o ?",
+    "old": "  const o = s.off;",
+    "new": "  const o = null;",
     "tests": [
       "test/systems/quest/fb1003b_totem.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "TOTEMCAGE-wm-box-placed",
     "file": "src/systems/quest/sceneMount.js",
-    "old": "      aabb: questStandBox(s),",
-    "new": "      aabb: { min: [s.x - s.width / 2, s.y, s.z - s.width / 2], max: [s.x + s.width / 2, s.y + s.height, s.z + s.width / 2] },",
+    "old": "      aabb: questStandBox(s), // TOTEM-CAGE: where the stand IS - a stand riding an acting marker is clicked where it rode to",
+    "new": "      aabb: {\n        min: [s.x - s.width / 2, s.y, s.z - s.width / 2],\n        max: [s.x + s.width / 2, s.y + s.height, s.z + s.width / 2],\n      }, // TOTEM-CAGE: where the stand IS - a stand riding an acting marker is clicked where it rode to",
     "tests": [
       "test/systems/quest/fb1003b_totem.test.js"
     ],

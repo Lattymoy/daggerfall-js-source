@@ -6490,7 +6490,7 @@ through DFU's C# (master, fetched for this reading):
   (`ParentQuest.StartTask` / `ParentQuest.ClearTask`; the port's `actions.js:"this.parentQuest.clearTask(this.taskSymbol);"`).
 - A clear is Task.SetTriggerValue(false), which calls RearmActions - the wave's IsComplete is lifted.
 - The next tick `_S.01_` runs set again, Task.Update's `if (!prevTriggered) action.InitialiseOnSet()` re-arms the wave
-  whole (the port's `task.js:"if (!this.prevTriggered) action.initialiseOnSet();"`).
+  whole (the port's `task.js:"if (!this.prevTriggered)"`).
 - CreateFoe.InitialiseOnSet zeroes lastSpawnTime and spawnCounter - Update's own comment on the count says "This can be
   cleared on next set/rearm" (the port's `actions.js:"InitialiseOnSet (CreateFoe.cs:61-65): a task rearm restarts the"`).
   The first Update after it backdates the timer a Range(0, interval) into the 55 minutes, and the 100% roll makes
@@ -6498,7 +6498,7 @@ through DFU's C# (master, fetched for this reading):
 
 CreateFoe reads no kill count. Foe.KillCount ("does not rearm") is read by the `killed` trigger, and by
 GameObjectHelper.AddQuestResourceObjects for a PLACED foe alone (`if (foe.KillCount < foe.SpawnCount)
-AddQuestFoe(...)`; the port's `sceneMount.js:"if (resource.killCount < resource.spawnCount) {"`). So a `place foe`
+AddQuestFoe(...)`; the port's `sceneMount.js:"if (resource.killCount < resource.spawnCount)"`). So a `place foe`
 killed stays dead on re-entry, and a `create foe` wave comes again whenever its task is set again. The Online-Waits page
 recorded the same re-arm already (`Online-Waits.md` W3: a guard stepping out for a minute every twenty met 2.8 waves of
 Nightblades offline over 400 rolls); online the re-armed wave keeps the script's full interval, never the short wait.
@@ -6733,7 +6733,7 @@ the machine no longer holds, and the expansion's null-parent bail hands the word
 orphan until its next load, whose RestoreConversationData sweep (TalkManager.cs:2522-2533; the port's
 `removeOrphanedQuestRumors`) takes it - and a session online is days of a character's clock.
 
-- removeQuest calls the machine's `removeProgressRumors` dep with the quest's uid (`machine.js:"this.deps.removeProgressRumors?.(quest.uid);"`).
+- removeQuest calls the machine's `removeProgressRumors` dep with the quest's uid (`machine.js:"this.deps.removeProgressRumors?.(quest.uid)"`).
 - A DEPARTURE in WHEN only (Port-Ledger A, RUMOR-ORPHAN): the rumor goes with its quest, not at the next load.
 - Pinned by `test/systems/quest/rpt1026_misc_rumor.test.js` (1); `tools/mutants/rpt1026_misc.json` (1).
 
@@ -6861,7 +6861,7 @@ sentence, which says the service is unbuilt.
 - **THE LAW IS DFU'S, THE WORDS ARE THE PORT'S.** A questor whose quest is open offers nothing:
   `DaggerfallGuildServicePopupWindow.GetQuest` (`DaggerfallGuildServicePopupWindow.cs:550-553`) and the coven's
   (`DaggerfallWitchesCovenPopupWindow.cs:125-129`) ask `IsLastNPCClickedAnActiveQuestor` and close. DFU closes in silence; the popups' two doors now say why
-  (`offerFlow.js:"export function questorBusy(machine) {"` - `{ kind: 'close', reason: 'activeQuestor', quest }`), and
+  (`offerFlow.js:"export function questorBusy"` - `{ kind: 'close', reason: 'activeQuestor', quest }`), and
   the bridge boxes it (`questBridge.js:"case 'close': return step.reason === ACTIVE_QUESTOR ? [{ rows: questorBusyRows(step.quest) }] : [];"`):
   "You have not finished the work you were given here: The Offered Errand." - the quest by the name the journal gives it
   (its DisplayName, a translation's -LOC one where it has one), the work alone where it has none. The text core's
@@ -6912,7 +6912,7 @@ mutation-checked by `tools/mutants/rpt1026_quests.json` (29 - 25 here, two the a
   death with `give pc nothing` and `remove log step 0` and the quest runs on under `_2dung_` (RAVEN-CLOSE closes it
   online on the short wait); N0B21Y14 writes its first entry only when its letter is read. A quest with nothing in its
   journal was no row: the bridge's walk listed only a stamped quest with objectives, and AUDIT QUESTLINES UI-8 drew no
-  Abandon on one. Now `machine.js:"export const holdsQuestorDoor = (quest) =>"` names the quests that hold the door (a
+  Abandon on one. Now `machine.js:"export const holdsQuestorDoor"` names the quests that hold the door (a
   Person its questor by the click), each is a row whether or not it has written anything
   (`questBridge.js:"if (!ql?.objectives?.length && !holdsQuestorDoor(q)) continue;"`), an Abandoned row once set aside
   (so its Reclaim stands), its detail says "Nothing is written in your journal for this quest yet." where it has no
@@ -6927,21 +6927,21 @@ mutation-checked by `tools/mutants/rpt1026_quests.json` (29 - 25 here, two the a
   parsed before either starts take one building (the lines were started together before QL-OFFERED), and 215 of
   Daggerfall's 345 tavern interiors lay one spawn marker - GameObjectHelper.AddQuestNPC stood both on it, one billboard
   over the other. FB1020c CROWD-CLEAR moved a Person off a resident; another quest Person already stood in the room now
-  crowds as a resident does (`sceneMount.js:"export function crowdOf(people, stands = null, self = null) {"`), and with
+  crowds as a resident does (`sceneMount.js:"export function crowdOf"`), and with
   no spawn marker clear the Person stands beside its own, on the same floor and in plain line - never through a wall,
-  onto a table or past a ledge (`sceneMount.js:"export function besideSpot(at, collider, lift, w, crowd) {"`). Its layout
+  onto a table or past a ledge (`sceneMount.js:"export function besideSpot"`). Its layout
   data (its name, its click) stays the drawn marker's. Port-Ledger A, QUEST-MARKERS' row, widened.
 - **NO-GIVES-BACK** - a No that hands the letter back asks again. The report: Lord K'avar's letter given to the Queen of
   Sentinel, No pressed, and she never spoke of it again. M0B11Y18 asks under `toting _I.03_ and _ruler_ clicked` and its
   No (`_S.20_`) is a `get item _I.03_` - not inert, not a clear, so NO-ASKS-AGAIN left it DFU's: the prompt spent, the
   click a set task's. Now a No whose every action hands back the item its asking click toted
-  (`noAsksAgain.js:"export function givesBackNo(quest, task, prompt) {"`) asks again once that item is back in the pack.
+  (`noAsksAgain.js:"export function givesBackNo"`) asks again once that item is back in the pack.
   The corpus has four: M0B11Y18 `_S.20_`, 80C0XY00 `_school_`, $CUREWER `_S.15_`, N0B00Y09 `_nononono_`
   (`test/systems/quest/fb1013e_noasks.test.js`'s census, PIN MOVED to six). Port-Ledger A, NO-ASKS-AGAIN's row, widened.
   AUDIT RPT1026 H1, NARROWED: three of the four are answers the questlines' sheets read as the player's choice
   (N0B00Y09's "Keep it for the Guild" and its `refused` ending, $CUREWER's `spared`, 80C0XY00's kept secret); forgotten,
   N0B00Y09 ended `loyal` and lost the standing its refusal moves, and $CUREWER's refusal ended as a failure. A stamped
-  quest's No that its sheet reads (`noAsksAgain.js:"export function sheetReadTasks(quest) {"`) is DFU's, asked once; the
+  quest's No that its sheet reads (`noAsksAgain.js:"export function sheetReadTasks"`) is DFU's, asked once; the
   queen's still asks again, and with the questlines off all four do (`test/systems/quest/audit_rpt1026_quests.test.js`).
 - **QUEST-ZONE** - online a quest's remote dungeon is never one the open zone seals. The report: a vampire's lair in the
   middle of the open zone, its door sealed ("The way in is sealed. Only the halls marked on the map are open today."). Of
@@ -7018,7 +7018,7 @@ for it. A guild's Get Quest had no work, a social giver the same, and a Daedra s
 in this region. You keep your gold." That held in every province, so past the Bay no quest left town.
 
 **THE LAW.** The quest layer's maps (`src/scenes/questWorld.js`, the `Object.create(maps)` it already wrapped for the
-smaller-dungeon law) answer a province's region from `src/scenes/quest/questProvinceSites.js:"export function createQuestProvinceSites("`:
+smaller-dungeon law) answer a province's region from `src/scenes/quest/questProvinceSites.js:"export function createQuestProvinceSites"`:
 
 - **Its towns** are the theatre's listed places on the world's registry (`world/worldWide/worldPlaces.js` inTheatre,
   `world/pastBayRows.js`): the capitals' slices and the model's cities, towns and villages that stand a location. A
@@ -7089,7 +7089,7 @@ towns are one location each.
 (cheap, read once). Past the Bay it is a place the build makes, some 20 ms each the first time (an Imperial City slice
 14-21 ms, a Skyrim town 19 ms, measured on the freeware). A temple's `remote house2` asked in the Imperial City tried
 its pools' slices one by one and took 20 s. The build keeps a place once stood, so
-`src/scenes/quest/questProvinceWarm.js:"export function createProvinceWarm("` stands the questor's province's table in
+`src/scenes/quest/questProvinceWarm.js:"export function createProvinceWarm"` stands the questor's province's table in
 idle time while the player is in that province:
 
 - **Nearest first, bounded by count.** At most WARM_PER_TICK (2) places a tick are stood for the first time, nearest the
@@ -7130,7 +7130,7 @@ made ready. Now:
   is CollectQuestSitesOfBuildingType's walk (`townBuildings`) and its law (`buildingAdmits`: the wildcards, the hall's
   and the temple's faction, never the Dark Brotherhood's or the Thieves Guild's), each now one home the search reads too
   (`_townBuildingsOfType`). No quest or owner changes it, so it holds for the session.
-- **Kept a slice, read before the slice stands** (`src/scenes/quest/questProvinceSites.js:"const sliceIndexAt = (px, py) => {"`):
+- **Kept a slice, read before the slice stands** (`src/scenes/quest/questProvinceSites.js:"const sliceIndexAt"`):
   off the slice as the build lays it - the stood slice, else its clone, not stood
   (`src/scenes/tamrielPlacesHost.js:"function capitalSliceAt(px, py) {"`, over capitalCloneOf, the one law capitalLocationAt
   stands) - and by the warmer in idle time.
@@ -7173,13 +7173,13 @@ no quest site landed in one: the Temple District's first quarter holds 865 marke
 blocks the walk read; the Arena District's eighteenth holds 1,189, and 28. Now every block is read, the city's own
 cells too, in three parts:
 
-- **A cell read as a quest reads it** (`src/world/imperialFabricBuildings.js:"export function fabricQuestBlock(name, blocksFile) {"`,
+- **A cell read as a quest reads it** (`src/world/imperialFabricBuildings.js:"export function fabricQuestBlock"`,
   the quest world's `questBlock`): withFabricBuildings' records, subrecords and donors' interiors over an empty block,
   without the cell's ground, models, lamps or town-map bytes. Made by the scene's door a cell is its whole fabric, some
   15 ms, and never a block the scene's cache needs evicted for a search.
 - **A slice's index takes its fabric baked** (`src/scenes/questWorld.js:"const sitesIndexOf = (loc) => {"`): its
   Daggerfall blocks walked, its own cells read as holding none, and the kinds its fabric gives a quest
-  (`src/world/imperialFabricBuildings.js:"export function fabricSliceSites(s) {"`) read off
+  (`src/world/imperialFabricBuildings.js:"export function fabricSliceSites"`) read off
   `src/world/imperialFabricSites.js`, which `tools/bakeFabricSites.mjs` writes from the plan and BLOCKS.BSA's donors
   (43 of the 53 marked; 625 slices, 50 distinct sets) and holds with `--check`. Laid out cell by cell the fabric's half is
   some 0.1 s a slice, and a temple's darts over the city read some ninety slices' indexes.
@@ -7242,7 +7242,7 @@ same table the talk's regional "Where is" reads (`06-Systems/Talk-Arc.md` BAY-LE
 - **%di's remote arm** (GetLocationCompassDirection, TalkManager.cs:1238-1281) said "...never mind..." for every site past
   the Bay (28 of DFU's quests use it): `questWorld.js` handed it the raw `maps`, and `systems/talk/talk.js` bounded the
   politic region by MapFileReader.RegionCount (62). It reads `questWorld.maps`, the region bounded by the world's regions
-  (`talk.js:"if (region < 0 || region >= REGION_NAMES.length) region = -1;"`). On the freeware Solitude's Fighters Guild
+  (`talk.js:"if (region < 0 || region >= REGION_NAMES.length)"`). On the freeware Solitude's Fighters Guild
   sends the player to Fenrarik Manor, "northeast", and to the Citadel of Alarne, "east"; the Bay's directions are as they
   were (Daggerfall's: Uplech and Greenfield's Hold, "northwest").
 - **The map item's and the guilds' reveals** (DiscoverRandomLocation, PlayerGPS.cs:892-910: the map item, the Thieves
@@ -7254,7 +7254,7 @@ same table the talk's regional "Where is" reads (`06-Systems/Talk-Arc.md` BAY-LE
   (AUDIT TESA II P6). The map is still spent either way, as DFU spends it (RemoveItem outside its catch).
 - **The Mages Guild's scrying** (LOOT19, `systems/loot/lootScry.js`) refused "nowhere" past the Bay (`scryWhere` read the
   raw maps): it reads the same table, and finds the family's nearest lair. A town's row past the Bay is NoDungeon (255) as
-  MAPS.BSA's towns are (`questProvinceSites.js:"export function provinceRow(p) {"`): it had read as type 0, a crypt, so an
+  MAPS.BSA's towns are (`questProvinceSites.js:"export function provinceRow"`): it had read as type 0, a crypt, so an
   undead scrying would have named a town.
 - **%lp** (MacroHelper LocalProvince: "High Rock" in a Breton region, else "Hammerfell") said "Hammerfell" everywhere past
   the Bay ("High Rock" in Cyrodiil - its people's race): a province's region answers its own name, as shown

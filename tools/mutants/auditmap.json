@@ -129,7 +129,7 @@
   {
     "name": "cull-per-point",
     "file": "src/ui/ink/inkMap.js",
-    "old": "        const draw = visible(p.x, p.y, 8)\n          || (i > 0 && meets(view, paperW, paperH, c[i - 1], p))\n          || (i + 1 < c.length && meets(view, paperW, paperH, p, c[i + 1]));",
+    "old": "        const draw =\n          visible(p.x, p.y, 8) ||\n          (i > 0 && meets(view, paperW, paperH, c[i - 1], p)) ||\n          (i + 1 < c.length && meets(view, paperW, paperH, p, c[i + 1]));",
     "new": "        const draw = visible(p.x, p.y, 8);",
     "tests": [
       "test/ui/heldmap.test.js"
@@ -138,8 +138,8 @@
   {
     "name": "junction-walked-through",
     "file": "src/ui/ink/inkMap.js",
-    "old": "    while (degree(x, y) === 2) {\n      const i = step(x, y);",
-    "new": "    for (;;) {\n      const i = step(x, y);",
+    "old": "    while (degree(x, y) === 2) {",
+    "new": "    for (;;) {",
     "tests": [
       "test/ui/heldmap.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "tracer-skips-loops",
     "file": "src/ui/overworldModel.js",
-    "old": "  for (let i = 0; i < mask.length; i++) {   // pure loops\n    const m = mask[i];\n    if (!m) continue;\n    for (let d = 0; d < 8; d++) if ((m & DIR_BIT[d]) && !(walked[i] & DIR_BIT[d])) walk(i, d);\n  }\n",
-    "new": "",
+    "old": "  for (let i = 0; i < mask.length; i++) {\n    // pure loops\n    const m = mask[i];\n    if (!m) continue;\n    for (let d = 0; d < 8; d++) if (m & DIR_BIT[d] && !(walked[i] & DIR_BIT[d])) walk(i, d);\n  }\n  return chains;",
+    "new": "  return chains;",
     "tests": [
       "test/ui/heldmap.test.js",
       "test/world/road/roads.test.js"
@@ -166,8 +166,8 @@
   {
     "name": "harbour-joined",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  ctx.moveTo(ax + 3 * Math.cos(Math.PI * 0.15), ay + 0.5 + 3 * Math.sin(Math.PI * 0.15));\n",
-    "new": "",
+    "old": "  ctx.moveTo(ax + 3 * Math.cos(Math.PI * 0.15), ay + 0.5 + 3 * Math.sin(Math.PI * 0.15));\n  ctx.arc(ax, ay + 0.5, 3, Math.PI * 0.15, Math.PI * 0.85);",
+    "new": "  ctx.arc(ax, ay + 0.5, 3, Math.PI * 0.15, Math.PI * 0.85);",
     "tests": [
       "test/ui/heldmap.test.js"
     ]

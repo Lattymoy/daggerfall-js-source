@@ -2,8 +2,8 @@
   {
     "name": "ARMORMOUNT-the-shields-alone-the-defect",
     "file": "src/net/decorLaw.js",
-    "old": "  return (it.g === DECOR_WEAPONS_GROUP && it.t !== DECOR_ARROW_TEMPLATE) || it.g === DECOR_ARMOR_GROUP || it.t === TROPHY_TEMPLATE;",
-    "new": "  return (it.g === DECOR_WEAPONS_GROUP && it.t !== DECOR_ARROW_TEMPLATE) || (it.g === DECOR_ARMOR_GROUP && it.t >= 109 && it.t <= 112) || it.t === TROPHY_TEMPLATE;",
+    "old": "    it.g === DECOR_ARMOR_GROUP ||",
+    "new": "    (it.g === DECOR_ARMOR_GROUP && it.t >= 109 && it.t <= 112) ||",
     "tests": [
       "test/systems/item/armormount.test.js"
     ]
@@ -11,7 +11,7 @@
   {
     "name": "ARMORMOUNT-no-armour-hangs",
     "file": "src/net/decorLaw.js",
-    "old": "  return (it.g === DECOR_WEAPONS_GROUP && it.t !== DECOR_ARROW_TEMPLATE) || it.g === DECOR_ARMOR_GROUP || it.t === TROPHY_TEMPLATE;",
+    "old": "  return (\n    (it.g === DECOR_WEAPONS_GROUP && it.t !== DECOR_ARROW_TEMPLATE) ||\n    it.g === DECOR_ARMOR_GROUP ||\n    it.t === TROPHY_TEMPLATE\n  );",
     "new": "  return (it.g === DECOR_WEAPONS_GROUP && it.t !== DECOR_ARROW_TEMPLATE) || it.t === TROPHY_TEMPLATE;",
     "tests": [
       "test/systems/item/armormount.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "ARMORMOUNT-armour-stands-as-a-billboard",
     "file": "src/systems/decor/decorItems.js",
-    "old": "new Set(['Weapons', 'Armor', 'Transportation',",
-    "new": "new Set(['Weapons', 'Transportation',",
+    "old": "  new Set(['Weapons', 'Armor', 'Transportation', 'Currency', 'Deeds', 'QuestItems']),",
+    "new": "  new Set(['Weapons', 'Transportation', 'Currency', 'Deeds', 'QuestItems']),",
     "tests": [
       "test/systems/item/armormount.test.js"
     ]

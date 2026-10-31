@@ -42,7 +42,7 @@ FIXED. A defender who is stood down now walks off. He leaves the world only wher
   breakWindup keeps outside a wind-up, would otherwise have struck the player beside him.)
 - **Gone only out of sight.** He leaves the world only where DFU's PopulationManager lets any walker come or go:
   UpdateMobiles' allowChange, which is beyond allowVisiblePopRange (120) or outside the player's 180-degree forward view.
-  He leaves no body. The law has one home now, `townPopulation.js:"export function popAllowChange("`. The street's pool
+  He leaves no body. The law has one home now, `townPopulation.js:"export function popAllowChange"`. The street's pool
   and the living town (`_hidden`) each carried their own copy, and now read it as the guard pool does. A host that hands
   the pool no yaw has only the distance term to go by. Measured on the real pool and motor: a defender watched the whole
   way walks about 4.9 m/s and leaves the world at 120.06 m. If the player turns away, he leaves on that frame.
@@ -57,7 +57,7 @@ FIXED. A defender who is stood down now walks off. He leaves the world only wher
   and sends each man at the threat nearest him (`cityGuards.js:"for (const g of guards) if (!g.dead && g.leaving) {"`).
   A monster on a defender is the town's threat (AUDIT DISC19 W1), so one set upon in town is called back by the
   watch's own countdown. A raid's defender is called back the same way, before one is minted (`standDefender`), and the
-  raid's list holds him once, not twice (`raidingParties.js:"if (!_live.some((e) => e.foe === foe)) _live.push("`). A
+  raid's list holds him once, not twice (`raidingParties.js:"if (!_live.some((e) => e.foe === foe))"`). A
   crime enlists him where he walks (`enlistDefender`).
 - **The living world** (`livingWatch.js` watchStep, unchanged). A turned defender's resident stays lent while he walks
   off. Once he is gone, the resident is back to their day, stood by the census out of the player's sight like any other

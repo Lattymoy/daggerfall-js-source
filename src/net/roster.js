@@ -40,7 +40,7 @@
 // Not a DFU member: Daggerfall Unity has no chat and no roster.
 // Ledger A row (ONLINE).
 import { tagOf, inEarshot } from './chat.js';
-import { sanitizeName, readBadge, readGuildTag } from './wire.js';   // GUILD1c: a row's guild tag, through the wire's own reader
+import { sanitizeName, readBadge, readGuildTag } from './wire.js'; // GUILD1c: a row's guild tag, through the wire's own reader
 
 /** How many rows the panel will hold. The relay's own ROSTER_MAX
  *  bounds what a room reports; this is the drawing's own ceiling, so
@@ -102,7 +102,7 @@ export const NAME_ORDER = new Intl.Collator(undefined, { numeric: true, sensitiv
 /** PERF-ON3: by name, then by tag (the second clause above: two players who share a name keep one order). */
 const byNameThenTag = (a, b) => {
   const n = NAME_ORDER.compare(a.name, b.name);
-  return n !== 0 ? n : (a.tag < b.tag ? -1 : a.tag > b.tag ? 1 : 0);
+  return n !== 0 ? n : a.tag < b.tag ? -1 : a.tag > b.tag ? 1 : 0;
 };
 /** PERF-ON3: past this many kept rows the memo lets go of every row the last call did not list - a cache, never
  *  state: a row it forgot is made afresh. AUDIT 637 A5: it let go of EVERY row, so the ask after rebuilt and re-sorted
@@ -112,8 +112,9 @@ export const ROW_MEMO_MAX = 4096;
 /** PERF-ON3: id -> { the inputs a row was made of, the row, the call that last listed it } */
 const _rowMemo = new Map();
 /** PERF-ON3: the last call's rows in listing order (the sort's input) and the frozen, sorted, capped answer */
-let _lastIn = /** @type {RosterRow[]} */ ([]), _lastOut = /** @type {readonly RosterRow[]} */ (Object.freeze([]));
-let _lastAll = /** @type {readonly RosterRow[]} */ (_lastOut);   // CHAT-FIND-ALL: the uncut sorted list a search reads
+let _lastIn = /** @type {RosterRow[]} */ ([]),
+  _lastOut = /** @type {readonly RosterRow[]} */ (Object.freeze([]));
+let _lastAll = /** @type {readonly RosterRow[]} */ (_lastOut); // CHAT-FIND-ALL: the uncut sorted list a search reads
 let _scratchIn = /** @type {RosterRow[]} */ ([]);
 let _call = 0;
 /** PERF-ON3: an input the badge reads, by value - an array by its elements (a glyph added in place is a change), anything else as itself.
@@ -127,7 +128,11 @@ const sameInput = (kept, now) => {
 const keepInput = (v) => (Array.isArray(v) ? v.slice() : v);
 /** AUDIT 637 A9: a kept row is SHARED - every ask and every caller is handed the same object while its inputs stand - so it
  *  is frozen whole, its badge's arrays with it: a caller that wrote into one would have changed every later answer. */
-const freezeRow = (row) => { Object.freeze(row.glyphs); if (row.ts) Object.freeze(row.ts); return Object.freeze(row); };
+const freezeRow = (row) => {
+  Object.freeze(row.glyphs);
+  if (row.ts) Object.freeze(row.ts);
+  return Object.freeze(row);
+};
 
 /**
  * The rows the panel draws, in order.
@@ -145,7 +150,7 @@ const freezeRow = (row) => { Object.freeze(row.glyphs); if (row.ts) Object.freez
  */
 export function rosterRows(session) {
   const call = ++_call;
-  if (_rowMemo.size > ROW_MEMO_MAX) for (const [k, m] of _rowMemo) if (m.call < call - 1) _rowMemo.delete(k);   // AUDIT 637 A5
+  if (_rowMemo.size > ROW_MEMO_MAX) for (const [k, m] of _rowMemo) if (m.call < call - 1) _rowMemo.delete(k); // AUDIT 637 A5
   /** @type {RosterRow[]} */
   const rows = _scratchIn;
   rows.length = 0;
@@ -153,16 +158,24 @@ export function rosterRows(session) {
   const push = (id, name, me, from = null) => {
     if (id == null) return;
     let m = _rowMemo.get(id);
-    if (m && m.call === call) return;   // listed already this call: the first of an id is the one kept, as the Set kept it
+    if (m && m.call === call) return; // listed already this call: the first of an id is the one kept, as the Set kept it
     const f = /** @type {any} */ (from);
-    if (!m || m.name !== name || m.me !== me || m.title !== f?.title || !sameInput(m.glyphs, f?.glyphs) || !sameInput(m.ts, f?.ts) || m.gt !== f?.gt) {
+    if (
+      !m ||
+      m.name !== name ||
+      m.me !== me ||
+      m.title !== f?.title ||
+      !sameInput(m.glyphs, f?.glyphs) ||
+      !sameInput(m.ts, f?.ts) ||
+      m.gt !== f?.gt
+    ) {
       // ACC3c: THE BADGE COMES ALONG, through the wire's own reader - the
       // roster is a list of NAMES and a name wears a title everywhere
       // else it is drawn, so a bare one here is the same name saying two
       // different things on one screen. `readBadge` rather than a second
       // spelling of the vocabulary check, for the reason it exists.
-      const row = { id, name: sanitizeName(name), tag: tagOf(id), me, ...readBadge(from), gt: readGuildTag(from) };   // GUILD1c: and the guild's tag, through the wire's own reader
-      freezeRow(row);   // AUDIT 637 A9
+      const row = { id, name: sanitizeName(name), tag: tagOf(id), me, ...readBadge(from), gt: readGuildTag(from) }; // GUILD1c: and the guild's tag, through the wire's own reader
+      freezeRow(row); // AUDIT 637 A9
       m = { name, me, title: f?.title, glyphs: keepInput(f?.glyphs), ts: keepInput(f?.ts), gt: f?.gt, row, call };
       _rowMemo.set(id, m);
     }
@@ -184,18 +197,18 @@ export function rosterRows(session) {
   // read a count one higher than everyone else's - themselves, the one player nobody can see.
   if (session?.hidden !== true) push(session?.id ?? null, session?.name ?? '', true, session);
   for (const p of session?.peers?.values?.() ?? []) push(p?.id ?? null, p?.name ?? '', false, p);
-  for (const p of session?.hubOnline?.values?.() ?? []) push(p?.id ?? null, p?.name ?? '', false, p);   // SCALE5c: and everyone on the hub's other shards, while it is small (a peer of my own shard is listed once, live)
+  for (const p of session?.hubOnline?.values?.() ?? []) push(p?.id ?? null, p?.name ?? '', false, p); // SCALE5c: and everyone on the hub's other shards, while it is small (a peer of my own shard is listed once, live)
 
   // PERF-ON3: the same rows in the same order as the last call sort to the same list - answer it, frozen, as it was
   let same = rows.length === _lastIn.length;
   for (let i = 0; same && i < rows.length; i++) same = rows[i] === _lastIn[i];
   if (!same) {
     const sorted = rows.slice().sort(byNameThenTag);
-    const out = Object.freeze(sorted.slice(0, ROSTER_ROWS_MAX));   // AUDIT 637 A6: the answer first, then the state that names it
-    _scratchIn = _lastIn;   // the old input becomes the next call's scratch; this call's list is kept as the new input
+    const out = Object.freeze(sorted.slice(0, ROSTER_ROWS_MAX)); // AUDIT 637 A6: the answer first, then the state that names it
+    _scratchIn = _lastIn; // the old input becomes the next call's scratch; this call's list is kept as the new input
     _lastIn = rows;
     _lastOut = out;
-    _lastAll = sorted.length > ROSTER_ROWS_MAX ? Object.freeze(sorted) : out;   // CHAT-FIND-ALL: every row known, for a search
+    _lastAll = sorted.length > ROSTER_ROWS_MAX ? Object.freeze(sorted) : out; // CHAT-FIND-ALL: every row known, for a search
   }
   // ROSTER-G: the count is the ROOM's when the relay said it (`n` on a channel's welcome) - a welcome list cut at
   // CHAT_ROSTER_MAX still says how many are online; a place's welcome says no `n`, and the rows are the count
@@ -207,10 +220,14 @@ export function rosterRows(session) {
   // ROSTER_ROWS_MAX the column draws. The same frozen array while nothing moved (PERF-ON3), so the panel's key holds.
   // non-enumerable: the answer's shape (rows, total, shown, label) is what its callers and pins compare; `all` rides beside it
   // CHAT-FIND-HUB: and the players the hub's own search found (`hubFound`) that this client does not know
-  return Object.defineProperty({ rows: _lastOut, total, shown: Math.min(rows.length, ROSTER_ROWS_MAX), label }, 'all', { value: withHubFound(_lastAll, session) });
+  return Object.defineProperty({ rows: _lastOut, total, shown: Math.min(rows.length, ROSTER_ROWS_MAX), label }, 'all', {
+    value: withHubFound(_lastAll, session),
+  });
 }
 
-let _hubOf = /** @type {any} */ (null), _hubBase = /** @type {readonly RosterRow[]|null} */ (null), _hubOut = _lastAll;
+let _hubOf = /** @type {any} */ (null),
+  _hubBase = /** @type {readonly RosterRow[]|null} */ (null),
+  _hubOut = _lastAll;
 /** CHAT-FIND-HUB (2026-10-15, Mac: "player search isnt working properly. Even in world tab I try to search for someone
  *  and they can't be found cause it only shows like 25 ppl out of 600"): past CHAT_ROSTER_MAX online the hub lets the
  *  World tab's everyone go (net/online.js sendHubWho) and a shard's link knows its own shard alone, so the search -
@@ -225,11 +242,21 @@ function withHubFound(base, session) {
   const have = new Set(base.map((r) => r.id));
   const more = [];
   for (const p of f.l) {
-    if (!p || typeof p.id !== 'string' || have.has(p.id)) continue;   // my own row is in `base` already - or, hidden, nowhere: the hub's search names neither its asker nor a hidden socket (AUDIT HIDDEN-UNCOUNTED N2)
+    if (!p || typeof p.id !== 'string' || have.has(p.id)) continue; // my own row is in `base` already - or, hidden, nowhere: the hub's search names neither its asker nor a hidden socket (AUDIT HIDDEN-UNCOUNTED N2)
     have.add(p.id);
-    more.push(freezeRow({ id: p.id, name: sanitizeName(p.name), tag: tagOf(p.id), me: false, ...readBadge(p), gt: readGuildTag(p) }));
+    more.push(
+      freezeRow({
+        id: p.id,
+        name: sanitizeName(p.name),
+        tag: tagOf(p.id),
+        me: false,
+        ...readBadge(p),
+        gt: readGuildTag(p),
+      }),
+    );
   }
-  _hubOf = f; _hubBase = base;
+  _hubOf = f;
+  _hubBase = base;
   _hubOut = more.length ? Object.freeze(base.concat(more).sort(byNameThenTag)) : base;
   return _hubOut;
 }
@@ -254,12 +281,21 @@ export const rosterTitle = (total, label = 'Online') => `${label} — ${total}`;
 export function partyRosterSource(party, hub, acct) {
   const peers = new Map();
   for (const m of party?.members ?? []) {
-    if (!m || m.acct === acct || !Array.isArray(m.peers) || !m.peers.length) continue;   // a mate with no tab standing is not online (the hub's row: `online` IS its tabs)
+    if (!m || m.acct === acct || !Array.isArray(m.peers) || !m.peers.length) continue; // a mate with no tab standing is not online (the hub's row: `online` IS its tabs)
     const id = m.peers[0];
     const known = hub?.peers?.get?.(id) ?? null;
     peers.set(id, { ...(known ?? {}), id, name: m.name ?? known?.name ?? '' });
   }
-  return { id: hub?.id ?? null, name: hub?.name ?? '', title: hub?.title ?? null, glyphs: hub?.glyphs ?? null, gt: hub?.gt ?? null, hidden: hub?.hidden === true, peers, label: 'Party' };
+  return {
+    id: hub?.id ?? null,
+    name: hub?.name ?? '',
+    title: hub?.title ?? null,
+    glyphs: hub?.glyphs ?? null,
+    gt: hub?.gt ?? null,
+    hidden: hub?.hidden === true,
+    peers,
+    label: 'Party',
+  };
 }
 
 /**
@@ -276,8 +312,17 @@ export function partyRosterSource(party, hub, acct) {
 export function guildRosterSource(hub, tag) {
   const peers = new Map();
   if (tag) for (const [id, p] of hub?.peers ?? []) if (p?.gt === tag) peers.set(id, p);
-  if (tag) for (const [id, p] of hub?.guildOnline ?? []) if (!peers.has(id)) peers.set(id, p);   // SCALE5c: the guild on every shard
-  return { id: hub?.id ?? null, name: hub?.name ?? '', title: hub?.title ?? null, glyphs: hub?.glyphs ?? null, gt: hub?.gt ?? null, hidden: hub?.hidden === true, peers, label: 'Guild' };
+  if (tag) for (const [id, p] of hub?.guildOnline ?? []) if (!peers.has(id)) peers.set(id, p); // SCALE5c: the guild on every shard
+  return {
+    id: hub?.id ?? null,
+    name: hub?.name ?? '',
+    title: hub?.title ?? null,
+    glyphs: hub?.glyphs ?? null,
+    gt: hub?.gt ?? null,
+    hidden: hub?.hidden === true,
+    peers,
+    label: 'Guild',
+  };
 }
 
 /**
@@ -289,7 +334,18 @@ export function guildRosterSource(hub, tag) {
  * @returns {RosterSource}
  */
 export function placedRosterSource(link, place) {
-  return { id: link?.id ?? null, name: link?.name ?? '', title: link?.title ?? null, glyphs: link?.glyphs ?? null, gt: link?.gt ?? null, hidden: link?.hidden === true, peers: link?.peers ?? null, roomCount: link?.roomCount ?? null, hubOnline: link?.hubOnline ?? null, label: place };   // GUILD1c: my own row wears my tag
+  return {
+    id: link?.id ?? null,
+    name: link?.name ?? '',
+    title: link?.title ?? null,
+    glyphs: link?.glyphs ?? null,
+    gt: link?.gt ?? null,
+    hidden: link?.hidden === true,
+    peers: link?.peers ?? null,
+    roomCount: link?.roomCount ?? null,
+    hubOnline: link?.hubOnline ?? null,
+    label: place,
+  }; // GUILD1c: my own row wears my tag
 }
 
 /**
@@ -307,5 +363,14 @@ export function localRosterSource(session, near, here) {
     const known = session?.peers?.get?.(p.id);
     if (known) peers.set(p.id, known);
   }
-  return { id: session?.id ?? null, name: session?.name ?? '', title: session?.title ?? null, glyphs: session?.glyphs ?? null, gt: session?.gt ?? null, hidden: session?.hidden === true, peers, label: 'Nearby' };   // GUILD1c: my own row wears my tag
+  return {
+    id: session?.id ?? null,
+    name: session?.name ?? '',
+    title: session?.title ?? null,
+    glyphs: session?.glyphs ?? null,
+    gt: session?.gt ?? null,
+    hidden: session?.hidden === true,
+    peers,
+    label: 'Nearby',
+  }; // GUILD1c: my own row wears my tag
 }

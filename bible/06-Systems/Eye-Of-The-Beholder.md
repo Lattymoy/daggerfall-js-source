@@ -1170,6 +1170,48 @@ DEPARTURE from the assembly, the sixth, recorded in the Ledger row.
 weapon's tick), `test/net/disc23b_eotb_sprites.test.js` (a peer's stroke by `an`); `tools/mutants/onestroke.json`.
 `tools/mutants/disc23b.json`'s clip-never-ends record re-aimed at the shot's own frames. Not verified in a browser.
 
+## ATTACK-MOVE (2026-10-31): a swing on the move plays whole
+
+A player's report, through the owner: "attack animations do not play properly when you attack and move
+simultaneously". The IL's `LoopIdleBillboard` runs beside a clip: while walking its clock advanced and repainted the
+walk table between the swing's frames, and a turn (`UpdateOrientation`) repainted the stance too. On the move the
+screen flickered between the walk and the swing.
+
+**The change.** `eotbBody.js`: a stance's delayed repaint (the walk's clock, a table change, one queued just before
+the clip) is dropped while a clip plays - the repaint after the clip paints the stance again - and a turn mid-clip
+repaints the clip's own frame at the new view. A peer's walker already rested its clock under a shot
+(`peerRiders.js`). A DEPARTURE from the assembly, the seventh, recorded in the Ledger row.
+
+**Pins.** `test/player/eyeOfTheBeholder/eotb_body.test.js` ATTACK-MOVE (every frame of a swing on the move, the eye
+swung round mid-swing, is the swing, turned with the eye; the walk after it); `tools/mutants/attackmove.json`. Not verified in a browser.
+
+**ATTACK-TURN** (the owner, 2026-10-31: "Walking shouldnt cancel attack animations"). A turn mid-clip repainted
+`frameCurrent`, which the walk's clock moves on under the clip. Steered on the move, 24 of a swing's 59 ticks showed the
+walk's frame number of the swing - most often its first. A turn now repaints the frame shown.
+
+**ATTACK-WARM.** Each layered outfit and each pair of hands is its own set of composed frames, and the body draws one
+only once it is composed: until then the last stays (`draw`). `preload` composes all when the body attaches, but a
+weapon or a piece changed later composed its swing as it played, and the walk's frame held through the blow.
+`layeredWarm.js` queues a new look's clips - the swing, each hand's for a pair, the loose, a readied cast - drawn, in
+every view, `LAYERED_WARM_A_FRAME` a frame. A walker's drawn weapon's swing is queued too (`peerRiders.js`,
+`WARM_QUEUE_MAX`); a sheathed one waits for its drawing. The port's own: the mod has no layered body.
+
+**Pins.** `eotb_body.test.js` ATTACK-TURN (a swing, a cast and a loose steered on the move show their own frame every
+tick) and ATTACK-WARM; `test/net/layered_peers.test.js` ATTACK-WARM; `tools/mutants/attackmove.json` (11, all dead).
+
+## TURN-FREE (2026-10-31): a readied body keeps its own facing
+
+The owner: "Allow players to view all rotations of their character when idle or moving in a direction with the camera
+facing another direction". The bundle ships `Graphics.TurnToView` at 2, When Weapon Readied: with a weapon out or a
+spell readied the body faced the camera, so it only ever showed its back. The port ships 1, Only When Animating: the
+body faces its walk, and stood still its last facing, so the eye goes round it through all eight views; a blow or a
+cast turns it to the camera while it plays, so it strikes where the player looks. The ladder is the IL's and the pane
+keeps all four. A DEPARTURE from the bundle's settings, the eighth, in the Ledger row.
+
+**Pins.** `eotb_body.test.js` TURN-FREE (the bundle's value read from `modsettings.json`; stood still, all eight views;
+walking aside, its side; a blow, the eye's); the IL's own pins at 2 set it (PIN MOVED); `tools/mutants/turnfree.json`
+(3, all dead).
+
 ## BACK-HOLSTER (2026-10-30): the sheathed weapon on the sprite's back - NOT the mod's
 
 Mac: "For layered/skins in third person. I want to implement back holstered weapon visuals for the sprites which rotate
@@ -1189,6 +1231,14 @@ through the most pixels - a haft, a blade, a bowstring; a mean axis was pulled o
 upright by a half turn where needed so its widest end is on top (a sword's guard, an axe's or a hammer's head), and
 resamples it at the sprites' pixel size: the paper doll's 0.01 m a pixel against the sets' 0.019. It is uploaded as
 drawn and mirrored; a store keeps eight, more while more are asked, and asks again for one that did not come (AUDIT).
+
+**FLAIL-BACK** (2026-10-31, the owner: "The flail when holstered on the back needs to look different. Adjust the
+placement of the ball and chain"). Stood up as the doll draws it, a flail's chain stuck out sideways from the cap and its
+ball rode the top like a flag, the handle broken at the doll's hand. `eotbHolsterFlail.js` `uprightFlailPicture` splits
+it as the hands do (`heldPicture`, `heldChain`): the handle upright, cap on top, its hand's gap bridged, and the chain
+hung from the cap down beside it, the ball by the handle's foot. `loadBackPicture` is the door my body and every walker
+take the back's picture through. Pins: `test/player/eyeOfTheBeholder/holster_flail.test.js`,
+`tools/mutants/flailback.json` (6, all dead).
 
 **The hang.** A line in the body's frame from the right shoulder to the left hip, 35 degrees off the spine, a quarter
 of its height over the shoulder row (`EOTB_FIGURE.shoulder`), 0.16 m behind the body's middle, centred on the painted

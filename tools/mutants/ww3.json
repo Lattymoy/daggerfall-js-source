@@ -2,7 +2,7 @@
   {
     "name": "WW3-the-directory-unbounded",
     "file": "src/systems/map/mapDirectory.js",
-    "old": "  return onMap(mapPixelX, mapPixelY) ? mapDict?.get(getMapPixelID(mapPixelX, mapPixelY)) ?? null : null;",
+    "old": "  return onMap(mapPixelX, mapPixelY) ? (mapDict?.get(getMapPixelID(mapPixelX, mapPixelY)) ?? null) : null;",
     "new": "  return mapDict?.get(getMapPixelID(mapPixelX, mapPixelY)) ?? null;",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "WW3-the-directory-a-column-short",
     "file": "src/systems/map/mapDirectory.js",
-    "old": "x >= 0 && y >= 0 && x < MAP_W && y < MAP_H;",
-    "new": "x >= 0 && y >= 0 && x < MAP_W - 1 && y < MAP_H;",
+    "old": "const onMap = (x, y) => Number.isInteger(x) && Number.isInteger(y) && x >= 0 && y >= 0 && x < MAP_W && y < MAP_H;",
+    "new": "const onMap = (x, y) => Number.isInteger(x) && Number.isInteger(y) && x >= 0 && y >= 0 && x < MAP_W - 1 && y < MAP_H;",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WW3-the-port-word-unread",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "    if (!p.port || inBay(p.px, p.py) || !p.name",
-    "new": "    if (inBay(p.px, p.py) || !p.name",
+    "old": "    if (!p.port || inBay(p.px, p.py) || !p.name || !isPortTownType(p.type) || !seaBears(p.px, p.py, openSea)) continue;",
+    "new": "    if (inBay(p.px, p.py) || !p.name || !isPortTownType(p.type) || !seaBears(p.px, p.py, openSea)) continue;",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WW3-the-bays-own-let-in",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "    if (!p.port || inBay(p.px, p.py) || !p.name",
-    "new": "    if (!p.port || !p.name",
+    "old": "    if (!p.port || inBay(p.px, p.py) || !p.name || !isPortTownType(p.type) || !seaBears(p.px, p.py, openSea)) continue;",
+    "new": "    if (!p.port || !p.name || !isPortTownType(p.type) || !seaBears(p.px, p.py, openSea)) continue;",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WW3-the-town-kind-unread",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "!p.name || !isPortTownType(p.type) || !seaBears",
-    "new": "!p.name || !seaBears",
+    "old": "    if (!p.port || inBay(p.px, p.py) || !p.name || !isPortTownType(p.type) || !seaBears(p.px, p.py, openSea)) continue;",
+    "new": "    if (!p.port || inBay(p.px, p.py) || !p.name || !seaBears(p.px, p.py, openSea)) continue;",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WW3-the-sea-unborne",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "!isPortTownType(p.type) || !seaBears(p.px, p.py, openSea)) continue;",
-    "new": "!isPortTownType(p.type)) continue;",
+    "old": "    if (!p.port || inBay(p.px, p.py) || !p.name || !isPortTownType(p.type) || !seaBears(p.px, p.py, openSea)) continue;",
+    "new": "    if (!p.port || inBay(p.px, p.py) || !p.name || !isPortTownType(p.type)) continue;",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "WW3-the-port-id-the-key-alone",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "maskMapId(p.mapId) : PORT_ID_WORLD + worldPixelKey(p.px, p.py));",
-    "new": "maskMapId(p.mapId) : worldPixelKey(p.px, p.py));",
+    "old": "export const portIdOf = (p) => (inBay(p.px, p.py) ? maskMapId(p.mapId) : PORT_ID_WORLD + worldPixelKey(p.px, p.py));",
+    "new": "export const portIdOf = (p) => (inBay(p.px, p.py) ? maskMapId(p.mapId) : worldPixelKey(p.px, p.py));",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "WW3-the-lane-water-unswitched",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "    : beyond() && inWorldGrid(px, py) && !inEther(px, py) && (rumareSeaPixel(px, py)",
-    "new": "    : inWorldGrid(px, py) && !inEther(px, py) && (rumareSeaPixel(px, py)",
+    "old": "      : beyond() &&\n        inWorldGrid(px, py) &&\n        !inEther(px, py) &&\n        (rumareSeaPixel(px, py) || squareCornersAll(sea, px, py));",
+    "new": "      : inWorldGrid(px, py) && !inEther(px, py) && (rumareSeaPixel(px, py) || squareCornersAll(sea, px, py));",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "WW3-the-lane-water-in-the-box",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "    : beyond() && inWorldGrid(px, py) && !inEther(px, py) && (rumareSeaPixel(px, py)",
-    "new": "    : beyond() && inWorldGrid(px, py) && (rumareSeaPixel(px, py)",
+    "old": "      : beyond() &&\n        inWorldGrid(px, py) &&\n        !inEther(px, py) &&\n        (rumareSeaPixel(px, py) || squareCornersAll(sea, px, py));",
+    "new": "      : beyond() && inWorldGrid(px, py) && (rumareSeaPixel(px, py) || squareCornersAll(sea, px, py));",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "WW3-the-lane-water-any-climate",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": " => (water(px, py) && climateAt(px, py) === CLIMATES.Ocean) || rumareSeaPixel(px, py);",
-    "new": " => (water(px, py)) || rumareSeaPixel(px, py);",
+    "old": "  const sea = (/** @type {number} */ px, /** @type {number} */ py) =>\n    (water(px, py) && climateAt(px, py) === CLIMATES.Ocean) || rumareSeaPixel(px, py);",
+    "new": "  const sea = (/** @type {number} */ px, /** @type {number} */ py) => water(px, py) || rumareSeaPixel(px, py);",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "WW3-the-lane-native-truncated",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "open(Math.floor(x / NATIVE_PIXEL), 499 - Math.floor(z / NATIVE_PIXEL))",
-    "new": "open(Math.trunc(x / NATIVE_PIXEL), 499 - Math.trunc(z / NATIVE_PIXEL))",
+    "old": "      open(Math.floor(x / NATIVE_PIXEL), 499 - Math.floor(z / NATIVE_PIXEL)),",
+    "new": "      open(Math.trunc(x / NATIVE_PIXEL), 499 - Math.trunc(z / NATIVE_PIXEL)),",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "WW3-the-bay-lanes-in-the-worlds-water",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "    if (!bay) { const p = bayPorts(); if (p) bay = laneNetwork(p, bayOpen); }",
-    "new": "    if (!bay) { const p = bayPorts(); if (p) bay = laneNetwork(p, worldOpen); }",
+    "old": "      if (p) bay = laneNetwork(p, bayOpen);",
+    "new": "      if (p) bay = laneNetwork(p, worldOpen);",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "WW3-the-beyond-lanes-in-the-bays-water",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "beyondList = longLanes(loneLanes(laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX)));",
-    "new": "beyondList = longLanes(loneLanes(laneNetwork(ports.list(), bayOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX)));",
+    "old": "        loneLanes(laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX)),",
+    "new": "        loneLanes(laneNetwork(ports.list(), bayOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX)),",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "WW3-the-bay-way-in-the-worlds-water",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "way = laneWay(lane, bayOpen, bayOpenNative, kernel); bayWays.set",
-    "new": "way = laneWay(lane, worldOpen, worldOpenNative, kernel); bayWays.set",
+    "old": "        way = laneWay(lane, bayOpen, bayOpenNative, kernel);",
+    "new": "        way = laneWay(lane, worldOpen, worldOpenNative, kernel);",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "WW3-the-beyond-lanes-unmade-again",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "    if (v !== beyondOf || t !== beyondTrace) { beyondOf = v; beyondTrace = t;",
-    "new": "    if (beyondOf === null) { beyondOf = v; beyondTrace = t;",
+    "old": "    if (v !== beyondOf || t !== beyondTrace) {",
+    "new": "    if (beyondOf === null) {",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "WW3-the-book-without-the-beyond",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "list: w.length || c.length ? [...b, ...w, ...c] : b };",
-    "new": "list: c.length ? [...b, ...c] : b };",
+    "old": "      if (!all || all.b !== b || all.w !== w || all.c !== c)\n        all = { b, w, c, list: w.length || c.length ? [...b, ...w, ...c] : b };",
+    "new": "      if (!all || all.b !== b || all.w !== w || all.c !== c) all = { b, w, c, list: c.length ? [...b, ...c] : b };",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ],
@@ -219,8 +219,8 @@
   {
     "name": "WW3-the-names-area-unread",
     "file": "src/systems/naval/shipNameBank.js",
-    "old": "export const shipNameBank = (regionIndex, area = -1) => (Number.isInteger(area) && area >= BAY_AREA_COUNT ? nameBankOfArea(area)",
-    "new": "export const shipNameBank = (regionIndex, area = -1) => (false ? nameBankOfArea(area)",
+    "old": "  Number.isInteger(area) && area >= BAY_AREA_COUNT",
+    "new": "  false",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "WW3-the-bays-area-a-provinces",
     "file": "src/systems/naval/shipNameBank.js",
-    "old": "Number.isInteger(area) && area >= BAY_AREA_COUNT ? nameBankOfArea(area)",
-    "new": "Number.isInteger(area) && area >= 0 && area !== regionIndex ? nameBankOfArea(area)",
+    "old": "  Number.isInteger(area) && area >= BAY_AREA_COUNT",
+    "new": "  Number.isInteger(area) && area >= 0 && area !== regionIndex",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]

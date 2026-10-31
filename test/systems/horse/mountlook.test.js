@@ -252,5 +252,5 @@ test('STOREFRONT the beat: a horse in a look throws its beat through the running
   assert.equal(fx.size, 0, 'riders not seen let go');
   assert.deepEqual(Object.keys(MOUNT_PREVIEW_BEAT).sort(), [...MOUNT_LOOKS].sort());
   assert.match(rd('src/player/mountRig.js'), /mountFx\.step\('self', mounted \? effectWorn\(ownEffects\(\), 'mount'\) : null,/);
-  assert.match(rd('src/net/peer/peerFx.js'), /const ridden = pose\.rd === POSE_RIDE\.Horse && !pose\.wb && othersEffectShown\(feet\) \? effectWorn\(kit, 'mount'\) : null;/);   // PIN MOVED (the wire audit): by the Others' effects choice
+  assert.match(rd('src/net/peer/peerFx.js'), /const ridden =\n\s*pose\.rd === POSE_RIDE\.Horse && !pose\.wb && othersEffectShown\(feet\) \? effectWorn\(kit, 'mount'\) : null;/);   // PIN MOVED (the wire audit): by the Others' effects choice
 });

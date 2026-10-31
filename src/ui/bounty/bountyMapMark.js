@@ -40,7 +40,11 @@ export const BOUNTY_MARKS_MAX = 8;
  */
 export function readBountyMarks(fn, size, fallbackLabel = BOUNTY_LEGEND_TEXT, max = BOUNTY_MARKS_MAX) {
   let list = null;
-  try { list = typeof fn === 'function' ? fn() : null; } catch { return []; }
+  try {
+    list = typeof fn === 'function' ? fn() : null;
+  } catch {
+    return [];
+  }
   if (!Array.isArray(list)) return [];
   const out = [];
   for (const m of list) {
@@ -58,19 +62,30 @@ export function readBountyMarks(fn, size, fallbackLabel = BOUNTY_LEGEND_TEXT, ma
  *  frame while it is shown, tamrielFrameInBay; else the Bay's own sheet), as WW2's rings past the Bay are read
  *  (ui/gate/gateMapMark.js readGateMarks): a hunt or a lair past the Bay is drawn where the Bay's sheet would drop it. */
 export function readBountyMarksIn(fn, box, fallbackLabel = BOUNTY_LEGEND_TEXT, max = BOUNTY_MARKS_MAX) {
-  const shifted = () => { const l = typeof fn === 'function' ? fn() : null; return Array.isArray(l) ? l.map((m) => (m && typeof m === 'object' ? { ...m, cx: m.cx - box.x0, cy: m.cy - box.y0 } : m)) : l; };
-  return readBountyMarks(shifted, { width: box.w, height: box.h }, fallbackLabel, max).map((m) => ({ ...m, cx: m.cx + box.x0, cy: m.cy + box.y0 }));
+  const shifted = () => {
+    const l = typeof fn === 'function' ? fn() : null;
+    return Array.isArray(l)
+      ? l.map((m) => (m && typeof m === 'object' ? { ...m, cx: m.cx - box.x0, cy: m.cy - box.y0 } : m))
+      : l;
+  };
+  return readBountyMarks(shifted, { width: box.w, height: box.h }, fallbackLabel, max).map((m) => ({
+    ...m,
+    cx: m.cx + box.x0,
+    cy: m.cy + box.y0,
+  }));
 }
 
 /** What a map repaints on: the circles and their words. */
-export const bountyMarksKey = (marks) => (marks ?? []).map((m) => `${m.cx.toFixed(2)}|${m.cy.toFixed(2)}|${m.r}|${m.label}`).join(';');
+export const bountyMarksKey = (marks) =>
+  (marks ?? []).map((m) => `${m.cx.toFixed(2)}|${m.cy.toFixed(2)}|${m.r}|${m.label}`).join(';');
 
 /** The classic page's texels for every circle - the ring's band, and the target pixel itself filled. */
 export function bountyRingTexels(marks, originX, originY, width, height) {
   const out = [];
   for (const m of marks ?? []) {
     out.push(...gateRingTexels(m, originX, originY, width, height));
-    const x = Math.floor(m.cx) - originX, y = Math.floor(m.cy) - originY;
+    const x = Math.floor(m.cx) - originX,
+      y = Math.floor(m.cy) - originY;
     if (x >= 0 && y >= 0 && x < width && y < height) out.push([x, y]);
   }
   return out;

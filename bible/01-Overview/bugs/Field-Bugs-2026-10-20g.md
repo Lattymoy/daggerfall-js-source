@@ -35,10 +35,10 @@ JUDGE_LEVEL_MAX) and agree with the summary, and every step was the save's own h
 
 THE LAW NOW. The stored current sum is the sum the level stands on: the highest the class's sum has reached. No swap
 lowers it, and no raise does either - `raiseSkills` stores the class's sum only where it is higher
-(`advancement.js:"if (raised.length) { const sum = levelUpSkillSum(entity); if (!(entity.currentLevelUpSkillSum >= sum)) entity.currentLevelUpSkillSum = sum; }"`).
+(`advancement.js:"if (raised.length)"`).
 A swap reads that sum first, caught up with the class's own where a point no raise has stored yet stands (intensive
 training's SetPermanentSkillValue, `worldModes.js` applyIntensive), and moves both sums only by what it takes the class's
-sum ABOVE it (`skillSwap.js:"const rise = Math.max(0, levelUpSkillSum(entity) - held);"`). So:
+sum ABOVE it (`skillSwap.js:"const rise = Math.max"`). So:
 
 - a trained skill given up for a less trained one moves nothing: the level and its progress stand, and the class's skills
   make the ground up before the next level comes any closer;

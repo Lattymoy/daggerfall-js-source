@@ -2,8 +2,8 @@
   {
     "name": "SEAT2b2-siegewright-no-day",
     "file": "src/net/fortLaw.js",
-    "old": "(siegewright ? SIEGEWRIGHT_DAYS : 0)",
-    "new": "(siegewright ? 0 : 0)",
+    "old": "    ? lastDeliveryS + (FORT_TIER_DAYS[t - 1] - (siegewright ? SIEGEWRIGHT_DAYS : 0)) * 86400",
+    "new": "    ? lastDeliveryS + (FORT_TIER_DAYS[t - 1] - (siegewright ? 0 : 0)) * 86400",
     "tests": [
       "test/net/seat2b_peace_law.test.js",
       "test/net/seat2b_peace_service.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "SEAT2b2-towers-past-not-at",
     "file": "src/net/fortLaw.js",
-    "old": "Number(s.influence) >= line",
-    "new": "Number(s.influence) > line",
+    "old": "    .filter((s) => s && s.guild !== holder && Number(s.influence) >= line)",
+    "new": "    .filter((s) => s && s.guild !== holder && Number(s.influence) > line)",
     "tests": [
       "test/net/seat2b_peace_law.test.js",
       "test/net/seat2b_peace_service.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "SEAT2b2-towers-see-the-holder",
     "file": "src/net/fortLaw.js",
-    "old": "filter((s) => s && s.guild !== holder && Number(s.influence) >= line)",
-    "new": "filter((s) => s && Number(s.influence) >= line)",
+    "old": "    .filter((s) => s && s.guild !== holder && Number(s.influence) >= line)",
+    "new": "    .filter((s) => s && Number(s.influence) >= line)",
     "tests": [
       "test/net/seat2b_peace_law.test.js",
       "test/net/seat2b_peace_service.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "SEAT2b2-towers-least-first",
     "file": "src/net/fortLaw.js",
-    "old": ".sort((a, b) => b.influence - a.influence ||",
-    "new": ".sort((a, b) => a.influence - b.influence ||",
+    "old": "    .sort((a, b) => b.influence - a.influence || (a.guild < b.guild ? -1 : 1));",
+    "new": "    .sort((a, b) => a.influence - b.influence || (a.guild < b.guild ? -1 : 1));",
     "tests": [
       "test/net/seat2b_peace_law.test.js",
       "test/net/seat2b_peace_service.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "SEAT2b2-towers-no-defence-everyone",
     "file": "src/net/fortLaw.js",
-    "old": "if (share == null || !(Number(defence) > 0)) return [];",
-    "new": "if (share == null) return [];",
+    "old": "  if (share == null || !(Number(defence) > 0)) return [];",
+    "new": "  if (share == null) return [];",
     "tests": [
       "test/net/seat2b_peace_law.test.js",
       "test/net/seat2b_peace_service.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "SEAT2b2-towers-quarter-is-half",
     "file": "src/net/fortLaw.js",
-    "old": "share <= 0.25 ? 'a quarter' : 'half'",
-    "new": "share < 0.25 ? 'a quarter' : 'half'",
+    "old": "  `The Watchtowers of ${seatName} see ${guildName} past ${share <= 0.25 ? 'a quarter' : 'half'} of our defense.`;",
+    "new": "  `The Watchtowers of ${seatName} see ${guildName} past ${share < 0.25 ? 'a quarter' : 'half'} of our defense.`;",
     "tests": [
       "test/net/seat2b_peace_law.test.js",
       "test/ui/seat2b_peace_client.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "SEAT2b2-coast-own-pixel-alone",
     "file": "src/net/fortLaw.js",
-    "old": "for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (isWater(px + dx, py + dy)) return true;",
-    "new": "if (isWater(px, py)) return true;",
+    "old": "  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (isWater(px + dx, py + dy)) return true;",
+    "new": "  if (isWater(px, py)) return true;",
     "tests": [
       "test/net/seat2b_peace_law.test.js"
     ]
@@ -81,8 +81,8 @@
   {
     "name": "SEAT2b2-coast-port-unasked",
     "file": "src/net/fortLaw.js",
-    "old": "  if (port) return true;\n  if (!Number.isFinite(px)",
-    "new": "  if (!Number.isFinite(px)",
+    "old": "  if (port) return true;\n  if (!Number.isFinite(px) || !Number.isFinite(py) || typeof isWater !== 'function') return false;",
+    "new": "  if (!Number.isFinite(px) || !Number.isFinite(py) || typeof isWater !== 'function') return false;",
     "tests": [
       "test/net/seat2b_peace_law.test.js"
     ]
@@ -90,8 +90,8 @@
   {
     "name": "SEAT2b2-harbour-any-guild",
     "file": "src/net/fortLaw.js",
-    "old": "!!guild && seat?.holder?.guild?.id === guild && harbourPort(",
-    "new": "!!guild && harbourPort(",
+    "old": "export const harbourPortFor = (seat, guild) =>\n  !!guild && seat?.holder?.guild?.id === guild && harbourPort(seat?.forts?.harbour ?? 0);",
+    "new": "export const harbourPortFor = (seat, guild) => !!guild && harbourPort(seat?.forts?.harbour ?? 0);",
     "tests": [
       "test/net/seat2b_peace_law.test.js"
     ]
@@ -99,8 +99,8 @@
   {
     "name": "SEAT2b2-shrine-row-dropped",
     "file": "src/net/townSeatLaw.js",
-    "old": "  add('shrine', Math.max(0, Math.trunc(Number(shrine) || 0)));",
-    "new": "",
+    "old": "  add('shrine', Math.max(0, Math.trunc(Number(shrine) || 0))); // SEAT2b part two (7.5): the Shrine's Standing a week, its tier's (fortLaw.js shrineStanding)",
+    "new": "  // SEAT2b part two (7.5): the Shrine's Standing a week, its tier's (fortLaw.js shrineStanding)",
     "tests": [
       "test/net/seat2b_peace_law.test.js",
       "test/net/seat2b_peace_service.test.js"
@@ -109,8 +109,8 @@
   {
     "name": "SEAT2b2-shrine-row-negative",
     "file": "src/net/townSeatLaw.js",
-    "old": "add('shrine', Math.max(0, Math.trunc(Number(shrine) || 0)));",
-    "new": "add('shrine', Math.trunc(Number(shrine) || 0));",
+    "old": "  add('shrine', Math.max(0, Math.trunc(Number(shrine) || 0))); // SEAT2b part two (7.5): the Shrine's Standing a week, its tier's (fortLaw.js shrineStanding)",
+    "new": "  add('shrine', Math.trunc(Number(shrine) || 0)); // SEAT2b part two (7.5): the Shrine's Standing a week, its tier's (fortLaw.js shrineStanding)",
     "tests": [
       "test/net/seat2b_peace_law.test.js"
     ]
@@ -118,8 +118,8 @@
   {
     "name": "SEAT2b2-plan-no-shrine",
     "file": "src/net/townSeatLaw.js",
-    "old": "shrine: s.holder.shrine ?? 0,",
-    "new": "shrine: 0,",
+    "old": "      shrine: s.holder.shrine ?? 0, // SEAT2b part two: the Shrine's Standing",
+    "new": "      shrine: 0, // SEAT2b part two: the Shrine's Standing",
     "tests": [
       "test/net/seat2b_peace_service.test.js"
     ]
@@ -127,8 +127,8 @@
   {
     "name": "SEAT2b2-standing-line-no-shrine",
     "file": "src/net/townSeatLaw.js",
-    "old": "${s.shrine > 0 ? ` (its Shrine's ${s.shrine.toLocaleString('en-US')})` : ''}",
-    "new": "",
+    "old": "  `${i + 1}. ${guildWords(s.guild)} - ${s.influence.toLocaleString('en-US')} influence${s.shrine > 0 ? ` (its Shrine's ${s.shrine.toLocaleString('en-US')})` : ''}`; // SEAT2b part two: the holder's Shrine's part",
+    "new": "  `${i + 1}. ${guildWords(s.guild)} - ${s.influence.toLocaleString('en-US')} influence`; // SEAT2b part two: the holder's Shrine's part",
     "tests": [
       "test/net/seat2b_peace_law.test.js"
     ]
@@ -136,8 +136,8 @@
   {
     "name": "SEAT2b2-ramkit-tier-worth",
     "file": "src/net/professionLaw.js",
-    "old": "'Ram Kit', ICON_IRON, null), value: 108 });",
-    "new": "'Ram Kit', ICON_IRON, null) });",
+    "old": "export const RAM_KIT = Object.freeze({ ...made('work:ram', 'siege', 5, 690, 'Ram Kit', ICON_IRON, null), value: 108 });",
+    "new": "export const RAM_KIT = Object.freeze({ ...made('work:ram', 'siege', 5, 690, 'Ram Kit', ICON_IRON, null) });",
     "tests": [
       "test/net/seat2b_peace_law.test.js",
       "test/net/seat2b_peace_service.test.js"
@@ -146,8 +146,8 @@
   {
     "name": "SEAT2b2-ramkit-to-the-pack",
     "file": "src/net/professionLaw.js",
-    "old": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane']);",
-    "new": "export const NO_PACK_FORM = Object.freeze(['essence:arcane']);",
+    "old": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane']); // SEAT2b part two: a siege work's road is the writ's (RAM_KIT); AUDIT PROF12 E1: Arcane Essence's the Stores'",
+    "new": "export const NO_PACK_FORM = Object.freeze(['essence:arcane']); // SEAT2b part two: a siege work's road is the writ's (RAM_KIT); AUDIT PROF12 E1: Arcane Essence's the Stores'",
     "tests": [
       "test/net/seat2b_peace_law.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "SEAT2b2-material-row-worth-unread",
     "file": "src/net/professionLaw.js",
-    "old": "value: r.value ?? TIER_VALUES[r.tier - 1],",
-    "new": "value: TIER_VALUES[r.tier - 1],",
+    "old": "      value: r.value ?? TIER_VALUES[r.tier - 1],",
+    "new": "      value: TIER_VALUES[r.tier - 1],",
     "tests": [
       "test/net/seat2b_peace_law.test.js",
       "test/net/seat2b_peace_service.test.js"
@@ -175,8 +175,8 @@
   {
     "name": "SEAT2b2-supply-day-unshortened",
     "file": "server-account/src/seatForts.js",
-    "old": "fortStandsAt(nowS, r.building, { siegewright: r.siegewright })",
-    "new": "fortStandsAt(nowS, r.building)",
+    "old": "          .bind(fortStandsAt(nowS, r.building, { siegewright: r.siegewright }), key, r.work, r.building),",
+    "new": "          .bind(fortStandsAt(nowS, r.building), key, r.work, r.building),",
     "tests": [
       "test/net/seat2b_peace_service.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "SEAT2b2-rise-keeps-siegewright",
     "file": "server-account/src/seatForts.js",
-    "old": "stands_at = NULL, builder = 0, siegewright = 0 WHERE key = ? AND work = ?",
-    "new": "stands_at = NULL, builder = 0 WHERE key = ? AND work = ?",
+    "old": "            'UPDATE town_seat_forts SET tier = building, building = NULL, stands_at = NULL, builder = 0, siegewright = 0 WHERE key = ? AND work = ? AND building = ? AND stands_at <= ?',",
+    "new": "            'UPDATE town_seat_forts SET tier = building, building = NULL, stands_at = NULL, builder = 0 WHERE key = ? AND work = ? AND building = ? AND stands_at <= ?',",
     "tests": [
       "test/net/seat2b_peace_service.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "SEAT2b2-capture-keeps-siegewright",
     "file": "server-account/src/seatForts.js",
-    "old": "builder = 0, siegewright = 0, guild_id = NULL WHERE key = ?1",
-    "new": "builder = 0, guild_id = NULL WHERE key = ?1",
+    "old": "      building = NULL, stands_at = NULL, builder = 0, siegewright = 0, guild_id = NULL WHERE key = ?1`,",
+    "new": "      building = NULL, stands_at = NULL, builder = 0, guild_id = NULL WHERE key = ?1`,",
     "tests": [
       "test/net/seat2b_peace_service.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "SEAT2b2-fund-siegewright-unkept",
     "file": "server-account/src/seatForts.js",
-    "old": "nowS, siegewright ? 1 : 0),",
-    "new": "nowS, 0),",
+    "old": "        .bind(key, work, t - 1, t, g, builder ? 1 : 0, nowS, siegewright ? 1 : 0),",
+    "new": "        .bind(key, work, t - 1, t, g, builder ? 1 : 0, nowS, 0),",
     "tests": [
       "test/net/seat2b_peace_service.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "SEAT2b2-tier-at-day-unread",
     "file": "server-account/src/seatForts.js",
-    "old": "return r.building != null && r.stands_at != null && Number(r.stands_at) <= nowS ? Number(r.building) : Number(r.tier);",
-    "new": "return Number(r.tier);",
+    "old": "  return r.building != null && r.stands_at != null && Number(r.stands_at) <= nowS ? Number(r.building) : Number(r.tier);",
+    "new": "  return Number(r.tier);",
     "tests": [
       "test/net/seat2b_peace_service.test.js"
     ]
@@ -348,8 +348,8 @@
   {
     "name": "SEAT2b2-camp-no-ram-kits",
     "file": "server-account/src/writs.js",
-    "old": "if (!fortMaterialOk(key) && key !== RAM_KIT_KEY) return { error: 'bad-material' };",
-    "new": "if (!fortMaterialOk(key)) return { error: 'bad-material' };",
+    "old": "    if (!fortMaterialOk(key) && key !== RAM_KIT_KEY) return { error: 'bad-material' };",
+    "new": "    if (!fortMaterialOk(key)) return { error: 'bad-material' };",
     "tests": [
       "test/net/seat2b_peace_service.test.js"
     ]
@@ -357,8 +357,8 @@
   {
     "name": "SEAT2b2-stockpile-asks-ram-kits",
     "file": "server-account/src/writs.js",
-    "old": "    if (key === RAM_KIT_KEY && !camp) return { error: 'bad-material' };\n",
-    "new": "",
+    "old": "    if (key === RAM_KIT_KEY && !camp) return { error: 'bad-material' };\n  } else if (key === RAM_KIT_KEY) return { error: 'bad-material' }; // SEAT2b part two: nor the guild Stores' (a kit leaves the Stores by a camp's writ alone)",
+    "new": "  } else if (key === RAM_KIT_KEY) return { error: 'bad-material' }; // SEAT2b part two: nor the guild Stores' (a kit leaves the Stores by a camp's writ alone)",
     "tests": [
       "test/net/seat2b_peace_service.test.js"
     ]
@@ -366,8 +366,8 @@
   {
     "name": "SEAT2b2-guild-stores-ask-ram-kits",
     "file": "server-account/src/writs.js",
-    "old": "  } else if (key === RAM_KIT_KEY) return { error: 'bad-material' };",
-    "new": "  }",
+    "old": "  } else if (key === RAM_KIT_KEY) return { error: 'bad-material' }; // SEAT2b part two: nor the guild Stores' (a kit leaves the Stores by a camp's writ alone)",
+    "new": "  } // SEAT2b part two: nor the guild Stores' (a kit leaves the Stores by a camp's writ alone)",
     "tests": [
       "test/net/seat2b_peace_service.test.js"
     ]
@@ -375,8 +375,8 @@
   {
     "name": "SEAT2b2-towers-due-anywhere",
     "file": "src/net/townSeatBook.js",
-    "old": "nowMs() - towersAt >= SEAT_TOWERS_EVERY_MS && towerSeats(guild).length > 0;",
-    "new": "nowMs() - towersAt >= SEAT_TOWERS_EVERY_MS;",
+    "old": "      return !towersBusy && open === true && nowMs() - towersAt >= SEAT_TOWERS_EVERY_MS && towerSeats(guild).length > 0;",
+    "new": "      return !towersBusy && open === true && nowMs() - towersAt >= SEAT_TOWERS_EVERY_MS;",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"
     ]
@@ -384,8 +384,8 @@
   {
     "name": "SEAT2b2-towers-due-always",
     "file": "src/net/townSeatBook.js",
-    "old": "nowMs() - towersAt >= SEAT_TOWERS_EVERY_MS &&",
-    "new": "nowMs() - towersAt >= 0 &&",
+    "old": "      return !towersBusy && open === true && nowMs() - towersAt >= SEAT_TOWERS_EVERY_MS && towerSeats(guild).length > 0;",
+    "new": "      return !towersBusy && open === true && nowMs() - towersAt >= 0 && towerSeats(guild).length > 0;",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"
     ]
@@ -393,8 +393,8 @@
   {
     "name": "SEAT2b2-towers-said-again",
     "file": "src/net/townSeatBook.js",
-    "old": "            if (said.includes(id)) continue;\n",
-    "new": "",
+    "old": "            if (said.includes(id)) continue;\n            const text = towersText(s.name ?? 'the seat', guildWords({ name: w.name, tag: w.tag }), w.share);",
+    "new": "            const text = towersText(s.name ?? 'the seat', guildWords({ name: w.name, tag: w.tag }), w.share);",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"
     ]
@@ -402,8 +402,8 @@
   {
     "name": "SEAT2b2-towers-not-kept",
     "file": "src/net/townSeatBook.js",
-    "old": "try { storage?.setItem?.(SEAT_TOWERS_KEY, JSON.stringify(towersSaid)); } catch { /* this page keeps them */ }",
-    "new": "",
+    "old": "            try {\n              storage?.setItem?.(SEAT_TOWERS_KEY, JSON.stringify(towersSaid));\n            } catch {\n              /* this page keeps them */\n            }\n          }",
+    "new": "          }",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"
     ]
@@ -411,8 +411,8 @@
   {
     "name": "SEAT2b2-towers-uncapped",
     "file": "src/net/townSeatBook.js",
-    "old": "towersSaid = [...said, id].slice(-SEAT_TOWERS_SAID_MAX);",
-    "new": "towersSaid = [...said, id];",
+    "old": "            towersSaid = [...said, id].slice(-SEAT_TOWERS_SAID_MAX);",
+    "new": "            towersSaid = [...said, id];",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"
     ]
@@ -420,8 +420,8 @@
   {
     "name": "SEAT2b2-towers-share-forgotten",
     "file": "src/net/townSeatBook.js",
-    "old": "const id = `${week}:${s.key}:${w.guild}:${w.share}`;",
-    "new": "const id = `${week}:${s.key}:${w.guild}`;",
+    "old": "            const id = `${week}:${s.key}:${w.guild}:${w.share}`;",
+    "new": "            const id = `${week}:${s.key}:${w.guild}`;",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"
     ]
@@ -429,8 +429,8 @@
   {
     "name": "SEAT2b2-towers-any-work",
     "file": "src/net/townSeatBook.js",
-    "old": "Number(s?.forts?.watchtowers ?? 0) >= 1",
-    "new": "Number(s?.forts?.watchtowers ?? 0) >= 0",
+    "old": "        (s) => s?.holder?.guild?.id === guild && Number(s?.forts?.watchtowers ?? 0) >= 1,",
+    "new": "        (s) => s?.holder?.guild?.id === guild && Number(s?.forts?.watchtowers ?? 0) >= 0,",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"
     ]
@@ -438,8 +438,8 @@
   {
     "name": "SEAT2b2-dressed-no-works",
     "file": "src/net/townSeatBook.js",
-    "old": "{ holder: s.holder ?? null, battle: s.battle ?? null, forts: s.forts ?? null,",
-    "new": "{ holder: s.holder ?? null, battle: s.battle ?? null,",
+    "old": "              battle: s.battle ?? null,\n              forts: s.forts ?? null, // SEAT2b part two: its works standing",
+    "new": "              battle: s.battle ?? null, // SEAT2b part two: its works standing",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"
     ],
@@ -448,8 +448,8 @@
   {
     "name": "SEAT2b2-tab-no-towers",
     "file": "src/ui/seatTab.js",
-    "old": "for (const w of Array.isArray(data?.towers) ? data.towers : []) list.append(",
-    "new": "for (const w of []) list.append(",
+    "old": "    for (const w of Array.isArray(data?.towers) ? data.towers : [])",
+    "new": "    for (const w of [])",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"
     ]
@@ -484,8 +484,8 @@
   {
     "name": "SEAT2b2-harbour-word-truthy",
     "file": "src/systems/travel/travelPorts.js",
-    "old": "try { return _seatHarbour(mapId) === true; } catch { return false; }",
-    "new": "try { return !!_seatHarbour(mapId); } catch { return false; }",
+    "old": "    return _seatHarbour(mapId) === true;",
+    "new": "    return !!_seatHarbour(mapId);",
     "tests": [
       "test/net/seat2b_peace_law.test.js"
     ]
@@ -493,8 +493,8 @@
   {
     "name": "SEAT2b2-harbour-throw-a-port",
     "file": "src/systems/travel/travelPorts.js",
-    "old": "try { return _seatHarbour(mapId) === true; } catch { return false; }",
-    "new": "try { return _seatHarbour(mapId) === true; } catch { return true; }",
+    "old": "    return false;",
+    "new": "    return true;",
     "tests": [
       "test/net/seat2b_peace_law.test.js"
     ]
@@ -502,8 +502,8 @@
   {
     "name": "SEAT2b2-harbour-unasked",
     "file": "src/systems/travel/travelPorts.js",
-    "old": "  if (hasPort(mapId)) return true;\n  if (mapId == null || !Number.isFinite(mapId)) return false;\n  try {",
-    "new": "  return hasPort(mapId);\n  try {",
+    "old": "  if (hasPort(mapId)) return true;\n  if (mapId == null || !Number.isFinite(mapId)) return false;",
+    "new": "  return hasPort(mapId);",
     "tests": [
       "test/net/seat2b_peace_law.test.js"
     ]
@@ -511,8 +511,8 @@
   {
     "name": "SEAT2b2-stored-words",
     "file": "src/systems/smithItems.js",
-    "old": "`You made a ${name}. It waits in your Stores`",
-    "new": "`You made a ${name}`",
+    "old": "  count > 1 ? `You made ${count} ${name}s. They wait in your Stores` : `You made a ${name}. It waits in your Stores`;",
+    "new": "  count > 1 ? `You made ${count} ${name}s. They wait in your Stores` : `You made a ${name}`;",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"
     ]
@@ -537,7 +537,7 @@
   },
   {
     "name": "SEAT2b2-host-craft-no-town",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "name: typeof playerEntity?.name === 'string' ? playerEntity.name : null, seat, ...more }, profMintCraft);",
     "new": "name: typeof playerEntity?.name === 'string' ? playerEntity.name : null, ...more }, profMintCraft);",
     "tests": [
@@ -546,7 +546,7 @@
   },
   {
     "name": "SEAT2b2-host-ram-kit-made-nothing",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "const made = rec?.kind === 'siege' ? storedText(rec.name, Number(r.data.count) || 1) : craftedText(mintPieces(r.data));",
     "new": "const made = craftedText(mintPieces(r.data));",
     "tests": [

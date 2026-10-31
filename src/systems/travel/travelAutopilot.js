@@ -40,7 +40,7 @@ export const OVERSHOOT_YAW_DEGREES = 5;
  *  world +y (world/streamingWorld.js keeps the axis names). */
 export function calculateYaw(fromX, fromZ, toX, toZ) {
   const angleRad = Math.atan2(fromX - toX, fromZ - toZ);
-  return angleRad * 180 / Math.PI + 180;
+  return (angleRad * 180) / Math.PI + 180;
 }
 
 /** Unity's Rect.Contains - inclusive at the minimum, exclusive at the
@@ -92,9 +92,9 @@ export function rectCentre(rect) {
  *  happened to swing. The look ahead grows with the frame's step (a fast frame steers no zig-zag across the line).
  *  A departure from PlayerAutoPilot.cs's Update (:76-105), the Overworld's and First-Person Travel's routed legs alone -
  *  the mod's own journeys (a place straight, the follow key, the coordinates) keep its re-aim exactly. */
-export const LANE_LOOK_MIN = 512;      // world units: a path's width (travelPaths.js P_SIZE) - back on the road within it
-export const LANE_LOOK_MAX = 4096;     // ...and never more than a city block ahead, whatever the step
-export const LANE_LOOK_STEPS = 3;      // three frames' steps ahead at speed
+export const LANE_LOOK_MIN = 512; // world units: a path's width (travelPaths.js P_SIZE) - back on the road within it
+export const LANE_LOOK_MAX = 4096; // ...and never more than a city block ahead, whatever the step
+export const LANE_LOOK_STEPS = 3; // three frames' steps ahead at speed
 /** AUDIT OW-REVISITED L2-4 / L1-2: a frame never carries the body past the corner it is walking to - its force cut to
  *  land on it (the last frame's step the measure), down to this share at the least, so a corner is turned at the corner
  *  at any frame rate (a 30 fps x100 frame walked ten metres past a road's bend, a rider's street corner a building's
@@ -107,7 +107,8 @@ export const LANE_CORNER_TURN = 22.5;
 
 /** The turn at point b of the runs a-b and b-c, degrees (NaN for a run of no length). */
 export function turnAt(a, b, c) {
-  const h1 = Math.atan2(b[0] - a[0], b[1] - a[1]), h2 = Math.atan2(c[0] - b[0], c[1] - b[1]);
+  const h1 = Math.atan2(b[0] - a[0], b[1] - a[1]),
+    h2 = Math.atan2(c[0] - b[0], c[1] - b[1]);
   const ok = (a[0] !== b[0] || a[1] !== b[1]) && (b[0] !== c[0] || b[1] !== c[1]);
   return ok ? Math.abs(((((h2 - h1) * 180) / Math.PI + 540) % 360) - 180) : NaN;
 }
@@ -118,7 +119,9 @@ export function turnAt(a, b, c) {
  * the lane (0 at a, 1 at b; past 1, the lane is walked). A lane of no length aims at its end, walked.
  */
 export function lanePursuit(x, z, lane, look) {
-  const dx = lane.bx - lane.ax, dz = lane.bz - lane.az, len = Math.hypot(dx, dz);
+  const dx = lane.bx - lane.ax,
+    dz = lane.bz - lane.az,
+    len = Math.hypot(dx, dz);
   if (!(len > 0)) return { t: 1, x: lane.bx, z: lane.bz };
   const t = ((x - lane.ax) * dx + (z - lane.az) * dz) / (len * len);
   const u = Math.max(0, Math.min(1, t + look / len));
@@ -127,7 +130,9 @@ export function lanePursuit(x, z, lane, look) {
 
 /** The distance from (x, z) to the segment a-b. */
 function segDistance(x, z, ax, az, bx, bz) {
-  const dx = bx - ax, dz = bz - az, l2 = dx * dx + dz * dz;
+  const dx = bx - ax,
+    dz = bz - az,
+    l2 = dx * dx + dz * dz;
   const u = l2 > 0 ? Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2)) : 0;
   return Math.hypot(x - (ax + dx * u), z - (az + dz * u));
 }
@@ -142,26 +147,39 @@ function segDistance(x, z, ax, az, bx, bz) {
  * A street's way through a town is walked as one line: no stop at each turn.
  */
 export function pathPursuit(x, z, path, seg, look, ahead = null) {
-  const last = path.length - 2, n = last + 1 + (ahead?.length ?? 0);
+  const last = path.length - 2,
+    n = last + 1 + (ahead?.length ?? 0);
   const pt = (j) => (j <= last + 1 ? path[j] : ahead[j - last - 2]);
   let k = Math.max(0, Math.min(last, seg | 0));
   let t = 0;
   for (;;) {
-    const [ax, az] = path[k], [bx, bz] = path[k + 1];
+    const [ax, az] = path[k],
+      [bx, bz] = path[k + 1];
     t = lanePursuit(x, z, { ax, az, bx, bz }, 0).t;
-    if (k < last && (t >= 1 || segDistance(x, z, bx, bz, path[k + 2][0], path[k + 2][1]) < segDistance(x, z, ax, az, bx, bz))) { k++; continue; }
+    if (
+      k < last &&
+      (t >= 1 || segDistance(x, z, bx, bz, path[k + 2][0], path[k + 2][1]) < segDistance(x, z, ax, az, bx, bz))
+    ) {
+      k++;
+      continue;
+    }
     break;
   }
-  let i = k, at = Math.max(0, Math.min(1, t)), left = look;
+  let i = k,
+    at = Math.max(0, Math.min(1, t)),
+    left = look;
   for (;;) {
-    const [ax, az] = pt(i), [bx, bz] = pt(i + 1);
+    const [ax, az] = pt(i),
+      [bx, bz] = pt(i + 1);
     const len = Math.hypot(bx - ax, bz - az);
     const rest = (1 - at) * len;
     if (left <= rest || i + 1 === n) {
       const u = len > 0 ? Math.min(1, at + left / len) : 1;
-      return { seg: k, t, x: ax + (bx - ax) * u, z: az + (bz - az) * u, end: t >= 1 };   // past 1 only on the last run - the runs before it moved on
+      return { seg: k, t, x: ax + (bx - ax) * u, z: az + (bz - az) * u, end: t >= 1 }; // past 1 only on the last run - the runs before it moved on
     }
-    left -= rest; i++; at = 0;
+    left -= rest;
+    i++;
+    at = 0;
   }
 }
 
@@ -175,8 +193,24 @@ export class TravelAutopilot {
    *  0.8 cautious by default). `grow` adds the arrival buffer, which is
    *  what the location-summary constructor does and the rect
    *  constructor does not. */
-  constructor(targetPixel, targetRect, speedMultiplier = 1, { grow = false, isLocation = false, edgeArrival = false, lane = null, path = null, ahead = null, cornerTurn = 0, lookMin = LANE_LOOK_MIN, lookMax = LANE_LOOK_MAX, walk = null } = {}) {
-    this.isLocation = !!isLocation;   // :155 - only a LOCATION destination turns the look at arrival
+  constructor(
+    targetPixel,
+    targetRect,
+    speedMultiplier = 1,
+    {
+      grow = false,
+      isLocation = false,
+      edgeArrival = false,
+      lane = null,
+      path = null,
+      ahead = null,
+      cornerTurn = 0,
+      lookMin = LANE_LOOK_MIN,
+      lookMax = LANE_LOOK_MAX,
+      walk = null,
+    } = {},
+  ) {
+    this.isLocation = !!isLocation; // :155 - only a LOCATION destination turns the look at arrival
     // ROAD-SMOOTH: the body's own walk - where it stood last, how far a whole frame carries it, the share of the force asked
     // - one body's, so handed on from the autopilot of the leg before (`walk`)
     this.walk = walk ?? { at: null, reach: 0, share: 1 };
@@ -195,36 +229,73 @@ export class TravelAutopilot {
     // fatigue - reads the latched bearing through MouseLookAtDestination
     // (:169-173): the player is left facing the way they were WALKING.
     // Zeroing it in the re-init snapped that camera to due north.
-    this.yaw = 0;          // yawVector.y
-    this.pitch = 0;        // :48 - mouseLook.Pitch = 0, and :143 holds it there every frame
-    this.initTargetRect(targetPixel, targetRect, speedMultiplier, { grow, lane, path, ahead, cornerTurn, lookMin, lookMax });
+    this.yaw = 0; // yawVector.y
+    this.pitch = 0; // :48 - mouseLook.Pitch = 0, and :143 holds it there every frame
+    this.initTargetRect(targetPixel, targetRect, speedMultiplier, {
+      grow,
+      lane,
+      path,
+      ahead,
+      cornerTurn,
+      lookMin,
+      lookMax,
+    });
   }
 
   /** :39-49, InitTargetRect - and :62-73's InitDestination, which is
    *  the same three lines with the buffer grown AFTER the centre is
    *  taken, so the centre stays the location's own. */
-  initTargetRect(targetPixel, targetRect, speedMultiplier, { grow = false, lane = null, path = null, ahead = null, cornerTurn = 0, lookMin = LANE_LOOK_MIN, lookMax = LANE_LOOK_MAX, edgeArrival = undefined } = {}) {
+  initTargetRect(
+    targetPixel,
+    targetRect,
+    speedMultiplier,
+    {
+      grow = false,
+      lane = null,
+      path = null,
+      ahead = null,
+      cornerTurn = 0,
+      lookMin = LANE_LOOK_MIN,
+      lookMax = LANE_LOOK_MAX,
+      edgeArrival = undefined,
+    } = {},
+  ) {
     this.destinationMapPixel = { x: targetPixel.x, y: targetPixel.y };
-    this.edgeArrival = edgeArrival ?? this.edgeBase ?? false;   // AUDIT SEA PATHS PL-1: the leg's own, else the autopilot's
+    this.edgeArrival = edgeArrival ?? this.edgeBase ?? false; // AUDIT SEA PATHS PL-1: the leg's own, else the autopilot's
     this.destinationCentre = rectCentre(targetRect);
     this.destinationWorldRect = grow
-      ? { xMin: targetRect.xMin - ARRIVAL_BUFFER, xMax: targetRect.xMax + ARRIVAL_BUFFER,
-        zMin: targetRect.zMin - ARRIVAL_BUFFER, zMax: targetRect.zMax + ARRIVAL_BUFFER }
+      ? {
+          xMin: targetRect.xMin - ARRIVAL_BUFFER,
+          xMax: targetRect.xMax + ARRIVAL_BUFFER,
+          zMin: targetRect.zMin - ARRIVAL_BUFFER,
+          zMax: targetRect.zMax + ARRIVAL_BUFFER,
+        }
       : { ...targetRect };
     this.speedMultiplier = speedMultiplier;
     this.lastPlayerMapPixel = { x: NO_PIXEL, y: NO_PIXEL };
     this.inDestinationMapPixel = false;
-    this.pitch = 0;        // :48 - mouseLook.Pitch = 0, and :143 holds it there every frame
+    this.pitch = 0; // :48 - mouseLook.Pitch = 0, and :143 holds it there every frame
     // ...and NOT the yaw: see the constructor (AUDIT-TO1 K1).
     // OW-ROAD-TRUE: a road's leg walks its line; OW-TOWN-WALK: a street's way its runs - one law, a line of points
-    this.path = path?.length >= 2 ? path.map((q) => [q[0] ?? q.x, q[1] ?? q.z]) : lane ? [[lane.ax, lane.az], [lane.bx, lane.bz]] : null;
+    this.path =
+      path?.length >= 2
+        ? path.map((q) => [q[0] ?? q.x, q[1] ?? q.z])
+        : lane
+          ? [
+              [lane.ax, lane.az],
+              [lane.bx, lane.bz],
+            ]
+          : null;
     this.seg = 0;
-    this.lookMin = lookMin;   // OW-TOWN-WALK: a street's corner is met at its corner - its look ahead a step or two, never a road's width
-    this.lookMax = Math.max(lookMin, lookMax);   // AUDIT OW-REVISITED L1-2: ...and a street's never more, whatever the step (a rider's three steps cut the corner)
+    this.lookMin = lookMin; // OW-TOWN-WALK: a street's corner is met at its corner - its look ahead a step or two, never a road's width
+    this.lookMax = Math.max(lookMin, lookMax); // AUDIT OW-REVISITED L1-2: ...and a street's never more, whatever the step (a rider's three steps cut the corner)
     // ROAD-SMOOTH: each point of the line a corner where it turns `cornerTurn` degrees or more (0: every point, a street's);
     // its end one unless `ahead`, the line the next leg walks, goes on from it with less - then the aim looks along it too
-    const P = this.path, next = ahead?.length ? ahead.map((q) => [q[0] ?? q.x, q[1] ?? q.z]) : null;
-    this.corners = P ? P.map((q, k) => (k === 0 ? 0 : !(turnAt(P[k - 1], q, P[k + 1] ?? next?.[0] ?? q) < cornerTurn) ? 1 : 0)) : null;
+    const P = this.path,
+      next = ahead?.length ? ahead.map((q) => [q[0] ?? q.x, q[1] ?? q.z]) : null;
+    this.corners = P
+      ? P.map((q, k) => (k === 0 ? 0 : !(turnAt(P[k - 1], q, P[k + 1] ?? next?.[0] ?? q) < cornerTurn) ? 1 : 0))
+      : null;
     this.ahead = P && next && !this.corners[P.length - 1] ? next : null;
   }
 
@@ -238,8 +309,8 @@ export class TravelAutopilot {
    *  happens only when the pixel under the player changed; then the
    *  orientation and the force, every frame. */
   update({ worldX, worldZ, mapPixelX, mapPixelY }) {
-    this.measureWalk(worldX, worldZ);   // ROAD-SMOOTH: the frame's step, whichever law walks it
-    if (this.path) return this.laneUpdate(worldX, worldZ);   // OW-ROAD-TRUE: a road's leg, along its lane (OW-TOWN-WALK: a street's runs)
+    this.measureWalk(worldX, worldZ); // ROAD-SMOOTH: the frame's step, whichever law walks it
+    if (this.path) return this.laneUpdate(worldX, worldZ); // OW-ROAD-TRUE: a road's leg, along its lane (OW-TOWN-WALK: a street's runs)
     // TRAVEL-NAV1: THE BUFFER THAT CROSSES A PIXEL EDGE. The arrival test
     // runs only in the destination PIXEL (:80), and a location eight
     // blocks across fills its pixel (terrainTiles.js
@@ -291,8 +362,12 @@ export class TravelAutopilot {
       return { yaw: this.yaw, pitch: this.pitch, forward: 0, arrived: true };
     }
     this.yaw = calculateYaw(worldX, worldZ, p.x, p.z);
-    const [ex, ez] = this.path[p.seg + 1], toEnd = Math.hypot(ex - worldX, ez - worldZ);
-    const cut = w.reach > 0 && toEnd < w.reach && p.t < 1 && this.corners[p.seg + 1] ? Math.max(LANE_CORNER_FORCE_MIN, toEnd / w.reach) : 1;
+    const [ex, ez] = this.path[p.seg + 1],
+      toEnd = Math.hypot(ex - worldX, ez - worldZ);
+    const cut =
+      w.reach > 0 && toEnd < w.reach && p.t < 1 && this.corners[p.seg + 1]
+        ? Math.max(LANE_CORNER_FORCE_MIN, toEnd / w.reach)
+        : 1;
     w.share = cut;
     return { yaw: this.yaw, pitch: this.pitch, forward: this.speedMultiplier * cut, arrived: false };
   }
@@ -312,7 +387,8 @@ export class TravelAutopilot {
    *  that walks no line. */
   get runYaw() {
     if (!this.path) return null;
-    const [ax, az] = this.path[this.seg], [bx, bz] = this.path[this.seg + 1];
+    const [ax, az] = this.path[this.seg],
+      [bx, bz] = this.path[this.seg + 1];
     return ax === bx && az === bz ? null : calculateYaw(ax, az, bx, bz);
   }
 
@@ -389,5 +465,5 @@ export function travelLookaheadFor({ speed = 0, dt = 0, scale = 1, maxFrameDt = 
 export function travelDriveForward({ feet, yaw, lookahead, heightAt, streaming, forward }) {
   const ahead = [feet[0] + Math.sin(yaw) * lookahead, feet[2] + Math.cos(yaw) * lookahead];
   const standing = Number.isFinite(heightAt(feet[0], feet[2])) && Number.isFinite(heightAt(ahead[0], ahead[1]));
-  return (!standing && streaming) ? 0 : forward;
+  return !standing && streaming ? 0 : forward;
 }

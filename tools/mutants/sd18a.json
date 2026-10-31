@@ -2,8 +2,8 @@
   {
     "name": "SD18A-an-ending-twice-running",
     "file": "src/net/superDungeon/sdMarks.js",
-    "old": "const p = ring[k % ring.length], e = ends[(k + Math.floor(k / ring.length)) % ends.length];",
-    "new": "const p = ring[k % ring.length], e = ends[Math.floor(k / ring.length) % ends.length];",
+    "old": "        e = ends[(k + Math.floor(k / ring.length)) % ends.length];",
+    "new": "        e = ends[Math.floor(k / ring.length) % ends.length];",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SD18A-omens-shared-running",
     "file": "src/net/superDungeon/sdMarks.js",
-    "old": "if (used[k] || !apart(last, pairs[k])) continue;",
-    "new": "if (used[k]) continue;",
+    "old": "      if (used[k] || !apart(last, pairs[k])) continue;",
+    "new": "      if (used[k]) continue;",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SD18A-the-ring-never-closed",
     "file": "src/net/superDungeon/sdMarks.js",
-    "old": "if (ring.length === pairs.length) return apart(pairs[ring[ring.length - 1]], pairs[ring[0]]);",
-    "new": "if (ring.length === pairs.length) return true;",
+    "old": "    if (ring.length === pairs.length) return apart(pairs[ring[ring.length - 1]], pairs[ring[0]]);",
+    "new": "    if (ring.length === pairs.length) return true;",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ],
@@ -31,8 +31,8 @@
   {
     "name": "SD18A-the-slot-from-nought",
     "file": "src/net/superDungeon/sdMarks.js",
-    "old": "const c = sdMarksCycle(), k = Math.floor(Number(s) || 0) - 1;",
-    "new": "const c = sdMarksCycle(), k = Math.floor(Number(s) || 0);",
+    "old": "    k = Math.floor(Number(s) || 0) - 1;",
+    "new": "    k = Math.floor(Number(s) || 0);",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -40,8 +40,8 @@
   {
     "name": "SD18A-a-doubled-omen-valid",
     "file": "src/net/superDungeon/sdMarks.js",
-    "old": "&& sdOmensOf(mk).length === SD_OMENS_A_HOLLOW && mk[1] !== mk[2];",
-    "new": "&& sdOmensOf(mk).length === SD_OMENS_A_HOLLOW;",
+    "old": "  sdOmensOf(mk).length === SD_OMENS_A_HOLLOW &&\n  mk[1] !== mk[2];",
+    "new": "  sdOmensOf(mk).length === SD_OMENS_A_HOLLOW;",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "SD18A-multipliers-overwritten",
     "file": "src/net/superDungeon/sdMarks.js",
-    "old": "out[k] = k.endsWith('X') && out[k] != null ? out[k] * v : v;",
-    "new": "out[k] = v;",
+    "old": "    for (const [k, v] of Object.entries(L)) out[k] = k.endsWith('X') && out[k] != null ? out[k] * v : v;",
+    "new": "    for (const [k, v] of Object.entries(L)) out[k] = v;",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "SD18A-the-brazen-hide-forgotten",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "SD_SHARE_X * sdProfileOf(f).hpX, frac",
-    "new": "SD_SHARE_X, frac",
+    "old": "    share = SD_TTK_S * dpsRef(level) * SD_SHARE_X * sdProfileOf(f).hpX,",
+    "new": "    share = SD_TTK_S * dpsRef(level) * SD_SHARE_X,",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "SD18A-the-short-hour-forgotten",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "pulseAt: op + P.pulseMs, endsAt: op + P.endsMs,",
-    "new": "pulseAt: op + P.pulseMs, endsAt: op + SD_ENDS_MS,",
+    "old": "    endsAt: op + P.endsMs,",
+    "new": "    endsAt: op + SD_ENDS_MS,",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "SD18A-the-hungering-heart-once",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "f.pulses++; f.pulseAt += sdProfileOf(f).pulseMs; }",
-    "new": "f.pulses++; f.pulseAt += SD_PULSE_EVERY_MS; }",
+    "old": "      f.pulseAt += sdProfileOf(f).pulseMs;",
+    "new": "      f.pulseAt += SD_PULSE_EVERY_MS;",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "SD18A-the-gears-unquickened",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "const P = sdProfileOf(f), w = CHOSEN.includes(A) && P.windX !== 1 ? Math.round(windupFor(A, f.phase, b) * P.windX) : windupFor(A, f.phase, b);",
-    "new": "const P = sdProfileOf(f), w = windupFor(A, f.phase, b);",
+    "old": "    w = CHOSEN.includes(A) && P.windX !== 1 ? Math.round(windupFor(A, f.phase, b) * P.windX) : windupFor(A, f.phase, b); // SD18a: the Quickened Gears'",
+    "new": "    w = windupFor(A, f.phase, b); // SD18a: the Quickened Gears'",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "SD18A-the-shape-unsaid",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "until: at + active + A.recover, ...(way ? { sw: way } : {}), ...(sh ? { sh } : {}) };",
-    "new": "until: at + active + A.recover, ...(way ? { sw: way } : {}) };",
+    "old": "    ...(way ? { sw: way } : {}),\n    ...(sh ? { sh } : {}),\n  };",
+    "new": "    ...(way ? { sw: way } : {}),\n  };",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "SD18A-the-shape-off-the-wire",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "...(Number.isInteger(a.n) ? { n: a.n } : {}), ...(a.sh ? { sh: { ...a.sh } } : {}) };",
-    "new": "...(Number.isInteger(a.n) ? { n: a.n } : {}) };",
+    "old": "    ...(a.sh ? { sh: { ...a.sh } } : {}),\n  };",
+    "new": "  };",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "SD18A-no-element",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "    if (P.el) sh.el = P.el;\n",
-    "new": "",
+    "old": "    if (P.el) sh.el = P.el;\n    if (P.windX !== 1) sh.w = w;",
+    "new": "    if (P.windX !== 1) sh.w = w;",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "SD18A-the-reset-quickened-too",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  if (CHOSEN.includes(A)) {\n    if (P.el) sh.el = P.el;",
-    "new": "  if (true) {\n    if (P.el) sh.el = P.el;",
+    "old": "  if (CHOSEN.includes(A)) {",
+    "new": "  if (true) {",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "SD18A-the-pulse-step-unsaid",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  if (A === SD_BLOWS.pulse && P.pulseStep !== SD_PULSE_STEP) sh.ps = P.pulseStep;\n",
-    "new": "",
+    "old": "  if (A === SD_BLOWS.pulse && P.pulseStep !== SD_PULSE_STEP) sh.ps = P.pulseStep;\n  return Object.keys(sh).length ? sh : null;",
+    "new": "  return Object.keys(sh).length ? sh : null;",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "SD18A-the-hardened-hearts-forgotten",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "heartHpFor(here.map((b) => f.players[b.sub].lv), n) * sdProfileOf(f).heartX)",
-    "new": "heartHpFor(here.map((b) => f.players[b.sub].lv), n))",
+    "old": "      ) * sdProfileOf(f).heartX,",
+    "new": "      ),",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "SD18A-the-dragon-break-fifteen",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "now - X.downAt < sdProfileOf(f).pairMs) continue;",
-    "new": "now - X.downAt < SD_ECHO_PAIR_MS) continue;",
+    "old": "        if (X.h > 0 || X.downAt == null || now - X.downAt < sdProfileOf(f).pairMs) continue; // SD18a: the Dragon's Break's",
+    "new": "        if (X.h > 0 || X.downAt == null || now - X.downAt < SD_ECHO_PAIR_MS) continue; // SD18a: the Dragon's Break's",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "SD18A-the-unending-reset-fifty",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "f.resetAt = f.outUntil + sdProfileOf(f).resetFirstMs;",
-    "new": "f.resetAt = f.outUntil + SD_RESET_FIRST_MS;",
+    "old": "      f.resetAt = f.outUntil + sdProfileOf(f).resetFirstMs; // SD18a: the Unending Reset's",
+    "new": "      f.resetAt = f.outUntil + SD_RESET_FIRST_MS; // SD18a: the Unending Reset's",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "SD18A-sunfall-five",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "    tg = live.slice(0, P.volleyMax).map(",
-    "new": "    tg = live.slice(0, A.max).map(",
+    "old": "    tg = live.slice(0, P.volleyMax).map((o) => keepInArena(o.x, o.z, SD_ARENA.r - 1)); // SD18a: Sunfall's seven",
+    "new": "    tg = live.slice(0, A.max).map((o) => keepInArena(o.x, o.z, SD_ARENA.r - 1)); // SD18a: Sunfall's seven",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "SD18A-the-tusk-at-its-old-pace",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "return b === SD_BODY.remnant ? P.remSpeed * (f.phase >= 3 ? SD_LAST_SPEED_X : 1) : P.echoSpeed;",
-    "new": "return b === SD_BODY.remnant ? SD_REM.speed * (f.phase >= 3 ? SD_LAST_SPEED_X : 1) : P.echoSpeed;",
+    "old": "  return b === SD_BODY.remnant ? P.remSpeed * (f.phase >= 3 ? SD_LAST_SPEED_X : 1) : P.echoSpeed;",
+    "new": "  return b === SD_BODY.remnant ? SD_REM.speed * (f.phase >= 3 ? SD_LAST_SPEED_X : 1) : P.echoSpeed;",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "SD18A-the-frame-unread",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  if (!A || !atk.sh) return A;\n",
-    "new": "  return A;\n",
+    "old": "  if (!A || !atk.sh) return A;",
+    "new": "  return A;",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "SD18A-the-ring-the-tables",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  const A = sized(atk, SD_BLOWS.stomp);\n  return Math.min(A.r1,",
-    "new": "  const A = SD_BLOWS.stomp;\n  return Math.min(A.r1,",
+    "old": "export function stompFrontAt(atk, now) {\n  const A = sized(atk, SD_BLOWS.stomp);",
+    "new": "export function stompFrontAt(atk, now) {\n  const A = SD_BLOWS.stomp;",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "SD18A-the-sweep-the-tables",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  const A = sized(atk, SD_BLOWS.hand), d = dist(x, z, atk.x, atk.z);",
-    "new": "  const A = SD_BLOWS.hand, d = dist(x, z, atk.x, atk.z);",
+    "old": "export function handSwept(atk, x, z, t0, t1) {\n  const A = sized(atk, SD_BLOWS.hand),",
+    "new": "export function handSwept(atk, x, z, t0, t1) {\n  const A = SD_BLOWS.hand,",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "SD18A-the-marks-off-the-state",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "    ...(f.mk ? { mk: [...f.mk] } : {}),   // SD18a: its Hollow's marks - every screen's profile of it\n",
-    "new": "",
+    "old": "    ...(f.mk ? { mk: [...f.mk] } : {}), // SD18a: its Hollow's marks - every screen's profile of it\n  };",
+    "new": "  };",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "SD18A-a-hit-unelemented",
     "file": "src/net/superDungeon/sdStrike.js",
-    "old": "const S = blowShape(atk), el = S.el ? { el: S.el } : null;",
-    "new": "const S = blowShape(atk), el = null;",
+    "old": "    el = S.el ? { el: S.el } : null; // SD18a: its own numbers and element",
+    "new": "    el = null; // SD18a: its own numbers and element",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "SD18A-the-tusk-disc-the-tables",
     "file": "src/net/superDungeon/sdStrike.js",
-    "old": "      if (landing('disc') && d <= S.r) hits.push(",
-    "new": "      if (landing('disc') && d <= A.r) hits.push(",
+    "old": "      if (landing('disc') && d <= S.r) hits.push({ part: 'disc', pct: A.pct, base: A.base, ...el });",
+    "new": "      if (landing('disc') && d <= A.r) hits.push({ part: 'disc', pct: A.pct, base: A.base, ...el });",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "SD18A-the-pool-the-tables",
     "file": "src/net/superDungeon/sdStrike.js",
-    "old": "  const S = blowShape(atk), P = S.pool;",
-    "new": "  const S = blowShape(atk), P = A.pool;",
+    "old": "    P = S.pool;",
+    "new": "    P = A.pool;",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "SD18A-the-link-forgets-its-marks",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "      mk: w.mk ?? null,   // SD18a: its Hollow's marks\n",
-    "new": "",
+    "old": "      mk: w.mk ?? null, // SD18a: its Hollow's marks\n    };",
+    "new": "    };",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "SD18A-the-link-drops-the-shape",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "...(w.n != null ? { n: w.n } : {}), ...(w.sh != null ? { sh: w.sh } : {}) });",
-    "new": "...(w.n != null ? { n: w.n } : {}) });",
+    "old": "  ...(w.sh != null ? { sh: w.sh } : {}),\n}); // SD18a: its shape",
+    "new": "}); // SD18a: its shape",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "SD18A-the-stun's-reset-fifty",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "rk: w.until + sdProfileOf(s).resetMs, heardAt: now };",
-    "new": "rk: w.until + 50_000, heardAt: now };",
+    "old": "        rk: w.until + sdProfileOf(s).resetMs,",
+    "new": "        rk: w.until + 50_000,",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "SD18A-rises-again-at-fifteen",
     "file": "src/ui/superDungeon/sdRemnantBar.js",
-    "old": "(s.ec[fallen].dn + sdProfileOf(s).pairMs - now)",
-    "new": "(s.ec[fallen].dn + 15_000 - now)",
+    "old": "        text: SD_BAR_TEXT.rises(fallen, Math.max(0, Math.ceil((s.ec[fallen].dn + sdProfileOf(s).pairMs - now) / 1000))),",
+    "new": "        text: SD_BAR_TEXT.rises(fallen, Math.max(0, Math.ceil((s.ec[fallen].dn + 15_000 - now) / 1000))),",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "SD18A-the-card-at-fifteen",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "show('break', t, { ...SD_BEAT_TEXT.break, sub: sdBreakSub(sdProfileOf(s).pairMs) }, '#e8c060');",
-    "new": "show('break', t, SD_BEAT_TEXT.break, '#e8c060');",
+    "old": "        if (s.ph === 2) show('break', t, { ...SD_BEAT_TEXT.break, sub: sdBreakSub(sdProfileOf(s).pairMs) }, '#e8c060');",
+    "new": "        if (s.ph === 2) show('break', t, SD_BEAT_TEXT.break, '#e8c060');",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "SD18A-the-read-the-tables",
     "file": "src/scenes/superDungeon/sdArenaRead.js",
-    "old": "    const S = blowShape(atk) ?? A, w = atkWindup(atk, A, s.ph,",
-    "new": "    const S = A, w = atkWindup(atk, A, s.ph,",
+    "old": "    const S = blowShape(atk) ?? A,",
+    "new": "    const S = A,",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "SD18A-the-floor-the-tables",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "  const S = blowShape(atk);   // SD18a: the blow its frame says - its Hollow's marks\n",
-    "new": "  const S = A;\n",
+    "old": "  const S = blowShape(atk); // SD18a: the blow its frame says - its Hollow's marks",
+    "new": "  const S = A;",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -355,8 +355,8 @@
   {
     "name": "SD18A-the-tide-unturned",
     "file": "src/scenes/superDungeon/sdRemnantRig.js",
-    "old": "    const S = blowShape(a);   // SD18a: the Turning Tide's wider, longer sweep\n",
-    "new": "    const S = A;\n",
+    "old": "    const S = blowShape(a); // SD18a: the Turning Tide's wider, longer sweep",
+    "new": "    const S = A;",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "SD18A-the-fray-forty-eight",
     "file": "src/net/superDungeon/sdBrain.js",
-    "old": "fray: opts?.fray ?? (opts ? SD_FRAY_MAX : sdMarksLaw(sdMarksOf(s)).fray ?? SD_FRAY_MAX) }",
-    "new": "fray: opts?.fray ?? SD_FRAY_MAX }",
+    "old": "    fray: opts?.fray ?? (opts ? SD_FRAY_MAX : (sdMarksLaw(sdMarksOf(s)).fray ?? SD_FRAY_MAX)),",
+    "new": "    fray: opts?.fray ?? SD_FRAY_MAX,",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]

@@ -72,17 +72,23 @@ let _struck = new WeakMap();
 let _onKill = null;
 
 /** The host's hand for a foe that paid: `fn(foe)` - null to stop. One at a time (one world per page). */
-export function setRenownKillHandler(fn) { _onKill = typeof fn === 'function' ? fn : null; }
+export function setRenownKillHandler(fn) {
+  _onKill = typeof fn === 'function' ? fn : null;
+}
 
 /** AUDIT RENOWN1 GAME-1/GAME-7: a foe that never pays - the city watch, whoever's, and my own ally. */
-const neverPays = (foe) => foe.mobileType === KNIGHT_CITY_WATCH || foe.entity?.team === 'PlayerAlly' || foe.entity?.mobileTeam === 'PlayerAlly';
+const neverPays = (foe) =>
+  foe.mobileType === KNIGHT_CITY_WATCH || foe.entity?.team === 'PlayerAlly' || foe.entity?.mobileTeam === 'PlayerAlly';
 
 /** A blow of the PLAYER's own landed on (or was sent at) `foe`. */
 export function renownFoeStruck(foe, now = Date.now()) {
   if (!foe || typeof foe !== 'object') return;
-  const never = neverPays(foe);   // read at the blow: the blow that lands on an ally is the one that turns it
+  const never = neverPays(foe); // read at the blow: the blow that lands on an ally is the one that turns it
   const e = _struck.get(foe);
-  if (e) { e.at = now; if (never) e.paid = true; } else _struck.set(foe, { at: now, paid: never });
+  if (e) {
+    e.at = now;
+    if (never) e.paid = true;
+  } else _struck.set(foe, { at: now, paid: never });
 }
 
 /** RAID1: when the player's last blow on `foe` landed (the clock `renownFoeStruck` was handed), or null. Raiding
@@ -112,7 +118,11 @@ export function renownFoeDied(foe, now = Date.now()) {
   const e = foe && typeof foe === 'object' ? _struck.get(foe) : null;
   if (!e || e.paid || !(now - e.at <= RENOWN_ASSIST_MS) || now < e.at) return false;
   e.paid = true;
-  try { _onKill?.(foe); } catch (err) { console.error('[renown] a kill could not be counted:', err); }
+  try {
+    _onKill?.(foe);
+  } catch (err) {
+    console.error('[renown] a kill could not be counted:', err);
+  }
   return true;
 }
 
@@ -125,7 +135,10 @@ export function renownFoeLevel(foe) {
 }
 
 /** Tests only: forget every stamp and the handler. */
-export function _resetRenownKillsForTests() { _struck = new WeakMap(); _onKill = null; }
+export function _resetRenownKillsForTests() {
+  _struck = new WeakMap();
+  _onKill = null;
+}
 
 /**
  * AUDIT RENOWN1 (UI-5, UI-7, WIRE-2c): WHAT THE PAGE DOES WITH A REPORT'S ANSWER - pure, so it is pinned (world.js
@@ -149,7 +162,7 @@ export function renownAnswer(data, sent, said = null) {
   const announce = level !== null && data?.rose === true && (said === null || level > said) ? level : null;
   const capped = Number.isSafeInteger(data?.credited) && data.credited < sent && !data?.max && !data?.repeat;
   const xp = Number.isSafeInteger(data?.xp) && data.xp >= 0 ? data.xp : null;
-  const room = Number.isSafeInteger(data?.room) && data.room >= 0 ? data.room : null;   // SCALE4h: what the hour still takes
+  const room = Number.isSafeInteger(data?.room) && data.room >= 0 ? data.room : null; // SCALE4h: what the hour still takes
   return { level, order, announce, capped, xp, room };
 }
 
@@ -172,7 +185,7 @@ export function renownAnswer(data, sent, said = null) {
  */
 export function renownReportSoon({ xp, pending, room, capped, hourLeftMs = null }) {
   if (capped) return true;
-  if (Number.isFinite(hourLeftMs) && /** @type {number} */ (hourLeftMs) <= RENOWN_REPORT_MS) return true;   // AUDIT SCALE II C-4
+  if (Number.isFinite(hourLeftMs) && /** @type {number} */ (hourLeftMs) <= RENOWN_REPORT_MS) return true; // AUDIT SCALE II C-4
   if (!Number.isSafeInteger(xp) || !Number.isSafeInteger(room)) return true;
   const n = Number.isFinite(pending) && pending > 0 ? pending : 0;
   if (n >= /** @type {number} */ (room)) return true;
@@ -181,7 +194,7 @@ export function renownReportSoon({ xp, pending, room, capped, hourLeftMs = null 
 }
 
 /** The service's refusals that will not change by trying again: this character (or this build) cannot report. */
-const PERMANENT = new Set(['renown-character', 'renown-xp', 'renown-full', 'progress-seat', 'trade-held']);   // INT16: not the account's seat here, or a character whose trade is held
+const PERMANENT = new Set(['renown-character', 'renown-xp', 'renown-full', 'progress-seat', 'trade-held']); // INT16: not the account's seat here, or a character whose trade is held
 
 /** AUDIT RENOWN1 GAME-2: the longest a refused report waits before it goes again - the wait doubles from
  *  RENOWN_REPORT_MS with each refusal in a row, up to this. */
@@ -234,17 +247,33 @@ export function renownRid(rand = (b) => globalThis.crypto.getRandomValues(b)) {
  *   onAnswer?: (data: any, sent: number) => void, onStop?: (error: string) => void, rid?: () => string,
  *   region?: () => number|null, soon?: () => boolean }} o
  */
-export function createRenownTracker({ report, leave = null, character, name = () => null, earning = () => true, now = () => Date.now(), onAnswer = () => {}, onStop = () => {}, rid = () => renownRid(), region = () => null, soon = () => true }) {
+export function createRenownTracker({
+  report,
+  leave = null,
+  character,
+  name = () => null,
+  earning = () => true,
+  now = () => Date.now(),
+  onAnswer = () => {},
+  onStop = () => {},
+  rid = () => renownRid(),
+  region = () => null,
+  soon = () => true,
+}) {
   /** earned, in no report yet - by the region it was earned in (SEAT1b, Seats-Arc 4.2: "The Renown report grows
    *  `region`"; null where none was known), so one report never names a region XP was not earned in */
   const pend = new Map();
-  const pendingXp = () => { let n = 0; for (const v of pend.values()) n += v; return n; };
+  const pendingXp = () => {
+    let n = 0;
+    for (const v of pend.values()) n += v;
+    return n;
+  };
   /** @type {{ character: string, xp: number, rid: string, region: number|null, vd: number }|null} */
-  let held = null;          // the report formed and not yet answered
-  let vdPend = 0;           // PVP-VILLAIN-KEEP: the villain meter earned off, in no report yet
+  let held = null; // the report formed and not yet answered
+  let vdPend = 0; // PVP-VILLAIN-KEEP: the villain meter earned off, in no report yet
   let inFlight = false;
-  let lastAt = -Infinity;   // when a report last went
-  let refused = 0;          // refusals in a row that trying again could cure
+  let lastAt = -Infinity; // when a report last went
+  let refused = 0; // refusals in a row that trying again could cure
   let stopped = false;
 
   /** Earn `xp` now - nothing while not earning (offline) or after a permanent refusal. Answers what was kept.
@@ -254,8 +283,12 @@ export function createRenownTracker({ report, leave = null, character, name = ()
     const n = Number.isFinite(xp) ? Math.max(0, Math.trunc(xp)) : 0;
     if (n > 0) {
       let r = null;
-      try { r = region(); } catch { r = null; }
-      const k = Number.isSafeInteger(r) && r >= 0 && r <= 70 ? r : null;   // WW7-3: a province's region past the Bay too (WW-R's 62-70)
+      try {
+        r = region();
+      } catch {
+        r = null;
+      }
+      const k = Number.isSafeInteger(r) && r >= 0 && r <= 70 ? r : null; // WW7-3: a province's region past the Bay too (WW-R's 62-70)
       pend.set(k, (pend.get(k) ?? 0) + n);
       if (Number.isFinite(vd) && vd > 0) vdPend += Math.trunc(vd);
     }
@@ -268,14 +301,23 @@ export function createRenownTracker({ report, leave = null, character, name = ()
     const v = pend.get(k) ?? 0;
     if (!(v > 0)) return null;
     let c = null;
-    try { c = character(); } catch { c = null; }
+    try {
+      c = character();
+    } catch {
+      c = null;
+    }
     if (typeof c !== 'string' || !c) return null;
     const xp = Math.min(v, RENOWN_XP_REPORT_MAX);
     let id = null;
-    try { id = rid(); } catch { id = null; }
+    try {
+      id = rid();
+    } catch {
+      id = null;
+    }
     if (typeof id !== 'string' || !id) return null;
-    if (v - xp > 0) pend.set(k, v - xp); else pend.delete(k);
-    const vd = Math.min(vdPend, xp);   // PVP-VILLAIN-KEEP: never more than the report's XP, as the service holds it
+    if (v - xp > 0) pend.set(k, v - xp);
+    else pend.delete(k);
+    const vd = Math.min(vdPend, xp); // PVP-VILLAIN-KEEP: never more than the report's XP, as the service holds it
     vdPend -= vd;
     return { character: c, xp, rid: id, region: k, vd };
   };
@@ -289,13 +331,27 @@ export function createRenownTracker({ report, leave = null, character, name = ()
   };
 
   /** SCALE4h: the host's word that the next answer is wanted at the minute's pace - a word that throws is soon. */
-  const soonNow = () => { try { return soon() !== false; } catch { return true; } };
+  const soonNow = () => {
+    try {
+      return soon() !== false;
+    } catch {
+      return true;
+    }
+  };
   /** How long since the last report before the next may go: a minute, doubling with each refusal in a row - and
    *  (SCALE4h) RENOWN_COALESCE_MS while the answer would say nothing the page needs soon. */
-  const waitMs = () => (refused ? Math.min(RENOWN_BACKOFF_MAX_MS, RENOWN_REPORT_MS * 2 ** (refused - 1)) : soonNow() ? RENOWN_REPORT_MS : RENOWN_COALESCE_MS);
+  const waitMs = () =>
+    refused
+      ? Math.min(RENOWN_BACKOFF_MAX_MS, RENOWN_REPORT_MS * 2 ** (refused - 1))
+      : soonNow()
+        ? RENOWN_REPORT_MS
+        : RENOWN_COALESCE_MS;
 
-  const due = (t = now()) => !stopped && !inFlight && (held !== null || pendingXp() > 0)
-    && (t - lastAt >= waitMs() || (!refused && held === null && pendingXp() >= RENOWN_XP_REPORT_MAX));
+  const due = (t = now()) =>
+    !stopped &&
+    !inFlight &&
+    (held !== null || pendingXp() > 0) &&
+    (t - lastAt >= waitMs() || (!refused && held === null && pendingXp() >= RENOWN_XP_REPORT_MAX));
 
   /** Send the held report, or form one and send it. Answers the service's data, or null. */
   const flush = async (t = now()) => {
@@ -305,16 +361,39 @@ export function createRenownTracker({ report, leave = null, character, name = ()
     inFlight = true;
     lastAt = t;
     let r;
-    try { r = await report(h.character, h.xp, name?.() ?? null, h.rid, h.region, h.vd); } catch { r = { ok: false, error: 'offline' }; } finally { inFlight = false; }
+    try {
+      r = await report(h.character, h.xp, name?.() ?? null, h.rid, h.region, h.vd);
+    } catch {
+      r = { ok: false, error: 'offline' };
+    } finally {
+      inFlight = false;
+    }
     if (r?.ok) {
       if (held === h) held = null;
       refused = 0;
-      try { onAnswer(r.data, h.xp); } catch (err) { console.error('[renown] the answer could not be shown:', err); }
+      try {
+        onAnswer(r.data, h.xp);
+      } catch (err) {
+        console.error('[renown] the answer could not be shown:', err);
+      }
       return r.data ?? null;
     }
-    if (PERMANENT.has(r?.error)) { stopped = true; held = null; pend.clear(); vdPend = 0; try { onStop(r.error); } catch { /* the stop stands */ } }
-    else if (r?.error === 'auth' || r?.error === 'no-session') { held = null; pend.clear(); vdPend = 0; }   // no account to earn for: nothing to keep
-    else refused++;   // anything else (offline, a busy service, a rate, a service without the route yet) holds the report and waits
+    if (PERMANENT.has(r?.error)) {
+      stopped = true;
+      held = null;
+      pend.clear();
+      vdPend = 0;
+      try {
+        onStop(r.error);
+      } catch {
+        /* the stop stands */
+      }
+    } else if (r?.error === 'auth' || r?.error === 'no-session') {
+      held = null;
+      pend.clear();
+      vdPend = 0;
+    } // no account to earn for: nothing to keep
+    else refused++; // anything else (offline, a busy service, a rate, a service without the route yet) holds the report and waits
     return null;
   };
 
@@ -339,9 +418,19 @@ export function createRenownTracker({ report, leave = null, character, name = ()
       for (const k of [...pend.keys()]) {
         const r = mint(k);
         if (!r) continue;
-        try { leave(r.character, r.xp, name?.() ?? null, r.rid, r.region, r.vd); } catch { pend.set(k, (pend.get(k) ?? 0) + r.xp); vdPend += r.vd; }   // not sent: still pending
+        try {
+          leave(r.character, r.xp, name?.() ?? null, r.rid, r.region, r.vd);
+        } catch {
+          pend.set(k, (pend.get(k) ?? 0) + r.xp);
+          vdPend += r.vd;
+        } // not sent: still pending
       }
-      try { leave(h.character, h.xp, name?.() ?? null, h.rid, h.region, h.vd); return true; } catch { return false; }
+      try {
+        leave(h.character, h.xp, name?.() ?? null, h.rid, h.region, h.vd);
+        return true;
+      } catch {
+        return false;
+      }
     },
     pending: () => pendingXp() + (held?.xp ?? 0),
     stopped: () => stopped,

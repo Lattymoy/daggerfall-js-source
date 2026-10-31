@@ -2,8 +2,8 @@
   {
     "name": "CSA-A-granule-step-halved",
     "file": "tools/lib/fsb5Vorbis.mjs",
-    "old": "if (prev) granule += (prev + block) / 4;",
-    "new": "if (prev) granule += (prev + block) / 2;",
+    "old": "    if (prev) granule += (prev + block) / 4;",
+    "new": "    if (prev) granule += (prev + block) / 2;",
     "tests": [
       "test/tooling/csa_audio.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CSA-A-granule-first-packet-counts",
     "file": "tools/lib/fsb5Vorbis.mjs",
-    "old": "if (prev) granule += (prev + block) / 4;",
-    "new": "granule += (prev + block) / 4;",
+    "old": "    if (prev) granule += (prev + block) / 4;",
+    "new": "    granule += (prev + block) / 4;",
     "tests": [
       "test/tooling/csa_audio.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CSA-A-granule-unclamped",
     "file": "tools/lib/fsb5Vorbis.mjs",
-    "old": "packets[packets.length - 1].granule = Math.min(granule, s.numSamples);",
-    "new": "packets[packets.length - 1].granule = granule;",
+    "old": "  packets[packets.length - 1].granule = Math.min(granule, s.numSamples);",
+    "new": "  packets[packets.length - 1].granule = granule;",
     "tests": [
       "test/tooling/csa_audio.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CSA-A-mode-bit-misread",
     "file": "tools/lib/fsb5Vorbis.mjs",
-    "old": "const mode = (p[0] >> 1) & ((1 << modeBits) - 1);",
-    "new": "const mode = p[0] & ((1 << modeBits) - 1);",
+    "old": "    const mode = (p[0] >> 1) & ((1 << modeBits) - 1);",
+    "new": "    const mode = p[0] & ((1 << modeBits) - 1);",
     "tests": [
       "test/tooling/csa_audio.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CSA-A-blockflag-inverted",
     "file": "tools/lib/fsb5Vorbis.mjs",
-    "old": "const block = modes[mode].blockflag ? 2048 : 256;",
-    "new": "const block = modes[mode].blockflag ? 256 : 2048;",
+    "old": "    const block = modes[mode].blockflag ? 2048 : 256;",
+    "new": "    const block = modes[mode].blockflag ? 256 : 2048;",
     "tests": [
       "test/tooling/csa_audio.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CSA-A-headers-not-flushed",
     "file": "tools/lib/fsb5Vorbis.mjs",
-    "old": "flushAfter: (i) => i === 0 || i === 2 });",
-    "new": "flushAfter: (i) => i === 2 });",
+    "old": "  const pages = oggPages(packets, { serial: REMUX_SERIAL, flushAfter: (i) => i === 0 || i === 2 });",
+    "new": "  const pages = oggPages(packets, { serial: REMUX_SERIAL, flushAfter: (i) => i === 2 });",
     "tests": [
       "test/tooling/csa_audio.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CSA-A-no-eos-flag",
     "file": "tools/lib/fsb5Vorbis.mjs",
-    "old": "(last ? 4 : 0);",
-    "new": "0;",
+    "old": "    const flags = (continued ? 1 : 0) | (bos && seq === 0 ? 2 : 0) | (last ? 4 : 0);",
+    "new": "    const flags = (continued ? 1 : 0) | (bos && seq === 0 ? 2 : 0) | 0;",
     "tests": [
       "test/tooling/csa_audio.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CSA-A-fsb-rate-bits-shifted",
     "file": "tools/lib/fsb5Vorbis.mjs",
-    "old": "rate: FSB5_RATES[(lo >>> 1) & 0x0f],",
-    "new": "rate: FSB5_RATES[(lo >>> 2) & 0x0f],",
+    "old": "      rate: FSB5_RATES[(lo >>> 1) & 0x0f],",
+    "new": "      rate: FSB5_RATES[(lo >>> 2) & 0x0f],",
     "tests": [
       "test/tooling/csa_audio.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CSA-A-fsb-samples-unshifted",
     "file": "tools/lib/fsb5Vorbis.mjs",
-    "old": "numSamples: (hi >>> 2) & 0x3fffffff,",
-    "new": "numSamples: hi & 0x3fffffff,",
+    "old": "      numSamples: (hi >>> 2) & 0x3fffffff,",
+    "new": "      numSamples: hi & 0x3fffffff,",
     "tests": [
       "test/tooling/csa_audio.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "CSA-A-setup-no-framing-check",
     "file": "tools/lib/fsb5Vorbis.mjs",
-    "old": "if (r.read(1) !== 1) throw new Error('Vorbis setup: no framing bit after the modes');",
-    "new": "r.read(1);",
+    "old": "  if (r.read(1) !== 1) throw new Error('Vorbis setup: no framing bit after the modes');",
+    "new": "  r.read(1);",
     "tests": [
       "test/tooling/csa_audio.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CSA-A-ogg-crc-reflected",
     "file": "tools/lib/fsb5Vorbis.mjs",
-    "old": "for (let k = 0; k < 8; k++) c = (c & 0x80000000) ? ((c << 1) ^ 0x04c11db7) : (c << 1);",
-    "new": "for (let k = 0; k < 8; k++) c = (c & 0x80000000) ? ((c << 1) ^ 0x04c11db6) : (c << 1);",
+    "old": "    for (let k = 0; k < 8; k++) c = c & 0x80000000 ? (c << 1) ^ 0x04c11db7 : c << 1;",
+    "new": "    for (let k = 0; k < 8; k++) c = c & 0x80000000 ? (c << 1) ^ 0x04c11db6 : c << 1;",
     "tests": [
       "test/tooling/csa_audio.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "CSA-A-tiled-scroll-sign",
     "file": "src/formats/derivedTexture.js",
-    "old": "const row = ((y + scroll) % h + h) % h;",
-    "new": "const row = ((y - scroll) % h + h) % h;",
+    "old": "    const row = (((y + scroll) % h) + h) % h;",
+    "new": "    const row = (((y - scroll) % h) + h) % h;",
     "tests": [
       "test/formats/csa_textures.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "CSA-A-tiled-phase-dropped",
     "file": "src/formats/derivedTexture.js",
-    "old": "    const sy = ((y + py) % src.height + src.height) % src.height;\n    const row",
-    "new": "    const sy = ((y) % src.height + src.height) % src.height;\n    const row",
+    "old": "  for (let y = 0; y < h; y++) {\n    const sy = (((y + py) % src.height) + src.height) % src.height;\n    const row = (((y + scroll) % h) + h) % h;",
+    "new": "  for (let y = 0; y < h; y++) {\n    const sy = ((y % src.height) + src.height) % src.height;\n    const row = (((y + scroll) % h) + h) % h;",
     "tests": [
       "test/formats/csa_textures.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "CSA-A-tiled-key-keeps-alpha",
     "file": "src/formats/derivedTexture.js",
-    "old": "data[d] = src.data[s]; data[d + 1] = src.data[s + 1]; data[d + 2] = src.data[s + 2]; data[d + 3] = 255;\n    }\n  }\n  return { width: w, height: h, data };\n}",
-    "new": "data[d] = src.data[s]; data[d + 1] = src.data[s + 1]; data[d + 2] = src.data[s + 2];\n    }\n  }\n  return { width: w, height: h, data };\n}",
+    "old": "      data[d + 3] = 255;\n    }",
+    "new": "    }",
     "tests": [
       "test/formats/csa_textures.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "CSA-A-derive-key-guard-dropped",
     "file": "src/formats/derivedTexture.js",
-    "old": "      if (p[i] === k[0] && p[i + 1] === k[1] && p[i + 2] === k[2] && p[i + 3] === k[3]) throw new Error(`derived texture: the picture holds the key colour ${key} itself at ${x},${y}`);\n",
-    "new": "",
+    "old": "      if (p[i] === k[0] && p[i + 1] === k[1] && p[i + 2] === k[2] && p[i + 3] === k[3])\n        throw new Error(`derived texture: the picture holds the key colour ${key} itself at ${x},${y}`);\n      const s = (sy * src.width + ((((x + px) % src.width) + src.width) % src.width)) * 4;",
+    "new": "      const s = (sy * src.width + ((((x + px) % src.width) + src.width) % src.width)) * 4;",
     "tests": [
       "test/formats/csa_textures.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "CSA-A-blocks-clear-counted",
     "file": "tools/lib/classicBlocks.mjs",
-    "old": "if (pic.data[i + 3] === 0) { block[y * w + x] = -1; continue; }",
-    "new": "if (false) { block[y * w + x] = -1; continue; }",
+    "old": "            if (pic.data[i + 3] === 0) {",
+    "new": "            if (false) {",
     "tests": [
       "test/formats/csa_textures.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "CSA-A-blocks-sparse-judged",
     "file": "tools/lib/classicBlocks.mjs",
-    "old": "if (visible < (w * w) / 4) continue;",
-    "new": "if (visible < 1) continue;",
+    "old": "        if (visible < (w * w) / 4) continue;",
+    "new": "        if (visible < 1) continue;",
     "tests": [
       "test/formats/csa_textures.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "CSA-A-png-palette-unsorted",
     "file": "tools/lib/indexedPng.mjs",
-    "old": "return [...set].sort((a, b) => a - b);",
-    "new": "return [...set];",
+    "old": "  return [...set].sort((a, b) => a - b);",
+    "new": "  return [...set];",
     "tests": [
       "test/formats/csa_textures.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "CSA-A-png-trns-cut-short",
     "file": "tools/lib/indexedPng.mjs",
-    "old": "while (lastOpaque > 0 && trns[lastOpaque - 1] === 255) lastOpaque--;",
-    "new": "while (lastOpaque > 1 && trns[lastOpaque - 1] !== 0) lastOpaque--;",
+    "old": "  while (lastOpaque > 0 && trns[lastOpaque - 1] === 255) lastOpaque--; // tRNS may stop at the last entry that is not opaque",
+    "new": "  while (lastOpaque > 1 && trns[lastOpaque - 1] !== 0) lastOpaque--; // tRNS may stop at the last entry that is not opaque",
     "tests": [
       "test/formats/csa_textures.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "CSA-A-unread-key-claimed-read",
     "file": "src/systems/modSettings.js",
-    "old": "'Handling.BadTack': Object.freeze({ default: false, get description() { return t('mods.comeSailAway.unread.description', 'Has no effect: the mod never uses this setting.'); } }),",
-    "new": "'Handling.BadTack': Object.freeze({ default: false, get description() { return t('mods.comeSailAway.unread.description', 'Tack badly.'); } }),",
+    "old": "        default: false,\n        get description() {\n          return t('mods.comeSailAway.unread.description', 'Has no effect: the mod never uses this setting.');\n        },",
+    "new": "        default: false,\n        get description() {\n          return t('mods.comeSailAway.unread.description', 'Tack badly.');\n        },",
     "tests": [
       "test/systems/csa_registration.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "CSA-A-default-moved",
     "file": "src/systems/modSettings.js",
-    "old": "'Waves.Speed': Object.freeze({ default: 100, min: 0, max: 200,",
-    "new": "'Waves.Speed': Object.freeze({ default: 50, min: 0, max: 200,",
+    "old": "      'Waves.Speed': Object.freeze({\n        default: 100,",
+    "new": "      'Waves.Speed': Object.freeze({\n        default: 50,",
     "tests": [
       "test/systems/csa_registration.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "CSA-A-lane-forced",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  'come-sail-away',         // CSA-A:",
-    "new": "  // 'come-sail-away',         // CSA-A:",
+    "old": "  'come-sail-away', // CSA-A: a boat is a possession in my save, placed and sailed by me - HCC's wagon's shape: whose boat stands where is the player's own, and a peer only SEES me move (my pose); its wind is my machine's own roll (ComeSailAway.UpdateWind, UnityEngine.Random), as it is each DFU player's",
+    "new": "  // 'come-sail-away',         // CSA-A: a boat is a possession in my save, placed and sailed by me - HCC's wagon's shape: whose boat stands where is the player's own, and a peer only SEES me move (my pose); its wind is my machine's own roll (ComeSailAway.UpdateWind, UnityEngine.Random), as it is each DFU player's",
     "tests": [
       "test/systems/csa_registration.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "CSA-A-mesh-stream-unaligned",
     "file": "tools/lib/unityScene.mjs",
-    "old": "    offset = (offset + 15) & ~15;\n  }\n  if (offset > data.length + 15)",
-    "new": "  }\n  if (offset > data.length + 15)",
+    "old": "    offset = (offset + 15) & ~15;\n  }",
+    "new": "  }",
     "tests": [
       "test/tooling/csa_models.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "CSA-A-mesh-dimension-whole-byte",
     "file": "tools/lib/unityScene.mjs",
-    "old": "    const dim = c.dimension & 0xf;\n    if (!dim) return;",
-    "new": "    const dim = c.dimension;\n    if (!dim) return;",
+    "old": "    const dim = c.dimension & 0xf;",
+    "new": "    const dim = c.dimension;",
     "tests": [
       "test/tooling/csa_models.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "CSA-A-mesh-half-exponent",
     "file": "tools/lib/unityScene.mjs",
-    "old": "return s * (1 + f / 1024) * 2 ** (e - 15);",
-    "new": "return s * (1 + f / 1024) * 2 ** (e - 16);",
+    "old": "  return s * (1 + f / 1024) * 2 ** (e - 15);",
+    "new": "  return s * (1 + f / 1024) * 2 ** (e - 16);",
     "tests": [
       "test/tooling/csa_models.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "CSA-A-mesh-unorm16-as-snorm",
     "file": "tools/lib/unityScene.mjs",
-    "old": "case 4: x = dv.getUint16(p, true) / 65535; break;",
-    "new": "case 4: x = dv.getUint16(p, true) / 32767; break;",
+    "old": "            x = dv.getUint16(p, true) / 65535;",
+    "new": "            x = dv.getUint16(p, true) / 32767;",
     "tests": [
       "test/tooling/csa_models.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "CSA-A-mesh-basevertex-ignored",
     "file": "tools/lib/unityScene.mjs",
-    "old": "for (let i = s.start; i < s.start + s.count; i++) if (indices[i] + s.baseVertex >= n)",
-    "new": "for (let i = s.start; i < s.start + s.count; i++) if (indices[i] >= n)",
+    "old": "      if (indices[i] + s.baseVertex >= n) throw new Error(`${m.m_Name}: an index past its ${n} vertices`);",
+    "new": "      if (indices[i] >= n) throw new Error(`${m.m_Name}: an index past its ${n} vertices`);",
     "tests": [
       "test/tooling/csa_models.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "CSA-A-clip-rotation-three",
     "file": "tools/lib/unityScene.mjs",
-    "old": "return b.attribute === 2 ? 4 : (b.attribute === 1",
-    "new": "return b.attribute === 2 ? 3 : (b.attribute === 1",
+    "old": "  return b.attribute === 2 ? 4 : b.attribute === 1 || b.attribute === 3 || b.attribute === 4 ? 3 : 1;",
+    "new": "  return b.attribute === 2 ? 3 : b.attribute === 1 || b.attribute === 3 || b.attribute === 4 ? 3 : 1;",
     "tests": [
       "test/tooling/csa_models.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "CSA-A-clip-sentinel-keys-kept",
     "file": "tools/lib/unityScene.mjs",
-    "old": "      if (k.index < 0 || k.index >= streamedCount) continue;",
-    "new": "      if (k.index < 0) continue;",
+    "old": "      if (k.index < 0 || k.index >= streamedCount) continue; // Unity writes a sentinel frame at +/-infinity whose keys may name no curve",
+    "new": "      if (k.index < 0) continue; // Unity writes a sentinel frame at +/-infinity whose keys may name no curve",
     "tests": [
       "test/tooling/csa_models.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "CSA-A-clip-key-coefficients-shuffled",
     "file": "tools/lib/unityScene.mjs",
-    "old": "keys.push({ index: buf.getInt32(o, true), a: buf.getFloat32(o + 4, true), b: buf.getFloat32(o + 8, true), c: buf.getFloat32(o + 12, true), d: buf.getFloat32(o + 16, true) });",
-    "new": "keys.push({ index: buf.getInt32(o, true), d: buf.getFloat32(o + 4, true), b: buf.getFloat32(o + 8, true), c: buf.getFloat32(o + 12, true), a: buf.getFloat32(o + 16, true) });",
+    "old": "        a: buf.getFloat32(o + 4, true),\n        b: buf.getFloat32(o + 8, true),\n        c: buf.getFloat32(o + 12, true),\n        d: buf.getFloat32(o + 16, true),",
+    "new": "        d: buf.getFloat32(o + 4, true),\n        b: buf.getFloat32(o + 8, true),\n        c: buf.getFloat32(o + 12, true),\n        a: buf.getFloat32(o + 16, true),",
     "tests": [
       "test/tooling/csa_models.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "CSA-A-component-pointer-lost",
     "file": "tools/lib/unityScene.mjs",
-    "old": "      if (components.has(k)) return { ...components.get(k) };\n",
-    "new": "",
+    "old": "      if (components.has(k)) return { ...components.get(k) };\n      const r = refs.ref(v);",
+    "new": "      const r = refs.ref(v);",
     "tests": [
       "test/tooling/csa_models.test.js"
     ]

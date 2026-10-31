@@ -200,7 +200,7 @@ test('WILD-INSURE THE SERVICE, A KILL (server-account/src/wild.js wildFall) - PI
   assert.deepEqual([pg.body.wi, pg.body.items[0].group, pg.body.items[0].stackCount, pg.body.insured, pg.body.took, pg.body.escrow], [0, 'Currency', premium, [gk], [], undefined], 'the gold first, his alone; the sword\'s policy spent; nothing of hers taken, nothing for her to watch');
   assert.ok(byKey(g.record().items, gk) && isEquipped(byKey(g.record().items, gk)), 'the sword still worn');
   assert.equal(state(g, gk), 'spent');
-  assert.ok(rd('server-account/src/wild.js').includes("...spent.map((k) => ctx.db.prepare(\"UPDATE wild_insurance SET state = 'spent'"), 'spent in the batch that keeps');
+  assert.ok(rd('server-account/src/wild.js').includes("...spent.map((k) =>\n      ctx.db\n        .prepare(\n          \"UPDATE wild_insurance SET state = 'spent'"), 'spent in the batch that keeps');
   const reclaim = await quiet(() => g.svc.call('/v1/wild/reclaim', { r: '0123456789b1', realm: g.R.at() }, g.ria.secret));
   assert.equal(reclaim.body.error, 'no-escrow', 'never hers to take back');
   assert.deepEqual((await quiet(() => g.svc.call('/v1/wild/escrows', { character: g.R.id }, g.ria.secret))).body.escrows, [], 'nor listed for her');

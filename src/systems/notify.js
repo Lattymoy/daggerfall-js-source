@@ -86,7 +86,10 @@ export function registerPresenter(p) {
   if (!p || typeof p !== 'object') return () => {};
   presenters.push(p);
   flushWaiting();
-  return () => { const i = presenters.indexOf(p); if (i >= 0) presenters.splice(i, 1); };
+  return () => {
+    const i = presenters.indexOf(p);
+    if (i >= 0) presenters.splice(i, 1);
+  };
 }
 
 /** The presenters in the order they are asked: priority, then recency. */
@@ -94,7 +97,7 @@ function order() {
   return presenters
     .map((p, i) => ({ p, i }))
     .filter(({ p }) => p.active?.() !== false)
-    .sort((a, b) => ((b.p.priority ?? 0) - (a.p.priority ?? 0)) || (b.i - a.i))
+    .sort((a, b) => (b.p.priority ?? 0) - (a.p.priority ?? 0) || b.i - a.i)
     .map(({ p }) => p);
 }
 
@@ -113,7 +116,10 @@ export function windowHeld(win) {
 export const notifyPresenters = () => order().map((p) => p.priority ?? 0);
 
 /** Tests: drop every presenter at once. */
-export function _resetNotifyForTests() { presenters.length = 0; waiting.length = 0; }
+export function _resetNotifyForTests() {
+  presenters.length = 0;
+  waiting.length = 0;
+}
 
 /** A message as rows: a string is one row (SetText's one Text token,
  *  DaggerfallMessageBox.cs:405-408, split on newlines the way the
@@ -138,7 +144,7 @@ export function toRows(text) {
 export function mountWindow(win, { push = true } = {}) {
   if (!win) return false;
   for (const p of order()) {
-    if (typeof p.mount !== 'function') continue;   // a host with a PopupText and no slot passes the window on
+    if (typeof p.mount !== 'function') continue; // a host with a PopupText and no slot passes the window on
     if (p.mount(win, { push: !!push })) return true;
   }
   return false;
@@ -170,8 +176,13 @@ export function messageBox(text, { highlightColor = undefined, previousWindow = 
   const rows = toRows(text);
   const win = new ActionTextBox(rows, { highlightColor, previousWindow });
   const handle = {
-    addNext(next) { win.addNext(toRows(next)); return handle; },
-    get done() { return win.done; },
+    addNext(next) {
+      win.addNext(toRows(next));
+      return handle;
+    },
+    get done() {
+      return win.done;
+    },
     mounted: true,
     window: win,
   };
@@ -196,7 +207,7 @@ function rowText(r) {
  * @param {string} text  @param {number} [delay]
  */
 export function hudText(text, delay = undefined) {
-  flushWaiting();   // AUDIT KB1 F3: a boot line still waiting goes first, the moment any host can speak
+  flushWaiting(); // AUDIT KB1 F3: a boot line still waiting goes first, the moment any host can speak
   return speak(text, delay);
 }
 function speak(text, delay) {
@@ -224,7 +235,7 @@ export const popupMessage = (text) => hudText(text);
 const waiting = [];
 export function hudTextWhenShown(text, delay = undefined) {
   flushWaiting();
-  if (waiting.length || !speak(text, delay)) waiting.push([String(text ?? ''), delay]);   // in order, behind any still waiting
+  if (waiting.length || !speak(text, delay)) waiting.push([String(text ?? ''), delay]); // in order, behind any still waiting
 }
 function flushWaiting() {
   while (waiting.length) {

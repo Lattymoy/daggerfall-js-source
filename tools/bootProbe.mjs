@@ -61,23 +61,37 @@ const state = await page.evaluate(async () => {
     const b = await fetchBytes('MIDI.BSA');
     probe = `bytes=${b?.length} ctor=${b?.constructor?.name}`;
     const { MidiBsaFile } = await import('/src/formats/hmiFile.js');
-    const m2 = new MidiBsaFile(); m2.load(b);
+    const m2 = new MidiBsaFile();
+    m2.load(b);
     probe += ` songs=${m2.getSongName(0)}`;
-  } catch (e) { probe = 'THREW: ' + (e?.message ?? e); }
+  } catch (e) {
+    probe = 'THREW: ' + (e?.message ?? e);
+  }
   // Decisive: ensure() is memoised, so awaiting it returns the SAME boot.
   // If enabled flips true here, the earlier read was simply too early.
   const { fetchBytes: fb } = await import('/src/scenes/shared.js');
   await mod.music.ensure(fb);
-  const afterAwait = { enabled: mod.music.enabled, pending: mod.music._pending ?? null, bootError: mod.music.bootError ?? null };
+  const afterAwait = {
+    enabled: mod.music.enabled,
+    pending: mod.music._pending ?? null,
+    bootError: mod.music.bootError ?? null,
+  };
   // T3: the crash overlay the header promised to report. main.js
   // stands a `#crash` <pre> on any uncaught error or rejection, and it
   // is the ONE boot-failure signal that does not depend on the query.
   const crashEl = document.getElementById('crash');
-  return { title: document.title, ready: window.__shotReady === true,
-           crashOverlay: crashEl ? crashEl.textContent.slice(0, 300) : null,
-           music: mod.music.current, playing: !!mod.music.player?.playing,
-           enabled: mod.music.enabled, pending: mod.music._pending ?? null,
-           ctx: aud.audio.ctx ? aud.audio.ctx.state : 'none', probe, afterAwait };
+  return {
+    title: document.title,
+    ready: window.__shotReady === true,
+    crashOverlay: crashEl ? crashEl.textContent.slice(0, 300) : null,
+    music: mod.music.current,
+    playing: !!mod.music.player?.playing,
+    enabled: mod.music.enabled,
+    pending: mod.music._pending ?? null,
+    ctx: aud.audio.ctx ? aud.audio.ctx.state : 'none',
+    probe,
+    afterAwait,
+  };
 });
 console.log(JSON.stringify({ ...state, crashes: crashes.slice(0, 6), notes: notes.slice(0, 6) }, null, 2));
 

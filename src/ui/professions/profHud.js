@@ -30,7 +30,7 @@
 // them where they happen and when the blow lands.
 // ═══════════════════════════════════════════════════════════════════
 import { PROF_CSS } from '../enhanced/enhancedPlusStyle.js';
-import { buildActReticle, marksOf, FOCAL_FALLBACK } from './profReticle.js';   // PROF-RETICLE: the act on the crosshair
+import { buildActReticle, marksOf, FOCAL_FALLBACK } from './profReticle.js'; // PROF-RETICLE: the act on the crosshair
 
 /** The toasts: four at most, three seconds each (PROF0 8). */
 export const PROF_TOASTS_MAX = 4;
@@ -61,8 +61,12 @@ export function createToastQueue({ max = PROF_TOASTS_MAX, ttl = PROF_TOAST_S } =
       for (const r of rows) r.left -= step;
       rows = rows.filter((r) => r.left > 0);
     },
-    get lines() { return rows.slice(); },
-    clear() { rows = []; },
+    get lines() {
+      return rows.slice();
+    },
+    clear() {
+      rows = [];
+    },
   };
 }
 
@@ -79,7 +83,11 @@ export function createProfHud({ doc = globalThis.document, anchor = null } = {})
     st.textContent = PROF_CSS;
     (doc.head ?? doc.body).append(st);
   }
-  const mk = (cls) => { const n = doc.createElement('div'); n.className = cls; return n; };
+  const mk = (cls) => {
+    const n = doc.createElement('div');
+    n.className = cls;
+    return n;
+  };
   const prompt = mk('prof-prompt');
   const meter = mk('prof-meter');
   meter.hidden = true;
@@ -92,23 +100,36 @@ export function createProfHud({ doc = globalThis.document, anchor = null } = {})
   let panel = null;
   /** PROF-RETICLE: the crosshair's middle and the lens's focal length (ui/worldPlaque.js reticleAnchor) - the marks
    *  stand round the one and an angle off the look stands `focal * tan(angle)` from it */
-  let seatX = null, seatY = null, focal = FOCAL_FALLBACK;
+  let seatX = null,
+    seatY = null,
+    focal = FOCAL_FALLBACK;
   const seat = () => {
     const a = anchor?.();
     if (!a) return;
     if (Number(a.focal) > 0) focal = a.focal;
     if (a.x === seatX && a.y === seatY) return;
-    seatX = a.x; seatY = a.y;
+    seatX = a.x;
+    seatY = a.y;
     meter.style.setProperty?.('--rx', `${a.x.toFixed(1)}px`);
     meter.style.setProperty?.('--ry', `${a.y.toFixed(1)}px`);
   };
   let bannerLeft = 0;
-  let lastPrompt = null, lastChip = null, drawnToasts = '';
+  let lastPrompt = null,
+    lastChip = null,
+    drawnToasts = '';
   /** AUDIT 29 C10: the system's reduced motion, asked once a second at most - never twice a frame through an act */
-  let _reduced = false, _reducedAt = -Infinity;
+  let _reduced = false,
+    _reducedAt = -Infinity;
   const reduced = () => {
     const t = Date.now();
-    if (t - _reducedAt > 1000) { _reducedAt = t; try { _reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches; } catch { _reduced = false; } }
+    if (t - _reducedAt > 1000) {
+      _reducedAt = t;
+      try {
+        _reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+      } catch {
+        _reduced = false;
+      }
+    }
     return _reduced;
   };
 
@@ -116,7 +137,10 @@ export function createProfHud({ doc = globalThis.document, anchor = null } = {})
   function seatChip() {
     const top = doc.querySelector?.('.hud .hud-top');
     if (top && chip.parentNode !== top) top.append(chip);
-    else if (!top && chip.parentNode !== doc.body) { doc.body.append(chip); chip.style.cssText = 'position:fixed;left:50%;top:52px;transform:translateX(-50%);z-index:12'; }
+    else if (!top && chip.parentNode !== doc.body) {
+      doc.body.append(chip);
+      chip.style.cssText = 'position:fixed;left:50%;top:52px;transform:translateX(-50%);z-index:12';
+    }
   }
 
   return {
@@ -130,8 +154,18 @@ export function createProfHud({ doc = globalThis.document, anchor = null } = {})
       const k = doc.createElement('kbd');
       k.textContent = `[${p.key}]`;
       prompt.append(k, doc.createTextNode(` ${p.verb}`));
-      if (p.rest) { const d = doc.createElement('span'); d.className = 'dim'; d.textContent = ` - ${p.rest}`; prompt.append(d); }
-      if (p.alt) { const d = doc.createElement('span'); d.className = 'dim prof-alt'; d.textContent = `   ${p.alt}`; prompt.append(d); }   // AUDIT 32 P9: its own line on a phone
+      if (p.rest) {
+        const d = doc.createElement('span');
+        d.className = 'dim';
+        d.textContent = ` - ${p.rest}`;
+        prompt.append(d);
+      }
+      if (p.alt) {
+        const d = doc.createElement('span');
+        d.className = 'dim prof-alt';
+        d.textContent = `   ${p.alt}`;
+        prompt.append(d);
+      } // AUDIT 32 P9: its own line on a phone
     },
     /**
      * PROF-RETICLE: THE ACT ON THE CROSSHAIR (ui/professions/profReticle.js) for an act, or null to take it down - built once an
@@ -141,12 +175,19 @@ export function createProfHud({ doc = globalThis.document, anchor = null } = {})
      * its sound too - the ear's (scenes/gatherHost.js feeds it the same act, GATHER-FEEL).
      */
     setMeter(act, label = '', { byUse = false } = {}) {
-      if (!act) { meter.hidden = true; meter.replaceChildren(); panel = null; return; }
+      if (!act) {
+        meter.hidden = true;
+        meter.replaceChildren();
+        panel = null;
+        return;
+      }
       meter.hidden = false;
       seat();
       const st = act.state;
       const which = marksOf(act);
-      if (!panel || panel.act !== act || panel.which !== which) { panel = { act, which, ui: buildActReticle(doc, meter, act) }; }
+      if (!panel || panel.act !== act || panel.which !== which) {
+        panel = { act, which, ui: buildActReticle(doc, meter, act) };
+      }
       panel.ui.update(act, { label, byUse, reduced: reduced(), focal });
       // the act's flashes - a blow on the glint, a Clean Cut, a bruise, the tug - on the reticle itself, whole
       const flags = ['prof-meter', 'prof-reticle', `prof-kind-${which}`];
@@ -158,13 +199,18 @@ export function createProfHud({ doc = globalThis.document, anchor = null } = {})
       if (meter.className !== c) meter.className = c;
     },
     /** A line on the right; `keep` (GATHER-SAID) outlasts the unkept past four. */
-    toast(text, o) { queue.push(text, o); },
+    toast(text, o) {
+      queue.push(text, o);
+    },
     /** The rank's banner. */
-    banner(text) { banner.textContent = String(text ?? ''); bannerLeft = text ? PROF_BANNER_S : 0; },
+    banner(text) {
+      banner.textContent = String(text ?? '');
+      bannerLeft = text ? PROF_BANNER_S : 0;
+    },
     /** The chip under the compass, or null to take it away. */
     setChip(text) {
       const t = text ?? '';
-      if (t === lastChip && chip.isConnected) return;   // AUDIT 29 C10: seated when it changes or has fallen out - not a query every frame
+      if (t === lastChip && chip.isConnected) return; // AUDIT 29 C10: seated when it changes or has fallen out - not a query every frame
       seatChip();
       if (t === lastChip) return;
       lastChip = t;
@@ -177,14 +223,33 @@ export function createProfHud({ doc = globalThis.document, anchor = null } = {})
       const key = lines.map((l) => l.id).join(',');
       if (key !== drawnToasts) {
         drawnToasts = key;
-        toasts.replaceChildren(...lines.map((l) => { const n = mk('prof-toast'); n.textContent = l.text; return n; }));
+        toasts.replaceChildren(
+          ...lines.map((l) => {
+            const n = mk('prof-toast');
+            n.textContent = l.text;
+            return n;
+          }),
+        );
       }
       const nodes = toasts.children;
       for (let i = 0; i < lines.length; i++) nodes[i]?.classList?.toggle('fade', lines[i].left < 0.4);
-      if (bannerLeft > 0) { bannerLeft -= Math.max(0, Number(dt) || 0); if (bannerLeft <= 0) banner.textContent = ''; }
+      if (bannerLeft > 0) {
+        bannerLeft -= Math.max(0, Number(dt) || 0);
+        if (bannerLeft <= 0) banner.textContent = '';
+      }
     },
     /** The HUD's lines, for the pins. */
-    get toastLines() { return queue.lines.map((l) => l.text); },
-    dispose() { prompt.remove(); meter.remove(); toasts.remove(); chip.remove(); banner.remove(); queue.clear(); panel = null; },
+    get toastLines() {
+      return queue.lines.map((l) => l.text);
+    },
+    dispose() {
+      prompt.remove();
+      meter.remove();
+      toasts.remove();
+      chip.remove();
+      banner.remove();
+      queue.clear();
+      panel = null;
+    },
   };
 }

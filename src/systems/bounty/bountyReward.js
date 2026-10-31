@@ -32,11 +32,11 @@ export function mintBountyItem(level, { rolls = Math.random, rarityOn = lootRari
   for (let i = 0; i < MINT_TRIES && !usable(item); i++) {
     item = rolls() < 0.5 ? createRandomWeapon(level, rolls) : createRandomArmor(level, rolls);
   }
-  if (!usable(item)) item = createRandomWeapon(1, () => 0.4);   // a plain blade, whatever the rolls said
+  if (!usable(item)) item = createRandomWeapon(1, () => 0.4); // a plain blade, whatever the rolls said
   mintCondition(item);
   const max = Number(item.maxCondition) || 0;
   if (max > 0) item.currentCondition = Math.max(1, Math.round(max * rule.condition));
-  if (max > 0) item.foundCondition = item.currentCondition;   // AUDIT SUGGESTIONS-1019 L1-3: SELL-AS-FOUND's mark (tradeModes.js) - online a mended reward sells as it was handed over and a third of the mend (MEND-THIRD)
+  if (max > 0) item.foundCondition = item.currentCondition; // AUDIT SUGGESTIONS-1019 L1-3: SELL-AS-FOUND's mark (tradeModes.js) - online a mended reward sells as it was handed over and a third of the mend (MEND-THIRD)
   if (rarityOn && rule.magicChance > 0 && rolls() < rule.magicChance) applyRarity(item, 'magic', rolls);
   return item;
 }

@@ -83,8 +83,8 @@ gear), each waiting to be taken: measured, one run mints one offer, even saved i
 The rail names a reward by its quest's title, so two read alike. Not a fault; nothing changed.
 
 THE LAW NOW. A start-up closing is read AS THE QUEST STANDS, at run time, on the success: the clock's own task and every
-`when` its end sets off alone with what is set now (`clock.js:"const end = reached(quest, name, { alone: true, live: true });"`,
-`reached`'s `live`: `clock.js:"const isSet = (sym) => seen.has(sym.name) || (live"`). A quiet close (`end quest`, `make
+`when` its end sets off alone with what is set now (`clock.js:"const end = reached"`,
+`reached`'s `live`: `clock.js:"const isSet = (sym)"`). A quiet close (`end quest`, `make
 permanent`, `drop as questor`) is the script closing a paid quest - the short wait; a `when` that would say or send
 anything keeps it a deadline. BODYGUARD-CLOSE's own docstring already said so ("An end that ... says or sends anything
 ... stays a deadline") and its own-task reading could not see such a `when`; the one reading replaces it
@@ -138,18 +138,18 @@ strictly better than the fine the owner set.
 
 THE LAW NOW.
 
-- SENTENCE-MENDS: `standing.js:"export function sentenceMends(player, regionIndex, {"` - the fine's own law
+- SENTENCE-MENDS: `standing.js:"export function sentenceMends"` - the fine's own law
   (`mendToLine`, the one body both answer through), called once the prison's days are served and before the refill on
   the zero-day arm (`arrestFlow.js` finish; AUDIT FB1021d SM-1 moved the prison's from beside the refund), answering the
   name the prisoner came in with (SM-3) and once a grace (SM-4), and said ("Time served mends your name in Daggerfall (+5). You are a
   scoundrel."). Not an acquittal (the court tried nothing to answer), a guild's rescue (the guild answered) or a
   banishment (DFU's state 4 repairs nothing). The report's chain now: -20 -> -22 -> released at -15; the next stop's
   sentence -> -10, no longer known; no stop and no patrol after it.
-- PATROL-GRACE: `standing.js:"export function patrolHalts("` - a known criminal outside the grace an answered law gives;
+- PATROL-GRACE: `standing.js:"export function patrolHalts"` - a known criminal outside the grace an answered law gives;
   LW9's `wanted` asks it (`world.js:"patrolHalts(playerEntity, trip.from.region,"`). An arrest on the road instead of a
   knight's sword stays LW-II's open item 6.
 - CURFEW-REFUND: the charge keeps the factor it was laid at (`arrestFlow.js:"playerEntity.chargedFactor = lowerRepForCrime("`,
-  the court's `factor`) and the refund gives back what was charged (`court.js:"const legal = loss * Math.max(1, Math.trunc(Number(factor) || 1));"`);
+  the court's `factor`) and the refund gives back what was charged (`court.js:"const legal = loss"`);
   a marked crime keeps half of what was charged; the People's half was never doubled.
 
 A save already under the line is mended by the next sentence it serves (or fine, or penance): nothing records what lowered
@@ -188,7 +188,7 @@ already there (`legacyHost.js` ownDay) - one conversation counted "a day" on two
 regard's day as the sky's; that row is gone. Offline the three clocks are one: nothing changes there. Also measured, not a
 fault: townsfolk take Polite ill (TONE-TASTE), so a Polite word nets -3 a day; the badge said so.
 
-THE LAW NOW. The relations are made in one place (`regardClock.js:"export function characterRelations(record, own, online = false, sky = () => skyMinutes()) {"`)
+THE LAW NOW. The relations are made in one place (`regardClock.js:"export function characterRelations"`)
 and count every regard in the character's own day, whatever living day a caller hands in - the street, the roads, the
 dives and the caravans keep their sky for everything else (LW0 decision 2: the world is shared; decision 6: how it feels
 about you is yours). Online, a record from before (no `clock: 'own'`) is rebased once at load: each regard as last
@@ -253,9 +253,9 @@ passage puts its passenger there):
 
 THE LAW NOW.
 
-- PASSAGE-HANDS: while her boat carries a charter and the voyage is under way (`passageHelm.js:"export const mastersHelm = (boat, journey) =>"`,
+- PASSAGE-HANDS: while her boat carries a charter and the voyage is under way (`passageHelm.js:"export const mastersHelm"`,
   the journey's hand marked live by tvSeaFrame - AUDIT FB1021d PS-2: halted, her helm is the passenger's), the rudder,
-  the oars, the sails and the trim answer her master's hand alone, and her lantern stays as it was lit (`passageHelm.js:"export function passengerHelm(input, boat, journey) {"`, the host's seam wrapped -
+  the oars, the sails and the trim answer her master's hand alone, and her lantern stays as it was lit (`passageHelm.js:"export function passengerHelm"`, the host's seam wrapped -
   `world.js:"input: passengerHelm({"` - an expression, no line); the passenger keeps stepping from her helm (the mod's
   disembark key, Transport) and the time dial. The journey's hand presses with taps of its own (`createJourneyHand`), never
   the panel's or the pad's, spent with them; so F17's gate now stands every sail press down under the view - keys, panel
@@ -264,16 +264,16 @@ THE LAW NOW.
   dial and Leave on it, and the pad's prompts say those two (AUDIT FB1021d PS-7); the passenger's autorun is let go at her
   helm (PS-4).
 - PASSAGE-IN: (a) a sailed leg is aimed at its pixel's middle where the built ground floats her there, else at the nearest
-  water that does - 5 by 5 tiles, room for her hull (`seaMark.js:"export function seaLegMark(origin, waterAt) {"`,
+  water that does - 5 by 5 tiles, room for her hull (`seaMark.js:"export function seaLegMark"`,
   `travelOptions.js:"const read = leg.kind === 'sea' && !leg.at ? seaLegMark(w, deps.seaWaterAt) : null;"` - the autopilot's rect,
   so the hand's mark and the arrival are that point; the host hands the journey its built water, one entry). AUDIT
   FB1021d PS-1: a pixel built dry is passed for the next leg, and one not built when its leg begins (a leg folds a
   straight run) is aimed again once it is (`travelOptions.js:"st.route.seaUnbuilt === st.route.i"`; the host's reader
   answers null there). On the same 56 voyages, none aimed at land - 25 dry legs passed, which the first count had
   filtered out.
-  (b) `passage.js:"export function voyageSails(from, to, plan) {"`: a voyage's plan may be walked when it sails, or when she
+  (b) `passage.js:"export function voyageSails"`: a voyage's plan may be walked when it sails, or when she
   already lies within VOYAGE_LANDFALL_PX of her port - no quay left is that near a port booked (`passageDestinations`).
-  (c) A pixel reached under sail or by embarking is walked round no town (`travelRoute.js:"const afloat = (i) =>"`) - the
+  (c) A pixel reached under sail or by embarking is walked round no town (`travelRoute.js:"const afloat = (i)"`) - the
   land a party embarks from or makes landfall on keeps its ring (AUDIT FB1021d PS-3).
 - PASSAGE-PLATE: the plate stands down under the Overworld's controls, which stand where it does, bottom right, as the
   helm panel does (`world.js:"!!travelView?.active;   // PASSAGE-PLATE: the Overworld's"`), and stands again when the
@@ -415,6 +415,6 @@ day against the grace, so the record goes stale the day a grace outlasts a sente
 live one, pinned there). The other seven survive on main as here and are not this change's: `rep2_sentences`
 REP2-no-charge-coming-quietly, `csa_together` CSAL-pad-bare-dpad and `auditships_sail` AUDIT-SHIPS-A5-the-gain-on-every-coast
 (named after the first campaign), and AUDIT DISC28 AR-1's two and WERE-FRIGHT's two withdrawn-box records, equivalent
-since PLEA-LOOP (2026-10-13b): `talkWindow.js:"if (this.done) return;"` refuses a box already answered, the withdrawal
+since PLEA-LOOP (2026-10-13b): `talkWindow.js:"if (this.done) return"` refuses a box already answered, the withdrawal
 marks it so, and every door reaches an arm through `input`, so the arms' own `surrenderBox` reads refuse nothing more.
 

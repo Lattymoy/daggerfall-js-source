@@ -21,19 +21,23 @@
 // A LEAF: no imports.
 // ═══════════════════════════════════════════════════════════════════
 
-const _registry = [];   // [{ vendor, table: { [archive]: { [record]: [x, y] } }, isOn: () => bool }]
-let _gen = 0;   // AUDIT DEX B7: bumps with every registration and every one let go
+const _registry = []; // [{ vendor, table: { [archive]: { [record]: [x, y] } }, isOn: () => bool }]
+let _gen = 0; // AUDIT DEX B7: bumps with every registration and every one let go
 
 /** Register (or replace) a vendor's xml scale table. */
 export function registerBillboardXml(vendor, table, isOn = () => true) {
   const i = _registry.findIndex((r) => r.vendor === vendor);
   const entry = { vendor, table, isOn };
-  if (i >= 0) _registry[i] = entry; else _registry.push(entry);
+  if (i >= 0) _registry[i] = entry;
+  else _registry.push(entry);
   _gen++;
 }
 export function unregisterBillboardXml(vendor) {
   const i = _registry.findIndex((r) => r.vendor === vendor);
-  if (i >= 0) { _registry.splice(i, 1); _gen++; }
+  if (i >= 0) {
+    _registry.splice(i, 1);
+    _gen++;
+  }
 }
 /** AUDIT DEX B7: what a size cached with the xml applied is current with - the registrations (a live registrant's switch
  *  is read at every ask, billboardXmlScaleOf). */

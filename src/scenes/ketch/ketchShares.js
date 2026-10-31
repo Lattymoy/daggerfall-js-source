@@ -24,14 +24,25 @@ export const ketchChestMouth = () => deckToDungeon(KT_VAULT.x, KT_CHEST_MOUTH.y,
 /** KETCH-FIX: THE CABIN KEEPS ITS SPOILS (world/gate/gateSpew.js keepLaunch, the Hour's SD_SPOILS_KEEP's law) - a disc of
  *  the cabin's floor between the chest and the door, clear of the stern lift's ring (a piece taken there rides a body off
  *  the ship) and of the door, so no throw carries a piece out onto the bridge or over its rail. */
-export const KT_SPOILS_KEEP = Object.freeze({ centre: Object.freeze(deckToDungeon(1.5, 0, 228)), r: 2.6, floorY: deckToDungeon(0, 0, 0)[1] });
+export const KT_SPOILS_KEEP = Object.freeze({
+  centre: Object.freeze(deckToDungeon(1.5, 0, 228)),
+  r: 2.6,
+  floorY: deckToDungeon(0, 0, 0)[1],
+});
 
 /** The device's shares paid and not yet given: `[{ d, o, s, c, l }]` - a receipt's voyage, ship, account, seed, level. */
 export const KT_OWED_KEY = 'kt.owed';
 /** The most it keeps (a share a voyage, each given as it is paid: a handful at most, with an older one still owed). */
 export const KT_SHARES_OWED_MAX = 8;
 
-const owedOk = (e) => !!e && typeof e === 'object' && Number.isSafeInteger(e.d) && typeof e.o === 'string' && typeof e.s === 'string' && Number.isSafeInteger(e.c) && Number.isFinite(e.l);
+const owedOk = (e) =>
+  !!e &&
+  typeof e === 'object' &&
+  Number.isSafeInteger(e.d) &&
+  typeof e.o === 'string' &&
+  typeof e.s === 'string' &&
+  Number.isSafeInteger(e.c) &&
+  Number.isFinite(e.l);
 const same = (a, b) => a.d === b.d && a.o === b.o && a.s === b.s;
 
 /**
@@ -48,18 +59,46 @@ export function createKetchShares({ store = null, pool, level, me, aboard, say =
   /** @returns {Array<{ d: number, o: string, s: string, c: number, l: number }>} */
   function owed() {
     let v;
-    try { v = store ? store.get(KT_OWED_KEY) : undefined; } catch { v = undefined; }
+    try {
+      v = store ? store.get(KT_OWED_KEY) : undefined;
+    } catch {
+      v = undefined;
+    }
     return (Array.isArray(v) ? v : v === undefined || v === null ? memory : []).filter(owedOk);
   }
-  const keep = (list) => { memory = list; try { store?.set(KT_OWED_KEY, list); } catch { /* memory holds it */ } };
+  const keep = (list) => {
+    memory = list;
+    try {
+      store?.set(KT_OWED_KEY, list);
+    } catch {
+      /* memory holds it */
+    }
+  };
   const drop = (e) => keep(owed().filter((k) => !same(k, e)));
   const lv = (e) => spoilsLevel(level() ?? 1, e.l);
-  const mine = () => { const m = me(); return owed().filter((e) => !m || e.s === m); };
+  const mine = () => {
+    const m = me();
+    return owed().filter((e) => !m || e.s === m);
+  };
   /** A share into the pack - let go once the pool has it (given, or spent already); a save asked for. */
   function grant(e) {
-    return spoilsLock(() => pool.grant({ day: ketchSpoilsDay(e.d, e.o), acct: e.s, roll: () => ketchSpoilsList(e.c, lv(e)), text: KT_SPOILS_TEXT.granted }))
-      .then((given) => { drop(e); if (given) changed(); return !!given; })
-      .catch((err) => { console.warn('[kt] spoils', err?.message ?? err); return false; });
+    return spoilsLock(() =>
+      pool.grant({
+        day: ketchSpoilsDay(e.d, e.o),
+        acct: e.s,
+        roll: () => ketchSpoilsList(e.c, lv(e)),
+        text: KT_SPOILS_TEXT.granted,
+      }),
+    )
+      .then((given) => {
+        drop(e);
+        if (given) changed();
+        return !!given;
+      })
+      .catch((err) => {
+        console.warn('[kt] spoils', err?.message ?? err);
+        return false;
+      });
   }
   return {
     /** The service paid a share (its receipt's claims): kept at once; given now if I stand off the ship. */
@@ -75,12 +114,26 @@ export function createKetchShares({ store = null, pool, level, me, aboard, say =
     chest(at, bearing) {
       const e = mine()[0];
       if (!e) return false;
-      const ok = pool.spew({ day: ketchSpoilsDay(e.d, e.o), seed: e.c, level: lv(e), at, bearing, acct: e.s, keep: KT_SPOILS_KEEP, roll: () => ketchSpoilsList(e.c, lv(e)) });
-      if (ok) { drop(e); say(KT_SPOILS_TEXT.spilled); } else void grant(e);
+      const ok = pool.spew({
+        day: ketchSpoilsDay(e.d, e.o),
+        seed: e.c,
+        level: lv(e),
+        at,
+        bearing,
+        acct: e.s,
+        keep: KT_SPOILS_KEEP,
+        roll: () => ketchSpoilsList(e.c, lv(e)),
+      });
+      if (ok) {
+        drop(e);
+        say(KT_SPOILS_TEXT.spilled);
+      } else void grant(e);
       return true;
     },
     /** Off the ship, or a stand-up after a crash: every share of mine still owed, into the pack. */
-    give() { return Promise.all(mine().map((e) => grant(e))); },
+    give() {
+      return Promise.all(mine().map((e) => grant(e)));
+    },
     owed,
   };
 }

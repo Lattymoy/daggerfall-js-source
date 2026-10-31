@@ -25,7 +25,9 @@ export const TV_FAR_MAX = 10;
  *  (world/terrain/terrainSampler.js, render/volumetricClouds.js PIXEL_METRES). */
 export const PIXEL_KM = 0.8192;
 /** The settlements the edge speaks for. */
-export const TV_FAR_TYPES = Object.freeze(new Set([LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage]));
+export const TV_FAR_TYPES = Object.freeze(
+  new Set([LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage]),
+);
 
 /** A distance in words: tenths of a kilometre under ten, whole kilometres past it (the tenths would only flicker). */
 export function farDistanceText(km) {
@@ -58,9 +60,10 @@ export function settlementPixels(index) {
 export function farPlaces({ at, near, settlements, summaryOf, range = TV_FAR_RANGE, max = TV_FAR_MAX }) {
   const found = [];
   for (const s of settlements ?? []) {
-    const dx = s.x - at.x, dy = s.y - at.y;
+    const dx = s.x - at.x,
+      dy = s.y - at.y;
     const cheb = Math.max(Math.abs(dx), Math.abs(dy));
-    if (cheb <= near || Math.hypot(dx, dy) > range) continue;   // beyond the grid's square; within the range's circle
+    if (cheb <= near || Math.hypot(dx, dy) > range) continue; // beyond the grid's square; within the range's circle
     const summary = summaryOf(s.x, s.y);
     if (!summary) continue;
     found.push({ key: `far:${summary.mapId}`, summary, x: s.x, y: s.y, d: Math.hypot(dx, dy) });

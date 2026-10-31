@@ -41,7 +41,12 @@
 // import it.
 // ═══════════════════════════════════════════════════════════════════
 
-import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, SCALED_OCEAN_ELEVATION } from '../terrain/terrainSampler.js';
+import {
+  HEIGHTMAP_DIMENSION,
+  MAX_TERRAIN_HEIGHT,
+  STREAMING_TERRAIN_SCALE,
+  SCALED_OCEAN_ELEVATION,
+} from '../terrain/terrainSampler.js';
 
 /** LocationLoader.cs:14 - the tile's heightmap span in samples. */
 export const WOD_TERRAIN_SIZE = 128;
@@ -69,13 +74,20 @@ const f32 = Math.fround;
 // ── the session list ─────────────────────────────────────────────────
 
 /** FLOW2: the map's pixel grid every instance's worldX/worldY names (Daggerfall's 1000 x 500). */
-const PIX_W = 1000, PIX_H = 500;
+const PIX_W = 1000,
+  PIX_H = 500;
 /** A pixel's slot in the grid, or -1 off it (an instance there can meet no tile the grid holds). */
-const pixelSlot = (x, y) => (Number.isInteger(x) && Number.isInteger(y) && x >= 0 && y >= 0 && x < PIX_W && y < PIX_H ? y * PIX_W + x : -1);
+const pixelSlot = (x, y) =>
+  Number.isInteger(x) && Number.isInteger(y) && x >= 0 && y >= 0 && x < PIX_W && y < PIX_H ? y * PIX_W + x : -1;
 /** Whether a type-0 instance stands strictly between list positions `a` and `b` (`t0` ascending). */
 function type0Between(t0, a, b) {
-  let lo = 0, hi = t0.length;
-  while (lo < hi) { const mid = (lo + hi) >> 1; if (t0[mid] <= a) lo = mid + 1; else hi = mid; }
+  let lo = 0,
+    hi = t0.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (t0[mid] <= a) lo = mid + 1;
+    else hi = mid;
+  }
   return lo < t0.length && t0[lo] < b;
 }
 
@@ -102,23 +114,29 @@ export class LocationSession {
     this.terrainY = new Int32Array(0);
     this.type = new Int32Array(0);
     this.locationID = new Int32Array(0);
-    this.name = [];     // string per instance
-    this.prefab = [];   // string per instance
-    this.regions = [];  // folder order, as loaded
+    this.name = []; // string per instance
+    this.prefab = []; // string per instance
+    this.regions = []; // folder order, as loaded
   }
 
-  hasRegion(region) { return this.regions.includes(region); }
+  hasRegion(region) {
+    return this.regions.includes(region);
+  }
 
   /** FLOW2: each map pixel's instances in list order (`first[slot]`, then `next[i]`), and every type-0 instance's list
    *  position, ascending - what `pickLocations` needs to walk one pixel with every decision the full scan makes. Built
    *  when first asked, and again once a region has been appended. */
   pixelIndex() {
     if (this._pix && this._pixCount === this.count) return this._pix;
-    const first = new Int32Array(PIX_W * PIX_H).fill(-1), next = new Int32Array(this.count).fill(-1);
+    const first = new Int32Array(PIX_W * PIX_H).fill(-1),
+      next = new Int32Array(this.count).fill(-1);
     const type0 = [];
     for (let i = this.count - 1; i >= 0; i--) {
       const p = pixelSlot(this.worldX[i], this.worldY[i]);
-      if (p >= 0) { next[i] = first[p]; first[p] = i; }
+      if (p >= 0) {
+        next[i] = first[p];
+        first[p] = i;
+      }
       if (this.type[i] === 0) type0.push(i);
     }
     this._pix = { first, next, type0: Int32Array.from(type0.reverse()) };
@@ -169,8 +187,14 @@ export class LocationSession {
   /** The i-th instance as LocationData.cs's LocationInstance shape. */
   instance(i) {
     return {
-      locationID: this.locationID[i], name: this.name[i], type: this.type[i], prefab: this.prefab[i],
-      worldX: this.worldX[i], worldY: this.worldY[i], terrainX: this.terrainX[i], terrainY: this.terrainY[i],
+      locationID: this.locationID[i],
+      name: this.name[i],
+      type: this.type[i],
+      prefab: this.prefab[i],
+      worldX: this.worldX[i],
+      worldY: this.worldY[i],
+      terrainX: this.terrainX[i],
+      terrainY: this.terrainY[i],
     };
   }
 }
@@ -216,8 +240,14 @@ export function pickLocations(tile, session, getPrefab, pathsPoint = null, siteC
     if ((st.hasLocation || st.ocean) && type0Between(idx.type0, prev, i)) return st.out;
     prev = i;
     const t = type[i];
-    if (st.hasLocation) { if (t === 0) return st.out; else if (t === 2) continue; }
-    if (st.ocean) { if (t === 0) return st.out; else if (t === 2) continue; }
+    if (st.hasLocation) {
+      if (t === 0) return st.out;
+      else if (t === 2) continue;
+    }
+    if (st.ocean) {
+      if (t === 0) return st.out;
+      else if (t === 2) continue;
+    }
     considerInstance(st, session, i, t);
   }
   return st.out;
@@ -236,7 +266,8 @@ export function pickLocations(tile, session, getPrefab, pathsPoint = null, siteC
 export function pickLocationsScan(tile, session, getPrefab, pathsPoint = null, siteClear = null) {
   const st = pickState(tile, getPrefab, pathsPoint, siteClear);
   const { worldX, worldY, type } = session;
-  const px = tile.mapPixelX, py = tile.mapPixelY;
+  const px = tile.mapPixelX,
+    py = tile.mapPixelY;
   for (let i = 0; i < session.count; i++) {
     const t = type[i];
     // :103-115 - a tile that already holds a location: a type-0
@@ -267,14 +298,23 @@ export function pickLocationsScan(tile, session, getPrefab, pathsPoint = null, s
  * port asks the region the pixel itself answers (`tile.regionIndex`, the sea's 31), so the arm does what :117-121 says.
  */
 function pickState(tile, getPrefab, pathsPoint, siteClear) {
-  return { out: [], hasLocation: !!tile.hasLocation, ocean: WOD_OCEAN_REGIONS.includes(tile.regionIndex ?? -1) && tile.worldHeight <= 2, pathsDataPoint: 0, getPrefab, pathsPoint, siteClear };
+  return {
+    out: [],
+    hasLocation: !!tile.hasLocation,
+    ocean: WOD_OCEAN_REGIONS.includes(tile.regionIndex ?? -1) && tile.worldHeight <= 2,
+    pathsDataPoint: 0,
+    getPrefab,
+    pathsPoint,
+    siteClear,
+  };
 }
 
 /** The loop's body for an instance on the tile's own pixel (:139-230) - FLOW2: one copy, the scan's and the walk's. */
 function considerInstance(st, session, i, t) {
   // :139-143
-  const tx = session.terrainX[i], ty = session.terrainY[i];
-  if (tx <= 0 || ty <= 0 || (tx > 128 || ty > 128)) return;
+  const tx = session.terrainX[i],
+    ty = session.terrainY[i];
+  if (tx <= 0 || ty <= 0 || tx > 128 || ty > 128) return;
   // :146-151 - Basic Roads' road|track mask at the instance's pixel.
   if (st.pathsPoint) st.pathsDataPoint = st.pathsPoint(session.worldX[i], session.worldY[i]) & 0xff;
   if (st.pathsDataPoint !== 0) return;
@@ -283,8 +323,8 @@ function considerInstance(st, session, i, t) {
   if (prefab == null) return;
   // :162-172 - NB the C# pairs terrainX with the prefab's HEIGHT and
   // terrainY with its WIDTH here, the transpose of the rect below.
-  if ((tx + prefab.height > 128 || ty + prefab.width > 128)) return;
-  if ((tx + prefab.height > 127 || ty + prefab.width > 127)) return;
+  if (tx + prefab.height > 128 || ty + prefab.width > 128) return;
+  if (tx + prefab.height > 127 || ty + prefab.width > 127) return;
   const rect = { x: tx, y: ty, width: prefab.width, height: prefab.height };
   // ROADS-CLEAR (2026-09-25, Mac: "Camps, mountains from WOD, shouldnt be placed on roads"): the mod asks only
   // this pixel's byte (:146-151), and a site's pieces reach into the next pixel's road - the port asks the site
@@ -300,14 +340,16 @@ function considerInstance(st, session, i, t) {
 
 /** GetDistanceFromRect (LocationLoader.cs:258-273), in C# floats. */
 export function distanceFromRect(rect, x, y) {
-  const xMin = rect.x, xMax = f32(rect.x + rect.width);
-  const yMin = rect.y, yMax = f32(rect.y + rect.height);
+  const xMin = rect.x,
+    xMax = f32(rect.x + rect.width);
+  const yMin = rect.y,
+    yMax = f32(rect.y + rect.height);
   let sq = 0;
   if (x > xMax) sq = f32(sq + f32(f32(x - xMax) * f32(x - xMax)));
   else if (x < xMin) sq = f32(sq + f32(f32(xMin - x) * f32(xMin - x)));
   if (y > yMax) sq = f32(sq + f32(f32(y - yMax) * f32(y - yMax)));
   else if (y < yMin) sq = f32(sq + f32(f32(yMin - y) * f32(yMin - y)));
-  return f32(Math.sqrt(sq));   // Mathf.Sqrt = (float)Math.Sqrt
+  return f32(Math.sqrt(sq)); // Mathf.Sqrt = (float)Math.Sqrt
 }
 
 /**
@@ -334,10 +376,11 @@ export function flattenForLocation(samples, rect, hDim = HEIGHTMAP_DIMENSION) {
       const i = x * hDim + y;
       const a = samples[i];
       const d = distanceFromRect(rect, x, y);
-      if (a <= SEA_SAMPLE && avg > a && d > SEA_RAMP) continue;   // FIELD BUGS 2026-10-02b SEA-LEVEL (below)
+      if (a <= SEA_SAMPLE && avg > a && d > SEA_RAMP) continue; // FIELD BUGS 2026-10-02b SEA-LEVEL (below)
       // Mathf.Lerp(a, b, t) = a + (b - a) * Clamp01(t)
       let t = f32(1 / f32(d + 1));
-      if (t > 1) t = 1; else if (t < 0) t = 0;
+      if (t > 1) t = 1;
+      else if (t < 0) t = 0;
       samples[i] = f32(a + f32(f32(avg - a) * t));
     }
   }
@@ -378,8 +421,10 @@ export function applyPicks(samples, picks, initialAverage = 0) {
     if (p.flatten) {
       average = flattenForLocation(samples, p.rect);
       locationRect = {
-        xMin: p.rect.x, xMax: p.rect.x + p.rect.width,
-        yMin: p.rect.y, yMax: p.rect.y + p.rect.height,
+        xMin: p.rect.x,
+        xMax: p.rect.x + p.rect.width,
+        yMin: p.rect.y,
+        yMax: p.rect.y + p.rect.height,
       };
     }
     averages.push(average);

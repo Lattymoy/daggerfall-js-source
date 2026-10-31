@@ -32,8 +32,8 @@ export const aurumRow = (/** @type {any} */ db, /** @type {string} */ id) =>
 /** A row's balance: its packs' Aurum and its lines'. */
 export const balanceOfRow = (/** @type {any} */ row) => int(row?.packs) + int(row?.lines);
 
-/** THE SALE THE DAILY WARES READ, per config: what SHOP_ON_SALE names (a daily ware too - the owner's one list), dropped
- *  by SHOP_FEATURED's first window, and a limited window holding the whole UTC day where the schedule marks one
+/** THE SALE THE DAILY WARES READ, per config: what SHOP_ON_SALE names (a daily ware too - the owner's one list), told
+ *  (shopLaw.js shopDropped: OPEN-ALL, a limited ware once its first window opens), and a limited window holding the whole UTC day where the schedule marks one
  *  (AUDIT-STOREFRONT III A3: a window shut mid-day sold the ware for Aurum past it). `cache` the rotation's
  *  (aurumLaw.js aurumDailyOf), one a config, kept for the isolate. */
 const sales = /** @type {Map<string, { eligible: (id: string, day: number) => boolean, cache: any }>} */ (new Map());

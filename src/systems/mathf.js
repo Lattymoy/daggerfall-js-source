@@ -47,8 +47,12 @@ export const lerpF = (a, b, t) => Math.fround(a + Math.fround(Math.fround(b - a)
 export function colorLerp(a, b, t) {
   const f = Math.fround;
   const k = t < 0 ? 0 : t > 1 ? 1 : f(t);
-  return [f(a[0] + f(f(b[0] - a[0]) * k)), f(a[1] + f(f(b[1] - a[1]) * k)),
-    f(a[2] + f(f(b[2] - a[2]) * k)), f(a[3] + f(f(b[3] - a[3]) * k))];
+  return [
+    f(a[0] + f(f(b[0] - a[0]) * k)),
+    f(a[1] + f(f(b[1] - a[1]) * k)),
+    f(a[2] + f(f(b[2] - a[2]) * k)),
+    f(a[3] + f(f(b[3] - a[3]) * k)),
+  ];
 }
 
 /** GLSL's `smoothstep`, on the CPU: the Hermite step, clamped - 0 at or

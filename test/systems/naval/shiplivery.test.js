@@ -496,7 +496,7 @@ test('CABIN-LOOK her cabin stained: none as built; each picture her room wears (
   assert.match(rd('src/scenes/interiorContext.js'), /if \(typeof opts\.restyle === 'function'\) await opts\.restyle\(texRemap, \[\.\.\.pending\.keys\(\)\]\.map\(\(id\) => cpuModels\.get\(id\)\?\.subMeshes \?\? \[\]\), \{ renderer, getTexture, palette \}\);/);
   const ic = rd('src/scenes/interiorContext.js');
   assert.ok(ic.indexOf('await opts.restyle(') < ic.indexOf('const drawList = [];'), 'before the room\'s batch is made');
-  assert.match(rd('src/scenes/sailingCabin.js'), /sailingCabin: cabin, restyle: cabinRestyle\(guest \? 0 : fleetShip\(cabin\.uid\)\?\.cabin \?\? 0\) \};/);   // PIN MOVED (AUDIT 2: another's cabin as built)
+  assert.match(rd('src/scenes/sailingCabin.js'), /sailingCabin: cabin,\n\s*restyle: cabinRestyle\(guest \? 0 : \(fleetShip\(cabin\.uid\)\?\.cabin \?\? 0\)\),\n\s*\};/);   // PIN MOVED (AUDIT 2: another's cabin as built)
   assert.match(rd('src/scenes/worldModes.js'), /restyle: hit\.restyle \?\? null,/);
 });
 

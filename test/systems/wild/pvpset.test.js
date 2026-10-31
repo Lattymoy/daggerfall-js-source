@@ -199,7 +199,7 @@ test('PVP-SET THE WIRING: one host line; the hotbar draws the set\'s marks; a ro
   assert.match(w, /const pvpKit = createPvpSpellMenu\(/);
   assert.doesNotMatch(w, /createPvpKitBar/);
   const hb = readFileSync(new URL('../../../src/ui/enhanced/enhancedHotbar.js', import.meta.url), 'utf8');
-  assert.match(hb, /if \(d\.payload\.kind === 'kit'\) \{ if \(i >= 0\) hotbarDropKit\(i, d\.payload\.kit, d\.payload\.name\); return; \}/);
+  assert.match(hb, /if \(d\.payload\.kind === 'kit'\) \{\n\s*if \(i >= 0\) hotbarDropKit\(i, d\.payload\.kit, d\.payload\.name\);\n\s*return;\n\s*\}/);
   assert.match(hb, /view\.forEach\(\(v, k\) => paintSlot\(slots\[v\.slot\], v, entity, marks\[k\]\)\);/);
   const sb = readFileSync(new URL('../../../src/ui/enhanced/enhancedSpellbook.js', import.meta.url), 'utf8');
   assert.match(sb, /pvp\.onclick = \(\) => \{ onExit\(\); openHotbarSecondSet\(\); \};/);

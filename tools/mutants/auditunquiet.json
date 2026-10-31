@@ -58,8 +58,8 @@
   {
     "name": "AUQ-D2-dread-max-unread",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": " && !!r.lair && (dreads | 0) < DREAD.MAX;",
-    "new": " && !!r.lair;",
+    "old": "export const mayAscend = (r, max, dreads = 0) =>\n  !!r && !r.dread && (r.rank | 0) >= max && !!r.lair && (dreads | 0) < DREAD.MAX;",
+    "new": "export const mayAscend = (r, max, dreads = 0) => !!r && !r.dread && (r.rank | 0) >= max && !!r.lair;",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "AUQ-D2-dread-max",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "SECOND_STAND: 0.25, GOLD: 3, MAX: 1 });",
-    "new": "SECOND_STAND: 0.25, GOLD: 3, MAX: 2 });",
+    "old": "export const DREAD = Object.freeze({ HEALTH: 1.5, STANDS: 2, SECOND_STAND: 0.25, GOLD: 3, MAX: 1 });",
+    "new": "export const DREAD = Object.freeze({ HEALTH: 1.5, STANDS: 2, SECOND_STAND: 0.25, GOLD: 3, MAX: 2 });",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js",
       "test/systems/revenant/unquiet.test.js"
@@ -95,8 +95,8 @@
   {
     "name": "AUQ-D4-tear-every-time",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "(deed === 'fled' && unbroken ? (tears | 0) >= TEAR_RANK",
-    "new": "(deed === 'fled' && unbroken ? (tears | 0) >= 1",
+    "old": "    ? (tears | 0) >= TEAR_RANK",
+    "new": "    ? (tears | 0) >= 1",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -140,8 +140,8 @@
   {
     "name": "AUQ-D4-tearline-unsaid",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "[craftLine(r), woundLine(r, now), ambitionLine(r), bloodLine(r), tearLine(r)]",
-    "new": "[craftLine(r), woundLine(r, now), ambitionLine(r), bloodLine(r)]",
+    "old": "  for (const line of fallen ? [] : [craftLine(r), woundLine(r, now), ambitionLine(r), bloodLine(r), tearLine(r)])",
+    "new": "  for (const line of fallen ? [] : [craftLine(r), woundLine(r, now), ambitionLine(r), bloodLine(r)])",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js",
       "test/systems/revenant/unquiet.test.js"
@@ -150,8 +150,8 @@
   {
     "name": "AUQ-D4-tearline-at-five",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "(r?.tears | 0) >= 1 && (r?.rank | 0) < REVENANT_MAX_RANK ?",
-    "new": "(r?.tears | 0) >= 1 ?",
+    "old": "  (r?.tears | 0) >= 1 && (r?.rank | 0) < REVENANT_MAX_RANK",
+    "new": "  (r?.tears | 0) >= 1",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -213,8 +213,8 @@
   {
     "name": "AUQ-D3-hoard-multiplied",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "Math.max(dread ? DREAD.GOLD : 1, Number.isFinite(plunder) && plunder > 0 ? plunder : 1)",
-    "new": "(dread ? DREAD.GOLD : 1) * (Number.isFinite(plunder) && plunder > 0 ? plunder : 1)",
+    "old": "  Math.max(dread ? DREAD.GOLD : 1, Number.isFinite(plunder) && plunder > 0 ? plunder : 1);",
+    "new": "  (dread ? DREAD.GOLD : 1) * (Number.isFinite(plunder) && plunder > 0 ? plunder : 1);",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -304,8 +304,8 @@
   {
     "name": "AUQ-A3-trail-hours-unclamped",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "Math.ceil(Math.min(HUNT.MINUTES, r.trail - now) / 60)",
-    "new": "Math.ceil((r.trail - now) / 60)",
+    "old": "export const trailHours = (r, now) => (trailWarm(r, now) ? Math.ceil(Math.min(HUNT.MINUTES, r.trail - now) / 60) : 0);",
+    "new": "export const trailHours = (r, now) => (trailWarm(r, now) ? Math.ceil((r.trail - now) / 60) : 0);",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -331,8 +331,8 @@
   {
     "name": "AUQ-A8-element-trained",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": ", [...learned, ...Object.keys(ADAPT.RESIST_OF)], r.mobileType, null);",
-    "new": ", learned, r.mobileType, null);",
+    "old": "    [...learned, ...Object.keys(ADAPT.RESIST_OF)],",
+    "new": "    learned,",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -421,8 +421,8 @@
   {
     "name": "AUQ-A5-slip-tail-dropped",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "{ given: r.given })}${revenantEscapeTail(r)}`, archive, rolls });",
-    "new": "{ given: r.given })}`, archive, rolls });",
+    "old": "    body: `${t('rvn.unq.slip', 'You hesitated. {given} got away, and it will remember.', { given: r.given })}${revenantEscapeTail(r)}`,",
+    "new": "    body: `${t('rvn.unq.slip', 'You hesitated. {given} got away, and it will remember.', { given: r.given })}`,",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -484,8 +484,8 @@
   {
     "name": "AUQ-D6-blink-pace",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "craft === 'bolt' ? CRAFT.BOLT_PACE : craft === 'blink' ? CRAFT.BLINK_PACE : craft === 'sink'",
-    "new": "craft === 'bolt' ? CRAFT.BOLT_PACE : craft === 'sink'",
+    "old": "  craft === 'bolt' ? CRAFT.BOLT_PACE : craft === 'blink' ? CRAFT.BLINK_PACE : craft === 'sink' ? CRAFT.SINK_PACE : pace;",
+    "new": "  craft === 'bolt' ? CRAFT.BOLT_PACE : craft === 'sink' ? CRAFT.SINK_PACE : pace;",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -521,8 +521,8 @@
   {
     "name": "AUQ-B1-sink-look-unsynced",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "    if (f.portalFx) f.portalFx.at = now - c.t;   // its look on the pool's clock\n",
-    "new": "",
+    "old": "    if (f.portalFx) f.portalFx.at = now - c.t; // its look on the pool's clock\n    return c.t >= CRAFT.SINK_DELAY + CRAFT.SINK_MS ? 'gone' : null;",
+    "new": "    return c.t >= CRAFT.SINK_DELAY + CRAFT.SINK_MS ? 'gone' : null;",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -530,8 +530,8 @@
   {
     "name": "AUQ-B1-blink-look-unsynced",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "  if (f.portalFx) f.portalFx.at = now - (c.t - c.fired);\n",
-    "new": "",
+    "old": "  if (f.portalFx) f.portalFx.at = now - (c.t - c.fired);\n  return c.t - c.fired >= CRAFT.BLINK_MS ? 'gone' : null;",
+    "new": "  return c.t - c.fired >= CRAFT.BLINK_MS ? 'gone' : null;",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -566,8 +566,8 @@
   {
     "name": "AUQ-B3-smoke-kept",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "  if (id != null && Array.isArray(e?.activeEffects)) e.activeEffects = e.activeEffects.filter((a) => a?.bundleId !== id);\n",
-    "new": "",
+    "old": "  if (id != null && Array.isArray(e?.activeEffects))\n    e.activeEffects = e.activeEffects.filter((a) => a?.bundleId !== id);\n  f._craft = null;",
+    "new": "  f._craft = null;",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -575,8 +575,8 @@
   {
     "name": "AUQ-B3-smoke-all-lifted",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "e.activeEffects.filter((a) => a?.bundleId !== id)",
-    "new": "[]",
+    "old": "  if (id != null && Array.isArray(e?.activeEffects))\n    e.activeEffects = e.activeEffects.filter((a) => a?.bundleId !== id);",
+    "new": "  if (id != null && Array.isArray(e?.activeEffects)) e.activeEffects = [];",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -584,8 +584,8 @@
   {
     "name": "AUQ-B3-bundle-unkept",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "    try { f._craft.bundle = assignModBundle(",
-    "new": "    try { assignModBundle(",
+    "old": "      f._craft.bundle =\n        assignModBundle(e, {\n          name: t('rvn.unq.craft.smoke', 'Smoke'),\n          kind: 'chameleonNormal',\n          rounds: CRAFT.SMOKE_ROUNDS,\n        })?.bundleId ?? null;",
+    "new": "      assignModBundle(e, {\n        name: t('rvn.unq.craft.smoke', 'Smoke'),\n        kind: 'chameleonNormal',\n        rounds: CRAFT.SMOKE_ROUNDS,\n      })?.bundleId ?? null;",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -593,8 +593,8 @@
   {
     "name": "AUQ-B5-zone-marked",
     "file": "src/systems/revenant/unquietMark.js",
-    "old": "entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && !isEventFoe(entity);",
-    "new": "entity?.unquiet === true && !entity.wildGiant && !entity.bout && !isEventFoe(entity);",
+    "old": "  entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && !isEventFoe(entity);",
+    "new": "  entity?.unquiet === true && !entity.wildGiant && !entity.bout && !isEventFoe(entity);",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -602,8 +602,8 @@
   {
     "name": "AUQ-B5-giant-marked",
     "file": "src/systems/revenant/unquietMark.js",
-    "old": "entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && !isEventFoe(entity);",
-    "new": "entity?.unquiet === true && !entity.wildFoe && !entity.bout && !isEventFoe(entity);",
+    "old": "export const isUnquiet = (entity) =>\n  entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && !isEventFoe(entity);",
+    "new": "export const isUnquiet = (entity) => entity?.unquiet === true && !entity.wildFoe && !entity.bout && !isEventFoe(entity);",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -611,8 +611,8 @@
   {
     "name": "AUQ-B5-sand-marked",
     "file": "src/systems/revenant/unquietMark.js",
-    "old": "entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && !isEventFoe(entity);",
-    "new": "entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !isEventFoe(entity);",
+    "old": "  entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && !isEventFoe(entity);",
+    "new": "  entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !isEventFoe(entity);",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -620,8 +620,8 @@
   {
     "name": "AUQ-B5-title-zone",
     "file": "src/systems/foeTitle.js",
-    "old": "entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && entity.eventFoe !== true ?",
-    "new": "entity?.unquiet === true && entity.eventFoe !== true ?",
+    "old": "  return entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && entity.eventFoe !== true\n    ? `Unquiet ${traited}`\n    : traited; // UNQUIET: the mark - it may rise (unquietMark.js isUnquiet's own test: AUDIT UNQUIET, never the zone's or the sand's; STAR-MASTER-FLED, nor an event's own - isEventFoe)",
+    "new": "  return entity?.unquiet === true && entity.eventFoe !== true ? `Unquiet ${traited}` : traited; // UNQUIET: the mark - it may rise (unquietMark.js isUnquiet's own test: AUDIT UNQUIET, never the zone's or the sand's; STAR-MASTER-FLED, nor an event's own - isEventFoe)",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -647,8 +647,8 @@
   {
     "name": "AUQ-A4-page-dread-heals",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "const heals = Number.isFinite(now) && !r?.dread && !r?.out && !held;",
-    "new": "const heals = Number.isFinite(now) && !r?.out && !held;",
+    "old": "  const heals = Number.isFinite(now) && !r?.dread && !r?.out && !held;",
+    "new": "  const heals = Number.isFinite(now) && !r?.out && !held;",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -656,8 +656,8 @@
   {
     "name": "AUQ-A4-page-out-heals",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "const heals = Number.isFinite(now) && !r?.dread && !r?.out && !held;",
-    "new": "const heals = Number.isFinite(now) && !r?.dread && !held;",
+    "old": "  const heals = Number.isFinite(now) && !r?.dread && !r?.out && !held;",
+    "new": "  const heals = Number.isFinite(now) && !r?.dread && !held;",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -665,8 +665,8 @@
   {
     "name": "AUQ-A4-page-held-heals",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "const heals = Number.isFinite(now) && !r?.dread && !r?.out && !held;",
-    "new": "const heals = Number.isFinite(now) && !r?.dread && !r?.out;",
+    "old": "  const heals = Number.isFinite(now) && !r?.dread && !r?.out && !held;",
+    "new": "  const heals = Number.isFinite(now) && !r?.dread && !r?.out;",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -674,8 +674,8 @@
   {
     "name": "AUQ-A4-held-dread-home",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  if (r.dread && !held) return",
-    "new": "  if (r.dread) return",
+    "old": "  if (r.dread && !held)",
+    "new": "  if (r.dread)",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -683,8 +683,8 @@
   {
     "name": "AUQ-A4-page-count-dread",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "living.filter((r) => !r.dread).length",
-    "new": "living.length",
+    "old": "  detail.append(divider(`Revenants (${living.filter((r) => !r.dread).length} of ${REVENANT_MAX})`)); // AUDIT UNQUIET: the cap counts those that hunt - the Dread waits",
+    "new": "  detail.append(divider(`Revenants (${living.length} of ${REVENANT_MAX})`)); // AUDIT UNQUIET: the cap counts those that hunt - the Dread waits",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -692,8 +692,8 @@
   {
     "name": "AUQ-B10-imp-blinks",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "M.AncientLich, M.Nymph, M.OrcShaman,",
-    "new": "M.AncientLich, M.Imp, M.Nymph, M.OrcShaman,",
+    "old": "  M.Nymph,",
+    "new": "  M.Imp,\n  M.Nymph,",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]

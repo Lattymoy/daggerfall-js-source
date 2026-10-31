@@ -73,44 +73,67 @@
 // SpellMakerDescription (:262-266); here the parchment simply draws
 // empty.
 
-import {
-  loadImg, nativeMetrics, drawImg, drawRect, shadowText, NATIVE_W, NATIVE_H,
-} from '../native/nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, drawRect, shadowText, NATIVE_W, NATIVE_H } from '../native/nativePanel.js';
 import { drawScreenDimBackdrop } from '../chargenArt.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from '../messageBox.js';
-import { noticeFrame, noticeRelease } from '../enhanced/enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
+import { noticeFrame, noticeRelease } from '../enhanced/enhancedNotice.js'; // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
 import { InputMessageBoxWindow } from '../inputMessageBox.js';
 import { ListPickerWindow, listPickerArtLoaded } from '../listPicker.js';
-import { SpellIconPickerWindow } from './spellIconPickerWindow.js';   // SelectIconButton's window (:894-898)
-import { preloadSpellIcons, drawSpellIcon } from './spellIcons.js';   // the one home for ICON00I0
-import { preloadLargeFont, questJournalLargeFont } from '../quest/questJournal.js';   // DaggerfallUI.LargeFont = FONT0000, one warm and one home
+import { SpellIconPickerWindow } from './spellIconPickerWindow.js'; // SelectIconButton's window (:894-898)
+import { preloadSpellIcons, drawSpellIcon } from './spellIcons.js'; // the one home for ICON00I0
+import { preloadLargeFont, questJournalLargeFont } from '../quest/questJournal.js'; // DaggerfallUI.LargeFont = FONT0000, one warm and one home
 // Internal_Strings.csv:954 ("enterSpellName" + " ") already has a home:
 // the spellbook's own rename box types under the same prompt.
 import { enterSpellNameLabel } from '../spellbookWindow.js';
 import { audio } from '../../systems/audio.js';
 import { SOUND } from '../../systems/soundClips.js';
 import {
-  SPELL_MAKER_EFFECTS, spellMakerGroups, spellMakerSubgroups, spellMakerDescriptionId,
+  SPELL_MAKER_EFFECTS,
+  spellMakerGroups,
+  spellMakerSubgroups,
+  spellMakerDescriptionId,
 } from '../../systems/spell/spellEffects.js';
 import {
-  MAX_EFFECTS_PER_SPELL, MAX_SPELL_NAME, DEFAULT_SPELL_ICON,
-  blankEffectSettings, stepSetting, setSetting, buildCustomSpell, spellMakerCost,
-  validateSpellPurchase, purchaseSpell, editedEffectCost,
-  NO_SPELLBOOK_ID, SPELLMAKER_NOT_ENOUGH_GOLD_ID, MUST_CHOOSE_NAME_ID,
-  SPELL_INSCRIBED_ID, noEffectsText,
-  updateAllowedButtons, enforceSelected, flagOfIndex,
-  DEFAULT_TARGET_INDEX, DEFAULT_ELEMENT_INDEX,
-  TARGET_FLAGS_ALL, ELEMENT_FLAGS_MAGIC_ONLY, SPELL_ICON_COUNT,
+  MAX_EFFECTS_PER_SPELL,
+  MAX_SPELL_NAME,
+  DEFAULT_SPELL_ICON,
+  blankEffectSettings,
+  stepSetting,
+  setSetting,
+  buildCustomSpell,
+  spellMakerCost,
+  validateSpellPurchase,
+  purchaseSpell,
+  editedEffectCost,
+  NO_SPELLBOOK_ID,
+  SPELLMAKER_NOT_ENOUGH_GOLD_ID,
+  MUST_CHOOSE_NAME_ID,
+  SPELL_INSCRIBED_ID,
+  noEffectsText,
+  updateAllowedButtons,
+  enforceSelected,
+  flagOfIndex,
+  DEFAULT_TARGET_INDEX,
+  DEFAULT_ELEMENT_INDEX,
+  TARGET_FLAGS_ALL,
+  ELEMENT_FLAGS_MAGIC_ONLY,
+  SPELL_ICON_COUNT,
 } from '../../systems/spell/spellMaker.js';
 import { goldAmount } from '../../systems/court.js';
 import { firstHotkey, shortcutBinding, sequenceString, normalizeCode } from '../../systems/dialogShortcuts.js';
-import { localizedStrings } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
-import { chapterPriced } from '../../net/npcChapterLaw.js';   // CHAP3c / AUDIT CHAP3 R12: a hall's band laid over a spell's making
-import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { localizedStrings } from '../../systems/textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
+import { chapterPriced } from '../../net/npcChapterLaw.js'; // CHAP3c / AUDIT CHAP3 R12: a hall's band laid over a spell's making
+import { noteFirstUse } from '../../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 // TargetTypes / ElementTypes in DFU's declaration order, which IS the
 // classic rangeType / element index order the record stores.
-export const TARGET_LABELS = ['Caster Only', 'By Touch', 'Single Target at Range', 'Area Around Caster', 'Area at Range'];
+export const TARGET_LABELS = [
+  'Caster Only',
+  'By Touch',
+  'Single Target at Range',
+  'Area Around Caster',
+  'Area at Range',
+];
 export const ELEMENT_LABELS = ['Fire', 'Frost', 'Poison', 'Shock', 'Magic'];
 
 /** Every button rect, verbatim (:36-53). INFO01I0 is a full-screen
@@ -171,7 +194,13 @@ export const SELECT_SUBRECTS = Object.freeze({
   shockBased: [24, 48, 16, 16],
   magicBased: [24, 64, 16, 16],
 });
-export const TARGET_BUTTONS = Object.freeze(['casterOnly', 'byTouch', 'singleTargetAtRange', 'areaAroundCaster', 'areaAtRange']);
+export const TARGET_BUTTONS = Object.freeze([
+  'casterOnly',
+  'byTouch',
+  'singleTargetAtRange',
+  'areaAroundCaster',
+  'areaAtRange',
+]);
 export const ELEMENT_BUTTONS = Object.freeze(['fireBased', 'coldBased', 'poisonBased', 'shockBased', 'magicBased']);
 
 /** AddTipButton's tag -> the localized string, VERBATIM from DFU's own
@@ -240,7 +269,8 @@ export const HOW_TO_ALTER_SPELL_ID = 1708;
 // ---- the settings editor's own metrics ------------------------------
 /** UpDownSpinner's three parts inside a 24x16 cell (:28-30), and the
  *  eleven cells (:31-41) + the exit button (:43). */
-export const SPINNER_W = 24, SPINNER_H = 16;
+export const SPINNER_W = 24,
+  SPINNER_H = 16;
 export const SPINNER_UP = Object.freeze([0, 0, SPINNER_W, 5]);
 export const SPINNER_VALUE = Object.freeze([0, 5, SPINNER_W, 6]);
 export const SPINNER_DOWN = Object.freeze([0, 11, SPINNER_W, 5]);
@@ -260,10 +290,16 @@ export const EDITOR_RECTS = Object.freeze({
 });
 /** Which support flag gates each spinner (InitControlState, :268-315). */
 export const EDITOR_COMPONENT = Object.freeze({
-  durationBase: 'duration', durationMod: 'duration', durationPerLevel: 'duration',
-  chanceBase: 'chance', chanceMod: 'chance', chancePerLevel: 'chance',
-  magnitudeBaseLow: 'magnitude', magnitudeBaseHigh: 'magnitude',
-  magnitudeLevelBase: 'magnitude', magnitudeLevelHigh: 'magnitude',
+  durationBase: 'duration',
+  durationMod: 'duration',
+  durationPerLevel: 'duration',
+  chanceBase: 'chance',
+  chanceMod: 'chance',
+  chancePerLevel: 'chance',
+  magnitudeBaseLow: 'magnitude',
+  magnitudeBaseHigh: 'magnitude',
+  magnitudeLevelBase: 'magnitude',
+  magnitudeLevelHigh: 'magnitude',
   magnitudePerLevel: 'magnitude',
 });
 /** The description parchment: parent (5,19,312,69) centred (:168-170)
@@ -277,9 +313,9 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && 
  *  the cell (UpDownSpinner's own ctor takes them that way). */
 export const spinnerPart = ([cx, cy], [px, py, pw, ph]) => [cx + px, cy + py, pw, ph];
 
-let _art = null;          // INFO01I0
-let _select = null;       // MASK01I0
-let _editorArt = null;    // MASK05I0
+let _art = null; // INFO01I0
+let _select = null; // MASK01I0
+let _editorArt = null; // MASK05I0
 export async function preloadSpellMakerArt(deps) {
   // The icons and the large font are shared warms - the icon well
   // draws through ui/spell/spellIcons.js and the effect rows through
@@ -291,11 +327,15 @@ export async function preloadSpellMakerArt(deps) {
     _art = await loadImg(deps, 'INFO01I0.IMG');
     _select = await loadImg(deps, 'MASK01I0.IMG');
     _editorArt = await loadImg(deps, 'MASK05I0.IMG');
-  } catch { console.warn('[spellmaker] INFO01I0 unavailable; the spell maker stays closed'); }
+  } catch {
+    console.warn('[spellmaker] INFO01I0 unavailable; the spell maker stays closed');
+  }
 }
 export const spellMakerArtLoaded = () => !!_art && !!_select && !!_editorArt;
 export function _setSpellMakerArtForTests(art, select, editor) {
-  _art = art; _select = select; _editorArt = editor;
+  _art = art;
+  _select = select;
+  _editorArt = editor;
 }
 
 /** MASK01I0's own size (selectedIconsBaseSize, :30) - the subrects
@@ -305,12 +345,16 @@ export const SELECT_SHEET = Object.freeze({ w: 40, h: 80 });
 function drawSelectMark(renderer, m, key, rect) {
   if (!_select) return;
   const [sx, sy, sw, sh] = SELECT_SUBRECTS[key];
-  renderer.drawScreenQuad(_select.tex,
+  renderer.drawScreenQuad(
+    _select.tex,
     { x: m.ox + rect[0] * m.s, y: m.oy + rect[1] * m.s, w: sw * m.s, h: sh * m.s },
     {
-      u0: sx / SELECT_SHEET.w, v0: sy / SELECT_SHEET.h,
-      u1: (sx + sw) / SELECT_SHEET.w, v1: (sy + sh) / SELECT_SHEET.h,
-    });
+      u0: sx / SELECT_SHEET.w,
+      v0: sy / SELECT_SHEET.h,
+      u1: (sx + sw) / SELECT_SHEET.w,
+      v1: (sy + sh) / SELECT_SHEET.h,
+    },
+  );
 }
 
 /**
@@ -339,7 +383,9 @@ export class EffectSettingsEditorWindow {
 
   /** UpdateCosts (:373-381) - the ONE effect's spell-point cost, with
    *  no target multiplier and no 5-point floor. */
-  cost() { return editedEffectCost(this.deps.slot, this.deps.entity).sp; }
+  cost() {
+    return editedEffectCost(this.deps.slot, this.deps.entity).sp;
+  }
 
   /** SpellMakerDescription's tokens for this effect, or [] where the
    *  record cannot be read. DFU throws on an empty set (:262-266);
@@ -354,8 +400,8 @@ export class EffectSettingsEditorWindow {
     if (!this.enabled(field)) return;
     const slot = this.deps.slot;
     if (!slot) return;
-    slot.settings = stepSetting(slot.settings ?? blankEffectSettings(), field, delta, slot.key);   // ABSORB-NERF: the effect's own range
-    this.deps.onSettingsChanged?.();   // OnValueChanged -> UpdateCosts (:409-470)
+    slot.settings = stepSetting(slot.settings ?? blankEffectSettings(), field, delta, slot.key); // ABSORB-NERF: the effect's own range
+    this.deps.onSettingsChanged?.(); // OnValueChanged -> UpdateCosts (:409-470)
   }
 
   /** HOLD-STEP: a value typed into a spinner (the enhanced port's field, ui/enhanced/enhancedPorts.js) - the step's law and its
@@ -364,8 +410,8 @@ export class EffectSettingsEditorWindow {
     if (!this.enabled(field) || !Number.isFinite(Number(value))) return;
     const slot = this.deps.slot;
     if (!slot) return;
-    slot.settings = setSetting(slot.settings ?? blankEffectSettings(), field, value, slot.key);   // ABSORB-NERF: the effect's own range
-    this.deps.onSettingsChanged?.();   // OnValueChanged -> UpdateCosts, as a step's
+    slot.settings = setSetting(slot.settings ?? blankEffectSettings(), field, value, slot.key); // ABSORB-NERF: the effect's own range
+    this.deps.onSettingsChanged?.(); // OnValueChanged -> UpdateCosts, as a step's
   }
 
   _close() {
@@ -375,24 +421,39 @@ export class EffectSettingsEditorWindow {
   }
 
   input(code) {
-    if (normalizeCode(code) === 'Escape') { this._close(); return; }
+    if (normalizeCode(code) === 'Escape') {
+      this._close();
+      return;
+    }
   }
 
   click(vx, vy) {
     for (const [field, cell] of Object.entries(EDITOR_RECTS)) {
       if (field === 'exit') continue;
       if (!this.enabled(field)) continue;
-      if (inRect(spinnerPart(cell, SPINNER_UP), vx, vy)) { this._step(field, 1); return true; }
-      if (inRect(spinnerPart(cell, SPINNER_DOWN), vx, vy)) { this._step(field, -1); return true; }
+      if (inRect(spinnerPart(cell, SPINNER_UP), vx, vy)) {
+        this._step(field, 1);
+        return true;
+      }
+      if (inRect(spinnerPart(cell, SPINNER_DOWN), vx, vy)) {
+        this._step(field, -1);
+        return true;
+      }
     }
     // ExitButton_OnMouseClick (:475-478) - CloseWindow, no sound of
     // its own (the spinners are silent too; UpDownSpinner assigns none)
-    if (inRect(EDITOR_RECTS.exit, vx, vy)) { this._close(); return true; }
-    return true;   // the background is the whole screen
+    if (inRect(EDITOR_RECTS.exit, vx, vy)) {
+      this._close();
+      return true;
+    }
+    return true; // the background is the whole screen
   }
 
   draw(renderer, canvas, font) {
-    if (!_editorArt) { this._close(); return; }
+    if (!_editorArt) {
+      this._close();
+      return;
+    }
     const m = nativeMetrics(canvas);
     // NativePanel.BackgroundColor = new Color(0, 0, 0, 0.65f) (:140)
     drawRect(renderer, m, 0, 0, NATIVE_W, NATIVE_H, [0, 0, 0, 0.65]);
@@ -427,7 +488,7 @@ export class EffectSettingsEditorWindow {
  */
 export class SpellMakerWindow {
   constructor({ entity, rows = null, onClose = null, priceFactor = null } = {}) {
-    noteFirstUse('spellmaker');   // TUT1
+    noteFirstUse('spellmaker'); // TUT1
     this.entity = entity;
     this.rows = rows;
     this.onClose = onClose;
@@ -464,7 +525,7 @@ export class SpellMakerWindow {
   }
 
   _close() {
-    noticeRelease(this);   // ENH-NOTICE2
+    noticeRelease(this); // ENH-NOTICE2
     if (this.done) return;
     this.done = true;
     this.onClose?.();
@@ -487,8 +548,12 @@ export class SpellMakerWindow {
     this._updateSpellCosts();
   }
 
-  usedSlots() { return this.slots.filter(Boolean); }
-  firstFreeSlot() { return this.slots.findIndex((s) => !s); }
+  usedSlots() {
+    return this.slots.filter(Boolean);
+  }
+  firstFreeSlot() {
+    return this.slots.findIndex((s) => !s);
+  }
 
   /** UpdateSpellCosts (:346-360). THE EMPTY-SHEET QUIRK IS DFU's:
    *  with no used slots it returns BEFORE CalculateTotalEffectCosts,
@@ -504,18 +569,24 @@ export class SpellMakerWindow {
     }
     const { gold, sp } = spellMakerCost(this._spell(), this.entity);
     // CHAP3c (Chapters-Arc 5.2): online, the hall's chapter's band laid over DFU's gold cost - DFU's own at 1 or none
-    this.totalGoldCost = chapterPriced(gold, this.priceFactor?.() ?? 1);   // AUDIT CHAP3 R12: the law's one rounding
+    this.totalGoldCost = chapterPriced(gold, this.priceFactor?.() ?? 1); // AUDIT CHAP3 R12: the law's one rounding
     this.totalSpellPointCost = sp;
   }
 
   _spell() {
     return buildCustomSpell({
-      slots: this.slots, rangeType: this.rangeType, element: this.element,
-      name: this.name, icon: this.icon, index: -1,   // a throwaway index; the BOUGHT spell mints a real one
+      slots: this.slots,
+      rangeType: this.rangeType,
+      element: this.element,
+      name: this.name,
+      icon: this.icon,
+      index: -1, // a throwaway index; the BOUGHT spell mints a real one
     });
   }
 
-  effectOf(slot) { return slot ? SPELL_MAKER_EFFECTS.find((e) => e.key === slot.key) ?? null : null; }
+  effectOf(slot) {
+    return slot ? (SPELL_MAKER_EFFECTS.find((e) => e.key === slot.key) ?? null) : null;
+  }
 
   /** SetStatusLabels (:354-360). moneyLabel is PlayerEntity.GoldPieces
    *  - COINS ONLY - while BuyButton tests GetGoldAmount(), which
@@ -539,7 +610,9 @@ export class SpellMakerWindow {
     this.box = { rows, buttons, onButton, onCancel, onDismiss };
   }
 
-  _sayText(text) { this.box = { rows: [{ text, center: true }], buttons: null }; }
+  _sayText(text) {
+    this.box = { rows: [{ text, center: true }], buttons: null };
+  }
 
   _dismissBox(button = null) {
     const b = this.box;
@@ -557,14 +630,19 @@ export class SpellMakerWindow {
   /** AddEffectButton_OnMouseClick (:703-733). */
   _addEffect() {
     audio.playOneShot(SOUND.ButtonClick, 1);
-    if (this.firstFreeSlot() === -1) { this._box(NO_MORE_THAN_3_EFFECTS_ID); return; }
-    this.tip = '';                                   // tipLabel.Text = string.Empty (:719)
+    if (this.firstFreeSlot() === -1) {
+      this._box(NO_MORE_THAN_3_EFFECTS_ID);
+      return;
+    }
+    this.tip = ''; // tipLabel.Text = string.Empty (:719)
     const groups = spellMakerGroups();
     this.picker = new ListPickerWindow({
       items: groups,
-      selectedIndex: 0,                              // ListBox.SelectedIndex = 0 (:727)
+      selectedIndex: 0, // ListBox.SelectedIndex = 0 (:727)
       onPick: (i) => this._pickGroup(groups[i]),
-      onCancel: () => { this.picker = null; },
+      onCancel: () => {
+        this.picker = null;
+      },
     });
   }
 
@@ -581,10 +659,16 @@ export class SpellMakerWindow {
     this.picker = new ListPickerWindow({
       items: subs.map((e) => e.subgroup),
       selectedIndex: 0,
-      onPick: (i) => { this.picker = null; this._addAndEditSlot(subs[i]); },
+      onPick: (i) => {
+        this.picker = null;
+        this._addAndEditSlot(subs[i]);
+      },
       // "allows user to hit escape and return to effect group list,
       // unlike classic which dumps whole spellmaker UI" (:299-300)
-      onCancel: () => { this.picker = null; this._addEffectNoSound(); },
+      onCancel: () => {
+        this.picker = null;
+        this._addEffectNoSound();
+      },
     });
   }
 
@@ -596,7 +680,9 @@ export class SpellMakerWindow {
       items: groups,
       selectedIndex: 0,
       onPick: (i) => this._pickGroup(groups[i]),
-      onCancel: () => { this.picker = null; },
+      onCancel: () => {
+        this.picker = null;
+      },
     });
   }
 
@@ -605,7 +691,9 @@ export class SpellMakerWindow {
     const slot = this.firstFreeSlot();
     if (slot === -1) return;
     this.slots[slot] = {
-      type: effect.type, subType: effect.subType, key: effect.key,
+      type: effect.type,
+      subType: effect.subType,
+      key: effect.key,
       // SetEffectTemplate -> SetSpinners(new EffectSettings()) (:388-392):
       // a fresh template starts every spinner at its own range floor.
       settings: blankEffectSettings(),
@@ -624,13 +712,17 @@ export class SpellMakerWindow {
       rows: this.rows,
       onSettingsChanged: () => this._updateSpellCosts(),
       // EffectEditor_OnClose (:997-1001)
-      onClose: () => { this.editor = null; this.editOrDeleteSlot = -1; this._updateAllowedButtons(); },
+      onClose: () => {
+        this.editor = null;
+        this.editOrDeleteSlot = -1;
+        this._updateAllowedButtons();
+      },
     });
   }
 
   /** EditOrDeleteSlot (:435-455) - the 1708 box with Edit and Delete. */
   _editOrDeleteSlot(slot) {
-    if (!this.slots[slot]) return;   // "Do nothing if slot not set" (:439-440)
+    if (!this.slots[slot]) return; // "Do nothing if slot not set" (:439-440)
     this.editOrDeleteSlot = slot;
     this._box(HOW_TO_ALTER_SPELL_ID, {
       buttons: [MB_BUTTONS.Edit, MB_BUTTONS.Delete],
@@ -646,7 +738,9 @@ export class SpellMakerWindow {
         }
       },
       // EditOrDeleteSpell_OnCancel (:971-974)
-      onCancel: () => { this.editOrDeleteSlot = -1; },
+      onCancel: () => {
+        this.editOrDeleteSlot = -1;
+      },
     });
   }
 
@@ -663,7 +757,7 @@ export class SpellMakerWindow {
   _setTarget(index) {
     if (!(this.allowedTargets & flagOfIndex(index))) return;
     this.rangeType = index;
-    this._updateSpellCosts();   // SetSpellTarget ends in UpdateSpellCosts (:520)
+    this._updateSpellCosts(); // SetSpellTarget ends in UpdateSpellCosts (:520)
   }
 
   /** SetSpellElement (:523-556) - the same gate, and NO cost update
@@ -688,7 +782,10 @@ export class SpellMakerWindow {
   _openIconPicker() {
     audio.playOneShot(SOUND.ButtonClick, 1);
     this.iconPicker = new SpellIconPickerWindow({
-      onClose: (icon) => { this.picker = null; if (icon) this.icon = icon.index % SPELL_ICON_COUNT; },
+      onClose: (icon) => {
+        this.picker = null;
+        if (icon) this.icon = icon.index % SPELL_ICON_COUNT;
+      },
     });
     this.picker = this.iconPicker;
   }
@@ -697,7 +794,10 @@ export class SpellMakerWindow {
   _buy() {
     audio.playOneShot(SOUND.ButtonClick, 1);
     const check = validateSpellPurchase({
-      entity: this.entity, slots: this.slots, goldCost: this.totalGoldCost, name: this.name,
+      entity: this.entity,
+      slots: this.slots,
+      goldCost: this.totalGoldCost,
+      name: this.name,
     });
     if (!check.ok) {
       if (check.textId) this._box(check.textId);
@@ -705,11 +805,14 @@ export class SpellMakerWindow {
       return;
     }
     const spell = buildCustomSpell({
-      slots: this.slots, rangeType: this.rangeType, element: this.element,
-      name: this.name.trim(), icon: this.icon,
+      slots: this.slots,
+      rangeType: this.rangeType,
+      element: this.element,
+      name: this.name.trim(),
+      icon: this.icon,
     });
     purchaseSpell(this.entity, spell, this.totalGoldCost);
-    audio.playOneShot(SOUND.ParchmentScratching, 1);   // inscribeGrimoire (:136)
+    audio.playOneShot(SOUND.ParchmentScratching, 1); // inscribeGrimoire (:136)
     // "Notify player and exit when this messagebox is dismissed"
     // (:790-795) - SpellHasBeenInscribed_OnClose is SetDefaults plus
     // the icon picker's ResetScrollPosition (:802-806).
@@ -743,7 +846,9 @@ export class SpellMakerWindow {
       label: enterSpellNameLabel(),
       value: this.name,
       maxCharacters: MAX_SPELL_NAME,
-      onSubmit: (input) => { this.name = input; },
+      onSubmit: (input) => {
+        this.name = input;
+      },
     });
   }
 
@@ -783,7 +888,10 @@ export class SpellMakerWindow {
   // ---- host seams ----------------------------------------------------
   hover(vx, vy, e = null) {
     this._mouse = [vx, vy];
-    if (this.picker) { this.picker.hover?.(vx, vy, e); return; }
+    if (this.picker) {
+      this.picker.hover?.(vx, vy, e);
+      return;
+    }
     if (this.editor || this.box || this.nameBox) return;
     this._setHot(this.buttonAt(vx, vy));
   }
@@ -796,10 +904,15 @@ export class SpellMakerWindow {
    *  window the same component and the same edge - so this one line
    *  now releases either occupant. The `?.` on `release` stays: the
    *  slot's contract is that a window may carry no latch at all. */
-  release() { this.picker?.release?.(); }
+  release() {
+    this.picker?.release?.();
+  }
 
   wheel(dir) {
-    if (this.picker) { this.picker.wheel?.(dir); return; }
+    if (this.picker) {
+      this.picker.wheel?.(dir);
+      return;
+    }
   }
 
   input(code, e = null) {
@@ -815,8 +928,9 @@ export class SpellMakerWindow {
     }
     if (this.box) {
       const c = normalizeCode(code, e);
-      if (this.box.buttons) { if (c === 'Escape') this._dismissBox(null); }
-      else this._dismissBox();
+      if (this.box.buttons) {
+        if (c === 'Escape') this._dismissBox(null);
+      } else this._dismissBox();
       return;
     }
     if (this.editor) {
@@ -824,11 +938,18 @@ export class SpellMakerWindow {
       if (this.editor?.done) this.editor = null;
       return;
     }
-    if (normalizeCode(code, e) === 'Escape') { this._close(); return; }
+    if (normalizeCode(code, e) === 'Escape') {
+      this._close();
+      return;
+    }
     // A8's shortcut table, finally consumed: every one of DFU's
     // eighteen SpellMaker* bindings fires its button's own handler.
     const keys = Object.keys(SPELL_MAKER_RECTS);
-    const hit = firstHotkey(keys.map((k) => SPELL_MAKER_SHORTCUTS[k]), code, e);
+    const hit = firstHotkey(
+      keys.map((k) => SPELL_MAKER_SHORTCUTS[k]),
+      code,
+      e,
+    );
     if (hit) {
       const key = keys.find((k) => SPELL_MAKER_SHORTCUTS[k] === hit);
       if (key) this._press(key);
@@ -838,20 +959,45 @@ export class SpellMakerWindow {
   /** One door for a button, whichever way it was pressed. */
   _press(key) {
     switch (key) {
-      case 'addEffect': this._addEffect(); return;
-      case 'buySpell': this._buy(); return;
-      case 'newSpell': this._newSpell(); return;
-      case 'exit': audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return;
-      case 'nameSpell': this._openNameBox(); return;
-      case 'nextIcon': this._stepIcon(1); return;
-      case 'previousIcon': this._stepIcon(-1); return;
-      case 'selectIcon': this._openIconPicker(); return;
-      default: break;
+      case 'addEffect':
+        this._addEffect();
+        return;
+      case 'buySpell':
+        this._buy();
+        return;
+      case 'newSpell':
+        this._newSpell();
+        return;
+      case 'exit':
+        audio.playOneShot(SOUND.ButtonClick, 1);
+        this._close();
+        return;
+      case 'nameSpell':
+        this._openNameBox();
+        return;
+      case 'nextIcon':
+        this._stepIcon(1);
+        return;
+      case 'previousIcon':
+        this._stepIcon(-1);
+        return;
+      case 'selectIcon':
+        this._openIconPicker();
+        return;
+      default:
+        break;
     }
     const t = TARGET_BUTTONS.indexOf(key);
-    if (t >= 0) { this._setTarget(t); audio.playOneShot(SOUND.ButtonClick, 1); return; }
+    if (t >= 0) {
+      this._setTarget(t);
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      return;
+    }
     const el = ELEMENT_BUTTONS.indexOf(key);
-    if (el >= 0) { this._setElement(el); audio.playOneShot(SOUND.ButtonClick, 1); }
+    if (el >= 0) {
+      this._setElement(el);
+      audio.playOneShot(SOUND.ButtonClick, 1);
+    }
   }
 
   click(vx, vy) {
@@ -860,7 +1006,10 @@ export class SpellMakerWindow {
       if (this.picker?.done || this.picker?.closed) this.picker = null;
       return true;
     }
-    if (this.nameBox) { this.nameBox.click(vx, vy); return true; }
+    if (this.nameBox) {
+      this.nameBox.click(vx, vy);
+      return true;
+    }
     if (this.box) {
       if (this.box.buttons) {
         const hit = this._boxLayout ? messageBoxHit(this._boxLayout, vx, vy) : null;
@@ -875,15 +1024,21 @@ export class SpellMakerWindow {
     }
     // the three effect rows (Effect1/2/3NamePanel_OnMouseClick, :1019-1028)
     for (let i = 0; i < MAX_EFFECTS_PER_SPELL; i++) {
-      if (inRect(EFFECT_NAME_PANELS[i], vx, vy)) { this._editOrDeleteSlot(i); return true; }
+      if (inRect(EFFECT_NAME_PANELS[i], vx, vy)) {
+        this._editOrDeleteSlot(i);
+        return true;
+      }
     }
     const key = this.buttonAt(vx, vy);
     if (key) this._press(key);
-    return true;   // the background is the whole screen
+    return true; // the background is the whole screen
   }
 
   draw(renderer, canvas, font) {
-    if (!_art) { this._close(); return; }
+    if (!_art) {
+      this._close();
+      return;
+    }
     const m = nativeMetrics(canvas);
     // ParentPanel.BackgroundColor = ScreenDimColor (:169), which for a
     // DaggerfallPopupWindow is Color.clear - the room stays visible.
@@ -904,8 +1059,9 @@ export class SpellMakerWindow {
       shadowText(renderer, font, L[key], m, SPELL_MAKER_LABELS[key][0], SPELL_MAKER_LABELS[key][1]);
     }
     // spellNameLabel.ShadowPosition = Vector2.zero (:266)
-    shadowText(renderer, font, L.spellName,
-      m, SPELL_MAKER_LABELS.spellName[0], SPELL_MAKER_LABELS.spellName[1], { shadowOffset: 0 });
+    shadowText(renderer, font, L.spellName, m, SPELL_MAKER_LABELS.spellName[0], SPELL_MAKER_LABELS.spellName[1], {
+      shadowOffset: 0,
+    });
 
     // the three effect rows: LargeFont, centred, no shadow (:272-276)
     const big = questJournalLargeFont() ?? font;
@@ -916,14 +1072,23 @@ export class SpellMakerWindow {
       shadowText(renderer, big, eff.name, m, px, py, { align: 'center', w: pw, shadowOffset: 0 });
     }
 
-    if (this.nameBox) { this.nameBox.draw(renderer, canvas, font); return; }
-    if (this.editor) { this.editor.draw(renderer, canvas, font); return; }
+    if (this.nameBox) {
+      this.nameBox.draw(renderer, canvas, font);
+      return;
+    }
+    if (this.editor) {
+      this.editor.draw(renderer, canvas, font);
+      return;
+    }
     if (this.picker && (this.picker !== this.iconPicker ? listPickerArtLoaded() : true)) {
       this.picker.draw(renderer, canvas, font);
       return;
     }
     // a box WITH buttons is a decision and keeps the parchment
-    if (noticeFrame(this, this.box && !this.box.buttons?.length ? this.box.rows : null)) { this._boxLayout = null; return; }
+    if (noticeFrame(this, this.box && !this.box.buttons?.length ? this.box.rows : null)) {
+      this._boxLayout = null;
+      return;
+    }
     if (this.box) {
       this._boxLayout = layoutMessageBox(font, this.box.rows, this.box.buttons ?? []);
       drawMessageBox(renderer, m, font, this._boxLayout);

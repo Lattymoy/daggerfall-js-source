@@ -44,16 +44,25 @@ import { FATIGUE_MULTIPLIER } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
 import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';
 import { youFeelSomewhatBadText } from './diseases.js';
-import { isClassEnemyId } from '../characters/enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
+import { isClassEnemyId } from '../characters/enemy/enemyBasics.js'; // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
 
 // ---- ItemEnums.Poisons, verbatim (0-7 weapon poisons, 8-11 drugs) ----
 export const POISONS = Object.freeze({
   None: -1,
-  Nux_Vomica: 128, Arsenic: 129, Moonseed: 130, Drothweed: 131,
-  Somnalius: 132, Pyrrhic_Acid: 133, Magebane: 134, Thyrwort: 135,
-  Indulcet: 136, Sursum: 137, Quaesto_Vil: 138, Aegrotat: 139,
+  Nux_Vomica: 128,
+  Arsenic: 129,
+  Moonseed: 130,
+  Drothweed: 131,
+  Somnalius: 132,
+  Pyrrhic_Acid: 133,
+  Magebane: 134,
+  Thyrwort: 135,
+  Indulcet: 136,
+  Sursum: 137,
+  Quaesto_Vil: 138,
+  Aegrotat: 139,
 });
-export const POISON_START_VALUE = 128;   // PoisonEffect.startValue
+export const POISON_START_VALUE = 128; // PoisonEffect.startValue
 export const TOTAL_POISON_VARIANTS = 12;
 
 // ---- PoisonEffect.Start's timing tables, verbatim (index = type - 128) ----
@@ -91,14 +100,20 @@ export function startPoison(target, poisonType, currentMinute, rolls = Math.rand
   // invent a poison DFU never creates.
   if (poisonType < POISON_START_VALUE || poisonType >= POISON_START_VALUE + TOTAL_POISON_VARIANTS) return null;
   const i = poisonType - POISON_START_VALUE;
-  const range = (lo, hi) => lo + Math.floor(rolls() * (hi + 1 - lo));   // Range(min, max + 1)
+  const range = (lo, hi) => lo + Math.floor(rolls() * (hi + 1 - lo)); // Range(min, max + 1)
   const minutesToStart = range(MIN_MINUTES_TO_POISON[i], MAX_MINUTES_TO_POISON[i]);
   const minutesRemaining = range(MIN_ROUNDS_OF_POISON[i], MAX_ROUNDS_OF_POISON[i]);
   if (target.activeEffects?.some((a) => a.kind === 'poison' && a.poison === poisonType && !a.ended)) return null;
   const entry = {
-    kind: 'poison', poison: poisonType, permanent: true,
-    state: 'waiting', minutesToStart, minutesRemaining,
-    lastMinute: currentMinute, statMods: {}, positiveStatsRemoved: false,
+    kind: 'poison',
+    poison: poisonType,
+    permanent: true,
+    state: 'waiting',
+    minutesToStart,
+    minutesRemaining,
+    lastMinute: currentMinute,
+    statMods: {},
+    positiveStatsRemoved: false,
   };
   target.activeEffects = target.activeEffects || [];
   target.activeEffects.push(entry);
@@ -110,7 +125,7 @@ export function startPoison(target, poisonType, currentMinute, rolls = Math.rand
 export function curePoisonEntry(entry) {
   entry.minutesRemaining = 0;
   entry.state = 'complete';
-  entry.ended = true;   // forcedRoundsRemaining = 0
+  entry.ended = true; // forcedRoundsRemaining = 0
 }
 
 /** IncrementPoisonEffects, verbatim: the Waiting countdown ticks
@@ -123,9 +138,11 @@ function incrementPoisonEffects(entry, sinks, rolls, onAlert) {
     if (--entry.minutesToStart > 0) return;
     entry.state = 'active';
   }
-  const range = (lo, hi) => lo + Math.floor(rolls() * (hi - lo));   // Range(lo, hi) exclusive
+  const range = (lo, hi) => lo + Math.floor(rolls() * (hi - lo)); // Range(lo, hi) exclusive
   const mods = entry.statMods;
-  const change = (stat, delta) => { mods[stat] = (mods[stat] ?? 0) + delta; };
+  const change = (stat, delta) => {
+    mods[stat] = (mods[stat] ?? 0) + delta;
+  };
   switch (entry.poison) {
     case POISONS.Nux_Vomica:
       if (sinks.hurt) sinks.hurt(range(2, 12));
@@ -143,7 +160,7 @@ function incrementPoisonEffects(entry, sinks, rolls, onAlert) {
       change('speed', -range(1, 5));
       break;
     case POISONS.Somnalius:
-      if (sinks.drainFatigue) sinks.drainFatigue(range(10, 100) * FATIGUE_MULTIPLIER);   // DecreaseFatigue(n, true)
+      if (sinks.drainFatigue) sinks.drainFatigue(range(10, 100) * FATIGUE_MULTIPLIER); // DecreaseFatigue(n, true)
       break;
     case POISONS.Pyrrhic_Acid:
       if (sinks.hurt) sinks.hurt(range(1, 30));
@@ -158,7 +175,7 @@ function incrementPoisonEffects(entry, sinks, rolls, onAlert) {
       break;
     case POISONS.Indulcet:
       if (sinks.drainFatigue) sinks.drainFatigue(range(10, 100) * FATIGUE_MULTIPLIER);
-      change('luck', range(4, 10));   // the drug's POSITIVE mod
+      change('luck', range(4, 10)); // the drug's POSITIVE mod
       break;
     case POISONS.Sursum:
       change('intelligence', -range(10, 30));
@@ -166,14 +183,14 @@ function incrementPoisonEffects(entry, sinks, rolls, onAlert) {
       break;
     case POISONS.Quaesto_Vil:
       change('willpower', -range(1, 4));
-      if (sinks.restoreFatigue) sinks.restoreFatigue(range(5, 10) * FATIGUE_MULTIPLIER);   // IncreaseFatigue(n, true)
+      if (sinks.restoreFatigue) sinks.restoreFatigue(range(5, 10) * FATIGUE_MULTIPLIER); // IncreaseFatigue(n, true)
       break;
     case POISONS.Aegrotat:
       change('endurance', -range(1, 5));
       if (sinks.restoreMagicka) sinks.restoreMagicka(range(5, 10));
       break;
   }
-  if (onAlert) onAlert(youFeelSomewhatBadText());   // player hosts only (the scene wires it)
+  if (onAlert) onAlert(youFeelSomewhatBadText()); // player hosts only (the scene wires it)
   if (--entry.minutesRemaining <= 0) entry.state = 'complete';
 }
 
@@ -233,8 +250,14 @@ export function inflictPoison(target, poisonType, bypassResistance, { rolls = Ma
 export function rollEnemyWeaponPoison(mobileType, playerLevel, rolls = Math.random) {
   if (playerLevel <= 1) return null;
   const isClass = isClassEnemyId(mobileType) && mobileType !== MOBILE_TYPES.None;
-  if (!isClass && mobileType !== MOBILE_TYPES.Orc && mobileType !== MOBILE_TYPES.Centaur && mobileType !== MOBILE_TYPES.OrcSergeant) return null;
+  if (
+    !isClass &&
+    mobileType !== MOBILE_TYPES.Orc &&
+    mobileType !== MOBILE_TYPES.Centaur &&
+    mobileType !== MOBILE_TYPES.OrcSergeant
+  )
+    return null;
   const chanceToPoison = mobileType === MOBILE_TYPES.Assassin ? 60 : 5;
   if (!dice100(chanceToPoison, rolls())) return null;
-  return POISON_START_VALUE + Math.floor(rolls() * 8);   // Range(128, 135 + 1)
+  return POISON_START_VALUE + Math.floor(rolls() * 8); // Range(128, 135 + 1)
 }

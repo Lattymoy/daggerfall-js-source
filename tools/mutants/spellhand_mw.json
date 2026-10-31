@@ -11,8 +11,8 @@
   {
     "name": "SPELLHANDMW-spell-arm-mirrored",
     "file": "src/combat/twoHands/spellHandArm.js",
-    "old": "{ [SPELL_HAND_ARM.spell]: { clip: spellIdle, side: SPELL_HAND_ARM.spell, mirror: false } }",
-    "new": "{ [SPELL_HAND_ARM.spell]: { clip: spellIdle, side: SPELL_HAND_ARM.weapon, mirror: true } }",
+    "old": "          limbs: { [SPELL_HAND_ARM.spell]: { clip: spellIdle, side: SPELL_HAND_ARM.spell, mirror: false } },",
+    "new": "          limbs: { [SPELL_HAND_ARM.spell]: { clip: spellIdle, side: SPELL_HAND_ARM.weapon, mirror: true } },",
     "tests": [
       "test/combat/spellhand_mw.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "MIXEDMW-blow-type-any-hand",
     "file": "src/combat/twoHands/mixedArm.js",
-    "old": "(gunArm && hand === 'L' && Number.isFinite(offType) ? offType : null)",
-    "new": "(gunArm && Number.isFinite(offType) ? offType : null)",
+    "old": "  gunArm && hand === 'L' && Number.isFinite(offType) ? offType : null;",
+    "new": "  gunArm && Number.isFinite(offType) ? offType : null;",
     "tests": [
       "test/combat/spellhand_mw.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "MIXEDMW-stance-one-hand-unread",
     "file": "src/combat/gun/pistolStance.js",
-    "old": "  const needR = only !== 'L', needL = pair || only === 'L';",
-    "new": "  const needR = true, needL = pair;",
+    "old": "  const needR = only !== 'L',\n    needL = pair || only === 'L';",
+    "new": "  const needR = true,\n    needL = pair;",
     "tests": [
       "test/combat/spellhand_mw.test.js"
     ]

@@ -226,7 +226,7 @@ test('AUDIT TESA II P7 THE LANES PAST THE BAY: their own reach and their own nea
   const two = [{ id: 1, name: 'A', px: 2000, py: -300 }, { id: 2, name: 'B', px: 2300, py: -300 }];
   assert.equal(laneNetwork(two, open, BEYOND_LANE_MAX_PX).length, 1);
   assert.equal(laneNetwork(two, open).length, 0, 'the Bay\'s reach: none');
-  assert.match(rd('src/scenes/naval/worldLanes.js'), /beyondList = longLanes\(loneLanes\(laneNetwork\(ports\.list\(\), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX\)\)\);/);   // PIN MOVED (SEA-SQUARE): the roomiest roadstead; PIN MOVED (AUDIT SEA PATHS LN-2, O2): a lone port its way's cap, and farther where none has a way; PIN MOVED (C1): a lane past its cap its own length
+  assert.match(rd('src/scenes/naval/worldLanes.js'), /beyondList = longLanes\(\n\s*loneLanes\(laneNetwork\(ports\.list\(\), worldOpen, BEYOND_LANE_MAX_PX, true, BEYOND_LANE_PATH_PX\)\),\n\s*\);/);   // PIN MOVED (SEA-SQUARE): the roomiest roadstead; PIN MOVED (AUDIT SEA PATHS LN-2, O2): a lone port its way's cap, and farther where none has a way; PIN MOVED (C1): a lane past its cap its own length
   assert.match(W, /if \(!worldLanes\.near\(lane, here\)\) continue;/, 'the host\'s feed asks the book');
 });
 

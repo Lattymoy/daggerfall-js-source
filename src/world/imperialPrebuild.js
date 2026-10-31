@@ -13,9 +13,38 @@
 // over the parts it builds on its own model door) on the blocks it makes: a taken block is the page's own to the byte.
 //
 // Pure but for the client's own registry (setImperialPrebuild / imperialPrebuilt) - the worker imports the work's half.
-import { IMPERIAL_SPAN, IMPERIAL_ARENA_CODE, IMPERIAL_SLICE_PARTS, imperialSlicePlan, imperialCodeCell, imperialFarPartId } from './imperialCity.js';
-import { imperialOwnName, imperialFarName, imperialFabricModelId, imperialSkylineId, imperialBlockJson, imperialModelBuild, isCarrier, imperialBlockOf, sliceOfCell, isFabricModelId, isSkylineId, IMPERIAL_FABRIC_MODEL, IMPERIAL_SKYLINE_MODEL } from './imperialBlocks.js';
-import { CAPITALS, portBlockJson, miscModelAt, startMarkerAt, inCapitalRim, CAPITAL_NO_GROUND, BLOCK_M } from './tamrielCapitals.js';
+import {
+  IMPERIAL_SPAN,
+  IMPERIAL_ARENA_CODE,
+  IMPERIAL_SLICE_PARTS,
+  imperialSlicePlan,
+  imperialCodeCell,
+  imperialFarPartId,
+} from './imperialCity.js';
+import {
+  imperialOwnName,
+  imperialFarName,
+  imperialFabricModelId,
+  imperialSkylineId,
+  imperialBlockJson,
+  imperialModelBuild,
+  isCarrier,
+  imperialBlockOf,
+  sliceOfCell,
+  isFabricModelId,
+  isSkylineId,
+  IMPERIAL_FABRIC_MODEL,
+  IMPERIAL_SKYLINE_MODEL,
+} from './imperialBlocks.js';
+import {
+  CAPITALS,
+  portBlockJson,
+  miscModelAt,
+  startMarkerAt,
+  inCapitalRim,
+  CAPITAL_NO_GROUND,
+  BLOCK_M,
+} from './tamrielCapitals.js';
 
 const B = BLOCK_M;
 
@@ -30,19 +59,36 @@ const B = BLOCK_M;
  * @returns {Array<{ kind: 'block', name: string } | { kind: 'model', id: number }>}
  */
 export function sliceWork(s, near) {
-  const plan = imperialSlicePlan(s), sx = s % IMPERIAL_SPAN, sy = Math.floor(s / IMPERIAL_SPAN);
+  const plan = imperialSlicePlan(s),
+    sx = s % IMPERIAL_SPAN,
+    sy = Math.floor(s / IMPERIAL_SPAN);
   /** @type {Array<{ kind: 'block', name: string } | { kind: 'model', id: number }>} */
-  const blocks = [], models = [];
+  const blocks = [],
+    models = [];
   for (let i = 0; i < 64; i++) {
-    const pr = 7 - Math.floor(i / 8), pc = i % 8, r = sy * 8 + pr, c = sx * 8 + pc, cell = plan[pr][pc];
+    const pr = 7 - Math.floor(i / 8),
+      pc = i % 8,
+      r = sy * 8 + pr,
+      c = sx * 8 + pc,
+      cell = plan[pr][pc];
     const own = !!imperialCodeCell(cell);
-    if (near) { if (own) { blocks.push({ kind: 'block', name: imperialOwnName(r, c) }); models.push({ kind: 'model', id: imperialFabricModelId(r, c) }); } }
-    else if (cell !== 'L' && cell !== 'O' && cell !== IMPERIAL_ARENA_CODE) {
+    if (near) {
+      if (own) {
+        blocks.push({ kind: 'block', name: imperialOwnName(r, c) });
+        models.push({ kind: 'model', id: imperialFabricModelId(r, c) });
+      }
+    } else if (cell !== 'L' && cell !== 'O' && cell !== IMPERIAL_ARENA_CODE) {
       blocks.push({ kind: 'block', name: imperialFarName(r, c) });
       if (own && isCarrier(r, c)) models.push({ kind: 'model', id: imperialSkylineId(s) });
     }
   }
-  return [...blocks, ...IMPERIAL_SLICE_PARTS[s].map((id) => /** @type {{ kind: 'model', id: number }} */ ({ kind: 'model', id: near ? id : imperialFarPartId(id) })), ...models];   // IC-TOWER-LOD: a far view's coarse
+  return [
+    ...blocks,
+    ...IMPERIAL_SLICE_PARTS[s].map(
+      (id) => /** @type {{ kind: 'model', id: number }} */ ({ kind: 'model', id: near ? id : imperialFarPartId(id) }),
+    ),
+    ...models,
+  ]; // IC-TOWER-LOD: a far view's coarse
 }
 
 /** IC-STUTTER: each landmark part's slice (its first, where a long wall's runs stand in several), near and far ids alike. */
@@ -56,14 +102,22 @@ let _partSlices = null;
  */
 export function pieceSlice(key) {
   if (typeof key !== 'string') return null;
-  if (key.startsWith('b:')) { const b = imperialBlockOf(key.slice(2)); return b ? sliceOfCell(b.r, b.c) : null; }
+  if (key.startsWith('b:')) {
+    const b = imperialBlockOf(key.slice(2));
+    return b ? sliceOfCell(b.r, b.c) : null;
+  }
   const id = key.startsWith('m:') ? Number(key.slice(2)) : NaN;
   if (!Number.isInteger(id)) return null;
-  if (isFabricModelId(id)) { const k = id - IMPERIAL_FABRIC_MODEL; return sliceOfCell(Math.floor(k / (8 * IMPERIAL_SPAN)), k % (8 * IMPERIAL_SPAN)); }
+  if (isFabricModelId(id)) {
+    const k = id - IMPERIAL_FABRIC_MODEL;
+    return sliceOfCell(Math.floor(k / (8 * IMPERIAL_SPAN)), k % (8 * IMPERIAL_SPAN));
+  }
   if (isSkylineId(id)) return id - IMPERIAL_SKYLINE_MODEL;
   if (!_partSlices) {
     _partSlices = new Map();
-    IMPERIAL_SLICE_PARTS.forEach((ids, s) => { for (const p of ids) for (const q of [p, imperialFarPartId(p)]) if (!_partSlices.has(q)) _partSlices.set(q, s); });
+    IMPERIAL_SLICE_PARTS.forEach((ids, s) => {
+      for (const p of ids) for (const q of [p, imperialFarPartId(p)]) if (!_partSlices.has(q)) _partSlices.set(q, s);
+    });
   }
   return _partSlices.get(id) ?? null;
 }
@@ -75,8 +129,15 @@ export function pieceSlice(key) {
 export function prebuildDeps(footprintOf = () => null, partModel = null) {
   const IC = CAPITALS.find((c) => c.family);
   return {
-    portBlockJson, miscModelAt, startMarkerAt, footprintOf, partModel, anchorMarkers: IC?.markers ?? [], noGround: CAPITAL_NO_GROUND,
-    rim: (/** @type {number} */ r, /** @type {number} */ c, /** @type {number} */ x, /** @type {number} */ z) => !!IC && inCapitalRim(IC, c * B + x, (r + 1) * B - z),
+    portBlockJson,
+    miscModelAt,
+    startMarkerAt,
+    footprintOf,
+    partModel,
+    anchorMarkers: IC?.markers ?? [],
+    noGround: CAPITAL_NO_GROUND,
+    rim: (/** @type {number} */ r, /** @type {number} */ c, /** @type {number} */ x, /** @type {number} */ z) =>
+      !!IC && inCapitalRim(IC, c * B + x, (r + 1) * B - z),
   };
 }
 /**
@@ -87,13 +148,20 @@ export function prebuildDeps(footprintOf = () => null, partModel = null) {
 export function makeWork(w, deps) {
   if (w.kind === 'model') return deps.partModel?.(w.id) ?? imperialModelBuild(w.id) ?? null;
   const json = imperialBlockJson(w.name, deps);
-  if (json?.RmbBlock?.FldHeader) json.RmbBlock.FldHeader.AutoMapData = Uint8Array.from(json.RmbBlock.FldHeader.AutoMapData);
+  if (json?.RmbBlock?.FldHeader)
+    json.RmbBlock.FldHeader.AutoMapData = Uint8Array.from(json.RmbBlock.FldHeader.AutoMapData);
   return json;
 }
 /** A made model's buffers, to hand across without a copy. */
-export const modelTransfers = (m) => (m ? [m.positions, m.normals, m.uvs, m.indices].filter((a) => a?.buffer).map((a) => a.buffer) : []);
+export const modelTransfers = (m) =>
+  m ? [m.positions, m.normals, m.uvs, m.indices].filter((a) => a?.buffer).map((a) => a.buffer) : [];
 
 /** THE PAGE'S CLIENT (world/imperialPrebuildClient.js), once one stands - the door and the family ask it. */
-let _client = /** @type {?{ takeBlock: (name: string) => any, takeModel: (id: number) => any, made: (key: string) => void }} */ (null);
-export const setImperialPrebuild = (/** @type {any} */ c) => { _client = c ?? null; };
+let _client =
+  /** @type {?{ takeBlock: (name: string) => any, takeModel: (id: number) => any, made: (key: string) => void }} */ (
+    null
+  );
+export const setImperialPrebuild = (/** @type {any} */ c) => {
+  _client = c ?? null;
+};
 export const imperialPrebuilt = () => _client;

@@ -386,7 +386,7 @@ test('AUDIT 63 F33: all five activation ladders carry the arm - the four hosts a
   // and the pickpocket law is ONE law with an optional target, as
   // DFU's Pickpocket(target = null) is
   const talk = read('../../src/systems/talk/talk.js');
-  assert.ok(/export function pickpocket\(player, \{ target = null/.test(talk));
+  assert.ok(/export function pickpocket\(\n\s*player,\n\s*\{ target = null/.test(talk));
   assert.ok(/if \(!target && !racialSuppressCrime\(player\)\)/.test(talk),
     'the crime write is the townsperson arm alone (:1655)');
 });

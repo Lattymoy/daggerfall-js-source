@@ -27,13 +27,26 @@ export function egRoomsOf(spec) {
     if (!q.room) continue;
     const { k, p, u, t } = q.room;
     const R = egRoomTurned(egRoomBuild(k, p, u, spec.band ?? 0, q.kit), u[0], t);
-    out.push({ q, walls: R.walls.map((w) => ({ a: [q.x + w.s[0] / 100, q.z + w.s[1] / 100], b: [q.x + w.s[2] / 100, q.z + w.s[3] / 100], y0: q.y + w.y0 / 100, y1: q.y + w.y1 / 100, k: w.k })) });
+    out.push({
+      q,
+      walls: R.walls.map((w) => ({
+        a: [q.x + w.s[0] / 100, q.z + w.s[1] / 100],
+        b: [q.x + w.s[2] / 100, q.z + w.s[3] / 100],
+        y0: q.y + w.y0 / 100,
+        y1: q.y + w.y1 / 100,
+        k: w.k,
+      })),
+    });
   }
   return out;
 }
 
 /** A polygon's triangles as a fan (every room's floor and ceiling is a convex outline - net/eliteGates/egRoomLaw.js's rectangles). */
-const fan = (poly) => { const out = []; for (let i = 1; i + 1 < poly.length; i++) out.push([poly[0], poly[i], poly[i + 1]]); return out; };
+const fan = (poly) => {
+  const out = [];
+  for (let i = 1; i + 1 < poly.length; i++) out.push([poly[0], poly[i], poly[i + 1]]);
+  return out;
+};
 
 /**
  * A ROOM'S COLLIDER (the dungeon's frame; both faces are one to the collider): its floors' tops and its ceilings' undersides
@@ -45,11 +58,17 @@ export function egRoomColliderInto(spec, out) {
   const D = (x, y, z) => realmToDungeon(spec.x0 + x, y, z);
   const tri = (a, b, c) => out.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]);
   for (const { q, walls } of egRoomsOf(spec)) {
-    for (const f of q.floors) for (const [a, b, c] of fan(f.poly)) tri(D(a[0], f.y, a[1]), D(b[0], f.y, b[1]), D(c[0], f.y, c[1]));
-    for (const c of q.ceil ?? []) for (const [a, b, e] of fan(c.poly)) tri(D(a[0], c.y, a[1]), D(b[0], c.y, b[1]), D(e[0], c.y, e[1]));
+    for (const f of q.floors)
+      for (const [a, b, c] of fan(f.poly)) tri(D(a[0], f.y, a[1]), D(b[0], f.y, b[1]), D(c[0], f.y, c[1]));
+    for (const c of q.ceil ?? [])
+      for (const [a, b, e] of fan(c.poly)) tri(D(a[0], c.y, a[1]), D(b[0], c.y, b[1]), D(e[0], c.y, e[1]));
     for (const w of walls) {
-      const p0 = D(w.a[0], w.y0, w.a[1]), p1 = D(w.b[0], w.y0, w.b[1]), p2 = D(w.b[0], w.y1, w.b[1]), p3 = D(w.a[0], w.y1, w.a[1]);
-      tri(p0, p1, p2); tri(p0, p2, p3);
+      const p0 = D(w.a[0], w.y0, w.a[1]),
+        p1 = D(w.b[0], w.y0, w.b[1]),
+        p2 = D(w.b[0], w.y1, w.b[1]),
+        p3 = D(w.a[0], w.y1, w.a[1]);
+      tri(p0, p1, p2);
+      tri(p0, p2, p3);
     }
   }
   return out;
@@ -69,29 +88,40 @@ export function egRoomModelInto(f, spec, recs, occ) {
   const triTo = (rec, a, b, c, ny) => {
     const n = (b[2] - a[2]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[2] - a[2]);
     const uv = (p) => [p[0] / 2, p[2] / 2];
-    if (n * ny >= 0) f.tri(rec, a, b, c, uv(a), uv(b), uv(c)); else f.tri(rec, a, c, b, uv(a), uv(c), uv(b));
+    if (n * ny >= 0) f.tri(rec, a, b, c, uv(a), uv(b), uv(c));
+    else f.tri(rec, a, c, b, uv(a), uv(c), uv(b));
   };
   /** a vertical quad from (a, y0) to (b, y1), both its faces */
   const both = (rec, a, b, y0, y1) => {
-    const L = Math.hypot(b[0] - a[0], b[1] - a[1]), h = y1 - y0;
-    const p0 = D(a[0], y0, a[1]), p1 = D(b[0], y0, b[1]), p2 = D(b[0], y1, b[1]), p3 = D(a[0], y1, a[1]);
+    const L = Math.hypot(b[0] - a[0], b[1] - a[1]),
+      h = y1 - y0;
+    const p0 = D(a[0], y0, a[1]),
+      p1 = D(b[0], y0, b[1]),
+      p2 = D(b[0], y1, b[1]),
+      p3 = D(a[0], y1, a[1]);
     f.quad(rec, p0, p1, p2, p3, [0, 0], [L / 2, 0], [L / 2, h / 2], [0, h / 2]);
     f.quad(rec, p1, p0, p3, p2, [L / 2, 0], [0, 0], [0, h / 2], [L / 2, h / 2]);
   };
   for (const { q, walls } of egRoomsOf(spec)) {
     for (const g of q.floors) {
       // the top you stand on, the slab's underside, its edges (both faces - a slab is thin)
-      for (const [a, b, c] of fan(g.poly)) triTo(recs.floor, D(a[0], g.y, a[1]), D(b[0], g.y, b[1]), D(c[0], g.y, c[1]), 1);
-      for (const [a, b, c] of fan(g.poly)) triTo(recs.root, D(a[0], g.y - S, a[1]), D(b[0], g.y - S, b[1]), D(c[0], g.y - S, c[1]), -1);
+      for (const [a, b, c] of fan(g.poly))
+        triTo(recs.floor, D(a[0], g.y, a[1]), D(b[0], g.y, b[1]), D(c[0], g.y, c[1]), 1);
+      for (const [a, b, c] of fan(g.poly))
+        triTo(recs.root, D(a[0], g.y - S, a[1]), D(b[0], g.y - S, b[1]), D(c[0], g.y - S, c[1]), -1);
       for (let i = 0; i < g.poly.length; i++) both(recs.root, g.poly[i], g.poly[(i + 1) % g.poly.length], g.y - S, g.y);
     }
     occ(() => {
       for (const c of q.ceil ?? []) {
-        for (const [a, b, e] of fan(c.poly)) triTo(recs.root, D(a[0], c.y, a[1]), D(b[0], c.y, b[1]), D(e[0], c.y, e[1]), -1);
-        for (const [a, b, e] of fan(c.poly)) triTo(recs.root, D(a[0], c.y + S, a[1]), D(b[0], c.y + S, b[1]), D(e[0], c.y + S, e[1]), 1);
+        for (const [a, b, e] of fan(c.poly))
+          triTo(recs.root, D(a[0], c.y, a[1]), D(b[0], c.y, b[1]), D(e[0], c.y, e[1]), -1);
+        for (const [a, b, e] of fan(c.poly))
+          triTo(recs.root, D(a[0], c.y + S, a[1]), D(b[0], c.y + S, b[1]), D(e[0], c.y + S, e[1]), 1);
       }
     });
-    occ(() => { for (const w of walls) both(w.k === 'r' ? recs.rail : w.k === 'c' ? recs.root : recs.wall, w.a, w.b, w.y0, w.y1); });
+    occ(() => {
+      for (const w of walls) both(w.k === 'r' ? recs.rail : w.k === 'c' ? recs.root : recs.wall, w.a, w.b, w.y0, w.y1);
+    });
   }
 }
 
@@ -102,17 +132,48 @@ export const EG_CLIMB_ZONE_OUT_M = 1.5;
 export function egClimbZones(spec) {
   const out = [];
   for (const c of spec?.climbs ?? []) {
-    const back = c.d * c.ledges.length, [nx, nz] = c.face;
-    const xs = [c.x0, c.x1, c.x0 + nx * EG_CLIMB_ZONE_OUT_M, c.x1 + nx * EG_CLIMB_ZONE_OUT_M, c.x0 - nx * back, c.x1 - nx * back];
-    const zs = [c.z0, c.z1, c.z0 + nz * EG_CLIMB_ZONE_OUT_M, c.z1 + nz * EG_CLIMB_ZONE_OUT_M, c.z0 - nz * back, c.z1 - nz * back];
-    out.push({ t: 'climb', c, x0: Math.min(...xs), x1: Math.max(...xs), z0: Math.min(...zs), z1: Math.max(...zs), y: c.y0 - 0.5, ceil: c.y1 + 2.5 });
+    const back = c.d * c.ledges.length,
+      [nx, nz] = c.face;
+    const xs = [
+      c.x0,
+      c.x1,
+      c.x0 + nx * EG_CLIMB_ZONE_OUT_M,
+      c.x1 + nx * EG_CLIMB_ZONE_OUT_M,
+      c.x0 - nx * back,
+      c.x1 - nx * back,
+    ];
+    const zs = [
+      c.z0,
+      c.z1,
+      c.z0 + nz * EG_CLIMB_ZONE_OUT_M,
+      c.z1 + nz * EG_CLIMB_ZONE_OUT_M,
+      c.z0 - nz * back,
+      c.z1 - nz * back,
+    ];
+    out.push({
+      t: 'climb',
+      c,
+      x0: Math.min(...xs),
+      x1: Math.max(...xs),
+      z0: Math.min(...zs),
+      z1: Math.max(...zs),
+      y: c.y0 - 0.5,
+      ceil: c.y1 + 2.5,
+    });
   }
   return out;
 }
 /** A CLIMB'S KEEP: (x, z) held along its face's span (a climber shimmies no further than the face built for it), `r` its body's
  *  radius - `[x, z]` where it is put, null where it stands within. Pure. */
 export function egClimbKeep(q, x, z, r) {
-  const c = q.c, ax = c.x0, az = c.z0, ex = c.x1 - c.x0, ez = c.z1 - c.z0, L = Math.hypot(ex, ez) || 1, ux = ex / L, uz = ez / L;
+  const c = q.c,
+    ax = c.x0,
+    az = c.z0,
+    ex = c.x1 - c.x0,
+    ez = c.z1 - c.z0,
+    L = Math.hypot(ex, ez) || 1,
+    ux = ex / L,
+    uz = ez / L;
   const t = (x - ax) * ux + (z - az) * uz;
   if (t >= r && t <= L - r) return null;
   const tt = Math.max(r, Math.min(L - r, t));

@@ -2,8 +2,8 @@
   {
     "name": "QA2-guild-rung-unread",
     "file": "src/systems/quest/person.js",
-    "old": "      ?? (guild ? halls.find((b) => b.npcs.some(sameLook)) ?? halls.find((b) => b.npcs.some((n) => n.factionID === q.factionID)) : null);",
-    "new": "      ?? null;",
+    "old": "      (guild\n        ? (halls.find((b) => b.npcs.some(sameLook)) ??\n          halls.find((b) => b.npcs.some((n) => n.factionID === q.factionID)))\n        : null);",
+    "new": "      null;",
     "tests": [
       "test/systems/quest/qa2_layouts.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "QA2-guild-look-only",
     "file": "src/systems/quest/person.js",
-    "old": "      ?? (guild ? halls.find((b) => b.npcs.some(sameLook)) ?? halls.find((b) => b.npcs.some((n) => n.factionID === q.factionID)) : null);",
-    "new": "      ?? (guild ? halls.find((b) => b.npcs.some(sameLook)) : null);",
+    "old": "      (guild\n        ? (halls.find((b) => b.npcs.some(sameLook)) ??\n          halls.find((b) => b.npcs.some((n) => n.factionID === q.factionID)))\n        : null);",
+    "new": "      (guild ? halls.find((b) => b.npcs.some(sameLook)) : null);",
     "tests": [
       "test/systems/quest/qa2_layouts.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "QA2-heldback-unread-questor",
     "file": "src/systems/quest/person.js",
-    "old": "    if (recordHeldBack(q)) return false;",
-    "new": "",
+    "old": "    if (recordHeldBack(q)) return false; // QUEST-AUDIT II PIN-SLEEP: a town standing apart for this session only - the questor's record sleeps, never rewritten",
+    "new": "    // QUEST-AUDIT II PIN-SLEEP: a town standing apart for this session only - the questor's record sleeps, never rewritten",
     "tests": [
       "test/systems/quest/qa2_layouts.test.js"
     ]
@@ -92,7 +92,7 @@
   {
     "name": "QA2-own-site-unkept",
     "file": "src/systems/quest/machine.js",
-    "old": "    for (const r of quest.resources.values()) if (r.isPlace && sitesBefore.has(r.symbol?.name)) r.keepOwnSite?.(sitesBefore.get(r.symbol?.name));",
+    "old": "    for (const r of quest.resources.values())\n      if (r.isPlace && sitesBefore.has(r.symbol?.name)) r.keepOwnSite?.(sitesBefore.get(r.symbol?.name));",
     "new": "",
     "tests": [
       "test/systems/quest/qa2_layouts.test.js"

@@ -43,7 +43,7 @@
 // law ("NEVER TRAPS"), on a surface a player reaches far more often.
 // ═══════════════════════════════════════════════════════════════════
 
-import { t, localizedText } from '../systems/textManager.js';   // L10N4: the tile's words in the player's language (a leaf - it imports nothing)
+import { t, localizedText } from '../systems/textManager.js'; // L10N4: the tile's words in the player's language (a leaf - it imports nothing)
 
 /** The cloud states a tile can be in. `off` draws no cloud line at all
  *  - ACC0's wall is at cloud saves, and a player with no account is not
@@ -82,7 +82,8 @@ export const CLOUD_STATES = Object.freeze(['off', 'none', 'saved', 'busy', 'bad'
  * @param {{gameTime?: number, realTime?: number}|null|undefined} local  this device's slot's `dateAndTime`
  */
 export function newerBackup(card, local) {
-  const g = card?.gameTime, lg = local?.gameTime;
+  const g = card?.gameTime,
+    lg = local?.gameTime;
   // the same save (or one side's minute unknown - a card from before ACC2 carried it, a caller with no local
   // time handed none) is never "newer": it reads as it always read
   if (!Number.isFinite(g) || !Number.isFinite(lg) || g === lg) return false;
@@ -120,7 +121,16 @@ export function newerBackup(card, local) {
  *        was saved (its SaveInfo `dateAndTime`) - a later save in the backup is `newer`. Absent, it reads as before.
  * @returns {{state: string, when: string|null, error: string|null}}
  */
-export function cloudStateOf({ signedIn = false, characterId = null, card = null, busy = false, error = null, nowS = 0, local = true, localTime = null } = {}) {
+export function cloudStateOf({
+  signedIn = false,
+  characterId = null,
+  card = null,
+  busy = false,
+  error = null,
+  nowS = 0,
+  local = true,
+  localTime = null,
+} = {}) {
   if (!signedIn) return { state: 'off', when: null, error: null };
   // ACC2c — A CARD WITH NO SAVE UNDER IT IS ITS OWN LADDER, kept whole
   // rather than threaded through the one below, because every rung of
@@ -175,11 +185,14 @@ export function agoText(thenS, nowS) {
 
 /** The line under the name: what a player would say about a character.
  *  Empty parts drop out rather than leaving a dangling separator. */
-export const tileLine = (save) => [
-  save?.race ?? null,
-  save?.career ?? null,
-  save?.level ? t('menu.save.level', 'level {level}', { level: save.level }) : null,
-].filter(Boolean).join(' · ');
+export const tileLine = (save) =>
+  [
+    save?.race ?? null,
+    save?.career ?? null,
+    save?.level ? t('menu.save.level', 'level {level}', { level: save.level }) : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
 /** ...and the line under THAT: when, in the world's own calendar. */
 export const tileWhen = (save) => [save?.when ?? null, save?.hour ?? null].filter(Boolean).join(' · ');
@@ -261,12 +274,20 @@ export function saveTile(doc, save, { actions = [], cloud = null, face = null, c
   const fallback = el('span', 'svinitial', initialOf(save));
   well.append(fallback);
   const waited = /** @type {Promise<HTMLCanvasElement|null>|null} */ (
-    face && typeof (/** @type {any} */ (face).then) === 'function' ? face : null);
+    face && typeof (/** @type {any} */ (face).then) === 'function' ? face : null
+  );
   if (waited) {
     // NOT AWAITED. The tile has to be on screen before the art is: a
     // list that waits for ten CIF reads is a menu that opens late, and
     // the well already draws something.
-    waited.then((art) => { if (art) { fallback.remove(); well.append(art); } }).catch(() => {});
+    waited
+      .then((art) => {
+        if (art) {
+          fallback.remove();
+          well.append(art);
+        }
+      })
+      .catch(() => {});
   } else if (face) {
     fallback.remove();
     well.append(/** @type {HTMLCanvasElement} */ (face));
@@ -286,14 +307,16 @@ export function saveTile(doc, save, { actions = [], cloud = null, face = null, c
   top.append(el('h3', null, save?.name || t('menu.save.unnamed', 'Unnamed')));
   if (save?.saveName) top.append(el('span', 'svslot', save.saveName));
   who.append(top);
-  if (save?.house) who.append(el('p', 'svhouse', save.house));   // LEGACY7: the house, under the name (net/houseLaw.js houseLine)
+  if (save?.house) who.append(el('p', 'svhouse', save.house)); // LEGACY7: the house, under the name (net/houseLaw.js houseLine)
   const line = tileLine(save);
   if (line) who.append(el('p', 'svsub', line));
   const when = tileWhen(save);
   if (when) who.append(el('p', 'svwhen', when));
 
   const dl = el('dl', 'stats');
-  const row = (k, v) => { if (v != null) dl.append(el('dt', null, k), el('dd', null, String(v))); };
+  const row = (k, v) => {
+    if (v != null) dl.append(el('dt', null, k), el('dd', null, String(v)));
+  };
   row(localizedText('health', 'Health'), save?.maxHealth ? `${save.health} / ${save.maxHealth}` : save?.health);
   row(t('menu.save.gold', 'Gold'), Number.isFinite(save?.gold) ? save.gold.toLocaleString() : null);
   if (dl.childNodes.length) who.append(dl);
@@ -324,7 +347,9 @@ export function saveTile(doc, save, { actions = [], cloud = null, face = null, c
     const bar = el('div', `svcloud is-${state}`);
     const said = {
       none: t('menu.cloud.none', 'Not backed up'),
-      saved: cloud.when ? t('menu.cloud.savedWhen', 'Backed up · {when}', { when: cloud.when }) : t('menu.cloud.saved', 'Backed up'),
+      saved: cloud.when
+        ? t('menu.cloud.savedWhen', 'Backed up · {when}', { when: cloud.when })
+        : t('menu.cloud.saved', 'Backed up'),
       busy: t('menu.cloud.busy', 'Backing up…'),
       // A REFUSAL IS THE SERVICE'S OWN SENTENCE, handed in - this file
       // owns no words about why a backup failed.
@@ -337,10 +362,14 @@ export function saveTile(doc, save, { actions = [], cloud = null, face = null, c
       // WHERE the save is rather than that it is safe - "Backed up"
       // under a tile whose only copy is the backup would be telling a
       // player they have two of something they have one of.
-      only: cloud.when ? t('menu.cloud.onlyWhen', 'Only in your backup · {when}', { when: cloud.when }) : t('menu.cloud.only', 'Only in your backup'),
+      only: cloud.when
+        ? t('menu.cloud.onlyWhen', 'Only in your backup · {when}', { when: cloud.when })
+        : t('menu.cloud.only', 'Only in your backup'),
       // FIELD 2026-09-27: the backup is a LATER save of this slot, from another device - the line says which copy
       // is ahead, because "Backed up" here told a player his older save was the safe one.
-      newer: cloud.when ? t('menu.cloud.newerWhen', 'Newer backup · {when}', { when: cloud.when }) : t('menu.cloud.newer', 'Newer backup'),
+      newer: cloud.when
+        ? t('menu.cloud.newerWhen', 'Newer backup · {when}', { when: cloud.when })
+        : t('menu.cloud.newer', 'Newer backup'),
     }[state];
     bar.append(el('span', 'svsay', said));
     for (const a of cloud.actions ?? []) bar.append(actionButton(el, a));

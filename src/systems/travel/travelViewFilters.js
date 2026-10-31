@@ -26,7 +26,7 @@
 // A player is shown while the Travellers switch is on, their kin's switch is on and their Renown reaches the floor.
 // ═══════════════════════════════════════════════════════════════════
 import { appStorage } from '../appStorage.js';
-import { FRIEND_CSS } from '../../net/social.js';   // OW-KIN: the friends' blue is the chat's own
+import { FRIEND_CSS } from '../../net/social.js'; // OW-KIN: the friends' blue is the chat's own
 
 export const TV_FILTER_GROUPS = Object.freeze(['towns', 'distant', 'dungeons', 'enemies', 'travellers', 'gathering']);
 export const TV_FILTER_STORE_KEY = 'dfjs.overworld.filters';
@@ -50,15 +50,15 @@ export const TV_FILTER_TEXT = Object.freeze({
 export function markGroup(kind = '') {
   const words = String(kind).split(' ');
   const k = words[0];
-  if (words.includes('chase')) return null;   // a threat coming at me stays on the screen
-  if (k === 'place' && words.includes('dungeon')) return 'dungeons';   // OW-DUNGEON-DOT: a found dungeon's plate within the grid
-  if (k === 'place' || k === 'yard') return 'towns';   // YARDS-FOUND: a town's yards go with its plate
+  if (words.includes('chase')) return null; // a threat coming at me stays on the screen
+  if (k === 'place' && words.includes('dungeon')) return 'dungeons'; // OW-DUNGEON-DOT: a found dungeon's plate within the grid
+  if (k === 'place' || k === 'yard') return 'towns'; // YARDS-FOUND: a town's yards go with its plate
   if (k === 'far') return words.includes('dungeon') ? 'dungeons' : 'distant';
   if (k === 'lair') return 'dungeons';
   if (k === 'band' || k === 'camp' || k === 'raider') return 'enemies';
-  if (k === 'traveller' || k === 'wayfarer') return 'travellers';   // LW3: the living world's parties beside the players
-  if (k === 'gather') return 'gathering';   // GATHER-OW
-  return null;   // dest, target, party - always drawn
+  if (k === 'traveller' || k === 'wayfarer') return 'travellers'; // LW3: the living world's parties beside the players
+  if (k === 'gather') return 'gathering'; // GATHER-OW
+  return null; // dest, target, party - always drawn
 }
 
 let shown = null;
@@ -67,12 +67,18 @@ const listeners = new Set();
 function read() {
   const all = Object.fromEntries(TV_FILTER_GROUPS.map((g) => [g, true]));
   let raw = null;
-  try { raw = appStorage()?.getItem(TV_FILTER_STORE_KEY) ?? null; } catch { raw = null; }
+  try {
+    raw = appStorage()?.getItem(TV_FILTER_STORE_KEY) ?? null;
+  } catch {
+    raw = null;
+  }
   if (raw) {
     try {
       const v = JSON.parse(raw);
       for (const g of TV_FILTER_GROUPS) if (typeof v?.[g] === 'boolean') all[g] = v[g];
-    } catch { /* a bad word: all on */ }
+    } catch {
+      /* a bad word: all on */
+    }
   }
   return all;
 }
@@ -88,8 +94,18 @@ export function toggleTravelViewFilter(group) {
   if (!TV_FILTER_GROUPS.includes(group)) return false;
   const next = { ...travelViewFilters(), [group]: !travelViewFilters()[group] };
   shown = next;
-  try { appStorage()?.setItem(TV_FILTER_STORE_KEY, JSON.stringify(next)); } catch { /* held for the session */ }
-  for (const fn of [...listeners]) { try { fn(next); } catch { /* a listener's own fault */ } }
+  try {
+    appStorage()?.setItem(TV_FILTER_STORE_KEY, JSON.stringify(next));
+  } catch {
+    /* held for the session */
+  }
+  for (const fn of [...listeners]) {
+    try {
+      fn(next);
+    } catch {
+      /* a listener's own fault */
+    }
+  }
   return next[group];
 }
 
@@ -119,14 +135,14 @@ export const TV_WHO_TEXT = Object.freeze({
   nodeKm: (km) => (km == null ? 'Nodes: any km' : `Nodes: ${km} km`),
   tip: (label, on) => `${on ? 'Hide' : 'Show'} ${label.toLowerCase()} on the maps`,
   renownTip: 'Shows players with at least this Renown. Click for the next',
-  all: (on) => (on ? 'Shown' : 'Hidden'),   // MAP-PLAYERS: the world map's one switch for every player
+  all: (on) => (on ? 'Shown' : 'Hidden'), // MAP-PLAYERS: the world map's one switch for every player
   allTip: (on) => `${on ? 'Hide' : 'Show'} other players on the maps`,
   nodeTip: 'Shows gathering groups up to this distance. Click for the next',
 });
 /** OW-KIN: a player's names are coloured by who they are to me - my party's green stays the party's (net/social.js). */
 export const TV_KIN_COLORS = Object.freeze({
-  friend: FRIEND_CSS,   // the chat's and the roster's friend blue, one home
-  guild: '#c9a6ff',    // a guild-mate's violet - none of the party's green, the friends' blue, the tag's steel or the renown's amber
+  friend: FRIEND_CSS, // the chat's and the roster's friend blue, one home
+  guild: '#c9a6ff', // a guild-mate's violet - none of the party's green, the friends' blue, the tag's steel or the renown's amber
 });
 /** OW-KIN: the legend's words for the two colours. */
 export const TV_KIN_LEGEND = Object.freeze({ friend: 'Friend', guild: 'Guild-mate' });
@@ -136,14 +152,20 @@ let who = null;
 function readWho() {
   const w = { ...WHO_DEFAULT };
   let raw = null;
-  try { raw = appStorage()?.getItem(TV_WHO_STORE_KEY) ?? null; } catch { raw = null; }
+  try {
+    raw = appStorage()?.getItem(TV_WHO_STORE_KEY) ?? null;
+  } catch {
+    raw = null;
+  }
   if (raw) {
     try {
       const v = JSON.parse(raw);
       for (const g of TV_WHO_GROUPS) if (typeof v?.[g] === 'boolean') w[g] = v[g];
       if (TV_RENOWN_STEPS.includes(v?.renown)) w.renown = v.renown;
       if (TV_NODE_KM_STEPS.includes(v?.nodeKm ?? null)) w.nodeKm = v?.nodeKm ?? null;
-    } catch { /* a bad word: the defaults */ }
+    } catch {
+      /* a bad word: the defaults */
+    }
   }
   return w;
 }
@@ -154,8 +176,18 @@ export function travelViewWho() {
 }
 function setWho(next) {
   who = next;
-  try { appStorage()?.setItem(TV_WHO_STORE_KEY, JSON.stringify(next)); } catch { /* held for the session */ }
-  for (const fn of [...listeners]) { try { fn(travelViewFilters()); } catch { /* a listener's own fault */ } }
+  try {
+    appStorage()?.setItem(TV_WHO_STORE_KEY, JSON.stringify(next));
+  } catch {
+    /* held for the session */
+  }
+  for (const fn of [...listeners]) {
+    try {
+      fn(travelViewFilters());
+    } catch {
+      /* a listener's own fault */
+    }
+  }
   return next;
 }
 /** Flip one kin switch. Returns its new state. */
@@ -207,9 +239,16 @@ export function markShown(m, f = travelViewFilters(), w = travelViewWho()) {
 export const isYardMark = (m) => String(m?.kind ?? '').split(' ')[0] === 'yard';
 export function countGroups(marks) {
   const n = Object.fromEntries(TV_FILTER_GROUPS.map((g) => [g, 0]));
-  for (const m of marks ?? []) { const g = markGroup(m?.kind); if (g && !isYardMark(m)) n[g] += 1; }   // YARDS-FOUND: the Towns switch counts towns
+  for (const m of marks ?? []) {
+    const g = markGroup(m?.kind);
+    if (g && !isYardMark(m)) n[g] += 1;
+  } // YARDS-FOUND: the Towns switch counts towns
   return n;
 }
 
 /** Pins: back to the device's word. */
-export function _resetTravelViewFilters() { shown = null; who = null; listeners.clear(); }
+export function _resetTravelViewFilters() {
+  shown = null;
+  who = null;
+  listeners.clear();
+}

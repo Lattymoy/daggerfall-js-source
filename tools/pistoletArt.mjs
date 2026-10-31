@@ -54,13 +54,22 @@ export const DOLL_ANGLE = 45;
 
 /** Scale2x (EPX), exact on colours: twice the size, a diagonal edge rounded rather than doubled into a staircase. */
 export function scale2x({ width: w, height: h, data }) {
-  const W = w * 2, out = new Uint8Array(W * h * 2 * 4);
+  const W = w * 2,
+    out = new Uint8Array(W * h * 2 * 4);
   const at = (x, y) => (Math.max(0, Math.min(h - 1, y)) * w + Math.max(0, Math.min(w - 1, x))) * 4;
-  const eq = (a, b) => data[a] === data[b] && data[a + 1] === data[b + 1] && data[a + 2] === data[b + 2] && data[a + 3] === data[b + 3];
-  const put = (x, y, s) => { const d = (y * W + x) * 4; for (let c = 0; c < 4; c++) out[d + c] = data[s + c]; };
+  const eq = (a, b) =>
+    data[a] === data[b] && data[a + 1] === data[b + 1] && data[a + 2] === data[b + 2] && data[a + 3] === data[b + 3];
+  const put = (x, y, s) => {
+    const d = (y * W + x) * 4;
+    for (let c = 0; c < 4; c++) out[d + c] = data[s + c];
+  };
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
-      const E = at(x, y), B = at(x, y - 1), D = at(x - 1, y), F = at(x + 1, y), H = at(x, y + 1);
+      const E = at(x, y),
+        B = at(x, y - 1),
+        D = at(x - 1, y),
+        F = at(x + 1, y),
+        H = at(x, y + 1);
       const edge = !eq(B, H) && !eq(D, F);
       put(2 * x, 2 * y, edge && eq(D, B) ? D : E);
       put(2 * x + 1, 2 * y, edge && eq(B, F) ? F : E);
@@ -78,20 +87,34 @@ export function scale2x({ width: w, height: h, data }) {
  * Answers `{ img, at }`, the picture just big enough to hold the turned one.
  */
 export function rotSprite(img, deg, point = null) {
-  const K = 8, big = scale2x(scale2x(scale2x(img)));
-  const a = deg * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
-  const cx = img.width / 2, cy = img.height / 2;
-  const turn = (x, y) => [(x - cx) * c + (y - cy) * s, -(x - cx) * s + (y - cy) * c];   // y down: (1, 0) goes up-right
-  const corners = [[0, 0], [img.width, 0], [0, img.height], [img.width, img.height]].map(([x, y]) => turn(x, y));
-  const x0 = Math.floor(Math.min(...corners.map((p) => p[0]))), y0 = Math.floor(Math.min(...corners.map((p) => p[1])));
-  const W = Math.ceil(Math.max(...corners.map((p) => p[0]))) - x0, H = Math.ceil(Math.max(...corners.map((p) => p[1]))) - y0;
+  const K = 8,
+    big = scale2x(scale2x(scale2x(img)));
+  const a = (deg * Math.PI) / 180,
+    c = Math.cos(a),
+    s = Math.sin(a);
+  const cx = img.width / 2,
+    cy = img.height / 2;
+  const turn = (x, y) => [(x - cx) * c + (y - cy) * s, -(x - cx) * s + (y - cy) * c]; // y down: (1, 0) goes up-right
+  const corners = [
+    [0, 0],
+    [img.width, 0],
+    [0, img.height],
+    [img.width, img.height],
+  ].map(([x, y]) => turn(x, y));
+  const x0 = Math.floor(Math.min(...corners.map((p) => p[0]))),
+    y0 = Math.floor(Math.min(...corners.map((p) => p[1])));
+  const W = Math.ceil(Math.max(...corners.map((p) => p[0]))) - x0,
+    H = Math.ceil(Math.max(...corners.map((p) => p[1]))) - y0;
   const out = new Uint8Array(W * H * 4);
   for (let Y = 0; Y < H; Y++) {
     for (let X = 0; X < W; X++) {
-      const u = X + 0.5 + x0, v = Y + 0.5 + y0;
-      const bx = Math.floor((u * c - v * s + cx) * K), by = Math.floor((u * s + v * c + cy) * K);
+      const u = X + 0.5 + x0,
+        v = Y + 0.5 + y0;
+      const bx = Math.floor((u * c - v * s + cx) * K),
+        by = Math.floor((u * s + v * c + cy) * K);
       if (bx < 0 || by < 0 || bx >= big.width || by >= big.height) continue;
-      const si = (by * big.width + bx) * 4, d = (Y * W + X) * 4;
+      const si = (by * big.width + bx) * 4,
+        d = (Y * W + X) * 4;
       for (let k = 0; k < 4; k++) out[d + k] = big.data[si + k];
     }
   }
@@ -113,8 +136,12 @@ export function flipAcross({ width: w, height: h, data }) {
   const out = new Uint8Array(data.length);
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
-      const s = (y * w + x) * 4, d = (y * w + (w - 1 - x)) * 4;
-      out[d] = data[s]; out[d + 1] = data[s + 1]; out[d + 2] = data[s + 2]; out[d + 3] = data[s + 3];
+      const s = (y * w + x) * 4,
+        d = (y * w + (w - 1 - x)) * 4;
+      out[d] = data[s];
+      out[d + 1] = data[s + 1];
+      out[d + 2] = data[s + 2];
+      out[d + 3] = data[s + 3];
     }
   }
   return { width: w, height: h, data: out };
@@ -123,7 +150,11 @@ export function flipAcross({ width: w, height: h, data }) {
 /** A hand's doll layer from the gapped sprite, its pose applied. `point` (source pixels) is carried through. */
 export function posed(level, hand, point = null) {
   const { flip, turn } = HAND_POSE[hand];
-  return rotSprite(flip ? flipAcross(level) : level, turn, point && (flip ? [level.width - point[0], point[1]] : point));
+  return rotSprite(
+    flip ? flipAcross(level) : level,
+    turn,
+    point && (flip ? [level.width - point[0], point[1]] : point),
+  );
 }
 
 /** Where the band's centre - the fist - lands in a hand's layer, in its pixels. src/systems/pistolet.js
@@ -134,17 +165,21 @@ export const dollGrip = (hand = 'left', { w = 24, h = 17, band = BAND } = {}) =>
 /** The doll layers and the gilded set, from the source picture. Pure: a test re-runs it against the shipped files. */
 export function pistoletArt(src, band = BAND) {
   const level = { width: src.width, height: src.height, data: new Uint8Array(src.data) };
-  const cut = punchBand(level, band);   // cut in the source's own frame (the band is measured there), then turned
+  const cut = punchBand(level, band); // cut in the source's own frame (the band is measured there), then turned
   const dollLeft = posed(level, 'left').img;
-  const doll = posed(level, 'right').img;   // the right hand's: flipped, the barrel toward the left hand's
+  const doll = posed(level, 'right').img; // the right hand's: flipped, the barrel toward the left hand's
   return { doll, dollLeft, iconGilded: gild(src), dollGilded: gild(doll), dollLeftGilded: gild(dollLeft), cut };
 }
 
 if (isMain(import.meta.url)) {
   const arg = process.argv.find((a) => a.startsWith('--band='));
-  const band = arg ? (([cx, cy, deg, thick, length]) => ({ cx, cy, deg, thick, length }))(arg.slice(7).split(',').map(Number)) : BAND;
+  const band = arg
+    ? (([cx, cy, deg, thick, length]) => ({ cx, cy, deg, thick, length }))(arg.slice(7).split(',').map(Number))
+    : BAND;
   const src = readPng(readFileSync(SOURCE));
   const art = pistoletArt(src, band);
   for (const [k, file] of Object.entries(OUT)) writeFileSync(file, writePng(art[k]));
-  console.log(`${SOURCE} ${src.width}x${src.height}: the gap cut ${art.cut} pixels; wrote ${Object.values(OUT).join(', ')}`);
+  console.log(
+    `${SOURCE} ${src.width}x${src.height}: the gap cut ${art.cut} pixels; wrote ${Object.values(OUT).join(', ')}`,
+  );
 }

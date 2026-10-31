@@ -10,7 +10,14 @@
 import { call, forgetSession } from './accountClient.js';
 import { t } from '../systems/textManager.js';
 import { BUILD_TAG, UPDATE } from '../buildTag.js';
-import { reportWordsOf, reportContextOf, reportHead, reportInboxHead, reportWhole, REPORT_INBOX_MAX } from './reportLaw.js';
+import {
+  reportWordsOf,
+  reportContextOf,
+  reportHead,
+  reportInboxHead,
+  reportWhole,
+  REPORT_INBOX_MAX,
+} from './reportLaw.js';
 
 /** A send: `{ ok, id, sentAt }` or `{ ok, repeat, id, sentAt }`. */
 export const reportSendCall = (io, o) => call(io, '/v1/report/send', o);
@@ -32,7 +39,11 @@ export function mintReportRid(rand = (b) => globalThis.crypto.getRandomValues(b)
 
 /** WHAT RIDES WITH A REPORT, and all of it: the update and the build the pause window prints (REL8, buildTag.js), and
  *  whether this is the desktop app (app/preload.cjs's bridge) or a browser. The form says so before it is sent. */
-export function reportContext({ update = UPDATE, build = BUILD_TAG, desktop = !!(/** @type {any} */ (globalThis).daggerShell) } = {}) {
+export function reportContext({
+  update = UPDATE,
+  build = BUILD_TAG,
+  desktop = !!(/** @type {any} */ (globalThis).daggerShell),
+} = {}) {
   return reportContextOf({ update, build, app: desktop ? 'desktop' : 'browser' });
 }
 
@@ -40,7 +51,7 @@ export function reportContext({ update = UPDATE, build = BUILD_TAG, desktop = !!
 const STATE_WORDS = Object.freeze({
   open: () => t('report.state.open', 'Open'),
   fixed: () => t('report.state.fixed', 'Fixed'),
-  wontfix: () => t('report.state.wontfix', 'Won\'t fix'),
+  wontfix: () => t('report.state.wontfix', "Won't fix"),
   duplicate: () => t('report.state.duplicate', 'Duplicate'),
 });
 export const reportStateText = (/** @type {string} */ state) => STATE_WORDS[state]?.() ?? String(state);
@@ -55,7 +66,10 @@ export const reportKindText = (/** @type {string} */ kind) => KIND_WORDS[kind]?.
 /** The form empty. */
 const emptyDraft = () => ({ kind: /** @type {string|null} */ (null), subject: '', body: '' });
 /** A count the service answered, or null - a safe integer, never below nought (the box's own check, serverPost.js). */
-const countsOf = (/** @type {any} */ d) => (Number.isSafeInteger(d?.unread) && Number.isSafeInteger(d?.open) && d.unread >= 0 && d.open >= 0 ? { unread: d.unread, open: d.open } : null);
+const countsOf = (/** @type {any} */ d) =>
+  Number.isSafeInteger(d?.unread) && Number.isSafeInteger(d?.open) && d.unread >= 0 && d.open >= 0
+    ? { unread: d.unread, open: d.open }
+    : null;
 
 /**
  * THE DESK. `version` moves on every change, so a window repaints on a number. `mine` and `inbox` are null until looked at,
@@ -114,11 +128,15 @@ export class ReportDesk {
     this._changed();
   }
 
-  _changed() { this.version++; }
+  _changed() {
+    this.version++;
+  }
   /** An answer that is nobody's now: the desk was reset since it set out, or the session it was asked under no longer
    *  stands (another account signed in, and nothing has asked the desk since) - never taken nor acted on (its `auth` would
    *  forget the new session). */
-  _stale(/** @type {any} */ io, /** @type {number} */ epoch) { return epoch !== this._epoch || (this.ioOf?.()?.secret ?? null) !== io?.secret; }
+  _stale(/** @type {any} */ io, /** @type {number} */ epoch) {
+    return epoch !== this._epoch || (this.ioOf?.()?.secret ?? null) !== io?.secret;
+  }
 
   /** The service, or null. AUDIT PRIVATE-REPORT CLI-1: a session not the one the desk's state is for clears it first. */
   _io() {
@@ -134,9 +152,16 @@ export class ReportDesk {
   /** A refusal the desk answers to: `auth` forgets the session and the desk with it; `not-report-reader` drops what only a
    *  reader may hold (AUDIT PRIVATE-REPORT CLI-1: the last good inbox and its opened reports were kept and drawn). */
   _refused(io, error) {
-    if (error === 'auth') { forgetSession(io?.storage); this.reset(); this._secret = null; return; }
+    if (error === 'auth') {
+      forgetSession(io?.storage);
+      this.reset();
+      this._secret = null;
+      return;
+    }
     if (error === 'not-report-reader') {
-      this.inbox = { open: null, closed: null }; this.inboxMore = { open: false, closed: false }; this.opened.clear();
+      this.inbox = { open: null, closed: null };
+      this.inboxMore = { open: false, closed: false };
+      this.opened.clear();
       this.counts = { unread: 0, open: 0 };
       this._changed();
     }
@@ -164,21 +189,35 @@ export class ReportDesk {
   async send() {
     if (this.sending) return { ok: false, error: 'busy' };
     /** an end said before the call, kept for the pane as every end is */
-    const ended = (/** @type {any} */ out) => { this.lastSend = out; this._changed(); return out; };
+    const ended = (/** @type {any} */ out) => {
+      this.lastSend = out;
+      this._changed();
+      return out;
+    };
     const words = reportWordsOf(this.draft);
     if ('error' in words) return ended({ ok: false, error: words.error });
     const io = this._io();
     if (!io) return ended({ ok: false, error: 'signed-out' });
     const key = JSON.stringify(words);
-    if (this._ridKey !== key) { this._rid = this.rid(); this._ridKey = key; }
+    if (this._ridKey !== key) {
+      this._rid = this.rid();
+      this._ridKey = key;
+    }
     const epoch = this._epoch;
-    this.sending = true; this.lastSend = null; this._changed();
+    this.sending = true;
+    this.lastSend = null;
+    this._changed();
     let out;
     try {
       const r = await reportSendCall(io, { ...words, context: this.context(), rid: this._rid });
-      if (this._stale(io, epoch)) return { ok: false, error: 'signed-out' };   // another account since: it is not theirs
-      if (!r.ok) { this._refused(io, r.error); out = { ok: false, error: r.error ?? 'server' }; return out; }
-      this._rid = null; this._ridKey = null;
+      if (this._stale(io, epoch)) return { ok: false, error: 'signed-out' }; // another account since: it is not theirs
+      if (!r.ok) {
+        this._refused(io, r.error);
+        out = { ok: false, error: r.error ?? 'server' };
+        return out;
+      }
+      this._rid = null;
+      this._ridKey = null;
       // AUDIT PRIVATE-REPORT CLI-9: the form emptied only if it still holds the words that went
       if (JSON.stringify(reportWordsOf(this.draft)) === key) this.draft = emptyDraft();
       this.loadMine().catch(() => {});
@@ -195,21 +234,39 @@ export class ReportDesk {
    *  look is followed by another, and every caller waits on both - never folded into an answer the service gave before
    *  the send that asked for it. */
   loadMine() {
-    if (this._mineLook) { this._mineAgain = true; return this._mineLook; }
+    if (this._mineLook) {
+      this._mineAgain = true;
+      return this._mineLook;
+    }
     this._mineLook = (async () => {
       let r;
-      do { this._mineAgain = false; r = await this._loadMine(); } while (this._mineAgain);
+      do {
+        this._mineAgain = false;
+        r = await this._loadMine();
+      } while (this._mineAgain);
       return r;
-    })().finally(() => { this._mineLook = null; });
+    })().finally(() => {
+      this._mineLook = null;
+    });
     return this._mineLook;
   }
   async _loadMine() {
     const io = this._io();
-    if (!io) { this.mine = null; this.mineError = 'signed-out'; this._changed(); return { ok: false, error: 'signed-out' }; }
+    if (!io) {
+      this.mine = null;
+      this.mineError = 'signed-out';
+      this._changed();
+      return { ok: false, error: 'signed-out' };
+    }
     const epoch = this._epoch;
     const r = await reportMineCall(io);
     if (this._stale(io, epoch)) return { ok: false, error: 'signed-out' };
-    if (!r.ok) { this._refused(io, r.error); this.mineError = r.error ?? 'server'; this._changed(); return { ok: false, error: this.mineError }; }
+    if (!r.ok) {
+      this._refused(io, r.error);
+      this.mineError = r.error ?? 'server';
+      this._changed();
+      return { ok: false, error: this.mineError };
+    }
     this.mine = (Array.isArray(r.data?.reports) ? r.data.reports : []).map(reportHead).filter((h) => h !== null);
     this.mineError = null;
     this._changed();
@@ -221,17 +278,28 @@ export class ReportDesk {
   async loadInbox(which = 'open', { more = false } = {}) {
     const w = which === 'closed' ? 'closed' : 'open';
     const io = this._io();
-    if (!io) { this.inboxError = 'signed-out'; this._changed(); return { ok: false, error: 'signed-out' }; }
+    if (!io) {
+      this.inboxError = 'signed-out';
+      this._changed();
+      return { ok: false, error: 'signed-out' };
+    }
     const held = more ? (this.inbox[w] ?? []) : null;
     const page = more ? Math.ceil((held?.length ?? 0) / REPORT_INBOX_MAX) : 0;
     const seq = ++this._inboxSeq[w];
     const epoch = this._epoch;
     const r = await reportInboxCall(io, w, page);
     if (this._stale(io, epoch) || seq !== this._inboxSeq[w]) return { ok: false, error: 'stale' };
-    if (!r.ok) { this._refused(io, r.error); this.inboxError = r.error ?? 'server'; this._changed(); return { ok: false, error: this.inboxError }; }
+    if (!r.ok) {
+      this._refused(io, r.error);
+      this.inboxError = r.error ?? 'server';
+      this._changed();
+      return { ok: false, error: this.inboxError };
+    }
     const list = (Array.isArray(r.data?.reports) ? r.data.reports : []).map(reportInboxHead).filter((h) => h !== null);
-    if (held) { const seen = new Set(held.map((p) => p.id)); this.inbox[w] = [...held, ...list.filter((p) => !seen.has(p.id))]; }
-    else this.inbox[w] = list;
+    if (held) {
+      const seen = new Set(held.map((p) => p.id));
+      this.inbox[w] = [...held, ...list.filter((p) => !seen.has(p.id))];
+    } else this.inbox[w] = list;
     this.inboxMore[w] = r.data?.more === true;
     const c = countsOf(r.data);
     if (c) this._takeCounts(c);
@@ -249,12 +317,18 @@ export class ReportDesk {
     const epoch = this._epoch;
     const r = await reportReadCall(io, id);
     if (this._stale(io, epoch)) return { ok: false, error: 'signed-out' };
-    if (!r.ok) { this._refused(io, r.error); return { ok: false, error: r.error ?? 'server' }; }
+    if (!r.ok) {
+      this._refused(io, r.error);
+      return { ok: false, error: r.error ?? 'server' };
+    }
     const whole = reportWhole(r.data?.report);
     if (!whole || whole.id !== id) return { ok: false, error: 'server' };
     this.opened.set(id, whole);
     const head = this.inbox.open?.find((p) => p.id === id);
-    if (head && !head.read) { head.read = true; this._takeCounts({ ...this.counts, unread: Math.max(0, this.counts.unread - 1) }); }
+    if (head && !head.read) {
+      head.read = true;
+      this._takeCounts({ ...this.counts, unread: Math.max(0, this.counts.unread - 1) });
+    }
     this._changed();
     return { ok: true, report: whole };
   }
@@ -266,18 +340,23 @@ export class ReportDesk {
     const io = this._io();
     if (!io) return { ok: false, error: 'signed-out' };
     const epoch = this._epoch;
-    this.closing.add(id); this._changed();
+    this.closing.add(id);
+    this._changed();
     try {
       const r = await reportCloseCall(io, id, state);
       if (this._stale(io, epoch)) return { ok: false, error: 'signed-out' };
-      if (!r.ok) { this._refused(io, r.error); return { ok: false, error: r.error ?? 'server' }; }
+      if (!r.ok) {
+        this._refused(io, r.error);
+        return { ok: false, error: r.error ?? 'server' };
+      }
       const kept = this.opened.get(id);
       if (kept) this.opened.set(id, { ...kept, state });
       this._changed();
       await Promise.all([this.loadInbox('open'), this.inbox.closed ? this.loadInbox('closed') : null]);
       return { ok: true, state };
     } finally {
-      this.closing.delete(id); this._changed();
+      this.closing.delete(id);
+      this._changed();
     }
   }
 }

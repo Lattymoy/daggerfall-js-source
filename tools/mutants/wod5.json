@@ -2,8 +2,8 @@
   {
     "name": "the-mirror-is-never-seen",
     "file": "src/render/staticBatch.js",
-    "old": "const mirrored = det3(local) < 0;",
-    "new": "const mirrored = false;",
+    "old": "    const mirrored = det3(local) < 0;",
+    "new": "    const mirrored = false;",
     "tests": [
       "test/scenes/wod5_audit.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "the-determinant-loses-a-sign",
     "file": "src/render/staticBatch.js",
-    "old": "m[0] * (m[5] * m[10] - m[9] * m[6])",
-    "new": "m[0] * (m[5] * m[10] + m[9] * m[6])",
+    "old": "  return m[0] * (m[5] * m[10] - m[9] * m[6]) - m[4] * (m[1] * m[10] - m[9] * m[2]) + m[8] * (m[1] * m[6] - m[5] * m[2]);",
+    "new": "  return m[0] * (m[5] * m[10] + m[9] * m[6]) - m[4] * (m[1] * m[10] - m[9] * m[2]) + m[8] * (m[1] * m[6] - m[5] * m[2]);",
     "tests": [
       "test/scenes/wod5_audit.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "the-swap-is-half-made",
     "file": "src/render/staticBatch.js",
-    "old": "run[i + 1] = run[i + 2]; run[i + 2] = t;",
-    "new": "run[i + 1] = run[i + 2];",
+    "old": "          run[i + 2] = t;\n        }",
+    "new": "        }",
     "tests": [
       "test/scenes/wod5_audit.test.js"
     ]

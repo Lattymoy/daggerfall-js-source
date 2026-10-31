@@ -11,8 +11,8 @@
   {
     "name": "WDO-a-towns-base-copied",
     "file": "src/formats/worldData/worldDataPack.js",
-    "old": "null, { owned: base?.[0] === 'l' });",
-    "new": "null, { owned: false });",
+    "old": "    const json = patchJson(baseOf(name, base, maps), expandOps(ops), null, { owned: base?.[0] === 'l' });",
+    "new": "    const json = patchJson(baseOf(name, base, maps), expandOps(ops), null, { owned: false });",
     "tests": [
       "test/formats/worldData/wdowned.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WDO-a-kept-block-laid-on",
     "file": "src/formats/worldData/worldDataPack.js",
-    "old": "null, { owned: base?.[0] === 'l' });",
-    "new": "null, { owned: base?.[0] === 'l' || base?.[0] === 'b' });",
+    "old": "    const json = patchJson(baseOf(name, base, maps), expandOps(ops), null, { owned: base?.[0] === 'l' });",
+    "new": "    const json = patchJson(baseOf(name, base, maps), expandOps(ops), null, {\n      owned: base?.[0] === 'l' || base?.[0] === 'b',\n    });",
     "tests": [
       "test/formats/worldData/wd3_pack.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WDO-a-kept-file-laid-on",
     "file": "src/formats/worldData/worldDataPack.js",
-    "old": "null, { owned: base?.[0] === 'l' });",
-    "new": "null, { owned: base?.[0] === 'l' || base?.[0] === 'f' });",
+    "old": "    const json = patchJson(baseOf(name, base, maps), expandOps(ops), null, { owned: base?.[0] === 'l' });",
+    "new": "    const json = patchJson(baseOf(name, base, maps), expandOps(ops), null, {\n      owned: base?.[0] === 'l' || base?.[0] === 'f',\n    });",
     "tests": [
       "test/formats/worldData/wd3_pack.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WDC-minus-zero-kept",
     "file": "src/formats/worldData/worldDataJson.js",
-    "old": "    case 'number': return Number.isFinite(x) ? (x === 0 ? 0 : x) : null;",
-    "new": "    case 'number': return Number.isFinite(x) ? x : null;",
+    "old": "      return Number.isFinite(x) ? (x === 0 ? 0 : x) : null;",
+    "new": "      return Number.isFinite(x) ? x : null;",
     "tests": [
       "test/formats/worldData/wdowned.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WDC-nan-kept",
     "file": "src/formats/worldData/worldDataJson.js",
-    "old": "    case 'number': return Number.isFinite(x) ? (x === 0 ? 0 : x) : null;",
-    "new": "    case 'number': return x === 0 ? 0 : x;",
+    "old": "      return Number.isFinite(x) ? (x === 0 ? 0 : x) : null;",
+    "new": "      return x === 0 ? 0 : x;",
     "tests": [
       "test/formats/worldData/wdowned.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WDC-a-proto-key-walked",
     "file": "src/formats/worldData/worldDataJson.js",
-    "old": "    if (k === '__proto__') return NOT_PLAIN;\n",
-    "new": "",
+    "old": "    if (k === '__proto__') return NOT_PLAIN;\n    const x = copiedValue(v[k], depth);",
+    "new": "    const x = copiedValue(v[k], depth);",
     "tests": [
       "test/formats/worldData/wdowned.test.js"
     ]

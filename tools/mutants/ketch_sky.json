@@ -2,8 +2,8 @@
   {
     "name": "KTY-she-comes-from-the-west",
     "file": "src/scenes/ketch/ketchSky.js",
-    "old": "return { v, phase: v.phase, dx: S.approach * s,",
-    "new": "return { v, phase: v.phase, dx: -S.approach * s,",
+    "old": "      dx: S.approach * s,",
+    "new": "      dx: -S.approach * s,",
     "tests": [
       "test/scenes/ketch_sky.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "KTY-the-lift-down-while-sighted",
     "file": "src/scenes/ketch/ketchSky.js",
-    "old": "(1 - smooth((u - S.turnFrom) / (1 - S.turnFrom))), lift: 0, moving: true };",
-    "new": "(1 - smooth((u - S.turnFrom) / (1 - S.turnFrom))), lift: 1, moving: true };",
+    "old": "      lift: 0,",
+    "new": "      lift: 1,",
     "tests": [
       "test/scenes/ketch_sky.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "KTY-the-turn-the-wrong-way",
     "file": "src/scenes/ketch/ketchSky.js",
-    "old": "  out[0] = c; out[2] = -s; out[5] = 1; out[8] = s; out[10] = c; out[15] = 1;",
-    "new": "  out[0] = c; out[2] = s; out[5] = 1; out[8] = -s; out[10] = c; out[15] = 1;",
+    "old": "  out[2] = -s;\n  out[5] = 1;\n  out[8] = s;",
+    "new": "  out[2] = s;\n  out[5] = 1;\n  out[8] = -s;",
     "tests": [
       "test/scenes/ketch_sky.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "KTY-her-middle-forgotten",
     "file": "src/scenes/ketch/ketchSky.js",
-    "old": "const ox = O[0], oy = O[1], oz = O[2] + KT_SKY.centre;",
-    "new": "const ox = O[0], oy = O[1], oz = O[2];",
+    "old": "    oz = O[2] + KT_SKY.centre; // the model's middle in its own frame",
+    "new": "    oz = O[2]; // the model's middle in its own frame",
     "tests": [
       "test/scenes/ketch_sky.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "KTY-the-lift-drawn-up-yet-drawn",
     "file": "src/scenes/ketch/ketchSky.js",
-    "old": "if (place.pose.lift > 0.01 && lift && chain)",
-    "new": "if (lift && chain)",
+    "old": "      if (place.pose.lift > 0.01 && lift && chain) {",
+    "new": "      if (lift && chain) {",
     "tests": [
       "test/scenes/ketch_sky.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "KTY-a-ride-at-once",
     "file": "src/scenes/ketch/ketchSky.js",
-    "old": "if (t - standAt >= KT_BOARD_HOLD_MS) { standAt = -1; needOut = true; onBoard(); }",
-    "new": "if (t - standAt >= 0) { standAt = -1; needOut = true; onBoard(); }",
+    "old": "        if (t - standAt >= KT_BOARD_HOLD_MS) {",
+    "new": "        if (t - standAt >= 0) {",
     "tests": [
       "test/scenes/ketch_sky.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "KTY-a-refused-ride-counted-again",
     "file": "src/scenes/ketch/ketchSky.js",
-    "old": "{ standAt = -1; needOut = true; onBoard(); }",
-    "new": "{ standAt = -1; onBoard(); }",
+    "old": "          needOut = true;\n          onBoard();",
+    "new": "          onBoard();",
     "tests": [
       "test/scenes/ketch_sky.test.js"
     ]

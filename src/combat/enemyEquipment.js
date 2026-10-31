@@ -14,50 +14,78 @@
 //   swing, exactly as GetBaseDamageMin/Max do.
 // Unity Random slots stay uniform rolls, as in DFU itself.
 
-import { mintCondition, templateByIndex, itemBaseValue, setItemFields, materialValue } from '../systems/item/itemTemplates.js';   // AUDIT 23 (items-5); F103: SetItem's value; MAC-N1: the one export that writes it; OH-E: the material's value line, one home
-import { dice100, formulaOverride } from './formulas.js';   // UL1: RandomMaterial / RandomArmorMaterial consult the registry
-import { weaponMinDamage, weaponMaxDamage } from '../characters/weapons.js';   // RRI2: CalculateWeaponMin/MaxDamage through their one home, so a registered override (weaponBalance) reaches the mint
+import {
+  mintCondition,
+  templateByIndex,
+  itemBaseValue,
+  setItemFields,
+  materialValue,
+} from '../systems/item/itemTemplates.js'; // AUDIT 23 (items-5); F103: SetItem's value; MAC-N1: the one export that writes it; OH-E: the material's value line, one home
+import { dice100, formulaOverride } from './formulas.js'; // UL1: RandomMaterial / RandomArmorMaterial consult the registry
+import { weaponMinDamage, weaponMaxDamage } from '../characters/weapons.js'; // RRI2: CalculateWeaponMin/MaxDamage through their one home, so a registered override (weaponBalance) reaches the mint
 import { materialArmorValue, itemArmorValue, BODY_PARTS } from '../systems/armorMaterials.js';
-import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';   // AUDIT 24 (wave 41): one home
-import { ARROW_TEMPLATE } from '../systems/inventory.js';   // X11b: CreateWeapon's one special case
-import { HAND_WRAPS_TEMPLATE } from '../characters/handWrapsIds.js';   // HAND-WRAPS: minted cloth
-import { customItemClass } from '../systems/roleplayRealismItems/rriItems.js';   // RRI2: a custom piece's body part is its class's equip slot
+import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js'; // AUDIT 24 (wave 41): one home
+import { ARROW_TEMPLATE } from '../systems/inventory.js'; // X11b: CreateWeapon's one special case
+import { HAND_WRAPS_TEMPLATE } from '../characters/handWrapsIds.js'; // HAND-WRAPS: minted cloth
+import { customItemClass } from '../systems/roleplayRealismItems/rriItems.js'; // RRI2: a custom piece's body part is its class's equip slot
 
 export { materialArmorValue };
 
 // ---- Weapons enum (template indices) - the roll ranges are numeric ----
 export const WEAPONS_ENUM = Object.freeze({
-  Dagger: 113, Tanto: 114, Staff: 115, Shortsword: 116, Wakazashi: 117,
-  Broadsword: 118, Saber: 119, Longsword: 120, Katana: 121, Claymore: 122,
-  'Dai-Katana': 123, Mace: 124, Flail: 125, Warhammer: 126,
-  'Battle Axe': 127, 'War Axe': 128, 'Short Bow': 129, 'Long Bow': 130,
+  Dagger: 113,
+  Tanto: 114,
+  Staff: 115,
+  Shortsword: 116,
+  Wakazashi: 117,
+  Broadsword: 118,
+  Saber: 119,
+  Longsword: 120,
+  Katana: 121,
+  Claymore: 122,
+  'Dai-Katana': 123,
+  Mace: 124,
+  Flail: 125,
+  Warhammer: 126,
+  'Battle Axe': 127,
+  'War Axe': 128,
+  'Short Bow': 129,
+  'Long Bow': 130,
 });
 const WEAPON_BY_INDEX = Object.freeze(Object.fromEntries(Object.entries(WEAPONS_ENUM).map(([k, v]) => [v, k])));
 
 export const ARMOR_ENUM = Object.freeze({
-  Cuirass: 102, Gauntlets: 103, Greaves: 104, Left_Pauldron: 105,
-  Right_Pauldron: 106, Helm: 107, Boots: 108, Buckler: 109,
-  Round_Shield: 110, Kite_Shield: 111, Tower_Shield: 112,
+  Cuirass: 102,
+  Gauntlets: 103,
+  Greaves: 104,
+  Left_Pauldron: 105,
+  Right_Pauldron: 106,
+  Helm: 107,
+  Boots: 108,
+  Buckler: 109,
+  Round_Shield: 110,
+  Kite_Shield: 111,
+  Tower_Shield: 112,
 });
 // AUDIT 24 (wave 24): ItemEnums.BodyParts has one home in
 // systems/armorMaterials.js.
 export { BODY_PARTS } from '../systems/armorMaterials.js';
 // GetBodyPartForEquipSlot, expressed piece -> part (each piece owns one slot)
 const PIECE_BODY_PART = Object.freeze({
-  107: 0,   // Helm -> Head
-  106: 1,   // Right pauldron -> RightArm
-  105: 2,   // Left pauldron -> LeftArm
-  102: 3,   // Cuirass -> Chest
-  103: 4,   // Gauntlets -> Hands
-  104: 5,   // Greaves -> Legs
-  108: 6,   // Boots -> Feet
+  107: 0, // Helm -> Head
+  106: 1, // Right pauldron -> RightArm
+  105: 2, // Left pauldron -> LeftArm
+  102: 3, // Cuirass -> Chest
+  103: 4, // Gauntlets -> Hands
+  104: 5, // Greaves -> Legs
+  108: 6, // Boots -> Feet
 });
 const SHIELD_VALUE = Object.freeze({ 109: 1, 110: 2, 111: 3, 112: 4 });
 const SHIELD_PARTS = Object.freeze({
-  109: [2, 4],          // Buckler: LeftArm, Hands
-  110: [2, 4, 5],       // Round: + Legs
-  111: [2, 4, 5],       // Kite: same
-  112: [0, 2, 4, 5],    // Tower: + Head
+  109: [2, 4], // Buckler: LeftArm, Hands
+  110: [2, 4, 5], // Round: + Legs
+  111: [2, 4, 5], // Kite: same
+  112: [0, 2, 4, 5], // Tower: + Head
 });
 
 /** DaggerfallUnityItem.GetShieldProtectedBodyParts (:1082-1095), verbatim:
@@ -70,13 +98,13 @@ export const shieldProtectedBodyParts = (templateIndex) => SHIELD_PARTS[template
 // ---- ItemBuilder.materialsByModifier + FormulaHelper.RandomMaterial ----
 export const MATERIALS_BY_MODIFIER = Object.freeze([64, 128, 10, 21, 13, 8, 5, 3, 2, 5]);
 export function randomMaterial(playerLevel, rolls = Math.random) {
-  const o = formulaOverride('randomMaterial')?.(playerLevel, rolls);   // UL1: TryGetOverride("RandomMaterial")
+  const o = formulaOverride('randomMaterial')?.(playerLevel, rolls); // UL1: TryGetOverride("RandomMaterial")
   if (o !== undefined) return o;
   let levelModifier = playerLevel - 10;
   levelModifier *= levelModifier >= 0 ? 2 : 4;
-  const randomModifier = Math.floor(rolls() * 256);          // Range(0, 256)
+  const randomModifier = Math.floor(rolls() * 256); // Range(0, 256)
   let combined = Math.max(0, Math.min(256, levelModifier + randomModifier));
-  let material = 0;                                          // iron
+  let material = 0; // iron
   while (MATERIALS_BY_MODIFIER[material] < combined) {
     combined -= MATERIALS_BY_MODIFIER[material++];
   }
@@ -86,9 +114,9 @@ export function randomMaterial(playerLevel, rolls = Math.random) {
 // ---- ArmorMaterialTypes + RandomArmorMaterial ----
 export const ARMOR_MATERIAL = Object.freeze({ Leather: 0x0000, Chain: 0x0100, PLATE_BASE: 0x0200 });
 export function randomArmorMaterial(playerLevel, rolls = Math.random) {
-  const o = formulaOverride('randomArmorMaterial')?.(playerLevel, rolls);   // UL1: TryGetOverride("RandomArmorMaterial")
+  const o = formulaOverride('randomArmorMaterial')?.(playerLevel, rolls); // UL1: TryGetOverride("RandomArmorMaterial")
   if (o !== undefined) return o;
-  const roll = 1 + Math.floor(rolls() * 100);                // Dice100.Roll
+  const roll = 1 + Math.floor(rolls() * 100); // Dice100.Roll
   if (roll >= 70) {
     if (roll >= 90) return ARMOR_MATERIAL.PLATE_BASE + randomMaterial(playerLevel, rolls);
     return ARMOR_MATERIAL.Chain;
@@ -137,8 +165,11 @@ export function createWeapon(templateIndex, material, rolls = Math.random) {
   // reads item.value raw.
   if (templateIndex === ARROW_TEMPLATE) {
     return {
-      group: 'Weapons', name: templateByIndex(ARROW_TEMPLATE)?.name ?? 'Arrow',
-      templateIndex: ARROW_TEMPLATE, material: 0, flags: 0,
+      group: 'Weapons',
+      name: templateByIndex(ARROW_TEMPLATE)?.name ?? 'Arrow',
+      templateIndex: ARROW_TEMPLATE,
+      material: 0,
+      flags: 0,
       stackCount: 1 + Math.floor(rolls() * 20),
       maxCondition: templateByIndex(ARROW_TEMPLATE)?.hitPoints ?? 0,
       currentCondition: 0,
@@ -158,15 +189,19 @@ export function createWeapon(templateIndex, material, rolls = Math.random) {
  *  to a stored field - itemBaseValue's ammunition floor is the arrow
  *  ARM's, not this pair's. */
 export function weaponOfMaterial(templateIndex, material) {
-  if (templateIndex === HAND_WRAPS_TEMPLATE) material = 0;   // HAND-WRAPS: cloth - no metal, whatever the roll (systems/handWraps.js)
+  if (templateIndex === HAND_WRAPS_TEMPLATE) material = 0; // HAND-WRAPS: cloth - no metal, whatever the roll (systems/handWraps.js)
   const t = templateByIndex(templateIndex);
-  const name = WEAPON_BY_INDEX[templateIndex] ?? t?.name;   // AUDIT-RR2 G12: SetItem's `shortName = itemTemplate.name` (DaggerfallUnityItem.cs:551) - the class enum has no 513/514
+  const name = WEAPON_BY_INDEX[templateIndex] ?? t?.name; // AUDIT-RR2 G12: SetItem's `shortName = itemTemplate.name` (DaggerfallUnityItem.cs:551) - the class enum has no 513/514
   return mintCondition({
-    name, templateIndex, group: 'Weapons', material,
+    name,
+    templateIndex,
+    group: 'Weapons',
+    material,
     flags: 0,
-    value: t ? materialValue(t.basePrice, material) : 1,   // F103: SetItem's basePrice through SetItemPropertiesByMaterial (:649)
-    minDamage: weaponMinDamage(templateIndex), maxDamage: weaponMaxDamage(templateIndex),
-  });   // AUDIT 23 (items-5): the condition mints with the item
+    value: t ? materialValue(t.basePrice, material) : 1, // F103: SetItem's basePrice through SetItemPropertiesByMaterial (:649)
+    minDamage: weaponMinDamage(templateIndex),
+    maxDamage: weaponMaxDamage(templateIndex),
+  }); // AUDIT 23 (items-5): the condition mints with the item
 }
 
 /** CreateArmor (ItemBuilder.cs:428-436): CreateItem then ApplyArmorSettings - SetItem's fresh piece at the material,
@@ -201,10 +236,11 @@ export function assignEnemyEquipment(entity, variant, playerLevel, rolls = Math.
  *  replaces the FIRST (`EnemyEntity.AssignEnemyEquipment = ...`) and keeps the
  *  second. assignEnemyEquipment above is still the pair. */
 export function rollEnemyEquipment(entity, variant, playerLevel, rolls = Math.random) {
-  const range = (lo, hi) => lo + Math.floor(rolls() * (hi + 1 - lo));   // Range(lo, hi+1)
+  const range = (lo, hi) => lo + Math.floor(rolls() * (hi + 1 - lo)); // Range(lo, hi+1)
   let itemLevel = playerLevel;
-  if (entity.isClass && entity.mobileType === KNIGHT_CITY_WATCH) itemLevel = 1;   // city watch: iron/steel only
-  let rightHand = null, leftHand = null;
+  if (entity.isClass && entity.mobileType === KNIGHT_CITY_WATCH) itemLevel = 1; // city watch: iron/steel only
+  let rightHand = null,
+    leftHand = null;
   const armorPieces = [];
   let chance = 0;
   if (variant === 0) {
@@ -218,11 +254,21 @@ export function rollEnemyEquipment(entity, variant, playerLevel, rolls = Math.ra
       leftHand = createWeapon(range(WEAPONS_ENUM.Dagger, WEAPONS_ENUM.Shortsword), randomMaterial(itemLevel, rolls));
     }
   } else {
-    rightHand = createWeapon(range(WEAPONS_ENUM.Claymore, WEAPONS_ENUM['Battle Axe']), randomMaterial(itemLevel, rolls));
+    rightHand = createWeapon(
+      range(WEAPONS_ENUM.Claymore, WEAPONS_ENUM['Battle Axe']),
+      randomMaterial(itemLevel, rolls),
+    );
     if (variant === 1) chance = 75;
     else if (variant === 2) chance = 90;
   }
-  for (const piece of [ARMOR_ENUM.Helm, ARMOR_ENUM.Right_Pauldron, ARMOR_ENUM.Left_Pauldron, ARMOR_ENUM.Cuirass, ARMOR_ENUM.Greaves, ARMOR_ENUM.Boots]) {
+  for (const piece of [
+    ARMOR_ENUM.Helm,
+    ARMOR_ENUM.Right_Pauldron,
+    ARMOR_ENUM.Left_Pauldron,
+    ARMOR_ENUM.Cuirass,
+    ARMOR_ENUM.Greaves,
+    ARMOR_ENUM.Boots,
+  ]) {
     if (dice100(chance, rolls())) armorPieces.push({ piece, material: randomArmorMaterial(itemLevel, rolls) });
   }
   // poisoned-weapon chance pends the poison system (Systems arc)
@@ -232,7 +278,15 @@ export function rollEnemyEquipment(entity, variant, playerLevel, rolls = Math.ra
 /** RRI2: GetBodyPartForEquipSlot for a piece the classic table does not
  *  name - a custom armor class's `GetEquipSlot` (the Hauberk's
  *  ChestArmor, the Sollerets' Feet), mapped onto the same body parts. */
-const SLOT_BODY_PART = Object.freeze({ Head: BODY_PARTS.Head, RightArm: BODY_PARTS.RightArm, LeftArm: BODY_PARTS.LeftArm, ChestArmor: BODY_PARTS.Chest, Gloves: BODY_PARTS.Hands, LegsArmor: BODY_PARTS.Legs, Feet: BODY_PARTS.Feet });
+const SLOT_BODY_PART = Object.freeze({
+  Head: BODY_PARTS.Head,
+  RightArm: BODY_PARTS.RightArm,
+  LeftArm: BODY_PARTS.LeftArm,
+  ChestArmor: BODY_PARTS.Chest,
+  Gloves: BODY_PARTS.Hands,
+  LegsArmor: BODY_PARTS.Legs,
+  Feet: BODY_PARTS.Feet,
+});
 const pieceBodyPart = (piece) => PIECE_BODY_PART[piece] ?? SLOT_BODY_PART[customItemClass(piece)?.equipSlot] ?? null;
 
 /** EnemyEntity.SetEnemyEquipment's armor-value pass (EnemyEntity.cs:410-421),
@@ -257,14 +311,14 @@ export function enemyArmorValues(entity, armorPieces) {
       // armorPieces - the corpse still drops them, as DFU's
       // Items.AddItem gives it.
       const part = pieceBodyPart(a.piece);
-      if (part == null || part === BODY_PARTS.Feet) continue;   // RRI2: the Feet bound holds for a custom piece worn there (the Sollerets, the leather Boots) exactly as for the classic Boots
+      if (part == null || part === BODY_PARTS.Feet) continue; // RRI2: the Feet bound holds for a custom piece worn there (the Sollerets, the leather Boots) exactly as for the classic Boots
       armorValues[part] -= (a.item ? itemArmorValue(a.item) : materialArmorValue(a.material)) * 5;
     }
   }
   if (entity.isClass) {
     for (let i = 0; i < 7; i++) if (armorValues[i] > 60) armorValues[i] = 60;
   } else {
-    const def = (entity.armor ?? 0);                          // already armorValue*5
+    const def = entity.armor ?? 0; // already armorValue*5
     for (let i = 0; i < 7; i++) if (armorValues[i] > def) armorValues[i] = def;
   }
   return armorValues;
@@ -278,10 +332,17 @@ export function enemyArmorValues(entity, armorPieces) {
  *  the same shape as assignEnemyEquipment, or null to let ItemHelper's
  *  arm run. */
 let _assigner = null;
-export function setEnemyEquipmentAssigner(fn) { _assigner = typeof fn === 'function' ? fn : null; }
+export function setEnemyEquipmentAssigner(fn) {
+  _assigner = typeof fn === 'function' ? fn : null;
+}
 /** The assigner on the delegate now (null: ItemHelper's) - what a mod that takes the delegate over replaced (DEX6). */
 export const enemyEquipmentAssigner = () => _assigner;
-export function assignEnemyStartingEquipment(entity, variant, playerLevel, { player = null, rolls = Math.random } = {}) {
+export function assignEnemyStartingEquipment(
+  entity,
+  variant,
+  playerLevel,
+  { player = null, rolls = Math.random } = {},
+) {
   const custom = _assigner?.(entity, variant, playerLevel, { player, rolls });
   return custom ?? assignEnemyEquipment(entity, variant, playerLevel, rolls);
 }
@@ -292,7 +353,7 @@ export function assignEnemyStartingEquipment(entity, variant, playerLevel, { pla
  *  shield rides armorPieces (its armor item), so a shield leftHand
  *  marker is skipped; a leftHand WEAPON is its own item. */
 export function equipmentItems(eq) {
-  if (eq.items) return eq.items;   // RRI2: an assigner that minted its own records (with their conditions) hands them over as they are
+  if (eq.items) return eq.items; // RRI2: an assigner that minted its own records (with their conditions) hands them over as they are
   const items = [];
   // AUDIT 58: the SAME record, not a copy. ItemHelper.cs:1382-1383
   // equips `weapon` and then adds THAT instance to Items, so the blade
@@ -334,9 +395,9 @@ export function bowDamageArrow() {
 
 /** SetEnemyCareer's equipment-variant table, verbatim. */
 export function equipmentVariantFor(careerIndex, isClass, rolls = Math.random) {
-  if (careerIndex === 7 || careerIndex === 21) return 0;      // Orc = 7, OrcShaman = 21 (EntityEnums.cs, verified)
-  if (careerIndex === 8 || careerIndex === 12) return 1;      // Centaur, OrcSergeant
-  if (careerIndex === 24) return 2;                            // OrcWarlord
-  if (isClass) return Math.floor(rolls() * 2);                 // Range(0, 2)
-  return null;                                                 // no equipment
+  if (careerIndex === 7 || careerIndex === 21) return 0; // Orc = 7, OrcShaman = 21 (EntityEnums.cs, verified)
+  if (careerIndex === 8 || careerIndex === 12) return 1; // Centaur, OrcSergeant
+  if (careerIndex === 24) return 2; // OrcWarlord
+  if (isClass) return Math.floor(rolls() * 2); // Range(0, 2)
+  return null; // no equipment
 }

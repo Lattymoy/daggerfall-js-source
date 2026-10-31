@@ -78,7 +78,7 @@
   "src/world/road/roadBand.js": 2,
   "src/world/road/roadNetwork.js": 2,
   "src/world/spawnedDungeons.js": 1,
-  "src/world/streamingWorld.js": 2,
+  "src/world/streamingWorld.js": 1,
   "src/world/tamriel/bayFitKept.js": 1,
   "src/world/tamriel/tamrielRaster.js": 1,
   "src/world/tamrielCountry.js": 2,

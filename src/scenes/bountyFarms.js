@@ -26,7 +26,7 @@
 // Not a DFU member. Ledger A (BOUNTY-FARM).
 import { bountyHash } from '../systems/bounty/bountyBoard.js';
 import { trs, multiply } from '../world/mat4.js';
-import { onFloatingFrame } from '../player/collider.js';   // PERF-COL2 (AUDIT): a farm's bucket rides the floating origin
+import { onFloatingFrame } from '../player/collider.js'; // PERF-COL2 (AUDIT): a farm's bucket rides the floating origin
 
 /** How far from a farm whose bounty is over the player must be before it comes down, metres. */
 export const FARM_LINGER_M = 200;
@@ -68,8 +68,9 @@ export function farmKeyHash(key) {
  */
 export function pickFarm(farms, px, py, key) {
   if (!farms?.length) return null;
-  const near = farms.map((f) => /** @type {[number, any]} */ ([Math.hypot(f.px - px, f.py - py), f]))
-    .sort((a, b) => (a[0] - b[0]) || (a[1].px - b[1].px) || (a[1].py - b[1].py))
+  const near = farms
+    .map((f) => /** @type {[number, any]} */ ([Math.hypot(f.px - px, f.py - py), f]))
+    .sort((a, b) => a[0] - b[0] || a[1].px - b[1].px || a[1].py - b[1].py)
     .slice(0, FARM_PICK_NEAREST);
   return near[bountyHash(farmKeyHash(key), 0xfa7) % near.length][1];
 }
@@ -82,9 +83,13 @@ export function pickFarm(farms, px, py, key) {
 export function farmSpotLocal(id, k = 0) {
   let h = 0;
   for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 0x01000193) >>> 0;
-  const a = bountyHash(h, k, 0xfa), b = bountyHash(h, k, 0xfb);
+  const a = bountyHash(h, k, 0xfa),
+    b = bountyHash(h, k, 0xfb);
   const span = FARM_BAND[1] - FARM_BAND[0];
-  return [FARM_PIXEL_SIDE * (FARM_BAND[0] + span * ((a % 1000) / 1000)), FARM_PIXEL_SIDE * (FARM_BAND[0] + span * ((b % 1000) / 1000))];
+  return [
+    FARM_PIXEL_SIDE * (FARM_BAND[0] + span * ((a % 1000) / 1000)),
+    FARM_PIXEL_SIDE * (FARM_BAND[0] + span * ((b % 1000) / 1000)),
+  ];
 }
 
 /**
@@ -110,13 +115,22 @@ export function createBountyFarms(deps) {
   const _world = new Float32Array(16);
 
   function takeDown(f) {
-    try { deps.collider()?.removeBucket?.(f.bucket); } catch { /* the collider went with the scene */ }
+    try {
+      deps.collider()?.removeBucket?.(f.bucket);
+    } catch {
+      /* the collider went with the scene */
+    }
     farms.delete(f.id);
   }
-  function destroyAll() { for (const f of [...farms.values()]) takeDown(f); }
+  function destroyAll() {
+    for (const f of [...farms.values()]) takeDown(f);
+  }
 
   /** Where the farm's centre is in the scene now. */
-  const centreOf = (f) => { const t = deps.pixelTranslation(f.px, f.py); return [t[0] + f.lx, t[1] + f.ly, t[2] + f.lz]; };
+  const centreOf = (f) => {
+    const t = deps.pixelTranslation(f.px, f.py);
+    return [t[0] + f.lx, t[1] + f.ly, t[2] + f.lz];
+  };
   /** AUDIT 28 B13: whether scene point (x, z) falls within `r` metres of a standing farm's block (not `except`) - a
    *  second farm's spot and a split hunt's trail spot keep out of one that stands. */
   const occupied = (x, z, r = 0, except = null) => {
@@ -128,33 +142,62 @@ export function createBountyFarms(deps) {
     return false;
   };
   /** Where the farmhouse stands in the scene now. */
-  const houseOf = (f) => { const t = deps.pixelTranslation(f.px, f.py); const h = f.house ?? [f.lx, f.ly, f.lz]; return [t[0] + h[0], t[1] + h[1], t[2] + h[2]]; };
+  const houseOf = (f) => {
+    const t = deps.pixelTranslation(f.px, f.py);
+    const h = f.house ?? [f.lx, f.ly, f.lz];
+    return [t[0] + h[0], t[1] + h[1], t[2] + h[2]];
+  };
 
   async function stand(f) {
-    const myGen = f.gen = ++gen;
-    const block = deps.farmBlockNear(f.px, f.py, f.id);   // BOUNTY-FARM-PICK: the notice picks among the nearest farms
+    const myGen = (f.gen = ++gen);
+    const block = deps.farmBlockNear(f.px, f.py, f.id); // BOUNTY-FARM-PICK: the notice picks among the nearest farms
     const pixel = deps.pixelBuilt(f.px, f.py);
-    if (!block?.models?.length || !pixel) { f.failed = true; return; }
+    if (!block?.models?.length || !pixel) {
+      f.failed = true;
+      return;
+    }
     const half = (block.side ?? 0) / 2;
     const t = deps.pixelTranslation(f.px, f.py);
     const col = deps.collider();
-    if (!col?.heightAt) { f.retry = FARM_RETRY_SYNCS; return; }
+    if (!col?.heightAt) {
+      f.retry = FARM_RETRY_SYNCS;
+      return;
+    }
     // the spot: every roll clear of roads, the sea and towns, measured on a 3x3 over the block - the flattest wins
-    let spot = null, best = Infinity, unbuilt = false;
+    let spot = null,
+      best = Infinity,
+      unbuilt = false;
     for (let k = 0; k < FARM_SPOT_TRIES; k++) {
       const [lx, lz] = farmSpotLocal(f.id, k);
-      if (!deps.spotOk(t[0] + lx, t[2] + lz, half + 4) || occupied(t[0] + lx, t[2] + lz, half + 4, f)) continue;   // AUDIT 28 B13: nor on another farm
-      let lo = Infinity, hi = -Infinity;
-      for (const dx of [-half, 0, half]) for (const dz of [-half, 0, half]) {
-        const h = col.heightAt(t[0] + lx + dx, t[2] + lz + dz);
-        if (Number.isFinite(h)) { lo = Math.min(lo, h); hi = Math.max(hi, h); }
+      if (!deps.spotOk(t[0] + lx, t[2] + lz, half + 4) || occupied(t[0] + lx, t[2] + lz, half + 4, f)) continue; // AUDIT 28 B13: nor on another farm
+      let lo = Infinity,
+        hi = -Infinity;
+      for (const dx of [-half, 0, half])
+        for (const dz of [-half, 0, half]) {
+          const h = col.heightAt(t[0] + lx + dx, t[2] + lz + dz);
+          if (Number.isFinite(h)) {
+            lo = Math.min(lo, h);
+            hi = Math.max(hi, h);
+          }
+        }
+      if (!Number.isFinite(lo)) {
+        unbuilt = true;
+        continue;
       }
-      if (!Number.isFinite(lo)) { unbuilt = true; continue; }
-      if (hi - lo > FARM_MAX_RISE_M) continue;   // BOUNTY-FARM-GROUND: a mountainside is no farmyard
-      if (hi - lo < best) { best = hi - lo; spot = [lx, lz]; }
+      if (hi - lo > FARM_MAX_RISE_M) continue; // BOUNTY-FARM-GROUND: a mountainside is no farmyard
+      if (hi - lo < best) {
+        best = hi - lo;
+        spot = [lx, lz];
+      }
     }
-    if (!spot) { if (unbuilt) f.retry = FARM_RETRY_SYNCS; else f.failed = true; return; }   // a far pixel's ground is not up yet - try again
-    f.lx = spot[0]; f.lz = spot[1]; f.half = half;
+    if (!spot) {
+      if (unbuilt) f.retry = FARM_RETRY_SYNCS;
+      else f.failed = true;
+      return;
+    } // a far pixel's ground is not up yet - try again
+    f.lx = spot[0];
+    f.lz = spot[1];
+    f.half = half;
     const centreGround = col.heightAt(t[0] + f.lx, t[2] + f.lz);
     f.ly = (Number.isFinite(centreGround) ? centreGround : 0) - t[1];
     // the block's own frame runs 0..side: its middle goes on the spot; each model's height is then its own ground's
@@ -163,21 +206,32 @@ export function createBountyFarms(deps) {
     for (const placed of block.models) {
       if (placed.enhancedOnly && !(deps.enhanced?.() ?? false)) continue;
       let gpu = null;
-      try { gpu = await deps.getGpuMesh(placed.modelIdNum); } catch { gpu = null; }
-      if (farms.get(f.id) !== f || f.gen !== myGen) return;   // taken down (or stood again) while the meshes came
+      try {
+        gpu = await deps.getGpuMesh(placed.modelIdNum);
+      } catch {
+        gpu = null;
+      }
+      if (farms.get(f.id) !== f || f.gen !== myGen) return; // taken down (or stood again) while the meshes came
       if (!gpu) continue;
-      try { await deps.prepare(gpu, pixel); } catch { /* an undressed wall is still a wall */ }
+      try {
+        await deps.prepare(gpu, pixel);
+      } catch {
+        /* an undressed wall is still a wall */
+      }
       if (farms.get(f.id) !== f || f.gen !== myGen) return;
       const local = multiply(origin, placed.matrix);
       const g = col.heightAt(t[0] + local[12], t[2] + local[14]);
-      local[13] = (Number.isFinite(g) ? g - t[1] : f.ly) + placed.matrix[13] - FARM_SINK_M;   // on the ground under ITSELF
+      local[13] = (Number.isFinite(g) ? g - t[1] : f.ly) + placed.matrix[13] - FARM_SINK_M; // on the ground under ITSELF
       models.push({ gpu, local, id: placed.modelIdNum });
     }
-    if (!models.length) { f.failed = true; return; }
+    if (!models.length) {
+      f.failed = true;
+      return;
+    }
     const live = deps.collider();
     if (live?.addMesh) {
-      const tr0 = () => deps.pixelTranslation(f.px, f.py);   // the pixel's own buckets' law: the translation rides the ray
-      const tr = deps.floatingFrame ? onFloatingFrame(deps.floatingFrame(), tr0) : tr0;   // PERF-COL2 (AUDIT): filed by place, as the pixel's own
+      const tr0 = () => deps.pixelTranslation(f.px, f.py); // the pixel's own buckets' law: the translation rides the ray
+      const tr = deps.floatingFrame ? onFloatingFrame(deps.floatingFrame(), tr0) : tr0; // PERF-COL2 (AUDIT): filed by place, as the pixel's own
       for (const m of models) {
         const cpu = deps.cpuModel(m.id);
         if (cpu?.positions && cpu.indices) live.addMesh(f.bucket, cpu.positions, cpu.indices, m.local, tr);
@@ -185,23 +239,47 @@ export function createBountyFarms(deps) {
     }
     // the farmhouse: the model with the widest footprint - where a farm bounty's pack makes its stand
     // BOUNTY-FARM-CLEAR: and every building's footprint, pixel-local, so no foe of the pack stands inside one
-    let house = null, widest = -1;
+    let house = null,
+      widest = -1;
     const boxes = [];
     for (const m of models) {
       const pos = deps.cpuModel(m.id)?.positions;
       if (!pos?.length) continue;
-      let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity, y0 = Infinity, y1 = -Infinity;
-      for (let i = 0; i < pos.length; i += 3) { x0 = Math.min(x0, pos[i]); x1 = Math.max(x1, pos[i]); y0 = Math.min(y0, pos[i + 1]); y1 = Math.max(y1, pos[i + 1]); z0 = Math.min(z0, pos[i + 2]); z1 = Math.max(z1, pos[i + 2]); }
+      let x0 = Infinity,
+        x1 = -Infinity,
+        z0 = Infinity,
+        z1 = -Infinity,
+        y0 = Infinity,
+        y1 = -Infinity;
+      for (let i = 0; i < pos.length; i += 3) {
+        x0 = Math.min(x0, pos[i]);
+        x1 = Math.max(x1, pos[i]);
+        y0 = Math.min(y0, pos[i + 1]);
+        y1 = Math.max(y1, pos[i + 1]);
+        z0 = Math.min(z0, pos[i + 2]);
+        z1 = Math.max(z1, pos[i + 2]);
+      }
       const area = (x1 - x0) * (z1 - z0);
-      if (area > widest) { widest = area; house = m; }
+      if (area > widest) {
+        widest = area;
+        house = m;
+      }
       // a fence or a sign is not a building: only models tall and wide enough to hold a foe
       if (y1 - y0 < 2 || Math.min(x1 - x0, z1 - z0) < 1.5) continue;
       const L = m.local;
-      let bx0 = Infinity, bx1 = -Infinity, bz0 = Infinity, bz1 = -Infinity;
-      for (const cx of [x0, x1]) for (const cz of [z0, z1]) {
-        const wx = L[0] * cx + L[8] * cz + L[12], wz = L[2] * cx + L[10] * cz + L[14];
-        bx0 = Math.min(bx0, wx); bx1 = Math.max(bx1, wx); bz0 = Math.min(bz0, wz); bz1 = Math.max(bz1, wz);
-      }
+      let bx0 = Infinity,
+        bx1 = -Infinity,
+        bz0 = Infinity,
+        bz1 = -Infinity;
+      for (const cx of [x0, x1])
+        for (const cz of [z0, z1]) {
+          const wx = L[0] * cx + L[8] * cz + L[12],
+            wz = L[2] * cx + L[10] * cz + L[14];
+          bx0 = Math.min(bx0, wx);
+          bx1 = Math.max(bx1, wx);
+          bz0 = Math.min(bz0, wz);
+          bz1 = Math.max(bz1, wz);
+        }
       boxes.push([bx0, bz0, bx1, bz1]);
     }
     f.boxes = boxes;
@@ -214,23 +292,47 @@ export function createBountyFarms(deps) {
    * Call a few times a second.
    */
   function sync(wanted) {
-    if (deps.mode() !== 'exterior') { destroyAll(); return; }
+    if (deps.mode() !== 'exterior') {
+      destroyAll();
+      return;
+    }
     const want = new Map((wanted ?? []).map((w) => [w.id, w]));
     const feet = deps.feet();
     for (const f of [...farms.values()]) {
       f.wanted = want.has(f.id);
-      if (f.retry > 0 && --f.retry === 0) { takeDown(f); continue; }   // the ground was not up: stood afresh below
-      if (!deps.pixelBuilt(f.px, f.py)) { takeDown(f); continue; }   // its pixel unloaded: down, stood again on return
+      if (f.retry > 0 && --f.retry === 0) {
+        takeDown(f);
+        continue;
+      } // the ground was not up: stood afresh below
+      if (!deps.pixelBuilt(f.px, f.py)) {
+        takeDown(f);
+        continue;
+      } // its pixel unloaded: down, stood again on return
       if (!f.wanted && f.models) {
         const c = centreOf(f);
-        if (!feet || Math.hypot(feet[0] - c[0], feet[2] - c[2]) > FARM_LINGER_M) takeDown(f);   // over, and out of sight
-      } else if (!f.wanted && !f.models) takeDown(f);   // over before it ever stood
+        if (!feet || Math.hypot(feet[0] - c[0], feet[2] - c[2]) > FARM_LINGER_M) takeDown(f); // over, and out of sight
+      } else if (!f.wanted && !f.models) takeDown(f); // over before it ever stood
     }
     for (const w of want.values()) {
       if (farms.has(w.id) || !deps.pixelBuilt(w.px, w.py)) continue;
-      const f = { id: w.id, px: w.px, py: w.py, lx: 0, lz: 0, ly: 0, models: null, wanted: true, gen: 0, bucket: FARM_BUCKET + w.id, failed: false, retry: 0 };
+      const f = {
+        id: w.id,
+        px: w.px,
+        py: w.py,
+        lx: 0,
+        lz: 0,
+        ly: 0,
+        models: null,
+        wanted: true,
+        gen: 0,
+        bucket: FARM_BUCKET + w.id,
+        failed: false,
+        retry: 0,
+      };
       farms.set(w.id, f);
-      stand(f).catch(() => { f.failed = true; });
+      stand(f).catch(() => {
+        f.failed = true;
+      });
     }
   }
 
@@ -243,15 +345,23 @@ export function createBountyFarms(deps) {
       const pixel = deps.pixelBuilt(f.px, f.py);
       const t = deps.pixelTranslation(f.px, f.py);
       const pm = trs(t[0], t[1], t[2], 0, 0, 0);
-      for (const m of f.models) { r.drawMesh(m.gpu, multiply(pm, m.local, _world), pixel?.texRemap ?? null); n++; }
+      for (const m of f.models) {
+        r.drawMesh(m.gpu, multiply(pm, m.local, _world), pixel?.texRemap ?? null);
+        n++;
+      }
     }
     return n;
   }
 
   return {
-    sync, draw, destroyAll,
+    sync,
+    draw,
+    destroyAll,
     /** The farm's centre in the scene, once it stands - where a farm bounty's pack makes its stand. */
-    anchorFor: (id) => { const f = farms.get(id); return f?.models ? houseOf(f) : null; },   // the farmhouse, not the block's middle
+    anchorFor: (id) => {
+      const f = farms.get(id);
+      return f?.models ? houseOf(f) : null;
+    }, // the farmhouse, not the block's middle
     /** Has this bounty's farm been tried and failed (no farm block, no clear spot)? Its pack then stands as any other. */
     failed: (id) => !!farms.get(id)?.failed,
     standing: () => [...farms.values()].filter((f) => f.models).map((f) => f.id),
@@ -261,7 +371,8 @@ export function createBountyFarms(deps) {
       for (const f of farms.values()) {
         if (!f.models || !f.boxes?.length) continue;
         const t = deps.pixelTranslation(f.px, f.py);
-        const lx = x - t[0], lz = z - t[2];
+        const lx = x - t[0],
+          lz = z - t[2];
         for (const b of f.boxes) if (lx > b[0] - r && lx < b[2] + r && lz > b[1] - r && lz < b[3] + r) return true;
       }
       return false;

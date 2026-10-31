@@ -32,8 +32,8 @@
   {
     "name": "DB-LETTER-a-throw-escapes",
     "file": "src/systems/crimeGuilds.js",
-    "old": "  } catch (ex) {\n    console.warn(`[crime guilds] the ${questName} letter did not start; it is sent again later`, ex?.message ?? ex);\n    return false;\n  }",
-    "new": "  } catch (ex) {\n    throw ex;\n  }",
+    "old": "    console.warn(`[crime guilds] the ${questName} letter did not start; it is sent again later`, ex?.message ?? ex);\n    return false;",
+    "new": "    throw ex;",
     "tests": [
       "test/systems/crimeguilds.test.js"
     ],

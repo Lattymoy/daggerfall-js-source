@@ -280,7 +280,7 @@ test('AUDIT POI E18: the editor\'s lines are sized in the pixels of the rect the
   draws.length = 0;
   Wd.editor.drawLines(v.proj, v.view);
   assert.deepEqual(draws.map((o) => [o.vw, o.vh]), [[0, 0], [0, 0]], 'no rect: the pass\'s own drawing buffer');
-  assert.match(hostText('src/scenes/world.js'), /viewport: \(\) => renderer\.worldViewportPx,   \/\/ AUDIT POI E18/, 'the world hands it the world pass\'s rect');
+  assert.match(hostText('src/scenes/world.js'), /viewport: \(\) => renderer\.worldViewportPx, \/\/ AUDIT POI E18/, 'the world hands it the world pass\'s rect');
 });
 
 test('AUDIT POI E16: the editor acts on its own keys alone - the browser keeps every other (find, reload, zoom, Tab, back, F5), though the world hears none of them (mutants: every chord answered taken; any key answered taken)', async () => {
@@ -416,20 +416,20 @@ test('AUDIT POI E1, E3, E12, E13, E14, E15 - THE WORLD\'S WIRING, BY SOURCE: the
   const enter = mount.slice(mount.indexOf('    function enter() {'), mount.indexOf('    function exit(how) {'));
   const exit = mount.slice(mount.indexOf('    function exit(how) {'), mount.indexOf('    function jump() {'));
   assert.match(enter, /hotbarKeysBack = holdHotbarKeys\(\);/, 'E1: the bar held on the way in');
-  assert.match(exit, /hotbarKeysBack\?\.\(\); hotbarKeysBack = null;/, 'E1: and let go on the way out');
-  assert.match(mount, /const worldKeysUp = \(\) => \{ keys\.clear\(\); for \(const ring of Object\.values\(latch\.edge\)\) ring\.clear\(\); \};/, 'E3: the held set and every edge ring');
+  assert.match(exit, /hotbarKeysBack\?\.\(\);\n\s*hotbarKeysBack = null;/, 'E1: and let go on the way out');
+  assert.match(mount, /const worldKeysUp = \(\) => \{\n\s*keys\.clear\(\);\n\s*for \(const ring of Object\.values\(latch\.edge\)\) ring\.clear\(\);\n\s*\};/, 'E3: the held set and every edge ring');
   assert.match(enter, /\n\s*worldKeysUp\(\);\n/, 'E3: on the way in');
-  assert.match(exit, /\n\s*worldKeysUp\(\);   \/\/ AUDIT POI E3/, 'E3: and on the way out');
-  assert.match(enter, /if \(_mode\(\) !== 'exterior' \|\| host\.travelView\?\.active \|\| !isOnFoot\(player\.transportMode\) \|\| !!csaRuntime\?\.isSailing\?\.\(\)\) \{ townTalk\.say\(/, 'E12: a bench, a saddle and a helm refused');   // PIN MOVED (DRAGON0): the mount moved to src/scenes/poiEditorMount.js, travelView read live through `host`
-  assert.match(exit, /if \(!Number\.isFinite\(below\)\) \{ panel\.say\([^\n]*\); return; \}/, 'E13: unbuilt ground refused, the editor still open');
+  assert.match(exit, /worldKeysUp\(\); \/\/ AUDIT POI E3/, 'E3: and on the way out');
+  assert.match(enter, /if \(\n\s*_mode\(\) !== 'exterior' \|\|\n\s*host\.travelView\?\.active \|\|\n\s*!isOnFoot\(player\.transportMode\) \|\|\n\s*!!csaRuntime\?\.isSailing\?\.\(\)\n\s*\) \{\n\s*townTalk\.say\(/, 'E12: a bench, a saddle and a helm refused');   // PIN MOVED (DRAGON0): the mount moved to src/scenes/poiEditorMount.js, travelView read live through `host`
+  assert.match(exit, /if \(!Number\.isFinite\(below\)\) \{\n\s*panel\.say\(\n\s*t\(\n\s*'poi\.editor\.hereNoGround',\n\s*'The ground here has not loaded yet\. Fly on, or exit to where you were standing\.',\n\s*\),\n\s*'bad',\n\s*\);\n\s*return;\n\s*\}/, 'E13: unbuilt ground refused, the editor still open');
   assert.ok(exit.indexOf('return; }') < exit.indexOf('window.removeEventListener'), 'E13: refused before anything is torn down');
-  assert.match(exit, /if \(heldInSolid\(collider, landing\)\) landing = openGroundNear\(collider, landing\[0\], landing\[2\], \{ dry: \(floor\) => floor >= tvSeaY\(\) \}\) \?\? landing;/, 'E13: the teleport\'s own rock check');
+  assert.match(exit, /if \(heldInSolid\(collider, landing\)\)\n\s*landing = openGroundNear\(collider, landing\[0\], landing\[2\], \{ dry: \(floor\) => floor >= tvSeaY\(\) \}\) \?\? landing;/, 'E13: the teleport\'s own rock check');
   assert.match(mount, /gone: \(\) => _mode\(\) !== 'exterior' \|\| restoresSoFar\(\) !== openedAt,\n\s*onGone: \(\) => exit\('away'\),/, 'E14: a mode change or a load leaves it');
   assert.match(enter, /openedAt = restoresSoFar\(\);/, 'E14: the loads counted from each opening');
-  assert.match(mount, /const route = createPoiEditorRouter\(\{ editor, canvas, cam, acts: \(\) => panel\.acts, owns: \(target\) => panel\.owns\(target\), overlayUp: \(\) => townTalk\.overlayActive, textEntry: isTextEntryTarget, win: window \}\);/);
+  assert.match(mount, /const route = createPoiEditorRouter\(\{\n\s*editor,\n\s*canvas,\n\s*cam,\n\s*acts: \(\) => panel\.acts,\n\s*owns: \(target\) => panel\.owns\(target\),\n\s*overlayUp: \(\) => townTalk\.overlayActive,\n\s*textEntry: isTextEntryTarget,\n\s*win: window,\n\s*\}\);/);
   assert.match(enter, /for \(const ty of POI_EDITOR_EVENTS\) window\.addEventListener\(ty, onEvent, \{ capture: true, passive: false \}\);/, 'E14: the capture\'s loss and the blur heard too');
   const presenter = w.slice(w.indexOf('setDeathPresenter(() => {'), w.indexOf('setDeathPresenter(() => {') + 400);
   assert.match(presenter, /^setDeathPresenter\(\(\) => \{\n\s*poiEditorLeave\?\.\('back'\);/, 'E14: a death leaves it first');
   assert.match(mount, /poiEditorLeave = exit;/);
-  assert.match(mount, /editor\.wantsOpen = \(id\) => \{ panel\.open\(id\)\.catch\(/, 'E15: a live POI clicked is opened');
+  assert.match(mount, /editor\.wantsOpen = \(id\) => \{\n\s*panel\.open\(id\)\.catch\(/, 'E15: a live POI clicked is opened');
 });

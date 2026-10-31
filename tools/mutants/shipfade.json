@@ -212,8 +212,8 @@
   {
     "name": "EL-uncut",
     "file": "src/render/enhancedLighting.js",
-    "old": "  else if (vWorldPos.y > uClipY) discard;\n  dissolveCut();   // SHIP-FADE: a ship sailing into the world or out of it, her share of her fragments (orderedDither.js)\n",
-    "new": "  else if (vWorldPos.y > uClipY) discard;\n",
+    "old": "  dissolveCut();   // SHIP-FADE: a ship sailing into the world or out of it, her share of her fragments (orderedDither.js)\n  vec4 tex = texture(uTex, vUV);",
+    "new": "  vec4 tex = texture(uTex, vUV);",
     "tests": [
       "test/render/shipfade.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "EL-no-cut-declared",
     "file": "src/render/enhancedLighting.js",
-    "old": "${EL_POINT_LIT_GLSL}\n${DISSOLVE_GLSL}\n${MESH_ALPHA_GLSL}\nout vec4 outColor;",
-    "new": "${EL_POINT_LIT_GLSL}\nvoid dissolveCut() {}\n${MESH_ALPHA_GLSL}\nout vec4 outColor;",
+    "old": "${DISSOLVE_GLSL}",
+    "new": "void dissolveCut() {}",
     "tests": [
       "test/render/shipfade.test.js"
     ]
@@ -302,8 +302,8 @@
   {
     "name": "HUD-tag-not-faded",
     "file": "src/ui/naval/navalHud.js",
-    "old": "tagAlpha(t.distance, reach) * Math.max(0, Math.min(1, t.fade ?? 1)) * 100",
-    "new": "tagAlpha(t.distance, reach) * 100",
+    "old": "    set(\n      'a',\n      String(Math.round(tagAlpha(t.distance, reach) * Math.max(0, Math.min(1, t.fade ?? 1)) * 100) / 100),\n      (v) => {\n        slot.n.style.opacity = v;\n      },\n    ); // SHIP-FADE: with her",
+    "new": "    set('a', String(Math.round(tagAlpha(t.distance, reach) * 100) / 100), (v) => {\n      slot.n.style.opacity = v;\n    }); // SHIP-FADE: with her",
     "tests": [
       "test/render/shipfade.test.js"
     ]

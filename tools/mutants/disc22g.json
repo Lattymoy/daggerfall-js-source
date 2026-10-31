@@ -11,8 +11,8 @@
   {
     "name": "D22G-normal-not-turned",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "  if (m) {\n    const ny = m[1] * x + m[5] * y + m[9] * z;",
-    "new": "  if (false) {\n    const ny = m[1] * x + m[5] * y + m[9] * z;",
+    "old": "  if (m) {",
+    "new": "  if (false) {",
     "tests": [
       "test/ui/disc22g_automap.test.js"
     ]
@@ -38,7 +38,7 @@
   {
     "name": "D22G-no-row-cache",
     "file": "src/systems/automap/automapFloors.js",
-    "old": "    if (!mine) { mine = rowFloorTriangles(r, []); _rowTris.set(r, mine); }",
+    "old": "    if (!mine) {\n      mine = rowFloorTriangles(r, []);\n      _rowTris.set(r, mine);\n    }",
     "new": "    mine = rowFloorTriangles(r, []);",
     "tests": [
       "test/ui/disc22g_automap.test.js"

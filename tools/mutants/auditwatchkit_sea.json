@@ -20,8 +20,8 @@
   {
     "name": "WK-N2-day-half-lookout",
     "file": "src/systems/naval/navalAI.js",
-    "old": "const near = nightSight(lookoutOf(ship), { night: !!world.night, lit: false }) * 0.5;",
-    "new": "const near = lookoutOf(ship) * 0.5;",
+    "old": "  const near = nightSight(lookoutOf(ship), { night: !!world.night, lit: false }) * 0.5;",
+    "new": "  const near = lookoutOf(ship) * 0.5;",
     "tests": [
       "test/systems/naval/auditwatchkit_sea.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WK-N3-run-never-ends",
     "file": "src/systems/naval/navalAI.js",
-    "old": "if (ship.runOn && !(world.night && world.now < ship.runOn.until)) ship.runOn = null;",
-    "new": "if (ship.runOn && !world.night) ship.runOn = null;",
+    "old": "  if (ship.runOn && !(world.night && world.now < ship.runOn.until)) ship.runOn = null; // AUDIT WK-N3: the run's end, or the day",
+    "new": "  if (ship.runOn && !world.night) ship.runOn = null; // AUDIT WK-N3: the run's end, or the day",
     "tests": [
       "test/systems/naval/auditwatchkit_sea.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WK-N3-day-runs-on",
     "file": "src/systems/naval/navalAI.js",
-    "old": "if (ship.runOn && !(world.night && world.now < ship.runOn.until)) ship.runOn = null;",
-    "new": "if (ship.runOn && !(world.now < ship.runOn.until)) ship.runOn = null;",
+    "old": "  if (ship.runOn && !(world.night && world.now < ship.runOn.until)) ship.runOn = null; // AUDIT WK-N3: the run's end, or the day",
+    "new": "  if (ship.runOn && !(world.now < ship.runOn.until)) ship.runOn = null; // AUDIT WK-N3: the run's end, or the day",
     "tests": [
       "test/systems/naval/auditwatchkit_sea.test.js"
     ]

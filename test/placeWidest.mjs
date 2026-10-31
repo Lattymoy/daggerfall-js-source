@@ -51,7 +51,9 @@ export const PARTY_POSE = { px: 100, py: 200, loc: 'Daggerfall', in: 0, h: 50, h
 // PIN MOVED (STOREFRONT): the glyphs are stored as their mask, `gb` (server/src/index.js packAttach), read back as `glyphs`
 // PIN MOVED (STOREFRONT, the wire audit): and the worn claims the widest token never carried - the hidden glyphs (`gx`), the
 // aura, the icon, the ribbon, both kits (`ak`, `fx`), the arms (`wa`) and the villain meter (`vl`)
-export const PLACE_ATTACH_FIELDS = Object.freeze(['key', 'id', 'sc', 'name', 'title', 'ts', 'gb', 'gx', 'au', 'pi', 'rb', 'ak', 'fx', 'wa', 'vl', 'sub', 'mu', 'lv', 'gi', 'gt', 'gm', 'hn', 'hc', 'hb', 'hg', 'ci', 'gio', 'pose', 'since', 'turn', 'kept', 'worldSeen', 'finalUsed', 'pk', 'lt', 'ld', 'fz']);   // HIBERNATE: `sc`, the id's secret, on the attachment so a wake can ask it without a storage read; WARDEN1: `pk`, whose parked team the socket last spoke for (24 hex - the town watch tells it of a throw); AUDIT RENOWN1 WIRE-4: `lv`, the Renown the token signed; GUILD1c: the guild it signed (`gi`, `gt`, `gm`) and when it was said (`gio`); LEGACY7: the house it signed (`hn`, `hc`, `hb`, `hg`); AUDIT LEGACY III O1: its realm character (`ci`), which the wed arm stamps
+// PIN MOVED (AUDIT DRAGON-CELL, then AUDIT DRAGON-CELL III G14): `at`, when the socket opened - Room.fetch has written it
+// since AUDIT WB A1, so the widest is measured with it
+export const PLACE_ATTACH_FIELDS = Object.freeze(['key', 'at', 'id', 'sc', 'name', 'title', 'ts', 'gb', 'gx', 'au', 'pi', 'rb', 'ak', 'fx', 'wa', 'vl', 'sub', 'mu', 'lv', 'gi', 'gt', 'gm', 'hn', 'hc', 'hb', 'hg', 'ci', 'gio', 'pose', 'since', 'turn', 'kept', 'worldSeen', 'finalUsed', 'pk', 'lt', 'ld', 'fz']);   // HIBERNATE: `sc`, the id's secret, on the attachment so a wake can ask it without a storage read; WARDEN1: `pk`, whose parked team the socket last spoke for (24 hex - the town watch tells it of a throw); AUDIT RENOWN1 WIRE-4: `lv`, the Renown the token signed; GUILD1c: the guild it signed (`gi`, `gt`, `gm`) and when it was said (`gio`); LEGACY7: the house it signed (`hn`, `hc`, `hb`, `hg`); AUDIT LEGACY III O1: its realm character (`ci`), which the wed arm stamps
 /** AUDIT FB1018D L4-4: a dungeon room's socket carries SEAT-LIVE's two stamps beside them (net/seatLive.js - when it came
  *  in, `hi`; when it was last heard, `hd`), which an interior's never writes. */
 export const SEAT_ATTACH_FIELDS = Object.freeze(['hd', 'hi']);
@@ -97,6 +99,7 @@ export async function widestPlace(tick, key = 'interior:m4294967295.16777216') {
   const hidden = [];
   for (const g of [...GLYPHS].sort((a, b) => b.length - a.length)) if (tokenBodyOf(await r.token(long(0), claimsOf(0, [...hidden, g]))).length <= TOKEN_BODY_MAX - 2) hidden.push(g);
   const widest = async (ws, n) => {
+    ws.att.at = Date.now();   // AUDIT DRAGON-CELL III G14: when the socket opened, as Room.fetch writes it (the fake writes none since II E14)
     const tok = await r.token(long(n), claimsOf(n, hidden));
     return r.hello(ws, long(n), WIDE_POSE, { tok, name: 'N'.repeat(NAME_MAX), ls: 1 });   // LEASE1: a build that hands its hub's lease on
   };

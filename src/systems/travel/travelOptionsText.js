@@ -19,53 +19,55 @@
 // whatever scale the panel asks. It takes the SDF arm of both, which
 // is the one whose layout does not assume the narrower classic
 // measure, and carries the other strings so nothing is lost.
-import { t } from '../textManager.js';   // L10N4: the port's own words below (TRAVEL_NAV_TEXT), never the mod's table
+import { t } from '../textManager.js'; // L10N4: the port's own words below (TRAVEL_NAV_TEXT), never the mod's table
 
 export const TRAVEL_OPTIONS_TEXT = Object.freeze({
-  MsgArrived: "You have arrived at your destination.",
+  MsgArrived: 'You have arrived at your destination.',
   MsgArrivedJunc: "You've arrived at a junction.",
-  MsgEnemies: "Enemies are seeking to prevent your travel...",
-  MsgAvoidFail: "You failed to avoid an encounter!",
-  MsgAvoidSuccess: "You successfully avoided an encounter.",
-  MsgLowHealth: "You are close to the point of death!",
-  MsgLowFatigue: "You are exhausted and should rest.",
+  MsgEnemies: 'Enemies are seeking to prevent your travel...',
+  MsgAvoidFail: 'You failed to avoid an encounter!',
+  MsgAvoidSuccess: 'You successfully avoided an encounter.',
+  MsgLowHealth: 'You are close to the point of death!',
+  MsgLowFatigue: 'You are exhausted and should rest.',
   MsgOcean: "You've found yourself in the sea, maybe you should travel on a ship.",
-  MsgNearLocation: "Paused the journey since a {0} called {1} is nearby.",
+  MsgNearLocation: 'Paused the journey since a {0} called {1} is nearby.',
   MsgEnterLocation: "Paused the journey as you've entered a {0} called {1}.",
-  MsgCircumnavigate: "Circumnavigating {0}.",
+  MsgCircumnavigate: 'Circumnavigating {0}.',
   MsgNoPath: "There's no path here to follow in that direction.",
-  MsgFollowRoad: "Following a road.",
-  MsgFollowTrack: "Following a dirt track.",
-  MsgTargetCoords: "Map coordinates: {0}, {1}.",
-  MsgNewRegion: "You have entered the region of {0}.",
-  DirectionN: "N",
-  DirectionNE: "NE",
-  DirectionE: "E",
-  DirectionSE: "SE",
-  DirectionS: "S",
-  DirectionSW: "SW",
-  DirectionW: "W",
-  DirectionNW: "NW",
-  DirectionNone: "none",
-  TipMap: "Consult Map",
-  TipCamp: "Stop to Camp",
-  MsgResume: "Resume your journey to {0}?",
-  MsgFollow: "Do you want to follow this road?",
-  MsgTeleportCost: "Teleportation will cost you {0} gold, is that acceptable?",
-  MsgPlayerControlled: "Player Controlled Journey",
-  MsgTimeFormat: " {0} hours {1} mins (approx)",
-  MsgTimeFormatNoSDF: "~ {0} hours {1} mins",
+  MsgFollowRoad: 'Following a road.',
+  MsgFollowTrack: 'Following a dirt track.',
+  MsgTargetCoords: 'Map coordinates: {0}, {1}.',
+  MsgNewRegion: 'You have entered the region of {0}.',
+  DirectionN: 'N',
+  DirectionNE: 'NE',
+  DirectionE: 'E',
+  DirectionSE: 'SE',
+  DirectionS: 'S',
+  DirectionSW: 'SW',
+  DirectionW: 'W',
+  DirectionNW: 'NW',
+  DirectionNone: 'none',
+  TipMap: 'Consult Map',
+  TipCamp: 'Stop to Camp',
+  MsgResume: 'Resume your journey to {0}?',
+  MsgFollow: 'Do you want to follow this road?',
+  MsgTeleportCost: 'Teleportation will cost you {0} gold, is that acceptable?',
+  MsgPlayerControlled: 'Player Controlled Journey',
+  MsgTimeFormat: ' {0} hours {1} mins (approx)',
+  MsgTimeFormatNoSDF: '~ {0} hours {1} mins',
   MsgNoPort: "You cannot travel by ship from here, since there's no port.",
-  MsgNoDestPort: "You cannot travel by ship to there, as that location has no port.",
+  MsgNoDestPort: 'You cannot travel by ship to there, as that location has no port.',
   MsgNoSailing: "Your journey doesn't cross any ocean, so a ship is not needed.",
   MsgNotVisited: "You have not visited this location yet, so can't fast travel there.",
-  MsgGuildHalls: "Guild Halls:    ",
-  MsgNoKnowledge: "You have no knowledge of {0}.",
-  LocationTypeDungeonKeep: "Keep",
-  LocationTypeDungeonLabyrinth: "Labyrinth",
-  LocationTypeDungeonRuin: "Ruin",
-  HelpInfoSDF: "Travel Options Help\n\nTravel Map\n\nLeftClick - Select travel destination (region, location, map pixel)\nRightClick - Zoom in or out\nMiddleClick - Mark a location (for example as a destination for road following)\nI - Location information known to character (press while hovering or after selecting)\n\nAccelerated Travel\n\n{0} - Follow road or track\nM - Open travel map while travelling (or click map button)\nC - Pause travel for camp (or click camp button)\n{1} - Exit travel (or click exit button)\n{2} - Open travel map when stopped to resume journey, or to choose a new destination",
-  HelpInfo: "Travel Options Help\n\nTravel Map\n\nLeftClick - Select travel destination (region, location, map pixel)\nRightClick - Zoom in or out\nMiddleClick - Mark a location\nI - Location information known to character\n\nAccelerated Travel\n\n{0} - Follow road or track\nM - Open travel map while travelling (or click map button)\nC - Pause travel for camp (or click camp button)\n{1} - Exit travel (or click exit button)\n{2} - Open travel map when stopped to resume journey,\n    or to choose a new destination",
+  MsgGuildHalls: 'Guild Halls:    ',
+  MsgNoKnowledge: 'You have no knowledge of {0}.',
+  LocationTypeDungeonKeep: 'Keep',
+  LocationTypeDungeonLabyrinth: 'Labyrinth',
+  LocationTypeDungeonRuin: 'Ruin',
+  HelpInfoSDF:
+    'Travel Options Help\n\nTravel Map\n\nLeftClick - Select travel destination (region, location, map pixel)\nRightClick - Zoom in or out\nMiddleClick - Mark a location (for example as a destination for road following)\nI - Location information known to character (press while hovering or after selecting)\n\nAccelerated Travel\n\n{0} - Follow road or track\nM - Open travel map while travelling (or click map button)\nC - Pause travel for camp (or click camp button)\n{1} - Exit travel (or click exit button)\n{2} - Open travel map when stopped to resume journey, or to choose a new destination',
+  HelpInfo:
+    'Travel Options Help\n\nTravel Map\n\nLeftClick - Select travel destination (region, location, map pixel)\nRightClick - Zoom in or out\nMiddleClick - Mark a location\nI - Location information known to character\n\nAccelerated Travel\n\n{0} - Follow road or track\nM - Open travel map while travelling (or click map button)\nC - Pause travel for camp (or click camp button)\n{1} - Exit travel (or click exit button)\n{2} - Open travel map when stopped to resume journey,\n    or to choose a new destination',
 });
 
 /** TRAVEL-NAV1: THE PORT'S OWN WORDS, kept OUT of the table above - that
@@ -75,11 +77,13 @@ export const TRAVEL_OPTIONS_TEXT = Object.freeze({
  *  MsgNearLocation's sentence, and a stopped journey is resumed from the
  *  map exactly as the mod's own stops are. */
 export const TRAVEL_NAV_TEXT = Object.freeze({
-  MsgBlocked: "Paused the journey since the way ahead is blocked.",
+  MsgBlocked: 'Paused the journey since the way ahead is blocked.',
   MsgStuck: "Paused the journey since you're making no headway.",
   // OW-TOWN-WALK: a walled city's way out behind its gates (DaggerfallCityGate's night, offline) - the port's newest words, read
   // in the player's language (L10N4)
-  get MsgGatesShut() { return t('travel.nav.gatesShut', 'Paused the journey since the city gates are shut for the night.'); },
+  get MsgGatesShut() {
+    return t('travel.nav.gatesShut', 'Paused the journey since the city gates are shut for the night.');
+  },
 });
 
 /** C#'s `string.Format` for the placeholders these strings use: `{0}`,
@@ -103,14 +107,23 @@ export function localize(key) {
  *  eight. */
 export function directionText(direction) {
   switch (direction) {
-    case 128: return TRAVEL_OPTIONS_TEXT.DirectionN;
-    case 64: return TRAVEL_OPTIONS_TEXT.DirectionNE;
-    case 32: return TRAVEL_OPTIONS_TEXT.DirectionE;
-    case 16: return TRAVEL_OPTIONS_TEXT.DirectionSE;
-    case 8: return TRAVEL_OPTIONS_TEXT.DirectionS;
-    case 4: return TRAVEL_OPTIONS_TEXT.DirectionSW;
-    case 2: return TRAVEL_OPTIONS_TEXT.DirectionW;
-    case 1: return TRAVEL_OPTIONS_TEXT.DirectionNW;
-    default: return TRAVEL_OPTIONS_TEXT.DirectionNone;
+    case 128:
+      return TRAVEL_OPTIONS_TEXT.DirectionN;
+    case 64:
+      return TRAVEL_OPTIONS_TEXT.DirectionNE;
+    case 32:
+      return TRAVEL_OPTIONS_TEXT.DirectionE;
+    case 16:
+      return TRAVEL_OPTIONS_TEXT.DirectionSE;
+    case 8:
+      return TRAVEL_OPTIONS_TEXT.DirectionS;
+    case 4:
+      return TRAVEL_OPTIONS_TEXT.DirectionSW;
+    case 2:
+      return TRAVEL_OPTIONS_TEXT.DirectionW;
+    case 1:
+      return TRAVEL_OPTIONS_TEXT.DirectionNW;
+    default:
+      return TRAVEL_OPTIONS_TEXT.DirectionNone;
   }
 }

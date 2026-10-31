@@ -21,7 +21,7 @@
 // Not a DFU member: DFU's GodMode / teleport console verbs are Wenzil console commands (Ledger A: the console window is
 // a departure); these ride the chat, the one text field the port has. Ledger A row (ONLINE).
 
-import { parseRelayCfgCommand } from './relayCfg.js';   // SCALE5b: /relay's words
+import { parseRelayCfgCommand } from './relayCfg.js'; // SCALE5b: /relay's words
 
 /** The glyphs that open the staff's commands. */
 export const STAFF_GLYPHS = Object.freeze(['dev', 'dm', 'shadowfang']);
@@ -29,7 +29,7 @@ export const STAFF_GLYPHS = Object.freeze(['dev', 'dm', 'shadowfang']);
 export const isStaff = (glyphs) => Array.isArray(glyphs) && glyphs.some((g) => STAFF_GLYPHS.includes(g));
 
 /** The staff's command names (lowercase). */
-export const STAFF_COMMANDS = Object.freeze(['tp', 'tpa', 'god', 'fly', 'heal', 'pos', 'staff', 'relay']);   // SCALE5b: `relay`, a developer's (net/relayCfg.js)
+export const STAFF_COMMANDS = Object.freeze(['tp', 'tpa', 'god', 'fly', 'heal', 'pos', 'staff', 'relay']); // SCALE5b: `relay`, a developer's (net/relayCfg.js)
 /** The travel map's grid: MapsFile's 1000 x 500 pixels. */
 export const TP_MAP_W = 1000;
 export const TP_MAP_H = 500;
@@ -37,7 +37,7 @@ export const TP_MAP_H = 500;
 /** The lines `/staff` shows. */
 export const STAFF_HELP_LINES = Object.freeze([
   'Staff commands:',
-  '/tp <place> - to a named place: any on the Bay, past it a city or town the map names',   // AUDIT TAMRIEL-WIDE II A5: what the search reaches
+  '/tp <place> - to a named place: any on the Bay, past it a city or town the map names', // AUDIT TAMRIEL-WIDE II A5: what the search reaches
   '/tp <x> <y> - to a map pixel (x 0-999, y 0-499)',
   '/tp @<player> - to their exact live position',
   '/tpa <player> - bring them to you (admins and Shadow Fang)',
@@ -73,8 +73,10 @@ export function parseStaffCommand(text, now = {}) {
       return player ? { cmd: 'tp', player } : { error: 'Usage: /tp @<player>.' };
     }
     if (words.length === 2 && words.every((w) => /^\d+$/.test(w))) {
-      const px = Number(words[0]), py = Number(words[1]);
-      if (px >= TP_MAP_W || py >= TP_MAP_H) return { error: `A map pixel is x 0-${TP_MAP_W - 1}, y 0-${TP_MAP_H - 1}.` };
+      const px = Number(words[0]),
+        py = Number(words[1]);
+      if (px >= TP_MAP_W || py >= TP_MAP_H)
+        return { error: `A map pixel is x 0-${TP_MAP_W - 1}, y 0-${TP_MAP_H - 1}.` };
       return { cmd: 'tp', px, py };
     }
     return { cmd: 'tp', place: rest.slice(0, 64) };
@@ -90,13 +92,18 @@ export function parseStaffCommand(text, now = {}) {
     const on = onOff(words[0]?.toLowerCase(), !!now[name]);
     return on === null ? { error: `Usage: /${name} [on|off].` } : { cmd: name, on };
   }
-  if (name === 'relay') return parseRelayCfgCommand(rest);   // SCALE5b
+  if (name === 'relay') return parseRelayCfgCommand(rest); // SCALE5b
   if (words.length) return { error: `/${name} takes nothing after it.` };
   return { cmd: name };
 }
 
 /** Folds a name for matching: lowercase, apostrophes dropped, a hyphen a space, spaces single. */
-const fold = (s) => String(s ?? '').toLowerCase().replace(/['\u2019]/g, '').replace(/[\s-]+/g, ' ').trim();
+const fold = (s) =>
+  String(s ?? '')
+    .toLowerCase()
+    .replace(/['\u2019]/g, '')
+    .replace(/[\s-]+/g, ' ')
+    .trim();
 
 /**
  * THE PLACE A TYPED NAME MEANS among `places` ({ name, px, py }): an exact name first, then one the name begins, then

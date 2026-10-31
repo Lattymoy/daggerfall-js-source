@@ -37,14 +37,29 @@
 //
 // Not a DFU member: Daggerfall Unity has no such game - the mod does. Ledger A row (THE KING'S GAMBIT).
 import {
-  newGambit, gambitAct, finishTurn, armyRefusal, KG_COLS, KG_ROWS, KG_TILE, KG_COMMANDS, KG_HAZARD_KINDS, KG_LAYOUTS,
-  KG_OPEN_FIELD, KG_MAX_UNITS, KG_MAX_HAZARDS, KG_ACTIONS_PER_TURN, KG_POTIONS_MAX, rosterUnit, KG_KING_CLASSES,
+  newGambit,
+  gambitAct,
+  finishTurn,
+  armyRefusal,
+  KG_COLS,
+  KG_ROWS,
+  KG_TILE,
+  KG_COMMANDS,
+  KG_HAZARD_KINDS,
+  KG_LAYOUTS,
+  KG_OPEN_FIELD,
+  KG_MAX_UNITS,
+  KG_MAX_HAZARDS,
+  KG_ACTIONS_PER_TURN,
+  KG_POTIONS_MAX,
+  rosterUnit,
+  KG_KING_CLASSES,
 } from '../kingsGambit.js';
 import { HOLDEM_SEATS_MIN, HOLDEM_SEATS_MAX } from '../card/cardLaw.js';
 import { HOLDEM_TABLES_MAX, HOLDEM_NAME_MAX, HOLDEM_STAKE_MAX } from '../holdemTable.js';
 import { gambitStakeOk } from './gambitStakes.js';
 import { GAMBIT_GAME_ID_RE, GAMBIT_RECEIPT_MAX } from './gambitReceipt.js';
-import { STAKE_ID_RE, ID_RE } from '../identityToken.js';   // AUDIT KG II A8: a queued cash-out's and result's ids, the shapes a receipt carries
+import { STAKE_ID_RE, ID_RE } from '../identityToken.js'; // AUDIT KG II A8: a queued cash-out's and result's ids, the shapes a receipt carries
 
 /** MEASURE (KG5, 10.7): a turn's clock - first guess 60 s (Iliac Hand's is 45). */
 export const GAMBIT_TURN_MS = 60000;
@@ -73,32 +88,59 @@ export const GAMBIT_LATE_MS = 3000;
 export function newGambitTable({ chairs, gold = false }) {
   if (!Number.isInteger(chairs) || chairs < HOLDEM_SEATS_MIN || chairs > HOLDEM_SEATS_MAX) return null;
   return {
-    chairs, gold: gold === true, gameNo: 0, nextDealAt: 0, clockAt: 0, endAt: /** @type {number|null} */ (null), dealtAt: 0,
+    chairs,
+    gold: gold === true,
+    gameNo: 0,
+    nextDealAt: 0,
+    clockAt: 0,
+    endAt: /** @type {number|null} */ (null),
+    dealtAt: 0,
     seats: /** @type {any[]} */ ([null, null]),
     game: /** @type {any} */ (null),
     last: /** @type {any} */ (null),
     // KG6: the dealt game's stakes (each seat's `{j, sub, amount}`), its id and its two accounts (rated when both are
     // accounts, and two), and what is owed: cash-outs and rated results, for the relay to sign
-    pot: /** @type {any[]|null} */ (null), id: /** @type {string|null} */ (null), subs: /** @type {any[]|null} */ (null),
-    cashouts: /** @type {any[]} */ ([]), results: /** @type {any[]} */ ([]),
+    pot: /** @type {any[]|null} */ (null),
+    id: /** @type {string|null} */ (null),
+    subs: /** @type {any[]|null} */ (null),
+    cashouts: /** @type {any[]} */ ([]),
+    results: /** @type {any[]} */ ([]),
   };
 }
 
 /** A seat in the room's frame: who, which chair, which crown, whether ready and for what stake - never the army it said
  *  at Ready, nor its account. */
-const seatView = (/** @type {any} */ s) => (s ? { id: s.id, name: s.name, chair: s.chair, crown: s.crown, ...(s.ready ? { ready: true } : {}), ...(s.stake ? { stake: s.stake.amount } : {}) } : null);
+const seatView = (/** @type {any} */ s) =>
+  s
+    ? {
+        id: s.id,
+        name: s.name,
+        chair: s.chair,
+        crown: s.crown,
+        ...(s.ready ? { ready: true } : {}),
+        ...(s.stake ? { stake: s.stake.amount } : {}),
+      }
+    : null;
 /** KG6: the pot's gold, both stakes. @param {any[]|null} pot */
 const potOf = (pot) => (pot ? pot.reduce((n, x) => n + (x?.amount ?? 0), 0) : 0);
 /** KG6: whether the dealt game is rated - two accounts, not one. @param {any} t */
-const ratedOf = (t) => !!t.subs && t.subs.every((/** @type {any} */ x) => typeof x === 'string') && t.subs[0] !== t.subs[1];
+const ratedOf = (t) =>
+  !!t.subs && t.subs.every((/** @type {any} */ x) => typeof x === 'string') && t.subs[0] !== t.subs[1];
 
 /** The room's view of the table: the seats, the game whole (nothing in a dealt game is hidden), the clock, the last
  *  game's end. @param {any} t */
 export function gambitPublicView(t) {
   return {
-    chairs: t.chairs, gameNo: t.gameNo, seats: t.seats.map(seatView), game: t.game,
-    clockAt: t.game ? t.clockAt : 0, ...(t.game && t.endAt !== null ? { endAt: t.endAt } : {}), last: t.last,
-    ...(t.gold ? { gold: true } : {}), ...(t.game && t.pot ? { pot: potOf(t.pot) } : {}), ...(t.game && ratedOf(t) ? { rated: true } : {}),
+    chairs: t.chairs,
+    gameNo: t.gameNo,
+    seats: t.seats.map(seatView),
+    game: t.game,
+    clockAt: t.game ? t.clockAt : 0,
+    ...(t.game && t.endAt !== null ? { endAt: t.endAt } : {}),
+    last: t.last,
+    ...(t.gold ? { gold: true } : {}),
+    ...(t.game && t.pot ? { pot: potOf(t.pot) } : {}),
+    ...(t.game && ratedOf(t) ? { rated: true } : {}),
   };
 }
 
@@ -107,7 +149,10 @@ export const gambitSeatOf = (t, id) => t.seats.findIndex((/** @type {any} */ s) 
 /** True when nobody sits at the table - the room forgets it. @param {any} t */
 export const gambitEmpty = (t) => t.seats.every((/** @type {any} */ s) => !s);
 
-const room = (/** @type {any} */ t, /** @type {any[]} */ events) => ({ to: null, frame: { events, state: gambitPublicView(t) } });
+const room = (/** @type {any} */ t, /** @type {any[]} */ events) => ({
+  to: null,
+  frame: { events, state: gambitPublicView(t) },
+});
 
 /**
  * Why `gambitSit` would refuse this sit ('no such chair', 'seated', 'taken', 'full', 'bad crown'), or null - pure,
@@ -132,7 +177,17 @@ export function gambitSit(t, { id, name, chair, crown, now, sub = null }) {
   const no = gambitSitRefusal(t, { id, chair, crown });
   if (no) return no;
   const p = t.seats.findIndex((/** @type {any} */ s) => !s);
-  t.seats[p] = { id, name: String(name ?? '').slice(0, HOLDEM_NAME_MAX), chair, crown, ready: false, army: null, idle: 0, sub: typeof sub === 'string' && sub ? sub : null, stake: null };
+  t.seats[p] = {
+    id,
+    name: String(name ?? '').slice(0, HOLDEM_NAME_MAX),
+    chair,
+    crown,
+    ready: false,
+    army: null,
+    idle: 0,
+    sub: typeof sub === 'string' && sub ? sub : null,
+    stake: null,
+  };
   return [room(t, [{ t: 'sit', seat: p, chair, name: t.seats[p].name, crown, at: now }])];
 }
 
@@ -190,7 +245,13 @@ export function gambitUnready(t, { id, now }) {
 }
 
 /** KG6: a cash-out queued for the relay to sign - `r` gold home to stake `j`'s account (net/card/cardReceipt.js `w`'s word). */
-function owe(/** @type {any} */ t, /** @type {string|null} */ to, /** @type {any} */ x, /** @type {number} */ r, /** @type {string} */ w) {
+function owe(
+  /** @type {any} */ t,
+  /** @type {string|null} */ to,
+  /** @type {any} */ x,
+  /** @type {number} */ r,
+  /** @type {string} */ w,
+) {
   t.cashouts.push({ to, j: x.j, s: x.sub, r, w });
 }
 /** KG6: a seat's stake, never dealt, handed back whole. */
@@ -204,8 +265,15 @@ function stakeBack(/** @type {any} */ t, /** @type {any} */ s, /** @type {string
  *  again. `how`: 'king' (the law's), 'forfeit', 'idle' (the clock stood `left` up), 'left' (a stand or a socket gone),
  *  'void' (the relay's source broke - no contest). */
 function finish(/** @type {any} */ t, /** @type {number} */ now, left = -1, how = 'king') {
-  const winner = how === 'void' ? null : left >= 0 ? 1 - left : t.game.over?.winner ?? null;
-  const end = { t: 'result', gameNo: t.gameNo, winner, how, names: t.seats.map((/** @type {any} */ s) => s?.name ?? null), at: now };
+  const winner = how === 'void' ? null : left >= 0 ? 1 - left : (t.game.over?.winner ?? null);
+  const end = {
+    t: 'result',
+    gameNo: t.gameNo,
+    winner,
+    how,
+    names: t.seats.map((/** @type {any} */ s) => s?.name ?? null),
+    at: now,
+  };
   t.last = { gameNo: t.gameNo, winner, how, names: end.names, game: t.game };
   // KG6: THE POT - the whole of it the winner's, nothing the loser's; each stake its own player's when nobody won
   const ids = [0, 1].map((k) => t.seats[k]?.id ?? null);
@@ -219,16 +287,23 @@ function finish(/** @type {any} */ t, /** @type {number} */ now, left = -1, how 
   }
   // KG6: A RATED GAME'S RESULT - two accounts, somebody's win
   if (winner !== null && ratedOf(t) && t.id) t.results.push({ j: t.id, f: t.subs.slice(), r: winner, h: how, to: ids });
-  t.pot = null; t.subs = null; t.id = null;
+  t.pot = null;
+  t.subs = null;
+  t.id = null;
   t.game = null;
   t.endAt = null;
   t.clockAt = 0;
-  for (const s of t.seats) if (s) { s.army = null; s.idle = 0; }   // ready again only by saying so (the deal let go of it)
+  for (const s of t.seats)
+    if (s) {
+      s.army = null;
+      s.idle = 0;
+    } // ready again only by saying so (the deal let go of it)
   return end;
 }
 
 /** KG6: a game's id - 16 hex from the relay's source (Iliac Hand's game id's shape). */
-const gameIdOf = (/** @type {() => number} */ rand32) => [rand32(), rand32()].map((v) => (v >>> 0).toString(16).padStart(8, '0')).join('');
+const gameIdOf = (/** @type {() => number} */ rand32) =>
+  [rand32(), rand32()].map((v) => (v >>> 0).toString(16).padStart(8, '0')).join('');
 
 /** The deal: both armies on the relay's board - the host's at the foot, the guest's at the head. */
 function deal(/** @type {any} */ t, /** @type {number} */ now, /** @type {() => number} */ rand32) {
@@ -236,8 +311,18 @@ function deal(/** @type {any} */ t, /** @type {number} */ now, /** @type {() => 
   if (!game) {
     // a source that broke (or an army that slipped the check at Ready): nobody's game - both asked to be ready again,
     // KG6: each stake handed back
-    for (const s of t.seats) if (s) { s.ready = false; s.army = null; stakeBack(t, s, 'void'); }
-    return [room(t, [{ t: 'unready', seat: 0, why: 'deal', at: now }, { t: 'unready', seat: 1, why: 'deal', at: now }])];
+    for (const s of t.seats)
+      if (s) {
+        s.ready = false;
+        s.army = null;
+        stakeBack(t, s, 'void');
+      }
+    return [
+      room(t, [
+        { t: 'unready', seat: 0, why: 'deal', at: now },
+        { t: 'unready', seat: 1, why: 'deal', at: now },
+      ]),
+    ];
   }
   t.game = game;
   // KG6: the stakes into the pot, the game's id and its two accounts
@@ -249,12 +334,33 @@ function deal(/** @type {any} */ t, /** @type {number} */ now, /** @type {() => 
   t.endAt = null;
   t.clockAt = now + GAMBIT_TURN_MS;
   t.dealtAt = now;
-  for (const s of t.seats) { s.ready = false; s.army = null; s.idle = 0; s.stake = null; s.spoke = false; }   // AUDIT KG II A1: none has acted in it
-  return [room(t, [{ t: 'game', gameNo: t.gameNo, layout: game.layout, crowns: t.seats.map((/** @type {any} */ s) => s.crown), at: now }])];
+  for (const s of t.seats) {
+    s.ready = false;
+    s.army = null;
+    s.idle = 0;
+    s.stake = null;
+    s.spoke = false;
+  } // AUDIT KG II A1: none has acted in it
+  return [
+    room(t, [
+      {
+        t: 'game',
+        gameNo: t.gameNo,
+        layout: game.layout,
+        crowns: t.seats.map((/** @type {any} */ s) => s.crown),
+        at: now,
+      },
+    ]),
+  ];
 }
 
 /** A step the law took: its events said, the game decided or the turn's end on its beat. */
-function stepped(/** @type {any} */ t, /** @type {any} */ out, /** @type {number} */ now, /** @type {any[]} */ first = []) {
+function stepped(
+  /** @type {any} */ t,
+  /** @type {any} */ out,
+  /** @type {number} */ now,
+  /** @type {any[]} */ first = [],
+) {
   t.game = out.state;
   const events = [...first, ...out.events.map((/** @type {any} */ e) => ({ ...e, at: now }))];
   if (t.game.over) events.push(finish(t, now));
@@ -275,10 +381,10 @@ export function gambitCommand(t, { id, cmd, gameNo, now, rand32 }) {
   const out = gambitAct(t.game, p, cmd, rand32);
   if ('refused' in out) {
     if (out.refused !== 'rand') return out.refused;
-    return [room(t, [finish(t, now, -1, 'void')])];   // the relay's source broke: no contest
+    return [room(t, [finish(t, now, -1, 'void')])]; // the relay's source broke: no contest
   }
-  t.seats[p].idle = 0;   // at the table
-  t.seats[p].spoke = true;   // AUDIT KG II A1: this seat has acted in the game - its stand concedes it
+  t.seats[p].idle = 0; // at the table
+  t.seats[p].spoke = true; // AUDIT KG II A1: this seat has acted in the game - its stand concedes it
   return stepped(t, out, now);
 }
 
@@ -304,9 +410,10 @@ export function gambitStand(t, { id, now, gameNo, idle = false }) {
   const p = gambitSeatOf(t, id);
   if (p < 0) return [];
   const events = [];
-  const late = !!t.game && Number.isInteger(gameNo) && gameNo < t.gameNo && now - t.dealtAt <= GAMBIT_LATE_MS && !t.seats[p].spoke;
+  const late =
+    !!t.game && Number.isInteger(gameNo) && gameNo < t.gameNo && now - t.dealtAt <= GAMBIT_LATE_MS && !t.seats[p].spoke;
   if (t.game) events.push(late ? finish(t, now, -1, 'void') : finish(t, now, p, idle ? 'idle' : 'left'));
-  else stakeBack(t, t.seats[p], 'stood');   // KG6: a stake never dealt goes home whole
+  else stakeBack(t, t.seats[p], 'stood'); // KG6: a stake never dealt goes home whole
   const { name, chair } = t.seats[p];
   t.seats[p] = null;
   // the other seat's readiness is its own; a game no longer waits on a chair left empty
@@ -333,12 +440,13 @@ export function gambitTick(t, now, rand32) {
       const out = finishTurn(t.game, rand32);
       if ('refused' in out) return out.refused === 'rand' ? [room(t, [finish(t, now, -1, 'void')])] : [];
       const msgs = stepped(t, out, now);
-      if (t.game) t.clockAt = now + GAMBIT_TURN_MS;   // the next side's turn, its own clock
+      if (t.game) t.clockAt = now + GAMBIT_TURN_MS; // the next side's turn, its own clock
       return msgs;
     }
     if (now < t.clockAt) return [];
     // the turn ran out: it ends as End turn does
-    const side = t.game.turn, s = t.seats[side];
+    const side = t.game.turn,
+      s = t.seats[side];
     const out = gambitAct(t.game, side, { type: 'end' }, rand32);
     if ('refused' in out) return [];
     if (s) s.idle = (s.idle ?? 0) + 1;
@@ -360,7 +468,8 @@ export const gambitLook = (t, id) => [{ to: id, frame: { events: [], state: gamb
 
 // ── THE STATE, CHECKED (AUDIT KG A4: a stored table the law did not mint is dropped) ────────────────────────────────
 
-const intIn = (/** @type {any} */ x, /** @type {number} */ lo, /** @type {number} */ hi) => Number.isInteger(x) && x >= lo && x <= hi;
+const intIn = (/** @type {any} */ x, /** @type {number} */ lo, /** @type {number} */ hi) =>
+  Number.isInteger(x) && x >= lo && x <= hi;
 const LAYOUT_KEYS = Object.freeze([...KG_LAYOUTS.map((l) => l.key), KG_OPEN_FIELD.key]);
 const TILES = Object.values(KG_TILE);
 
@@ -373,32 +482,79 @@ const TILES = Object.values(KG_TILE);
  */
 export function validGambitState(st) {
   if (!st || typeof st !== 'object' || !LAYOUT_KEYS.includes(st.layout)) return false;
-  if (!Array.isArray(st.tiles) || st.tiles.length !== KG_COLS * KG_ROWS || !st.tiles.every((/** @type {any} */ x) => TILES.includes(x))) return false;
+  if (
+    !Array.isArray(st.tiles) ||
+    st.tiles.length !== KG_COLS * KG_ROWS ||
+    !st.tiles.every((/** @type {any} */ x) => TILES.includes(x))
+  )
+    return false;
   if (!Array.isArray(st.hazards) || st.hazards.length > KG_MAX_HAZARDS) return false;
-  for (const h of st.hazards) if (!h || typeof h !== 'object' || !intIn(h.col, 0, KG_COLS - 1) || !intIn(h.row, 0, KG_ROWS - 1) || !KG_HAZARD_KINDS.includes(h.kind) || typeof h.active !== 'boolean') return false;
+  for (const h of st.hazards)
+    if (
+      !h ||
+      typeof h !== 'object' ||
+      !intIn(h.col, 0, KG_COLS - 1) ||
+      !intIn(h.row, 0, KG_ROWS - 1) ||
+      !KG_HAZARD_KINDS.includes(h.kind) ||
+      typeof h.active !== 'boolean'
+    )
+      return false;
   if (!Array.isArray(st.pieces) || st.pieces.length > GAMBIT_PIECES_MAX) return false;
-  const ids = new Set(), cells = new Set();
+  const ids = new Set(),
+    cells = new Set();
   for (const p of st.pieces) {
-    if (!p || typeof p !== 'object' || !intIn(p.id, 0, 10_000) || ids.has(p.id) || (p.side !== 0 && p.side !== 1)) return false;
+    if (!p || typeof p !== 'object' || !intIn(p.id, 0, 10_000) || ids.has(p.id) || (p.side !== 0 && p.side !== 1))
+      return false;
     if (typeof p.king !== 'boolean' || typeof p.ranged !== 'boolean') return false;
     if (p.king ? !KG_KING_CLASSES.includes(p.unit) : !rosterUnit(p.unit)) return false;
-    if (!intIn(p.col, 0, KG_COLS - 1) || !intIn(p.row, 0, KG_ROWS - 1) || st.tiles[p.row * KG_COLS + p.col] !== KG_TILE.floor) return false;
+    if (
+      !intIn(p.col, 0, KG_COLS - 1) ||
+      !intIn(p.row, 0, KG_ROWS - 1) ||
+      st.tiles[p.row * KG_COLS + p.col] !== KG_TILE.floor
+    )
+      return false;
     const cell = p.row * KG_COLS + p.col;
     if (cells.has(cell)) return false;
-    if (!intIn(p.level, 1, 100) || !intIn(p.maxHp, 1, 10_000) || !intIn(p.hp, 1, p.maxHp) || !intIn(p.atk, 0, 10_000)) return false;
-    ids.add(p.id); cells.add(cell);
+    if (!intIn(p.level, 1, 100) || !intIn(p.maxHp, 1, 10_000) || !intIn(p.hp, 1, p.maxHp) || !intIn(p.atk, 0, 10_000))
+      return false;
+    ids.add(p.id);
+    cells.add(cell);
   }
   if (st.turn !== 0 && st.turn !== 1) return false;
-  if (!intIn(st.actions, 0, KG_ACTIONS_PER_TURN) || !intIn(st.round, 1, 1_000_000) || typeof st.ending !== 'boolean') return false;
-  if (!Array.isArray(st.potions) || st.potions.length !== 2 || !st.potions.every((/** @type {any} */ n) => intIn(n, 0, KG_POTIONS_MAX))) return false;
-  if (st.over !== null && !(st.over && typeof st.over === 'object' && (st.over.winner === 0 || st.over.winner === 1) && (st.over.fallen === 0 || st.over.fallen === 1))) return false;
+  if (!intIn(st.actions, 0, KG_ACTIONS_PER_TURN) || !intIn(st.round, 1, 1_000_000) || typeof st.ending !== 'boolean')
+    return false;
+  if (
+    !Array.isArray(st.potions) ||
+    st.potions.length !== 2 ||
+    !st.potions.every((/** @type {any} */ n) => intIn(n, 0, KG_POTIONS_MAX))
+  )
+    return false;
+  if (
+    st.over !== null &&
+    !(
+      st.over &&
+      typeof st.over === 'object' &&
+      (st.over.winner === 0 || st.over.winner === 1) &&
+      (st.over.fallen === 0 || st.over.fallen === 1)
+    )
+  )
+    return false;
   return true;
 }
 
 /** KG6: a seat's stake as the relay spent it: its order's id, its account, one of the stakes. @param {any} x */
-const stakeOk = (x) => !!x && typeof x === 'object' && typeof x.j === 'string' && x.j.length > 0 && x.j.length <= 64 && typeof x.sub === 'string' && gambitStakeOk(x.amount);
+const stakeOk = (x) =>
+  !!x &&
+  typeof x === 'object' &&
+  typeof x.j === 'string' &&
+  x.j.length > 0 &&
+  x.j.length <= 64 &&
+  typeof x.sub === 'string' &&
+  gambitStakeOk(x.amount);
 /** KG6: a queue of what is owed, each of its shape (absent on a table stored before KG6). @param {any} q @param {(x: any) => boolean} ok */
-const queueOk = (q, ok) => q === undefined || (Array.isArray(q) && q.length <= GAMBIT_QUEUE_MAX && q.every((x) => !!x && typeof x === 'object' && ok(x)));
+const queueOk = (q, ok) =>
+  q === undefined ||
+  (Array.isArray(q) && q.length <= GAMBIT_QUEUE_MAX && q.every((x) => !!x && typeof x === 'object' && ok(x)));
 
 /**
  * A stored table, checked as the room loads it (AUDIT KG A4): its seats and its clock of their types, its game one the
@@ -406,29 +562,93 @@ const queueOk = (q, ok) => q === undefined || (Array.isArray(q) && q.length <= G
  * @param {any} t
  */
 export function gambitTableValid(t) {
-  if (!t || typeof t !== 'object' || !intIn(t.chairs, HOLDEM_SEATS_MIN, HOLDEM_SEATS_MAX) || !Number.isSafeInteger(t.gameNo) || t.gameNo < 0) return false;
+  if (
+    !t ||
+    typeof t !== 'object' ||
+    !intIn(t.chairs, HOLDEM_SEATS_MIN, HOLDEM_SEATS_MAX) ||
+    !Number.isSafeInteger(t.gameNo) ||
+    t.gameNo < 0
+  )
+    return false;
   if (!Array.isArray(t.seats) || t.seats.length !== 2) return false;
   for (const s of t.seats) {
     if (s === null) continue;
-    if (!s || typeof s !== 'object' || typeof s.id !== 'string' || typeof s.name !== 'string' || !intIn(s.chair, 0, t.chairs - 1) || !intIn(s.crown, 0, GAMBIT_CROWN_COUNT - 1)) return false;
+    if (
+      !s ||
+      typeof s !== 'object' ||
+      typeof s.id !== 'string' ||
+      typeof s.name !== 'string' ||
+      !intIn(s.chair, 0, t.chairs - 1) ||
+      !intIn(s.crown, 0, GAMBIT_CROWN_COUNT - 1)
+    )
+      return false;
     if (typeof s.ready !== 'boolean' || !intIn(s.idle ?? 0, 0, GAMBIT_IDLE_TURNS)) return false;
-    if (s.spoke !== undefined && typeof s.spoke !== 'boolean') return false;   // AUDIT KG II A1
+    if (s.spoke !== undefined && typeof s.spoke !== 'boolean') return false; // AUDIT KG II A1
     if (s.army !== null && !(Array.isArray(s.army) && armyRefusal(s.army) === null)) return false;
-    if ((s.sub ?? null) !== null && typeof s.sub !== 'string') return false;   // KG6
+    if ((s.sub ?? null) !== null && typeof s.sub !== 'string') return false; // KG6
     if ((s.stake ?? null) !== null && !(t.gold === true && stakeOk(s.stake))) return false;
   }
   // KG6: the pot (a gold game's two stakes), the game's id and accounts, the queues owed
   if (t.gold !== undefined && typeof t.gold !== 'boolean') return false;
-  if ((t.pot ?? null) !== null && !(t.game && Array.isArray(t.pot) && t.pot.length === 2 && t.pot.every(stakeOk) && t.pot[0].amount === t.pot[1].amount)) return false;
+  if (
+    (t.pot ?? null) !== null &&
+    !(
+      t.game &&
+      Array.isArray(t.pot) &&
+      t.pot.length === 2 &&
+      t.pot.every(stakeOk) &&
+      t.pot[0].amount === t.pot[1].amount
+    )
+  )
+    return false;
   if ((t.id ?? null) !== null && !(typeof t.id === 'string' && GAMBIT_GAME_ID_RE.test(t.id))) return false;
-  if ((t.subs ?? null) !== null && !(Array.isArray(t.subs) && t.subs.length === 2 && t.subs.every((/** @type {any} */ x) => x === null || typeof x === 'string'))) return false;
+  if (
+    (t.subs ?? null) !== null &&
+    !(
+      Array.isArray(t.subs) &&
+      t.subs.length === 2 &&
+      t.subs.every((/** @type {any} */ x) => x === null || typeof x === 'string')
+    )
+  )
+    return false;
   // AUDIT KG II A8: only what the relay can sign and send - a cash-out a receipt can carry (else it is never signed, never
   // shifted, and every one behind it waits), a result with its two accounts and the two seats it goes to
   const seatId = (/** @type {any} */ x) => x === null || (typeof x === 'string' && x.length > 0 && x.length <= 64);
-  if (!queueOk(t.cashouts, (/** @type {any} */ x) => seatId(x.to ?? null) && typeof x.j === 'string' && STAKE_ID_RE.test(x.j) && typeof x.s === 'string' && ID_RE.test(x.s) && Number.isSafeInteger(x.r) && x.r >= 0 && typeof x.w === 'string')) return false;
-  if (!queueOk(t.results, (/** @type {any} */ x) => typeof x.j === 'string' && GAMBIT_GAME_ID_RE.test(x.j) && Array.isArray(x.f) && x.f.length === 2 && x.f.every((/** @type {any} */ s) => typeof s === 'string' && ID_RE.test(s)) && x.f[0] !== x.f[1]
-    && (x.r === 0 || x.r === 1) && typeof x.h === 'string' && Array.isArray(x.to) && x.to.length === 2 && x.to.every(seatId))) return false;
-  if (!Number.isFinite(t.nextDealAt) || !Number.isFinite(t.clockAt) || !(t.endAt === null || Number.isFinite(t.endAt))) return false;
+  if (
+    !queueOk(
+      t.cashouts,
+      (/** @type {any} */ x) =>
+        seatId(x.to ?? null) &&
+        typeof x.j === 'string' &&
+        STAKE_ID_RE.test(x.j) &&
+        typeof x.s === 'string' &&
+        ID_RE.test(x.s) &&
+        Number.isSafeInteger(x.r) &&
+        x.r >= 0 &&
+        typeof x.w === 'string',
+    )
+  )
+    return false;
+  if (
+    !queueOk(
+      t.results,
+      (/** @type {any} */ x) =>
+        typeof x.j === 'string' &&
+        GAMBIT_GAME_ID_RE.test(x.j) &&
+        Array.isArray(x.f) &&
+        x.f.length === 2 &&
+        x.f.every((/** @type {any} */ s) => typeof s === 'string' && ID_RE.test(s)) &&
+        x.f[0] !== x.f[1] &&
+        (x.r === 0 || x.r === 1) &&
+        typeof x.h === 'string' &&
+        Array.isArray(x.to) &&
+        x.to.length === 2 &&
+        x.to.every(seatId),
+    )
+  )
+    return false;
+  if (!Number.isFinite(t.nextDealAt) || !Number.isFinite(t.clockAt) || !(t.endAt === null || Number.isFinite(t.endAt)))
+    return false;
   if (t.game !== null && !(validGambitState(t.game) && t.seats.every(Boolean))) return false;
   return true;
 }
@@ -442,8 +662,12 @@ function cmdOk(c) {
   if (!c || typeof c !== 'object' || !KG_COMMANDS.includes(c.type)) return null;
   if (c.type === 'end') return { type: 'end' };
   if (!intIn(c.piece, 0, 10_000)) return null;
-  if (c.type === 'move') return intIn(c.col, 0, KG_COLS - 1) && intIn(c.row, 0, KG_ROWS - 1) ? { type: 'move', piece: c.piece, col: c.col, row: c.row } : null;
-  if (c.type === 'attack') return intIn(c.target, 0, 10_000) ? { type: 'attack', piece: c.piece, target: c.target } : null;
+  if (c.type === 'move')
+    return intIn(c.col, 0, KG_COLS - 1) && intIn(c.row, 0, KG_ROWS - 1)
+      ? { type: 'move', piece: c.piece, col: c.col, row: c.row }
+      : null;
+  if (c.type === 'attack')
+    return intIn(c.target, 0, 10_000) ? { type: 'attack', piece: c.piece, target: c.target } : null;
   return { type: 'potion', piece: c.piece };
 }
 
@@ -459,41 +683,93 @@ export function validGambitIn(m) {
   if (!m || typeof m !== 'object' || !GAMBIT_OPS.includes(m.op)) return null;
   if (!Number.isInteger(m.table) || m.table < 0 || m.table >= HOLDEM_TABLES_MAX) return null;
   if (m.op === 'sit') {
-    if (!intIn(m.chairs, HOLDEM_SEATS_MIN, HOLDEM_SEATS_MAX) || !intIn(m.chair, 0, m.chairs - 1) || !intIn(m.crown, 0, GAMBIT_CROWN_COUNT - 1)) return null;
+    if (
+      !intIn(m.chairs, HOLDEM_SEATS_MIN, HOLDEM_SEATS_MAX) ||
+      !intIn(m.chair, 0, m.chairs - 1) ||
+      !intIn(m.crown, 0, GAMBIT_CROWN_COUNT - 1)
+    )
+      return null;
     return { op: 'sit', table: m.table, chair: m.chair, chairs: m.chairs, crown: m.crown };
   }
   if (m.op === 'ready') {
-    if (!Array.isArray(m.army) || m.army.length > KG_MAX_UNITS || !m.army.every((/** @type {any} */ x) => intIn(x, 0, 10_000))) return null;
+    if (
+      !Array.isArray(m.army) ||
+      m.army.length > KG_MAX_UNITS ||
+      !m.army.every((/** @type {any} */ x) => intIn(x, 0, 10_000))
+    )
+      return null;
     if (m.crown !== undefined && !intIn(m.crown, 0, GAMBIT_CROWN_COUNT - 1)) return null;
-    if (m.stake !== undefined && !(typeof m.stake === 'string' && m.stake.length > 0 && m.stake.length <= HOLDEM_STAKE_MAX)) return null;   // KG6: the service's order on the stake
-    return { op: 'ready', table: m.table, army: m.army.slice(), ...(m.crown !== undefined ? { crown: m.crown } : {}), ...(m.stake !== undefined ? { stake: m.stake } : {}) };
+    if (
+      m.stake !== undefined &&
+      !(typeof m.stake === 'string' && m.stake.length > 0 && m.stake.length <= HOLDEM_STAKE_MAX)
+    )
+      return null; // KG6: the service's order on the stake
+    return {
+      op: 'ready',
+      table: m.table,
+      army: m.army.slice(),
+      ...(m.crown !== undefined ? { crown: m.crown } : {}),
+      ...(m.stake !== undefined ? { stake: m.stake } : {}),
+    };
   }
-  if (m.op === 'ack') return typeof m.j === 'string' && GAMBIT_GAME_ID_RE.test(m.j) ? { op: 'ack', table: m.table, j: m.j } : null;   // KG6: a rated result kept on the device
+  if (m.op === 'ack')
+    return typeof m.j === 'string' && GAMBIT_GAME_ID_RE.test(m.j) ? { op: 'ack', table: m.table, j: m.j } : null; // KG6: a rated result kept on the device
   if (m.op === 'act') {
     const cmd = cmdOk(m.cmd);
     return cmd && gameNoOk(m.gameNo) ? { op: 'act', table: m.table, gameNo: m.gameNo, cmd } : null;
   }
-  if (m.op === 'forfeit' || m.op === 'stand') return m.gameNo === undefined || gameNoOk(m.gameNo) ? { op: m.op, table: m.table, ...(m.gameNo !== undefined ? { gameNo: m.gameNo } : {}) } : null;
+  if (m.op === 'forfeit' || m.op === 'stand')
+    return m.gameNo === undefined || gameNoOk(m.gameNo)
+      ? { op: m.op, table: m.table, ...(m.gameNo !== undefined ? { gameNo: m.gameNo } : {}) }
+      : null;
   return { op: m.op, table: m.table };
 }
 
 /** A seat (0 or 1), or `none` where the field may say nobody. */
-const seatOr = (/** @type {any} */ x, /** @type {any} */ none = undefined) => x === 0 || x === 1 || (none !== undefined && x === none);
+const seatOr = (/** @type {any} */ x, /** @type {any} */ none = undefined) =>
+  x === 0 || x === 1 || (none !== undefined && x === none);
 /** An event of the room's, checked for the fields the panel reads off its own kind; the law's own by `t` alone. @param {any} e */
 function eventOk(e) {
   if (!e || typeof e !== 'object' || typeof e.t !== 'string') return false;
   switch (e.t) {
-    case 'sit': return seatOr(e.seat) && Number.isInteger(e.chair) && typeof e.name === 'string' && intIn(e.crown, 0, GAMBIT_CROWN_COUNT - 1);
-    case 'leave': return seatOr(e.seat) && (e.name == null || typeof e.name === 'string');
-    case 'ready': case 'unready': case 'timeout': case 'forfeit': return seatOr(e.seat);
-    case 'game': return gameNoOk(e.gameNo) && LAYOUT_KEYS.includes(e.layout) && Array.isArray(e.crowns) && e.crowns.length === 2 && e.crowns.every((/** @type {any} */ c) => intIn(c, 0, GAMBIT_CROWN_COUNT - 1));
-    case 'result': return seatOr(e.winner, null) && typeof e.how === 'string' && e.how.length <= WORD_MAX;
-    case 'end': return seatOr(e.side);
-    case 'move': return seatOr(e.side) && Number.isInteger(e.piece) && Array.isArray(e.from) && Array.isArray(e.to);
-    case 'attack': return seatOr(e.side) && Number.isInteger(e.piece) && Number.isInteger(e.target) && Number.isInteger(e.damage);
-    case 'potion': return seatOr(e.side) && Number.isInteger(e.piece) && Number.isInteger(e.healed);
-    case 'hazard': return seatOr(e.side) && Number.isInteger(e.piece) && KG_HAZARD_KINDS.includes(e.kind) && Number.isInteger(e.damage);
-    default: return true;
+    case 'sit':
+      return (
+        seatOr(e.seat) &&
+        Number.isInteger(e.chair) &&
+        typeof e.name === 'string' &&
+        intIn(e.crown, 0, GAMBIT_CROWN_COUNT - 1)
+      );
+    case 'leave':
+      return seatOr(e.seat) && (e.name == null || typeof e.name === 'string');
+    case 'ready':
+    case 'unready':
+    case 'timeout':
+    case 'forfeit':
+      return seatOr(e.seat);
+    case 'game':
+      return (
+        gameNoOk(e.gameNo) &&
+        LAYOUT_KEYS.includes(e.layout) &&
+        Array.isArray(e.crowns) &&
+        e.crowns.length === 2 &&
+        e.crowns.every((/** @type {any} */ c) => intIn(c, 0, GAMBIT_CROWN_COUNT - 1))
+      );
+    case 'result':
+      return seatOr(e.winner, null) && typeof e.how === 'string' && e.how.length <= WORD_MAX;
+    case 'end':
+      return seatOr(e.side);
+    case 'move':
+      return seatOr(e.side) && Number.isInteger(e.piece) && Array.isArray(e.from) && Array.isArray(e.to);
+    case 'attack':
+      return seatOr(e.side) && Number.isInteger(e.piece) && Number.isInteger(e.target) && Number.isInteger(e.damage);
+    case 'potion':
+      return seatOr(e.side) && Number.isInteger(e.piece) && Number.isInteger(e.healed);
+    case 'hazard':
+      return (
+        seatOr(e.side) && Number.isInteger(e.piece) && KG_HAZARD_KINDS.includes(e.kind) && Number.isInteger(e.damage)
+      );
+    default:
+      return true;
   }
 }
 
@@ -503,16 +779,41 @@ function eventOk(e) {
  * @param {any} m
  */
 export function validGambitOut(m) {
-  if (!m || typeof m !== 'object' || !Number.isInteger(m.table) || m.table < 0 || m.table >= HOLDEM_TABLES_MAX) return false;
+  if (!m || typeof m !== 'object' || !Number.isInteger(m.table) || m.table < 0 || m.table >= HOLDEM_TABLES_MAX)
+    return false;
   if (typeof m.error === 'string') return m.error.length <= WORD_MAX;
-  if (m.receipt !== undefined) return typeof m.receipt === 'string' && m.receipt.length <= GAMBIT_RECEIPT_MAX;   // KG6: a rated game's result
+  if (m.receipt !== undefined) return typeof m.receipt === 'string' && m.receipt.length <= GAMBIT_RECEIPT_MAX; // KG6: a rated game's result
   if (!Array.isArray(m.events) || m.events.length > 64 || !m.events.every(eventOk)) return false;
   const s = m.state;
   if (!s || typeof s !== 'object' || !intIn(s.chairs, HOLDEM_SEATS_MIN, HOLDEM_SEATS_MAX)) return false;
-  if (!Array.isArray(s.seats) || s.seats.length !== 2 || !s.seats.every((/** @type {any} */ x) => x === null || (x && typeof x.id === 'string' && typeof x.name === 'string' && intIn(x.chair, 0, s.chairs - 1) && intIn(x.crown, 0, GAMBIT_CROWN_COUNT - 1) && (x.stake === undefined || gambitStakeOk(x.stake))))) return false;
-  if (s.pot !== undefined && !(Number.isSafeInteger(s.pot) && s.pot > 0)) return false;   // KG6
-  if (!gameNoOk(s.gameNo) || !Number.isFinite(s.clockAt) || (s.endAt !== undefined && !Number.isFinite(s.endAt))) return false;
-  if (s.last != null && !(typeof s.last === 'object' && seatOr(s.last.winner, null) && typeof s.last.how === 'string' && (s.last.game == null || validGambitState(s.last.game)))) return false;
+  if (
+    !Array.isArray(s.seats) ||
+    s.seats.length !== 2 ||
+    !s.seats.every(
+      (/** @type {any} */ x) =>
+        x === null ||
+        (x &&
+          typeof x.id === 'string' &&
+          typeof x.name === 'string' &&
+          intIn(x.chair, 0, s.chairs - 1) &&
+          intIn(x.crown, 0, GAMBIT_CROWN_COUNT - 1) &&
+          (x.stake === undefined || gambitStakeOk(x.stake))),
+    )
+  )
+    return false;
+  if (s.pot !== undefined && !(Number.isSafeInteger(s.pot) && s.pot > 0)) return false; // KG6
+  if (!gameNoOk(s.gameNo) || !Number.isFinite(s.clockAt) || (s.endAt !== undefined && !Number.isFinite(s.endAt)))
+    return false;
+  if (
+    s.last != null &&
+    !(
+      typeof s.last === 'object' &&
+      seatOr(s.last.winner, null) &&
+      typeof s.last.how === 'string' &&
+      (s.last.game == null || validGambitState(s.last.game))
+    )
+  )
+    return false;
   return s.game === null || (validGambitState(s.game) && s.seats.every(Boolean));
 }
 
@@ -529,12 +830,22 @@ export const flipCell = (/** @type {number[]} */ [c, r]) => [KG_COLS - 1 - c, KG
 export function flipGambitState(st) {
   if (!st) return st;
   const tiles = new Array(KG_COLS * KG_ROWS);
-  for (let r = 0; r < KG_ROWS; r++) for (let c = 0; c < KG_COLS; c++) tiles[(KG_ROWS - 1 - r) * KG_COLS + (KG_COLS - 1 - c)] = st.tiles[r * KG_COLS + c];
+  for (let r = 0; r < KG_ROWS; r++)
+    for (let c = 0; c < KG_COLS; c++)
+      tiles[(KG_ROWS - 1 - r) * KG_COLS + (KG_COLS - 1 - c)] = st.tiles[r * KG_COLS + c];
   return {
-    ...st, tiles,
-    hazards: st.hazards.map((/** @type {any} */ h) => { const [col, row] = flipCell([h.col, h.row]); return { ...h, col, row }; }),
-    pieces: st.pieces.map((/** @type {any} */ p) => { const [col, row] = flipCell([p.col, p.row]); return { ...p, col, row, side: 1 - p.side }; }),
-    turn: 1 - st.turn, potions: [st.potions[1], st.potions[0]],
+    ...st,
+    tiles,
+    hazards: st.hazards.map((/** @type {any} */ h) => {
+      const [col, row] = flipCell([h.col, h.row]);
+      return { ...h, col, row };
+    }),
+    pieces: st.pieces.map((/** @type {any} */ p) => {
+      const [col, row] = flipCell([p.col, p.row]);
+      return { ...p, col, row, side: 1 - p.side };
+    }),
+    turn: 1 - st.turn,
+    potions: [st.potions[1], st.potions[0]],
     over: st.over ? { winner: 1 - st.over.winner, fallen: 1 - st.over.fallen } : null,
   };
 }

@@ -31,8 +31,8 @@
   {
     "name": "CAPITAL-TREES-the-entry-drops-it",
     "file": "src/systems/textureReplacement.js",
-    "old": "readOnly: e.readOnly === true, cutout: e.cutout === true };",
-    "new": "readOnly: e.readOnly === true, cutout: false };",
+    "old": "      cutout: e.cutout === true,",
+    "new": "      cutout: false,",
     "tests": [
       "test/world/capitaltrees.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "CAPITAL-TREES-a-root-on-the-porch",
     "file": "src/world/capitalPlans.js",
-    "old": "rootPorch: 0.34,",
-    "new": "rootPorch: 0,",
+    "old": "  rootPorch: 0.34,",
+    "new": "  rootPorch: 0,",
     "tests": [
       "test/world/capitaltrees.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "CAPITAL-TREES-a-bough-up-through-its-deck",
     "file": "src/world/capitalFalinesti.js",
-    "old": "Q(tr + 24, y - 3.8), Q(reach, y + rise)];",
-    "new": "Q(tr + 24, y + 1), Q(reach, y + rise)];",
+    "old": "        : [Q(tr * 0.5, y - F.boughDrop), Q(tr + 6, y - 4.6), Q(tr + 24, y - 3.8), Q(reach, y + rise)];",
+    "new": "        : [Q(tr * 0.5, y - F.boughDrop), Q(tr + 6, y - 4.6), Q(tr + 24, y + 1), Q(reach, y + rise)];",
     "tests": [
       "test/world/capitaltrees.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "CAPITAL-TREES-the-bough-over-the-deck-low",
     "file": "src/world/capitalPlans.js",
-    "old": "boughOver: 4.85, boughLift: 7.5,",
-    "new": "boughOver: 4.85, boughLift: 3,",
+    "old": "  boughLift: 7.5,",
+    "new": "  boughLift: 3,",
     "tests": [
       "test/world/capitaltrees.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "CAPITAL-TREES-a-gap-at-the-bark",
     "file": "src/world/capitalFalinesti.js",
-    "old": "    const b0 = trunkRadius(y0) * 0.97, b1 = trunkRadius(y1) * 0.97,",
-    "new": "    const b0 = ri0, b1 = ri1,",
+    "old": "    const b0 = trunkRadius(y0) * 0.97,\n      b1 = trunkRadius(y1) * 0.97,",
+    "new": "    const b0 = ri0,\n      b1 = ri1,",
     "tests": [
       "test/world/capitaltrees.test.js"
     ],
@@ -104,8 +104,8 @@
   {
     "name": "CAPITAL-TREES-the-walkways-rail-one-faced",
     "file": "src/world/capitalFalinesti.js",
-    "old": "    mb.sheet(TIMBER, P(a0, o0, y0 - 0.5), P(a1, o1, y1 - 0.5),",
-    "new": "    mb.quad(TIMBER, P(a0, o0, y0 - 0.5), P(a1, o1, y1 - 0.5),",
+    "old": "    mb.sheet(",
+    "new": "    mb.quad(",
     "tests": [
       "test/world/capitaltrees.test.js"
     ]
@@ -122,8 +122,8 @@
   {
     "name": "CAPITAL-TREES-doors-away-from-the-trunk",
     "file": "src/world/capitalFalinesti.js",
-    "old": "F.hutR, F.hutH, a + Math.PI); }",
-    "new": "F.hutR, F.hutH, a); }",
+    "old": "      hideHut(mb, Math.cos(a) * d, y, Math.sin(a) * d, F.hutR, F.hutH, a + Math.PI);",
+    "new": "      hideHut(mb, Math.cos(a) * d, y, Math.sin(a) * d, F.hutR, F.hutH, a);",
     "tests": [
       "test/world/capitaltrees.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "CAPITAL-TREES-the-trunk-unfluted",
     "file": "src/world/capitalFalinesti.js",
-    "old": "(i % 3 === 0 ? 1 - B.furrow : 1 + B.ridge * (i % 3 === 1 ? 1 : 0.6))",
-    "new": "(1)",
+    "old": "  const flute = (i, y) =>\n    (i % 3 === 0 ? 1 - B.furrow : 1 + B.ridge * (i % 3 === 1 ? 1 : 0.6)) * (1 + 0.012 * Math.sin(y * 0.21 + i * 0.7));",
+    "new": "  const flute = (i, y) => 1 * (1 + 0.012 * Math.sin(y * 0.21 + i * 0.7));",
     "tests": [
       "test/world/capitaltrees.test.js"
     ]
@@ -140,8 +140,8 @@
   {
     "name": "CAPITAL-TREES-roots-over-the-walkway",
     "file": "src/world/capitalFalinesti.js",
-    "old": "top = Math.min(F.rootTop, walkwayOver(angle, 0, F) - F.rootUnder);",
-    "new": "top = F.rootTop;",
+    "old": "      top = Math.min(F.rootTop, walkwayOver(angle, 0, F) - F.rootUnder);",
+    "new": "      top = F.rootTop;",
     "tests": [
       "test/world/capitaltrees.test.js",
       "test/world/audittesa2c_capitals.test.js"
@@ -150,8 +150,8 @@
   {
     "name": "CAPITAL-TREES-a-card-over-the-liana",
     "file": "src/world/capitalFalinesti.js",
-    "old": "u: [0, LIANA_U0], aspect: LIANA_U0, keep });",
-    "new": "u: [0, 1], aspect: LIANA_U0, keep });",
+    "old": "    cards(mb, SPRAY, m, { n: M.cards, size: M.size, u: [0, LIANA_U0], aspect: LIANA_U0, keep });",
+    "new": "    cards(mb, SPRAY, m, { n: M.cards, size: M.size, u: [0, 1], aspect: LIANA_U0, keep });",
     "tests": [
       "test/world/capitaltrees.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "CAPITAL-TREES-a-soft-alpha",
     "file": "src/world/capitalTreeArt.js",
-    "old": "img.data[i * 4 + 3] = R.kind[i] < 0 ? 0 : 255;",
-    "new": "img.data[i * 4 + 3] = R.kind[i] < 0 ? 0 : 160;",
+    "old": "  for (let i = 0; i < w * h; i++) img.data[i * 4 + 3] = R.kind[i] < 0 ? 0 : 255;",
+    "new": "  for (let i = 0; i < w * h; i++) img.data[i * 4 + 3] = R.kind[i] < 0 ? 0 : 160;",
     "tests": [
       "test/world/capitaltrees.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "CAPITAL-TREES-the-oaks-spray-at-64",
     "file": "src/world/capitalTreeArt.js",
-    "old": "graht: Object.freeze({ w: 128, h: 128 }),",
-    "new": "graht: Object.freeze({ w: 64, h: 64 }),",
+    "old": "  graht: Object.freeze({ w: 128, h: 128 }),",
+    "new": "  graht: Object.freeze({ w: 64, h: 64 }),",
     "tests": [
       "test/world/capitaltrees.test.js"
     ],
@@ -187,8 +187,8 @@
   {
     "name": "CAPITAL-TREES-the-bays-trees-back",
     "file": "src/world/capitalPlans.js",
-    "old": "mournholdTile, mournholdClosed);   // CAPITAL-TREES",
-    "new": "mournholdTile, mournholdClosed, () => 12);   // CAPITAL-TREES",
+    "old": "); // CAPITAL-TREES: no tree law - the city's own trees stand on its gardens' model (mournholdTreeSites)",
+    "new": "  () => 12,\n); // CAPITAL-TREES: no tree law - the city's own trees stand on its gardens' model (mournholdTreeSites)",
     "tests": [
       "test/world/capitaltrees.test.js",
       "test/tesalore_capitals.test.js"
@@ -197,8 +197,8 @@
   {
     "name": "CAPITAL-TREES-allees-on-the-ways",
     "file": "src/world/capitalPlans.js",
-    "old": "allee: Object.freeze([86, 9]),",
-    "new": "allee: Object.freeze([86, 3]),",
+    "old": "    allee: Object.freeze([86, 9]),",
+    "new": "    allee: Object.freeze([86, 3]),",
     "tests": [
       "test/world/capitaltrees.test.js"
     ]
@@ -206,8 +206,8 @@
   {
     "name": "CAPITAL-TREES-trees-over-the-statue",
     "file": "src/world/capitalPlans.js",
-    "old": "height: Object.freeze([9, 11]),",
-    "new": "height: Object.freeze([17, 21]),",
+    "old": "    height: Object.freeze([9, 11]),",
+    "new": "    height: Object.freeze([17, 21]),",
     "tests": [
       "test/world/capitaltrees.test.js"
     ]
@@ -225,8 +225,8 @@
   {
     "name": "CAPITAL-TREES-sprays-uncrossed",
     "file": "src/world/capitalMournhold.js",
-    "old": "elev: [-0.95, 1.05], crossed: true, keep:",
-    "new": "elev: [-0.95, 1.05], keep:",
+    "old": "    crossed: true,\n    keep: (corners) => corners.every((p) => p[1] >= SPRAY_FLOOR),",
+    "new": "    keep: (corners) => corners.every((p) => p[1] >= SPRAY_FLOOR),",
     "tests": [
       "test/world/capitaltrees.test.js"
     ],
@@ -235,8 +235,8 @@
   {
     "name": "CAPITAL-TREES-a-twin-on-its-plane",
     "file": "src/world/capitalTrees.js",
-    "old": "(crossed ? [tg, unit(cross(out, tg))] : [tg])",
-    "new": "(crossed ? [tg, tg] : [tg])",
+    "old": "    const spray = (crossed ? [tg, unit(cross(out, tg))] : [tg]).map((side) => {",
+    "new": "    const spray = (crossed ? [tg, tg] : [tg]).map((side) => {",
     "tests": [
       "test/world/capitaltrees.test.js"
     ],

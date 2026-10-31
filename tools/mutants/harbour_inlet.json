@@ -1,32 +1,32 @@
 [
- {
-  "name": "SHIPAUDIT-HARBOUR-the-retry-dropped",
-  "file": "src/systems/naval/shipLife.js",
-  "old": "  if (!mouth) {\n    berths = pick(",
-  "new": "  if (false) {\n    berths = pick(",
-  "tests": [
-   "test/systems/naval/harbour_inlet.test.js"
-  ],
-  "note": "a harbour whose nearest berths lie in a closed inlet is none again"
- },
- {
-  "name": "SHIPAUDIT-HARBOUR-the-inlet-shores-kept",
-  "file": "src/systems/naval/shipLife.js",
-  "old": "    berths = pick(cands.filter((c) => openOut(c.pos[0], c.pos[1], c.normal[0], c.normal[1], true)));",
-  "new": "    berths = pick(cands);",
-  "tests": [
-   "test/systems/naval/harbour_inlet.test.js"
-  ],
-  "note": "the retry takes the inlet's berths again"
- },
- {
-  "name": "SHIPAUDIT-HARBOUR-the-way-out-over-land",
-  "file": "src/systems/naval/shipLife.js",
-  "old": "      if (!water(p[0], p[1])) { if (wet) return null; continue; }",
-  "new": "      if (!water(p[0], p[1])) continue;",
-  "tests": [
-   "test/systems/naval/harbour_inlet.test.js"
-  ],
-  "note": "an inlet berth facing the town reads the sea past it as her way out"
- }
+  {
+    "name": "SHIPAUDIT-HARBOUR-the-retry-dropped",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "  if (!mouth) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/naval/harbour_inlet.test.js"
+    ],
+    "note": "a harbour whose nearest berths lie in a closed inlet is none again"
+  },
+  {
+    "name": "SHIPAUDIT-HARBOUR-the-inlet-shores-kept",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "    berths = pick(cands.filter((c) => openOut(c.pos[0], c.pos[1], c.normal[0], c.normal[1], true)));",
+    "new": "    berths = pick(cands);",
+    "tests": [
+      "test/systems/naval/harbour_inlet.test.js"
+    ],
+    "note": "the retry takes the inlet's berths again"
+  },
+  {
+    "name": "SHIPAUDIT-HARBOUR-the-way-out-over-land",
+    "file": "src/systems/naval/shipLife.js",
+    "old": "      if (!water(p[0], p[1])) {\n        if (wet) return null;\n        continue;\n      }",
+    "new": "      if (!water(p[0], p[1])) continue;",
+    "tests": [
+      "test/systems/naval/harbour_inlet.test.js"
+    ],
+    "note": "an inlet berth facing the town reads the sea past it as her way out"
+  }
 ]

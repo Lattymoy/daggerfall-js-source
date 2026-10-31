@@ -2,8 +2,8 @@
   {
     "name": "RESHL-default-look-outline",
     "file": "src/render/nodeGlint.js",
-    "old": "?? RESOURCE_HIGHLIGHTS.glint;",
-    "new": "?? RESOURCE_HIGHLIGHTS.outline;",
+    "old": "  RESOURCE_HIGHLIGHTS[/** @type {keyof typeof RESOURCE_HIGHLIGHTS} */ (tier)] ?? RESOURCE_HIGHLIGHTS.glint;",
+    "new": "  RESOURCE_HIGHLIGHTS[/** @type {keyof typeof RESOURCE_HIGHLIGHTS} */ (tier)] ?? RESOURCE_HIGHLIGHTS.outline;",
     "tests": [
       "test/scenes/resourcehighlights.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RESHL-none-draws",
     "file": "src/render/nodeGlint.js",
-    "old": "|| !isVec3(r._camPos) || !(look.glint || look.ring)) return 0;",
-    "new": "|| !isVec3(r._camPos)) return 0;",
+    "old": "    if (!list.length || !r._proj || !r._view || !isVec3(r._camPos) || !(look.glint || look.ring)) return 0;",
+    "new": "    if (!list.length || !r._proj || !r._view || !isVec3(r._camPos)) return 0;",
     "tests": [
       "test/scenes/resourcehighlights.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RESHL-outline-draws-glints",
     "file": "src/render/nodeGlint.js",
-    "old": "    if (!look.glint) { for (let i = 0; i < n; i++)",
-    "new": "    if (false) { for (let i = 0; i < n; i++)",
+    "old": "    if (!look.glint) {",
+    "new": "    if (false) {",
     "tests": [
       "test/scenes/resourcehighlights.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "RESHL-outline-holds-marks",
     "file": "src/render/nodeGlint.js",
-    "old": "    if (!look.glint) { for (let i = 0; i < n; i++) this._nodes[i].g = null; this._handBack();",
-    "new": "    if (!look.glint) { this._handBack();",
+    "old": "      for (let i = 0; i < n; i++) this._nodes[i].g = null;\n      this._handBack();",
+    "new": "      this._handBack();",
     "tests": [
       "test/scenes/resourcehighlights.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "RESHL-breath-unwhole",
     "file": "src/render/nodeGlint.js",
-    "old": "[GLINT_SHEEN_HZ, OUTLINE_BREATH_HZ, ...",
-    "new": "[GLINT_SHEEN_HZ, OUTLINE_BREATH_HZ + 0.001, ...",
+    "old": "    OUTLINE_BREATH_HZ,",
+    "new": "    OUTLINE_BREATH_HZ + 0.001,",
     "tests": [
       "test/scenes/resourcehighlights.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RESHL-breath-moves-still",
     "file": "src/render/nodeGlint.js",
-    "old": "(still ? 1 : 1 - OUTLINE_BREATH",
-    "new": "(false ? 1 : 1 - OUTLINE_BREATH",
+    "old": "  still ? 1 : 1 - OUTLINE_BREATH * 0.5 * (1 - Math.cos(2 * Math.PI * OUTLINE_BREATH_HZ * seconds));",
+    "new": "  false ? 1 : 1 - OUTLINE_BREATH * 0.5 * (1 - Math.cos(2 * Math.PI * OUTLINE_BREATH_HZ * seconds));",
     "tests": [
       "test/scenes/resourcehighlights.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RESHL-ring-added",
     "file": "src/render/nodeGlint.js",
-    "old": "    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);\n    gl.depthMask(false);",
-    "new": "    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);\n    gl.depthMask(false);",
+    "old": "    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);",
+    "new": "    gl.blendFunc(gl.ONE, gl.ONE);",
     "tests": [
       "test/scenes/resourcehighlights.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RESHL-ring-unkindled",
     "file": "src/render/nodeGlint.js",
-    "old": "OUTLINE_ALPHA * Math.min(1, g.alpha) * breath);",
-    "new": "OUTLINE_ALPHA * breath);",
+    "old": "      gl.uniform4f(R.uOutlineColor, g.rgb[0], g.rgb[1], g.rgb[2], OUTLINE_ALPHA * Math.min(1, g.alpha) * breath);",
+    "new": "      gl.uniform4f(R.uOutlineColor, g.rgb[0], g.rgb[1], g.rgb[2], OUTLINE_ALPHA * breath);",
     "tests": [
       "test/scenes/resourcehighlights.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "RESHL-ring-width-unfit",
     "file": "src/render/nodeGlint.js",
-    "old": "      s.ring = Math.max(1, ringPx * fit);",
-    "new": "      s.ring = Math.max(1, ringPx);",
+    "old": "      s.ring = Math.max(1, ringPx * fit); // RESOURCE-HIGHLIGHTS: the ring's width in the tile's texels",
+    "new": "      s.ring = Math.max(1, ringPx); // RESOURCE-HIGHLIGHTS: the ring's width in the tile's texels",
     "tests": [
       "test/scenes/resourcehighlights.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "RESHL-ring-on-it",
     "file": "src/render/nodeGlint.js",
-    "old": "vec4(at3 + away * (${OUTLINE_RING_BACK.toFixed(4)} / max(length(away), 1e-4)), 1.0);",
-    "new": "vec4(at3, 1.0);",
+    "old": "  vec4 c = uVP * vec4(at3 + away * (${OUTLINE_RING_BACK.toFixed(4)} / max(length(away), 1e-4)), 1.0);   // stood behind the silhouette it borders",
+    "new": "  vec4 c = uVP * vec4(at3, 1.0);   // stood behind the silhouette it borders",
     "tests": [
       "test/scenes/resourcehighlights.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "RESHL-ring-unfogged",
     "file": "src/render/nodeGlint.js",
-    "old": "uOutlineColor.a * fogFactorAt(at3));",
-    "new": "uOutlineColor.a);",
+    "old": "  o = vec4(dwWaterFog(uOutlineColor.rgb, at3), uOutlineColor.a * fogFactorAt(at3));",
+    "new": "  o = vec4(dwWaterFog(uOutlineColor.rgb, at3), uOutlineColor.a);",
     "tests": [
       "test/scenes/resourcehighlights.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "RESHL-F9-ctor-leaks",
     "file": "src/render/nodeGlint.js",
-    "old": "    } catch (e) { for (const p of built) gl.deleteProgram(p); throw e; }",
-    "new": "    } catch (e) { throw e; }",
+    "old": "      for (const p of built) gl.deleteProgram(p);\n      throw e;",
+    "new": "      throw e;",
     "tests": [
       "test/scenes/resourcehighlights.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "RESHL-F9-pass-leaks",
     "file": "src/render/nodeGlint.js",
-    "old": "pass = null; releasePrograms(renderer.gl, NODE_GLINT_PROGRAMS); }",
-    "new": "pass = null; }",
+    "old": "      releasePrograms(renderer.gl, NODE_GLINT_PROGRAMS);\n    }",
+    "new": "    }",
     "tests": [
       "test/scenes/resourcehighlights.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "RESHL-ring-undisposed",
     "file": "src/render/nodeGlint.js",
-    "old": "gl.deleteProgram(this.light); gl.deleteProgram(this.ring);",
-    "new": "gl.deleteProgram(this.light);",
+    "old": "    gl.deleteProgram(this.ring);\n    gl.deleteFramebuffer(this.fb);",
+    "new": "    gl.deleteFramebuffer(this.fb);",
     "tests": [
       "test/scenes/resourcehighlights.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "RESHL-outline-the-glints-room",
     "file": "src/render/nodeGlint.js",
-    "old": "const room = look.glint ? Math.max(roomPx, s.glint + 2) : Math.ceil(ringPx) + 2;",
-    "new": "const room = Math.max(roomPx, s.glint + 2);",
+    "old": "      const room = look.glint ? Math.max(roomPx, s.glint + 2) : Math.ceil(ringPx) + 2; // RESOURCE-HIGHLIGHTS: the ring alone takes its own width's room (section 46's), so more nodes hold a texel a pixel",
+    "new": "      const room = Math.max(roomPx, s.glint + 2); // RESOURCE-HIGHLIGHTS: the ring alone takes its own width's room (section 46's), so more nodes hold a texel a pixel",
     "tests": [
       "test/scenes/resourcehighlights.test.js"
     ]

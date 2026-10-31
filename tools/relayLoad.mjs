@@ -90,20 +90,69 @@ const windowHours = (h) => Math.min(loadHours(h), WINDOW_HOURS_MAX);
  *   points that carry them (`blob12 != ''`: a relay before part two wrote none).
  */
 export const QUESTIONS = Object.freeze([
-  ['kinds', 'The rooms by kind (sends, most first)', ['kind', 'room_windows', 'peak', 'hellos', 'busy', 'room_full', 'refused', 'drops', 'poses', 'sends', 'sends_per_pose', 'mb_out', 'storage'],
-    (h) => `SELECT blob1 AS kind, ${W.n} AS room_windows, MAX(double15) AS peak, ${W.hellos} AS hellos, ${W.busy} AS busy, ${W.full} AS room_full, ${W.refused} AS refused, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends, IF(${W.poses} > 0, ${W.sends} / ${W.poses}, 0.0) AS sends_per_pose, ${W.mbOut} AS mb_out, ${W.storage} AS storage FROM ${DATASET} WHERE ${since(h)} GROUP BY kind ORDER BY sends DESC LIMIT 40`],
-  ['windows', `Every five minutes, by kind (${WINDOW_KINDS.join(', ')}; the last ${WINDOW_HOURS_MAX} hours at most)`, ['bucket', 'kind', 'sockets', 'peak', 'busy', 'room_full', 'drops', 'poses', 'sends'],
-    (h) => `SELECT toStartOfInterval(timestamp, INTERVAL '5' MINUTE) AS bucket, blob1 AS kind, ${W.sockets} AS sockets, MAX(double15) AS peak, ${W.busy} AS busy, ${W.full} AS room_full, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends FROM ${DATASET} WHERE ${since(windowHours(h))} AND blob1 IN (${WINDOW_KINDS.map((k) => `'${k}'`).join(', ')}) GROUP BY bucket, kind ORDER BY bucket DESC, kind LIMIT ${12 * windowHours(h) * WINDOW_KINDS.length + 12 * WINDOW_KINDS.length}`],
-  ['crowds', 'The busiest rooms but the channels (peak sockets, most first)', ['stamp', 'kind', 'peak', 'sockets', 'hellos', 'busy', 'room_full', 'drops', 'poses', 'sends'],
-    (h) => `SELECT timestamp AS stamp, blob1 AS kind, double15 AS peak, double2 AS sockets, double3 AS hellos, double4 AS busy, double13 AS room_full, double14 AS drops, double7 AS poses, double8 AS sends FROM ${DATASET} WHERE ${since(h)} AND blob1 != 'chat' ORDER BY peak DESC LIMIT 40`],
-  ['fulls', 'The foes budget\'s full frames and its hold, by kind (FOES-FIRST, FOES-HOLD)', ['kind', 'fulls', 'full_drops', 'held', 'held_sent', 'held_gone', 'wait_ms', 'beats', 'hit_drops'],
-    (h) => `SELECT blob1 AS kind, ${B.fulls} AS fulls, ${B.fullDrops} AS full_drops, ${B.held} AS held, ${B.heldSent} AS held_sent, ${B.heldGone} AS held_gone, IF(${B.heldSent} > 0, ${B.heldMs} / ${B.heldSent}, 0.0) AS wait_ms, ${B.beats} AS beats, ${B.hitDrops} AS hit_drops FROM ${DATASET} WHERE ${since(h)} AND blob6 != '' GROUP BY kind ORDER BY fulls DESC LIMIT 40`],
-  ['storage', 'The room-windows that wrote storage most (writes, most first)', ['stamp', 'kind', 'writes', 'reads', 'room_sockets', 'room_peak'],
-    (h) => `SELECT timestamp AS stamp, blob1 AS kind, double11 AS writes, double10 AS reads, double2 AS room_sockets, double15 AS room_peak FROM ${DATASET} WHERE ${since(h)} ORDER BY writes DESC LIMIT 40`],
-  ['levels', 'The cells by their node\'s level (COST-2: 0 a 16-pixel cell, 1-4 a coarse node)',['kind', 'level', 'room_windows', 'sockets', 'peak', 'room_full', 'poses', 'sends'],
-    (h) => `SELECT blob1 AS kind, blob11 AS level, ${W.n} AS room_windows, ${W.sockets} AS sockets, MAX(double15) AS peak, ${W.full} AS room_full, ${W.poses} AS poses, ${W.sends} AS sends FROM ${DATASET} WHERE ${since(h)} AND blob1 = 'world' GROUP BY kind, level ORDER BY level LIMIT 10`],
-  ['moves', 'The cell directory\'s moves (COST-2 part two)',['kind', 'points', 'moves', 'blocked'],
-    (h) => `SELECT blob1 AS kind, ${W.n} AS points, SUM(_sample_interval * toUInt32(blob12)) AS moves, SUM(_sample_interval * toUInt32(blob13)) AS blocked FROM ${DATASET} WHERE ${since(h)} AND blob1 = 'cells' AND blob12 != '' GROUP BY kind LIMIT 1`],
+  [
+    'kinds',
+    'The rooms by kind (sends, most first)',
+    [
+      'kind',
+      'room_windows',
+      'peak',
+      'hellos',
+      'busy',
+      'room_full',
+      'refused',
+      'drops',
+      'poses',
+      'sends',
+      'sends_per_pose',
+      'mb_out',
+      'storage',
+    ],
+    (h) =>
+      `SELECT blob1 AS kind, ${W.n} AS room_windows, MAX(double15) AS peak, ${W.hellos} AS hellos, ${W.busy} AS busy, ${W.full} AS room_full, ${W.refused} AS refused, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends, IF(${W.poses} > 0, ${W.sends} / ${W.poses}, 0.0) AS sends_per_pose, ${W.mbOut} AS mb_out, ${W.storage} AS storage FROM ${DATASET} WHERE ${since(h)} GROUP BY kind ORDER BY sends DESC LIMIT 40`,
+  ],
+  [
+    'windows',
+    `Every five minutes, by kind (${WINDOW_KINDS.join(', ')}; the last ${WINDOW_HOURS_MAX} hours at most)`,
+    ['bucket', 'kind', 'sockets', 'peak', 'busy', 'room_full', 'drops', 'poses', 'sends'],
+    (h) =>
+      `SELECT toStartOfInterval(timestamp, INTERVAL '5' MINUTE) AS bucket, blob1 AS kind, ${W.sockets} AS sockets, MAX(double15) AS peak, ${W.busy} AS busy, ${W.full} AS room_full, ${W.drops} AS drops, ${W.poses} AS poses, ${W.sends} AS sends FROM ${DATASET} WHERE ${since(windowHours(h))} AND blob1 IN (${WINDOW_KINDS.map((k) => `'${k}'`).join(', ')}) GROUP BY bucket, kind ORDER BY bucket DESC, kind LIMIT ${12 * windowHours(h) * WINDOW_KINDS.length + 12 * WINDOW_KINDS.length}`,
+  ],
+  [
+    'crowds',
+    'The busiest rooms but the channels (peak sockets, most first)',
+    ['stamp', 'kind', 'peak', 'sockets', 'hellos', 'busy', 'room_full', 'drops', 'poses', 'sends'],
+    (h) =>
+      `SELECT timestamp AS stamp, blob1 AS kind, double15 AS peak, double2 AS sockets, double3 AS hellos, double4 AS busy, double13 AS room_full, double14 AS drops, double7 AS poses, double8 AS sends FROM ${DATASET} WHERE ${since(h)} AND blob1 != 'chat' ORDER BY peak DESC LIMIT 40`,
+  ],
+  [
+    'fulls',
+    "The foes budget's full frames and its hold, by kind (FOES-FIRST, FOES-HOLD)",
+    ['kind', 'fulls', 'full_drops', 'held', 'held_sent', 'held_gone', 'wait_ms', 'beats', 'hit_drops'],
+    (h) =>
+      `SELECT blob1 AS kind, ${B.fulls} AS fulls, ${B.fullDrops} AS full_drops, ${B.held} AS held, ${B.heldSent} AS held_sent, ${B.heldGone} AS held_gone, IF(${B.heldSent} > 0, ${B.heldMs} / ${B.heldSent}, 0.0) AS wait_ms, ${B.beats} AS beats, ${B.hitDrops} AS hit_drops FROM ${DATASET} WHERE ${since(h)} AND blob6 != '' GROUP BY kind ORDER BY fulls DESC LIMIT 40`,
+  ],
+  [
+    'storage',
+    'The room-windows that wrote storage most (writes, most first)',
+    ['stamp', 'kind', 'writes', 'reads', 'room_sockets', 'room_peak'],
+    (h) =>
+      `SELECT timestamp AS stamp, blob1 AS kind, double11 AS writes, double10 AS reads, double2 AS room_sockets, double15 AS room_peak FROM ${DATASET} WHERE ${since(h)} ORDER BY writes DESC LIMIT 40`,
+  ],
+  [
+    'levels',
+    "The cells by their node's level (COST-2: 0 a 16-pixel cell, 1-4 a coarse node)",
+    ['kind', 'level', 'room_windows', 'sockets', 'peak', 'room_full', 'poses', 'sends'],
+    (h) =>
+      `SELECT blob1 AS kind, blob11 AS level, ${W.n} AS room_windows, ${W.sockets} AS sockets, MAX(double15) AS peak, ${W.full} AS room_full, ${W.poses} AS poses, ${W.sends} AS sends FROM ${DATASET} WHERE ${since(h)} AND blob1 = 'world' GROUP BY kind, level ORDER BY level LIMIT 10`,
+  ],
+  [
+    'moves',
+    "The cell directory's moves (COST-2 part two)",
+    ['kind', 'points', 'moves', 'blocked'],
+    (h) =>
+      `SELECT blob1 AS kind, ${W.n} AS points, SUM(_sample_interval * toUInt32(blob12)) AS moves, SUM(_sample_interval * toUInt32(blob13)) AS blocked FROM ${DATASET} WHERE ${since(h)} AND blob1 = 'cells' AND blob12 != '' GROUP BY kind LIMIT 1`,
+  ],
 ]);
 
 const book = questionBook(QUESTIONS);

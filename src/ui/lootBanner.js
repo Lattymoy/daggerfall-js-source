@@ -39,7 +39,14 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
-import { createAcquireWatch, setCodexFindPresenter, tierIsBig, tierRank, isAcquired, announces } from '../systems/acquireWatch.js';
+import {
+  createAcquireWatch,
+  setCodexFindPresenter,
+  tierIsBig,
+  tierRank,
+  isAcquired,
+  announces,
+} from '../systems/acquireWatch.js';
 import { tierLabel, RARITIES } from '../systems/loot/lootRarity.js';
 import { isIliacCard } from '../systems/iliac/iliacItems.js';
 import { cardById } from '../net/iliac/iliacCards.js';
@@ -56,9 +63,9 @@ import { sweepHudLayout } from './hud/hudLayout.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { enhancedSoundsOn } from '../systems/enhancedSounds.js';
-import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
-import { TITLE_TEXT, AURA_TEXT, AURA_PAINT, titleBadge, titlePaint, gradientAt } from './playerBadge.js';   // HONOUR-BANNER: a title's word and paint
-import { t } from '../systems/textManager.js';   // HONOUR-BANNER: its words in the player's language
+import { noteFirstUse } from '../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
+import { TITLE_TEXT, AURA_TEXT, AURA_PAINT, titleBadge, titlePaint, gradientAt } from './playerBadge.js'; // HONOUR-BANNER: a title's word and paint
+import { t } from '../systems/textManager.js'; // HONOUR-BANNER: its words in the player's language
 
 export const LOOT_BANNER_STYLE_ID = 'loot-banner-css';
 export const LOOT_BANNER_STACK_ID = 'loot-banners';
@@ -82,17 +89,31 @@ const WATCHDOG_MS = 400;
 
 let _uid = 0;
 const _ids = new WeakMap();
-const idOf = (item) => { let id = _ids.get(item); if (id == null) { id = ++_uid; _ids.set(item, id); } return id; };
+const idOf = (item) => {
+  let id = _ids.get(item);
+  if (id == null) {
+    id = ++_uid;
+    _ids.set(item, id);
+  }
+  return id;
+};
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
 
 /** The kicker's words: a card's tier and "Card"; any other piece the pack's own tier label (lootRarity.js tierLabel). */
 export function bannerKicker(item, tier) {
   if (isIliacCard(item)) return `${RARITIES[tier]?.label ?? cap(tier)} Card`;
-  try { return tierLabel(item); } catch { return RARITIES[tier]?.label ?? cap(tier); }
+  try {
+    return tierLabel(item);
+  } catch {
+    return RARITIES[tier]?.label ?? cap(tier);
+  }
 }
 /** What it is, under the name: a card's kind ("Unit card"), any other piece its template's name ("Longsword"). */
 export function bannerSub(item) {
-  if (isIliacCard(item)) { const c = cardById(item.card); return c ? `${cap(c.kind)} card` : 'Card'; }
+  if (isIliacCard(item)) {
+    const c = cardById(item.card);
+    return c ? `${cap(c.kind)} card` : 'Card';
+  }
   return templateByIndex(item?.templateIndex)?.name ?? '';
 }
 
@@ -108,23 +129,39 @@ export function bannerEntry(arrival, identity = undefined) {
   const count = Math.max(1, Math.trunc(Number(arrival.count) || 1));
   const card = isIliacCard(item) ? cardById(item.card) : null;
   let name = '';
-  try { name = card ? card.name : itemLongName(item); } catch { name = ''; }
+  try {
+    name = card ? card.name : itemLongName(item);
+  } catch {
+    name = '';
+  }
   return {
     key: card ? `card\u0002${item.card}` : `item\u0002${idOf(item)}`,
-    item, card: card ? item.card : null,
-    tier, name: name || item.name || 'Item', kicker: bannerKicker(item, tier), sub: bannerSub(item),
-    exalted: tier === 'legendary' && item.exalted === true, big: tierIsBig(tier),
-    count, codex: false, image: card ? null : imageOf(item, identity),
+    item,
+    card: card ? item.card : null,
+    tier,
+    name: name || item.name || 'Item',
+    kicker: bannerKicker(item, tier),
+    sub: bannerSub(item),
+    exalted: tier === 'legendary' && item.exalted === true,
+    big: tierIsBig(tier),
+    count,
+    codex: false,
+    image: card ? null : imageOf(item, identity),
   };
 }
 function imageOf(item, identity) {
-  try { return inventoryItemImage(item, identity) ?? null; } catch { return null; }
+  try {
+    return inventoryItemImage(item, identity) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /** HONOUR-BANNER: the line under an honour's name - where it is worn - read when it is drawn. */
 export const honourSub = () => t('lootBanner.honour.wear', 'Wear it from your account card');
 /** HONOUR-BANNER: the kicker over it. */
-export const honourKicker = (kind) => (kind === 'aura' ? t('lootBanner.honour.aura', 'New Aura') : t('lootBanner.honour.title', 'New Title'));
+export const honourKicker = (kind) =>
+  kind === 'aura' ? t('lootBanner.honour.aura', 'New Aura') : t('lootBanner.honour.title', 'New Title');
 /**
  * HONOUR-BANNER: A TITLE OR AN AURA AS A BANNER'S DATA - `kind` 'title' or 'aura', `key` the vocabulary's word
  * (net/identityToken.js TITLES / AURAS). Its tier is the top one (`gilded`: it waits first, stands big, sounds the
@@ -138,10 +175,21 @@ export function honourEntry({ kind, key } = /** @type {any} */ ({})) {
   const name = aura ? AURA_TEXT[key] : TITLE_TEXT[key];
   if (typeof name !== 'string' || !name) return null;
   const badge = titleBadge({ title: aura ? AURA_PAINT[key] : key });
-  const rgba = badge?.gradient?.length > 1 ? gradientAt(badge.gradient, 0.5) : badge?.rgba ?? null;
+  const rgba = badge?.gradient?.length > 1 ? gradientAt(badge.gradient, 0.5) : (badge?.rgba ?? null);
   return {
-    key: `honour\u0002${kind}\u0002${key}`, item: null, card: null, honour: { kind, key, badge, rgba },
-    tier: 'gilded', name, kicker: honourKicker(kind), sub: honourSub(), exalted: false, big: true, count: 1, codex: false, image: null,
+    key: `honour\u0002${kind}\u0002${key}`,
+    item: null,
+    card: null,
+    honour: { kind, key, badge, rgba },
+    tier: 'gilded',
+    name,
+    kicker: honourKicker(kind),
+    sub: honourSub(),
+    exalted: false,
+    big: true,
+    count: 1,
+    codex: false,
+    image: null,
   };
 }
 
@@ -158,7 +206,13 @@ export function honourEntry({ kind, key } = /** @type {any} */ ({})) {
  *  - A banner holds its hold, then slides out over `slide`. While fewer than `max` stand that are not leaving, the next
  *    in waiting takes a place - unless `canEnter(entry)` says no (it is no longer held), and it is dropped.
  */
-export function createBannerQueue({ max = LOOT_BANNERS_MAX, hold = LOOT_BANNER_HOLD_MS, bigHold = LOOT_BANNER_BIG_HOLD_MS, slide = LOOT_BANNER_SLIDE_MS, pendingMax = LOOT_BANNER_PENDING_MAX } = {}) {
+export function createBannerQueue({
+  max = LOOT_BANNERS_MAX,
+  hold = LOOT_BANNER_HOLD_MS,
+  bigHold = LOOT_BANNER_BIG_HOLD_MS,
+  slide = LOOT_BANNER_SLIDE_MS,
+  pendingMax = LOOT_BANNER_PENDING_MAX,
+} = {}) {
   let seq = 0;
   /** @type {any[]} */
   let standing = [];
@@ -171,20 +225,39 @@ export function createBannerQueue({ max = LOOT_BANNERS_MAX, hold = LOOT_BANNER_H
       for (const e of entries ?? []) {
         if (!e?.key || !(e.count > 0)) continue;
         const s = standing.find((c) => c.key === e.key && c.outMs == null);
-        if (s) { s.count += e.count; s.leftMs = holdOf(s); s.bumps += 1; s.codex = s.codex || !!e.codex; added = true; continue; }
+        if (s) {
+          s.count += e.count;
+          s.leftMs = holdOf(s);
+          s.bumps += 1;
+          s.codex = s.codex || !!e.codex;
+          added = true;
+          continue;
+        }
         const w = waiting.find((c) => c.key === e.key);
-        if (w) { w.count += e.count; w.codex = w.codex || !!e.codex; added = true; continue; }
+        if (w) {
+          w.count += e.count;
+          w.codex = w.codex || !!e.codex;
+          added = true;
+          continue;
+        }
         waiting.push({ ...e, id: ++seq, bumps: 0, leftMs: 0, outMs: null });
         added = true;
       }
-      waiting = waiting.map((e, i) => [e, i]).sort((a, b) => tierRank(b[0].tier) - tierRank(a[0].tier) || a[1] - b[1]).map(([e]) => e).slice(0, Math.max(0, pendingMax));
+      waiting = waiting
+        .map((e, i) => [e, i])
+        .sort((a, b) => tierRank(b[0].tier) - tierRank(a[0].tier) || a[1] - b[1])
+        .map(([e]) => e)
+        .slice(0, Math.max(0, pendingMax));
       return added;
     },
     /** @param {number} ms @param {{ canEnter?: (e: any) => boolean }} [o] */
     tick(ms, { canEnter = (_e) => true } = {}) {
       const step = Math.max(0, Number(ms) || 0);
       for (const c of standing) {
-        if (c.outMs != null) { c.outMs -= step; continue; }
+        if (c.outMs != null) {
+          c.outMs -= step;
+          continue;
+        }
         c.leftMs -= step;
         if (c.leftMs <= 0) c.outMs = slide;
       }
@@ -202,11 +275,22 @@ export function createBannerQueue({ max = LOOT_BANNERS_MAX, hold = LOOT_BANNER_H
       return { entered, gone };
     },
     /** The entry standing or waiting for `item` (the codex's door), or null. */
-    find(item) { return standing.find((c) => c.item === item && c.outMs == null) ?? waiting.find((c) => c.item === item) ?? null; },
-    standing() { return standing.slice(); },
-    pending() { return waiting.slice(); },
-    get size() { return standing.length + waiting.length; },
-    clear() { standing = []; waiting = []; },
+    find(item) {
+      return standing.find((c) => c.item === item && c.outMs == null) ?? waiting.find((c) => c.item === item) ?? null;
+    },
+    standing() {
+      return standing.slice();
+    },
+    pending() {
+      return waiting.slice();
+    },
+    get size() {
+      return standing.length + waiting.length;
+    },
+    clear() {
+      standing = [];
+      waiting = [];
+    },
   };
 }
 
@@ -229,8 +313,19 @@ export function bannerStillHeld(entity, entry) {
  * first. Answers `{ top, shown }`; one banner always shows.
  * @param {{ base?: number, notice?: { top: number, bottom: number } | null, lower?: number, heights?: number[], gap?: number, cardGap?: number }} [o]
  */
-export function bannerLayout({ base, notice = null, lower = Infinity, heights = [], gap = LOOT_BANNER_GAP, cardGap = 8 } = {}) {
-  const total = (n) => { let h = 0; for (let i = 0; i < n; i++) h += heights[i] ?? 0; return n > 0 ? h + (n - 1) * cardGap : 0; };
+export function bannerLayout({
+  base,
+  notice = null,
+  lower = Infinity,
+  heights = [],
+  gap = LOOT_BANNER_GAP,
+  cardGap = 8,
+} = {}) {
+  const total = (n) => {
+    let h = 0;
+    for (let i = 0; i < n; i++) h += heights[i] ?? 0;
+    return n > 0 ? h + (n - 1) * cardGap : 0;
+  };
   let top = Number.isFinite(base) ? base : 0;
   let shown = heights.length;
   if (notice && Number.isFinite(notice.top) && Number.isFinite(notice.bottom) && notice.bottom > notice.top) {
@@ -247,8 +342,12 @@ export function bannerLayout({ base, notice = null, lower = Infinity, heights = 
 // it tints the feed's; and it scales with the HUD (--hud-scale, read off `.hud` as the feed reads it).
 const T = FRAME_TONES;
 const rgbOf = (hex) => [1, 3, 5].map((i) => parseInt(String(hex).slice(i, i + 2), 16)).join(',');
-const THEME_TINTS = Object.entries(PLUS_THEMES).filter(([, th]) => /** @type {any} */ (th).panel)
-  .map(([id, th]) => `:root[data-plus-theme="${id}"] .lootbanner { background-color: rgba(${rgbOf(hudVeil(th))}, 0.92); }`).join('\n');
+const THEME_TINTS = Object.entries(PLUS_THEMES)
+  .filter(([, th]) => /** @type {any} */ (th).panel)
+  .map(
+    ([id, th]) => `:root[data-plus-theme="${id}"] .lootbanner { background-color: rgba(${rgbOf(hudVeil(th))}, 0.92); }`,
+  )
+  .join('\n');
 
 export const LOOT_BANNER_CSS = `${PIXELIFY_FIVE_FACE}
 /* LOOT-BANNER: a rare-or-better piece arrived (ui/lootBanner.js) */
@@ -328,19 +427,53 @@ let _stack = null;
 let _watchdog = null;
 let _entity = null;
 let _faultSaid = false;
-let _lastTop = null, _lastScale = null;
+let _lastTop = null,
+  _lastScale = null;
 /** Pieces the codex announced before the watcher saw them (a take tells the codex inside the press): their banner
  *  says so. */
 const _codexNew = new WeakSet();
-let _icon = (image, box, onReady) => requestFittedIcon(image.archive, image.record, { box, dpr: screenDpr(), dye: image.dye, dyeTarget: image.dyeTarget, onReady });
-let _play = (clip) => { try { audio.playOneShot?.(clip, 1); } catch { /* silence */ } };
+let _icon = (image, box, onReady) =>
+  requestFittedIcon(image.archive, image.record, {
+    box,
+    dpr: screenDpr(),
+    dye: image.dye,
+    dyeTarget: image.dyeTarget,
+    onReady,
+  });
+let _play = (clip) => {
+  try {
+    audio.playOneShot?.(clip, 1);
+  } catch {
+    /* silence */
+  }
+};
 let _wd = {};
 
 /** Tests and the probe: the picture's door, the sound's, and the watchdog's timers. */
 export function _setLootBannerForTests({ icon, play, schedule, cancel } = /** @type {any} */ ({})) {
-  if (icon !== undefined) _icon = icon ?? ((image, box, onReady) => requestFittedIcon(image.archive, image.record, { box, dpr: screenDpr(), dye: image.dye, dyeTarget: image.dyeTarget, onReady }));
-  if (play !== undefined) _play = play ?? ((clip) => { try { audio.playOneShot?.(clip, 1); } catch { /* silence */ } });
-  if (schedule !== undefined || cancel !== undefined) _wd = { ...(schedule ? { schedule } : {}), ...(cancel ? { cancel } : {}) };
+  if (icon !== undefined)
+    _icon =
+      icon ??
+      ((image, box, onReady) =>
+        requestFittedIcon(image.archive, image.record, {
+          box,
+          dpr: screenDpr(),
+          dye: image.dye,
+          dyeTarget: image.dyeTarget,
+          onReady,
+        }));
+  if (play !== undefined)
+    _play =
+      play ??
+      ((clip) => {
+        try {
+          audio.playOneShot?.(clip, 1);
+        } catch {
+          /* silence */
+        }
+      });
+  if (schedule !== undefined || cancel !== undefined)
+    _wd = { ...(schedule ? { schedule } : {}), ...(cancel ? { cancel } : {}) };
 }
 
 const docOf = () => (typeof document === 'undefined' ? null : document);
@@ -364,25 +497,48 @@ function ensure(d) {
   _stack.setAttribute('aria-live', 'polite');
   _stack.setAttribute('role', 'log');
   d.body.append(_stack);
-  _lastTop = null; _lastScale = null;
-  try { sweepHudLayout(d); } catch { /* the sheet's own place */ }
+  _lastTop = null;
+  _lastScale = null;
+  try {
+    sweepHudLayout(d);
+  } catch {
+    /* the sheet's own place */
+  }
   return _stack;
 }
 function takeDown() {
-  disarmDraw(_watchdog); _watchdog = null;
-  for (const c of drawn.values()) { try { c.el.remove(); } catch { /* gone */ } }
+  disarmDraw(_watchdog);
+  _watchdog = null;
+  for (const c of drawn.values()) {
+    try {
+      c.el.remove();
+    } catch {
+      /* gone */
+    }
+  }
   drawn.clear();
-  if (_stack) { try { _stack.remove(); } catch { /* gone */ } }
+  if (_stack) {
+    try {
+      _stack.remove();
+    } catch {
+      /* gone */
+    }
+  }
   _stack = null;
 }
 
-const el = (d, tag, cls, text = null) => { const n = d.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
+const el = (d, tag, cls, text = null) => {
+  const n = d.createElement(tag);
+  n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+};
 const countText = (n) => (n > 1 ? `×${n}` : '');
 
 function build(d, e) {
   const node = el(d, 'div', e.big ? 'lootbanner lb-big' : 'lootbanner');
   node.dataset.rarity = e.tier;
-  if (e.honour) paintHonour(node, e.honour);   // HONOUR-BANNER: the title's colour over the tier's
+  if (e.honour) paintHonour(node, e.honour); // HONOUR-BANNER: the title's colour over the tier's
   if (e.exalted) node.dataset.exalted = '';
   const icon = el(d, 'div', 'lb-icon');
   icon.setAttribute('aria-hidden', 'true');
@@ -392,7 +548,12 @@ function build(d, e) {
   const name = el(d, 'div', 'lb-name', e.honour ? null : e.name);
   // HONOUR-BANNER (AUDIT FIVE-ASKS E3): the word in its own inline box, painted as it is worn - a gradient title's run spans
   // the word, never the banner's width, and the count beside it keeps its own colour
-  if (e.honour) { const word = el(d, 'span', 'lb-word', e.name); const p = titlePaint(e.honour.badge); for (const k of Object.keys(p)) if (p[k]) word.style[k] = p[k]; name.append(word); }
+  if (e.honour) {
+    const word = el(d, 'span', 'lb-word', e.name);
+    const p = titlePaint(e.honour.badge);
+    for (const k of Object.keys(p)) if (p[k]) word.style[k] = p[k];
+    name.append(word);
+  }
   const num = el(d, 'span', 'lb-count', countText(e.count));
   name.append(num);
   const sub = el(d, 'div', 'lb-sub', e.sub);
@@ -409,27 +570,50 @@ function build(d, e) {
  *  by then takes nothing). A piece with no picture stands on its words in an empty well. */
 function setPicture(icon, e) {
   const box = e.big ? LOOT_BANNER_BIG_ICON_BOX : LOOT_BANNER_ICON_BOX;
-  if (e.honour) { const d = icon.ownerDocument ?? docOf(); if (d) icon.append(honourMark(d, e.honour.kind, box)); return; }   // HONOUR-BANNER: its own mark
+  if (e.honour) {
+    const d = icon.ownerDocument ?? docOf();
+    if (d) icon.append(honourMark(d, e.honour.kind, box));
+    return;
+  } // HONOUR-BANNER: its own mark
   if (e.card) {
     try {
       const c = icon.ownerDocument?.createElement?.('canvas');
       const ctx = c?.getContext?.('2d');
       if (!ctx) return;
-      const h = box * 2, w = Math.round(h * ILIAC_CARD_ASPECT);
-      c.width = w; c.height = h;
+      const h = box * 2,
+        w = Math.round(h * ILIAC_CARD_ASPECT);
+      c.width = w;
+      c.height = h;
       paintIliacCard(ctx, cardById(e.card), w, h);
       icon.append(c);
-    } catch { /* the words stand */ }
+    } catch {
+      /* the words stand */
+    }
     return;
   }
   if (!e.image || e.image.archive == null) return;
   const put = (pic) => {
     if (!pic?.src) return false;
     const img = fittedImg(pic);
-    if (icon.replaceChildren) icon.replaceChildren(img); else icon.append(img);
+    if (icon.replaceChildren) icon.replaceChildren(img);
+    else icon.append(img);
     return true;
   };
-  try { put(_icon(e.image, box, () => { if (icon.isConnected !== false) { try { put(_icon(e.image, box, null)); } catch { /* the words stand */ } } })); } catch { /* the words stand */ }
+  try {
+    put(
+      _icon(e.image, box, () => {
+        if (icon.isConnected !== false) {
+          try {
+            put(_icon(e.image, box, null));
+          } catch {
+            /* the words stand */
+          }
+        }
+      }),
+    );
+  } catch {
+    /* the words stand */
+  }
 }
 
 /** HONOUR-BANNER: the rarity's custom properties in the title's colour (enhancedPlusStyle.js RARITY_VARS' names) - its
@@ -438,8 +622,20 @@ export function honourVars(rgba) {
   if (!Array.isArray(rgba) || rgba.length < 3) return null;
   const c = (v, k) => Math.max(0, Math.min(255, Math.round(v * 255 * k)));
   const hex = (k) => `#${[0, 1, 2].map((i) => c(rgba[i], k).toString(16).padStart(2, '0')).join('')}`;
-  const hi = `#${[0, 1, 2].map((i) => Math.round(c(rgba[i], 1) + (255 - c(rgba[i], 1)) * 0.45).toString(16).padStart(2, '0')).join('')}`;
-  return { '--rar': hex(1), '--rar-hi': hi, '--rar-lo': hex(0.5), '--rar-rgb': [0, 1, 2].map((i) => c(rgba[i], 1)).join(','), '--rar-pips': "'\\2605'" };
+  const hi = `#${[0, 1, 2]
+    .map((i) =>
+      Math.round(c(rgba[i], 1) + (255 - c(rgba[i], 1)) * 0.45)
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('')}`;
+  return {
+    '--rar': hex(1),
+    '--rar-hi': hi,
+    '--rar-lo': hex(0.5),
+    '--rar-rgb': [0, 1, 2].map((i) => c(rgba[i], 1)).join(','),
+    '--rar-pips': "'\\2605'",
+  };
 }
 function paintHonour(node, honour) {
   const vars = honourVars(honour.rgba);
@@ -458,12 +654,44 @@ function honourMark(d, kind, box) {
   svg.setAttribute('height', String(box));
   svg.setAttribute('shape-rendering', 'crispEdges');
   svg.setAttribute('fill', 'var(--rar)');
-  const rects = kind === 'aura'
-    ? [[6, 1, 4, 1], [3, 2, 3, 1], [10, 2, 3, 1], [2, 3, 1, 3], [13, 3, 1, 3], [1, 6, 1, 4], [14, 6, 1, 4], [2, 10, 1, 3], [13, 10, 1, 3], [3, 13, 3, 1], [10, 13, 3, 1], [6, 14, 4, 1], [7, 6, 2, 4], [6, 7, 4, 2]]
-    : [[7, 2, 2, 2], [6, 4, 4, 1], [3, 5, 2, 2], [11, 5, 2, 2], [2, 7, 2, 2], [12, 7, 2, 2], [3, 9, 2, 2], [11, 9, 2, 2], [5, 11, 2, 1], [9, 11, 2, 1], [7, 12, 2, 2], [6, 6, 4, 4]];
+  const rects =
+    kind === 'aura'
+      ? [
+          [6, 1, 4, 1],
+          [3, 2, 3, 1],
+          [10, 2, 3, 1],
+          [2, 3, 1, 3],
+          [13, 3, 1, 3],
+          [1, 6, 1, 4],
+          [14, 6, 1, 4],
+          [2, 10, 1, 3],
+          [13, 10, 1, 3],
+          [3, 13, 3, 1],
+          [10, 13, 3, 1],
+          [6, 14, 4, 1],
+          [7, 6, 2, 4],
+          [6, 7, 4, 2],
+        ]
+      : [
+          [7, 2, 2, 2],
+          [6, 4, 4, 1],
+          [3, 5, 2, 2],
+          [11, 5, 2, 2],
+          [2, 7, 2, 2],
+          [12, 7, 2, 2],
+          [3, 9, 2, 2],
+          [11, 9, 2, 2],
+          [5, 11, 2, 1],
+          [9, 11, 2, 1],
+          [7, 12, 2, 2],
+          [6, 6, 4, 4],
+        ];
   for (const [x, y, w, h] of rects) {
     const r = d.createElementNS ? d.createElementNS(NS, 'rect') : d.createElement('rect');
-    r.setAttribute('x', String(x)); r.setAttribute('y', String(y)); r.setAttribute('width', String(w)); r.setAttribute('height', String(h));
+    r.setAttribute('x', String(x));
+    r.setAttribute('y', String(y));
+    r.setAttribute('width', String(w));
+    r.setAttribute('height', String(h));
     svg.append(r);
   }
   return svg;
@@ -476,23 +704,46 @@ function place(d) {
   const vh = Number(win.innerHeight) || 0;
   const scale = Number.parseFloat(d.querySelector?.('.hud')?.style?.getPropertyValue?.('--hud-scale')) || 1;
   const s = String(scale);
-  if (s !== _lastScale) { _lastScale = s; _stack.style.setProperty('--hud-scale', s); }
-  if (_stack.hasAttribute?.('data-hm-moved')) {   // HUD-MOVE put it somewhere: the sheet's place, moved - no dodging
-    if (_lastTop !== '') { _lastTop = ''; _stack.style.removeProperty?.('--lb-top'); }
+  if (s !== _lastScale) {
+    _lastScale = s;
+    _stack.style.setProperty('--hud-scale', s);
+  }
+  if (_stack.hasAttribute?.('data-hm-moved')) {
+    // HUD-MOVE put it somewhere: the sheet's place, moved - no dodging
+    if (_lastTop !== '') {
+      _lastTop = '';
+      _stack.style.removeProperty?.('--lb-top');
+    }
     return;
   }
-  const rect = (n) => { const r = n?.getBoundingClientRect?.(); return r && r.height > 0 ? r : null; };
+  const rect = (n) => {
+    const r = n?.getBoundingClientRect?.();
+    return r && r.height > 0 ? r : null;
+  };
   let notice = null;
   for (const n of d.querySelectorAll?.('.notice-stack') ?? []) {
     if (n.hasAttribute?.('data-hm-ghost') || !n.children?.length) continue;
     const r = rect(n);
     if (r) notice = { top: r.top, bottom: r.bottom };
   }
-  const kids = [..._stack.children ?? []];
-  const heights = kids.map((k) => { const r = rect(k); if (r) k._lbH = r.height; return (r?.height ?? k._lbH ?? 0); });
-  const { top, shown } = bannerLayout({ base: vh * 0.6, notice, lower: vh - LOOT_BANNER_GAP, heights, cardGap: 8 * scale });
+  const kids = [...(_stack.children ?? [])];
+  const heights = kids.map((k) => {
+    const r = rect(k);
+    if (r) k._lbH = r.height;
+    return r?.height ?? k._lbH ?? 0;
+  });
+  const { top, shown } = bannerLayout({
+    base: vh * 0.6,
+    notice,
+    lower: vh - LOOT_BANNER_GAP,
+    heights,
+    cardGap: 8 * scale,
+  });
   const t = `${top.toFixed(1)}px`;
-  if (t !== _lastTop) { _lastTop = t; _stack.style.setProperty('--lb-top', t); }
+  if (t !== _lastTop) {
+    _lastTop = t;
+    _stack.style.setProperty('--lb-top', t);
+  }
   for (let i = 0; i < kids.length; i++) kids[i].classList.toggle('lb-over', i >= shown);
 }
 
@@ -506,49 +757,97 @@ export function drawLootBanners({ entity = null, hidden = false, dt = 0, doc = d
     if (entity) {
       _entity = entity;
       const arrivals = watch.observe(entity);
-      if (arrivals.length && doc?.body && isEnhanced()) {   // the classic skin: read and marked, never queued
+      if (arrivals.length && doc?.body && isEnhanced()) {
+        // the classic skin: read and marked, never queued
         const entries = arrivals.map((a) => bannerEntry(a, entity)).filter(Boolean);
-        for (const e of entries) if (_codexNew.has(e.item)) { e.codex = true; _codexNew.delete(e.item); }
+        for (const e of entries)
+          if (_codexNew.has(e.item)) {
+            e.codex = true;
+            _codexNew.delete(e.item);
+          }
         queue.push(entries);
-        if (entries.length) noteFirstUse('loot');   // TUT1: the first rare find
+        if (entries.length) noteFirstUse('loot'); // TUT1: the first rare find
       }
     }
-    if (!queue.size) { if (_stack) takeDown(); return 0; }
+    if (!queue.size) {
+      if (_stack) takeDown();
+      return 0;
+    }
     if (!doc?.body) return queue.size;
     const stack = ensure(doc);
     stack.classList.toggle('lb-hidden', !!hidden);
     disarmDraw(_watchdog);
-    _watchdog = armDrawWatchdog(WATCHDOG_MS, () => { _watchdog = null; if (_stack) _stack.classList.add('lb-hidden'); }, _wd);
+    _watchdog = armDrawWatchdog(
+      WATCHDOG_MS,
+      () => {
+        _watchdog = null;
+        if (_stack) _stack.classList.add('lb-hidden');
+      },
+      _wd,
+    );
     if (hidden) return queue.size;
     const held = _entity;
-    const { entered, gone } = queue.tick(Math.max(0, Number(dt) || 0) * 1000, { canEnter: (e) => !!e.honour || !held || bannerStillHeld(held, e) });   // HONOUR-BANNER: an honour is held by the account
+    const { entered, gone } = queue.tick(Math.max(0, Number(dt) || 0) * 1000, {
+      canEnter: (e) => !!e.honour || !held || bannerStillHeld(held, e),
+    }); // HONOUR-BANNER: an honour is held by the account
     paint(doc, entered, gone);
     sound(entered);
-    if (!queue.size) { takeDown(); return 0; }
+    if (!queue.size) {
+      takeDown();
+      return 0;
+    }
     place(doc);
     return queue.size;
   } catch (e) {
-    if (!_faultSaid) { _faultSaid = true; console.warn(`[loot-banner] a frame failed; the banners are taken down: ${e?.message ?? e}`); }
-    try { queue.clear(); takeDown(); } catch { /* gone */ }
+    if (!_faultSaid) {
+      _faultSaid = true;
+      console.warn(`[loot-banner] a frame failed; the banners are taken down: ${e?.message ?? e}`);
+    }
+    try {
+      queue.clear();
+      takeDown();
+    } catch {
+      /* gone */
+    }
     return 0;
   }
 }
 
 function paint(d, entered, gone) {
-  for (const e of gone) { const c = drawn.get(e.id); if (c) { try { c.el.remove(); } catch { /* gone */ } drawn.delete(e.id); } }
+  for (const e of gone) {
+    const c = drawn.get(e.id);
+    if (c) {
+      try {
+        c.el.remove();
+      } catch {
+        /* gone */
+      }
+      drawn.delete(e.id);
+    }
+  }
   for (const e of entered) {
     const c = build(d, e);
     drawn.set(e.id, c);
     _stack.insertBefore(c.el, _stack.firstChild ?? null);
-    void c.el.offsetWidth;   // the slide starts from off the edge
+    void c.el.offsetWidth; // the slide starts from off the edge
     c.el.classList.add('lb-in');
   }
   for (const e of queue.standing()) {
     const c = drawn.get(e.id);
     if (!c) continue;
-    if (e.outMs != null && !c.el.classList.contains('lb-out')) { c.el.classList.remove('lb-in'); c.el.classList.add('lb-out'); }
-    if (c.count !== e.count) { c.count = e.count; c.num.textContent = countText(e.count); }
-    if (c.bumps !== e.bumps) { c.bumps = e.bumps; c.num.classList.remove('bump-a', 'bump-b'); c.num.classList.add(e.bumps % 2 ? 'bump-a' : 'bump-b'); }
+    if (e.outMs != null && !c.el.classList.contains('lb-out')) {
+      c.el.classList.remove('lb-in');
+      c.el.classList.add('lb-out');
+    }
+    if (c.count !== e.count) {
+      c.count = e.count;
+      c.num.textContent = countText(e.count);
+    }
+    if (c.bumps !== e.bumps) {
+      c.bumps = e.bumps;
+      c.num.classList.remove('bump-a', 'bump-b');
+      c.num.classList.add(e.bumps % 2 ? 'bump-a' : 'bump-b');
+    }
     if (c.codex.hidden === !!e.codex) c.codex.hidden = !e.codex;
   }
 }
@@ -557,7 +856,10 @@ function paint(d, entered, gone) {
  *  the codex's own chime for a first find (lootCodex.js noteFind played it before the banner took its words). */
 function sound(entered) {
   if (!entered.length) return;
-  if (entered.some((e) => e.big) && enhancedSoundsOn()) { _play(SOUND.ArenaFanfareLevelUp); return; }
+  if (entered.some((e) => e.big) && enhancedSoundsOn()) {
+    _play(SOUND.ArenaFanfareLevelUp);
+    return;
+  }
   if (entered.some((e) => e.codex)) _play(SOUND.LevelUp);
 }
 
@@ -569,7 +871,12 @@ function sound(entered) {
 export function bannerCodexFind(item) {
   if (!item || !isEnhanced() || !announces(item)) return false;
   const e = queue.find(item);
-  if (e) { e.codex = true; const c = drawn.get(e.id); if (c) c.codex.hidden = false; return true; }
+  if (e) {
+    e.codex = true;
+    const c = drawn.get(e.id);
+    if (c) c.codex.hidden = false;
+    return true;
+  }
   // only a piece the watcher will read next frame: in the keeping of the player it last read, and not read yet
   if (isAcquired(item) || !_entity || !bannerStillHeld(_entity, { item, card: null })) return false;
   _codexNew.add(item);
@@ -589,24 +896,53 @@ export function announceHonour(kind, key, { doc = docOf() } = {}) {
     const e = honourEntry({ kind, key });
     if (!e) return false;
     return queue.push([e]);
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 }
 
 /** Every banner down at once; the watcher keeps its baseline. */
-export function clearLootBanners() { queue.clear(); takeDown(); }
+export function clearLootBanners() {
+  queue.clear();
+  takeDown();
+}
 /** Tests: what stands and waits, as the law reads it. */
 export const _lootBanners = () => ({
-  standing: queue.standing().map((e) => ({ name: e.name, tier: e.tier, kicker: e.kicker, count: e.count, big: e.big, codex: e.codex, out: e.outMs != null })),
+  standing: queue.standing().map((e) => ({
+    name: e.name,
+    tier: e.tier,
+    kicker: e.kicker,
+    count: e.count,
+    big: e.big,
+    codex: e.codex,
+    out: e.outMs != null,
+  })),
   pending: queue.pending().map((e) => ({ name: e.name, tier: e.tier, count: e.count })),
 });
-export function _resetLootBannersForTests() { clearLootBanners(); watch.reset(); _entity = null; _faultSaid = false; }
+export function _resetLootBannersForTests() {
+  clearLootBanners();
+  watch.reset();
+  _entity = null;
+  _faultSaid = false;
+}
 
 /** HUD-MOVE's preview (ui/hud/hudLayout.js): a banner standing where the real ones will, while the UI is unlocked. */
 export function buildLootBannerPreview(doc) {
   ensureStyle(doc);
   const stack = doc.createElement('div');
   stack.className = 'lootbanner-stack';
-  const { el: node } = build(doc, { tier: 'legendary', big: false, exalted: true, kicker: 'Exalted Legendary', name: 'Loot banners (preview)', sub: 'Longsword', count: 1, codex: false, image: null, card: null });
+  const { el: node } = build(doc, {
+    tier: 'legendary',
+    big: false,
+    exalted: true,
+    kicker: 'Exalted Legendary',
+    name: 'Loot banners (preview)',
+    sub: 'Longsword',
+    count: 1,
+    codex: false,
+    image: null,
+    card: null,
+  });
   node.classList.add('lb-in');
   stack.append(node);
   return stack;

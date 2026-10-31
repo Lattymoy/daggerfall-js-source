@@ -45,7 +45,20 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { bake, writeWav8, DF_RATE } from './sndify.mjs';
-import { RATE, rng, seconds, buf, decay, attack, biquad, sweepLowpass, noise, mix, softClip, envelope } from './sfxSynth.mjs';
+import {
+  RATE,
+  rng,
+  seconds,
+  buf,
+  decay,
+  attack,
+  biquad,
+  sweepLowpass,
+  noise,
+  mix,
+  softClip,
+  envelope,
+} from './sfxSynth.mjs';
 
 const OUT = 'public/sfx';
 
@@ -70,7 +83,7 @@ function fire() {
   let phase = 0;
   for (let i = 0; i < thump.length; i++) {
     const f = 52 + (110 - 52) * decay(i, 0.035);
-    phase += 2 * Math.PI * f / RATE;
+    phase += (2 * Math.PI * f) / RATE;
     thump[i] = Math.sin(phase) * attack(i, 1) * decay(i, 0.065);
   }
   mix(out, thump, 0, 0.85);
@@ -82,7 +95,7 @@ function fire() {
   envelope(tail, (i) => attack(i, 6) * decay(i, 0.16));
   mix(out, tail, 0.01, 0.34);
   mix(out, tail, 0.055, 0.17);
-  mix(out, tail, 0.098, 0.10);
+  mix(out, tail, 0.098, 0.1);
 
   return softClip(out, 1.9);
 }
@@ -97,7 +110,7 @@ function clack(rand, { metal = 2600, wood = 210, tau = 0.009, woodTau = 0.03, le
   mix(out, edge, 0, 1);
   const knock = buf(len);
   for (let i = 0; i < knock.length; i++) {
-    knock[i] = Math.sin(2 * Math.PI * wood * i / RATE) * attack(i, 0.5) * decay(i, woodTau);
+    knock[i] = Math.sin((2 * Math.PI * wood * i) / RATE) * attack(i, 0.5) * decay(i, woodTau);
   }
   mix(out, knock, 0, 0.55);
   return out;
@@ -106,7 +119,8 @@ function clack(rand, { metal = 2600, wood = 210, tau = 0.009, woodTau = 0.03, le
 /** The spent shell, tumbling: three small high ticks, unevenly spaced,
  *  each quieter than the last. Even spacing reads as a machine. */
 function shellRattle(rand, at, out, gain) {
-  const offs = [0, 0.043, 0.092], gains = [1, 0.62, 0.38];
+  const offs = [0, 0.043, 0.092],
+    gains = [1, 0.62, 0.38];
   for (let k = 0; k < offs.length; k++) {
     const tick = biquad(noise(seconds(0.05), rand), { type: 'bandpass', f0: 3300 + k * 400, q: 1.6 });
     envelope(tick, (i) => attack(i, 0.2) * decay(i, 0.004));
@@ -141,7 +155,7 @@ function reloadClose() {
 // and it still exists if a picked recording ever has to come out.
 const CLIPS = [
   ['gun-fire-synth', fire, 0.92],
-  ['gun-reload-open-synth', reloadOpen, 0.80],
+  ['gun-reload-open-synth', reloadOpen, 0.8],
   ['gun-reload-close-synth', reloadClose, 0.86],
 ];
 
@@ -158,7 +172,9 @@ for (const [name, make, peak] of CLIPS) {
     // actually does rather than taking it on trust
     writeFileSync(join(rawDir, `${name}-44k.wav`), writeWav8(bakeRaw(mono), RATE));
   }
-  console.log(`${name}.wav  ${DF_RATE}Hz 8-bit mono  ${pcm.length} samples  ${(pcm.length / DF_RATE).toFixed(3)}s  ${(44 + pcm.length)} bytes`);
+  console.log(
+    `${name}.wav  ${DF_RATE}Hz 8-bit mono  ${pcm.length} samples  ${(pcm.length / DF_RATE).toFixed(3)}s  ${44 + pcm.length} bytes`,
+  );
 }
 
 function bakeRaw(mono) {

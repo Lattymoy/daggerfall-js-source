@@ -89,3 +89,23 @@ test('LAYERED-PEERS: the viewer\'s choice is the setting, read each frame - on b
     assert.deepEqual(await drawn(w, one), { set: ARCHIVE_FOOT + 7 }, 'Skins chosen: the next frame draws their set');
   } finally { _resetModSettings(); }
 });
+
+test('ATTACK-WARM (the owner, 2026-10-31: "Walking shouldnt cancel attack animations"): a walker who draws a weapon has its swing composed in every view before its blow; a sheathed one\'s waits for the drawing', async () => {
+  const { createWeapon } = await import('../../src/combat/enemyEquipment.js');
+  const { WEAPONS } = await import('../../src/characters/weapons.js');
+  const { EQUIP_SLOTS } = await import('../../src/characters/paperdoll/paperdoll.js');
+  const { LAYERED_WARM_A_FRAME } = await import('../../src/player/eyeOfTheBeholder/layeredWarm.js');
+  const asked = new Set();
+  const renderer = { uploadTexture() {}, createBillboardBatch: (archive, record, size) => ({ archive, record, size, origin: null }), destroyBillboardBatch() {} };
+  const art = createEotbArt({ renderer, urlFor: (k) => `u:${k}`, decode: async (u) => { asked.add(u); return { width: 50, height: 110, colors: new Uint32Array(50 * 110) }; } });
+  const w = createPeerWalkers({ art, layeredAll: () => true });
+  const sword = { ...createWeapon(WEAPONS.Longsword, 0, () => 0.5), equipSlot: EQUIP_SLOTS.RightHand };
+  const swing = () => [...asked].filter((u) => u.includes('@ls0') && /:(5|6|7|8|9)-\d:/.test(u)).length;
+  const peer = (wd) => [{ id: 'k', look: { gender: 'male', lg: 1, items: [sword] }, shown: pose({ wd, mv: 1 }) }];
+  for (let i = 0; i < 30; i++) w.sync(peer(0), toScene, { eye: [4, 1, 20], dt: 0.016 });
+  await settle();
+  assert.equal(swing(), 0, 'sheathed: no swing composed');
+  for (let i = 0; i < Math.ceil(48 / LAYERED_WARM_A_FRAME) + 2; i++) w.sync(peer(1), toScene, { eye: [4, 1, 20], dt: 0.016 });
+  await settle();
+  assert.ok(swing() >= 6, `drawn: its swing composed before a blow (${swing()} pictures)`);
+});

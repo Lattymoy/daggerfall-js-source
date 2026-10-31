@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-PATRON-H1-the-campaign-unread",
     "file": "server-account/src/patreon.js",
-    "old": "\n    && (!campaign || r.relationships?.campaign?.data?.id === campaign));",
-    "new": ");",
+    "old": "    (/** @type {any} */ r) =>\n      r?.type === 'member' && ids.has(r.id) && (!campaign || r.relationships?.campaign?.data?.id === campaign),",
+    "new": "    (/** @type {any} */ r) => r?.type === 'member' && ids.has(r.id),",
     "tests": [
       "test/server/patreon_link.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-PATRON-H1-payable-any-campaign",
     "file": "server-account/src/patreon.js",
-    "old": "if (campaign) return who?.campaign === campaign ? who.cents ?? null : null;",
-    "new": "if (campaign) return who?.cents ?? null;",
+    "old": "  if (campaign) return who?.campaign === campaign ? (who.cents ?? null) : null;",
+    "new": "  if (campaign) return who?.cents ?? null;",
     "tests": [
       "test/server/patreon_link.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-PATRON-P2-the-refund-unread",
     "file": "server-account/src/patreon.js",
-    "old": "PATREON_UNDONE.includes(/** @type {string} */ (m.charge))",
-    "new": "false",
+    "old": "      : [patreonAurumStatement(db, m.user, m.cents, nowS, PATREON_UNDONE.includes(/** @type {string} */ (m.charge)))]),",
+    "new": "      : [patreonAurumStatement(db, m.user, m.cents, nowS, false)]),",
     "tests": [
       "test/server/patreon_link.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-PATRON-P3-the-page-silent",
     "file": "server-account/src/patreon.js",
-    "old": "      ...(aurum > 0 ? [`Linking pays ${handle} up to ${aurum.toLocaleString('en-US')} Aurum. It stays on that game account.`] : []),   // AUDIT PATRON-AURUM P3\n",
-    "new": "",
+    "old": "      ...(aurum > 0\n        ? [`Linking pays ${handle} up to ${aurum.toLocaleString('en-US')} Aurum. It stays on that game account.`]\n        : []), // AUDIT PATRON-AURUM P3\n      'Not your game account? Close this page and nothing is linked.',",
+    "new": "      'Not your game account? Close this page and nothing is linked.',",
     "tests": [
       "test/server/patreon_link.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-PATRON-A1-the-webhook-switch-unread",
     "file": "server-account/src/patreon.js",
-    "old": "m.cents === undefined || aurumSwitchOf(env?.AURUM_OPEN) !== 'on' ? []",
-    "new": "m.cents === undefined ? []",
+    "old": "    ...(m.cents === undefined || aurumSwitchOf(env?.AURUM_OPEN) !== 'on'",
+    "new": "    ...(m.cents === undefined",
     "tests": [
       "test/server/patreon_link.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-SPEND-F1-the-credit-unread",
     "file": "server-account/src/shop.js",
-    "old": "credit: String(b.credit ?? '') }))];",
-    "new": "credit: '' }))];",
+    "old": "    ...bought.map((/** @type {any} */ b) => ({\n      id: `aurum:${b.ref}`,\n      ware: String(b.ref),\n      credit: String(b.credit ?? ''),\n    })),",
+    "new": "    ...bought.map((/** @type {any} */ b) => ({ id: `aurum:${b.ref}`, ware: String(b.ref), credit: '' })),",
     "tests": [
       "test/server/audit_aurum_spend.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-SPEND-F4-the-aurum-kept",
     "file": "server-account/src/shop.js",
-    "old": "INSERT OR IGNORE INTO aurum_ledger (account, kind, ref, amount, day, at) SELECT ?1, 'back', ?2, -amount, ?3, ?4",
-    "new": "INSERT OR IGNORE INTO aurum_ledger (account, kind, ref, amount, day, at) SELECT ?1, 'back', ?2, 0, ?3, ?4",
+    "old": "          `INSERT OR IGNORE INTO aurum_ledger (account, kind, ref, amount, day, at) SELECT ?1, 'back', ?2, -amount, ?3, ?4",
+    "new": "          `INSERT OR IGNORE INTO aurum_ledger (account, kind, ref, amount, day, at) SELECT ?1, 'back', ?2, 0, ?3, ?4",
     "tests": [
       "test/server/audit_aurum_spend.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-SPEND-F5-the-debt-left-out",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "need: base.price - a.balance,",
-    "new": "need: base.price - Math.max(0, a.balance),",
+    "old": "      : { state: 'short', buy: null, need: base.price - a.balance, ...base }; // AUDIT AURUM-SPEND F5: a debt counts",
+    "new": "      : { state: 'short', buy: null, need: base.price - Math.max(0, a.balance), ...base }; // AUDIT AURUM-SPEND F5: a debt counts",
     "tests": [
       "test/server/audit_aurum_spend.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-SPEND-F6-the-short-not-read",
     "file": "src/ui/accountFlow.js",
-    "old": "|| r.error === 'aurum-price' || r.error === 'aurum-short') await self.refresh();",
-    "new": "|| r.error === 'aurum-price') await self.refresh();",
+    "old": "        if (\n          r.error === 'aurum-sale' ||\n          r.error === 'aurum-held' ||\n          r.error === 'aurum-price' ||\n          r.error === 'aurum-short'\n        )\n          await self.refresh(); // AUDIT AURUM-SPEND F6: the balance read again",
+    "new": "        if (r.error === 'aurum-sale' || r.error === 'aurum-held' || r.error === 'aurum-price') await self.refresh(); // AUDIT AURUM-SPEND F6: the balance read again",
     "tests": [
       "test/server/audit_aurum_spend.test.js"
     ]

@@ -84,7 +84,11 @@ export class PakFile {
     let pos = PAK_HEIGHT * 4;
     runs.forEach((r, row) => {
       v.setUint32(row * 4, pos, true);
-      for (const [n, value] of r) { v.setUint16(pos, n, true); out[pos + 2] = value; pos += 3; }
+      for (const [n, value] of r) {
+        v.setUint16(pos, n, true);
+        out[pos + 2] = value;
+        pos += 3;
+      }
     });
     return out;
   }

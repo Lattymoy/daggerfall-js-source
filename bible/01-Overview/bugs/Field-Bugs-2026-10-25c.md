@@ -16,7 +16,7 @@ THE TRACE, producer by producer (the sweep's piles):
 - A purse dropped on the GROUND never rides the wire: a drop is the dropper's (AUDIT WORLD B3), and the room's memory
   carries none. A pile of 1,000,000 there is honest and stays.
 - The open zone's remains (`wildDropLaw.js` takeWildGold) are minted by the coin's count up to `GOLD_INT_MAX`, never
-  through `validLootList` (REMAINS-GOLD, `Field-Bugs-2026-10-20h.md`; `wildRemains.js:"const mintOne = (/** @type {any} */ r) => {"`),
+  through `validLootList` (REMAINS-GOLD, `Field-Bugs-2026-10-20h.md`; `wildRemains.js:"const mintOne = (/** @type {any} */ r)"`),
   and the relay bounds no stack. Already answered.
 - The legacy remains' gold is at most `REMAINS_GOLD_MAX`, 2,500 (`legacyLaw.js`). Never past the bound.
 - A purse dropped INTO A SHARED CONTAINER is the one that broke. The drop (`planDropGold`, then `addItem(remote,
@@ -38,7 +38,7 @@ where 65,535 lands today.
 THE CHANGE:
 
 - The room modules MARK the list they compose (`roomCarriedList.js` markRoomCarried) - the dungeon's at
-  `roomLootHost.js:"markRoomCarried(list);"`, a cupboard's at `interiorRoomLoot.js:"markRoomCarried(t.items);"`. That
+  `roomLootHost.js:"markRoomCarried(list);"`, a cupboard's at `interiorRoomLoot.js:"markRoomCarried(t.items)"`. That
   list alone is read for puts (a list some load replaced is not, and carries no mark). A leaf module: the planner reaches
   it without the room modules, whose import graph reaches back to the windows.
 - `planDropGold` asks whether the remote list is marked (`shared`, by default `isRoomCarried(remote)`) and clamps the

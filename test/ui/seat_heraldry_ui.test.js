@@ -205,8 +205,8 @@ test('HERALDRY-SHOWN THE SIEGE HUD: each side\'s shield on the bar - the defende
   assert.match(SIEGE_HUD_CSS, /\.sg-bar \{ position: relative;[^\n]*padding: 3px 34px; \}\n\.sg-arm \{ position: absolute; top: 4px; width: 22px; height: auto;[^\n]*\}\n\.sg-arm-defend \{ left: 6px; \}\n\.sg-arm-attack \{ right: 6px; \}/);
   hud.destroy();
   // the session dresses the fight it enters, once
-  assert.match(rd('src/net/siege/siegeSession.js'), /      s = \{ seat, battle: fightArmed\(battle, seat\), field, room: '',/);
-  assert.match(rd('src/net/siege/siegeSession.js'), /attacker: s\.battle\?\.attackerGuild, defender: s\.battle\?\.defenderGuild \}/);
+  assert.match(rd('src/net/siege/siegeSession.js'), /s = \{\n\s*seat,\n\s*battle: fightArmed\(battle, seat\),\n\s*field,\n\s*room: '',/);
+  assert.match(rd('src/net/siege/siegeSession.js'), /attacker: s\.battle\?\.attackerGuild,\n\s*defender: s\.battle\?\.defenderGuild,\n\s*\}/);
 });
 
 test('HERALDRY-SHOWN THE SEAT TAB\'S CHRONICLE: each line under the shield of the guild it is about - known from the standings\' answer or the seats\' list - and a line about a guild unknown, or no guild, under none; the words unchanged (mutants: the swatch; the row\'s guild; the sources)', async () => {
@@ -270,7 +270,7 @@ test('HERALDRY-SHOWN THE HALL OF RECORDS\' ROLL OF ARMS: the book reader draws t
   const w = rd('src/scenes/world.js');
   assert.match(w, /const w = st && seatBook \? await hallOfRecordsRead\(st\) : null;/);   // PIN MOVED (AUDIT CHAP4 C5): the board's door reads as the palace's
   assert.match(w, /return r\?\.data \? hallOfRecordsWindow\(seat, r\.data\.rows, r\.data\.zero, seatArmsOf, ch\?\.ok \? ch\.data : null\) : null;/);   // PIN MOVED (CHAP4d): and the chapters' Chronicle; (AUDIT CHAP4 C5) the one read
-  assert.match(rd('src/ui/hallOfRecords.js'), /export const hallOfRecordsWindow = \(seat, rows, zero = null, armsOf = null, chapters = null\) => createBookReaderWindow\(hallOfRecordsBook\(seat, rows, zero, armsOf, chapters\)\);/);   // PIN MOVED (CHAP4d): and the chapters' Chronicle
+  assert.match(rd('src/ui/hallOfRecords.js'), /export const hallOfRecordsWindow = \(seat, rows, zero = null, armsOf = null, chapters = null\) =>\n\s*createBookReaderWindow\(hallOfRecordsBook\(seat, rows, zero, armsOf, chapters\)\);/);   // PIN MOVED (CHAP4d): and the chapters' Chronicle
 });
 
 // ─── AUDIT HERALDRY H1-H4 ────────────────────────────────────────────

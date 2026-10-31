@@ -82,22 +82,39 @@ const VIEWS = [
 ];
 
 mkdirSync(OUT, { recursive: true });
-const vite = process.env.PROBE_PORT ? null : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
+const vite = process.env.PROBE_PORT
+  ? null
+  : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
 if (vite) await vite.listen();
 const port = vite ? vite.httpServer.address().port : Number(process.env.PROBE_PORT);
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 const fails = [];
 let checks = 0;
-const check = (ok, what) => { checks++; if (!ok) fails.push(what); };
-const settle = (page) => page.evaluate(() => new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res))));
+const check = (ok, what) => {
+  checks++;
+  if (!ok) fails.push(what);
+};
+const settle = (page) =>
+  page.evaluate(() => new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res))));
 try {
   await writeFile(join(ROOT, `tools/${PAGE_NAME}`), PAGE);
   for (const v of VIEWS) {
-    const ctx = await browser.newContext({ viewport: v.viewport, isMobile: !!v.isMobile, hasTouch: !!v.hasTouch, deviceScaleFactor: 2 });
+    const ctx = await browser.newContext({
+      viewport: v.viewport,
+      isMobile: !!v.isMobile,
+      hasTouch: !!v.hasTouch,
+      deviceScaleFactor: 2,
+    });
     const page = await ctx.newPage();
     page.on('pageerror', (err) => fails.push(`${v.name}: page error ${err.message}`));
-    page.on('console', (m) => { if (/\[icons\]|vendor|texture/i.test(m.text())) console.log(`${v.name}: console ${m.type()} ${m.text().slice(0, 200)}`); });
-    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+    page.on('console', (m) => {
+      if (/\[icons\]|vendor|texture/i.test(m.text()))
+        console.log(`${v.name}: console ${m.type()} ${m.text().slice(0, 200)}`);
+    });
+    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 90000,
+    });
     await page.waitForFunction(() => globalThis.__ready === true, null, { timeout: 90000 });
     console.log(`${v.name}: images ${JSON.stringify(await page.evaluate(() => globalThis.__images()))}`);
     // ── THE PACK ──
@@ -106,7 +123,7 @@ try {
     check(await page.evaluate(() => globalThis.__tab('Weapons')), `${v.name}: no Weapons page`);
     await page.waitForSelector('#enhanced-inventory .itemrow', { timeout: 30000 });
     await page.evaluate(() => document.fonts.ready);
-    for (let i = 0; i < 20; i++) await settle(page);   // the art's own fetch and fit land a few frames on
+    for (let i = 0; i < 20; i++) await settle(page); // the art's own fetch and fit land a few frames on
     await page.waitForTimeout(400);
     for (let i = 0; i < 6; i++) await settle(page);
     const pics = await page.evaluate(() => globalThis.__packPictures());
@@ -115,22 +132,40 @@ try {
     check(await page.evaluate(() => globalThis.__closePack()), `${v.name}: the pack did not close`);
     // ── THE HOTBAR ──
     check(await page.evaluate(() => globalThis.__hotbar()), `${v.name}: the hotbar did not mount`);
-    for (let i = 0; i < 20; i++) { await page.evaluate(() => globalThis.__redraw()); await settle(page); }
+    for (let i = 0; i < 20; i++) {
+      await page.evaluate(() => globalThis.__redraw());
+      await settle(page);
+    }
     await page.waitForTimeout(400);
-    for (let i = 0; i < 6; i++) { await page.evaluate(() => globalThis.__redraw()); await settle(page); }
+    for (let i = 0; i < 6; i++) {
+      await page.evaluate(() => globalThis.__redraw());
+      await settle(page);
+    }
     const hb = await page.evaluate(() => globalThis.__hotbarPictures());
     console.log(`${v.name}: hotbar pictures ${JSON.stringify(hb)}`);
     for (const [k, h] of hb.entries()) {
       check(h.shown, `${v.name}: hotbar slot ${k + 1} draws no picture`);
       check(h.top === 'self', `${v.name}: hotbar slot ${k + 1} is ${h.top}`);
     }
-    const dock = await page.evaluate(() => { const r = document.getElementById('dock').getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; });
+    const dock = await page.evaluate(() => {
+      const r = document.getElementById('dock').getBoundingClientRect();
+      return { x: r.x, y: r.y, w: r.width, h: r.height };
+    });
     const slots = hb.map((h) => h.slot).filter(Boolean);
     if (slots.length) {
-      const x0 = Math.max(0, Math.min(...slots.map((s) => s.x)) - 16), y0 = Math.max(0, Math.min(...slots.map((s) => s.y)) - 16);
-      const x1 = Math.min(v.viewport.width, Math.max(...slots.map((s) => s.r)) + 16), y1 = Math.min(v.viewport.height, Math.max(...slots.map((s) => s.b)) + 16);
-      await page.screenshot({ path: join(OUT, `gunslots-${v.name}-hotbar.png`), clip: { x: x0, y: y0, width: x1 - x0, height: y1 - y0 } });
-    } else await page.screenshot({ path: join(OUT, `gunslots-${v.name}-hotbar.png`), clip: { x: 0, y: Math.max(0, dock.y - 80), width: v.viewport.width, height: Math.min(200, v.viewport.height) } });
+      const x0 = Math.max(0, Math.min(...slots.map((s) => s.x)) - 16),
+        y0 = Math.max(0, Math.min(...slots.map((s) => s.y)) - 16);
+      const x1 = Math.min(v.viewport.width, Math.max(...slots.map((s) => s.r)) + 16),
+        y1 = Math.min(v.viewport.height, Math.max(...slots.map((s) => s.b)) + 16);
+      await page.screenshot({
+        path: join(OUT, `gunslots-${v.name}-hotbar.png`),
+        clip: { x: x0, y: y0, width: x1 - x0, height: y1 - y0 },
+      });
+    } else
+      await page.screenshot({
+        path: join(OUT, `gunslots-${v.name}-hotbar.png`),
+        clip: { x: 0, y: Math.max(0, dock.y - 80), width: v.viewport.width, height: Math.min(200, v.viewport.height) },
+      });
     await ctx.close();
   }
 } finally {

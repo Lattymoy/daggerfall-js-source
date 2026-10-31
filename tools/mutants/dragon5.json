@@ -2,8 +2,8 @@
   {
     "name": "DRAGON5-a-dragon-sellable",
     "file": "src/systems/dragon/dragonMount.js",
-    "old": "  bound: true, packOnly: true,\n",
-    "new": "\n",
+    "old": "  bound: true,\n  packOnly: true,\n});",
+    "new": "});",
     "tests": [
       "test/net/dragon/dragon5_mount.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DRAGON5-the-key-preferring-the-dragon",
     "file": "src/systems/transport.js",
-    "old": "  if (hasHorse(items)) return TRANSPORT_MODES.Horse;\n",
-    "new": "  if (hasDragon(items)) return TRANSPORT_MODES.Dragon;\n  if (hasHorse(items)) return TRANSPORT_MODES.Horse;\n",
+    "old": "  if (hasHorse(items)) return TRANSPORT_MODES.Horse;",
+    "new": "  if (hasDragon(items)) return TRANSPORT_MODES.Dragon;\n  if (hasHorse(items)) return TRANSPORT_MODES.Horse;",
     "tests": [
       "test/net/dragon/dragon5_mount.test.js"
     ]
@@ -101,7 +101,7 @@
   {
     "name": "DRAGON5-the-catch",
     "file": "src/player/dragonRide.js",
-    "old": "  if (_falling >= DRAGON_CATCH_S && flight.lift()) { _falling = 0; _heard?.('took-off'); }",
+    "old": "  if (_falling >= DRAGON_CATCH_S && flight.lift()) {\n    _falling = 0;\n    _heard?.('took-off');\n  }",
     "new": "",
     "tests": [
       "test/net/dragon/dragon5_mount.test.js"
@@ -110,8 +110,8 @@
   {
     "name": "DRAGON5-the-row-for-anyone",
     "file": "src/ui/transportWindow.js",
-    "old": "      dragon: !!hooks.hasDragon,",
-    "new": "      dragon: true,",
+    "old": "      dragon: !!hooks.hasDragon, // DRAGON5: no row at all without one",
+    "new": "      dragon: true, // DRAGON5: no row at all without one",
     "tests": [
       "test/net/dragon/dragon5_mount.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "DRAGON5-the-click-unheard",
     "file": "src/ui/transportWindow.js",
-    "old": "    if (this.enabled.dragon && hit(TRANSPORT_RECTS.dragon)) { this._pick(TRANSPORT_MODES.Dragon); return true; }\n",
-    "new": "",
+    "old": "    if (this.enabled.dragon && hit(TRANSPORT_RECTS.dragon)) {\n      this._pick(TRANSPORT_MODES.Dragon);\n      return true;\n    }\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/net/dragon/dragon5_mount.test.js"
     ]
@@ -191,7 +191,7 @@
   {
     "name": "DRAGON5-the-mounts-ride-unsent",
     "file": "src/systems/staffDragon.js",
-    "old": "export const dragonPoseRide = (mode = null) => ((_ride || mode === 'Dragon') && _relayKeepsRide ? DRAGON_POSE_RIDE : null);",
+    "old": "export const dragonPoseRide = (mode = null) =>\n  (_ride || mode === 'Dragon') && _relayKeepsRide ? DRAGON_POSE_RIDE : null;",
     "new": "export const dragonPoseRide = (mode = null) => (_ride && _relayKeepsRide ? DRAGON_POSE_RIDE : null);",
     "tests": [
       "test/net/dragon/dragon5_mount.test.js"
@@ -218,8 +218,8 @@
   {
     "name": "DRAGON5-a-second-dragon",
     "file": "src/scenes/dragonRewards.js",
-    "old": "      if (!hasDragon(items)) { host.takeSpoil?.({ kind: 'item', item: newDragonMount(t) }); bound = true; }",
-    "new": "      { host.takeSpoil?.({ kind: 'item', item: newDragonMount(t) }); bound = true; }",
+    "old": "      if (!hasDragon(items)) {",
+    "new": "      {",
     "tests": [
       "test/net/dragon/dragon5_mount.test.js"
     ]

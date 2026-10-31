@@ -273,7 +273,7 @@ test('AUDIT-TESA A4-F2/A4-F3: a capital\'s pixel is the capital\'s - never clone
   assert.match(W, /const aloc = aq \? capitalLocationAt\(aq\.bx, aq\.by\) \|\| arenaLocationAt\(aq\.bx, aq\.by\) : null;/);
   // PIN MOVED (WORLD-WIDE folded into TESA, #1184): the port's id is WORLD-WIDE's own (world/worldWide/worldPorts.js portIdOfLocation)
   // PIN MOVED (the fourth merge of main into #1184): the towns are one list, kept by id (RPT1026-WORLD FAR-QUAY's ring beside it)
-  assert.match(W, /if \(aloc\?\.exterior\?\.exteriorData\) add\(\{ id: portIdOfLocation\(aloc\), loc: aloc,/);
+  assert.match(W, /if \(aloc\?\.exterior\?\.exteriorData\)\n\s*add\(\{ id: portIdOfLocation\(aloc\), loc: aloc,/);
 });
 
 test('AUDIT-TESA A2-3: a pixel id past the Bay aliases a Bay row (y * 1000 + x) - every read by it asks the Bay\'s pixels alone; past the Bay the place the world stands there answers, once discovered', () => {
@@ -295,7 +295,7 @@ test('AUDIT-TESA A2-3: a pixel id past the Bay aliases a Bay row (y * 1000 + x) 
   ]) assert.match(W, re);
   // PIN MOVED (WORLD-WIDE folded into TESA, #1184): the harbour's loop no longer bounds itself - WW3's directory answers no
   // row off the Bay's map (systems/map/mapDirectory.js locationSummaryAt), so a pixel past the Bay aliases none
-  assert.match(read('src/systems/map/mapDirectory.js'), /return onMap\(mapPixelX, mapPixelY\) \? mapDict\?\.get\(getMapPixelID\(mapPixelX, mapPixelY\)\) \?\? null : null;/);
+  assert.match(read('src/systems/map/mapDirectory.js'), /return onMap\(mapPixelX, mapPixelY\) \? \(mapDict\?\.get\(getMapPixelID\(mapPixelX, mapPixelY\)\) \?\? null\) : null;/);
 });
 
 // ── WAVE 3 ──────────────────────────────────────────────────────

@@ -22,8 +22,8 @@
   {
     "name": "SCALE4f2-joined-unread",
     "file": "server-account/src/seatRibbons.js",
-    "old": "    ? (member && member.gid != null && await db.prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND season = ? AND at >= ? LIMIT 1').bind(member.guild_id, n, member.joined_at).first() ? { heraldry: member.heraldry } : null)",
-    "new": "    ? (member && member.gid != null && await db.prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND season = ? LIMIT 1').bind(member.guild_id, n).first() ? { heraldry: member.heraldry } : null)",
+    "old": "          .prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND season = ? AND at >= ? LIMIT 1')\n          .bind(member.guild_id, n, member.joined_at)",
+    "new": "          .prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND season = ? LIMIT 1')\n          .bind(member.guild_id, n)",
     "tests": [
       "test/server/scale4f_guild.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "SCALE4f2-season-unread",
     "file": "server-account/src/seatRibbons.js",
-    "old": "    ? (member && member.gid != null && await db.prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND season = ? AND at >= ? LIMIT 1').bind(member.guild_id, n, member.joined_at).first() ? { heraldry: member.heraldry } : null)",
-    "new": "    ? (member && member.gid != null && await db.prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND at >= ? LIMIT 1').bind(member.guild_id, member.joined_at).first() ? { heraldry: member.heraldry } : null)",
+    "old": "          .prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND season = ? AND at >= ? LIMIT 1')\n          .bind(member.guild_id, n, member.joined_at)",
+    "new": "          .prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND at >= ? LIMIT 1')\n          .bind(member.guild_id, member.joined_at)",
     "tests": [
       "test/server/scale4f_guild.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "SCALE4f2-ribbon-gone-guild",
     "file": "server-account/src/seatRibbons.js",
-    "old": "    ? (member && member.gid != null && await db.prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND season = ? AND at >= ? LIMIT 1').bind(member.guild_id, n, member.joined_at).first() ? { heraldry: member.heraldry } : null)",
-    "new": "    ? (member && await db.prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND season = ? AND at >= ? LIMIT 1').bind(member.guild_id, n, member.joined_at).first() ? { heraldry: member.heraldry } : null)",
+    "old": "        member.gid != null &&\n        (await db",
+    "new": "        (await db",
     "tests": [
       "test/server/scale4f_guild.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "SCALE4f2-heraldry-lost",
     "file": "server-account/src/seatRibbons.js",
-    "old": "    ? (member && member.gid != null && await db.prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND season = ? AND at >= ? LIMIT 1').bind(member.guild_id, n, member.joined_at).first() ? { heraldry: member.heraldry } : null)",
-    "new": "    ? (member && member.gid != null && await db.prepare('SELECT 1 FROM town_seat_ribbons WHERE guild_id = ? AND season = ? AND at >= ? LIMIT 1').bind(member.guild_id, n, member.joined_at).first() ? { heraldry: null } : null)",
+    "old": "        ? { heraldry: member.heraldry }",
+    "new": "        ? { heraldry: null }",
     "tests": [
       "test/server/scale4f_guild.test.js"
     ],

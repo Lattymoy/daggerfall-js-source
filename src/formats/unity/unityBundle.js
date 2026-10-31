@@ -25,8 +25,8 @@
 import { lz4BlockDecompress } from '../lz4.js';
 import { dxtDecode } from '../dxt.js';
 import { bc7Decode } from '../bc7.js';
-import { unpackUnityCrunch } from '../crunch.js';   // DWHD1: Diverse Weapons HD's handhelds are crunched
-import { resampleRgba } from '../resample.js';   // DFMOD2: a picture past the detail with no smaller mip   // DFMOD1: DREAM's paperdoll ships its sprites as BC7
+import { unpackUnityCrunch } from '../crunch.js'; // DWHD1: Diverse Weapons HD's handhelds are crunched
+import { resampleRgba } from '../resample.js'; // DFMOD2: a picture past the detail with no smaller mip   // DFMOD1: DREAM's paperdoll ships its sprites as BC7
 
 // ---- binary reader ---------------------------------------------------
 
@@ -38,32 +38,72 @@ class Reader {
     this.pos = 0;
     this.le = littleEndian;
   }
-  get length() { return this.bytes.length; }
+  get length() {
+    return this.bytes.length;
+  }
   u8() {
     if (this.pos >= this.bytes.length) throw new Error('unity bundle: read past the end');
     return this.bytes[this.pos++];
   }
-  i8() { return this.view.getInt8(this.pos++); }
-  u16() { const v = this.view.getUint16(this.pos, this.le); this.pos += 2; return v; }
-  i16() { const v = this.view.getInt16(this.pos, this.le); this.pos += 2; return v; }
-  u32() { const v = this.view.getUint32(this.pos, this.le); this.pos += 4; return v; }
-  i32() { const v = this.view.getInt32(this.pos, this.le); this.pos += 4; return v; }
-  f32() { const v = this.view.getFloat32(this.pos, this.le); this.pos += 4; return v; }
-  f64() { const v = this.view.getFloat64(this.pos, this.le); this.pos += 8; return v; }
-  i64() { const v = this.view.getBigInt64(this.pos, this.le); this.pos += 8; return v; }
-  u64() { const v = this.view.getBigUint64(this.pos, this.le); this.pos += 8; return v; }
+  i8() {
+    return this.view.getInt8(this.pos++);
+  }
+  u16() {
+    const v = this.view.getUint16(this.pos, this.le);
+    this.pos += 2;
+    return v;
+  }
+  i16() {
+    const v = this.view.getInt16(this.pos, this.le);
+    this.pos += 2;
+    return v;
+  }
+  u32() {
+    const v = this.view.getUint32(this.pos, this.le);
+    this.pos += 4;
+    return v;
+  }
+  i32() {
+    const v = this.view.getInt32(this.pos, this.le);
+    this.pos += 4;
+    return v;
+  }
+  f32() {
+    const v = this.view.getFloat32(this.pos, this.le);
+    this.pos += 4;
+    return v;
+  }
+  f64() {
+    const v = this.view.getFloat64(this.pos, this.le);
+    this.pos += 8;
+    return v;
+  }
+  i64() {
+    const v = this.view.getBigInt64(this.pos, this.le);
+    this.pos += 8;
+    return v;
+  }
+  u64() {
+    const v = this.view.getBigUint64(this.pos, this.le);
+    this.pos += 8;
+    return v;
+  }
   bytesOf(n) {
     if (this.pos + n > this.bytes.length) throw new Error(`unity bundle: read of ${n} bytes past the end`);
-    const v = this.bytes.subarray(this.pos, this.pos + n); this.pos += n; return v;
+    const v = this.bytes.subarray(this.pos, this.pos + n);
+    this.pos += n;
+    return v;
   }
   cstr() {
     const start = this.pos;
     while (this.pos < this.bytes.length && this.bytes[this.pos] !== 0) this.pos++;
     const s = utf8(this.bytes.subarray(start, this.pos));
-    this.pos++;   // the terminator
+    this.pos++; // the terminator
     return s;
   }
-  align(n = 4) { this.pos = (this.pos + n - 1) & ~(n - 1); }
+  align(n = 4) {
+    this.pos = (this.pos + n - 1) & ~(n - 1);
+  }
 }
 
 const utf8 = (b) => new TextDecoder('utf-8').decode(b);
@@ -73,7 +113,7 @@ const utf8 = (b) => new TextDecoder('utf-8').decode(b);
 /** Archive flags (the pre-2020.3.34 set, which every 2019 bundle wears). */
 const COMPRESSION_MASK = 0x3f;
 const BLOCKS_INFO_AT_END = 0x80;
-const BLOCK_INFO_NEED_PADDING = 0x200;   // only meaningful on the newer flag set
+const BLOCK_INFO_NEED_PADDING = 0x200; // only meaningful on the newer flag set
 const COMPRESSION = Object.freeze({ NONE: 0, LZMA: 1, LZ4: 2, LZ4HC: 3 });
 
 function decompress(src, uncompressedSize, flags) {
@@ -81,11 +121,15 @@ function decompress(src, uncompressedSize, flags) {
   if (mode === COMPRESSION.NONE) {
     // AUDIT 68 S12-bundle-stored-block-short: a truncated stored block is
     // corrupt, as a short LZ4 block is - never a zero-filled tail
-    if (src.length < uncompressedSize) throw new Error(`unity bundle: stored block holds ${src.length} of ${uncompressedSize} bytes`);
+    if (src.length < uncompressedSize)
+      throw new Error(`unity bundle: stored block holds ${src.length} of ${uncompressedSize} bytes`);
     return src.subarray(0, uncompressedSize);
   }
   if (mode === COMPRESSION.LZ4 || mode === COMPRESSION.LZ4HC) return lz4BlockDecompress(src, uncompressedSize);
-  if (mode === COMPRESSION.LZMA) throw new Error('unity bundle: LZMA-compressed bundles are not supported (build the mod with ChunkBasedCompression, or unpack it once)');
+  if (mode === COMPRESSION.LZMA)
+    throw new Error(
+      'unity bundle: LZMA-compressed bundles are not supported (build the mod with ChunkBasedCompression, or unpack it once)',
+    );
   throw new Error(`unity bundle: unknown compression ${mode}`);
 }
 
@@ -109,8 +153,10 @@ export function usesNewArchiveFlags([a, b, c]) {
  *  is its own; a multi-gigabyte `.dfmod` (DREAM's full set) is a Blob read by range in the worker
  *  (unityBundleWorker.js blobSource), because the whole file as one ArrayBuffer is past what a tab can hold. */
 export function byteSource(bytes) {
-  if (bytes instanceof Uint8Array) return { size: bytes.length, slice: (a, b) => bytes.subarray(a, Math.min(bytes.length, b)) };
-  if (typeof Blob !== 'undefined' && bytes instanceof Blob) throw new Error('unity bundle: a Blob is read by range in the worker (blobSource), not here');
+  if (bytes instanceof Uint8Array)
+    return { size: bytes.length, slice: (a, b) => bytes.subarray(a, Math.min(bytes.length, b)) };
+  if (typeof Blob !== 'undefined' && bytes instanceof Blob)
+    throw new Error('unity bundle: a Blob is read by range in the worker (blobSource), not here');
   if (bytes && typeof bytes.slice === 'function' && Number.isFinite(bytes.size)) return bytes;
   throw new Error('unity bundle: not a byte source');
 }
@@ -126,11 +172,12 @@ export function readUnityFs(bytes) {
   const src = byteSource(bytes);
   const r = new Reader(src.slice(0, Math.min(src.size, HEADER_PEEK)), false);
   const signature = r.cstr();
-  if (signature !== 'UnityFS') throw new Error(`unity bundle: not a UnityFS archive (signature ${JSON.stringify(signature)})`);
+  if (signature !== 'UnityFS')
+    throw new Error(`unity bundle: not a UnityFS archive (signature ${JSON.stringify(signature)})`);
   const version = r.u32();
   const unityVersion = r.cstr();
   const unityRevision = r.cstr();
-  r.i64();   // the whole bundle's size
+  r.i64(); // the whole bundle's size
   const compressedInfoSize = r.u32();
   const uncompressedInfoSize = r.u32();
   const flags = r.u32();
@@ -139,7 +186,7 @@ export function readUnityFs(bytes) {
   if (version >= 7 || (engine[0] === 2019 && (engine[1] > 4 || (engine[1] === 4 && engine[2] >= 15)))) r.align(16);
   const start = r.pos;
   let infoBytes;
-  let pos = start;   // DFMOD2: an absolute position in the source from here on
+  let pos = start; // DFMOD2: an absolute position in the source from here on
   if (flags & BLOCKS_INFO_AT_END) {
     infoBytes = src.slice(src.size - compressedInfoSize, src.size);
   } else {
@@ -148,7 +195,7 @@ export function readUnityFs(bytes) {
   }
   if (infoBytes.length < compressedInfoSize) throw new Error('unity bundle: the block directory runs past the end');
   const info = new Reader(decompress(infoBytes, uncompressedInfoSize, flags), false);
-  info.bytesOf(16);   // the uncompressed data hash
+  info.bytesOf(16); // the uncompressed data hash
   const blockCount = info.i32();
   const blocks = [];
   for (let i = 0; i < blockCount; i++) {
@@ -159,7 +206,7 @@ export function readUnityFs(bytes) {
   for (let i = 0; i < nodeCount; i++) {
     nodes.push({ offset: Number(info.i64()), size: Number(info.i64()), flags: info.u32(), path: info.cstr() });
   }
-  if (newFlags && (flags & BLOCK_INFO_NEED_PADDING)) pos = (pos + 15) & ~15;
+  if (newFlags && flags & BLOCK_INFO_NEED_PADDING) pos = (pos + 15) & ~15;
   if (flags & BLOCKS_INFO_AT_END) pos = start;
   // DW1: THE BLOCKS STAY COMPRESSED. This used to decompress every
   // block into one stream the directory indexed - which is the whole
@@ -174,9 +221,13 @@ export function readUnityFs(bytes) {
   const files = nodes.map((n) => {
     let whole = null;
     return {
-      path: n.path, flags: n.flags, size: n.size,
+      path: n.path,
+      flags: n.flags,
+      size: n.size,
       read: (offset, length) => stream.read(n.offset + offset, length),
-      get bytes() { return whole ??= stream.read(n.offset, n.size); },
+      get bytes() {
+        return (whole ??= stream.read(n.offset, n.size));
+      },
     };
   });
   return { signature, version, unityVersion, unityRevision, flags, files };
@@ -193,15 +244,25 @@ export const BLOCK_CACHE = 32;
  *  `length` bytes (short at the end of the stream), never a view into
  *  the cache, so a caller may hold it while the cache turns over. */
 function blockStream(src, dataStart, blocks) {
-  const cOff = new Array(blocks.length);   // compressed offset of block i in `bytes`
-  const uOff = new Array(blocks.length + 1);   // uncompressed offset of block i; the last entry is the total
-  let c = dataStart, u = 0;
-  for (let i = 0; i < blocks.length; i++) { cOff[i] = c; uOff[i] = u; c += blocks[i].compressedSize; u += blocks[i].uncompressedSize; }
+  const cOff = new Array(blocks.length); // compressed offset of block i in `bytes`
+  const uOff = new Array(blocks.length + 1); // uncompressed offset of block i; the last entry is the total
+  let c = dataStart,
+    u = 0;
+  for (let i = 0; i < blocks.length; i++) {
+    cOff[i] = c;
+    uOff[i] = u;
+    c += blocks[i].compressedSize;
+    u += blocks[i].uncompressedSize;
+  }
   uOff[blocks.length] = u;
-  const cache = new Map();   // block index -> decompressed bytes, insertion order = age
+  const cache = new Map(); // block index -> decompressed bytes, insertion order = age
   const block = (i) => {
     let d = cache.get(i);
-    if (d) { cache.delete(i); cache.set(i, d); return d; }   // touched: youngest again
+    if (d) {
+      cache.delete(i);
+      cache.set(i, d);
+      return d;
+    } // touched: youngest again
     const b = blocks[i];
     d = decompress(src.slice(cOff[i], cOff[i] + b.compressedSize), b.uncompressedSize, b.flags);
     cache.set(i, d);
@@ -217,15 +278,22 @@ function blockStream(src, dataStart, blocks) {
       const out = new Uint8Array(Math.max(0, end - offset));
       if (!out.length) return out;
       // the first block holding `offset`, by binary search over the prefix sums
-      let lo = 0, hi = blocks.length - 1;
-      while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (uOff[mid] <= offset) lo = mid; else hi = mid - 1; }
-      let at = offset, put = 0;
+      let lo = 0,
+        hi = blocks.length - 1;
+      while (lo < hi) {
+        const mid = (lo + hi + 1) >> 1;
+        if (uOff[mid] <= offset) lo = mid;
+        else hi = mid - 1;
+      }
+      let at = offset,
+        put = 0;
       for (let i = lo; i < blocks.length && at < end; i++) {
         const d = block(i);
         const from = at - uOff[i];
         const n = Math.min(d.length - from, end - at);
         out.set(d.subarray(from, from + n), put);
-        at += n; put += n;
+        at += n;
+        put += n;
       }
       return out;
     },
@@ -236,29 +304,119 @@ function blockStream(src, dataStart, blocks) {
 
 /** The common-string table a type tree's names index with the high bit
  *  set (AssetStudio's CommonString, the 2019 extent). */
-export const COMMON_STRINGS = Object.freeze(new Map([
-  [0, 'AABB'], [5, 'AnimationClip'], [19, 'AnimationCurve'], [34, 'AnimationState'], [49, 'Array'], [55, 'Base'],
-  [60, 'BitField'], [69, 'bitset'], [76, 'bool'], [81, 'char'], [86, 'ColorRGBA'], [96, 'Component'], [106, 'data'],
-  [111, 'deque'], [117, 'double'], [124, 'dynamic_array'], [138, 'FastPropertyName'], [155, 'first'], [161, 'float'],
-  [167, 'Font'], [172, 'GameObject'], [183, 'Generic Mono'], [196, 'GradientNEW'], [208, 'GUID'], [213, 'GUIStyle'],
-  [222, 'int'], [226, 'list'], [231, 'long long'], [241, 'map'], [245, 'Matrix4x4f'], [256, 'MdFour'],
-  [263, 'MonoBehaviour'], [277, 'MonoScript'], [288, 'm_ByteSize'], [299, 'm_Curve'], [307, 'm_EditorClassIdentifier'],
-  [331, 'm_EditorHideFlags'], [349, 'm_Enabled'], [359, 'm_ExtensionPtr'], [374, 'm_GameObject'], [387, 'm_Index'],
-  [395, 'm_IsArray'], [405, 'm_IsStatic'], [416, 'm_MetaFlag'], [427, 'm_Name'], [434, 'm_ObjectHideFlags'],
-  [452, 'm_PrefabInternal'], [469, 'm_PrefabParentObject'], [490, 'm_Script'], [499, 'm_StaticEditorFlags'],
-  [519, 'm_Type'], [526, 'm_Version'], [536, 'Object'], [543, 'pair'], [548, 'PPtr<Component>'],
-  [564, 'PPtr<GameObject>'], [581, 'PPtr<Material>'], [596, 'PPtr<MonoBehaviour>'], [616, 'PPtr<MonoScript>'],
-  [633, 'PPtr<Object>'], [646, 'PPtr<Prefab>'], [659, 'PPtr<Sprite>'], [672, 'PPtr<TextAsset>'], [688, 'PPtr<Texture>'],
-  [702, 'PPtr<Texture2D>'], [718, 'PPtr<Transform>'], [734, 'Prefab'], [741, 'Quaternionf'], [753, 'Rectf'],
-  [759, 'RectInt'], [767, 'RectOffset'], [778, 'second'], [785, 'set'], [789, 'short'], [795, 'size'], [800, 'SInt16'],
-  [807, 'SInt32'], [814, 'SInt64'], [821, 'SInt8'], [827, 'staticvector'], [840, 'string'], [847, 'TextAsset'],
-  [857, 'TextMesh'], [866, 'Texture'], [874, 'Texture2D'], [884, 'Transform'], [894, 'TypelessData'], [907, 'UInt16'],
-  [914, 'UInt32'], [921, 'UInt64'], [928, 'UInt8'], [934, 'unsigned int'], [947, 'unsigned long long'],
-  [966, 'unsigned short'], [981, 'vector'], [988, 'Vector2f'], [997, 'Vector3f'], [1006, 'Vector4f'],
-  [1015, 'm_ScriptingClassIdentifier'], [1042, 'Gradient'], [1051, 'Type*'], [1057, 'int2_storage'],
-  [1070, 'int3_storage'], [1083, 'BoundsInt'], [1093, 'm_CorrespondingSourceObject'], [1121, 'm_PrefabInstance'],
-  [1138, 'm_PrefabAsset'], [1152, 'FileSize'], [1161, 'Hash128'],
-]));
+export const COMMON_STRINGS = Object.freeze(
+  new Map([
+    [0, 'AABB'],
+    [5, 'AnimationClip'],
+    [19, 'AnimationCurve'],
+    [34, 'AnimationState'],
+    [49, 'Array'],
+    [55, 'Base'],
+    [60, 'BitField'],
+    [69, 'bitset'],
+    [76, 'bool'],
+    [81, 'char'],
+    [86, 'ColorRGBA'],
+    [96, 'Component'],
+    [106, 'data'],
+    [111, 'deque'],
+    [117, 'double'],
+    [124, 'dynamic_array'],
+    [138, 'FastPropertyName'],
+    [155, 'first'],
+    [161, 'float'],
+    [167, 'Font'],
+    [172, 'GameObject'],
+    [183, 'Generic Mono'],
+    [196, 'GradientNEW'],
+    [208, 'GUID'],
+    [213, 'GUIStyle'],
+    [222, 'int'],
+    [226, 'list'],
+    [231, 'long long'],
+    [241, 'map'],
+    [245, 'Matrix4x4f'],
+    [256, 'MdFour'],
+    [263, 'MonoBehaviour'],
+    [277, 'MonoScript'],
+    [288, 'm_ByteSize'],
+    [299, 'm_Curve'],
+    [307, 'm_EditorClassIdentifier'],
+    [331, 'm_EditorHideFlags'],
+    [349, 'm_Enabled'],
+    [359, 'm_ExtensionPtr'],
+    [374, 'm_GameObject'],
+    [387, 'm_Index'],
+    [395, 'm_IsArray'],
+    [405, 'm_IsStatic'],
+    [416, 'm_MetaFlag'],
+    [427, 'm_Name'],
+    [434, 'm_ObjectHideFlags'],
+    [452, 'm_PrefabInternal'],
+    [469, 'm_PrefabParentObject'],
+    [490, 'm_Script'],
+    [499, 'm_StaticEditorFlags'],
+    [519, 'm_Type'],
+    [526, 'm_Version'],
+    [536, 'Object'],
+    [543, 'pair'],
+    [548, 'PPtr<Component>'],
+    [564, 'PPtr<GameObject>'],
+    [581, 'PPtr<Material>'],
+    [596, 'PPtr<MonoBehaviour>'],
+    [616, 'PPtr<MonoScript>'],
+    [633, 'PPtr<Object>'],
+    [646, 'PPtr<Prefab>'],
+    [659, 'PPtr<Sprite>'],
+    [672, 'PPtr<TextAsset>'],
+    [688, 'PPtr<Texture>'],
+    [702, 'PPtr<Texture2D>'],
+    [718, 'PPtr<Transform>'],
+    [734, 'Prefab'],
+    [741, 'Quaternionf'],
+    [753, 'Rectf'],
+    [759, 'RectInt'],
+    [767, 'RectOffset'],
+    [778, 'second'],
+    [785, 'set'],
+    [789, 'short'],
+    [795, 'size'],
+    [800, 'SInt16'],
+    [807, 'SInt32'],
+    [814, 'SInt64'],
+    [821, 'SInt8'],
+    [827, 'staticvector'],
+    [840, 'string'],
+    [847, 'TextAsset'],
+    [857, 'TextMesh'],
+    [866, 'Texture'],
+    [874, 'Texture2D'],
+    [884, 'Transform'],
+    [894, 'TypelessData'],
+    [907, 'UInt16'],
+    [914, 'UInt32'],
+    [921, 'UInt64'],
+    [928, 'UInt8'],
+    [934, 'unsigned int'],
+    [947, 'unsigned long long'],
+    [966, 'unsigned short'],
+    [981, 'vector'],
+    [988, 'Vector2f'],
+    [997, 'Vector3f'],
+    [1006, 'Vector4f'],
+    [1015, 'm_ScriptingClassIdentifier'],
+    [1042, 'Gradient'],
+    [1051, 'Type*'],
+    [1057, 'int2_storage'],
+    [1070, 'int3_storage'],
+    [1083, 'BoundsInt'],
+    [1093, 'm_CorrespondingSourceObject'],
+    [1121, 'm_PrefabInstance'],
+    [1138, 'm_PrefabAsset'],
+    [1152, 'FileSize'],
+    [1161, 'Hash128'],
+  ]),
+);
 
 const ALIGN_FLAG = 0x4000;
 
@@ -297,8 +455,12 @@ function readTypeTreeBlob(r, version) {
       metaFlag: nv.getInt32(o + 20, le),
       children: [],
     };
-    if (node.level > prev.level) { stack.push(parent); parent = prev; }
-    else if (node.level < prev.level) { while (node.level <= parent.level) parent = stack.pop(); }
+    if (node.level > prev.level) {
+      stack.push(parent);
+      parent = prev;
+    } else if (node.level < prev.level) {
+      while (node.level <= parent.level) parent = stack.pop();
+    }
     parent.children.push(node);
     prev = node;
   }
@@ -335,16 +497,22 @@ export function readSerializedFile(source, name) {
   // DW1: a Uint8Array, or a lazy `{ size, read(offset, length) }` from
   // readUnityFs. The header and the metadata are read once, whole; an
   // object's body is read when `read()` is called, and only that body.
-  const src = source instanceof Uint8Array
-    ? { size: source.length, read: (o, n) => source.subarray(o, Math.min(source.length, o + n)) }
-    : source;
+  const src =
+    source instanceof Uint8Array
+      ? { size: source.length, read: (o, n) => source.subarray(o, Math.min(source.length, o + n)) }
+      : source;
   const head = new Reader(src.read(0, Math.min(src.size, 48)), false);
   let metadataSize = head.u32();
-  head.u32();   // fileSize, re-read below
+  head.u32(); // fileSize, re-read below
   const headerVersion = head.u32();
-  if (headerVersion >= 22) { head.u32(); head.u8(); head.bytesOf(3); metadataSize = head.u32(); }
+  if (headerVersion >= 22) {
+    head.u32();
+    head.u8();
+    head.bytesOf(3);
+    metadataSize = head.u32();
+  }
   const headerSize = headerVersion >= 22 ? 48 : 20;
-  const bytes = src.read(0, Math.min(src.size, headerSize + metadataSize + 64));   // the metadata, and a little slack for the alignment its tail takes
+  const bytes = src.read(0, Math.min(src.size, headerSize + metadataSize + 64)); // the metadata, and a little slack for the alignment its tail takes
   const r = new Reader(bytes, false);
   metadataSize = r.u32();
   let fileSize = r.u32();
@@ -367,27 +535,32 @@ export function readSerializedFile(source, name) {
   const unityVersion = version >= 7 ? r.cstr() : '';
   const targetPlatform = version >= 8 ? r.i32() : 0;
   const enableTypeTree = version >= 13 ? r.u8() !== 0 : true;
-  if (!enableTypeTree) throw new Error(`unity bundle: ${name} carries no type tree; this reader takes the object layout from it`);
+  if (!enableTypeTree)
+    throw new Error(`unity bundle: ${name} carries no type tree; this reader takes the object layout from it`);
   // Below 14 the object table is a different shape (unaligned 32-bit
   // path ids unless bigIdEnabled, an isDestroyed field before 11) and
   // 9 and 11 write the old type-tree format: Unity 5.0 and older, which
   // no DFU mod is built with. Refused whole rather than read wrongly.
-  if (version < 14) throw new Error(`unity bundle: SerializedFile ${version} (Unity 5.0 or older) is older than this reader`);
+  if (version < 14)
+    throw new Error(`unity bundle: SerializedFile ${version} (Unity 5.0 or older) is older than this reader`);
   const typeCount = r.i32();
   const types = [];
   for (let i = 0; i < typeCount; i++) {
     const classId = r.i32();
-    if (version >= 16) r.u8();   // isStrippedType
+    if (version >= 16) r.u8(); // isStrippedType
     const scriptTypeIndex = version >= 17 ? r.i16() : -1;
     if (version >= 13) {
       if ((version < 16 && classId < 0) || (version >= 16 && classId === 114)) r.bytesOf(16);
-      r.bytesOf(16);   // oldTypeHash
+      r.bytesOf(16); // oldTypeHash
     }
     const node = readTypeTreeBlob(r, version);
-    if (version >= 21) { const n = r.i32(); r.bytesOf(4 * n); }   // typeDependencies
+    if (version >= 21) {
+      const n = r.i32();
+      r.bytesOf(4 * n);
+    } // typeDependencies
     types.push({ classId, scriptTypeIndex, node });
   }
-  if (version >= 7 && version < 14) r.i32();   // bigIdEnabled
+  if (version >= 7 && version < 14) r.i32(); // bigIdEnabled
   const objectCount = r.i32();
   const objects = [];
   for (let i = 0; i < objectCount; i++) {
@@ -408,12 +581,17 @@ export function readSerializedFile(source, name) {
     if (version >= 11 && version < 17) r.i16();
     if (version === 15 || version === 16) r.u8();
     objects.push({
-      pathId, classId, byteStart: dataOffset + byteStart, byteSize, type,
+      pathId,
+      classId,
+      byteStart: dataOffset + byteStart,
+      byteSize,
+      type,
       /** Parse the object through its type tree. */
       read: () => readObject(src.read(dataOffset + byteStart, byteSize), 0, byteSize, type?.node, littleEndian),
       /** DFMOD2: the object's top-level fields BEFORE `stopAt`, off the front of its body only - a texture's name,
        *  size and format without reading (and, inline, decompressing) its pixels. Null when the front is not enough. */
-      head: (stopAt, peek = 2048) => readObjectHead(src.read(dataOffset + byteStart, Math.min(byteSize, peek)), type?.node, littleEndian, stopAt),
+      head: (stopAt, peek = 2048) =>
+        readObjectHead(src.read(dataOffset + byteStart, Math.min(byteSize, peek)), type?.node, littleEndian, stopAt),
     });
   }
   // CSA-A: the files a pointer's m_FileID names (1 is the first entry) - a
@@ -424,26 +602,64 @@ export function readSerializedFile(source, name) {
   try {
     if (version >= 11) {
       const scriptTypes = r.i32();
-      for (let i = 0; i < scriptTypes; i++) { r.i32(); if (version >= 14) { r.align(4); r.i64(); } else r.i32(); }
+      for (let i = 0; i < scriptTypes; i++) {
+        r.i32();
+        if (version >= 14) {
+          r.align(4);
+          r.i64();
+        } else r.i32();
+      }
     }
     const count = r.i32();
     for (let i = 0; i < count; i++) {
-      if (version >= 6) r.cstr();   // tempEmpty
+      if (version >= 6) r.cstr(); // tempEmpty
       const guid = version >= 5 ? r.bytesOf(16) : null;
       const type = version >= 5 ? r.i32() : 0;
-      externals.push({ path: r.cstr(), type, guid: guid ? [...guid].map((x) => x.toString(16).padStart(2, '0')).join('') : null });
+      externals.push({
+        path: r.cstr(),
+        type,
+        guid: guid ? [...guid].map((x) => x.toString(16).padStart(2, '0')).join('') : null,
+      });
     }
-  } catch { externals.length = 0; }
-  return { name, version, unityVersion, targetPlatform, littleEndian, metadataSize, fileSize, dataOffset, types, objects, externals };
+  } catch {
+    externals.length = 0;
+  }
+  return {
+    name,
+    version,
+    unityVersion,
+    targetPlatform,
+    littleEndian,
+    metadataSize,
+    fileSize,
+    dataOffset,
+    types,
+    objects,
+    externals,
+  };
 }
 
 const PRIMITIVES = {
   bool: (r) => r.u8() !== 0,
-  SInt8: (r) => r.i8(), UInt8: (r) => r.u8(), char: (r) => r.u8(),
-  short: (r) => r.i16(), SInt16: (r) => r.i16(), UInt16: (r) => r.u16(), 'unsigned short': (r) => r.u16(),
-  int: (r) => r.i32(), SInt32: (r) => r.i32(), UInt32: (r) => r.u32(), 'unsigned int': (r) => r.u32(), 'Type*': (r) => r.u32(),
-  'long long': (r) => r.i64(), SInt64: (r) => r.i64(), UInt64: (r) => r.u64(), 'unsigned long long': (r) => r.u64(), FileSize: (r) => r.u64(),
-  float: (r) => r.f32(), double: (r) => r.f64(),
+  SInt8: (r) => r.i8(),
+  UInt8: (r) => r.u8(),
+  char: (r) => r.u8(),
+  short: (r) => r.i16(),
+  SInt16: (r) => r.i16(),
+  UInt16: (r) => r.u16(),
+  'unsigned short': (r) => r.u16(),
+  int: (r) => r.i32(),
+  SInt32: (r) => r.i32(),
+  UInt32: (r) => r.u32(),
+  'unsigned int': (r) => r.u32(),
+  'Type*': (r) => r.u32(),
+  'long long': (r) => r.i64(),
+  SInt64: (r) => r.i64(),
+  UInt64: (r) => r.u64(),
+  'unsigned long long': (r) => r.u64(),
+  FileSize: (r) => r.u64(),
+  float: (r) => r.f32(),
+  double: (r) => r.f64(),
 };
 
 /** The generic type-tree walk (the reference readers' read_value):
@@ -475,7 +691,8 @@ function readValue(node, r) {
     // Every element consumes at least one byte, so a count past the
     // bytes that remain is corrupt - and refused BEFORE the allocation,
     // which for a count near 2^31 is not a catchable error but the tab.
-    if (n > r.length - r.pos) throw new Error(`unity bundle: array length ${n} exceeds the ${r.length - r.pos} bytes that remain`);
+    if (n > r.length - r.pos)
+      throw new Error(`unity bundle: array length ${n} exceeds the ${r.length - r.pos} bytes that remain`);
     const sub = arr.children[1];
     if ((sub.type === 'UInt8' || sub.type === 'char') && !(sub.metaFlag & ALIGN_FLAG)) {
       value = r.bytesOf(n);
@@ -503,7 +720,9 @@ function readObjectHead(prefix, node, littleEndian, stopAt) {
       value[c.name] = readValue(c, r);
     }
     return value;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 function readObject(fileBytes, start, size, node, littleEndian) {
@@ -517,10 +736,20 @@ function readObject(fileBytes, start, size, node, littleEndian) {
 
 // ---- the objects a mod carries ------------------------------------------
 
-export const CLASS_ID = Object.freeze({ Texture2D: 28, TextAsset: 49, AssetBundle: 142, Texture2DArray: 187 });   // GROUND1: the array DREAM's terrain ships as
+export const CLASS_ID = Object.freeze({ Texture2D: 28, TextAsset: 49, AssetBundle: 142, Texture2DArray: 187 }); // GROUND1: the array DREAM's terrain ships as
 
 /** Unity's TextureFormat values this reader decodes. */
-export const TEXTURE_FORMAT = Object.freeze({ Alpha8: 1, RGB24: 3, RGBA32: 4, ARGB32: 5, DXT1: 10, DXT5: 12, BC7: 25, DXT1Crunched: 28, DXT5Crunched: 29 });
+export const TEXTURE_FORMAT = Object.freeze({
+  Alpha8: 1,
+  RGB24: 3,
+  RGBA32: 4,
+  ARGB32: 5,
+  DXT1: 10,
+  DXT5: 12,
+  BC7: 25,
+  DXT1Crunched: 28,
+  DXT5Crunched: 29,
+});
 
 /**
  * Decode a parsed Texture2D to RGBA8, TOP ROW FIRST - the raster order
@@ -546,14 +775,15 @@ export function decodeTexture2D(tex, resource = null, { maxSize = Infinity } = {
     let crn = tex['image data'];
     const st = tex.m_StreamData;
     if ((!crn || !crn.length) && st && st.size > 0) {
-      if (!resource) throw new Error(`unity bundle: ${tex.m_Name} streams from ${st.path} and no resource resolver was given`);
+      if (!resource)
+        throw new Error(`unity bundle: ${tex.m_Name} streams from ${st.path} and no resource resolver was given`);
       crn = resource(st.path, Number(st.offset), Number(st.size));
     }
     if (!crn || !crn.length) throw new Error(`unity bundle: ${tex.m_Name} carries no image data`);
     const lvl = mipLevelFor(tex, maxSize);
     const u = unpackUnityCrunch(crn, lvl);
     const px = dxtDecode(u.blocks, u.width, u.height, u.format === 'DXT5');
-    const flipped = new Uint8Array(px.length);   // bottom-up to top-down, as below
+    const flipped = new Uint8Array(px.length); // bottom-up to top-down, as below
     const row = u.width * 4;
     for (let y = 0; y < u.height; y++) flipped.set(px.subarray(y * row, (y + 1) * row), (u.height - 1 - y) * row);
     return { width: u.width, height: u.height, data: flipped };
@@ -568,8 +798,11 @@ export function decodeTexture2D(tex, resource = null, { maxSize = Infinity } = {
   let src = tex['image data'];
   const stream = tex.m_StreamData;
   if ((!src || !src.length) && stream && stream.size > 0) {
-    if (!resource) throw new Error(`unity bundle: ${tex.m_Name} streams from ${stream.path} and no resource resolver was given`);
-    src = level ? resource(stream.path, Number(stream.offset) + mipOffset, mipSize) : resource(stream.path, Number(stream.offset), Number(stream.size));
+    if (!resource)
+      throw new Error(`unity bundle: ${tex.m_Name} streams from ${stream.path} and no resource resolver was given`);
+    src = level
+      ? resource(stream.path, Number(stream.offset) + mipOffset, mipSize)
+      : resource(stream.path, Number(stream.offset), Number(stream.size));
   } else if (src && level) {
     src = src.subarray(mipOffset, mipOffset + mipSize);
   }
@@ -578,9 +811,16 @@ export function decodeTexture2D(tex, resource = null, { maxSize = Infinity } = {
   const n = width * height;
   // Mip 0 comes first and must be whole: a short buffer is corrupt, not
   // a darker picture (the block formats check the same in dxtDecode).
-  const RAW_BPP = { [TEXTURE_FORMAT.RGBA32]: 4, [TEXTURE_FORMAT.ARGB32]: 4, [TEXTURE_FORMAT.RGB24]: 3, [TEXTURE_FORMAT.Alpha8]: 1 };
+  const RAW_BPP = {
+    [TEXTURE_FORMAT.RGBA32]: 4,
+    [TEXTURE_FORMAT.ARGB32]: 4,
+    [TEXTURE_FORMAT.RGB24]: 3,
+    [TEXTURE_FORMAT.Alpha8]: 1,
+  };
   if (RAW_BPP[format] && src.length < n * RAW_BPP[format]) {
-    throw new Error(`unity bundle: ${tex.m_Name} carries ${src.length} bytes for ${width}x${height} at ${RAW_BPP[format]} bytes a texel`);
+    throw new Error(
+      `unity bundle: ${tex.m_Name} carries ${src.length} bytes for ${width}x${height} at ${RAW_BPP[format]} bytes a texel`,
+    );
   }
   switch (format) {
     case TEXTURE_FORMAT.RGBA32:
@@ -589,18 +829,29 @@ export function decodeTexture2D(tex, resource = null, { maxSize = Infinity } = {
     case TEXTURE_FORMAT.ARGB32:
       rgba = new Uint8Array(n * 4);
       for (let i = 0; i < n; i++) {
-        rgba[i * 4] = src[i * 4 + 1]; rgba[i * 4 + 1] = src[i * 4 + 2]; rgba[i * 4 + 2] = src[i * 4 + 3]; rgba[i * 4 + 3] = src[i * 4];
+        rgba[i * 4] = src[i * 4 + 1];
+        rgba[i * 4 + 1] = src[i * 4 + 2];
+        rgba[i * 4 + 2] = src[i * 4 + 3];
+        rgba[i * 4 + 3] = src[i * 4];
       }
       break;
     case TEXTURE_FORMAT.RGB24:
       rgba = new Uint8Array(n * 4);
       for (let i = 0; i < n; i++) {
-        rgba[i * 4] = src[i * 3]; rgba[i * 4 + 1] = src[i * 3 + 1]; rgba[i * 4 + 2] = src[i * 3 + 2]; rgba[i * 4 + 3] = 255;
+        rgba[i * 4] = src[i * 3];
+        rgba[i * 4 + 1] = src[i * 3 + 1];
+        rgba[i * 4 + 2] = src[i * 3 + 2];
+        rgba[i * 4 + 3] = 255;
       }
       break;
     case TEXTURE_FORMAT.Alpha8:
       rgba = new Uint8Array(n * 4);
-      for (let i = 0; i < n; i++) { rgba[i * 4] = 0; rgba[i * 4 + 1] = 0; rgba[i * 4 + 2] = 0; rgba[i * 4 + 3] = src[i]; }
+      for (let i = 0; i < n; i++) {
+        rgba[i * 4] = 0;
+        rgba[i * 4 + 1] = 0;
+        rgba[i * 4 + 2] = 0;
+        rgba[i * 4 + 3] = src[i];
+      }
       break;
     case TEXTURE_FORMAT.DXT1:
       rgba = dxtDecode(src, width, height, false);
@@ -625,10 +876,14 @@ export function decodeTexture2D(tex, resource = null, { maxSize = Infinity } = {
 // A Texture2DArray names its format as a GraphicsFormat, not a TextureFormat. The ones a DFU texture mod's terrain
 // is built with, mapped to the TextureFormat decode they share (UnityEngine.Experimental.Rendering.GraphicsFormat).
 const GRAPHICS_FORMAT = Object.freeze({
-  4: TEXTURE_FORMAT.RGBA32, 8: TEXTURE_FORMAT.RGBA32,        // R8G8B8A8 _SRGB / _UNorm
-  96: TEXTURE_FORMAT.DXT1, 97: TEXTURE_FORMAT.DXT1,          // RGBA_DXT1 _SRGB / _UNorm
-  100: TEXTURE_FORMAT.DXT5, 101: TEXTURE_FORMAT.DXT5,        // RGBA_DXT5 _SRGB / _UNorm
-  108: TEXTURE_FORMAT.BC7, 109: TEXTURE_FORMAT.BC7,          // RGBA_BC7 _SRGB / _UNorm - DREAM's
+  4: TEXTURE_FORMAT.RGBA32,
+  8: TEXTURE_FORMAT.RGBA32, // R8G8B8A8 _SRGB / _UNorm
+  96: TEXTURE_FORMAT.DXT1,
+  97: TEXTURE_FORMAT.DXT1, // RGBA_DXT1 _SRGB / _UNorm
+  100: TEXTURE_FORMAT.DXT5,
+  101: TEXTURE_FORMAT.DXT5, // RGBA_DXT5 _SRGB / _UNorm
+  108: TEXTURE_FORMAT.BC7,
+  109: TEXTURE_FORMAT.BC7, // RGBA_BC7 _SRGB / _UNorm - DREAM's
 });
 /**
  * Every slice of a Texture2DArray, mip 0, top-down RGBA `{ width, height, data }` each (a decoded PNG's order, as
@@ -638,11 +893,13 @@ const GRAPHICS_FORMAT = Object.freeze({
  */
 export function decodeTextureArray(arr, resource = null) {
   const format = GRAPHICS_FORMAT[arr.m_Format];
-  if (format == null) throw new Error(`unity bundle: ${arr.m_Name} is GraphicsFormat ${arr.m_Format}, which this reader does not decode`);
+  if (format == null)
+    throw new Error(`unity bundle: ${arr.m_Name} is GraphicsFormat ${arr.m_Format}, which this reader does not decode`);
   let data = arr['image data'];
   const st = arr.m_StreamData;
   if ((!data || !data.length) && st && st.size > 0) {
-    if (!resource) throw new Error(`unity bundle: ${arr.m_Name} streams from ${st.path} and no resource resolver was given`);
+    if (!resource)
+      throw new Error(`unity bundle: ${arr.m_Name} streams from ${st.path} and no resource resolver was given`);
     data = resource(st.path, Number(st.offset), Number(st.size));
   }
   const depth = arr.m_Depth | 0;
@@ -650,7 +907,16 @@ export function decodeTextureArray(arr, resource = null) {
   const per = Math.floor(Number(arr.m_DataSize || data.length) / depth);
   const out = [];
   for (let i = 0; i < depth; i++) {
-    out.push(decodeTexture2D({ m_Name: `${arr.m_Name}[${i}]`, m_Width: arr.m_Width, m_Height: arr.m_Height, m_MipCount: 1, m_TextureFormat: format, 'image data': data.subarray(i * per, (i + 1) * per) }));
+    out.push(
+      decodeTexture2D({
+        m_Name: `${arr.m_Name}[${i}]`,
+        m_Width: arr.m_Width,
+        m_Height: arr.m_Height,
+        m_MipCount: 1,
+        m_TextureFormat: format,
+        'image data': data.subarray(i * per, (i + 1) * per),
+      }),
+    );
   }
   return out;
 }
@@ -659,12 +925,20 @@ export function decodeTextureArray(arr, resource = null) {
 function mipBytes(format, w, h) {
   const blocks = Math.max(1, Math.ceil(w / 4)) * Math.max(1, Math.ceil(h / 4));
   switch (format) {
-    case TEXTURE_FORMAT.DXT1: return blocks * 8;
-    case TEXTURE_FORMAT.DXT5: case TEXTURE_FORMAT.BC7: return blocks * 16;
-    case TEXTURE_FORMAT.RGBA32: case TEXTURE_FORMAT.ARGB32: return w * h * 4;
-    case TEXTURE_FORMAT.RGB24: return w * h * 3;
-    case TEXTURE_FORMAT.Alpha8: return w * h;
-    default: return 0;
+    case TEXTURE_FORMAT.DXT1:
+      return blocks * 8;
+    case TEXTURE_FORMAT.DXT5:
+    case TEXTURE_FORMAT.BC7:
+      return blocks * 16;
+    case TEXTURE_FORMAT.RGBA32:
+    case TEXTURE_FORMAT.ARGB32:
+      return w * h * 4;
+    case TEXTURE_FORMAT.RGB24:
+      return w * h * 3;
+    case TEXTURE_FORMAT.Alpha8:
+      return w * h;
+    default:
+      return 0;
   }
 }
 /** The first mip level no larger than `maxSize` on its longer side, within the chain the texture carries. */
@@ -677,8 +951,12 @@ export function mipLevelFor(tex, maxSize = Infinity) {
 /** Where mip `level` starts in the image data, and its byte size. */
 export function mipSpan(tex, level) {
   let offset = 0;
-  for (let i = 0; i < level; i++) offset += mipBytes(tex.m_TextureFormat, Math.max(1, tex.m_Width >> i), Math.max(1, tex.m_Height >> i));
-  return { offset, size: mipBytes(tex.m_TextureFormat, Math.max(1, tex.m_Width >> level), Math.max(1, tex.m_Height >> level)) };
+  for (let i = 0; i < level; i++)
+    offset += mipBytes(tex.m_TextureFormat, Math.max(1, tex.m_Width >> i), Math.max(1, tex.m_Height >> i));
+  return {
+    offset,
+    size: mipBytes(tex.m_TextureFormat, Math.max(1, tex.m_Width >> level), Math.max(1, tex.m_Height >> level)),
+  };
 }
 
 /**
@@ -692,7 +970,11 @@ function decodeCapped(tex, resource, maxSize) {
   if (Math.max(img.width, img.height) <= maxSize) return img;
   const k = maxSize / Math.max(img.width, img.height);
   const r = resampleRgba(img, img.width * k, img.height * k);
-  return { width: r.width, height: r.height, data: r.data instanceof Uint8Array ? r.data : new Uint8Array(r.data.buffer, r.data.byteOffset, r.data.byteLength) };
+  return {
+    width: r.width,
+    height: r.height,
+    data: r.data instanceof Uint8Array ? r.data : new Uint8Array(r.data.buffer, r.data.byteOffset, r.data.byteLength),
+  };
 }
 
 /**
@@ -713,7 +995,8 @@ export function readUnityBundle(bytes, { maxTextureSize = Infinity, knownTexture
     const base = path.slice(path.lastIndexOf('/') + 1);
     const res = resources.get(base) ?? resources.get(path);
     if (!res) throw new Error(`unity bundle: resource ${path} is not in the container`);
-    if (offset < 0 || size < 0 || offset + size > res.size) throw new Error(`unity bundle: ${path} stream ${offset}+${size} runs past ${res.size} bytes`);
+    if (offset < 0 || size < 0 || offset + size > res.size)
+      throw new Error(`unity bundle: ${path} stream ${offset}+${size} runs past ${res.size} bytes`);
     return res.read(offset, size);
   };
   const textures = [];
@@ -727,15 +1010,29 @@ export function readUnityBundle(bytes, { maxTextureSize = Infinity, knownTexture
       if (o.classId !== CLASS_ID.Texture2DArray) continue;
       try {
         const h = o.head('image data') ?? o.read();
-        arrays.push({ name: h.m_Name, width: h.m_Width, height: h.m_Height, depth: h.m_Depth, format: h.m_Format, layers: () => decodeTextureArray(o.read(), resource) });
-      } catch { /* an array this reader cannot read is not one of the mod's pictures */ }
+        arrays.push({
+          name: h.m_Name,
+          width: h.m_Width,
+          height: h.m_Height,
+          depth: h.m_Depth,
+          format: h.m_Format,
+          layers: () => decodeTextureArray(o.read(), resource),
+        });
+      } catch {
+        /* an array this reader cannot read is not one of the mod's pictures */
+      }
     }
   }
   if (Array.isArray(knownTextures) && knownTextures.length === texObjects.length && texObjects.length) {
     for (let i = 0; i < texObjects.length; i++) {
       const o = texObjects[i];
       const [name, width, height] = knownTextures[i];
-      textures.push({ name, width, height, rgba: (opts) => decodeCapped(o.read(), resource, opts?.maxSize ?? maxTextureSize) });
+      textures.push({
+        name,
+        width,
+        height,
+        rgba: (opts) => decodeCapped(o.read(), resource, opts?.maxSize ?? maxTextureSize),
+      });
     }
     return { ...fs, assets, textures, textAssets, arrays };
   }
@@ -747,8 +1044,13 @@ export function readUnityBundle(bytes, { maxTextureSize = Infinity, knownTexture
         // multi-gigabyte DREAM set, minutes and the tab); the body is read when a picture is asked for
         const tex = o.head('image data') ?? o.read();
         textures.push({
-          name: tex.m_Name, width: tex.m_Width, height: tex.m_Height, format: tex.m_TextureFormat,
-          mipCount: tex.m_MipCount, filterMode: tex.m_TextureSettings?.m_FilterMode, wrapU: tex.m_TextureSettings?.m_WrapU,
+          name: tex.m_Name,
+          width: tex.m_Width,
+          height: tex.m_Height,
+          format: tex.m_TextureFormat,
+          mipCount: tex.m_MipCount,
+          filterMode: tex.m_TextureSettings?.m_FilterMode,
+          wrapU: tex.m_TextureSettings?.m_WrapU,
           // DW1: the body is READ AGAIN on decode rather than kept. `tex`
           // holds the pixels inline (`image data`), and a closure over
           // it for 12,934 textures is the whole bundle in memory by
@@ -760,7 +1062,13 @@ export function readUnityBundle(bytes, { maxTextureSize = Infinity, knownTexture
         const t = o.read();
         // m_Script is a byte run: a manifest is UTF-8 JSON, a DLL is not
         // text at all, so both the bytes and a decoded view are offered.
-        textAssets.push({ name: t.m_Name, bytes: t.m_Script, get text() { return utf8(t.m_Script); } });
+        textAssets.push({
+          name: t.m_Name,
+          bytes: t.m_Script,
+          get text() {
+            return utf8(t.m_Script);
+          },
+        });
       }
     }
   }

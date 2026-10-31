@@ -9,7 +9,12 @@
 
 /** Each rolled tier's own colour - RARITIES[tier].colour (common has none). */
 export const TIER_MARKS = Object.freeze({
-  magic: '#6f9ee8', rare: '#e4c34f', legendary: '#e07a2e', aetheric: '#bfe8ff', artifact: '#b57bee', gilded: '#ff3b4a',
+  magic: '#6f9ee8',
+  rare: '#e4c34f',
+  legendary: '#e07a2e',
+  aetheric: '#bfe8ff',
+  artifact: '#b57bee',
+  gilded: '#ff3b4a',
 });
 /** The gem's side in CSS pixels, and the gap after it. */
 export const TIER_GEM_PX = 9;
@@ -34,11 +39,17 @@ export function tierMarkCss({ scope = '', wash, washAlpha, edge, selGround = nul
   ];
   for (const [k, c] of Object.entries(TIER_MARKS)) {
     const w = wash(k);
-    out.push(`${at(`.wplaque-row[data-rarity="${k}"]`)} { background: linear-gradient(90deg, ${rgba(w, washAlpha)}, ${rgba(w, washAlpha * 0.35)} 55%, ${rgba(w, 0)} 92%)${b}; }`);
-    out.push(`${at(`.wplaque-row.sel[data-rarity="${k}"]`)} { background: linear-gradient(90deg, ${rgba(w, Math.min(1, washAlpha * 1.5))}, ${rgba(w, washAlpha * 0.5)} 60%, ${rgba(w, 0.04)} 100%)${selGround ? `, ${selGround}` : ''}${b}; }`);
+    out.push(
+      `${at(`.wplaque-row[data-rarity="${k}"]`)} { background: linear-gradient(90deg, ${rgba(w, washAlpha)}, ${rgba(w, washAlpha * 0.35)} 55%, ${rgba(w, 0)} 92%)${b}; }`,
+    );
+    out.push(
+      `${at(`.wplaque-row.sel[data-rarity="${k}"]`)} { background: linear-gradient(90deg, ${rgba(w, Math.min(1, washAlpha * 1.5))}, ${rgba(w, washAlpha * 0.5)} 60%, ${rgba(w, 0.04)} 100%)${selGround ? `, ${selGround}` : ''}${b}; }`,
+    );
     out.push(`${at(`.wplaque-row[data-rarity="${k}"] > span:first-child::before`)} { background: ${c}${b}; }`);
   }
   // the Gilded's gem is set, not painted: GILDED-RED's crimson stone in a rim of the crown's gold, and a glint
-  out.push(`${at('.wplaque-row[data-rarity="gilded"] > span:first-child::before')} { box-shadow: inset 0 0 0 2px #f6c945, 0 0 0 1px ${edge}, 0 0 5px rgba(255, 59, 74, 0.8), 1px 2px 0 rgba(0,0,0,0.45)${b}; }`);
+  out.push(
+    `${at('.wplaque-row[data-rarity="gilded"] > span:first-child::before')} { box-shadow: inset 0 0 0 2px #f6c945, 0 0 0 1px ${edge}, 0 0 5px rgba(255, 59, 74, 0.8), 1px 2px 0 rgba(0,0,0,0.45)${b}; }`,
+  );
   return out.join('\n');
 }

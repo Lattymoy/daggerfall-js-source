@@ -2,8 +2,8 @@
   {
     "name": "BOOT2-the-cursor-takes-the-helper-from-the-hud-again",
     "file": "src/ui/cursor.js",
-    "old": "import { APP_ROOT } from '../systems/appRoot.js';",
-    "new": "import { APP_ROOT } from '../systems/appRoot.js';\nimport { drawHud } from './hud/hud.js';",
+    "old": "import { APP_ROOT } from '../systems/appRoot.js';\n",
+    "new": "import { APP_ROOT } from '../systems/appRoot.js';\nimport { drawHud } from './hud/hud.js';\n",
     "tests": [
       "test/render/boot2.test.js"
     ]
@@ -41,7 +41,7 @@
     "name": "ECOTONE1-the-border-law-imports-on-the-boot-path",
     "file": "src/world/ecotone.js",
     "old": "export const ECOTONE = Object.freeze({",
-    "new": "import { MAP_W } from './road/roadNetwork.js'; void MAP_W;\nexport const ECOTONE = Object.freeze({",
+    "new": "import { MAP_W } from './road/roadNetwork.js';\nvoid MAP_W;\nexport const ECOTONE = Object.freeze({",
     "tests": [
       "test/render/boot2.test.js"
     ]

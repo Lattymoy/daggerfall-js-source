@@ -35,14 +35,21 @@ export function prepareImport(model, baked) {
   const warnings = [...(model.warnings ?? [])];
   const images = (model.images ?? []).map((im, i) => {
     const meta = poiImageMetaOf(im.bytes);
-    if ('error' in meta) { warnings.push({ code: 'image-format', image: i, why: meta.error }); return null; }
+    if ('error' in meta) {
+      warnings.push({ code: 'image-format', image: i, why: meta.error });
+      return null;
+    }
     return { index: i, name: im.name, bytes: im.bytes, meta };
   });
-  const parts = [], refused = [];
+  const parts = [],
+    refused = [];
   for (const p of baked) {
     // a part the bake would not build past a limit comes with the law's code already (gltfImport.js bakeGltf)
     const code = p.refused ?? poiMeshError(p.mesh);
-    if (code) { refused.push({ name: p.name, code }); continue; }
+    if (code) {
+      refused.push({ name: p.name, code });
+      continue;
+    }
     const materials = p.materials.map((mi) => {
       const m = poiMaterialOf(model.materials?.[mi]);
       // a picture the store will not take: the material plain (its colour kept)
@@ -51,7 +58,7 @@ export function prepareImport(model, baked) {
       return m;
     });
     parts.push({
-      name: lawName(p.name) || lawName(model.name),   // none: the editor keys it `part`, and the builder names it
+      name: lawName(p.name) || lawName(model.name), // none: the editor keys it `part`, and the builder names it
       position: [...p.position],
       bytes: encodePoiMesh(p.mesh),
       submeshes: p.mesh.submeshes.length,
@@ -76,7 +83,11 @@ export function prepareImport(model, baked) {
 export async function uploadImport(prep, put, progress = () => {}) {
   const metas = new Map();
   const worn = new Set();
-  for (const p of prep.parts) for (const m of p.materials) { if (m.texture !== null) worn.add(m.texture); if (m.emissive !== null) worn.add(m.emissive); }
+  for (const p of prep.parts)
+    for (const m of p.materials) {
+      if (m.texture !== null) worn.add(m.texture);
+      if (m.emissive !== null) worn.add(m.emissive);
+    }
   const total = worn.size + prep.parts.length;
   let done = 0;
   const shaOfImage = new Map();
@@ -85,7 +96,7 @@ export async function uploadImport(prep, put, progress = () => {}) {
     const r = await put(im.bytes, 'texture');
     if (!r.ok) return { ok: false, error: r.error, ...(r.why ? { why: r.why } : {}), image: im.name };
     shaOfImage.set(i, r.data.sha);
-    metas.set(r.data.sha, { kind: 'texture', ...r.data.meta, bytes: im.bytes.byteLength });   // AUDIT POI S6: its bytes, for the budget
+    metas.set(r.data.sha, { kind: 'texture', ...r.data.meta, bytes: im.bytes.byteLength }); // AUDIT POI S6: its bytes, for the budget
     progress(++done, total);
   }
   const parts = [];
@@ -94,8 +105,15 @@ export async function uploadImport(prep, put, progress = () => {}) {
     if (!r.ok) return { ok: false, error: r.error, ...(r.why ? { why: r.why } : {}), part: p.name };
     metas.set(r.data.sha, { kind: 'mesh', ...r.data.meta, bytes: p.bytes.byteLength });
     parts.push({
-      name: p.name, mesh: r.data.sha, submeshes: p.submeshes, t: p.position,
-      materials: p.materials.map((m) => ({ ...m, texture: m.texture === null ? null : shaOfImage.get(m.texture), emissive: m.emissive === null ? null : shaOfImage.get(m.emissive) })),
+      name: p.name,
+      mesh: r.data.sha,
+      submeshes: p.submeshes,
+      t: p.position,
+      materials: p.materials.map((m) => ({
+        ...m,
+        texture: m.texture === null ? null : shaOfImage.get(m.texture),
+        emissive: m.emissive === null ? null : shaOfImage.get(m.emissive),
+      })),
     });
     progress(++done, total);
   }

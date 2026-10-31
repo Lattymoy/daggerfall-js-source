@@ -72,7 +72,7 @@ test('PVP-REWARD THE GOLD: a policy\'s gold is a coin pile; paid as coin where i
 test('PVP-REWARD THE HOST AND THE WORDS: no worn offer at my death; my collect says my free weight and a policy\'s gold is said as coin or a letter; the relay signs a fall after a short wait, the body window\'s pinned equal (mutants: the offer back; the weight unsaid)', () => {
   const w = rd('src/scenes/world.js'), eh = rd('src/scenes/wildEscrowHost.js');
   assert.ok(!w.includes('wildFight.offerWorn('), 'no worn offer');
-  assert.ok(eh.includes('free: entityMaxEncumbrance(playerEntity) - carriedWeight(playerEntity) }'), 'my free weight');
+  assert.ok(eh.includes('free: entityMaxEncumbrance(playerEntity) - carriedWeight(playerEntity),\n          }'), 'my free weight');
   assert.ok(eh.includes('if (isGoldPieces(item)) addGoldPieces(playerEntity, item.stackCount ?? 1);'), 'coin into the purse');
   assert.equal(WILD_TEXT.policyGold(1200), 'All their gear was insured. You take 1,200 gold from one policy.');
   assert.equal(WILD_TEXT.policyLetter(1200), 'All their gear was insured. The coin was too heavy, so you take a letter of credit for 1,200 gold.');

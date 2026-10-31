@@ -11,8 +11,8 @@
   {
     "name": "DSIZE1-unseeded",
     "file": "src/world/smallerDungeons.js",
-    "old": "  setSeed(dfLocation.mapTableData.mapId);\n  const layout = rows.map(",
-    "new": "  const layout = rows.map(",
+    "old": "  setSeed(dfLocation.mapTableData.mapId);\n  const layout = rows.map(([x, z, border], i) => generateRdbBlock(x, z, border, i === 0, dfLocation));",
+    "new": "  const layout = rows.map(([x, z, border], i) => generateRdbBlock(x, z, border, i === 0, dfLocation));",
     "tests": [
       "test/systems/quest/dsize1_mediumdungeons.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DSIZE1-the-ring-from-the-interior-pool",
     "file": "src/world/smallerDungeons.js",
-    "old": "const layout = rows.map(([x, z, border], i) => generateRdbBlock(x, z, border, i === 0, dfLocation));",
-    "new": "const layout = rows.map(([x, z], i) => generateRdbBlock(x, z, false, i === 0, dfLocation));",
+    "old": "  const layout = rows.map(([x, z, border], i) => generateRdbBlock(x, z, border, i === 0, dfLocation));",
+    "new": "  const layout = rows.map(([x, z], i) => generateRdbBlock(x, z, false, i === 0, dfLocation));",
     "tests": [
       "test/systems/quest/dsize1_mediumdungeons.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DSIZE1-no-start",
     "file": "src/world/smallerDungeons.js",
-    "old": "generateRdbBlock(x, z, border, i === 0, dfLocation));",
-    "new": "generateRdbBlock(x, z, border, false, dfLocation));",
+    "old": "  const layout = rows.map(([x, z, border], i) => generateRdbBlock(x, z, border, i === 0, dfLocation));",
+    "new": "  const layout = rows.map(([x, z, border], i) => generateRdbBlock(x, z, border, false, dfLocation));",
     "tests": [
       "test/systems/quest/dsize1_mediumdungeons.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DSIZE1-the-ring-open",
     "file": "src/world/smallerDungeons.js",
-    "old": "[0, -1, true], [1, -1, true], [-1, 0, true], [2, 0, true],",
-    "new": "[0, -2, true], [1, -1, true], [-1, 0, true], [2, 0, true],",
+    "old": "    [1, 0, false],\n    [0, -1, true],",
+    "new": "    [1, 0, false],\n    [0, -2, true],",
     "tests": [
       "test/systems/quest/dsize1_mediumdungeons.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "DSIZE1-medium-beats-small",
     "file": "src/world/smallerDungeons.js",
-    "old": "  if (setting) return 'small';\n  if (world) return onlineDungeonSize(dfLocation);   // SD-ONLINE: offline, the world's sizes asked for\n  return medium ? 'medium' : 'full';",
-    "new": "  if (medium) return 'medium';\n  if (setting) return 'small';\n  if (world) return onlineDungeonSize(dfLocation);   // SD-ONLINE: offline, the world's sizes asked for\n  return 'full';",
+    "old": "  if (setting) return 'small';\n  if (world) return onlineDungeonSize(dfLocation); // SD-ONLINE: offline, the world's sizes asked for\n  return medium ? 'medium' : 'full';",
+    "new": "  if (medium) return 'medium';\n  if (setting) return 'small';\n  if (world) return onlineDungeonSize(dfLocation); // SD-ONLINE: offline, the world's sizes asked for\n  return 'full';",
     "tests": [
       "test/systems/quest/dsize1_mediumdungeons.test.js"
     ],
@@ -57,8 +57,8 @@
   {
     "name": "DSIZE1-the-quest-frozen-medium-ignored",
     "file": "src/world/smallerDungeons.js",
-    "old": "    if (quest && quest.smallerDungeonsState === MEDIUM_DUNGEONS_STATE) return 'medium';   // DSIZE1\n",
-    "new": "",
+    "old": "    if (quest && quest.smallerDungeonsState === MEDIUM_DUNGEONS_STATE) return 'medium'; // DSIZE1\n    if (quest && quest.smallerDungeonsState === ONLINE_DUNGEONS_STATE) return onlineDungeonSize(dfLocation); // SD-ONLINE: the world's, as its markers know it",
+    "new": "    if (quest && quest.smallerDungeonsState === ONLINE_DUNGEONS_STATE) return onlineDungeonSize(dfLocation); // SD-ONLINE: the world's, as its markers know it",
     "tests": [
       "test/systems/quest/dsize1_mediumdungeons.test.js"
     ]
@@ -86,8 +86,8 @@
   {
     "name": "DSIZE1-the-save-stamped-full",
     "file": "src/world/smallerDungeons.js",
-    "old": "  if (isMediumDungeon(dfLocation)) return dfLocation.dungeon.distinct === true ? MEDIUM_DISTINCT_STAMP : MEDIUM_DUNGEONS_STATE;\n",
-    "new": "",
+    "old": "  if (isMediumDungeon(dfLocation))\n    return dfLocation.dungeon.distinct === true ? MEDIUM_DISTINCT_STAMP : MEDIUM_DUNGEONS_STATE;\n  return isSmallerDungeon(dfLocation) ? SMALLER_DUNGEONS_STATE.Enabled : SMALLER_DUNGEONS_STATE.Disabled;",
+    "new": "  return isSmallerDungeon(dfLocation) ? SMALLER_DUNGEONS_STATE.Enabled : SMALLER_DUNGEONS_STATE.Disabled;",
     "tests": [
       "test/systems/quest/dsize1_mediumdungeons.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "DSIZE1-the-door-builds-small",
     "file": "src/world/smallerDungeons.js",
-    "old": "size === 'medium' ? generateMediumDungeon(dfLocation) : dfLocation;\n  // DELVE II",
-    "new": "size === 'medium' ? generateSmallerDungeon(dfLocation) : dfLocation;\n  // DELVE II",
+    "old": "        ? generateMediumDungeon(dfLocation)",
+    "new": "        ? generateSmallerDungeon(dfLocation)",
     "tests": [
       "test/systems/quest/dsize1_mediumdungeons.test.js"
     ]
@@ -150,8 +150,8 @@
   {
     "name": "AUDIT-DELVE-A6-a-medium-quest-refuses-the-setting",
     "file": "src/world/smallerDungeons.js",
-    "old": "    if (quest && quest.smallerDungeonsState === SMALLER_DUNGEONS_STATE.Disabled) return false;\n  }\n  return setting;",
-    "new": "    if (quest && quest.smallerDungeonsState !== SMALLER_DUNGEONS_STATE.Enabled) return false;\n  }\n  return setting;",
+    "old": "    if (quest && quest.smallerDungeonsState === SMALLER_DUNGEONS_STATE.Disabled) return false;",
+    "new": "    if (quest && quest.smallerDungeonsState !== SMALLER_DUNGEONS_STATE.Enabled) return false;",
     "tests": [
       "test/systems/quest/dsize1_mediumdungeons.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "AUDIT-DELVE-E4-online-stamped-by-the-setting",
     "file": "src/world/smallerDungeons.js",
-    "old": "  if (online) return SMALLER_DUNGEONS_STATE.Disabled;\n  if (enabled)",
-    "new": "  if (enabled)",
+    "old": "  if (online) return SMALLER_DUNGEONS_STATE.Disabled;\n  if (enabled) return SMALLER_DUNGEONS_STATE.Enabled;",
+    "new": "  if (enabled) return SMALLER_DUNGEONS_STATE.Enabled;",
     "tests": [
       "test/systems/quest/dsize1_mediumdungeons.test.js"
     ],
@@ -169,8 +169,8 @@
   {
     "name": "AUDIT-DELVE-E5-DFU-pair-adopted",
     "file": "src/world/smallerDungeons.js",
-    "old": "    if (!portSize(held) && !portSize(quest.smallerDungeonsState)) continue;\n",
-    "new": "",
+    "old": "    if (!portSize(held) && !portSize(quest.smallerDungeonsState)) continue;\n    quest.smallerDungeonsState = held;",
+    "new": "    quest.smallerDungeonsState = held;",
     "tests": [
       "test/systems/quest/dsize1_mediumdungeons.test.js"
     ],
@@ -188,8 +188,8 @@
   {
     "name": "AUDIT-DELVE-E1-agreeing-markers-relaid",
     "file": "src/systems/quest/questRepair.js",
-    "old": "    if (markerAddresses(markers.questSpawnMarkers) === markerAddresses(sd.questSpawnMarkers)\n      && markerAddresses(markers.questItemMarkers) === markerAddresses(sd.questItemMarkers)) continue;\n",
-    "new": "",
+    "old": "    if (\n      markerAddresses(markers.questSpawnMarkers) === markerAddresses(sd.questSpawnMarkers) &&\n      markerAddresses(markers.questItemMarkers) === markerAddresses(sd.questItemMarkers)\n    )\n      continue;\n    r.siteDetails = {",
+    "new": "    r.siteDetails = {",
     "tests": [
       "test/systems/quest/dsize1_mediumdungeons.test.js"
     ]
@@ -216,8 +216,8 @@
   {
     "name": "SD-ONLINE-E1-a-world-sized-quest-relaid",
     "file": "src/systems/quest/questRepair.js",
-    "old": "  if (!quest || quest.smallerDungeonsState === SMALLER_DUNGEONS_STATE.Disabled) return false;",
-    "new": "  if (!quest) return false;",
+    "old": "  if (!quest || quest.smallerDungeonsState === SMALLER_DUNGEONS_STATE.Disabled) return false; // INSTANCES: the whole dungeon's, as its markers know it",
+    "new": "  if (!quest) return false; // INSTANCES: the whole dungeon's, as its markers know it",
     "tests": [
       "test/systems/quest/dsize1_mediumdungeons.test.js"
     ],
@@ -245,7 +245,7 @@
   {
     "name": "SD-ONLINE-E1-an-unread-dungeon-restamped",
     "file": "src/systems/quest/questRepair.js",
-    "old": "    if (!location?.dungeon?.blocks) { unread = true; continue; }",
+    "old": "    if (!location?.dungeon?.blocks) {\n      unread = true;\n      continue;\n    }",
     "new": "    if (!location?.dungeon?.blocks) continue;",
     "tests": [
       "test/systems/quest/dsize1_mediumdungeons.test.js"

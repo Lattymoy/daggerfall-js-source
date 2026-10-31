@@ -97,11 +97,11 @@
 import { WEAPON_MATERIALS, WEAPONS } from '../characters/weapons.js';
 import { THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE } from '../characters/thunderlockIds.js';
 import { createThunderlock } from './thunderlock.js';
-import { createPistolet } from './pistolet.js';   // PISTOLET: the Sunken Sovereign's pistolet era's mint
-import { createWeapon } from '../combat/enemyEquipment.js';   // GILDED2: a DFU weapon's own mint (CreateWeapon)
+import { createPistolet } from './pistolet.js'; // PISTOLET: the Sunken Sovereign's pistolet era's mint
+import { createWeapon } from '../combat/enemyEquipment.js'; // GILDED2: a DFU weapon's own mint (CreateWeapon)
 import { itemBaseValue } from './item/itemTemplates.js';
 import { affixesWorth, validAffix, registerGildedRecords } from './loot/lootRarity.js';
-import { makerLaid } from './enchanting.js';   // GILDED-MAKER: the item maker's own rows, the one kind a Gilded piece carries
+import { makerLaid } from './enchanting.js'; // GILDED-MAKER: the item maker's own rows, the one kind a Gilded piece carries
 import { SKILLS } from './skills.js';
 
 /** The tier's id, as `item.rarity` wears it. */
@@ -125,8 +125,12 @@ export const KETCH_GILDED_CHANCE = 1 / 100;
  *  strikes `pct`% harder; `refund`: a foe it fells gives its shot back (GUNS-UNFOUND: an arrow off the bow, a pellet off
  *  the gun era's). Read once at import, frozen. */
 export const HOUR_TOLLS = Object.freeze({
-  name: 'The Hour Tolls', kind: 'toll', every: 3, pct: 100, refund: true,
-  brief: 'Every 3rd hit x2; kills refund',   // inside the card's row (sigilSets.js BRIEF_MAX)
+  name: 'The Hour Tolls',
+  kind: 'toll',
+  every: 3,
+  pct: 100,
+  refund: true,
+  brief: 'Every 3rd hit x2; kills refund', // inside the card's row (sigilSets.js BRIEF_MAX)
   text: 'Every third shot that lands tolls the Hour and deals double damage. A kill returns the shot',
 });
 
@@ -137,8 +141,12 @@ export const HOUR_TOLLS = Object.freeze({
  *  as Open Hand's second blow is (playerDoor.js oweFoe); the burst on the others reaches only the foes the world runs.
  *  Read once at import, frozen. */
 export const DRAGONFIRE = Object.freeze({
-  name: 'Dragonfire', kind: 'dragonfire', group: 'daedra', share: 33, metres: 3,
-  brief: 'Daedra burn +33%, and all in 3m',   // inside the card's row (sigilSets.js BRIEF_MAX)
+  name: 'Dragonfire',
+  kind: 'dragonfire',
+  group: 'daedra',
+  share: 33,
+  metres: 3,
+  brief: 'Daedra burn +33%, and all in 3m', // inside the card's row (sigilSets.js BRIEF_MAX)
   text: 'Each hit on a Daedra burns it with Dragonfire for a third of the damage, and burns every other Daedra within 3 m for the same. No Daedra resists it',
 });
 /** GILDED2: UNDERTOW - the Sunken Sovereign's power (systems/loot/lootPowers.js, kind 'undertow'). Each of its blows that LANDS on
@@ -147,8 +155,13 @@ export const DRAGONFIRE = Object.freeze({
  *  crystal of the next Reckoning, kept its stacks for good); a foe it fells gives `heal`% of my health back. Read once at
  *  import, frozen. */
 export const UNDERTOW = Object.freeze({
-  name: 'Undertow', kind: 'undertow', pct: 10, max: 5, seconds: 6, heal: 10,
-  brief: '+10%/hit on a foe; kills heal',   // inside the card's row (sigilSets.js BRIEF_MAX)
+  name: 'Undertow',
+  kind: 'undertow',
+  pct: 10,
+  max: 5,
+  seconds: 6,
+  heal: 10,
+  brief: '+10%/hit on a foe; kills heal', // inside the card's row (sigilSets.js BRIEF_MAX)
   text: 'Each hit drags the foe deeper: +10% damage to your next hits on it for 6 s, up to +50%. A kill heals you for 10% of your health',
 });
 
@@ -157,8 +170,11 @@ export const UNDERTOW = Object.freeze({
  *  tuned to the Hammer's flight, struck again where it falls. Earthshaker's reach (a melee blow's) on a shot, in the shot's
  *  own element. Read once at import, frozen. */
 export const HAMMERFALL = Object.freeze({
-  name: 'Hammerfall', kind: 'hammerfall', share: 50, metres: 3.5,
-  brief: 'Hits ring 50% shock within 3.5m',   // inside the card's row (sigilSets.js BRIEF_MAX)
+  name: 'Hammerfall',
+  kind: 'hammerfall',
+  share: 50,
+  metres: 3.5,
+  brief: 'Hits ring 50% shock within 3.5m', // inside the card's row (sigilSets.js BRIEF_MAX)
   text: 'Each shot that lands rings on: every other foe within 3.5 m of the one it struck takes half the shot as shock',
 });
 /** KETCH: BROADSIDE - the Ketchmaster's Word's power (systems/loot/lootPowers.js, kind 'broadside'). A shot of it that LANDS
@@ -166,8 +182,11 @@ export const HAMMERFALL = Object.freeze({
  *  `pct`% harder, and the mark is spent. The Ketch's boarding drill: one pistol calls the mark, the other answers. Read
  *  once at import, frozen. */
 export const BROADSIDE = Object.freeze({
-  name: 'Broadside', kind: 'broadside', pct: 60, seconds: 2.5,
-  brief: 'Hit marks: other hand +60% on it',   // inside the card's row (sigilSets.js BRIEF_MAX)
+  name: 'Broadside',
+  kind: 'broadside',
+  pct: 60,
+  seconds: 2.5,
+  brief: 'Hit marks: other hand +60% on it', // inside the card's row (sigilSets.js BRIEF_MAX)
   text: 'Each shot that lands marks the foe for 2.5 s: the next blow of your other hand on it strikes 60% harder',
 });
 
@@ -235,8 +254,8 @@ export const SUNKEN_SOVEREIGN = Object.freeze({
     line('leech', 10),
   ]),
   power: UNDERTOW,
-  lore: 'A Sentinel admiral\'s saber, swallowed with her flagship off Stros M\'kai. The Old Coil gave back only the blade, and the sea never touched its gilding.',
-  hint: 'Said to lie in the Old Coil\'s belly, once in a long while',
+  lore: "A Sentinel admiral's saber, swallowed with her flagship off Stros M'kai. The Old Coil gave back only the blade, and the sea never touched its gilding.",
+  hint: "Said to lie in the Old Coil's belly, once in a long while",
 });
 
 /** THE SOVEREIGN'S PISTOLET ERA (GUNS-UNFOUND; AUDIT PISTOLET A7, C1, D8 named the shape, as the saber era). PISTOLET
@@ -248,8 +267,10 @@ export const SUNKEN_SOVEREIGN = Object.freeze({
 export const SOVEREIGN_PISTOLET_ERA = Object.freeze({
   ...SUNKEN_SOVEREIGN,
   templateIndex: PISTOLET_TEMPLATE,
-  affixes: Object.freeze(SUNKEN_SOVEREIGN.affixes.map((a) => (a.id === 'skill' ? Object.freeze({ ...a, param: SKILLS.Archery }) : a))),
-  lore: 'A Sentinel admiral\'s pistolet, swallowed with her flagship off Stros M\'kai. The Old Coil gave back only the pistol, and the sea never touched its gilding, nor stilled its coil.',
+  affixes: Object.freeze(
+    SUNKEN_SOVEREIGN.affixes.map((a) => (a.id === 'skill' ? Object.freeze({ ...a, param: SKILLS.Archery }) : a)),
+  ),
+  lore: "A Sentinel admiral's pistolet, swallowed with her flagship off Stros M'kai. The Old Coil gave back only the pistol, and the sea never touched its gilding, nor stilled its coil.",
 });
 
 /** KETCH (2026-10-24): VOLENDRUNG'S ECHO - a Gilded Dwarven Thunderlock, the Tonal Warden's (bible/11-Multiplayer/
@@ -258,7 +279,7 @@ export const SOVEREIGN_PISTOLET_ERA = Object.freeze({
  *  the Hourlock's own as a gun (+40% damage, +15 Agility, +30 Archery, +10 shock a shot); its power HAMMERFALL. */
 export const VOLENDRUNGS_ECHO = Object.freeze({
   id: 'volendrungs-echo',
-  name: 'Volendrung\'s Echo',
+  name: "Volendrung's Echo",
   group: 'Weapons',
   templateIndex: THUNDERLOCK_TEMPLATE,
   material: WEAPON_MATERIALS.Dwarven,
@@ -269,7 +290,7 @@ export const VOLENDRUNGS_ECHO = Object.freeze({
     line('elemental', 10, 'shock'),
   ]),
   power: HAMMERFALL,
-  lore: 'The Rourken threw Volendrung out of Morrowind and built where it fell. Their gunwrights tuned this one to the note the Hammer sang in its flight, and gilded it for the steersman they bound to the ship\'s helm. Every shot still carries the echo.',
+  lore: "The Rourken threw Volendrung out of Morrowind and built where it fell. Their gunwrights tuned this one to the note the Hammer sang in its flight, and gilded it for the steersman they bound to the ship's helm. Every shot still carries the echo.",
   hint: 'Said to ride the Dwarven airship over Daggerfall, once in a long while',
 });
 /** KETCH (2026-10-24): THE KETCHMASTER'S WORD - a Gilded Dwarven Pistolet, the Tonal Warden's. The Mzunthar's master carried
@@ -278,7 +299,7 @@ export const VOLENDRUNGS_ECHO = Object.freeze({
  *  BROADSIDE - which a second pistol, or a blade, in the other hand answers. */
 export const KETCHMASTERS_WORD = Object.freeze({
   id: 'the-ketchmasters-word',
-  name: 'The Ketchmaster\'s Word',
+  name: "The Ketchmaster's Word",
   group: 'Weapons',
   templateIndex: PISTOLET_TEMPLATE,
   material: WEAPON_MATERIALS.Dwarven,
@@ -289,14 +310,20 @@ export const KETCHMASTERS_WORD = Object.freeze({
     line('elemental', 10, 'shock'),
   ]),
   power: BROADSIDE,
-  lore: 'The Mzunthar\'s master carried it on the day the Dwemer vanished, and gave the last order with it. Its coil has never wound down.',
+  lore: "The Mzunthar's master carried it on the day the Dwemer vanished, and gave the last order with it. Its coil has never wound down.",
   hint: 'Said to ride the Dwarven airship over Daggerfall, once in a long while',
 });
 
 /** EVERY GILDED RECORD - the Hourlock, then (GILDED2) the gate's and the serpent's, then (KETCH) the airship's two guns; the
  *  one list every reader asks. */
 /** @type {readonly GildedRecord[]} */
-export const GILDED_RECORDS = Object.freeze([HOURLOCK, DRAGONFIRE_OATH, SUNKEN_SOVEREIGN, VOLENDRUNGS_ECHO, KETCHMASTERS_WORD]);
+export const GILDED_RECORDS = Object.freeze([
+  HOURLOCK,
+  DRAGONFIRE_OATH,
+  SUNKEN_SOVEREIGN,
+  VOLENDRUNGS_ECHO,
+  KETCHMASTERS_WORD,
+]);
 export const gildedById = (id) => GILDED_RECORDS.find((r) => r.id === id) ?? null;
 /** GUNS-UNFOUND: the eras a record's id was minted under before its record moved - each lawful as minted, none minted now. */
 export const GILDED_ERAS = Object.freeze([HOURLOCK_GUN_ERA, SOVEREIGN_PISTOLET_ERA]);
@@ -309,7 +336,10 @@ export function gildedRecordOf(item) {
 /** Is this a Gilded piece (its tier's own field)? */
 export const isGilded = (item) => item?.rarity === GILDED;
 // the ladder reads a Gilded piece's power and lore through these (it imports nothing of this file - this file imports it)
-registerGildedRecords({ powerOf: (id) => gildedById(id)?.power ?? null, loreOf: (item) => gildedRecordOf(item)?.lore ?? null });   // AUDIT PISTOLET, GUNS-UNFOUND: an era's piece reads its own lore
+registerGildedRecords({
+  powerOf: (id) => gildedById(id)?.power ?? null,
+  loreOf: (item) => gildedRecordOf(item)?.lore ?? null,
+}); // AUDIT PISTOLET, GUNS-UNFOUND: an era's piece reads its own lore
 
 /** @typedef {{ id: string, name: string, group: string, templateIndex: number, material: number, affixes: readonly any[], power: any, lore: string, hint?: string }} GildedRecord */
 /**
@@ -320,9 +350,12 @@ registerGildedRecords({ powerOf: (id) => gildedById(id)?.power ?? null, loreOf: 
  * @param {GildedRecord} r
  */
 export function mintGilded(r) {
-  const item = r.templateIndex === THUNDERLOCK_TEMPLATE ? createThunderlock({ material: r.material })
-    : r.templateIndex === PISTOLET_TEMPLATE ? createPistolet({ material: r.material })   // PISTOLET: the Sunken Sovereign's pistolet era; KETCH: the Ketchmaster's Word
-    : createWeapon(r.templateIndex, r.material);
+  const item =
+    r.templateIndex === THUNDERLOCK_TEMPLATE
+      ? createThunderlock({ material: r.material })
+      : r.templateIndex === PISTOLET_TEMPLATE
+        ? createPistolet({ material: r.material }) // PISTOLET: the Sunken Sovereign's pistolet era; KETCH: the Ketchmaster's Word
+        : createWeapon(r.templateIndex, r.material);
   const affixes = r.affixes.filter(validAffix).map((a) => ({ ...a }));
   item.name = r.name;
   item.rarity = GILDED;
@@ -358,7 +391,19 @@ export function rollKetchGilded(rolls = Math.random) {
 /** The fields a static roll keeps off itself: every mark another door lays on a piece (a sigil, a Legendary's or an
  *  Aetheric's record, the Reforge's line, imprint, hones and socket, a curse, an Exalted's line) - each would make it
  *  something its record is not. */
-const NEVER_ON_GILDED = Object.freeze(['sigil', 'legendary', 'aetheric', 'imprint', 'cursed', 'socket', 'sockets', 'reforged', 'reforges', 'honed', 'exalted']);   // GEM1: nor a socket list; REFORGE-REPLACE: nor the Reforge's count
+const NEVER_ON_GILDED = Object.freeze([
+  'sigil',
+  'legendary',
+  'aetheric',
+  'imprint',
+  'cursed',
+  'socket',
+  'sockets',
+  'reforged',
+  'reforges',
+  'honed',
+  'exalted',
+]); // GEM1: nor a socket list; REFORGE-REPLACE: nor the Reforge's count
 
 /**
  * THE MARKS AGREE WITH THE ITEM (the wire's check - systems/loot/loot.js validLootItem, beside the Aetheric's validSetMarks):
@@ -371,15 +416,28 @@ const NEVER_ON_GILDED = Object.freeze(['sigil', 'legendary', 'aetheric', 'imprin
 export function validGildedMarks(item) {
   if (!item || typeof item !== 'object') return null;
   if (item.rarity !== GILDED && item.gilded == null) return item;
-  const r = gildedRecordOf(item);   // AUDIT PISTOLET, GUNS-UNFOUND: the record it was minted to - an era's for an old gun
-  if (!r || item.rarity !== GILDED || r.group !== item.group || r.templateIndex !== item.templateIndex || item.material !== r.material) return null;
-  const want = r.affixes, have = Array.isArray(item.affixes) ? item.affixes : [];
+  const r = gildedRecordOf(item); // AUDIT PISTOLET, GUNS-UNFOUND: the record it was minted to - an era's for an old gun
+  if (
+    !r ||
+    item.rarity !== GILDED ||
+    r.group !== item.group ||
+    r.templateIndex !== item.templateIndex ||
+    item.material !== r.material
+  )
+    return null;
+  const want = r.affixes,
+    have = Array.isArray(item.affixes) ? item.affixes : [];
   if (have.length !== want.length) return null;
   for (let i = 0; i < want.length; i++) {
-    const a = have[i], w = want[i];
+    const a = have[i],
+      w = want[i];
     if (a?.id !== w.id || (a.param ?? null) !== (w.param ?? null) || a.value !== w.value) return null;
   }
   for (const k of NEVER_ON_GILDED) if (item[k] != null) return null;
-  if (item.customEnchantments?.length || (Array.isArray(item.enchantments) && item.enchantments.some((e) => !makerLaid(e)))) return null;
+  if (
+    item.customEnchantments?.length ||
+    (Array.isArray(item.enchantments) && item.enchantments.some((e) => !makerLaid(e)))
+  )
+    return null;
   return item;
 }

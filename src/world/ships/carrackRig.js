@@ -38,7 +38,16 @@
 import { MeshBench, prism, rope, box, add, scl, norm, lerp3 } from './galleonMesh.js';
 import { CARRACK_ARCHIVE, TEX, CARRACK_TILE } from './carrackArt.js';
 import { nodeOf, inArchive } from '../shipKit.js';
-import { rigBench, squareSailPose, yardGeometry, YARD_R, GRID, lateenBoomY, lateenSailPose, lateenSparsGeometry } from './galleonRig.js';
+import {
+  rigBench,
+  squareSailPose,
+  yardGeometry,
+  YARD_R,
+  GRID,
+  lateenBoomY,
+  lateenSailPose,
+  lateenSparsGeometry,
+} from './galleonRig.js';
 import { FIX_DEFORMATIONS_INTERVAL } from '../skinnedBake.js';
 
 /**
@@ -55,11 +64,19 @@ export const CARRACK_RIG = Object.freeze({
     main: Object.freeze({ z: 8.9293, top: 20.0783 }),
     mizzen: Object.freeze({ z: -1.279, top: 20.0783 }),
   }),
-  footY: 1.6016, footR: 0.8, headR: 0.5116,
-  deckY: 7.8082, railY: 8.6343, railCap: Object.freeze([5.807, 6.086]),
+  footY: 1.6016,
+  footR: 0.8,
+  headR: 0.5116,
+  deckY: 7.8082,
+  railY: 8.6343,
+  railCap: Object.freeze([5.807, 6.086]),
   bowsprit: Object.freeze({
-    heel: Object.freeze([0, 8.4136, 22.714]), end: Object.freeze([0, 10.818, 30.652]), heelR: 0.515, endR: 0.369,
-    underHeel: Object.freeze([0, 8.028, 22.872]), underEnd: Object.freeze([0, 10.531, 30.731]),
+    heel: Object.freeze([0, 8.4136, 22.714]),
+    end: Object.freeze([0, 10.818, 30.652]),
+    heelR: 0.515,
+    endR: 0.369,
+    underHeel: Object.freeze([0, 8.028, 22.872]),
+    underEnd: Object.freeze([0, 10.531, 30.731]),
   }),
   // her stem's leading edge, where the bobstay is set up (the bake's: 23.761 at y 2, 24.068 at 3)
   stem: Object.freeze([0, 2.2, 23.83]),
@@ -70,7 +87,7 @@ const MASTS = CARRACK_RIG.masts;
 /** A mast's corners' distance from its axis at height `y` (its taper, the bake's). */
 function mastRadius(mast, y) {
   const R = CARRACK_RIG;
-  return R.footR + (R.headR - R.footR) * (y - R.footY) / (MASTS[mast].top - R.footY);
+  return R.footR + ((R.headR - R.footR) * (y - R.footY)) / (MASTS[mast].top - R.footY);
 }
 /** A point on a mast's side face (`s` +1 starboard, -1 port) at height `y`: the face's middle (world/ships/galleonRig.js
  *  mastSideFace's - the masts are the galleon's pentagon). */
@@ -96,12 +113,75 @@ export function bowspritUnderAt(z) {
  * `footY` from its tack forward to its clew at `clewZ`.
  */
 export const SAILS = Object.freeze([
-  Object.freeze({ key: 'Spritsail', kind: 'square', size: 'Small', mast: 'bowsprit', z: 28.4, yardY: 9.35, drop: 3.0, headW: 6.0, footW: 7.0, yardSpan: 7.0, belly: 0.12, aback: 0.2 }),
-  Object.freeze({ key: 'ForeCourse', kind: 'square', size: 'Large', mast: 'fore', yardY: 15.5, drop: 4.55, headW: 10.2, footW: 11.4, yardSpan: 11.4, belly: 0.15, aback: 0.18 }),
-  Object.freeze({ key: 'MainCourse', kind: 'square', size: 'Large', mast: 'main', yardY: 15.2, drop: 3.75, headW: 10.4, footW: 11.2, yardSpan: 11.2, belly: 0.15, aback: 0.18 }),
-  Object.freeze({ key: 'MainTopsail', kind: 'square', size: '', mast: 'main', yardY: 18.9, drop: 3.25, headW: 7.6, footW: 9.4, yardSpan: 8.8, belly: 0.075, aback: 0.12 }),
-  Object.freeze({ key: 'Mizzen', kind: 'lateen', size: '', mast: 'mizzen', fore: Object.freeze([0, 12.55, 3.4]), aft: Object.freeze([0, 21.3, -10.3]), side: 0.85, footY: 12.4, clewZ: -9.6,
-    yardR: Object.freeze([0.19, 0.08]), throat: 1.2, peakIn: 0.4, belly: 1.1, pin: 2.0 }),
+  Object.freeze({
+    key: 'Spritsail',
+    kind: 'square',
+    size: 'Small',
+    mast: 'bowsprit',
+    z: 28.4,
+    yardY: 9.35,
+    drop: 3.0,
+    headW: 6.0,
+    footW: 7.0,
+    yardSpan: 7.0,
+    belly: 0.12,
+    aback: 0.2,
+  }),
+  Object.freeze({
+    key: 'ForeCourse',
+    kind: 'square',
+    size: 'Large',
+    mast: 'fore',
+    yardY: 15.5,
+    drop: 4.55,
+    headW: 10.2,
+    footW: 11.4,
+    yardSpan: 11.4,
+    belly: 0.15,
+    aback: 0.18,
+  }),
+  Object.freeze({
+    key: 'MainCourse',
+    kind: 'square',
+    size: 'Large',
+    mast: 'main',
+    yardY: 15.2,
+    drop: 3.75,
+    headW: 10.4,
+    footW: 11.2,
+    yardSpan: 11.2,
+    belly: 0.15,
+    aback: 0.18,
+  }),
+  Object.freeze({
+    key: 'MainTopsail',
+    kind: 'square',
+    size: '',
+    mast: 'main',
+    yardY: 18.9,
+    drop: 3.25,
+    headW: 7.6,
+    footW: 9.4,
+    yardSpan: 8.8,
+    belly: 0.075,
+    aback: 0.12,
+  }),
+  Object.freeze({
+    key: 'Mizzen',
+    kind: 'lateen',
+    size: '',
+    mast: 'mizzen',
+    fore: Object.freeze([0, 12.55, 3.4]),
+    aft: Object.freeze([0, 21.3, -10.3]),
+    side: 0.85,
+    footY: 12.4,
+    clewZ: -9.6,
+    yardR: Object.freeze([0.19, 0.08]),
+    throat: 1.2,
+    peakIn: 0.4,
+    belly: 1.1,
+    pin: 2.0,
+  }),
 ]);
 /** A sail's canvas grid (columns across, rows down): world/ships/galleonRig.js's - a square sail's the galleon's, the
  *  lateen's along its foot. */
@@ -110,7 +190,10 @@ export { GRID };
 const SAIL_CLIP_S = 1;
 /** Her skinned renderers' bakes (world/ships/galleonRig.js BAKE's law): her running rope every frame, each canvas on the
  *  mod's tenth of a second from its own timer - the k-th sail's k fifths of it. */
-const BAKE = Object.freeze({ rope: Object.freeze({ everyFrame: true }), canvasTimer: (k) => Math.fround(k * FIX_DEFORMATIONS_INTERVAL / SAILS.length) });
+const BAKE = Object.freeze({
+  rope: Object.freeze({ everyFrame: true }),
+  canvasTimer: (k) => Math.fround((k * FIX_DEFORMATIONS_INTERVAL) / SAILS.length),
+});
 
 /** How far before its mast's axis a square sail's yard hangs (its boom's frame z): the mast's radius at the yard and a
  *  yard's thickness with a hand's room - the spritsail's under its slings. */
@@ -129,7 +212,11 @@ function liftHead(sail) {
 // ── the lateen ──────────────────────────────────────────────────────────────────────────────────────────────────────
 
 /** Her mizzen as world/ships/galleonRig.js's lateen reads a mast: its axis, its head, its taper. */
-export const MIZZEN = Object.freeze({ z: MASTS.mizzen.z, top: MASTS.mizzen.top, radius: (y) => mastRadius('mizzen', y) });
+export const MIZZEN = Object.freeze({
+  z: MASTS.mizzen.z,
+  top: MASTS.mizzen.top,
+  radius: (y) => mastRadius('mizzen', y),
+});
 
 // ── the standing rope ───────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -143,9 +230,24 @@ export const MIZZEN = Object.freeze({ z: MASTS.mizzen.z, top: MASTS.mizzen.top, 
  * under 4.2).
  */
 const CHANNELS = Object.freeze({
-  fore: Object.freeze({ feet: Object.freeze([10.75, 11.4, 12.05]), headY: 16.1, inX: 6.1075, plateX: Object.freeze([6.1698, 6.1744, 6.179]) }),
-  main: Object.freeze({ feet: Object.freeze([1.2, 1.8, 2.4, 3.0]), headY: 19.3, inX: 6.0858, plateX: Object.freeze([6.1022, 6.1064, 6.1107, 6.1149]) }),
-  topY: 8.4, thick: 0.14, width: 0.52, deadeyeR: 0.11, deadeyeH: 0.22, chainDrop: 0.42,
+  fore: Object.freeze({
+    feet: Object.freeze([10.75, 11.4, 12.05]),
+    headY: 16.1,
+    inX: 6.1075,
+    plateX: Object.freeze([6.1698, 6.1744, 6.179]),
+  }),
+  main: Object.freeze({
+    feet: Object.freeze([1.2, 1.8, 2.4, 3.0]),
+    headY: 19.3,
+    inX: 6.0858,
+    plateX: Object.freeze([6.1022, 6.1064, 6.1107, 6.1149]),
+  }),
+  topY: 8.4,
+  thick: 0.14,
+  width: 0.52,
+  deadeyeR: 0.11,
+  deadeyeH: 0.22,
+  chainDrop: 0.42,
 });
 /** Where each shroud stands: its head on its mast's side face, its foot on the deadeye on its channel (the galleon's
  *  shroudLines' shape). */
@@ -157,7 +259,14 @@ function shroudLines() {
       const xd = C[mast].inX + C.width - C.deadeyeR;
       for (const [k, z] of C[mast].feet.entries()) {
         const deadeye = [s * xd, C.topY, z];
-        lines.push({ mast, side: s, head: mastSideFace(mast, C[mast].headY, s), foot: [s * xd, C.topY + C.deadeyeH, z], deadeye, plate: [s * C[mast].plateX[k], C.topY - C.thick - C.chainDrop, z] });
+        lines.push({
+          mast,
+          side: s,
+          head: mastSideFace(mast, C[mast].headY, s),
+          foot: [s * xd, C.topY + C.deadeyeH, z],
+          deadeye,
+          plate: [s * C[mast].plateX[k], C.topY - C.thick - C.chainDrop, z],
+        });
       }
     }
   }
@@ -167,14 +276,17 @@ function shroudLines() {
 function ratlineLines() {
   const out = [];
   const lines = shroudLines();
-  for (const mast of ['main', 'fore']) for (const s of [-1, 1]) {
-    const set = lines.filter((l) => l.mast === mast && l.side === s);
-    for (let k = 0; k + 1 < set.length; k++) {
-      const a = set[k], b = set[k + 1];
-      const at = (l, y) => lerp3(l.foot, l.head, (y - l.foot[1]) / (l.head[1] - l.foot[1]));
-      for (let y = 9.05; y < Math.min(a.head[1], b.head[1]) - 1.6; y += 0.42) out.push({ mast, side: s, a: at(a, y), b: at(b, y) });
+  for (const mast of ['main', 'fore'])
+    for (const s of [-1, 1]) {
+      const set = lines.filter((l) => l.mast === mast && l.side === s);
+      for (let k = 0; k + 1 < set.length; k++) {
+        const a = set[k],
+          b = set[k + 1];
+        const at = (l, y) => lerp3(l.foot, l.head, (y - l.foot[1]) / (l.head[1] - l.foot[1]));
+        for (let y = 9.05; y < Math.min(a.head[1], b.head[1]) - 1.6; y += 0.42)
+          out.push({ mast, side: s, a: at(a, y), b: at(b, y) });
+      }
     }
-  }
   return out;
 }
 /**
@@ -185,13 +297,25 @@ function ratlineLines() {
  * stem.
  */
 function stayLines() {
-  const foreHead = 16.6, mainHead = 19.9, mainFoot = 13.4, mizzenHead = 19.9, mizzenFoot = 14.1;
+  const foreHead = 16.6,
+    mainHead = 19.9,
+    mainFoot = 13.4,
+    mizzenHead = 19.9,
+    mizzenFoot = 14.1;
   const B = CARRACK_RIG.bowsprit;
-  const endTop = add(B.end, scl(norm([0, B.end[2] - B.heel[2], -(B.end[1] - B.heel[1])]), B.endR));   // its top corner
+  const endTop = add(B.end, scl(norm([0, B.end[2] - B.heel[2], -(B.end[1] - B.heel[1])]), B.endR)); // its top corner
   return {
     forestay: { head: [0, foreHead, MASTS.fore.z + mastRadius('fore', foreHead)], foot: endTop, r: 0.045 },
-    mainstay: { head: [0, mainHead, MASTS.main.z + mastRadius('main', mainHead)], foot: [0, mainFoot, MASTS.fore.z - 0.809 * mastRadius('fore', mainFoot)], r: 0.05 },
-    mizzenstay: { head: [0, mizzenHead, MASTS.mizzen.z + mastRadius('mizzen', mizzenHead)], foot: [0, mizzenFoot, MASTS.main.z - 0.809 * mastRadius('main', mizzenFoot)], r: 0.04 },
+    mainstay: {
+      head: [0, mainHead, MASTS.main.z + mastRadius('main', mainHead)],
+      foot: [0, mainFoot, MASTS.fore.z - 0.809 * mastRadius('fore', mainFoot)],
+      r: 0.05,
+    },
+    mizzenstay: {
+      head: [0, mizzenHead, MASTS.mizzen.z + mastRadius('mizzen', mizzenHead)],
+      foot: [0, mizzenFoot, MASTS.main.z - 0.809 * mastRadius('main', mizzenFoot)],
+      r: 0.04,
+    },
     bobstay: { head: bowspritUnderAt(27.0), foot: [...CARRACK_RIG.stem], r: 0.04 },
   };
 }
@@ -199,7 +323,8 @@ function stayLines() {
 /** Her standing rigging, still in her frame, a mesh a piece (the galleon's AUDIT GN-R15): each mast's shrouds with their
  *  deadeyes, ratlines and channels, the stays and the bobstay, and the flagstaff over her main masthead. */
 function standingRiggingGeometry() {
-  const lines = shroudLines(), rungs = ratlineLines();
+  const lines = shroudLines(),
+    rungs = ratlineLines();
   const C = CHANNELS;
   const shrouds = (mast) => {
     const bench = new MeshBench(CARRACK_ARCHIVE);
@@ -209,16 +334,40 @@ function standingRiggingGeometry() {
       prism(bench, TEX.iron, add(l.deadeye, [0, 0.05, 0]), l.plate, 0.03, 0.03, 4);
     }
     for (const r of rungs.filter((q) => q.mast === mast)) rope(bench, TEX.rope, [r.a, r.b], 0.014, { sides: 3 });
-    const feet = C[mast].feet, z0 = Math.min(...feet) - 0.35, z1 = Math.max(...feet) + 0.35;
-    for (const s of [-1, 1]) box(bench, TEX.trim, [s * (C[mast].inX + C.width / 2), C.topY - C.thick / 2, (z0 + z1) / 2], [C.width / 2, C.thick / 2, (z1 - z0) / 2], { tile: CARRACK_TILE.trim });
+    const feet = C[mast].feet,
+      z0 = Math.min(...feet) - 0.35,
+      z1 = Math.max(...feet) + 0.35;
+    for (const s of [-1, 1])
+      box(
+        bench,
+        TEX.trim,
+        [s * (C[mast].inX + C.width / 2), C.topY - C.thick / 2, (z0 + z1) / 2],
+        [C.width / 2, C.thick / 2, (z1 - z0) / 2],
+        { tile: CARRACK_TILE.trim },
+      );
     return bench.finish();
   };
   const S = stayLines();
   const stays = new MeshBench(CARRACK_ARCHIVE);
-  for (const k of ['forestay', 'mainstay', 'mizzenstay', 'bobstay']) rope(stays, TEX.rope, [S[k].head, S[k].foot], S[k].r);
+  for (const k of ['forestay', 'mainstay', 'mizzenstay', 'bobstay'])
+    rope(stays, TEX.rope, [S[k].head, S[k].foot], S[k].r);
   const flagstaff = new MeshBench(CARRACK_ARCHIVE);
-  prism(flagstaff, TEX.spar, [0, MASTS.main.top - 0.05, MASTS.main.z], [0, CARRACK_RIG.flagY + 0.15, MASTS.main.z], 0.09, 0.05, 6, { smooth: true, tileV: 2 });
-  return { mainShrouds: shrouds('main'), foreShrouds: shrouds('fore'), stays: stays.finish(), flagstaff: flagstaff.finish() };
+  prism(
+    flagstaff,
+    TEX.spar,
+    [0, MASTS.main.top - 0.05, MASTS.main.z],
+    [0, CARRACK_RIG.flagY + 0.15, MASTS.main.z],
+    0.09,
+    0.05,
+    6,
+    { smooth: true, tileV: 2 },
+  );
+  return {
+    mainShrouds: shrouds('main'),
+    foreShrouds: shrouds('fore'),
+    stays: stays.finish(),
+    flagstaff: flagstaff.finish(),
+  };
 }
 
 /**
@@ -245,14 +394,24 @@ const BELAYS = Object.freeze({
  */
 export function buildCarrackRig(cx) {
   const kids = [];
-  const { clips, overrides, meshNode, sailNode, running } = rigBench(cx, { ship: 'carrack', clipPrefix: 'carrack2', timerOf: (key) => BAKE.canvasTimer(SAILS.findIndex((x) => x.key === key)) });
-  const own = (geometry) => inArchive(geometry, CARRACK_ARCHIVE);   // the galleon's builders' geometry, worn in her archive
+  const { clips, overrides, meshNode, sailNode, running } = rigBench(cx, {
+    ship: 'carrack',
+    clipPrefix: 'carrack2',
+    timerOf: (key) => BAKE.canvasTimer(SAILS.findIndex((x) => x.key === key)),
+  });
+  const own = (geometry) => inArchive(geometry, CARRACK_ARCHIVE); // the galleon's builders' geometry, worn in her archive
 
   // the yards and their square sails, each on its boom (the sail its first child: the auto-trim reads it)
   const squares = {};
   for (const s of SAILS.filter((x) => x.kind === 'square')) {
-    const d = yardOffset(s), mastR = s.mast === 'bowsprit' ? 0 : mastRadius(s.mast, s.yardY);
-    const poses = { stowed: squareSailPose(s, d, mastR, 'stowed'), left: squareSailPose(s, d, mastR, 'aback'), center: squareSailPose(s, d, mastR, 'center'), right: squareSailPose(s, d, mastR, 'full') };
+    const d = yardOffset(s),
+      mastR = s.mast === 'bowsprit' ? 0 : mastRadius(s.mast, s.yardY);
+    const poses = {
+      stowed: squareSailPose(s, d, mastR, 'stowed'),
+      left: squareSailPose(s, d, mastR, 'aback'),
+      center: squareSailPose(s, d, mastR, 'center'),
+      right: squareSailPose(s, d, mastR, 'full'),
+    };
     const { sail, bones } = sailNode(`${s.key}Square${s.size}Sail`, poses, GRID.square, 'Sail Controller', s.key);
     const yard = meshNode(`${s.key}Yard`, `carrack:yard:${s.key}`, own(yardGeometry(s.yardSpan, d, liftHead(s))));
     const armP = nodeOf(`${s.key}YardArmPort`, { p: [-(s.yardSpan / 2 - 0.2), 0, d] });
@@ -263,34 +422,72 @@ export function buildCarrackRig(cx) {
   }
   // the lateen on her mizzen
   const l = SAILS.find((x) => x.kind === 'lateen');
-  const lPoses = { stowed: lateenSailPose(l, MIZZEN, 'stowed'), left: lateenSailPose(l, MIZZEN, 'left'), center: lateenSailPose(l, MIZZEN, 'center'), right: lateenSailPose(l, MIZZEN, 'right') };
+  const lPoses = {
+    stowed: lateenSailPose(l, MIZZEN, 'stowed'),
+    left: lateenSailPose(l, MIZZEN, 'left'),
+    center: lateenSailPose(l, MIZZEN, 'center'),
+    right: lateenSailPose(l, MIZZEN, 'right'),
+  };
   const lSail = sailNode(`${l.key}Lateen${l.size}Sail`, lPoses, GRID.lateen, 'Sail Controller', l.key);
   const lSpars = meshNode(`${l.key}LateenYard`, 'carrack:lateen', lateenSparsGeometry(l, MIZZEN, CARRACK_ARCHIVE));
   kids.push(nodeOf(`${l.key}LateenBoom`, { p: [0, lateenBoomY(l, MIZZEN), MIZZEN.z], kids: [lSail.sail, lSpars] }));
 
   // the standing rigging
   const standing = standingRiggingGeometry();
-  for (const [name, key] of [['MainShrouds', 'mainShrouds'], ['ForeShrouds', 'foreShrouds'], ['Stays', 'stays'], ['Flagstaff', 'flagstaff']]) kids.push(meshNode(name, `carrack:rigging:${key}`, standing[key]));
+  for (const [name, key] of [
+    ['MainShrouds', 'mainShrouds'],
+    ['ForeShrouds', 'foreShrouds'],
+    ['Stays', 'stays'],
+    ['Flagstaff', 'flagstaff'],
+  ])
+    kids.push(meshNode(name, `carrack:rigging:${key}`, standing[key]));
 
   // the running rope: a bone on her rail for each rope's foot
-  const railBone = (name, p) => { const n = nodeOf(name, { p }); kids.push(n); return { bone: n, world: p }; };
+  const railBone = (name, p) => {
+    const n = nodeOf(name, { p });
+    kids.push(n);
+    return { bone: n, world: p };
+  };
   const local = (boom, child) => add(boom.position, child.position);
   const sided = (p, s) => [s * p[0], p[1], p[2]];
-  const braceTo = { Spritsail: BELAYS.spritBrace, ForeCourse: BELAYS.foreBrace, MainCourse: BELAYS.mainBrace, MainTopsail: BELAYS.mainTopBrace };
+  const braceTo = {
+    Spritsail: BELAYS.spritBrace,
+    ForeCourse: BELAYS.foreBrace,
+    MainCourse: BELAYS.mainBrace,
+    MainTopsail: BELAYS.mainTopBrace,
+  };
   for (const { s, boom, armP, armS } of Object.values(squares)) {
-    for (const [arm, side] of [[armP, -1], [armS, 1]]) {
+    for (const [arm, side] of [
+      [armP, -1],
+      [armS, 1],
+    ]) {
       const name = `${s.key}Brace${side > 0 ? 'Starboard' : 'Port'}`;
-      kids.push(running(name, { bone: arm, world: local(boom, arm) }, railBone(`${name}Belay`, sided(braceTo[s.key], side))));
+      kids.push(
+        running(name, { bone: arm, world: local(boom, arm) }, railBone(`${name}Belay`, sided(braceTo[s.key], side))),
+      );
     }
   }
   // the courses' sheets from their clews (each foot's corner bone) to her rail - under the sail itself, so a course struck
   // from sight takes them with it (the galleon's AUDIT GN2-RG2)
   const [NU, NV] = GRID.square;
-  for (const [key, belay] of [['ForeCourse', BELAYS.foreSheet], ['MainCourse', BELAYS.mainSheet]]) {
+  for (const [key, belay] of [
+    ['ForeCourse', BELAYS.foreSheet],
+    ['MainCourse', BELAYS.mainSheet],
+  ]) {
     const { boom, sail, bones } = squares[key];
-    for (const [k, side] of [[(NV - 1) * NU, -1], [NV * NU - 1, 1]]) {
+    for (const [k, side] of [
+      [(NV - 1) * NU, -1],
+      [NV * NU - 1, 1],
+    ]) {
       const name = `${key}Sheet${side > 0 ? 'Starboard' : 'Port'}`;
-      sail.children.push(running(name, { bone: bones[k], world: add(boom.position, bones[k].position) }, railBone(`${name}Belay`, sided(belay, side)), boom.position));
+      sail.children.push(
+        running(
+          name,
+          { bone: bones[k], world: add(boom.position, bones[k].position) },
+          railBone(`${name}Belay`, sided(belay, side)),
+          boom.position,
+        ),
+      );
     }
   }
   return { kids, clips, overrides };

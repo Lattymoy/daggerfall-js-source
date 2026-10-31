@@ -27,7 +27,10 @@ mkdirSync(OUT, { recursive: true });
 const PAGE_NAME = 'pistoletrig.tmp.html';
 const PAGE = `tools/${PAGE_NAME}`;
 const results = [];
-const check = (name, ok, detail = '') => { results.push(!!ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`); };
+const check = (name, ok, detail = '') => {
+  results.push(!!ok);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`);
+};
 
 const HTML = `<!doctype html><html><head><meta charset="utf-8"><title>pistolet rig probe</title>
 <style>html,body{margin:0;height:100%;overflow:hidden;background:#000}canvas{display:block;width:100vw;height:100vh}</style></head><body><canvas id="c"></canvas>
@@ -88,33 +91,55 @@ globalThis.__ready = true;
 
 const server = await createServer({ server: { port: 5194, strictPort: true }, logLevel: 'error' });
 await server.listen();
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
-page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+page.on('console', (m) => {
+  if (m.type() === 'error') errors.push(m.text());
+});
 try {
   await writeFile(PAGE, HTML);
   await page.goto(`http://localhost:5194/tools/${PAGE_NAME}`, { waitUntil: 'domcontentloaded', timeout: 600000 });
   await page.waitForFunction(() => globalThis.__ready, null, { timeout: 600000 });
   const st = () => page.evaluate(() => globalThis.__state());
-  const waitFrames = async (n) => { const f = (await st()).frames; await page.waitForFunction(([f0, k]) => globalThis.__state().frames > f0 + k, [f, n], { timeout: 120000 }); };
+  const waitFrames = async (n) => {
+    const f = (await st()).frames;
+    await page.waitForFunction(([f0, k]) => globalThis.__state().frames > f0 + k, [f, n], { timeout: 120000 });
+  };
   const waitIdle = () => page.waitForFunction(() => globalThis.__state().state === 'Idle', null, { timeout: 60000 });
 
   await page.evaluate(() => globalThis.__wear('pair'));
-  await waitFrames(40);   // the art loads, the draw slides in
+  await waitFrames(40); // the art loads, the draw slides in
   let s = await st();
-  check('a pair of Pistolets is a gun pair on the rig', s.mode === 'dual' && s.gunPair, `${s.mode}, gunPair ${s.gunPair}`);
+  check(
+    'a pair of Pistolets is a gun pair on the rig',
+    s.mode === 'dual' && s.gunPair,
+    `${s.mode}, gunPair ${s.gunPair}`,
+  );
   const rest = readPng(await page.screenshot({ path: `${OUT}/pair-rest.png` }));
   // THE MIRROR IS THE PICTURE'S: each forearm leaves through its own bottom corner - the right's at the right edge, the
   // left's at the LEFT (an unmirrored left pistol is a right hand moved across: its forearm ends mid-screen and the
   // corner is the room's)
-  const px = (x, y) => { const o = (y * rest.width + x) * 4; return [rest.data[o], rest.data[o + 1], rest.data[o + 2]]; };
+  const px = (x, y) => {
+    const o = (y * rest.width + x) * 4;
+    return [rest.data[o], rest.data[o + 1], rest.data[o + 2]];
+  };
   const room = px(640, 40);
   const isRoom = (c) => Math.abs(c[0] - room[0]) + Math.abs(c[1] - room[1]) + Math.abs(c[2] - room[2]) < 12;
-  const corner = (x0) => { let arm = 0; for (let y = rest.height - 30; y < rest.height; y++) for (let x = x0; x < x0 + 30; x++) if (!isRoom(px(x, y))) arm++; return arm; };
-  check('each forearm leaves its own bottom corner - the left pistol is the right in the mirror', corner(0) > 600 && corner(rest.width - 30) > 600,
-    `left corner ${corner(0)}/900 drawn, right ${corner(rest.width - 30)}/900`);
+  const corner = (x0) => {
+    let arm = 0;
+    for (let y = rest.height - 30; y < rest.height; y++)
+      for (let x = x0; x < x0 + 30; x++) if (!isRoom(px(x, y))) arm++;
+    return arm;
+  };
+  check(
+    'each forearm leaves its own bottom corner - the left pistol is the right in the mirror',
+    corner(0) > 600 && corner(rest.width - 30) > 600,
+    `left corner ${corner(0)}/900 drawn, right ${corner(rest.width - 30)}/900`,
+  );
   const p0 = s.pellets;
   await page.evaluate(() => globalThis.__fire());
   await waitFrames(2);
@@ -126,16 +151,31 @@ try {
   await page.evaluate(() => globalThis.__fire());
   await waitFrames(2);
   s = await st();
-  check('the next is the off hand’s - the left, loaded while the right reloads', s.strike?.hand === 'L' && s.strike?.off && !s.loadedR, `${s.strike?.hand}, R loaded ${s.loadedR}`);
+  check(
+    'the next is the off hand’s - the left, loaded while the right reloads',
+    s.strike?.hand === 'L' && s.strike?.off && !s.loadedR,
+    `${s.strike?.hand}, R loaded ${s.loadedR}`,
+  );
   await page.screenshot({ path: `${OUT}/shot-left.png` });
   const mL = s.muzzle;
-  check('each shot leaves its own pistol’s barrel', mR && mL && mR.right > 0 && mL.right < 0, `right ${mR?.right?.toFixed(3)}, left ${mL?.right?.toFixed(3)}`);
+  check(
+    'each shot leaves its own pistol’s barrel',
+    mR && mL && mR.right > 0 && mL.right < 0,
+    `right ${mR?.right?.toFixed(3)}, left ${mL?.right?.toFixed(3)}`,
+  );
   check('the fire clip is the Pistolet’s own', s.played.includes('pistolet:fire'), s.played.join(', '));
-  await waitIdle(); await waitFrames(10);
+  await waitIdle();
+  await waitFrames(10);
   await page.screenshot({ path: `${OUT}/reloading.png` });
-  await page.waitForFunction(() => globalThis.__state().loadedR && globalThis.__state().loadedL, null, { timeout: 60000 });
+  await page.waitForFunction(() => globalThis.__state().loadedR && globalThis.__state().loadedL, null, {
+    timeout: 60000,
+  });
   s = await st();
-  check('the clacks are each hand’s reload', s.played.some((k) => k === 'pistolet:open') && s.played.some((k) => k === 'pistolet:close'), s.played.join(', '));
+  check(
+    'the clacks are each hand’s reload',
+    s.played.some((k) => k === 'pistolet:open') && s.played.some((k) => k === 'pistolet:close'),
+    s.played.join(', '),
+  );
   // the Pellets are spent by the hosts' shot (the ranged lane), not by the rig - so here the count only must not move
   check('the rig itself spends nothing (the host’s ranged lane does)', s.pellets === p0, `${p0} -> ${s.pellets}`);
 
@@ -149,8 +189,11 @@ try {
   await page.screenshot({ path: `${OUT}/single.png` });
   check('no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
 } finally {
-  await browser.close(); await server.close();
-  await unlink(PAGE).catch(() => { /* gone */ });
+  await browser.close();
+  await server.close();
+  await unlink(PAGE).catch(() => {
+    /* gone */
+  });
 }
 console.log(`${results.filter(Boolean).length}/${results.length} ok - shots in ${OUT}/`);
 process.exit(results.every(Boolean) ? 0 : 1);

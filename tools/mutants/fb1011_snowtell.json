@@ -2,8 +2,8 @@
   {
     "name": "SNOW-TELL-a-the-settlement-unread",
     "file": "src/render/snowfallGlsl.js",
-    "old": "Math.max(0, u.depths[0], u.depths[1])",
-    "new": "Math.max(0, u.depths[0])",
+    "old": "export const snowSurfaceRise = (u) =>\n  Math.max(0, u.depths[0], u.depths[1]) + Math.max(0, u.limits[0]) + Math.max(0, u.radius[2]);",
+    "new": "export const snowSurfaceRise = (u) => Math.max(0, u.depths[0]) + Math.max(0, u.limits[0]) + Math.max(0, u.radius[2]);",
     "tests": [
       "test/render/fb1011_snowtell.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SNOW-TELL-b-the-berm-dropped",
     "file": "src/render/snowfallGlsl.js",
-    "old": "+ Math.max(0, u.limits[0]) +",
-    "new": "+ 0 +",
+    "old": "export const snowSurfaceRise = (u) =>\n  Math.max(0, u.depths[0], u.depths[1]) + Math.max(0, u.limits[0]) + Math.max(0, u.radius[2]);",
+    "new": "export const snowSurfaceRise = (u) => Math.max(0, u.depths[0], u.depths[1]) + 0 + Math.max(0, u.radius[2]);",
     "tests": [
       "test/render/fb1011_snowtell.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SNOW-TELL-c-the-offset-dropped",
     "file": "src/render/snowfallGlsl.js",
-    "old": "+ Math.max(0, u.radius[2]);",
-    "new": "+ 0;",
+    "old": "export const snowSurfaceRise = (u) =>\n  Math.max(0, u.depths[0], u.depths[1]) + Math.max(0, u.limits[0]) + Math.max(0, u.radius[2]);",
+    "new": "export const snowSurfaceRise = (u) => Math.max(0, u.depths[0], u.depths[1]) + Math.max(0, u.limits[0]) + 0;",
     "tests": [
       "test/render/fb1011_snowtell.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SNOW-TELL-e-the-pass-unlifted",
     "file": "src/render/foeTelegraph.js",
-    "old": "gl.uniform1f(U.uLift, telegraphLift(snowRise));",
-    "new": "gl.uniform1f(U.uLift, BLOW_LIFT);",
+    "old": "    gl.uniform1f(U.uLift, telegraphLift(snowRise)); // SNOW-TELL: over the deep snow, where the frame drew it",
+    "new": "    gl.uniform1f(U.uLift, BLOW_LIFT); // SNOW-TELL: over the deep snow, where the frame drew it",
     "tests": [
       "test/render/fb1011_snowtell.test.js"
     ]

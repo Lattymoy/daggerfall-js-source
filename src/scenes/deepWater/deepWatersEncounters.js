@@ -37,14 +37,32 @@
 
 import { TransientObjectTracker } from '../../world/deepWater/deepWaterTransients.js';
 import {
-  PassiveFishSchool, pickSpecies, resolveFishPosition, pickSchoolmatePosition, schoolRadius, scaledAttemptsPerPixel,
-  rangeInt, rangeFloat, MAX_PENDING_FISH_SPAWNS_PER_FRAME, MAX_LIVE_FISH_LIMIT,
+  PassiveFishSchool,
+  pickSpecies,
+  resolveFishPosition,
+  pickSchoolmatePosition,
+  schoolRadius,
+  scaledAttemptsPerPixel,
+  rangeInt,
+  rangeFloat,
+  MAX_PENDING_FISH_SPAWNS_PER_FRAME,
+  MAX_LIVE_FISH_LIMIT,
 } from '../../world/passiveFish.js';
 import { TILE_WORLD_SIZE } from '../../world/deepWater/deepWaterFloor.js';
 import {
-  resolveSpawnColumn, pickEnemyForDepth, pickEnemyPosition, pickTreasureGuardType, scaledEnemyAttemptsPerPixel, rollTreasureGuardCount,
-  pickRingDistance, isOutsideImmediateView, MAX_PENDING_ENEMY_SPAWNS_PER_FRAME, TREASURE_GUARD_DISTANCE, TREASURE_GUARD_BOSS_CHANCE,
-  TREASURE_GUARD_TEAM, SPAWN_VIEWPORT_MARGIN,
+  resolveSpawnColumn,
+  pickEnemyForDepth,
+  pickEnemyPosition,
+  pickTreasureGuardType,
+  scaledEnemyAttemptsPerPixel,
+  rollTreasureGuardCount,
+  pickRingDistance,
+  isOutsideImmediateView,
+  MAX_PENDING_ENEMY_SPAWNS_PER_FRAME,
+  TREASURE_GUARD_DISTANCE,
+  TREASURE_GUARD_BOSS_CHANCE,
+  TREASURE_GUARD_TEAM,
+  SPAWN_VIEWPORT_MARGIN,
 } from '../../world/underwater/underwaterEnemies.js';
 
 export const TICK_INTERVAL = 0.1;
@@ -82,7 +100,10 @@ export function createFishSpawner({ settings, spawnable, makeFish, pixelOrigin, 
   const cap = () => settings().maxLive;
 
   function clearAll() {
-    for (const g of groups.values()) { g.active = false; g.fish.clear(); }
+    for (const g of groups.values()) {
+      g.active = false;
+      g.fish.clear();
+    }
     groups.clear();
     pending.length = 0;
     liveCount = 0;
@@ -108,7 +129,10 @@ export function createFishSpawner({ settings, spawnable, makeFish, pixelOrigin, 
   /** SpawnSchool: the first at the point; the rest on the ring, while the live count allows. */
   function spawnSchool(f, first, species, size, liveCap, group) {
     const radius = schoolRadius(size);
-    const school = size > 1 ? new PassiveFishSchool(first.pos, radius, species.cruiseSpeedMultiplier, species.fleeSpeedMultiplier, f) : null;
+    const school =
+      size > 1
+        ? new PassiveFishSchool(first.pos, radius, species.cruiseSpeedMultiplier, species.fleeSpeedMultiplier, f)
+        : null;
     const placed = size > 1 ? [] : null;
     if (!reserve(group, first.pos, species, school, first.column)) return;
     placed?.push(first.pos);
@@ -120,8 +144,12 @@ export function createFishSpawner({ settings, spawnable, makeFish, pixelOrigin, 
   }
 
   return {
-    get liveCount() { return liveCount; },
-    get pendingCount() { return pending.length; },
+    get liveCount() {
+      return liveCount;
+    },
+    get pendingCount() {
+      return pending.length;
+    },
     groupOf: (key) => groups.get(key) ?? null,
     clearAll,
 
@@ -133,7 +161,10 @@ export function createFishSpawner({ settings, spawnable, makeFish, pixelOrigin, 
         const r = pending.shift();
         if (!r.group?.active) continue;
         const fish = makeFish({ pos: r.pos, species: r.species, school: r.school, column: r.column });
-        if (fish) { r.group.fish.add(fish); continue; }
+        if (fish) {
+          r.group.fish.add(fish);
+          continue;
+        }
         r.group.liveOrPending = Math.max(0, r.group.liveOrPending - 1);
         liveCount = Math.max(0, liveCount - 1);
       }
@@ -160,7 +191,12 @@ export function createFishSpawner({ settings, spawnable, makeFish, pixelOrigin, 
       if (budget.n <= 0 || !entry) return;
       let g = groups.get(key);
       if (!g) {
-        g = { fish: new TransientObjectTracker(), attemptsRemaining: scaledAttemptsPerPixel(settings().frequency), liveOrPending: 0, active: true };
+        g = {
+          fish: new TransientObjectTracker(),
+          attemptsRemaining: scaledAttemptsPerPixel(settings().frequency),
+          liveOrPending: 0,
+          active: true,
+        };
         groups.set(key, g);
       }
       if (g.attemptsRemaining <= 0) return;
@@ -168,7 +204,10 @@ export function createFishSpawner({ settings, spawnable, makeFish, pixelOrigin, 
       const origin = pixelOrigin(entry);
       const s = settings();
       while (budget.n > 0 && g.attemptsRemaining > 0) {
-        if (liveCount >= liveCap) { g.attemptsRemaining = 0; break; }
+        if (liveCount >= liveCap) {
+          g.attemptsRemaining = 0;
+          break;
+        }
         budget.n--;
         g.attemptsRemaining--;
         const x = origin[0] + f.roll() * TILE_WORLD_SIZE;
@@ -179,7 +218,10 @@ export function createFishSpawner({ settings, spawnable, makeFish, pixelOrigin, 
         const first = resolveFishPosition(f, x, z, species, s.waterDepth);
         if (!first) continue;
         const size = Math.min(rangeInt(species.minSchoolSize, species.maxSchoolSize + 1, f.roll), liveCap - liveCount);
-        if (size <= 0) { g.attemptsRemaining = 0; break; }
+        if (size <= 0) {
+          g.attemptsRemaining = 0;
+          break;
+        }
         spawnSchool(f, first, species, size, liveCap, g);
       }
     },
@@ -203,7 +245,18 @@ export function createFishSpawner({ settings, spawnable, makeFish, pixelOrigin, 
  * @param {?{spawner: any, canPopulate: () => boolean, attempts: number}} [deps.enemies]
  * @param {() => void} [deps.updateInventoryState] - PassiveFishResources.UpdateInventoryState
  */
-export function createEncounterPulse({ canRunHeavy, exteriorWaterContext, playerPosition, loadedPixels, isWaterPixel, pixelOrigin, keyOf, fish, enemies = null, updateInventoryState = () => {} }) {
+export function createEncounterPulse({
+  canRunHeavy,
+  exteriorWaterContext,
+  playerPosition,
+  loadedPixels,
+  isWaterPixel,
+  pixelOrigin,
+  keyOf,
+  fish,
+  enemies = null,
+  updateInventoryState = () => {},
+}) {
   let nextTickTime = 0;
   const disabledSince = { fish: -1, enemies: -1 };
   const keepKeys = new Set();
@@ -211,7 +264,12 @@ export function createEncounterPulse({ canRunHeavy, exteriorWaterContext, player
   const candidates = [];
   const pendingDestroys = [];
   /** @type {Array<[string, {spawner: any, canPopulate: () => boolean, attempts: number}]>} */
-  const lanes = /** @type {any} */ ([['fish', fish], ['enemies', enemies]].filter(([, l]) => l));
+  const lanes = /** @type {any} */ (
+    [
+      ['fish', fish],
+      ['enemies', enemies],
+    ].filter(([, l]) => l)
+  );
 
   /** Unity's `!= null`: there, and not destroyed. */
   const live = (o) => !!o && !o.destroyed?.();
@@ -256,15 +314,20 @@ export function createEncounterPulse({ canRunHeavy, exteriorWaterContext, player
       if (d > DESPAWN_RADIUS * DESPAWN_RADIUS) continue;
       const key = keyOf(e);
       keepKeys.add(key);
-      if (d <= POPULATE_RADIUS * POPULATE_RADIUS && isWaterPixel(e)) candidates.push({ entry: e, key, edgeDistanceSq: d });
+      if (d <= POPULATE_RADIUS * POPULATE_RADIUS && isWaterPixel(e))
+        candidates.push({ entry: e, key, edgeDistanceSq: d });
     }
     candidates.sort((a, b) => a.edgeDistanceSq - b.edgeDistanceSq);
   }
 
   return {
     queueDestroy,
-    get pendingDestroyCount() { return pendingDestroys.length; },
-    get keepKeys() { return keepKeys; },
+    get pendingDestroyCount() {
+      return pendingDestroys.length;
+    },
+    get keepKeys() {
+      return keepKeys;
+    },
 
     /** Pump. @param {import('../../world/passiveFish.js').FishFrame} f */
     pump(f) {
@@ -272,7 +335,10 @@ export function createEncounterPulse({ canRunHeavy, exteriorWaterContext, player
       for (const [, l] of lanes) l.spawner.pumpPendingSpawns();
       if (f.time < nextTickTime) return;
       nextTickTime = f.time + TICK_INTERVAL;
-      if (!canRunHeavy()) { clearEverything(); return; }
+      if (!canRunHeavy()) {
+        clearEverything();
+        return;
+      }
       updateInventoryState();
       const context = exteriorWaterContext();
       const on = {};
@@ -322,7 +388,10 @@ export function createEnemySpawner({ settings, spawnEnemy, pixelOrigin }) {
   let liveCount = 0;
 
   function clearAll() {
-    for (const g of groups.values()) { g.active = false; g.enemies.clear(); }
+    for (const g of groups.values()) {
+      g.active = false;
+      g.enemies.clear();
+    }
     groups.clear();
     pending.length = 0;
     liveCount = 0;
@@ -338,18 +407,29 @@ export function createEnemySpawner({ settings, spawnEnemy, pixelOrigin }) {
   }
 
   return {
-    get liveCount() { return liveCount; },
-    get pendingCount() { return pending.length; },
+    get liveCount() {
+      return liveCount;
+    },
+    get pendingCount() {
+      return pending.length;
+    },
     groupOf: (key) => groups.get(key) ?? null,
     clearAll,
     /** AUDIT (the pre-merge audit, P2): the reservations not yet stood, given back - the deep this player stood is
      *  another's now (DEEP-SHARE's election), and the pump stood what was reserved whether or not it still was. */
     dropPending() {
-      for (const r of pending) if (r.group?.active) { r.group.liveOrPending = Math.max(0, r.group.liveOrPending - 1); liveCount = Math.max(0, liveCount - 1); }
+      for (const r of pending)
+        if (r.group?.active) {
+          r.group.liveOrPending = Math.max(0, r.group.liveOrPending - 1);
+          liveCount = Math.max(0, liveCount - 1);
+        }
       pending.length = 0;
     },
     /** CanPopulate: the switch on and a frequency above nothing. */
-    canPopulate: () => { const s = settings(); return !!s.on && s.frequency > 0; },
+    canPopulate: () => {
+      const s = settings();
+      return !!s.on && s.frequency > 0;
+    },
 
     /** PumpPendingSpawns: one a frame; a spawn whose group left is dropped, one that fails un-counted. */
     pumpPendingSpawns() {
@@ -396,7 +476,12 @@ export function createEnemySpawner({ settings, spawnEnemy, pixelOrigin }) {
       if (budget.n <= 0 || !entry) return;
       let g = groups.get(key);
       if (!g) {
-        g = { enemies: new TransientObjectTracker(), attemptsRemaining: scaledEnemyAttemptsPerPixel(settings().frequency), liveOrPending: 0, active: true };
+        g = {
+          enemies: new TransientObjectTracker(),
+          attemptsRemaining: scaledEnemyAttemptsPerPixel(settings().frequency),
+          liveOrPending: 0,
+          active: true,
+        };
         groups.set(key, g);
       }
       if (g.attemptsRemaining <= 0) return;
@@ -404,7 +489,10 @@ export function createEnemySpawner({ settings, spawnEnemy, pixelOrigin }) {
       const cap = s.maxLive;
       const origin = pixelOrigin(entry);
       while (budget.n > 0 && g.attemptsRemaining > 0) {
-        if (liveCount >= cap) { g.attemptsRemaining = 0; break; }
+        if (liveCount >= cap) {
+          g.attemptsRemaining = 0;
+          break;
+        }
         budget.n--;
         g.attemptsRemaining--;
         const x = origin[0] + f.roll() * TILE_WORLD_SIZE;
@@ -447,26 +535,35 @@ export function trySpawnTreasureGuards({ f, centre, settings, canRunHeavy, playe
   let count = rollTreasureGuardCount(settings.frequency, f.roll);
   if (boss) count = Math.max(1, count);
   if (count <= 0) return 0;
-  let spawned = 0, tries = 0, bossSpawned = false;
+  let spawned = 0,
+    tries = 0,
+    bossSpawned = false;
   const stand = (x, z) => {
     const c = resolveSpawnColumn(f, x, z, settings.waterDepth);
     if (!c) return null;
     const type = pickTreasureGuardType(boss, bossSpawned, f.roll);
     const pos = pickEnemyPosition(x, z, c.floorY, c.surfaceY, type, c.depthFraction, f.roll);
-    return { pos, type, entry: c.column.entry ?? null, outside: isOutsideImmediateView(pos, playerPos, vision, SPAWN_VIEWPORT_MARGIN, view) };
+    return {
+      pos,
+      type,
+      entry: c.column.entry ?? null,
+      outside: isOutsideImmediateView(pos, playerPos, vision, SPAWN_VIEWPORT_MARGIN, view),
+    };
   };
   while (spawned < count && tries < 8 * count + 15) {
     tries++;
     const angle = rangeFloat(0, Math.fround(Math.PI * 2), f.roll);
     const d = pickRingDistance(TREASURE_GUARD_DISTANCE[0], TREASURE_GUARD_DISTANCE[1], f.roll);
     const s = stand(centre[0] + Math.cos(angle) * d, centre[2] + Math.sin(angle) * d);
-    if (!s || !s.outside || !spawnGuard({ pos: s.pos, type: s.type, team: TREASURE_GUARD_TEAM, entry: s.entry })) continue;
+    if (!s || !s.outside || !spawnGuard({ pos: s.pos, type: s.type, team: TREASURE_GUARD_TEAM, entry: s.entry }))
+      continue;
     if (boss && !bossSpawned) bossSpawned = true;
     spawned++;
   }
   if (spawned === 0) {
     const s = stand(centre[0], centre[2]);
-    if (s?.outside) spawned = spawnGuard({ pos: s.pos, type: s.type, team: TREASURE_GUARD_TEAM, entry: s.entry }) ? 1 : 0;
+    if (s?.outside)
+      spawned = spawnGuard({ pos: s.pos, type: s.type, team: TREASURE_GUARD_TEAM, entry: s.entry }) ? 1 : 0;
   }
   return spawned;
 }

@@ -29,8 +29,8 @@
   {
     "name": "PAD-CLASSIC-the-page-under-plus-alone",
     "file": "src/ui/gamepadInput.js",
-    "old": "Forge, the Anvil and Withdraw and A pressed nothing\n    {",
-    "new": "Forge, the Anvil and Withdraw and A pressed nothing\n    if (plusPadActive()) {",
+    "old": "    {",
+    "new": "    if (plusPadActive()) {",
     "tests": [
       "test/systems/fb1001_stations.test.js"
     ]

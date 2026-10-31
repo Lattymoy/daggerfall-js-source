@@ -20,16 +20,20 @@ async function studioByKey() {
   try {
     const r = await fetch(studioUrl(STUDIO_INDEX), { cache: 'no-store' });
     return r.ok ? new Map(studioEntries((await r.json()).files).map((e) => [e.key, e])) : new Map();
-  } catch { return new Map(); }
+  } catch {
+    return new Map();
+  }
 }
 
 /** A picture (top-down RGBA) on a canvas, shown at a whole multiple of its size. */
 function canvasOf(p) {
   const c = document.createElement('canvas');
-  c.width = p.width; c.height = p.height;
+  c.width = p.width;
+  c.height = p.height;
   c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(p.data), p.width, p.height), 0, 0);
   const k = Math.max(1, Math.floor(136 / Math.max(p.width, p.height)));
-  c.style.width = `${p.width * k}px`; c.style.height = `${p.height * k}px`;
+  c.style.width = `${p.width * k}px`;
+  c.style.height = `${p.height * k}px`;
   return c;
 }
 
@@ -62,12 +66,23 @@ async function draw() {
       const painted = canvasOf(await s.picture());
       const by = own.get(s.key);
       const pics = el('div', 'pics');
-      if (by) { const img = el('img'); img.src = studioUrl(by.path); img.alt = by.path; pics.append(img); }
+      if (by) {
+        const img = el('img');
+        img.src = studioUrl(by.path);
+        img.alt = by.path;
+        pics.append(img);
+      }
       pics.append(painted);
       const button = el('button', null, 'template');
       button.title = s.fileName;
       button.addEventListener('click', () => save(painted, s.fileName));
-      const cell = el('div', by ? 'cell own' : 'cell', null, [pics, el('div', 'n', s.name), el('div', 'k', `${s.key} - ${painted.width} x ${painted.height}${s.cutout ? ' - glass' : ''}`), ...(by ? [el('div', 'by', by.path)] : []), button]);
+      const cell = el('div', by ? 'cell own' : 'cell', null, [
+        pics,
+        el('div', 'n', s.name),
+        el('div', 'k', `${s.key} - ${painted.width} x ${painted.height}${s.cutout ? ' - glass' : ''}`),
+        ...(by ? [el('div', 'by', by.path)] : []),
+        button,
+      ]);
       cells.push({ cell, section, text: `${s.name} ${s.key} ${set.title} ${by?.path ?? ''}`.toLowerCase(), own: !!by });
       grid.append(cell);
       own.delete(s.key);
@@ -78,8 +93,14 @@ async function draw() {
     const grid = el('div', 'grid');
     root.append(el('section', 'set', null, [el('h2', null, "Daggerfall's own textures the studio replaces"), grid]));
     for (const e of own.values()) {
-      const img = el('img'); img.src = studioUrl(e.path); img.alt = e.path;
-      const cell = el('div', 'cell own', null, [el('div', 'pics', null, [img]), el('div', 'k', e.key), el('div', 'by', e.path)]);
+      const img = el('img');
+      img.src = studioUrl(e.path);
+      img.alt = e.path;
+      const cell = el('div', 'cell own', null, [
+        el('div', 'pics', null, [img]),
+        el('div', 'k', e.key),
+        el('div', 'by', e.path),
+      ]);
       cells.push({ cell, section: grid.parentElement, text: `${e.key} ${e.path}`.toLowerCase(), own: true });
       grid.append(cell);
     }
@@ -88,7 +109,8 @@ async function draw() {
 }
 
 function filter() {
-  const q = $('find').value.trim().toLowerCase(), mine = $('mine').checked;
+  const q = $('find').value.trim().toLowerCase(),
+    mine = $('mine').checked;
   const shown = new Set();
   for (const c of cells) {
     const on = (!q || c.text.includes(q)) && (!mine || c.own);
@@ -102,5 +124,7 @@ function filter() {
 if (globalThis.document) {
   $('find').addEventListener('input', filter);
   $('mine').addEventListener('change', filter);
-  draw().catch((e) => { $('status').textContent = `the studio would not draw: ${e?.message ?? e}`; });
+  draw().catch((e) => {
+    $('status').textContent = `the studio would not draw: ${e?.message ?? e}`;
+  });
 }

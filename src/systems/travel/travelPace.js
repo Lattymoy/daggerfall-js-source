@@ -61,7 +61,7 @@ export function clampPace(n, onRoad = false) {
 }
 
 let pace = null;
-let ground = false;   // the host's last word: on a road or a track
+let ground = false; // the host's last word: on a road or a track
 /** WILD3 (the owner: "Youre also slower in this zone max 20x in the wilds and 40x on the roads"): THE ZONE'S CAP - while
  *  the host says the traveller stands in the open PvP zone, the ground's top is the zone's (`WILD_PACE_CAP`). A cap,
  *  never a write: the dials keep the player's choice and run under it, and leaving the zone gives it back at once. */
@@ -74,11 +74,19 @@ const topOn = (onRoad) => {
 };
 /** The host's word on the zone, each frame (scenes/world.js wildFrame): `cap` the zone's tops, or null outside it. */
 export function setPaceZoneCap(cap) {
-  const next = cap ? { road: Number(cap.road) || WILD_PACE_CAP.road, open: Number(cap.open) || WILD_PACE_CAP.open } : null;
+  const next = cap
+    ? { road: Number(cap.road) || WILD_PACE_CAP.road, open: Number(cap.open) || WILD_PACE_CAP.open }
+    : null;
   if ((next?.road ?? 0) === (zoneCap?.road ?? 0) && (next?.open ?? 0) === (zoneCap?.open ?? 0)) return;
   zoneCap = next;
   const cur = travelPace();
-  for (const fn of [...listeners]) { try { fn(cur, 'zone'); } catch { /* a listener's own fault */ } }   // a running journey asks its clock again
+  for (const fn of [...listeners]) {
+    try {
+      fn(cur, 'zone');
+    } catch {
+      /* a listener's own fault */
+    }
+  } // a running journey asks its clock again
 }
 /** The zone's cap in force, or null. */
 export const paceZoneCap = () => zoneCap;
@@ -87,19 +95,35 @@ const listeners = new Set();
 function read() {
   const p = { ...TRAVEL_PACE_DEFAULT };
   let raw = null;
-  try { raw = appStorage()?.getItem(TRAVEL_PACE_STORE_KEY) ?? null; } catch { raw = null; }
+  try {
+    raw = appStorage()?.getItem(TRAVEL_PACE_STORE_KEY) ?? null;
+  } catch {
+    raw = null;
+  }
   if (raw) {
     try {
       const v = JSON.parse(raw);
-      for (const k of TRAVEL_PACE_DIALS) if (Number.isFinite(v?.[k])) p[k] = clampPace(v[k], false);   // a boot is on no known road: x100 is chosen again on one
-    } catch { /* a bad word: the defaults */ }
+      for (const k of TRAVEL_PACE_DIALS) if (Number.isFinite(v?.[k])) p[k] = clampPace(v[k], false); // a boot is on no known road: x100 is chosen again on one
+    } catch {
+      /* a bad word: the defaults */
+    }
   }
   return p;
 }
 function write(next, which) {
   pace = next;
-  try { appStorage()?.setItem(TRAVEL_PACE_STORE_KEY, JSON.stringify(pace)); } catch { /* held for the session */ }
-  for (const fn of [...listeners]) { try { fn(pace, which); } catch { /* a listener's own fault */ } }
+  try {
+    appStorage()?.setItem(TRAVEL_PACE_STORE_KEY, JSON.stringify(pace));
+  } catch {
+    /* held for the session */
+  }
+  for (const fn of [...listeners]) {
+    try {
+      fn(pace, which);
+    } catch {
+      /* a listener's own fault */
+    }
+  }
 }
 
 /** The dials as stored: { speed, foe }. */
@@ -119,16 +143,22 @@ export function setPaceGround(onRoad) {
   ground = !!onRoad;
   if (was === ground) return;
   const cur = travelPace();
-  for (const fn of [...listeners]) { try { fn(cur, 'ground'); } catch { /* a listener's own fault */ } }
+  for (const fn of [...listeners]) {
+    try {
+      fn(cur, 'ground');
+    } catch {
+      /* a listener's own fault */
+    }
+  }
 }
 
 /** A dial's rate in force now (the stored one, under the ground's top). */
 export function paceNow(which) {
   const v = travelPace()[which] ?? TRAVEL_PACE_DEFAULT[which];
-  return Math.min(v, topOn(ground));   // WILD3: under the zone's cap too
+  return Math.min(v, topOn(ground)); // WILD3: under the zone's cap too
 }
 /** The journey's rate on a ground (systems/timeScale.js travelRateOf asks). */
-export const paceRateOn = (onRoad) => Math.min(topOn(onRoad), travelPace().speed);   // WILD3: the zone's top where it stands
+export const paceRateOn = (onRoad) => Math.min(topOn(onRoad), travelPace().speed); // WILD3: the zone's top where it stands
 
 /** Set one dial - onto the ladder, under the ground's top (x100 refused off the road). Returns the rate set. */
 export function setTravelPace(which, n) {
@@ -160,4 +190,9 @@ export function onTravelPace(fn) {
 }
 
 /** Pins: back to the device's word. */
-export function _resetTravelPace() { pace = null; ground = false; zoneCap = null; listeners.clear(); }
+export function _resetTravelPace() {
+  pace = null;
+  ground = false;
+  zoneCap = null;
+  listeners.clear();
+}

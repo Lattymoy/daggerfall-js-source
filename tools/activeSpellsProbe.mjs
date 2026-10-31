@@ -11,31 +11,45 @@ import { chromium } from 'playwright';
 
 const server = await createServer({ root: '/home/user/project-dagger', server: { port: 5221, strictPort: true } });
 await server.listen();
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
 const errors = [];
-page.on('pageerror', (e) => { errors.push(e.message); console.log('[pageerror]', e.message); });
+page.on('pageerror', (e) => {
+  errors.push(e.message);
+  console.log('[pageerror]', e.message);
+});
 await page.goto('http://localhost:5221/play/?shot&play&exterior&time=12:00&class=1');
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 180000 });
 
-const fail = (m) => { console.log('FAIL:', m); process.exit(1); };
+const fail = (m) => {
+  console.log('FAIL:', m);
+  process.exit(1);
+};
 const waitFrames = async (n) => {
   const f = await page.evaluate(() => window.__frame);
   await page.waitForFunction(([f0, k]) => window.__frame > f0 + k, [f, n], { timeout: 60000 });
 };
-const placed = () => page.evaluate(async () => {
-  const m = await import('/src/ui/hud/hud.js');
-  return JSON.stringify(m.activeSpellIconsPlaced());
-});
-const rows = () => page.evaluate(async () => {
-  const m = await import('/src/ui/hud/hudActiveSpells.js');
-  return JSON.stringify(m.activeSpellIcons(window.__playerEntity));
-});
+const placed = () =>
+  page.evaluate(async () => {
+    const m = await import('/src/ui/hud/hud.js');
+    return JSON.stringify(m.activeSpellIconsPlaced());
+  });
+const rows = () =>
+  page.evaluate(async () => {
+    const m = await import('/src/ui/hud/hudActiveSpells.js');
+    return JSON.stringify(m.activeSpellIcons(window.__playerEntity));
+  });
 
 console.log('== THE SHEET LOADS WITH THE HUD, NOT WITH THE SPELLBOOK ==');
-await page.waitForFunction(async () => (await import('/src/ui/spell/spellIcons.js')).spellIconsLoaded(), null, { timeout: 60000 });
-console.log('spellIconsLoaded (spellbook never opened):', await page.evaluate(async () =>
-  (await import('/src/ui/spell/spellIcons.js')).spellIconsLoaded()));
+await page.waitForFunction(async () => (await import('/src/ui/spell/spellIcons.js')).spellIconsLoaded(), null, {
+  timeout: 60000,
+});
+console.log(
+  'spellIconsLoaded (spellbook never opened):',
+  await page.evaluate(async () => (await import('/src/ui/spell/spellIcons.js')).spellIconsLoaded()),
+);
 console.log('nothing active yet:', await placed());
 if (JSON.parse(await placed()).length !== 0) fail('icons drawn with no active effect');
 
@@ -49,11 +63,12 @@ const cast = await page.evaluate(async () => {
   const book = p.spells ?? [];
   const spell = book.find((sp) => sp.rangeType === 0) ?? book[0];
   if (!spell) return JSON.stringify({ error: 'the starting book is empty' });
-  const named = { ...spell, name: `!${spell.name}` };   // the non-vendor bang
+  const named = { ...spell, name: `!${spell.name}` }; // the non-vendor bang
   const sinks = { hurt: () => {}, drainFatigue: () => {}, drainMagicka: () => {} };
   E.applySpell(named, 6, p, sinks, () => 0.5, { entity: p, sinks }, { bypassSavingThrows: true });
   return JSON.stringify({
-    spell: spell.name, icon: spell.icon,
+    spell: spell.name,
+    icon: spell.icon,
     stamped: (p.activeEffects ?? []).filter((a) => a.bundleId != null).length,
   });
 });
@@ -63,7 +78,10 @@ if (info.error) fail(info.error);
 if (!info.stamped) fail('the cast left no bundle-stamped entry - nothing for the HUD to read');
 await waitFrames(4);
 let r = JSON.parse(await rows());
-console.log('rows:', JSON.stringify({ self: r.self.map((i) => i.displayName), other: r.other.map((i) => i.displayName) }));
+console.log(
+  'rows:',
+  JSON.stringify({ self: r.self.map((i) => i.displayName), other: r.other.map((i) => i.displayName) }),
+);
 if (r.self.length !== 1) fail(`a SELF cast belongs in the buff row, got ${r.self.length}`);
 if (r.other.length !== 0) fail('and nothing in the debuff row');
 if (r.self[0].displayName !== info.spell) fail(`the leading bang is dropped, got ${r.self[0].displayName}`);
@@ -84,8 +102,9 @@ const foeCast = await page.evaluate(async () => {
   // (X10's own note), so it would mint no second bundle to sort.
   const book = p.spells ?? [];
   const first = book.find((sp) => sp.rangeType === 0) ?? book[0];
-  const base = book.find((sp) => sp !== first && sp.rangeType === 0
-    && sp.effects?.[0]?.type !== first.effects?.[0]?.type);
+  const base = book.find(
+    (sp) => sp !== first && sp.rangeType === 0 && sp.effects?.[0]?.type !== first.effects?.[0]?.type,
+  );
   if (!base) return 'the book has only one spell';
   const spell = { ...base, name: 'Curse', icon: 12 };
   const sinks = { hurt: () => {}, drainFatigue: () => {}, drainMagicka: () => {} };
@@ -96,7 +115,10 @@ console.log('after the foe cast, stamped entries:', foeCast);
 if (typeof foeCast === 'string') fail(foeCast);
 await waitFrames(4);
 r = JSON.parse(await rows());
-console.log('rows:', JSON.stringify({ self: r.self.map((i) => i.displayName), other: r.other.map((i) => i.displayName) }));
+console.log(
+  'rows:',
+  JSON.stringify({ self: r.self.map((i) => i.displayName), other: r.other.map((i) => i.displayName) }),
+);
 if (r.other.length !== 1) fail(`a foe's cast belongs in the debuff row, got ${r.other.length}`);
 p0 = JSON.parse(await placed());
 const debuff = p0.find((i) => i.displayName === 'Curse');
@@ -108,7 +130,9 @@ console.log('\n== THE LARGE HUD LIFTS THE DEBUFF ROW AND LEAVES THE BUFFS ==');
 await page.evaluate(async () => {
   (await import('/src/systems/settings/settings.js')).setValue('GUI', 'LargeHUD', 'True');
 });
-await page.waitForFunction(async () => (await import('/src/ui/hud/hud.js')).largeHudBar() !== null, null, { timeout: 60000 });
+await page.waitForFunction(async () => (await import('/src/ui/hud/hud.js')).largeHudBar() !== null, null, {
+  timeout: 60000,
+});
 await waitFrames(4);
 const p1 = JSON.parse(await placed());
 const buff1 = p1.find((i) => i.displayName !== 'Curse');

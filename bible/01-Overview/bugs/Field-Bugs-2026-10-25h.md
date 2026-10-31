@@ -23,7 +23,7 @@ No DFU member: the open zone and its referee are DFO's own (`11-Multiplayer/Wild
 THE CHANGE:
 
 - THE REFEREE SAYS A FALL IS STILL DOWN. The fighter keeps where its body lay with its fall
-  (`wildRef.js:"t.fell = { r: rid, at: now, pose: t.pose ? { ...t.pose } : null };"`), and a socket that says it stands
+  (`wildRef.js:"t.fell = { r: rid"`), and a socket that says it stands
   in the zone while its fighter is down is told `{ t: 'wref', k: 'down', ms, r?, p? }`
   (`wildRef.js:"export function wildDownWord"`, said by `server/src/index.js:"_wildDownSay(st, sub, now) {"`) - the time left and,
   from the room that refereed the fall, its remains' id and the body's place. It is said BEFORE the receipts the socket
@@ -80,11 +80,11 @@ THE CHANGE:
   is still laid once a fall, the second carrier's deposit answered by the first (`laid-already` in the log).
 - THE REMAINS NAMED FOR THE FALLEN. The service's remains order carries the name the fallen wears, `wnm` - its token's,
   by the same law: the account's name, or the realm character's where the player chose it
-  (`wild.js:"async function fallenNameOf("` over `accounts.js:"export async function wornNameOf"`, checked as the wire keeps a name -
-  `identityToken.js:"if (c.wnm !== undefined"`), and the room names the remains with it whoever carries the order
+  (`wild.js:"async function fallenNameOf"` over `accounts.js:"export async function wornNameOf"`, checked as the wire keeps a name -
+  `identityToken.js:"&& !(typeof c.wnm === 'string' && c.wnm === sanitizeName(c.wnm))"`), and the room names the remains with it whoever carries the order
   (`server/src/index.js:"nm: c.wnm ?? (a.sub === c.s"`). A game reads a remains as its own by the fallen's account where
   the room names one, by the peer that laid it only where it names none, or as the remains its own deposit laid
-  (`wildRemains.js:"export const remainsMine = "`). A guest's game knows its account too, so a guest is marked as a
+  (`wildRemains.js:"export const remainsMine"`). A guest's game knows its account too, so a guest is marked as a
   registered player is.
 - A GAME THE HUB HAS NOT SEATED KNOWS ITS OWN FALL (WILD-HUBLESS, 5). The zone reads my account as the hub's word where it
   has seated me, else the signed-in session's - the token's subject, the same id the receipt's `f` and `k` and the
@@ -93,7 +93,7 @@ THE CHANGE:
   reference: DFU has no online zone and no drop at death.
 - THE HARNESS MINTS THE GATE PAIR. `standServices` minted the identity pair alone, so the local account service answered
   every seizure `no-gate-key`; it mints the gate's receipt pair beside it now
-  (`loadHarness.mjs:"const [gatePriv, gatePub] = gate.stdout.split"`, `tools/mintGateKeys.mjs`).
+  (`loadHarness.mjs:"const [gatePriv, gatePub]"`, `tools/mintGateKeys.mjs`).
 
 Pinned by `test/net/wildremainsloss.test.js` (a deposit by the fallen and by its killer into a room woken since its
 last hello, through the real account service and the relay's Room); `tools/mutants/wildremainsloss.json` (9, all dead); `test/net/wildself.test.js`, `tools/mutants/wildself.json` (2, all

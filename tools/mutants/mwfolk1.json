@@ -2,8 +2,8 @@
   {
     "name": "MWFOLK1-no-picture-wears-its-outfit",
     "file": "src/characters/folkBodies.js",
-    "old": "  if (own && spriteSex(person.archive) === gender && !WARDROBE_BEAST_RACES.includes(race)) return",
-    "new": "  if (false && own && spriteSex(person.archive) === gender && !WARDROBE_BEAST_RACES.includes(race)) return",
+    "old": "  if (own && spriteSex(person.archive) === gender && !WARDROBE_BEAST_RACES.includes(race))",
+    "new": "  if (false && own && spriteSex(person.archive) === gender && !WARDROBE_BEAST_RACES.includes(race))",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "MWFOLK1-a-woman-in-a-mans-picture",
     "file": "src/characters/folkBodies.js",
-    "old": "  if (own && spriteSex(person.archive) === gender && !WARDROBE_BEAST_RACES.includes(race)) return",
-    "new": "  if (own && !WARDROBE_BEAST_RACES.includes(race)) return",
+    "old": "  if (own && spriteSex(person.archive) === gender && !WARDROBE_BEAST_RACES.includes(race))",
+    "new": "  if (own && !WARDROBE_BEAST_RACES.includes(race))",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "MWFOLK1-boots-on-a-beast",
     "file": "src/characters/folkBodies.js",
-    "old": "  if (own && spriteSex(person.archive) === gender && !WARDROBE_BEAST_RACES.includes(race)) return",
-    "new": "  if (own && spriteSex(person.archive) === gender) return",
+    "old": "  if (own && spriteSex(person.archive) === gender && !WARDROBE_BEAST_RACES.includes(race))",
+    "new": "  if (own && spriteSex(person.archive) === gender)",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "MWFOLK1-the-sleeves-hide-no-forearm",
     "file": "src/characters/ownModels/ownClothingModels.js",
-    "old": "  outfit(385, ['cuirass', 'groin', ...PAIR('upper arm', 'forearm', 'upper leg', 'knee', 'ankle', 'foot')]),",
-    "new": "  outfit(385, ['cuirass', 'groin', ...PAIR('upper arm', 'upper leg', 'knee', 'ankle', 'foot')]),",
+    "old": "      outfit(385, ['cuirass', 'groin', ...PAIR('upper arm', 'forearm', 'upper leg', 'knee', 'ankle', 'foot')]), // Breton: the tunic, the long sleeves, the striped hose",
+    "new": "      outfit(385, ['cuirass', 'groin', ...PAIR('upper arm', 'upper leg', 'knee', 'ankle', 'foot')]), // Breton: the tunic, the long sleeves, the striped hose",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "MWFOLK1-a-hood-over-the-hair",
     "file": "src/characters/ownModels/ownClothingModels.js",
-    "old": "  outfit(388, ['cuirass', 'groin', 'hair', ...PAIR('upper leg', 'knee', 'ankle', 'foot')]),",
-    "new": "  outfit(388, ['cuirass', 'groin', ...PAIR('upper leg', 'knee', 'ankle', 'foot')]),",
+    "old": "      outfit(388, ['cuirass', 'groin', 'hair', ...PAIR('upper leg', 'knee', 'ankle', 'foot')]), // Nord: the green hood, the orange tunic, the striped hose",
+    "new": "      outfit(388, ['cuirass', 'groin', ...PAIR('upper leg', 'knee', 'ankle', 'foot')]), // Nord: the green hood, the orange tunic, the striped hose",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "MWFOLK1-the-bodice-covers-nothing",
     "file": "src/characters/ownModels/ownClothingModels.js",
-    "old": "  outfit(398, ['groin', 'hair', ...PAIR('upper leg', 'foot')], ['chest']),",
-    "new": "  outfit(398, ['groin', 'hair', ...PAIR('upper leg', 'foot')]),",
+    "old": "      outfit(398, ['groin', 'hair', ...PAIR('upper leg', 'foot')], ['chest']), // Redguard woman: the hooded dress",
+    "new": "      outfit(398, ['groin', 'hair', ...PAIR('upper leg', 'foot')]), // Redguard woman: the hooded dress",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -82,7 +82,7 @@
   {
     "name": "MWFOLK1-the-outfit-never-added",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "  if (outfitAdd) adds.push(outfitAdd);   // MW-FOLK1",
+    "old": "  if (outfitAdd) adds.push(outfitAdd); // MW-FOLK1",
     "new": "",
     "tests": [
       "test/tooling/mwfolk1.test.js"
@@ -92,7 +92,7 @@
   {
     "name": "MWFOLK1-the-second-outfit-drawn",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "      if (outfitAdd) { notes.push(`outfit ${o.id}: ${t('body.outfit.second', 'a second outfit - the first ({first}) is the one drawn', { first: outfitAdd.recordId })}`); continue; }",
+    "old": "      if (outfitAdd) {\n        notes.push(\n          `outfit ${o.id}: ${t('body.outfit.second', 'a second outfit - the first ({first}) is the one drawn', { first: outfitAdd.recordId })}`,\n        );\n        continue;\n      }",
     "new": "",
     "tests": [
       "test/tooling/mwfolk1.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "MWFOLK1-hidden-in-the-first-person",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "      for (const h of o.hides) claim(ARMO_PART.findIndex((r) => r.name === h), prio, null, outfitAdd);",
-    "new": "      for (const h of o.hides) claim(ARMO_PART.findIndex((r) => r.name === h), prio, null);",
+    "old": "          outfitAdd,\n        );",
+    "new": "        );",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "MWFOLK1-a-shirt-under-the-dress",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "  if (show || !args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn;",
-    "new": "  if (show || !args.female || worn.shadows.includes('chest')) return worn;",
+    "old": "  if (show || !args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn; // MW-FOLK1: or an outfit dresses it",
+    "new": "  if (show || !args.female || worn.shadows.includes('chest')) return worn; // MW-FOLK1: or an outfit dresses it",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "MWFOLK1-one-body-two-outfits",
     "file": "src/net/peer/peerBodies.js",
-    "old": "lookKey(look)) + npcKeyOf(look) + outfitKeyOf(look);",
-    "new": "lookKey(look)) + npcKeyOf(look);",
+    "old": "        : lookKey(look)) +\n      npcKeyOf(look) +\n      outfitKeyOf(look);",
+    "new": "        : lookKey(look)) + npcKeyOf(look);",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "MWFOLK1-the-arm-falls-at-the-old-angle",
     "file": "tools/bakeTownsfolk.mjs",
-    "old": "    const want = Math.asin(PACK_ARM_FALL / Math.hypot(H[0] - U[0], H[2] - U[2]));",
-    "new": "    const want = Math.atan2(PACK_ARM_FALL, Math.abs(H[0] - U[0]));",
+    "old": "    const want = Math.asin(PACK_ARM_FALL / Math.hypot(H[0] - U[0], H[2] - U[2])); // a turn about Y keeps that reach",
+    "new": "    const want = Math.atan2(PACK_ARM_FALL, Math.abs(H[0] - U[0])); // a turn about Y keeps that reach",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "MWFOLK1-the-teal-hood-green",
     "file": "tools/bakeTownsfolk.mjs",
-    "old": "  outfit(389, 'Breton_Male.028', [[0, 'tunic_nord1'], [1, 'hose_bretonnpc']]),",
-    "new": "  outfit(389, 'Breton_Male.028', [[0, 'tunic_nord2'], [1, 'hose_bretonnpc']]),",
+    "old": "  outfit(389, 'Breton_Male.028', [\n    [0, 'tunic_nord1'],",
+    "new": "  outfit(389, 'Breton_Male.028', [\n    [0, 'tunic_nord2'],",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "MWFOLK1-a-whole-object-cut",
     "file": "tools/fbxStrip.mjs",
-    "old": "    for (const m of materials) if (mats[0] === m) throw new Error(`${label}: every polygon wears material ${m} - drop the object instead`);\n",
-    "new": "",
+    "old": "    for (const m of materials)\n      if (mats[0] === m) throw new Error(`${label}: every polygon wears material ${m} - drop the object instead`);\n    throw new Error(`${label}: no polygon wears material ${materials[0]} - nothing to cut`);",
+    "new": "    throw new Error(`${label}: no polygon wears material ${materials[0]} - nothing to cut`);",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "MWFOLK1-AUDIT-one-face-for-all",
     "file": "src/characters/folkBodies.js",
-    "old": "items: [], npc: npcHint(seed, 0), outfit: own.id };",
-    "new": "items: [], npc: npcHint(1, 0), outfit: own.id };",
+    "old": "    return { race, gender, faceIndex, items: [], npc: npcHint(seed, 0), outfit: own.id };",
+    "new": "    return { race, gender, faceIndex, items: [], npc: npcHint(1, 0), outfit: own.id };",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -282,8 +282,8 @@
   {
     "name": "MWFOLK1-AUDIT-outfit-composed-last",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "  if (piece.kind === 'outfit') return 0;",
-    "new": "  if (piece.kind === 'outfit') return 11;",
+    "old": "  if (piece.kind === 'outfit') return 0; // MW-FOLK1: a whole outfit, first as a robe is",
+    "new": "  if (piece.kind === 'outfit') return 11; // MW-FOLK1: a whole outfit, first as a robe is",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -292,8 +292,8 @@
   {
     "name": "MWFOLK1-AUDIT-beast-boots",
     "file": "src/net/peer/peerBodies.js",
-    "old": "typeof look?.outfit === 'string' && !WARDROBE_BEAST_RACES.includes(look.race) ? ownOutfitFor(look.outfit) : null",
-    "new": "typeof look?.outfit === 'string' ? ownOutfitFor(look.outfit) : null",
+    "old": "const lookOutfit = (look) =>\n  typeof look?.outfit === 'string' && !WARDROBE_BEAST_RACES.includes(look.race) ? ownOutfitFor(look.outfit) : null;",
+    "new": "const lookOutfit = (look) => (typeof look?.outfit === 'string' ? ownOutfitFor(look.outfit) : null);",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -333,8 +333,8 @@
   {
     "name": "MWFOLK1-AUDIT-paths-one-short",
     "file": "src/characters/ownModels/ownClothingModels.js",
-    "old": "export const ownOutfitModelPaths = () => Object.values(TOWNSFOLK_OUTFITS).map(",
-    "new": "export const ownOutfitModelPaths = () => Object.values(TOWNSFOLK_OUTFITS).slice(1).map(",
+    "old": "export const ownOutfitModelPaths = () => Object.values(TOWNSFOLK_OUTFITS).map((o) => `meshes/${o.model}`);",
+    "new": "export const ownOutfitModelPaths = () =>\n  Object.values(TOWNSFOLK_OUTFITS)\n    .slice(1)\n    .map((o) => `meshes/${o.model}`);",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -353,8 +353,8 @@
   {
     "name": "MWFOLK1-AUDIT-a-slot-cut-twice",
     "file": "tools/fbxStrip.mjs",
-    "old": "    if (list.includes(material)) throw new Error(`\"${object}\": material ${material} named twice`);\n",
-    "new": "",
+    "old": "    if (list.includes(material)) throw new Error(`\"${object}\": material ${material} named twice`);\n    slotsOf.set(object, [...list, material]);",
+    "new": "    slotsOf.set(object, [...list, material]);",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -363,8 +363,8 @@
   {
     "name": "MWFOLK1-AUDIT-a-deformer-left-on-the-old-numbering",
     "file": "tools/fbxStrip.mjs",
-    "old": "    if (hung) throw",
-    "new": "    if (false) throw",
+    "old": "    if (hung)",
+    "new": "    if (false)",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -373,8 +373,8 @@
   {
     "name": "MWFOLK1-AUDIT-direct-with-an-index-table",
     "file": "tools/fbxStrip.mjs",
-    "old": "      if (el.children.some((c) => c.name === `${valueName}Index`)) throw",
-    "new": "      if (false) throw",
+    "old": "      if (el.children.some((c) => c.name === `${valueName}Index`))\n        throw new Error(`${label}: its ${el.name} is referenced Direct yet carries a ${valueName}Index`);",
+    "new": "      if (false) throw new Error(`${label}: its ${el.name} is referenced Direct yet carries a ${valueName}Index`);",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -383,8 +383,8 @@
   {
     "name": "MWFOLK1-AUDIT-direct-not-a-value-a-corner",
     "file": "tools/fbxStrip.mjs",
-    "old": "      if (values.length !== pvi.length * width) throw",
-    "new": "      if (false) throw",
+    "old": "      if (values.length !== pvi.length * width) throw new Error(`${label}: its ${valueName} is not one value a corner`);",
+    "new": "      if (false) throw new Error(`${label}: its ${valueName} is not one value a corner`);",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -394,7 +394,7 @@
     "name": "MWFOLK1-AUDIT-loose-vertices-dropped",
     "file": "tools/fbxStrip.mjs",
     "old": "  const keptV = Array.from({ length: verts.length / 3 }, (_, u) => u).filter((u) => !theirs.has(u));",
-    "new": "  const keptV = Array.from({ length: verts.length / 3 }, (_, u) => u).filter((u) => !theirs.has(u) && keptPV.some((k) => vOf(k) === u));",
+    "new": "  const keptV = Array.from({ length: verts.length / 3 }, (_, u) => u).filter(\n    (u) => !theirs.has(u) && keptPV.some((k) => vOf(k) === u),\n  );",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -404,7 +404,7 @@
     "name": "MWFOLK1-AUDIT-cut-vertices-out-of-order",
     "file": "tools/fbxStrip.mjs",
     "old": "  const keptV = Array.from({ length: verts.length / 3 }, (_, u) => u).filter((u) => !theirs.has(u));",
-    "new": "  const keptV = Array.from({ length: verts.length / 3 }, (_, u) => u).filter((u) => !theirs.has(u)).reverse();",
+    "new": "  const keptV = Array.from({ length: verts.length / 3 }, (_, u) => u)\n    .filter((u) => !theirs.has(u))\n    .reverse();",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -414,7 +414,7 @@
     "name": "MWFOLK1-AUDIT-cut-table-out-of-order",
     "file": "tools/fbxStrip.mjs",
     "old": "      keepAt = Array.from({ length: values.length / width }, (_, u) => u).filter((u) => !only.has(u));",
-    "new": "      keepAt = Array.from({ length: values.length / width }, (_, u) => u).filter((u) => !only.has(u)).reverse();",
+    "new": "      keepAt = Array.from({ length: values.length / width }, (_, u) => u)\n        .filter((u) => !only.has(u))\n        .reverse();",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -423,8 +423,8 @@
   {
     "name": "MWFOLK1-AUDIT-every-polygon-cut",
     "file": "tools/fbxStrip.mjs",
-    "old": "  if (keep.every((k) => !k)) throw",
-    "new": "  if (false) throw",
+    "old": "  if (keep.every((k) => !k))",
+    "new": "  if (false)",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -433,8 +433,8 @@
   {
     "name": "MWFOLK1-AUDIT-the-arms-reach-hard",
     "file": "tools/skinWeights.mjs",
-    "old": "claim = Math.max(claim, 1 - smoothstep((segmentDistance(p, b.from, b.to) - b.reach) / b.fade));",
-    "new": "claim = Math.max(claim, segmentDistance(p, b.from, b.to) <= b.reach ? 1 : 0);",
+    "old": "      if (b.reach != null)\n        claim = Math.max(claim, 1 - smoothstep((segmentDistance(p, b.from, b.to) - b.reach) / b.fade));",
+    "new": "      if (b.reach != null) claim = Math.max(claim, segmentDistance(p, b.from, b.to) <= b.reach ? 1 : 0);",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -463,8 +463,8 @@
   {
     "name": "MWFOLK1-AUDIT-no-calves",
     "file": "tools/bakeTownsfolk.mjs",
-    "old": "    calves: ['Bip01 L Calf', 'Bip01 R Calf'], knee, kneeBlend: KNEE_BLEND };",
-    "new": "    knee, kneeBlend: KNEE_BLEND };",
+    "old": "    calves: ['Bip01 L Calf', 'Bip01 R Calf'],\n    knee,",
+    "new": "    knee,",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -493,8 +493,8 @@
   {
     "name": "MWFOLK1-AUDIT-a-hood-from-the-neck",
     "file": "tools/bakeTownsfolk.mjs",
-    "old": "  if (min[2] > 112 && max[2] > SCENE_BODY.head.max[2] &&",
-    "new": "  if (min[2] > 106 && max[2] > SCENE_BODY.head.max[2] &&",
+    "old": "  if (min[2] > 112 && max[2] > SCENE_BODY.head.max[2] && Math.max(-min[0], max[0]) < 12) return 'hood';",
+    "new": "  if (min[2] > 106 && max[2] > SCENE_BODY.head.max[2] && Math.max(-min[0], max[0]) < 12) return 'hood';",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -503,8 +503,8 @@
   {
     "name": "MWFOLK1-AUDIT-a-wider-hood",
     "file": "tools/bakeTownsfolk.mjs",
-    "old": "Math.max(-min[0], max[0]) < 12) return 'hood';",
-    "new": "Math.max(-min[0], max[0]) < 12.9) return 'hood';",
+    "old": "  if (min[2] > 112 && max[2] > SCENE_BODY.head.max[2] && Math.max(-min[0], max[0]) < 12) return 'hood';",
+    "new": "  if (min[2] > 112 && max[2] > SCENE_BODY.head.max[2] && Math.max(-min[0], max[0]) < 12.9) return 'hood';",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -523,8 +523,8 @@
   {
     "name": "MWFOLK1-AUDIT-her-thighs-under-the-dress-drawn",
     "file": "src/characters/ownModels/ownClothingModels.js",
-    "old": "  outfit(398, ['groin', 'hair', ...PAIR('upper leg', 'foot')], ['chest']),",
-    "new": "  outfit(398, ['groin', 'hair', ...PAIR('foot')], ['chest']),",
+    "old": "      outfit(398, ['groin', 'hair', ...PAIR('upper leg', 'foot')], ['chest']), // Redguard woman: the hooded dress",
+    "new": "      outfit(398, ['groin', 'hair', ...PAIR('foot')], ['chest']), // Redguard woman: the hooded dress",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -533,8 +533,8 @@
   {
     "name": "MWFOLK1-AUDIT-a-repainted-object-baked",
     "file": "tools/bakeTownsfolk.mjs",
-    "old": "if (JSON.stringify(names) !== JSON.stringify(want.materials)) {",
-    "new": "if (false) {",
+    "old": "  if (JSON.stringify(names) !== JSON.stringify(want.materials)) {",
+    "new": "  if (false) {",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -543,8 +543,8 @@
   {
     "name": "MWFOLK1-AUDIT-a-moved-object-baked",
     "file": "tools/bakeTownsfolk.mjs",
-    "old": "if (Math.max(...off) > BOX_SLACK) throw new Error(`\"${name}\" stands at",
-    "new": "if (false) throw new Error(`\"${name}\" stands at",
+    "old": "  if (Math.max(...off) > BOX_SLACK)",
+    "new": "  if (false)",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -553,8 +553,8 @@
   {
     "name": "MWFOLK1-AUDIT-an-arm-from-x-4",
     "file": "tools/bakeTownsfolk.mjs",
-    "old": "if (min[2] > 100 && min[0] > 6) return 'arm:R';",
-    "new": "if (min[2] > 100 && min[0] > 4) return 'arm:R';",
+    "old": "  if (min[2] > 100 && min[0] > 6) return 'arm:R';",
+    "new": "  if (min[2] > 100 && min[0] > 4) return 'arm:R';",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -563,8 +563,8 @@
   {
     "name": "MWFOLK1-AUDIT-normalsw-left-whole",
     "file": "tools/fbxStrip.mjs",
-    "old": "if (wRec) wRec.props = arrayProps(wRec, keepAt.map((u) => wRec.decoded.props[0][u]));",
-    "new": "",
+    "old": "    if (wRec)\n      wRec.props = arrayProps(\n        wRec,\n        keepAt.map((u) => wRec.decoded.props[0][u]),\n      );\n  };",
+    "new": "  };",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -573,8 +573,8 @@
   {
     "name": "MWFOLK1-AUDIT-a-shared-geometry-cut",
     "file": "tools/fbxStrip.mjs",
-    "old": "if (links.some((l) => l.child === geos[0] && l.parent !== id && byId.get(l.parent)?.name === 'Model')) throw",
-    "new": "if (false) throw",
+    "old": "    if (links.some((l) => l.child === geos[0] && l.parent !== id && byId.get(l.parent)?.name === 'Model'))\n      throw new Error(`${label}'s Geometry is another object's too - a cut would cut both`);",
+    "new": "    if (false) throw new Error(`${label}'s Geometry is another object's too - a cut would cut both`);",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -583,8 +583,8 @@
   {
     "name": "MWFOLK1-AUDIT-an-unknown-record-left",
     "file": "tools/fbxStrip.mjs",
-    "old": "for (const c of geo.children) if (!CUT_GEOMETRY.has(c.name)) throw",
-    "new": "for (const c of geo.children) if (false) throw",
+    "old": "    if (!CUT_GEOMETRY.has(c.name))",
+    "new": "    if (false)",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -593,8 +593,8 @@
   {
     "name": "MWFOLK1-AUDIT-another-material-mapping-cut",
     "file": "tools/fbxStrip.mjs",
-    "old": "if (value(matEl, 'MappingInformationType') !== 'ByPolygon' || value(matEl, 'ReferenceInformationType') !== 'IndexToDirect') {",
-    "new": "if (false) {",
+    "old": "  if (\n    value(matEl, 'MappingInformationType') !== 'ByPolygon' ||\n    value(matEl, 'ReferenceInformationType') !== 'IndexToDirect'\n  ) {",
+    "new": "  if (false) {",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -603,8 +603,8 @@
   {
     "name": "MWFOLK1-AUDIT-a-short-material-list-cut",
     "file": "tools/fbxStrip.mjs",
-    "old": "if (mats.length !== polys.length) throw",
-    "new": "if (false) throw",
+    "old": "  if (mats.length !== polys.length)\n    throw new Error(`${label}: ${mats.length} material indices for ${polys.length} polygons`);",
+    "new": "  if (false) throw new Error(`${label}: ${mats.length} material indices for ${polys.length} polygons`);",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -613,8 +613,8 @@
   {
     "name": "MWFOLK1-AUDIT-the-cli-asks-a-drop",
     "file": "tools/fbxStrip.mjs",
-    "old": "if (files.length !== 2 || (!dropArg && !cut.length) || cut.some((c) => !c.object || !Number.isInteger(c.material))) {",
-    "new": "if (files.length !== 2 || !dropArg) {",
+    "old": "  if (files.length !== 2 || (!dropArg && !cut.length) || cut.some((c) => !c.object || !Number.isInteger(c.material))) {",
+    "new": "  if (files.length !== 2 || !dropArg) {",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -623,8 +623,8 @@
   {
     "name": "MWFOLK1-AUDIT-another-layer-mapping-cut",
     "file": "tools/fbxStrip.mjs",
-    "old": "if (value(el, 'MappingInformationType') !== 'ByPolygonVertex') throw",
-    "new": "if (false) throw",
+    "old": "    if (value(el, 'MappingInformationType') !== 'ByPolygonVertex')\n      throw new Error(`${label}: its ${el.name} is not mapped ByPolygonVertex - a cut reads no other`);",
+    "new": "    if (false) throw new Error(`${label}: its ${el.name} is not mapped ByPolygonVertex - a cut reads no other`);",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -633,8 +633,8 @@
   {
     "name": "MWFOLK1-AUDIT-an-open-last-polygon-cut",
     "file": "tools/fbxStrip.mjs",
-    "old": "if (!polys.length || polys.at(-1)[1] !== pvi.length - 1) throw",
-    "new": "if (false) throw",
+    "old": "  if (!polys.length || polys.at(-1)[1] !== pvi.length - 1)\n    throw new Error(`${label}: its PolygonVertexIndex does not close its last polygon`);",
+    "new": "  if (false) throw new Error(`${label}: its PolygonVertexIndex does not close its last polygon`);",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -643,8 +643,8 @@
   {
     "name": "MWFOLK1-AUDIT-outfit-face-index-fixed",
     "file": "src/characters/folkBodies.js",
-    "old": "return { race, gender, faceIndex, items: [], npc:",
-    "new": "return { race, gender, faceIndex: 0, items: [], npc:",
+    "old": "    return { race, gender, faceIndex, items: [], npc: npcHint(seed, 0), outfit: own.id };",
+    "new": "    return { race, gender, faceIndex: 0, items: [], npc: npcHint(seed, 0), outfit: own.id };",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -667,8 +667,8 @@
   {
     "name": "MWFOLK1-AUDIT-the-cut-guard-off",
     "file": "tools/bakeTownsfolk.mjs",
-    "old": "if (CUT[o.object]?.includes(s.material)) throw",
-    "new": "if (false) throw",
+    "old": "      if (CUT[o.object]?.includes(s.material))",
+    "new": "      if (false)",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],

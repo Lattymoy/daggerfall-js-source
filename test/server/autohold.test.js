@@ -215,7 +215,7 @@ test('AUTO-HOLD service (AUDIT): a hold a reader cannot wait out - a dead maker\
     assert.equal(stands({ held: null }), 0);
     const realm = readFileSync(new URL('../../server-account/src/realm.js', import.meta.url), 'utf8');
     const market = readFileSync(new URL('../../server-account/src/market.js', import.meta.url), 'utf8');
-    assert.match(realm, /WHERE p\.provenance = \?1 AND \$\{holdStandsSql\('r', '\?3'\)\}`\)\.bind\(provenance, playerId, Math\.floor\(Date\.now\(\) \/ 1000\)\)/, 'the craft\'s hold asks it');
+    assert.match(realm, /WHERE p\.provenance = \?1 AND \$\{holdStandsSql\('r', '\?3'\)\}`,\n\s*\)\n\s*\.bind\(provenance, playerId, Math\.floor\(Date\.now\(\) \/ 1000\)\)/, 'the craft\'s hold asks it');
     assert.match(market, /const PATRON_HELD_SQL = `EXISTS \(SELECT 1 FROM realm_characters c WHERE c\.id = l\.char_id AND c\.player = l\.seller AND \(\$\{holdStandsSql\('c', /, 'the patrons\' too');
   } finally { s.done(); }
 });

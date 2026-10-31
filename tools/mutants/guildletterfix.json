@@ -1,14 +1,122 @@
 [
-  { "name": "GUILD-LETTER-FIX-member-unread", "file": "src/net/repairLaw.js", "old": "    if (memberOf(save, g.guild)) return 'letter-member';\n", "new": "", "tests": ["test/server/staffguildletter.test.js"], "note": "a member sent the invitation again" },
-  { "name": "GUILD-LETTER-FIX-vampire-book-unread", "file": "src/net/repairLaw.js", "old": "[store.mortal, store.vampire]", "new": "[store.mortal]", "tests": ["test/server/staffguildletter.test.js"], "note": "a vampire member's book never read" },
-  { "name": "GUILD-LETTER-FIX-quest-unread", "file": "src/net/repairLaw.js", "old": "    if (questHeld(save, g.quest)) return 'letter-quest';\n", "new": "", "tests": ["test/server/staffguildletter.test.js"], "note": "a second initiation quest beside the one held" },
-  { "name": "GUILD-LETTER-FIX-waiting-quests-unread", "file": "src/net/repairLaw.js", "old": "[m?.quests, m?.toInvoke]", "new": "[m?.quests]", "tests": ["test/server/staffguildletter.test.js"], "note": "a quest waiting to start not seen" },
-  { "name": "GUILD-LETTER-FIX-pending-unread", "file": "src/net/repairLaw.js", "old": "    if (pending) return 'letter-pending';\n", "new": "", "tests": ["test/server/staffguildletter.test.js"], "note": "a letter on its way stamped again" },
-  { "name": "GUILD-LETTER-FIX-the-target", "file": "src/net/repairLaw.js", "old": "    save[g.tally] = g.target;\n", "new": "    save[g.tally] = 0;\n", "tests": ["test/server/staffguildletter.test.js"], "note": "the tally not at the target" },
-  { "name": "GUILD-LETTER-FIX-the-clock", "file": "src/net/repairLaw.js", "old": "    save[g.clock] = 1;\n", "new": "    save[g.clock] = 0;\n", "tests": ["test/server/staffguildletter.test.js"], "note": "no letter due - nothing ever sends it" },
-  { "name": "GUILD-LETTER-FIX-cancel-park", "file": "src/net/repairLaw.js", "old": "  save[g.tally] = INVITE_SENT;\n  save[g.clock] = 0;\n  return { was };\n}", "new": "  save[g.clock] = 0;\n  return { was };\n}", "tests": ["test/server/staffguildletter.test.js"], "note": "a called-off letter earned again by the tally" },
-  { "name": "GUILD-LETTER-FIX-act-unwired", "file": "server-account/src/review.js", "old": "  if (act === 'letter') return letterAct(ctx, row, by, note, body);   // GUILD-LETTER-FIX\n", "new": "", "tests": ["test/server/staffguildletter.test.js"], "note": "the panel's fix does nothing" },
-  { "name": "GUILD-LETTER-FIX-route-unlisted", "file": "server-account/src/staffRealm.js", "old": "'/v1/staff/fix/bank', '/v1/staff/fix/letter', '/v1/staff/gains', '/v1/staff/market/pull',\n", "new": "'/v1/staff/fix/bank', '/v1/staff/gains', '/v1/staff/market/pull',\n", "tests": ["test/server/staffguildletter.test.js"], "note": "the route never reached" },
-  { "name": "GUILD-LETTER-FIX-row-kind", "file": "server-account/src/review.js", "old": " : r.faction < BANK_SET_FACTION ? 'letter' : 'repair');", "new": " : 'repair');", "tests": ["test/server/staffguildletter.test.js"], "note": "a letter's row read as a repair's" },
-  { "name": "GUILD-LETTER-FIX-finding", "file": "server-account/src/review.js", "old": "    staffFinding(db, row, nowS, { act: 'letter', by, note, ticket: fix.ticket, guild: fix.guild, op: fix.op, was, from: row.seq, to: seq }),\n", "new": "", "tests": ["test/server/staffguildletter.test.js"], "note": "no finding says who sent it" }
+  {
+    "name": "GUILD-LETTER-FIX-member-unread",
+    "file": "src/net/repairLaw.js",
+    "old": "    if (memberOf(save, g.guild)) return 'letter-member';\n    if (questHeld(save, g.quest)) return 'letter-quest';",
+    "new": "    if (questHeld(save, g.quest)) return 'letter-quest';",
+    "tests": [
+      "test/server/staffguildletter.test.js"
+    ],
+    "note": "a member sent the invitation again"
+  },
+  {
+    "name": "GUILD-LETTER-FIX-vampire-book-unread",
+    "file": "src/net/repairLaw.js",
+    "old": "  const books =\n    Object.hasOwn(store, 'mortal') || Object.hasOwn(store, 'vampire') ? [store.mortal, store.vampire] : [store];",
+    "new": "  const books = Object.hasOwn(store, 'mortal') || Object.hasOwn(store, 'vampire') ? [store.mortal] : [store];",
+    "tests": [
+      "test/server/staffguildletter.test.js"
+    ],
+    "note": "a vampire member's book never read"
+  },
+  {
+    "name": "GUILD-LETTER-FIX-quest-unread",
+    "file": "src/net/repairLaw.js",
+    "old": "    if (questHeld(save, g.quest)) return 'letter-quest';\n    if (pending) return 'letter-pending';",
+    "new": "    if (pending) return 'letter-pending';",
+    "tests": [
+      "test/server/staffguildletter.test.js"
+    ],
+    "note": "a second initiation quest beside the one held"
+  },
+  {
+    "name": "GUILD-LETTER-FIX-waiting-quests-unread",
+    "file": "src/net/repairLaw.js",
+    "old": "  return [m?.quests, m?.toInvoke].some(",
+    "new": "  return [m?.quests].some(",
+    "tests": [
+      "test/server/staffguildletter.test.js"
+    ],
+    "note": "a quest waiting to start not seen"
+  },
+  {
+    "name": "GUILD-LETTER-FIX-pending-unread",
+    "file": "src/net/repairLaw.js",
+    "old": "    if (pending) return 'letter-pending';\n    save[g.tally] = g.target;",
+    "new": "    save[g.tally] = g.target;",
+    "tests": [
+      "test/server/staffguildletter.test.js"
+    ],
+    "note": "a letter on its way stamped again"
+  },
+  {
+    "name": "GUILD-LETTER-FIX-the-target",
+    "file": "src/net/repairLaw.js",
+    "old": "    save[g.tally] = g.target;",
+    "new": "    save[g.tally] = 0;",
+    "tests": [
+      "test/server/staffguildletter.test.js"
+    ],
+    "note": "the tally not at the target"
+  },
+  {
+    "name": "GUILD-LETTER-FIX-the-clock",
+    "file": "src/net/repairLaw.js",
+    "old": "    save[g.clock] = 1;",
+    "new": "    save[g.clock] = 0;",
+    "tests": [
+      "test/server/staffguildletter.test.js"
+    ],
+    "note": "no letter due - nothing ever sends it"
+  },
+  {
+    "name": "GUILD-LETTER-FIX-cancel-park",
+    "file": "src/net/repairLaw.js",
+    "old": "  save[g.tally] = INVITE_SENT;\n  save[g.clock] = 0;",
+    "new": "  save[g.clock] = 0;",
+    "tests": [
+      "test/server/staffguildletter.test.js"
+    ],
+    "note": "a called-off letter earned again by the tally"
+  },
+  {
+    "name": "GUILD-LETTER-FIX-act-unwired",
+    "file": "server-account/src/review.js",
+    "old": "  if (act === 'letter') return letterAct(ctx, row, by, note, body); // GUILD-LETTER-FIX\n  if (act === 'rollback') {",
+    "new": "  if (act === 'rollback') {",
+    "tests": [
+      "test/server/staffguildletter.test.js"
+    ],
+    "note": "the panel's fix does nothing"
+  },
+  {
+    "name": "GUILD-LETTER-FIX-route-unlisted",
+    "file": "server-account/src/staffRealm.js",
+    "old": "  '/v1/staff/fix/letter',\n  '/v1/staff/gains',",
+    "new": "  '/v1/staff/gains',",
+    "tests": [
+      "test/server/staffguildletter.test.js"
+    ],
+    "note": "the route never reached"
+  },
+  {
+    "name": "GUILD-LETTER-FIX-row-kind",
+    "file": "server-account/src/review.js",
+    "old": "  r.faction === 0\n    ? 'mend'\n    : r.faction === BANK_SET_FACTION\n      ? 'bank'\n      : r.faction < BANK_SET_FACTION\n        ? 'letter'\n        : 'repair';",
+    "new": "  r.faction === 0 ? 'mend' : r.faction === BANK_SET_FACTION ? 'bank' : 'repair';",
+    "tests": [
+      "test/server/staffguildletter.test.js"
+    ],
+    "note": "a letter's row read as a repair's"
+  },
+  {
+    "name": "GUILD-LETTER-FIX-finding",
+    "file": "server-account/src/review.js",
+    "old": "      staffFinding(db, row, nowS, {\n        act: 'letter',\n        by,\n        note,\n        ticket: fix.ticket,\n        guild: fix.guild,\n        op: fix.op,\n        was,\n        from: row.seq,\n        to: seq,\n      }),\n    ],",
+    "new": "    ],",
+    "tests": [
+      "test/server/staffguildletter.test.js"
+    ],
+    "note": "no finding says who sent it"
+  }
 ]

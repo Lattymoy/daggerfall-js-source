@@ -103,8 +103,8 @@
   {
     "name": "KEEPBOATS-the-mods-default",
     "file": "src/systems/modSettings.js",
-    "old": "      'Compatibility.PersistentDungeonBoats': Object.freeze({ default: true,",
-    "new": "      'Compatibility.PersistentDungeonBoats': Object.freeze({ default: false,",
+    "old": "      'Compatibility.PersistentDungeonBoats': Object.freeze({\n        default: true,",
+    "new": "      'Compatibility.PersistentDungeonBoats': Object.freeze({\n        default: false,",
     "tests": [
       "test/systems/naval/keepplunder.test.js",
       "test/systems/csa_registration.test.js"

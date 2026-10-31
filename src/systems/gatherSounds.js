@@ -69,26 +69,30 @@ export const GATHER_SFX = Object.freeze({
   rank: Object.freeze(['gather:rank']),
 });
 /** Each key's file under public/sfx (`gather:chop-1` -> gather-chop-1.wav). */
-export const GATHER_SFX_FILES = Object.freeze(Object.fromEntries(
-  Object.values(GATHER_SFX).flat().map((key) => [key, `${key.replace(':', '-')}.wav`]),
-));
+export const GATHER_SFX_FILES = Object.freeze(
+  Object.fromEntries(
+    Object.values(GATHER_SFX)
+      .flat()
+      .map((key) => [key, `${key.replace(':', '-')}.wav`]),
+  ),
+);
 
 /** The ear's numbers: the pitch's variety, the water's beats while the net waits and hauls, the slice's climb, the
  *  creak's lag behind its blow, the net's place's reach, and the gap a burst of answers keeps. */
 export const GATHER_SOUND = Object.freeze({
-  PITCH_JITTER: 0.05,      // a clip's pitch moved by up to this, either way (none for a chime - a note keeps its pitch)
-  PICK_SWING_PITCH: 0.85,  // the pick's swing, a heavier head than the axe's
-  MISS_PITCH: 0.85,        // a find missed: the rustle, lower and quieter
-  SLICE_FROM: 0.92,        // the knife's first stroke...
-  SLICE_TO: 1.22,          // ...and its last: the pitch climbs along the line
-  CREAK_AFTER_S: 0.12,     // the tree groans this long after the blow that bent it lands
-  PLIP_MIN_S: 2.2,         // the water by the floats while the net waits: a plip every this...
-  PLIP_MAX_S: 5.5,         // ...to this
-  THRASH_MIN_S: 0.5,       // the haul: the catch fights in the mesh every this...
-  THRASH_MAX_S: 1.1,       // ...to this
-  THRASH_SLIP_S: 0.32,     // ...and this often while it slips outside the band
-  THRASH_SLIP_GAIN: 1.35,  // ...louder
-  NET_REF_M: 8,            // the net's sounds at their full volume out to this (the throw is 3-12 m - professionLaw FISH_ACT)
+  PITCH_JITTER: 0.05, // a clip's pitch moved by up to this, either way (none for a chime - a note keeps its pitch)
+  PICK_SWING_PITCH: 0.85, // the pick's swing, a heavier head than the axe's
+  MISS_PITCH: 0.85, // a find missed: the rustle, lower and quieter
+  SLICE_FROM: 0.92, // the knife's first stroke...
+  SLICE_TO: 1.22, // ...and its last: the pitch climbs along the line
+  CREAK_AFTER_S: 0.12, // the tree groans this long after the blow that bent it lands
+  PLIP_MIN_S: 2.2, // the water by the floats while the net waits: a plip every this...
+  PLIP_MAX_S: 5.5, // ...to this
+  THRASH_MIN_S: 0.5, // the haul: the catch fights in the mesh every this...
+  THRASH_MAX_S: 1.1, // ...to this
+  THRASH_SLIP_S: 0.32, // ...and this often while it slips outside the band
+  THRASH_SLIP_GAIN: 1.35, // ...louder
+  NET_REF_M: 8, // the net's sounds at their full volume out to this (the throw is 3-12 m - professionLaw FISH_ACT)
 });
 
 /**
@@ -134,27 +138,36 @@ export const GATHER_SAY = Object.freeze({
 
 // ---- the clips' loading: once, the first frame the sounds are on ----------------------------------------------------
 
-export const gatherSfxUrl = (file) => new URL(`sfx/${file}`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
+export const gatherSfxUrl = (file) =>
+  new URL(`sfx/${file}`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
 
 let _install = null;
 /** Register the thirty-six clips, once. Answers how many took; a clip that will not load is silence, never a stopped act. */
 export function installGatherSounds(audio, { fetchBytes = null } = {}) {
   if (!audio?.registerSound) return Promise.resolve(0);
   return (_install ??= (async () => {
-    const load = fetchBytes ?? (async (file) => {
-      const r = await fetch(gatherSfxUrl(file));
-      if (!r.ok) throw new Error(`${file}: ${r.status}`);
-      return new Uint8Array(await r.arrayBuffer());
-    });
+    const load =
+      fetchBytes ??
+      (async (file) => {
+        const r = await fetch(gatherSfxUrl(file));
+        if (!r.ok) throw new Error(`${file}: ${r.status}`);
+        return new Uint8Array(await r.arrayBuffer());
+      });
     let n = 0;
     for (const [key, file] of Object.entries(GATHER_SFX_FILES)) {
-      try { if (await audio.registerSound(key, await load(file))) n++; } catch { /* the act goes on, silently */ }
+      try {
+        if (await audio.registerSound(key, await load(file))) n++;
+      } catch {
+        /* the act goes on, silently */
+      }
     }
     return n;
   })());
 }
 /** Test seam. */
-export function _resetGatherSounds() { _install = null; }
+export function _resetGatherSounds() {
+  _install = null;
+}
 
 /** One of `sfx`'s clips - never `prev` while it has another. Null for a sound with none. */
 export function gatherClip(sfx, prev, rand) {
@@ -175,7 +188,19 @@ const beat = (name, delay = 0, pitch = 1, gain = 1, after = null) => ({ name, de
 /** Every machine's state as it begins (systems/chopAct.js, mineAct.js, herbAct.js, traceAct.js, fishAct.js): an act is
  *  heard from here, so its first frame says what that frame did - a net thrown on the frame it was cast (a tapped E
  *  never winds), a blow struck on the frame it began. */
-const BEGUN = Object.freeze({ chops: 0, creaked: false, strikes: 0, bruised: false, done: false, spot: -1, hits: 0, tracing: false, reached: 0, slips: 0, phase: 'wind' });
+const BEGUN = Object.freeze({
+  chops: 0,
+  creaked: false,
+  strikes: 0,
+  bruised: false,
+  done: false,
+  spot: -1,
+  hits: 0,
+  tracing: false,
+  reached: 0,
+  slips: 0,
+  phase: 'wind',
+});
 
 /**
  * THE BEATS an act's frame says, read off its state against the last frame's (`prev`, mutated to this one); `landsIn`
@@ -196,7 +221,7 @@ export function actBeats(prev, st, landsIn = 0) {
   const out = [];
   if (!st) return out;
   const lands = Number(landsIn) > 0 ? Number(landsIn) : 0;
-  const rides = (after) => (lands > 0 ? after : null);   // a beat on a blow in the air lands with it
+  const rides = (after) => (lands > 0 ? after : null); // a beat on a blow in the air lands with it
   if (prev.kind == null) {
     Object.assign(prev, BEGUN);
     if (st.kind === 'hand' || st.kind === 'steady' || st.kind === 'basket') out.push(beat('kneel'));
@@ -204,7 +229,8 @@ export function actBeats(prev, st, landsIn = 0) {
   if (st.kind === 'chop' && st.chops > (prev.chops ?? 0)) {
     out.push(beat('swing'));
     out.push(beat(st.last === 'clean' ? 'chopClean' : 'chop', lands, 1, 1, rides(0)));
-    if (st.creaked && !prev.creaked && !st.done) out.push(beat('creak', lands + GATHER_SOUND.CREAK_AFTER_S, 1, 1, rides(GATHER_SOUND.CREAK_AFTER_S)));
+    if (st.creaked && !prev.creaked && !st.done)
+      out.push(beat('creak', lands + GATHER_SOUND.CREAK_AFTER_S, 1, 1, rides(GATHER_SOUND.CREAK_AFTER_S)));
   }
   if (st.kind === 'mine' && st.strikes > (prev.strikes ?? 0)) {
     out.push(beat('swing', 0, GATHER_SOUND.PICK_SWING_PITCH));
@@ -234,9 +260,18 @@ export function actBeats(prev, st, landsIn = 0) {
     }
     if (st.done && !prev.done && !st.cancelled) out.push(beat('netOut'));
   }
-  prev.kind = st.kind; prev.chops = st.chops; prev.creaked = st.creaked; prev.strikes = st.strikes; prev.bruised = st.bruised;
-  prev.done = st.done; prev.spot = st.spot; prev.hits = st.hits?.length; prev.tracing = st.tracing;
-  prev.reached = st.tracing ? st.reached : 0; prev.slips = st.slips; prev.phase = st.phase;
+  prev.kind = st.kind;
+  prev.chops = st.chops;
+  prev.creaked = st.creaked;
+  prev.strikes = st.strikes;
+  prev.bruised = st.bruised;
+  prev.done = st.done;
+  prev.spot = st.spot;
+  prev.hits = st.hits?.length;
+  prev.tracing = st.tracing;
+  prev.reached = st.tracing ? st.reached : 0;
+  prev.slips = st.slips;
+  prev.phase = st.phase;
   return out;
 }
 
@@ -244,13 +279,20 @@ export function actBeats(prev, st, landsIn = 0) {
  *  height - or null where either is unknown. Pure. */
 export function netLanding(eye, at, metres) {
   if (!isVec3(eye) || !isVec3(at) || !(Number(metres) > 0)) return null;
-  const dx = at[0] - eye[0], dz = at[2] - eye[2];
+  const dx = at[0] - eye[0],
+    dz = at[2] - eye[2];
   const l = Math.hypot(dx, dz);
   if (!(l > 1e-6)) return null;
   return [eye[0] + (dx / l) * metres, at[1], eye[2] + (dz / l) * metres];
 }
 
-const isVec3 = (v) => v != null && typeof v === 'object' && v.length >= 3 && Number.isFinite(v[0]) && Number.isFinite(v[1]) && Number.isFinite(v[2]);
+const isVec3 = (v) =>
+  v != null &&
+  typeof v === 'object' &&
+  v.length >= 3 &&
+  Number.isFinite(v[0]) &&
+  Number.isFinite(v[1]) &&
+  Number.isFinite(v[2]);
 
 // ---- the ear --------------------------------------------------------------------------------------------------------
 
@@ -271,9 +313,17 @@ const isVec3 = (v) => v != null && typeof v === 'object' && v.length >= 3 && Num
  *   dice (the pins' seam; Math.random bare - the port's own variety, no DFU draw); `cue` the classic skin's voice
  *   (systems/professions/profSounds.js profCue); `install` false keeps the clips unloaded (a pin's bus has none).
  */
-export function createGatherEar({ audio = null, on = enhancedSoundsOn, rand = Math.random, cue = profCue, install = true } = {}) {
+export function createGatherEar({
+  audio = null,
+  on = enhancedSoundsOn,
+  rand = Math.random,
+  cue = profCue,
+  install = true,
+} = {}) {
   /** the act last heard and its state as last heard; its node's place; where its net landed */
-  let heard = null, node = null, net = null;
+  let heard = null,
+    node = null,
+    net = null;
   let prev = {};
   /** beats waiting for their time: `{ due, b, place, of, blow }` - `place` where it was heard (its own copy - null at
    *  the ear), `of` the act machine it was heard from or rides (null for one said alone); a beat riding a blow in the air
@@ -281,9 +331,11 @@ export function createGatherEar({ audio = null, on = enhancedSoundsOn, rand = Ma
   let pending = [];
   let clock = 0;
   /** the water's next beat: seconds to the next plip while the net waits, to the next thrash while it hauls */
-  let plipIn = 0, thrashIn = 0;
+  let plipIn = 0,
+    thrashIn = 0;
   /** sfx -> the key last played; name -> the clock it last sounded */
-  const last = new Map(), saidAt = new Map();
+  const last = new Map(),
+    saidAt = new Map();
   /** AUDIT GATHER-FEEL F7: a node's going still sounding, by its key - the bus's own handle (play3dVoice), let go as it ends */
   const voices = new Map();
 
@@ -293,8 +345,15 @@ export function createGatherEar({ audio = null, on = enhancedSoundsOn, rand = Ma
     if (!say) return false;
     if (say.gap && clock - (saidAt.get(b.name) ?? -Infinity) < say.gap) return false;
     saidAt.set(b.name, clock);
-    if (!on()) {   // the classic skin: the DFU cue the HUD said here before, or nothing
-      if (say.classic) { try { cue(say.classic); } catch { /* a cue never stops an act */ } }
+    if (!on()) {
+      // the classic skin: the DFU cue the HUD said here before, or nothing
+      if (say.classic) {
+        try {
+          cue(say.classic);
+        } catch {
+          /* a cue never stops an act */
+        }
+      }
       return !!say.classic;
     }
     if (!audio) return false;
@@ -308,12 +367,20 @@ export function createGatherEar({ audio = null, on = enhancedSoundsOn, rand = Ma
     try {
       if (say.where !== 'ear' && isVec3(at) && audio.play3d) {
         const o = { refDistance: say.where === 'net' ? GATHER_SOUND.NET_REF_M : DEFAULT_ACTIVATION_DISTANCE, pitch };
-        if (voice != null && audio.play3dVoice) {   // AUDIT GATHER-FEEL F7: kept, to be taken back
-          const h = audio.play3dVoice(key, at, volume, { ...o, onEnd: () => { if (voices.get(voice) === h) voices.delete(voice); } });
+        if (voice != null && audio.play3dVoice) {
+          // AUDIT GATHER-FEEL F7: kept, to be taken back
+          const h = audio.play3dVoice(key, at, volume, {
+            ...o,
+            onEnd: () => {
+              if (voices.get(voice) === h) voices.delete(voice);
+            },
+          });
           if (h) voices.set(voice, h);
         } else audio.play3d(key, at, volume, o);
       } else audio.playOneShot?.(key, volume, pitch);
-    } catch { return false; }   // a sound never stops an act
+    } catch {
+      return false;
+    } // a sound never stops an act
     return true;
   }
   /** A beat on its time: now, or held until its delay has run - or, riding `of`'s blow in the air, until that blow
@@ -321,11 +388,21 @@ export function createGatherEar({ audio = null, on = enhancedSoundsOn, rand = Ma
    *  lands on its own node, not the next one). */
   function queue(b, place = null, of = null, voice = null) {
     const rides = !!of && b.after != null;
-    const aloft = rides && Number(of.landsIn) > 0;   // its blow in the air: the next its machine lands
+    const aloft = rides && Number(of.landsIn) > 0; // its blow in the air: the next its machine lands
     const wait = aloft ? Infinity : rides ? b.after : b.delay;
-    if (!(wait > 0)) { fire(b, place, voice); return; }
+    if (!(wait > 0)) {
+      fire(b, place, voice);
+      return;
+    }
     const at = place ?? placeOf(GATHER_SAY[b.name]?.where);
-    pending.push({ due: clock + wait, b, place: at ? [at[0], at[1], at[2]] : null, of, blow: aloft ? (of.state?.landed | 0) + 1 : 0, voice });
+    pending.push({
+      due: clock + wait,
+      b,
+      place: at ? [at[0], at[1], at[2]] : null,
+      of,
+      blow: aloft ? (of.state?.landed | 0) + 1 : 0,
+      voice,
+    });
   }
 
   return {
@@ -334,36 +411,53 @@ export function createGatherEar({ audio = null, on = enhancedSoundsOn, rand = Ma
      * @param {number[]|null} [at] its node's place in the scene @param {number[]|null} [eye] the eye's
      */
     frame(dt, act = null, at = null, eye = null) {
-      const step = Math.max(0, Number(dt) || 0);   // the frame's own time, whole: a blow is due when the hand lands it (chopAct's swing runs on the same unclamped time)
+      const step = Math.max(0, Number(dt) || 0); // the frame's own time, whole: a blow is due when the hand lands it (chopAct's swing runs on the same unclamped time)
       clock += step;
-      if (install && audio?.registerSound && on()) installGatherSounds(audio);   // the first frame the sounds are on loads them, once
-      if (act !== heard) { heard = act; prev = {}; net = null; plipIn = 0; thrashIn = 0; }
+      if (install && audio?.registerSound && on()) installGatherSounds(audio); // the first frame the sounds are on loads them, once
+      if (act !== heard) {
+        heard = act;
+        prev = {};
+        net = null;
+        plipIn = 0;
+        thrashIn = 0;
+      }
       if (act) {
         if (isVec3(at)) node = [at[0], at[1], at[2]];
         const st = act.state;
         const wasPhase = prev.phase;
         for (const b of actBeats(prev, st, act.landsIn ?? 0)) {
-          if (b.name === 'throw') net = netLanding(eye, at, st.throwM) ?? (isVec3(at) ? [at[0], at[1], at[2]] : null);   // the net's own place, from its throw on
+          if (b.name === 'throw') net = netLanding(eye, at, st.throwM) ?? (isVec3(at) ? [at[0], at[1], at[2]] : null); // the net's own place, from its throw on
           queue(b, null, act);
         }
         // the water's own beats: a plip by the floats while the net waits, the catch fighting while it hauls - more
         // often and louder while it slips outside the band
         if (st?.kind === 'fish' && !st.done && !st.cancelled) {
           if (st.phase === 'wait') {
-            if (wasPhase !== 'wait') plipIn = GATHER_SOUND.PLIP_MIN_S + rand() * (GATHER_SOUND.PLIP_MAX_S - GATHER_SOUND.PLIP_MIN_S);
-            else if ((plipIn -= step) <= 0) { queue(beat('plip')); plipIn = GATHER_SOUND.PLIP_MIN_S + rand() * (GATHER_SOUND.PLIP_MAX_S - GATHER_SOUND.PLIP_MIN_S); }
+            if (wasPhase !== 'wait')
+              plipIn = GATHER_SOUND.PLIP_MIN_S + rand() * (GATHER_SOUND.PLIP_MAX_S - GATHER_SOUND.PLIP_MIN_S);
+            else if ((plipIn -= step) <= 0) {
+              queue(beat('plip'));
+              plipIn = GATHER_SOUND.PLIP_MIN_S + rand() * (GATHER_SOUND.PLIP_MAX_S - GATHER_SOUND.PLIP_MIN_S);
+            }
           }
           if (st.phase === 'haul') {
             const slipping = !(st.weight >= st.bandAt && st.weight <= st.bandAt + st.bandW);
-            const span = () => (slipping ? GATHER_SOUND.THRASH_SLIP_S : GATHER_SOUND.THRASH_MIN_S + rand() * (GATHER_SOUND.THRASH_MAX_S - GATHER_SOUND.THRASH_MIN_S));
+            const span = () =>
+              slipping
+                ? GATHER_SOUND.THRASH_SLIP_S
+                : GATHER_SOUND.THRASH_MIN_S + rand() * (GATHER_SOUND.THRASH_MAX_S - GATHER_SOUND.THRASH_MIN_S);
             if (wasPhase !== 'haul') thrashIn = span();
-            else if ((thrashIn -= step) <= 0) { queue(beat('thrash', 0, 1, slipping ? GATHER_SOUND.THRASH_SLIP_GAIN : 1)); thrashIn = span(); }
+            else if ((thrashIn -= step) <= 0) {
+              queue(beat('thrash', 0, 1, slipping ? GATHER_SOUND.THRASH_SLIP_GAIN : 1));
+              thrashIn = span();
+            }
           }
         }
       }
       // the beats whose time has come, in the order they were held - a blow's once its machine has landed it
       if (pending.length) {
-        for (const p of pending) if (p.due === Infinity && (p.of?.state?.landed | 0) >= p.blow) p.due = clock + (p.b.after ?? 0);
+        for (const p of pending)
+          if (p.due === Infinity && (p.of?.state?.landed | 0) >= p.blow) p.due = clock + (p.b.after ?? 0);
         if (pending.some((p) => p.due <= clock)) {
           const due = pending.filter((p) => p.due <= clock);
           pending = pending.filter((p) => p.due > clock);
@@ -386,22 +480,36 @@ export function createGatherEar({ audio = null, on = enhancedSoundsOn, rand = Ma
       if (voice == null) return;
       const h = voices.get(voice);
       voices.delete(voice);
-      try { h?.stop(); } catch { /* a sound never stops an act */ }
+      try {
+        h?.stop();
+      } catch {
+        /* a sound never stops an act */
+      }
     },
     /** An act let go before its end (Escape, walked off, a window, the dungeon left, the professions shut) - the one
      *  playing (the act heard, unnamed) or a finished one's last swing: its beats in the air (its blow, what rides it)
      *  go with the hand that swung it - every other act's, and a beat said alone, land all the same. */
     stop(act = heard) {
       if (act) pending = pending.filter((p) => p.of !== act);
-      if (act === heard) { heard = null; prev = {}; }
+      if (act === heard) {
+        heard = null;
+        prev = {};
+      }
     },
     /** The floating origin moved (world.js's recentre: `offset` added to every scene point) - the places held (the
      *  node's, the net's where it landed, each beat's in the air) stand where they stood on the land. */
     rebase(offset) {
       if (!isVec3(offset)) return;
-      for (const p of [node, net, ...pending.map((q) => q.place)]) if (p) { p[0] += offset[0]; p[1] += offset[1]; p[2] += offset[2]; }
+      for (const p of [node, net, ...pending.map((q) => q.place)])
+        if (p) {
+          p[0] += offset[0];
+          p[1] += offset[1];
+          p[2] += offset[2];
+        }
     },
     /** The beats still held, for the pins. */
-    get pending() { return pending.map((p) => p.b.name); },
+    get pending() {
+      return pending.map((p) => p.b.name);
+    },
   };
 }

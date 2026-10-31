@@ -25,7 +25,7 @@ import { FlcPlayer } from './flcPlayer.js';
 import { nativeMetrics, shadowText } from './native/nativePanel.js';
 import { measureText } from './text.js';
 
-export const TEXT_LINES_PER_CHUNK = 4;   // :26
+export const TEXT_LINES_PER_CHUNK = 4; // :26
 /** daedricFoes[Random.Range(0,5)], Random.Range(3,6) foes at 8..64
  *  units (:86-87) - the SUMMONED window's own refusal spawn, distinct
  *  from the quest popup's 1-3 at 4..64. */
@@ -46,7 +46,11 @@ export function tokensToLines(tokens) {
   let line = '';
   let sawText = false;
   for (const t of tokens ?? []) {
-    if (t.formatting === 'text') { line += t.text; sawText = true; continue; }
+    if (t.formatting === 'text') {
+      line += t.text;
+      sawText = true;
+      continue;
+    }
     lines.push(line);
     line = '';
     sawText = false;
@@ -80,11 +84,15 @@ export class DaedraSummonedWindow {
     // the FLC: loaded synchronously off the fetched bytes; ready or
     // this window should not have been mounted
     this.flc = new FlcFile();
-    try { this.flc.load(hooks.flcBytes, hooks.flcName ?? 'SUMMON.FLC'); } catch { /* readyToPlay stays false */ }
-    this.player = new FlcPlayer(this.flc, { loop: true });   // FLCPlayer.Loop defaults true (:38)
+    try {
+      this.flc.load(hooks.flcBytes, hooks.flcName ?? 'SUMMON.FLC');
+    } catch {
+      /* readyToPlay stays false */
+    }
+    this.player = new FlcPlayer(this.flc, { loop: true }); // FLCPlayer.Loop defaults true (:38)
     if (this.flc.readyToPlay) this.player.start();
     this.lines = tokensToLines(hooks.offerStep?.prompt?.tokens ?? []);
-    this._advanceChunk();   // DisplayNextTextChunk at Setup (:112)
+    this._advanceChunk(); // DisplayNextTextChunk at Setup (:112)
   }
 
   /** DisplayNextTextChunk (:118-131): the next four lines; reaching
@@ -96,7 +104,7 @@ export class DaedraSummonedWindow {
   }
 
   _close() {
-    if (this.done) return;   // one close, however many keys land on the tail
+    if (this.done) return; // one close, however many keys land on the tail
     this.done = true;
     this.player.stop();
     this.hooks.onClose?.();
@@ -113,7 +121,10 @@ export class DaedraSummonedWindow {
     this.lines = tokensToLines(r?.popup?.tokens ?? []);
     this.idx = 0;
     this.lastChunk = false;
-    if (!this.lines.length) { this._close(); return; }
+    if (!this.lines.length) {
+      this._close();
+      return;
+    }
     this._advanceChunk();
   }
 
@@ -129,13 +140,22 @@ export class DaedraSummonedWindow {
     this._advanceChunk();
   }
 
-  click() { this._page(); return true; }
+  click() {
+    this._page();
+    return true;
+  }
 
   input(code) {
     if (this.lastChunk && !this.answerGiven) {
-      if (code === 'KeyY' || code === 'Enter') { this._answer(true); return; }
-      if (code === 'KeyN' || code === 'Escape') { this._answer(false); return; }
-      return;   // the last offer chunk answers to Y/N alone
+      if (code === 'KeyY' || code === 'Enter') {
+        this._answer(true);
+        return;
+      }
+      if (code === 'KeyN' || code === 'Escape') {
+        this._answer(false);
+        return;
+      }
+      return; // the last offer chunk answers to Y/N alone
     }
     this._page();
   }
@@ -146,7 +166,7 @@ export class DaedraSummonedWindow {
   }
 
   draw(renderer, canvas, font) {
-    this._renderer = renderer;   // the drain calls dispose() bare
+    this._renderer = renderer; // the drain calls dispose() bare
     const m = nativeMetrics(canvas);
     // the FLC frame, fullscreen 320x200 (Setup :103-108), under the
     // chargen release-then-upload law so a tick cannot leak a texture

@@ -32,7 +32,8 @@ import { createVampirismCurse, liveVampirism, VAMPIRE_CLAN_SPELLS } from './vamp
  *  one clan can match a vampire's own spellbook. */
 export function inferVampireClan(indexes) {
   const have = new Set(indexes);
-  for (const [clan, ids] of Object.entries(VAMPIRE_CLAN_SPELLS)) if (ids.length && ids.every((id) => have.has(id))) return Number(clan);
+  for (const [clan, ids] of Object.entries(VAMPIRE_CLAN_SPELLS))
+    if (ids.length && ids.every((id) => have.has(id))) return Number(clan);
   return VAMPIRE_CLANS.Anthotis;
 }
 
@@ -53,12 +54,16 @@ export function repairLostCurses(entity, { now = 0, lycanthropyType = LYCANTHROP
   if (vampire.length) {
     const clan = inferVampireClan(vampire.map((s) => s.index));
     if (!createVampirismCurse(entity, clan, { now, restore: true })) return null;
-    console.info(`[curse-repair] CURSE-REPAIR1: vampirism given back (clan ${clan}) - its spells outlived the curse the round clock pruned`);
+    console.info(
+      `[curse-repair] CURSE-REPAIR1: vampirism given back (clan ${clan}) - its spells outlived the curse the round clock pruned`,
+    );
     return 'vampirism';
   }
   if (spells.some((s) => s?.tag === LYCANTHROPY_SPELL_TAG)) {
     if (!createLycanthropyCurse(entity, lycanthropyType, { now, restore: true })) return null;
-    console.info(`[curse-repair] CURSE-REPAIR1: lycanthropy given back (strain ${lycanthropyType}, assumed - both strains grant spell 92)`);
+    console.info(
+      `[curse-repair] CURSE-REPAIR1: lycanthropy given back (strain ${lycanthropyType}, assumed - both strains grant spell 92)`,
+    );
     return 'lycanthropy';
   }
   return null;

@@ -77,14 +77,20 @@ export const RETRO_TARGETS_HUD = Object.freeze({ 1: Object.freeze([320, 154]), 2
 /** RetroModeAspects: Off, FourThree, SixteenTen. */
 export const RETRO_ASPECT = Object.freeze({ OFF: 0, FOUR_THREE: 1, SIXTEEN_TEN: 2 });
 /** PostProcessingInRetroMode (RetroModeConfigPage.cs:51-58, UpdateDepthProcessMaterial :388-406). */
-export const RETRO_POST = Object.freeze({ OFF: 0, POSTERIZE: 1, POSTERIZE_NO_SKY: 2, PALETTIZE: 3, PALETTIZE_NO_SKY: 4 });
+export const RETRO_POST = Object.freeze({
+  OFF: 0,
+  POSTERIZE: 1,
+  POSTERIZE_NO_SKY: 2,
+  PALETTIZE: 3,
+  PALETTIZE_NO_SKY: 4,
+});
 
 // SettingsManager.cs:408-412
 export const retroRenderingMode = () => getInt('Video', 'RetroRenderingMode', 0, 2);
-export const retroPostProcessing = () => getInt('Video', 'PostProcessingInRetroMode', 0, 4);   // RETRO1 departure: DFU reads it unclamped
+export const retroPostProcessing = () => getInt('Video', 'PostProcessingInRetroMode', 0, 4); // RETRO1 departure: DFU reads it unclamped
 export const retroUseMipMaps = () => getBool('Video', 'UseMipMapsInRetroMode');
 export const retroAspectCorrection = () => getInt('Video', 'RetroModeAspectCorrection', 0, 2);
-export const palettizationLutShift = () => getInt('Video', 'PalettizationLUTShift', 0, 7);   // RETRO1 departure: DFU reads it unclamped (AUDIT RETRO1 C7: 8 is a black world)
+export const palettizationLutShift = () => getInt('Video', 'PalettizationLUTShift', 0, 7); // RETRO1 departure: DFU reads it unclamped (AUDIT RETRO1 C7: 8 is a black world)
 
 /** The world's texture for a mode, [w, h], or null when retro is off. */
 export function retroTargetSize(mode, docked) {
@@ -121,7 +127,9 @@ export function retroAspectViewportRect(screenW, screenH, aspect, hudPx = 0) {
  *  the world's rect above and the UI's rect below are cut from. */
 function retroPillarWidth(screenW, screenH, aspect) {
   const heightRatio = Math.fround(Math.fround(screenH / 6) / 200);
-  const viewWidth = Math.trunc(Math.fround(Math.fround(320 * (aspect === RETRO_ASPECT.FOUR_THREE ? 5 : 6)) * heightRatio));
+  const viewWidth = Math.trunc(
+    Math.fround(Math.fround(320 * (aspect === RETRO_ASPECT.FOUR_THREE ? 5 : 6)) * heightRatio),
+  );
   return Math.trunc((screenW - viewWidth) / 2);
 }
 
@@ -150,7 +158,9 @@ export function toggleRetroPostprocessing() {
   return _postprocessing;
 }
 /** Tests only: back to a fresh RetroRenderer's flag. */
-export function _resetRetroPostprocessing() { _postprocessing = true; }
+export function _resetRetroPostprocessing() {
+  _postprocessing = true;
+}
 
 /**
  * THE FRAME'S RETRO STATE, for the renderer (main.js hands it this
@@ -170,10 +180,14 @@ export function _resetRetroPostprocessing() { _postprocessing = true; }
 export function retroFrameConfig() {
   const mode = retroRenderingMode();
   if (mode === 0) return null;
-  const size = retroTargetSize(mode, false), hud = retroTargetSize(mode, true);
+  const size = retroTargetSize(mode, false),
+    hud = retroTargetSize(mode, true);
   if (!size || !hud) return null;
   return {
-    width: size[0], height: size[1], hudWidth: hud[0], hudHeight: hud[1],
+    width: size[0],
+    height: size[1],
+    hudWidth: hud[0],
+    hudHeight: hud[1],
     post: _postprocessing ? retroPostProcessing() : RETRO_POST.OFF,
     lutShift: palettizationLutShift(),
     mipmaps: retroUseMipMaps(),

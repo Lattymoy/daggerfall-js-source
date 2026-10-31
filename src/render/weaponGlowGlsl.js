@@ -56,7 +56,8 @@ export const GLOW_FIRE_DOWN = 0.6;
 export const GLOW_EMBER_RISE = Object.freeze([6, 7.5, 9]);
 /** How far a look's outline stands off the weapon at most, in glow units: the outer ring, fire's stretched up and its
  *  embers over it. */
-export const glowReach = (look) => (look === 'fire' ? Math.max(GLOW_RINGS[0] * GLOW_FIRE_UP, ...GLOW_EMBER_RISE) : GLOW_RINGS[0]);
+export const glowReach = (look) =>
+  look === 'fire' ? Math.max(GLOW_RINGS[0] * GLOW_FIRE_UP, ...GLOW_EMBER_RISE) : GLOW_RINGS[0];
 /** AUDIT WEAPON-GLOW MW-3: THE ROOM A THIRD-PERSON PICTURE NEEDS FOR ITS OUTLINE, in texels a side (render/
  *  characterSprite.js drawRigSpriteBox pads the window by it, as it pads for a foe's tells - bodyFxPad): the reach in
  *  glow units at the unit the PADDED picture will draw at, and a texel over. `rows` the picture's rows before the pad.
@@ -95,19 +96,40 @@ export const GLOW_DRAWS_MAX = 64;
  *  1, arcane (its one level, 2) 1.6 + 1.2. The sprite clamps its reach here (`uReachMax`), and its window below holds
  *  every cell within it, so no band is ever cut short by the window's box (AUDIT WEAPON-GLOW SPR-2: the window was a
  *  guess, and shock's band reached past it in every frame at level 3). */
-export const GLOW_REACH_MAX = Object.freeze({ fire: 7.35, frost: 6.1, shock: 10, arcane: 2.8, brand: 3.4, edge: 3.4, gilded: 3.2 });   // ARMORY: the Brand's (1 + 0.7 x 2)(0.6 + 0.8), the Edge's 1 + 0.4 x 2 + 1.6; GILDED-GLOW: 1.2 + 0.4 x 2 + 0.6 + 0.6, under the Brand's
+export const GLOW_REACH_MAX = Object.freeze({
+  fire: 7.35,
+  frost: 6.1,
+  shock: 10,
+  arcane: 2.8,
+  brand: 3.4,
+  edge: 3.4,
+  gilded: 3.2,
+}); // ARMORY: the Brand's (1 + 0.7 x 2)(0.6 + 0.8), the Edge's 1 + 0.4 x 2 + 1.6; GILDED-GLOW: 1.2 + 0.4 x 2 + 0.6 + 0.6, under the Brand's
 /** How far past its band a fire ember may rise off the weapon (GLOW_SPRITE_FS - an ember stands only over a solid). */
 export const GLOW_EMBER_SLACK = 3;
 /** The farthest a look's field measures, in glow cells: its reach, and fire's embers past it. */
-export const glowFieldReach = (look) => GLOW_REACH_MAX[/** @type {keyof typeof GLOW_REACH_MAX} */ (look)] + (look === 'fire' ? GLOW_EMBER_SLACK : 0);
+export const glowFieldReach = (look) =>
+  GLOW_REACH_MAX[/** @type {keyof typeof GLOW_REACH_MAX} */ (look)] + (look === 'fire' ? GLOW_EMBER_SLACK : 0);
 /** The sprite's search window per look, in glow cells: [half-width, rows above the cell, rows below it] - every cell
  *  within glowFieldReach in the look's metric (gwMetric), and no more. Fire's flame stands over its weapon, so it looks
  *  far DOWN (its metric shrinks a rise by GLOW_FIRE_UP) and a little way up (a fall grows by 1/GLOW_FIRE_DOWN), and only
  *  its band looks up - an ember rises off a solid below it. */
-export const GLOW_SPRITE_WINDOW = Object.freeze(Object.fromEntries(['fire', 'frost', 'shock', 'arcane', 'brand', 'edge', 'gilded'].map((look) => {
-  const r = GLOW_REACH_MAX[/** @type {keyof typeof GLOW_REACH_MAX} */ (look)], e = glowFieldReach(look);
-  return [look, Object.freeze(look === 'fire' ? [Math.floor(e), Math.floor(r * GLOW_FIRE_DOWN), Math.floor(e * GLOW_FIRE_UP)] : [Math.floor(e), Math.floor(e), Math.floor(e)])];
-})));
+export const GLOW_SPRITE_WINDOW = Object.freeze(
+  Object.fromEntries(
+    ['fire', 'frost', 'shock', 'arcane', 'brand', 'edge', 'gilded'].map((look) => {
+      const r = GLOW_REACH_MAX[/** @type {keyof typeof GLOW_REACH_MAX} */ (look)],
+        e = glowFieldReach(look);
+      return [
+        look,
+        Object.freeze(
+          look === 'fire'
+            ? [Math.floor(e), Math.floor(r * GLOW_FIRE_DOWN), Math.floor(e * GLOW_FIRE_UP)]
+            : [Math.floor(e), Math.floor(e), Math.floor(e)],
+        ),
+      ];
+    }),
+  ),
+);
 /** AUDIT WEAPON-GLOW SPR-1: the most frames' fields the renderer keeps (render/renderer.js drawScreenQuadGlow) - a
  *  weapon's sheet is seven records of a few frames each, so two weapons' worth and the Thunderlock's; the least
  *  recently drawn goes first. */
@@ -393,9 +415,14 @@ void main() {
  *  FOG_GLSL, handed in - this file is a leaf) at its place in the world. Throws on a source without exactly one of each
  *  needle (glowMeshVs' rule). */
 export function glowWorldFs(spriteFs, fogGlsl) {
-  const decl = 'out vec4 outColor;', main = /\bvoid main\(\) \{/g;
-  const decls = spriteFs.split(decl).length - 1, mains = spriteFs.match(main)?.length ?? 0;
-  if (decls !== 1 || mains !== 1) throw new Error(`BACK-HOLSTER GLOW: the outline's shader needs one "${decl}" and one main (has ${decls} and ${mains})`);
+  const decl = 'out vec4 outColor;',
+    main = /\bvoid main\(\) \{/g;
+  const decls = spriteFs.split(decl).length - 1,
+    mains = spriteFs.match(main)?.length ?? 0;
+  if (decls !== 1 || mains !== 1)
+    throw new Error(
+      `BACK-HOLSTER GLOW: the outline's shader needs one "${decl}" and one main (has ${decls} and ${mains})`,
+    );
   const fog = `${decl}\nin vec3 vWorld;\nuniform int uFogMode;\nuniform float uFogDensity;\nuniform vec2 uFogRange;\nuniform vec3 uCamPos;\n`;
   return `${spriteFs.replace(decl, () => fog + fogGlsl).replace(main, (m) => m.replace('main', 'gwPaint'))}
 float gwFog() { return fogFactorAt(vWorld); }
@@ -418,11 +445,19 @@ export function glowMeshVs(charSkinVs) {
   const pos = 'gl_Position = uProj * uView * world;';
   const n = (needle) => charSkinVs.split(needle).length - 1;
   if (n(decl) !== 1 || n(pos) !== 1) {
-    throw new Error(`WEAPON-GLOW1: the character vertex shader needs one "${decl}" and one "${pos}" (has ${n(decl)} and ${n(pos)})`);
+    throw new Error(
+      `WEAPON-GLOW1: the character vertex shader needs one "${decl}" and one "${pos}" (has ${n(decl)} and ${n(pos)})`,
+    );
   }
   return charSkinVs
-    .replace(decl, `${decl}\nout vec3 vViewPos;\nflat out float vRingD;\nuniform vec4 uGlowDraw[${GLOW_DRAWS_MAX}];\nuniform int uGlowInstanced;\nuniform float uGlowPull;`)
-    .replace(pos, `${pos}\n  vViewPos = (uView * world).xyz;\n  vec4 gwD = uGlowInstanced == 1 ? uGlowDraw[gl_InstanceID] : vec4(0.0);\n  gl_Position.xy += gwD.xy * gl_Position.w;\n  gl_Position.z = gwD.z > 0.0 ? gwD.z * gl_Position.w : gl_Position.z + uGlowPull * gl_Position.w;\n  vRingD = gwD.w;`);
+    .replace(
+      decl,
+      `${decl}\nout vec3 vViewPos;\nflat out float vRingD;\nuniform vec4 uGlowDraw[${GLOW_DRAWS_MAX}];\nuniform int uGlowInstanced;\nuniform float uGlowPull;`,
+    )
+    .replace(
+      pos,
+      `${pos}\n  vViewPos = (uView * world).xyz;\n  vec4 gwD = uGlowInstanced == 1 ? uGlowDraw[gl_InstanceID] : vec4(0.0);\n  gl_Position.xy += gwD.xy * gl_Position.w;\n  gl_Position.z = gwD.z > 0.0 ? gwD.z * gl_Position.w : gl_Position.z + uGlowPull * gl_Position.w;\n  vRingD = gwD.w;`,
+    );
 }
 
 /** THE MORROWIND PASS'S FRAGMENT SHADER: `uMode` 0 the rings (opaque, each fragment's band its instance's `vRingD`, -1
@@ -486,15 +521,19 @@ export function glowRingDraws(look) {
   for (const ring of GLOW_RINGS) {
     for (let i = 0; i < GLOW_DIRS; i++) {
       const a = (i * 2 * Math.PI) / GLOW_DIRS;
-      let x = Math.cos(a), y = Math.sin(a);
+      let x = Math.cos(a),
+        y = Math.sin(a);
       if (look === 'fire') y *= y > 0 ? GLOW_FIRE_UP : GLOW_FIRE_DOWN;
-      out.push(Object.freeze({ shift: Object.freeze([x * ring, y * ring]), ring, far: GLOW_RING_FAR + ring * GLOW_RING_STEP }));
+      out.push(
+        Object.freeze({ shift: Object.freeze([x * ring, y * ring]), ring, far: GLOW_RING_FAR + ring * GLOW_RING_STEP }),
+      );
     }
   }
   if (look === 'fire') {
-    for (const up of GLOW_EMBER_RISE) for (const side of [-0.6, 0, 0.6]) {
-      out.push(Object.freeze({ shift: Object.freeze([side, up]), ring: -1, far: GLOW_RING_FAR }));
-    }
+    for (const up of GLOW_EMBER_RISE)
+      for (const side of [-0.6, 0, 0.6]) {
+        out.push(Object.freeze({ shift: Object.freeze([side, up]), ring: -1, far: GLOW_RING_FAR }));
+      }
   }
   return Object.freeze(out);
 }

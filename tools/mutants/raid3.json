@@ -2,8 +2,8 @@
   {
     "name": "RAID3-window-slack-early",
     "file": "src/net/raid/raidLaw.js",
-    "old": "return g >= w.st - RAID_SLACK_MINUTES && g <",
-    "new": "return g >= w.st && g <",
+    "old": "  return g >= w.st - RAID_SLACK_MINUTES && g < w.st + RAID_WINDOW_MINUTES + RAID_SLACK_MINUTES;",
+    "new": "  return g >= w.st && g < w.st + RAID_WINDOW_MINUTES + RAID_SLACK_MINUTES;",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RAID3-window-slack-late",
     "file": "src/net/raid/raidLaw.js",
-    "old": "g < w.st + RAID_WINDOW_MINUTES + RAID_SLACK_MINUTES;",
-    "new": "g < w.st + RAID_WINDOW_MINUTES;",
+    "old": "  return g >= w.st - RAID_SLACK_MINUTES && g < w.st + RAID_WINDOW_MINUTES + RAID_SLACK_MINUTES;",
+    "new": "  return g >= w.st - RAID_SLACK_MINUTES && g < w.st + RAID_WINDOW_MINUTES;",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RAID3-start-another-day",
     "file": "src/net/raid/raidLaw.js",
-    "old": "if (w.st < first || w.st > first + RAID_START_LAST) return false;",
-    "new": "if (w.st > first + RAID_START_LAST) return false;",
+    "old": "  if (w.st < first || w.st > first + RAID_START_LAST) return false;",
+    "new": "  if (w.st > first + RAID_START_LAST) return false;",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RAID3-start-last-off-by-one",
     "file": "src/net/raid/raidLaw.js",
-    "old": "w.st > first + RAID_START_LAST) return false;",
-    "new": "w.st > first + RAID_START_LAST + 1) return false;",
+    "old": "  if (w.st < first || w.st > first + RAID_START_LAST) return false;",
+    "new": "  if (w.st < first || w.st > first + RAID_START_LAST + 1) return false;",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RAID3-cap-gone",
     "file": "src/net/raid/raidLaw.js",
-    "old": "Math.min(w.n - rec.n, raidCap(led, nowMs) - led.n, led.tg - led.n)",
-    "new": "Math.min(w.n - rec.n, led.tg - led.n)",
+    "old": "    credited = Math.max(0, Math.min(w.n - rec.n, raidCap(led, nowMs) - led.n, led.tg - led.n));",
+    "new": "    credited = Math.max(0, Math.min(w.n - rec.n, led.tg - led.n));",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RAID3-rate-doubled",
     "file": "src/net/raid/raidLaw.js",
-    "old": "Math.floor(Math.max(0, nowMs - led.first) / RAID_KILL_MS)",
-    "new": "Math.floor(Math.max(0, nowMs - led.first) / (RAID_KILL_MS / 2))",
+    "old": "export const raidCap = (led, nowMs) => RAID_KILLS_BURST + Math.floor(Math.max(0, nowMs - led.first) / RAID_KILL_MS);",
+    "new": "export const raidCap = (led, nowMs) =>\n  RAID_KILLS_BURST + Math.floor(Math.max(0, nowMs - led.first) / (RAID_KILL_MS / 2));",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "RAID3-share-unremembered",
     "file": "src/net/raid/raidLaw.js",
-    "old": "    rec.n += credited;\n",
-    "new": "",
+    "old": "    rec.n += credited;\n    led.n += credited;",
+    "new": "    led.n += credited;",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RAID3-target-overrun",
     "file": "src/net/raid/raidLaw.js",
-    "old": "Math.min(w.n - rec.n, raidCap(led, nowMs) - led.n, led.tg - led.n)",
-    "new": "Math.min(w.n - rec.n, raidCap(led, nowMs) - led.n)",
+    "old": "    credited = Math.max(0, Math.min(w.n - rec.n, raidCap(led, nowMs) - led.n, led.tg - led.n));",
+    "new": "    credited = Math.max(0, Math.min(w.n - rec.n, raidCap(led, nowMs) - led.n));",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "RAID3-strike-forgotten",
     "file": "src/net/raid/raidLaw.js",
-    "old": "if (w.s === 1) rec.s = 1;",
-    "new": "rec.s = w.s === 1 ? 1 : 0;",
+    "old": "  if (w.s === 1) rec.s = 1;",
+    "new": "  rec.s = w.s === 1 ? 1 : 0;",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RAID3-ledger-unbounded",
     "file": "src/net/raid/raidLaw.js",
-    "old": "    if (Object.keys(led.a).length >= RAID_ACCOUNTS_MAX) return { credited: 0, known: false };\n",
-    "new": "",
+    "old": "    if (Object.keys(led.a).length >= RAID_ACCOUNTS_MAX) return { credited: 0, known: false };\n    rec = led.a[acct] = { nm: '', n: 0, s: 0, last: 0 };",
+    "new": "    rec = led.a[acct] = { nm: '', n: 0, s: 0, last: 0 };",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RAID3-counts-after-cleanse",
     "file": "src/net/raid/raidLaw.js",
-    "old": "  if (led.cl) return { credited: 0, known: !!led.a[acct] };\n",
-    "new": "",
+    "old": "  if (led.cl) return { credited: 0, known: !!led.a[acct] };\n  let rec = led.a[acct];",
+    "new": "  let rec = led.a[acct];",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "RAID3-earned-strike-not-asked",
     "file": "src/net/raid/raidLaw.js",
-    "old": "r.s === 1 && atMs - r.last <= RAID_PRESENT_MS",
-    "new": "atMs - r.last <= RAID_PRESENT_MS",
+    "old": "  return Object.entries(led.a).filter(([, r]) => r.s === 1 && atMs - r.last <= RAID_PRESENT_MS);",
+    "new": "  return Object.entries(led.a).filter(([, r]) => atMs - r.last <= RAID_PRESENT_MS);",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "RAID3-earned-presence-not-asked",
     "file": "src/net/raid/raidLaw.js",
-    "old": "r.s === 1 && atMs - r.last <= RAID_PRESENT_MS",
-    "new": "r.s === 1",
+    "old": "  return Object.entries(led.a).filter(([, r]) => r.s === 1 && atMs - r.last <= RAID_PRESENT_MS);",
+    "new": "  return Object.entries(led.a).filter(([, r]) => r.s === 1);",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "RAID3-present-window-off-by-one",
     "file": "src/net/raid/raidLaw.js",
-    "old": "r.s === 1 && atMs - r.last <= RAID_PRESENT_MS",
-    "new": "r.s === 1 && atMs - r.last < RAID_PRESENT_MS",
+    "old": "  return Object.entries(led.a).filter(([, r]) => r.s === 1 && atMs - r.last <= RAID_PRESENT_MS);",
+    "new": "  return Object.entries(led.a).filter(([, r]) => r.s === 1 && atMs - r.last < RAID_PRESENT_MS);",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "RAID3-top-order-reversed",
     "file": "src/net/raid/raidLaw.js",
-    "old": ".sort(([, a], [, b]) => b.n - a.n ||",
-    "new": ".sort(([, a], [, b]) => a.n - b.n ||",
+    "old": "    .sort(([, a], [, b]) => b.n - a.n || (a.nm < b.nm ? -1 : a.nm > b.nm ? 1 : 0))",
+    "new": "    .sort(([, a], [, b]) => a.n - b.n || (a.nm < b.nm ? -1 : a.nm > b.nm ? 1 : 0))",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "RAID3-receipt-version-not-read",
     "file": "src/net/raid/raidReceipt.js",
-    "old": "  if (v !== RAID_RECEIPT_V) return { ok: false, why: 'version' };\n",
-    "new": "",
+    "old": "  if (v !== RAID_RECEIPT_V) return { ok: false, why: 'version' };\n  if (!sig64) return { ok: false, why: 'unsigned' };",
+    "new": "  if (!sig64) return { ok: false, why: 'unsigned' };",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "RAID3-receipt-foreign-claims",
     "file": "src/net/raid/raidReceipt.js",
-    "old": "  if (c.n !== undefined || c.k !== undefined || c.t !== undefined || c.o !== undefined || c.d !== undefined || c.b !== undefined) return false;\n",
-    "new": "",
+    "old": "  if (\n    c.n !== undefined ||\n    c.k !== undefined ||\n    c.t !== undefined ||\n    c.o !== undefined ||\n    c.d !== undefined ||\n    c.b !== undefined\n  )\n    return false;\n  if (typeof c.w !== 'string' || !RAID_KEY_RE.test(c.w)) return false;",
+    "new": "  if (typeof c.w !== 'string' || !RAID_KEY_RE.test(c.w)) return false;",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "RAID3-receipt-expiry-ignored",
     "file": "src/net/raid/raidReceipt.js",
-    "old": "  if (nowS >= claims.e) return { ok: false, why: 'expired' };\n",
-    "new": "",
+    "old": "  if (nowS >= claims.e) return { ok: false, why: 'expired' };\n  if (claims.i > nowS + skewS) return { ok: false, why: 'future' };",
+    "new": "  if (claims.i > nowS + skewS) return { ok: false, why: 'future' };",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "RAID3-receipt-future-ignored",
     "file": "src/net/raid/raidReceipt.js",
-    "old": "  if (claims.i > nowS + skewS) return { ok: false, why: 'future' };\n",
-    "new": "",
+    "old": "  if (claims.i > nowS + skewS) return { ok: false, why: 'future' };\n  return { ok: true, claims };",
+    "new": "  return { ok: true, claims };",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "RAID3-receipt-unsigned-verified",
     "file": "src/net/raid/raidReceipt.js",
-    "old": "  if (!sig64) return { ok: false, why: 'unsigned' };\n",
-    "new": "",
+    "old": "  if (!sig64) return { ok: false, why: 'unsigned' };\n  const sig = _b64url.decode(sig64);",
+    "new": "  const sig = _b64url.decode(sig64);",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "RAID3-receipt-ttl-unbounded",
     "file": "src/net/raid/raidReceipt.js",
-    "old": "if (c.e <= c.i || c.e - c.i > RAID_RECEIPT_TTL_S) return false;",
-    "new": "if (c.e <= c.i) return false;",
+    "old": "  if (c.e <= c.i || c.e - c.i > RAID_RECEIPT_TTL_S) return false;",
+    "new": "  if (c.e <= c.i) return false;",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -512,8 +512,8 @@
   {
     "name": "RAID3-client-word-unsaid",
     "file": "src/systems/raidingParties.js",
-    "old": "  else if (relay && said) sayToRelay(said);\n",
-    "new": "",
+    "old": "  if (said?.staff)\n    sayToCell(said); // STAFF-EVENT: its cell keeps its meter\n  else if (relay && said) sayToRelay(said);",
+    "new": "  if (said?.staff) sayToCell(said); // STAFF-EVENT: its cell keeps its meter",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -521,8 +521,8 @@
   {
     "name": "RAID3-client-said-every-frame",
     "file": "src/systems/raidingParties.js",
-    "old": "  if (_lastWord && _lastWord.key === key && _lastWord.n === n && _lastWord.s === s && t - _lastWord.at < RAID_WORD_MS) return false;\n",
-    "new": "",
+    "old": "  if (_lastWord && _lastWord.key === key && _lastWord.n === n && _lastWord.s === s && t - _lastWord.at < RAID_WORD_MS)\n    return false;\n  const word = {",
+    "new": "  const word = {",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -530,8 +530,8 @@
   {
     "name": "RAID3-client-refused-taken-as-said",
     "file": "src/systems/raidingParties.js",
-    "old": "  if (!host().sendRaid?.(word, worldRoom(raid.px, raid.py))) return false;\n",
-    "new": "  host().sendRaid?.(word, worldRoom(raid.px, raid.py));\n",
+    "old": "  if (!host().sendRaid?.(word, worldRoom(raid.px, raid.py))) return false;",
+    "new": "  host().sendRaid?.(word, worldRoom(raid.px, raid.py));",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -539,8 +539,8 @@
   {
     "name": "RAID3-client-local-count-cleanses",
     "file": "src/systems/raidingParties.js",
-    "old": "    if (!raid.staff && !raidRelayOn() && raidKillTotal(raid) >= raid.attackAmount) cleanse(raid);",
-    "new": "    if (!raid.staff && raidKillTotal(raid) >= raid.attackAmount) cleanse(raid);",
+    "old": "    if (!raid.staff && !raidRelayOn() && raidKillTotal(raid) >= raid.attackAmount) cleanse(raid); // RAID3: at a raid relay, its cleanse alone; STAFF-EVENT: an event's end is the relay's",
+    "new": "    if (!raid.staff && raidKillTotal(raid) >= raid.attackAmount) cleanse(raid); // RAID3: at a raid relay, its cleanse alone; STAFF-EVENT: an event's end is the relay's",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -548,8 +548,8 @@
   {
     "name": "RAID3-client-frame-local-cleanse",
     "file": "src/systems/raidingParties.js",
-    "old": "  for (const r of state.raids) if (!relay && raidActive(r, now)",
-    "new": "  for (const r of state.raids) if (raidActive(r, now)",
+    "old": "  for (const r of state.raids) if (!relay && raidActive(r, now) && raidKillTotal(r) >= r.attackAmount) cleanse(r); // RAID2: the owners' shares summed; RAID3: at a raid relay, its cleanse alone",
+    "new": "  for (const r of state.raids) if (raidActive(r, now) && raidKillTotal(r) >= r.attackAmount) cleanse(r); // RAID2: the owners' shares summed; RAID3: at a raid relay, its cleanse alone",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -557,8 +557,8 @@
   {
     "name": "RAID3-client-defenders-unsaid",
     "file": "src/systems/raidingParties.js",
-    "old": "  const who = defendedLine(top, n);",
-    "new": "  const who = '';",
+    "old": "  const who = defendedLine(top, n); // RAID3: the relay's cleanse names who held the town",
+    "new": "  const who = ''; // RAID3: the relay's cleanse names who held the town",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -566,8 +566,8 @@
   {
     "name": "RAID3-client-cleanse-said-bay-wide",
     "file": "src/systems/raidingParties.js",
-    "old": "said: (typeof room === 'string' && isCellRoom(room)) || inRegion,",
-    "new": "said: true,",
+    "old": "    cleanse(raid, { said: (typeof room === 'string' && isCellRoom(room)) || inRegion, top: f.top, n: f.n });",
+    "new": "    cleanse(raid, { said: true, top: f.top, n: f.n });",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -575,8 +575,8 @@
   {
     "name": "RAID3-client-list-said-aloud",
     "file": "src/systems/raidingParties.js",
-    "old": "if (r && !r.cleansed) cleanse(r, { said: false }); }",
-    "new": "if (r && !r.cleansed) cleanse(r); }",
+    "old": "      if (r && !r.cleansed) cleanse(r, { said: false });",
+    "new": "      if (r && !r.cleansed) cleanse(r);",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -584,8 +584,8 @@
   {
     "name": "RAID3-client-missed-cleanse-kept-open",
     "file": "src/systems/raidingParties.js",
-    "old": "    if (f.c > 0 && !raid.cleansed) cleanse(raid);",
-    "new": "    if (false) cleanse(raid);",
+    "old": "    if (f.c > 0 && !raid.cleansed) cleanse(raid); // a cleanse this machine missed (a dropped link): said now",
+    "new": "    if (false) cleanse(raid); // a cleanse this machine missed (a dropped link): said now",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -602,8 +602,8 @@
   {
     "name": "RAID3-client-receipts-unbounded",
     "file": "src/systems/raidingParties.js",
-    "old": "    _receipts.set(c.w, f.r);\n    while (_receipts.size > RAID_RECEIPTS_KEPT) _receipts.delete(_receipts.keys().next().value);\n",
-    "new": "    _receipts.set(c.w, f.r);\n",
+    "old": "    while (_receipts.size > RAID_RECEIPTS_KEPT) _receipts.delete(_receipts.keys().next().value);\n    host().onRaidReceipt?.(f.r, c, raidHeldFor(c.w)); // RAID4 carries it to the account service and rolls the spoils off its seed; AUDIT WORLD-EVENTS L3-14: and whether its town was held, for the character that fought",
+    "new": "    host().onRaidReceipt?.(f.r, c, raidHeldFor(c.w)); // RAID4 carries it to the account service and rolls the spoils off its seed; AUDIT WORLD-EVENTS L3-14: and whether its town was held, for the character that fought",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]
@@ -611,8 +611,8 @@
   {
     "name": "RAID3-client-unknown-raid-kept",
     "file": "src/systems/raidingParties.js",
-    "old": "    if (!raid) return false;   // a raid this machine does not hold (its list is the day's roll - AUDIT RAID R1: its tuple too) is not its to keep\n",
-    "new": "",
+    "old": "    if (!raid) return false; // a raid this machine does not hold (its list is the day's roll - AUDIT RAID R1: its tuple too) is not its to keep\n    _relay.set(f.key, { n: f.n, tg: f.tg, c: f.c });",
+    "new": "    _relay.set(f.key, { n: f.n, tg: f.tg, c: f.c });",
     "tests": [
       "test/net/raid3_raidLedger.test.js"
     ]

@@ -15,8 +15,15 @@
 // the search box the player is typing in); the menu's repaint builds a new pane, and the old root is let go.
 
 import {
-  TUTORIALS, TUTORIAL_GROUPS, tutorialById, tutorialText, seenTutorials, markTutorialsSeen, forgetTutorialsSeen,
-  tutorialPopupsOn, setTutorialPopups,
+  TUTORIALS,
+  TUTORIAL_GROUPS,
+  tutorialById,
+  tutorialText,
+  seenTutorials,
+  markTutorialsSeen,
+  forgetTutorialsSeen,
+  tutorialPopupsOn,
+  setTutorialPopups,
 } from '../systems/tutorials.js';
 import { boundKeyName, clearTutorialLine } from './tutorialPopup.js';
 
@@ -59,7 +66,7 @@ function ensureStyle() {
 let selId = TUTORIALS[0].id;
 let query = '';
 let armedReset = false;
-let railScroll = 0;   // the rail keeps its place across a repaint - a click far down the book is not a jump to its top
+let railScroll = 0; // the rail keeps its place across a repaint - a click far down the book is not a jump to its top
 
 /** The menu's unmount: the next visit opens on the first page with no search. */
 export function releaseTutorialsPane() {
@@ -71,7 +78,10 @@ export function releaseTutorialsPane() {
 
 /** The pages a search keeps: every word of the query in the title or the words (keys left as written). */
 export function tutorialsMatching(q) {
-  const words = String(q ?? '').toLowerCase().split(/\s+/).filter(Boolean);
+  const words = String(q ?? '')
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean);
   if (!words.length) return [...TUTORIALS];
   return TUTORIALS.filter((t) => {
     const hay = [t.title, t.trigger, ...t.body, ...(t.points ?? [])].join(' ').toLowerCase();
@@ -82,7 +92,7 @@ export function tutorialsMatching(q) {
 /** Draw the pane into `body`. */
 export function drawTutorialsPane(body) {
   ensureStyle();
-  if (body.classList?.contains('body')) body.classList.add('wide');   // the front door's reading column is too narrow for a rail and a page
+  if (body.classList?.contains('body')) body.classList.add('wide'); // the front door's reading column is too narrow for a rail and a page
   const root = el('div', 'tut-pane');
   body.append(root);
   paint(root);
@@ -103,7 +113,12 @@ function paint(root) {
   search.setAttribute('aria-label', 'Search tutorials');
   search.value = query;
   const list = el('div', 'tut-list');
-  search.oninput = () => { query = search.value; list.scrollTop = 0; railScroll = 0; fillRail(list, root, seen); };
+  search.oninput = () => {
+    query = search.value;
+    list.scrollTop = 0;
+    railScroll = 0;
+    fillRail(list, root, seen);
+  };
   rail.append(search, list);
   fillRail(list, root, seen);
   wrap.append(rail);
@@ -138,15 +153,19 @@ function paint(root) {
   const nav = el('div', 'acts tut-nav');
   const prev = el('button', 'act', '← Previous');
   prev.disabled = at <= 0;
-  prev.onclick = () => { select(root, order[at - 1]); };
+  prev.onclick = () => {
+    select(root, order[at - 1]);
+  };
   const next = el('button', 'act primary', 'Next →');
   next.disabled = at >= order.length - 1;
-  next.onclick = () => { select(root, order[at + 1]); };
+  next.onclick = () => {
+    select(root, order[at + 1]);
+  };
   nav.append(prev, next);
   detail.append(nav);
   wrap.append(detail);
   root.append(wrap);
-  list.scrollTop = railScroll;   // again, now that it is laid out
+  list.scrollTop = railScroll; // again, now that it is laid out
 }
 
 /** Reading a page in the book is reading it: it will not pop in the game afterwards. */
@@ -192,9 +211,17 @@ function controls(root, seen) {
     if (on) clearTutorialLine();
     paint(root);
   };
-  const reset = el('button', armedReset ? 'act primary' : 'act', armedReset ? 'Click again to confirm' : 'Show all again');
+  const reset = el(
+    'button',
+    armedReset ? 'act primary' : 'act',
+    armedReset ? 'Click again to confirm' : 'Show all again',
+  );
   reset.onclick = () => {
-    if (!armedReset) { armedReset = true; paint(root); return; }
+    if (!armedReset) {
+      armedReset = true;
+      paint(root);
+      return;
+    }
     armedReset = false;
     forgetTutorialsSeen();
     setTutorialPopups(true);
@@ -202,7 +229,12 @@ function controls(root, seen) {
   };
   const all = el('button', 'act', 'Mark all read');
   all.disabled = seen.size >= TUTORIALS.length;
-  all.onclick = () => { markTutorialsSeen(TUTORIALS.map((t) => t.id)); clearTutorialLine(); armedReset = false; paint(root); };
+  all.onclick = () => {
+    markTutorialsSeen(TUTORIALS.map((t) => t.id));
+    clearTutorialLine();
+    armedReset = false;
+    paint(root);
+  };
   row.append(toggle, reset, all);
   card.append(row);
   return card;

@@ -225,7 +225,7 @@ const frame = (key, kind, title, subs, rows = [], rest = 0, empty = false) =>
   ({ key, kind, title, subs, rows, rest, empty });
 
 /** A house container's glance: the list when the reader has one, the name otherwise.
- *  `preview` is why quick loot does not light a row or arm a take (quickLoot.js:"const take = frame?.kind === 'items' && !frame.preview;"). */
+ *  `preview` is why quick loot does not light a row or arm a take (quickLoot.js:"const take = frame?.kind"). */
 function resolvePreview(key, hit, name, contents) {
   const named = name?.(key, hit) ?? null;
   if (!named?.title) return null;

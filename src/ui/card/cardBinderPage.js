@@ -22,20 +22,37 @@
 import { ILIAC_CARDS, ILIAC_TIERS, cardById } from '../../net/iliac/iliacCards.js';
 import { deckValid, ILIAC_DECK_SIZE, ILIAC_COPIES_MAX, ILIAC_LEGENDARY_COPIES_MAX } from '../../net/iliac/iliacHand.js';
 import { paintIliacCard, paintIliacBack, ILIAC_CARD_ASPECT } from '../../render/iliacCardFaces.js';
-import { binderOf, binderDecks, collectionOf, deckHeldRefusal, setBinderDeck, dropBinderDeck, DECK_NAME_MAX, BINDER_DECKS_MAX } from '../../systems/iliac/iliacItems.js';
+import {
+  binderOf,
+  binderDecks,
+  collectionOf,
+  deckHeldRefusal,
+  setBinderDeck,
+  dropBinderDeck,
+  DECK_NAME_MAX,
+  BINDER_DECKS_MAX,
+} from '../../systems/iliac/iliacItems.js';
 import { cardRules, cardFlavor } from '../../systems/iliac/iliacCardWords.js';
 import { textRevision } from '../../systems/textManager.js';
 
 export const CARD_BINDER_STYLE_ID = 'card-binder-page-css';
 /** The kinds' switch: [id, label]. */
-export const CARD_KIND_FILTERS = Object.freeze([['all', 'All'], ['unit', 'Units'], ['spell', 'Spells'], ['prince', 'Princes']]);
+export const CARD_KIND_FILTERS = Object.freeze([
+  ['all', 'All'],
+  ['unit', 'Units'],
+  ['spell', 'Spells'],
+  ['prince', 'Princes'],
+]);
 /** A tile's height in the grid (its width the cards' aspect), and the pressed card's large view. */
 export const TILE_H = 112;
 export const LARGE_H = 371;
 /** The rules' and the pack's refusals of a deck, in words. */
 export const DECK_REFUSAL_WORDS = Object.freeze({
-  size: 'A deck holds exactly 30 cards.', copies: 'At most two of one card.', legendary: 'At most one of a Legendary or rarer card.',
-  'unknown card': 'The deck holds an unknown card.', 'not held': 'Your binder does not hold every card this deck names.',
+  size: 'A deck holds exactly 30 cards.',
+  copies: 'At most two of one card.',
+  legendary: 'At most one of a Legendary or rarer card.',
+  'unknown card': 'The deck holds an unknown card.',
+  'not held': 'Your binder does not hold every card this deck names.',
 });
 
 /** The deck cards: the catalog's (its locations are a list of their own - net/iliac/iliacCards.js ILIAC_LOCATIONS). */
@@ -43,7 +60,8 @@ export const deckCards = () => ILIAC_CARDS;
 /** Whether the part shows: the character carries a binder. */
 export const cardsPartShown = (/** @type {any} */ player = null) => !!binderOf(player?.items);
 /** How many of a card a deck may hold (the rules' law, net/iliac/iliacHand.js deckValid). */
-export const copiesAllowed = (/** @type {any} */ card) => (ILIAC_TIERS.indexOf(card?.tier) >= ILIAC_TIERS.indexOf('legendary') ? ILIAC_LEGENDARY_COPIES_MAX : ILIAC_COPIES_MAX);
+export const copiesAllowed = (/** @type {any} */ card) =>
+  ILIAC_TIERS.indexOf(card?.tier) >= ILIAC_TIERS.indexOf('legendary') ? ILIAC_LEGENDARY_COPIES_MAX : ILIAC_COPIES_MAX;
 
 let _filter = 'all';
 let _picked = /** @type {string|null} */ (null);
@@ -51,9 +69,17 @@ let _editing = /** @type {{i: number, name: string, cards: string[]}|null} */ (n
 let _dropArmed = /** @type {number|null} */ (null);
 let _said = /** @type {string|null} */ (null);
 /** The part forgotten (a load, a new character, a visit's end). */
-export function resetCardsPart() { _filter = 'all'; _picked = null; _editing = null; _dropArmed = null; _said = null; }
+export function resetCardsPart() {
+  _filter = 'all';
+  _picked = null;
+  _editing = null;
+  _dropArmed = null;
+  _said = null;
+}
 /** AUDIT CARDS-5 D5: an armed Delete never outlives its screen - another page, tab or part disarms it. */
-export function disarmCardsPart() { _dropArmed = null; }
+export function disarmCardsPart() {
+  _dropArmed = null;
+}
 
 export const CARD_BINDER_CSS = `
 .px-sys .binder-filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
@@ -101,18 +127,27 @@ let _facesRev = -1;
  *  2D context (the bench's DOM) draws nothing. Cached by card, height, pixel ratio and mode, while the language stands.
  *  KG3: `picture` paints the card's picture alone (render/iliacCardFaces.js's PICTURE - The King's Gambit's units). */
 export function cardCanvas(/** @type {any} */ doc, /** @type {any} */ card, h = TILE_H, { picture = false } = {}) {
-  if (_facesRev !== textRevision()) { _faces.clear(); _facesRev = textRevision(); }
+  if (_facesRev !== textRevision()) {
+    _faces.clear();
+    _facesRev = textRevision();
+  }
   const dpr = Math.min(2, Number(globalThis.devicePixelRatio) || 1);
   const key = `${card?.id ?? '?'}|${h}|${dpr}${picture ? '|picture' : ''}`;
   const had = _faces.get(key);
   if (had && had.ownerDocument === doc) return had;
   const cv = doc.createElement('canvas');
   const w = Math.round(h * ILIAC_CARD_ASPECT);
-  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  cv.width = Math.round(w * dpr);
+  cv.height = Math.round(h * dpr);
   const ctx = cv.getContext?.('2d');
   if (ctx) {
     ctx.scale?.(dpr, dpr);
-    try { if (card) paintIliacCard(ctx, card, w, h, undefined, { picture }); else paintIliacBack(ctx, w, h); } catch { /* a face that will not paint is a blank tile */ }
+    try {
+      if (card) paintIliacCard(ctx, card, w, h, undefined, { picture });
+      else paintIliacBack(ctx, w, h);
+    } catch {
+      /* a face that will not paint is a blank tile */
+    }
   }
   if (_faces.size >= FACE_CACHE_MAX) _faces.delete(_faces.keys().next().value);
   _faces.set(key, cv);
@@ -125,12 +160,15 @@ export function cardCanvas(/** @type {any} */ doc, /** @type {any} */ card, h = 
 export function cardCanvasCopy(/** @type {any} */ doc, /** @type {any} */ card, h = TILE_H, { picture = false } = {}) {
   const src = cardCanvas(doc, card, h, { picture });
   const cv = doc.createElement('canvas');
-  cv.width = src.width; cv.height = src.height;
+  cv.width = src.width;
+  cv.height = src.height;
   cv.getContext?.('2d')?.drawImage?.(src, 0, 0);
   return cv;
 }
 /** Tests: the faces painted afresh. */
-export function _clearCardFacesForTests() { _faces.clear(); }
+export function _clearCardFacesForTests() {
+  _faces.clear();
+}
 
 /** Why `cards` cannot be kept in this pack's binder, or null. */
 export function deckRefusal(/** @type {string[]} */ cards, /** @type {any[]} */ items) {
@@ -147,11 +185,14 @@ export function drawCardsPart(detail, rerender, kit) {
   const { el, divider } = kit;
   const items = kit.player?.items ?? [];
   const binder = binderOf(items);
-  if (!binder) { detail.append(el('p', 'px-note', 'You are not carrying a Card Binder.')); return; }
+  if (!binder) {
+    detail.append(el('p', 'px-note', 'You are not carrying a Card Binder.'));
+    return;
+  }
   const have = collectionOf(items);
   const all = deckCards();
   const known = all.filter((c) => have.has(c.id));
-  const total = known.reduce((s, c) => s + (have.get(c.id) ?? 0), 0);   // AUDIT CARDS-5 C6: the cards this build knows
+  const total = known.reduce((s, c) => s + (have.get(c.id) ?? 0), 0); // AUDIT CARDS-5 C6: the cards this build knows
   // THE DECKS (or the one open for building) first - what a player came to change
   if (_editing) drawEditor(detail, rerender, el, items, binder, have);
   else drawDecks(detail, rerender, el, divider, items, binder);
@@ -161,13 +202,18 @@ export function drawCardsPart(detail, rerender, kit) {
     const b = el('button', `binder-filter${id === _filter ? ' on' : ''}`, label);
     b.type = 'button';
     b.setAttribute('data-focus', `binder-filter-${id}`);
-    b.onclick = () => { _filter = id; _dropArmed = null; rerender(); };
+    b.onclick = () => {
+      _filter = id;
+      _dropArmed = null;
+      rerender();
+    };
     filters.append(b);
   }
   detail.append(filters);
   if (_said) detail.append(el('p', 'binder-said', _said));
   const look = _picked && !_editing ? cardById(_picked) : null;
-  if (look) {   // AUDIT CARDS-5 B2/B3: the pressed card large, and what it is in words - its flavor too
+  if (look) {
+    // AUDIT CARDS-5 B2/B3: the pressed card large, and what it is in words - its flavor too
     const box = el('div', 'binder-look');
     if (doc) box.append(cardCanvas(doc, look, LARGE_H));
     const words = el('div', 'binder-look-text');
@@ -195,7 +241,8 @@ export function drawCardsPart(detail, rerender, kit) {
 }
 
 /** "2 copies of Rat" - a count of a card in words. */
-const copies = (/** @type {number} */ n, /** @type {string} */ name) => `${n} ${n === 1 ? 'copy' : 'copies'} of ${name}`;
+const copies = (/** @type {number} */ n, /** @type {string} */ name) =>
+  `${n} ${n === 1 ? 'copy' : 'copies'} of ${name}`;
 /** A card pressed: building, it goes in the deck (or is said why not); else it is shown. */
 function pressCard(/** @type {string} */ id, /** @type {number} */ held, rerender) {
   const c = cardById(id);
@@ -205,34 +252,63 @@ function pressCard(/** @type {string} */ id, /** @type {number} */ held, rerende
     const inDeck = _editing.cards.filter((x) => x === id).length;
     const cap = copiesAllowed(c);
     if (!held) _said = `Your binder holds no ${c.name}.`;
-    else if (_editing.cards.length >= ILIAC_DECK_SIZE) _said = `The deck is full (${ILIAC_DECK_SIZE} cards). Take one out first.`;   // AUDIT CARDS-5 D4
-    else if (inDeck >= cap) _said = cap === 1 ? `A deck can hold only one ${c.name} because it is Legendary or rarer.` : `A deck holds at most ${cap} of one card.`;   // AUDIT CARDS-5 D4
-    else if (inDeck >= held) _said = `Your binder's ${copies(held, c.name)} ${held === 1 ? 'is' : 'are all'} in this deck.`;
-    else { _editing.cards = [..._editing.cards, id]; _said = `${c.name} added to the deck (${_editing.cards.length} of ${ILIAC_DECK_SIZE}).`; }
+    else if (_editing.cards.length >= ILIAC_DECK_SIZE)
+      _said = `The deck is full (${ILIAC_DECK_SIZE} cards). Take one out first.`; // AUDIT CARDS-5 D4
+    else if (inDeck >= cap)
+      _said =
+        cap === 1
+          ? `A deck can hold only one ${c.name} because it is Legendary or rarer.`
+          : `A deck holds at most ${cap} of one card.`; // AUDIT CARDS-5 D4
+    else if (inDeck >= held)
+      _said = `Your binder's ${copies(held, c.name)} ${held === 1 ? 'is' : 'are all'} in this deck.`;
+    else {
+      _editing.cards = [..._editing.cards, id];
+      _said = `${c.name} added to the deck (${_editing.cards.length} of ${ILIAC_DECK_SIZE}).`;
+    }
   } else if (c) _said = held ? `You hold ${copies(held, c.name)}.` : `You hold no ${c.name} yet.`;
   rerender();
 }
 
 /** THE DECKS: each with its count and whether it can be played, and its acts. */
 function drawDecks(detail, rerender, el, divider, items, binder) {
-  const decks = binderDecks(binder);   // AUDIT CARDS-5 C1: the decks a reader may trust
+  const decks = binderDecks(binder); // AUDIT CARDS-5 C1: the decks a reader may trust
   detail.append(divider(`Decks - ${decks.length} of ${BINDER_DECKS_MAX}`));
   const list = el('div', 'binder-decks');
   decks.forEach((d, i) => {
     const row = el('div', 'binder-deck');
     row.dataset.deck = String(i);
     const why = deckRefusal(d.cards, items);
-    row.append(el('span', 'nm', d.name), el('span', why ? 'why' : 'ok', why ? DECK_REFUSAL_WORDS[why] ?? 'This deck cannot be played.' : `${d.cards.length} cards - ready`));
+    row.append(
+      el('span', 'nm', d.name),
+      el(
+        'span',
+        why ? 'why' : 'ok',
+        why ? (DECK_REFUSAL_WORDS[why] ?? 'This deck cannot be played.') : `${d.cards.length} cards - ready`,
+      ),
+    );
     const edit = el('button', 'act', 'Edit');
     edit.type = 'button';
     edit.setAttribute('data-focus', `binder-deck-edit-${i}`);
-    edit.onclick = () => { _editing = { i, name: d.name, cards: d.cards.slice() }; _said = null; _dropArmed = null; _picked = null; rerender(); };
+    edit.onclick = () => {
+      _editing = { i, name: d.name, cards: d.cards.slice() };
+      _said = null;
+      _dropArmed = null;
+      _picked = null;
+      rerender();
+    };
     const drop = el('button', 'act', _dropArmed === i ? 'Delete it' : 'Delete');
     drop.type = 'button';
-    drop.setAttribute('data-focus', `binder-deck-drop-${i}`);   // AUDIT CARDS-5 D2: armed, its words change - the keyboard stays on it
+    drop.setAttribute('data-focus', `binder-deck-drop-${i}`); // AUDIT CARDS-5 D2: armed, its words change - the keyboard stays on it
     drop.onclick = () => {
-      if (_dropArmed !== i) { _dropArmed = i; rerender(); return; }
-      dropBinderDeck(binder, i); _dropArmed = null; _said = `${d.name} deleted. Its cards stay in your binder.`; rerender();
+      if (_dropArmed !== i) {
+        _dropArmed = i;
+        rerender();
+        return;
+      }
+      dropBinderDeck(binder, i);
+      _dropArmed = null;
+      _said = `${d.name} deleted. Its cards stay in your binder.`;
+      rerender();
     };
     row.append(edit, drop);
     list.append(row);
@@ -242,7 +318,14 @@ function drawDecks(detail, rerender, el, divider, items, binder) {
     const add = el('button', 'act', 'New deck');
     add.type = 'button';
     add.setAttribute('data-focus', 'binder-deck-new');
-    add.onclick = () => { _editing = { i: decks.length, name: `Deck ${decks.length + 1}`, cards: [] }; _said = 'Press a card below to add it to the deck.'; _dropArmed = null; _picked = null; rerender(); focusNext(add, ['binder-deck-name']); };
+    add.onclick = () => {
+      _editing = { i: decks.length, name: `Deck ${decks.length + 1}`, cards: [] };
+      _said = 'Press a card below to add it to the deck.';
+      _dropArmed = null;
+      _picked = null;
+      rerender();
+      focusNext(add, ['binder-deck-name']);
+    };
     detail.append(add);
   }
 }
@@ -254,7 +337,11 @@ function focusNext(/** @type {any} */ node, /** @type {string[]} */ keys) {
   for (const k of keys) {
     const n = doc?.querySelector?.(`[data-focus="${k}"]`);
     if (!n || n.disabled) continue;
-    try { n.focus({ preventScroll: true }); } catch { n.focus?.(); }
+    try {
+      n.focus({ preventScroll: true });
+    } catch {
+      n.focus?.();
+    }
     return;
   }
 }
@@ -271,28 +358,41 @@ function drawEditor(detail, rerender, el, items, binder, have) {
   name.value = e.name;
   name.setAttribute('aria-label', 'Deck name');
   name.setAttribute('data-focus', 'binder-deck-name');
-  name.oninput = () => { e.name = String(name.value ?? '').slice(0, DECK_NAME_MAX); };
+  name.oninput = () => {
+    e.name = String(name.value ?? '').slice(0, DECK_NAME_MAX);
+  };
   box.append(name);
   const chips = el('div', 'binder-deckcards');
   const counts = new Map();
   for (const id of e.cards) counts.set(id, (counts.get(id) ?? 0) + 1);
   for (const [id, n] of [...counts].sort((a, b) => (cardById(a[0])?.cost ?? 0) - (cardById(b[0])?.cost ?? 0))) {
-    const held = have.get(id) ?? 0, nm = cardById(id)?.name ?? id;
-    const chip = el('button', `binder-chip${n > held ? ' short' : ''}`, `${nm} ×${n}${n > held ? ` (${held} held)` : ''}`);   // AUDIT CARDS-5 D6: the card the binder is short of
+    const held = have.get(id) ?? 0,
+      nm = cardById(id)?.name ?? id;
+    const chip = el(
+      'button',
+      `binder-chip${n > held ? ' short' : ''}`,
+      `${nm} ×${n}${n > held ? ` (${held} held)` : ''}`,
+    ); // AUDIT CARDS-5 D6: the card the binder is short of
     chip.type = 'button';
     chip.dataset.card = id;
-    chip.setAttribute('data-focus', `binder-chip-${id}`);   // AUDIT CARDS-5 D3: its count changes - the keyboard stays on it
+    chip.setAttribute('data-focus', `binder-chip-${id}`); // AUDIT CARDS-5 D3: its count changes - the keyboard stays on it
     chip.onclick = () => {
       const k = e.cards.lastIndexOf(id);
       if (k >= 0) e.cards = e.cards.filter((_, j) => j !== k);
-      _said = `${nm} removed from the deck (${e.cards.length} of ${ILIAC_DECK_SIZE}).`;   // AUDIT CARDS-5 D7
+      _said = `${nm} removed from the deck (${e.cards.length} of ${ILIAC_DECK_SIZE}).`; // AUDIT CARDS-5 D7
       rerender();
     };
     chips.append(chip);
   }
   box.append(chips);
   const why = deckRefusal(e.cards, items);
-  box.append(el('p', why ? 'why' : 'ok', why ? DECK_REFUSAL_WORDS[why] ?? 'This deck cannot be played.' : 'This deck can be played.'));
+  box.append(
+    el(
+      'p',
+      why ? 'why' : 'ok',
+      why ? (DECK_REFUSAL_WORDS[why] ?? 'This deck cannot be played.') : 'This deck can be played.',
+    ),
+  );
   const keep = el('button', 'act', 'Keep deck');
   keep.type = 'button';
   keep.setAttribute('data-focus', 'binder-deck-keep');
@@ -300,14 +400,22 @@ function drawEditor(detail, rerender, el, items, binder, have) {
   keep.onclick = () => {
     if (deckRefusal(e.cards, items)) return;
     const kept = e.name.trim() || `Deck ${e.i + 1}`;
-    if (setBinderDeck(binder, e.i, { name: kept, cards: e.cards })) { _said = `${kept} saved to your binder.`; _editing = null; }
+    if (setBinderDeck(binder, e.i, { name: kept, cards: e.cards })) {
+      _said = `${kept} saved to your binder.`;
+      _editing = null;
+    }
     rerender();
     focusNext(keep, [`binder-deck-edit-${e.i}`, 'binder-deck-new']);
   };
   const cancel = el('button', 'act', 'Cancel');
   cancel.type = 'button';
   cancel.setAttribute('data-focus', 'binder-deck-cancel');
-  cancel.onclick = () => { _editing = null; _said = null; rerender(); focusNext(cancel, [`binder-deck-edit-${e.i}`, 'binder-deck-new']); };
+  cancel.onclick = () => {
+    _editing = null;
+    _said = null;
+    rerender();
+    focusNext(cancel, [`binder-deck-edit-${e.i}`, 'binder-deck-new']);
+  };
   box.append(keep, cancel);
   detail.append(box);
 }

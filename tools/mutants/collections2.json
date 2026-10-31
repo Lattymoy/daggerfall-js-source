@@ -2,8 +2,8 @@
   {
     "name": "C2-an-entry-dropped",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "    ilovelamp: E('world', 'open', () => t('coll.how.ilovelamp', 'Speak with a shopkeeper who is a lamp.')),\n",
-    "new": "",
+    "old": "    ilovelamp: E('world', 'open', () => t('coll.how.ilovelamp', 'Speak with a shopkeeper who is a lamp.')),\n    grandmaster: E('ranked', 'ranked', () =>",
+    "new": "    grandmaster: E('ranked', 'ranked', () =>",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "C2-the-remnants-odds",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "Object.freeze({ hourbreaker: 4, turninghour: 8 })",
-    "new": "Object.freeze({ hourbreaker: 4, turninghour: 4 })",
+    "old": "export const REMNANT_ODDS = Object.freeze({ hourbreaker: 4, turninghour: 8 });",
+    "new": "export const REMNANT_ODDS = Object.freeze({ hourbreaker: 4, turninghour: 4 });",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "C2-a-redoubt",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "Object.freeze({ spirewalker: 2, beaconlighter: 5,",
-    "new": "Object.freeze({ spirewalker: 3, beaconlighter: 5,",
+    "old": "  spirewalker: 2,",
+    "new": "  spirewalker: 3,",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "C2-the-chapters-said-open",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "    chaptermaster: E('chapters', 'dormant',",
-    "new": "    chaptermaster: E('chapters', 'open',",
+    "old": "    chaptermaster: E('chapters', 'dormant', () =>",
+    "new": "    chaptermaster: E('chapters', 'open', () =>",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "C2-retired-obtainable",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'shop', 'store', 'pass', 'daily']);",
-    "new": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'shop', 'store', 'pass', 'daily', 'retired']);",
+    "old": "]); // STOREFRONT: `store` sold in the shop for good, `pass` while its season runs (wardrobeAvail)",
+    "new": "  'retired',\n]); // STOREFRONT: `store` sold in the shop for good, `pass` while its season runs (wardrobeAvail)",
     "tests": [
       "test/ui/collections2.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "C2-the-read-inside-the-draw",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "const startRead = (/** @type {any} */ flow) => { Promise.resolve().then(() => flow?.start?.()).catch(() => {}); };",
-    "new": "const startRead = (/** @type {any} */ flow) => { flow?.start?.(); };",
+    "old": "  Promise.resolve()\n    .then(() => flow?.start?.())\n    .catch(() => {});",
+    "new": "  flow?.start?.();",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "C2-a-forgotten-read-repaints",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "    if (_flow !== flow) return;\n",
-    "new": "",
+    "old": "    if (_flow !== flow) return;\n    if (_rereadOnceAnswered && !flow.busy) {",
+    "new": "    if (_rereadOnceAnswered && !flow.busy) {",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "C2-the-count-without-the-account",
     "file": "src/ui/collectionsPage.js",
-    "old": "return { held: wardrobe ? n.held : null, total: n.total };",
-    "new": "return { held: n.held, total: n.total };",
+    "old": "    return { held: wardrobe ? n.held : null, total: n.total };",
+    "new": "    return { held: n.held, total: n.total };",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "C2-the-wrong-press-for-a-kind",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "{ title: 'equip', aura: 'wearAura', armory: 'wearArmory', icon: 'wearIcon', glyph: 'toggleGlyph' }",
-    "new": "{ title: 'equip', aura: 'wearIcon', armory: 'wearArmory', icon: 'wearAura', glyph: 'toggleGlyph' }",
+    "old": "  const press = { title: 'equip', aura: 'wearAura', armory: 'wearArmory', icon: 'wearIcon', glyph: 'toggleGlyph' }[",
+    "new": "  const press = { title: 'equip', aura: 'wearIcon', armory: 'wearArmory', icon: 'wearAura', glyph: 'toggleGlyph' }[",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "C2-a-comes-with-stays-put",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "    b.onclick = () => { openWardrobeRow(kind, key); ctx.goTo(kind); ctx.rerender(); focusRow(kind, key); };",
-    "new": "    b.onclick = () => { openWardrobeRow(kind, key); ctx.rerender(); focusRow(kind, key); };",
+    "old": "      ctx.goTo(kind);\n      ctx.rerender();",
+    "new": "      ctx.rerender();",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "C2-a-state-chip-not-held",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "  if (held) tags.append(",
-    "new": "  if (held || true) tags.append(",
+    "old": "  if (held) tags.append(el('span', `coll-tag ${worn ? 'is-worn' : 'is-held'}`, stateWord(e.kind, e, wardrobe)));",
+    "new": "  if (held || true) tags.append(el('span', `coll-tag ${worn ? 'is-worn' : 'is-held'}`, stateWord(e.kind, e, wardrobe)));",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "C2-the-filter-never-applied",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "  const shown = entries.filter((e) => wardrobeFilterPasses(_filter, e, wardrobe, now, flow?.shop));",
-    "new": "  const shown = entries;",
+    "old": "  const shown = entries.filter((e) => wardrobeFilterPasses(_filter, e, wardrobe, now, flow?.shop)); // AUDIT-STOREFRONT S2: the shop's own word",
+    "new": "  const shown = entries; // AUDIT-STOREFRONT S2: the shop's own word",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "C2-the-reset-keeps-the-filter",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "export function resetWardrobePart() { _filter = 'all'; _open = null; _flow = null; _rereadOnceAnswered = false; _noteKind = null; }",
-    "new": "export function resetWardrobePart() { _open = null; _flow = null; _rereadOnceAnswered = false; _noteKind = null; }",
+    "old": "  _filter = 'all';\n  _open = null;",
+    "new": "  _open = null;",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "C2-a-role-dropped",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    '.px-sys .coll-row',   // COLLECTIONS-II",
-    "new": "    // COLLECTIONS-II",
+    "old": "    '.px-sys .coll-row', // COLLECTIONS-II: a title, an aura, an icon or a glyph, a line each - the one opened brass",
+    "new": "    // COLLECTIONS-II: a title, an aura, an icon or a glyph, a line each - the one opened brass",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "C2-the-sheets-own-ground",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": ".px-sys .coll-row { display: grid;",
-    "new": ".px-sys .coll-row { background: #222; display: grid;",
+    "old": ".px-sys .coll-row { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 5px 8px 6px; border-width: 0 0 1px; border-style: solid; text-align: left; cursor: pointer; }",
+    "new": ".px-sys .coll-row { background: #222; display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 5px 8px 6px; border-width: 0 0 1px; border-style: solid; text-align: left; cursor: pointer; }",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "C2-the-note-names-the-key",
     "file": "src/ui/accountFlow.js",
-    "old": "{ what: TITLE_TEXT[want] ?? want }",
-    "new": "{ what: want }",
+    "old": "        ? t('account.flow.wearing', 'Wearing {what}.', { what: TITLE_TEXT[want] ?? want })",
+    "new": "        ? t('account.flow.wearing', 'Wearing {what}.', { what: want })",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "C2A-leaving-lets-the-read-go",
     "file": "src/ui/collectionsPage.js",
-    "old": "export function disarmCollectionsPage() { disarmCardsPart(); }",
-    "new": "export function disarmCollectionsPage() { disarmCardsPart(); resetWardrobePart(); }",
+    "old": "  disarmCardsPart();\n}",
+    "new": "  disarmCardsPart();\n  resetWardrobePart();\n}",
     "tests": [
       "test/ui/collections2.test.js",
       "test/systems/auditcards5_ui.test.js"
@@ -239,8 +239,8 @@
   {
     "name": "C2A-the-card-closing-reads-nothing",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "  if (_flow.busy) { _rereadOnceAnswered = true; return; }\n  startRead(_flow);",
-    "new": "  if (_flow.busy) { _rereadOnceAnswered = true; return; }",
+    "old": "  startRead(_flow);\n}",
+    "new": "}",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -248,7 +248,7 @@
   {
     "name": "C2A-the-busy-answer-dropped",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "  if (_flow.busy) { _rereadOnceAnswered = true; return; }",
+    "old": "  if (_flow.busy) {\n    _rereadOnceAnswered = true;\n    return;\n  }",
     "new": "  if (_flow.busy) _rereadOnceAnswered = true;",
     "tests": [
       "test/ui/collections2.test.js"
@@ -257,8 +257,8 @@
   {
     "name": "C2A-the-busy-reread-never",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "    if (_rereadOnceAnswered && !flow.busy) { _rereadOnceAnswered = false; startRead(flow); }\n",
-    "new": "",
+    "old": "    if (_rereadOnceAnswered && !flow.busy) {\n      _rereadOnceAnswered = false;\n      startRead(flow);\n    }\n    rerender();",
+    "new": "    rerender();",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -294,8 +294,8 @@
   {
     "name": "C2A-a-press-while-busy",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "  b.onclick = () => { if (flow.busy) return; _noteKind = e.kind; Promise.resolve(e.kind === 'armory'",
-    "new": "  b.onclick = () => { _noteKind = e.kind; Promise.resolve(e.kind === 'armory'",
+    "old": "    if (flow.busy) return;\n    _noteKind = e.kind;",
+    "new": "    _noteKind = e.kind;",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -303,8 +303,8 @@
   {
     "name": "C2A-comes-with-drops-the-keyboard",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "ctx.goTo(kind); ctx.rerender(); focusRow(kind, key); };",
-    "new": "ctx.goTo(kind); ctx.rerender(); };",
+    "old": "      focusRow(kind, key);\n    };",
+    "new": "    };",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -312,8 +312,8 @@
   {
     "name": "C2A-comes-with-keeps-the-filter",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "export function openWardrobeRow(/** @type {string} */ kind, /** @type {string} */ key) { _open = `${kind}:${key}`; if (_filter !== 'all') _filter = 'all'; }",
-    "new": "export function openWardrobeRow(/** @type {string} */ kind, /** @type {string} */ key) { _open = `${kind}:${key}`; }",
+    "old": "  if (_filter !== 'all') _filter = 'all';\n}",
+    "new": "}",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -321,8 +321,8 @@
   {
     "name": "C2A-the-auth-sentence-swallowed",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "    if (flow.error) p.append(el('span', 'fail', flow.error), el('span', null, ' '));",
-    "new": "",
+    "old": "    if (flow.error) p.append(el('span', 'fail', flow.error), el('span', null, ' ')); // AUDIT COLLECTIONS-II (lane 2): why it signed out (`auth`), never swallowed",
+    "new": "    // AUDIT COLLECTIONS-II (lane 2): why it signed out (`auth`), never swallowed",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -330,8 +330,8 @@
   {
     "name": "C2A-the-guest-unsaid",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "  else if (flow.account?.kind === 'guest') {",
-    "new": "  else if (false) {",
+    "old": "  } else if (flow.account?.kind === 'guest') {",
+    "new": "  } else if (false) {",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -339,8 +339,8 @@
   {
     "name": "C2A-the-founder-retired",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "    founder: E('account', 'closed',",
-    "new": "    founder: E('account', 'retired',",
+    "old": "    founder: E('account', 'closed', () =>",
+    "new": "    founder: E('account', 'retired', () =>",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -348,8 +348,8 @@
   {
     "name": "C2A-closed-obtainable",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'shop', 'store', 'pass', 'daily']);",
-    "new": "export const AVAIL_NOW = Object.freeze(['open', 'chance', 'ranked', 'seasonal', 'patron', 'shop', 'store', 'pass', 'daily', 'closed']);",
+    "old": "]); // STOREFRONT: `store` sold in the shop for good, `pass` while its season runs (wardrobeAvail)",
+    "new": "  'closed',\n]); // STOREFRONT: `store` sold in the shop for good, `pass` while its season runs (wardrobeAvail)",
     "tests": [
       "test/ui/collections2.test.js"
     ],
@@ -358,8 +358,8 @@
   {
     "name": "C2A-the-champions-own-line-lost",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "  if (typeof e.note === 'function') return e.note();",
-    "new": "",
+    "old": "  if (typeof e.note === 'function') return e.note(); // AUDIT COLLECTIONS-II (lane 1): an entry's own word, where its kind's would mislead",
+    "new": "  // AUDIT COLLECTIONS-II (lane 1): an entry's own word, where its kind's would mislead",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -367,8 +367,8 @@
   {
     "name": "C2A-the-table-floor",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "iliacchampion: Object.freeze({ games: 10, foes: 5 })",
-    "new": "iliacchampion: Object.freeze({ games: 10, foes: 3 })",
+    "old": "  iliacchampion: Object.freeze({ games: 10, foes: 5 }),",
+    "new": "  iliacchampion: Object.freeze({ games: 10, foes: 3 }),",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -376,8 +376,8 @@
   {
     "name": "C2A-a-seat-glyph-held",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "  if (e?.scope === 'character') return false;",
-    "new": "",
+    "old": "  if (e?.scope === 'character') return false; // the account never keeps it - the page cannot say (wardrobeKnown)",
+    "new": "  // the account never keeps it - the page cannot say (wardrobeKnown)",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -394,8 +394,8 @@
   {
     "name": "C2A-a-seat-glyph-missing",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "  if (filter === 'missing') return wardrobeKnown(e) && !wardrobeHeld(e.kind, e.key, wardrobe);",
-    "new": "  if (filter === 'missing') return !wardrobeHeld(e.kind, e.key, wardrobe);",
+    "old": "  if (filter === 'missing') return wardrobeKnown(e) && !wardrobeHeld(e.kind, e.key, wardrobe); // a character's own is not \"missing\" from an account that never keeps it",
+    "new": "  if (filter === 'missing') return !wardrobeHeld(e.kind, e.key, wardrobe); // a character's own is not \"missing\" from an account that never keeps it",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -403,8 +403,8 @@
   {
     "name": "C2A-an-aura-without-its-glyph",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "    radiance: E('bestowed', 'bestowed', bestowed, { with: ['title:primarch', 'glyph:primarch'],",
-    "new": "    radiance: E('bestowed', 'bestowed', bestowed, { with: ['title:primarch'],",
+    "old": "      with: ['title:primarch', 'glyph:primarch'],",
+    "new": "      with: ['title:primarch'],",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -421,8 +421,8 @@
   {
     "name": "C2A-a-ranked-title-open",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "    arenachampion: E('ranked', 'ranked', arenaTop,",
-    "new": "    arenachampion: E('ranked', 'open', arenaTop,",
+    "old": "    arenachampion: E('ranked', 'ranked', arenaTop, { with: ['glyph:laurel'] }),",
+    "new": "    arenachampion: E('ranked', 'open', arenaTop, { with: ['glyph:laurel'] }),",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -439,8 +439,8 @@
   {
     "name": "C2A-the-questline-level",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "level: l.opens.level ?? 1 });",
-    "new": "level: 1 });",
+    "old": "        level: l.opens.level ?? 1,",
+    "new": "        level: 1,",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -448,8 +448,8 @@
   {
     "name": "C2A-the-meter-never-drawn",
     "file": "src/ui/collectionsPage.js",
-    "old": "    if (typeof kit.meter === 'function') b.append(kit.meter(n.held ?? 0, n.total));\n",
-    "new": "",
+    "old": "    if (typeof kit.meter === 'function') b.append(kit.meter(n.held ?? 0, n.total));\n    b.onclick = () => {",
+    "new": "    b.onclick = () => {",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -457,8 +457,8 @@
   {
     "name": "C2A-the-codex-count-short",
     "file": "src/ui/collectionsPage.js",
-    "old": "return { held: n.gilded + n.legendary + n.aetheric, total: n.gildeds + n.legendaries + n.aetherics }; }",
-    "new": "return { held: n.legendary + n.aetheric, total: n.gildeds + n.legendaries + n.aetherics }; }",
+    "old": "    return { held: n.gilded + n.legendary + n.aetheric, total: n.gildeds + n.legendaries + n.aetherics };",
+    "new": "    return { held: n.legendary + n.aetheric, total: n.gildeds + n.legendaries + n.aetherics };",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -475,8 +475,8 @@
   {
     "name": "C2A-whose-said-unread",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "  else if (wardrobe) text.append(el('p', `coll-own",
-    "new": "  else if (true) text.append(el('p', `coll-own",
+    "old": "  else if (wardrobe)",
+    "new": "  else if (true)",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -484,8 +484,8 @@
   {
     "name": "C2A-the-sheet-never-laid",
     "file": "src/ui/collectionsPage.js",
-    "old": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${WARDROBE_THEME_CSS}${LOOKS_PART_CSS}`;",
-    "new": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_THEME_CSS}${LOOKS_PART_CSS}`;",
+    "old": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${WARDROBE_THEME_CSS}${LOOKS_PART_CSS}`; // APPEARANCES: and the looks' part's   // COLLECTIONS-II: and the wardrobe's parts' sheet - AUDIT COLLECTIONS-II: and its Stone theme's",
+    "new": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_THEME_CSS}${LOOKS_PART_CSS}`; // APPEARANCES: and the looks' part's   // COLLECTIONS-II: and the wardrobe's parts' sheet - AUDIT COLLECTIONS-II: and its Stone theme's",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -520,8 +520,8 @@
   {
     "name": "C2A-the-sprout-obtainable",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "    sprout: E('account', 'auto',",
-    "new": "    sprout: E('account', 'open',",
+    "old": "    sprout: E('account', 'auto', () => t('coll.how.sprout', 'Every new account shows it for its first two weeks.')),",
+    "new": "    sprout: E('account', 'open', () => t('coll.how.sprout', 'Every new account shows it for its first two weeks.')),",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -538,8 +538,8 @@
   {
     "name": "C2A-the-grimoire-never-inked",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "    inkPaintedWord(word);   // the Grimoire's page: its colours inked (ui/grimoireDress.js, one home)",
-    "new": "",
+    "old": "    inkPaintedWord(word); // the Grimoire's page: its colours inked (ui/grimoireDress.js, one home)\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -547,8 +547,8 @@
   {
     "name": "C2A-the-stone-plate-bare",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": ":root[data-plus-theme=\"stone\"] .px-sys .coll-plate { background-color: rgba(10,12,16,0.82); padding: 1px 6px 2px; }\n",
-    "new": "",
+    "old": ":root[data-plus-theme=\"stone\"] .px-sys .coll-plate { background-color: rgba(10,12,16,0.82); padding: 1px 6px 2px; }\n:root[data-plus-theme=\"stone\"] .px-sys .coll-acct, :root[data-plus-theme=\"stone\"] .px-sys .coll-whole .coll-own.no, :root[data-plus-theme=\"stone\"] .px-sys .coll-part .coll-pcount, :root[data-plus-theme=\"stone\"] .px-sys .coll-tag { color: #e2d9c4; }",
+    "new": ":root[data-plus-theme=\"stone\"] .px-sys .coll-acct, :root[data-plus-theme=\"stone\"] .px-sys .coll-whole .coll-own.no, :root[data-plus-theme=\"stone\"] .px-sys .coll-part .coll-pcount, :root[data-plus-theme=\"stone\"] .px-sys .coll-tag { color: #e2d9c4; }",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -556,8 +556,8 @@
   {
     "name": "C2A-the-stone-theme-never-laid",
     "file": "src/ui/collectionsPage.js",
-    "old": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${WARDROBE_THEME_CSS}${LOOKS_PART_CSS}`;",
-    "new": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${LOOKS_PART_CSS}`;",
+    "old": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${WARDROBE_THEME_CSS}${LOOKS_PART_CSS}`; // APPEARANCES: and the looks' part's   // COLLECTIONS-II: and the wardrobe's parts' sheet - AUDIT COLLECTIONS-II: and its Stone theme's",
+    "new": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${LOOKS_PART_CSS}`; // APPEARANCES: and the looks' part's   // COLLECTIONS-II: and the wardrobe's parts' sheet - AUDIT COLLECTIONS-II: and its Stone theme's",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -565,8 +565,8 @@
   {
     "name": "C2A-no-try-again",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "    p.append(again);\n",
-    "new": "",
+    "old": "    p.append(again);\n  } else if (flow.account?.kind === 'guest') {",
+    "new": "  } else if (flow.account?.kind === 'guest') {",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -574,7 +574,7 @@
   {
     "name": "C2A-try-again-asks-nothing",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "    again.onclick = () => { Promise.resolve(flow.start?.()).catch(() => {}); };",
+    "old": "    again.onclick = () => {\n      Promise.resolve(flow.start?.()).catch(() => {});\n    };",
     "new": "    again.onclick = () => {};",
     "tests": [
       "test/ui/collections2.test.js"
@@ -583,8 +583,8 @@
   {
     "name": "C2A-the-wait-unsaid",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "    if (flow.busy) p.append(el('span', null, ' '), el('span', 'said', t('coll.acct.busy', 'Asking your account…')));\n    else if",
-    "new": "    if",
+    "old": "    if (flow.busy) p.append(el('span', null, ' '), el('span', 'said', t('coll.acct.busy', 'Asking your account…')));\n    else if (flow.error && _noteKind === kind) p.append(el('span', null, ' '), el('span', 'fail', flow.error));",
+    "new": "    if (flow.error && _noteKind === kind) p.append(el('span', null, ' '), el('span', 'fail', flow.error));",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -592,8 +592,8 @@
   {
     "name": "C2A-the-note-on-every-part",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "    else if (flow.note && _noteKind === kind)",
-    "new": "    else if (flow.note)",
+    "old": "    else if (flow.note && _noteKind === kind) p.append(el('span', null, ' '), el('span', 'said', flow.note));",
+    "new": "    else if (flow.note) p.append(el('span', null, ' '), el('span', 'said', flow.note));",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -601,8 +601,8 @@
   {
     "name": "C2A-the-note-never-placed",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "  b.onclick = () => { if (flow.busy) return; _noteKind = e.kind; Promise",
-    "new": "  b.onclick = () => { if (flow.busy) return; Promise",
+    "old": "    _noteKind = e.kind;\n    Promise.resolve(e.kind === 'armory' ? flow[press](armoryPieceOf(e.key)?.slot, e.key) : flow[press](e.key)).catch(",
+    "new": "    Promise.resolve(e.kind === 'armory' ? flow[press](armoryPieceOf(e.key)?.slot, e.key) : flow[press](e.key)).catch(",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -610,8 +610,8 @@
   {
     "name": "C2A-held-offered-unread",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "    if (!read && (id === 'held' || id === 'missing')) continue;\n",
-    "new": "",
+    "old": "    if (!read && (id === 'held' || id === 'missing')) continue;\n    const b = el('button', `coll-filter${id === _filter ? ' on' : ''}`, label());",
+    "new": "    const b = el('button', `coll-filter${id === _filter ? ' on' : ''}`, label());",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -619,8 +619,8 @@
   {
     "name": "C2A-a-held-filter-kept-unread",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "  if (!wardrobe && (_filter === 'held' || _filter === 'missing')) _filter = 'all';\n",
-    "new": "",
+    "old": "  if (!wardrobe && (_filter === 'held' || _filter === 'missing')) _filter = 'all';\n  detail.append(filterRow(el, rerender, !!wardrobe));",
+    "new": "  detail.append(filterRow(el, rerender, !!wardrobe));",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -628,8 +628,8 @@
   {
     "name": "C2A-the-divider-zero-unread",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "held: wardrobe ? held : '–',",
-    "new": "held,",
+    "old": "          ? t('coll.group', '{source} - {held}/{total}', {\n              source: sourceName(src),\n              held: wardrobe ? held : '–',\n              total: counted.length,\n            })",
+    "new": "          ? t('coll.group', '{source} - {held}/{total}', { source: sourceName(src), held, total: counted.length })",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -637,8 +637,8 @@
   {
     "name": "C2A-the-seats-counted-nought",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "    detail.append(divider(counted.length ? t(",
-    "new": "    detail.append(divider(true ? t(",
+    "old": "        counted.length",
+    "new": "        true",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -655,8 +655,8 @@
   {
     "name": "C2A-the-foot-not-across",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": ".px-sys .coll-foot { grid-column: 1 / -1; ",
-    "new": ".px-sys .coll-foot { ",
+    "old": ".px-sys .coll-foot { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; gap: 6px; }",
+    "new": ".px-sys .coll-foot { display: flex; flex-direction: column; align-items: center; gap: 6px; }",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -664,8 +664,8 @@
   {
     "name": "C2A-a-name-on-top-for-titles-alone",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "  text.append(paintedWord(el, e.kind, e.key, 'coll-bigword'));",
-    "new": "  if (e.kind === 'title') text.append(paintedWord(el, e.kind, e.key, 'coll-bigword'));",
+    "old": "  text.append(paintedWord(el, e.kind, e.key, 'coll-bigword')); // its name on top, every kind's (AUDIT COLLECTIONS-II lane 3: after a jump the row may be out of view)",
+    "new": "  if (e.kind === 'title') text.append(paintedWord(el, e.kind, e.key, 'coll-bigword')); // its name on top, every kind's (AUDIT COLLECTIONS-II lane 3: after a jump the row may be out of view)",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -673,8 +673,8 @@
   {
     "name": "C2A-a-box-opened-below-the-fold",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": " ctx.rerender(); if (_open) revealOpened(); };",
-    "new": " ctx.rerender(); };",
+    "old": "    if (_open) revealOpened();\n  };",
+    "new": "  };",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -682,8 +682,8 @@
   {
     "name": "C2A-the-row-out-of-view",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "    row?.scrollIntoView?.({ block: 'start' });",
-    "new": "",
+    "old": "    row?.scrollIntoView?.({ block: 'start' }); // AUDIT COLLECTIONS-II (lane 3): the repaint kept the old part's scroll, the row 1,800px below it",
+    "new": "    // AUDIT COLLECTIONS-II (lane 3): the repaint kept the old part's scroll, the row 1,800px below it",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -700,8 +700,8 @@
   {
     "name": "C2A-the-codex-in-english",
     "file": "src/ui/collectionsPage.js",
-    "old": "divider(t('coll.codex.gilded', 'Gilded - {n} of {total} found', { n: n.gilded, total: n.gildeds }))",
-    "new": "divider(`Gilded - ${n.gilded} of ${n.gildeds} found`)",
+    "old": "  detail.append(divider(t('coll.codex.gilded', 'Gilded - {n} of {total} found', { n: n.gilded, total: n.gildeds }))); // AUDIT COLLECTIONS-II (lanes 3, 5): the codex's words in the player's language, on a page every player opens",
+    "new": "  detail.append(divider(`Gilded - ${n.gilded} of ${n.gildeds} found`)); // AUDIT COLLECTIONS-II (lanes 3, 5): the codex's words in the player's language, on a page every player opens",
     "tests": [
       "test/ui/collections2.test.js",
       "test/systems/l10n4_hardcoded.test.js"

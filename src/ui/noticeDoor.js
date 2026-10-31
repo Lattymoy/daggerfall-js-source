@@ -7,14 +7,18 @@
 // and the host's `onClose` runs last.
 import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';
 import { registerOverlay } from './enhanced/enhancedOverlays.js';
-import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
-import { lineBoard } from '../scenes/quest/questlineOffers.js';   // QL-OFFERED: the questlines on offer, posted on every town's board
+import { noteFirstUse } from '../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
+import { lineBoard } from '../scenes/quest/questlineOffers.js'; // QL-OFFERED: the questlines on offer, posted on every town's board
 
 /** @type {any} */ let _open = null;
 /** Is the board up. */
 export const noticeDoorOpen = () => !!_open && !_open.done;
 /** Shut it, if it is up. */
-export function closeNoticeDoor() { const was = noticeDoorOpen(); _open?.dispose(); return was; }
+export function closeNoticeDoor() {
+  const was = noticeDoorOpen();
+  _open?.dispose();
+  return was;
+}
 
 /**
  * @param {any} deps the window's own deps (ui/noticeWindow.js mountNoticeBoard), less `onExit`; plus `onClose`. QL-OFFERED:
@@ -23,7 +27,7 @@ export function closeNoticeDoor() { const was = noticeDoorOpen(); _open?.dispose
  * @returns {any} the overlay, or null with no document
  */
 export function createNoticeOverlay(deps) {
-  noteFirstUse('notice-board');   // TUT1
+  noteFirstUse('notice-board'); // TUT1
   if (typeof document === 'undefined') return null;
   _open?.dispose();
   let fired = false;
@@ -39,28 +43,47 @@ export function createNoticeOverlay(deps) {
     view?.unmount();
     view = null;
     host.remove();
-    fired = true;   // last: `done` must not read true while the DOM is up
+    fired = true; // last: `done` must not read true while the DOM is up
     if (_open === overlay) _open = null;
     deps.onClose?.();
   };
   unregister = registerOverlay(close);
   const overlay = {
     isChoiceWindow: true,
-    get done() { return fired; },
-    input() { /* the window's own capture keydown owns the keyboard */ },
-    click() { /* a fixed div over the canvas */ },
+    get done() {
+      return fired;
+    },
+    input() {
+      /* the window's own capture keydown owns the keyboard */
+    },
+    click() {
+      /* a fixed div over the canvas */
+    },
     wheel() {},
     hover() {},
     tick() {},
-    draw() { /* DOM, not canvas */ },
-    dispose() { close(); },
-    repaint() { view?.repaint(); },
+    draw() {
+      /* DOM, not canvas */
+    },
+    dispose() {
+      close();
+    },
+    repaint() {
+      view?.repaint();
+    },
   };
   _open = overlay;
   mountEnhancedChunk({
     load: () => import('./noticeWindow.js'),
-    mount: (m) => { view = m.mountNoticeBoard(host, { questlines: lineBoard, ...deps, onExit: close }); },
-    alive: () => !fired, host, onDismiss: () => { close(); }, label: 'notice-board',
+    mount: (m) => {
+      view = m.mountNoticeBoard(host, { questlines: lineBoard, ...deps, onExit: close });
+    },
+    alive: () => !fired,
+    host,
+    onDismiss: () => {
+      close();
+    },
+    label: 'notice-board',
   });
   return overlay;
 }

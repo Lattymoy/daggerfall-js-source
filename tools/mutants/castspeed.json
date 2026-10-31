@@ -130,8 +130,8 @@
   {
     "name": "CASTSPEED-loot-anyones",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "  if (!mine(entity)) return 0;\n  return Math.min(CAST_SPEED_CAP",
-    "new": "  return Math.min(CAST_SPEED_CAP",
+    "old": "  if (!mine(entity)) return 0;\n  return Math.min(CAST_SPEED_CAP, wornSum(entity, 'castSpeed'));",
+    "new": "  return Math.min(CAST_SPEED_CAP, wornSum(entity, 'castSpeed'));",
     "tests": [
       "test/systems/castspeed.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "CASTSPEED-loot-unregistered",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "registerCastSpeedMod(LOOT_POWERS, lootCastSpeed);   // CAST-SPEED\n",
-    "new": "",
+    "old": "registerCastSpeedMod(LOOT_POWERS, lootCastSpeed); // CAST-SPEED\nregisterSpellPowerMod(LOOT_POWERS, lootSpellPower); // BAL9c",
+    "new": "registerSpellPowerMod(LOOT_POWERS, lootSpellPower); // BAL9c",
     "tests": [
       "test/systems/castspeed.test.js"
     ]
@@ -157,36 +157,49 @@
   {
     "name": "CASTRECOVER-no-recovery-gate",
     "file": "src/combat/fpsSpellCasting.js",
-    "old": "    if (this.isPlayingAnim || this._hold || this._recover > 0) return false;",
-    "new": "    if (this.isPlayingAnim || this._hold) return false;",
-    "tests": ["test/systems/castspeed.test.js", "test/combat/fpsspellcasting.test.js", "test/systems/hostmagic.test.js"]
+    "old": "    if (this.isPlayingAnim || this._hold || this._recover > 0) return false; // CAST-RECOVER: nor inside the last cast's recovery",
+    "new": "    if (this.isPlayingAnim || this._hold) return false; // CAST-RECOVER: nor inside the last cast's recovery",
+    "tests": [
+      "test/systems/castspeed.test.js",
+      "test/combat/fpsspellcasting.test.js",
+      "test/systems/hostmagic.test.js"
+    ]
   },
   {
     "name": "CASTRECOVER-click-ignores-recovery",
     "file": "src/scenes/hostMagic.js",
     "old": "  castBusy = () => fpsSpellCasting.isPlayingAnim || fpsSpellCasting.releaseHeld || fpsSpellCasting.recovering,",
     "new": "  castBusy = () => fpsSpellCasting.isPlayingAnim || fpsSpellCasting.releaseHeld,",
-    "tests": ["test/systems/hostmagic.test.js", "test/systems/castspeed.test.js"]
+    "tests": [
+      "test/systems/hostmagic.test.js",
+      "test/systems/castspeed.test.js"
+    ]
   },
   {
     "name": "CASTRECOVER-recovery-ignores-rate",
     "file": "src/combat/fpsSpellCasting.js",
-    "old": "    this._recover = CAST_RECOVER_S / validCastRate(rate);",
-    "new": "    this._recover = CAST_RECOVER_S;",
-    "tests": ["test/systems/castspeed.test.js"]
+    "old": "    this._recover = CAST_RECOVER_S / validCastRate(rate); // CAST-RECOVER: from the click, at the cast's rate",
+    "new": "    this._recover = CAST_RECOVER_S; // CAST-RECOVER: from the click, at the cast's rate",
+    "tests": [
+      "test/systems/castspeed.test.js"
+    ]
   },
   {
     "name": "HANDSEAM-hands-tile",
     "file": "src/combat/fpsSpellCasting.js",
-    "old": "c32, { clamp: true }),",
-    "new": "c32),",
-    "tests": ["test/combat/fpsspellcasting.test.js"]
+    "old": "      tex: renderer.uploadTexture('img', `fpsc:${fileName}:${r}`, c32, { clamp: true }), // HAND-SEAM: one quad, never tiled - no wrap onto the far edge (render/renderer.js textureParams)",
+    "new": "      tex: renderer.uploadTexture('img', `fpsc:${fileName}:${r}`, c32), // HAND-SEAM: one quad, never tiled - no wrap onto the far edge (render/renderer.js textureParams)",
+    "tests": [
+      "test/combat/fpsspellcasting.test.js"
+    ]
   },
   {
     "name": "HANDSEAM-clamp-wraps",
     "file": "src/render/renderer.js",
     "old": "  if (opts.clamp) return { wrap: gl.CLAMP_TO_EDGE, filter: gl.NEAREST };",
     "new": "  if (opts.clamp) return { wrap: gl.REPEAT, filter: gl.NEAREST };",
-    "tests": ["test/ui/startwindow.test.js"]
+    "tests": [
+      "test/ui/startwindow.test.js"
+    ]
   }
 ]

@@ -12,8 +12,8 @@
   {
     "name": "DO-ASK-overloaded-asked",
     "file": "server/src/relayScale.js",
-    "old": "&& err.retryable && !err.overloaded) continue;",
-    "new": "&& err.retryable) continue;",
+    "old": "      if (i === 0 && err.retryable && !err.overloaded) continue;",
+    "new": "      if (i === 0 && err.retryable) continue;",
     "tests": [
       "test/server/doask.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "DO-ASK-asked-for-ever",
     "file": "server/src/relayScale.js",
-    "old": "if (i === 0 && err.retryable",
-    "new": "if (err.retryable",
+    "old": "      if (i === 0 && err.retryable && !err.overloaded) continue;",
+    "new": "      if (err.retryable && !err.overloaded) continue;",
     "tests": [
       "test/server/doask.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "DO-ASK-walk-unasked",
     "file": "server/src/relayScale.js",
-    "old": "res = await askRoom(rooms, layerName(key, ly), new Request(request, { headers }));",
-    "new": "res = await rooms.get(rooms.idFromName(layerName(key, ly))).fetch(new Request(request, { headers }));",
+    "old": "    res = await askRoom(rooms, layerName(key, ly), new Request(request, { headers })); // DO-ASK: a layer that did not answer is asked once more, or its 503",
+    "new": "    res = await rooms.get(rooms.idFromName(layerName(key, ly))).fetch(new Request(request, { headers })); // DO-ASK: a layer that did not answer is asked once more, or its 503",
     "tests": [
       "test/server/doask.test.js"
     ],

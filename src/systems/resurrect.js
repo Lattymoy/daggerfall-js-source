@@ -9,19 +9,19 @@
 // poses each frame of the death screen, rises when a NEW `rz` names it. ALLY-CAST's law holds: party members alone,
 // and the receiving client decides.
 import { buildCustomSpell } from './spell/spellMaker.js';
-import { t } from './textManager.js';   // REZ-BLOODLINE: the caster's refusal in the player's language (L10N4)
+import { t } from './textManager.js'; // REZ-BLOODLINE: the caster's refusal in the player's language (L10N4)
 
 export const RESURRECT_TYPE = 45;
 export const RESURRECT_SUBTYPE = 255;
 export const RESURRECT_KEY = '45,255';
 export const RESURRECT_HEALTH_PCT = 30;
 /** Metres from the eye to the body: a touch, with room for a body lying on the floor below the crosshair. */
-export const RESURRECT_REACH = 6;   // RESURRECT3 ("still too hard to hit"): 4.5 -> 6
+export const RESURRECT_REACH = 6; // RESURRECT3 ("still too hard to hit"): 4.5 -> 6
 /** RESURRECT2 ("the aiming at the corpse is off - hard to trigger"): a body LIES - wide and flat on the floor - so it
  *  is aimed at where the crosshair meets the ground, within this many metres of the body's feet... */
-export const RESURRECT_GROUND_SLACK = 2.2;   // RESURRECT3: 1.3 -> 2.2
+export const RESURRECT_GROUND_SLACK = 2.2; // RESURRECT3: 1.3 -> 2.2
 /** ...or by a crosshair passing within this of the body's middle (a body on a ledge, aimed at from below). */
-export const RESURRECT_RAY_SLACK = 1.5;   // RESURRECT3: 0.9 -> 1.5
+export const RESURRECT_RAY_SLACK = 1.5; // RESURRECT3: 0.9 -> 1.5
 /** RESURRECT3: ...or simply lying roughly where the player faces - within this many degrees of the aim. */
 export const RESURRECT_CONE_DEG = 30;
 
@@ -31,9 +31,12 @@ export const RESURRECT_CONE_DEG = 30;
 export function pickFallenBody(eye, dir, bodies, ground = Infinity) {
   const l = Math.hypot(dir[0], dir[1], dir[2]) || 1;
   const d = [dir[0] / l, dir[1] / l, dir[2] / l];
-  const g = Number.isFinite(ground) && ground <= RESURRECT_REACH + RESURRECT_GROUND_SLACK
-    ? [eye[0] + d[0] * ground, eye[1] + d[1] * ground, eye[2] + d[2] * ground] : null;
-  let best = null, bestScore = Infinity;
+  const g =
+    Number.isFinite(ground) && ground <= RESURRECT_REACH + RESURRECT_GROUND_SLACK
+      ? [eye[0] + d[0] * ground, eye[1] + d[1] * ground, eye[2] + d[2] * ground]
+      : null;
+  let best = null,
+    bestScore = Infinity;
   for (const b of bodies ?? []) {
     const f = b?.feet;
     if (!f || f.length !== 3) continue;
@@ -44,7 +47,7 @@ export function pickFallenBody(eye, dir, bodies, ground = Infinity) {
       const dh = Math.hypot(g[0] - f[0], g[2] - f[2]);
       if (dh <= RESURRECT_GROUND_SLACK) score = dh;
     }
-    const m = [f[0], f[1] + 0.3, f[2]];   // the body's middle, a hand above the floor
+    const m = [f[0], f[1] + 0.3, f[2]]; // the body's middle, a hand above the floor
     const t = (m[0] - eye[0]) * d[0] + (m[1] - eye[1]) * d[1] + (m[2] - eye[2]) * d[2];
     if (t > 0 && (!Number.isFinite(ground) || t <= ground + RESURRECT_RAY_SLACK)) {
       const off = Math.hypot(eye[0] + d[0] * t - m[0], eye[1] + d[1] * t - m[1], eye[2] + d[2] * t - m[2]);
@@ -55,9 +58,13 @@ export function pickFallenBody(eye, dir, bodies, ground = Infinity) {
       const v = [m[0] - eye[0], m[1] - eye[1], m[2] - eye[2]];
       const vl = Math.hypot(v[0], v[1], v[2]) || 1;
       const cos = (v[0] * d[0] + v[1] * d[1] + v[2] * d[2]) / vl;
-      if (cos >= Math.cos(RESURRECT_CONE_DEG * Math.PI / 180)) score = RESURRECT_RAY_SLACK + Math.acos(Math.min(1, cos));   // ranked after any direct hit
+      if (cos >= Math.cos((RESURRECT_CONE_DEG * Math.PI) / 180))
+        score = RESURRECT_RAY_SLACK + Math.acos(Math.min(1, cos)); // ranked after any direct hit
     }
-    if (score < bestScore) { bestScore = score; best = { ...b, distance: reach }; }
+    if (score < bestScore) {
+      bestScore = score;
+      best = { ...b, distance: reach };
+    }
   }
   return best;
 }
@@ -68,22 +75,32 @@ export const RESURRECTION_SPELL_INDEX = -45001;
 
 export const RESURRECT_TEXT = Object.freeze({
   noBody: 'There is no fallen party member within reach.',
-  aim: 'Look at a fallen party member\'s body and cast.',
+  aim: "Look at a fallen party member's body and cast.",
   cast: (name) => `You call ${name || 'your companion'} back from death.`,
   raised: (name) => `${name || 'A companion'} has brought you back from death.`,
-  spared: (n) => `Death takes none of your gold: the ${n.toLocaleString('en-US')} it claimed stay in your purse.`,   // AUDIT 28 B5: the screen's loss, withdrawn
+  spared: (n) => `Death takes none of your gold: the ${n.toLocaleString('en-US')} it claimed stay in your purse.`, // AUDIT 28 B5: the screen's loss, withdrawn
   // REZ-BLOODLINE (FIELD BUGS 2026-10-16b): a body whose death is decided for good (their pose's `fg` - net/wire.js
   // validPartyPose): said to the caster, and nothing spent
-  forGood: (name) => t('resurrect.forGood', '{name} has fallen for good. No spell will raise them now.', { name: name || t('resurrect.companion', 'Your companion') }),
+  forGood: (name) =>
+    t('resurrect.forGood', '{name} has fallen for good. No spell will raise them now.', {
+      name: name || t('resurrect.companion', 'Your companion'),
+    }),
 });
 
 /** Does this spell carry the Resurrect effect? */
-export const hasResurrect = (sp) => !!sp && Array.isArray(sp.effects) && sp.effects.some((e) => e && e.type === RESURRECT_TYPE);
+export const hasResurrect = (sp) =>
+  !!sp && Array.isArray(sp.effects) && sp.effects.some((e) => e && e.type === RESURRECT_TYPE);
 
 /** The ready-made spell a temple or the Mages Guild sells online: Resurrect, by touch. */
 export function resurrectionSpell() {
-  return buildCustomSpell({ slots: [{ type: RESURRECT_TYPE, subType: RESURRECT_SUBTYPE, settings: {} }], rangeType: 1, element: 4,
-    name: 'Resurrection', icon: 10, index: RESURRECTION_SPELL_INDEX });
+  return buildCustomSpell({
+    slots: [{ type: RESURRECT_TYPE, subType: RESURRECT_SUBTYPE, settings: {} }],
+    rangeType: 1,
+    element: 4,
+    name: 'Resurrection',
+    icon: 10,
+    index: RESURRECTION_SPELL_INDEX,
+  });
 }
 
 /** THE RECEIVER'S TWO HALVES. At the death: what every party member's pose already said (an old call, sent for an

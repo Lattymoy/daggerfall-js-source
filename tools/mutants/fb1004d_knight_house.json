@@ -2,8 +2,8 @@
   {
     "name": "KNIGHT-HOUSE-crossed-deed-counted",
     "file": "src/net/homeLaw.js",
-    "old": ".find((d) => !d.crossed && d.buildingKey",
-    "new": ".find((d) => d.buildingKey",
+    "old": "    regionDeedsOf(houses, region).find(\n      (d) => !d.crossed && d.buildingKey === buildingKey && Number(d.mapId) >>> 0 === id,\n    ) ?? null",
+    "new": "    regionDeedsOf(houses, region).find((d) => d.buildingKey === buildingKey && Number(d.mapId) >>> 0 === id) ?? null",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "KNIGHT-HOUSE-key-unread",
     "file": "src/net/homeLaw.js",
-    "old": "!d.crossed && d.buildingKey === buildingKey && (Number(d.mapId) >>> 0) === id)",
-    "new": "!d.crossed && (Number(d.mapId) >>> 0) === id)",
+    "old": "  return (\n    regionDeedsOf(houses, region).find(\n      (d) => !d.crossed && d.buildingKey === buildingKey && Number(d.mapId) >>> 0 === id,\n    ) ?? null\n  );",
+    "new": "  return regionDeedsOf(houses, region).find((d) => !d.crossed && Number(d.mapId) >>> 0 === id) ?? null;",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "KNIGHT-HOUSE-map-id-signed",
     "file": "src/net/homeLaw.js",
-    "old": "(Number(d.mapId) >>> 0) === id) ?? null",
-    "new": "Number(d.mapId) === id) ?? null",
+    "old": "    regionDeedsOf(houses, region).find(\n      (d) => !d.crossed && d.buildingKey === buildingKey && Number(d.mapId) >>> 0 === id,\n    ) ?? null",
+    "new": "    regionDeedsOf(houses, region).find((d) => !d.crossed && d.buildingKey === buildingKey && Number(d.mapId) === id) ??\n    null",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "KNIGHT-HOUSE-town-unread",
     "file": "src/net/homeLaw.js",
-    "old": " && (Number(d.mapId) >>> 0) === id) ?? null",
-    "new": ") ?? null",
+    "old": "  return (\n    regionDeedsOf(houses, region).find(\n      (d) => !d.crossed && d.buildingKey === buildingKey && Number(d.mapId) >>> 0 === id,\n    ) ?? null\n  );",
+    "new": "  return regionDeedsOf(houses, region).find((d) => !d.crossed && d.buildingKey === buildingKey) ?? null;",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
@@ -73,8 +73,8 @@
   {
     "name": "KNIGHT-HOUSE-no-deed-listed",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "? [{ region, mapId, buildingKey: slot.buildingKey }] : [];",
-    "new": "? [] : [];",
+    "old": "      return realmDeedAt(houses, region, mapId, slot.buildingKey)\n        ? [{ region, mapId, buildingKey: slot.buildingKey }]\n        : [];",
+    "new": "      return realmDeedAt(houses, region, mapId, slot.buildingKey) ? [] : [];",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
@@ -263,8 +263,8 @@
   {
     "name": "KNIGHT-HOUSE-route-unlisted",
     "file": "server-account/src/service.js",
-    "old": "  '/v1/homes/deed',\n",
-    "new": "",
+    "old": "  '/v1/homes/deed',\n  // PERMADEATH-HOUSES: a fallen realm character's home taken up by the living realm character of its line who carries it",
+    "new": "  // PERMADEATH-HOUSES: a fallen realm character's home taken up by the living realm character of its line who carries it",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
@@ -283,8 +283,8 @@
   {
     "name": "KNIGHT-HOUSE-version-unmoved",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct232';",
-    "new": "export const ACCOUNT_VERSION = 'acct76';",
+    "old": "export const ACCOUNT_VERSION = 'acct235'; // acct235: CACHE-SPREAD (2026-10-31, acct234 on its branch, renumbered past EG-MIGHT's acct234 at the merge of main; Mac: \"no daily cap ... value finds from 5 to 10\"; bible/06-Systems/Aurum.md section 3a) - POST /v1/aurum/cache pays a cache its own 5 to 10 Aurum (net/aurumCacheLaw.js aurumCacheAurumOf) and holds no day's bound; `cache-capped` gone. No migration.",
+    "new": "export const ACCOUNT_VERSION = 'acct76'; // acct235: CACHE-SPREAD (2026-10-31, acct234 on its branch, renumbered past EG-MIGHT's acct234 at the merge of main; Mac: \"no daily cap ... value finds from 5 to 10\"; bible/06-Systems/Aurum.md section 3a) - POST /v1/aurum/cache pays a cache its own 5 to 10 Aurum (net/aurumCacheLaw.js aurumCacheAurumOf) and holds no day's bound; `cache-capped` gone. No migration.",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],

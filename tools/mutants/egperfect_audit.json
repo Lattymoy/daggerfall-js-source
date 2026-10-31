@@ -65,8 +65,8 @@
   {
     "name": "EGAUD-binder-guard-glint",
     "file": "src/world/eliteGates/egTelegraph.js",
-    "old": "export const egRimOf = (band, fl, lord = true) => ((fl & EG_FL.lit) !== 0 && lord ?",
-    "new": "export const egRimOf = (band, fl, lord = true) => ((fl & EG_FL.lit) !== 0 ?",
+    "old": "  (fl & EG_FL.lit) !== 0 && lord",
+    "new": "  (fl & EG_FL.lit) !== 0",
     "tests": [
       "test/net/eliteGates/egperfect_lords.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "EGAUD-plate-zoneless",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "(u.kind === 'plate' && !plate)",
-    "new": "u.kind === 'plate'",
+    "old": "      if (!(u.leg < d.leg - 1) || u.y - d.y < 500 || !overPlan(u.b, d.b) || (u.kind === 'plate' && !plate)) continue;",
+    "new": "      if (!(u.leg < d.leg - 1) || u.y - d.y < 500 || !overPlan(u.b, d.b) || u.kind === 'plate') continue;",
     "tests": [
       "test/net/eliteGates/egperfect_audit.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "EGAUD-pend-reach-path",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "if (B.hits(b, t + u, xs, ay + EG_JUMP_MPS * u - 0.5 * EG_JUMP_G * u * u, lz + d0 + v * u)) return false;",
-    "new": "if (B.hits(b, t + u, xs, b.y, lz + (reach * k) / EG_SOLVE_FLIGHT_N)) return false;",
+    "old": "          if (B.hits(b, t + u, xs, ay + EG_JUMP_MPS * u - 0.5 * EG_JUMP_G * u * u, lz + d0 + v * u)) return false;",
+    "new": "          if (B.hits(b, t + u, xs, b.y, lz + (reach * k) / EG_SOLVE_FLIGHT_N)) return false;",
     "tests": [
       "test/net/eliteGates/egperfect_audit.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "EGAUD-z-link-any-heading",
     "file": "src/net/eliteGates/egRouteProof.js",
-    "old": "|| s.hd % 2 === 1 || s.z < z0",
-    "new": "|| s.z < z0",
+    "old": "    if ((s.road ?? 0) !== road || s.hd % 2 === 1 || s.z < z0 || s.z > z1 || s.y < y0 || s.y > y1) return false; // (THE AUDIT: a link along z takes no piece turned along x)",
+    "new": "    if ((s.road ?? 0) !== road || s.z < z0 || s.z > z1 || s.y < y0 || s.y > y1) return false; // (THE AUDIT: a link along z takes no piece turned along x)",
     "tests": [
       "test/net/eliteGates/egperfect_audit.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "EGAUD-rails-period-half",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "phase: (q % 2) * Math.round(Math.PI * 1000) });",
-    "new": "phase: (q % 2) * (P / 2) });",
+    "old": "            phase: (q % 2) * Math.round(Math.PI * 1000),",
+    "new": "            phase: (q % 2) * (P / 2),",
     "tests": [
       "test/net/eliteGates/egperfect_broken_unit.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "EGAUD-gust-in-approach",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "const APPROACH_NOT = Object.freeze(['drop', 'riser', 'gust']);",
-    "new": "const APPROACH_NOT = Object.freeze(['drop', 'riser']);",
+    "old": "const APPROACH_NOT = Object.freeze(['drop', 'riser', 'gust']); // (THE AUDIT: a Gust a decree's piece, laid on its island - drawn after a Crumble run, its push 1 s in 6 met a body that could not wait: THE TIMED SOLVER weighs no gust)",
+    "new": "const APPROACH_NOT = Object.freeze(['drop', 'riser']); // (THE AUDIT: a Gust a decree's piece, laid on its island - drawn after a Crumble run, its push 1 s in 6 met a body that could not wait: THE TIMED SOLVER weighs no gust)",
     "tests": [
       "test/net/eliteGates/egperfect_broken.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "EGAUD-long-run-one-bridge",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "const n = Math.max(1, Math.min(Math.ceil(run / split), Math.floor(run / EG_BROKEN_CHUNK_CM)));",
-    "new": "const n = 1;",
+    "old": "  const n = Math.max(1, Math.min(Math.ceil(run / split), Math.floor(run / EG_BROKEN_CHUNK_CM)));",
+    "new": "  const n = 1;",
     "tests": [
       "test/net/eliteGates/egperfect_broken.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "EGAUD-swing-joined-untested",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "const near = (v, b, j) => (j ? !b.brk || egAscentApart(v, b, EG_BROKEN_CLEAR_CM) : egAscentApart(v, b));",
-    "new": "const near = (v, b, j) => j || egAscentApart(v, b);",
+    "old": "    const near = (v, b, j) => (j ? !b.brk || egAscentApart(v, b, EG_BROKEN_CLEAR_CM) : egAscentApart(v, b));",
+    "new": "    const near = (v, b, j) => j || egAscentApart(v, b);",
     "tests": [
       "test/net/eliteGates/egperfect_broken.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "EGAUD-lone-still",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "const pool = want === 1 && kinds.some((q) => q !== 'still') ? kinds.filter((q) => q !== 'still') : kinds;",
-    "new": "const pool = kinds;",
+    "old": "  const pool = want === 1 && kinds.some((q) => q !== 'still') ? kinds.filter((q) => q !== 'still') : kinds;",
+    "new": "  const pool = kinds;",
     "tests": [
       "test/net/eliteGates/egperfect_broken.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "EGAUD-fork-first-always",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "H.law >= EG_BROKEN_LAW && !H.lean ? [",
-    "new": "H.law >= EG_BROKEN_LAW ? [",
+    "old": "      return H.law >= EG_BROKEN_LAW && !H.lean",
+    "new": "      return H.law >= EG_BROKEN_LAW",
     "tests": [
       "test/net/eliteGates/egperfect_broken.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "EGAUD-clamp-side-open",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "return Math.abs((x - a.x) * (az / al) - (z - a.z) * (ax / al)) <= EG_RING_DOOR.w / 2 - r &&",
-    "new": "return Math.abs((x - a.x) * (az / al) - (z - a.z) * (ax / al)) <= 3 &&",
+    "old": "      Math.abs((x - a.x) * (az / al) - (z - a.z) * (ax / al)) <= EG_RING_DOOR.w / 2 - r &&",
+    "new": "      Math.abs((x - a.x) * (az / al) - (z - a.z) * (ax / al)) <= 3 &&",
     "tests": [
       "test/world/eliteGates/egperfect_audit_screen.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "EGAUD-end-piece-unread",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "    || (spec.steps ?? []).some((q) => Math.abs(q.y - y) < H && Math.abs(px - q.x) <= q.w / 2 && Math.abs(pz - q.z) <= q.d / 2)\n",
-    "new": "",
+    "old": "    (spec.steps ?? []).some(\n      (q) => Math.abs(q.y - y) < H && Math.abs(px - q.x) <= q.w / 2 && Math.abs(pz - q.z) <= q.d / 2,\n    ) ||\n    (spec.heroes ?? []).some(",
+    "new": "    (spec.heroes ?? []).some(",
     "tests": [
       "test/world/eliteGates/egperfect_audit_screen.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "EGAUD-turned-column-on-leap",
     "file": "src/world/eliteGates/egPlatformModel.js",
-    "old": "const along = s.hd % 2 === 1, side = along ? (r() < 0.5 ? 0 : 2) : r() < 0.5 ? 1 : 3",
-    "new": "const along = false, side = r() < 0.5 ? 1 : 3",
+    "old": "    const along = s.hd % 2 === 1,\n      side = along ? (r() < 0.5 ? 0 : 2) : r() < 0.5 ? 1 : 3,",
+    "new": "    const along = false,\n      side = r() < 0.5 ? 1 : 3,",
     "tests": [
       "test/world/eliteGates/egperfect_audit_screen.test.js"
     ]

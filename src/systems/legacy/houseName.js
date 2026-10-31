@@ -7,4 +7,7 @@
 
 /** A house's name where a sentence says "the house of ..." - its surname, or a seat's house by its seat ("of Sentinel"
  *  says "Sentinel"); empty while the house has no name yet. */
-export const houseWord = (surname) => String(surname ?? '').trim().replace(/^of\s+/i, '');
+export const houseWord = (surname) =>
+  String(surname ?? '')
+    .trim()
+    .replace(/^of\s+/i, '');

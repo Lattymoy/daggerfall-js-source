@@ -34,7 +34,7 @@
 import { mergeNamedBuildings, blockBuildingCount, makeBuildingKey } from '../systems/talk/talkTopics.js';
 import { generateBuildingName, isResidence } from './buildingNames.js';
 import { GLOBAL_SCALE } from './meshReader.js';
-import { hasInteriorModels } from './interior/interiorLayout.js';   // AUDIT FB1005 C2: the arena's move asks it too
+import { hasInteriorModels } from './interior/interiorLayout.js'; // AUDIT FB1005 C2: the arena's move asks it too
 // ONE HOME (the audit24 ratchet): BlocksFile.RMBDimension and
 // BlocksFile.RotationDivisor already live with the format that defines
 // them - this module reads them, it does not redeclare them.
@@ -46,11 +46,7 @@ import { RMB_DIMENSION, ROTATION_DIVISOR } from '../formats/blocksFile.js';
  * yRotation }). Pure.
  */
 export function buildingPosition(sub, globalScale = GLOBAL_SCALE) {
-  return [
-    (sub?.xPos ?? 0) * globalScale,
-    0,
-    (RMB_DIMENSION - (sub?.zPos ?? 0)) * globalScale,
-  ];
+  return [(sub?.xPos ?? 0) * globalScale, 0, (RMB_DIMENSION - (sub?.zPos ?? 0)) * globalScale];
 }
 
 /** BuildingSummary.Rotation's y (RMBLayout.cs:571) - degrees. */
@@ -69,7 +65,9 @@ export const buildingRotationY = (sub) => -(sub?.yRotation ?? 0) / ROTATION_DIVI
  *   BuildingNames.GetName for at :712-719.
  */
 export function buildingSummaries(exteriorBuildings, blocks, nameOpts = {}) {
-  const merged = mergeNamedBuildings(exteriorBuildings ?? [], blocks ?? [], { locationIndex: nameOpts.locationIndex ?? 0 });   // RR3b: the replacement seed varies by location
+  const merged = mergeNamedBuildings(exteriorBuildings ?? [], blocks ?? [], {
+    locationIndex: nameOpts.locationIndex ?? 0,
+  }); // RR3b: the replacement seed varies by location
   const out = [];
   for (const b of blocks ?? []) {
     const list = merged.get(b) ?? [];
@@ -92,7 +90,7 @@ export function buildingSummaries(exteriorBuildings, blocks, nameOpts = {}) {
         nameSeed: data.nameSeed,
         isResidence: isResidence(data.buildingType),
         name: generateBuildingName(data.nameSeed, data.buildingType, { ...nameOpts, factionId: data.factionId }),
-        hasInterior: hasInteriorModels(sub),   // AUDIT FB1005 C2: a room that cannot be laid out (CRYPT-SALE's law)
+        hasInterior: hasInteriorModels(sub), // AUDIT FB1005 C2: a room that cannot be laid out (CRYPT-SALE's law)
       });
     }
   }

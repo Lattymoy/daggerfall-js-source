@@ -24,10 +24,24 @@ const wavAt = arg('--wav');
 const SECONDS = Number(arg('--seconds') ?? 1e9);
 const ARENA2 = process.env.ARENA2_PATH ?? '/home/claude/dfdata/arena2';
 const MIDI_BSA = join(ARENA2, 'MIDI.BSA');
-const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
+const out = [];
+const check = (n, ok, d = '') => {
+  out.push(ok);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`);
+};
 const KEYS = ['calm', 'open', 'storm', 'night', 'port', 'fight'];
 /** DFU's outdoor songs a helm heard before (systems/song/songManager.js SUNNY_SONGS, CLOUDY_SONGS, NIGHT_SONGS, RAIN_SONGS). */
-const CLASSIC = ['SUNNYDAY.HMI', 'GDAY___D.HMI', 'GSUNNY2.HMI', '02.HMI', '29.HMI', 'OVERCAST.HMI', '10.HMI', 'GEERIE.HMI', 'RAINING.HMI'];
+const CLASSIC = [
+  'SUNNYDAY.HMI',
+  'GDAY___D.HMI',
+  'GSUNNY2.HMI',
+  '02.HMI',
+  '29.HMI',
+  'OVERCAST.HMI',
+  '10.HMI',
+  'GEERIE.HMI',
+  'RAINING.HMI',
+];
 
 const PAGE = `<!doctype html><html><body><script type=module>
 import { SongPlayer } from '/src/systems/song/songPlayer.js';
@@ -74,22 +88,53 @@ window.ready = true;
 function wav(pcmB64, rate) {
   const data = Buffer.from(pcmB64, 'base64');
   const h = Buffer.alloc(44);
-  h.write('RIFF', 0); h.writeUInt32LE(36 + data.length, 4); h.write('WAVE', 8); h.write('fmt ', 12);
-  h.writeUInt32LE(16, 16); h.writeUInt16LE(1, 20); h.writeUInt16LE(2, 22); h.writeUInt32LE(rate, 24); h.writeUInt32LE(rate * 4, 28); h.writeUInt16LE(4, 32); h.writeUInt16LE(16, 34);
-  h.write('data', 36); h.writeUInt32LE(data.length, 40);
+  h.write('RIFF', 0);
+  h.writeUInt32LE(36 + data.length, 4);
+  h.write('WAVE', 8);
+  h.write('fmt ', 12);
+  h.writeUInt32LE(16, 16);
+  h.writeUInt16LE(1, 20);
+  h.writeUInt16LE(2, 22);
+  h.writeUInt32LE(rate, 24);
+  h.writeUInt32LE(rate * 4, 28);
+  h.writeUInt16LE(4, 32);
+  h.writeUInt16LE(16, 34);
+  h.write('data', 36);
+  h.writeUInt32LE(data.length, 40);
   return Buffer.concat([h, data]);
 }
 
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
-  if (url === '/probe/') { res.writeHead(200, { 'content-type': 'text/html' }); res.end(PAGE); return; }
+  if (url === '/probe/') {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(PAGE);
+    return;
+  }
   if (url === '/arena2/MIDI.BSA') {
-    if (!existsSync(MIDI_BSA)) { res.writeHead(404); res.end(); return; }
-    res.writeHead(200, { 'content-type': 'application/octet-stream' }); res.end(readFileSync(MIDI_BSA)); return;
+    if (!existsSync(MIDI_BSA)) {
+      res.writeHead(404);
+      res.end();
+      return;
+    }
+    res.writeHead(200, { 'content-type': 'application/octet-stream' });
+    res.end(readFileSync(MIDI_BSA));
+    return;
   }
   const f = join(ROOT, url);
-  if (!f.startsWith(ROOT) || !existsSync(f)) { res.writeHead(404); res.end(); return; }
-  res.writeHead(200, { 'content-type': extname(f) === '.js' ? 'text/javascript' : extname(f) === '.json' ? 'application/json' : 'application/octet-stream' });
+  if (!f.startsWith(ROOT) || !existsSync(f)) {
+    res.writeHead(404);
+    res.end();
+    return;
+  }
+  res.writeHead(200, {
+    'content-type':
+      extname(f) === '.js'
+        ? 'text/javascript'
+        : extname(f) === '.json'
+          ? 'application/json'
+          : 'application/octet-stream',
+  });
   res.end(readFileSync(f));
 });
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -97,42 +142,78 @@ const port = server.address().port;
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 try {
   const page = await browser.newPage();
-  const errs = []; page.on('pageerror', (e) => errs.push(e.message));
+  const errs = [];
+  page.on('pageerror', (e) => errs.push(e.message));
   await page.goto(`http://127.0.0.1:${port}/probe/`);
   await page.waitForFunction(() => window.ready === true, null, { timeout: 60000 });
   const db = (x) => (x > 0 ? 20 * Math.log10(x) : -Infinity);
   // the loudness of the whole render (its first second, the band's attack, left out) - M4: it was seconds 1 to 24 alone
-  const loudness = (rms) => { const loud = rms.slice(1); return db(Math.sqrt(loud.reduce((a, b) => a + b * b, 0) / loud.length)); };
+  const loudness = (rms) => {
+    const loud = rms.slice(1);
+    return db(Math.sqrt(loud.reduce((a, b) => a + b * b, 0) / loud.length));
+  };
   const r = {};
   for (const key of KEYS) {
     r[key] = await page.evaluate(([k, s]) => window.render(k, s), [key, SECONDS]);
     r[key].meanDb = loudness(r[key].rms);
-    console.log(`     ${key}: ${r[key].secs.toFixed(1)} s, peak ${db(r[key].peak).toFixed(1)} dBFS, loudness ${r[key].meanDb.toFixed(1)} dBFS, ${r[key].voices} voices`);
+    console.log(
+      `     ${key}: ${r[key].secs.toFixed(1)} s, peak ${db(r[key].peak).toFixed(1)} dBFS, loudness ${r[key].meanDb.toFixed(1)} dBFS, ${r[key].voices} voices`,
+    );
     if (wavAt) writeFileSync(join(wavAt, `${key}.wav`), wav(r[key].pcm, r[key].rate));
   }
-  for (const key of KEYS) check(`${key}: it plays - every second of it sounding, no NaN`, r[key].nan === 0 && r[key].rms.every((x) => x > 1e-4), r[key].rms.slice(0, 12).map((x) => db(x).toFixed(0)).join(' '));
+  for (const key of KEYS)
+    check(
+      `${key}: it plays - every second of it sounding, no NaN`,
+      r[key].nan === 0 && r[key].rms.every((x) => x > 1e-4),
+      r[key].rms
+        .slice(0, 12)
+        .map((x) => db(x).toFixed(0))
+        .join(' '),
+    );
   // the highest MusicVolume is twice the 0.5 this renders at: +6 dB - under the clip there
-  for (const key of KEYS) check(`${key}: under the clip at the highest MusicVolume`, db(r[key].peak) + 6.02 <= -1, `${(db(r[key].peak) + 6.02).toFixed(2)} dBFS at full volume`);
-  check('the night under the open sea, the storm and the fight over the still sea', r.night.meanDb < r.open.meanDb && r.storm.meanDb > r.calm.meanDb && r.fight.meanDb > r.calm.meanDb,
-    KEYS.map((k) => `${k} ${r[k].meanDb.toFixed(1)}`).join(', '));
-  const haveBsa = existsSync(MIDI_BSA) && await page.evaluate(() => window.loadBsa());
+  for (const key of KEYS)
+    check(
+      `${key}: under the clip at the highest MusicVolume`,
+      db(r[key].peak) + 6.02 <= -1,
+      `${(db(r[key].peak) + 6.02).toFixed(2)} dBFS at full volume`,
+    );
+  check(
+    'the night under the open sea, the storm and the fight over the still sea',
+    r.night.meanDb < r.open.meanDb && r.storm.meanDb > r.calm.meanDb && r.fight.meanDb > r.calm.meanDb,
+    KEYS.map((k) => `${k} ${r[k].meanDb.toFixed(1)}`).join(', '),
+  );
+  const haveBsa = existsSync(MIDI_BSA) && (await page.evaluate(() => window.loadBsa()));
   if (!haveBsa) console.log(`     (no MIDI.BSA at ${MIDI_BSA}: the comparison with Daggerfall's own songs is skipped)`);
   else {
     const c = {};
     for (const name of CLASSIC) {
       const m = await page.evaluate(([n, s]) => window.renderClassic(n, s), [name, SECONDS]);
-      if (!m) { console.log(`     ${name}: not in the archive`); continue; }
+      if (!m) {
+        console.log(`     ${name}: not in the archive`);
+        continue;
+      }
       c[name] = loudness(m.rms);
       console.log(`     ${name}: loudness ${c[name].toFixed(1)} dBFS, peak ${db(m.peak).toFixed(1)} dBFS`);
     }
     const vals = Object.values(c);
-    const lo = Math.min(...vals), hi = Math.max(...vals);
+    const lo = Math.min(...vals),
+      hi = Math.max(...vals);
     const day = ['SUNNYDAY.HMI', 'GDAY___D.HMI', 'GSUNNY2.HMI'].map((n) => c[n]).filter(Number.isFinite);
     const dayDb = day.reduce((a, b) => a + b, 0) / day.length;
     // a helm's songs inside the range of the songs they stand in for - none a boss's level over them (the Warden's war
     // reads -15.8 dBFS) - and the open sea and landfall, which stand in for the day songs, within 2 dB of them
-    for (const key of KEYS) check(`${key}: inside Daggerfall's outdoor songs (${lo.toFixed(1)} to ${hi.toFixed(1)} dBFS, a decibel over at most)`, r[key].meanDb >= lo && r[key].meanDb <= hi + 1, `${r[key].meanDb.toFixed(1)} dBFS`);
-    for (const key of ['open', 'port']) check(`${key}: within 2 dB of the day songs (${dayDb.toFixed(1)} dBFS)`, Math.abs(r[key].meanDb - dayDb) <= 2, `${r[key].meanDb.toFixed(1)} dBFS`);
+    for (const key of KEYS)
+      check(
+        `${key}: inside Daggerfall's outdoor songs (${lo.toFixed(1)} to ${hi.toFixed(1)} dBFS, a decibel over at most)`,
+        r[key].meanDb >= lo && r[key].meanDb <= hi + 1,
+        `${r[key].meanDb.toFixed(1)} dBFS`,
+      );
+    for (const key of ['open', 'port'])
+      check(
+        `${key}: within 2 dB of the day songs (${dayDb.toFixed(1)} dBFS)`,
+        Math.abs(r[key].meanDb - dayDb) <= 2,
+        `${r[key].meanDb.toFixed(1)} dBFS`,
+      );
   }
   check('no page error', errs.length === 0, errs.join('; '));
 } finally {

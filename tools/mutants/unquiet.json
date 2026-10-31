@@ -11,8 +11,8 @@
   {
     "name": "UNQUIET-mark-redrawn",
     "file": "src/systems/revenant/unquietMark.js",
-    "old": "  if (typeof entity.unquiet === 'boolean') return entity.unquiet;\n",
-    "new": "",
+    "old": "  if (typeof entity.unquiet === 'boolean') return entity.unquiet;\n  let open = false;",
+    "new": "  let open = false;",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "UNQUIET-mark-gate-unread",
     "file": "src/systems/revenant/unquietMark.js",
-    "old": "  if (!open) return false;\n",
-    "new": "",
+    "old": "  if (!open) return false;\n  entity._voiceId ??= mintCharacterId();",
+    "new": "  entity._voiceId ??= mintCharacterId();",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "UNQUIET-mark-on-a-die",
     "file": "src/systems/revenant/unquietMark.js",
-    "old": "entity.unquiet = _force ?? unquietId(entity._voiceId);",
-    "new": "entity.unquiet = _force ?? Math.random() < UNQUIET_MARK;",
+    "old": "  entity.unquiet = _force ?? unquietId(entity._voiceId);",
+    "new": "  entity.unquiet = _force ?? Math.random() < UNQUIET_MARK;",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "UNQUIET-mark-seam-ignored",
     "file": "src/systems/revenant/unquietMark.js",
-    "old": "entity.unquiet = _force ?? unquietId(entity._voiceId);",
-    "new": "entity.unquiet = unquietId(entity._voiceId);",
+    "old": "  entity.unquiet = _force ?? unquietId(entity._voiceId);",
+    "new": "  entity.unquiet = unquietId(entity._voiceId);",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "UNQUIET-mark-truthy",
     "file": "src/systems/revenant/unquietMark.js",
-    "old": "export const isUnquiet = (entity) => entity?.unquiet === true && ",
-    "new": "export const isUnquiet = (entity) => !!entity?.unquiet && ",
+    "old": "  entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && !isEventFoe(entity);",
+    "new": "  !!entity?.unquiet && !entity.wildFoe && !entity.wildGiant && !entity.bout && !isEventFoe(entity);",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "UNQUIET-door-elite-unmarked",
     "file": "src/systems/eliteFoes.js",
-    "old": "  if (own) markUnquiet(entity);",
-    "new": "",
+    "old": "  if (own) markUnquiet(entity); // UNQUIET: the mark that lets it rise, drawn on its own",
+    "new": "  // UNQUIET: the mark that lets it rise, drawn on its own",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "UNQUIET-door-elite-puppet",
     "file": "src/systems/eliteFoes.js",
-    "old": "  if (own) markUnquiet(entity);",
-    "new": "  markUnquiet(entity);",
+    "old": "  if (own) markUnquiet(entity); // UNQUIET: the mark that lets it rise, drawn on its own",
+    "new": "  markUnquiet(entity); // UNQUIET: the mark that lets it rise, drawn on its own",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "UNQUIET-door-champion-unmarked",
     "file": "src/systems/champions.js",
-    "old": "  if (own) markUnquiet(entity);",
-    "new": "",
+    "old": "  if (own) markUnquiet(entity); // UNQUIET: the mark that lets it rise",
+    "new": "  // UNQUIET: the mark that lets it rise",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "UNQUIET-door-champion-puppet",
     "file": "src/systems/champions.js",
-    "old": "  if (own) markUnquiet(entity);",
-    "new": "  markUnquiet(entity);",
+    "old": "  if (own) markUnquiet(entity); // UNQUIET: the mark that lets it rise",
+    "new": "  markUnquiet(entity); // UNQUIET: the mark that lets it rise",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "UNQUIET-title-unsaid",
     "file": "src/systems/foeTitle.js",
-    "old": "return entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && entity.eventFoe !== true ? `Unquiet ${traited}` : traited;",
-    "new": "return traited;",
+    "old": "  return entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && entity.eventFoe !== true\n    ? `Unquiet ${traited}`\n    : traited; // UNQUIET: the mark - it may rise (unquietMark.js isUnquiet's own test: AUDIT UNQUIET, never the zone's or the sand's; STAR-MASTER-FLED, nor an event's own - isEventFoe)",
+    "new": "  return traited; // UNQUIET: the mark - it may rise (unquietMark.js isUnquiet's own test: AUDIT UNQUIET, never the zone's or the sand's; STAR-MASTER-FLED, nor an event's own - isEventFoe)",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "UNQUIET-blood-read-back",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "Math.min(BLOOD_RANK - 1, v)",
-    "new": "v",
+    "old": "export const sanitizeBlood = (v) => (Number.isInteger(v) && v >= 0 ? Math.min(BLOOD_RANK - 1, v) : 0);",
+    "new": "export const sanitizeBlood = (v) => (Number.isInteger(v) && v >= 0 ? v : 0);",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "UNQUIET-craft-rank",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "  RANK: 2,\n  BOLT_PACE",
-    "new": "  RANK: 3,\n  BOLT_PACE",
+    "old": "  RANK: 2,",
+    "new": "  RANK: 3,",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "UNQUIET-craft-blinker-moved",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "M.Ghost, M.Wraith, M.Lich",
-    "new": "M.Ghost, M.Lich",
+    "old": "  M.Wraith,\n  M.Lich,",
+    "new": "  M.Lich,",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -390,8 +390,8 @@
   {
     "name": "UNQUIET-craft-sinker-moved",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "M.SkeletalWarrior, M.Zombie, M.Mummy",
-    "new": "M.SkeletalWarrior, M.Mummy",
+    "old": "const SINKERS = new Set([M.SkeletalWarrior, M.Zombie, M.Mummy, M.Vampire, M.VampireAncient, M.Spriggan]);",
+    "new": "const SINKERS = new Set([M.SkeletalWarrior, M.Mummy, M.Vampire, M.VampireAncient, M.Spriggan]);",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "UNQUIET-craft-no-smoke",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "  if (isClassEnemyId(mobileType) && mobileType !== M.None) return 'smoke';\n",
-    "new": "",
+    "old": "  if (isClassEnemyId(mobileType) && mobileType !== M.None) return 'smoke';\n  return 'bolt';",
+    "new": "  return 'bolt';",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -408,8 +408,8 @@
   {
     "name": "UNQUIET-craft-sink-runs",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "craft === 'sink' ? CRAFT.SINK_PACE : pace",
-    "new": "pace",
+    "old": "  craft === 'bolt' ? CRAFT.BOLT_PACE : craft === 'blink' ? CRAFT.BLINK_PACE : craft === 'sink' ? CRAFT.SINK_PACE : pace;",
+    "new": "  craft === 'bolt' ? CRAFT.BOLT_PACE : craft === 'blink' ? CRAFT.BLINK_PACE : pace;",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -480,8 +480,8 @@
   {
     "name": "UNQUIET-smoke-no-chameleon",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "    try { f._craft.bundle = assignModBundle(e, { name: t('rvn.unq.craft.smoke', 'Smoke'), kind: 'chameleonNormal', rounds: CRAFT.SMOKE_ROUNDS })?.bundleId ?? null; } catch { /* no effects: it runs plain */ }\n",
-    "new": "",
+    "old": "    try {\n      f._craft.bundle =\n        assignModBundle(e, {\n          name: t('rvn.unq.craft.smoke', 'Smoke'),\n          kind: 'chameleonNormal',\n          rounds: CRAFT.SMOKE_ROUNDS,\n        })?.bundleId ?? null;\n    } catch {\n      /* no effects: it runs plain */\n    }\n    puff(at);",
+    "new": "    puff(at);",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -498,8 +498,8 @@
   {
     "name": "UNQUIET-sink-no-dissolve",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "    f.portalFx = { dir: 'out', at: now, delay: CRAFT.SINK_DELAY, ms: CRAFT.SINK_MS, tint: CRAFT_TINT.sink };\n",
-    "new": "",
+    "old": "    f.portalFx = { dir: 'out', at: now, delay: CRAFT.SINK_DELAY, ms: CRAFT.SINK_MS, tint: CRAFT_TINT.sink };\n    puff(at);",
+    "new": "    puff(at);",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -507,8 +507,8 @@
   {
     "name": "UNQUIET-sink-blow-unread",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "    if (e.health < c.hp) { f.portalFx = null; c.kind = 'broken'; return 'broken'; }\n",
-    "new": "",
+    "old": "    if (e.health < c.hp) {\n      f.portalFx = null;\n      c.kind = 'broken';\n      return 'broken';\n    }\n    if (f.portalFx) f.portalFx.at = now - c.t; // its look on the pool's clock",
+    "new": "    if (f.portalFx) f.portalFx.at = now - c.t; // its look on the pool's clock",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -516,8 +516,8 @@
   {
     "name": "UNQUIET-blink-no-delay",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "    if (c.t < CRAFT.BLINK_DELAY * 1000) return null;\n",
-    "new": "",
+    "old": "    if (c.t < CRAFT.BLINK_DELAY * 1000) return null;\n    let held = false;",
+    "new": "    let held = false;",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -525,8 +525,8 @@
   {
     "name": "UNQUIET-blink-silence-unread",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "held = isSilencedEffect(e) || entityIsParalyzed(e);",
-    "new": "held = entityIsParalyzed(e);",
+    "old": "      held = isSilencedEffect(e) || entityIsParalyzed(e);",
+    "new": "      held = entityIsParalyzed(e);",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -534,8 +534,8 @@
   {
     "name": "UNQUIET-blink-paralysis-unread",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "held = isSilencedEffect(e) || entityIsParalyzed(e);",
-    "new": "held = isSilencedEffect(e);",
+    "old": "      held = isSilencedEffect(e) || entityIsParalyzed(e);",
+    "new": "      held = isSilencedEffect(e);",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -543,8 +543,8 @@
   {
     "name": "UNQUIET-blink-blow-unread",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "  if (e.health < c.hp) { f.portalFx = null; c.kind = 'run'; return null; }\n",
-    "new": "",
+    "old": "  if (e.health < c.hp) {\n    f.portalFx = null;\n    c.kind = 'run';\n    return null;\n  }\n  if (f.portalFx) f.portalFx.at = now - (c.t - c.fired);",
+    "new": "  if (f.portalFx) f.portalFx.at = now - (c.t - c.fired);",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -552,8 +552,8 @@
   {
     "name": "UNQUIET-blink-no-fade",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "return c.t - c.fired >= CRAFT.BLINK_MS ? 'gone' : null;",
-    "new": "return 'gone';",
+    "old": "  return c.t - c.fired >= CRAFT.BLINK_MS ? 'gone' : null;",
+    "new": "  return 'gone';",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -561,8 +561,8 @@
   {
     "name": "UNQUIET-craft-kept",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "  if (f.portalFx?.dir === 'out') f.portalFx = null;\n",
-    "new": "",
+    "old": "  if (f.portalFx?.dir === 'out') f.portalFx = null;\n}",
+    "new": "}",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -570,8 +570,8 @@
   {
     "name": "UNQUIET-craft-laststand-kept",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "  endCraft(f);   // UNQUIET: risen mid-sink it stands whole\n",
-    "new": "",
+    "old": "  endCraft(f); // UNQUIET: risen mid-sink it stands whole\n  f._stands = (f._stands | 0) + 1; // UNQUIET: the Dread stands twice",
+    "new": "  f._stands = (f._stands | 0) + 1; // UNQUIET: the Dread stands twice",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -606,8 +606,8 @@
   {
     "name": "UNQUIET-wound-bled-share",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "from: Object.freeze(['blade']), health: 0.9",
-    "new": "from: Object.freeze(['blade']), health: 0.8",
+    "old": "  bled: Object.freeze({ from: Object.freeze(['blade']), health: 0.9 }),",
+    "new": "  bled: Object.freeze({ from: Object.freeze(['blade']), health: 0.8 }),",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -615,8 +615,8 @@
   {
     "name": "UNQUIET-wound-fist-uncracked",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "from: Object.freeze(['blunt', 'h2h']), poise: 0.7",
-    "new": "from: Object.freeze(['blunt']), poise: 0.7",
+    "old": "  cracked: Object.freeze({ from: Object.freeze(['blunt', 'h2h']), poise: 0.7 }),",
+    "new": "  cracked: Object.freeze({ from: Object.freeze(['blunt']), poise: 0.7 }),",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -624,8 +624,8 @@
   {
     "name": "UNQUIET-wound-cracked-share",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "from: Object.freeze(['blunt', 'h2h']), poise: 0.7",
-    "new": "from: Object.freeze(['blunt', 'h2h']), poise: 0.8",
+    "old": "  cracked: Object.freeze({ from: Object.freeze(['blunt', 'h2h']), poise: 0.7 }),",
+    "new": "  cracked: Object.freeze({ from: Object.freeze(['blunt', 'h2h']), poise: 0.8 }),",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -633,8 +633,8 @@
   {
     "name": "UNQUIET-wound-maimed-share",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "from: Object.freeze(['axe']), blows: 0.9",
-    "new": "from: Object.freeze(['axe']), blows: 0.8",
+    "old": "  maimed: Object.freeze({ from: Object.freeze(['axe']), blows: 0.9 }),",
+    "new": "  maimed: Object.freeze({ from: Object.freeze(['axe']), blows: 0.8 }),",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -642,8 +642,8 @@
   {
     "name": "UNQUIET-wound-lamed-share",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "from: Object.freeze(['arrow']), speed: -15",
-    "new": "from: Object.freeze(['arrow']), speed: -10",
+    "old": "  lamed: Object.freeze({ from: Object.freeze(['arrow']), speed: -15 }),",
+    "new": "  lamed: Object.freeze({ from: Object.freeze(['arrow']), speed: -10 }),",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -651,8 +651,8 @@
   {
     "name": "UNQUIET-wound-reopened-twice",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": ".filter((x) => x !== w), w].slice(-WOUND.MAX)",
-    "new": ", w].slice(-WOUND.MAX)",
+    "old": "    ? [...(Array.isArray(wounds) ? wounds : []).filter((x) => x !== w), w].slice(-WOUND.MAX)",
+    "new": "    ? [...(Array.isArray(wounds) ? wounds : []), w].slice(-WOUND.MAX)",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -723,8 +723,8 @@
   {
     "name": "UNQUIET-wound-poise-unread",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "poise: (edge?.poise ?? 1) * w.poise",
-    "new": "poise: (edge?.poise ?? 1)",
+    "old": "  return Object.freeze({ ...(edge ?? {}), poise: (edge?.poise ?? 1) * w.poise, resist: Object.freeze(resist) });",
+    "new": "  return Object.freeze({ ...(edge ?? {}), poise: edge?.poise ?? 1, resist: Object.freeze(resist) });",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -741,8 +741,8 @@
   {
     "name": "UNQUIET-ledger-last-unkept",
     "file": "src/systems/feudLedger.js",
-    "old": "  l.last = FEUD_CLASSES.includes(cls) ? cls : 'other';",
-    "new": "",
+    "old": "  l.last = FEUD_CLASSES.includes(cls) ? cls : 'other'; // UNQUIET (bible/06-Systems/Revenants.md section 46): the blow that broke it",
+    "new": "  // UNQUIET (bible/06-Systems/Revenants.md section 46): the blow that broke it",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -750,8 +750,8 @@
   {
     "name": "UNQUIET-ambition-brutal-moved",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "brutal: 'vengeance',",
-    "new": "brutal: 'plunder',",
+    "old": "  brutal: 'vengeance',",
+    "new": "  brutal: 'plunder',",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -759,8 +759,8 @@
   {
     "name": "UNQUIET-ambition-cold-moved",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "cold: 'mastery',",
-    "new": "cold: 'vengeance',",
+    "old": "  cold: 'mastery',",
+    "new": "  cold: 'vengeance',",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -768,8 +768,8 @@
   {
     "name": "UNQUIET-ambition-witty-moved",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "witty: 'plunder',",
-    "new": "witty: 'mastery',",
+    "old": "  witty: 'plunder',",
+    "new": "  witty: 'mastery',",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -777,8 +777,8 @@
   {
     "name": "UNQUIET-ambition-default",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "AMBITION_OF[personality] ?? 'vengeance'",
-    "new": "AMBITION_OF[personality] ?? 'plunder'",
+    "old": "export const ambitionOf = (personality) => AMBITION_OF[personality] ?? 'vengeance';",
+    "new": "export const ambitionOf = (personality) => AMBITION_OF[personality] ?? 'plunder';",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -786,8 +786,8 @@
   {
     "name": "UNQUIET-vengeance-days",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "VENGEANCE_DUE: Object.freeze([1440, 2880]),",
-    "new": "VENGEANCE_DUE: Object.freeze([2880, 5760]),",
+    "old": "  VENGEANCE_DUE: Object.freeze([1440, 2880]),",
+    "new": "  VENGEANCE_DUE: Object.freeze([2880, 5760]),",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -795,8 +795,8 @@
   {
     "name": "UNQUIET-vengeance-share",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "VENGEANCE_RETURN: 0.55,",
-    "new": "VENGEANCE_RETURN: 0.5,",
+    "old": "  VENGEANCE_RETURN: 0.55,",
+    "new": "  VENGEANCE_RETURN: 0.5,",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -876,8 +876,8 @@
   {
     "name": "UNQUIET-plunder-part-days",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "Math.max(0, Math.floor(Number(daysPast) || 0))",
-    "new": "Math.max(0, Number(daysPast) || 0)",
+    "old": "  Math.min(AMBITION.PLUNDER_MOST, 1 + AMBITION.PLUNDER_PER_DAY * Math.max(0, Math.floor(Number(daysPast) || 0)));",
+    "new": "  Math.min(AMBITION.PLUNDER_MOST, 1 + AMBITION.PLUNDER_PER_DAY * Math.max(0, Number(daysPast) || 0));",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -913,8 +913,8 @@
   {
     "name": "UNQUIET-dread-health",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "export const DREAD = Object.freeze({ HEALTH: 1.5,",
-    "new": "export const DREAD = Object.freeze({ HEALTH: 1.25,",
+    "old": "export const DREAD = Object.freeze({ HEALTH: 1.5, STANDS: 2, SECOND_STAND: 0.25, GOLD: 3, MAX: 1 });",
+    "new": "export const DREAD = Object.freeze({ HEALTH: 1.25, STANDS: 2, SECOND_STAND: 0.25, GOLD: 3, MAX: 1 });",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -922,8 +922,8 @@
   {
     "name": "UNQUIET-dread-stands",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "STANDS: 2, SECOND_STAND: 0.25,",
-    "new": "STANDS: 1, SECOND_STAND: 0.25,",
+    "old": "export const DREAD = Object.freeze({ HEALTH: 1.5, STANDS: 2, SECOND_STAND: 0.25, GOLD: 3, MAX: 1 });",
+    "new": "export const DREAD = Object.freeze({ HEALTH: 1.5, STANDS: 1, SECOND_STAND: 0.25, GOLD: 3, MAX: 1 });",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -931,8 +931,8 @@
   {
     "name": "UNQUIET-dread-second-stand",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "STANDS: 2, SECOND_STAND: 0.25,",
-    "new": "STANDS: 2, SECOND_STAND: 0.5,",
+    "old": "export const DREAD = Object.freeze({ HEALTH: 1.5, STANDS: 2, SECOND_STAND: 0.25, GOLD: 3, MAX: 1 });",
+    "new": "export const DREAD = Object.freeze({ HEALTH: 1.5, STANDS: 2, SECOND_STAND: 0.5, GOLD: 3, MAX: 1 });",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -940,8 +940,8 @@
   {
     "name": "UNQUIET-dread-gold",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "SECOND_STAND: 0.25, GOLD: 3, MAX: 1 });",
-    "new": "SECOND_STAND: 0.25, GOLD: 2, MAX: 1 });",
+    "old": "export const DREAD = Object.freeze({ HEALTH: 1.5, STANDS: 2, SECOND_STAND: 0.25, GOLD: 3, MAX: 1 });",
+    "new": "export const DREAD = Object.freeze({ HEALTH: 1.5, STANDS: 2, SECOND_STAND: 0.25, GOLD: 2, MAX: 1 });",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -949,8 +949,8 @@
   {
     "name": "UNQUIET-dread-no-lair",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "(r.rank | 0) >= max && !!r.lair && (dreads | 0) < DREAD.MAX;",
-    "new": "(r.rank | 0) >= max && (dreads | 0) < DREAD.MAX;",
+    "old": "export const mayAscend = (r, max, dreads = 0) =>\n  !!r && !r.dread && (r.rank | 0) >= max && !!r.lair && (dreads | 0) < DREAD.MAX;",
+    "new": "export const mayAscend = (r, max, dreads = 0) => !!r && !r.dread && (r.rank | 0) >= max && (dreads | 0) < DREAD.MAX;",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -958,8 +958,8 @@
   {
     "name": "UNQUIET-dread-second-stand-unread",
     "file": "src/systems/revenant/revenantUnquiet.js",
-    "old": "n >= 2 ? DREAD.SECOND_STAND : first",
-    "new": "first",
+    "old": "export const dreadStandHealth = (n, first) => (n >= 2 ? DREAD.SECOND_STAND : first);",
+    "new": "export const dreadStandHealth = (n, first) => first;",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -1084,8 +1084,8 @@
   {
     "name": "UNQUIET-dread-stands-once",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "f._lastStood = !(r?.dread && f._stands < DREAD.STANDS);",
-    "new": "f._lastStood = true;",
+    "old": "  f._lastStood = !(r?.dread && f._stands < DREAD.STANDS);",
+    "new": "  f._lastStood = true;",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -1102,8 +1102,8 @@
   {
     "name": "UNQUIET-dread-tears-away",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "return !!r && !r.dread && willMatters(",
-    "new": "return !!r && willMatters(",
+    "old": "  return !!r && !r.dread && willMatters(r.rank) && !willBroken(f.entity._feud); // UNQUIET: the Dread, at home, has nowhere to tear away to - it kneels",
+    "new": "  return !!r && willMatters(r.rank) && !willBroken(f.entity._feud); // UNQUIET: the Dread, at home, has nowhere to tear away to - it kneels",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -1111,8 +1111,8 @@
   {
     "name": "UNQUIET-dread-stand-health-unread",
     "file": "src/systems/revenant/revenantFate.js",
-    "old": "(r?.dread ? dreadStandHealth(f._stands, lastStandHealth(r.rank)) : lastStandHealth(r?.rank))",
-    "new": "lastStandHealth(r?.rank)",
+    "old": "  e.health = Math.max(\n    1,\n    Math.round(\n      (e.maxHealth || 1) * (r?.dread ? dreadStandHealth(f._stands, lastStandHealth(r.rank)) : lastStandHealth(r?.rank)),\n    ),\n  );",
+    "new": "  e.health = Math.max(1, Math.round((e.maxHealth || 1) * lastStandHealth(r?.rank)));",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -1120,8 +1120,8 @@
   {
     "name": "UNQUIET-page-craft-any-rank",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "craftWords(revenantCraft(r?.mobileType, r?.rank))",
-    "new": "craftWords(revenantCraft(r?.mobileType, 5))",
+    "old": "  const c = craftWords(revenantCraft(r?.mobileType, r?.rank));",
+    "new": "  const c = craftWords(revenantCraft(r?.mobileType, 5));",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -1129,8 +1129,8 @@
   {
     "name": "UNQUIET-page-dread-ambition",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  if (r?.dread) return '';\n  const a = ambitionWords",
-    "new": "  const a = ambitionWords",
+    "old": "  if (r?.dread) return '';\n  const a = ambitionWords(ambitionOf(r?.personality));",
+    "new": "  const a = ambitionWords(ambitionOf(r?.personality));",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -1138,8 +1138,8 @@
   {
     "name": "UNQUIET-page-blood-at-five",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "(r?.blood | 0) >= 1 && (r?.rank | 0) < REVENANT_MAX_RANK",
-    "new": "(r?.blood | 0) >= 1",
+    "old": "  (r?.blood | 0) >= 1 && (r?.rank | 0) < REVENANT_MAX_RANK",
+    "new": "  (r?.blood | 0) >= 1",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -1147,8 +1147,8 @@
   {
     "name": "UNQUIET-page-dread-will",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "const will = fallen || r.dread ? '' : willWords(r);",
-    "new": "const will = fallen ? '' : willWords(r);",
+    "old": "  const will = fallen || r.dread ? '' : willWords(r);",
+    "new": "  const will = fallen ? '' : willWords(r);",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -1156,8 +1156,8 @@
   {
     "name": "UNQUIET-page-dread-home",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  if (r.dread && !held) return { tag: t('rvn.unq.page.dreadTag'",
-    "new": "  if (false) return { tag: t('rvn.unq.page.dreadTag'",
+    "old": "  if (r.dread && !held)",
+    "new": "  if (false)",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -1165,8 +1165,8 @@
   {
     "name": "UNQUIET-page-ascended-unworded",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  ascended: 'became the Dread',",
-    "new": "",
+    "old": "  ascended: 'became the Dread', // UNQUIET (Revenants.md section 46)",
+    "new": "  // UNQUIET (Revenants.md section 46)",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -1174,8 +1174,8 @@
   {
     "name": "UNQUIET-page-lines-dropped",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "[craftLine(r), woundLine(r, now), ambitionLine(r), bloodLine(r), tearLine(r)]",
-    "new": "[craftLine(r), woundLine(r, now)]",
+    "old": "  for (const line of fallen ? [] : [craftLine(r), woundLine(r, now), ambitionLine(r), bloodLine(r), tearLine(r)])",
+    "new": "  for (const line of fallen ? [] : [craftLine(r), woundLine(r, now)])",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -1183,8 +1183,8 @@
   {
     "name": "UNQUIET-card-ascended-edge",
     "file": "src/ui/revenant/revenantCard.js",
-    "old": "body .rvncard.is-ascended { border-left-color: #2a0a12;",
-    "new": "body .rvncard.is-ascended { border-left-color: #2a0a13;",
+    "old": "body .rvncard.is-ascended { border-left-color: #2a0a12; box-shadow: inset 0 0 0 1px #7a1020; }",
+    "new": "body .rvncard.is-ascended { border-left-color: #2a0a13; box-shadow: inset 0 0 0 1px #7a1020; }",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]

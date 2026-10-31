@@ -20,8 +20,8 @@
   {
     "name": "AUDIT68-S16-air-release-keeps-a-stale-prepare",
     "file": "src/render/airPass.js",
-    "old": "    this.fresh = false;   // AUDIT 68 S16-air-stale-ao-unprepared: a prepare the resolve never took",
-    "new": "    // AUDIT 68 S16-air-stale-ao-unprepared: a prepare the resolve never took",
+    "old": "    this.fresh = false; // AUDIT 68 S16-air-stale-ao-unprepared: a prepare the resolve never took is no frame's when the door reopens",
+    "new": "    // AUDIT 68 S16-air-stale-ao-unprepared: a prepare the resolve never took is no frame's when the door reopens",
     "tests": [
       "test/render/audit68_render_a.test.js"
     ]

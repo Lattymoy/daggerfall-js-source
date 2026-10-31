@@ -17,7 +17,14 @@ export const YEAR_MINUTES = 12 * 30 * 1440;
 
 /** THE SPAN by race, in years - the lore's long-lived elves, the humans and the beast folk between. */
 export const SPANS = Object.freeze({
-  Breton: 90, Nord: 90, Redguard: 80, Khajiit: 85, Argonian: 85, WoodElf: 150, DarkElf: 180, HighElf: 200,
+  Breton: 90,
+  Nord: 90,
+  Redguard: 80,
+  Khajiit: 85,
+  Argonian: 85,
+  WoodElf: 150,
+  DarkElf: 180,
+  HighElf: 200,
 });
 export const spanOf = (race) => SPANS[race] ?? SPANS.Breton;
 

@@ -39,43 +39,69 @@
 import { loadImg, nativeMetrics, drawImg, shadowText } from './native/nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
-import { noticeFrame, noticeRelease } from './enhanced/enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
+import { noticeFrame, noticeRelease } from './enhanced/enhancedNotice.js'; // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
 import { typedChar } from './input.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import {
-  TRANSACTION_TYPE, TRANSACTION_RESULT,
-  bankButtonEnabled, toggleTransactionInput, parseTransactionAmount,
-  borrowDecision, buyHouseDecision, buyShipDecision, sellDecision, houseOfferText,
-  accountTotal, loanedTotal, loanDueDate, calculateMaxBankLoan,
-  depositGold, withdrawGold, depositAllLetters, withdrawLetter,
-  repayLoan, borrowLoan, shipSellPrice,
-  empireRefusalLines, empireDefaultOwed, empireGarnishLines,   // REALM P0.3: online, the Empire is one lender
-  goldRegion,   // EMPIRE-ACCOUNT: online, one account at every branch
+  TRANSACTION_TYPE,
+  TRANSACTION_RESULT,
+  bankButtonEnabled,
+  toggleTransactionInput,
+  parseTransactionAmount,
+  borrowDecision,
+  buyHouseDecision,
+  buyShipDecision,
+  sellDecision,
+  houseOfferText,
+  accountTotal,
+  loanedTotal,
+  loanDueDate,
+  calculateMaxBankLoan,
+  depositGold,
+  withdrawGold,
+  depositAllLetters,
+  withdrawLetter,
+  repayLoan,
+  borrowLoan,
+  shipSellPrice,
+  empireRefusalLines,
+  empireDefaultOwed,
+  empireGarnishLines, // REALM P0.3: online, the Empire is one lender
+  goldRegion, // EMPIRE-ACCOUNT: online, one account at every branch
 } from '../systems/banking.js';
-import { REGION_NAMES } from '../formats/mapsFile.js';   // REALM P0.3: the branch another loan or default stands in
-import { expandMacroValues } from '../systems/quest/questMacros.js';   // MH1: the ONE walk
-import { localizedText, getLocalizedRegionName } from '../systems/textManager.js';   // L10N3d: the TOO_HEAVY line; L10N3e: %reg's region shown
-import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { REGION_NAMES } from '../formats/mapsFile.js'; // REALM P0.3: the branch another loan or default stands in
+import { expandMacroValues } from '../systems/quest/questMacros.js'; // MH1: the ONE walk
+import { localizedText, getLocalizedRegionName } from '../systems/textManager.js'; // L10N3d: the TOO_HEAVY line; L10N3e: %reg's region shown
+import { noteFirstUse } from '../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 /** mainPanel.Size (:77) - and the size BANK00I0.IMG ships. */
-export const BANK_PANEL_W = 225, BANK_PANEL_H = 181;
-export const BANK_PANEL_X = Math.round((320 - BANK_PANEL_W) / 2);   // 48
-export const BANK_PANEL_Y = Math.round((200 - BANK_PANEL_H) / 2);   // 10
+export const BANK_PANEL_W = 225,
+  BANK_PANEL_H = 181;
+export const BANK_PANEL_X = Math.round((320 - BANK_PANEL_W) / 2); // 48
+export const BANK_PANEL_Y = Math.round((200 - BANK_PANEL_H) / 2); // 10
 
 /** The four live labels (:81-106), panel-relative. */
 export const BANK_LABELS = Object.freeze({
-  account: [150, 14], inventory: [156, 24], loanDue: [96, 34], loanBy: [71, 44],
+  account: [150, 14],
+  inventory: [156, 24],
+  loanDue: [96, 34],
+  loanBy: [71, 44],
 });
 
 /** The ten buttons, the exit and the field (:108-190), panel-relative.
  *  Two columns at x120 and x172, five rows on an 18-pixel stride. */
 export const BANK_RECTS = Object.freeze({
-  depositGold: [120, 58, 45, 8], withdrawGold: [172, 58, 45, 8],
-  depositLetters: [120, 76, 45, 8], withdrawLetter: [172, 76, 45, 8],
-  loanRepay: [120, 94, 45, 8], loanBorrow: [172, 94, 45, 8],
-  buyHouse: [120, 112, 45, 8], sellHouse: [172, 112, 45, 8],
-  buyShip: [120, 130, 45, 8], sellShip: [172, 130, 45, 8],
+  depositGold: [120, 58, 45, 8],
+  withdrawGold: [172, 58, 45, 8],
+  depositLetters: [120, 76, 45, 8],
+  withdrawLetter: [172, 76, 45, 8],
+  loanRepay: [120, 94, 45, 8],
+  loanBorrow: [172, 94, 45, 8],
+  buyHouse: [120, 112, 45, 8],
+  sellHouse: [172, 112, 45, 8],
+  buyShip: [120, 130, 45, 8],
+  sellShip: [172, 130, 45, 8],
   exit: [92, 159, 40, 19],
   input: [113, 146, 103, 12],
 });
@@ -103,17 +129,21 @@ export const CANNOT_CARRY_GOLD = 'You cannot carry that much gold.';
 
 let _art = null;
 /** BOX1's seam, as every other art-gated window carries it. */
-export function _setBankArtForTests(art) { _art = art; }
+export function _setBankArtForTests(art) {
+  _art = art;
+}
 export async function preloadBankArt(deps) {
   if (_art) return;
   try {
     _art = await loadImg(deps, 'BANK00I0.IMG');
-  } catch { console.warn('[bank] BANK00I0 unavailable; the banking window stays closed'); }
+  } catch {
+    console.warn('[bank] BANK00I0 unavailable; the banking window stays closed');
+  }
 }
 export const bankArtLoaded = () => !!_art;
 
-const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + BANK_PANEL_X && y >= ry + BANK_PANEL_Y
-  && x < rx + BANK_PANEL_X + rw && y < ry + BANK_PANEL_Y + rh;
+const inRect = ([rx, ry, rw, rh], x, y) =>
+  x >= rx + BANK_PANEL_X && y >= ry + BANK_PANEL_Y && x < rx + BANK_PANEL_X + rw && y < ry + BANK_PANEL_Y + rh;
 
 /**
  * hooks:
@@ -142,27 +172,44 @@ const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + BANK_PANEL_X && y >= ry + B
  */
 export class BankWindow {
   constructor(hooks) {
-    noteFirstUse('bank');   // TUT1
+    noteFirstUse('bank'); // TUT1
     this.hooks = hooks;
     this.done = false;
-    this.isChoiceWindow = true;   // raw codes through the overlay seam
+    this.isChoiceWindow = true; // raw codes through the overlay seam
     this.transactionType = TRANSACTION_TYPE.None;
     this.value = '';
     this.box = null;
   }
 
-  _close() { this.done = true; noticeRelease(this); this.hooks.onClose?.(); }
-  get accounts() { return this.hooks.accounts(); }
-  get region() { return this.hooks.regionIndex(); }
+  _close() {
+    this.done = true;
+    noticeRelease(this);
+    this.hooks.onClose?.();
+  }
+  get accounts() {
+    return this.hooks.accounts();
+  }
+  get region() {
+    return this.hooks.regionIndex();
+  }
 
   /** UpdateButtons (:252-265), through the law. MARKS1: the Marks sale is the port's own - open, held, nothing typed. */
   enabled(button) {
     if (button === 'sellMarks') {
       const m = this.hooks.marks;
-      return !!m && m.open() === true && (m.balance() ?? 0) > 0 && !m.pending() && this.transactionType === TRANSACTION_TYPE.None && !this.box;
+      return (
+        !!m &&
+        m.open() === true &&
+        (m.balance() ?? 0) > 0 &&
+        !m.pending() &&
+        this.transactionType === TRANSACTION_TYPE.None &&
+        !this.box
+      );
     }
     return bankButtonEnabled(button, {
-      transactionType: this.transactionType, accounts: this.accounts, regionIndex: this.region,
+      transactionType: this.transactionType,
+      accounts: this.accounts,
+      regionIndex: this.region,
     });
   }
 
@@ -190,11 +237,11 @@ export class BankWindow {
    *  (MacroHelper.cs:503-527) rather than a hole in the sentence. */
   _macros(amount) {
     return {
-      a: String(amount),                                        // MacroHelper.cs:50
-      ml: () => String(calculateMaxBankLoan(this.hooks.level?.() ?? 1)),   // :139
-      cn: this.hooks.cityName?.() ?? null,                      // :67, CityName :567-574
-      pcn: this.hooks.playerName?.() ?? null,                   // :152, PlayerName :779-782
-      reg: this._shownRegionName(),                             // :211, RegionInContext :1049-1057
+      a: String(amount), // MacroHelper.cs:50
+      ml: () => String(calculateMaxBankLoan(this.hooks.level?.() ?? 1)), // :139
+      cn: this.hooks.cityName?.() ?? null, // :67, CityName :567-574
+      pcn: this.hooks.playerName?.() ?? null, // :152, PlayerName :779-782
+      reg: this._shownRegionName(), // :211, RegionInContext :1049-1057
     };
   }
 
@@ -215,17 +262,19 @@ export class BankWindow {
   _popup(result, amount = 0) {
     if (result === TRANSACTION_RESULT.NONE) return;
     const values = this._macros(amount);
-    const rows = result === TRANSACTION_RESULT.TOO_HEAVY
-      ? [{ text: localizedText('cannotCarryGold', CANNOT_CARRY_GOLD), center: true }]
-      : (this.hooks.rows?.(result) ?? []).map((r) => (typeof r === 'string'
-        ? expandMacroValues(r, values)
-        : { ...r, text: expandMacroValues(r.text, values) }));
+    const rows =
+      result === TRANSACTION_RESULT.TOO_HEAVY
+        ? [{ text: localizedText('cannotCarryGold', CANNOT_CARRY_GOLD), center: true }]
+        : (this.hooks.rows?.(result) ?? []).map((r) =>
+            typeof r === 'string' ? expandMacroValues(r, values) : { ...r, text: expandMacroValues(r.text, values) },
+          );
     // THREE results ask rather than tell (:313-334), not one: the
     // letter deposit and BOTH sell offers. H3 - the two sell arms
     // raised a click-anywhere box and no sale, so a player could
     // accept an offer and keep the house.
     const ASKS = {
-      [TRANSACTION_RESULT.DEPOSIT_LOC]: () => this._garnished(() => depositAllLetters(this.accounts, this.region, this.hooks.player)),
+      [TRANSACTION_RESULT.DEPOSIT_LOC]: () =>
+        this._garnished(() => depositAllLetters(this.accounts, this.region, this.hooks.player)),
       // MakeTransaction(Sell_house / Sell_ship, 0, regionIndex)
       // (:355, :364) - the amount is IGNORED on both, because the
       // price is the deed's, not the player's to name.
@@ -242,7 +291,9 @@ export class BankWindow {
   }
 
   /** REALM P0.3: a box of the Empire's own lines, which no Daggerfall record says. */
-  _lines(lines) { this.box = { rows: lines.map((text) => ({ text, center: true })), buttons: null, amount: 0, onYes: null }; }
+  _lines(lines) {
+    this.box = { rows: lines.map((text) => ({ text, center: true })), buttons: null, amount: 0, onYes: null };
+  }
 
   /** REALM P0.3: a deposit, and the Empire's garnish said when a default took some of it - the account shows less than
    *  was paid in (banking.js garnishDeposit, online only). */
@@ -264,19 +315,33 @@ export class BankWindow {
     const amount = parseTransactionAmount(this.value);
     const type = this.transactionType;
     this._openInput(TRANSACTION_TYPE.None);
-    if (amount == null) return;    // int.TryParse: nothing at all
-    if (type === MARKS_ENTRY) { this._sellMarks(amount); return; }   // MARKS1: the port's own
-    const a = this.accounts, r = this.region, p = this.hooks.player;
+    if (amount == null) return; // int.TryParse: nothing at all
+    if (type === MARKS_ENTRY) {
+      this._sellMarks(amount);
+      return;
+    } // MARKS1: the port's own
+    const a = this.accounts,
+      r = this.region,
+      p = this.hooks.player;
     let result = TRANSACTION_RESULT.NONE;
     switch (type) {
-      case TRANSACTION_TYPE.Depositing_gold: result = this._garnished(() => depositGold(a, r, amount, p)); break;
-      case TRANSACTION_TYPE.Withdrawing_gold: result = withdrawGold(a, r, amount, p); break;
-      case TRANSACTION_TYPE.Withdrawing_Letter: result = withdrawLetter(a, r, amount, p); break;
-      case TRANSACTION_TYPE.Repaying_loan: result = repayLoan(a, r, amount, p).result; break;
+      case TRANSACTION_TYPE.Depositing_gold:
+        result = this._garnished(() => depositGold(a, r, amount, p));
+        break;
+      case TRANSACTION_TYPE.Withdrawing_gold:
+        result = withdrawGold(a, r, amount, p);
+        break;
+      case TRANSACTION_TYPE.Withdrawing_Letter:
+        result = withdrawLetter(a, r, amount, p);
+        break;
+      case TRANSACTION_TYPE.Repaying_loan:
+        result = repayLoan(a, r, amount, p).result;
+        break;
       case TRANSACTION_TYPE.Borrowing_loan:
         result = borrowLoan(a, r, amount, { level: this.hooks.level?.() ?? 1, nowMinutes: this.hooks.now?.() ?? 0 });
         break;
-      default: return;
+      default:
+        return;
     }
     this._popup(result, amount);
   }
@@ -295,15 +360,26 @@ export class BankWindow {
   _button(name) {
     if (!this.enabled(name)) return;
     audio.playOneShot(SOUND.ButtonClick, 1);
-    if (name === 'sellMarks') { this.transactionType = MARKS_ENTRY; this.value = ''; return; }   // MARKS1
-    if (OPENS[name]) { this._openInput(OPENS[name]); return; }
-    if (name === 'depositLetters') { this._popup(TRANSACTION_RESULT.DEPOSIT_LOC); return; }
+    if (name === 'sellMarks') {
+      this.transactionType = MARKS_ENTRY;
+      this.value = '';
+      return;
+    } // MARKS1
+    if (OPENS[name]) {
+      this._openInput(OPENS[name]);
+      return;
+    }
+    if (name === 'depositLetters') {
+      this._popup(TRANSACTION_RESULT.DEPOSIT_LOC);
+      return;
+    }
     if (name === 'loanBorrow') {
       const d = borrowDecision(this.accounts, this.region);
       // DFU closes any open input on BOTH refusals (:403, :408)
       if (d.kind === 'refuse') {
         this._openInput(TRANSACTION_TYPE.None);
-        if (d.empireRegion != null) this._lines(empireRefusalLines(d, (i) => REGION_NAMES[i] ?? ''));   // REALM P0.3: another branch's
+        if (d.empireRegion != null)
+          this._lines(empireRefusalLines(d, (i) => REGION_NAMES[i] ?? '')); // REALM P0.3: another branch's
         else this._popup(d.result);
         return;
       }
@@ -315,14 +391,24 @@ export class BankWindow {
       // home - and this list is Daggerfall's own house, which the account service never hears of, so a house bought
       // here online could be anybody's online home tomorrow. The host answers the lines; offline it answers none.
       const online = this.hooks.onlineHomeLines?.() ?? null;
-      if (online) { this.box = { rows: online.map((text) => ({ text, center: true })), buttons: null, amount: 0, onYes: null }; return; }
-      const d = buyHouseDecision({ housesFull: !!this.hooks.housesFull?.(), housesForSale: this.hooks.housesForSale?.() ?? 0 });
+      if (online) {
+        this.box = { rows: online.map((text) => ({ text, center: true })), buttons: null, amount: 0, onYes: null };
+        return;
+      }
+      const d = buyHouseDecision({
+        housesFull: !!this.hooks.housesFull?.(),
+        housesForSale: this.hooks.housesForSale?.() ?? 0,
+      });
       // H2: 'pick' reaches the purchase window at last. The refusals
       // are still the law's - the region's three owned (HOUSES-3, said
       // in the bank's words counted to three), nothing for sale - and
       // a host with no purchase window falls back to DFU's own answer
       // for a missing directory (:433-434).
-      if (d.kind === 'refuse') { if (d.lines) this._lines(d.lines); else this._popup(d.result); return; }
+      if (d.kind === 'refuse') {
+        if (d.lines) this._lines(d.lines);
+        else this._popup(d.result);
+        return;
+      }
       if (!this.hooks.openPurchase?.()) this._popup(TRANSACTION_RESULT.NO_HOUSES_FOR_SALE);
       return;
     }
@@ -333,7 +419,10 @@ export class BankWindow {
       // own - unlike BUY HOUSE, which answers NO_HOUSES_FOR_SALE for
       // a missing directory (:433-434), the ships list is a fixed pair
       // that cannot be empty, so DFU pushes unconditionally.
-      if (d.kind === 'refuse') { this._popup(d.result); return; }
+      if (d.kind === 'refuse') {
+        this._popup(d.result);
+        return;
+      }
       this.hooks.openShipPurchase?.();
       return;
     }
@@ -354,8 +443,11 @@ export class BankWindow {
       return;
     }
     if (name === 'sellShip') {
-      const crossed = this.hooks.crossedDeed?.('ship');   // RESTORE: nor a ship
-      if (crossed) { this._lines(crossed); return; }
+      const crossed = this.hooks.crossedDeed?.('ship'); // RESTORE: nor a ship
+      if (crossed) {
+        this._lines(crossed);
+        return;
+      }
       const ship = this.hooks.ownedShip?.() ?? -1;
       const d = sellDecision('ship', { owns: ship >= 0, price: shipSellPrice(ship) });
       if (d.kind === 'offer') this._popup(d.result, d.price);
@@ -379,7 +471,8 @@ export class BankWindow {
       if (offers[i].crossed) continue;
       const d = sellDecision('house', { owns: true, price: offers[i].price ?? 0 });
       this._popup(d.result, d.price);
-      if (offers.length > 1) this.box.rows = [...this.box.rows, { text: houseOfferText(i + 1, offers.length), center: true }];
+      if (offers.length > 1)
+        this.box.rows = [...this.box.rows, { text: houseOfferText(i + 1, offers.length), center: true }];
       this.box.onYes = () => this.hooks.sellHouse?.(i);
       this.box.onNo = () => this._offerHouse(offers, i + 1);
       return;
@@ -389,11 +482,11 @@ export class BankWindow {
   }
 
   _dismissBox(button = null) {
-    if (this.box?.waiting) return;   // MARKS1: the counting box stays until the service answers
+    if (this.box?.waiting) return; // MARKS1: the counting box stays until the service answers
     const b = this.box;
     this.box = null;
     if (b?.buttons === 'YesNo' && button === MB_BUTTONS.Yes) b.onYes?.();
-    else if (b?.buttons === 'YesNo' && button === MB_BUTTONS.No) b.onNo?.();   // HOUSES-3: the town's next house (Escape closes)
+    else if (b?.buttons === 'YesNo' && button === MB_BUTTONS.No) b.onNo?.(); // HOUSES-3: the town's next house (Escape closes)
   }
 
   input(code, e = null) {
@@ -401,13 +494,16 @@ export class BankWindow {
       if (this.box.buttons === 'YesNo') {
         if (code === 'KeyY') this._dismissBox(MB_BUTTONS.Yes);
         else if (code === 'KeyN') this._dismissBox(MB_BUTTONS.No);
-        else if (code === 'Escape') this._dismissBox();   // HOUSES-3: a close, never the No that offers the next house
+        else if (code === 'Escape') this._dismissBox(); // HOUSES-3: a close, never the No that offers the next house
       } else this._dismissBox();
       return;
     }
     // Update (:212-223): Return commits an OPEN transaction and does
     // nothing otherwise - it is not a close.
-    if (code === 'Enter') { if (this.transactionType !== TRANSACTION_TYPE.None) this._commit(); return; }
+    if (code === 'Enter') {
+      if (this.transactionType !== TRANSACTION_TYPE.None) this._commit();
+      return;
+    }
     // AUDIT 63 F45: the BACK BUTTON cancels UNCONDITIONALLY.
     // DaggerfallBankingWindow is a DaggerfallPopupWindow (:24) and
     // never assigns AllowCancel, so DaggerfallPopupWindow.Update
@@ -425,9 +521,15 @@ export class BankWindow {
     // Ledger A note in this file's header - DFU gives exitButton no
     // HotKey), so it keeps the button's gate. No ButtonClick here:
     // CancelWindow plays none; only ExitButton_OnMouseClick does.
-    if (code === 'Escape' || (code === 'KeyE' && this.transactionType === TRANSACTION_TYPE.None)) { this._close(); return; }
+    if (code === 'Escape' || (code === 'KeyE' && this.transactionType === TRANSACTION_TYPE.None)) {
+      this._close();
+      return;
+    }
     if (this.transactionType !== TRANSACTION_TYPE.None) {
-      if (code === 'backspace' || code === 'Backspace') { this.value = this.value.slice(0, -1); return; }
+      if (code === 'backspace' || code === 'Backspace') {
+        this.value = this.value.slice(0, -1);
+        return;
+      }
       const ch = typedChar(code, e);
       if (ch && /^[0-9]$/.test(ch) && this.value.length < AMOUNT_FIELD.maxCharacters) this.value += ch;
       return;
@@ -457,9 +559,17 @@ export class BankWindow {
       return true;
     }
     for (const name of Object.keys(OPENS).concat([
-      'depositLetters', 'loanBorrow', 'buyHouse', 'sellHouse', 'buyShip', 'sellShip',
+      'depositLetters',
+      'loanBorrow',
+      'buyHouse',
+      'sellHouse',
+      'buyShip',
+      'sellShip',
     ])) {
-      if (inRect(BANK_RECTS[name], vx, vy)) { this._button(name); return true; }
+      if (inRect(BANK_RECTS[name], vx, vy)) {
+        this._button(name);
+        return true;
+      }
     }
     return inRect([0, 0, BANK_PANEL_W, BANK_PANEL_H], vx, vy);
   }
@@ -476,23 +586,27 @@ export class BankWindow {
    *  LETTERS button (:377-389, banking.depositAllLetters) hands the
    *  bank exactly the paper the label was denying the player held. */
   labels() {
-    const a = this.accounts, r = this.region;
+    const a = this.accounts,
+      r = this.region;
     const wagon = this.hooks.wagonGold?.() ?? 0;
     // bankPurse supplies both quantities (worldModes.js): `totalGold`
     // is GetGoldAmount, `gold` the coins the deposit/withdraw arms
     // move. A host that wires only the coin reader still draws.
     const purse = this.hooks.player.totalGold?.() ?? this.hooks.player.gold();
     return {
-      account: String(accountTotal(a, goldRegion(a, r))),   // EMPIRE-ACCOUNT: online, the Empire's account at every branch
+      account: String(accountTotal(a, goldRegion(a, r))), // EMPIRE-ACCOUNT: online, the Empire's account at every branch
       inventory: wagon > 0 ? `${purse} (+${wagon})` : String(purse),
       loanDue: String(loanedTotal(a, r)),
-      loanBy: this.hooks.dueDateText?.(loanDueDate(a, r), { short: true }) ?? '',   // AUDIT LIVED1 P: the parchment's room
-      loanByFull: this.hooks.dueDateText?.(loanDueDate(a, r)) ?? '',   // ...and the enhanced face's whole words
+      loanBy: this.hooks.dueDateText?.(loanDueDate(a, r), { short: true }) ?? '', // AUDIT LIVED1 P: the parchment's room
+      loanByFull: this.hooks.dueDateText?.(loanDueDate(a, r)) ?? '', // ...and the enhanced face's whole words
     };
   }
 
   draw(renderer, canvas, font) {
-    if (!_art) { this._close(); return; }
+    if (!_art) {
+      this._close();
+      return;
+    }
     const m = nativeMetrics(canvas);
     // ParentPanel.BackgroundColor = ScreenDimColor (:74), which is
     // Color.clear - the letterbox is NOT painted.
@@ -507,7 +621,10 @@ export class BankWindow {
       const [ix, iy] = BANK_RECTS.input;
       shadowText(renderer, font, `${this.value}_`, m, BANK_PANEL_X + ix + 2, BANK_PANEL_Y + iy + 2);
     }
-    if (noticeFrame(this, this.box && this.box.buttons !== 'YesNo' ? this.box.rows : null)) { this._boxLayout = null; return; }
+    if (noticeFrame(this, this.box && this.box.buttons !== 'YesNo' ? this.box.rows : null)) {
+      this._boxLayout = null;
+      return;
+    }
     if (this.box) {
       const buttons = this.box.buttons === 'YesNo' ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : [];
       this._boxLayout = layoutMessageBox(font, this.box.rows, buttons);

@@ -8,13 +8,18 @@
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 
-const SHOPPY = new Set([0, 2, 5, 6, 7, 8, 9, 12, 13]);   // shopStock.isShop's nine
+const SHOPPY = new Set([0, 2, 5, 6, 7, 8, 9, 12, 13]); // shopStock.isShop's nine
 const server = await createServer({ root: '/home/user/project-dagger', server: { port: 5212, strictPort: true } });
 await server.listen();
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 const errors = [];
-page.on('pageerror', (e) => { errors.push(e.message); console.log('[pageerror]', e.message); });
+page.on('pageerror', (e) => {
+  errors.push(e.message);
+  console.log('[pageerror]', e.message);
+});
 // T2: `class=16` SKIPS THE CHARGEN WIZARD, and without it this probe
 // has been lying since the day it was written. The wizard holds
 // townTalk's overlay slot, and townTalk.keydown runs FIRST in this
@@ -33,12 +38,16 @@ const waitFrames = async (n) => {
   const f = await page.evaluate(() => window.__frame);
   await page.waitForFunction(([f0, k]) => window.__frame > f0 + k, [f, n], { timeout: 60000 });
 };
-const shop = async () => JSON.parse(await page.evaluate(() => window.__shopOverlay()) ?? 'null');
-const gold = () => page.evaluate(() => {
-  const g = (window.__playerEntity.items ?? []).find((i) => i.group === 'Currency');
-  return g ? g.stackCount : 0;
-});
-const fail = (m) => { console.log('FAIL:', m); process.exit(1); };
+const shop = async () => JSON.parse((await page.evaluate(() => window.__shopOverlay())) ?? 'null');
+const gold = () =>
+  page.evaluate(() => {
+    const g = (window.__playerEntity.items ?? []).find((i) => i.group === 'Currency');
+    return g ? g.stackCount : 0;
+  });
+const fail = (m) => {
+  console.log('FAIL:', m);
+  process.exit(1);
+};
 
 const doors = JSON.parse(await page.evaluate(() => JSON.stringify(window.__doors())));
 let entered = null;
@@ -46,12 +55,17 @@ for (let i = 0; i < doors.length && !entered; i++) {
   const b = JSON.parse(await page.evaluate((j) => window.__buildingAt(j), i));
   if (!b || !SHOPPY.has(b.buildingType)) continue;
   const { pos, normal } = doors[i];
-  await page.evaluate(([x, y, z, yaw]) => window.__pose(x, y, z, yaw, -0.05),
-    [pos[0] + normal[0] * 1.5, pos[1] - 1.2, pos[2] + normal[2] * 1.5, Math.atan2(-normal[0], -normal[2])]);
-  if (!await page.evaluate(() => window.__enter())) continue;
+  await page.evaluate(
+    ([x, y, z, yaw]) => window.__pose(x, y, z, yaw, -0.05),
+    [pos[0] + normal[0] * 1.5, pos[1] - 1.2, pos[2] + normal[2] * 1.5, Math.atan2(-normal[0], -normal[2])],
+  );
+  if (!(await page.evaluate(() => window.__enter()))) continue;
   await waitFrames(8);
-  const shelves = JSON.parse(await page.evaluate(() => window.__shelves()) ?? 'null');
-  if (shelves?.shelves?.length > 0) { entered = { b, shelves }; break; }
+  const shelves = JSON.parse((await page.evaluate(() => window.__shelves())) ?? 'null');
+  if (shelves?.shelves?.length > 0) {
+    entered = { b, shelves };
+    break;
+  }
   await page.evaluate(() => window.__exit());
   await waitFrames(4);
 }
@@ -66,18 +80,20 @@ console.log('shop:', JSON.stringify(entered.b), 'shelves:', entered.shelves.shel
 // probe reported "the sale did not pay" while the port was obeying
 // the law exactly. Fund the purse for the BUY and leave headroom, and
 // let the probe walk BOTH arms deliberately further down.
-const setGold = (n) => page.evaluate((amt) => {
-  const e = window.__playerEntity;
-  e.items = e.items ?? [];
-  const g = e.items.find((i) => i.group === 'Currency');
-  if (g) g.stackCount = amt; else e.items.push({ group: 'Currency', name: 'Gold pieces', stackCount: amt });
-}, n);
+const setGold = (n) =>
+  page.evaluate((amt) => {
+    const e = window.__playerEntity;
+    e.items = e.items ?? [];
+    const g = e.items.find((i) => i.group === 'Currency');
+    if (g) g.stackCount = amt;
+    else e.items.push({ group: 'Currency', name: 'Gold pieces', stackCount: amt });
+  }, n);
 /** What the window itself weighs the proceeds against - read off the
  *  LIVE window through __tradeOverlay, not recomputed here, so the
  *  probe cannot disagree with the thing it is testing. Only readable
  *  while a trade window is up, which is exactly when it matters. */
 const weighing = async () => {
-  const t = JSON.parse(await page.evaluate(() => window.__tradeOverlay()) ?? 'null');
+  const t = JSON.parse((await page.evaluate(() => window.__tradeOverlay())) ?? 'null');
   return t?.weight ?? null;
 };
 await setGold(20000);
@@ -99,7 +115,7 @@ await waitFrames(2);
 s = await shop();
 console.log('after one click:', JSON.stringify({ basket: s.basket, cost: s.cost, canCommit: s.canCommit }));
 if (s.basket !== 1) fail('the click did not stage into the basket');
-if (await gold() !== gold0) fail('THE CLICK TRANSACTED - staging must not move gold');
+if ((await gold()) !== gold0) fail('THE CLICK TRANSACTED - staging must not move gold');
 if (!s.cost || !s.canCommit) fail('the cost strip did not pick the basket up');
 const staged = s.cost;
 
@@ -108,13 +124,20 @@ await waitFrames(2);
 s = await shop();
 console.log('offer box:', JSON.stringify(s.box));
 if (s.box?.buttons !== 'YesNo') fail('the mode action did not raise the Yes/No offer');
-if (await gold() !== gold0) fail('gold moved before the confirm');
+if ((await gold()) !== gold0) fail('gold moved before the confirm');
 
 await page.keyboard.press('KeyY');
 await waitFrames(4);
 s = await shop();
 const gold1 = await gold();
-console.log('after YES:', JSON.stringify({ basket: s.basket, cost: s.cost, lastPrice: s.lastPrice }), 'gold', gold0, '->', gold1);
+console.log(
+  'after YES:',
+  JSON.stringify({ basket: s.basket, cost: s.cost, lastPrice: s.lastPrice }),
+  'gold',
+  gold0,
+  '->',
+  gold1,
+);
 if (gold1 >= gold0) fail('the commit did not charge');
 if (s.basket !== 0) fail('the basket was not spent');
 if (s.lastPrice == null) fail('the concluded price was not recorded');
@@ -141,7 +164,7 @@ await waitFrames(2);
 s = await shop();
 console.log('after staging:', JSON.stringify({ staged: s.staged, remote: s.remote, cost: s.cost }));
 if (s.staged !== 1 || s.remote !== 1) fail('the pack item did not stage to the right-hand list');
-if (await gold() !== gold2) fail('THE CLICK SOLD - staging must not move gold');
+if ((await gold()) !== gold2) fail('THE CLICK SOLD - staging must not move gold');
 
 // The proceeds are WEIGHED before they are paid (:1039). The purse
 // this probe carries has room, so this sale must come in COINS - and
@@ -187,7 +210,10 @@ if (!w2 || w2.carriedWeightKg <= w2.maxEncumbranceKg) {
   fail(`the LETTER arm is unreachable - the purse did not overload the player: ${JSON.stringify(w2)}`);
 }
 const gold4 = await gold();
-const letters0 = await page.evaluate(() => (window.__playerEntity.items ?? []).filter((i) => i.templateIndex === 275).length   /* LETTER_OF_CREDIT_TEMPLATE */);
+const letters0 = await page.evaluate(
+  () =>
+    (window.__playerEntity.items ?? []).filter((i) => i.templateIndex === 275).length /* LETTER_OF_CREDIT_TEMPLATE */,
+);
 await page.evaluate(() => window.__tradeSlot('local', 0));
 await waitFrames(2);
 await page.evaluate(() => window.__tradeClick('modeAction'));
@@ -198,8 +224,14 @@ await page.keyboard.press('KeyY');
 await waitFrames(4);
 s = await shop();
 const gold5 = await gold();
-const letters1 = await page.evaluate(() => (window.__playerEntity.items ?? []).filter((i) => i.templateIndex === 275).length   /* LETTER_OF_CREDIT_TEMPLATE */);
-console.log('after YES:', JSON.stringify({ gold: `${gold4} -> ${gold5}`, letters: `${letters0} -> ${letters1}`, box: s.box }));
+const letters1 = await page.evaluate(
+  () =>
+    (window.__playerEntity.items ?? []).filter((i) => i.templateIndex === 275).length /* LETTER_OF_CREDIT_TEMPLATE */,
+);
+console.log(
+  'after YES:',
+  JSON.stringify({ gold: `${gold4} -> ${gold5}`, letters: `${letters0} -> ${letters1}`, box: s.box }),
+);
 if (gold5 !== gold4) fail('an overloaded seller was paid in COINS - the weighing did not gate the payment');
 if (letters1 !== letters0 + 1) fail('no letter of credit was minted');
 // T2's own finding: the port minted the letter in SILENCE. DFU says
@@ -233,7 +265,12 @@ const beforeClear = { remote: s.remote, basket: s.basket };
 await page.evaluate(() => window.__tradeClick('clear'));
 await waitFrames(2);
 s = await shop();
-console.log('cleared:', JSON.stringify(beforeClear), '->', JSON.stringify({ remote: s.remote, basket: s.basket, cost: s.cost }));
+console.log(
+  'cleared:',
+  JSON.stringify(beforeClear),
+  '->',
+  JSON.stringify({ remote: s.remote, basket: s.basket, cost: s.cost }),
+);
 if (s.basket !== 0) fail('Clear did not empty the basket');
 if (s.remote !== beforeClear.remote + 1) fail('Clear did not put the goods back on the shelf');
 if (s.cost !== 0) fail('the strip did not go back to zero');

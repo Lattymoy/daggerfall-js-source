@@ -29,8 +29,8 @@
   {
     "name": "GL-a-flint",
     "file": "src/systems/thunderlock.js",
-    "old": "Its lock holds no flint but a tonal coil:",
-    "new": "Its lock holds a flint:",
+    "old": "    'A Rourken long gun. Its lock holds no flint but a tonal coil: the trigger frees the striker, the coil sings one deep note, and the note wakes the aetherium in a Dwemer Pellet and throws it out as a ball of bound lightning. The thunder you hear is the note.',",
+    "new": "    'A Rourken long gun. Its lock holds a flint: the trigger frees the striker, the coil sings one deep note, and the note wakes the aetherium in a Dwemer Pellet and throws it out as a ball of bound lightning. The thunder you hear is the note.',",
     "tests": [
       "test/systems/gunlore.test.js"
     ]

@@ -58,15 +58,30 @@
 // the host's one unwind line (P0's `frameAlive` guard) stays the plaque's.
 // ═══════════════════════════════════════════════════════════════════
 import {
-  TV_RISE_S, TV_FALL_S, TV_ZOOM_STEP, ceilingFor, initialCamera, stepCamera, zoomTarget, orbitBy, turnCamera, blendView,
-  anglesOf, rightOf, leanedUp, turnHeading, forwardOf, tvOwnGrow, keysHeading,
+  TV_RISE_S,
+  TV_FALL_S,
+  TV_ZOOM_STEP,
+  ceilingFor,
+  initialCamera,
+  stepCamera,
+  zoomTarget,
+  orbitBy,
+  turnCamera,
+  blendView,
+  anglesOf,
+  rightOf,
+  leanedUp,
+  turnHeading,
+  forwardOf,
+  tvOwnGrow,
+  keysHeading,
 } from '../player/travelCamera.js';
-import { travelRateOf } from '../systems/timeScale.js';   // RATE-LAW: the keys' travel runs at its ground's rate
-import { planning } from '../systems/travel/planSlices.js';   // PLAN-SLICES: the readout says a journey's plan is being made
-import { t } from '../systems/textManager.js';   // PLAN-SLICES: its words in the player's language
+import { travelRateOf } from '../systems/timeScale.js'; // RATE-LAW: the keys' travel runs at its ground's rate
+import { planning } from '../systems/travel/planSlices.js'; // PLAN-SLICES: the readout says a journey's plan is being made
+import { t } from '../systems/textManager.js'; // PLAN-SLICES: its words in the player's language
 /** PLAN-SLICES: the readout's line while a journey's plan is being made (systems/travel/planSlices.js planning). */
 const planningLine = () => t('travelView.planning', 'Planning the way...');
-import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { noteFirstUse } from '../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 /** A press that moves further than this (px) before it lifts is a drag (the orbit), not a click (a pick). */
 export const TV_CLICK_SLOP = 6;
@@ -74,7 +89,8 @@ export const TV_CLICK_SLOP = 6;
 export const TV_WORLD_ACTIONS = Object.freeze(['ActivateCenterObject', 'SwingWeapon']);
 /** AUDIT DEEP2 A4: a wheel event's pixels a zoom notch (a mouse's click is about 100), and the most notches one event
  *  may carry. */
-export const TV_WHEEL_PX = 100, TV_WHEEL_MAX = 3;
+export const TV_WHEEL_PX = 100,
+  TV_WHEEL_MAX = 3;
 /** AUDIT DEEP2 A4: A WHEEL EVENT BY ITS SIZE - ui/heldMap.js wheelPixels' law (lines 16 px, pages the screen), as zoom
  *  notches: a trackpad's dozens of small deltas were a full notch each, and crossed the whole band in a flick. */
 export function wheelNotches(e, pageHeight = 800) {
@@ -106,12 +122,12 @@ export const TRAVEL_VIEW_TEXT = Object.freeze({
   water: 'You cannot walk out onto the water.',
   far: 'That lies beyond what you can see from here.',
   noWay: 'There is no way there by land.',
-  mountains: 'The mountains cannot be crossed on foot.',   // OW-MOUNTAINS: a spot among the peaks
-  placesOnly: 'Travel Options travels only to places. Click a town.',   // AUDIT DEEP T2-8: coordinate targeting off
+  mountains: 'The mountains cannot be crossed on foot.', // OW-MOUNTAINS: a spot among the peaks
+  placesOnly: 'Travel Options travels only to places. Click a town.', // AUDIT DEEP T2-8: coordinate targeting off
   spot: 'The marked spot',
-  theSpot: 'the marked spot',   // AUDIT OW5 P5: inside a sentence ("L leads the party to the marked spot.")
+  theSpot: 'the marked spot', // AUDIT OW5 P5: inside a sentence ("L leads the party to the marked spot.")
   partyHalted: 'The party has stopped.',
-  attackAsk: (name) => [`Attack ${name || 'them'}?`, 'You will travel straight to them.'],   // OW-ATTACK: the box on an enemy's double-click   // AUDIT OW5 P5: a halt said - the panel only closed, and nobody knew why
+  attackAsk: (name) => [`Attack ${name || 'them'}?`, 'You will travel straight to them.'], // OW-ATTACK: the box on an enemy's double-click   // AUDIT OW5 P5: a halt said - the panel only closed, and nobody knew why
   byRoad: (name) => `To ${name}, by the road`,
   acrossCountry: (name) => `To ${name}, across country`,
   toSpot: 'To the marked spot',
@@ -119,19 +135,20 @@ export const TRAVEL_VIEW_TEXT = Object.freeze({
   bySea: (name) => `To ${name}, by sea`,
   toSpotBySea: 'To the marked spot, by sea',
   needBoat: 'There is no way there by land. You need a boat to cross the water.',
-  passenger: 'You are aboard another\'s boat. Its helmsman sets the course.',
-  rider: 'You ride in another\'s wagon. Its driver sets the course.',   // WAGONS2: seated in the back of another's wagon (scenes/wagon/wagonRiders.js)
-  climbing: 'You cannot set out from a wall. Climb down first.',   // AUDIT FB1007b C2
+  passenger: "You are aboard another's boat. Its helmsman sets the course.",
+  rider: "You ride in another's wagon. Its driver sets the course.", // WAGONS2: seated in the back of another's wagon (scenes/wagon/wagonRiders.js)
+  climbing: 'You cannot set out from a wall. Climb down first.', // AUDIT FB1007b C2
   noLaunch: 'There is no water here for your boat to float in.',
   noWayAtSea: 'Your boat can make no way toward its mark.',
   noShore: 'There is no safe landing here. Your boat stays in the water.',
   leftMoored: 'Your boat is left moored where it landed.',
   noBoat: 'Your boat is not with you to cross the water.',
   aground: 'Your boat has run aground.',
-  raidersAlongside: 'Pirates come alongside!',   // OWS3
-  enemiesSlow: 'Enemies are near. You slow your pace.',   // OW6: the journey held for an enemy near (systems/travel/travelThreat.js), said once as it begins
+  raidersAlongside: 'Pirates come alongside!', // OWS3
+  enemiesSlow: 'Enemies are near. You slow your pace.', // OW6: the journey held for an enemy near (systems/travel/travelThreat.js), said once as it begins
   // TV-WASD: the bar's line while the movement keys travel - the speed, and the governor's hold beside it (the land's; OW6: or an enemy's)
-  travelling: (rate, held = null) => (held != null && held < rate ? `Traveling at ×${held} of ×${rate}` : `Traveling at ×${rate}`),   // the travel strip's own sign
+  travelling: (rate, held = null) =>
+    held != null && held < rate ? `Traveling at ×${held} of ×${rate}` : `Traveling at ×${rate}`, // the travel strip's own sign
   inPlace: (place, region) => (region ? `${place}, ${region}` : place),
   nearPlace: (place, region) => (region ? `Near ${place}, ${region}` : `Near ${place}`),
   wilderness: (region) => (region ? `The wilds of ${region}` : 'The wilds'),
@@ -169,7 +186,15 @@ export function travelTripLine({ name = '', share = 0, spot = false, sea = false
  * The body walks on its own feet - swimming, at a helm or aboard a boat, the keys are the sea's. The rate, or 0 while
  * the keys walk at walking pace (`travels` false - Travel Options off: no fast travel by the keys).
  */
-export function travelWalkRate({ viewUp = false, journey = false, moving = false, onFoot = false, paused = false, travels = true, onRoad = false } = {}) {
+export function travelWalkRate({
+  viewUp = false,
+  journey = false,
+  moving = false,
+  onFoot = false,
+  paused = false,
+  travels = true,
+  onRoad = false,
+} = {}) {
   if (!viewUp || journey || !moving || !onFoot || paused || !travels) return 0;
   return travelRateOf(onRoad);
 }
@@ -238,7 +263,8 @@ export const ROUTE_DOT_SIZES = Object.freeze([1, 0.85, 0.72, 0.6, 0.5, 0.42]);
 /** The size class of a dot whose ground stands `r` times the feet's scale: the nearest of ROUTE_DOT_SIZES. */
 export function routeDotClass(r) {
   let best = 0;
-  for (let i = 1; i < ROUTE_DOT_SIZES.length; i++) if (Math.abs(ROUTE_DOT_SIZES[i] - r) < Math.abs(ROUTE_DOT_SIZES[best] - r)) best = i;
+  for (let i = 1; i < ROUTE_DOT_SIZES.length; i++)
+    if (Math.abs(ROUTE_DOT_SIZES[i] - r) < Math.abs(ROUTE_DOT_SIZES[best] - r)) best = i;
   return best;
 }
 /** OW-DOTS-GROUND: the finest spacing on the ground (m) - every spacing is it doubled, so a coarser set is a subset. */
@@ -269,51 +295,74 @@ const dotStep = (perM, px) => ROUTE_DOT_M * 2 ** Math.max(0, Math.ceil(Math.log2
  * @param {(p:number[]) => ({x:number, y:number, front:boolean}|null)} proj
  * @returns {{x:number, y:number, c:number}[]}
  */
-export function routeGroundDots(points, proj, { px = ROUTE_DOT_PX, min = ROUTE_DOT_MIN_PX, max = ROUTE_DOTS_MAX, w = Infinity, h = Infinity, m = 16, keep = null } = {}) {
+export function routeGroundDots(
+  points,
+  proj,
+  {
+    px = ROUTE_DOT_PX,
+    min = ROUTE_DOT_MIN_PX,
+    max = ROUTE_DOTS_MAX,
+    w = Infinity,
+    h = Infinity,
+    m = 16,
+    keep = null,
+  } = {},
+) {
   const out = [];
   if (!points || points.length < 2 || typeof proj !== 'function') return out;
   const off = (q) => !q?.front || !Number.isFinite(q.x) || !Number.isFinite(q.y);
   const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
   // THE LINE'S ONE SPACING: the ground's scale at the feet - a metre (or the first piece, if shorter) along the way
-  let base = 0, feetPerM = 0;
+  let base = 0,
+    feetPerM = 0;
   {
     const f = points[0];
     let n = 1;
     while (n < points.length - 1 && Math.hypot(points[n][0] - f[0], points[n][2] - f[2]) < 1e-6) n++;
     const L = Math.hypot(points[n][0] - f[0], points[n][2] - f[2]);
     const t = L > 0 ? Math.min(1, 1 / L) : 0;
-    const q0 = proj(f), q1 = t > 0 ? proj(lerp(f, points[n], t)) : null;
+    const q0 = proj(f),
+      q1 = t > 0 ? proj(lerp(f, points[n], t)) : null;
     const perM = !off(q0) && !off(q1) ? Math.hypot(q1.x - q0.x, q1.y - q0.y) / (L * t) : 0;
     feetPerM = perM;
     if (perM > 0) {
       const kept = keep?.k > 0 ? keep.k * perM : 0;
       base = kept >= px * ROUTE_DOT_KEEP[0] && kept <= px * ROUTE_DOT_KEEP[1] ? keep.k : dotStep(perM, px);
       if (keep) keep.k = base;
-    } else if (keep?.k > 0) base = keep.k;   // the feet off the picture: the spacing they last had
+    } else if (keep?.k > 0) base = keep.k; // the feet off the picture: the spacing they last had
   }
   // a: the far end (dA from the journey's end), b: the near end (dB < dA)
   const piece = (a, b, dA, dB, qa, qb, depth) => {
     if (out.length >= max || !(dA > dB)) return;
     if (off(qa) && off(qb)) return;
     if (!off(qa) && !off(qb)) {
-      if ((qa.x < -m && qb.x < -m) || (qa.x > w + m && qb.x > w + m) || (qa.y < -m && qb.y < -m) || (qa.y > h + m && qb.y > h + m)) return;
+      if (
+        (qa.x < -m && qb.x < -m) ||
+        (qa.x > w + m && qb.x > w + m) ||
+        (qa.y < -m && qb.y < -m) ||
+        (qa.y > h + m && qb.y > h + m)
+      )
+        return;
     }
     const len = off(qa) || off(qb) ? Infinity : Math.hypot(qb.x - qa.x, qb.y - qa.y);
-    if (len > 80 && depth < 16) {   // short on the screen: its scale near even along it (OW-DOTS-EVEN)
-      const mid = lerp(a, b, 0.5), dm = (dA + dB) / 2, qm = proj(mid);
+    if (len > 80 && depth < 16) {
+      // short on the screen: its scale near even along it (OW-DOTS-EVEN)
+      const mid = lerp(a, b, 0.5),
+        dm = (dA + dB) / 2,
+        qm = proj(mid);
       piece(a, mid, dA, dm, qa, qm, depth + 1);
       piece(mid, b, dm, dB, qm, qb, depth + 1);
       return;
     }
-    if (!Number.isFinite(len)) return;   // still across the eye's plane at the depth's end: no dots there
+    if (!Number.isFinite(len)) return; // still across the eye's plane at the depth's end: no dots there
     const perM = len / (dA - dB);
     if (!(perM > 0)) return;
-    const k = Math.max(base || dotStep(perM, px), dotStep(perM, min));   // the line's spacing; thinned only where it would crowd
+    const k = Math.max(base || dotStep(perM, px), dotStep(perM, min)); // the line's spacing; thinned only where it would crowd
     // each dot's size by the ground's scale where IT lies: the steps to its neighbours on the screen over the step on the
     // ground (the piece's own scale for a lone dot) - a piece's mean would size its near and far dots alike
     const qs = [];
     for (let t = Math.floor(dA / k) * k; t > dB && qs.length + out.length < max; t -= k) {
-      if (t > dA || t <= 0) continue;   // the end's own dot is the cross
+      if (t > dA || t <= 0) continue; // the end's own dot is the cross
       qs.push(proj(lerp(b, a, (t - dB) / (dA - dB))));
     }
     for (let i = 0; i < qs.length; i++) {
@@ -327,52 +376,74 @@ export function routeGroundDots(points, proj, { px = ROUTE_DOT_PX, min = ROUTE_D
   let d = 0;
   let qb = proj(points[points.length - 1]);
   for (let i = points.length - 1; i > 0 && out.length < max; i--) {
-    const b = points[i], a = points[i - 1];
+    const b = points[i],
+      a = points[i - 1];
     const seg = Math.hypot(b[0] - a[0], b[2] - a[2]);
     const qa = proj(a);
     if (seg > 0) piece(a, b, d + seg, d, qa, qb, 0);
-    d += seg; qb = qa;
+    d += seg;
+    qb = qa;
   }
   return out;
 }
 
 export function createTravelView(deps) {
   const win = deps.win ?? globalThis;
-  let state = 'off';           // 'off' | 'rising' | 'up' | 'falling'
-  let t = 0;                   // the blend: 0 the head, 1 the sky
-  let camera = null;           // player/travelCamera.js's state
-  let shown = null;            // the frame's { eye, fwd } once blended
-  let askedBody = false;       // AUDIT TV B2: the body was ASKED to hold - released on the way down whatever it answered
+  let state = 'off'; // 'off' | 'rising' | 'up' | 'falling'
+  let t = 0; // the blend: 0 the head, 1 the sky
+  let camera = null; // player/travelCamera.js's state
+  let shown = null; // the frame's { eye, fwd } once blended
+  let askedBody = false; // AUDIT TV B2: the body was ASKED to hold - released on the way down whatever it answered
   let listening = false;
-  let press = null;            // { id, x, y, moved, button }
-  const pointers = new Map();  // pointerId -> {x, y} (pinch)
-  let pinch = null;            // { d } the last two-finger distance
-  const lookHeld = new Set();  // the TV_LOOK_ACTIONS held
+  let press = null; // { id, x, y, moved, button }
+  const pointers = new Map(); // pointerId -> {x, y} (pinch)
+  let pinch = null; // { d } the last two-finger distance
+  const lookHeld = new Set(); // the TV_LOOK_ACTIONS held
   const keysTaken = new Set(); // AUDIT TV B4: the key codes whose press the view took - only their release is the view's
   const buttonsTaken = new Set(); // ...and the mouse buttons
   let lastHeading = null;
-  let hintKeys = null;         // AUDIT DEEP T1-12: the bound keys the hint names (the Controls page is a window: never changes under the view)
-  let beat = null;             // the heartbeat's timer
-  let missed = false;          // AUDIT DEEP X-9: one beat already went by with no frame
+  let hintKeys = null; // AUDIT DEEP T1-12: the bound keys the hint names (the Controls page is a window: never changes under the view)
+  let beat = null; // the heartbeat's timer
+  let missed = false; // AUDIT DEEP X-9: one beat already went by with no frame
   const schedule = deps.schedule ?? ((fn, ms) => (typeof setTimeout === 'function' ? setTimeout(fn, ms) : null));
-  const cancel = deps.cancel ?? ((h) => { if (h != null && typeof clearTimeout === 'function') clearTimeout(h); });
+  const cancel =
+    deps.cancel ??
+    ((h) => {
+      if (h != null && typeof clearTimeout === 'function') clearTimeout(h);
+    });
   /** The host's loop is gone (a later boot, an unwind): down quietly, and the event goes on to whoever owns it now. */
-  const gone = () => { if (state === 'off' || !deps.alive || deps.alive()) return false; finish(true); return true; };
+  const gone = () => {
+    if (state === 'off' || !deps.alive || deps.alive()) return false;
+    finish(true);
+    return true;
+  };
 
   const isCanvasEvent = (e) => {
     const c = deps.canvas;
     const tg = e?.target;
     return !!c && (tg === c || (typeof c.contains === 'function' && tg && c.contains(tg)));
   };
-  const swallow = (e) => { e.preventDefault?.(); e.stopImmediatePropagation?.(); e.stopPropagation?.(); };
+  const swallow = (e) => {
+    e.preventDefault?.();
+    e.stopImmediatePropagation?.();
+    e.stopPropagation?.();
+  };
   /** AUDIT TV B7: a key typed into a box (the chat, a name) is the box's - never the view's turn or its way down. */
-  const typing = (e) => { const tg = e?.target; return !!tg && (tg.tagName === 'INPUT' || tg.tagName === 'TEXTAREA' || !!tg.isContentEditable); };
+  const typing = (e) => {
+    const tg = e?.target;
+    return !!tg && (tg.tagName === 'INPUT' || tg.tagName === 'TEXTAREA' || !!tg.isContentEditable);
+  };
 
   function onPointerDown(e) {
     if (state === 'off' || gone() || !isCanvasEvent(e)) return;
     swallow(e);
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) }; press = null; return; }
+    if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) };
+      press = null;
+      return;
+    }
     press = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false, button: e.button ?? 0 };
   }
   function onPointerMove(e) {
@@ -383,15 +454,20 @@ export function createTravelView(deps) {
     if (pinch && pointers.size === 2) {
       const [a, b] = [...pointers.values()];
       const d = Math.hypot(a.x - b.x, a.y - b.y);
-      if (pinch.d > 0 && d > 0) zoom(Math.log(d / pinch.d) / Math.log(TV_ZOOM_STEP));   // fingers apart: in
+      if (pinch.d > 0 && d > 0) zoom(Math.log(d / pinch.d) / Math.log(TV_ZOOM_STEP)); // fingers apart: in
       pinch.d = d;
       return;
     }
     if (!press || press.id !== e.pointerId || !camera) return;
     // AUDIT DEEP2 A7: a MOUSE with no button down is not dragging - its release went elsewhere (a focus lost mid-drag),
     // and every hover after it orbited the view
-    if (e.pointerType === 'mouse' && e.buttons === 0) { press = null; pointers.delete(e.pointerId); return; }
-    const dx = e.clientX - press.x, dy = e.clientY - press.y;
+    if (e.pointerType === 'mouse' && e.buttons === 0) {
+      press = null;
+      pointers.delete(e.pointerId);
+      return;
+    }
+    const dx = e.clientX - press.x,
+      dy = e.clientY - press.y;
     if (!press.moved && Math.hypot(dx, dy) > TV_CLICK_SLOP) press.moved = true;
     if (press.moved) camera = orbitBy(camera, e.clientX - prev.x, e.clientY - prev.y);
   }
@@ -399,7 +475,10 @@ export function createTravelView(deps) {
     if (!pointers.has(e.pointerId)) return;
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinch = null;
-    if (state === 'off') { press = null; return; }
+    if (state === 'off') {
+      press = null;
+      return;
+    }
     swallow(e);
     const p = press;
     press = null;
@@ -408,7 +487,8 @@ export function createTravelView(deps) {
       // PERF-TV: the marks are drawn, so a click on a plate is found by where it landed - a place's (or TV5's far
       // place's) journey, never the ground's pick
       const key = deps.hud?.pickAt?.(e.clientX, e.clientY) ?? null;
-      if (key) deps.onMark?.(key, e); else deps.onPick?.(e.clientX, e.clientY, e);   // OW-ATTACK: the press with the mark (an enemy's single click is the ground's)
+      if (key) deps.onMark?.(key, e);
+      else deps.onPick?.(e.clientX, e.clientY, e); // OW-ATTACK: the press with the mark (an enemy's single click is the ground's)
     }
     // WAYPOINTS (2026-10-06, the player: "with right mouseclick context menu"): a RIGHT press that never moved is the
     // waypoint menu's - on a mark (a flag: its own menu) or on the land (add one there). A right DRAG still orbits.
@@ -421,12 +501,15 @@ export function createTravelView(deps) {
       deps.onPing?.(e.clientX, e.clientY);
     }
   }
-  function onMouse(e) {   // the host's window mousedown/mouseup (the swing, Mouse0) - the canvas's are the view's
+  function onMouse(e) {
+    // the host's window mousedown/mouseup (the swing, Mouse0) - the canvas's are the view's
     if (state === 'off' || gone() || !isCanvasEvent(e)) return;
     // AUDIT TV B4: a button held down before the view rose is the host's - its release goes on to the host, or the
     // swing (or Mouse0's hold) sticks down for good
     const b = e.button ?? 0;
-    if (e.type === 'mouseup') { if (!buttonsTaken.delete(b)) return; } else buttonsTaken.add(b);
+    if (e.type === 'mouseup') {
+      if (!buttonsTaken.delete(b)) return;
+    } else buttonsTaken.add(b);
     swallow(e);
   }
   /** AUDIT TV B3: a finger on the canvas is the view's (its pointer events orbit, pinch and pick) - the touch layer
@@ -441,14 +524,22 @@ export function createTravelView(deps) {
     swallow(e);
     zoom(wheelNotches(e, win?.innerHeight));
   }
-  function onContext(e) { if (state !== 'off' && !gone() && isCanvasEvent(e)) swallow(e); }
+  function onContext(e) {
+    if (state !== 'off' && !gone() && isCanvasEvent(e)) swallow(e);
+  }
   function onKey(e, down) {
     if (state === 'off' || gone()) return;
     const acts = deps.actionsOf?.(e) ?? [];
     const code = e.code ?? e.key ?? '';
     // AUDIT TV B7: a key typed into a box is the box's. AUDIT DEEP T1-7: a RELEASE there still stops the view's own turn
     // (a look key held, the chat opened, the key let go in the box: the view orbited on with nothing held)
-    if (typing(e)) { if (!down) { keysTaken.delete(code); for (const a of acts) lookHeld.delete(a); } return; }
+    if (typing(e)) {
+      if (!down) {
+        keysTaken.delete(code);
+        for (const a of acts) lookHeld.delete(a);
+      }
+      return;
+    }
     // AUDIT TV B4: a release is the view's only when the press was - a look key held down before the view rose lets
     // go in the host's own Set, or the traveller turns on after the view is gone
     if (!down && !keysTaken.delete(code)) {
@@ -462,13 +553,27 @@ export function createTravelView(deps) {
     // arrows choose on it; the view took them first and went down under a dial still open
     if (down && deps.overlayUp?.()) return;
     // the pause key is the way down (KB1: the registry's Escape action, wherever the player bound it) - never the pause
-    if (acts.includes('Escape')) { if (down) { keysTaken.add(code); exit('escape'); } swallow(e); return; }
+    if (acts.includes('Escape')) {
+      if (down) {
+        keysTaken.add(code);
+        exit('escape');
+      }
+      swallow(e);
+      return;
+    }
     // AUDIT DEEP2 A2: the world's activation and swing are never pressed from under the view - a pad's A and Y reach the
     // page as those keys (ui/gamepadInput.js), and activated what stood before the traveller's head, or swung
-    if (acts.some((a) => TV_WORLD_ACTIONS.includes(a))) { if (down) keysTaken.add(code); swallow(e); return; }
+    if (acts.some((a) => TV_WORLD_ACTIONS.includes(a))) {
+      if (down) keysTaken.add(code);
+      swallow(e);
+      return;
+    }
     const look = acts.filter((a) => TV_LOOK_ACTIONS.includes(a));
     if (!look.length) return;
-    for (const a of look) { if (down) lookHeld.add(a); else lookHeld.delete(a); }
+    for (const a of look) {
+      if (down) lookHeld.add(a);
+      else lookHeld.delete(a);
+    }
     if (down) keysTaken.add(code);
     swallow(e);
   }
@@ -477,8 +582,11 @@ export function createTravelView(deps) {
   /** AUDIT DEEP2 A7: the window lost its focus - no release will come for what was held (a look key kept the view
    *  spinning, a drag orbited on every hover), so nothing is held. */
   function onBlur() {
-    press = null; pinch = null;
-    pointers.clear(); lookHeld.clear(); keysTaken.clear();
+    press = null;
+    pinch = null;
+    pointers.clear();
+    lookHeld.clear();
+    keysTaken.clear();
   }
 
   function listen(on) {
@@ -492,24 +600,33 @@ export function createTravelView(deps) {
     win[m]('mouseup', onMouse, true);
     win[m]('wheel', onWheel, { capture: true, passive: false });
     win[m]('contextmenu', onContext, true);
-    win[m]('touchstart', onTouchStart, { capture: true, passive: false });   // AUDIT TV B3
+    win[m]('touchstart', onTouchStart, { capture: true, passive: false }); // AUDIT TV B3
     win[m]('keydown', onKeyDown, true);
     win[m]('keyup', onKeyUp, true);
-    win[m]('blur', onBlur, true);   // AUDIT DEEP2 A7
+    win[m]('blur', onBlur, true); // AUDIT DEEP2 A7
     listening = on;
   }
 
   function zoom(notches) {
     if (!camera || !notches) return;
-    camera = { ...camera, heightTarget: zoomTarget(camera.heightTarget, notches, ceilingFor(deps.cloudBase?.() ?? null)) };
+    camera = {
+      ...camera,
+      heightTarget: zoomTarget(camera.heightTarget, notches, ceilingFor(deps.cloudBase?.() ?? null)),
+    };
   }
 
   function enter() {
     if (state === 'up' || state === 'rising') return true;
     const ok = deps.allowed();
-    if (!ok?.ok) { if (ok?.why) deps.say?.(ok.why); return false; }
-    if (deps.danger?.()) { deps.say?.(TRAVEL_VIEW_TEXT.enemies); return false; }
-    noteFirstUse('travel-view');   // TUT1
+    if (!ok?.ok) {
+      if (ok?.why) deps.say?.(ok.why);
+      return false;
+    }
+    if (deps.danger?.()) {
+      deps.say?.(TRAVEL_VIEW_TEXT.enemies);
+      return false;
+    }
+    noteFirstUse('travel-view'); // TUT1
     const from = state;
     if (from === 'off') camera = initialCamera(deps.feet(), deps.yaw());
     state = 'rising';
@@ -518,11 +635,15 @@ export function createTravelView(deps) {
     if (from === 'off') {
       hintKeys = deps.hintKeys?.() ?? null;
       deps.holdBody?.(true);
-      askedBody = !!deps.holdBody;   // AUDIT TV B2: asked is released, even when the body could not be held
+      askedBody = !!deps.holdBody; // AUDIT TV B2: asked is released, even when the body could not be held
       deps.freeCursor?.(true);
     }
     listen(true);
-    deps.hud?.show({ onReturn: () => exit('button'), onMap: () => deps.openMap?.(), onWaypointGo: (id) => deps.onWaypointGo?.(id) });   // OW-BLOCK: the block's Map; WAYPOINTS: a followed row's Go
+    deps.hud?.show({
+      onReturn: () => exit('button'),
+      onMap: () => deps.openMap?.(),
+      onWaypointGo: (id) => deps.onWaypointGo?.(id),
+    }); // OW-BLOCK: the block's Map; WAYPOINTS: a followed row's Go
     rearm();
     return true;
   }
@@ -537,18 +658,28 @@ export function createTravelView(deps) {
     beat = null;
     if (state === 'off') return;
     if (gone()) return;
-    if (win?.document?.hidden) { rearm(); return; }   // a hidden tab: the browser stopped the frames, nothing broke
+    if (win?.document?.hidden) {
+      rearm();
+      return;
+    } // a hidden tab: the browser stopped the frames, nothing broke
     // AUDIT DEEP X-9: ONE silent beat is a long task (a quicksave, a shader's first compile) - its timer runs before the
     // frame it held back does; the view comes down on the SECOND, a loop that really stopped
-    if (!missed) { missed = true; beat = schedule(stalled, TV_HEARTBEAT_MS); return; }
+    if (!missed) {
+      missed = true;
+      beat = schedule(stalled, TV_HEARTBEAT_MS);
+      return;
+    }
     finish();
   }
 
   /** Out: `cut` drops straight to off (a window, a door, a death); otherwise the camera falls back to the head. */
   function exit(why = 'escape', cut = false) {
     if (state === 'off') return false;
-    if (!cut) deps.onLower?.(why);   // OW-ONLY: the host hears a view brought down - a journey stops with it
-    if (cut) { finish(); return true; }
+    if (!cut) deps.onLower?.(why); // OW-ONLY: the host hears a view brought down - a journey stops with it
+    if (cut) {
+      finish();
+      return true;
+    }
     state = 'falling';
     return true;
   }
@@ -560,7 +691,12 @@ export function createTravelView(deps) {
     state = 'off';
     t = 0;
     shown = null;
-    press = null; pinch = null; pointers.clear(); lookHeld.clear(); keysTaken.clear(); buttonsTaken.clear();
+    press = null;
+    pinch = null;
+    pointers.clear();
+    lookHeld.clear();
+    keysTaken.clear();
+    buttonsTaken.clear();
     listen(false);
     deps.hud?.hide();
     if (askedBody) deps.holdBody?.(false);
@@ -573,7 +709,8 @@ export function createTravelView(deps) {
     if (state === 'off' || !camera) return;
     const yawDir = (lookHeld.has('TurnRight') ? 1 : 0) - (lookHeld.has('TurnLeft') ? 1 : 0);
     const tiltDir = (lookHeld.has('LookDown') ? 1 : 0) - (lookHeld.has('LookUp') ? 1 : 0);
-    if (yawDir || tiltDir) camera = turnCamera(camera, yawDir * TV_KEY_ORBIT_RATE * dt, tiltDir * TV_KEY_TILT_RATE * dt);
+    if (yawDir || tiltDir)
+      camera = turnCamera(camera, yawDir * TV_KEY_ORBIT_RATE * dt, tiltDir * TV_KEY_TILT_RATE * dt);
     // OW-FACE (FIELD BUGS 2026-10-01 #10): the body turns to the way the keys point from the view, not to the view's own
     // heading - it walked every key's way with its back to the camera (S toward it, A and D sideways), so the sprite's
     // eight views and the Morrowind body never turned; the host turns the axes onto the body (axesToward)
@@ -592,31 +729,47 @@ export function createTravelView(deps) {
     if (state === 'off') return null;
     rearm();
     const ok = deps.allowed();
-    if (!ok?.ok || deps.windowUp()) { finish(); return null; }
+    if (!ok?.ok || deps.windowUp()) {
+      finish();
+      return null;
+    }
     // the view is for the road, not the fight: a foe near brings the camera down to the traveller's own eyes
     if ((state === 'up' || state === 'rising') && deps.danger?.()) exit('danger');
     const head = headArg ?? deps.headView();
     const ceiling = ceilingFor(deps.cloudBase?.() ?? null);
     const r = stepCamera(camera, { feet: deps.feet(), dt, ceiling, heightAt: deps.heightAt ?? null });
     camera = r.camera;
-    if (state === 'rising') { t = Math.min(1, t + dt / TV_RISE_S); if (t >= 1) state = 'up'; }
-    else if (state === 'falling') { t = Math.max(0, t - dt / TV_FALL_S); if (t <= 0) { finish(); return null; } }
-    else t = 1;
+    if (state === 'rising') {
+      t = Math.min(1, t + dt / TV_RISE_S);
+      if (t >= 1) state = 'up';
+    } else if (state === 'falling') {
+      t = Math.max(0, t - dt / TV_FALL_S);
+      if (t <= 0) {
+        finish();
+        return null;
+      }
+    } else t = 1;
     shown = blendView(head, { eye: r.eye, fwd: r.fwd }, t);
     const ang = anglesOf(shown.fwd);
     const tilt = Math.max(0, -ang.pitch);
     const f = deps.feet();
     return {
-      eye: shown.eye, fwd: shown.fwd, yaw: ang.yaw, pitch: ang.pitch,
-      right: rightOf(ang.yaw), up: leanedUp(ang.yaw, tilt * Math.min(1, t)),
+      eye: shown.eye,
+      fwd: shown.fwd,
+      yaw: ang.yaw,
+      pitch: ang.pitch,
+      right: rightOf(ang.yaw),
+      up: leanedUp(ang.yaw, tilt * Math.min(1, t)),
       focus: [camera.focus[0], camera.focus[1], camera.focus[2]],
-      blend: t, fullyUp: state === 'up', state,
-      grow: tvOwnGrow(Math.hypot(shown.eye[0] - f[0], shown.eye[1] - f[1], shown.eye[2] - f[2])),   // OW-BIG: the traveller's sprite, grown with the eye's distance
+      blend: t,
+      fullyUp: state === 'up',
+      state,
+      grow: tvOwnGrow(Math.hypot(shown.eye[0] - f[0], shown.eye[1] - f[1], shown.eye[2] - f[2])), // OW-BIG: the traveller's sprite, grown with the eye's distance
     };
   }
 
   /** The readout, after the frame's matrices exist (the host's projection). */
-  const dotSpacing = { k: 0 };   // OW-DOTS-EVEN: the route's ground spacing, kept between frames (routeGroundDots `keep`)
+  const dotSpacing = { k: 0 }; // OW-DOTS-EVEN: the route's ground spacing, kept between frames (routeGroundDots `keep`)
   function drawHud() {
     if (state === 'off' || !deps.hud) return;
     const feet = deps.feet();
@@ -630,32 +783,80 @@ export function createTravelView(deps) {
     const marks = [];
     for (const m of deps.marks?.() ?? []) {
       const at = proj(m.at);
-      marks.push({ key: m.key, x: at?.x ?? 0, y: at?.y ?? 0, front: !!at?.front, label: m.label, sub: m.sub, kind: m.kind, pick: !!m.pick, edge: !!m.edge, ...(m.color ? { color: m.color } : {}), badge: m.badge ?? null,
-        ...(m.kin ? { kin: m.kin } : {}), ...(m.lv != null ? { lv: m.lv } : {}), ...(Number.isFinite(m.dist) ? { dist: m.dist } : {}), ...(m.hub ? { hub: true } : {}), ...(m.tip ? { tip: m.tip } : {}),
-        ...(m.wpKind ? { wpKind: m.wpKind } : {}), ...(m.followed ? { followed: true } : {}), ...(m.skull ? { skull: m.skull } : {}) });   // AUDIT NAMES N2-1: and the player's badge - dropped here, every marker was a bare name; AUDIT GATHER-OW: and a group's colour (every diamond was brass); FIELD BUGS 2026-10-04e: OW-KIN's kin, OW-WHO's Renown, OW-NODE-KM's distance, OW-HUBS' wheel and SEAT-TIP's card - each field the readout reads is carried, or it is dropped here; WAYPOINTS: a flag's kind and whether it is followed
+      marks.push({
+        key: m.key,
+        x: at?.x ?? 0,
+        y: at?.y ?? 0,
+        front: !!at?.front,
+        label: m.label,
+        sub: m.sub,
+        kind: m.kind,
+        pick: !!m.pick,
+        edge: !!m.edge,
+        ...(m.color ? { color: m.color } : {}),
+        badge: m.badge ?? null,
+        ...(m.kin ? { kin: m.kin } : {}),
+        ...(m.lv != null ? { lv: m.lv } : {}),
+        ...(Number.isFinite(m.dist) ? { dist: m.dist } : {}),
+        ...(m.hub ? { hub: true } : {}),
+        ...(m.tip ? { tip: m.tip } : {}),
+        ...(m.wpKind ? { wpKind: m.wpKind } : {}),
+        ...(m.followed ? { followed: true } : {}),
+        ...(m.skull ? { skull: m.skull } : {}),
+      }); // AUDIT NAMES N2-1: and the player's badge - dropped here, every marker was a bare name; AUDIT GATHER-OW: and a group's colour (every diamond was brass); FIELD BUGS 2026-10-04e: OW-KIN's kin, OW-WHO's Renown, OW-NODE-KM's distance, OW-HUBS' wheel and SEAT-TIP's card - each field the readout reads is carried, or it is dropped here; WAYPOINTS: a flag's kind and whether it is followed
     }
     deps.hud.update({
-      feet: f, heading: lastHeading, yaw: camera?.yaw ?? 0, where: deps.where?.() ?? '',
-      touch: !!deps.touch, fade: t, marks, keys: hintKeys,
-      route: routeWorld.map(proj), trip: planning() ? planningLine() : deps.trip?.() ?? '', sky: deps.sky?.() ?? '',   // OW-FORECAST: the weather ahead; PLAN-SLICES: the plan being made
-      routeDots: routeGroundDots(routeWorld, proj, { w: deps.canvas?.clientWidth || Infinity, h: deps.canvas?.clientHeight || Infinity, keep: dotSpacing }),   // OW-DOTS-GROUND; OW-DOTS-EVEN: the line's spacing kept frame to frame
-      routeDotSizes: ROUTE_DOT_SIZES,   // OW-DOTS-EVEN: the readout's path pair a size
-      followDist: deps.followDist?.() ?? null,   // WAYPOINTS: the followed list's distances
+      feet: f,
+      heading: lastHeading,
+      yaw: camera?.yaw ?? 0,
+      where: deps.where?.() ?? '',
+      touch: !!deps.touch,
+      fade: t,
+      marks,
+      keys: hintKeys,
+      route: routeWorld.map(proj),
+      trip: planning() ? planningLine() : (deps.trip?.() ?? ''),
+      sky: deps.sky?.() ?? '', // OW-FORECAST: the weather ahead; PLAN-SLICES: the plan being made
+      routeDots: routeGroundDots(routeWorld, proj, {
+        w: deps.canvas?.clientWidth || Infinity,
+        h: deps.canvas?.clientHeight || Infinity,
+        keep: dotSpacing,
+      }), // OW-DOTS-GROUND; OW-DOTS-EVEN: the line's spacing kept frame to frame
+      routeDotSizes: ROUTE_DOT_SIZES, // OW-DOTS-EVEN: the readout's path pair a size
+      followDist: deps.followDist?.() ?? null, // WAYPOINTS: the followed list's distances
     });
   }
 
   return {
-    enter, exit, steer, frame, drawHud,
+    enter,
+    exit,
+    steer,
+    frame,
+    drawHud,
     /** The host's teardown: out at once, listeners and all. */
-    dispose() { if (state !== 'off') finish(); },
-    get active() { return state !== 'off'; },
-    get state() { return state; },
-    get camera() { return camera; },
-    get blend() { return t; },
+    dispose() {
+      if (state !== 'off') finish();
+    },
+    get active() {
+      return state !== 'off';
+    },
+    get state() {
+      return state;
+    },
+    get camera() {
+      return camera;
+    },
+    get blend() {
+      return t;
+    },
     /** TV2's ray and TV3's marks read the frame's own eye. */
-    get eye() { return shown?.eye ?? null; },
+    get eye() {
+      return shown?.eye ?? null;
+    },
     /** PARTY-PING: a key while the view is up looks along this, not the body's. */
-    get fwd() { return shown?.fwd ?? null; },
+    get fwd() {
+      return shown?.fwd ?? null;
+    },
     /** AUDIT DEEP2 D2: THE FLOATING ORIGIN MOVED by `offset` - every scene point the view holds moves with it. Unmoved,
      *  the feet's 819 m re-anchor read as a jump: the focus snapped to them and the eye lurched forward by its eased lag at
      *  every map pixel crossed (37 m at 400 m/s), and the frame's eye (the peers' and the sprite's 8-way view) stood a

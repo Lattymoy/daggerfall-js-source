@@ -156,14 +156,15 @@ test('THE WIRE AUDIT 5: my kill is told by the wire\'s own reach from my feet, w
 
 test('THE WIRE AUDIT 6 and 9: the relay\'s rollback floor is written where a deploy reads it, and the pose\'s kill fields are named as the code names them - `xk`, `xp`, `xh` (mutants: the floor unsaid)', () => {
   const version = rd('src/net/wire.js').split('\n').find((l) => l.startsWith('export const RELAY_VERSION = '));
-  assert.equal(RELAY_VERSION, 'world297');   // PIN MOVED: world297, STOREFRONT (world295 on its branch, renumbered past GUILD-SHOP and FIELD BUGS 2026-10-30b at the merge of main at 82d76daff); PIN MOVED: world295, STOREFRONT (world283, world286, world288, world289, world290, world291, world293 then world294 on its branch, renumbered past FB1029 GROUND, FRONTS, DRAGON, HAND-WRAPS, PVP-LINGER, GILDED-GLOW, DELVE II, PVP-VITALS, WYRM-RIDER and DRAGON-HARDER at the merges of main); PIN MOVED: world288, STOREFRONT (world283 then world286 on its branch, renumbered past FB1029 GROUND and FRONTS at the merge of main at 05cf1838d); PIN MOVED: world286, STOREFRONT (world283 on its branch, renumbered past PVP-SAFE-HIT, AUDIT TAMRIEL-WIDE and CAPE-TOGGLE at the merge)
+  assert.equal(RELAY_VERSION, 'world302');   // PIN MOVED: world299, DRAGON-CELL (world298 on its branch, renumbered past LITANY-STAND's world298 at the merge; an omen told near its cell alone); PIN MOVED: world297, STOREFRONT (world295 on its branch, renumbered past GUILD-SHOP and FIELD BUGS 2026-10-30b at the merge of main at 82d76daff); PIN MOVED: world295, STOREFRONT (world283, world286, world288, world289, world290, world291, world293 then world294 on its branch, renumbered past FB1029 GROUND, FRONTS, DRAGON, HAND-WRAPS, PVP-LINGER, GILDED-GLOW, DELVE II, PVP-VITALS, WYRM-RIDER and DRAGON-HARDER at the merges of main); PIN MOVED: world288, STOREFRONT (world283 then world286 on its branch, renumbered past FB1029 GROUND and FRONTS at the merge of main at 05cf1838d); PIN MOVED: world286, STOREFRONT (world283 on its branch, renumbered past PVP-SAFE-HIT, AUDIT TAMRIEL-WIDE and CAPE-TOGGLE at the merge)   // PIN MOVED: world302, LEGIBLE (the relay files formatted - the same program, new bytes) (world298 on its branch, renumbered past world298 on main at the merge) (world299 on its branch, renumbered past world299-world301 on main at the merge)
   assert.match(version, /ROLLBACK FLOOR: world297 while acct230 or later mints `gb`/);
-  assert.match(version, /a pose's kill \(`xk`, `xp`, `xh`\)/);
+  const storefront = rd('src/net/wire.js').split('\n').find((l) => l.startsWith('// world297: STOREFRONT'));   // PIN MOVED: world298, LEGIBLE - world297's note is a history line under the version now
+  assert.match(storefront, /a pose's kill \(`xk`, `xp`, `xh`\)/);
   const page = rd('bible/06-Systems/Storefront.md');
   assert.match(page, /\*\*Deploy, and the rollback floor\.\*\*/);
   assert.match(page, /world297 is the relay's floor while acct230 or later mints/);
   assert.match(page, /\(`xk`,\n`xp`, `xh`\)/, 'section 4 names them as section 10 does');
-  for (const [where, text] of [['wire.js', version], ['Storefront.md', page], ['relayversion.test.js', rd('test/net/relayversion.test.js')]]) assert.doesNotMatch(text, /`kc`, `kp`, `ks`/, `${where}: \`kc\` is a sea receipt's killer (world246), never the pose's kill`);
+  for (const [where, text] of [['wire.js', version], ['wire.js world297', storefront], ['Storefront.md', page], ['relayversion.test.js', rd('test/net/relayversion.test.js')]]) assert.doesNotMatch(text, /`kc`, `kp`, `ks`/, `${where}: \`kc\` is a sea receipt's killer (world246), never the pose's kill`);
 });
 
 /** The glyphs the token's mask was first signed over (STOREFRONT, world286) - their places are the mask's meaning. */

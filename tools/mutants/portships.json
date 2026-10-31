@@ -2,8 +2,8 @@
   {
     "name": "PORTSHIPS-berth-unasked",
     "file": "src/systems/naval/shipLife.js",
-    "old": "      if (stands && !berthStands(c.pos, yaw, c.normal, hull, stands)) continue;",
-    "new": "      if (stands && false) continue;",
+    "old": "        if (stands && !berthStands(c.pos, yaw, c.normal, hull, stands)) continue; // PORT-SHIPS: afloat, and her ship, her quay and her jetty's way out of the town",
+    "new": "        if (stands && false) continue; // PORT-SHIPS: afloat, and her ship, her quay and her jetty's way out of the town",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PORTSHIPS-approach-unasked",
     "file": "src/systems/naval/shipLife.js",
-    "old": "      if (stands && !berthStands(approach, yaw, c.normal, hull, stands, false)) continue;",
-    "new": "      if (stands && false) continue;",
+    "old": "        if (stands && !berthStands(approach, yaw, c.normal, hull, stands, false)) continue; // PORT-SHIPS: and her approach's hull",
+    "new": "        if (stands && false) continue; // PORT-SHIPS: and her approach's hull",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PORTSHIPS-quay-band-unsampled",
     "file": "src/systems/naval/shipLife.js",
-    "old": "  const ends = quay ? BERTH_QUAY_ENDS : 0, inn = halfWidth + (quay ? BERTH_QUAY_IN : 0);",
-    "new": "  const ends = quay ? BERTH_QUAY_ENDS : 0, inn = halfWidth;",
+    "old": "    inn = halfWidth + (quay ? BERTH_QUAY_IN : 0);",
+    "new": "    inn = halfWidth;",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PORTSHIPS-ground-a-bank-afloat",
     "file": "src/systems/naval/shipLife.js",
-    "old": "if (ground(p[0], p[1]) > BERTH_DRY_M) return false; }",
-    "new": "if (ground(p[0], p[1]) > 10) return false; }",
+    "old": "        if (ground(p[0], p[1]) > BERTH_DRY_M) return false;",
+    "new": "        if (ground(p[0], p[1]) > 10) return false;",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PORTSHIPS-book-keep-unhanded",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "reach, square, keep: near.keep ?? null, ground: deps.ground ?? null });",
-    "new": "reach, square, keep: null, ground: deps.ground ?? null });",
+    "old": "        keep: near.keep ?? null,",
+    "new": "        keep: null,",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "PORTSHIPS-book-ground-unhanded",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "reach, square, keep: near.keep ?? null, ground: deps.ground ?? null });",
-    "new": "reach, square, keep: near.keep ?? null, ground: null });",
+    "old": "        ground: deps.ground ?? null,",
+    "new": "        ground: null,",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PORTSHIPS-host-keep-unhanded",
     "file": "src/scenes/harbourHost.js",
-    "old": "return { ...h, keep: harbourKeep(t.loc, h.rect) };",
-    "new": "return { ...h };",
+    "old": "      return { ...h, keep: harbourKeep(t.loc, h.rect) };",
+    "new": "      return { ...h };",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PORTSHIPS-host-ground-unhanded",
     "file": "src/scenes/harbourHost.js",
-    "old": "    ground: (x, z) => surfaceAt(x, z) - tvSeaY(),",
-    "new": "    ground: undefined,",
+    "old": "    ground: (x, z) => surfaceAt(x, z) - tvSeaY(), // PORT-SHIPS: the ground over the sea's top - a berth's ship stands afloat (shipLife.js berthStands)",
+    "new": "    ground: undefined, // PORT-SHIPS: the ground over the sea's top - a berth's ship stands afloat (shipLife.js berthStands)",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PORTSHIPS-solitude-walls-thin",
     "file": "src/systems/naval/harbourKeep.js",
-    "old": "  solitude: wallsOf(SOLITUDE.wall, SOLITUDE.wall.tower / 2, null),",
-    "new": "  solitude: wallsOf(SOLITUDE.wall, 0, null),",
+    "old": "  solitude: wallsOf(SOLITUDE.wall, SOLITUDE.wall.tower / 2, null), // square towers, its side the half",
+    "new": "  solitude: wallsOf(SOLITUDE.wall, 0, null), // square towers, its side the half",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "PORTSHIPS-solitude-piers",
     "file": "src/systems/naval/harbourKeep.js",
-    "old": "    return inCapitalWalls(CAPITAL_WALLS.solitude, dx, dz) || onPier(SOLITUDE_DOCKS, dx, dz)",
-    "new": "    return inCapitalWalls(CAPITAL_WALLS.solitude, dx, dz)",
+    "old": "      onPier(SOLITUDE_DOCKS, dx, dz) ||\n      Math.hypot(dx - st.x, dz - st.z) <= STACK_FOOT + KEEP_SPARE ||",
+    "new": "      Math.hypot(dx - st.x, dz - st.z) <= STACK_FOOT + KEEP_SPARE ||",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PORTSHIPS-solitude-stack",
     "file": "src/systems/naval/harbourKeep.js",
-    "old": "      || Math.hypot(dx - st.x, dz - st.z) <= STACK_FOOT + KEEP_SPARE",
-    "new": "      || Math.hypot(dx - st.x, dz - st.z) <= st.r",
+    "old": "      Math.hypot(dx - st.x, dz - st.z) <= STACK_FOOT + KEEP_SPARE ||",
+    "new": "      Math.hypot(dx - st.x, dz - st.z) <= st.r ||",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "PORTSHIPS-solitude-arch",
     "file": "src/systems/naval/harbourKeep.js",
-    "old": "      || (dx >= st.x && dx <= A.to + KEEP_SPARE && Math.abs(dz) <= ARCH_FOOT + KEEP_SPARE);",
-    "new": "      || false;",
+    "old": "      (dx >= st.x && dx <= A.to + KEEP_SPARE && Math.abs(dz) <= ARCH_FOOT + KEEP_SPARE)",
+    "new": "      false",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "PORTSHIPS-waterfront-piers",
     "file": "src/systems/naval/harbourKeep.js",
-    "old": "      if (Wf.piers.some((p) => Math.abs(((b - p + 540) % 360) - 180) * (Math.PI / 180) * r <= Wf.pierW / 2 + KEEP_SPARE)) return true;",
-    "new": "      if (Wf.piers.some((p) => Math.abs(((b - p + 540) % 360) - 180) * (Math.PI / 180) * r <= Wf.pierW / 2 + KEEP_SPARE)) return false;",
+    "old": "        return true;",
+    "new": "        return false;",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "PORTSHIPS-slice-unread",
     "file": "src/systems/naval/harbourKeep.js",
-    "old": "  const ax = rect.minX + (cap.anchor[0] - sx * 8) * BLOCK_M, az = rect.maxZ - (cap.anchor[1] - sy * 8) * BLOCK_M;",
-    "new": "  const ax = rect.minX + cap.anchor[0] * BLOCK_M, az = rect.maxZ - cap.anchor[1] * BLOCK_M;",
+    "old": "  const ax = rect.minX + (cap.anchor[0] - sx * 8) * BLOCK_M,\n    az = rect.maxZ - (cap.anchor[1] - sy * 8) * BLOCK_M;",
+    "new": "  const ax = rect.minX + cap.anchor[0] * BLOCK_M,\n    az = rect.maxZ - cap.anchor[1] * BLOCK_M;",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "PORTSHIPS-town-wall-unbanded",
     "file": "src/systems/naval/harbourKeep.js",
-    "old": "segDistance(-M + (gx + 0.5) * C, -M + (gz + 0.5) * C, a, b) <= TOWN_WALL_KEEP) cells[gz * W + gx] = 1;",
-    "new": "segDistance(-M + (gx + 0.5) * C, -M + (gz + 0.5) * C, a, b) <= 0) cells[gz * W + gx] = 1;",
+    "old": "        if (!cells[gz * W + gx] && segDistance(-M + (gx + 0.5) * C, -M + (gz + 0.5) * C, a, b) <= TOWN_WALL_KEEP)",
+    "new": "        if (!cells[gz * W + gx] && segDistance(-M + (gx + 0.5) * C, -M + (gz + 0.5) * C, a, b) <= 0)",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]

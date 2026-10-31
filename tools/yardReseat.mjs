@@ -60,38 +60,81 @@ export const OPEN_STALLS = Object.freeze([53113, 53115, 53117, 53118, 53121, 531
 export const STALL_K = 0.75;
 /** Each rock's, WD3's builder (the boulder round its origin, the mesh at 1, its rim pushed out by its id's seed). */
 export const ROCK_BOX_WD3 = Object.freeze({
-  53006: [-0.226406, -0.12, -0.251709, 0.278465, 0.33, 0.296942], 53012: [-0.473724, -0.13, -0.268142, 0.431261, 0.28, 0.26585],
-  53014: [-0.615383, -0.05, -0.46802, 0.47357, 0.35, 0.535653], 53017: [-0.2817, -0.05, -0.428387, 0.296552, 0.64, 0.429729],
-  53020: [-0.743893, -0.05, -0.598985, 0.787606, 0.96, 0.642975], 53023: [-0.681927, -0.25, -0.594267, 0.652108, 0.52, 0.666381],
-  53029: [-0.302549, -0.09, -0.274144, 0.264379, 0.17, 0.303291], 53030: [-0.313368, -0.07, -0.213128, 0.275539, 0.17, 0.194352],
-  53031: [-0.238374, -0.09, -0.232624, 0.262537, 0.18, 0.194537], 53032: [-0.556896, -0.12, -0.514704, 0.537748, 0.22, 0.54053],
-  53033: [-0.313258, -0.1, -0.283295, 0.305679, 0.12, 0.295455], 53035: [-0.31748, -0.4, -0.296898, 0.391648, 0.41, 0.31919],
-  53036: [-0.329286, -0.1, -0.287957, 0.357572, 0.54, 0.297244], 53037: [-0.925233, -0.14, -0.837453, 0.95666, 0.71, 0.792177],
-  53038: [-0.960688, -0.18, -0.664702, 0.768595, 0.47, 0.665316], 53039: [-1.069271, -0.16, -0.846553, 1.246957, 0.66, 0.871185],
-  53040: [-1.23477, -0.19, -1.291343, 1.175076, 0.52, 1.368774], 53042: [-1.031626, -0.11, -1.034972, 1.030194, 0.22, 1.069274],
-  53054: [-0.380459, -0.05, -0.292738, 0.467575, 0.13, 0.298958], 53064: [-0.363017, -0.05, -0.428691, 0.376021, 0.37, 0.409391],
-  53083: [-0.406759, -0.05, -0.23743, 0.335147, 0.13, 0.249957], 53085: [-0.346818, -0.05, -0.318846, 0.316258, 0.14, 0.27277],
+  53006: [-0.226406, -0.12, -0.251709, 0.278465, 0.33, 0.296942],
+  53012: [-0.473724, -0.13, -0.268142, 0.431261, 0.28, 0.26585],
+  53014: [-0.615383, -0.05, -0.46802, 0.47357, 0.35, 0.535653],
+  53017: [-0.2817, -0.05, -0.428387, 0.296552, 0.64, 0.429729],
+  53020: [-0.743893, -0.05, -0.598985, 0.787606, 0.96, 0.642975],
+  53023: [-0.681927, -0.25, -0.594267, 0.652108, 0.52, 0.666381],
+  53029: [-0.302549, -0.09, -0.274144, 0.264379, 0.17, 0.303291],
+  53030: [-0.313368, -0.07, -0.213128, 0.275539, 0.17, 0.194352],
+  53031: [-0.238374, -0.09, -0.232624, 0.262537, 0.18, 0.194537],
+  53032: [-0.556896, -0.12, -0.514704, 0.537748, 0.22, 0.54053],
+  53033: [-0.313258, -0.1, -0.283295, 0.305679, 0.12, 0.295455],
+  53035: [-0.31748, -0.4, -0.296898, 0.391648, 0.41, 0.31919],
+  53036: [-0.329286, -0.1, -0.287957, 0.357572, 0.54, 0.297244],
+  53037: [-0.925233, -0.14, -0.837453, 0.95666, 0.71, 0.792177],
+  53038: [-0.960688, -0.18, -0.664702, 0.768595, 0.47, 0.665316],
+  53039: [-1.069271, -0.16, -0.846553, 1.246957, 0.66, 0.871185],
+  53040: [-1.23477, -0.19, -1.291343, 1.175076, 0.52, 1.368774],
+  53042: [-1.031626, -0.11, -1.034972, 1.030194, 0.22, 1.069274],
+  53054: [-0.380459, -0.05, -0.292738, 0.467575, 0.13, 0.298958],
+  53064: [-0.363017, -0.05, -0.428691, 0.376021, 0.37, 0.409391],
+  53083: [-0.406759, -0.05, -0.23743, 0.335147, 0.13, 0.249957],
+  53085: [-0.346818, -0.05, -0.318846, 0.316258, 0.14, 0.27277],
   53086: [-1.208504, -0.05, -0.617461, 1.16387, 0.56, 0.633971],
 });
 /** Each rock's, TEMPLE-STEPS' builder - unchanged by STALL-SHAPE. */
 export const ROCK_BOX_NOW = Object.freeze({
-  53006: [-1.366447, -0.738, -1.562793, 1.492473, 1.962, 1.594734], 53012: [-2.148195, -0.65, -1.271291, 1.946256, 1.39, 1.189943],
-  53014: [-1.885066, -0.05, -1.489733, 2.188409, 1.396, 2.212384], 53017: [-1.211771, -0.05, -2.031227, 1.987632, 3.834, 2.642086],
-  53020: [-2.559338, -0.05, -1.939317, 2.992115, 3.844, 2.732568], 53023: [-1.525747, -0.51, -1.151077, 0.936068, 1.046, 1.151977],
-  53029: [-2.055897, -0.552, -1.791453, 1.126483, 1.002, 1.386954], 53030: [-2.74289, -0.552, -1.61654, 1.479394, 1.336, 1.414485],
-  53031: [-1.633253, -0.51, -1.290151, 1.191586, 1.056, 1.111467], 53032: [-1.496333, -0.372, -1.489537, 1.467867, 0.672, 1.417229],
-  53033: [-1.197188, -0.408, -1.247501, 1.112523, 0.476, 0.966032], 53035: [-1.135145, -0.36, -1.501593, 1.578086, 1.984, 1.5787],
-  53036: [-1.769261, -0.618, -1.570251, 2.015764, 3.246, 1.747795], 53037: [-3.164011, -0.564, -2.745274, 3.847995, 2.86, 3.355369],
-  53038: [-3.579495, -0.704, -1.986528, 2.962217, 1.872, 3.082199], 53039: [-4.264714, -0.656, -3.381254, 4.294974, 2.632, 2.844407],
-  53040: [-2.999847, -0.567, -3.277583, 3.513542, 1.569, 3.971793], 53042: [-3.665372, -0.456, -4.08858, 3.904145, 0.896, 3.747141],
-  53054: [-2.528612, -0.05, -2.401428, 3.891707, 1.064, 1.919181], 53064: [-2.095135, -0.05, -2.500007, 2.131888, 2.202, 2.098935],
-  53083: [-2.233555, -0.05, -1.357521, 1.974411, 0.798, 1.402978], 53085: [-1.930978, -0.05, -3.009645, 2.948896, 1.088, 1.476333],
+  53006: [-1.366447, -0.738, -1.562793, 1.492473, 1.962, 1.594734],
+  53012: [-2.148195, -0.65, -1.271291, 1.946256, 1.39, 1.189943],
+  53014: [-1.885066, -0.05, -1.489733, 2.188409, 1.396, 2.212384],
+  53017: [-1.211771, -0.05, -2.031227, 1.987632, 3.834, 2.642086],
+  53020: [-2.559338, -0.05, -1.939317, 2.992115, 3.844, 2.732568],
+  53023: [-1.525747, -0.51, -1.151077, 0.936068, 1.046, 1.151977],
+  53029: [-2.055897, -0.552, -1.791453, 1.126483, 1.002, 1.386954],
+  53030: [-2.74289, -0.552, -1.61654, 1.479394, 1.336, 1.414485],
+  53031: [-1.633253, -0.51, -1.290151, 1.191586, 1.056, 1.111467],
+  53032: [-1.496333, -0.372, -1.489537, 1.467867, 0.672, 1.417229],
+  53033: [-1.197188, -0.408, -1.247501, 1.112523, 0.476, 0.966032],
+  53035: [-1.135145, -0.36, -1.501593, 1.578086, 1.984, 1.5787],
+  53036: [-1.769261, -0.618, -1.570251, 2.015764, 3.246, 1.747795],
+  53037: [-3.164011, -0.564, -2.745274, 3.847995, 2.86, 3.355369],
+  53038: [-3.579495, -0.704, -1.986528, 2.962217, 1.872, 3.082199],
+  53039: [-4.264714, -0.656, -3.381254, 4.294974, 2.632, 2.844407],
+  53040: [-2.999847, -0.567, -3.277583, 3.513542, 1.569, 3.971793],
+  53042: [-3.665372, -0.456, -4.08858, 3.904145, 0.896, 3.747141],
+  53054: [-2.528612, -0.05, -2.401428, 3.891707, 1.064, 1.919181],
+  53064: [-2.095135, -0.05, -2.500007, 2.131888, 2.202, 2.098935],
+  53083: [-2.233555, -0.05, -1.357521, 1.974411, 0.798, 1.402978],
+  53085: [-1.930978, -0.05, -3.009645, 2.948896, 1.088, 1.476333],
   53086: [-5.163713, -0.05, -2.232297, 3.400785, 2.24, 2.427954],
 });
 /** What each rock grew by at TEMPLE-STEPS: its prefab's scale (world/townStandIns.js RMBRP_ROCK_SCALE as it stood). */
 export const ROCK_K = Object.freeze({
-  53006: 6, 53012: 5, 53014: 4, 53017: 6, 53020: 4, 53023: 2, 53029: 6, 53030: 8, 53031: 6, 53032: 3, 53033: 4, 53035: 4,
-  53036: 6, 53037: 4, 53038: 4, 53039: 4, 53040: 3, 53042: 4, 53054: 8, 53064: 6, 53083: 6, 53085: 8, 53086: 4,
+  53006: 6,
+  53012: 5,
+  53014: 4,
+  53017: 6,
+  53020: 4,
+  53023: 2,
+  53029: 6,
+  53030: 8,
+  53031: 6,
+  53032: 3,
+  53033: 4,
+  53035: 4,
+  53036: 6,
+  53037: 4,
+  53038: 4,
+  53039: 4,
+  53040: 3,
+  53042: 4,
+  53054: 8,
+  53064: 6,
+  53083: 6,
+  53085: 8,
+  53086: 4,
 });
 
 /**
@@ -99,14 +142,21 @@ export const ROCK_K = Object.freeze({
  * `was` the box it was placed by, `now` the box it stands by, `k` what the model grew by between them.
  * @type {ReadonlyArray<{ model: number, before: boolean, was: readonly number[], now: readonly number[], k: number }>}
  */
-export const YARD_RESEATS = Object.freeze([
-  ...COUNTER_STALLS.map((model) => ({ model, before: true, was: STALL_BOX_WD3, now: STALL_BOX_NOW, k: STALL_K })),
-  ...OPEN_STALLS.map((model) => ({ model, before: true, was: STALL_BOX_WD3, now: OPEN_STALL_BOX_NOW, k: STALL_K })),
-  ...OPEN_STALLS.map((model) => ({ model, before: false, was: STALL_BOX_NOW, now: OPEN_STALL_BOX_NOW, k: 1 })),
-  ...Object.keys(ROCK_BOX_WD3).map(Number).map((model) => ({ model, before: true, was: ROCK_BOX_WD3[model], now: ROCK_BOX_NOW[model], k: ROCK_K[model] })),
-].map(Object.freeze));
+export const YARD_RESEATS = Object.freeze(
+  [
+    ...COUNTER_STALLS.map((model) => ({ model, before: true, was: STALL_BOX_WD3, now: STALL_BOX_NOW, k: STALL_K })),
+    ...OPEN_STALLS.map((model) => ({ model, before: true, was: STALL_BOX_WD3, now: OPEN_STALL_BOX_NOW, k: STALL_K })),
+    ...OPEN_STALLS.map((model) => ({ model, before: false, was: STALL_BOX_NOW, now: OPEN_STALL_BOX_NOW, k: 1 })),
+    ...Object.keys(ROCK_BOX_WD3)
+      .map(Number)
+      .map((model) => ({ model, before: true, was: ROCK_BOX_WD3[model], now: ROCK_BOX_NOW[model], k: ROCK_K[model] })),
+  ].map(Object.freeze),
+);
 
-const round = (v, places) => { const p = 10 ** places; return Math.round(v * p) / p; };
+const round = (v, places) => {
+  const p = 10 ** places;
+  return Math.round(v * p) / p;
+};
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const mid = (b, a) => (b[a] + b[a + 3]) / 2;
 
@@ -114,8 +164,11 @@ const mid = (b, a) => (b[a] + b[a + 3]) / 2;
  *  the yard's frame - [dx, dy, dz]. */
 export function reseatMove({ was, now, k }, scale, yaw) {
   const s2 = clamp(round(scale / k, 3), DECOR_SCALE_MIN, DECOR_SCALE_MAX);
-  const lx = scale * mid(was, 0) - s2 * mid(now, 0), lz = scale * mid(was, 2) - s2 * mid(now, 2);
-  const r = (yaw * Math.PI) / 180, c = Math.cos(r), s = Math.sin(r);
+  const lx = scale * mid(was, 0) - s2 * mid(now, 0),
+    lz = scale * mid(was, 2) - s2 * mid(now, 2);
+  const r = (yaw * Math.PI) / 180,
+    c = Math.cos(r),
+    s = Math.sin(r);
   // world/mat4.js trs's turn about y: a model's +x stands at (cos, -sin) in the yard, its +z at (sin, cos)
   return { scale: s2, d: [c * lx + s * lz, scale * was[1] - s2 * now[1], -s * lx + c * lz] };
 }
@@ -123,7 +176,11 @@ export function reseatMove({ was, now, k }, scale, yaw) {
 export function reseatPlace(place, reseat) {
   const { scale, d } = reseatMove(reseat, place.scale, place.rot[0]);
   const B = DECOR_YARD_POS_MAX;
-  const pos = [round(clamp(place.pos[0] + d[0], -B, B), 3), round(clamp(place.pos[1] + d[1], -B, DECOR_YARD_HIGH), 3), round(clamp(place.pos[2] + d[2], -B, B), 3)];
+  const pos = [
+    round(clamp(place.pos[0] + d[0], -B, B), 3),
+    round(clamp(place.pos[1] + d[1], -B, DECOR_YARD_HIGH), 3),
+    round(clamp(place.pos[2] + d[2], -B, B), 3),
+  ];
   return { ...place, pos, scale, reseat: YARD_RESEAT_MARK };
 }
 
@@ -140,8 +197,19 @@ export function reseatRestored(row) {
   const kept = { row, reseated: false, unsure: false };
   if (row.yard !== 1) return kept;
   let place;
-  try { place = JSON.parse(row.place); } catch { return kept; }
-  if (!place || typeof place !== 'object' || place.reseat != null || !Array.isArray(place.pos) || !Array.isArray(place.rot)) return kept;
+  try {
+    place = JSON.parse(row.place);
+  } catch {
+    return kept;
+  }
+  if (
+    !place ||
+    typeof place !== 'object' ||
+    place.reseat != null ||
+    !Array.isArray(place.pos) ||
+    !Array.isArray(place.rot)
+  )
+    return kept;
   const before = row.placed_at < YARD_RESEAT_AT;
   const reseat = YARD_RESEATS.find((m) => m.model === row.model && m.before === before);
   if (!reseat) return kept;
@@ -158,7 +226,10 @@ const SIN = `r * ${horner([6, 20, 42, 72, 110, 156, 210, 272, 342])}`;
 
 /** THE MIGRATION's text. */
 export function reseatSql() {
-  const rows = YARD_RESEATS.map((m) => `  (${m.model}, ${m.before ? 1 : 0}, ${num(mid(m.was, 0))}, ${num(mid(m.was, 2))}, ${num(m.was[1])}, ${num(mid(m.now, 0))}, ${num(mid(m.now, 2))}, ${num(m.now[1])}, ${num(m.k)})`);
+  const rows = YARD_RESEATS.map(
+    (m) =>
+      `  (${m.model}, ${m.before ? 1 : 0}, ${num(mid(m.was, 0))}, ${num(mid(m.was, 2))}, ${num(m.was[1])}, ${num(mid(m.now, 0))}, ${num(mid(m.now, 2))}, ${num(m.now[1])}, ${num(m.k)})`,
+  );
   const B = DECOR_YARD_POS_MAX;
   const at = new Date(YARD_RESEAT_AT * 1000).toISOString().replace('.000Z', 'Z');
   return `-- FIELD BUGS 2026-10-16b STALL-SHAPE - A YARD'S SAVED STALLS AND BOULDERS, RE-SEATED WHERE THEIR OWNERS PUT THEM.
@@ -212,7 +283,7 @@ if (isMain(import.meta.url)) {
     console.log(`wrote ${YARD_RESEAT_FILE}`);
   } else if (process.argv.includes('--check')) {
     const on = readFileSync(new URL(`../${YARD_RESEAT_FILE}`, import.meta.url), 'utf8');
-    console.log(on === sql ? 'the migration is the tool\'s' : 'the migration is NOT the tool\'s');
+    console.log(on === sql ? "the migration is the tool's" : "the migration is NOT the tool's");
     process.exitCode = on === sql ? 0 : 1;
   } else process.stdout.write(sql);
 }

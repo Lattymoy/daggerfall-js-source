@@ -3,7 +3,7 @@
     "name": "GOTHWAY-MONUMENT-back-at-the-hold",
     "file": "src/world/lefayMonument.js",
     "old": "export const LEFAY_TOWN = 'Gothway Garden';",
-    "new": "export const LEFAY_TOWN = 'Privateer\\'s Hold';",
+    "new": "export const LEFAY_TOWN = \"Privateer's Hold\";",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "GOTHWAY-MONUMENT-the-way-in-not-kept",
     "file": "src/world/lefayMonument.js",
-    "old": "  for (let t = 0; t <= MONUMENT_WAY_IN_M + 1e-9; t += HALF_CELL) closeRound(nav, way.x + way.nx * t, way.z + way.nz * t, MONUMENT_WAY_M);\n",
-    "new": "\n",
+    "old": "  for (let t = 0; t <= MONUMENT_WAY_IN_M + 1e-9; t += HALF_CELL)\n    closeRound(nav, way.x + way.nx * t, way.z + way.nz * t, MONUMENT_WAY_M);",
+    "new": "",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "GOTHWAY-MONUMENT-no-open-way-in",
     "file": "src/world/lefayMonument.js",
-    "old": "  if (!found.length) found = runs((wt) => wt > 0, 3);",
-    "new": "  if (!found.length) found = [];",
+    "old": "  if (!found.length) found = runs((wt) => wt > 0, 3); // no paved road: the widest open way in",
+    "new": "  if (!found.length) found = []; // no paved road: the widest open way in",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "GOTHWAY-MONUMENT-the-band-shallow",
     "file": "src/world/lefayMonument.js",
-    "old": "band = Math.max(2, Math.round(ENTRANCE_BAND_M / NAV_CELL));",
-    "new": "band = 2;",
+    "old": "    band = Math.max(2, Math.round(ENTRANCE_BAND_M / NAV_CELL));",
+    "new": "    band = 2;",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "GOTHWAY-MONUMENT-a-thin-run-a-way",
     "file": "src/world/lefayMonument.js",
-    "old": "if (gx - start >= least) out.push",
-    "new": "if (gx - start >= 1) out.push",
+    "old": "        if (gx - start >= least) out.push([start, gx - 1]);",
+    "new": "        if (gx - start >= 1) out.push([start, gx - 1]);",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "GOTHWAY-MONUMENT-the-south-border",
     "file": "src/world/lefayMonument.js",
-    "old": "ok = want(nav.weightAt(gx, h - 1 - k));",
-    "new": "ok = want(nav.weightAt(gx, k));",
+    "old": "      if (gx < w) for (let k = 0; k < band && !ok; k++) ok = want(nav.weightAt(gx, h - 1 - k));",
+    "new": "      if (gx < w) for (let k = 0; k < band && !ok; k++) ok = want(nav.weightAt(gx, k));",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "GOTHWAY-MONUMENT-the-way-off-its-middle",
     "file": "src/world/lefayMonument.js",
-    "old": "return { x: ((a + b + 1) / 2) * NAV_CELL,",
-    "new": "return { x: ((a + b) / 2) * NAV_CELL,",
+    "old": "  return { x: ((a + b + 1) / 2) * NAV_CELL, z: h * NAV_CELL, nx: 0, nz: -1 };",
+    "new": "  return { x: ((a + b) / 2) * NAV_CELL, z: h * NAV_CELL, nx: 0, nz: -1 };",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "STEWART-MONUMENT-any-slice",
     "file": "src/world/lefayMonument.js",
-    "old": "loc.capital.s === STEWART_SLICE",
-    "new": "loc.capital.s >= 0",
+    "old": "export const isStewartSlice = (loc) => loc?.capital?.key === 'imperial-city' && loc.capital.s === STEWART_SLICE;",
+    "new": "export const isStewartSlice = (loc) => loc?.capital?.key === 'imperial-city' && loc.capital.s >= 0;",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "STEWART-MONUMENT-any-capital",
     "file": "src/world/lefayMonument.js",
-    "old": "loc?.capital?.key === 'imperial-city' &&",
-    "new": "!!loc?.capital &&",
+    "old": "export const isStewartSlice = (loc) => loc?.capital?.key === 'imperial-city' && loc.capital.s === STEWART_SLICE;",
+    "new": "export const isStewartSlice = (loc) => !!loc?.capital && loc.capital.s === STEWART_SLICE;",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "STEWART-MONUMENT-the-frame-unflipped",
     "file": "src/world/lefayMonument.js",
-    "old": "gy = Math.floor((mid - STEWART_AT[1]) / NAV_CELL)",
-    "new": "gy = Math.floor((mid + STEWART_AT[1]) / NAV_CELL)",
+    "old": "    gy = Math.floor((mid - STEWART_AT[1]) / NAV_CELL);",
+    "new": "    gy = Math.floor((mid + STEWART_AT[1]) / NAV_CELL);",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "STEWART-MONUMENT-off-the-middle",
     "file": "src/world/lefayMonument.js",
-    "old": "const mid = (IMPERIAL_CELLS / 2 - ((IMPERIAL_SPAN - 1) / 2) * 8) * BLOCK_M;",
-    "new": "const mid = (IMPERIAL_CELLS / 2 - (IMPERIAL_SPAN - 1) / 2 * 8 + 1) * BLOCK_M;",
+    "old": "  const mid = (IMPERIAL_CELLS / 2 - ((IMPERIAL_SPAN - 1) / 2) * 8) * BLOCK_M;",
+    "new": "  const mid = (IMPERIAL_CELLS / 2 - ((IMPERIAL_SPAN - 1) / 2) * 8 + 1) * BLOCK_M;",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "STEWART-MONUMENT-on-the-door's-walk",
     "file": "src/world/lefayMonument.js",
-    "old": "polar(80, IMPERIAL.tower.plinthR + 25)",
-    "new": "polar(90, IMPERIAL.tower.plinthR + 25)",
+    "old": "export const STEWART_AT = Object.freeze(polar(80, IMPERIAL.tower.plinthR + 25));",
+    "new": "export const STEWART_AT = Object.freeze(polar(90, IMPERIAL.tower.plinthR + 25));",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]

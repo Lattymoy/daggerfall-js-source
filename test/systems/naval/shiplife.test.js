@@ -349,7 +349,7 @@ test('SHIP-LIFE the world\'s wiring by source: the host is handed the port near 
   assert.match(WHOLE, /harbourNear: navalHarbourNear,/);
   // PIN MOVED (RPT1026-WORLD FAR-QUAY): the footprint is made in systems/naval/harbourBook.js harbourOf, which the host
   // maps over every port town near the player
-  assert.match(readFileSync(new URL('../../../src/systems/naval/harbourBook.js', import.meta.url), 'utf8'), /const r = locationWorldRect\(t\.loc, t\.x, t\.y\);\n\s*const \[ax, az\] = state\.localFromWorld\(r\.minX, r\.minZ\), \[bx, bz\] = state\.localFromWorld\(r\.maxX, r\.maxZ\);/);
+  assert.match(readFileSync(new URL('../../../src/systems/naval/harbourBook.js', import.meta.url), 'utf8'), /const r = locationWorldRect\(t\.loc, t\.x, t\.y\);\n\s*const \[ax, az\] = state\.localFromWorld\(r\.minX, r\.minZ\),\n\s*\[bx, bz\] = state\.localFromWorld\(r\.maxX, r\.maxZ\);/);
   assert.match(WHOLE, /harbourOf\(t, \{ state, built: csaPixelAt, woods: host\.woods \}\)/);
   assert.match(WHOLE, /if \(_navalHarbourAt\.key !== key\) \{/);
   assert.match(WHOLE, /Object\.assign\(_navalHarbourAt, \{ key, towns \}\);/);

@@ -38,8 +38,8 @@
   {
     "name": "SEA-SEASON-rise-wall",
     "file": "src/net/sea/seaSeasonLaw.js",
-    "old": "SEA_LEGEND_RISE_DAYS * 1440 / ONLINE_MINUTES_PER_MS / 1000);",
-    "new": "SEA_LEGEND_RISE_DAYS * 1440 / ONLINE_MINUTES_PER_MS / 1200);",
+    "old": "export const SEA_LEGEND_RISE_S = Math.round((SEA_LEGEND_RISE_DAYS * 1440) / ONLINE_MINUTES_PER_MS / 1000);",
+    "new": "export const SEA_LEGEND_RISE_S = Math.round((SEA_LEGEND_RISE_DAYS * 1440) / ONLINE_MINUTES_PER_MS / 1200);",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SEA-SEASON-day-clock",
     "file": "src/net/sea/seaSeasonLaw.js",
-    "old": "wallMsForClassicMinutes(Math.floor(Number(day) || 0) * 1440) / 1000",
-    "new": "wallMsForClassicMinutes(Math.floor(Number(day) || 0) * 1440 + 1440) / 1000",
+    "old": "  arenaSeasonOf(Math.floor(wallMsForClassicMinutes(Math.floor(Number(day) || 0) * 1440) / 1000));",
+    "new": "  arenaSeasonOf(Math.floor(wallMsForClassicMinutes(Math.floor(Number(day) || 0) * 1440 + 1440) / 1000));",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SEA-SEASON-start-off-one",
     "file": "src/net/sea/seaSeasonLaw.js",
-    "old": "ARENA_SEASON_EPOCH_S + (Math.max(1, Math.floor(season)) - 1) * ARENA_SEASON_S;",
-    "new": "ARENA_SEASON_EPOCH_S + Math.max(1, Math.floor(season)) * ARENA_SEASON_S;",
+    "old": "  ARENA_SEASON_EPOCH_S + (Math.max(1, Math.floor(season)) - 1) * ARENA_SEASON_S;",
+    "new": "  ARENA_SEASON_EPOCH_S + Math.max(1, Math.floor(season)) * ARENA_SEASON_S;",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SEA-SEASON-possible-no-first",
     "file": "src/net/sea/seaSeasonLaw.js",
-    "old": "/ SEA_LEGEND_RISE_S) + 1);",
-    "new": "/ SEA_LEGEND_RISE_S));",
+    "old": "  SEA_LEGENDS * (Math.floor(Math.max(0, nowS - seaSeasonStartS(arenaSeasonOf(nowS))) / SEA_LEGEND_RISE_S) + 1);",
+    "new": "  SEA_LEGENDS * Math.floor(Math.max(0, nowS - seaSeasonStartS(arenaSeasonOf(nowS))) / SEA_LEGEND_RISE_S);",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SEA-SEASON-possible-one",
     "file": "src/net/sea/seaSeasonLaw.js",
-    "old": "export const seaLegendsPossible = (/** @type {number} */ nowS) => SEA_LEGENDS * (",
-    "new": "export const seaLegendsPossible = (/** @type {number} */ nowS) => (",
+    "old": "  SEA_LEGENDS * (Math.floor(Math.max(0, nowS - seaSeasonStartS(arenaSeasonOf(nowS))) / SEA_LEGEND_RISE_S) + 1);",
+    "new": "  Math.floor(Math.max(0, nowS - seaSeasonStartS(arenaSeasonOf(nowS))) / SEA_LEGEND_RISE_S) + 1;",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SEA-SEASON-figures-past-rises",
     "file": "src/net/sea/seaSeasonLaw.js",
-    "old": "legends < 0 || legends > seaLegendsPossible(before ? turnS - 1 : nowS)) return null;",
-    "new": "legends < 0) return null;",
+    "old": "  if (!Number.isSafeInteger(legends) || legends < 0 || legends > seaLegendsPossible(before ? turnS - 1 : nowS))\n    return null;",
+    "new": "  if (!Number.isSafeInteger(legends) || legends < 0) return null;",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SEA-SEASON-figures-negative-legends",
     "file": "src/net/sea/seaSeasonLaw.js",
-    "old": "  if (!Number.isSafeInteger(legends) || legends < 0 || legends >",
-    "new": "  if (!Number.isSafeInteger(legends) || legends >",
+    "old": "  if (!Number.isSafeInteger(legends) || legends < 0 || legends > seaLegendsPossible(before ? turnS - 1 : nowS))\n    return null;",
+    "new": "  if (!Number.isSafeInteger(legends) || legends > seaLegendsPossible(before ? turnS - 1 : nowS)) return null;",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "SEA-SEASON-read-any-length",
     "file": "src/net/sea/seaSeasonLaw.js",
-    "old": "  const rows = (/** @type {any} */ list, max) => (Array.isArray(list) ? list : []).slice(0, max)",
-    "new": "  const rows = (/** @type {any} */ list, max) => (Array.isArray(list) ? list : [])",
+    "old": "      .slice(0, max)\n      .filter((r) => r && typeof r.name === 'string' && r.name.length > 0 && r.name.length <= 64)",
+    "new": "      .filter((r) => r && typeof r.name === 'string' && r.name.length > 0 && r.name.length <= 64)",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SEA-SEASON-read-unnamed",
     "file": "src/net/sea/seaSeasonLaw.js",
-    "old": "    .filter((r) => r && typeof r.name === 'string' && r.name.length > 0 && r.name.length <= 64)",
-    "new": "    .filter((r) => r && typeof r.name === 'string' && r.name.length <= 64)",
+    "old": "      .filter((r) => r && typeof r.name === 'string' && r.name.length > 0 && r.name.length <= 64)",
+    "new": "      .filter((r) => r && typeof r.name === 'string' && r.name.length <= 64)",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "SEA-SEASON-read-rank-none",
     "file": "src/net/sea/seaSeasonLaw.js",
-    "old": "(m && Number.isSafeInteger(m.rank) && m.rank >= 1 ? { rank: m.rank, n: whole(m.n) } : null)",
-    "new": "(m && Number.isSafeInteger(m.rank) && m.rank >= 0 ? { rank: m.rank, n: whole(m.n) } : null)",
+    "old": "    m && Number.isSafeInteger(m.rank) && m.rank >= 1 ? { rank: m.rank, n: whole(m.n) } : null;",
+    "new": "    m && Number.isSafeInteger(m.rank) && m.rank >= 0 ? { rank: m.rank, n: whole(m.n) } : null;",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "SEA-SEASON-ledger-old-day-resets",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "    if (ether.season && n < ether.season.n) return null;\n",
-    "new": "",
+    "old": "    if (ether.season && n < ether.season.n) return null;\n    if (!ether.season || n > ether.season.n) ether.season = { n, deepest: 0, legends: 0 };",
+    "new": "    if (!ether.season || n > ether.season.n) ether.season = { n, deepest: 0, legends: 0 };",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "SEA-SEASON-ledger-legend-uncounted",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "      if (s) s.legends = whole(s.legends + 1);\n",
-    "new": "",
+    "old": "      if (s) s.legends = whole(s.legends + 1);\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SEA-SEASON-restore-past-sea",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "&& v.deepest <= SEA_DEEPEST_MAX",
-    "new": "",
+    "old": "  v.deepest <= SEA_DEEPEST_MAX &&\n  Number.isSafeInteger(v.legends) &&",
+    "new": "  Number.isSafeInteger(v.legends) &&",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "SEA-SEASON-restore-season-none",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "(v && Number.isSafeInteger(v.n) && v.n >= 1 &&",
-    "new": "(v && Number.isSafeInteger(v.n) &&",
+    "old": "  v.n >= 1 &&\n  Number.isSafeInteger(v.deepest) &&",
+    "new": "  Number.isSafeInteger(v.deepest) &&",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "SEA-SEASON-restore-negative",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "  && Number.isSafeInteger(v.legends) && v.legends >= 0 ? {",
-    "new": "  && Number.isSafeInteger(v.legends) ? {",
+    "old": "  Number.isSafeInteger(v.legends) &&\n  v.legends >= 0",
+    "new": "  Number.isSafeInteger(v.legends)",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "SEA-SEASON-restore-dropped",
     "file": "src/systems/naval/captainLedger.js",
-    "old": "      ether.season = restoreSeason(e.season);   // SEA-SEASON\n",
-    "new": "",
+    "old": "      ether.season = restoreSeason(e.season); // SEA-SEASON\n      ether.fleets = [",
+    "new": "      ether.fleets = [",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "SEA-SEASON-offline-keeps",
     "file": "src/systems/offlineCopy.js",
-    "old": "  dropLineage(copy);\n  dropSeason(copy);\n  const own",
-    "new": "  dropLineage(copy);\n  const own",
+    "old": "  dropSeason(copy);\n  const own = saneSaveClock(copy.classicMinutes),",
+    "new": "  const own = saneSaveClock(copy.classicMinutes),",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "SEA-SEASON-online-keeps",
     "file": "src/systems/offlineCopy.js",
-    "old": "  dropLineage(copy);\n  dropSeason(copy);\n  if (!Number.isFinite(worldNow))",
-    "new": "  dropLineage(copy);\n  if (!Number.isFinite(worldNow))",
+    "old": "  dropSeason(copy);\n  if (!Number.isFinite(worldNow)) return copy;",
+    "new": "  if (!Number.isFinite(worldNow)) return copy;",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "SEA-SEASON-steps-held",
     "file": "server-account/src/seaSeason.js",
-    "old": " WHERE NOT EXISTS (SELECT 1 FROM realm_characters WHERE id = ?2 AND held IS NOT NULL)",
-    "new": " WHERE 1",
+    "old": "    SELECT ?1, ?2, ?3, ?4, ?6, ?5, ?6, ?6 WHERE NOT EXISTS (SELECT 1 FROM realm_characters WHERE id = ?2 AND held IS NOT NULL)",
+    "new": "    SELECT ?1, ?2, ?3, ?4, ?6, ?5, ?6, ?6 WHERE 1",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "SEA-SEASON-board-held-shown",
     "file": "server-account/src/seaSeason.js",
-    "old": "    FROM sea_season s JOIN realm_characters rc ON rc.id = s.char_id AND rc.held IS NULL\n    WHERE s.season = ?1 AND s.${n} > 0 ORDER BY",
-    "new": "    FROM sea_season s JOIN realm_characters rc ON rc.id = s.char_id\n    WHERE s.season = ?1 AND s.${n} > 0 ORDER BY",
+    "old": "        `SELECT rc.name AS name, s.${n} AS n\n    FROM sea_season s JOIN realm_characters rc ON rc.id = s.char_id AND rc.held IS NULL",
+    "new": "        `SELECT rc.name AS name, s.${n} AS n\n    FROM sea_season s JOIN realm_characters rc ON rc.id = s.char_id",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "SEA-SEASON-board-least-first",
     "file": "server-account/src/seaSeason.js",
-    "old": "ORDER BY s.${n} DESC, s.${at}, rc.name LIMIT ?2",
-    "new": "ORDER BY s.${n} ASC, s.${at}, rc.name LIMIT ?2",
+    "old": "    WHERE s.season = ?1 AND s.${n} > 0 ORDER BY s.${n} DESC, s.${at}, rc.name LIMIT ?2`,",
+    "new": "    WHERE s.season = ?1 AND s.${n} > 0 ORDER BY s.${n} ASC, s.${at}, rc.name LIMIT ?2`,",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "SEA-SEASON-board-by-name",
     "file": "server-account/src/seaSeason.js",
-    "old": "ORDER BY s.${n} DESC, s.${at}, rc.name LIMIT ?2",
-    "new": "ORDER BY s.${n} DESC, rc.name LIMIT ?2",
+    "old": "    WHERE s.season = ?1 AND s.${n} > 0 ORDER BY s.${n} DESC, s.${at}, rc.name LIMIT ?2`,",
+    "new": "    WHERE s.season = ?1 AND s.${n} > 0 ORDER BY s.${n} DESC, rc.name LIMIT ?2`,",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "SEA-SEASON-board-zero-shown",
     "file": "server-account/src/seaSeason.js",
-    "old": "    WHERE s.season = ?1 AND s.${n} > 0 ORDER BY",
-    "new": "    WHERE s.season = ?1 ORDER BY",
+    "old": "    WHERE s.season = ?1 AND s.${n} > 0 ORDER BY s.${n} DESC, s.${at}, rc.name LIMIT ?2`,",
+    "new": "    WHERE s.season = ?1 ORDER BY s.${n} DESC, s.${at}, rc.name LIMIT ?2`,",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "SEA-SEASON-rank-moment-blind",
     "file": "server-account/src/seaSeason.js",
-    "old": "(o.${n} = s.${n} AND (o.${at} < s.${at} OR (o.${at} = s.${at} AND orc.name < rc.name)))",
-    "new": "(o.${n} = s.${n} AND orc.name < rc.name)",
+    "old": "      WHERE o.season = s.season AND o.${n} > 0 AND (o.${n} > s.${n} OR (o.${n} = s.${n} AND (o.${at} < s.${at} OR (o.${at} = s.${at} AND orc.name < rc.name))))) AS rank",
+    "new": "      WHERE o.season = s.season AND o.${n} > 0 AND (o.${n} > s.${n} OR (o.${n} = s.${n} AND orc.name < rc.name))) AS rank",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "SEA-SEASON-rank-ties-ahead",
     "file": "server-account/src/seaSeason.js",
-    "old": "WHERE o.season = s.season AND o.${n} > 0 AND (o.${n} > s.${n} OR",
-    "new": "WHERE o.season = s.season AND o.${n} > 0 AND (o.${n} >= s.${n} OR",
+    "old": "      WHERE o.season = s.season AND o.${n} > 0 AND (o.${n} > s.${n} OR (o.${n} = s.${n} AND (o.${at} < s.${at} OR (o.${at} = s.${at} AND orc.name < rc.name))))) AS rank",
+    "new": "      WHERE o.season = s.season AND o.${n} > 0 AND (o.${n} >= s.${n} OR (o.${n} = s.${n} AND (o.${at} < s.${at} OR (o.${at} = s.${at} AND orc.name < rc.name))))) AS rank",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "SEA-SEASON-rank-anyones",
     "file": "server-account/src/seaSeason.js",
-    "old": "    WHERE s.season = ?1 AND s.char_id = ?2 AND s.player = ?3 AND s.${n} > 0`).bind(season, character, player.id);",
-    "new": "    WHERE s.season = ?1 AND s.char_id = ?2 AND s.${n} > 0`).bind(season, character, player.id);",
+    "old": "    WHERE s.season = ?1 AND s.char_id = ?2 AND s.player = ?3 AND s.${n} > 0`,",
+    "new": "    WHERE s.season = ?1 AND s.char_id = ?2 AND s.${n} > 0`,",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "SEA-SEASON-rank-held-placed",
     "file": "server-account/src/seaSeason.js",
-    "old": "    FROM sea_season s JOIN realm_characters rc ON rc.id = s.char_id AND rc.held IS NULL\n    WHERE s.season = ?1 AND s.char_id = ?2",
-    "new": "    FROM sea_season s JOIN realm_characters rc ON rc.id = s.char_id\n    WHERE s.season = ?1 AND s.char_id = ?2",
+    "old": "      WHERE o.season = s.season AND o.${n} > 0 AND (o.${n} > s.${n} OR (o.${n} = s.${n} AND (o.${at} < s.${at} OR (o.${at} = s.${at} AND orc.name < rc.name))))) AS rank\n    FROM sea_season s JOIN realm_characters rc ON rc.id = s.char_id AND rc.held IS NULL",
+    "new": "      WHERE o.season = s.season AND o.${n} > 0 AND (o.${n} > s.${n} OR (o.${n} = s.${n} AND (o.${at} < s.${at} OR (o.${at} = s.${at} AND orc.name < rc.name))))) AS rank\n    FROM sea_season s JOIN realm_characters rc ON rc.id = s.char_id",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "SEA-SEASON-last-this",
     "file": "server-account/src/seaSeason.js",
-    "old": "    top(WAYS.deep, season - 1, SEA_SEASON_LAST_ROWS), top(WAYS.legends, season - 1, SEA_SEASON_LAST_ROWS),",
-    "new": "    top(WAYS.deep, season, SEA_SEASON_LAST_ROWS), top(WAYS.legends, season, SEA_SEASON_LAST_ROWS),",
+    "old": "    top(WAYS.deep, season - 1, SEA_SEASON_LAST_ROWS),\n    top(WAYS.legends, season - 1, SEA_SEASON_LAST_ROWS),",
+    "new": "    top(WAYS.deep, season, SEA_SEASON_LAST_ROWS),\n    top(WAYS.legends, season, SEA_SEASON_LAST_ROWS),",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "SEA-SEASON-board-ends",
     "file": "server-account/src/seaSeason.js",
-    "old": "    season, ends: arenaSeasonEndsS(season),",
-    "new": "    season, ends: arenaSeasonEndsS(season) - 1,",
+    "old": "    ends: arenaSeasonEndsS(season),",
+    "new": "    ends: arenaSeasonEndsS(season) - 1,",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "SEA-SEASON-checkpoint-none",
     "file": "server-account/src/realm.js",
-    "old": "      ...(v.clean ? seaSeasonSteps(db, { player: playerId, char: id }, save, nowS) : []),\n",
-    "new": "",
+    "old": "      ...(v.clean ? seaSeasonSteps(db, { player: playerId, char: id }, save, nowS) : []),\n    ]);",
+    "new": "    ]);",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "SEA-SEASON-page-days-floor",
     "file": "src/scenes/seaSeasonHost.js",
-    "old": "daysLeft: Math.max(0, Math.ceil((board.ends * 1000 - now()) / 86_400_000))",
-    "new": "daysLeft: Math.max(0, Math.floor((board.ends * 1000 - now()) / 86_400_000))",
+    "old": "      daysLeft: Math.max(0, Math.ceil((board.ends * 1000 - now()) / 86_400_000)),",
+    "new": "      daysLeft: Math.max(0, Math.floor((board.ends * 1000 - now()) / 86_400_000)),",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "SEA-SEASON-page-days-negative",
     "file": "src/scenes/seaSeasonHost.js",
-    "old": "daysLeft: Math.max(0, Math.ceil((board.ends * 1000 - now()) / 86_400_000))",
-    "new": "daysLeft: Math.ceil((board.ends * 1000 - now()) / 86_400_000)",
+    "old": "    return {\n      asking: false,\n      ...board,\n      daysLeft: Math.max(0, Math.ceil((board.ends * 1000 - now()) / 86_400_000)),\n      line,\n    };",
+    "new": "    return { asking: false, ...board, daysLeft: Math.ceil((board.ends * 1000 - now()) / 86_400_000), line };",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "SEA-SEASON-page-refusal-unsaid",
     "file": "src/scenes/seaSeasonHost.js",
-    "old": "      else { line = { text: accountRefusalText(r?.error), warn: true }; nextAt",
-    "new": "      else { line = null; nextAt",
+    "old": "        line = { text: accountRefusalText(r?.error), warn: true };",
+    "new": "        line = null;",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -587,8 +587,8 @@
   {
     "name": "SEA-SEASON-page-unread-an-empty-season",
     "file": "src/scenes/seaSeasonHost.js",
-    "old": "    if (!board) return { asking: true,",
-    "new": "    if (!board) return { asking: false,",
+    "old": "        asking: true,",
+    "new": "        asking: false,",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -596,8 +596,8 @@
   {
     "name": "SEA-SEASON-tab-no-section",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "season: o.season ? seasonText(o.season) : null };",
-    "new": "season: null };",
+    "old": "    season: o.season ? seasonText(o.season) : null,",
+    "new": "    season: null,",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "SEA-SEASON-words-days",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "t('sea.season.headSub', 'Season {n} - {days, plural, one {# day} other {# days}} left', { n: s.season, days: s.daysLeft })",
-    "new": "t('sea.season.headSub', 'Season {n} - {days, plural, one {# day} other {# days}} left', { n: s.season, days: s.daysLeft + 1 })",
+    "old": "            days: s.daysLeft,",
+    "new": "            days: s.daysLeft + 1,",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -623,8 +623,8 @@
   {
     "name": "SEA-SEASON-words-plural",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "'{n, plural, one {{figure} league} other {{figure} leagues}}', { n, figure: g(n) }",
-    "new": "'{n, plural, one {{figure} league} other {{figure} leagues}}', { n: 2, figure: g(n) }",
+    "old": "    t('sea.season.leagues', '{n, plural, one {{figure} league} other {{figure} leagues}}', { n, figure: g(n) });",
+    "new": "    t('sea.season.leagues', '{n, plural, one {{figure} league} other {{figure} leagues}}', { n: 2, figure: g(n) });",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -632,8 +632,8 @@
   {
     "name": "SEA-SEASON-words-figure-plain",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "'{n, plural, one {{figure} legend} other {{figure} legends}}', { n, figure: g(n) }",
-    "new": "'{n, plural, one {{figure} legend} other {{figure} legends}}', { n, figure: n }",
+    "old": "    t('sea.season.legends', '{n, plural, one {{figure} legend} other {{figure} legends}}', { n, figure: g(n) });",
+    "new": "    t('sea.season.legends', '{n, plural, one {{figure} legend} other {{figure} legends}}', { n, figure: n });",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -641,8 +641,8 @@
   {
     "name": "SEA-SEASON-words-mine-unsaid",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "    s.mine?.deep ? t('sea.season.mineDeep',",
-    "new": "    false ? t('sea.season.mineDeep',",
+    "old": "    s.mine?.deep",
+    "new": "    false",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -650,8 +650,8 @@
   {
     "name": "SEA-SEASON-words-last-unsaid",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "    lastLegends ? t('sea.season.lastLegends',",
-    "new": "    false ? t('sea.season.lastLegends',",
+    "old": "    lastLegends ? t('sea.season.lastLegends', \"Last season's most legends ended: {who}.\", { who: lastLegends }) : '',",
+    "new": "    false ? t('sea.season.lastLegends', \"Last season's most legends ended: {who}.\", { who: lastLegends }) : '',",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -659,8 +659,8 @@
   {
     "name": "SEA-SEASON-words-asking-lists",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "    lists: s.asking ? [] : [",
-    "new": "    lists: [",
+    "old": "    lists: s.asking\n      ? []\n      : [\n          {\n            title: t('sea.season.deepTitle', 'Deepest voyages'),\n            rows: rows(s.deep ?? [], leagues),\n            none: t('sea.season.deepNone', 'No captain has sailed past the Veil this season.'),\n          },\n          {\n            title: t('sea.season.legendsTitle', 'Legends ended'),\n            rows: rows(s.legends ?? [], legends),\n            none: t('sea.season.legendsNone', 'No legend has been sunk or taken this season.'),\n          },\n        ],",
+    "new": "    lists: [\n      {\n        title: t('sea.season.deepTitle', 'Deepest voyages'),\n        rows: rows(s.deep ?? [], leagues),\n        none: t('sea.season.deepNone', 'No captain has sailed past the Veil this season.'),\n      },\n      {\n        title: t('sea.season.legendsTitle', 'Legends ended'),\n        rows: rows(s.legends ?? [], legends),\n        none: t('sea.season.legendsNone', 'No legend has been sunk or taken this season.'),\n      },\n    ],",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -668,8 +668,8 @@
   {
     "name": "SEA-SEASON-words-asking-unsaid",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "    lede: s.asking ? t('sea.season.asking',",
-    "new": "    lede: false ? t('sea.season.asking',",
+    "old": "    lede: s.asking",
+    "new": "    lede: false",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -686,8 +686,8 @@
   {
     "name": "SEA-SEASON-win-no-titles",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "      seasonList.append(el('li', 'dfnaval-item more', list.title));\n",
-    "new": "",
+    "old": "      seasonList.append(el('li', 'dfnaval-item more', list.title));\n      if (!list.rows.length) seasonList.append(officeRow(list.none, ''));",
+    "new": "      if (!list.rows.length) seasonList.append(officeRow(list.none, ''));",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -695,8 +695,8 @@
   {
     "name": "SEA-SEASON-win-no-none",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "      if (!list.rows.length) seasonList.append(officeRow(list.none, ''));\n",
-    "new": "",
+    "old": "      if (!list.rows.length) seasonList.append(officeRow(list.none, ''));\n      for (const r of list.rows) seasonList.append(officeRow(r.title, r.words));",
+    "new": "      for (const r of list.rows) seasonList.append(officeRow(r.title, r.words));",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -713,7 +713,7 @@
   {
     "name": "SEA-SEASON-win-office-hides",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "    for (const n of [oLede, boardSec, heldSec, lettersSec, wantedSec, seasonSec]) n.style.display = tab === 'office' ? '' : 'none';",
+    "old": "    for (const n of [oLede, boardSec, heldSec, lettersSec, wantedSec, seasonSec])\n      n.style.display = tab === 'office' ? '' : 'none';",
     "new": "    for (const n of [oLede, boardSec, heldSec, lettersSec, wantedSec]) n.style.display = tab === 'office' ? '' : 'none';",
     "tests": [
       "test/systems/sea/seaseason.test.js"
@@ -722,8 +722,8 @@
   {
     "name": "SEA-SEASON-win-unrendered",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "    renderSeason(ot.season);   // SEA-SEASON\n",
-    "new": "",
+    "old": "    renderSeason(ot.season); // SEA-SEASON\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]

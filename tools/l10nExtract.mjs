@@ -51,7 +51,8 @@ export function literalText(n, consts = null) {
   if (n.type === 'Literal' && typeof n.value === 'string') return n.value;
   if (n.type === 'TemplateLiteral' && n.expressions.length === 0) return n.quasis[0].value.cooked;
   if (n.type === 'BinaryExpression' && n.operator === '+') {
-    const a = literalText(n.left, consts), b = literalText(n.right, consts);
+    const a = literalText(n.left, consts),
+      b = literalText(n.right, consts);
     return a === null || b === null ? null : a + b;
   }
   if (n.type === 'Identifier' && consts?.has(n.name)) return consts.get(n.name);
@@ -81,14 +82,18 @@ export function extractPortStrings(root = ROOT) {
     const src = readFileSync(file, 'utf8');
     if (!src.includes('textManager.js')) continue;
     let ast;
-    try { ast = parse(src, { ecmaVersion: 'latest', sourceType: 'module', locations: true }); } catch (err) {
+    try {
+      ast = parse(src, { ecmaVersion: 'latest', sourceType: 'module', locations: true });
+    } catch (err) {
       problems.push(`${relative(root, file)}: does not parse (${err.message})`);
       continue;
     }
-    const names = new Map();   // local name -> 't' | 'tIn'
+    const names = new Map(); // local name -> 't' | 'tIn'
     for (const node of ast.body) {
       if (node.type !== 'ImportDeclaration' || !/textManager\.js$/.test(node.source.value)) continue;
-      for (const sp of node.specifiers) if (sp.type === 'ImportSpecifier' && (sp.imported.name === 't' || sp.imported.name === 'tIn')) names.set(sp.local.name, sp.imported.name);
+      for (const sp of node.specifiers)
+        if (sp.type === 'ImportSpecifier' && (sp.imported.name === 't' || sp.imported.name === 'tIn'))
+          names.set(sp.local.name, sp.imported.name);
     }
     if (!names.size) continue;
     const consts = moduleConsts(ast);
@@ -96,13 +101,31 @@ export function extractPortStrings(root = ROOT) {
       if (node.type !== 'CallExpression' || node.callee.type !== 'Identifier' || !names.has(node.callee.name)) return;
       const at = `${relative(root, file)}:${node.loc.start.line}`;
       const [keyArg, enArg] = names.get(node.callee.name) === 'tIn' ? node.arguments.slice(1) : node.arguments;
-      const key = literalText(keyArg), en = literalText(enArg, consts);
-      if (key === null) { problems.push(`${at}: the key is not a literal`); return; }
-      if (!PORT_KEY.test(key)) { problems.push(`${at}: '${key}' is not a dotted key`); return; }
-      if (en === null) { problems.push(`${at}: '${key}' has no literal English`); return; }
-      try { parseMessage(en); } catch (err) { problems.push(`${at}: '${key}' ${err.message}`); return; }
+      const key = literalText(keyArg),
+        en = literalText(enArg, consts);
+      if (key === null) {
+        problems.push(`${at}: the key is not a literal`);
+        return;
+      }
+      if (!PORT_KEY.test(key)) {
+        problems.push(`${at}: '${key}' is not a dotted key`);
+        return;
+      }
+      if (en === null) {
+        problems.push(`${at}: '${key}' has no literal English`);
+        return;
+      }
+      try {
+        parseMessage(en);
+      } catch (err) {
+        problems.push(`${at}: '${key}' ${err.message}`);
+        return;
+      }
       const prev = strings.get(key);
-      if (prev && prev.en !== en) { problems.push(`${at}: '${key}' is '${en}' here and '${prev.en}' at ${prev.at}`); return; }
+      if (prev && prev.en !== en) {
+        problems.push(`${at}: '${key}' is '${en}' here and '${prev.en}' at ${prev.at}`);
+        return;
+      }
       if (!prev) strings.set(key, { en, at });
     });
   }
@@ -116,13 +139,23 @@ export function catalogCsv(strings) {
 
 if (isMain(import.meta.url)) {
   const { strings, problems } = extractPortStrings();
-  if (problems.length) { for (const p of problems) console.error(p); process.exit(1); }
+  if (problems.length) {
+    for (const p of problems) console.error(p);
+    process.exit(1);
+  }
   const csv = catalogCsv(strings);
   const path = join(ROOT, CATALOG_PATH);
   if (process.argv.includes('--check')) {
     let onDisk = '';
-    try { onDisk = readFileSync(path, 'utf8'); } catch { /* missing is a difference */ }
-    if (onDisk !== csv) { console.error(`${CATALOG_PATH} is not what the source says - run node tools/l10nExtract.mjs`); process.exit(1); }
+    try {
+      onDisk = readFileSync(path, 'utf8');
+    } catch {
+      /* missing is a difference */
+    }
+    if (onDisk !== csv) {
+      console.error(`${CATALOG_PATH} is not what the source says - run node tools/l10nExtract.mjs`);
+      process.exit(1);
+    }
     console.log(`${CATALOG_PATH}: ${strings.size} strings, in step with the source`);
   } else {
     mkdirSync(dirname(path), { recursive: true });

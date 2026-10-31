@@ -38,17 +38,22 @@ const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
 // registered provider answers { negVertical, negHorizontal, posHorizontal }
 // each frame, or null for 1 / 1 / 1.
 let _limits = null;
-export function setAxisLimitsProvider(fn) { _limits = typeof fn === 'function' ? fn : null; }
+export function setAxisLimitsProvider(fn) {
+  _limits = typeof fn === 'function' ? fn : null;
+}
 const clampAxes = (axes) => {
   const l = _limits?.();
   if (!l) return axes;
-  return { forward: clamp(axes.forward, -(l.negVertical ?? 1), 1), strafe: clamp(axes.strafe, -(l.negHorizontal ?? 1), l.posHorizontal ?? 1) };
+  return {
+    forward: clamp(axes.forward, -(l.negVertical ?? 1), 1),
+    strafe: clamp(axes.strafe, -(l.negHorizontal ?? 1), l.posHorizontal ?? 1),
+  };
 };
 
 export class MoveAxes {
   constructor() {
-    this.horizontal = 0;   // strafe: right +, left -
-    this.vertical = 0;     // forward +, backward -
+    this.horizontal = 0; // strafe: right +, left -
+    this.vertical = 0; // forward +, backward -
   }
 
   /**
@@ -83,13 +88,21 @@ export class MoveAxes {
       // pass that zeroes ToggleAutorun at :1851 still applies its -1
       // this frame), autorun + MoveForwards is +1. Two opposing keys
       // keep the file's recorded neutral-difference answer above.
-      this.vertical = ay !== 0 ? ay : (held.forwards || held.backwards)
-        ? ((held.forwards ? 1 : 0) - (held.backwards ? 1 : 0))
-        : (held.autorun ? 1 : 0);
-      return clampAxes({ forward: this.vertical, strafe: this.horizontal });   // RR2: InputManager's limits
+      this.vertical =
+        ay !== 0
+          ? ay
+          : held.forwards || held.backwards
+            ? (held.forwards ? 1 : 0) - (held.backwards ? 1 : 0)
+            : held.autorun
+              ? 1
+              : 0;
+      return clampAxes({ forward: this.vertical, strafe: this.horizontal }); // RR2: InputManager's limits
     }
-    let posH = false, negH = false, posV = false, negV = false;
-    const force = (axis, scale) => clamp(axis + (MOVE_ACCELERATION_CONST * scale) * dt, -1, 1);
+    let posH = false,
+      negH = false,
+      posV = false,
+      negV = false;
+    const force = (axis, scale) => clamp(axis + MOVE_ACCELERATION_CONST * scale * dt, -1, 1);
     // AUDIT 64 F3: the autorun force runs BEFORE the key forces,
     // because :542 precedes FindKeyboardActions at :548 - so a frame
     // with autorun AND MoveForwards sums two +1 forces, and autorun
@@ -97,7 +110,10 @@ export class MoveAxes {
     // Raising posV is load-bearing (:1472): without it ApplyFriction
     // (:1482-1483) decays the axis by the same 9.8/s every frame and
     // the net stays 0.
-    if (held.autorun) { this.vertical = force(this.vertical, 1); posV = true; }
+    if (held.autorun) {
+      this.vertical = force(this.vertical, 1);
+      posV = true;
+    }
     // FindKeyboardActions (:1840-1852): right, left, forwards, backwards.
     // TI2: the joystick arm. A key is an IMPULSE toward +/-1; a throw
     // is a TARGET, so the axis climbs toward the throw at the same
@@ -107,16 +123,35 @@ export class MoveAxes {
     // Ledger A under TI2: DFU's joystick reading reaches
     // ApplyHorizontalForce as the scale of the same impulse, which with
     // acceleration on would walk every throw to full speed.
-    const toward = (axis, target) => axis + clamp(target - axis, -MOVE_ACCELERATION_CONST * dt, MOVE_ACCELERATION_CONST * dt);
-    if (ax !== 0) { this.horizontal = toward(this.horizontal, ax); if (ax > 0) posH = true; else negH = true; }
-    else {
-      if (held.right) { this.horizontal = force(this.horizontal, 1); posH = true; }
-      if (held.left) { this.horizontal = force(this.horizontal, -1); negH = true; }
+    const toward = (axis, target) =>
+      axis + clamp(target - axis, -MOVE_ACCELERATION_CONST * dt, MOVE_ACCELERATION_CONST * dt);
+    if (ax !== 0) {
+      this.horizontal = toward(this.horizontal, ax);
+      if (ax > 0) posH = true;
+      else negH = true;
+    } else {
+      if (held.right) {
+        this.horizontal = force(this.horizontal, 1);
+        posH = true;
+      }
+      if (held.left) {
+        this.horizontal = force(this.horizontal, -1);
+        negH = true;
+      }
     }
-    if (ay !== 0) { this.vertical = toward(this.vertical, ay); if (ay > 0) posV = true; else negV = true; }
-    else {
-      if (held.forwards) { this.vertical = force(this.vertical, 1); posV = true; }
-      if (held.backwards) { this.vertical = force(this.vertical, -1); negV = true; }
+    if (ay !== 0) {
+      this.vertical = toward(this.vertical, ay);
+      if (ay > 0) posV = true;
+      else negV = true;
+    } else {
+      if (held.forwards) {
+        this.vertical = force(this.vertical, 1);
+        posV = true;
+      }
+      if (held.backwards) {
+        this.vertical = force(this.vertical, -1);
+        negV = true;
+      }
     }
     // ApplyFriction (:1477-1491): decay an axis whose impulse was not raised.
     const step = MOVE_ACCELERATION_CONST * dt;
@@ -124,6 +159,6 @@ export class MoveAxes {
     if (!negV && this.vertical < 0) this.vertical = clamp(this.vertical + step, this.vertical, 0);
     if (!posH && this.horizontal > 0) this.horizontal = clamp(this.horizontal - step, 0, this.horizontal);
     if (!negH && this.horizontal < 0) this.horizontal = clamp(this.horizontal + step, this.horizontal, 0);
-    return clampAxes({ forward: this.vertical, strafe: this.horizontal });   // RR2: InputManager's limits
+    return clampAxes({ forward: this.vertical, strafe: this.horizontal }); // RR2: InputManager's limits
   }
 }

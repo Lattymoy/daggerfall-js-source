@@ -35,10 +35,10 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { collectDecor, decorCatalogue, addDecorNature, HALL_BOARD_ENTRY } from './decorCatalogue.js';
-import { GUILD_FURNITURE_ENTRIES, registerGuildFurniture } from '../../world/guildFurniture.js';   // GUILD-SHOP
-import { addDecorMods } from './decorMods.js';   // DECOR-MODS: the town mods' furnishings
-import { customModelFor, customModelNeeds, classicModelIdOf } from '../../world/customModels.js';   // DECOR-MODS: a stand-in's own size
-import { BLOCK_TYPES } from '../../formats/blocksFile.js';   // DECOR-DUNGEON: the host's deps, built once (decorScanDeps)
+import { GUILD_FURNITURE_ENTRIES, registerGuildFurniture } from '../../world/guildFurniture.js'; // GUILD-SHOP
+import { addDecorMods } from './decorMods.js'; // DECOR-MODS: the town mods' furnishings
+import { customModelFor, customModelNeeds, classicModelIdOf } from '../../world/customModels.js'; // DECOR-MODS: a stand-in's own size
+import { BLOCK_TYPES } from '../../formats/blocksFile.js'; // DECOR-DUNGEON: the host's deps, built once (decorScanDeps)
 import { GLOBAL_SCALE } from '../../world/meshReader.js';
 import { billboardSize } from '../../world/rmbFlats.js';
 
@@ -55,10 +55,10 @@ export function decorScanDeps({ blocks, arch, getTexture }) {
     blocks,
     isTownBlock: (t) => t === BLOCK_TYPES.Rmb,
     isDungeonBlock: (t) => t === BLOCK_TYPES.Rdb,
-    nature: true,   // DECOR-OUTDOOR: a yard's trees and plants, its own climate's
-    mods: true,   // DECOR-MODS: the town mods' furnishings (offered while the port stands them)
+    nature: true, // DECOR-OUTDOOR: a yard's trees and plants, its own climate's
+    mods: true, // DECOR-MODS: the town mods' furnishings (offered while the port stands them)
     modelRadius: (id) => {
-      const rec = arch?.getRecordIndex?.(classicModelIdOf(id));   // DECOR-MODS: an alias (a coloured bed) is its classic model's size
+      const rec = arch?.getRecordIndex?.(classicModelIdOf(id)); // DECOR-MODS: an alias (a coloured bed) is its classic model's size
       if (rec != null && rec >= 0) {
         const r = arch.getMesh(rec)?.radius ?? 0;
         return r > 0 ? r * GLOBAL_SCALE : null;
@@ -104,7 +104,15 @@ export const DECOR_SCAN_MODELS_A_STEP = 32;
  *   modelRadius(id)   - a model's radius in metres, or null
  *   flatRadius(archive, record) - a Promise of a flat's radius in metres (half its billboard's diagonal), or null
  */
-export function createDecorScan({ blocks, isTownBlock, isDungeonBlock = (_type) => false, nature = false, mods = false, modelRadius, flatRadius }) {
+export function createDecorScan({
+  blocks,
+  isTownBlock,
+  isDungeonBlock = (_type) => false,
+  nature = false,
+  mods = false,
+  modelRadius,
+  flatRadius,
+}) {
   /** @type {'blocks'|'models'|'flats'|'done'} */
   let phase = 'blocks';
   const total = Math.max(0, blocks?.count ?? 0);
@@ -124,12 +132,30 @@ export function createDecorScan({ blocks, isTownBlock, isDungeonBlock = (_type) 
   const measuring = new Set();
   let lateSized = 0;
 
-  const keep = (key, r) => { if (Number.isFinite(r) && r > 0) { radii.set(key, r); if (phase === 'done') lateSized++; } };
+  const keep = (key, r) => {
+    if (Number.isFinite(r) && r > 0) {
+      radii.set(key, r);
+      if (phase === 'done') lateSized++;
+    }
+  };
   /** One entry measured - a model at once, a flat when its archive answers. */
   function measure(e) {
-    if (e.model != null) { try { keep(e.key, modelRadius(e.model)); } catch { /* unmeasured: no price */ } return null; }
+    if (e.model != null) {
+      try {
+        keep(e.key, modelRadius(e.model));
+      } catch {
+        /* unmeasured: no price */
+      }
+      return null;
+    }
     measuring.add(e.key);
-    return Promise.resolve().then(() => flatRadius(e.flat[0], e.flat[1])).then((r) => keep(e.key, r), () => {}).finally(() => measuring.delete(e.key));
+    return Promise.resolve()
+      .then(() => flatRadius(e.flat[0], e.flat[1]))
+      .then(
+        (r) => keep(e.key, r),
+        () => {},
+      )
+      .finally(() => measuring.delete(e.key));
   }
 
   function readBlocks(n) {
@@ -137,19 +163,25 @@ export function createDecorScan({ blocks, isTownBlock, isDungeonBlock = (_type) 
     for (; next < end; next++) {
       try {
         const type = blocks.getBlockType(next);
-        if (!isTownBlock(type) && !isDungeonBlock(type)) continue;   // DECOR-DUNGEON: and a dungeon's furnishings
+        if (!isTownBlock(type) && !isDungeonBlock(type)) continue; // DECOR-DUNGEON: and a dungeon's furnishings
         // WD3: Daggerfall's blocks as BLOCKS.BSA holds them, never a world-data mod's through the door (Beautiful Villages
         // and Beautiful Cities redecorate 1,400 interiors; read here their pieces would renumber the catalogue) - DECOR-MODS:
         // the mods' furnishings join after every place of Daggerfall's instead (decorMods.js, measured), offered while they stand
         const b = blocks.readClassicBlock ? blocks.readClassicBlock(next) : blocks.getBlock(next);
         if (b) collectDecor([b], collected);
-      } catch { /* a block the file cannot read is a block with nothing in it */ }
+      } catch {
+        /* a block the file cannot read is a block with nothing in it */
+      }
     }
     if (next >= total) {
       // GUILD1e: and the hall's board, which no room placed - measured and priced as every piece
-      const read = nature ? addDecorNature(collected) : collected;   // DECOR-OUTDOOR: and the climates' nature
-      registerGuildFurniture();   // measured as any model is (customModelFor, below)
-      entries = Object.freeze([...decorCatalogue(mods ? addDecorMods(read) : read), HALL_BOARD_ENTRY, ...GUILD_FURNITURE_ENTRIES]);   // GUILD-SHOP: the guild's own pieces, a hall's alone   // DECOR-MODS: and the town mods' furnishings
+      const read = nature ? addDecorNature(collected) : collected; // DECOR-OUTDOOR: and the climates' nature
+      registerGuildFurniture(); // measured as any model is (customModelFor, below)
+      entries = Object.freeze([
+        ...decorCatalogue(mods ? addDecorMods(read) : read),
+        HALL_BOARD_ENTRY,
+        ...GUILD_FURNITURE_ENTRIES,
+      ]); // GUILD-SHOP: the guild's own pieces, a hall's alone   // DECOR-MODS: and the town mods' furnishings
       models = entries.filter((e) => e.model != null);
       phase = 'models';
     }
@@ -160,7 +192,9 @@ export function createDecorScan({ blocks, isTownBlock, isDungeonBlock = (_type) 
     for (; measured < end; measured++) measure(models[measured]);
     if (measured >= models.length) {
       phase = 'flats';
-      Promise.all((entries ?? []).filter((e) => e.flat).map(measure)).then(() => { phase = 'done'; });
+      Promise.all((entries ?? []).filter((e) => e.flat).map(measure)).then(() => {
+        phase = 'done';
+      });
     }
   }
   /** AUDIT 05b A3: the entries asked again, a step's worth of models at a time (a stand-in measured off its model is
@@ -198,7 +232,7 @@ export function createDecorScan({ blocks, isTownBlock, isDungeonBlock = (_type) 
     /** The catalogue (decorCatalogue's frozen entries) once the blocks are read, else null. */
     entries: () => entries,
     /** An entry's radius in metres once measured, else null - the panel's price and size band. */
-    radiusOf: (entry) => (entry ? radii.get(entry.key) ?? null : null),
+    radiusOf: (entry) => (entry ? (radii.get(entry.key) ?? null) : null),
     /** AUDIT 05b A3: how many entries were measured after the scan was done (`remeasure`). */
     lateSized: () => lateSized,
     /**

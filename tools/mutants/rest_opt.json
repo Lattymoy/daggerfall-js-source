@@ -20,8 +20,8 @@
   {
     "name": "REST-OPT-law-mine-ignored",
     "file": "src/systems/party/partyRestLaw.js",
-    "old": "  if (!mineOn) return false;\n",
-    "new": "",
+    "old": "  if (!mineOn) return false;\n  if (!party || iLead) return true;",
+    "new": "  if (!party || iLead) return true;",
     "tests": [
       "test/systems/party/restopt.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "REST-OPT-switch-off-by-default",
     "file": "src/systems/uiPrefs.js",
-    "old": "  restWithParty: true,",
-    "new": "  restWithParty: false,",
+    "old": "  restWithParty: true, // REST-OPT: off - I rest alone, and the party rests without me",
+    "new": "  restWithParty: false, // REST-OPT: off - I rest alone, and the party rests without me",
     "tests": [
       "test/systems/party/restopt.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "REST-OPT-switch-not-the-players",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  'restWithParty',   // REST-OPT: whether I rest with my party or alone - my own say\n",
-    "new": "",
+    "old": "  'restWithParty', // REST-OPT: whether I rest with my party or alone - my own say\n  'gentleActs', // PROF1: Gentle acts - an accessibility choice; every act plain is never an edge over another player",
+    "new": "  'gentleActs', // PROF1: Gentle acts - an accessibility choice; every act plain is never an edge over another player",
     "tests": [
       "test/systems/party/restopt.test.js"
     ]

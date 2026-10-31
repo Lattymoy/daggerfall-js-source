@@ -9,7 +9,7 @@
 
 import { deref } from './mwNifFile.js';
 import { flattenNif } from './mwNifMesh.js';
-import { particleSystemOf, affineInverse } from './mwParticles.js';   // MAC-Q: a part's particle systems, off the same walk; MWNPC9: a creature node's rest undone
+import { particleSystemOf, affineInverse } from './mwParticles.js'; // MAC-Q: a part's particle systems, off the same walk; MWNPC9: a creature node's rest undone
 import { skeletonSpaceMatrices, poseSkeleton, GRAPH_ROOT } from './mwSkin.js';
 
 /**
@@ -150,7 +150,10 @@ export function findNodeByName(nif, name) {
     // (mwNifMesh.js:"RULE 58 (2): RootCollisionNode"), and carry an `includeHidden` escape
     // hatch besides. This function produces a NODE.
     //
-    if (String(rec.name || '').toLowerCase() === want) { found = { rec, parents }; return; }
+    if (String(rec.name || '').toLowerCase() === want) {
+      found = { rec, parents };
+      return;
+    }
     if (!rec.children) return;
     const chain = [...parents, rec];
     for (const child of rec.children) if (child >= 0) walk(child, chain);
@@ -200,7 +203,7 @@ export function nodeTransformOf(nif, name) {
 const affineOf = (rec) => {
   const a = new Float32Array(9);
   const s = rec.scale ?? 1;
-  for (let i = 0; i < 9; i++) a[i] = (rec.rotation ? rec.rotation[i] : (i % 4 === 0 ? 1 : 0)) * s;
+  for (let i = 0; i < 9; i++) a[i] = (rec.rotation ? rec.rotation[i] : i % 4 === 0 ? 1 : 0) * s;
   const t = rec.translation || [0, 0, 0];
   return { a, t: [t[0], t[1], t[2]] };
 };
@@ -226,11 +229,11 @@ export function bindPart(skeleton, partNif, opts = {}) {
   // MAC-Q: the file's PARTICLE SYSTEMS come out of the same walk, into
   // their own list - a flame is not a batch and a batch is not a flame.
   const sink = [];
-  const batches = flattenNif(partNif, { underNode: opts.underNode, excludeNode: opts.excludeNode, effects: sink });   // WS1
+  const batches = flattenNif(partNif, { underNode: opts.underNode, excludeNode: opts.excludeNode, effects: sink }); // WS1
   const effects = [];
   for (const bundle of sink) {
     const d = particleSystemOf(partNif, bundle);
-    if (d) effects.push(Object.assign(d, { parentRef: bundle.parentRef ?? -1 }));   // MWNPC9: the node it hangs under
+    if (d) effects.push(Object.assign(d, { parentRef: bundle.parentRef ?? -1 })); // MWNPC9: the node it hangs under
   }
   const skinned = [];
   const attached = [];
@@ -293,7 +296,10 @@ export function bindPart(skeleton, partNif, opts = {}) {
 
 /** MWNPC9: the debug shapes a creature's model carries ("Tri Bip01 ..."), which OpenMW strips from a creature's
  *  object root before it draws (animation.cpp setObjectRoot - RemoveTriBipVisitor, for a creature alone). */
-export const isTriBip = (name) => String(name || '').toLowerCase().startsWith('tri bip');
+export const isTriBip = (name) =>
+  String(name || '')
+    .toLowerCase()
+    .startsWith('tri bip');
 
 /**
  * MWNPC9 (bible/04-Characters/Morrowind-NPCs.md section 14): A CREATURE'S MODEL, BOUND TO ITS OWN SKELETON. A
@@ -318,7 +324,11 @@ export function bindCreatureModel(skeleton, nif) {
     return { attachRef: ref, pre: at ? affineInverse(at) : null };
   };
   const dropped = [];
-  const keep = (b) => { if (!isTriBip(b.name)) return true; dropped.push(b.name); return false; };
+  const keep = (b) => {
+    if (!isTriBip(b.name)) return true;
+    dropped.push(b.name);
+    return false;
+  };
   return {
     skinned: bound.skinned.filter(keep),
     rigid: bound.attached.filter(keep).map((batch) => ({ batch, ...onNode(batch.parentRef) })),

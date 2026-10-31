@@ -76,7 +76,13 @@ export const BRIGANDINE_METALS = Object.freeze(Object.keys(ARMOR_MATERIAL).filte
 /** MW-STEEL1: Daggerfall's classic armour templates (combat/enemyEquipment.js ARMOR_ENUM, DFU's ItemEnums.Armor),
  *  restated for the leaf's sake; test/tooling/mwsteel1.test.js holds them to the enum. */
 export const CLASSIC_ARMOR_TEMPLATE = Object.freeze({
-  Cuirass: 102, Gauntlets: 103, Greaves: 104, Left_Pauldron: 105, Right_Pauldron: 106, Helm: 107, Boots: 108,
+  Cuirass: 102,
+  Gauntlets: 103,
+  Greaves: 104,
+  Left_Pauldron: 105,
+  Right_Pauldron: 106,
+  Helm: 107,
+  Boots: 108,
 });
 
 /** MW-STEEL1: the steel helm's two styles - the Steel Helm switch's values (systems/features.js, pref `mwSteelHelm`),
@@ -84,13 +90,21 @@ export const CLASSIC_ARMOR_TEMPLATE = Object.freeze({
 export const STEEL_HELM_STYLES = Object.freeze(['closed', 'open']);
 export const STEEL_HELM_DEFAULT = STEEL_HELM_STYLES[0];
 
-const part = (p, model, hides = null) => Object.freeze({ part: p, model, ...(hides ? { hides: Object.freeze(hides) } : {}) });
-const plate = (material) => (id, name, templateIndex, { parts, styles = null }) => Object.freeze({
-  id, name, templateIndex, material, parts: Object.freeze(parts),
-  ...(styles ? { styles: Object.freeze(styles) } : {}),
-});
+const part = (p, model, hides = null) =>
+  Object.freeze({ part: p, model, ...(hides ? { hides: Object.freeze(hides) } : {}) });
+const plate =
+  (material) =>
+  (id, name, templateIndex, { parts, styles = null }) =>
+    Object.freeze({
+      id,
+      name,
+      templateIndex,
+      material,
+      parts: Object.freeze(parts),
+      ...(styles ? { styles: Object.freeze(styles) } : {}),
+    });
 const steel = plate(ARMOR_MATERIAL.Steel);
-const ebony = plate(ARMOR_MATERIAL.Ebony);   // MW-EBONY1
+const ebony = plate(ARMOR_MATERIAL.Ebony); // MW-EBONY1
 
 /** MW-STEEL1: Mac's steel plate, piece by piece (tools/bakeSteelPlate.mjs bakes the meshes, skinned - MW-STEEL4). Each
  *  piece fills the ARMO_PART slots a retail piece of its shape fills, so the priority law and the skin shadows are the
@@ -102,7 +116,7 @@ const ebony = plate(ARMOR_MATERIAL.Ebony);   // MW-EBONY1
  *  hiding the ankle and knee. The helm fills the HAIR slot, which hides the hair; the open helm leaves the head, its
  *  face showing, and the closed one hides it (MW-FIT1). */
 function steelPlate() {
-  const helmClosed = Object.freeze([part('hair', 'steel_plate_helm_closed.nif', ['head'])]);   // MW-FIT1: a closed helm is the head
+  const helmClosed = Object.freeze([part('hair', 'steel_plate_helm_closed.nif', ['head'])]); // MW-FIT1: a closed helm is the head
   const helmOpen = Object.freeze([part('hair', 'steel_plate_helm_open.nif')]);
   return [
     steel('daggerfall_steel_cuirass', 'Steel Cuirass', CLASSIC_ARMOR_TEMPLATE.Cuirass, {
@@ -115,7 +129,10 @@ function steelPlate() {
       ],
     }),
     steel('daggerfall_steel_greaves', 'Steel Greaves', CLASSIC_ARMOR_TEMPLATE.Greaves, {
-      parts: [part('right upper leg', 'steel_plate_greave_right.nif'), part('left upper leg', 'steel_plate_greave_left.nif')],
+      parts: [
+        part('right upper leg', 'steel_plate_greave_right.nif'),
+        part('left upper leg', 'steel_plate_greave_left.nif'),
+      ],
     }),
     steel('daggerfall_steel_left_pauldron', 'Steel Left Pauldron', CLASSIC_ARMOR_TEMPLATE.Left_Pauldron, {
       parts: [part('left pauldron', 'steel_plate_pauldron_left.nif', ['left upper arm'])],
@@ -124,7 +141,8 @@ function steelPlate() {
       parts: [part('right pauldron', 'steel_plate_pauldron_right.nif', ['right upper arm'])],
     }),
     steel('daggerfall_steel_helm', 'Steel Helm', CLASSIC_ARMOR_TEMPLATE.Helm, {
-      parts: helmClosed, styles: { closed: helmClosed, open: helmOpen },
+      parts: helmClosed,
+      styles: { closed: helmClosed, open: helmOpen },
     }),
     steel('daggerfall_steel_boots', 'Steel Boots', CLASSIC_ARMOR_TEMPLATE.Boots, {
       parts: [
@@ -140,15 +158,16 @@ function steelPlate() {
  *  chest skin). The skirt needs no split of its own: skinned from the groin, thighs and knees, it bends with the legs
  *  under it. */
 const BRIGANDINE_SKIN_FROM = Object.freeze(['chest', 'groin', 'upperleg', 'knee']);
-const brigandine = (metal) => Object.freeze({
-  id: `daggerfall_brigandine_${metal.toLowerCase()}`,
-  name: `${metal} Brigandine`,
-  templateIndex: RRI_JERKIN_TEMPLATE,
-  material: ARMOR_MATERIAL[metal],
-  skinFrom: BRIGANDINE_SKIN_FROM,
-  fitTo: 'chest',   // MW-BRIG3: its closed top sits where the chest skin it hides ends, at the base of the neck
-  parts: Object.freeze([Object.freeze({ part: 'cuirass', model: `brigandine_${metal.toLowerCase()}.nif` })]),
-});
+const brigandine = (metal) =>
+  Object.freeze({
+    id: `daggerfall_brigandine_${metal.toLowerCase()}`,
+    name: `${metal} Brigandine`,
+    templateIndex: RRI_JERKIN_TEMPLATE,
+    material: ARMOR_MATERIAL[metal],
+    skinFrom: BRIGANDINE_SKIN_FROM,
+    fitTo: 'chest', // MW-BRIG3: its closed top sits where the chest skin it hides ends, at the base of the neck
+    parts: Object.freeze([Object.freeze({ part: 'cuirass', model: `brigandine_${metal.toLowerCase()}.nif` })]),
+  });
 
 /** MW-EBONY1 (2026-10-09, Mac: "The ebony armor set and its textures"; asked, Ebony only): Mac's ebony plate,
  *  Daggerfall's seven classic pieces in Ebony (tools/bakeEbonyPlate.mjs bakes the meshes, skinned as the steel plate's
@@ -169,7 +188,10 @@ function ebonyPlate() {
       ],
     }),
     ebony('daggerfall_ebony_greaves', 'Ebony Greaves', CLASSIC_ARMOR_TEMPLATE.Greaves, {
-      parts: [part('right upper leg', 'ebony_plate_greave_right.nif'), part('left upper leg', 'ebony_plate_greave_left.nif')],
+      parts: [
+        part('right upper leg', 'ebony_plate_greave_right.nif'),
+        part('left upper leg', 'ebony_plate_greave_left.nif'),
+      ],
     }),
     ebony('daggerfall_ebony_left_pauldron', 'Ebony Left Pauldron', CLASSIC_ARMOR_TEMPLATE.Left_Pauldron, {
       parts: [part('left pauldron', 'ebony_plate_pauldron_left.nif', ['left upper arm'])],
@@ -177,7 +199,9 @@ function ebonyPlate() {
     ebony('daggerfall_ebony_right_pauldron', 'Ebony Right Pauldron', CLASSIC_ARMOR_TEMPLATE.Right_Pauldron, {
       parts: [part('right pauldron', 'ebony_plate_pauldron_right.nif', ['right upper arm'])],
     }),
-    ebony('daggerfall_ebony_helm', 'Ebony Helm', CLASSIC_ARMOR_TEMPLATE.Helm, { parts: [part('hair', 'ebony_plate_helm.nif', ['head'])] }),
+    ebony('daggerfall_ebony_helm', 'Ebony Helm', CLASSIC_ARMOR_TEMPLATE.Helm, {
+      parts: [part('hair', 'ebony_plate_helm.nif', ['head'])],
+    }),
     ebony('daggerfall_ebony_boots', 'Ebony Boots', CLASSIC_ARMOR_TEMPLATE.Boots, {
       parts: [
         part('right foot', 'ebony_plate_boot_right.nif', ['right ankle', 'right knee']),
@@ -210,11 +234,7 @@ function ebonyPlate() {
  *
  * `styles`: a piece that comes more than one way (the steel helm), the parts of each - `parts` is the default's.
  */
-export const OWN_MW_ARMOR = Object.freeze([
-  ...BRIGANDINE_METALS.map(brigandine),
-  ...steelPlate(),
-  ...ebonyPlate(),
-]);
+export const OWN_MW_ARMOR = Object.freeze([...BRIGANDINE_METALS.map(brigandine), ...steelPlate(), ...ebonyPlate()]);
 
 /** The own model this worn piece wears, or null for everything that
  *  resolves through Morrowind's own records. */
@@ -223,9 +243,12 @@ export const ownArmorModelFor = (piece) =>
 
 /** MW-STEEL1: the parts an own model wears in this style - its `styles` entry when it has one, else `parts`. */
 export const ownArmorParts = (own, { helmStyle = STEEL_HELM_DEFAULT } = {}) =>
-  (own?.styles?.[helmStyle] ?? own?.parts ?? []);
+  own?.styles?.[helmStyle] ?? own?.parts ?? [];
 
 /** Every mesh path this table can ask for, derived rather than typed out
  *  again - the coverage walk's (each ships). Every style's. */
-export const ownArmorModelPaths = () =>
-  [...new Set(OWN_MW_ARMOR.flatMap((a) => [a.parts, ...Object.values(a.styles ?? {})].flat().map((p) => `meshes/${p.model}`)))];
+export const ownArmorModelPaths = () => [
+  ...new Set(
+    OWN_MW_ARMOR.flatMap((a) => [a.parts, ...Object.values(a.styles ?? {})].flat().map((p) => `meshes/${p.model}`)),
+  ),
+];

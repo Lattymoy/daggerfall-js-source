@@ -30,8 +30,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { mapPixelToWorldCoord, worldCoordToMapPixel } from '../formats/mapsFile.js';
-import { seededRng } from './wind/wind.js';   // mulberry32, the weather's own - one home
-import { chaseWordOf, validChaseWord, BANDS_WIRE_MAX } from './travel/travelBands.js';   // OW6: the chase word's one law (TV7b's)
+import { seededRng } from './wind/wind.js'; // mulberry32, the weather's own - one home
+import { chaseWordOf, validChaseWord, BANDS_WIRE_MAX } from './travel/travelBands.js'; // OW6: the chase word's one law (TV7b's)
 
 export { seededRng };
 
@@ -64,14 +64,18 @@ export const RAIDER_REACH_PX = 12;
 export const RAIDER_LABEL = 'Pirates';
 /** The seed's salt: "RAID". */
 const RAIDER_SEED = 0x52414944;
-const M = NATIVE_PIXEL / 819.2;   // native units a metre
+const M = NATIVE_PIXEL / 819.2; // native units a metre
 
 /** A map pixel's native origin corner: its row counted south (MapsFile.MapPixelToWorldCoord). */
-export const nativeOfPixel = (px, py) => { const w = mapPixelToWorldCoord(px, py); return { x: w.x, z: w.y }; };
+export const nativeOfPixel = (px, py) => {
+  const w = mapPixelToWorldCoord(px, py);
+  return { x: w.x, z: w.y };
+};
 /** The map pixel a native point stands in (MapsFile.WorldCoordToMapPixel). */
 export const pixelOfNative = (x, z) => worldCoordToMapPixel(x, z);
 
-const seedOf = (cx, cy, life) => (Math.imul(cx + 1013, 73856093) ^ Math.imul(cy + 2029, 19349663) ^ Math.imul(life + 7, 83492791) ^ RAIDER_SEED) >>> 0;
+const seedOf = (cx, cy, life) =>
+  (Math.imul(cx + 1013, 73856093) ^ Math.imul(cy + 2029, 19349663) ^ Math.imul(life + 7, 83492791) ^ RAIDER_SEED) >>> 0;
 
 /**
  * THE RAIDER of a cell in a life, or null: the chance rolled, its birth pixel drawn in the cell and its place within
@@ -83,12 +87,22 @@ export function raiderOf({ cx, cy, life, open, sea = null }) {
   const seed = seedOf(cx, cy, life);
   const r = seededRng(seed);
   if (r() >= RAIDER_CHANCE) return null;
-  const px = cx * RAIDER_CELL_PX + Math.floor(r() * RAIDER_CELL_PX), py = cy * RAIDER_CELL_PX + Math.floor(r() * RAIDER_CELL_PX);
+  const px = cx * RAIDER_CELL_PX + Math.floor(r() * RAIDER_CELL_PX),
+    py = cy * RAIDER_CELL_PX + Math.floor(r() * RAIDER_CELL_PX);
   if (!open(px, py)) return null;
   const o = nativeOfPixel(px, py);
   const born = { x: o.x + r() * NATIVE_PIXEL, z: o.z + r() * NATIVE_PIXEL };
   if (sea && !sea(born.x, born.z)) return null;
-  return { id: `r${cx}.${cy}.${life}`, cx, cy, life, seed, born, bornMs: life * RAIDER_LIFE_MS, heading0: r() * Math.PI * 2 };
+  return {
+    id: `r${cx}.${cy}.${life}`,
+    cx,
+    cy,
+    life,
+    seed,
+    born,
+    bornMs: life * RAIDER_LIFE_MS,
+    heading0: r() * Math.PI * 2,
+  };
 }
 
 /** AUDIT OW5b S4: how many points along a leg are asked for water - one every RAIDER_LEG_MS's run over this (about 22 m
@@ -109,7 +123,9 @@ export function raiderAt(raider, ms, sea) {
   const r = seededRng(raider.seed ^ 0x9e3779b9);
   const t = Math.max(0, Math.min(RAIDER_LIFE_MS, ms - raider.bornMs));
   const legs = Math.floor(t / RAIDER_LEG_MS);
-  let x = raider.born.x, z = raider.born.z, h = raider.heading0;
+  let x = raider.born.x,
+    z = raider.born.z,
+    h = raider.heading0;
   const step = RAIDER_SAIL_MPS * M * (RAIDER_LEG_MS / 1000);
   const clear = (hd) => {
     for (let k = 1; k <= RAIDER_LEG_PROBES; k++) {
@@ -123,11 +139,12 @@ export function raiderAt(raider, ms, sea) {
     const way = clear(h) ? h : clear(h + Math.PI) ? h + Math.PI : null;
     if (way == null) return;
     h = way;
-    x += Math.sin(h) * step * frac; z += Math.cos(h) * step * frac;
+    x += Math.sin(h) * step * frac;
+    z += Math.cos(h) * step * frac;
   };
   for (let k = 0; k < legs; k++) {
     sail(1);
-    h += (r() - 0.5) * Math.PI;   // the bend at the leg's end
+    h += (r() - 0.5) * Math.PI; // the bend at the leg's end
   }
   sail((t - legs * RAIDER_LEG_MS) / RAIDER_LEG_MS);
   return { x, z, heading: h };
@@ -140,12 +157,14 @@ export function raiderAt(raider, ms, sea) {
  */
 export function raidersNear({ at, ms, open, sea, reach = RAIDER_REACH_PX }) {
   const life = Math.floor(ms / RAIDER_LIFE_MS);
-  const c0x = Math.floor((at.x - reach) / RAIDER_CELL_PX), c1x = Math.floor((at.x + reach) / RAIDER_CELL_PX);
-  const c0y = Math.floor((at.y - reach) / RAIDER_CELL_PX), c1y = Math.floor((at.y + reach) / RAIDER_CELL_PX);
+  const c0x = Math.floor((at.x - reach) / RAIDER_CELL_PX),
+    c1x = Math.floor((at.x + reach) / RAIDER_CELL_PX);
+  const c0y = Math.floor((at.y - reach) / RAIDER_CELL_PX),
+    c1y = Math.floor((at.y + reach) / RAIDER_CELL_PX);
   const out = [];
   for (let cy = c0y; cy <= c1y; cy++) {
     for (let cx = c0x; cx <= c1x; cx++) {
-      const raider = raiderOf({ cx, cy, life, open, sea });   // AUDIT SEA PATHS O3: born on the sea it sails
+      const raider = raiderOf({ cx, cy, life, open, sea }); // AUDIT SEA PATHS O3: born on the sea it sails
       if (raider) out.push({ ...raider, ...raiderAt(raider, ms, sea) });
     }
   }
@@ -164,7 +183,8 @@ export const raiderSight = (night) => (night ? RAIDER_SIGHT_NIGHT_M : RAIDER_SIG
  *   best: number, bestAt: number, sea: (x:number, z:number) => boolean }} q
  */
 export function chaseStep({ pos, quarry, dt, scale, contact, now, best, bestAt, sea }) {
-  const dx = quarry.x - pos.x, dz = quarry.z - pos.z;
+  const dx = quarry.x - pos.x,
+    dz = quarry.z - pos.z;
   const dist = Math.hypot(dx, dz) / M;
   const move = Math.min(dist, RAIDER_CHASE_MPS * dt * Math.max(1, scale));
   const k = dist > 0 ? move / dist : 0;
@@ -173,8 +193,10 @@ export function chaseStep({ pos, quarry, dt, scale, contact, now, best, bestAt, 
   if (left <= contact) return { state: 'contact', pos: next, left, best: Math.min(best, left), bestAt: now };
   if (!sea(next.x, next.z)) return { state: 'lost', pos, left: dist, best, bestAt };
   const gained = left < best - 1;
-  const b = gained ? left : best, at = gained ? now : bestAt;
-  if (left > RAIDER_LEASH_M || now - at > RAIDER_GIVE_UP_MS) return { state: 'lost', pos: next, left, best: b, bestAt: at };
+  const b = gained ? left : best,
+    at = gained ? now : bestAt;
+  if (left > RAIDER_LEASH_M || now - at > RAIDER_GIVE_UP_MS)
+    return { state: 'lost', pos: next, left, best: b, bestAt: at };
   return { state: 'chase', pos: next, left, best: b, bestAt: at };
 }
 
@@ -208,5 +230,7 @@ export function raiderNearMe(id, at, life) {
   const l = Number(m[3]);
   if (l !== life && l !== life - 1) return false;
   const reach = RAIDER_REACH_PX + RAIDER_CELL_PX;
-  return Math.abs(Number(m[1]) * RAIDER_CELL_PX - at.x) <= reach && Math.abs(Number(m[2]) * RAIDER_CELL_PX - at.y) <= reach;
+  return (
+    Math.abs(Number(m[1]) * RAIDER_CELL_PX - at.x) <= reach && Math.abs(Number(m[2]) * RAIDER_CELL_PX - at.y) <= reach
+  );
 }

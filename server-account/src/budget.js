@@ -20,7 +20,7 @@
 // refills it. The numbers below are the first setting, a guess the measure exists to replace.
 // ═══════════════════════════════════════════════════════════════════
 
-import { DB_ROOT } from './service.js';   // SCALE4d: the binding a request's counted Proxy wraps - what the config is kept by
+import { DB_ROOT } from './service.js'; // SCALE4d: the binding a request's counted Proxy wraps - what the config is kept by
 
 /** The first setting, by level band: `upTo` the band's top level, `rate` the gold an hour of play may add, `cap` the most
  *  the bucket holds (hours of rate). OPEN, every one - the measure sets them. */
@@ -43,18 +43,39 @@ export const SPOILS_GRANT_PER_LEVEL = 2_000;
  *  the dearer half of the mean's; a guess the measure replaces, as the rest). */
 export const SPOILS_GRANT_PIECE = 10_000;
 /** How many pieces a receipt's portents (`p`, its bits - net/gate/gateReceipt.js) pay: one a bit, three at most. */
-export const portentPieces = (/** @type {unknown} */ p) => (Number.isSafeInteger(p) && /** @type {number} */ (p) > 0 ? [1, 2, 4].filter((b) => (/** @type {number} */ (p) & b) !== 0).length : 0);
-export const spoilsGrant = (/** @type {number} */ level) => SPOILS_GRANT_BASE + SPOILS_GRANT_PER_LEVEL * Math.max(1, Math.trunc(Number(level) || 1));
+export const portentPieces = (/** @type {unknown} */ p) =>
+  Number.isSafeInteger(p) && /** @type {number} */ (p) > 0
+    ? [1, 2, 4].filter((b) => /** @type {number} */ (p & b) !== 0).length
+    : 0;
+export const spoilsGrant = (/** @type {number} */ level) =>
+  SPOILS_GRANT_BASE + SPOILS_GRANT_PER_LEVEL * Math.max(1, Math.trunc(Number(level) || 1));
 
 /** A band's shape - whole, positive numbers, rising levels. */
-const validBand = (/** @type {any} */ b) => !!b && Number.isSafeInteger(b.upTo) && b.upTo >= 1 && Number.isSafeInteger(b.rate) && b.rate >= 0 && Number.isSafeInteger(b.cap) && b.cap >= 0;
+const validBand = (/** @type {any} */ b) =>
+  !!b &&
+  Number.isSafeInteger(b.upTo) &&
+  b.upTo >= 1 &&
+  Number.isSafeInteger(b.rate) &&
+  b.rate >= 0 &&
+  Number.isSafeInteger(b.cap) &&
+  b.cap >= 0;
 /** A config staff may write, or null: `enforce` a boolean, `bands` one to twelve valid bands with rising tops. */
 export function budgetConfigOf(/** @type {unknown} */ v) {
   if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
   const c = /** @type {any} */ (v);
-  if (typeof c.enforce !== 'boolean' || !Array.isArray(c.bands) || c.bands.length < 1 || c.bands.length > 12 || !c.bands.every(validBand)) return null;
+  if (
+    typeof c.enforce !== 'boolean' ||
+    !Array.isArray(c.bands) ||
+    c.bands.length < 1 ||
+    c.bands.length > 12 ||
+    !c.bands.every(validBand)
+  )
+    return null;
   for (let i = 1; i < c.bands.length; i++) if (c.bands[i].upTo <= c.bands[i - 1].upTo) return null;
-  return { enforce: c.enforce, bands: c.bands.map((/** @type {any} */ b) => ({ upTo: b.upTo, rate: b.rate, cap: b.cap })) };
+  return {
+    enforce: c.enforce,
+    bands: c.bands.map((/** @type {any} */ b) => ({ upTo: b.upTo, rate: b.rate, cap: b.cap })),
+  };
 }
 /** How long an isolate keeps the config it read (AUDIT INT: every checkpoint asked for it) - a change staff make is
  *  read at once where they made it (forgetBudgetConfig), and within a minute everywhere. */
@@ -64,7 +85,7 @@ const kept = new WeakMap();
 /** SCALE4d: KEPT BY THE BINDING, never by the object a request hands in (STORM-SHED's DB_ROOT). A deployed service counts
  *  every request's statements through a Proxy made for that request (metrics.js countedDb), so keyed by `db` this kept
  *  nothing past its own request: every realm checkpoint read the config again, the minute it was meant to keep it. */
-const keyOf = (/** @type {any} */ db) => (db && typeof db === 'object' ? db[DB_ROOT] ?? db : null);
+const keyOf = (/** @type {any} */ db) => (db && typeof db === 'object' ? (db[DB_ROOT] ?? db) : null);
 /** The config standing: staff's, else the first setting. */
 export async function budgetConfig(/** @type {any} */ db) {
   return budgetKept(db) ?? budgetFrom(db, await budgetRead(db).first());
@@ -80,16 +101,24 @@ export const budgetRead = (/** @type {any} */ db) => db.prepare("SELECT value FR
 /** The config its row says (staff's, else the first setting), kept for the binding. */
 export function budgetFrom(/** @type {any} */ db, /** @type {any} */ row) {
   let c = null;
-  try { c = budgetConfigOf(JSON.parse(row?.value ?? 'null')); } catch { c = null; }
+  try {
+    c = budgetConfigOf(JSON.parse(row?.value ?? 'null'));
+  } catch {
+    c = null;
+  }
   const config = c ?? BUDGET_DEFAULT;
   const key = keyOf(db);
   if (key) kept.set(key, { at: Date.now(), config });
   return config;
 }
 /** A staff change made here: the next read asks the database. */
-export const forgetBudgetConfig = (/** @type {any} */ db) => { const key = keyOf(db); if (key) kept.delete(key); };
+export const forgetBudgetConfig = (/** @type {any} */ db) => {
+  const key = keyOf(db);
+  if (key) kept.delete(key);
+};
 /** The band a level plays in: the first whose top it does not pass, else the last. */
-export const bandOf = (/** @type {{ bands: readonly any[] }} */ config, /** @type {number} */ level) => config.bands.find((b) => level <= b.upTo) ?? config.bands[config.bands.length - 1];
+export const bandOf = (/** @type {{ bands: readonly any[] }} */ config, /** @type {number} */ level) =>
+  config.bands.find((b) => level <= b.upTo) ?? config.bands[config.bands.length - 1];
 
 /**
  * ONE STEP OF THE BUCKET, pure: `allowance` (null - the character's first judgement: full), filled by `played` seconds
@@ -127,10 +156,19 @@ export async function grantSpoils(db, playerId, pieces = 0) {
  * @param {any} db @param {string} playerId @param {number} [pieces] @param {string|null} [guard] @param {...unknown} binds
  */
 export function spoilsGrantStatement(db, playerId, pieces = 0, guard = null, ...binds) {
-  return db.prepare(
-    'UPDATE realm_characters SET allowance = allowance + ?2 + ?3 * MAX(1, COALESCE(level_seen, 1)) + ?4'
-    + ' WHERE player = ?1 AND lease IS NOT NULL AND allowance IS NOT NULL AND dead_at IS NULL' + (guard ? ` AND (${guard})` : ''),
-  ).bind(playerId, SPOILS_GRANT_BASE, SPOILS_GRANT_PER_LEVEL, SPOILS_GRANT_PIECE * Math.max(0, Math.min(3, Math.trunc(Number(pieces) || 0))), ...binds);   // AUDIT WB14 (WIRE-6): and a portent's pieces
+  return db
+    .prepare(
+      'UPDATE realm_characters SET allowance = allowance + ?2 + ?3 * MAX(1, COALESCE(level_seen, 1)) + ?4' +
+        ' WHERE player = ?1 AND lease IS NOT NULL AND allowance IS NOT NULL AND dead_at IS NULL' +
+        (guard ? ` AND (${guard})` : ''),
+    )
+    .bind(
+      playerId,
+      SPOILS_GRANT_BASE,
+      SPOILS_GRANT_PER_LEVEL,
+      SPOILS_GRANT_PIECE * Math.max(0, Math.min(3, Math.trunc(Number(pieces) || 0))),
+      ...binds,
+    ); // AUDIT WB14 (WIRE-6): and a portent's pieces
 }
 
 /** LW15 (bible/06-Systems/Living-World-II.md "LW15"): THE SERVICE'S OWN FAUCETS - gold it pays that no player paid (a
@@ -139,6 +177,9 @@ export function spoilsGrantStatement(db, playerId, pieces = 0, guard = null, ...
  *  staff's own refunds (review.js `repair`) - gold no player paid, named as its own kind. */
 export const FAUCET_KINDS = Object.freeze(['patron', 'repair']);
 /** One faucet's gold written to its hour. @param {any} db @param {string} kind @param {number} hour @param {number} gold */
-export const faucetStatement = (db, kind, hour, gold) => db.prepare(
-  'INSERT INTO realm_faucets (hour, kind, gold, n) VALUES (?1, ?2, ?3, 1) ON CONFLICT (hour, kind) DO UPDATE SET gold = realm_faucets.gold + excluded.gold, n = realm_faucets.n + 1',
-).bind(hour, FAUCET_KINDS.includes(kind) ? kind : 'patron', Math.max(0, Math.trunc(Number(gold) || 0)));
+export const faucetStatement = (db, kind, hour, gold) =>
+  db
+    .prepare(
+      'INSERT INTO realm_faucets (hour, kind, gold, n) VALUES (?1, ?2, ?3, 1) ON CONFLICT (hour, kind) DO UPDATE SET gold = realm_faucets.gold + excluded.gold, n = realm_faucets.n + 1',
+    )
+    .bind(hour, FAUCET_KINDS.includes(kind) ? kind : 'patron', Math.max(0, Math.trunc(Number(gold) || 0)));

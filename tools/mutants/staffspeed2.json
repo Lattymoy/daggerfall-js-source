@@ -5,7 +5,9 @@
     "old": "      if (!claim?.meta?.changes) return;",
     "new": "      return;",
     "why": "a stale row answered for ever, never made again",
-    "tests": ["test/server/staffspeed2_kept.test.js"]
+    "tests": [
+      "test/server/staffspeed2_kept.test.js"
+    ]
   },
   {
     "name": "STAFF-SPEED-2-claim-ignored",
@@ -13,23 +15,29 @@
     "old": "      if (!claim?.meta?.changes) return;",
     "new": "      if (false) return;",
     "why": "two stale asks at once both make it",
-    "tests": ["test/server/staffspeed2_kept.test.js"]
+    "tests": [
+      "test/server/staffspeed2_kept.test.js"
+    ]
   },
   {
     "name": "STAFF-SPEED-2-no-size-cap",
     "file": "server-account/src/staffKept.js",
-    "old": "body.length > STAFF_KEPT_MAX_BYTES) return null;",
-    "new": "body.length > Infinity) return null;",
+    "old": "  if (typeof body !== 'string' || body.length > STAFF_KEPT_MAX_BYTES) return null;",
+    "new": "  if (typeof body !== 'string' || body.length > Infinity) return null;",
     "why": "an answer past D1's value size sent to the table",
-    "tests": ["test/server/staffspeed2_kept.test.js"]
+    "tests": [
+      "test/server/staffspeed2_kept.test.js"
+    ]
   },
   {
     "name": "STAFF-SPEED-2-stale-past-its-time",
     "file": "server-account/src/staffKept.js",
-    "old": "nowS >= at && nowS - at < staleS) {",
-    "new": "nowS >= at) {",
+    "old": "  if (row && Number.isFinite(at) && nowS >= at && nowS - at < staleS) {",
+    "new": "  if (row && Number.isFinite(at) && nowS >= at) {",
     "why": "a row of any age answered",
-    "tests": ["test/server/staffspeed2_kept.test.js"]
+    "tests": [
+      "test/server/staffspeed2_kept.test.js"
+    ]
   },
   {
     "name": "STAFF-SPEED-2-many-reads-each",
@@ -37,7 +45,9 @@
     "old": "  if (ctx.kept?.rows.has(key)) row = ctx.kept.rows.get(key);",
     "new": "  if (false) row = null;",
     "why": "Home's kept watches each read their row again",
-    "tests": ["test/server/staffspeed2_kept.test.js"]
+    "tests": [
+      "test/server/staffspeed2_kept.test.js"
+    ]
   },
   {
     "name": "STAFF-SPEED-2-home-keeps-reports",
@@ -45,6 +55,8 @@
     "old": "export const HOME_KEPT = Object.freeze(['economy',",
     "new": "export const HOME_KEPT = Object.freeze(['reports', 'economy',",
     "why": "a watch with a member's own claims kept for every Admin",
-    "tests": ["test/server/staffspeed2_kept.test.js"]
+    "tests": [
+      "test/server/staffspeed2_kept.test.js"
+    ]
   }
 ]

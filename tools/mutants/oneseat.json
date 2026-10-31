@@ -138,8 +138,8 @@
   {
     "name": "ONESEAT-lock-hold-not-asked",
     "file": "src/net/oneSeat.js",
-    "old": "      if (!held) return;\n",
-    "new": "",
+    "old": "      if (!held) return;\n      if (m.at < at || (m.at === at && String(m.n) < nonce)) {",
+    "new": "      if (m.at < at || (m.at === at && String(m.n) < nonce)) {",
     "tests": [
       "test/net/oneseat.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "ONESEAT-lock-own-word",
     "file": "src/net/oneSeat.js",
-    "old": "if (!m || m.t !== 'seat' || m.n === nonce || !Number.isFinite(m.at)) return;",
-    "new": "if (!m || m.t !== 'seat' || !Number.isFinite(m.at)) return;",
+    "old": "      if (!m || m.t !== 'seat' || m.n === nonce || !Number.isFinite(m.at)) return;",
+    "new": "      if (!m || m.t !== 'seat' || !Number.isFinite(m.at)) return;",
     "tests": [
       "test/net/oneseat.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "ONESEAT-lock-lost-kept",
     "file": "src/net/oneSeat.js",
-    "old": "      held = false;\n      try { onLost(); }",
-    "new": "      try { onLost(); }",
+    "old": "      } // the older claim gives way - the other tab's\n      held = false;\n      try {",
+    "new": "      } // the older claim gives way - the other tab's\n      try {",
     "tests": [
       "test/net/oneseat.test.js"
     ]
@@ -501,8 +501,8 @@
   {
     "name": "ONESEAT-C4-no-stamp-asked",
     "file": "src/net/oneSeat.js",
-    "old": "      if (m.at < at || (m.at === at && String(m.n) < nonce)) { say(); return; }   // the older claim gives way - the other tab's\n",
-    "new": "",
+    "old": "      if (m.at < at || (m.at === at && String(m.n) < nonce)) {\n        say();\n        return;\n      } // the older claim gives way - the other tab's\n      held = false;",
+    "new": "      held = false;",
     "tests": [
       "test/net/oneseat.test.js"
     ]
@@ -510,8 +510,8 @@
   {
     "name": "ONESEAT-C4-older-not-answered",
     "file": "src/net/oneSeat.js",
-    "old": "{ say(); return; }",
-    "new": "return;",
+    "old": "      if (m.at < at || (m.at === at && String(m.n) < nonce)) {\n        say();\n        return;\n      } // the older claim gives way - the other tab's",
+    "new": "      if (m.at < at || (m.at === at && String(m.n) < nonce)) return; // the older claim gives way - the other tab's",
     "tests": [
       "test/net/oneseat.test.js"
     ]
@@ -519,8 +519,8 @@
   {
     "name": "ONESEAT-C4-stamp-the-clock-alone",
     "file": "src/net/oneSeat.js",
-    "old": "      at = seen = Math.max(now(), seen + 1);",
-    "new": "      at = seen = now();",
+    "old": "      at = seen = Math.max(now(), seen + 1); // after every claim this tab has heard, whatever the clock says",
+    "new": "      at = seen = now(); // after every claim this tab has heard, whatever the clock says",
     "tests": [
       "test/net/oneseat.test.js"
     ]

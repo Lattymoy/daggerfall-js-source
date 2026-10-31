@@ -2,7 +2,7 @@
   {
     "name": "TV5-the-grid's-own-places-marked-twice",
     "file": "src/systems/travel/travelFarPlaces.js",
-    "old": "    if (cheb <= near || Math.hypot(dx, dy) > range) continue;   // beyond the grid's square; within the range's circle",
+    "old": "    if (cheb <= near || Math.hypot(dx, dy) > range) continue; // beyond the grid's square; within the range's circle",
     "new": "    if (Math.hypot(dx, dy) > range) continue;",
     "tests": [
       "test/ui/travel/tv5_far_places.test.js"
@@ -12,7 +12,7 @@
   {
     "name": "TV5-no-reach",
     "file": "src/systems/travel/travelFarPlaces.js",
-    "old": "    if (cheb <= near || Math.hypot(dx, dy) > range) continue;   // beyond the grid's square; within the range's circle",
+    "old": "    if (cheb <= near || Math.hypot(dx, dy) > range) continue; // beyond the grid's square; within the range's circle",
     "new": "    if (cheb <= near) continue;",
     "tests": [
       "test/ui/travel/tv5_far_places.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "TV5-tenths-flicker",
     "file": "src/systems/travel/travelFarPlaces.js",
-    "old": "  return km < 10 ?",
-    "new": "  return km < 100 ?",
+    "old": "  return km < 10 ? `${(Math.round(km * 10) / 10).toFixed(1)} km` : `${Math.round(km)} km`;",
+    "new": "  return km < 100 ? `${(Math.round(km * 10) / 10).toFixed(1)} km` : `${Math.round(km)} km`;",
     "tests": [
       "test/ui/travel/tv5_far_places.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "PERF-TV-click-never-a-plate",
     "file": "src/scenes/travelView.js",
-    "old": "      if (key) deps.onMark?.(key, e); else deps.onPick?.(e.clientX, e.clientY, e);",
-    "new": "      deps.onPick?.(e.clientX, e.clientY, e);",
+    "old": "      if (key) deps.onMark?.(key, e);\n      else deps.onPick?.(e.clientX, e.clientY, e); // OW-ATTACK: the press with the mark (an enemy's single click is the ground's)",
+    "new": "      deps.onPick?.(e.clientX, e.clientY, e); // OW-ATTACK: the press with the mark (an enemy's single click is the ground's)",
     "tests": [
       "test/ui/travel/tv5_far_places.test.js",
       "test/systems/travel/tv2_click_to_move.test.js"
@@ -213,8 +213,8 @@
   {
     "name": "PERF-TV-curtains-sample-every-cell",
     "file": "src/render/rainCurtains.js",
-    "old": "  const kept = [];\n",
-    "new": "  const kept = [];\n  for (const k of out) lowestGround(groundAt, k.centre[0], k.centre[2], k.radius);\n",
+    "old": "  // AUDIT DEEP R-4: the LOWEST LAND's rule wherever the host knows the land - the traveller's own (CURTAIN_BELOW_M under",
+    "new": "  for (const k of out) lowestGround(groundAt, k.centre[0], k.centre[2], k.radius);\n  // AUDIT DEEP R-4: the LOWEST LAND's rule wherever the host knows the land - the traveller's own (CURTAIN_BELOW_M under",
     "tests": [
       "test/ui/travel/tv5_far_places.test.js"
     ],
@@ -603,7 +603,7 @@
   {
     "name": "AUDIT-DEEP2-F8-a-square-range",
     "file": "src/systems/travel/travelFarPlaces.js",
-    "old": "    if (cheb <= near || Math.hypot(dx, dy) > range) continue;   // beyond the grid's square; within the range's circle",
+    "old": "    if (cheb <= near || Math.hypot(dx, dy) > range) continue; // beyond the grid's square; within the range's circle",
     "new": "    if (cheb <= near || cheb > range) continue;",
     "tests": [
       "test/ui/travel/tv5_far_places.test.js"

@@ -64,13 +64,22 @@ export function makeHitPend({ send, room, now, max = 64, ms = 2000, warn = (l) =
     const fn = ok ? e.fate?.sent : e.fate?.dropped;
     e.fate = null;
     if (!fn) return;
-    try { fn(); } catch (err) { warn(`[online] a blow's ${ok ? 'send' : 'drop'} handler threw: ${err?.message ?? err}`); }
+    try {
+      fn();
+    } catch (err) {
+      warn(`[online] a blow's ${ok ? 'send' : 'drop'} handler threw: ${err?.message ?? err}`);
+    }
   };
-  const wipe = () => { while (pend.length) settle(pend.shift(), false); };
+  const wipe = () => {
+    while (pend.length) settle(pend.shift(), false);
+  };
   const push = (r, hit, at, fate) => {
     if (pend.length >= max) {
       settle(pend.shift(), false);
-      if (!dropSaid) { dropSaid = true; warn(`[online] more blows than the wire will carry - the oldest go (${max} held, ${ms} ms)`); }
+      if (!dropSaid) {
+        dropSaid = true;
+        warn(`[online] more blows than the wire will carry - the oldest go (${max} held, ${ms} ms)`);
+      }
     }
     pend.push({ room: r, hit, at, fate });
   };
@@ -78,29 +87,53 @@ export function makeHitPend({ send, room, now, max = 64, ms = 2000, warn = (l) =
   const flush = (at = now()) => {
     if (!pend.length) return false;
     const r = room();
-    if (r == null || pend[0].room !== r) { wipe(); return false; }            // another room's blows name nothing here
-    while (pend.length && at - pend[0].at > ms) settle(pend.shift(), false);  // the fight moved on
+    if (r == null || pend[0].room !== r) {
+      wipe();
+      return false;
+    } // another room's blows name nothing here
+    while (pend.length && at - pend[0].at > ms) settle(pend.shift(), false); // the fight moved on
     let went = false;
     while (pend.length) {
-      if (!send(pend[0].hit)) break;   // the gate is spent, or the socket is away - the rest wait for a later frame
-      settle(pend.shift(), true); went = true;
+      if (!send(pend[0].hit)) break; // the gate is spent, or the socket is away - the rest wait for a later frame
+      settle(pend.shift(), true);
+      went = true;
     }
     return went;
   };
   /** The one door both pools' blows go out of (WORLD2's dungeon puppet, WORLD6b's cell owner). */
   const sendOrHold = (hit, fate = null) => {
     const e = { fate };
-    if (!hit || typeof hit !== 'object' || Array.isArray(hit)) { settle(e, false); return false; }
+    if (!hit || typeof hit !== 'object' || Array.isArray(hit)) {
+      settle(e, false);
+      return false;
+    }
     const r = room();
-    if (r == null) { wipe(); settle(e, false); return false; }
+    if (r == null) {
+      wipe();
+      settle(e, false);
+      return false;
+    }
     const at = now();
     if (pend.length && pend[0].room !== r) wipe();
-    if (pend.length) { push(r, hit, at, fate); return flush(at); }   // behind what is already waiting
-    if (send(hit)) { settle(e, true); return true; }
+    if (pend.length) {
+      push(r, hit, at, fate);
+      return flush(at);
+    } // behind what is already waiting
+    if (send(hit)) {
+      settle(e, true);
+      return true;
+    }
     push(r, hit, at, fate);
     return false;
   };
   /** LOOT-DUP: the pool going away is every held frame's end - the reservations come back rather than vanishing. */
   const clear = () => wipe();
-  return { send: sendOrHold, flush, clear, get held() { return pend.length; } };
+  return {
+    send: sendOrHold,
+    flush,
+    clear,
+    get held() {
+      return pend.length;
+    },
+  };
 }

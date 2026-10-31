@@ -2,7 +2,7 @@
   {
     "name": "DEATHHOLDS-not-called",
     "file": "src/systems/deathRespawn.js",
-    "old": "  const released = (dead || force) ? endDeathHolds(entity) : [];",
+    "old": "  const released = dead || force ? endDeathHolds(entity) : [];",
     "new": "  const released = [];",
     "tests": [
       "test/systems/fb1005_deathholds.test.js"
@@ -12,7 +12,7 @@
   {
     "name": "DEATHHOLDS-living-released",
     "file": "src/systems/deathRespawn.js",
-    "old": "  const released = (dead || force) ? endDeathHolds(entity) : [];",
+    "old": "  const released = dead || force ? endDeathHolds(entity) : [];",
     "new": "  const released = endDeathHolds(entity);",
     "tests": [
       "test/systems/fb1005_deathholds.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "DEATHHOLDS-paralyze-dropped",
     "file": "src/systems/deathRespawn.js",
-    "old": "export const DEATH_HOLDS = Object.freeze(['paralyze', 'silenced', ",
-    "new": "export const DEATH_HOLDS = Object.freeze(['silenced', ",
+    "old": "export const DEATH_HOLDS = Object.freeze([\n  'paralyze',\n  'silenced',\n  'continuousDamageFatigue',\n  'continuousDamageSpellPoints',\n]);",
+    "new": "export const DEATH_HOLDS = Object.freeze(['silenced', 'continuousDamageFatigue', 'continuousDamageSpellPoints']);",
     "tests": [
       "test/systems/fb1005_deathholds.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "DEATHHOLDS-silence-dropped",
     "file": "src/systems/deathRespawn.js",
-    "old": "Object.freeze(['paralyze', 'silenced', 'continuousDamageFatigue',",
-    "new": "Object.freeze(['paralyze', 'continuousDamageFatigue',",
+    "old": "export const DEATH_HOLDS = Object.freeze([\n  'paralyze',\n  'silenced',\n  'continuousDamageFatigue',\n  'continuousDamageSpellPoints',\n]);",
+    "new": "export const DEATH_HOLDS = Object.freeze(['paralyze', 'continuousDamageFatigue', 'continuousDamageSpellPoints']);",
     "tests": [
       "test/systems/fb1005_deathholds.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "DEATHHOLDS-fatigue-drain-dropped",
     "file": "src/systems/deathRespawn.js",
-    "old": "'silenced', 'continuousDamageFatigue', 'continuousDamageSpellPoints']);",
-    "new": "'silenced', 'continuousDamageSpellPoints']);",
+    "old": "export const DEATH_HOLDS = Object.freeze([\n  'paralyze',\n  'silenced',\n  'continuousDamageFatigue',\n  'continuousDamageSpellPoints',\n]);",
+    "new": "export const DEATH_HOLDS = Object.freeze(['paralyze', 'silenced', 'continuousDamageSpellPoints']);",
     "tests": [
       "test/systems/fb1005_deathholds.test.js"
     ],
@@ -72,7 +72,7 @@
   {
     "name": "DEATHHOLDS-forced-only",
     "file": "src/systems/deathRespawn.js",
-    "old": "  const released = (dead || force) ? endDeathHolds(entity) : [];",
+    "old": "  const released = dead || force ? endDeathHolds(entity) : [];",
     "new": "  const released = force ? endDeathHolds(entity) : [];",
     "tests": [
       "test/systems/fb1005_deathholds.test.js"

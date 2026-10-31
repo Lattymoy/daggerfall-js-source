@@ -83,8 +83,8 @@
   {
     "name": "PROFILE-MENU-the-plates-title-colourless",
     "file": "src/ui/playerBadge.js",
-    "old": "  ...TITLES.map((t) => `.card .acctworntitle.${badgeClass('tl', t)} { color: ${cssRgba(TITLE_RGBA[t])}; }`),\n",
-    "new": "  ...[],\n",
+    "old": "    ...TITLES.map((t) => `.card .acctworntitle.${badgeClass('tl', t)} { color: ${cssRgba(TITLE_RGBA[t])}; }`),",
+    "new": "    ...[],",
     "tests": [
       "test/ui/enhanced/plus_menu_site.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PROFILE-MENU-a-tile-not-a-panel-under-Plus",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    '.px-win .card.acctin ul.acctfacts.acctrecord li',   // PROFILE-MENU",
-    "new": "    // PROFILE-MENU",
+    "old": "    '.px-win .card.acctin ul.acctfacts.acctrecord li', // PROFILE-MENU: the profile's record, a tile a deed   // ARENA3: the Arena window's cards - a bout, a tier, a banner, a board, a rule   // ARENA2: the versus bar's plate - a stone panel over the sand",
+    "new": "    // PROFILE-MENU: the profile's record, a tile a deed   // ARENA3: the Arena window's cards - a bout, a tier, a banner, a board, a rule   // ARENA2: the versus bar's plate - a stone panel over the sand",
     "tests": [
       "test/ui/enhanced/plus_menu_site.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PLUS-MENU-the-doors-out-of-the-role",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    '.px-menu .doorbtn',\n    // FIRM1",
-    "new": "    // FIRM1",
+    "old": "    '.px-menu .doorbtn',\n    // FIRM1: the Firmament's window (ui/firmamentWindow.js) - its bar, its panels, its presses",
+    "new": "    // FIRM1: the Firmament's window (ui/firmamentWindow.js) - its bar, its panels, its presses",
     "tests": [
       "test/ui/enhanced/plus_menu_site.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "PLUS-SITE-the-kit-not-injected",
     "file": "scripts/landingHtml.mjs",
-    "old": "      { tag: 'style', attrs: { id: 'plus-kit' }, children: SITE_KIT_CSS, injectTo: 'head' },\n",
-    "new": "",
+    "old": "      { tag: 'style', attrs: { id: 'plus-kit' }, children: SITE_KIT_CSS, injectTo: 'head' },\n      ...skinTags(tokens, fonts),",
+    "new": "      ...skinTags(tokens, fonts),",
     "tests": [
       "test/ui/enhanced/plus_menu_site.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "PLUS-SITE-a-fitting-missing",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "[['left', 'top'], ['right', 'top'], ['left', 'bottom'], ['right', 'bottom']]",
-    "new": "[['left', 'top'], ['right', 'top'], ['left', 'bottom']]",
+    "old": "    ['right', 'bottom'],\n  ].flatMap(([x, y]) => fittingAt(x, y, t));",
+    "new": "  ].flatMap(([x, y]) => fittingAt(x, y, t));",
     "tests": [
       "test/ui/enhanced/plus_menu_site.test.js"
     ]
@@ -425,7 +425,7 @@
   {
     "name": "AUDIT-S3-a-fitting-without-its-body",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    at(t.brass, 1, 1, F - 2, F - 2), at(t.outline, 0, 0, F, F),",
+    "old": "    at(t.brass, 1, 1, F - 2, F - 2),\n    at(t.outline, 0, 0, F, F),",
     "new": "    at(t.outline, 0, 0, F, F),",
     "tests": [
       "test/ui/enhanced/plus_menu_site.test.js"
@@ -443,8 +443,8 @@
   {
     "name": "AUDIT-S5-no-brass-under-the-pointer",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "${list(pressable, ':hover')},\n${list(pressable, ':focus-visible')} { border-color: ${BRASS}; background-color: ${t.groundButtonHi};",
-    "new": "${list(pressable, ':focus-visible')} { border-color: ${BRASS}; background-color: ${t.groundButtonHi};",
+    "old": "${list(pressable, ':hover')},\n${list(pressable, ':focus-visible')} { border-color: ${BRASS}; background-color: ${t.groundButtonHi}; background-image: ${LIT_BAND}; }",
+    "new": "${list(pressable, ':focus-visible')} { border-color: ${BRASS}; background-color: ${t.groundButtonHi}; background-image: ${LIT_BAND}; }",
     "tests": [
       "test/ui/enhanced/plus_menu_site.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "AUDIT-S5-never-sinks",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "${list(pressable, ':active')} { border-color: ${SUNK}; translate: 1px 1px;",
-    "new": "${list(pressable, ':active')} { border-color: ${RAISED}; translate: 1px 1px;",
+    "old": "${list(pressable, ':active')} { border-color: ${SUNK}; translate: 1px 1px; box-shadow: ${RING}, inset 2px 2px 0 rgba(0,0,0,0.5); }",
+    "new": "${list(pressable, ':active')} { border-color: ${RAISED}; translate: 1px 1px; box-shadow: ${RING}, inset 2px 2px 0 rgba(0,0,0,0.5); }",
     "tests": [
       "test/ui/enhanced/plus_menu_site.test.js"
     ]

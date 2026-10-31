@@ -17,7 +17,10 @@ export function pvpRollIndex(/** @type {(b: Uint8Array<ArrayBuffer>) => Uint8Arr
 
 /** THE VILLAIN'S SEAM (PVP-VILLAIN, a later slice): a villain holds no insurance, so no policy keeps or pays at its fall.
  *  `keys` the policies in force; `among` the fallen's pieces (INSURE-ALL: a key two carry keeps neither). */
-export const pvpInsuredFor = (/** @type {Iterable<string>} */ keys, { villain = false, among = /** @type {any[] | null} */ (null) } = {}) => wildInsuredBy(villain ? [] : keys, among);
+export const pvpInsuredFor = (
+  /** @type {Iterable<string>} */ keys,
+  { villain = false, among = /** @type {any[] | null} */ (null) } = {},
+) => wildInsuredBy(villain ? [] : keys, among);
 
 /**
  * THE ROLL over the fallen's worn pieces (`items`, wornOffer's order): `{ w }`, the place in wornOffer of one random piece
@@ -30,19 +33,28 @@ export function pvpRewardRoll(items, { insured = () => false, keep = () => false
   const offer = wornOffer(items);
   const open = offer.map((it, w) => (insured(it) || keep(it) ? -1 : w)).filter((w) => w >= 0);
   if (open.length) return { w: open[pick(open.length)] };
-  const keys = [...new Set(offer.filter((it) => insured(it)).map(insureKeyOf).filter((k) => k != null))];
+  const keys = [
+    ...new Set(
+      offer
+        .filter((it) => insured(it))
+        .map(insureKeyOf)
+        .filter((k) => k != null),
+    ),
+  ];
   return keys.length ? { policy: /** @type {string} */ (keys[pick(keys.length)]) } : null;
 }
 
 /** The policy's gold as the remains carry it, killer's alone: a coin pile of `n`. */
 export const pvpPolicyGold = (/** @type {number} */ n) => goldStack(n);
 /** A remains record's policy gold (a coin pile - a worn piece never is one), or 0. */
-export const pvpPolicyGoldOf = (/** @type {any} */ rec) => (isGoldPieces(rec) && Number.isSafeInteger(rec.stackCount) && rec.stackCount > 0 ? rec.stackCount : 0);
+export const pvpPolicyGoldOf = (/** @type {any} */ rec) =>
+  isGoldPieces(rec) && Number.isSafeInteger(rec.stackCount) && rec.stackCount > 0 ? rec.stackCount : 0;
 
 /** HOW THE GOLD IS PAID - DFU's trade window's own law (tradeModes.js sellProceeds): coin when `n` pieces fit under the
  *  killer's `freeKg` (its game's MaxEncumbrance less its CarriedWeight), else a letter of credit for the whole. A tab that
  *  says no weight is paid a letter, which never overweights. */
-export const pvpGoldPaid = (/** @type {number} */ n, /** @type {unknown} */ freeKg) => (typeof freeKg === 'number' && Number.isFinite(freeKg) && n * GOLD_PIECE_WEIGHT_KG <= freeKg ? 'gold' : 'letter');
+export const pvpGoldPaid = (/** @type {number} */ n, /** @type {unknown} */ freeKg) =>
+  typeof freeKg === 'number' && Number.isFinite(freeKg) && n * GOLD_PIECE_WEIGHT_KG <= freeKg ? 'gold' : 'letter';
 
 /** The letter itself, its id `uid` (minted by the service). */
 export const pvpLetterOf = (/** @type {number} */ n, /** @type {string} */ uid) => ({ ...letterOfCredit(n), uid });

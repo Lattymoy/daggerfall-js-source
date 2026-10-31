@@ -214,7 +214,7 @@ test('TAMRIEL-RELIEF the wiring, by source: the data its own chunk (no static im
   assert.deepEqual(statics, [], 'nothing imports the data statically');
   assert.match(read('src/world/tamriel/tamrielRelief.js'), /const \{ RELIEF_DATA \} = await import\('\.\/tamrielReliefData\.js'\);/);
   assert.match(read('src/world/tamriel/tamrielRelief.js'), /return maskRelief\(decodeRelief\(RELIEF_DATA\), trace\);/, 'AUDIT TESA II G1: the trace\'s mask laid on the player\'s machine');
-  assert.match(read('src/ui/tamrielTrace.js'), /if \(trace && relief\) trace\.relief = await loadRelief\(trace\)\.catch\(\(e\) => \(console\.warn\([^\n]*, null\)\);/, 'AUDIT TESA II G2: a relief that does not load is its own loss');
+  assert.match(read('src/ui/tamrielTrace.js'), /if \(trace && relief\) trace\.relief = await loadRelief\(trace\)\.catch\(\(e\) => \{ console\.warn\([^\n]*; return null; \}\);/, 'AUDIT TESA II G2: a relief that does not load is its own loss');
   assert.match(read('tools/bakeTamrielRelief.mjs'), /import \{ RELIEF_SCALE \} from '\.\.\/src\/world\/tamriel\/tamrielRelief\.js';/, 'AUDIT TESA II G8: the grid\'s one home');
   assert.match(read('tools/bakeTamrielRelief.mjs'), /const trace = await preloadTamrielTrace\(\{ fetchBytes, palette: pal, relief: false, niben: false \}\);/, 'AUDIT TESA II G2: the bake never reads its own output - PIN MOVED (NIBEN-SEA): and reads the painting\'s own coasts');
   assert.doesNotMatch(read('tools/bakeTamrielRelief.mjs'), /export const (RELIEF_SCALE|FIT) =/, 'AUDIT TESA II G8: no second literal of the grid or the fit');

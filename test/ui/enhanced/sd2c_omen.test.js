@@ -255,7 +255,7 @@ test('SD2c the hosts by source: world.js hands the held map, the compass, the Ti
   // PIN MOVED (WW5): every lane's ring, one or a list read over the continent's frame as WW2's gates are
   assert.match(hm, /const sds = readGateMarks\(\(\) => \{ const v = typeof this\.deps\.sd === 'function' \? this\.deps\.sd\(\) : null; return Array\.isArray\(v\) \? v : v \? \[v\] : \[\]; \}, sheet\);/);   // PIN MOVED (BAY-LEFT-MAPS, at AUDIT BAY-LEFT's merge): over the sheet's box (_marksBox) - the continent's frame while it is shown, the zone map's too
   assert.match(hm, /\n {10}sds: this\._sds,   \/\/ SD2c/);
-  assert.match(read('src/ui/ink/inkMap.js'), /for \(const m of opts\.sds \?\? \(opts\.sd \? \[opts\.sd\] : \[\]\)\) if \(m && visible\(m\.cx, m\.cy, m\.r \+ 2\)\) paintGateRing\(ctx, view, m, pulse, SD_MAP_INK\);/);
+  assert.match(read('src/ui/ink/inkMap.js'), /for \(const m of opts\.sds \?\? \(opts\.sd \? \[opts\.sd\] : \[\]\)\)\n\s*if \(m && visible\(m\.cx, m\.cy, m\.r \+ 2\)\) paintGateRing\(ctx, view, m, pulse, SD_MAP_INK\);/);
   assert.match(read('src/ui/enhanced/enhancedHud.js'), /drawSdMark\(opts\.sd \?\? null, opts\.playerXZ \?\? null, heading01\);/);
   assert.match(read('src/ui/noticeWindow.js'), /sd: deps\.sd\?\.\(\) \?\? null,/);
   const rec = read('bible/11-Multiplayer/Super-Dungeons.md');

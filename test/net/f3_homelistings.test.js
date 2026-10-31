@@ -60,8 +60,8 @@ test('F3 the game\'s file: every row it holds is a good one, and both ends read 
   assert.match(src('server-account/src/homes.js'), /if \(homeListedOff\(mapId, buildingKey, undefined, layout\)\) return \{ error: 'home-unlisted' \};\n\s*if \(homeListedPrice\(mapId, buildingKey, price, undefined, layout\) !== price\) return \{ error: 'home-update' \};/);
   assert.match(src('server-account/src/halls.js'), /if \(homeListedOff\(mapId, buildingKey, undefined, layout\)\) return \{ error: 'home-unlisted' \};[^\n]*\n\s*if \(homeListedPrice\(mapId, buildingKey, price, undefined, layout\) !== price\) return \{ error: 'home-update' \};/);
   assert.match(src('src/scenes/worldModes.js'), /return homePriceOk\(price\) \? homeListedPrice\(homeTownOf\(bd\), bd\?\.buildingKey, price, undefined, homeClaimLayout\(homeTownOf\(bd\)\)\) : 0;/);
-  assert.match(src('src/systems/online/onlineHomes.js'), /=> !homeListedOff\(mapId, bd\?\.buildingKey, undefined, homeClaimLayout\(mapId\)\) &&/);
-  assert.match(src('src/systems/arena/arenaMove.js'), /!homeListedOff\(o\?\.mapId, s\.buildingKey, undefined, homeClaimLayout\(o\?\.mapId\)\)\), opts\);/);
+  assert.match(src('src/systems/online/onlineHomes.js'), /=>\n\s*!homeListedOff\(mapId, bd\?\.buildingKey, undefined, homeClaimLayout\(mapId\)\) &&/);
+  assert.match(src('src/systems/arena/arenaMove.js'), /!homeListedOff\(o\?\.mapId, s\.buildingKey, undefined, homeClaimLayout\(o\?\.mapId\)\),\n\s*\),\n\s*opts,\n\s*\);/);
   assert.match(src('server-account/src/decorAccess.js'), /homeGroundPrice\(mapId, buildingKey, Number\(home\.price\), ground, townBlocks, home\.layout \?\? null\)/);
 });
 

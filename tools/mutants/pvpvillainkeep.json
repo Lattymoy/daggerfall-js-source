@@ -2,8 +2,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-fall-step-unwired",
     "file": "server-account/src/wild.js",
-    "old": "    ...villainFallSteps(ctx.db, sea),   // PVP-VILLAIN-KEEP: the kill's points on its killer, once with the fall\n",
-    "new": "",
+    "old": "    ...villainFallSteps(ctx.db, sea), // PVP-VILLAIN-KEEP: the kill's points on its killer, once with the fall\n    // WILD-INSURE: each policy that kept its piece, spent in the batch that kept it",
+    "new": "    // WILD-INSURE: each policy that kept its piece, spent in the batch that kept it",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-shields-fall-uncounted",
     "file": "server-account/src/wild.js",
-    "old": "      ...villainFallSteps(ctx.db, sea),   // PVP-VILLAIN-KEEP: a shielded kill is still a kill its killer chose\n",
-    "new": "",
+    "old": "      ...villainFallSteps(ctx.db, sea), // PVP-VILLAIN-KEEP: a shielded kill is still a kill its killer chose\n    ]);",
+    "new": "    ]);",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-top-unheld",
     "file": "server-account/src/villainy.js",
-    "old": "SET villainy = MIN(?3, villainy + ?4)",
-    "new": "SET villainy = villainy + ?4 + 0 * ?3",
+    "old": "      .prepare('UPDATE realm_characters SET villainy = MIN(?3, villainy + ?4) WHERE id = ?1 AND player = ?2')",
+    "new": "      .prepare('UPDATE realm_characters SET villainy = villainy + ?4 + 0 * ?3 WHERE id = ?1 AND player = ?2')",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-killers-account-unasked",
     "file": "server-account/src/villainy.js",
-    "old": "villainy + ?4) WHERE id = ?1 AND player = ?2'",
-    "new": "villainy + ?4) WHERE id = ?1 AND ?2 IS NOT NULL'",
+    "old": "      .prepare('UPDATE realm_characters SET villainy = MIN(?3, villainy + ?4) WHERE id = ?1 AND player = ?2')",
+    "new": "      .prepare('UPDATE realm_characters SET villainy = MIN(?3, villainy + ?4) WHERE id = ?1 AND ?2 IS NOT NULL')",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-raid-unwired",
     "file": "server-account/src/raids.js",
-    "old": "    villainRaidStep(db, player.id, character, c.w, nonce),   // PVP-VILLAIN-KEEP: last, so no place above moves\n",
-    "new": "",
+    "old": "    villainRaidStep(db, player.id, character, c.w, nonce), // PVP-VILLAIN-KEEP: last, so no place above moves\n  ]);",
+    "new": "  ]);",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-a-red-raid-counted",
     "file": "server-account/src/villainy.js",
-    "old": " AND villainy > 0 AND villainy < ?6'",
-    "new": " AND villainy > 0 AND ?6 > 0'",
+    "old": "      'UPDATE realm_characters SET villainy = MAX(0, villainy - ?5) WHERE id = ?2 AND player = ?1 AND villainy > 0 AND villainy < ?6' +",
+    "new": "      'UPDATE realm_characters SET villainy = MAX(0, villainy - ?5) WHERE id = ?2 AND player = ?1 AND villainy > 0 AND ?6 > 0' +",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-raids-floor-gone",
     "file": "server-account/src/villainy.js",
-    "old": "SET villainy = MAX(0, villainy - ?5)",
-    "new": "SET villainy = villainy - ?5",
+    "old": "      'UPDATE realm_characters SET villainy = MAX(0, villainy - ?5) WHERE id = ?2 AND player = ?1 AND villainy > 0 AND villainy < ?6' +",
+    "new": "      'UPDATE realm_characters SET villainy = villainy - ?5 WHERE id = ?2 AND player = ?1 AND villainy > 0 AND villainy < ?6' +",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-raid-once-unasked",
     "file": "server-account/src/villainy.js",
-    "old": "    + ' AND EXISTS (SELECT 1 FROM raid_cleanses WHERE raid = ?3 AND account = ?1 AND nonce = ?4)')",
-    "new": "    + ' AND EXISTS (SELECT 1 FROM raid_cleanses WHERE raid = ?3 AND account = ?1 AND ?4 IS NOT NULL)')",
+    "old": "        ' AND EXISTS (SELECT 1 FROM raid_cleanses WHERE raid = ?3 AND account = ?1 AND nonce = ?4)',",
+    "new": "        ' AND EXISTS (SELECT 1 FROM raid_cleanses WHERE raid = ?3 AND account = ?1 AND ?4 IS NOT NULL)',",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-credit-unbounded",
     "file": "server-account/src/villainy.js",
-    "old": "Math.min(/** @type {number} */ (vd), Math.trunc(r.credited), VILLAIN_REPORT_DOWN_MAX)",
-    "new": "Math.min(/** @type {number} */ (vd), VILLAIN_REPORT_DOWN_MAX)",
+    "old": "  return Math.min(/** @type {number} */ (vd), Math.trunc(r.credited), VILLAIN_REPORT_DOWN_MAX);",
+    "new": "  return Math.min(/** @type {number} */ (vd), VILLAIN_REPORT_DOWN_MAX);",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-reports-top-gone",
     "file": "server-account/src/villainy.js",
-    "old": "Math.trunc(r.credited), VILLAIN_REPORT_DOWN_MAX)",
-    "new": "Math.trunc(r.credited))",
+    "old": "  return Math.min(/** @type {number} */ (vd), Math.trunc(r.credited), VILLAIN_REPORT_DOWN_MAX);",
+    "new": "  return Math.min(/** @type {number} */ (vd), Math.trunc(r.credited));",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-floor-gone",
     "file": "server-account/src/villainy.js",
-    "old": "SET villainy = MAX(0, villainy - ?3)",
-    "new": "SET villainy = villainy - ?3",
+    "old": "    .prepare(\n      'UPDATE realm_characters SET villainy = MAX(0, villainy - ?3) WHERE id = ?1 AND player = ?2 AND villainy > 0',\n    )",
+    "new": "    .prepare('UPDATE realm_characters SET villainy = villainy - ?3 WHERE id = ?1 AND player = ?2 AND villainy > 0')",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-meter-unread",
     "file": "server-account/src/realm.js",
-    "old": "    vl: villainClamp(row.villainy),",
-    "new": "    vl: 0,",
+    "old": "    vl: villainClamp(row.villainy), // PVP-VILLAIN-KEEP: its villain meter, 0..10,000",
+    "new": "    vl: 0, // PVP-VILLAIN-KEEP: its villain meter, 0..10,000",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-claim-unchecked",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.vl !== undefined && !(c.rc === 1 && villainyIssuable(c.vl))) return false;",
-    "new": "",
+    "old": "  if (c.vl !== undefined && !(c.rc === 1 && villainyIssuable(c.vl))) return false; // PVP-VILLAIN-KEEP: the meter, beside the realm's yes alone",
+    "new": "  // PVP-VILLAIN-KEEP: the meter, beside the realm's yes alone",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-realms-yes-unasked",
     "file": "src/net/identityToken.js",
-    "old": "!(c.rc === 1 && villainyIssuable(c.vl))",
-    "new": "!villainyIssuable(c.vl)",
+    "old": "  if (c.vl !== undefined && !(c.rc === 1 && villainyIssuable(c.vl))) return false; // PVP-VILLAIN-KEEP: the meter, beside the realm's yes alone",
+    "new": "  if (c.vl !== undefined && !villainyIssuable(c.vl)) return false; // PVP-VILLAIN-KEEP: the meter, beside the realm's yes alone",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-bounds-unread",
     "file": "src/net/identityToken.js",
-    "old": "Number.isSafeInteger(vl) && vl >= 1 && vl <= TOKEN_VILLAINY_MAX;",
-    "new": "Number.isFinite(vl);",
+    "old": "export const villainyIssuable = (vl) => Number.isSafeInteger(vl) && vl >= 1 && vl <= TOKEN_VILLAINY_MAX;",
+    "new": "export const villainyIssuable = (vl) => Number.isFinite(vl);",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-mint-drops-it",
     "file": "src/net/identityToken.js",
-    "old": "  if (who?.vl !== undefined) claims.vl = who.vl;",
-    "new": "",
+    "old": "  if (who?.vl !== undefined) claims.vl = who.vl; // PVP-VILLAIN-KEEP: only while the meter is above 0 - a meter at 0, the bytes as before",
+    "new": "  // PVP-VILLAIN-KEEP: only while the meter is above 0 - a meter at 0, the bytes as before",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-token-unread",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (villainClamp(vl) > villainClamp(x.vi)) x.vi = villainClamp(vl);",
-    "new": "",
+    "old": "  if (villainClamp(vl) > villainClamp(x.vi)) x.vi = villainClamp(vl); // PVP-VILLAIN-KEEP: the meter its token signs, where it is the larger",
+    "new": "  // PVP-VILLAIN-KEEP: the meter its token signs, where it is the larger",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-smaller-kept",
     "file": "src/net/wild/wildRef.js",
-    "old": "  if (villainClamp(vl) > villainClamp(x.vi)) x.vi = villainClamp(vl);",
-    "new": "  if (villainClamp(vl) > 0) x.vi = villainClamp(vl);",
+    "old": "  if (villainClamp(vl) > villainClamp(x.vi)) x.vi = villainClamp(vl); // PVP-VILLAIN-KEEP: the meter its token signs, where it is the larger",
+    "new": "  if (villainClamp(vl) > 0) x.vi = villainClamp(vl); // PVP-VILLAIN-KEEP: the meter its token signs, where it is the larger",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-socket-never-carries-it",
     "file": "src/net/wild/wildRef.js",
-    "old": "({ ci: who.ci, ...(Number.isSafeInteger(who.vl) && who.vl > 0 ? { vl: villainClamp(who.vl) } : {}) })",
-    "new": "({ ci: who.ci })",
+    "old": "export const wildTokenAtt = (/** @type {any} */ who) => ({\n  ci: who.ci,\n  ...(Number.isSafeInteger(who.vl) && who.vl > 0 ? { vl: villainClamp(who.vl) } : {}),\n});",
+    "new": "export const wildTokenAtt = (/** @type {any} */ who) => ({ ci: who.ci });",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-pages-bound-gone",
     "file": "src/net/renownTracker.js",
-    "old": "    const vd = Math.min(vdPend, xp);",
-    "new": "    const vd = vdPend;",
+    "old": "    const vd = Math.min(vdPend, xp); // PVP-VILLAIN-KEEP: never more than the report's XP, as the service holds it",
+    "new": "    const vd = vdPend; // PVP-VILLAIN-KEEP: never more than the report's XP, as the service holds it",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-pages-word-unsent",
     "file": "src/net/renownTracker.js",
-    "old": "h.rid, h.region, h.vd); } catch { r = { ok: false, error: 'offline' }; }",
-    "new": "h.rid, h.region, 0); } catch { r = { ok: false, error: 'offline' }; }",
+    "old": "      r = await report(h.character, h.xp, name?.() ?? null, h.rid, h.region, h.vd);",
+    "new": "      r = await report(h.character, h.xp, name?.() ?? null, h.rid, h.region, 0);",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-pages-word-uncounted",
     "file": "src/net/renownTracker.js",
-    "old": "      if (Number.isFinite(vd) && vd > 0) vdPend += Math.trunc(vd);",
-    "new": "",
+    "old": "      if (Number.isFinite(vd) && vd > 0) vdPend += Math.trunc(vd);\n    }",
+    "new": "    }",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]

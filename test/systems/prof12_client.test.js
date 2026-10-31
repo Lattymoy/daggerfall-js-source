@@ -351,7 +351,7 @@ test('PROF12 goods: the Apothecaries\' sixteen withdraw as DFU\'s own ingredient
   // BOARD-UI (PIN MOVED): the counters folded under the suppliers' line, which the Materials view hangs
   assert.match(m, /if \(\(m\.apothecaries \?\? \[\]\)\.length\) box\.append\(apothecariesNode\(\)\);/);
   assert.match(m, /if \(st\.view === 'materials'\) box\.append\(suppliersNode\(\)\);/);
-  assert.match(m, /box\.append\(el\('h4', null, 'The Apothecaries\\' counter'\)\);/);
+  assert.match(m, /box\.append\(el\('h4', null, "The Apothecaries' counter"\)\);/);
   assert.match(hostText('src/scenes/world.js'), /apothecaries: APOTHECARY_STOCK,/);
 });
 
@@ -398,20 +398,20 @@ test('PROF12 wiring: the alchemy station an Alchemist\'s (open for trade) or a h
   assert.match(m, /guildGroupOfFaction\(townTalk\?\.factionDict \?\? null, interiorBuilding\.factionId\) === GUILD_GROUPS\.MagesGuild\) return \{ kind: 'shop', fee: ENCHANT_FEE \};/);
   assert.match(m, /if \(stationOwnerHere\(\) && interiorDecor\.list\(\)\.some\(\(p\) => p\?\.station === 'enchant'\)\) return \{ kind: 'home', fee: 0 \};/);   // PIN MOVED (FB1018D HOME-BENCH, test/scenes/fb1018d_homebench.test.js): a home's stations serve its owner's account
   assert.match(m, /goldDiscountPct: \(\) => enchantGoldPct\(\),/);
-  assert.match(src('src/ui/item/itemMakerWindow.js'), /enchantDecision\(this\.selected, this\.powers, this\.sideEffects, \{ gold: this\.gold\(\), discountPct: this\.goldDiscountPct\(\), souls: this\._souls \}\)/);   // PIN MOVED (RPT1026-PROGRESS SOUL-HELD, test/ui/rpt1026_progress_ui.test.js): and the souls the pack holds now
+  assert.match(src('src/ui/item/itemMakerWindow.js'), /enchantDecision\(this\.selected, this\.powers, this\.sideEffects, \{\n\s*gold: this\.gold\(\),\n\s*discountPct: this\.goldDiscountPct\(\),\n\s*souls: this\._souls,\n\s*\}\)/);   // PIN MOVED (RPT1026-PROGRESS SOUL-HELD, test/ui/rpt1026_progress_ui.test.js): and the souls the pack holds now
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /alchemy: \(\) => modes\?\.alchemyHere\?\.\(\) \?\? null,/);
-  assert.match(w, /const myHall = \(profession\) => hallStepsFor\(seatHere\(_musicLoc\?\.mapTableData\?\.mapId\), guildBook\?\.guild\?\.id \?\? null, profession\);\n\s*const alchemyHall = \(\) => myHall\('alchemy'\);/);   // PIN MOVED (AUDIT PROF-541 R2-H1): the guard fortLaw.js hallStepsFor's (prof9_client.test.js drives it)
+  assert.match(w, /alchemy: \(\) => host\.modes\?\.alchemyHere\?\.\(\) \?\? null,/);
+  assert.match(w, /const myHall = \(profession\) => hallStepsFor\(seatHere\(host\._musicLoc\?\.mapTableData\?\.mapId\), host\.guildBook\?\.guild\?\.id \?\? null, profession\);\n\s*const alchemyHall = \(\) => myHall\('alchemy'\);/);   // PIN MOVED (AUDIT PROF-541 R2-H1): the guard fortLaw.js hallStepsFor's (prof9_client.test.js drives it)
   assert.match(w, /const \{ seat \} = alchemyHall\(\);\n\s*const r = await profBook\.brew\(potion, keys, \{ fee: f\.fee > 0 \? f\.fee : 0, seat \}, profMintCraft\);/);
   assert.match(w, /alchemySteps: \(\) => alchemyHall\(\)\.steps,/, 'AUDIT PROF-541 B4: the station\'s line says the steps the service adds');
   assert.match(w, /if \(typeof data\?\.potion === 'string'\) \{\n\s*const potions = brewItems\(data\);/);
-  assert.match(w, /const f = \(alch \? modes\?\.alchemyHere\?\.\(\) : mason \?/);
+  assert.match(w, /const f = \(alch \? host\.modes\?\.alchemyHere\?\.\(\) : mason \?/);
   assert.match(w, /r = await profBook\.disenchant\(provenance\);\n\s*if \(r\?\.ok && here\(\) && !r\.elsewhere\) takeOut\(\);/);
   assert.match(w, /if \(at >= 0\) out = \{ piece: playerEntity\.items\.splice\(at, 1\)\[0\], at \};/);
   const idx = src('server-account/src/index.js');
   assert.match(idx, /'\/v1\/prof\/brew': \(\) => brewAtStation\(ctx, who\.player, env, body\),/);
   assert.match(idx, /'\/v1\/prof\/disenchant': \(\) => disenchantPiece\(\{ \.\.\.ctx, bucket: env\.SAVES \}, who\.player, env, body\),/);
-  assert.match(src('server-account/src/service.js'), /'\/v1\/prof\/brew', '\/v1\/prof\/disenchant',/);
+  assert.match(src('server-account/src/service.js'), /'\/v1\/prof\/brew',\n\s*'\/v1\/prof\/disenchant',/);
   assert.match(src('src/ui/professions/profPages.js'), /\['jeweller', \(d\) => drawJewellerBench\(d, rerender, kit\)\],   \/\/ PROF10\n\s*\['alchemy', \(d\) => drawAlchemyStation\(d, rerender, kit\)\],   \/\/ PROF12\n\s*\['enchant', \(d\) => drawEnchantingStation\(d, rerender, kit\)\],   \/\/ PROF12/);   // PIN MOVED (MENU-ORDER)
   assert.equal(POTENT.pct, 25);
 });

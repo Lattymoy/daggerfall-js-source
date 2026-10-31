@@ -2,8 +2,8 @@
   {
     "name": "EGE1-the-week-never-asked",
     "file": "server-account/src/egEconomy.js",
-    "old": "AND w = ?3 AND wk = ?7 AND paid = 1) THEN 1 ELSE 0 END AS paid) q",
-    "new": "AND w = ?3 AND paid = 1) THEN 1 ELSE 0 END AS paid) q",
+    "old": "    FROM (SELECT CASE WHEN ?9 = 1 AND NOT EXISTS (SELECT 1 FROM eg_redoubts WHERE account = ?2 AND w = ?3 AND wk = ?7 AND paid = 1) THEN 1 ELSE 0 END AS paid) q`,",
+    "new": "    FROM (SELECT CASE WHEN ?9 = 1 AND NOT EXISTS (SELECT 1 FROM eg_redoubts WHERE account = ?2 AND w = ?3 AND paid = 1) THEN 1 ELSE 0 END AS paid) q`,",
     "why": "a Redoubt paid once ever, never again the next week",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "EGE1-paid-on-every-row",
     "file": "server-account/src/egEconomy.js",
-    "old": "CASE WHEN ?9 = 1 AND NOT EXISTS (SELECT 1 FROM eg_redoubts WHERE account = ?2 AND w = ?3 AND wk = ?7",
-    "new": "CASE WHEN ?9 = 1 OR NOT EXISTS (SELECT 1 FROM eg_redoubts WHERE account = ?2 AND w = ?3 AND wk = ?7",
+    "old": "    FROM (SELECT CASE WHEN ?9 = 1 AND NOT EXISTS (SELECT 1 FROM eg_redoubts WHERE account = ?2 AND w = ?3 AND wk = ?7 AND paid = 1) THEN 1 ELSE 0 END AS paid) q`,",
+    "new": "    FROM (SELECT CASE WHEN ?9 = 1 OR NOT EXISTS (SELECT 1 FROM eg_redoubts WHERE account = ?2 AND w = ?3 AND wk = ?7 AND paid = 1) THEN 1 ELSE 0 END AS paid) q`,",
     "why": "the same Redoubt paid twice a week - the farm AUDIT EG0 G6 shut",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "EGE1-the-rehearsal-paid",
     "file": "server-account/src/egEconomy.js",
-    "old": "payable = c.rh === 1 ? 0 : 1;",
-    "new": "payable = 1;",
+    "old": "    payable = c.rh === 1 ? 0 : 1;",
+    "new": "    payable = 1;",
     "why": "a Rehearsal (no key staked) paying Marks, embers and a key",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "EGE1-the-first-ember-every-week",
     "file": "server-account/src/egEconomy.js",
-    "old": "THEN ?11 ELSE ?12 END,",
-    "new": "THEN ?11 ELSE ?11 END,",
+    "old": "      CASE WHEN q.paid = 0 THEN 0 WHEN NOT EXISTS (SELECT 1 FROM eg_redoubts WHERE account = ?2 AND w = ?3 AND paid = 1 AND wk >= ?10) THEN ?11 ELSE ?12 END,",
+    "new": "      CASE WHEN q.paid = 0 THEN 0 WHEN NOT EXISTS (SELECT 1 FROM eg_redoubts WHERE account = ?2 AND w = ?3 AND paid = 1 AND wk >= ?10) THEN ?11 ELSE ?11 END,",
     "why": "a first-this-season ember paid every week",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "EGE1-embers-on-an-unpaid-row",
     "file": "server-account/src/egEconomy.js",
-    "old": "CASE WHEN q.paid = 0 THEN 0 WHEN",
-    "new": "CASE WHEN q.paid = 2 THEN 0 WHEN",
+    "old": "      CASE WHEN q.paid = 0 THEN 0 WHEN NOT EXISTS (SELECT 1 FROM eg_redoubts WHERE account = ?2 AND w = ?3 AND paid = 1 AND wk >= ?10) THEN ?11 ELSE ?12 END,",
+    "new": "      CASE WHEN q.paid = 2 THEN 0 WHEN NOT EXISTS (SELECT 1 FROM eg_redoubts WHERE account = ?2 AND w = ?3 AND paid = 1 AND wk >= ?10) THEN ?11 ELSE ?12 END,",
     "why": "a Redoubt the week already paid paying embers",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "EGE1-the-season-forgotten",
     "file": "server-account/src/egEconomy.js",
-    "old": "AND paid = 1 AND wk >= ?10) THEN ?11",
-    "new": "AND paid = 1 AND wk >= 0) THEN ?11",
+    "old": "      CASE WHEN q.paid = 0 THEN 0 WHEN NOT EXISTS (SELECT 1 FROM eg_redoubts WHERE account = ?2 AND w = ?3 AND paid = 1 AND wk >= ?10) THEN ?11 ELSE ?12 END,",
+    "new": "      CASE WHEN q.paid = 0 THEN 0 WHEN NOT EXISTS (SELECT 1 FROM eg_redoubts WHERE account = ?2 AND w = ?3 AND paid = 1 AND wk >= 0) THEN ?11 ELSE ?12 END,",
     "why": "a new season's first never a first",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "EGE1-the-pity-never-forced",
     "file": "server-account/src/egEconomy.js",
-    "old": "THEN ${1 << p} ELSE 0 END)`);",
-    "new": "THEN 0 ELSE 0 END)`);",
+    "old": "    forced.push(`(CASE WHEN ${n} >= ${EG_PANOPLY_PITY} THEN ${1 << p} ELSE 0 END)`);",
+    "new": "    forced.push(`(CASE WHEN ${n} >= ${EG_PANOPLY_PITY} THEN 0 ELSE 0 END)`);",
     "why": "ten misses and the eleventh still a miss",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "EGE1-the-forced-pass-misnamed",
     "file": "server-account/src/egEconomy.js",
-    "old": "THEN ${1 << p} ELSE 0 END)`);",
-    "new": "THEN ${1} ELSE 0 END)`);",
+    "old": "    forced.push(`(CASE WHEN ${n} >= ${EG_PANOPLY_PITY} THEN ${1 << p} ELSE 0 END)`);",
+    "new": "    forced.push(`(CASE WHEN ${n} >= ${EG_PANOPLY_PITY} THEN ${1} ELSE 0 END)`);",
     "why": "a Valkynaz's second pass forced and the first named",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "EGE1-the-passes-counted-at-once",
     "file": "server-account/src/egEconomy.js",
-    "old": "forced.push(`(CASE WHEN ${n} >= ",
-    "new": "forced.push(`(CASE WHEN ${count} >= ",
+    "old": "    forced.push(`(CASE WHEN ${n} >= ${EG_PANOPLY_PITY} THEN ${1 << p} ELSE 0 END)`);",
+    "new": "    forced.push(`(CASE WHEN ${count} >= ${EG_PANOPLY_PITY} THEN ${1 << p} ELSE 0 END)`);",
     "why": "every pass read off the count before the first - a Valkynaz's second never forced at nine",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "EGE1-a-hit-never-resets",
     "file": "server-account/src/egEconomy.js",
-    "old": "    n = hit ? '0' : ",
-    "new": "    n = hit ? `(${n} + 1)` : ",
+    "old": "    n = hit ? '0' : `(CASE WHEN ${n} >= ${EG_PANOPLY_PITY} THEN 0 ELSE ${n} + 1 END)`;",
+    "new": "    n = hit ? `(${n} + 1)` : `(CASE WHEN ${n} >= ${EG_PANOPLY_PITY} THEN 0 ELSE ${n} + 1 END)`;",
     "why": "a piece by its own draw leaving the count climbing",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "EGE1-a-forced-pass-never-resets",
     "file": "server-account/src/egEconomy.js",
-    "old": "THEN 0 ELSE ${n} + 1 END)`;",
-    "new": "THEN ${n} + 1 ELSE ${n} + 1 END)`;",
+    "old": "    n = hit ? '0' : `(CASE WHEN ${n} >= ${EG_PANOPLY_PITY} THEN 0 ELSE ${n} + 1 END)`;",
+    "new": "    n = hit ? '0' : `(CASE WHEN ${n} >= ${EG_PANOPLY_PITY} THEN ${n} + 1 ELSE ${n} + 1 END)`;",
     "why": "the forced piece leaving the count at ten - every pass after it forced",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "EGE1-the-pity-off-nothing",
     "file": "server-account/src/egEconomy.js",
-    "old": "${pitySql('(SELECT eg_pity FROM players WHERE id = ?2)', hits).forced}",
-    "new": "${pitySql('0', hits).forced}",
+    "old": "      ?8, CASE WHEN q.paid = 1 THEN ${pitySql('(SELECT eg_pity FROM players WHERE id = ?2)', hits).forced} ELSE 0 END",
+    "new": "      ?8, CASE WHEN q.paid = 1 THEN ${pitySql('0', hits).forced} ELSE 0 END",
     "why": "the row's forced passes never read off the count",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "EGE1-the-pity-moved-unpaid",
     "file": "server-account/src/egEconomy.js",
-    "old": "WHERE id = ?2 AND ${mine}`).bind(b, player.id, w, nonce));",
-    "new": "WHERE id = ?2`).bind(b, player.id, w, nonce));",
+    "old": "        .prepare(`UPDATE players SET eg_pity = ${pitySql('eg_pity', hits).after} WHERE id = ?2 AND ${mine}`)",
+    "new": "        .prepare(`UPDATE players SET eg_pity = ${pitySql('eg_pity', hits).after} WHERE id = ?2`)",
     "why": "a receipt the week does not pay moving the pity",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "EGE1-the-week-gives-two-keys",
     "file": "server-account/src/egEconomy.js",
-    "old": "AND paid = 1\n        AND EXISTS (SELECT 1 FROM players WHERE id = ?2 AND eg_valk_wk != ?5)`)",
-    "new": "AND paid = 1`)",
+    "old": "            `UPDATE eg_redoubts SET wkey = 1 WHERE b = ?1 AND account = ?2 AND w = ?3 AND nonce = ?4 AND paid = 1\n        AND EXISTS (SELECT 1 FROM players WHERE id = ?2 AND eg_valk_wk != ?5)`,",
+    "new": "            `UPDATE eg_redoubts SET wkey = 1 WHERE b = ?1 AND account = ?2 AND w = ?3 AND nonce = ?4 AND paid = 1`,",
     "why": "a second Valkynaz the same week finding a key",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "EGE1-the-week-unmarked",
     "file": "server-account/src/egEconomy.js",
-    "old": "UPDATE players SET eg_keys = eg_keys + 1, eg_valk_wk = ?5 WHERE id = ?2",
-    "new": "UPDATE players SET eg_keys = eg_keys + 1 WHERE id = ?2",
+    "old": "            `UPDATE players SET eg_keys = eg_keys + 1, eg_valk_wk = ?5 WHERE id = ?2",
+    "new": "            `UPDATE players SET eg_keys = eg_keys + 1 WHERE id = ?2",
     "why": "the key's week never kept - a key every Valkynaz",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "EGE1-the-key-certain",
     "file": "server-account/src/egEconomy.js",
-    "old": "if (egValkRedoubt(w) && draw(EG_VALK_KEY_ODDS)) {",
-    "new": "if (egValkRedoubt(w) && draw(1)) {",
+    "old": "    if (egValkRedoubt(w) && draw(EG_VALK_KEY_ODDS)) {",
+    "new": "    if (egValkRedoubt(w) && draw(1)) {",
     "why": "a key at every paid Valkynaz, not one in four",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "EGE1-the-key-at-every-redoubt",
     "file": "server-account/src/egEconomy.js",
-    "old": "if (egValkRedoubt(w) && draw(EG_VALK_KEY_ODDS)) {",
-    "new": "if (draw(EG_VALK_KEY_ODDS)) {",
+    "old": "    if (egValkRedoubt(w) && draw(EG_VALK_KEY_ODDS)) {",
+    "new": "    if (draw(EG_VALK_KEY_ODDS)) {",
     "why": "a key at any Redoubt",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -172,8 +172,8 @@
   {
     "name": "EGE1-the-weir-said-everywhere",
     "file": "server-account/src/egEconomy.js",
-    "old": "weir: paid && egValkRedoubt(w) ?",
-    "new": "weir: paid ?",
+    "old": "      weir: paid && egValkRedoubt(w) ? { found: int(r?.wkey) === 1, keys: int(me?.eg_keys) } : null,",
+    "new": "      weir: paid ? { found: int(r?.wkey) === 1, keys: int(me?.eg_keys) } : null,",
     "why": "a key's word on a Redoubt no Valkynaz guards",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "EGE1-no-marks",
     "file": "server-account/src/egEconomy.js",
-    "old": "    add('marks', egStrikeStatement(ctx, player, env, week, b, w, nonce));\n",
-    "new": "",
+    "old": "    add('marks', egStrikeStatement(ctx, player, env, week, b, w, nonce));\n    const deed = deedStatements(ctx, player, env, { kind: 'eg', event, character, guard: [b, w, nonce] });",
+    "new": "    const deed = deedStatements(ctx, player, env, { kind: 'eg', event, character, guard: [b, w, nonce] });",
     "why": "a Redoubt striking no silver",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "EGE1-marks-said-unpaid",
     "file": "server-account/src/egEconomy.js",
-    "old": "marks: paid ? await egStrikeAnswer(",
-    "new": "marks: true ? await egStrikeAnswer(",
+    "old": "      marks: paid ? await egStrikeAnswer(ctx, player, env, recorded ? wrote('marks') : true, int(r?.wk), w) : null,",
+    "new": "      marks: true ? await egStrikeAnswer(ctx, player, env, recorded ? wrote('marks') : true, int(r?.wk), w) : null,",
     "why": "an unpaid Redoubt's answer saying the week's line",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "EGE1-again-unsaid",
     "file": "server-account/src/egEconomy.js",
-    "old": "...(recorded ? {} : { again: true }),",
-    "new": "...(recorded ? {} : {}),",
+    "old": "      ...(recorded ? {} : { again: true }),",
+    "new": "      ...(recorded ? {} : {}),",
     "why": "a receipt carried again not said again",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "EGE1-the-deed-event-every-breach",
     "file": "server-account/src/egEconomy.js",
-    "old": "const event = deedEvent('eg', `${b}:${w}`);",
-    "new": "const event = deedEvent('eg', `${w}`);",
+    "old": "  const event = deedEvent('eg', `${b}:${w}`);",
+    "new": "  const event = deedEvent('eg', `${w}`);",
     "why": "one deed a Redoubt for every breach of it",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -312,8 +312,8 @@
   {
     "name": "EGE1-every-reliquary-opens",
     "file": "server-account/src/egEconomy.js",
-    "old": "(mine.has(w) ? mine.get(w) : !paidWeek.has(w))",
-    "new": "(mine.has(w) ? true : !paidWeek.has(w))",
+    "old": "    const pays = [...new Set(named.filter((w) => (mine.has(w) ? mine.get(w) : !paidWeek.has(w))))];",
+    "new": "    const pays = [...new Set(named.filter((w) => (mine.has(w) ? true : !paidWeek.has(w))))];",
     "why": "a Reliquary sealed in a circle the week already paid opening",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -322,8 +322,8 @@
   {
     "name": "EGE1-the-week-elsewhere-unread",
     "file": "server-account/src/egEconomy.js",
-    "old": "(mine.has(w) ? mine.get(w) : !paidWeek.has(w))",
-    "new": "(mine.has(w) ? mine.get(w) : true)",
+    "old": "    const pays = [...new Set(named.filter((w) => (mine.has(w) ? mine.get(w) : !paidWeek.has(w))))];",
+    "new": "    const pays = [...new Set(named.filter((w) => (mine.has(w) ? mine.get(w) : true)))];",
     "why": "a circle never taken here but paid in another breach this week opening",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -332,8 +332,8 @@
   {
     "name": "EGE1-the-rehearsal-opens",
     "file": "server-account/src/egEconomy.js",
-    "old": "  if (c.rh === 1) return { rl: [] };\n",
-    "new": "",
+    "old": "  if (c.rh === 1) return { rl: [] };\n  const named = c.rl.slice(0, RL_MAX).filter((w) => Number.isSafeInteger(w) && w >= 1 && w <= 19_999);",
+    "new": "  const named = c.rl.slice(0, RL_MAX).filter((w) => Number.isSafeInteger(w) && w >= 1 && w <= 19_999);",
     "why": "a Rehearsal's end opening Reliquaries",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -342,8 +342,8 @@
   {
     "name": "EGE1-sink-the-week-unasked",
     "file": "server-account/src/egEconomy.js",
-    "old": "        AND NOT EXISTS (SELECT 1 FROM eg_sink WHERE account = ?1 AND wk = ?2)\n",
-    "new": "        AND NOT EXISTS (SELECT 1 FROM eg_sink WHERE account = ?1)\n",
+    "old": "        AND NOT EXISTS (SELECT 1 FROM eg_sink WHERE account = ?1 AND wk = ?2)",
+    "new": "        AND NOT EXISTS (SELECT 1 FROM eg_sink WHERE account = ?1)",
     "why": "one Panoply piece ever, never the next week",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -352,8 +352,8 @@
   {
     "name": "EGE1-sink-twice-a-week",
     "file": "server-account/src/egEconomy.js",
-    "old": "        AND NOT EXISTS (SELECT 1 FROM eg_sink WHERE account = ?1 AND wk = ?2)\n",
-    "new": "",
+    "old": "        AND NOT EXISTS (SELECT 1 FROM eg_sink WHERE account = ?1 AND wk = ?2)\n        AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3${",
+    "new": "        AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3${",
     "why": "the sink selling twice a week, the second sale's embers spent for nothing",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -362,8 +362,8 @@
   {
     "name": "EGE1-sink-the-purse-unasked",
     "file": "server-account/src/egEconomy.js",
-    "old": "        AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3${rid ? `",
-    "new": "        ${rid ? `",
+    "old": "        AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3${",
+    "new": "        ${",
     "why": "a piece sold to a purse that cannot pay",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -373,8 +373,8 @@
   {
     "name": "EGE1-sink-the-price",
     "file": "server-account/src/egEconomy.js",
-    "old": ".bind(player.id, week, EG_SINK_EMBERS, nowS, ...(rid ? [rid] : [])),",
-    "new": ".bind(player.id, week, 1, nowS, ...(rid ? [rid] : [])),",
+    "old": "      .bind(player.id, week, EG_SINK_EMBERS, nowS, ...(rid ? [rid] : [])),",
+    "new": "      .bind(player.id, week, 1, nowS, ...(rid ? [rid] : [])),",
     "why": "the Panoply sold for one ember",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -384,8 +384,8 @@
   {
     "name": "EGE1-sink-the-row-unguarded",
     "file": "server-account/src/egEconomy.js",
-    "old": "SELECT ?1, ?2, ?3, ?4 WHERE changes() > 0')",
-    "new": "SELECT ?1, ?2, ?3, ?4 WHERE 1')",
+    "old": "      .prepare('INSERT INTO eg_sink (account, wk, piece, at) SELECT ?1, ?2, ?3, ?4 WHERE changes() > 0')",
+    "new": "      .prepare('INSERT INTO eg_sink (account, wk, piece, at) SELECT ?1, ?2, ?3, ?4 WHERE 1')",
     "why": "a refused sale writing the week's row",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -394,8 +394,8 @@
   {
     "name": "EGE1-sink-any-piece",
     "file": "server-account/src/egEconomy.js",
-    "old": "if (typeof piece !== 'string' || !EG_PANOPLY_IDS.includes(piece)) return { error: 'piece' };",
-    "new": "if (typeof piece !== 'string') return { error: 'piece' };",
+    "old": "  if (typeof piece !== 'string' || !EG_PANOPLY_IDS.includes(piece)) return { error: 'piece' };",
+    "new": "  if (typeof piece !== 'string') return { error: 'piece' };",
     "why": "the sink selling what is not a Panoply piece",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -404,8 +404,8 @@
   {
     "name": "EGE1-sink-a-guest",
     "file": "server-account/src/egEconomy.js",
-    "old": "  if (!player?.handle) return { error: 'guest' };\n  const piece",
-    "new": "  const piece",
+    "old": "  if (!player?.handle) return { error: 'guest' };\n  const piece = body?.piece;",
+    "new": "  const piece = body?.piece;",
     "why": "a guest row, one storage clear from gone, buying",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -414,8 +414,8 @@
   {
     "name": "EGE1-keys-no-sink",
     "file": "server-account/src/eg.js",
-    "old": ", sink: await egSinkOf({ db, nowS }, player), ...(",
-    "new": ", ...(",
+    "old": "    sink: await egSinkOf({ db, nowS }, player),\n    ...(await egRecordOf(db, player.id)),",
+    "new": "    ...(await egRecordOf(db, player.id)),",
     "why": "the week's sale never said, a lost answer never asked after",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -505,8 +505,8 @@
   {
     "name": "EGE1-window-no-rows",
     "file": "src/ui/brokerWindow.js",
-    "old": "    if (pan.length) {\n      const head = el('li', 'broker-insignia-head broker-panoply-head');",
-    "new": "    if (false) {\n      const head = el('li', 'broker-insignia-head broker-panoply-head');",
+    "old": "    if (pan.length) {",
+    "new": "    if (false) {",
     "why": "the Panoply never drawn",
     "tests": [
       "test/systems/eliteGates/egeco_broker.test.js"
@@ -525,8 +525,8 @@
   {
     "name": "EGE1-window-wares-mid-sale",
     "file": "src/ui/brokerWindow.js",
-    "old": " || pendingPan !== null || ",
-    "new": " || ",
+    "old": "  deps = { ...outer, insigniaBusy: () => !!outer.insigniaBusy?.() || pendingPan !== null || !!outer.panoply?.busy?.() };",
+    "new": "  deps = { ...outer, insigniaBusy: () => !!outer.insigniaBusy?.() || !!outer.panoply?.busy?.() };",
     "why": "a ware pressable while a Panoply piece is sold",
     "tests": [
       "test/systems/eliteGates/egeco_broker.test.js"
@@ -535,8 +535,8 @@
   {
     "name": "EGE1-window-bought-unread",
     "file": "src/ui/brokerWindow.js",
-    "old": "bought: piece === id, spent: piece !== null",
-    "new": "bought: false, spent: piece !== null",
+    "old": "    bought: piece === id,",
+    "new": "    bought: false,",
     "why": "the week's piece not marked bought",
     "tests": [
       "test/systems/eliteGates/egeco_broker.test.js"
@@ -545,8 +545,8 @@
   {
     "name": "EGE1-window-spent-unread",
     "file": "src/ui/brokerWindow.js",
-    "old": "bought: piece === id, spent: piece !== null",
-    "new": "bought: piece === id, spent: false",
+    "old": "    spent: piece !== null,",
+    "new": "    spent: false,",
     "why": "the rest still offered once the week's piece is bought",
     "tests": [
       "test/systems/eliteGates/egeco_broker.test.js"
@@ -565,8 +565,8 @@
   {
     "name": "EGE1-capped-the-breach",
     "file": "src/net/marksBook.js",
-    "old": " kind === 'eg' ? MARKS_TEXT.cappedEg :",
-    "new": "",
+    "old": "            : kind === 'eg'\n              ? MARKS_TEXT.cappedEg\n              : kind === 'star'\n                ? MARKS_TEXT.cappedStar()\n                : MARKS_TEXT.capped",
+    "new": "            : kind === 'star'\n              ? MARKS_TEXT.cappedStar()\n              : MARKS_TEXT.capped",
     "why": "a Redoubt's capped line naming a breach",
     "tests": [
       "test/net/silverways_client.test.js"

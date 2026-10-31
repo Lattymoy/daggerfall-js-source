@@ -16,7 +16,7 @@ export const RATE = 44100;
 export function rng(seed) {
   let a = seed >>> 0;
   return () => {
-    a = (a + 0x6D2B79F5) >>> 0;
+    a = (a + 0x6d2b79f5) >>> 0;
     let t = Math.imul(a ^ (a >>> 15), 1 | a);
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
@@ -34,17 +34,34 @@ export const attack = (i, ms) => Math.min(1, i / Math.max(1, seconds(ms / 1000))
 
 /** RBJ biquad, the two shapes used here. */
 export function biquad(x, { type, f0, q }) {
-  const w = 2 * Math.PI * f0 / RATE, cw = Math.cos(w), sw = Math.sin(w);
+  const w = (2 * Math.PI * f0) / RATE,
+    cw = Math.cos(w),
+    sw = Math.sin(w);
   const alpha = sw / (2 * q);
   let b0, b1, b2;
-  const a0 = 1 + alpha, a1 = -2 * cw, a2 = 1 - alpha;
-  if (type === 'bandpass') { b0 = alpha; b1 = 0; b2 = -alpha; }
-  else { b0 = (1 - cw) / 2; b1 = 1 - cw; b2 = (1 - cw) / 2; }   // lowpass
+  const a0 = 1 + alpha,
+    a1 = -2 * cw,
+    a2 = 1 - alpha;
+  if (type === 'bandpass') {
+    b0 = alpha;
+    b1 = 0;
+    b2 = -alpha;
+  } else {
+    b0 = (1 - cw) / 2;
+    b1 = 1 - cw;
+    b2 = (1 - cw) / 2;
+  } // lowpass
   const out = new Float32Array(x.length);
-  let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+  let x1 = 0,
+    x2 = 0,
+    y1 = 0,
+    y2 = 0;
   for (let i = 0; i < x.length; i++) {
     const y = (b0 / a0) * x[i] + (b1 / a0) * x1 + (b2 / a0) * x2 - (a1 / a0) * y1 - (a2 / a0) * y2;
-    x2 = x1; x1 = x[i]; y2 = y1; y1 = y;
+    x2 = x1;
+    x1 = x[i];
+    y2 = y1;
+    y1 = y;
     out[i] = y;
   }
   return out;
@@ -58,7 +75,7 @@ export function sweepLowpass(x, fromHz, toHz, tau) {
   let y = 0;
   for (let i = 0; i < x.length; i++) {
     const f = toHz + (fromHz - toHz) * decay(i, tau);
-    const a = Math.exp(-2 * Math.PI * f / RATE);
+    const a = Math.exp((-2 * Math.PI * f) / RATE);
     y = (1 - a) * x[i] + a * y;
     out[i] = y;
   }
@@ -85,7 +102,10 @@ export function mix(dst, src, at = 0, gain = 1) {
  *  cannot overshoot into the 8-bit rail. */
 export const softClip = (x, drive = 1) => x.map((v) => Math.tanh(v * drive) / Math.tanh(drive));
 
-export const envelope = (x, fn) => { for (let i = 0; i < x.length; i++) x[i] *= fn(i); return x; };
+export const envelope = (x, fn) => {
+  for (let i = 0; i < x.length; i++) x[i] *= fn(i);
+  return x;
+};
 
 // ---- the climb's pieces (CLIMB4), shared since GATHER-FEEL --------------------------------------------------------
 
@@ -115,10 +135,14 @@ export function knock(len, from, to, tau, decayTau, attackMs = 0.6) {
 export function rough(len, rand, hz) {
   const out = new Float32Array(len);
   const step = Math.max(1, Math.round(RATE / hz));
-  let a = rand(), b = rand();
+  let a = rand(),
+    b = rand();
   for (let i = 0; i < len; i++) {
     const k = i % step;
-    if (k === 0 && i > 0) { a = b; b = rand(); }
+    if (k === 0 && i > 0) {
+      a = b;
+      b = rand();
+    }
     const s = (1 - Math.cos((Math.PI * k) / step)) / 2;
     out[i] = a + (b - a) * s;
   }
@@ -128,16 +152,31 @@ export function rough(len, rand, hz) {
 /** A bandpass whose centre MOVES (`f0(t)` Hz, t in seconds) - coefficients recomputed every 32 samples. */
 export function bandSweep(x, f0, q) {
   const out = new Float32Array(x.length);
-  let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
-  let b0 = 0, b2 = 0, a1 = 0, a2 = 0;
+  let x1 = 0,
+    x2 = 0,
+    y1 = 0,
+    y2 = 0;
+  let b0 = 0,
+    b2 = 0,
+    a1 = 0,
+    a2 = 0;
   for (let i = 0; i < x.length; i++) {
     if (i % 32 === 0) {
-      const w = (2 * Math.PI * Math.min(f0(i / RATE), RATE * 0.45)) / RATE, cw = Math.cos(w), sw = Math.sin(w);
-      const alpha = sw / (2 * q), a0 = 1 + alpha;
-      b0 = alpha / a0; b2 = -alpha / a0; a1 = (-2 * cw) / a0; a2 = (1 - alpha) / a0;
+      const w = (2 * Math.PI * Math.min(f0(i / RATE), RATE * 0.45)) / RATE,
+        cw = Math.cos(w),
+        sw = Math.sin(w);
+      const alpha = sw / (2 * q),
+        a0 = 1 + alpha;
+      b0 = alpha / a0;
+      b2 = -alpha / a0;
+      a1 = (-2 * cw) / a0;
+      a2 = (1 - alpha) / a0;
     }
     const y = b0 * x[i] + b2 * x2 - a1 * y1 - a2 * y2;
-    x2 = x1; x1 = x[i]; y2 = y1; y1 = y;
+    x2 = x1;
+    x1 = x[i];
+    y2 = y1;
+    y1 = y;
     out[i] = y;
   }
   return out;
@@ -153,14 +192,18 @@ export function rub(rand, len, { f0 = 1800, q = 1.5, hz = 120, inMs = 10, tau = 
 }
 
 /** Short bandpassed ticks at uneven times, loudest first on average - grit coming away, debris. */
-export function grit(out, rand, { count, from, to, lo = 2200, hi = 4400, tauLo = 0.0015, tauHi = 0.004, gain = 0.3, q = 1.8 }) {
+export function grit(
+  out,
+  rand,
+  { count, from, to, lo = 2200, hi = 4400, tauLo = 0.0015, tauHi = 0.004, gain = 0.3, q = 1.8 },
+) {
   for (let k = 0; k < count; k++) {
     const at = from + (to - from) * Math.pow(rand(), 1.5);
     const f0 = lo + (hi - lo) * rand();
     const tau = tauLo + (tauHi - tauLo) * rand();
     const t = biquad(noise(seconds(tau * 8), rand), { type: 'bandpass', f0, q });
     envelope(t, (i) => attack(i, 0.15) * decay(i, tau));
-    mix(out, unit(t), at, gain * (0.4 + 0.6 * rand()) * (1 - 0.55 * (at - from) / Math.max(1e-6, to - from)));
+    mix(out, unit(t), at, gain * (0.4 + 0.6 * rand()) * (1 - (0.55 * (at - from)) / Math.max(1e-6, to - from)));
   }
   return out;
 }
@@ -179,7 +222,8 @@ export function modes(len, list, { attackMs = 0.4 } = {}) {
   for (const [f, tau, g] of list) {
     if (f > TOP_HZ) continue;
     const w = (2 * Math.PI * f) / RATE;
-    for (let i = 0; i < out.length; i++) out[i] += g * Math.sin(w * i) * attack(i, attackMs) * decay(i, tau) * Math.min(1, (out.length - i) / fade);
+    for (let i = 0; i < out.length; i++)
+      out[i] += g * Math.sin(w * i) * attack(i, attackMs) * decay(i, tau) * Math.min(1, (out.length - i) / fade);
   }
   return out;
 }
@@ -206,14 +250,18 @@ export function bubble(len, from, to, rise, tau, attackMs = 0.5) {
 
 /** Leaves: many short grains through a leaf's band (`lo`..`hi` Hz) at uneven times, each grain's loudness `env(u)` of
  *  where it falls in the span (0..1), a few of them louder - a rustle is a crackle, not a hiss. */
-export function leaves(out, rand, { count, from, to, lo = 1800, hi = 4200, tauLo = 0.0005, tauHi = 0.002, gain = 0.4, q = 1.4, env = () => 1 }) {
+export function leaves(
+  out,
+  rand,
+  { count, from, to, lo = 1800, hi = 4200, tauLo = 0.0005, tauHi = 0.002, gain = 0.4, q = 1.4, env = () => 1 },
+) {
   for (let k = 0; k < count; k++) {
     const u = rand();
     const f0 = lo + (hi - lo) * rand();
     const tau = tauLo + (tauHi - tauLo) * rand();
     const g = biquad(noise(seconds(tau * 8), rand), { type: 'bandpass', f0, q });
     envelope(g, (i) => attack(i, 0.1) * decay(i, tau));
-    const crackle = rand() < 0.15 ? 1.7 : 1;   // a leaf folding over, a twig: a few louder among the many
+    const crackle = rand() < 0.15 ? 1.7 : 1; // a leaf folding over, a twig: a few louder among the many
     mix(out, unit(g), from + (to - from) * u, gain * crackle * (0.25 + 0.75 * rand()) * env(u));
   }
   return out;
@@ -243,7 +291,10 @@ export function groan(rand, len, { rate, jitter = 0.25, bands, env, noiseGain = 
 
 /** A splash: water thrown up - noise whose top falls away as the drops scatter (a moving low-pass), a wet body under
  *  it, and `drops` little plips falling back within `dropsTo` s. */
-export function splash(rand, { len = 0.35, from = 4200, to = 500, tau = 0.05, body = 0.5, drops = 6, dropsTo = 0.3 } = {}) {
+export function splash(
+  rand,
+  { len = 0.35, from = 4200, to = 500, tau = 0.05, body = 0.5, drops = 6, dropsTo = 0.3 } = {},
+) {
   const out = buf(len);
   const n = seconds(len);
   const x = noise(n, rand);
@@ -263,5 +314,16 @@ export function splash(rand, { len = 0.35, from = 4200, to = 500, tau = 0.05, bo
 /** A bell's note: its fundamental and three partials over it (an octave, a bell's 2.76, a breath-sharp twin that makes
  *  it shimmer), none past the bake's top. */
 export function bellNote(f, tau, len = tau * 5) {
-  return unit(modes(len, [[f, tau, 1], [f * 1.0035, tau * 0.9, 0.3], [f * 2, tau * 0.45, 0.24], [f * 2.76, tau * 0.25, 0.1]], { attackMs: 1.5 }));
+  return unit(
+    modes(
+      len,
+      [
+        [f, tau, 1],
+        [f * 1.0035, tau * 0.9, 0.3],
+        [f * 2, tau * 0.45, 0.24],
+        [f * 2.76, tau * 0.25, 0.1],
+      ],
+      { attackMs: 1.5 },
+    ),
+  );
 }

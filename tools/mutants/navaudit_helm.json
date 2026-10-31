@@ -2,8 +2,8 @@
   {
     "name": "NAV1H-the-slope-a-radians",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "  const slope = AIM_SLOPE / NAVAL_DEG;   // m a radian",
-    "new": "  const slope = AIM_SLOPE;   // m a radian",
+    "old": "  const slope = AIM_SLOPE / NAVAL_DEG; // m a radian",
+    "new": "  const slope = AIM_SLOPE; // m a radian",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "NAV1H-the-ramp-turned-back",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "hh / Math.tan(p0) + slope * (p0 - dip);",
-    "new": "hh / Math.tan(p0) + slope * (dip - p0);",
+    "old": "  return dip >= p0 ? hh / Math.tan(dip) : hh / Math.tan(p0) + slope * (p0 - dip);",
+    "new": "  return dip >= p0 ? hh / Math.tan(dip) : hh / Math.tan(p0) + slope * (dip - p0);",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "NAV1H-the-laws-swapped",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "  return dip >= p0 ? hh / Math.tan(dip)",
-    "new": "  return dip <= p0 ? hh / Math.tan(dip)",
+    "old": "  return dip >= p0 ? hh / Math.tan(dip) : hh / Math.tan(p0) + slope * (p0 - dip);",
+    "new": "  return dip <= p0 ? hh / Math.tan(dip) : hh / Math.tan(p0) + slope * (p0 - dip);",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "NAV1H-the-points-height-ignored",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "    layDy = c[1] - look.at[1];\n",
-    "new": "",
+    "old": "    layDy = c[1] - look.at[1];\n  } else if (look) {",
+    "new": "  } else if (look) {",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "NAV1H-the-slant-for-the-range",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "    want = (lookPoint[0] - c[0]) * dir[0] + (lookPoint[2] - c[2]) * dir[2];\n  }",
-    "new": "    want = Math.hypot(lookPoint[0] - c[0], lookPoint[2] - c[2]);\n  }",
+    "old": "    want = (lookPoint[0] - c[0]) * dir[0] + (lookPoint[2] - c[2]) * dir[2];",
+    "new": "    want = Math.hypot(lookPoint[0] - c[0], lookPoint[2] - c[2]);",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "NAV1H-the-look-ignored",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "  } else if (look) {\n    // the sea",
-    "new": "  } else if (false) {\n    // the sea",
+    "old": "  } else if (look) {",
+    "new": "  } else if (false) {",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js",
       "test/systems/naval/nav_a_guns.test.js"
@@ -229,8 +229,8 @@
   {
     "name": "NAV1H-the-tail-unsaid",
     "file": "src/ui/naval/navalHud.js",
-    "old": "hot: !!a.hot && (a.state ?? 'ready') === 'ready', dim: !!a.state && a.state !== 'ready', target: aimTail(a),",
-    "new": "hot: !!a.hot && (a.state ?? 'ready') === 'ready', dim: !!a.state && a.state !== 'ready', target: a.hot ? ' - on target' : '',",
+    "old": "        target: aimTail(a),",
+    "new": "        target: a.hot ? ' - on target' : '',",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "NAV1H-never-dimmed",
     "file": "src/ui/naval/navalHud.js",
-    "old": "dim: !!a.state && a.state !== 'ready', target: aimTail(a),",
-    "new": "dim: false, target: aimTail(a),",
+    "old": "        dim: !!a.state && a.state !== 'ready',",
+    "new": "        dim: false,",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "NAV1H-crippled-unsaid",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    case 'crippled': return ' - guns silent';\n",
-    "new": "",
+    "old": "    case 'crippled':\n      return ' - guns silent';\n    case 'empty':",
+    "new": "    case 'empty':",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "NAV1H-the-post-lying-flat",
     "file": "src/render/navalRender.js",
-    "old": "f, [0, AIM_POST_HALF_H, 0], tone.post, false, uv.u0, uv.u1, uv.v0, uv.v1);",
-    "new": "f, [0, 0, AIM_POST_HALF_H], tone.post, false, uv.u0, uv.u1, uv.v0, uv.v1);",
+    "old": "          [0, AIM_POST_HALF_H, 0],",
+    "new": "          [0, 0, AIM_POST_HALF_H],",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "NAV1H-the-grey-ignored",
     "file": "src/render/navalRender.js",
-    "old": "  if (aim?.ready === false) return AIM_TONES.idle;\n",
-    "new": "",
+    "old": "  if (aim?.ready === false) return AIM_TONES.idle;\n  return aim?.hot ? AIM_TONES.hot : AIM_TONES.laid;",
+    "new": "  return aim?.hot ? AIM_TONES.hot : AIM_TONES.laid;",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "NAV1H-the-camera-setting-unread",
     "file": "src/scenes/naval/aimCamera.js",
-    "old": "    const want = deps.setting('AimCamera', true) !== false && deps.aiming()",
-    "new": "    const want = deps.aiming()",
+    "old": "    const want =\n      deps.setting('AimCamera', true) !== false && deps.aiming() && boat && aim && aim.side && !deps.wrecked(boat)\n        ? aim.side\n        : null;",
+    "new": "    const want = deps.aiming() && boat && aim && aim.side && !deps.wrecked(boat) ? aim.side : null;",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js",
       "test/systems/naval/aimends_camera.test.js"
@@ -311,8 +311,8 @@
   {
     "name": "NAV1H-the-camera-unsmoothed",
     "file": "src/scenes/naval/aimCamera.js",
-    "old": "    const k = camK * camK * (3 - 2 * camK);   // eased in and out",
-    "new": "    const k = camK;   // eased in and out",
+    "old": "    const k = camK * camK * (3 - 2 * camK); // eased in and out",
+    "new": "    const k = camK; // eased in and out",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "NAV1H-the-camera-guard-dropped",
     "file": "src/scenes/naval/aimCamera.js",
-    "old": "    if (clear < 1) at = [c[0] + (at[0] - c[0]) * clear,",
-    "new": "    if (false) at = [c[0] + (at[0] - c[0]) * clear,",
+    "old": "    if (clear < 1) at = [c[0] + (at[0] - c[0]) * clear, c[1] + (at[1] - c[1]) * clear, c[2] + (at[2] - c[2]) * clear];",
+    "new": "    if (false) at = [c[0] + (at[0] - c[0]) * clear, c[1] + (at[1] - c[1]) * clear, c[2] + (at[2] - c[2]) * clear];",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "AIMENDS-the-ends-at-the-broadsides-place",
     "file": "src/scenes/naval/aimCamera.js",
-    "old": "    let at = isEnd(camSide)\n",
-    "new": "    let at = false\n",
+    "old": "    let at = isEnd(camSide)",
+    "new": "    let at = false",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js",
       "test/systems/naval/aimends_camera.test.js"
@@ -339,8 +339,8 @@
   {
     "name": "NAV1H-the-camera-crippled",
     "file": "src/scenes/naval/aimCamera.js",
-    "old": "\n      && !deps.wrecked(boat) ? aim.side : null;",
-    "new": " ? aim.side : null;",
+    "old": "      deps.setting('AimCamera', true) !== false && deps.aiming() && boat && aim && aim.side && !deps.wrecked(boat)\n        ? aim.side\n        : null;",
+    "new": "      deps.setting('AimCamera', true) !== false && deps.aiming() && boat && aim && aim.side ? aim.side : null;",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js",
       "test/systems/naval/aimends_camera.test.js"
@@ -349,8 +349,8 @@
   {
     "name": "NAV1H-the-camera-never-home",
     "file": "src/scenes/naval/aimCamera.js",
-    "old": "    if (!want && camK < 1e-3) { camK = 0; camSide = null; camLocal = null; }\n",
-    "new": "",
+    "old": "    if (!want && camK < 1e-3) {\n      camK = 0;\n      camSide = null;\n      camLocal = null;\n    }\n    if (!boat || !camSide || camK <= 0) return ownEye;",
+    "new": "    if (!boat || !camSide || camK <= 0) return ownEye;",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -412,8 +412,8 @@
   {
     "name": "NAV1H-the-finger-to-the-look",
     "file": "src/ui/naval/navalHud.js",
-    "old": "  const hold = (on) => (e) => { e?.preventDefault?.(); e?.stopPropagation?.(); touchBrace = on; };",
-    "new": "  const hold = (on) => (e) => { e?.preventDefault?.(); touchBrace = on; };",
+    "old": "    e?.stopPropagation?.();\n    touchBrace = on;",
+    "new": "    touchBrace = on;",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -421,8 +421,8 @@
   {
     "name": "NAV1H-a-press-surviving-its-plate",
     "file": "src/ui/naval/navalHud.js",
-    "old": "if (!braceOn) touchBrace = false; }",
-    "new": "}",
+    "old": "    if (!braceOn) touchBrace = false;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -430,8 +430,8 @@
   {
     "name": "NAV1H-a-press-surviving-a-cover",
     "file": "src/ui/naval/navalHud.js",
-    "old": "  if (!want) { shown.braceBtn = false; touchBrace = false; for",
-    "new": "  if (!want) { shown.braceBtn = false; for",
+    "old": "    touchBrace = false;\n    for (const c of parts.cardChunks) stowChunk(c);",
+    "new": "    for (const c of parts.cardChunks) stowChunk(c);",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -439,8 +439,8 @@
   {
     "name": "NAV1H-the-brace-for-a-mouse",
     "file": "src/ui/naval/navalHud.js",
-    "old": "    brace: touch && !!model.armed,",
-    "new": "    brace: !!model.armed,",
+    "old": "        brace: touch && !!model.armed,",
+    "new": "        brace: !!model.armed,",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -448,8 +448,8 @@
   {
     "name": "NAV1H-the-finger-told-crouch",
     "file": "src/ui/naval/navalHud.js",
-    "old": "  const bracePress = touch ? 'hold Brace' : `${braceKey}: brace`;",
-    "new": "  const bracePress = `${braceKey}: brace`;",
+    "old": "  const bracePress = touch ? 'hold Brace' : `${braceKey}: brace`; // AUDIT NAV1: a finger's is the plate's own press",
+    "new": "  const bracePress = `${braceKey}: brace`; // AUDIT NAV1: a finger's is the plate's own press",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -610,8 +610,8 @@
   {
     "name": "NAV1H-the-crews-share-unread",
     "file": "src/systems/naval/navalYard.js",
-    "old": "(crewed ? Math.max(0, Math.min(1, crewShare)) : FIELD_MEND_ALONE)",
-    "new": "(crewed ? 1 : FIELD_MEND_ALONE)",
+    "old": "  const rate =\n    FIELD_MEND_PER_S *\n    (crewed ? Math.max(0, Math.min(1, crewShare)) : FIELD_MEND_ALONE) *\n    Math.max(0, scale) *\n    Math.max(0, dt);",
+    "new": "  const rate = FIELD_MEND_PER_S * (crewed ? 1 : FIELD_MEND_ALONE) * Math.max(0, scale) * Math.max(0, dt);",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -619,8 +619,8 @@
   {
     "name": "NAV1H-the-lone-hand-rate",
     "file": "src/systems/naval/navalYard.js",
-    "old": ": FIELD_MEND_ALONE) * Math.max(0, scale) * Math.max(0, dt);",
-    "new": ": 1) * Math.max(0, scale) * Math.max(0, dt);",
+    "old": "    FIELD_MEND_PER_S *\n    (crewed ? Math.max(0, Math.min(1, crewShare)) : FIELD_MEND_ALONE) *\n    Math.max(0, scale) *\n    Math.max(0, dt);",
+    "new": "    FIELD_MEND_PER_S * (crewed ? Math.max(0, Math.min(1, crewShare)) : 1) * Math.max(0, scale) * Math.max(0, dt);",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ],
@@ -675,8 +675,8 @@
   {
     "name": "NAV1H-mending-while-she-burns",
     "file": "src/systems/naval/navalDamage.js",
-    "old": "      if (s.fires.length && s.state !== SHIP_STATES.sinking && s.state !== SHIP_STATES.sunk) {\n        s.lastHitAt = now;\n",
-    "new": "      if (s.fires.length && s.state !== SHIP_STATES.sinking && s.state !== SHIP_STATES.sunk) {\n",
+    "old": "        s.lastHitAt = now;\n        for (const f of s.fires) {",
+    "new": "        for (const f of s.fires) {",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -740,8 +740,8 @@
   {
     "name": "NAV1H-the-mend-chip-unsaid",
     "file": "src/ui/naval/navalHud.js",
-    "old": "ship.repairing ? 'repair' : ship.mending ? 'mend' : null]",
-    "new": "ship.repairing ? 'repair' : null]",
+    "old": "          ship.repairing ? 'repair' : ship.mending ? 'mend' : null,",
+    "new": "          ship.repairing ? 'repair' : null,",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ],
@@ -750,8 +750,8 @@
   {
     "name": "NAV1H-the-wreck-hint-unsaid",
     "file": "src/ui/naval/navalHud.js",
-    "old": "      : ship.wrecked ? (ship.repairing ? 'Crippled, crew repairing' : ship.repairOrdered ? 'Crippled, repairs ordered' : ship.stores > 0 ? 'Crippled. Order repairs, or make for port' : 'Crippled. Make for port and a shipwright')   // AUDIT NAV1: the way out of a wreck, said - SEA-REPAIR: her stores the other\n",
-    "new": "",
+    "old": "              : ship.wrecked\n                ? ship.repairing\n                  ? 'Crippled, crew repairing'\n                  : ship.repairOrdered\n                    ? 'Crippled, repairs ordered'\n                    : ship.stores > 0\n                      ? 'Crippled. Order repairs, or make for port'\n                      : 'Crippled. Make for port and a shipwright' // AUDIT NAV1: the way out of a wreck, said - SEA-REPAIR: her stores the other\n                : !model.armed\n                  ? 'No guns aboard'\n                  : `${touch ? 'Hold and drag' : `Hold ${aimKey}`} to aim - ${bracePress}`,",
+    "new": "              : !model.armed\n                ? 'No guns aboard'\n                : `${touch ? 'Hold and drag' : `Hold ${aimKey}`} to aim - ${bracePress}`,",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ],
@@ -760,8 +760,8 @@
   {
     "name": "NAV1H-the-yard-a-ship-to-board",
     "file": "src/ui/naval/navalHud.js",
-    "old": "`open ${model.board.name}'s hold` : model.board.kind === 'yard' ? model.board.name : `board ${model.board.name}`}`",
-    "new": "`open ${model.board.name}'s hold` : `board ${model.board.name}`}`",
+    "old": "              ? `${boardKey}: ${model.board.kind === 'hold' ? `open ${model.board.name}'s hold` : model.board.kind === 'yard' ? model.board.name : `board ${model.board.name}`}`",
+    "new": "              ? `${boardKey}: ${model.board.kind === 'hold' ? `open ${model.board.name}'s hold` : `board ${model.board.name}`}`",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -769,7 +769,7 @@
   {
     "name": "NAV1H-a-rows-press-unwired",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "      const press = button(r.press, 'dfnaval-btn dfnaval-yardbuy', () => { note = yardNote(m.buy?.(r.id)); render(); });",
+    "old": "      const press = button(r.press, 'dfnaval-btn dfnaval-yardbuy', () => {\n        note = yardNote(m.buy?.(r.id));\n        render();\n      });",
     "new": "      const press = button(r.press, 'dfnaval-btn dfnaval-yardbuy', () => {});",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
@@ -778,7 +778,7 @@
   {
     "name": "NAV1H-the-whole-press-unwired",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "  const whole = button('', 'dfnaval-btn dfnaval-take dfnaval-whole', () => { note = yardNote(m.buyAll?.()); render(); });",
+    "old": "  const whole = button('', 'dfnaval-btn dfnaval-take dfnaval-whole', () => {\n    note = yardNote(m.buyAll?.());\n    render();\n  });",
     "new": "  const whole = button('', 'dfnaval-btn dfnaval-take dfnaval-whole', () => {});",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
@@ -796,8 +796,8 @@
   {
     "name": "NAV1H-a-crewless-boats-hands",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "r.id === 'crew' ? sh.maxCrew > 0 :",
-    "new": "r.id === 'crew' ? true :",
+    "old": "    r.id === 'sail'\n      ? sh.maxSail > 0\n      : r.id === 'crew'\n        ? sh.maxCrew > 0\n        : r.id === 'barrels'\n          ? model.hasBarrels !== false\n          : true;",
+    "new": "    r.id === 'sail' ? sh.maxSail > 0 : r.id === 'crew' ? true : r.id === 'barrels' ? model.hasBarrels !== false : true;",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -805,8 +805,8 @@
   {
     "name": "NAV1H-never-greyed",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "      able(press, r.can);\n      li.append(el('b', null, r.label), el('span', null, r.state), press);\n      list.append(li);",
-    "new": "      able(press, true);\n      li.append(el('b', null, r.label), el('span', null, r.state), press);\n      list.append(li);",
+    "old": "        render();\n      });\n      able(press, r.can);\n      li.append(el('b', null, r.label), el('span', null, r.state), press);\n      list.append(li);",
+    "new": "        render();\n      });\n      able(press, true);\n      li.append(el('b', null, r.label), el('span', null, r.state), press);\n      list.append(li);",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ],
@@ -815,7 +815,7 @@
   {
     "name": "NAV1H-the-yard-back-key-deaf",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "    if (overlayAction(e) === 'back') { e.preventDefault(); e.stopPropagation(); exit('close'); }",
+    "old": "    if (overlayAction(e) === 'back') {\n      e.preventDefault();\n      e.stopPropagation();\n      exit('close');\n    }",
     "new": "    void e;",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
@@ -1015,7 +1015,7 @@
   {
     "name": "AIMENDS-her-reach-unread",
     "file": "src/scenes/naval/aimCamera.js",
-    "old": "    const along = Math.max(dot(c, fwd) + AIM_CAM_AHEAD, ...own.filter(Boolean).map((b) => reachAlong(b, fwd) + AIM_CAM_CLEAR));",
+    "old": "    const along = Math.max(\n      dot(c, fwd) + AIM_CAM_AHEAD,\n      ...own.filter(Boolean).map((b) => reachAlong(b, fwd) + AIM_CAM_CLEAR),\n    );",
     "new": "    const along = dot(c, fwd) + AIM_CAM_AHEAD;",
     "tests": [
       "test/systems/naval/aimends_camera.test.js",
@@ -1025,8 +1025,8 @@
   {
     "name": "AIMENDS-the-ahead-turned-aft",
     "file": "src/scenes/naval/aimCamera.js",
-    "old": "    const along = Math.max(dot(c, fwd) + AIM_CAM_AHEAD, ...own",
-    "new": "    const along = Math.max(dot(c, fwd) - AIM_CAM_AHEAD, ...own",
+    "old": "      dot(c, fwd) + AIM_CAM_AHEAD,",
+    "new": "      dot(c, fwd) - AIM_CAM_AHEAD,",
     "tests": [
       "test/systems/naval/aimends_camera.test.js",
       "test/systems/naval/navaudit_helm.test.js"
@@ -1044,8 +1044,8 @@
   {
     "name": "AIMENDS-the-clearance-dropped",
     "file": "src/scenes/naval/aimCamera.js",
-    "old": "...own.filter(Boolean).map((b) => reachAlong(b, fwd) + AIM_CAM_CLEAR));",
-    "new": "...own.filter(Boolean).map((b) => reachAlong(b, fwd)));",
+    "old": "    const along = Math.max(\n      dot(c, fwd) + AIM_CAM_AHEAD,\n      ...own.filter(Boolean).map((b) => reachAlong(b, fwd) + AIM_CAM_CLEAR),\n    );",
+    "new": "    const along = Math.max(dot(c, fwd) + AIM_CAM_AHEAD, ...own.filter(Boolean).map((b) => reachAlong(b, fwd)));",
     "tests": [
       "test/systems/naval/aimends_camera.test.js",
       "test/systems/naval/navaudit_helm.test.js"
@@ -1054,8 +1054,8 @@
   {
     "name": "AIMENDS-the-wreck-unread",
     "file": "src/scenes/naval/aimCamera.js",
-    "old": "      && !deps.wrecked(boat) ? aim.side : null;",
-    "new": "      ? aim.side : null;",
+    "old": "      deps.setting('AimCamera', true) !== false && deps.aiming() && boat && aim && aim.side && !deps.wrecked(boat)\n        ? aim.side\n        : null;",
+    "new": "      deps.setting('AimCamera', true) !== false && deps.aiming() && boat && aim && aim.side ? aim.side : null;",
     "tests": [
       "test/systems/naval/aimends_camera.test.js"
     ]
@@ -1063,8 +1063,8 @@
   {
     "name": "AIMENDS-the-fall-straight",
     "file": "src/systems/naval/navalBallistics.js",
-    "old": "p0[1] + (land[1] - p0[1]) * s * s,",
-    "new": "p0[1] + (land[1] - p0[1]) * s,",
+    "old": "    out.push([p0[0] + (land[0] - p0[0]) * s, p0[1] + (land[1] - p0[1]) * s * s, p0[2] + (land[2] - p0[2]) * s]);",
+    "new": "    out.push([p0[0] + (land[0] - p0[0]) * s, p0[1] + (land[1] - p0[1]) * s, p0[2] + (land[2] - p0[2]) * s]);",
     "tests": [
       "test/systems/naval/aimends_camera.test.js"
     ]
@@ -1072,8 +1072,8 @@
   {
     "name": "AIMENDS-the-way-uneven",
     "file": "src/systems/naval/navalBallistics.js",
-    "old": "out.push([p0[0] + (land[0] - p0[0]) * s, p0[1] + (land[1] - p0[1]) * s * s, p0[2] + (land[2] - p0[2]) * s]);",
-    "new": "out.push([p0[0] + (land[0] - p0[0]) * s, p0[1] + (land[1] - p0[1]) * s * s, p0[2] + (land[2] - p0[2]) * s * s]);",
+    "old": "    out.push([p0[0] + (land[0] - p0[0]) * s, p0[1] + (land[1] - p0[1]) * s * s, p0[2] + (land[2] - p0[2]) * s]);",
+    "new": "    out.push([p0[0] + (land[0] - p0[0]) * s, p0[1] + (land[1] - p0[1]) * s * s, p0[2] + (land[2] - p0[2]) * s * s]);",
     "tests": [
       "test/systems/naval/aimends_camera.test.js"
     ]
@@ -1119,8 +1119,8 @@
   {
     "name": "AUDITAIM-A2-her-hull-unasked",
     "file": "src/scenes/naval/aimCamera.js",
-    "old": "      ? endEye(camSide, c, fwd, [deps.hull(boat), ...deps.rig(boat)])",
-    "new": "      ? endEye(camSide, c, fwd, [...deps.rig(boat)])",
+    "old": "      ? endEye(camSide, c, fwd, [deps.hull(boat), ...deps.rig(boat)]) // AIM-ENDS: clear of all of her there",
+    "new": "      ? endEye(camSide, c, fwd, [...deps.rig(boat)]) // AIM-ENDS: clear of all of her there",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]

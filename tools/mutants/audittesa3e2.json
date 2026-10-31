@@ -132,8 +132,8 @@
   {
     "name": "E2-2-castle-city-the-kingdom-id",
     "file": "src/net/castleLaw.js",
-    "old": "(castleRegionOk(r) ? kingdomSeatName(CROWN_SEAT_REGIONS[r]) : null)",
-    "new": "(castleRegionOk(r) ? CROWN_SEAT_REGIONS[r] : null)",
+    "old": "export const castleCityOf = (r) => (castleRegionOk(r) ? kingdomSeatName(CROWN_SEAT_REGIONS[r]) : null);",
+    "new": "export const castleCityOf = (r) => (castleRegionOk(r) ? CROWN_SEAT_REGIONS[r] : null);",
     "tests": [
       "test/net/audittesa3e2_castles.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "E2-4-gate-behind-its-row",
     "file": "src/net/instanceRoom.js",
-    "old": "export const GUILD_INSTANCE_RELAY_MIN = 276;",
-    "new": "export const GUILD_INSTANCE_RELAY_MIN = 275;",
+    "old": "export const GUILD_INSTANCE_RELAY_MIN = 276; // world276 (the eighth merge of main into #1184, 2026-10-28: past main's world275, SD-PARTY, already live); world275 (the seventh merge of main into #1184, 2026-10-28: past main's world274, LADDER-CUT); world274 (the fourth merge of main into #1184, 2026-10-27: past main's world272 and world273); world272 (the third merge of main into #1184, 2026-10-27: past MASTER-THREE's world271, main's); world271 (the second merge of main into #1184, 2026-10-27: past CHAT-POST's world270, main's); world270 (the merge of main into TESA, 2026-10-27: #1184's world269 folded into its world270 past BOW-TOPS's world269, main's): the merged release's (world256 on TESA's, renumbered past main's world256 to world259 at the merge, then world260 past main's world260 to world268 at the next)",
+    "new": "export const GUILD_INSTANCE_RELAY_MIN = 275; // world276 (the eighth merge of main into #1184, 2026-10-28: past main's world275, SD-PARTY, already live); world275 (the seventh merge of main into #1184, 2026-10-28: past main's world274, LADDER-CUT); world274 (the fourth merge of main into #1184, 2026-10-27: past main's world272 and world273); world272 (the third merge of main into #1184, 2026-10-27: past MASTER-THREE's world271, main's); world271 (the second merge of main into #1184, 2026-10-27: past CHAT-POST's world270, main's); world270 (the merge of main into TESA, 2026-10-27: #1184's world269 folded into its world270 past BOW-TOPS's world269, main's): the merged release's (world256 on TESA's, renumbered past main's world256 to world259 at the merge, then world260 past main's world260 to world268 at the next)",
     "tests": [
       "test/net/domain2_castles.test.js"
     ],

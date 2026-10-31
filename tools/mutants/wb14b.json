@@ -38,8 +38,8 @@
   {
     "name": "WB14b-the-post-without-them",
     "file": "src/net/gate/gateHerald.js",
-    "old": "text: `${RITE_OMEN_LINE} ${marks}${pt ? ` ${pt}` : ''}`,",
-    "new": "text: `${RITE_OMEN_LINE} ${marks}`,",
+    "old": "    text: `${RITE_OMEN_LINE} ${marks}${pt ? ` ${pt}` : ''}`, // WB12d: the rite - AUDIT WB12d (D3): the chat's own sentences, before the marks",
+    "new": "    text: `${RITE_OMEN_LINE} ${marks}`, // WB12d: the rite - AUDIT WB12d (D3): the chat's own sentences, before the marks",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WB14b-the-portents-unsaid-in-the-chat",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "          if (pt) sayOf(pt);\n",
-    "new": "\n",
+    "old": "          if (pt) sayOf(pt);\n        } else if (line === 'seal')",
+    "new": "        } else if (line === 'seal')",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WB14b-the-map-card-without-them",
     "file": "src/systems/gate/gateOmen.js",
-    "old": "marksLineOf(c.t.day), ...(pt ? [pt] : [])]",
-    "new": "marksLineOf(c.t.day)]",
+    "old": "      ...(Number.isFinite(fell)\n        ? [`${boss.name} has fallen`]\n        : [`${boss.name}, ${boss.title}`, marksLineOf(c.t.day), ...(pt ? [pt] : [])]),",
+    "new": "      ...(Number.isFinite(fell) ? [`${boss.name} has fallen`] : [`${boss.name}, ${boss.title}`, marksLineOf(c.t.day)]),",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WB14b-the-card-row-missing",
     "file": "src/ui/gate/gateMarksView.js",
-    "old": "  const portents = portentRowsOf(pt);   // WB14b",
-    "new": "  const portents = portentRowsOf(null);   // WB14b",
+    "old": "  const portents = portentRowsOf(pt); // WB14b: and the night's portents, each its sign, name, line and tip",
+    "new": "  const portents = portentRowsOf(null); // WB14b: and the night's portents, each its sign, name, line and tip",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WB14b-the-Vanguard-arriving-in-his-court",
     "file": "src/net/gate/gateBrain.js",
-    "old": "root: has('vanguard') ? FLOOR.bridgehead : FLOOR.first,",
-    "new": "root: FLOOR.first,",
+    "old": "    root: has('vanguard') ? FLOOR.bridgehead : FLOOR.first,",
+    "new": "    root: FLOOR.first,",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "WB14b-the-Sundering-keeping-the-third-walkway",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (has('sunder')) walks.push(WALKWAY.rift); else walks.push(WALKWAY.third);\n",
-    "new": "  walks.push(WALKWAY.third);\n",
+    "old": "  if (has('sunder')) walks.push(WALKWAY.rift);\n  else walks.push(WALKWAY.third);",
+    "new": "  walks.push(WALKWAY.third);",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "WB14b-the-Pen-on-no-night",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (has('captive')) { floors.push(FLOOR.pen); walks.push(WALKWAY.pen); }\n",
-    "new": "\n",
+    "old": "  if (has('captive')) {\n    floors.push(FLOOR.pen);\n    walks.push(WALKWAY.pen);\n  }",
+    "new": "",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "WB14b-a-hole-said-as-nothing",
     "file": "src/net/gate/gateBrain.js",
-    "old": "(_, i) => (Number.isFinite(a[i]) ? a[i] : null));",
-    "new": "(_, i) => (Number.isFinite(a[i]) ? a[i] : 0));",
+    "old": "  const out = Array.from({ length: Math.min(a.length, WALKS.length) }, (_, i) => (Number.isFinite(a[i]) ? a[i] : null)); // a hole too (a sparse array's)",
+    "new": "  const out = Array.from({ length: Math.min(a.length, WALKS.length) }, (_, i) => (Number.isFinite(a[i]) ? a[i] : 0)); // a hole too (a sparse array's)",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "WB14b-the-state-silent-on-them",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    ...(f.pt ? { pt: f.pt } : {}),   // WB14b",
-    "new": "    ...({}),   // WB14b",
+    "old": "    ...(f.pt ? { pt: f.pt } : {}), // WB14b: the night's portents - none said, a plain night",
+    "new": "    ...{}, // WB14b: the night's portents - none said, a plain night",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "WB14b-the-telegraph-over-every-floor",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "floorKs = floor ? floor.ks ?? null : PLAN_PLAIN.floors;",
-    "new": "floorKs = floor ? floor.ks ?? null : null;",
+    "old": "      floorKs = floor ? (floor.ks ?? null) : PLAN_PLAIN.floors;",
+    "new": "      floorKs = floor ? (floor.ks ?? null) : null;",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-portents-a-pair-the-table-never-makes",
     "file": "src/net/gate/gateMods.js",
-    "old": "if (ordered.length === 2 && !(ordered[0] === GATE_DIRE[0] && ordered[1] === GATE_DIRE[1])) return undefined;",
-    "new": "void 0;",
+    "old": "  if (ordered.length === 2 && !(ordered[0] === GATE_DIRE[0] && ordered[1] === GATE_DIRE[1])) return undefined;",
+    "new": "  void 0;",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ],
@@ -175,8 +175,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-portents-an-unknown-word",
     "file": "src/net/gate/gateMods.js",
-    "old": "if (!pt.every((id) => typeof id === 'string' && PORTENT_BY_ID.has(id)) || new Set(pt).size !== pt.length) return undefined;",
-    "new": "if (new Set(pt).size !== pt.length) return undefined;",
+    "old": "  if (!pt.every((id) => typeof id === 'string' && PORTENT_BY_ID.has(id)) || new Set(pt).size !== pt.length)\n    return undefined;",
+    "new": "  if (new Set(pt).size !== pt.length) return undefined;",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ],
@@ -195,8 +195,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-floor-open-before-its-walkway-is-whole",
     "file": "src/net/gate/gateBrain.js",
-    "old": "!plan.floors.includes(w.b) || walkFormed(xa, k, now) < 1) continue;",
-    "new": "!plan.floors.includes(w.b) || walkFormed(xa, k, now) <= 0) continue;",
+    "old": "      if (live.includes(w.b) || !live.includes(w.a) || !plan.floors.includes(w.b) || walkFormed(xa, k, now) < 1)",
+    "new": "      if (live.includes(w.b) || !live.includes(w.a) || !plan.floors.includes(w.b) || walkFormed(xa, k, now) <= 0)",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ],
@@ -205,8 +205,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-a-walkway-from-a-floor-not-yet-reached",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    if (!(f > 0) || !live.includes(w.a)) continue;\n    const t = (x - w.ax) * w.ux + (z - w.az) * w.uz, side",
-    "new": "    if (!(f > 0)) continue;\n    const t = (x - w.ax) * w.ux + (z - w.az) * w.uz, side",
+    "old": "      f = walkFormed(xa, k, now);\n    if (!(f > 0) || !live.includes(w.a)) continue;\n    const t = (x - w.ax) * w.ux + (z - w.az) * w.uz,",
+    "new": "      f = walkFormed(xa, k, now);\n    if (!(f > 0)) continue;\n    const t = (x - w.ax) * w.ux + (z - w.az) * w.uz,",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ],

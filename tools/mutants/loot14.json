@@ -201,8 +201,8 @@
   {
     "name": "LOOT14-the-gear-under-the-dress-cap",
     "file": "src/systems/clothingStanding.js",
-    "old": "groups.map((v, g) => clamp(v) + capGear(gear?.[g]))",
-    "new": "groups.map((v, g) => clamp(v + capGear(gear?.[g])))",
+    "old": "  return { groups: groups.map((v, g) => clamp(v) + capGear(gear?.[g])), temple: clamp(temple) };",
+    "new": "  return { groups: groups.map((v, g) => clamp(v + capGear(gear?.[g]))), temple: clamp(temple) };",
     "tests": [
       "test/systems/loot14_wardrobe.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "LOOT14-the-lining-forgotten",
     "file": "src/systems/survival/temperature.js",
-    "old": "    + Math.max(0, Number(gear) || 0);   // LOOT14",
-    "new": "    + 0;   // LOOT14",
+    "old": "    Math.max(0, Number(gear) || 0); // LOOT14: a garment's warmth lines - a lining, halved in the heat and eaten by the wet as the cloth is",
+    "new": "    0; // LOOT14: a garment's warmth lines - a lining, halved in the heat and eaten by the wet as the cloth is",
     "tests": [
       "test/systems/loot14_wardrobe.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "LOOT14-the-felt-reading-ignores-the-lining",
     "file": "src/systems/survival/temperature.js",
-    "old": "inSunlight: !!env.inSunlight, gear: ctx.gearWarmth });",
-    "new": "inSunlight: !!env.inSunlight });",
+    "old": "  const clothes = clothingWarmth(worn, { wet, natural: air, inSunlight: !!env.inSunlight, gear: ctx.gearWarmth });",
+    "new": "  const clothes = clothingWarmth(worn, { wet, natural: air, inSunlight: !!env.inSunlight });",
     "tests": [
       "test/systems/loot14_wardrobe.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "LOOT14-the-storm-unturned",
     "file": "src/systems/survival/temperature.js",
-    "old": "        * (1 - Math.min(GEAR_DRY_MOST, Math.max(0, Number(ctx.gearDry) || 0)) / 100)",
-    "new": "        * 1",
+    "old": "        (1 - Math.min(GEAR_DRY_MOST, Math.max(0, Number(ctx.gearDry) || 0)) / 100) + // LOOT14: weatherproofing turns the weather's soaking aside",
+    "new": "        1 + // LOOT14: weatherproofing turns the weather's soaking aside",
     "tests": [
       "test/systems/loot14_wardrobe.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "LOOT14-the-context-drops-the-dry",
     "file": "src/systems/survival/temperature.js",
-    "old": "    gearWarmth: Number(mods.warmth) || 0, gearDry: Number(mods.dry) || 0,",
-    "new": "    gearWarmth: Number(mods.warmth) || 0, gearDry: 0,",
+    "old": "    gearDry: Number(mods.dry) || 0,",
+    "new": "    gearDry: 0,",
     "tests": [
       "test/systems/loot14_wardrobe.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "LOOT14-the-garment-a-gear-piece",
     "file": "src/systems/foeLootCap.js",
-    "old": "if (g != null) return g; return r > 0",
-    "new": "if (g != null) void 0; return r > 0",
+    "old": "  if (g != null) return g;",
+    "new": "  if (g != null) void 0;",
     "tests": [
       "test/systems/loot14_wardrobe.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "LOOT14-the-kit-garments-never-roll",
     "file": "src/systems/foeLootCap.js",
-    "old": "  const kit = [...rollKitPieces(entity, opts), ...rollKitGarments(entity, opts)];",
-    "new": "  const kit = [...rollKitPieces(entity, opts)];",
+    "old": "  const kit = [...rollKitPieces(entity, opts), ...rollKitGarments(entity, opts)]; // LOOT14: the garments after every draw the kit made",
+    "new": "  const kit = [...rollKitPieces(entity, opts)]; // LOOT14: the garments after every draw the kit made",
     "tests": [
       "test/systems/loot14_wardrobe.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "LOOT14-the-kit-takes-garments-first",
     "file": "src/systems/foeLootCap.js",
-    "old": "    if (isGarment(it)) return;   // LOOT14: the kit's garments roll after all of this (rollKitGarments)\n",
-    "new": "\n",
+    "old": "    if (isGarment(it)) return; // LOOT14: the kit's garments roll after all of this (rollKitGarments)\n    if (!it || it.untaken === true || !rarityEligible(it)) return; // AUDIT 625 L1: no mark - the kit the spawn's roll passed by",
+    "new": "    if (!it || it.untaken === true || !rarityEligible(it)) return; // AUDIT 625 L1: no mark - the kit the spawn's roll passed by",
     "tests": [
       "test/systems/loot14_wardrobe.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "LOOT14-the-live-garment-laddered",
     "file": "src/systems/foeLootCap.js",
-    "old": "    const copy = { ...g, untaken: true };\n    entity.items[i] = copy;",
-    "new": "    const copy = g; g.untaken = true;\n    entity.items[i] = copy;",
+    "old": "    const copy = { ...g, untaken: true };",
+    "new": "    const copy = g;\n    g.untaken = true;",
     "tests": [
       "test/systems/loot14_wardrobe.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "LOOT14-the-kit-garment-a-bosses",
     "file": "src/systems/foeLootCap.js",
-    "old": "  kit.boss = false;\n",
-    "new": "\n",
+    "old": "  kit.boss = false;",
+    "new": "",
     "tests": [
       "test/systems/loot14_wardrobe.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "LOOT14-the-kit-garment-on-the-whole-ladder",
     "file": "src/systems/foeLootCap.js",
-    "old": "  kit.weights = plainFoeRarityWeights(quarters);\n",
-    "new": "\n",
+    "old": "  kit.weights = plainFoeRarityWeights(quarters);",
+    "new": "",
     "tests": [
       "test/systems/loot14_wardrobe.test.js"
     ]

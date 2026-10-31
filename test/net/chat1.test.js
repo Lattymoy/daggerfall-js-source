@@ -651,7 +651,9 @@ test('CHAT1 / AUDIT CHAT: the host by source - world.js starts the chat with the
   const w = rd('src/scenes/world.js');
   assert.match(w, /import \{ ChatLog, CHAT_REJOIN_MS \} from '\.\.\/net\/chat\.js';/);
   assert.match(w, /import \{ createChatPanel \} from '\.\.\/ui\/chatPanel\.js';/);
-  assert.match(w, /import \{ requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive, cursorActive, holdCursor \} from '\.\.\/player\/pointerLock\.js';/);   // AUDIT-TO1 I2: cursorActive joined the import; HERB-CURSOR: and holdCursor
+  // PIN MOVED (HOST-SPLIT PROFESSIONS): holdCursor left the host's import with the professions' block
+  assert.match(w, /import \{ requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive, cursorActive \} from '\.\.\/player\/pointerLock\.js';/);
+  assert.match(w, /import \{ cursorActive, holdCursor, requestLook, setCursorActive \} from '\.\.\/player\/pointerLock\.js';/);   // AUDIT-TO1 I2: cursorActive joined the import; HERB-CURSOR: and holdCursor
   assert.match(w, /if \(typeof document !== 'undefined'\) chatStart\(\);/, 'OVH3: on either skin, with a document (node has none)');
   assert.match(w, /const chatStart = \(\) => \{\s*if \(!online\.url\) return;/, 'AUDIT CHAT A9/B1: a relay the law refused is no relay for the chat either');
   // CHAT-CHAN: a channel session per tab that rides a room of its OWN (`link`: the World and the Region tabs) - the Party

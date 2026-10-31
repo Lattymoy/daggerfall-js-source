@@ -21,8 +21,8 @@
   {
     "name": "AC6-B1-win-returns",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "      if (held) addItem(d.entity.items, held);\n",
-    "new": "",
+    "old": "      if (held) addItem(d.entity.items, held);\n      d.entity.iliacForfeits = forfeitsAfter(d.entity.iliacForfeits, d.key, today(), foe.name);",
+    "new": "      d.entity.iliacForfeits = forfeitsAfter(d.entity.iliacForfeits, d.key, today(), foe.name);",
     "tests": [
       "test/systems/auditcards6_b.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "AC6-B1-draw-returns",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "    } else if (held) addItem(d.entity.items, held);   // a draw: nobody pays, the stake comes home\n",
-    "new": "    }\n",
+    "old": "    } else if (held) addItem(d.entity.items, held); // a draw: nobody pays, the stake comes home",
+    "new": "    }",
     "tests": [
       "test/systems/auditcards6_b.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "AC6-B1-take-said",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "      if (held) d.say(`${foe.name} takes a card from your deck: ${cardById(held.card)?.name ?? 'a card'}.`);",
-    "new": "",
+    "old": "      if (held) d.say(`${foe.name} takes a card from your deck: ${cardById(held.card)?.name ?? 'a card'}.`);\n    } else if (held) addItem(d.entity.items, held); // a draw: nobody pays, the stake comes home",
+    "new": "    } else if (held) addItem(d.entity.items, held); // a draw: nobody pays, the stake comes home",
     "tests": [
       "test/systems/auditcards6_b.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "AC6-B6-tie",
     "file": "src/systems/iliac/iliacTableSession.js",
-    "old": " || (b === key ? 1 : 0) - (a === key ? 1 : 0)",
-    "new": "",
+    "old": "  const keys = Object.keys(next).sort(\n    (a, b) => (next[b]?.day ?? 0) - (next[a]?.day ?? 0) || (b === key ? 1 : 0) - (a === key ? 1 : 0),\n  );",
+    "new": "  const keys = Object.keys(next).sort((a, b) => (next[b]?.day ?? 0) - (next[a]?.day ?? 0));",
     "tests": [
       "test/systems/auditcards6_b.test.js",
       "test/systems/cards10_table.test.js"
@@ -140,8 +140,8 @@
   {
     "name": "AC6-B10-row-tab",
     "file": "src/ui/iliacTableHud.js",
-    "old": "    n.setAttribute('tabindex', '0');\n",
-    "new": "",
+    "old": "    n.setAttribute('tabindex', '0');\n    n.setAttribute('role', 'button');",
+    "new": "    n.setAttribute('role', 'button');",
     "tests": [
       "test/systems/auditcards6_b.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "AC6-B10-row-keys",
     "file": "src/ui/iliacTableHud.js",
-    "old": "    n.addEventListener('keydown', (e) => { if (!ACTIVATE.has(e.key)) return; e.preventDefault?.(); e.stopPropagation?.(); fn(); });",
-    "new": "",
+    "old": "    n.addEventListener('keydown', (e) => {\n      if (!ACTIVATE.has(e.key)) return;\n      e.preventDefault?.();\n      e.stopPropagation?.();\n      fn();\n    });\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/auditcards6_b.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "AC6-B10-refocus",
     "file": "src/ui/iliacTableHud.js",
-    "old": "      refocus(kept);\n",
-    "new": "",
+    "old": "      refocus(kept);\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/auditcards6_b.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "AC6-B10-fallback-hand",
     "file": "src/ui/iliacTableHud.js",
-    "old": ", keyed.find((x) => x.getAttribute('data-focus').startsWith('pick-'))]) if (n && took(n)) return;",
-    "new": "]) if (n && took(n)) return;",
+    "old": "    for (const n of [at(key), keyed.find((x) => x.getAttribute('data-focus').startsWith('pick-'))])\n      if (n && took(n)) return;",
+    "new": "    for (const n of [at(key)]) if (n && took(n)) return;",
     "tests": [
       "test/systems/auditcards6_b.test.js"
     ]
@@ -176,7 +176,7 @@
   {
     "name": "AC6-B10-tab-walk",
     "file": "src/ui/iliacTableHud.js",
-    "old": "  root.addEventListener('keydown', (e) => { if (e.key === 'Tab' || e.key === ' ' || e.key === 'Enter') e.stopPropagation?.(); });",
+    "old": "  root.addEventListener('keydown', (e) => {\n    if (e.key === 'Tab' || e.key === ' ' || e.key === 'Enter') e.stopPropagation?.();\n  });",
     "new": "",
     "tests": [
       "test/systems/auditcards6_b.test.js"
@@ -185,7 +185,7 @@
   {
     "name": "AC6-B10-button-keys",
     "file": "src/ui/iliacTableHud.js",
-    "old": "        b.addEventListener('keydown', (e) => { if (ACTIVATE.has(e.key)) e.stopPropagation?.(); });",
+    "old": "        b.addEventListener('keydown', (e) => {\n          if (ACTIVATE.has(e.key)) e.stopPropagation?.();\n        });",
     "new": "",
     "tests": [
       "test/systems/auditcards6_b.test.js"
@@ -194,8 +194,8 @@
   {
     "name": "AC6-B10-starts-in-panel",
     "file": "src/ui/iliacTableHud.js",
-    "old": "  try { root.focus?.({ preventScroll: true }); } catch { /* a page that cannot focus */ }",
-    "new": "",
+    "old": "  try {\n    root.focus?.({ preventScroll: true });\n  } catch {\n    /* a page that cannot focus */\n  } // AUDIT CARDS-6 B10: the keyboard starts in the panel",
+    "new": "  // AUDIT CARDS-6 B10: the keyboard starts in the panel",
     "tests": [
       "test/systems/auditcards6_b.test.js"
     ]
@@ -213,8 +213,8 @@
   {
     "name": "AC6-B13-closed",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "    staked: () => !g.closed && g.phase === 'playing'",
-    "new": "    staked: () => g.phase === 'playing'",
+    "old": "    staked: () => !g.closed && g.phase === 'playing' && !!g.session?.forKeeps, // AUDIT CARDS-6 B13: a closed game stakes nothing",
+    "new": "    staked: () => g.phase === 'playing' && !!g.session?.forKeeps, // AUDIT CARDS-6 B13: a closed game stakes nothing",
     "tests": [
       "test/systems/auditcards6_b.test.js"
     ]

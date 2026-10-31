@@ -2,8 +2,8 @@
   {
     "name": "ASH-the-haze",
     "file": "src/world/weather.js",
-    "old": "  ashfall: { mode: 'exp', density: 0.006,",
-    "new": "  ashfall: { mode: 'exp', density: 0.003,",
+    "old": "  ashfall: { mode: 'exp', density: 0.006, start: 0, end: 0, excludeSky: true }, // ASHFALL1: the port's own row - a haze of ash, thicker than the snow's (half a kilometre to the fog's colour), the pall over it seen",
+    "new": "  ashfall: { mode: 'exp', density: 0.003, start: 0, end: 0, excludeSky: true }, // ASHFALL1: the port's own row - a haze of ash, thicker than the snow's (half a kilometre to the fog's colour), the pall over it seen",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ASH-the-sun",
     "file": "src/world/weather.js",
-    "old": "  else if (weather === 'ashfall') scale = 0.4;",
-    "new": "  else if (weather === 'ashfall') scale = 1;",
+    "old": "  else if (weather === 'ashfall') scale = 0.4; // ASHFALL1: the port's own - the pall a shade darker than a rain's deck",
+    "new": "  else if (weather === 'ashfall') scale = 1; // ASHFALL1: the port's own - the pall a shade darker than a rain's deck",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ASH-not-overcast",
     "file": "src/world/weather.js",
-    "old": " || weather === 'sandstorm' || weather === 'ashfall',",
-    "new": " || weather === 'sandstorm',",
+    "old": "      weather === 'sandstorm' ||\n      weather === 'ashfall',",
+    "new": "      weather === 'sandstorm',",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ASH-no-fall",
     "file": "src/world/weather.js",
-    "old": "  if (weather === 'ashfall') return 'ash';   // ASHFALL1",
-    "new": "  if (weather === 'ashfall') return null;   // ASHFALL1",
+    "old": "  if (weather === 'ashfall') return 'ash'; // ASHFALL1: the ash and its embers (render/dryFall.js), not the rain program",
+    "new": "  if (weather === 'ashfall') return null; // ASHFALL1: the ash and its embers (render/dryFall.js), not the rain program",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "ASH-the-field-coin",
     "file": "src/systems/weather/weatherField.js",
-    "old": "u < ash * ASH_FIELD_GAIN;",
-    "new": "u < ash;",
+    "old": "  if (word === 'ashfall') return ash > 0 && ASH_FROM.includes(zoneWord) && u < ash * ASH_FIELD_GAIN;",
+    "new": "  if (word === 'ashfall') return ash > 0 && ASH_FROM.includes(zoneWord) && u < ash;",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "ASH-the-field-seat-unread",
     "file": "src/systems/weather/weatherField.js",
-    "old": "word === 'ashfall' ? ashAtPixel(climateAt, p.x, p.y) : 0, c.u)",
-    "new": "0, c.u)",
+    "old": "        if (!cellSeats(word, seat, wordOfClimate(seat), word === 'ashfall' ? ashAtPixel(climateAt, p.x, p.y) : 0, c.u))\n          continue; // WEATHER2d: a sandstorm seats on desert land under a cloudy or thunder word; ASHFALL1: an ashfall on the volcano's under a dry one",
+    "new": "        if (!cellSeats(word, seat, wordOfClimate(seat), 0, c.u)) continue; // WEATHER2d: a sandstorm seats on desert land under a cloudy or thunder word; ASHFALL1: an ashfall on the volcano's under a dry one",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "ASH-the-travel-veil-untinted",
     "file": "src/render/rainCurtains.js",
-    "old": "tint: c.tint ?? null, alpha, d, shape, clip });",
-    "new": "tint: null, alpha, d, shape, clip });",
+    "old": "      tint: c.tint ?? null,",
+    "new": "      tint: null,",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "ASH-the-tint-ignored",
     "file": "src/render/rainCurtains.js",
-    "old": "  if (tint) {\n    const grey = 0.299 * _mix[0]",
-    "new": "  if (false) {\n    const grey = 0.299 * _mix[0]",
+    "old": "  if (tint) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "ASH-the-body-chilled",
     "file": "src/systems/survival/temperature.js",
-    "old": "sandstorm: 5, ashfall: -5,",
-    "new": "sandstorm: 5, ashfall: -10,",
+    "old": "  ashfall: -5,",
+    "new": "  ashfall: -10,",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "ASH-windfall-sunny",
     "file": "src/systems/windfall.js",
-    "old": "ashfall: WEATHER.overcast });",
-    "new": "ashfall: WEATHER.sunny });",
+    "old": "const WORD_TO_WEATHER = Object.freeze({ ...WEATHER, sandstorm: WEATHER.thunder, ashfall: WEATHER.overcast });",
+    "new": "const WORD_TO_WEATHER = Object.freeze({ ...WEATHER, sandstorm: WEATHER.thunder, ashfall: WEATHER.sunny });",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "ASH-forecast-unsaid",
     "file": "src/systems/weather/owForecast.js",
-    "old": "'sandstorm', 'ashfall']));",
-    "new": "'sandstorm']));",
+    "old": "export const FORECAST_NOTABLE = Object.freeze(new Set(['fog', 'rain', 'thunder', 'snow', 'sandstorm', 'ashfall']));",
+    "new": "export const FORECAST_NOTABLE = Object.freeze(new Set(['fog', 'rain', 'thunder', 'snow', 'sandstorm']));",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "ASH-embers-blended",
     "file": "src/render/dryFall.js",
-    "old": "      gl.blendFunc(gl.ONE, gl.ONE);   // the embers' own light, added",
-    "new": "      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);   // the embers' own light, added",
+    "old": "      gl.blendFunc(gl.ONE, gl.ONE); // the embers' own light, added",
+    "new": "      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); // the embers' own light, added",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -281,7 +281,7 @@
   {
     "name": "ASH-the-count-whole",
     "file": "src/render/dryFall.js",
-    "old": "export const dryCount = (strength01, look) => Math.round(look.count * Math.max(0, Math.min(1, Number(strength01) || 0)));",
+    "old": "export const dryCount = (strength01, look) =>\n  Math.round(look.count * Math.max(0, Math.min(1, Number(strength01) || 0)));",
     "new": "export const dryCount = (strength01, look) => (Number(strength01) > 0 ? look.count : 0);",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
@@ -290,8 +290,8 @@
   {
     "name": "ASH-the-clock-unwrapped",
     "file": "src/render/dryFall.js",
-    "old": "    gl.uniform1f(U.uTime, wispClock(timeSeconds));   // wrapped here, in double precision",
-    "new": "    gl.uniform1f(U.uTime, timeSeconds);   // wrapped here, in double precision",
+    "old": "    gl.uniform1f(U.uTime, wispClock(timeSeconds)); // wrapped here, in double precision",
+    "new": "    gl.uniform1f(U.uTime, timeSeconds); // wrapped here, in double precision",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "ASH-the-least-size",
     "file": "src/render/dryFall.js",
-    "old": "gl.uniform1f(U.uMinSize, DRY_MIN_PX / Math.max(1, viewH || gl.drawingBufferHeight || 720));",
-    "new": "gl.uniform1f(U.uMinSize, 0);",
+    "old": "    gl.uniform1f(U.uMinSize, DRY_MIN_PX / Math.max(1, viewH || gl.drawingBufferHeight || 720)); // half the least size, in the world image's -1..1",
+    "new": "    gl.uniform1f(U.uMinSize, 0); // half the least size, in the world image's -1..1",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "ASH-the-least-size-the-canvas",
     "file": "src/render/dryFall.js",
-    "old": "DRY_MIN_PX / Math.max(1, viewH || gl.drawingBufferHeight || 720)",
-    "new": "DRY_MIN_PX / Math.max(1, gl.drawingBufferHeight || 720)",
+    "old": "    gl.uniform1f(U.uMinSize, DRY_MIN_PX / Math.max(1, viewH || gl.drawingBufferHeight || 720)); // half the least size, in the world image's -1..1",
+    "new": "    gl.uniform1f(U.uMinSize, DRY_MIN_PX / Math.max(1, gl.drawingBufferHeight || 720)); // half the least size, in the world image's -1..1",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "ASH-a-flake-fills-the-screen",
     "file": "src/render/dryFall.js",
-    "old": "  vFade *= smoothstep(0.3, 1.0, c.w);",
-    "new": "  vFade *= 1.0;",
+    "old": "  vFade *= smoothstep(0.3, 1.0, c.w);   // ASHFALL1's audit: a flake at the eye goes before it fills the screen (0.2 m off, a disc 200 px across)",
+    "new": "  vFade *= 1.0;   // ASHFALL1's audit: a flake at the eye goes before it fills the screen (0.2 m off, a disc 200 px across)",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "ASH-the-bay-asked",
     "file": "src/systems/weather/weatherField.js",
-    "old": "  if (inBay(px, py)) return 0;   // the second audit: no zone asked of the Bay (it answers none - and every ask filled its cache)\n",
-    "new": "",
+    "old": "  if (inBay(px, py)) return 0; // the second audit: no zone asked of the Bay (it answers none - and every ask filled its cache)\n  const zone = tamrielBiomeAt(px, py);",
+    "new": "  const zone = tamrielBiomeAt(px, py);",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "ASH-the-songs-a-sunny-day",
     "file": "src/systems/song/songManager.js",
-    "old": "    case 'ashfall':  return fm ? OVERCAST_SONGS_FM : OVERCAST_SONGS;\n",
-    "new": "",
+    "old": "    case 'ashfall':\n      return fm ? OVERCAST_SONGS_FM : OVERCAST_SONGS;\n    case 'rain':",
+    "new": "    case 'rain':",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "ASH-the-skies-sky-unnamed",
     "file": "src/systems/dynamicSkies/dynamicSkies.js",
-    "old": "sandstorm: 'SkyboxFog', ashfall: 'SkyboxOvercast',",
-    "new": "sandstorm: 'SkyboxFog',",
+    "old": "  ashfall: 'SkyboxOvercast',\n});",
+    "new": "});",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "ASH-the-skies-fog-unnamed",
     "file": "src/systems/dynamicSkies/dynamicSkies.js",
-    "old": "sandstorm: 'FogHeavyFog', ashfall: 'FogSnowy',",
-    "new": "sandstorm: 'FogHeavyFog',",
+    "old": "  sandstorm: 'FogHeavyFog',\n  ashfall: 'FogSnowy', // ASHFALL1's audit: as world/weather.js fogForWeather stands them in",
+    "new": "  sandstorm: 'FogHeavyFog', // ASHFALL1's audit: as world/weather.js fogForWeather stands them in",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "ASH-the-nearest-cell-worn",
     "file": "src/systems/weather/weatherField.js",
-    "old": "CELL_RANK[c.word] < CELL_RANK[inside.word]",
-    "new": "c.d < inside.d",
+    "old": "  for (const c of cells) if (c.d < c.r && (!inside || CELL_RANK[c.word] < CELL_RANK[inside.word])) inside = c;",
+    "new": "  for (const c of cells) if (c.d < c.r && (!inside || c.d < inside.d)) inside = c;",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
