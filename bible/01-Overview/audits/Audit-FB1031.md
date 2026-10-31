@@ -135,3 +135,7 @@ where the ramp's own metals stand.
 Delve vault is another (`../../06-Systems/Unleveled-Loot.md`). Main's Portal Book, music box, raids and creatures met
 every branch law soundly.
 
+
+**M1.** The merge's renumbering held in every version line, pin, mutant record and migration; its one slip was W3. The
+acct235 history in `service.js` said main ran to migration 0203; main ends at 0202, and 0203 is BUTCHER-STORES'. Not
+the branch's: `test/world/fb1002_audit.test.js` test 9 fails on main as here, from before the merge.
