@@ -20,8 +20,8 @@
   {
     "name": "GUILD-YARD-the-look-a-characters-again",
     "file": "server-account/src/homes.js",
-    "old": "AND ${OWNS}`)\n    .bind(next ? JSON.stringify(next) : null, mapId, buildingKey, mapId, buildingKey, player.id, character).run();",
-    "new": "AND player = ? AND char_id = ?`)\n    .bind(next ? JSON.stringify(next) : null, mapId, buildingKey, player.id, character).run();",
+    "old": "    .prepare(`UPDATE homes SET look = ? WHERE map_id = ? AND building_key = ? AND ${OWNS}`)\n    .bind(next ? JSON.stringify(next) : null, mapId, buildingKey, mapId, buildingKey, player.id, character)",
+    "new": "    .prepare(`UPDATE homes SET look = ? WHERE map_id = ? AND building_key = ? AND player = ? AND char_id = ?`)\n    .bind(next ? JSON.stringify(next) : null, mapId, buildingKey, player.id, character)",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "GUILD-YARD-the-halls-look-unanswered",
     "file": "server-account/src/homes.js",
-    "old": "          ...lookFor(h, h.kin === 1),   // GUILD-YARD: how its keepers painted it, to everyone (AUDIT HOME-VOTE A3: but a shunned hall's)\n",
-    "new": "",
+    "old": "            ...lookFor(h, h.kin === 1), // GUILD-YARD: how its keepers painted it, to everyone (AUDIT HOME-VOTE A3: but a shunned hall's)\n            ...votesOf(h), // HOME-VOTE",
+    "new": "            ...votesOf(h), // HOME-VOTE",
     "note": "AUDIT HOME-VOTE A3 (PIN MOVED): the hall's paint through lookFor, a shunned hall's to its guild alone",
     "tests": [
       "test/net/guild_yard.test.js"
@@ -57,8 +57,8 @@
   {
     "name": "GUILD-YARD-the-sale-without-the-yard",
     "file": "server-account/src/halls.js",
-    "old": "AS back FROM home_decor WHERE map_id = ? AND building_key = ?`)",
-    "new": "AS back FROM home_decor WHERE map_id = ? AND building_key = ? AND yard = 0`)",
+    "old": "    COALESCE(SUM(CASE WHEN json_valid(place) THEN paid / 2 ELSE 0 END), 0) AS back FROM home_decor WHERE map_id = ? AND building_key = ?`,",
+    "new": "    COALESCE(SUM(CASE WHEN json_valid(place) THEN paid / 2 ELSE 0 END), 0) AS back FROM home_decor WHERE map_id = ? AND building_key = ? AND yard = 0`,",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "AUDIT-GUILD-YARD-Y1-the-keeper-off-the-rank-alone",
     "file": "server-account/src/homes.js",
-    "old": "guildMay(rank, 'decorate', powers) && h.me_realm === 1 ? { keeper: true }",
-    "new": "guildMay(rank, 'decorate', powers) ? { keeper: true }",
+    "old": "            ...(rank != null\n              ? { member: true, ...(guildMay(rank, 'decorate', powers) && h.me_realm === 1 ? { keeper: true } : {}) }\n              : {}),",
+    "new": "            ...(rank != null ? { member: true, ...(guildMay(rank, 'decorate', powers) ? { keeper: true } : {}) } : {}),",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "AUDIT-PROF-541-G2-hallEntry-asks-a-realm-character",
     "file": "server-account/src/homes.js",
-    "old": "guildMay(rank, 'hallEntry', powers) ? { hallEntry: true }",
-    "new": "guildMay(rank, 'hallEntry', powers) && h.me_realm === 1 ? { hallEntry: true }",
+    "old": "            ...(rank != null && guildMay(rank, 'hallEntry', powers) ? { hallEntry: true } : {}),",
+    "new": "            ...(rank != null && guildMay(rank, 'hallEntry', powers) && h.me_realm === 1 ? { hallEntry: true } : {}),",
     "tests": [
       "test/net/guild_yard.test.js"
     ]

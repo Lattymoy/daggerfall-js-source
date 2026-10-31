@@ -83,8 +83,8 @@
   {
     "name": "LAMP-KEEPER-II-a-guest-written",
     "file": "server-account/src/lamp.js",
-    "old": "  if (!player?.handle) return { granted: false, why: 'guest' };\n",
-    "new": "",
+    "old": "  if (!player?.handle) return { granted: false, why: 'guest' };\n  const r = await db",
+    "new": "  const r = await db",
     "tests": [
       "test/server/lampkeeper2.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LAMP-KEEPER-II-granted-every-time",
     "file": "server-account/src/lamp.js",
-    "old": "WHERE id = ?1 AND lamp_title = 0",
-    "new": "WHERE id = ?1",
+    "old": "  const r = await db\n    .prepare('UPDATE players SET lamp_title = 1 WHERE id = ?1 AND lamp_title = 0')\n    .bind(player.id)\n    .run();",
+    "new": "  const r = await db.prepare('UPDATE players SET lamp_title = 1 WHERE id = ?1').bind(player.id).run();",
     "tests": [
       "test/server/lampkeeper2.test.js"
     ]

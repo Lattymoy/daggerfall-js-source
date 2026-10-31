@@ -185,8 +185,8 @@
   {
     "name": "SILVER-WAYS-svc-guild-goes-with-contract",
     "file": "server-account/src/guilds.js",
-    "old": "`EXISTS (SELECT 1 FROM guild_contracts WHERE guild_id = ${p} AND state = 'open')`",
-    "new": "`0`",
+    "old": "  [\n    'guild-contracts',\n    (/** @type {string} */ p) => `EXISTS (SELECT 1 FROM guild_contracts WHERE guild_id = ${p} AND state = 'open')`,\n  ], // SILVER-WAYS: a contract standing",
+    "new": "  ['guild-contracts', (/** @type {string} */ p) => `0`], // SILVER-WAYS: a contract standing",
     "tests": [
       "test/net/silverways_service.test.js",
       "test/net/silverways_client.test.js"

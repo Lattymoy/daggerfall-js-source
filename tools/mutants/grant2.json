@@ -143,8 +143,8 @@
   {
     "name": "GRANT2-batch-kept-twice",
     "file": "server-account/src/grants.js",
-    "old": "  if (!kept?.meta?.changes) return { ok: true, read: false };\n",
-    "new": "",
+    "old": "  if (!kept?.meta?.changes) return { ok: true, read: false };\n  const writes = [",
+    "new": "  const writes = [",
     "why": "a window posted twice counted twice",
     "tests": [
       "test/server/grant2_service.test.js"

@@ -56,8 +56,8 @@
   {
     "name": "REALM6-claim-unpaid",
     "file": "server-account/src/homes.js",
-    "old": "(save) => (payFromSave(save, claim.price, claim.region) ? null : 'realm-gold')",
-    "new": "() => null",
+    "old": "  const prep = await prepareRealmRecord(ctx, player.id, at, (save) =>\n    payFromSave(save, claim.price, claim.region) ? null : 'realm-gold',\n  );",
+    "new": "  const prep = await prepareRealmRecord(ctx, player.id, at, () => null);",
     "tests": [
       "test/server/realm6.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "REALM6-second-press-pays",
     "file": "server-account/src/homes.js",
-    "old": "  if (held) return heldByAccount(held, player, claim.character) ? { ok: true, repeat: true, home: homeOf(held), ...realmSaleOf(held), realm: { seq: at.seq } } : { error: 'home-taken' };\n",
-    "new": "  if (held && held.player !== player.id) return { error: 'home-taken' };\n",
+    "old": "  if (held)\n    return heldByAccount(held, player, claim.character)\n      ? { ok: true, repeat: true, home: homeOf(held), ...realmSaleOf(held), realm: { seq: at.seq } }\n      : { error: 'home-taken' };",
+    "new": "  if (held && held.player !== player.id) return { error: 'home-taken' };",
     "tests": [
       "test/server/realm6.test.js"
     ],
@@ -75,8 +75,8 @@
   {
     "name": "REALM6-landed-claim-unsaid",
     "file": "server-account/src/homes.js",
-    "old": "  const side = await realmActFirst(db, player.id, character, realm);   // AUDIT REALM L1-F2: where the record stands, before the hour's claims",
-    "new": "  const side = await realmActFirst(db, player.id, character, realm).then((s) => (s.error === 'seq' ? { at: realmAtOf(realm) } : s));",
+    "old": "  const side = await realmActFirst(db, player.id, character, realm); // AUDIT REALM L1-F2: where the record stands, before the hour's claims",
+    "new": "  const side = await realmActFirst(db, player.id, character, realm).then((s) =>\n    s.error === 'seq' ? { at: realmAtOf(realm) } : s,\n  );",
     "tests": [
       "test/server/realm6.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "REALM6-sale-to-purse",
     "file": "server-account/src/homes.js",
-    "old": "creditSave(save, back, { bank: home.region })",
-    "new": "creditSave(save, back)",
+    "old": "  const prep = await prepareRealmRecord(ctx, player.id, at, (save) =>\n    creditSave(save, back, { bank: home.region }) ? null : 'no-data',\n  );",
+    "new": "  const prep = await prepareRealmRecord(ctx, player.id, at, (save) => (creditSave(save, back) ? null : 'no-data'));",
     "tests": [
       "test/server/realm6.test.js"
     ]

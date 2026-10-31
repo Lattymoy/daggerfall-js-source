@@ -137,8 +137,8 @@
   {
     "name": "WD3-HOME-LAYOUT-UNCHECKED",
     "file": "server-account/src/homes.js",
-    "old": "  if (!homeLayoutOk(layout)) return { error: 'bad-home' };",
-    "new": "",
+    "old": "  if (!homeLayoutOk(layout)) return { error: 'bad-home' }; // WD3: the layout the claimant's town stands in (null: Daggerfall's)",
+    "new": "  // WD3: the layout the claimant's town stands in (null: Daggerfall's)",
     "tests": [
       "test/net/wd3_online.test.js"
     ]

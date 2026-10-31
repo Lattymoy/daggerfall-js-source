@@ -72,8 +72,8 @@
   {
     "name": "SCALE4g-letterbox-honours-on-session",
     "file": "server-account/src/letters.js",
-    "old": "    for (const p of await withIliacHonoursAll({ db: primary }, await withArenaHonoursAll({ db: primary }, found, nowS), nowS)) rows.set(p.id, p);",
-    "new": "    for (const p of await withIliacHonoursAll({ db }, await withArenaHonoursAll({ db }, found, nowS), nowS)) rows.set(p.id, p);",
+    "old": "    for (const p of await withIliacHonoursAll(\n      { db: primary },\n      await withArenaHonoursAll({ db: primary }, found, nowS),\n      nowS,\n    ))",
+    "new": "    for (const p of await withIliacHonoursAll({ db }, await withArenaHonoursAll({ db }, found, nowS), nowS))",
     "tests": [
       "test/server/scale4g.test.js"
     ],

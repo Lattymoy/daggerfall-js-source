@@ -66,8 +66,8 @@
   {
     "name": "HUNTERS-MARK-service-day-ceiling",
     "file": "server-account/src/hunts.js",
-    "old": "WHERE player = ?1 AND day = ?8) < ?10",
-    "new": "WHERE player = ?1 AND day = ?8) <= ?10",
+    "old": "      WHERE (SELECT COUNT(*) FROM hunt_clears WHERE player = ?1 AND day = ?8) < ?10",
+    "new": "      WHERE (SELECT COUNT(*) FROM hunt_clears WHERE player = ?1 AND day = ?8) <= ?10",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "HUNTERS-MARK-service-mark-rung",
     "file": "server-account/src/hunts.js",
-    "old": "AND (?3 <> 'mark' OR (SELECT COUNT(*) FROM hunt_clears WHERE player = ?1 AND char_id = ?2 AND kind = 'board' AND at < ?12) >= ?11)",
-    "new": "AND (?3 <> 'mark' OR 1)",
+    "old": "        AND (?3 <> 'mark' OR (SELECT COUNT(*) FROM hunt_clears WHERE player = ?1 AND char_id = ?2 AND kind = 'board' AND at < ?12) >= ?11)",
+    "new": "        AND (?3 <> 'mark' OR 1)",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "HUNTERS-MARK-service-key-the-id",
     "file": "server-account/src/hunts.js",
-    "old": ".bind(player.id, character, c.kind, c.key, c.id, c.tier,",
-    "new": ".bind(player.id, character, c.kind, c.id, c.id, c.tier,",
+    "old": "        c.key,",
+    "new": "        c.id,",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "HUNTERS-MARK-service-tier-unchecked",
     "file": "server-account/src/hunts.js",
-    "old": "if (!huntTierFits(c.level, seen?.lv == null ? null : int(seen.lv))) return { error: 'hunt-tier' };",
-    "new": "void seen;",
+    "old": "  if (!huntTierFits(c.level, seen?.lv == null ? null : int(seen.lv))) return { error: 'hunt-tier' };",
+    "new": "  void seen;",
     "tests": [
       "test/server/huntersmark_service.test.js",
       "test/scenes/huntersmark_client.test.js"
@@ -103,8 +103,8 @@
   {
     "name": "HUNTERS-MARK-service-region-tally",
     "file": "server-account/src/hunts.js",
-    "old": "(regions?.results ?? []).map((r) => [int(r.region), int(r.n)])",
-    "new": "(regions?.results ?? []).map((r) => [int(r.region), 1])",
+    "old": "    regions: Object.fromEntries((regions?.results ?? []).map((r) => [int(r.region), int(r.n)])),",
+    "new": "    regions: Object.fromEntries((regions?.results ?? []).map((r) => [int(r.region), 1])),",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "HUNTERS-MARK-service-no-influence",
     "file": "server-account/src/hunts.js",
-    "old": "const influence = recorded && region !== null ? await creditHunt(",
-    "new": "const influence = false && region !== null ? await creditHunt(",
+    "old": "    recorded && region !== null",
+    "new": "    false && region !== null",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "MARKS-OF-MASTERY-dead-character-master",
     "file": "server-account/src/hunts.js",
-    "old": "AND EXISTS (SELECT 1 FROM realm_characters r WHERE r.id = t.char_id AND r.player = ?1 AND r.dead_at IS NULL)) AS masters",
-    "new": "AND 1) AS masters",
+    "old": "    AND EXISTS (SELECT 1 FROM realm_characters r WHERE r.id = t.char_id AND r.player = ?1 AND r.dead_at IS NULL)) AS masters,",
+    "new": "    AND 1) AS masters,",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "MARKS-OF-MASTERY-serpents-unread",
     "file": "server-account/src/hunts.js",
-    "old": "(SELECT COUNT(*) FROM serpent_kills WHERE account = ?1) AS serpents,",
-    "new": "0 AS serpents,",
+    "old": "  (SELECT COUNT(*) FROM serpent_kills WHERE account = ?1) AS serpents,",
+    "new": "  0 AS serpents,",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "MARKS-OF-MASTERY-clears-marks-counted",
     "file": "server-account/src/hunts.js",
-    "old": "(SELECT 1 FROM hunt_clears WHERE player = ?1 AND kind = 'board' LIMIT ?3)) AS clears,",
-    "new": "(SELECT 1 FROM hunt_clears WHERE player = ?1 LIMIT ?3)) AS clears,",
+    "old": "  (SELECT COUNT(*) FROM (SELECT 1 FROM hunt_clears WHERE player = ?1 AND kind = 'board' LIMIT ?3)) AS clears,",
+    "new": "  (SELECT COUNT(*) FROM (SELECT 1 FROM hunt_clears WHERE player = ?1 LIMIT ?3)) AS clears,",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "MARKS-OF-MASTERY-guest-marked",
     "file": "server-account/src/hunts.js",
-    "old": "  if (!(typeof player?.handle === 'string' && player.handle)) return player;\n  return { ...player, masteryMarks:",
-    "new": "  return { ...player, masteryMarks:",
+    "old": "  if (!(typeof player?.handle === 'string' && player.handle)) return player;\n  return { ...player, masteryMarks: await masteryMarksRead(ctx.db, player.id, env) };",
+    "new": "  return { ...player, masteryMarks: await masteryMarksRead(ctx.db, player.id, env) };",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "MARKS-OF-MASTERY-board-batch-masters",
     "file": "server-account/src/hunts.js",
-    "old": "masters: ms.get(id), ...ds.get(id)",
-    "new": "masters: null, ...ds.get(id)",
+    "old": "    ids.map((id) => [\n      id,\n      countsOfRow({ clears: hs.get(id), serpents: ss.get(id), masters: ms.get(id), ...ds.get(id) }),\n    ]),",
+    "new": "    ids.map((id) => [id, countsOfRow({ clears: hs.get(id), serpents: ss.get(id), masters: null, ...ds.get(id) })]),",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -635,8 +635,8 @@
   {
     "name": "AUDIT-F1-day-ceiling-a-character",
     "file": "server-account/src/hunts.js",
-    "old": "WHERE (SELECT COUNT(*) FROM hunt_clears WHERE player = ?1 AND day = ?8) < ?10",
-    "new": "WHERE (SELECT COUNT(*) FROM hunt_clears WHERE player = ?1 AND char_id = ?2 AND day = ?8) < ?10",
+    "old": "      WHERE (SELECT COUNT(*) FROM hunt_clears WHERE player = ?1 AND day = ?8) < ?10",
+    "new": "      WHERE (SELECT COUNT(*) FROM hunt_clears WHERE player = ?1 AND char_id = ?2 AND day = ?8) < ?10",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -644,8 +644,8 @@
   {
     "name": "AUDIT-F2-mark-done-any-week",
     "file": "server-account/src/hunts.js",
-    "old": "COALESCE(MAX(kind = 'mark' AND key = ?3), 0) AS done",
-    "new": "COALESCE(MAX(kind = 'mark' AND (key = ?3 OR 1)), 0) AS done",
+    "old": "      COALESCE(MAX(kind = 'mark' AND key = ?3), 0) AS done FROM hunt_clears WHERE player = ?1 AND char_id = ?2`,",
+    "new": "      COALESCE(MAX(kind = 'mark' AND (key = ?3 OR 1)), 0) AS done FROM hunt_clears WHERE player = ?1 AND char_id = ?2`,",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -653,8 +653,8 @@
   {
     "name": "AUDIT-F6-influence-once-a-character",
     "file": "server-account/src/hunts.js",
-    "old": "ref: `${character}:${c.key}`",
-    "new": "ref: `${character}`",
+    "old": "    recorded && region !== null\n      ? await creditHunt(ctx, player, env, { character, region, ref: `${character}:${c.key}` })\n      : null;",
+    "new": "    recorded && region !== null ? await creditHunt(ctx, player, env, { character, region, ref: `${character}` }) : null;",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -662,8 +662,8 @@
   {
     "name": "AUDIT-F10-mark-rung-read-now",
     "file": "server-account/src/hunts.js",
-    "old": "seatWeekStartMs(/** @type {number} */ (c.week) + 1) / 1000",
-    "new": "seatWeekStartMs(/** @type {number} */ (c.week) + 2) / 1000",
+    "old": "  const until = c.kind === 'mark' ? seatWeekStartMs(/** @type {number} */ (c.week) + 1) / 1000 : nowS + 1;",
+    "new": "  const until = c.kind === 'mark' ? seatWeekStartMs(/** @type {number} */ (c.week) + 2) / 1000 : nowS + 1;",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -671,8 +671,8 @@
   {
     "name": "AUDIT-F10-rung-refusal-read-now",
     "file": "server-account/src/hunts.js",
-    "old": "AND kind = 'board' AND at < ?5) AS board",
-    "new": "AND kind = 'board') AS board",
+    "old": "      (SELECT COUNT(*) FROM hunt_clears WHERE player = ?1 AND char_id = ?2 AND kind = 'board' AND at < ?5) AS board`,",
+    "new": "      (SELECT COUNT(*) FROM hunt_clears WHERE player = ?1 AND char_id = ?2 AND kind = 'board') AS board`,",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -680,8 +680,8 @@
   {
     "name": "AUDIT-F-living-master-no-realm-row",
     "file": "server-account/src/hunts.js",
-    "old": "AND EXISTS (SELECT 1 FROM realm_characters r WHERE r.id = t.char_id AND r.player = ?1 AND r.dead_at IS NULL)) AS masters",
-    "new": "AND NOT EXISTS (SELECT 1 FROM realm_characters r WHERE r.id = t.char_id AND r.player = ?1 AND r.dead_at IS NOT NULL)) AS masters",
+    "old": "    AND EXISTS (SELECT 1 FROM realm_characters r WHERE r.id = t.char_id AND r.player = ?1 AND r.dead_at IS NULL)) AS masters,",
+    "new": "    AND NOT EXISTS (SELECT 1 FROM realm_characters r WHERE r.id = t.char_id AND r.player = ?1 AND r.dead_at IS NOT NULL)) AS masters,",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -689,8 +689,8 @@
   {
     "name": "AUDIT-F-living-master-no-realm-row-batched",
     "file": "server-account/src/hunts.js",
-    "old": "AND EXISTS (SELECT 1 FROM realm_characters r WHERE r.id = t.char_id AND r.player = t.player AND r.dead_at IS NULL) GROUP BY t.player",
-    "new": "AND NOT EXISTS (SELECT 1 FROM realm_characters r WHERE r.id = t.char_id AND r.player = t.player AND r.dead_at IS NOT NULL) GROUP BY t.player",
+    "old": "      AND EXISTS (SELECT 1 FROM realm_characters r WHERE r.id = t.char_id AND r.player = t.player AND r.dead_at IS NULL) GROUP BY t.player`,",
+    "new": "      AND NOT EXISTS (SELECT 1 FROM realm_characters r WHERE r.id = t.char_id AND r.player = t.player AND r.dead_at IS NOT NULL) GROUP BY t.player`,",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -698,8 +698,8 @@
   {
     "name": "AUDIT-F-mastery-read-unbounded",
     "file": "server-account/src/hunts.js",
-    "old": "AND kind = 'board' LIMIT ?3)) AS clears",
-    "new": "AND kind = 'board' LIMIT -1)) AS clears",
+    "old": "  (SELECT COUNT(*) FROM (SELECT 1 FROM hunt_clears WHERE player = ?1 AND kind = 'board' LIMIT ?3)) AS clears,",
+    "new": "  (SELECT COUNT(*) FROM (SELECT 1 FROM hunt_clears WHERE player = ?1 AND kind = 'board' LIMIT -1)) AS clears,",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -707,8 +707,8 @@
   {
     "name": "AUDIT-F-mastery-batch-unbounded",
     "file": "server-account/src/hunts.js",
-    "old": "AND h.kind = 'board' LIMIT ?1)) AS n FROM v",
-    "new": "AND h.kind = 'board' LIMIT -1)) AS n FROM v",
+    "old": "      (SELECT COUNT(*) FROM (SELECT 1 FROM hunt_clears h WHERE h.player = v.id AND h.kind = 'board' LIMIT ?1)) AS n FROM v`,",
+    "new": "      (SELECT COUNT(*) FROM (SELECT 1 FROM hunt_clears h WHERE h.player = v.id AND h.kind = 'board' LIMIT -1)) AS n FROM v`,",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -716,8 +716,8 @@
   {
     "name": "AUDIT-F5-inbox-marks-unread",
     "file": "server-account/src/letters.js",
-    "old": "    for (const p of await withMasteryMarksAll({ db }, [...rows.values()], env)) rows.set(p.id, p);   // AUDIT HORIZONTAL F5: a worn Mark of Mastery (reads alone)\n",
-    "new": "",
+    "old": "    for (const p of await withMasteryMarksAll({ db }, [...rows.values()], env)) rows.set(p.id, p); // AUDIT HORIZONTAL F5: a worn Mark of Mastery (reads alone)\n  }",
+    "new": "  }",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -725,8 +725,8 @@
   {
     "name": "AUDIT-F5-letter-marks-unread",
     "file": "server-account/src/letters.js",
-    "old": "badgeOf(await withMasteryMarks({ db, env }, await withGambitHonours(",
-    "new": "badgeOf(await ((_c, p) => p)({ db, env }, await withGambitHonours(",
+    "old": "        await withMasteryMarks(",
+    "new": "        await ((_c, p) => p)(",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -770,8 +770,8 @@
   {
     "name": "AUDIT-F3-service-day-unsaid",
     "file": "server-account/src/hunts.js",
-    "old": "max: HUNT_CLEARS_DAY_MAX, day: utcDay(nowS) }",
-    "new": "max: HUNT_CLEARS_DAY_MAX }",
+    "old": "    account: {\n      clears: int(a.clears),\n      marks: int(a.marks),\n      today: int(a.today),\n      max: HUNT_CLEARS_DAY_MAX,\n      day: utcDay(nowS),\n    },",
+    "new": "    account: { clears: int(a.clears), marks: int(a.marks), today: int(a.today), max: HUNT_CLEARS_DAY_MAX },",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]

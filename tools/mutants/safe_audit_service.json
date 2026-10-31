@@ -573,8 +573,8 @@
   {
     "name": "AUDIT-SAFE-C7-letter-delivered",
     "file": "server-account/src/letters.js",
-    "old": "  if (await db.prepare('SELECT 1 AS y FROM blocks WHERE player = ?1 AND blocked = ?2').bind(reader.id, sender.id).first()) return",
-    "new": "  if (false) return",
+    "old": "  if (\n    await db.prepare('SELECT 1 AS y FROM blocks WHERE player = ?1 AND blocked = ?2').bind(reader.id, sender.id).first()\n  )\n    return { ok: true, id, to: account ? displayName(reader) : reader.handle };",
+    "new": "  if (false) return { ok: true, id, to: account ? displayName(reader) : reader.handle };",
     "tests": [
       "test/server/safe_audit.test.js"
     ]

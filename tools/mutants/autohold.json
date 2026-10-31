@@ -3,8 +3,8 @@
     "name": "AUTOHOLD-a-contested-claim-struck",
     "reaimed": "STAFF-PANEL4-CENSUS: re-aimed by content - a copy written down keeps its first holder, its claimant and its print (ledger.js copyRows)",
     "file": "server-account/src/ledger.js",
-    "old": "      ...chargeSteps(db, claimant, keys, nowS, { strike: false }));",
-    "new": "      ...chargeSteps(db, claimant, keys, nowS));",
+    "old": "      ...chargeSteps(db, claimant, keys, nowS, { strike: false }),",
+    "new": "      ...chargeSteps(db, claimant, keys, nowS),",
     "tests": [
       "test/server/autohold.test.js",
       "test/systems/item/int4_itemids.test.js"
@@ -14,7 +14,7 @@
     "name": "AUTOHOLD-a-piece-a-strike",
     "file": "server-account/src/ledger.js",
     "old": "    ...(strike ? [db.prepare('UPDATE realm_characters SET dupes = dupes + 1 WHERE id = ?1').bind(char)] : []),",
-    "new": "    ...(strike ? [db.prepare('UPDATE realm_characters SET dupes = dupes + ?2 WHERE id = ?1').bind(char, keys.length)] : []),",
+    "new": "    ...(strike\n      ? [db.prepare('UPDATE realm_characters SET dupes = dupes + ?2 WHERE id = ?1').bind(char, keys.length)]\n      : []),",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -23,7 +23,7 @@
     "name": "AUTOHOLD-a-copy-holds-the-character",
     "file": "server-account/src/ledger.js",
     "old": "    ...(strike ? [db.prepare('UPDATE realm_characters SET dupes = dupes + 1 WHERE id = ?1').bind(char)] : []),",
-    "new": "    ...(strike ? [db.prepare(\"UPDATE realm_characters SET dupes = dupes + 1, held = 'staff' WHERE id = ?1\").bind(char)] : []),",
+    "new": "    ...(strike\n      ? [db.prepare(\"UPDATE realm_characters SET dupes = dupes + 1, held = 'staff' WHERE id = ?1\").bind(char)]\n      : []),",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -31,7 +31,7 @@
   {
     "name": "AUTOHOLD-the-locked-unlisted",
     "file": "server-account/src/ledger.js",
-    "old": "  const locked = [...new Set([...[...shown.keys()].filter((k) => copiesKnown.has(k)), ...copies])].slice(0, LOCKED_SAID_MAX);",
+    "old": "  const locked = [...new Set([...[...shown.keys()].filter((k) => copiesKnown.has(k)), ...copies])].slice(\n    0,\n    LOCKED_SAID_MAX,\n  );",
     "new": "  const locked = [...new Set([...copies])].slice(0, LOCKED_SAID_MAX);",
     "tests": [
       "test/server/autohold.test.js"
@@ -301,8 +301,8 @@
   {
     "name": "AUTOHOLD-AUDIT-the-patron-claim-struck",
     "file": "server-account/src/ledger.js",
-    "old": "    ...chargeSteps(db, claim, [key], nowS, { strike: false }),\n",
-    "new": "    ...chargeSteps(db, claim, [key], nowS),\n",
+    "old": "    ...chargeSteps(db, claim, [key], nowS, { strike: false }),",
+    "new": "    ...chargeSteps(db, claim, [key], nowS),",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -508,8 +508,8 @@
   {
     "name": "AUTOHOLD-AUDIT-one-of-two-leaves-unasked",
     "file": "server-account/src/ledger.js",
-    "old": "  for (const [k, n] of was) if ((now.get(k) ?? 0) < n) { leaving.push(k); if (n > 1) twice.push(k); }",
-    "new": "  for (const [k, n] of was) if (!now.has(k)) { leaving.push(k); if (n > 1) twice.push(k); }",
+    "old": "    if ((now.get(k) ?? 0) < n) {",
+    "new": "    if (!now.has(k)) {",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -517,8 +517,8 @@
   {
     "name": "AUTOHOLD-AUDIT-twice-is-any-leaving",
     "file": "server-account/src/ledger.js",
-    "old": "{ leaving.push(k); if (n > 1) twice.push(k); }",
-    "new": "{ leaving.push(k); twice.push(k); }",
+    "old": "      if (n > 1) twice.push(k);",
+    "new": "      twice.push(k);",
     "tests": [
       "test/server/autohold.test.js"
     ]

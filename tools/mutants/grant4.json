@@ -394,8 +394,8 @@
   {
     "name": "GRANT7-timing-counted",
     "file": "server-account/src/grants.js",
-    "old": "AND at > ?2 AND reason IN (${inReasons}) GROUP BY",
-    "new": "AND at > ?2 AND (1 OR reason IN (${inReasons})) GROUP BY",
+    "old": "            `SELECT reader, reason, SUM(n) AS n FROM grant_tallies WHERE sender = ?1 AND at > ?2 AND reason IN (${inReasons}) GROUP BY reader, reason`,",
+    "new": "            `SELECT reader, reason, SUM(n) AS n FROM grant_tallies WHERE sender = ?1 AND at > ?2 AND (1 OR reason IN (${inReasons})) GROUP BY reader, reason`,",
     "why": "a timing word counted against a sender",
     "tests": [
       "test/server/grant7_case.test.js"
@@ -404,8 +404,8 @@
   {
     "name": "GRANT7-case-a-reports",
     "file": "server-account/src/grants.js",
-    "old": "const caseId = await openCaseFor(ctx, env, sender, 'review', 'spawn');",
-    "new": "const caseId = await openCaseFor(ctx, env, sender, 'report', 'spawn');",
+    "old": "    const caseId = await openCaseFor(ctx, env, sender, 'review', 'spawn'); // STAFF-PANEL2-FIX: a spawn case, never a chat report's",
+    "new": "    const caseId = await openCaseFor(ctx, env, sender, 'report', 'spawn'); // STAFF-PANEL2-FIX: a spawn case, never a chat report's",
     "why": "the grant case a report's",
     "tests": [
       "test/server/grant7_case.test.js"
@@ -414,8 +414,8 @@
   {
     "name": "GRANT7-line-every-batch",
     "file": "server-account/src/grants.js",
-    "old": "    if (await db.prepare('SELECT 1 AS y FROM mod_case_lines WHERE case_id = ?1 AND tab = ?2 AND at > ?3').bind(caseId, GRANT_CASE_TAB, since).first()) continue;   // one line a window\n",
-    "new": "",
+    "old": "    if (\n      await db\n        .prepare('SELECT 1 AS y FROM mod_case_lines WHERE case_id = ?1 AND tab = ?2 AND at > ?3')\n        .bind(caseId, GRANT_CASE_TAB, since)\n        .first()\n    )\n      continue; // one line a window\n    await keepCaseLines(",
+    "new": "    await keepCaseLines(",
     "why": "a line every batch",
     "tests": [
       "test/server/grant7_case.test.js"
@@ -424,8 +424,8 @@
   {
     "name": "GRANT5-rate-no-room",
     "file": "server-account/src/grants.js",
-    "old": "(/** @type {number} */ (perHour) * GRANT_SUGGEST_ROOM) / 3600",
-    "new": "/** @type {number} */ (perHour) / 3600",
+    "old": "  Number.isFinite(perHour) && /** @type {number} */ (perHour) > 0\n    ? /** @type {number} */ (perHour * GRANT_SUGGEST_ROOM) / 3600\n    : null;",
+    "new": "  Number.isFinite(perHour) && /** @type {number} */ (perHour) > 0 ? /** @type {number} */ (perHour) / 3600 : null;",
     "why": "a rate suggested at the measure itself",
     "tests": [
       "test/server/grant7_case.test.js"
@@ -434,8 +434,8 @@
   {
     "name": "GRANT5-ceiling-no-room",
     "file": "server-account/src/grants.js",
-    "old": "Math.ceil(/** @type {number} */ (most) * GRANT_SUGGEST_ROOM)",
-    "new": "Math.ceil(/** @type {number} */ (most))",
+    "old": "  Number.isFinite(most) && /** @type {number} */ (most) > 0\n    ? Math.ceil(/** @type {number} */ (most) * GRANT_SUGGEST_ROOM)\n    : null;",
+    "new": "  Number.isFinite(most) && /** @type {number} */ (most) > 0 ? Math.ceil(/** @type {number} */ (most)) : null;",
     "why": "a ceiling suggested at the most a cell held",
     "tests": [
       "test/server/grant7_case.test.js"

@@ -516,7 +516,7 @@ WHAT THE PORT DID. INT4's ledger keeps the first holder of a piece; another reco
 holder's checkpoint still with it past `DUPE_GRACE_S` (750 s) settles the claim a copy - the claimant's, locked. A
 crafted piece's claim was settled by the craft's record instead: where `products.owner` named the claimant's account
 and not the holder's, the holder "kept a piece it sold", so the piece went to the claimant and the holder's copy was
-written down (`craft`) and locked (`ledger.js:"const upheld = new Map();"`). The owner moves with a market sale, an
+written down (`craft`) and locked (`ledger.js:"const upheld = new"`). The owner moves with a market sale, an
 auction won and a commission filled - and with nothing else: a realm trade (`realmTrade.js`), a delivery collected from
 the market's pack route (MARKET-ANY, `market.js` collectGood), a guild vault and a shared chest move the piece and never
 the owner (Professions-Arc 18's hand-over of the owner was never built). The report's steps, run on the real Worker: a
@@ -528,17 +528,17 @@ this clause.
 
 FIXED. The craft's record is the account the service last HANDED the piece to. Every move of a crafted piece into a
 record - `ledgerMoves`' entered set, so the trade, the collect, the vault, the chest, the zone's escrow and staff's
-return alike - writes `products.handed_to` (`ledger.js:"// RPT1026-LEDGERLAW: and a crafted one is that record's account's by the craft's record (CRAFT_RECORD_SQL) - handed on"`;
+return alike - writes `products.handed_to` (`ledger.js:"RPT1026-LEDGERLAW: and a"`;
 NULL where it is the owner's own account, and only where it changes) - where the account handing it on is the one the
-record names (AUDIT RPT1026 C1, `ledger.js:"AND COALESCE(handed_to, owner) = COALESCE(?2,"`: the trade's other side,
+record names (AUDIT RPT1026 C1, `ledger.js:"AND COALESCE(handed_to, owner)"`: the trade's other side,
 `realmTrade.js` `from`, or the account an escrow row names). The batch wrote it whoever gave the piece: a seller that kept
 a piece it SOLD holds the ledger's row first (the sale lets the row go, and the buyer's piece is minted at its pack), and
 one realm trade of it to an accomplice, or one listing of it from the pack an accomplice collected, named the
 accomplice the craft's record - the buyer's claim was settled the copy and the buyer's piece locked, where INT19 had
 given it to the buyer. A sale that moves the owner clears it
 (`market.js` pieceSoldSteps - the Drakes buy, the gold buy, the auction won - and `writs.js`'s fill); the uphold reads
-`COALESCE(handed_to, owner)` (`ledger.js:"const CRAFT_RECORD_SQL = 'COALESCE(p.handed_to, p.owner)';"`) - and never
-against the owner holding it (`ledger.js:"// RPT1026-LEDGERLAW: and never against its owner holding it"`: a piece come back
+`COALESCE(handed_to, owner)` (`ledger.js:"const CRAFT_RECORD_SQL"`) - and never
+against the owner holding it (`ledger.js:".all(); // RPT1026-LEDGERLAW"`: a piece come back
 to its owner by a peer's hands is the owner's, so the hand-over before it cannot turn the report's exploit round). The
 maker's written-back piece is now the claimant's copy - locked, no strike, as every contested claim's - the buyer keeps theirs
 and passes it on, and the maker is refused `piece-dupe`. The seller that kept a piece it SOLD is still the copier (the
@@ -571,7 +571,7 @@ character's every purse after it: on the real Worker purses of 9e15 and 5e9 gold
 `enforce` (off as shipped), would have caught it. realmReview's usage lines named the hold and the strikes, never the
 excuse.
 
-FIXED. Every judgement keeps the character law's VALUES beside the signature (`judge.js:"export function lawValuesOf(save, summary) {"`
+FIXED. Every judgement keeps the character law's VALUES beside the signature (`judge.js:"export function lawValuesOf"`
 - each finding's key and the value it read, `gold@=-8000000`, `stat@agility=101`; `realm_characters.law_v`), the clear
 excuses the two together (`review.js:"law_excused = CASE WHEN law_v IS NULL THEN law_sig ELSE law_sig || '|' || law_v END,"`,
 `verdict.js:"export const lawExcuseOf"` - a finding of pieces alone keeps its signature as every excuse was), and a

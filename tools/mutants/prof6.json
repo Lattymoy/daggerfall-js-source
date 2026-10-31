@@ -499,8 +499,8 @@
   {
     "name": "PROF6-svc-disband-keeps-nothing",
     "file": "server-account/src/guilds.js",
-    "old": "      AND NOT ${guildKeepsSql('?1')}\n",
-    "new": "",
+    "old": "      AND NOT ${guildKeepsSql('?1')}\n      AND (?2 = 0 OR (SELECT COUNT(*) FROM guild_members WHERE guild_id = ?1) = 1)`,",
+    "new": "      AND (?2 = 0 OR (SELECT COUNT(*) FROM guild_members WHERE guild_id = ?1) = 1)`,",
     "tests": [
       "test/net/prof6_service.test.js"
     ]

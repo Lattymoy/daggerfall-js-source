@@ -2,8 +2,8 @@
   {
     "name": "SCALE4c-mail-part-dropped",
     "file": "server-account/src/heartbeat.js",
-    "old": "  if (body?.mail === true) await part('mail', async () => (accountKind(player) !== 'linked' ? { error: 'mail-needs-account' } : inboxOf(ctx, player, env)));\n",
-    "new": "",
+    "old": "  if (body?.mail === true)\n    await part('mail', async () =>\n      accountKind(player) !== 'linked' ? { error: 'mail-needs-account' } : inboxOf(ctx, player, env),\n    );\n  if (body?.board !== undefined) await part('board', () => readBoard(ctx, player, env, body.board));",
+    "new": "  if (body?.board !== undefined) await part('board', () => readBoard(ctx, player, env, body.board));",
     "tests": [
       "test/net/scale4c.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "SCALE4c-guest-box-opened",
     "file": "server-account/src/heartbeat.js",
-    "old": "accountKind(player) !== 'linked' ? { error: 'mail-needs-account' } : inboxOf(ctx, player, env)",
-    "new": "inboxOf(ctx, player, env)",
+    "old": "  if (body?.mail === true)\n    await part('mail', async () =>\n      accountKind(player) !== 'linked' ? { error: 'mail-needs-account' } : inboxOf(ctx, player, env),\n    );",
+    "new": "  if (body?.mail === true) await part('mail', async () => inboxOf(ctx, player, env));",
     "tests": [
       "test/net/scale4c.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "SCALE4c-board-elsewhere",
     "file": "server-account/src/heartbeat.js",
-    "old": "() => readBoard(ctx, player, env, body.board)",
-    "new": "() => readBoard(ctx, player, env, Number(body.board) + 1)",
+    "old": "  if (body?.board !== undefined) await part('board', () => readBoard(ctx, player, env, body.board));",
+    "new": "  if (body?.board !== undefined) await part('board', () => readBoard(ctx, player, env, Number(body.board) + 1));",
     "tests": [
       "test/net/scale4c.test.js"
     ],

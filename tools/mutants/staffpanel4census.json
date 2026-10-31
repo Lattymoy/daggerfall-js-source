@@ -472,8 +472,8 @@
   {
     "name": "STAFF-PANEL4-CENSUS-twice-unkinded",
     "file": "server-account/src/ledger.js",
-    "old": "copyRows(db, copies, char, nowS, 'twice',",
-    "new": "copyRows(db, copies, char, nowS, null,",
+    "old": "      ...copyRows(db, copies, char, nowS, 'twice', (k) => {",
+    "new": "      ...copyRows(db, copies, char, nowS, null, (k) => {",
     "why": "a piece twice in one record found as nothing",
     "tests": [
       "test/server/staffpanel4census.test.js"
@@ -482,8 +482,8 @@
   {
     "name": "STAFF-PANEL4-CENSUS-claim-no-first",
     "file": "server-account/src/ledger.js",
-    "old": "'claim', (k) => { const r = rows.get(k); return { first: char,",
-    "new": "'claim', (k) => { const r = rows.get(k); return { first: null,",
+    "old": "      ...copyRows(db, keys, claimant, nowS, 'claim', (k) => {\n        const r = rows.get(k);\n        return { first: char, firstAt: r?.at ?? null, claimant, claimAt: r?.claim_at ?? null, fp: r?.fp ?? null };\n      }),",
+    "new": "      ...copyRows(db, keys, claimant, nowS, 'claim', (k) => {\n        const r = rows.get(k);\n        return { first: null, firstAt: r?.at ?? null, claimant, claimAt: r?.claim_at ?? null, fp: r?.fp ?? null };\n      }),",
     "why": "a contested piece's first holder lost",
     "tests": [
       "test/server/staffpanel4census.test.js"
@@ -492,8 +492,8 @@
   {
     "name": "STAFF-PANEL4-CENSUS-claim-no-first-at",
     "file": "server-account/src/ledger.js",
-    "old": "'claim', (k) => { const r = rows.get(k); return { first: char, firstAt: r?.at ?? null,",
-    "new": "'claim', (k) => { const r = rows.get(k); return { first: char, firstAt: null,",
+    "old": "      ...copyRows(db, keys, claimant, nowS, 'claim', (k) => {\n        const r = rows.get(k);\n        return { first: char, firstAt: r?.at ?? null, claimant, claimAt: r?.claim_at ?? null, fp: r?.fp ?? null };\n      }),",
+    "new": "      ...copyRows(db, keys, claimant, nowS, 'claim', (k) => {\n        const r = rows.get(k);\n        return { first: char, firstAt: null, claimant, claimAt: r?.claim_at ?? null, fp: r?.fp ?? null };\n      }),",
     "why": "the first holder's time lost",
     "tests": [
       "test/server/staffpanel4census.test.js"
@@ -502,8 +502,8 @@
   {
     "name": "STAFF-PANEL4-CENSUS-claim-no-claim-at",
     "file": "server-account/src/ledger.js",
-    "old": "claimAt: r?.claim_at ?? null, fp: r?.fp ?? null }; }),",
-    "new": "claimAt: null, fp: r?.fp ?? null }; }),",
+    "old": "      ...copyRows(db, keys, claimant, nowS, 'claim', (k) => {\n        const r = rows.get(k);\n        return { first: char, firstAt: r?.at ?? null, claimant, claimAt: r?.claim_at ?? null, fp: r?.fp ?? null };\n      }),",
+    "new": "      ...copyRows(db, keys, claimant, nowS, 'claim', (k) => {\n        const r = rows.get(k);\n        return { first: char, firstAt: r?.at ?? null, claimant, claimAt: null, fp: r?.fp ?? null };\n      }),",
     "why": "the claimant's time lost",
     "tests": [
       "test/server/staffpanel4census.test.js"
@@ -512,8 +512,8 @@
   {
     "name": "STAFF-PANEL4-CENSUS-claim-no-print",
     "file": "server-account/src/ledger.js",
-    "old": "claimant, claimAt: r?.claim_at ?? null, fp: r?.fp ?? null }; }),",
-    "new": "claimant, claimAt: r?.claim_at ?? null, fp: null }; }),",
+    "old": "      ...copyRows(db, keys, claimant, nowS, 'claim', (k) => {\n        const r = rows.get(k);\n        return { first: char, firstAt: r?.at ?? null, claimant, claimAt: r?.claim_at ?? null, fp: r?.fp ?? null };\n      }),",
+    "new": "      ...copyRows(db, keys, claimant, nowS, 'claim', (k) => {\n        const r = rows.get(k);\n        return { first: char, firstAt: r?.at ?? null, claimant, claimAt: r?.claim_at ?? null, fp: null };\n      }),",
     "why": "which piece it is lost",
     "tests": [
       "test/server/staffpanel4census.test.js"
@@ -522,8 +522,8 @@
   {
     "name": "STAFF-PANEL4-CENSUS-craft-no-claimant",
     "file": "server-account/src/ledger.js",
-    "old": "'craft', (k) => { const r = rows.get(k); return { first: char, firstAt: r?.at ?? null, claimant,",
-    "new": "'craft', (k) => { const r = rows.get(k); return { first: char, firstAt: r?.at ?? null, claimant: null,",
+    "old": "      ...copyRows(db, keys, char, nowS, 'craft', (k) => {\n        const r = rows.get(k);\n        return { first: char, firstAt: r?.at ?? null, claimant, claimAt: r?.claim_at ?? null, fp: r?.fp ?? null };\n      }),",
+    "new": "      ...copyRows(db, keys, char, nowS, 'craft', (k) => {\n        const r = rows.get(k);\n        return { first: char, firstAt: r?.at ?? null, claimant: null, claimAt: r?.claim_at ?? null, fp: r?.fp ?? null };\n      }),",
     "why": "the craft's claimant lost",
     "tests": [
       "test/server/staffpanel4census.test.js"
@@ -532,8 +532,8 @@
   {
     "name": "STAFF-PANEL4-CENSUS-escrow-no-print",
     "file": "server-account/src/ledger.js",
-    "old": "(SELECT fp FROM item_uids WHERE uid = ?1))",
-    "new": "NULL)",
+    "old": "      (SELECT at FROM item_uids WHERE uid = ?1), ?2, (SELECT claim_at FROM item_uids WHERE uid = ?1), (SELECT fp FROM item_uids WHERE uid = ?1))`,",
+    "new": "      (SELECT at FROM item_uids WHERE uid = ?1), ?2, (SELECT claim_at FROM item_uids WHERE uid = ?1), NULL)`,",
     "why": "an escrow copy's piece unnamed",
     "tests": [
       "test/server/staffpanel4census.test.js"
@@ -542,8 +542,8 @@
   {
     "name": "STAFF-PANEL4-CENSUS-drop-unkinded",
     "file": "server-account/src/ledger.js",
-    "old": "copyRows(db, keys, char, nowS, 'drop',",
-    "new": "copyRows(db, keys, char, nowS, null,",
+    "old": "  copyRows(db, keys, char, nowS, 'drop', () => ({\n    first: char,\n    firstAt: null,\n    claimant: null,\n    claimAt: null,\n    fp: null,\n  })); // STAFF-PANEL4-CENSUS: bookkeeping, never contested",
+    "new": "  copyRows(db, keys, char, nowS, null, () => ({ first: char, firstAt: null, claimant: null, claimAt: null, fp: null })); // STAFF-PANEL4-CENSUS: bookkeeping, never contested",
     "why": "a death's drop listed as contested",
     "tests": [
       "test/server/staffpanel4census.test.js"

@@ -402,8 +402,8 @@
   {
     "name": "STAFF-PANEL3-REALM-ledger-seized-not-copy",
     "file": "server-account/src/ledger.js",
-    "old": "if (r && r.state === 'escrow' && r.char_id === SEIZED) { copies.push(key); continue; }",
-    "new": "if (false) { copies.push(key); continue; }",
+    "old": "    if (r && r.state === 'escrow' && r.char_id === SEIZED) {",
+    "new": "    if (false) {",
     "why": "a save that shows a taken piece again keeps it as its own",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -592,8 +592,8 @@
   {
     "name": "STAFF-PANEL3-REALM-FIX-goods-count-coins",
     "file": "server-account/src/judge.js",
-    "old": "if (!(liquidWorthOf(it) > 0)) goods += pieceWealth(it, 0);",
-    "new": "goods += pieceWealth(it);",
+    "old": "  for (const list of wealthLists(save))\n    for (const it of list) if (!(liquidWorthOf(it) > 0)) goods += pieceWealth(it, 0);",
+    "new": "  for (const list of wealthLists(save)) for (const it of list) goods += pieceWealth(it);",
     "why": "coins counted as goods",
     "tests": [
       "test/server/staffpanel3realm.test.js"

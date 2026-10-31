@@ -802,7 +802,7 @@ EnemyBasics holds the custom id, and ItemHelper.cs:352-368 names the gem "Soul T
 Item law 8 took only DFU's ranges (`itemLaw.js:"const soulLawful = "`: 0-42 and 128-146), so a gem holding any of the
 fifty was a `soul` finding (`itemLaw.js:"&& soulLawful(item.trappedSoulType))) out.add('soul');"`). The account service
 judges every realm checkpoint headless with that law
-(`judge.js:"for (const code of findingsOf(it)) keep({ code, list: li, at: i, t: it?.templateIndex ?? null });"`), the
+(`judge.js:"for (const code of findingsOf(it))"`), the
 verdict holds the character and adds a strike (`verdict.js:"  if (law > 0 || (until != null && until > nowS)) return 'law';"`),
 and the client announces the hold (`realmHoldHost.js:"session.onTradeHeld"`) by the template's name
 (`itemIds.js:"const name = now"`). Reproduced word for word through

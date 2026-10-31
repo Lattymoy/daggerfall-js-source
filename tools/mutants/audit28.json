@@ -47,8 +47,8 @@
   {
     "name": "AUDIT28-M3-a-going-guild-sweeps-nothing",
     "file": "server-account/src/guilds.js",
-    "old": "    guildMarksSweep(db, guildId, player, nowS, { alone }),\n",
-    "new": "",
+    "old": "    guildMarksSweep(db, guildId, player, nowS, { alone }),\n    db",
+    "new": "    db",
     "tests": [
       "test/net/audit28_marks.test.js",
       "test/net/marks1.test.js"
@@ -66,8 +66,8 @@
   {
     "name": "AUDIT28-M5-the-marks-shown-behind-a-shut-switch",
     "file": "server-account/src/guilds.js",
-    "old": "    ...(marksOpen ? {\n      marks:",
-    "new": "    ...(true ? {\n      marks:",
+    "old": "    ...(marksOpen",
+    "new": "    ...(true",
     "tests": [
       "test/net/audit28_marks.test.js"
     ]

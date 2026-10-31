@@ -557,7 +557,7 @@ with them: a deserter revenant's take, a pile on the ground, a shop's shelf, a d
 account's chests'. A `twice` copy is lifted in the same batch only where the act itself leaves the record one - its
 batch destroys a copy of it, or staff's Remove took one off the character and keeps it - its row the record's own, held
 and unclaimed and of the piece kept, no other record's copy known, and no trail check or one that found it innocent
-(`ledger.js:"export async function ownCopiesLiftable(db, char, pieces) {"`); the `dupe` finding and the answer's
+(`ledger.js:"export async function ownCopiesLiftable"`); the `dupe` finding and the answer's
 `lifted` say what the batch took, and a checkpoint landing between the act's read and its seizure refuses it `seq`. No
 checkpoint lifts a copy (AUDIT FB1025i): the record a checkpoint shows is the lists it holds, and a copy moved where it
 lists nothing - a revenant's take (RVN8: a deserter's split, `splitPack`, and a kill's, `pickTaken` - neither takes a

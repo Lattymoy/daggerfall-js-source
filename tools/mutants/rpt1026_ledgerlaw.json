@@ -12,8 +12,8 @@
   {
     "name": "RPT1026-LEDGERLAW-105-hand-over-unwritten",
     "file": "server-account/src/ledger.js",
-    "old": "`UPDATE products SET handed_to = CASE WHEN owner = ?1 THEN NULL ELSE ?1 END\n",
-    "new": "`UPDATE products SET handed_to = NULL\n",
+    "old": "      (m) => `UPDATE products SET handed_to = CASE WHEN owner = ?1 THEN NULL ELSE ?1 END",
+    "new": "      (m) => `UPDATE products SET handed_to = NULL",
     "tests": [
       "test/server/rpt1026_ledgerlaw.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "RPT1026-LEDGERLAW-105-owner-holding-upheld-against",
     "file": "server-account/src/ledger.js",
-    "old": "\n          AND p.owner != ?${part.length + 1}`).bind(...part, at.player).all();",
-    "new": "`).bind(...part, at.player).all();",
+    "old": "        WHERE p.provenance IN (${marks(part.length, 1)}) AND ${CRAFT_RECORD_SQL} = c.player AND ${CRAFT_RECORD_SQL} != ?${part.length + 1}\n          AND p.owner != ?${part.length + 1}`,",
+    "new": "        WHERE p.provenance IN (${marks(part.length, 1)}) AND ${CRAFT_RECORD_SQL} = c.player AND ${CRAFT_RECORD_SQL} != ?${part.length + 1}`,",
     "tests": [
       "test/server/rpt1026_ledgerlaw.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "RPT1026-LEDGERLAW-99-value-dropped",
     "file": "server-account/src/judge.js",
-    "old": "=${cutOf(JSON.stringify(lawValueOf(save, summary, f)) ?? 'none', 40)}`",
-    "new": "=`",
+    "old": "      .map((f) => `${f.code}@${f.at ?? ''}=${cutOf(JSON.stringify(lawValueOf(save, summary, f)) ?? 'none', 40)}`)",
+    "new": "      .map((f) => `${f.code}@${f.at ?? ''}=`)",
     "tests": [
       "test/server/rpt1026_ledgerlaw.test.js"
     ],

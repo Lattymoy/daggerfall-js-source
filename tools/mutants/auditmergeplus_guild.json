@@ -74,8 +74,8 @@
   {
     "name": "A2-the-leave-deletes-by-the-character",
     "file": "server-account/src/guilds.js",
-    "old": "db.prepare('DELETE FROM guild_members WHERE rowid = ? AND guild_id = ?').bind(a.me.rid, a.me.guild_id)",
-    "new": "db.prepare('DELETE FROM guild_members WHERE player = ? AND char_id = ?').bind(player.id, character)",
+    "old": "    .prepare('DELETE FROM guild_members WHERE rowid = ? AND guild_id = ?')\n    .bind(a.me.rid, a.me.guild_id)",
+    "new": "    .prepare('DELETE FROM guild_members WHERE player = ? AND char_id = ?')\n    .bind(player.id, character)",
     "tests": [
       "test/net/auditmergeplus_guild.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "A2-a-leave-that-took-nothing-answered-as-one",
     "file": "server-account/src/guilds.js",
-    "old": "  if (!r?.meta?.changes) return { error: 'no-guild' };\n",
-    "new": "",
+    "old": "  if (!r?.meta?.changes) return { error: 'no-guild' };\n  // GUILD1c: the leaver wears no tag now. AUDIT MERGE-PLUS A2: AND THE HUB HEARS IT AS A REMOVAL - the member row's out",
+    "new": "  // GUILD1c: the leaver wears no tag now. AUDIT MERGE-PLUS A2: AND THE HUB HEARS IT AS A REMOVAL - the member row's out",
     "tests": [
       "test/net/auditmergeplus_guild.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "A2-the-lone-masters-leave-tells-the-hub-nothing",
     "file": "server-account/src/guilds.js",
-    "old": "if (r?.meta?.changes) return { ok: true, disbanded: true, badge: {}, out: { s: player.id, gi: a.me.guild_id } };",
-    "new": "if (r?.meta?.changes) return { ok: true, disbanded: true, badge: {} };",
+    "old": "    if (r?.meta?.changes) return { ok: true, disbanded: true, badge: {}, out: { s: player.id, gi: a.me.guild_id } };",
+    "new": "    if (r?.meta?.changes) return { ok: true, disbanded: true, badge: {} };",
     "tests": [
       "test/net/auditmergeplus_guild.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "A2-the-lone-masters-leave-names-one-member",
     "file": "server-account/src/guilds.js",
-    "old": "disbanded: true, badge: {}, out: { s: player.id, gi: a.me.guild_id } }",
-    "new": "disbanded: true, badge: {}, out: { s: player.id, gi: a.me.guild_id, gm: `m${a.me.rid}` } }",
+    "old": "    if (r?.meta?.changes) return { ok: true, disbanded: true, badge: {}, out: { s: player.id, gi: a.me.guild_id } };",
+    "new": "    if (r?.meta?.changes)\n      return { ok: true, disbanded: true, badge: {}, out: { s: player.id, gi: a.me.guild_id, gm: `m${a.me.rid}` } };",
     "tests": [
       "test/net/auditmergeplus_guild.test.js"
     ]

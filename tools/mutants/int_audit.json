@@ -4,8 +4,8 @@
     "reaimed": "STAFF-PANEL4-CENSUS: re-aimed by content - a copy written down keeps its first holder, its claimant and its print (ledger.js copyRows)",
     "file": "server-account/src/ledger.js",
     "note": "AUTO-HOLD (PIN MOVED): re-aimed by content - a contested claim locks the claimant with no strike, `{ strike: false }`",
-    "old": "      ...chargeSteps(db, claimant, keys, nowS, { strike: false }));",
-    "new": "      ...chargeSteps(db, char, keys, nowS, { strike: false }));",
+    "old": "      ...chargeSteps(db, claimant, keys, nowS, { strike: false }),",
+    "new": "      ...chargeSteps(db, char, keys, nowS, { strike: false }),",
     "tests": [
       "test/systems/item/int4_itemids.test.js"
     ]
@@ -13,8 +13,8 @@
   {
     "name": "INTA-the-print-unread",
     "file": "server-account/src/ledger.js",
-    "old": "    if (r && r.fp !== fp) {\n      if (!rehomedPrint(r.fp, fp)) { forged.push(key); continue; }   // another piece's key: no claim to that piece\n      reprint.push([key, fp, r.fp]);   // AUDIT FB1018f L1-1: the piece itself, its base moved home by the load (lootRarity.js)\n    }\n",
-    "new": "",
+    "old": "    if (r && r.fp !== fp) {\n      if (!rehomedPrint(r.fp, fp)) {\n        forged.push(key);\n        continue;\n      } // another piece's key: no claim to that piece\n      reprint.push([key, fp, r.fp]); // AUDIT FB1018f L1-1: the piece itself, its base moved home by the load (lootRarity.js)\n    }\n    // STAFF-PANEL3-REALM: a piece staff took, shown again - a copy of it, charged to this record (and locked, as every copy)",
+    "new": "    // STAFF-PANEL3-REALM: a piece staff took, shown again - a copy of it, charged to this record (and locked, as every copy)",
     "tests": [
       "test/systems/item/int4_itemids.test.js"
     ],
@@ -23,8 +23,8 @@
   {
     "name": "INTA-no-grace",
     "file": "server-account/src/ledger.js",
-    "old": "nowS - r.claim_at >= DUPE_GRACE_S) proven.set",
-    "new": "nowS - r.claim_at >= 0) proven.set",
+    "old": "      if (r.claim_char && r.claim_char !== char && nowS - r.claim_at >= DUPE_GRACE_S)",
+    "new": "      if (r.claim_char && r.claim_char !== char && nowS - r.claim_at >= 0)",
     "tests": [
       "test/systems/item/int4_itemids.test.js"
     ]
@@ -32,8 +32,8 @@
   {
     "name": "INTA-new-unbounded",
     "file": "server-account/src/ledger.js",
-    "old": "    if (!r) { if (fresh.length < LEDGER_NEW_MAX) fresh.push([key, fp]); continue; }",
-    "new": "    if (!r) { fresh.push([key, fp]); continue; }",
+    "old": "      if (fresh.length < LEDGER_NEW_MAX) fresh.push([key, fp]);",
+    "new": "      fresh.push([key, fp]);",
     "tests": [
       "test/systems/item/int4_itemids.test.js"
     ]
@@ -50,8 +50,8 @@
   {
     "name": "INTA-held-still-rewritten",
     "file": "server-account/src/ledger.js",
-    "old": "    if (r.char_id === char && r.state === 'held') {\n      // mine:",
-    "new": "    if (r.char_id === char && r.state === 'held') {\n      claim.push(key);\n      // mine:",
+    "old": "      // mine: a claim on it past its grace, with the piece still here, was a copy - unless the craft's record says the",
+    "new": "      claim.push(key);\n      // mine: a claim on it past its grace, with the piece still here, was a copy - unless the craft's record says the",
     "tests": [
       "test/systems/item/int4_itemids.test.js"
     ]
@@ -68,8 +68,8 @@
   {
     "name": "INTA-escrow-forgotten",
     "file": "server-account/src/ledger.js",
-    "old": "  const held = escrow === true ? gone : escrow instanceof Set ? gone.filter((k) => escrow.has(k)) : [];\n",
-    "new": "  const held = escrow instanceof Set ? gone.filter((k) => escrow.has(k)) : [];\n",
+    "old": "  const held = escrow === true ? gone : escrow instanceof Set ? gone.filter((k) => escrow.has(k)) : [];",
+    "new": "  const held = escrow instanceof Set ? gone.filter((k) => escrow.has(k)) : [];",
     "tests": [
       "test/systems/item/int4_itemids.test.js"
     ],
@@ -78,8 +78,8 @@
   {
     "name": "INTA-delivery-unledgered",
     "file": "server-account/src/ledger.js",
-    "old": "    ...insertSteps(db, at, came, `ON CONFLICT (uid) DO UPDATE",
-    "new": "    ...insertSteps(db, at, [], `ON CONFLICT (uid) DO UPDATE",
+    "old": "      came,",
+    "new": "      [],",
     "tests": [
       "test/systems/item/int4_itemids.test.js"
     ]
@@ -87,8 +87,8 @@
   {
     "name": "INTA-the-claim-moves",
     "file": "server-account/src/ledger.js",
-    "old": "    if (rows.length) return 'piece-claimed';\n",
-    "new": "",
+    "old": "    if (rows.length) return 'piece-claimed';\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/item/int4_itemids.test.js"
     ]
@@ -96,8 +96,8 @@
   {
     "name": "INTA-the-dead-hold",
     "file": "server-account/src/ledger.js",
-    "old": "    db.prepare(\"DELETE FROM item_uids WHERE char_id = ?1 AND state = 'held'\").bind(char),\n",
-    "new": "",
+    "old": "    db.prepare(\"DELETE FROM item_uids WHERE char_id = ?1 AND state = 'held'\").bind(char),\n    ...(deleted ? [db.prepare('DELETE FROM item_dupes WHERE char_id = ?1').bind(char)] : []),",
+    "new": "    ...(deleted ? [db.prepare('DELETE FROM item_dupes WHERE char_id = ?1').bind(char)] : []),",
     "tests": [
       "test/systems/item/int4_itemids.test.js"
     ]
@@ -105,8 +105,8 @@
   {
     "name": "INTA-the-copy-taken-up",
     "file": "server-account/src/ledger.js",
-    "old": "WHERE uid IN (${m}) AND char_id = ?1 AND state = 'held' AND EXISTS (SELECT 1 FROM item_dupes d WHERE d.uid = item_uids.uid)`),\n    ...overKeys(db, keys, [char], (m) => `DELETE",
-    "new": "WHERE uid IN (${m}) AND char_id = ?1 AND state = 'held' AND 0`),\n    ...overKeys(db, keys, [char], (m) => `DELETE",
+    "old": "      WHERE uid IN (${m}) AND char_id = ?1 AND state = 'held' AND EXISTS (SELECT 1 FROM item_dupes d WHERE d.uid = item_uids.uid)`,",
+    "new": "      WHERE uid IN (${m}) AND char_id = ?1 AND state = 'held' AND 0`,",
     "tests": [
       "test/systems/item/int4_itemids.test.js"
     ]
@@ -260,8 +260,8 @@
   {
     "name": "INTA-the-craft-upgraded",
     "file": "server-account/src/judge.js",
-    "old": "      && (piece.q == null || (Number.isInteger(piece.q) && /** @type {number} */ (piece.q) <= Number(row.quality)))\n",
-    "new": "      && true\n",
+    "old": "      (piece.q == null || (Number.isInteger(piece.q) && /** @type {number} */ (piece.q) <= Number(row.quality))) &&",
+    "new": "      true &&",
     "tests": [
       "test/server/int2_judge.test.js"
     ]
@@ -269,8 +269,8 @@
   {
     "name": "INTA-the-craft-remade",
     "file": "server-account/src/judge.js",
-    "old": "      && (piece.m == null || row.material == null || Number(row.material) === piece.m)",
-    "new": "      && true",
+    "old": "      (piece.m == null || row.material == null || Number(row.material) === piece.m) &&",
+    "new": "      true &&",
     "tests": [
       "test/server/int2_judge.test.js"
     ]
@@ -278,8 +278,8 @@
   {
     "name": "INTA-the-gold-unread",
     "file": "server-account/src/judge.js",
-    "old": "  if (!purseWord(save?.goldPieces)) out.push({ code: 'gold' });\n",
-    "new": "",
+    "old": "  if (!purseWord(save?.goldPieces)) out.push({ code: 'gold' });\n  arrayOf(save?.bankAccounts).forEach((/** @type {any} */ a, /** @type {number} */ i) => {",
+    "new": "  arrayOf(save?.bankAccounts).forEach((/** @type {any} */ a, /** @type {number} */ i) => {",
     "tests": [
       "test/server/int2_judge.test.js"
     ]
@@ -287,8 +287,8 @@
   {
     "name": "INTA-infinite-gold",
     "file": "server-account/src/judge.js",
-    "old": "const goldOf = (/** @type {unknown} */ v) => (Number.isSafeInteger(v) && /** @type {number} */ (v) > 0 ? /** @type {number} */ (v) : 0);",
-    "new": "const goldOf = (/** @type {unknown} */ v) => Math.max(0, Number(v) || 0);",
+    "old": "export const goldOf = (/** @type {unknown} */ v) =>\n  Number.isSafeInteger(v) && /** @type {number} */ (v) > 0 ? /** @type {number} */ (v) : 0;",
+    "new": "export const goldOf = (/** @type {unknown} */ v) => Math.max(0, Number(v) || 0);",
     "tests": [
       "test/server/int2_judge.test.js"
     ]
@@ -496,8 +496,8 @@
   {
     "name": "INTA-old-stock-vaulted",
     "file": "server-account/src/guildVault.js",
-    "old": "  if (!lawfulItem(rec)) return { error: 'vault-goods' };   // one no honest client mints goes to no member: it waits for staff\n",
-    "new": "",
+    "old": "  if (!lawfulItem(rec)) return { error: 'vault-goods' }; // one no honest client mints goes to no member: it waits for staff\n  const give = { ...rec };",
+    "new": "  const give = { ...rec };",
     "tests": [
       "test/net/int6_review.test.js"
     ]

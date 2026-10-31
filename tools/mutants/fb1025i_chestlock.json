@@ -226,8 +226,8 @@
   {
     "name": "FB1025I-EXPLOIT-CHECKPOINT-LIFTS",
     "file": "server-account/src/ledger.js",
-    "old": "[...shown.keys()].filter((k) => copiesKnown.has(k))",
-    "new": "[...shown.keys()].filter((k) => copiesKnown.has(k) && (shown.get(k)?.n ?? 0) > 1)",
+    "old": "  const locked = [...new Set([...[...shown.keys()].filter((k) => copiesKnown.has(k)), ...copies])].slice(\n    0,\n    LOCKED_SAID_MAX,\n  );",
+    "new": "  const locked = [\n    ...new Set([...[...shown.keys()].filter((k) => copiesKnown.has(k) && (shown.get(k)?.n ?? 0) > 1), ...copies]),\n  ].slice(0, LOCKED_SAID_MAX);",
     "tests": [
       "test/server/fb1025i_chestlock.test.js"
     ],
@@ -236,8 +236,8 @@
   {
     "name": "FB1025I-COPY-LIFT-ANY-KIND",
     "file": "server-account/src/ledger.js",
-    "old": "d.kind = 'twice' AND (d.trail_found",
-    "new": "(d.trail_found",
+    "old": "const OWN_COPY_SQL = `d.kind = 'twice' AND (d.trail_found IS NULL OR d.trail_found = 'innocent')",
+    "new": "const OWN_COPY_SQL = `(d.trail_found IS NULL OR d.trail_found = 'innocent')",
     "tests": [
       "test/server/fb1025i_chestlock.test.js"
     ],
@@ -246,8 +246,8 @@
   {
     "name": "FB1025I-COPY-LIFT-COPIER",
     "file": "server-account/src/ledger.js",
-    "old": "AND (d.trail_found IS NULL OR d.trail_found = 'innocent')",
-    "new": "",
+    "old": "const OWN_COPY_SQL = `d.kind = 'twice' AND (d.trail_found IS NULL OR d.trail_found = 'innocent')",
+    "new": "const OWN_COPY_SQL = `d.kind = 'twice' ",
     "tests": [
       "test/server/fb1025i_chestlock.test.js"
     ],
@@ -256,8 +256,8 @@
   {
     "name": "FB1025I-COPY-LIFT-ROW-ANOTHERS",
     "file": "server-account/src/ledger.js",
-    "old": "AND u.char_id = ?1 AND u.state",
-    "new": "AND u.state",
+    "old": "  AND u.char_id = ?1 AND u.state = 'held' AND u.claim_char IS NULL",
+    "new": "  AND u.state = 'held' AND u.claim_char IS NULL",
     "tests": [
       "test/server/fb1025i_chestlock.test.js"
     ],
@@ -266,8 +266,8 @@
   {
     "name": "FB1025I-COPY-LIFT-ROW-GONE",
     "file": "server-account/src/ledger.js",
-    "old": "u.state = 'held' AND u.claim_char",
-    "new": "u.claim_char",
+    "old": "  AND u.char_id = ?1 AND u.state = 'held' AND u.claim_char IS NULL",
+    "new": "  AND u.char_id = ?1 AND u.claim_char IS NULL",
     "tests": [
       "test/server/fb1025i_chestlock.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "FB1025I-COPY-LIFT-CLAIMED",
     "file": "server-account/src/ledger.js",
-    "old": " AND u.claim_char IS NULL",
-    "new": "",
+    "old": "  AND u.char_id = ?1 AND u.state = 'held' AND u.claim_char IS NULL",
+    "new": "  AND u.char_id = ?1 AND u.state = 'held'",
     "tests": [
       "test/server/fb1025i_chestlock.test.js"
     ]
@@ -284,8 +284,8 @@
   {
     "name": "FB1025I-COPY-LIFT-ELSEWHERE",
     "file": "server-account/src/ledger.js",
-    "old": "\n  AND NOT EXISTS (SELECT 1 FROM item_dupes o WHERE o.uid = d.uid AND o.char_id != ?1)",
-    "new": "",
+    "old": "  AND u.char_id = ?1 AND u.state = 'held' AND u.claim_char IS NULL\n  AND NOT EXISTS (SELECT 1 FROM item_dupes o WHERE o.uid = d.uid AND o.char_id != ?1)`;",
+    "new": "  AND u.char_id = ?1 AND u.state = 'held' AND u.claim_char IS NULL`;",
     "tests": [
       "test/server/fb1025i_chestlock.test.js"
     ],
@@ -294,8 +294,8 @@
   {
     "name": "FB1025I-COPY-LIFT-OTHER-PIECE",
     "file": "server-account/src/ledger.js",
-    "old": "if (row.fp === fpOf.get(row.uid)) out.push(row.uid);",
-    "new": "out.push(row.uid);",
+    "old": "    for (const row of r?.results ?? []) if (row.fp === fpOf.get(row.uid)) out.push(row.uid);",
+    "new": "    for (const row of r?.results ?? []) out.push(row.uid);",
     "tests": [
       "test/server/fb1025i_chestlock.test.js"
     ]
@@ -303,8 +303,8 @@
   {
     "name": "FB1025I-COPY-LIFT-UNGUARDED",
     "file": "server-account/src/ledger.js",
-    "old": "uid IN (${m}) AND EXISTS (SELECT 1 FROM item_dupes d JOIN item_uids u ON u.uid = d.uid\n    WHERE d.uid = item_dupes.uid AND d.char_id = ?1 AND ${OWN_COPY_SQL})",
-    "new": "uid IN (${m})",
+    "old": "        ...overKeys(\n          db,\n          keys,\n          [char],\n          (\n            m,\n          ) => `DELETE FROM item_dupes WHERE char_id = ?1 AND uid IN (${m}) AND EXISTS (SELECT 1 FROM item_dupes d JOIN item_uids u ON u.uid = d.uid\n    WHERE d.uid = item_dupes.uid AND d.char_id = ?1 AND ${OWN_COPY_SQL})`,\n        ),",
+    "new": "        ...overKeys(db, keys, [char], (m) => `DELETE FROM item_dupes WHERE char_id = ?1 AND uid IN (${m})`),",
     "tests": [
       "test/server/fb1025i_chestlock.test.js"
     ],
@@ -313,8 +313,8 @@
   {
     "name": "FB1025I-COPY-LIFT-NONE",
     "file": "server-account/src/ledger.js",
-    "old": "(!keys.length ? [] : [",
-    "new": "(true ? [] : [",
+    "old": "  !keys.length",
+    "new": "  true",
     "tests": [
       "test/server/fb1025i_chestlock.test.js",
       "test/server/staffpanel3realm.test.js"
@@ -324,8 +324,8 @@
   {
     "name": "FB1025I-COPY-LIFT-FINDING-SILENT",
     "file": "server-account/src/ledger.js",
-    "old": "json_object('lifted', json((SELECT json_group_array(uid) FROM (SELECT uid FROM (${LIFTING_SQL}) LIMIT 40))), 'count',",
-    "new": "json_object('count',",
+    "old": "    SELECT c.player, c.id, c.seq, ?2, ?3, 'dupe', json_object('lifted', json((SELECT json_group_array(uid) FROM (SELECT uid FROM (${LIFTING_SQL}) LIMIT 40))), 'count', (SELECT COUNT(*) FROM (${LIFTING_SQL})))",
+    "new": "    SELECT c.player, c.id, c.seq, ?2, ?3, 'dupe', json_object('count', (SELECT COUNT(*) FROM (${LIFTING_SQL})))",
     "tests": [
       "test/server/fb1025i_chestlock.test.js",
       "test/server/staffpanel3realm.test.js"
@@ -424,8 +424,8 @@
   {
     "name": "LF-TRAIL-UNCLEAR-NOT-LIFTED",
     "file": "server-account/src/ledger.js",
-    "old": "AND (d.trail_found IS NULL OR d.trail_found = 'innocent')",
-    "new": "AND (d.trail_found IS NULL OR d.trail_found != 'copier')",
+    "old": "const OWN_COPY_SQL = `d.kind = 'twice' AND (d.trail_found IS NULL OR d.trail_found = 'innocent')",
+    "new": "const OWN_COPY_SQL = `d.kind = 'twice' AND (d.trail_found IS NULL OR d.trail_found != 'copier')",
     "why": "AUDIT FB1025i F7 (lane F's survivor): a copy whose trail check found it 'unclear' lifted - staff's to settle first, found innocent",
     "tests": [
       "test/server/staffpanel3realm.test.js",
@@ -435,8 +435,8 @@
   {
     "name": "LF-LIFT-FINDING-ALWAYS",
     "file": "server-account/src/ledger.js",
-    "old": "(!keys.length ? [] : [",
-    "new": "(false ? [] : [",
+    "old": "  !keys.length",
+    "new": "  false",
     "why": "AUDIT FB1025i F2 (lane F's survivor): a keep that lifts nothing still puts the lift's statements in its batch",
     "tests": [
       "test/server/staffpanel3realm.test.js",
@@ -479,8 +479,8 @@
   {
     "name": "LF-ELSEWHERE-CLAIM-IGNORED",
     "file": "server-account/src/ledger.js",
-    "old": "AND NOT EXISTS (SELECT 1 FROM item_dupes o WHERE o.uid = d.uid AND o.char_id != ?1)",
-    "new": "AND NOT EXISTS (SELECT 1 FROM item_dupes o WHERE o.uid = d.uid AND o.char_id != ?1 AND o.kind != 'claim')",
+    "old": "  AND NOT EXISTS (SELECT 1 FROM item_dupes o WHERE o.uid = d.uid AND o.char_id != ?1)`;",
+    "new": "  AND NOT EXISTS (SELECT 1 FROM item_dupes o WHERE o.uid = d.uid AND o.char_id != ?1 AND o.kind != 'claim')`;",
     "why": "another record's 'claim' copy no longer bars the lift",
     "tests": [
       "test/server/staffpanel3realm.test.js",
@@ -632,8 +632,8 @@
   {
     "name": "LF-F2-FINDING-ASKED",
     "file": "server-account/src/ledger.js",
-    "old": "FROM realm_characters c WHERE c.id = ?1 AND EXISTS (${LIFTING_SQL})`)",
-    "new": "FROM realm_characters c WHERE c.id = ?1`)",
+    "old": "    FROM realm_characters c WHERE c.id = ?1 AND EXISTS (${LIFTING_SQL})`,",
+    "new": "    FROM realm_characters c WHERE c.id = ?1`,",
     "why": "AUDIT FB1025i F2: a lift of none still writes a 'dupe' finding",
     "tests": [
       "test/server/staffpanel3realm.test.js",
@@ -643,8 +643,8 @@
   {
     "name": "LF-F2-FINDING-OF-THE-ASK",
     "file": "server-account/src/ledger.js",
-    "old": "WHERE d.char_id = ?1 AND ${OWN_COPY_SQL} AND d.uid IN (SELECT value FROM json_each(?4))`;",
-    "new": "WHERE d.char_id = ?1 AND d.uid IN (SELECT value FROM json_each(?4))`;",
+    "old": "  WHERE d.char_id = ?1 AND ${OWN_COPY_SQL} AND d.uid IN (SELECT value FROM json_each(?4))`;",
+    "new": "  WHERE d.char_id = ?1 AND d.uid IN (SELECT value FROM json_each(?4))`;",
     "why": "AUDIT FB1025i F2: the finding says lifted every key asked, the law's own statement refusing some",
     "tests": [
       "test/server/staffpanel3realm.test.js",

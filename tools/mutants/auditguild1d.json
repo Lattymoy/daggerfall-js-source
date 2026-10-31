@@ -40,8 +40,8 @@
   {
     "name": "AUDIT-GUILD1d-S4-raced-heraldry-refused",
     "file": "server-account/src/halls.js",
-    "old": "    if (landed?.kind === 'heraldry') return",
-    "new": "    if (false) return",
+    "old": "    if (landed?.kind === 'heraldry')",
+    "new": "    if (false)",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]
@@ -49,7 +49,7 @@
   {
     "name": "AUDIT-GUILD1d-S5-raced-claim-taken",
     "file": "server-account/src/halls.js",
-    "old": "    if (now) return now.guild_id === gid ? { ok: true, repeat: true, hall: await hallViewOf(db, gid) } : { error: 'home-taken' };",
+    "old": "    if (now)\n      return now.guild_id === gid\n        ? { ok: true, repeat: true, hall: await hallViewOf(db, gid) }\n        : { error: 'home-taken' };",
     "new": "    if (now) return { error: 'home-taken' };",
     "tests": [
       "test/net/auditguild1d.test.js"
@@ -67,8 +67,8 @@
   {
     "name": "AUDIT-GUILD1d-S7-entry-rank-in-the-write",
     "file": "server-account/src/halls.js",
-    "old": "AND ${guildPowerSql('hallEntry', 'rank', '?2')})`).bind(entry, a.me.guild_id, a.me.rid)",
-    "new": "AND rank IN (0, 1, 2, 3))`).bind(entry, a.me.guild_id, a.me.rid)",
+    "old": "    AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?3 AND guild_id = ?2 AND ${guildPowerSql('hallEntry', 'rank', '?2')})`,",
+    "new": "    AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?3 AND guild_id = ?2 AND rank IN (0, 1, 2, 3))`,",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "AUDIT-GUILD1d-S7-first-heraldry-rank-in-the-write",
     "file": "server-account/src/halls.js",
-    "old": "WHERE id = ? AND heraldry IS NULL AND ${stillMaster}`)",
-    "new": "WHERE id = ? AND heraldry IS NULL`)",
+    "old": "      .prepare(`UPDATE guilds SET heraldry = ? WHERE id = ? AND heraldry IS NULL AND ${stillMaster}`)",
+    "new": "      .prepare(`UPDATE guilds SET heraldry = ? WHERE id = ? AND heraldry IS NULL`)",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "AUDIT-GUILD1d-S9-buy-leaves-realm-gold",
     "file": "server-account/src/halls.js",
-    "old": "SET treasury = treasury - ?1, realm_gold = realm_gold - ?1, moved_by = ?2, moved_at = ?3, moved_kind = 'hall'",
-    "new": "SET treasury = treasury - ?1, moved_by = ?2, moved_at = ?3, moved_kind = 'hall'",
+    "old": "          `UPDATE guilds SET treasury = treasury - ?1, realm_gold = realm_gold - ?1, moved_by = ?2, moved_at = ?3, moved_kind = 'hall'",
+    "new": "          `UPDATE guilds SET treasury = treasury - ?1, moved_by = ?2, moved_at = ?3, moved_kind = 'hall'",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "AUDIT-GUILD1d-S9-sale-pieces-unheld",
     "file": "server-account/src/halls.js",
-    "old": "AND building_key = ?2) = ?5\n        AND (SELECT COALESCE(SUM(paid), 0) FROM home_decor WHERE map_id = ?1 AND building_key = ?2) = ?6",
-    "new": "AND building_key = ?2) <= ?5\n        AND (SELECT COALESCE(SUM(paid), 0) FROM home_decor WHERE map_id = ?1 AND building_key = ?2) <= ?6",
+    "old": "        AND (SELECT COUNT(*) FROM home_decor WHERE map_id = ?1 AND building_key = ?2) = ?5\n        AND (SELECT COALESCE(SUM(paid), 0) FROM home_decor WHERE map_id = ?1 AND building_key = ?2) = ?6",
+    "new": "        AND (SELECT COUNT(*) FROM home_decor WHERE map_id = ?1 AND building_key = ?2) <= ?5\n        AND (SELECT COALESCE(SUM(paid), 0) FROM home_decor WHERE map_id = ?1 AND building_key = ?2) <= ?6",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "AUDIT-GUILD1d-S9-sale-paid-unheld",
     "file": "server-account/src/halls.js",
-    "old": "AND guild_id = ?3 AND paid = ?4\n",
-    "new": "AND guild_id = ?3 AND ?4 IS NOT NULL\n",
+    "old": "          `DELETE FROM homes WHERE map_id = ?1 AND building_key = ?2 AND guild_id = ?3 AND paid = ?4",
+    "new": "          `DELETE FROM homes WHERE map_id = ?1 AND building_key = ?2 AND guild_id = ?3 AND ?4 IS NOT NULL",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "AUDIT-GUILD1d-S9-sale-rank-unheld",
     "file": "server-account/src/halls.js",
-    "old": "AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?7 AND guild_id = ?3 AND rank = ?8)`)",
-    "new": "AND ?7 IS NOT NULL AND ?8 IS NOT NULL`)",
+    "old": "        AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?7 AND guild_id = ?3 AND rank = ?8)`,",
+    "new": "        AND ?7 IS NOT NULL AND ?8 IS NOT NULL`,",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "AUDIT-GUILD1d-S9-buy-rank-unheld",
     "file": "server-account/src/halls.js",
-    "old": "AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?5 AND guild_id = ?4 AND rank = ?6)`)",
-    "new": "AND ?5 IS NOT NULL AND ?6 IS NOT NULL`)",
+    "old": "          AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?5 AND guild_id = ?4 AND rank = ?6)`,",
+    "new": "          AND ?5 IS NOT NULL AND ?6 IS NOT NULL`,",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "AUDIT-GUILD1d-S9-sale-past-the-cap",
     "file": "server-account/src/halls.js",
-    "old": "moved_kind = 'hall-sale'\n          WHERE id = ?4 AND treasury + ?1 <= ?5`)",
-    "new": "moved_kind = 'hall-sale'\n          WHERE id = ?4 AND ?5 IS NOT NULL`)",
+    "old": "          WHERE id = ?4 AND treasury + ?1 <= ?5`,",
+    "new": "          WHERE id = ?4 AND ?5 IS NOT NULL`,",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "AUDIT-GUILD1d-S9-heraldry-change-unheld",
     "file": "server-account/src/halls.js",
-    "old": "SET heraldry = ? WHERE id = ? AND heraldry = ? AND ${stillMaster} AND ${noBattle}`)",
-    "new": "SET heraldry = ? WHERE id = ? AND ? IS NOT NULL AND ${stillMaster} AND ${noBattle}`)",
+    "old": "        .prepare(`UPDATE guilds SET heraldry = ? WHERE id = ? AND heraldry = ? AND ${stillMaster} AND ${noBattle}`)",
+    "new": "        .prepare(`UPDATE guilds SET heraldry = ? WHERE id = ? AND ? IS NOT NULL AND ${stillMaster} AND ${noBattle}`)",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "AUDIT-GUILD1d-S9-first-heraldry-unheld",
     "file": "server-account/src/halls.js",
-    "old": "SET heraldry = ? WHERE id = ? AND heraldry IS NULL AND ${stillMaster}`)",
-    "new": "SET heraldry = ? WHERE id = ? AND ${stillMaster}`)",
+    "old": "    const r = await db\n      .prepare(`UPDATE guilds SET heraldry = ? WHERE id = ? AND heraldry IS NULL AND ${stillMaster}`)\n      .bind(json, gid)\n      .run();",
+    "new": "    const r = await db.prepare(`UPDATE guilds SET heraldry = ? WHERE id = ? AND ${stillMaster}`).bind(json, gid).run();",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "AUDIT-GUILD1d-R5-heraldry-a-deposit",
     "file": "server-account/src/guilds.js",
-    "old": "'guild-withdraw': 'withdraw', heraldry: 'heraldry', 'guild-deed': 'deed',",
-    "new": "'guild-withdraw': 'withdraw', 'guild-deed': 'deed',",
+    "old": "  heraldry: 'heraldry',\n  'guild-deed': 'deed',",
+    "new": "  'guild-deed': 'deed',",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]

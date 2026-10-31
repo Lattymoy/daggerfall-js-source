@@ -1312,7 +1312,7 @@
   {
     "name": "AUDIT-LEGACY-III-O1-a-half-names-no-character",
     "file": "server-account/src/legacy.js",
-    "old": "  if (typeof partnerChar !== 'string' || !REALM_CHARACTER_RE.test(partnerChar) || typeof withdraw !== 'boolean') return { error: 'body' };",
+    "old": "  if (typeof partnerChar !== 'string' || !REALM_CHARACTER_RE.test(partnerChar) || typeof withdraw !== 'boolean')\n    return { error: 'body' };",
     "new": "  if (typeof withdraw !== 'boolean') return { error: 'body' };",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
@@ -1321,8 +1321,8 @@
   {
     "name": "AUDIT-LEGACY-III-O1-any-character-of-the-account",
     "file": "server-account/src/legacy.js",
-    "old": "  if (other.char_id !== partnerChar || other.partner_char !== id) return { error: 'wed-partner' };\n",
-    "new": "",
+    "old": "  if (other.char_id !== partnerChar || other.partner_char !== id) return { error: 'wed-partner' };\n  const them = await db",
+    "new": "  const them = await db",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1330,8 +1330,8 @@
   {
     "name": "AUDIT-LEGACY-III-O1-my-half-renamed",
     "file": "server-account/src/legacy.js",
-    "old": " || own.partner_char !== partnerChar) return { error: 'wed-spent' };",
-    "new": ") return { error: 'wed-spent' };",
+    "old": "  if (!own || own.char_id !== id || own.partner !== partner || own.partner_char !== partnerChar)\n    return { error: 'wed-spent' };",
+    "new": "  if (!own || own.char_id !== id || own.partner !== partner) return { error: 'wed-spent' };",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1438,8 +1438,8 @@
   {
     "name": "AUDIT-LEGACY-III-O3-a-repost-refreshes-the-half",
     "file": "server-account/src/legacy.js",
-    "old": "ON CONFLICT (sid, player) DO NOTHING')",
-    "new": "ON CONFLICT (sid, player) DO UPDATE SET at = excluded.at')",
+    "old": "      'INSERT INTO realm_wed_halves (sid, player, char_id, partner, partner_char, at) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (sid, player) DO NOTHING',",
+    "new": "      'INSERT INTO realm_wed_halves (sid, player, char_id, partner, partner_char, at) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (sid, player) DO UPDATE SET at = excluded.at',",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1447,8 +1447,8 @@
   {
     "name": "AUDIT-LEGACY-III-O3-a-withdraw-keeps-the-half",
     "file": "server-account/src/legacy.js",
-    "old": "    await db.prepare('DELETE FROM realm_wed_halves WHERE sid = ? AND player = ?').bind(sid, playerId).run();\n    const u = await",
-    "new": "    const u = await",
+    "old": "    await db.prepare('DELETE FROM realm_wed_halves WHERE sid = ? AND player = ?').bind(sid, playerId).run();\n    const u = await db.prepare('SELECT * FROM realm_unions WHERE sid = ?').bind(sid).first();",
+    "new": "    const u = await db.prepare('SELECT * FROM realm_unions WHERE sid = ?').bind(sid).first();",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1456,8 +1456,8 @@
   {
     "name": "AUDIT-LEGACY-III-O3-a-union-without-their-half",
     "file": "server-account/src/legacy.js",
-    "old": "    + ' AND EXISTS (SELECT 1 FROM realm_wed_halves WHERE sid = ? AND player = ? AND char_id = ? AND partner_char = ?)',",
-    "new": "    + ' AND (1 OR EXISTS (SELECT 1 FROM realm_wed_halves WHERE sid = ? AND player = ? AND char_id = ? AND partner_char = ?))',",
+    "old": "        ' AND EXISTS (SELECT 1 FROM realm_wed_halves WHERE sid = ? AND player = ? AND char_id = ? AND partner_char = ?)',",
+    "new": "        ' AND (1 OR EXISTS (SELECT 1 FROM realm_wed_halves WHERE sid = ? AND player = ? AND char_id = ? AND partner_char = ?))',",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1528,8 +1528,8 @@
   {
     "name": "AUDIT-LEGACY-III-O5-the-dead-keep-their-guild-seat",
     "file": "server-account/src/legacy.js",
-    "old": "  await guildMemberDead(db, playerId, id);\n  await db.prepare('DELETE FROM realm_wed_halves",
-    "new": "  await db.prepare('DELETE FROM realm_wed_halves",
+    "old": "  await guildMemberDead(db, playerId, id);\n  await db.prepare('DELETE FROM realm_wed_halves WHERE player = ? AND char_id = ?').bind(playerId, id).run();",
+    "new": "  await db.prepare('DELETE FROM realm_wed_halves WHERE player = ? AND char_id = ?').bind(playerId, id).run();",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1547,8 +1547,8 @@
   {
     "name": "AUDIT-LEGACY-III-O5-a-master-nobody-succeeds",
     "file": "server-account/src/guilds.js",
-    "old": "  await succeed(db, row.guild_id);\n  await db.prepare(`DELETE FROM guilds WHERE id = ?1 AND treasury = 0",
-    "new": "  await db.prepare(`DELETE FROM guilds WHERE id = ?1 AND treasury = 0",
+    "old": "  await succeed(db, row.guild_id);\n  await db",
+    "new": "  await db",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1585,8 +1585,8 @@
   {
     "name": "AUDIT-LEGACY-III-O6-a-bloodline-retires",
     "file": "server-account/src/legacy.js",
-    "old": "  if (why === 'retired' && row.model !== 'enduring') return { error: 'body' };\n",
-    "new": "",
+    "old": "  if (why === 'retired' && row.model !== 'enduring') return { error: 'body' };\n  if (row.dead_at != null && row.rez_lease != null) {",
+    "new": "  if (row.dead_at != null && row.rez_lease != null) {",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1594,8 +1594,8 @@
   {
     "name": "AUDIT-LEGACY-III-O6-the-first-word-forgotten",
     "file": "server-account/src/legacy.js",
-    "old": "    .bind(nowS, why, nowS, id, playerId, ...(lease == null ? [] : [lease])).run();",
-    "new": "    .bind(nowS, 'fell', nowS, id, playerId, ...(lease == null ? [] : [lease])).run();",
+    "old": "    .bind(nowS, why, nowS, id, playerId, ...(lease == null ? [] : [lease]))",
+    "new": "    .bind(nowS, 'fell', nowS, id, playerId, ...(lease == null ? [] : [lease]))",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1603,8 +1603,8 @@
   {
     "name": "AUDIT-LEGACY-III-O6-a-retired-elder-never-falls",
     "file": "server-account/src/legacy.js",
-    "old": "WHERE id = ? AND player = ? AND dead_why = 'retired'\").bind(nowS, id, playerId).run();",
-    "new": "WHERE id = ? AND player = ? AND dead_why = 'retired' AND 0\").bind(nowS, id, playerId).run();",
+    "old": "      \"UPDATE realm_characters SET dead_why = 'fell', updated_at = ? WHERE id = ? AND player = ? AND dead_why = 'retired'\",",
+    "new": "      \"UPDATE realm_characters SET dead_why = 'fell', updated_at = ? WHERE id = ? AND player = ? AND dead_why = 'retired' AND 0\",",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1630,8 +1630,8 @@
   {
     "name": "AUDIT-LEGACY-III-O8-newest-wed-first",
     "file": "server-account/src/legacy.js",
-    "old": "ORDER BY COALESCE(ended_at, wed_at) DESC, wed_at DESC LIMIT 50",
-    "new": "ORDER BY wed_at DESC LIMIT 50",
+    "old": "  'WITH u AS (SELECT * FROM realm_unions WHERE a_player = ?1 OR b_player = ?1 ORDER BY COALESCE(ended_at, wed_at) DESC, wed_at DESC LIMIT 50),' +",
+    "new": "  'WITH u AS (SELECT * FROM realm_unions WHERE a_player = ?1 OR b_player = ?1 ORDER BY wed_at DESC LIMIT 50),' +",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1648,8 +1648,8 @@
   {
     "name": "AUDIT-LEGACY-III-W2-the-lines-dead-stand-in-the-realm",
     "file": "server-account/src/legacy.js",
-    "old": "      await entombLineDead({ db, nowS }, playerId, id, had.record, /** @type {any} */ (record));\n",
-    "new": "",
+    "old": "      await entombLineDead({ db, nowS }, playerId, id, had.record, /** @type {any} */ (record));\n      return { ok: true, rev: rec.rev };",
+    "new": "      return { ok: true, rev: rec.rev };",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1657,8 +1657,8 @@
   {
     "name": "AUDIT-LEGACY-III-W2-a-retired-elders-death-unheard",
     "file": "server-account/src/legacy.js",
-    "old": "    else if (why === 'fell' && row.dead_why === 'retired') await fellRetired(db, playerId, row.id, nowS);\n",
-    "new": "",
+    "old": "    else if (why === 'fell' && row.dead_why === 'retired') await fellRetired(db, playerId, row.id, nowS);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1666,8 +1666,8 @@
   {
     "name": "AUDIT-LEGACY-III-A2-the-realm-asks-no-base",
     "file": "server-account/src/legacy.js",
-    "old": "WHERE player = ? AND id = ? AND rev = ? AND rev < ?')",
-    "new": "WHERE player = ? AND id = ? AND (rev = ? OR 1) AND rev < ?')",
+    "old": "        'UPDATE lineages SET record = ?, rev = ?, surname = ?, updated_at = ? WHERE player = ? AND id = ? AND rev = ? AND rev < ?',",
+    "new": "        'UPDATE lineages SET record = ?, rev = ?, surname = ?, updated_at = ? WHERE player = ? AND id = ? AND (rev = ? OR 1) AND rev < ?',",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1675,8 +1675,8 @@
   {
     "name": "AUDIT-LEGACY-III-A2-any-base-taken",
     "file": "server-account/src/legacy.js",
-    "old": "  if (base !== null && !(Number.isSafeInteger(base) && /** @type {number} */ (base) >= 0)) return { error: 'body' };\n",
-    "new": "",
+    "old": "  if (base !== null && !(Number.isSafeInteger(base) && /** @type {number} */ (base) >= 0)) return { error: 'body' };\n  const had = await db",
+    "new": "  const had = await db",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1757,8 +1757,8 @@
   {
     "name": "LP-svc-people-unbounded",
     "file": "server-account/src/legacy.js",
-    "old": " || r.people.length > LINEAGE_PEOPLE_MAX) return null;",
-    "new": ") return null;",
+    "old": "  if (!Array.isArray(r.people) || !r.people.length || r.people.length > LINEAGE_PEOPLE_MAX) return null;",
+    "new": "  if (!Array.isArray(r.people) || !r.people.length) return null;",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1766,8 +1766,8 @@
   {
     "name": "LP-svc-surname-unbounded",
     "file": "server-account/src/legacy.js",
-    "old": " || r.surname.length > LINEAGE_SURNAME_MAX ||",
-    "new": " ||",
+    "old": "  if (typeof r.surname !== 'string' || r.surname.length > LINEAGE_SURNAME_MAX || !LINEAGE_MODELS.includes(r.model))\n    return null;",
+    "new": "  if (typeof r.surname !== 'string' || !LINEAGE_MODELS.includes(r.model)) return null;",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1775,8 +1775,8 @@
   {
     "name": "LP-svc-given-unfiltered",
     "file": "server-account/src/legacy.js",
-    "old": "  if (h.hc && !checkName(h.hc).ok) { delete h.hc; delete h.hg; }\n",
-    "new": "",
+    "old": "  if (h.hc && !checkName(h.hc).ok) {\n    delete h.hc;\n    delete h.hg;\n  }\n  return h;",
+    "new": "  return h;",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]

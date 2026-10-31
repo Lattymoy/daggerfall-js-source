@@ -103,8 +103,8 @@
   {
     "name": "FOUNDER5-live-the-census-unasked",
     "file": "server-account/src/founderLink.js",
-    "old": "'SELECT player FROM realm_census WHERE char_id = ?2'",
-    "new": "'SELECT player FROM realm_census WHERE 0'",
+    "old": "  'SELECT player FROM realm_census WHERE char_id = ?2' +",
+    "new": "  'SELECT player FROM realm_census WHERE 0' +",
     "tests": [
       "test/server/founder5.test.js"
     ],
@@ -113,8 +113,8 @@
   {
     "name": "FOUNDER5-live-later-too",
     "file": "server-account/src/founderLink.js",
-    "old": "' WHERE id = ?1 AND (SELECT t FROM linked) < MIN(created_at, COALESCE(registered_at, created_at), COALESCE(first_played_at, created_at))'",
-    "new": "' WHERE id = ?1'",
+    "old": "  ' WHERE id = ?1 AND (SELECT t FROM linked) < MIN(created_at, COALESCE(registered_at, created_at), COALESCE(first_played_at, created_at))';",
+    "new": "  ' WHERE id = ?1';",
     "tests": [
       "test/server/founder5.test.js"
     ],
@@ -123,8 +123,8 @@
   {
     "name": "FOUNDER5-live-itself",
     "file": "server-account/src/founderLink.js",
-    "old": "' WHERE o.id <> ?1 AND o.id IN ('",
-    "new": "' WHERE o.id IN ('",
+    "old": "  ' WHERE o.id <> ?1 AND o.id IN (' +",
+    "new": "  ' WHERE o.id IN (' +",
     "tests": [
       "test/server/founder5.test.js"
     ],

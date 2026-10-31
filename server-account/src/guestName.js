@@ -42,9 +42,11 @@ import { nameIsIssuable } from '../../src/net/identityToken.js';
  *  that has the two name sets this shape needs. DERIVED from the data
  *  rather than listed, so a bank added to the file is a bank a guest
  *  can come from without this line moving. */
-export const GUEST_BANKS = Object.freeze(Object.keys(banks)
-  .filter((k) => Array.isArray(banks[k]?.sets) && banks[k].sets.length >= 6)
-  .sort());
+export const GUEST_BANKS = Object.freeze(
+  Object.keys(banks)
+    .filter((k) => Array.isArray(banks[k]?.sets) && banks[k].sets.length >= 6)
+    .sort(),
+);
 
 /* ═══ THE TWO NAME SHAPES MOVED TO src/net/handleShape.js (ACC1e) ══
  *
@@ -73,11 +75,11 @@ export { GUEST_NAME_RE, HANDLE_RE, isGuestShaped, isHandleShaped };
 export function pick(n, rand) {
   if (!Number.isInteger(n) || n <= 0) throw new RangeError('pick needs a positive count');
   if (n === 1) return 0;
-  const limit = Math.floor(256 / n) * n;          // the largest whole multiple that fits a byte
+  const limit = Math.floor(256 / n) * n; // the largest whole multiple that fits a byte
   const buf = new Uint8Array(1);
   for (let guard = 0; guard < 1000; guard++) {
     rand(buf);
-    if (buf[0] < limit) return buf[0] % n;        // the tail above `limit` is thrown away
+    if (buf[0] < limit) return buf[0] % n; // the tail above `limit` is thrown away
   }
   throw new Error('pick could not draw an unbiased index');
 }
@@ -87,7 +89,10 @@ const partsOf = (bank, set) => banks[bank].sets[set].parts;
 /** One draw, unfiltered. Separate from `guestName` so the rejection
  *  below has something to reject. */
 function drawName(rand, bank) {
-  const part = (set) => { const p = partsOf(bank, set); return p[pick(p.length, rand)]; };
+  const part = (set) => {
+    const p = partsOf(bank, set);
+    return p[pick(p.length, rand)];
+  };
   // sets 0+1 are the male first name, 4+5 the surname - the same sets
   // characters/nameHelper.js draws those two from
   return `${part(0) + part(1)} ${part(4) + part(5)}`;
@@ -140,4 +145,3 @@ export function guestName(rand, bank = null) {
   }
   throw new Error(`no issuable name could be drawn from ${b} - the bank and NAME_MAX have parted`);
 }
-

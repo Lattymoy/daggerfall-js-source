@@ -2,8 +2,8 @@
   {
     "name": "HOME1-claim-a-guest-owns",
     "file": "server-account/src/homes.js",
-    "old": "  if (accountKind(player) !== 'linked') return { error: 'homes-need-account' };\n  if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey) || !homeRegionOk(region) || !Number.isSafeInteger(price)",
-    "new": "  if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey) || !homeRegionOk(region) || !Number.isSafeInteger(price)",
+    "old": "  const { db, nowS } = ctx;\n  if (accountKind(player) !== 'linked') return { error: 'homes-need-account' };\n  if (",
+    "new": "  const { db, nowS } = ctx;\n  if (",
     "tests": [
       "test/server/home1.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "HOME1-claim-cap-unread",
     "file": "server-account/src/homes.js",
-    "old": "paid, mapId, mapId, layout, ground, player.id, character, region, HOME_CAP, mapId, ...layoutMatchBinds(layout));",
-    "new": "paid, mapId, mapId, layout, ground, player.id, character, region, HOME_CAP + 1, mapId, ...layoutMatchBinds(layout));",
+    "old": "      HOME_CAP,",
+    "new": "      HOME_CAP + 1,",
     "note": "Re-aimed by content (HOUSES-3): the region's three deeds. FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew.",
     "tests": [
       "test/server/home1.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "HOME1-claim-cap-per-account",
     "file": "server-account/src/homes.js",
-    "old": "WHERE (SELECT COUNT(*) FROM homes WHERE player = ? AND char_id = ? AND region = ? AND deed = 0) < ?",
-    "new": "WHERE (SELECT COUNT(*) FROM homes WHERE player = ? AND ? IS NOT NULL AND region = ? AND deed = 0) < ?",
+    "old": "    WHERE (SELECT COUNT(*) FROM homes WHERE player = ? AND char_id = ? AND region = ? AND deed = 0) < ?",
+    "new": "    WHERE (SELECT COUNT(*) FROM homes WHERE player = ? AND ? IS NOT NULL AND region = ? AND deed = 0) < ?",
     "tests": [
       "test/server/home1.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "HOME1-claim-two-owners",
     "file": "server-account/src/homes.js",
-    "old": "INSERT OR IGNORE INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at, paid, layout, ground)",
-    "new": "INSERT OR REPLACE INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at, paid, layout, ground)",
+    "old": "      `INSERT OR IGNORE INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at, paid, layout, ground)",
+    "new": "      `INSERT OR REPLACE INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at, paid, layout, ground)",
     "tests": [
       "test/server/home1.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "HOME1-claim-repeat-refused",
     "file": "server-account/src/homes.js",
-    "old": "heldByAccount(held, player, claim.character) ? { ok: true, repeat: true,",
-    "new": "heldByAccount(held, player, claim.character) && false ? { ok: true, repeat: true,",
+    "old": "    return heldByAccount(held, player, claim.character)",
+    "new": "    return heldByAccount(held, player, claim.character) && false",
     "tests": [
       "test/server/home1.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "HOME1-claim-rate-unread",
     "file": "server-account/src/homes.js",
-    "old": "  if (await overRate({ db, nowS }, `home:${player.id}`, HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S)) return { error: 'home-rate' };\n  // DECOR-ROOMY: the ground its price was set from",
-    "new": "  // DECOR-ROOMY: the ground its price was set from",
+    "old": "  if (await overRate({ db, nowS }, `home:${player.id}`, HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S))\n    return { error: 'home-rate' };\n  // DECOR-ROOMY: the ground its price was set from, where the claim names one that agrees (an older build names none)",
+    "new": "  // DECOR-ROOMY: the ground its price was set from, where the claim names one that agrees (an older build names none)",
     "tests": [
       "test/server/home1.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "HOME1-release-anyones",
     "file": "server-account/src/homes.js",
-    "old": "DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND deed = 0 RETURNING price",
-    "new": "DELETE FROM homes WHERE map_id = ? AND building_key = ? AND ? IS NOT NULL AND guild_id IS NULL AND deed = 0 RETURNING price",
+    "old": "        'DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND deed = 0 RETURNING price',",
+    "new": "        'DELETE FROM homes WHERE map_id = ? AND building_key = ? AND ? IS NOT NULL AND guild_id IS NULL AND deed = 0 RETURNING price',",
     "tests": [
       "test/server/home1.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "HOME1-entry-anyones",
     "file": "server-account/src/homes.js",
-    "old": "UPDATE homes SET entry = ? WHERE map_id = ? AND building_key = ? AND player = ?",
-    "new": "UPDATE homes SET entry = ? WHERE map_id = ? AND building_key = ? AND ? IS NOT NULL",
+    "old": "    .prepare('UPDATE homes SET entry = ? WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL')",
+    "new": "    .prepare('UPDATE homes SET entry = ? WHERE map_id = ? AND building_key = ? AND ? IS NOT NULL AND guild_id IS NULL')",
     "tests": [
       "test/server/home1.test.js"
     ]
@@ -81,8 +81,8 @@
   {
     "name": "HOME1-entry-any-word",
     "file": "server-account/src/homes.js",
-    "old": "  if (!homeEntryOk(entry)) return { error: 'bad-entry' };\n",
-    "new": "",
+    "old": "  if (!homeEntryOk(entry)) return { error: 'bad-entry' };\n  if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey)) return { error: 'no-home' };",
+    "new": "  if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey)) return { error: 'no-home' };",
     "tests": [
       "test/server/home1.test.js"
     ]
@@ -90,8 +90,8 @@
   {
     "name": "HOME1-town-shows-a-character",
     "file": "server-account/src/homes.js",
-    "old": "...(mine ? { character: h.char_id } : {})",
-    "new": "character: h.char_id",
+    "old": "          ...(mine ? { character: h.char_id } : {}),",
+    "new": "          character: h.char_id,",
     "tests": [
       "test/server/home1.test.js"
     ]
@@ -99,8 +99,8 @@
   {
     "name": "HOME1-town-all-mine",
     "file": "server-account/src/homes.js",
-    "old": "const mine = h.player === player.id;",
-    "new": "const mine = true;",
+    "old": "        const mine = h.player === player.id;",
+    "new": "        const mine = true;",
     "tests": [
       "test/server/home1.test.js"
     ]

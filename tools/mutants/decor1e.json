@@ -422,8 +422,8 @@
   {
     "name": "DECOR1e-the-half-of-the-sum",
     "file": "server-account/src/homes.js",
-    "old": "THEN CAST(json_extract(place, '$.paid') AS INTEGER) / 2 ELSE 0 END), 0) AS back",
-    "new": "THEN CAST(json_extract(place, '$.paid') AS INTEGER) ELSE 0 END), 0) / 2 AS back",
+    "old": "      COALESCE(SUM(CASE WHEN json_valid(place) THEN CAST(json_extract(place, '$.paid') AS INTEGER) / 2 ELSE 0 END), 0) AS back",
+    "new": "      COALESCE(SUM(CASE WHEN json_valid(place) THEN CAST(json_extract(place, '$.paid') AS INTEGER) ELSE 0 END), 0) / 2 AS back",
     "tests": [
       "test/server/decor1.test.js"
     ]
@@ -431,8 +431,8 @@
   {
     "name": "DECOR1e-the-bad-record-counted",
     "file": "server-account/src/homes.js",
-    "old": "const decorBackStatement = (db, mapId, buildingKey) => db.prepare(`SELECT COALESCE(SUM(CASE WHEN json_valid(place) THEN 1 ELSE 0 END), 0) AS n,",
-    "new": "const decorBackStatement = (db, mapId, buildingKey) => db.prepare(`SELECT COUNT(*) AS n,",
+    "old": "    .prepare(\n      `SELECT COALESCE(SUM(CASE WHEN json_valid(place) THEN 1 ELSE 0 END), 0) AS n,\n      COALESCE(SUM(CASE WHEN json_valid(place) THEN CAST(json_extract(place, '$.paid') AS INTEGER) / 2 ELSE 0 END), 0) AS back",
+    "new": "    .prepare(\n      `SELECT COUNT(*) AS n,\n      COALESCE(SUM(CASE WHEN json_valid(place) THEN CAST(json_extract(place, '$.paid') AS INTEGER) / 2 ELSE 0 END), 0) AS back",
     "tests": [
       "test/server/decor1.test.js"
     ]
@@ -449,8 +449,8 @@
   {
     "name": "DECOR1e-the-release-count-dropped",
     "file": "server-account/src/homes.js",
-    "old": "decorCount: Number(d?.n) || 0,",
-    "new": "decorCount: 0,",
+    "old": "    decorCount: Number(d?.n) || 0,",
+    "new": "    decorCount: 0,",
     "tests": [
       "test/server/decor1.test.js"
     ]

@@ -465,7 +465,7 @@
   {
     "name": "FOE-BOUNDS-relay-word-weighed-as-a-readers",
     "file": "server-account/src/grants.js",
-    "old": "  for (const t of b.tl) if (t.a === GRANT_RELAY_READER && GRANT_CASE_REASONS.includes(t.r)) add(String(t.b), grantRelayText(t));",
+    "old": "  for (const t of b.tl)\n    if (t.a === GRANT_RELAY_READER && GRANT_CASE_REASONS.includes(t.r)) add(String(t.b), grantRelayText(t));",
     "new": "  void grantRelayText;",
     "why": "what the relay itself stripped opens no case",
     "tests": [
@@ -475,8 +475,8 @@
   {
     "name": "FOE-BOUNDS-service-evidence-dropped",
     "file": "server-account/src/grants.js",
-    "old": "no builder could give${t.e ? ` - the worst",
-    "new": "no builder could give${false ? ` - the worst",
+    "old": "  `the relay itself dropped ${t.n} of this account's foes no builder could give${t.e ? ` - the worst a type ${t.e.t} at ${Math.round(t.e.k)} health, its most ${Math.round(t.e.mx)}` : ''} (Spawn-Grants FOE-BOUNDS)`;",
+    "new": "  `the relay itself dropped ${t.n} of this account's foes no builder could give${false ? ` - the worst a type ${t.e.t} at ${Math.round(t.e.k)} health, its most ${Math.round(t.e.mx)}` : ''} (Spawn-Grants FOE-BOUNDS)`;",
     "why": "the case line without its evidence",
     "tests": [
       "test/server/grantcase_own.test.js"
@@ -505,8 +505,8 @@
   {
     "name": "FOE-BOUNDS-a-line-a-finding",
     "file": "server-account/src/grants.js",
-    "old": "text: f.texts.join('; ') }]",
-    "new": "text: f.texts[0] }]",
+    "old": "      [{ tab: GRANT_CASE_TAB, sub: sender, name: displayName(target), at: nowS, text: f.texts.join('; ') }],",
+    "new": "      [{ tab: GRANT_CASE_TAB, sub: sender, name: displayName(target), at: nowS, text: f.texts[0] }],",
     "why": "a batch's second finding on an account lost",
     "tests": [
       "test/server/grantcase_own.test.js"
@@ -515,8 +515,8 @@
   {
     "name": "FOE-BOUNDS-hour-cap-unread",
     "file": "server-account/src/grants.js",
-    "old": "      && await overRate(ctx, 'grant-own-cases', GRANT_OWN_CASES_HOUR, 3600)) continue;",
-    "new": "      && false) continue;",
+    "old": "      (await overRate(ctx, 'grant-own-cases', GRANT_OWN_CASES_HOUR, 3600))",
+    "new": "      false",
     "why": "a flood of fresh accounts floods #mod-queue",
     "tests": [
       "test/server/grantcase_own.test.js"

@@ -2,8 +2,8 @@
   {
     "name": "AG3-W1-an-open-writ-its-own-escrow",
     "file": "server-account/src/guilds.js",
-    "old": "FROM guild_writs WHERE guild_id = ${p} AND state IN ('filled', 'withdrawn', 'expired') AND +returned = 0",
-    "new": "FROM guild_writs WHERE guild_id = ${p} AND +returned = 0",
+    "old": "      `EXISTS (SELECT 1 FROM guild_writs WHERE guild_id = ${p} AND state IN ('filled', 'withdrawn', 'expired') AND +returned = 0 AND escrow > 0)`,",
+    "new": "      `EXISTS (SELECT 1 FROM guild_writs WHERE guild_id = ${p} AND +returned = 0 AND escrow > 0)`,",
     "tests": [
       "test/net/audit_guild3.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AG3-W1-an-open-contract-its-own-escrow",
     "file": "server-account/src/guilds.js",
-    "old": "FROM guild_contracts WHERE guild_id = ${p} AND state IN ('filled', 'withdrawn', 'expired') AND +returned = 0",
-    "new": "FROM guild_contracts WHERE guild_id = ${p} AND +returned = 0",
+    "old": "      `EXISTS (SELECT 1 FROM guild_contracts WHERE guild_id = ${p} AND state IN ('filled', 'withdrawn', 'expired') AND +returned = 0 AND escrow > 0)`,",
+    "new": "      `EXISTS (SELECT 1 FROM guild_contracts WHERE guild_id = ${p} AND +returned = 0 AND escrow > 0)`,",
     "tests": [
       "test/net/audit_guild3.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AG3-S2-the-realm-unreturned-index",
     "file": "server-account/src/guilds.js",
-    "old": "FROM guild_writs WHERE guild_id = ${p} AND state IN ('filled', 'withdrawn', 'expired') AND +returned = 0",
-    "new": "FROM guild_writs WHERE guild_id = ${p} AND state <> 'open' AND returned = 0",
+    "old": "      `EXISTS (SELECT 1 FROM guild_writs WHERE guild_id = ${p} AND state IN ('filled', 'withdrawn', 'expired') AND +returned = 0 AND escrow > 0)`,",
+    "new": "      `EXISTS (SELECT 1 FROM guild_writs WHERE guild_id = ${p} AND state <> 'open' AND returned = 0 AND escrow > 0)`,",
     "tests": [
       "test/net/audit_guild3.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AG3-S3-the-view-asks-no-account",
     "file": "server-account/src/guilds.js",
-    "old": "keeps: (await guildHolds(db, guildId, me.player)) ?? []",
-    "new": "keeps: (await guildHolds(db, guildId, null)) ?? []",
+    "old": "    ...(me.rank === GUILD_RANK_MASTER ? { keeps: (await guildHolds(db, guildId, me.player)) ?? [] } : {}),",
+    "new": "    ...(me.rank === GUILD_RANK_MASTER ? { keeps: (await guildHolds(db, guildId, null)) ?? [] } : {}),",
     "tests": [
       "test/net/audit_guild3.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AG3-S3-the-leave-asks-no-account",
     "file": "server-account/src/guilds.js",
-    "old": "whyNotGone(db, a.me.guild_id, { alone: true, account: player.id })",
-    "new": "whyNotGone(db, a.me.guild_id, { alone: true })",
+    "old": "    return notGone(await whyNotGone(db, a.me.guild_id, { alone: true, account: player.id }));",
+    "new": "    return notGone(await whyNotGone(db, a.me.guild_id, { alone: true }));",
     "tests": [
       "test/net/audit_guild3.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AG3-S3-the-disband-asks-no-account",
     "file": "server-account/src/guilds.js",
-    "old": "whyNotGone(db, a.me.guild_id, { account: player.id })",
-    "new": "whyNotGone(db, a.me.guild_id, {})",
+    "old": "    : notGone(await whyNotGone(db, a.me.guild_id, { account: player.id }));",
+    "new": "    : notGone(await whyNotGone(db, a.me.guild_id, {}));",
     "tests": [
       "test/net/audit_guild3.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AG3-S4-any-guild-source-out",
     "file": "server-account/src/guilds.js",
-    "old": "out: l.src_kind === 'guild' && String(l.src_id) === String(guildId),",
-    "new": "out: l.src_kind === 'guild',",
+    "old": "            out: l.src_kind === 'guild' && String(l.src_id) === String(guildId),",
+    "new": "            out: l.src_kind === 'guild',",
     "tests": [
       "test/net/audit_guild3.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AG3-T1-an-empty-store-holds",
     "file": "server-account/src/guilds.js",
-    "old": "guild_prof_stores WHERE guild_id = ${p} AND qty > 0)",
-    "new": "guild_prof_stores WHERE guild_id = ${p} AND qty >= 0)",
+    "old": "    (/** @type {string} */ p) => `EXISTS (SELECT 1 FROM guild_prof_stores WHERE guild_id = ${p} AND qty > 0)`,",
+    "new": "    (/** @type {string} */ p) => `EXISTS (SELECT 1 FROM guild_prof_stores WHERE guild_id = ${p} AND qty >= 0)`,",
     "tests": [
       "test/net/audit_guild3.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AG3-T1-a-contract-of-any-state-holds",
     "file": "server-account/src/guilds.js",
-    "old": "`EXISTS (SELECT 1 FROM guild_contracts WHERE guild_id = ${p} AND state = 'open')`",
-    "new": "`EXISTS (SELECT 1 FROM guild_contracts WHERE guild_id = ${p})`",
+    "old": "  [\n    'guild-contracts',\n    (/** @type {string} */ p) => `EXISTS (SELECT 1 FROM guild_contracts WHERE guild_id = ${p} AND state = 'open')`,\n  ], // SILVER-WAYS: a contract standing",
+    "new": "  ['guild-contracts', (/** @type {string} */ p) => `EXISTS (SELECT 1 FROM guild_contracts WHERE guild_id = ${p})`], // SILVER-WAYS: a contract standing",
     "tests": [
       "test/net/audit_guild3.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AG3-T1-a-decided-bid-holds",
     "file": "server-account/src/guilds.js",
-    "old": "`EXISTS (SELECT 1 FROM npc_chapter_patron_bids WHERE guild_id = ${p} AND state = 'open')`",
-    "new": "`EXISTS (SELECT 1 FROM npc_chapter_patron_bids WHERE guild_id = ${p})`",
+    "old": "  [\n    'guild-patron',\n    (/** @type {string} */ p) =>\n      `EXISTS (SELECT 1 FROM npc_chapter_patron_bids WHERE guild_id = ${p} AND state = 'open')`,\n  ], // AUDIT CHAP5 E4: a bid for a chapter's patronage, its escrow burnt with the guild",
+    "new": "  ['guild-patron', (/** @type {string} */ p) => `EXISTS (SELECT 1 FROM npc_chapter_patron_bids WHERE guild_id = ${p})`], // AUDIT CHAP5 E4: a bid for a chapter's patronage, its escrow burnt with the guild",
     "tests": [
       "test/net/audit_guild3.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AG3-T1-a-battle-past-holds",
     "file": "server-account/src/guilds.js",
-    "old": "(guild_id = ${p} OR against = ${p}) AND ${SEAT_BATTLE_PENDING})`",
-    "new": "(guild_id = ${p} OR against = ${p}))`",
+    "old": "    (/** @type {string} */ p) =>\n      `EXISTS (SELECT 1 FROM town_seat_rights WHERE (guild_id = ${p} OR against = ${p}) AND ${SEAT_BATTLE_PENDING})`,",
+    "new": "    (/** @type {string} */ p) => `EXISTS (SELECT 1 FROM town_seat_rights WHERE (guild_id = ${p} OR against = ${p}))`,",
     "tests": [
       "test/net/audit_guild3.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AG3-T1-an-empty-escrow-holds",
     "file": "server-account/src/guilds.js",
-    "old": "FROM guild_writs WHERE guild_id = ${p} AND state IN ('filled', 'withdrawn', 'expired') AND +returned = 0 AND escrow > 0)",
-    "new": "FROM guild_writs WHERE guild_id = ${p} AND state IN ('filled', 'withdrawn', 'expired') AND +returned = 0 AND escrow >= 0)",
+    "old": "      `EXISTS (SELECT 1 FROM guild_writs WHERE guild_id = ${p} AND state IN ('filled', 'withdrawn', 'expired') AND +returned = 0 AND escrow > 0)`,",
+    "new": "      `EXISTS (SELECT 1 FROM guild_writs WHERE guild_id = ${p} AND state IN ('filled', 'withdrawn', 'expired') AND +returned = 0 AND escrow >= 0)`,",
     "tests": [
       "test/net/audit_guild3.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AG3-T1-a-contract-escrow-unread",
     "file": "server-account/src/guilds.js",
-    "old": "AND +returned = 0 AND escrow > 0)`],   // SILVER-WAYS: or a closed one's escrow not yet home",
-    "new": "AND +returned = 0 AND escrow > 0 AND 0)`],   // SILVER-WAYS: or a closed one's escrow not yet home",
+    "old": "      `EXISTS (SELECT 1 FROM guild_contracts WHERE guild_id = ${p} AND state IN ('filled', 'withdrawn', 'expired') AND +returned = 0 AND escrow > 0)`,",
+    "new": "      `EXISTS (SELECT 1 FROM guild_contracts WHERE guild_id = ${p} AND state IN ('filled', 'withdrawn', 'expired') AND +returned = 0 AND escrow > 0 AND 0)`,",
     "tests": [
       "test/net/audit_guild3.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AG3-T1-said-twice",
     "file": "server-account/src/guilds.js",
-    "old": "if (Number(yes) > 0 && !keeps.includes(code)) keeps.push(code);",
-    "new": "if (Number(yes) > 0) keeps.push(code);",
+    "old": "    if (Number(yes) > 0 && !keeps.includes(code)) keeps.push(code);",
+    "new": "    if (Number(yes) > 0) keeps.push(code);",
     "tests": [
       "test/net/audit_guild3.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "AG3-T4-the-hand-over-alone",
     "file": "server-account/src/guilds.js",
-    "old": "  keeps.push(...held);\n",
-    "new": "  if (!keeps.length) keeps.push(...held);\n",
+    "old": "  keeps.push(...held);",
+    "new": "  if (!keeps.length) keeps.push(...held);",
     "tests": [
       "test/net/audit_guild3.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AG3-T5-an-officer-asked",
     "file": "server-account/src/guilds.js",
-    "old": "...(me.rank === GUILD_RANK_MASTER ? { keeps:",
-    "new": "...(me.rank <= 1 ? { keeps:",
+    "old": "    ...(me.rank === GUILD_RANK_MASTER ? { keeps: (await guildHolds(db, guildId, me.player)) ?? [] } : {}),",
+    "new": "    ...(me.rank <= 1 ? { keeps: (await guildHolds(db, guildId, me.player)) ?? [] } : {}),",
     "tests": [
       "test/net/audit_guild3.test.js"
     ]

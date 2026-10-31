@@ -155,8 +155,8 @@
   {
     "name": "DRAGON5-any-id-lawful",
     "file": "server-account/src/judge.js",
-    "old": "  return dragons.filter((d) => { const ok = have.get(d.id) === d.look && !seen.has(d.id); seen.add(d.id); return !ok; })",
-    "new": "  return dragons.filter(() => false)",
+    "old": "  return dragons\n    .filter((d) => {\n      const ok = have.get(d.id) === d.look && !seen.has(d.id);\n      seen.add(d.id);\n      return !ok;\n    })\n    .map((d) => ({ code: 'dragon-tame', at: d.id, t: DRAGON_MOUNT_TEMPLATE }));",
+    "new": "  return dragons.filter(() => false).map((d) => ({ code: 'dragon-tame', at: d.id, t: DRAGON_MOUNT_TEMPLATE }));",
     "tests": [
       "test/net/dragon/dragon5_mount.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "DRAGON5-another-characters-tame",
     "file": "server-account/src/judge.js",
-    "old": "SELECT id, look FROM dragon_mounts WHERE account = ?1 AND char_id = ?2').bind(player, char)",
-    "new": "SELECT id, look FROM dragon_mounts WHERE account = ?1').bind(player)",
+    "old": "  const r = await db\n    .prepare('SELECT id, look FROM dragon_mounts WHERE account = ?1 AND char_id = ?2')\n    .bind(player, char)\n    .all();",
+    "new": "  const r = await db.prepare('SELECT id, look FROM dragon_mounts WHERE account = ?1').bind(player).all();",
     "tests": [
       "test/net/dragon/dragon5_mount.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "DRAGON5-a-second-copy",
     "file": "server-account/src/judge.js",
-    "old": "const ok = have.get(d.id) === d.look && !seen.has(d.id);",
-    "new": "const ok = have.get(d.id) === d.look;",
+    "old": "      const ok = have.get(d.id) === d.look && !seen.has(d.id);",
+    "new": "      const ok = have.get(d.id) === d.look;",
     "tests": [
       "test/net/dragon/dragon5_mount.test.js"
     ]

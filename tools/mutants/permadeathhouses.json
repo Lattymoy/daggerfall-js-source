@@ -211,8 +211,8 @@
   {
     "name": "PERMADEATH-HOUSES-service-living-from",
     "file": "server-account/src/homes.js",
-    "old": " AND h.dead_at IS NULL AND d.dead_at IS NOT NULL AND d.dead_why = 'fell'`)",
-    "new": " AND h.dead_at IS NULL`)",
+    "old": "      WHERE h.id = ? AND d.id = ? AND h.player = ? AND h.lineage_id IS NOT NULL AND h.dead_at IS NULL AND d.dead_at IS NOT NULL AND d.dead_why = 'fell'`,",
+    "new": "      WHERE h.id = ? AND d.id = ? AND h.player = ? AND h.lineage_id IS NOT NULL AND h.dead_at IS NULL`,",
     "tests": [
       "test/systems/legacy/permadeath_houses.test.js"
     ],
@@ -221,8 +221,8 @@
   {
     "name": "PERMADEATH-HOUSES-service-retired-leaves",
     "file": "server-account/src/homes.js",
-    "old": " AND d.dead_at IS NOT NULL AND d.dead_why = 'fell'`)",
-    "new": " AND d.dead_at IS NOT NULL`)",
+    "old": "      WHERE h.id = ? AND d.id = ? AND h.player = ? AND h.lineage_id IS NOT NULL AND h.dead_at IS NULL AND d.dead_at IS NOT NULL AND d.dead_why = 'fell'`,",
+    "new": "      WHERE h.id = ? AND d.id = ? AND h.player = ? AND h.lineage_id IS NOT NULL AND h.dead_at IS NULL AND d.dead_at IS NOT NULL`,",
     "tests": [
       "test/systems/legacy/permadeath_houses.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "PERMADEATH-HOUSES-service-any-line",
     "file": "server-account/src/homes.js",
-    "old": "  const kin = await db.prepare(`SELECT 1 FROM realm_characters h JOIN realm_characters d ON d.player = h.player AND d.lineage_id = h.lineage_id",
-    "new": "  const kin = await db.prepare(`SELECT 1 FROM realm_characters h JOIN realm_characters d ON d.player = h.player",
+    "old": "      `SELECT 1 FROM realm_characters h JOIN realm_characters d ON d.player = h.player AND d.lineage_id = h.lineage_id",
+    "new": "      `SELECT 1 FROM realm_characters h JOIN realm_characters d ON d.player = h.player",
     "tests": [
       "test/systems/legacy/permadeath_houses.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "PERMADEATH-HOUSES-service-hall-taken",
     "file": "server-account/src/homes.js",
-    "old": "  const took = await db.prepare('UPDATE homes SET char_id = ? WHERE map_id = ? AND building_key = ? AND player = ? AND char_id = ? AND guild_id IS NULL')",
-    "new": "  const took = await db.prepare('UPDATE homes SET char_id = ? WHERE map_id = ? AND building_key = ? AND player = ? AND char_id = ?')",
+    "old": "    .prepare(\n      'UPDATE homes SET char_id = ? WHERE map_id = ? AND building_key = ? AND player = ? AND char_id = ? AND guild_id IS NULL',\n    )",
+    "new": "    .prepare('UPDATE homes SET char_id = ? WHERE map_id = ? AND building_key = ? AND player = ? AND char_id = ?')",
     "tests": [
       "test/systems/legacy/permadeath_houses.test.js"
     ]

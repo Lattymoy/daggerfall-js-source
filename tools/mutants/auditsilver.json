@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-A3-deeds-unread",
     "file": "server-account/src/guilds.js",
-    "old": "      ...(await guildDeedsToday(db, guildId, nowS)),\n",
-    "new": "",
+    "old": "          ...(await guildDeedsToday(db, guildId, nowS)),\n        }",
+    "new": "        }",
     "tests": [
       "test/net/auditsilver_service.test.js"
     ]

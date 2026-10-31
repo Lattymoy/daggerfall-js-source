@@ -162,8 +162,8 @@
   {
     "name": "AUDIT-GUILD2-G1-the-piece-unread",
     "file": "server-account/src/guildVault.js",
-    "old": "AND count = ?4 AND rec = ?5'",
-    "new": "AND count = ?4 AND (1 OR rec = ?5)'",
+    "old": "              'DELETE FROM guild_vault WHERE guild_id = ?1 AND slot = ?2 AND at = ?3 AND count = ?4 AND rec = ?5',",
+    "new": "              'DELETE FROM guild_vault WHERE guild_id = ?1 AND slot = ?2 AND at = ?3 AND count = ?4 AND (1 OR rec = ?5)',",
     "tests": [
       "test/net/guild2_service.test.js"
     ]
@@ -171,8 +171,8 @@
   {
     "name": "AUDIT-GUILD2-G4-the-standing-unread",
     "file": "server-account/src/guildVault.js",
-    "old": "AND rank = ?5 AND vault_level IS ?6 AND vault_limit = ?7",
-    "new": "AND (1 OR rank = ?5 AND vault_level IS ?6 AND vault_limit = ?7)",
+    "old": "          AND rank = ?5 AND vault_level IS ?6 AND vault_limit = ?7`,",
+    "new": "          AND (1 OR rank = ?5 AND vault_level IS ?6 AND vault_limit = ?7)`,",
     "tests": [
       "test/net/guild2_service.test.js"
     ]
@@ -189,8 +189,8 @@
   {
     "name": "AUDIT-GUILD2-G3-digits-refused",
     "file": "server-account/src/guilds.js",
-    "old": "    const flat = normaliseName(w);\n    if (!flat) continue;",
-    "new": "    const flat = normaliseName(w);\n    if (!w) continue;",
+    "old": "    if (!flat) continue;",
+    "new": "    if (!w) continue;",
     "tests": [
       "test/net/guild2_service.test.js"
     ]
@@ -198,8 +198,8 @@
   {
     "name": "AUDIT-GUILD2-the-hall-keeps-the-old-name",
     "file": "server-account/src/guilds.js",
-    "old": "      db.prepare('UPDATE homes SET owner_name = ? WHERE guild_id = ?').bind(n, gid),\n",
-    "new": "",
+    "old": "      db.prepare('UPDATE homes SET owner_name = ? WHERE guild_id = ?').bind(n, gid),\n    ]);",
+    "new": "    ]);",
     "tests": [
       "test/net/guild2_service.test.js"
     ]
@@ -405,8 +405,8 @@
   {
     "name": "AUDIT2-GUILD2-S3-the-bound-by-the-read-alone",
     "file": "server-account/src/guildVault.js",
-    "old": "          AND ?2 < ${SHELVES_SQL} AND (SELECT COUNT(*) FROM guild_vault WHERE guild_id = ?1) < ${SHELVES_SQL}`)",
-    "new": "          AND (?2 < ${SHELVES_SQL} OR 1) AND ((SELECT COUNT(*) FROM guild_vault WHERE guild_id = ?1) < ${SHELVES_SQL} OR 1)`)",
+    "old": "          AND ?2 < ${SHELVES_SQL} AND (SELECT COUNT(*) FROM guild_vault WHERE guild_id = ?1) < ${SHELVES_SQL}`,",
+    "new": "          AND (?2 < ${SHELVES_SQL} OR 1) AND ((SELECT COUNT(*) FROM guild_vault WHERE guild_id = ?1) < ${SHELVES_SQL} OR 1)`,",
     "tests": [
       "test/net/guild2_service.test.js"
     ]
@@ -414,8 +414,8 @@
   {
     "name": "AUDIT2-GUILD2-S4-the-standing-unheld",
     "file": "server-account/src/guildVault.js",
-    "old": "AND rank = ?11 AND vault_level IS ?12)",
-    "new": "AND (rank = ?11 OR 1) AND (vault_level IS ?12 OR 1))",
+    "old": "        WHERE EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?10 AND guild_id = ?1 AND rank = ?11 AND vault_level IS ?12)",
+    "new": "        WHERE EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?10 AND guild_id = ?1 AND (rank = ?11 OR 1) AND (vault_level IS ?12 OR 1))",
     "tests": [
       "test/net/guild2_service.test.js"
     ]
@@ -423,8 +423,8 @@
   {
     "name": "AUDIT2-GUILD2-S5-the-granter-unheld",
     "file": "server-account/src/guildVault.js",
-    "old": "      AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?5 AND guild_id = ?4 AND rank = ?6 AND ${guildPowerSql('vaultGrant', 'rank', '?4')})`)",
-    "new": "      AND (EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?5 AND guild_id = ?4 AND rank = ?6 AND ${guildPowerSql('vaultGrant', 'rank', '?4')}) OR 1)`)",
+    "old": "      AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?5 AND guild_id = ?4 AND rank = ?6 AND ${guildPowerSql('vaultGrant', 'rank', '?4')})`,",
+    "new": "      AND (EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?5 AND guild_id = ?4 AND rank = ?6 AND ${guildPowerSql('vaultGrant', 'rank', '?4')}) OR 1)`,",
     "tests": [
       "test/net/guild2_service.test.js"
     ]
@@ -567,8 +567,8 @@
   {
     "name": "AUDIT2-GUILD2-D3-the-batch-fortnight-gone",
     "file": "server-account/src/guilds.js",
-    "old": "AND (renamed_at IS NULL OR renamed_at + ?8 <= ?5)",
-    "new": "AND (?8 = ?8)",
+    "old": "          AND (renamed_at IS NULL OR renamed_at + ?8 <= ?5) AND NOT ${battle}",
+    "new": "          AND (?8 = ?8) AND NOT ${battle}",
     "tests": [
       "test/net/guild2_service.test.js"
     ],
@@ -578,8 +578,8 @@
   {
     "name": "AUDIT2-GUILD2-D3-the-batch-day-limit-gone",
     "file": "server-account/src/guildVault.js",
-    "old": "AND (?4 = 0 OR (CASE WHEN vault_day = ?3 THEN vault_taken ELSE 0 END) < ?4)",
-    "new": "AND (?4 = ?4)",
+    "old": "        WHERE rowid = ?1 AND guild_id = ?2 AND (?4 = 0 OR (CASE WHEN vault_day = ?3 THEN vault_taken ELSE 0 END) < ?4)",
+    "new": "        WHERE rowid = ?1 AND guild_id = ?2 AND (?4 = ?4)",
     "tests": [
       "test/net/guild2_service.test.js"
     ],

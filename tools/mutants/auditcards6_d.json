@@ -12,8 +12,8 @@
   {
     "name": "AC6-D1-rating-by-second",
     "file": "server-account/src/iliac.js",
-    "old": "  const t = await db.prepare(`SELECT (SELECT r FROM (${MY_GAMES_SQL('?2', '?1')}) ORDER BY k DESC LIMIT 1) AS last,",
-    "new": "  const t = await db.prepare(`SELECT (SELECT r FROM (${MY_GAMES_SQL('?2', '?1')}) ORDER BY at DESC, k DESC LIMIT 1) AS last,",
+    "old": "      `SELECT (SELECT r FROM (${MY_GAMES_SQL('?2', '?1')}) ORDER BY k DESC LIMIT 1) AS last,",
+    "new": "      `SELECT (SELECT r FROM (${MY_GAMES_SQL('?2', '?1')}) ORDER BY at DESC, k DESC LIMIT 1) AS last,",
     "tests": [
       "test/net/iliac/auditcards6_d.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "AC6-D6-ends-clock",
     "file": "server-account/src/iliac.js",
-    "old": "ends: arenaSeasonEndsS(season) },",
-    "new": "ends: arenaSeasonEndsS(nowS) },",
+    "old": "    season: { n: season, day: arenaSeasonDay(nowS), ends: arenaSeasonEndsS(season) }, // AUDIT CARDS-6 D6: the season's end (it was handed the clock, and said the year 275760)",
+    "new": "    season: { n: season, day: arenaSeasonDay(nowS), ends: arenaSeasonEndsS(nowS) }, // AUDIT CARDS-6 D6: the season's end (it was handed the clock, and said the year 275760)",
     "tests": [
       "test/net/iliac/auditcards6_d.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "AC6-D5-claims-clock",
     "file": "server-account/src/iliac.js",
-    "old": ".bind(a, b, c.i).first();",
-    "new": ".bind(a, b, nowS).first();",
+    "old": "    const pair = await db.prepare(PAIR_SQL('played > ?3 - 86400 AND played < ?3 + 86400')).bind(a, b, c.i).first();",
+    "new": "    const pair = await db.prepare(PAIR_SQL('played > ?3 - 86400 AND played < ?3 + 86400')).bind(a, b, nowS).first();",
     "tests": [
       "test/net/iliac/auditcards6_d.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "AC6-D5-day-before-alone",
     "file": "server-account/src/iliac.js",
-    "old": "PAIR_SQL('played > ?3 - 86400 AND played < ?3 + 86400')",
-    "new": "PAIR_SQL('played > ?3 - 86400 AND played <= ?3')",
+    "old": "    const pair = await db.prepare(PAIR_SQL('played > ?3 - 86400 AND played < ?3 + 86400')).bind(a, b, c.i).first();",
+    "new": "    const pair = await db.prepare(PAIR_SQL('played > ?3 - 86400 AND played <= ?3')).bind(a, b, c.i).first();",
     "tests": [
       "test/net/iliac/auditcards6_d.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "AC6-D5-claim-second-stored",
     "file": "server-account/src/iliac.js",
-    "old": "rated ? 1 : 0, c.i, nowS).run();",
-    "new": "rated ? 1 : 0, nowS, nowS).run();",
+    "old": "      .bind(c.j, season, a, b, c.r, c.h, ra.rating, rb.rating, na, nb, rated ? 1 : 0, c.i, nowS)",
+    "new": "      .bind(c.j, season, a, b, c.r, c.h, ra.rating, rb.rating, na, nb, rated ? 1 : 0, nowS, nowS)",
     "tests": [
       "test/net/iliac/auditcards6_d.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "AC6-D10-nobody-stamped",
     "file": "server-account/src/iliac.js",
-    "old": "if (kept && kept.player != null && Number(last.at) < kept.at) {",
-    "new": "if (kept && Number(last.at) < kept.at) {",
+    "old": "  if (kept && kept.player != null && Number(last.at) < kept.at) {",
+    "new": "  if (kept && Number(last.at) < kept.at) {",
     "tests": [
       "test/net/iliac/auditcards6_d.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "AC6-D11-foe-guest",
     "file": "server-account/src/iliac.js",
-    "old": "return { recorded: false, why: 'foe-unregistered' };",
-    "new": "return { recorded: false, why: 'guest' };",
+    "old": "  if (!linked(a) || !linked(b)) return { recorded: false, why: 'foe-unregistered' };",
+    "new": "  if (!linked(a) || !linked(b)) return { recorded: false, why: 'guest' };",
     "tests": [
       "test/net/iliac/auditcards6_d.test.js",
       "test/net/iliac/cards10_service.test.js"
@@ -213,8 +213,8 @@
   {
     "name": "AC6-D12-never-counted",
     "file": "server-account/src/iliac.js",
-    "old": "  return na >= rating || nb >= rating;\n",
-    "new": "  return false;\n",
+    "old": "  return na >= rating || nb >= rating;",
+    "new": "  return false;",
     "tests": [
       "test/net/iliac/auditcards6_d.test.js"
     ],
@@ -223,8 +223,8 @@
   {
     "name": "AC6-D12-always-counted",
     "file": "server-account/src/iliac.js",
-    "old": "if (rated) { try { if (await topMayMove(ctx, season, a, b, na, nb)) await storeIliacChampion(ctx, season, nowS);",
-    "new": "if (rated) { try { if (true) await storeIliacChampion(ctx, season, nowS);",
+    "old": "          if (await topMayMove(ctx, season, a, b, na, nb)) await storeIliacChampion(ctx, season, nowS);",
+    "new": "          if (true) await storeIliacChampion(ctx, season, nowS);",
     "tests": [
       "test/net/iliac/auditcards6_d.test.js"
     ],
@@ -233,8 +233,8 @@
   {
     "name": "AC6-D12-top-a-side",
     "file": "server-account/src/iliac.js",
-    "old": "  if (!top || top === a || top === b) return true;\n",
-    "new": "  if (!top) return true;\n",
+    "old": "  if (!top || top === a || top === b) return true;",
+    "new": "  if (!top) return true;",
     "tests": [
       "test/net/iliac/auditcards6_d.test.js"
     ],
@@ -255,7 +255,7 @@
     "name": "AC6-D12-pair-or",
     "file": "server-account/src/iliac.js",
     "old": "const PAIR_SQL = (when) => `SELECT (SELECT COUNT(*) FROM iliac_games WHERE a = ?1 AND b = ?2 AND rated = 1 AND ${when})\n    + (SELECT COUNT(*) FROM iliac_games WHERE a = ?2 AND b = ?1 AND ?1 IS NOT ?2 AND rated = 1 AND ${when}) AS n`;",
-    "new": "const PAIR_SQL = (when) => `SELECT COUNT(*) AS n FROM iliac_games WHERE rated = 1 AND ${when} AND ((a = ?1 AND b = ?2) OR (a = ?2 AND b = ?1))`;",
+    "new": "const PAIR_SQL = (when) =>\n  `SELECT COUNT(*) AS n FROM iliac_games WHERE rated = 1 AND ${when} AND ((a = ?1 AND b = ?2) OR (a = ?2 AND b = ?1))`;",
     "tests": [
       "test/net/iliac/auditcards6_d.test.js"
     ],

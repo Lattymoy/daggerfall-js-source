@@ -256,8 +256,8 @@
   {
     "name": "DECORROOMY-move-drops-ground",
     "file": "server-account/src/homes.js",
-    "old": "'rent_due', 'look', 'layout', 'deed', 'ground']);",
-    "new": "'rent_due', 'look', 'layout', 'deed']);",
+    "old": "  'ground',\n]); // DECOR-ROOMY: the ground goes with the price it set   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed's hold stays one (none stands in the cell: holdDeed refuses it)",
+    "new": "]); // DECOR-ROOMY: the ground goes with the price it set   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed's hold stays one (none stands in the cell: holdDeed refuses it)",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]

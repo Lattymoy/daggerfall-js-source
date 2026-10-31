@@ -129,8 +129,8 @@
   {
     "name": "NAMEAS-a-guest-taken-as-a-reader",
     "file": "server-account/src/letters.js",
-    "old": "  if (!reader.handle) return { error: 'reader-guest' };",
-    "new": "  if (!reader.handle && false) return { error: 'reader-guest' };",
+    "old": "  if (!reader.handle) return { error: 'reader-guest' }; // NAME-AS: by account alone - a handle found by handle has one",
+    "new": "  if (!reader.handle && false) return { error: 'reader-guest' }; // NAME-AS: by account alone - a handle found by handle has one",
     "tests": [
       "test/net/nameas_service.test.js",
       "test/server/mail1.test.js"
@@ -139,8 +139,8 @@
   {
     "name": "NAMEAS-the-letter-answer-naming-the-handle",
     "file": "server-account/src/letters.js",
-    "old": "return { ok: true, id, to: account ? displayName(reader) : reader.handle };\n}",
-    "new": "return { ok: true, id, to: reader.handle };\n}",
+    "old": "  if (!r?.meta?.changes) return { error: 'inbox-full' };\n  return { ok: true, id, to: account ? displayName(reader) : reader.handle };",
+    "new": "  if (!r?.meta?.changes) return { error: 'inbox-full' };\n  return { ok: true, id, to: reader.handle };",
     "tests": [
       "test/net/nameas_service.test.js"
     ]

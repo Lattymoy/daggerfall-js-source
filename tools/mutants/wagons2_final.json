@@ -128,8 +128,8 @@
   {
     "name": "WAGONS2-FINAL-the-services-row-by-the-record",
     "file": "server-account/src/guildVault.js",
-    "old": "const pieceName = (rec) => String(wagonItemName(rec) ?? rec?.name ?? 'an item').slice(0, 64);",
-    "new": "const pieceName = (rec) => String(rec?.name ?? 'an item').slice(0, 64);",
+    "old": "const pieceName = (rec) => String(wagonItemName(rec) ?? rec?.name ?? 'an item').slice(0, 64); // WAGONS2 (FINAL AUDIT): a Caravan's row and its log line said \"Small Cart\" (its record's name)",
+    "new": "const pieceName = (rec) => String(rec?.name ?? 'an item').slice(0, 64); // WAGONS2 (FINAL AUDIT): a Caravan's row and its log line said \"Small Cart\" (its record's name)",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]

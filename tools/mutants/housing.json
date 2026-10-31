@@ -231,8 +231,8 @@
   {
     "name": "HOME-RENT-the-sale-unguarded",
     "file": "server-account/src/homes.js",
-    "old": ".bind(mapId, buildingKey, ctx.nowS ?? Math.floor(Date.now() / 1000)).first())?.n ?? 0) > 0) return { error: 'home-tenants' };",
-    "new": ".bind(mapId, buildingKey, ctx.nowS ?? Math.floor(Date.now() / 1000)).first())?.n ?? 0) > 1e9) return { error: 'home-tenants' };",
+    "old": "          .first()\n      )?.n ?? 0,\n    ) > 0\n  )\n    return { error: 'home-tenants' };",
+    "new": "          .first()\n      )?.n ?? 0,\n    ) > 1e9\n  )\n    return { error: 'home-tenants' };",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -295,8 +295,8 @@
   {
     "name": "HOME-LOOK-the-owner-unchecked",
     "file": "server-account/src/homes.js",
-    "old": "  const r = await db.prepare(`UPDATE homes SET look = ? WHERE map_id = ? AND building_key = ? AND ${OWNS}`)\n    .bind(next ? JSON.stringify(next) : null, mapId, buildingKey, mapId, buildingKey, player.id, character).run();",
-    "new": "  const r = await db.prepare(`UPDATE homes SET look = ? WHERE map_id = ? AND building_key = ?`)\n    .bind(next ? JSON.stringify(next) : null, mapId, buildingKey).run();",
+    "old": "    .prepare(`UPDATE homes SET look = ? WHERE map_id = ? AND building_key = ? AND ${OWNS}`)\n    .bind(next ? JSON.stringify(next) : null, mapId, buildingKey, mapId, buildingKey, player.id, character)",
+    "new": "    .prepare(`UPDATE homes SET look = ? WHERE map_id = ? AND building_key = ?`)\n    .bind(next ? JSON.stringify(next) : null, mapId, buildingKey)",
     "tests": [
       "test/net/homelook.test.js"
     ]

@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-REALM2-S2-any-id-buys-a-house",
     "file": "server-account/src/homes.js",
-    "old": "  if (!REALM_ID_RE.test(character)) return { error: 'realm-only' };\n",
-    "new": "",
+    "old": "  if (!REALM_ID_RE.test(character)) return { error: 'realm-only' };\n  const side = await realmActFirst(db, player.id, character, realm); // AUDIT REALM L1-F2: where the record stands, before the hour's claims",
+    "new": "  const side = await realmActFirst(db, player.id, character, realm); // AUDIT REALM L1-F2: where the record stands, before the hour's claims",
     "tests": [
       "test/systems/auditrealm2_service.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-REALM2-S2-any-id-founds-a-guild",
     "file": "server-account/src/guilds.js",
-    "old": "  if (!REALM_ID_RE.test(character)) return { error: 'realm-only' };\n",
-    "new": "",
+    "old": "  if (!REALM_ID_RE.test(character)) return { error: 'realm-only' };\n  const side = await realmActFirst(db, player.id, character, realm); // REALM P2.2; AUDIT REALM L1-F2: where the record stands, before any other word",
+    "new": "  const side = await realmActFirst(db, player.id, character, realm); // REALM P2.2; AUDIT REALM L1-F2: where the record stands, before any other word",
     "tests": [
       "test/systems/auditrealm2_service.test.js"
     ]

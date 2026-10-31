@@ -232,8 +232,8 @@
   {
     "name": "HOME-VOTE-change-dropped",
     "file": "server-account/src/homeVotes.js",
-    "old": "      ON CONFLICT (map_id, building_key, player) DO UPDATE SET vote = excluded.vote, voted_at = excluded.voted_at`)",
-    "new": "      ON CONFLICT (map_id, building_key, player) DO NOTHING`)",
+    "old": "      ON CONFLICT (map_id, building_key, player) DO UPDATE SET vote = excluded.vote, voted_at = excluded.voted_at`,",
+    "new": "      ON CONFLICT (map_id, building_key, player) DO NOTHING`,",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "HOME-VOTE-owner-votes-service",
     "file": "server-account/src/homeVotes.js",
-    "old": "((h.guild_id IS NULL AND h.player = ?)",
-    "new": "((h.guild_id IS NULL AND h.player = ? AND 0)",
+    "old": "export const INSIDER = `((h.guild_id IS NULL AND h.player = ?)",
+    "new": "export const INSIDER = `((h.guild_id IS NULL AND h.player = ? AND 0)",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "HOME-VOTE-member-votes-service",
     "file": "server-account/src/homeVotes.js",
-    "old": "g.guild_id = h.guild_id AND g.player = ?)))`;",
-    "new": "g.guild_id = h.guild_id AND g.player = ? AND 0)))`;",
+    "old": "    OR (h.guild_id IS NOT NULL AND EXISTS (SELECT 1 FROM guild_members g WHERE g.guild_id = h.guild_id AND g.player = ?)))`;",
+    "new": "    OR (h.guild_id IS NOT NULL AND EXISTS (SELECT 1 FROM guild_members g WHERE g.guild_id = h.guild_id AND g.player = ? AND 0)))`;",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "HOME-VOTE-no-age-bar",
     "file": "server-account/src/homeVotes.js",
-    "old": "  if (vote !== 0 && !(Number.isSafeInteger(player.registered_at) && player.registered_at <= nowS - HOME_VOTE_AGE_S)) return { error: 'vote-young' };   // AUDIT A1\n",
-    "new": "",
+    "old": "  if (vote !== 0 && !(Number.isSafeInteger(player.registered_at) && player.registered_at <= nowS - HOME_VOTE_AGE_S))\n    return { error: 'vote-young' }; // AUDIT A1\n  // AUDIT HOME-VOTE II A2: the hour's bar is on votes cast - a vote taken back deletes the account's own row and no",
+    "new": "  // AUDIT HOME-VOTE II A2: the hour's bar is on votes cast - a vote taken back deletes the account's own row and no",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -272,8 +272,8 @@
   {
     "name": "HOME-VOTE-take-back-aged",
     "file": "server-account/src/homeVotes.js",
-    "old": "  if (vote !== 0 && !(Number.isSafeInteger",
-    "new": "  if (!(Number.isSafeInteger",
+    "old": "  if (vote !== 0 && !(Number.isSafeInteger(player.registered_at) && player.registered_at <= nowS - HOME_VOTE_AGE_S))",
+    "new": "  if (!(Number.isSafeInteger(player.registered_at) && player.registered_at <= nowS - HOME_VOTE_AGE_S))",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -282,8 +282,8 @@
   {
     "name": "HOME-VOTE-withdrawal-guarded",
     "file": "server-account/src/homeVotes.js",
-    "old": "    ? db.prepare('DELETE FROM home_votes WHERE map_id = ? AND building_key = ? AND player = ?').bind(mapId, buildingKey, player.id)",
-    "new": "    ? db.prepare(`DELETE FROM home_votes WHERE map_id = ? AND building_key = ? AND player = ? AND ${VOTABLE}`).bind(mapId, buildingKey, player.id, mapId, buildingKey, player.id, player.id)",
+    "old": "          .prepare('DELETE FROM home_votes WHERE map_id = ? AND building_key = ? AND player = ?')\n          .bind(mapId, buildingKey, player.id)",
+    "new": "          .prepare(`DELETE FROM home_votes WHERE map_id = ? AND building_key = ? AND player = ? AND ${VOTABLE}`)\n          .bind(mapId, buildingKey, player.id, mapId, buildingKey, player.id, player.id)",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -292,8 +292,8 @@
   {
     "name": "HOME-VOTE-rate-uncounted",
     "file": "server-account/src/homeVotes.js",
-    "old": "  if (vote !== 0 && await overRate({ db, nowS }, `vote:${player.id}`, HOME_VOTES_MAX, HOME_VOTES_WINDOW_S)) return { error: 'vote-rate' };\n",
-    "new": "",
+    "old": "  if (vote !== 0 && (await overRate({ db, nowS }, `vote:${player.id}`, HOME_VOTES_MAX, HOME_VOTES_WINDOW_S)))\n    return { error: 'vote-rate' };\n  // AUDIT A4: one's own vote is taken back whatever one is now - the key names the account's own row and nobody else's",
+    "new": "  // AUDIT A4: one's own vote is taken back whatever one is now - the key names the account's own row and nobody else's",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -302,8 +302,8 @@
   {
     "name": "HOME-VOTE-bad-vote-taken",
     "file": "server-account/src/homeVotes.js",
-    "old": "|| !homeVoteOk(vote) ||",
-    "new": "||",
+    "old": "  if (\n    !homeMapIdOk(mapId) ||\n    !homeBuildingKeyOk(buildingKey) ||\n    !homeVoteOk(vote) ||\n    (vote !== 0 && !homeVoteOwnerOk(owner))\n  )",
+    "new": "  if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey) || (vote !== 0 && !homeVoteOwnerOk(owner)))",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -312,8 +312,8 @@
   {
     "name": "HOME-VOTE-withdraw-inserted",
     "file": "server-account/src/homeVotes.js",
-    "old": "  const write = vote === 0\n",
-    "new": "  const write = false\n",
+    "old": "  const write =\n    vote === 0\n      ? db\n          .prepare('DELETE FROM home_votes WHERE map_id = ? AND building_key = ? AND player = ?')\n          .bind(mapId, buildingKey, player.id)\n      : db\n          .prepare(\n            `INSERT INTO home_votes (map_id, building_key, player, vote, voted_at) SELECT ?, ?, ?, ?, ? WHERE ${VOTABLE}\n      ON CONFLICT (map_id, building_key, player) DO UPDATE SET vote = excluded.vote, voted_at = excluded.voted_at`,\n          )\n          .bind(mapId, buildingKey, player.id, vote, nowS, mapId, buildingKey, owner, player.id, player.id);",
+    "new": "  const write = false\n    ? db\n        .prepare('DELETE FROM home_votes WHERE map_id = ? AND building_key = ? AND player = ?')\n        .bind(mapId, buildingKey, player.id)\n    : db\n        .prepare(\n          `INSERT INTO home_votes (map_id, building_key, player, vote, voted_at) SELECT ?, ?, ?, ?, ? WHERE ${VOTABLE}\n      ON CONFLICT (map_id, building_key, player) DO UPDATE SET vote = excluded.vote, voted_at = excluded.voted_at`,\n        )\n        .bind(mapId, buildingKey, player.id, vote, nowS, mapId, buildingKey, owner, player.id, player.id);",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -342,8 +342,8 @@
   {
     "name": "HOME-VOTE-score-unsaid",
     "file": "server-account/src/homes.js",
-    "old": "        ...votesOf(h),   // HOME-VOTE\n      };",
-    "new": "      };",
+    "old": "          ...votesOf(h), // HOME-VOTE\n        };",
+    "new": "        };",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -352,8 +352,8 @@
   {
     "name": "HOME-VOTE-score-unselected",
     "file": "server-account/src/homes.js",
-    "old": "h.look, h.guild_id, h.deed, h.score,",
-    "new": "h.look, h.guild_id, h.deed, 0 AS score,",
+    "old": "      `SELECT h.building_key, h.player, h.char_id, h.owner_name, h.entry, h.paid, h.rent_due, h.look, h.guild_id, h.deed, h.score,",
+    "new": "      `SELECT h.building_key, h.player, h.char_id, h.owner_name, h.entry, h.paid, h.rent_due, h.look, h.guild_id, h.deed, 0 AS score,",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -362,8 +362,8 @@
   {
     "name": "HOME-VOTE-vote-unsaid",
     "file": "server-account/src/homes.js",
-    "old": "...(homeMyVoteOf(h.my_vote) ? { vote: homeMyVoteOf(h.my_vote) } : {})",
-    "new": "...({})",
+    "old": "  const votesOf = (h) => ({\n    ...(Number(h.score) ? { score: Number(h.score) } : {}),\n    ...(homeMyVoteOf(h.my_vote) ? { vote: homeMyVoteOf(h.my_vote) } : {}),\n  });",
+    "new": "  const votesOf = (h) => ({ ...(Number(h.score) ? { score: Number(h.score) } : {}), ...{} });",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -372,8 +372,8 @@
   {
     "name": "HOME-VOTE-insider-unsaid",
     "file": "server-account/src/homes.js",
-    "old": "          ...(h.kin === 1 && rank == null ? { insider: true } : {}),",
-    "new": "          ...({}),",
+    "old": "            ...(h.kin === 1 && rank == null ? { insider: true } : {}), // AUDIT HOME-VOTE A5: the account has another character in its guild - no vote, its decor always (a `member` is one already)",
+    "new": "            ...{}, // AUDIT HOME-VOTE A5: the account has another character in its guild - no vote, its decor always (a `member` is one already)",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -382,8 +382,8 @@
   {
     "name": "HOME-VOTE-look-said",
     "file": "server-account/src/homes.js",
-    "old": "(insider || !homeShunned(Number(h.score)) ? lookOfRow(h) : {})",
-    "new": "lookOfRow(h)",
+    "old": "  const lookFor = (h, insider) => (insider || !homeShunned(Number(h.score)) ? lookOfRow(h) : {});",
+    "new": "  const lookFor = (h, insider) => lookOfRow(h);",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -572,8 +572,8 @@
   {
     "name": "HOME-VOTE-II-A2-bar-on-take-back",
     "file": "server-account/src/homeVotes.js",
-    "old": "  if (vote !== 0 && await overRate(",
-    "new": "  if (await overRate(",
+    "old": "  if (vote !== 0 && (await overRate({ db, nowS }, `vote:${player.id}`, HOME_VOTES_MAX, HOME_VOTES_WINDOW_S)))",
+    "new": "  if (await overRate({ db, nowS }, `vote:${player.id}`, HOME_VOTES_MAX, HOME_VOTES_WINDOW_S))",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -612,8 +612,8 @@
   {
     "name": "HOME-VOTE-II-A4-owner-unread",
     "file": "server-account/src/homeVotes.js",
-    "old": "h.building_key = ? AND h.deed = 0 AND ${OWNER} = ? AND NOT ${INSIDER}",
-    "new": "h.building_key = ? AND h.deed = 0 AND (? IS NOT NULL) AND NOT ${INSIDER}",
+    "old": "const VOTABLE = `EXISTS (SELECT 1 FROM homes h WHERE h.map_id = ? AND h.building_key = ? AND h.deed = 0 AND ${OWNER} = ? AND NOT ${INSIDER})`;",
+    "new": "const VOTABLE = `EXISTS (SELECT 1 FROM homes h WHERE h.map_id = ? AND h.building_key = ? AND h.deed = 0 AND (? IS NOT NULL) AND NOT ${INSIDER})`;",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -622,8 +622,8 @@
   {
     "name": "HOME-VOTE-II-A4-owner-unchecked",
     "file": "server-account/src/homeVotes.js",
-    "old": " || (vote !== 0 && !homeVoteOwnerOk(owner))) return { error: 'bad-vote' };",
-    "new": ") return { error: 'bad-vote' };",
+    "old": "  if (\n    !homeMapIdOk(mapId) ||\n    !homeBuildingKeyOk(buildingKey) ||\n    !homeVoteOk(vote) ||\n    (vote !== 0 && !homeVoteOwnerOk(owner))\n  )\n    return { error: 'bad-vote' };",
+    "new": "  if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey) || !homeVoteOk(vote)) return { error: 'bad-vote' };",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -662,8 +662,8 @@
   {
     "name": "HOME-VOTE-II-B5-deed-votable-service",
     "file": "server-account/src/homeVotes.js",
-    "old": "h.building_key = ? AND h.deed = 0 AND ${OWNER} = ? AND NOT ${INSIDER}",
-    "new": "h.building_key = ? AND ${OWNER} = ? AND NOT ${INSIDER}",
+    "old": "const VOTABLE = `EXISTS (SELECT 1 FROM homes h WHERE h.map_id = ? AND h.building_key = ? AND h.deed = 0 AND ${OWNER} = ? AND NOT ${INSIDER})`;",
+    "new": "const VOTABLE = `EXISTS (SELECT 1 FROM homes h WHERE h.map_id = ? AND h.building_key = ? AND ${OWNER} = ? AND NOT ${INSIDER})`;",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -722,8 +722,8 @@
   {
     "name": "HOME-VOTE-II-age-boundary",
     "file": "server-account/src/homeVotes.js",
-    "old": "player.registered_at <= nowS - HOME_VOTE_AGE_S)) return { error: 'vote-young' }",
-    "new": "player.registered_at < nowS - HOME_VOTE_AGE_S)) return { error: 'vote-young' }",
+    "old": "  if (vote !== 0 && !(Number.isSafeInteger(player.registered_at) && player.registered_at <= nowS - HOME_VOTE_AGE_S))",
+    "new": "  if (vote !== 0 && !(Number.isSafeInteger(player.registered_at) && player.registered_at < nowS - HOME_VOTE_AGE_S))",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -732,8 +732,8 @@
   {
     "name": "HOME-VOTE-II-guest-unguarded",
     "file": "server-account/src/homeVotes.js",
-    "old": "  if (accountKind(player) !== 'linked') return { error: 'homes-need-account' };\n",
-    "new": "",
+    "old": "  if (accountKind(player) !== 'linked') return { error: 'homes-need-account' };\n  if (",
+    "new": "  if (",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -742,8 +742,8 @@
   {
     "name": "HOME-VOTE-II-empty-take-back-checked",
     "file": "server-account/src/homeVotes.js",
-    "old": "if (!r?.meta?.changes && vote !== 0) {",
-    "new": "if (!r?.meta?.changes) {",
+    "old": "  if (!r?.meta?.changes && vote !== 0) {",
+    "new": "  if (!r?.meta?.changes) {",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -832,8 +832,8 @@
   {
     "name": "HOME-VOTE-II-hall-score-unsaid",
     "file": "server-account/src/homes.js",
-    "old": "          ...votesOf(h),   // HOME-VOTE\n        };",
-    "new": "        };",
+    "old": "            ...votesOf(h), // HOME-VOTE\n          };",
+    "new": "          };",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -842,8 +842,8 @@
   {
     "name": "HOME-VOTE-II-hall-paint-from-its-guild",
     "file": "server-account/src/homes.js",
-    "old": "...lookFor(h, h.kin === 1),",
-    "new": "...lookFor(h, false),",
+    "old": "            ...lookFor(h, h.kin === 1), // GUILD-YARD: how its keepers painted it, to everyone (AUDIT HOME-VOTE A3: but a shunned hall's)",
+    "new": "            ...lookFor(h, false), // GUILD-YARD: how its keepers painted it, to everyone (AUDIT HOME-VOTE A3: but a shunned hall's)",
     "tests": [
       "test/net/homevote.test.js"
     ],

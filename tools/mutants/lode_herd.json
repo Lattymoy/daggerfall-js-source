@@ -42,8 +42,8 @@
   {
     "name": "HUNTLEAN-rate-back",
     "file": "server-account/src/hunts.js",
-    "old": "  if (!renownCharacterOk(body?.character)) return { error: 'hunt-character' };\n  return { ok: true,",
-    "new": "  if (!renownCharacterOk(body?.character)) return { error: 'hunt-character' };\n  if (await overRate(ctx, `hunt:${player.id}`, HUNT_OPS_HOUR, 3600)) return { error: 'hunt-rate' };\n  return { ok: true,",
+    "old": "  return { ok: true, ...(await huntStateOf(ctx.db, player.id, body.character, ctx.nowS)) };",
+    "new": "  if (await overRate(ctx, `hunt:${player.id}`, HUNT_OPS_HOUR, 3600)) return { error: 'hunt-rate' };\n  return { ok: true, ...(await huntStateOf(ctx.db, player.id, body.character, ctx.nowS)) };",
     "tests": [
       "test/server/lode_herd.test.js"
     ],

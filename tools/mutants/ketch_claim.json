@@ -47,8 +47,8 @@
   {
     "name": "KTR-the-ship-not-compared",
     "file": "server-account/src/ketch.js",
-    "old": "  return k?.owner === c.o ? { recorded: false, why: 'claimed'",
-    "new": "  return k?.owner != null ? { recorded: false, why: 'claimed'",
+    "old": "  return k?.owner === c.o",
+    "new": "  return k?.owner != null",
     "tests": [
       "test/server/ketch_claim.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "KTR-the-guest-unsaid",
     "file": "server-account/src/ketch.js",
-    "old": "guest = !player.handle ? { guest: true } : {};",
-    "new": "guest = {};",
+    "old": "    guest = !player.handle ? { guest: true } : {};",
+    "new": "    guest = {};",
     "tests": [
       "test/server/ketch_claim.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "KTA-a-claimed-share-paid-to-any-device",
     "file": "server-account/src/ketch.js",
-    "old": "why: 'claimed', share: mine != null && k.cid === mine,",
-    "new": "why: 'claimed', share: true,",
+    "old": "    ? { recorded: false, why: 'claimed', share: mine != null && k.cid === mine, sailed, ...guest }",
+    "new": "    ? { recorded: false, why: 'claimed', share: true, sailed, ...guest }",
     "tests": [
       "test/server/ketch_claim.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "KTA-the-claim-id-unwritten",
     "file": "server-account/src/ketch.js",
-    "old": "c.m ? JSON.stringify(c.m) : null, mine),",
-    "new": "c.m ? JSON.stringify(c.m) : null, null),",
+    "old": "      .bind(c.d, player.id, c.o, c.x, c.l, nonce, nowS, c.m ? JSON.stringify(c.m) : null, mine),",
+    "new": "      .bind(c.d, player.id, c.o, c.x, c.l, nonce, nowS, c.m ? JSON.stringify(c.m) : null, null),",
     "tests": [
       "test/server/ketch_claim.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "KTA-the-fill-unguarded",
     "file": "server-account/src/ketch.js",
-    "old": "WHERE voyage = ?5 AND account = ?1 AND nonce = ?6)', c.d, nonce),",
-    "new": "WHERE voyage = ?5 AND account = ?1 AND ?6 = ?6)', c.d, nonce),",
+    "old": "      'EXISTS (SELECT 1 FROM ketch_voyages WHERE voyage = ?5 AND account = ?1 AND nonce = ?6)',",
+    "new": "      'EXISTS (SELECT 1 FROM ketch_voyages WHERE voyage = ?5 AND account = ?1 AND ?6 = ?6)',",
     "tests": [
       "test/server/ketch_claim.test.js"
     ]

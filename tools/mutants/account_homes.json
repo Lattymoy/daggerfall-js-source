@@ -75,8 +75,8 @@
   {
     "name": "ACCOUNT-HOMES-sale-the-buyer-again",
     "file": "server-account/src/homes.js",
-    "old": "'DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND deed = 0 AND paid = ? AND rent_due = ?').bind(home.map_id, home.building_key, player.id, home.paid, home.rent_due ?? 0)",
-    "new": "'DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND char_id = ? AND paid = ? AND rent_due = ?').bind(home.map_id, home.building_key, player.id, at.id, home.paid, home.rent_due ?? 0)",
+    "old": "          'DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND deed = 0 AND paid = ? AND rent_due = ?',\n        )\n        .bind(home.map_id, home.building_key, player.id, home.paid, home.rent_due ?? 0), // HOME-RENT: a rent landing between the read and the sale is never lost",
+    "new": "          'DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND char_id = ? AND paid = ? AND rent_due = ?',\n        )\n        .bind(home.map_id, home.building_key, player.id, at.id, home.paid, home.rent_due ?? 0), // HOME-RENT: a rent landing between the read and the sale is never lost",
     "tests": [
       "test/server/account_homes.test.js"
     ],
@@ -85,8 +85,8 @@
   {
     "name": "ACCOUNT-HOMES-sum-the-buyer-again",
     "file": "server-account/src/homes.js",
-    "old": "const sale = mine && !deedRow && !crossed && Number(h.me_realm) === 1 ?",
-    "new": "const sale = mine && !deedRow && !crossed && Number(h.me_realm) === 1 && h.char_id === me ?",
+    "old": "          mine && !deedRow && !crossed && Number(h.me_realm) === 1",
+    "new": "          mine && !deedRow && !crossed && Number(h.me_realm) === 1 && h.char_id === me",
     "tests": [
       "test/server/account_homes.test.js",
       "test/systems/homeprice.test.js"
@@ -96,8 +96,8 @@
   {
     "name": "ACCOUNT-HOMES-crossed-the-realms-alone",
     "file": "server-account/src/homes.js",
-    "old": "      const crossed = mine && !deedRow && !(Number(h.paid) > 0);",
-    "new": "      const crossed = mine && !deedRow && !(Number(h.paid) > 0) && REALM_ID_RE.test(String(h.char_id));",
+    "old": "        const crossed = mine && !deedRow && !(Number(h.paid) > 0);",
+    "new": "        const crossed = mine && !deedRow && !(Number(h.paid) > 0) && REALM_ID_RE.test(String(h.char_id));",
     "tests": [
       "test/systems/homeprice.test.js",
       "test/server/account_homes.test.js"
@@ -107,8 +107,8 @@
   {
     "name": "ACCOUNT-HOMES-repeat-the-buyer-again",
     "file": "server-account/src/homes.js",
-    "old": "  && (Number(row.deed) !== 1 || row.char_id === character);",
-    "new": "  && row.char_id === character;",
+    "old": "  !!row && row.player === player.id && row.guild_id == null && (Number(row.deed) !== 1 || row.char_id === character);",
+    "new": "  !!row && row.player === player.id && row.guild_id == null && row.char_id === character;",
     "tests": [
       "test/server/home1.test.js"
     ],
@@ -117,8 +117,8 @@
   {
     "name": "ACCOUNT-HOMES-repeat-any-account",
     "file": "server-account/src/homes.js",
-    "old": "export const heldByAccount = (row, player, character) => !!row && row.player === player.id && row.guild_id == null",
-    "new": "export const heldByAccount = (row, player, character) => !!row && row.guild_id == null",
+    "old": "  !!row && row.player === player.id && row.guild_id == null && (Number(row.deed) !== 1 || row.char_id === character);",
+    "new": "  !!row && row.guild_id == null && (Number(row.deed) !== 1 || row.char_id === character);",
     "tests": [
       "test/server/home1.test.js"
     ],

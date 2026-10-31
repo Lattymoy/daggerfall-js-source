@@ -74,8 +74,8 @@
   {
     "name": "REV-putLineage-deaf",
     "file": "server-account/src/legacy.js",
-    "old": "  const record = had ? withoutRevived(sent, had.record) : sent;",
-    "new": "  const record = sent;",
+    "old": "  const record = had ? withoutRevived(sent, had.record) : sent; // REVIVE: a death the stored copy says was taken back",
+    "new": "  const record = sent; // REVIVE: a death the stored copy says was taken back",
     "tests": [
       "test/systems/legacy/revive.test.js"
     ]

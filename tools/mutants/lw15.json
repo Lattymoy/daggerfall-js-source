@@ -727,8 +727,8 @@
   {
     "name": "LW15-AUDIT-P7-opens",
     "file": "server-account/src/homes.js",
-    "old": "AND guild_id IS NULL AND entry != 'public')`)",
-    "new": "AND guild_id IS NULL)`)",
+    "old": "      AND EXISTS (SELECT 1 FROM homes WHERE map_id = ?1 AND building_key = ?2 AND player = ?3 AND guild_id IS NULL AND entry != 'public')`,",
+    "new": "      AND EXISTS (SELECT 1 FROM homes WHERE map_id = ?1 AND building_key = ?2 AND player = ?3 AND guild_id IS NULL)`,",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]

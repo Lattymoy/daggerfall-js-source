@@ -233,8 +233,8 @@
   {
     "name": "AUDIT1003-S8-the-inbox-s-senders-bare",
     "file": "server-account/src/letters.js",
-    "old": "    for (const p of await withIliacHonoursAll({ db: primary }, await withArenaHonoursAll({ db: primary }, found, nowS), nowS)) rows.set(p.id, p);",
-    "new": "    for (const p of await withIliacHonoursAll({ db: primary }, found, nowS)) rows.set(p.id, p);",
+    "old": "    for (const p of await withIliacHonoursAll(\n      { db: primary },\n      await withArenaHonoursAll({ db: primary }, found, nowS),\n      nowS,\n    ))\n      rows.set(p.id, p); // AUDIT PRE-MERGE 1003 S8: the Grand Champion's title, the #1's laurel",
+    "new": "    for (const p of await withIliacHonoursAll({ db: primary }, found, nowS)) rows.set(p.id, p); // AUDIT PRE-MERGE 1003 S8: the Grand Champion's title, the #1's laurel",
     "tests": [
       "test/net/arena/audit1003_server.test.js"
     ],
@@ -243,8 +243,8 @@
   {
     "name": "AUDIT1003-S8-the-opened-letter-s-sender-bare",
     "file": "server-account/src/letters.js",
-    "old": "const row = await withIliacHonours({ db }, await withArenaHonours({ db }, await db.prepare('SELECT * FROM players WHERE id = ?').bind(l.from_id).first(), nowS), nowS);",
-    "new": "const row = await withIliacHonours({ db }, await db.prepare('SELECT * FROM players WHERE id = ?').bind(l.from_id).first(), nowS);",
+    "old": "    await withArenaHonours(\n      { db },\n      await db.prepare('SELECT * FROM players WHERE id = ?').bind(l.from_id).first(),\n      nowS,\n    ),",
+    "new": "    await db.prepare('SELECT * FROM players WHERE id = ?').bind(l.from_id).first(),",
     "tests": [
       "test/net/arena/audit1003_server.test.js"
     ]

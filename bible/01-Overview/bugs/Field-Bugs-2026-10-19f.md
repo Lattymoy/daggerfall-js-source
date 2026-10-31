@@ -1257,7 +1257,7 @@ too (a 25-million lot at a quality-10 counter, Mercantile and Personality 40, pa
 pieces, and the purse's write is unclamped, as DFU's setter is (`inventory.js:"entity.goldPieces = goldPiecesOf(entity) + amount;"`).
 A purse already below nothing stays there. Every price is more than it, so every payment spends the letters first
 (`court.js:"const loc = items.find"`), and the judge finds it
-at every checkpoint (`judge.js:"if (!purseWord(save?.goldPieces)) out.push({ code: 'gold' });"`): the trade held, and a
+at every checkpoint (`judge.js:"if (!purseWord(save?.goldPieces))"`): the trade held, and a
 death in the zone burnt (BURNT-SAID). 18b left such a character to "a staff repair (`review.js`)", and none could be
 made. The review's one repair took a faction's flag or nothing (`repairLaw.js:"if (!REPAIR_FLAGS.includes(flag))"`)
 and never reached the purse. `clear` lifts the hold but EXCUSES its signature (`review.js`'s `law_excused = law_sig` at d5a4c9c6a), so

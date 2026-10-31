@@ -93,8 +93,8 @@
   {
     "name": "GUILD1c-every-character-the-accounts-guild",
     "file": "server-account/src/guilds.js",
-    "old": "WHERE m.player = ? AND m.char_id = ?').bind(playerId, character).first()) ?? null;",
-    "new": "WHERE m.player = ?').bind(playerId).first()) ?? null;",
+    "old": "          ' FROM guild_members m LEFT JOIN guilds g ON g.id = m.guild_id WHERE m.player = ? AND m.char_id = ?',\n      )\n      .bind(playerId, character)",
+    "new": "          ' FROM guild_members m LEFT JOIN guilds g ON g.id = m.guild_id WHERE m.player = ?',\n      )\n      .bind(playerId)",
     "tests": [
       "test/net/guild1c.test.js"
     ],
@@ -103,8 +103,8 @@
   {
     "name": "GUILD1c-removal-names-the-remover",
     "file": "server-account/src/guilds.js",
-    "old": "out: { s: t.player, gi: a.me.guild_id, gm: `m${t.rid}` }",
-    "new": "out: { s: player.id, gi: a.me.guild_id, gm: `m${a.me.rid}` }",
+    "old": "    ? { ok: true, out: { s: t.player, gi: a.me.guild_id, gm: `m${t.rid}` } }",
+    "new": "    ? { ok: true, out: { s: player.id, gi: a.me.guild_id, gm: `m${a.me.rid}` } }",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "GUILD1c-disband-takes-one",
     "file": "server-account/src/guilds.js",
-    "old": "return r?.meta?.changes ? { ok: true, badge: {}, out: { s: player.id, gi: a.me.guild_id } }",
-    "new": "return r?.meta?.changes ? { ok: true, badge: {}, out: { s: player.id, gi: a.me.guild_id, gm: `m${a.me.rid}` } }",
+    "old": "    ? { ok: true, badge: {}, out: { s: player.id, gi: a.me.guild_id } }",
+    "new": "    ? { ok: true, badge: {}, out: { s: player.id, gi: a.me.guild_id, gm: `m${a.me.rid}` } }",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "GUILD1c-join-answers-none",
     "file": "server-account/src/guilds.js",
-    "old": "  return { ok: true, guild: view, badge: view ? badgeOfRow(me, view.tag) : {} };",
-    "new": "  return { ok: true, guild: view };",
+    "old": "  return { ok: true, guild: view, badge: view ? badgeOfRow(me, view.tag) : {} }; // GUILD1c: the joiner wears the tag now",
+    "new": "  return { ok: true, guild: view }; // GUILD1c: the joiner wears the tag now",
     "tests": [
       "test/net/guild1c.test.js"
     ]

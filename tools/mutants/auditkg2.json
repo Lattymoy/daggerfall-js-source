@@ -364,8 +364,8 @@
   {
     "name": "AKG2-E5-season",
     "file": "server-account/src/gambit.js",
-    "old": "seasonFull = Number(pairSeason?.n ?? 0) >= ARENA_PAIR_SEASON_MAX;",
-    "new": "seasonFull = false;",
+    "old": "      seasonFull = Number(pairSeason?.n ?? 0) >= ARENA_PAIR_SEASON_MAX;",
+    "new": "      seasonFull = false;",
     "tests": [
       "test/net/gambit/auditkg2_season.test.js"
     ]
@@ -373,8 +373,8 @@
   {
     "name": "AKG2-E5-board-rated",
     "file": "server-account/src/gambit.js",
-    "old": "FROM gambit_games WHERE a = ${p} AND season = ${s} AND rated = 1",
-    "new": "FROM gambit_games WHERE a = ${p} AND season = ${s}",
+    "old": "      FROM gambit_games WHERE a = ${p} AND season = ${s} AND rated = 1",
+    "new": "      FROM gambit_games WHERE a = ${p} AND season = ${s}",
     "tests": [
       "test/net/gambit/auditkg2_season.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "AKG2-E5-race",
     "file": "server-account/src/gambit.js",
-    "old": "WHERE ${RATING_NOW_SQL('?3')} = ?7 AND ${RATING_NOW_SQL('?4')} = ?8`)",
-    "new": "WHERE 1 = 1`)",
+    "old": "        WHERE ${RATING_NOW_SQL('?3')} = ?7 AND ${RATING_NOW_SQL('?4')} = ?8`,",
+    "new": "        WHERE 1 = 1`,",
     "tests": [
       "test/net/gambit/auditkg2_season.test.js"
     ]
@@ -400,8 +400,8 @@
   {
     "name": "AKG2-E5-top",
     "file": "server-account/src/gambit.js",
-    "old": "return na >= rating || nb >= rating;",
-    "new": "return false;",
+    "old": "  return na >= rating || nb >= rating;",
+    "new": "  return false;",
     "tests": [
       "test/net/gambit/auditkg2_season.test.js"
     ]
@@ -409,8 +409,8 @@
   {
     "name": "AKG2-D11-cap",
     "file": "server-account/src/gambit.js",
-    "old": "...(rated ? {} : { cap: seasonFull ? 'season' : 'day' })",
-    "new": "...(rated ? {} : { cap: 'day' })",
+    "old": "      return {\n        recorded: true,\n        ...(await gameAnswer(ctx, player.id, row)),\n        ...(rated ? {} : { cap: seasonFull ? 'season' : 'day' }),\n      };",
+    "new": "      return { recorded: true, ...(await gameAnswer(ctx, player.id, row)), ...(rated ? {} : { cap: 'day' }) };",
     "tests": [
       "test/net/gambit/auditkg2_season.test.js"
     ]

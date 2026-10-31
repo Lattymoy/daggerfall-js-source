@@ -73,8 +73,8 @@
   {
     "name": "SERVERPOST-the-heartbeats-part-unanswered",
     "file": "server-account/src/heartbeat.js",
-    "old": "  if (body?.post === true) await part('post',",
-    "new": "  if (body?.post === 'never') await part('post',",
+    "old": "  if (body?.post === true)",
+    "new": "  if (body?.post === 'never')",
     "tests": [
       "test/server/serverpost_service.test.js"
     ],

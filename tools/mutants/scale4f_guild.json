@@ -2,8 +2,8 @@
   {
     "name": "SCALE4f2-badge-gone-guild",
     "file": "server-account/src/guilds.js",
-    "old": "  const r = member !== undefined ? (member && member.gid != null ? member : null)",
-    "new": "  const r = member !== undefined ? (member ? member : null)",
+    "old": "      ? member && member.gid != null",
+    "new": "      ? member",
     "tests": [
       "test/server/scale4f_guild.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "SCALE4f2-rank-unread",
     "file": "server-account/src/guilds.js",
-    "old": "m.guild_id AS guild_id, m.rank AS rank, m.joined_at AS joined_at",
-    "new": "m.guild_id AS guild_id, m.joined_at AS joined_at",
+    "old": "        'SELECT m.rowid AS rid, m.guild_id AS guild_id, m.rank AS rank, m.joined_at AS joined_at, g.id AS gid, g.tag AS tag, g.heraldry AS heraldry' +",
+    "new": "        'SELECT m.rowid AS rid, m.guild_id AS guild_id, m.joined_at AS joined_at, g.id AS gid, g.tag AS tag, g.heraldry AS heraldry' +",
     "tests": [
       "test/server/scale4f_guild.test.js"
     ],

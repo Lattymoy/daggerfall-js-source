@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-RPT1026-C1-hand-over-from-any-giver",
     "file": "server-account/src/ledger.js",
-    "old": "\n        AND COALESCE(handed_to, owner) = COALESCE(?2, (SELECT u.player FROM item_uids u WHERE u.uid = products.provenance AND u.state = 'escrow'))`),",
-    "new": "`),",
+    "old": "      WHERE provenance IN (${m}) AND handed_to IS NOT (CASE WHEN owner = ?1 THEN NULL ELSE ?1 END)\n        AND COALESCE(handed_to, owner) = COALESCE(?2, (SELECT u.player FROM item_uids u WHERE u.uid = products.provenance AND u.state = 'escrow'))`,",
+    "new": "      WHERE provenance IN (${m}) AND handed_to IS NOT (CASE WHEN owner = ?1 THEN NULL ELSE ?1 END)`,",
     "tests": [
       "test/server/audit_rpt1026_ledgerlaw.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "AUDIT-RPT1026-C1-escrow-giver-unread",
     "file": "server-account/src/ledger.js",
-    "old": "COALESCE(?2, (SELECT u.player FROM item_uids u WHERE u.uid = products.provenance AND u.state = 'escrow'))",
-    "new": "COALESCE(?2, ?1)",
+    "old": "        AND COALESCE(handed_to, owner) = COALESCE(?2, (SELECT u.player FROM item_uids u WHERE u.uid = products.provenance AND u.state = 'escrow'))`,",
+    "new": "        AND COALESCE(handed_to, owner) = COALESCE(?2, ?1)`,",
     "tests": [
       "test/server/rpt1026_ledgerlaw.test.js"
     ],
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-RPT1026-C5-cut-unmarked",
     "file": "server-account/src/judge.js",
-    "old": "(s.length > n ? `${s.slice(0, n)}${LAW_VALUES_CUT}` : s)",
-    "new": "s.slice(0, n)",
+    "old": "const cutOf = (/** @type {string} */ s, /** @type {number} */ n) =>\n  s.length > n ? `${s.slice(0, n)}${LAW_VALUES_CUT}` : s;",
+    "new": "const cutOf = (/** @type {string} */ s, /** @type {number} */ n) => s.slice(0, n);",
     "tests": [
       "test/server/audit_rpt1026_ledgerlaw.test.js"
     ],

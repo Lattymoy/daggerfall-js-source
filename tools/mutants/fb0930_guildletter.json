@@ -56,8 +56,8 @@
   {
     "name": "GUILD-LETTER-the-treasury-drops-the-letter",
     "file": "server-account/src/guilds.js",
-    "old": "'withdraw', gold, null, letter);",
-    "new": "'withdraw', gold, null);",
+    "old": "  if (side.at) return realmTreasury(ctx, player, a.me, side.at, 'withdraw', gold, null, letter);",
+    "new": "  if (side.at) return realmTreasury(ctx, player, a.me, side.at, 'withdraw', gold, null);",
     "tests": [
       "test/systems/fb0930_guildletter.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "GUILD-LETTER-the-record-told-nothing",
     "file": "server-account/src/guilds.js",
-    "old": "creditSave(save, gold, { letter })",
-    "new": "creditSave(save, gold)",
+    "old": "        : creditSave(save, gold, { letter })",
+    "new": "        : creditSave(save, gold)",
     "tests": [
       "test/systems/fb0930_guildletter.test.js"
     ]

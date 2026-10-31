@@ -609,7 +609,7 @@
   {
     "name": "AUDIT-SEATS-S10-heraldry-pre",
     "file": "server-account/src/halls.js",
-    "old": "  if (was && await inBattle()) return { error: 'heraldry-siege' };",
+    "old": "  if (was && (await inBattle())) return { error: 'heraldry-siege' };",
     "new": "  if (false) return { error: 'heraldry-siege' };",
     "tests": [
       "test/net/audit_seats_service.test.js"
@@ -618,7 +618,7 @@
   {
     "name": "AUDIT-SEATS-S10-heraldry-first",
     "file": "server-account/src/halls.js",
-    "old": "  if (was && await inBattle()) return { error: 'heraldry-siege' };",
+    "old": "  if (was && (await inBattle())) return { error: 'heraldry-siege' };",
     "new": "  if (await inBattle()) return { error: 'heraldry-siege' };",
     "tests": [
       "test/net/audit_seats_service.test.js"
@@ -627,8 +627,8 @@
   {
     "name": "AUDIT-SEATS-S10-heraldry-write",
     "file": "server-account/src/halls.js",
-    "old": "AND ${stillMaster} AND ${noBattle}`).bind(json, gid, row.heraldry),",
-    "new": "AND ${stillMaster}`).bind(json, gid, row.heraldry),",
+    "old": "        .prepare(`UPDATE guilds SET heraldry = ? WHERE id = ? AND heraldry = ? AND ${stillMaster} AND ${noBattle}`)",
+    "new": "        .prepare(`UPDATE guilds SET heraldry = ? WHERE id = ? AND heraldry = ? AND ${stillMaster}`)",
     "tests": [
       "test/net/audit_seats_service.test.js"
     ]
@@ -636,8 +636,8 @@
   {
     "name": "AUDIT-SEATS-S10-heraldry-catch",
     "file": "server-account/src/halls.js",
-    "old": "    if (await inBattle()) return { error: 'heraldry-siege' };   // AUDIT-SEATS S10: a Turning placed a battle meanwhile\n",
-    "new": "",
+    "old": "    if (await inBattle()) return { error: 'heraldry-siege' }; // AUDIT-SEATS S10: a Turning placed a battle meanwhile\n    const bal = await db.prepare('SELECT balance FROM guild_marks WHERE guild_id = ?').bind(gid).first();",
+    "new": "    const bal = await db.prepare('SELECT balance FROM guild_marks WHERE guild_id = ?').bind(gid).first();",
     "tests": [
       "test/net/audit_seats_service.test.js"
     ]
@@ -645,8 +645,8 @@
   {
     "name": "AUDIT-SEATS-S10-heraldry-void-read",
     "file": "server-account/src/halls.js",
-    "old": "AND (attacker = ? OR defender = ?) AND state <> 'void'\")",
-    "new": "AND (attacker = ? OR defender = ?)\")",
+    "old": "      .prepare(\"SELECT 1 FROM town_seat_battles WHERE week = ? AND (attacker = ? OR defender = ?) AND state <> 'void'\")",
+    "new": "      .prepare('SELECT 1 FROM town_seat_battles WHERE week = ? AND (attacker = ? OR defender = ?)')",
     "tests": [
       "test/net/audit_seats_service.test.js"
     ]
@@ -654,8 +654,8 @@
   {
     "name": "AUDIT-SEATS-S10-heraldry-void-write",
     "file": "server-account/src/halls.js",
-    "old": "AND (attacker = guilds.id OR defender = guilds.id) AND state <> 'void')`;",
-    "new": "AND (attacker = guilds.id OR defender = guilds.id))`;",
+    "old": "  const noBattle = `NOT EXISTS (SELECT 1 FROM town_seat_battles WHERE week = ${week} AND (attacker = guilds.id OR defender = guilds.id) AND state <> 'void')`;",
+    "new": "  const noBattle = `NOT EXISTS (SELECT 1 FROM town_seat_battles WHERE week = ${week} AND (attacker = guilds.id OR defender = guilds.id))`;",
     "tests": [
       "test/net/audit_seats_service.test.js"
     ]

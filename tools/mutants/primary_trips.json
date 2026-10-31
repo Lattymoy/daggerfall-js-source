@@ -102,8 +102,8 @@
   {
     "name": "BEAT-LAST-beat-first",
     "file": "server-account/src/heartbeat.js",
-    "old": "  if (body?.mail === true) await part('mail',",
-    "new": "  if (body?.beat === true) await part('beat', () => creditPlay(ctx, player.id));\n  if (body?.mail === true) await part('mail',",
+    "old": "  if (body?.mail === true)",
+    "new": "  if (body?.beat === true) await part('beat', () => creditPlay(ctx, player.id));\n  if (body?.mail === true)",
     "tests": [
       "test/server/primary_trips.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "PRIMARY-TRIPS-AUDIT-iliac-kept-late",
     "file": "server-account/src/iliac.js",
-    "old": "(cached ? keptId : await championFrom(",
-    "new": "(cached ? _champ.id : await championFrom(",
+    "old": "          ? keptId",
+    "new": "          ? _champ.id",
     "tests": [
       "test/server/primary_trips.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "PRIMARY-TRIPS-AUDIT-gambit-kept-late",
     "file": "server-account/src/gambit.js",
-    "old": "(cached ? keptId : await championFrom(",
-    "new": "(cached ? _champ.id : await championFrom(",
+    "old": "          ? keptId",
+    "new": "          ? _champ.id",
     "tests": [
       "test/server/primary_trips.test.js"
     ],

@@ -2,8 +2,8 @@
   {
     "name": "GUILD1d-hall-no-half-again",
     "file": "server-account/src/halls.js",
-    "old": "  const cost = guildHallPrice(price);\n",
-    "new": "  const cost = price;\n",
+    "old": "  const cost = guildHallPrice(price);",
+    "new": "  const cost = price;",
     "tests": [
       "test/net/guild1d_service.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "GUILD1d-realm-gold-unguarded",
     "file": "server-account/src/halls.js",
-    "old": "AND treasury >= ?1 AND realm_gold >= ?1 AND NOT EXISTS",
-    "new": "AND treasury >= ?1 AND NOT EXISTS",
+    "old": "        WHERE id = ?4 AND treasury >= ?1 AND realm_gold >= ?1 AND NOT EXISTS (SELECT 1 FROM homes WHERE guild_id = ?4)",
+    "new": "        WHERE id = ?4 AND treasury >= ?1 AND NOT EXISTS (SELECT 1 FROM homes WHERE guild_id = ?4)",
     "tests": [
       "test/net/guild1d_service.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "GUILD1d-buy-rank-unasked",
     "file": "server-account/src/halls.js",
-    "old": "  if (!hallMay(a.me.rank, 'hall')) return { error: 'guild-rank' };\n  if (!homeMapIdOk(mapId)",
-    "new": "  if (!homeMapIdOk(mapId)",
+    "old": "  if (!hallMay(a.me.rank, 'hall')) return { error: 'guild-rank' };\n  if (",
+    "new": "  if (",
     "tests": [
       "test/net/guild1d_service.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "GUILD1d-mark-a-character-id",
     "file": "server-account/src/halls.js",
-    "old": "player.id, guildHallOwner(gid), g?.name",
-    "new": "player.id, gid, g?.name",
+    "old": "          guildHallOwner(gid),",
+    "new": "          gid,",
     "tests": [
       "test/net/guild1d_service.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "GUILD1d-ledger-kind-unsaid",
     "file": "server-account/src/halls.js",
-    "old": "moved_by = ?2, moved_at = ?3, moved_kind = 'hall'\n",
-    "new": "moved_by = ?2, moved_at = ?3\n",
+    "old": "          `UPDATE guilds SET treasury = treasury - ?1, realm_gold = realm_gold - ?1, moved_by = ?2, moved_at = ?3, moved_kind = 'hall'",
+    "new": "          `UPDATE guilds SET treasury = treasury - ?1, realm_gold = realm_gold - ?1, moved_by = ?2, moved_at = ?3",
     "tests": [
       "test/net/guild1d_service.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "GUILD1d-old-lane-sells-a-hall",
     "file": "server-account/src/homes.js",
-    "old": "AND player = ? AND guild_id IS NULL AND deed = 0 RETURNING price",
-    "new": "AND player = ? AND deed = 0 RETURNING price",
+    "old": "      .prepare(\n        'DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND deed = 0 RETURNING price',\n      )",
+    "new": "      .prepare('DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND deed = 0 RETURNING price')",
     "tests": [
       "test/net/guild1d_service.test.js"
     ],
@@ -67,8 +67,8 @@
   {
     "name": "GUILD1d-anchor-opens-a-hall",
     "file": "server-account/src/homes.js",
-    "old": "WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL')\n    .bind(entry,",
-    "new": "WHERE map_id = ? AND building_key = ? AND player = ?')\n    .bind(entry,",
+    "old": "    .prepare('UPDATE homes SET entry = ? WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL')",
+    "new": "    .prepare('UPDATE homes SET entry = ? WHERE map_id = ? AND building_key = ? AND player = ?')",
     "tests": [
       "test/net/guild1d_service.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "GUILD1d-anchor-lists-a-hall",
     "file": "server-account/src/homes.js",
-    "old": "WHERE player = ? AND guild_id IS NULL ORDER BY bought_at",
-    "new": "WHERE player = ? ORDER BY bought_at",
+    "old": "    .prepare('SELECT * FROM homes WHERE player = ? AND guild_id IS NULL ORDER BY bought_at, map_id, building_key')",
+    "new": "    .prepare('SELECT * FROM homes WHERE player = ? ORDER BY bought_at, map_id, building_key')",
     "tests": [
       "test/net/guild1d_service.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "GUILD1d-keeps-no-hall",
     "file": "server-account/src/guilds.js",
-    "old": "`EXISTS (SELECT 1 FROM homes WHERE guild_id = ${p})`",
-    "new": "`0`",
+    "old": "  ['guild-hall', (/** @type {string} */ p) => `EXISTS (SELECT 1 FROM homes WHERE guild_id = ${p})`], // GUILD1d: its hall - sold first, its deed share into the treasury",
+    "new": "  ['guild-hall', (/** @type {string} */ p) => `0`], // GUILD1d: its hall - sold first, its deed share into the treasury",
     "tests": [
       "test/net/guild1d_service.test.js"
     ],
@@ -95,8 +95,8 @@
   {
     "name": "GUILD1d-sale-no-deed-share",
     "file": "server-account/src/halls.js",
-    "old": "  const back = refund + piecesBack;\n",
-    "new": "  const back = piecesBack;\n",
+    "old": "  const back = refund + piecesBack;",
+    "new": "  const back = piecesBack;",
     "tests": [
       "test/net/guild1d_service.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "GUILD1d-sale-outside-realm-gold",
     "file": "server-account/src/halls.js",
-    "old": "treasury = treasury + ?1, realm_gold = realm_gold + ?1, moved_by = ?2, moved_at = ?3, moved_kind = 'hall-sale'",
-    "new": "treasury = treasury + ?1, moved_by = ?2, moved_at = ?3, moved_kind = 'hall-sale'",
+    "old": "                `UPDATE guilds SET treasury = treasury + ?1, realm_gold = realm_gold + ?1, moved_by = ?2, moved_at = ?3, moved_kind = 'hall-sale'",
+    "new": "                `UPDATE guilds SET treasury = treasury + ?1, moved_by = ?2, moved_at = ?3, moved_kind = 'hall-sale'",
     "tests": [
       "test/net/guild1d_service.test.js"
     ]
@@ -113,8 +113,8 @@
   {
     "name": "GUILD1d-entry-rank-unasked",
     "file": "server-account/src/halls.js",
-    "old": "  if (!guildMay(a.me.rank, 'hallEntry', a.powers)) return { error: 'guild-rank' };   // GUILD-RANKS: as the guild set it\n",
-    "new": "",
+    "old": "  if (!guildMay(a.me.rank, 'hallEntry', a.powers)) return { error: 'guild-rank' }; // GUILD-RANKS: as the guild set it\n  if (!guildHallEntryOk(entry)) return { error: 'bad-entry' };",
+    "new": "  if (!guildHallEntryOk(entry)) return { error: 'bad-entry' };",
     "tests": [
       "test/net/guild1d_service.test.js",
       "test/net/auditguild1d.test.js"
@@ -123,8 +123,8 @@
   {
     "name": "GUILD1d-entry-unchecked",
     "file": "server-account/src/halls.js",
-    "old": "  if (!guildHallEntryOk(entry)) return { error: 'bad-entry' };\n",
-    "new": "",
+    "old": "  if (!guildHallEntryOk(entry)) return { error: 'bad-entry' };\n  if (await overRate({ db, nowS }, `guild:${player.id}`, GUILD_OPS_MAX, GUILD_OPS_WINDOW_S))",
+    "new": "  if (await overRate({ db, nowS }, `guild:${player.id}`, GUILD_OPS_MAX, GUILD_OPS_WINDOW_S))",
     "tests": [
       "test/net/guild1d_service.test.js"
     ]
@@ -132,8 +132,8 @@
   {
     "name": "GUILD1d-first-heraldry-charged",
     "file": "server-account/src/halls.js",
-    "old": "  if (!was) {\n",
-    "new": "  if (false) {\n",
+    "old": "  if (!was) {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/guild1d_service.test.js"
     ]
@@ -141,8 +141,8 @@
   {
     "name": "GUILD1d-heraldry-rank-unasked",
     "file": "server-account/src/halls.js",
-    "old": "  if (!hallMay(a.me.rank, 'heraldry')) return { error: 'guild-rank' };\n",
-    "new": "",
+    "old": "  if (!hallMay(a.me.rank, 'heraldry')) return { error: 'guild-rank' };\n  const next = heraldryOf(heraldry);",
+    "new": "  const next = heraldryOf(heraldry);",
     "tests": [
       "test/net/guild1d_service.test.js",
       "test/net/auditguild1d.test.js"
@@ -151,8 +151,8 @@
   {
     "name": "GUILD1d-heraldry-change-without-line",
     "file": "server-account/src/halls.js",
-    "old": "        .bind(gid, HERALDRY_CHANGE_DRAKES, utcDay(nowS), nowS, player.id, displayName(player), rid),\n      mustChange(db),\n",
-    "new": "        .bind(gid, HERALDRY_CHANGE_DRAKES, utcDay(nowS), nowS, player.id, displayName(player), rid),\n",
+    "old": "      mustChange(db),\n      db",
+    "new": "      db",
     "tests": [
       "test/net/guild1d_service.test.js"
     ]
@@ -190,8 +190,8 @@
   {
     "name": "GUILD1d-every-member-a-keeper",
     "file": "server-account/src/homes.js",
-    "old": "...(guildMay(rank, 'decorate', powers) && h.me_realm === 1 ? { keeper: true } : {})",
-    "new": "...({ keeper: true })",
+    "old": "            ...(rank != null\n              ? { member: true, ...(guildMay(rank, 'decorate', powers) && h.me_realm === 1 ? { keeper: true } : {}) }\n              : {}),",
+    "new": "            ...(rank != null ? { member: true, ...{ keeper: true } } : {}),",
     "tests": [
       "test/net/guild1d_service.test.js"
     ]
@@ -199,8 +199,8 @@
   {
     "name": "GUILD1d-guildmate-for-a-stranger",
     "file": "server-account/src/homes.js",
-    "old": "WHERE a.player = h.player AND b.player = ?2 AND b.char_id = ?3)) AS guildmate",
-    "new": "WHERE a.player = h.player)) AS guildmate",
+    "old": "        WHERE a.player = h.player AND b.player = ?2 AND b.char_id = ?3)) AS guildmate,",
+    "new": "        WHERE a.player = h.player)) AS guildmate,",
     "tests": [
       "test/net/guild1d_service.test.js"
     ],

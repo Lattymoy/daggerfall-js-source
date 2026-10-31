@@ -242,8 +242,8 @@
   {
     "name": "AUDIT-REALM-L1F3-the-realm-claim-paid-nothing",
     "file": "server-account/src/homes.js",
-    "old": "claimStatement(db, player, claim, nowS, claim.price)",
-    "new": "claimStatement(db, player, claim, nowS)",
+    "old": "      claimStatement(db, player, claim, nowS, claim.price),",
+    "new": "      claimStatement(db, player, claim, nowS),",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -251,8 +251,8 @@
   {
     "name": "AUDIT-REALM-L1F3-the-pieces-client-cost",
     "file": "server-account/src/homes.js",
-    "old": "THEN paid / 2 ELSE 0 END), 0) AS back",
-    "new": "THEN CAST(json_extract(place, '$.paid') AS INTEGER) / 2 ELSE 0 END), 0) AS back",
+    "old": "      COALESCE(SUM(CASE WHEN json_valid(place) THEN paid / 2 ELSE 0 END), 0) AS back",
+    "new": "      COALESCE(SUM(CASE WHEN json_valid(place) THEN CAST(json_extract(place, '$.paid') AS INTEGER) / 2 ELSE 0 END), 0) AS back",
     "tests": [
       "test/systems/auditrealm.test.js",
       "test/server/account_homes.test.js"
@@ -262,8 +262,8 @@
   {
     "name": "AUDIT-REALM-L1F3-the-old-treasury-withdrawn",
     "file": "server-account/src/guilds.js",
-    "old": " WHERE id = ?2 AND treasury >= ?1 AND realm_gold >= ?1\n",
-    "new": " WHERE id = ?2 AND treasury >= ?1\n",
+    "old": "            `UPDATE guilds SET treasury = treasury - ?1, realm_gold = realm_gold - ?1, moved_by = ?3, moved_at = ?4 WHERE id = ?2 AND treasury >= ?1 AND realm_gold >= ?1",
+    "new": "            `UPDATE guilds SET treasury = treasury - ?1, realm_gold = realm_gold - ?1, moved_by = ?3, moved_at = ?4 WHERE id = ?2 AND treasury >= ?1",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -271,8 +271,8 @@
   {
     "name": "AUDIT-REALM-L1F3-a-realm-deposit-uncounted",
     "file": "server-account/src/guilds.js",
-    "old": "UPDATE guilds SET treasury = treasury + ?1, realm_gold = realm_gold + ?1, moved_by",
-    "new": "UPDATE guilds SET treasury = treasury + ?1, moved_by",
+    "old": "            'UPDATE guilds SET treasury = treasury + ?1, realm_gold = realm_gold + ?1, moved_by = ?4, moved_at = ?5 WHERE id = ?2 AND treasury + ?1 <= ?3',",
+    "new": "            'UPDATE guilds SET treasury = treasury + ?1, moved_by = ?4, moved_at = ?5 WHERE id = ?2 AND treasury + ?1 <= ?3',",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -280,8 +280,8 @@
   {
     "name": "AUDIT-REALM-L1F3-the-old-lane-leaves-the-realm-part",
     "file": "server-account/src/guilds.js",
-    "old": "SET treasury = treasury - ?1, realm_gold = MIN(realm_gold, treasury - ?1), moved_by",
-    "new": "SET treasury = treasury - ?1, moved_by",
+    "old": "            `UPDATE guilds SET treasury = treasury - ?1, realm_gold = MIN(realm_gold, treasury - ?1), moved_by = ?3, moved_at = ?4 WHERE id = ?2 AND treasury >= ?1",
+    "new": "            `UPDATE guilds SET treasury = treasury - ?1, moved_by = ?3, moved_at = ?4 WHERE id = ?2 AND treasury >= ?1",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]

@@ -204,8 +204,8 @@
   {
     "name": "LEANW-window-halved",
     "file": "server-account/src/leanWitness.js",
-    "old": "nowS - 2 * SEAT_WITNESS_IGNORED_S);",
-    "new": "nowS - SEAT_WITNESS_IGNORED_S);",
+    "old": "  db.prepare(`SELECT (${unmatchedSql('?1', '?2', '?3')}) AS n`).bind(kind, account, nowS - 2 * SEAT_WITNESS_IGNORED_S);",
+    "new": "  db.prepare(`SELECT (${unmatchedSql('?1', '?2', '?3')}) AS n`).bind(kind, account, nowS - SEAT_WITNESS_IGNORED_S);",
     "tests": [
       "test/server/lean_witness.test.js"
     ],

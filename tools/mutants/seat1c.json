@@ -320,8 +320,8 @@
   {
     "name": "SEAT1c-guild-goes-holding",
     "file": "server-account/src/guilds.js",
-    "old": "`EXISTS (SELECT 1 FROM town_seat_holds WHERE guild_id = ${p})`",
-    "new": "`0`",
+    "old": "  ['guild-seat', (/** @type {string} */ p) => `EXISTS (SELECT 1 FROM town_seat_holds WHERE guild_id = ${p})`], // SEAT1c: a Charter it holds - relinquished first (SEAT0 16)",
+    "new": "  ['guild-seat', (/** @type {string} */ p) => `0`], // SEAT1c: a Charter it holds - relinquished first (SEAT0 16)",
     "tests": [
       "test/net/seat1c_service.test.js"
     ]

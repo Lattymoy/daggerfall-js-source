@@ -182,8 +182,8 @@
   {
     "name": "HELD-BASE-ledger-move-refused",
     "file": "server-account/src/ledger.js",
-    "old": "      if (!rehomedPrint(r.fp, fp)) { forged.push(key); continue; }",
-    "new": "      forged.push(key); continue;",
+    "old": "      if (!rehomedPrint(r.fp, fp)) {\n        forged.push(key);\n        continue;\n      } // another piece's key: no claim to that piece",
+    "new": "      forged.push(key);\n      continue; // another piece's key: no claim to that piece",
     "tests": [
       "test/systems/loot/fb1018f_heldbase.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "HELD-BASE-ledger-row-unprinted",
     "file": "server-account/src/ledger.js",
-    "old": "  for (const [key, fp, was] of reprint) steps.push(db.prepare('UPDATE item_uids SET fp = ?2 WHERE uid = ?1 AND fp = ?3').bind(key, fp, was));   // AUDIT FB1018f L1-1\n",
-    "new": "",
+    "old": "  for (const [key, fp, was] of reprint)\n    steps.push(db.prepare('UPDATE item_uids SET fp = ?2 WHERE uid = ?1 AND fp = ?3').bind(key, fp, was)); // AUDIT FB1018f L1-1\n  // STAFF-PANEL4-CENSUS: each copy written down with the record the ledger had holding it and since when - a piece shown",
+    "new": "  // STAFF-PANEL4-CENSUS: each copy written down with the record the ledger had holding it and since when - a piece shown",
     "tests": [
       "test/systems/loot/fb1018f_heldbase.test.js"
     ],

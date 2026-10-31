@@ -210,8 +210,8 @@
   {
     "name": "MASTER-ART-judge-lines-unread",
     "file": "server-account/src/judge.js",
-    "old": "&& (piece.l === undefined || piece.l === recordLines(row.record));",
-    "new": "&& (piece.l === undefined || piece.l !== '');",
+    "old": "      (piece.l === undefined || piece.l === recordLines(row.record)); // MASTER-ART: a Master's lines are its record's",
+    "new": "      (piece.l === undefined || piece.l !== ''); // MASTER-ART: a Master's lines are its record's",
     "tests": [
       "test/net/masterart_service.test.js"
     ]
@@ -455,8 +455,8 @@
   {
     "name": "AUDIT-HB2-plain-record-let-through",
     "file": "server-account/src/judge.js",
-    "old": "&& (piece.l === undefined || piece.l === recordLines(row.record));",
-    "new": "&& (piece.l === undefined || recordLines(row.record) === '' || piece.l === recordLines(row.record));",
+    "old": "      (piece.l === undefined || piece.l === recordLines(row.record)); // MASTER-ART: a Master's lines are its record's",
+    "new": "      (piece.l === undefined || recordLines(row.record) === '' || piece.l === recordLines(row.record)); // MASTER-ART: a Master's lines are its record's",
     "tests": [
       "test/net/masterart_service.test.js"
     ]

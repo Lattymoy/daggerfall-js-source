@@ -130,8 +130,8 @@
     "name": "AUDITLWII2-S2-copy",
     "reaimed": "STAFF-PANEL4-CENSUS: re-aimed by content - a copy written down keeps its first holder, its claimant and its print (ledger.js copyRows)",
     "file": "server-account/src/ledger.js",
-    "old": "    db.prepare(`INSERT OR IGNORE INTO item_dupes (uid, char_id, at, kind, first_char, first_at, claimant, claim_at, fp) VALUES (?1, ?2, ?3, 'escrow', NULL,\n      (SELECT at FROM item_uids WHERE uid = ?1), ?2, (SELECT claim_at FROM item_uids WHERE uid = ?1), (SELECT fp FROM item_uids WHERE uid = ?1))`).bind(key, claim, nowS),\n",
-    "new": "",
+    "old": "    db\n      .prepare(\n        `INSERT OR IGNORE INTO item_dupes (uid, char_id, at, kind, first_char, first_at, claimant, claim_at, fp) VALUES (?1, ?2, ?3, 'escrow', NULL,\n      (SELECT at FROM item_uids WHERE uid = ?1), ?2, (SELECT claim_at FROM item_uids WHERE uid = ?1), (SELECT fp FROM item_uids WHERE uid = ?1))`,\n      )\n      .bind(key, claim, nowS),\n    ...chargeSteps(db, claim, [key], nowS, { strike: false }),",
+    "new": "    ...chargeSteps(db, claim, [key], nowS, { strike: false }),",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -140,8 +140,8 @@
     "name": "AUDITLWII2-S2-charge",
     "file": "server-account/src/ledger.js",
     "note": "AUDIT AUTO-HOLD (PIN MOVED): re-aimed by content - the claimant is found contested, no strike; the finding is what the pin reads",
-    "old": "    ...chargeSteps(db, claim, [key], nowS, { strike: false }),\n",
-    "new": "",
+    "old": "    ...chargeSteps(db, claim, [key], nowS, { strike: false }),\n    db",
+    "new": "    db",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "AUDITLWII2-S2-gone",
     "file": "server-account/src/ledger.js",
-    "old": "SET state = 'gone', claim_char = NULL, claim_at = NULL, at = ?3 WHERE uid = ?1 AND state = 'escrow' AND claim_char = ?2",
-    "new": "SET claim_char = NULL, claim_at = NULL, at = ?3 WHERE uid = ?1 AND state = 'escrow' AND claim_char = ?2",
+    "old": "        \"UPDATE item_uids SET state = 'gone', claim_char = NULL, claim_at = NULL, at = ?3 WHERE uid = ?1 AND state = 'escrow' AND claim_char = ?2\",",
+    "new": "        \"UPDATE item_uids SET claim_char = NULL, claim_at = NULL, at = ?3 WHERE uid = ?1 AND state = 'escrow' AND claim_char = ?2\",",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "AUDITLWII2-S2-unclaimed",
     "file": "server-account/src/ledger.js",
-    "old": "if (!claim) return [db.prepare(\"DELETE FROM item_uids WHERE uid = ?1 AND state = 'escrow' AND claim_char IS NULL\").bind(key)];",
-    "new": "if (!claim) return [];",
+    "old": "  if (!claim)\n    return [db.prepare(\"DELETE FROM item_uids WHERE uid = ?1 AND state = 'escrow' AND claim_char IS NULL\").bind(key)];",
+    "new": "  if (!claim) return [];",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "AUDITLWII2-S4-opens-now",
     "file": "server-account/src/homes.js",
-    "old": ".bind(mapId, buildingKey, player.id, Math.floor(/** @type {number} */ (nowS) / PATRON_HOUR_S)).run();",
-    "new": ".bind(mapId, buildingKey, player.id, Math.floor(/** @type {number} */ (nowS) / PATRON_HOUR_S) - 1).run();",
+    "old": "      .bind(mapId, buildingKey, player.id, Math.floor(/** @type {number} */ (nowS) / PATRON_HOUR_S))",
+    "new": "      .bind(mapId, buildingKey, player.id, Math.floor(/** @type {number} */ (nowS) / PATRON_HOUR_S) - 1)",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "AUDITLWII2-S4-shut-reckons",
     "file": "server-account/src/homes.js",
-    "old": "    await reckonPatrons(ctx, { maps: [mapId] }, env).catch(() => null);\n",
-    "new": "",
+    "old": "    await reckonPatrons(ctx, { maps: [mapId] }, env).catch(() => null);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]

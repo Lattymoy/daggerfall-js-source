@@ -29,8 +29,8 @@
   {
     "name": "INT4-contested-never",
     "file": "server-account/src/ledger.js",
-    "old": "    if (r.claim_char == null) claim.push(key);   // another's, or the service's: claimed - one claim at a time\n",
-    "new": "",
+    "old": "    if (r.claim_char == null) claim.push(key); // another's, or the service's: claimed - one claim at a time\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/item/int4_itemids.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "INT4-the-keeper-forgiven",
     "file": "server-account/src/ledger.js",
-    "old": "      if (r.claim_char && r.claim_char !== char && nowS - r.claim_at >= DUPE_GRACE_S) proven.set(r.claim_char, [...(proven.get(r.claim_char) ?? []), key]);\n",
-    "new": "",
+    "old": "      if (r.claim_char && r.claim_char !== char && nowS - r.claim_at >= DUPE_GRACE_S)\n        proven.set(r.claim_char, [...(proven.get(r.claim_char) ?? []), key]);\n      continue;",
+    "new": "      continue;",
     "tests": [
       "test/systems/item/int4_itemids.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "INT4-twice-in-one",
     "file": "server-account/src/ledger.js",
-    "old": "    if (n > 1) { copies.push(key); if (!r) fresh.push([key, fp]); continue; }   // one piece twice in one record\n",
-    "new": "",
+    "old": "    if (n > 1) {\n      copies.push(key);\n      if (!r) fresh.push([key, fp]);\n      continue;\n    } // one piece twice in one record\n    if (!r) {",
+    "new": "    if (!r) {",
     "tests": [
       "test/systems/item/int4_itemids.test.js"
     ]

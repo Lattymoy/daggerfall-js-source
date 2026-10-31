@@ -6638,7 +6638,7 @@ possible. No exceptions and no band aids." The decisions below are the record's,
   a band narrowed past a made value, or a line taken from a group's pool, is a change of the law (its version), as for a
   drop's lines.
 
-- **The judge** - `judge.js:"const recordLines = (record) => {"`: a piece showing a Master's lines holds a record that
+- **The judge** - `judge.js:"const recordLines"`: a piece showing a Master's lines holds a record that
   names them, at the values it signs. A piece edited within the band passes the item law and fails here. AUDIT
   HORIZONTAL B2: so does a plain craft's Masterwork reshaped to a Legendary of three band-top lines - its record names no
   lines, and this clause alone finds it (pinned).

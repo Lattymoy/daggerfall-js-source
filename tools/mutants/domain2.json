@@ -94,8 +94,8 @@
   {
     "name": "DOMAIN2-the-view-silent",
     "file": "server-account/src/guilds.js",
-    "old": "    ...(await castleViewOf(db, guildId, Number(me.rank), nowS)),\n",
-    "new": "",
+    "old": "    ...(await castleViewOf(db, guildId, Number(me.rank), nowS)),\n    // GUILD2a: when the guild last took a new name, and when it may next (null: now)",
+    "new": "    // GUILD2a: when the guild last took a new name, and when it may next (null: now)",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]

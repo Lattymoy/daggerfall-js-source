@@ -139,8 +139,8 @@
   {
     "name": "HOUSES3-the-service-cap-in-all",
     "file": "server-account/src/homes.js",
-    "old": "AND char_id = ? AND region = ? AND deed = 0) < ?",
-    "new": "AND char_id = ? AND ? IS NOT NULL AND deed = 0) < ?",
+    "old": "    WHERE (SELECT COUNT(*) FROM homes WHERE player = ? AND char_id = ? AND region = ? AND deed = 0) < ?",
+    "new": "    WHERE (SELECT COUNT(*) FROM homes WHERE player = ? AND char_id = ? AND ? IS NOT NULL AND deed = 0) < ?",
     "tests": [
       "test/server/home1.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "HOUSES3-a-forged-region",
     "file": "server-account/src/homes.js",
-    "old": "  if (witnessed && Number(witnessed.region) !== region) return { error: 'bad-home' };\n",
-    "new": "",
+    "old": "  if (witnessed && Number(witnessed.region) !== region) return { error: 'bad-home' };\n  if (await overRate({ db, nowS }, `home:${player.id}`, HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S))",
+    "new": "  if (await overRate({ db, nowS }, `home:${player.id}`, HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S))",
     "tests": [
       "test/server/home1.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "HOUSES3-the-transfer-cap-in-all-read",
     "file": "server-account/src/homeTransfer.js",
-    "old": "AND guild_id IS NULL AND region = (SELECT region FROM homes WHERE map_id = ? AND building_key = ?)';",
-    "new": "AND guild_id IS NULL AND ? IS NOT NULL AND ? IS NOT NULL';",
+    "old": "  'SELECT COUNT(*) AS n FROM homes WHERE player = ? AND char_id = ? AND guild_id IS NULL AND region = (SELECT region FROM homes WHERE map_id = ? AND building_key = ?)';",
+    "new": "  'SELECT COUNT(*) AS n FROM homes WHERE player = ? AND char_id = ? AND guild_id IS NULL AND ? IS NOT NULL AND ? IS NOT NULL';",
     "tests": [
       "test/server/hometransfer.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "HOUSES3-the-transfer-cap-in-all-write",
     "file": "server-account/src/homeTransfer.js",
-    "old": " AND h.guild_id IS NULL AND h.region = homes.region) < ?8",
-    "new": " AND h.guild_id IS NULL) < ?8",
+    "old": "      AND (SELECT COUNT(*) FROM homes h WHERE h.player = ?1 AND h.char_id = ?2 AND h.guild_id IS NULL AND h.region = homes.region) < ?8`,",
+    "new": "      AND (SELECT COUNT(*) FROM homes h WHERE h.player = ?1 AND h.char_id = ?2 AND h.guild_id IS NULL) < ?8`,",
     "tests": [
       "test/server/hometransfer.test.js"
     ]

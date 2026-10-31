@@ -172,8 +172,8 @@
   {
     "name": "PRIVREP-the-heartbeat-without-the-config",
     "file": "server-account/src/heartbeat.js",
-    "old": "postBoxOf(ctx, player, env)",
-    "new": "postBoxOf(ctx, player)",
+    "old": "      accountKind(player) !== 'linked' ? { error: 'post-needs-account' } : postBoxOf(ctx, player, env),",
+    "new": "      accountKind(player) !== 'linked' ? { error: 'post-needs-account' } : postBoxOf(ctx, player),",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],

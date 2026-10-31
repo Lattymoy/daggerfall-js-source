@@ -114,7 +114,7 @@ FOUND, in Node over the real account service on node:sqlite, the real client reg
 host's own gates: character A of an account claims a home; the town read as the account's character B. The door lets
 B in, every station refuses, and the enchanting station says "This belongs to <the account's own handle>." Two owner
 questions disagreed (THE ONE CONSTRUCTION SEAM):
-- the door asks the ACCOUNT (`mine`: `homes.js:"      const mine = h.player === player.id;"` on the service,
+- the door asks the ACCOUNT (`mine`: `homes.js:"const mine = h.player"` on the service,
   `homeLaw.js:"if (home.mine) return"`);
 - the stations asked THIS CHARACTER (`own`: `onlineHomes.js` homeAt's `row.mine && typeof me === 'string' && row.character === me` - since
   ACCOUNT-HOMES, `onlineHomes.js:"const own = row.mine"`, the account's too),
@@ -139,7 +139,7 @@ not built.
 AUDIT FB1018D. "A visitor the door admits is refused" was pinned for a home open to anyone alone; a guildmate the door
 lets in (entry 'guild') and a tenant are pinned refused too, every accessor null (L1-3). A knight's house still
 refuses the account's other character (L1-4): the service hands B the deed row
-(`homes.js:"homes: results.filter((h) => !(h.deed === 1 && h.player === player.id && h.char_id === me)).map((h) => {"`),
+(`homes.js:"own as an online".."homes: results"`),
 which reads `mine` and so would serve its stations - but the house's pieces are A's save's and the service lists none,
 so B finds no station to press. Cruor's report still stands in a knight's house; closing it needs a deed house's
 pieces on the service. Left.

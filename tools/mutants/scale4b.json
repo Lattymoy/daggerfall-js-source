@@ -92,8 +92,8 @@
   {
     "name": "SCALE4b-succession-unasked",
     "file": "server-account/src/guilds.js",
-    "old": "  if (!first || Number(first.rank) === GUILD_RANK_MASTER) return;\n",
-    "new": "",
+    "old": "  if (!first || Number(first.rank) === GUILD_RANK_MASTER) return;\n  await db",
+    "new": "  await db",
     "tests": [
       "test/server/scale4b.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "SCALE4b-succession-never",
     "file": "server-account/src/guilds.js",
-    "old": "  if (!first || Number(first.rank) === GUILD_RANK_MASTER) return;\n",
-    "new": "  if (!first || Number(first.rank) !== -1) return;\n",
+    "old": "  if (!first || Number(first.rank) === GUILD_RANK_MASTER) return;",
+    "new": "  if (!first || Number(first.rank) !== -1) return;",
     "tests": [
       "test/server/scale4b.test.js"
     ],

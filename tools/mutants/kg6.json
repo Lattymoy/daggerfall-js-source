@@ -247,8 +247,8 @@
   {
     "name": "KG6-A-claim-account",
     "file": "server-account/src/gambit.js",
-    "old": "  if (!c.f.includes(player.id)) return { error: 'not-yours' };\n",
-    "new": "",
+    "old": "  if (!c.f.includes(player.id)) return { error: 'not-yours' };\n  if (!player.handle) return { recorded: false, why: 'guest' };",
+    "new": "  if (!player.handle) return { recorded: false, why: 'guest' };",
     "tests": [
       "test/net/gambit/kg6_season.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "KG6-A-elo",
     "file": "server-account/src/gambit.js",
-    "old": "eloAfter(ra.rating, rb.rating, c.r === 0 ? 1 : 0)",
-    "new": "eloAfter(ra.rating, rb.rating, c.r === 0 ? 0 : 1)",
+    "old": "    const [na, nb] = rated ? eloAfter(ra.rating, rb.rating, c.r === 0 ? 1 : 0) : [ra.rating, rb.rating];",
+    "new": "    const [na, nb] = rated ? eloAfter(ra.rating, rb.rating, c.r === 0 ? 0 : 1) : [ra.rating, rb.rating];",
     "tests": [
       "test/net/gambit/kg6_season.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "KG6-A-title-floor",
     "file": "server-account/src/gambit.js",
-    "old": "Number(r.games) >= GAMBIT_CHAMPION_MIN_GAMES && Number(r.foes ?? 0) >= GAMBIT_CHAMPION_MIN_FOES;",
-    "new": "Number(r.games) >= GAMBIT_CHAMPION_MIN_GAMES;",
+    "old": "export const gambitTitleWorthy = (r) =>\n  !!r && Number(r.games) >= GAMBIT_CHAMPION_MIN_GAMES && Number(r.foes ?? 0) >= GAMBIT_CHAMPION_MIN_FOES;",
+    "new": "export const gambitTitleWorthy = (r) => !!r && Number(r.games) >= GAMBIT_CHAMPION_MIN_GAMES;",
     "tests": [
       "test/net/gambit/kg6_season.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "KG6-A-honours",
     "file": "server-account/src/honours.js",
-    "old": "iliac: answers[1], gambit: answers[2] };",
-    "new": "iliac: answers[1] };",
+    "old": "  return { ...player, arena: answers[0], iliac: answers[1], gambit: answers[2] };",
+    "new": "  return { ...player, arena: answers[0], iliac: answers[1] };",
     "tests": [
       "test/net/gambit/kg6_season.test.js"
     ],

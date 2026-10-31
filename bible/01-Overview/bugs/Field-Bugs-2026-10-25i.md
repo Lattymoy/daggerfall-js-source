@@ -238,7 +238,7 @@ deserter's take, the ground, a shop's shelf (`staffRealm.js:"export function cop
 `hidden`) - keeps the ledger's own piece (the first of its row's print) and destroys the rest, and lifts where its batch
 destroyed a copy or staff's Remove keeps one; its row the record's own, held and unclaimed and of the piece kept, no
 other record's copy, no trail check or one found innocent - never `unclear`
-(`ledger.js:"export async function ownCopiesLiftable(db, char, pieces) {"`). The finding and the answer say what the
+(`ledger.js:"export async function ownCopiesLiftable"`). The finding and the answer say what the
 batch lifted; a checkpoint landing between the act's read and its seizure refuses it `seq`; a keep empties the
 account's chests only of what it lifts. No revenant takes a realm-locked piece (`revenant.js:"&& !isRealmLocked(item)"`).
 No checkpoint lifts a copy: a slice that did was found launderable before it merged - a copy moved where the record

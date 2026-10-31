@@ -84,8 +84,8 @@
   {
     "name": "HOMEVENDOR-a-stocked-house-sold",
     "file": "server-account/src/homes.js",
-    "old": ".first())?.n ?? 0) > 0) return { error: 'home-vendor-stocked' };",
-    "new": ".first())?.n ?? 0) > 0) void 0;",
+    "old": "    return { error: 'home-vendor-stocked' };",
+    "new": "    void 0;",
     "tests": [
       "test/net/homevendor_service.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "GUILD-SEEN-the-stamp-unsaid",
     "file": "server-account/src/guilds.js",
-    "old": "        seenAt: Number.isSafeInteger(m.seen_at) ? (hid == null ? m.seen_at : Math.min(m.seen_at, hid)) : null,",
-    "new": "        seenAt: null,",
+    "old": "        seenAt: Number.isSafeInteger(m.seen_at) ? (hid == null ? m.seen_at : Math.min(m.seen_at, hid)) : null, // GUILD-SEEN: this service's seconds - the Members page's \"last online\"; AUDIT HIDDEN-UNCOUNTED C1: a hidden member's the moment they hid",
+    "new": "        seenAt: null, // GUILD-SEEN: this service's seconds - the Members page's \"last online\"; AUDIT HIDDEN-UNCOUNTED C1: a hidden member's the moment they hid",
     "tests": [
       "test/net/guildseen.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "GUILD-SEEN-the-call-ahead-of-the-beat",
     "file": "server-account/src/guilds.js",
-    "old": "COALESCE(p.played_at, p.last_seen) AS seen_at",
-    "new": "COALESCE(p.last_seen, p.played_at) AS seen_at",
+    "old": "    COALESCE(p.played_at, p.last_seen) AS seen_at FROM guild_members m LEFT JOIN players p ON p.id = m.player WHERE m.guild_id = ? ORDER BY m.rank, m.joined_at, m.rowid`,",
+    "new": "    COALESCE(p.last_seen, p.played_at) AS seen_at FROM guild_members m LEFT JOIN players p ON p.id = m.player WHERE m.guild_id = ? ORDER BY m.rank, m.joined_at, m.rowid`,",
     "tests": [
       "test/net/guildseen.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "GUILD-SEEN-the-beat-unread",
     "file": "server-account/src/guilds.js",
-    "old": "COALESCE(p.played_at, p.last_seen) AS seen_at",
-    "new": "p.last_seen AS seen_at",
+    "old": "    COALESCE(p.played_at, p.last_seen) AS seen_at FROM guild_members m LEFT JOIN players p ON p.id = m.player WHERE m.guild_id = ? ORDER BY m.rank, m.joined_at, m.rowid`,",
+    "new": "    p.last_seen AS seen_at FROM guild_members m LEFT JOIN players p ON p.id = m.player WHERE m.guild_id = ? ORDER BY m.rank, m.joined_at, m.rowid`,",
     "tests": [
       "test/net/guildseen.test.js"
     ]

@@ -363,8 +363,8 @@
   {
     "name": "CARDS10-service-short",
     "file": "server-account/src/iliac.js",
-    "old": "  if (short) return { error: 'deck-short', card: short };\n",
-    "new": "",
+    "old": "  if (short) return { error: 'deck-short', card: short };\n  const digest = await deckDigest(deck, { subtle });",
+    "new": "  const digest = await deckDigest(deck, { subtle });",
     "tests": [
       "test/net/iliac/cards10_service.test.js"
     ]
@@ -372,8 +372,8 @@
   {
     "name": "CARDS10-service-account",
     "file": "server-account/src/iliac.js",
-    "old": "  if (!c.f.includes(player.id)) return { error: 'not-yours' };\n",
-    "new": "",
+    "old": "  if (!c.f.includes(player.id)) return { error: 'not-yours' };\n  if (!player.handle) return { recorded: false, why: 'guest' };",
+    "new": "  if (!player.handle) return { recorded: false, why: 'guest' };",
     "tests": [
       "test/net/iliac/cards10_service.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "CARDS10-service-title-foes",
     "file": "server-account/src/iliac.js",
-    "old": "Number(r.games) >= ILIAC_CHAMPION_MIN_GAMES && Number(r.foes ?? 0) >= ILIAC_CHAMPION_MIN_FOES;",
-    "new": "Number(r.games) >= ILIAC_CHAMPION_MIN_GAMES;",
+    "old": "export const iliacTitleWorthy = (r) =>\n  !!r && Number(r.games) >= ILIAC_CHAMPION_MIN_GAMES && Number(r.foes ?? 0) >= ILIAC_CHAMPION_MIN_FOES;",
+    "new": "export const iliacTitleWorthy = (r) => !!r && Number(r.games) >= ILIAC_CHAMPION_MIN_GAMES;",
     "tests": [
       "test/net/iliac/cards10_service.test.js"
     ]
@@ -417,8 +417,8 @@
   {
     "name": "CARDS10-service-honours-door",
     "file": "server-account/src/honours.js",
-    "old": "arena: answers[0], iliac: answers[1], gambit: answers[2]",
-    "new": "arena: answers[0], gambit: answers[2]",
+    "old": "  return { ...player, arena: answers[0], iliac: answers[1], gambit: answers[2] };",
+    "new": "  return { ...player, arena: answers[0], gambit: answers[2] };",
     "tests": [
       "test/net/iliac/cards10_service.test.js"
     ],
@@ -427,8 +427,8 @@
   {
     "name": "CARDS10-service-season-played",
     "file": "server-account/src/iliac.js",
-    "old": ": played ? await storeIliacChampion(ctx, season, nowS) : null;",
-    "new": ": await storeIliacChampion(ctx, season, nowS);",
+    "old": "      : played\n        ? await storeIliacChampion(ctx, season, nowS)\n        : null;",
+    "new": "      : await storeIliacChampion(ctx, season, nowS);",
     "tests": [
       "test/server/scale4b.test.js",
       "test/systems/legacy/stormshed2.test.js"

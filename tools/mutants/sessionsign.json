@@ -272,8 +272,8 @@
   {
     "name": "SESSIONSIGN-beat-session-unsent",
     "file": "server-account/src/heartbeat.js",
-    "old": "creditPlay(ctx, player.id, sessionId)",
-    "new": "creditPlay(ctx, player.id)",
+    "old": "  if (body?.beat === true) await part('beat', () => creditPlay(ctx, player.id, sessionId)); // SESSION-SIGN E3: under its session",
+    "new": "  if (body?.beat === true) await part('beat', () => creditPlay(ctx, player.id)); // SESSION-SIGN E3: under its session",
     "tests": [
       "test/server/sessionsign.test.js"
     ],
