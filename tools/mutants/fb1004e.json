@@ -772,8 +772,8 @@
   {
     "name": "SEATTIP-readTip-ignores-the-bound",
     "file": "src/ui/eventMapMarks.js",
-    "old": ".map((l) => String(l ?? '').slice(0, textMax))",
-    "new": ".map((l) => String(l ?? '').slice(0, TIP_TEXT_MAX))",
+    "old": "    .map((l) => String(l ?? '').slice(0, textMax))",
+    "new": "    .map((l) => String(l ?? '').slice(0, TIP_TEXT_MAX))",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],

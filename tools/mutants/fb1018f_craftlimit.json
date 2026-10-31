@@ -112,8 +112,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-words-cap-limit-as-top",
     "file": "src/ui/craftXpWords.js",
-    "old": "  if (limit.by?.length) {\n    return t('prof.page.craft.xpLimit'",
-    "new": "  if (false) {\n    return t('prof.page.craft.xpLimit'",
+    "old": "  if (limit.by?.length) {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -122,7 +122,7 @@
   {
     "name": "CRAFT-LIMIT-SAID-words-list-unjoined",
     "file": "src/ui/craftXpWords.js",
-    "old": "  try { return new Intl.ListFormat(intlLocale(), { type: 'conjunction' }).format(names); } catch { return names.join(', '); }",
+    "old": "  try {\n    return new Intl.ListFormat(intlLocale(), { type: 'conjunction' }).format(names);\n  } catch {\n    return names.join(', ');\n  }",
     "new": "  return names.join(', ');",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-words-paid-unscaled",
     "file": "src/ui/craftXpWords.js",
-    "old": "creditedXp(scaleXp(xp, pay.pct ?? 0), pay.limit?.room ?? Infinity)",
-    "new": "creditedXp(xp, pay.limit?.room ?? Infinity)",
+    "old": "export const paidXp = (xp, pay = {}) => creditedXp(scaleXp(xp, pay.pct ?? 0), pay.limit?.room ?? Infinity);",
+    "new": "export const paidXp = (xp, pay = {}) => creditedXp(xp, pay.limit?.room ?? Infinity);",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-words-paid-unbounded",
     "file": "src/ui/craftXpWords.js",
-    "old": "creditedXp(scaleXp(xp, pay.pct ?? 0), pay.limit?.room ?? Infinity)",
-    "new": "creditedXp(scaleXp(xp, pay.pct ?? 0), Infinity)",
+    "old": "export const paidXp = (xp, pay = {}) => creditedXp(scaleXp(xp, pay.pct ?? 0), pay.limit?.room ?? Infinity);",
+    "new": "export const paidXp = (xp, pay = {}) => creditedXp(scaleXp(xp, pay.pct ?? 0), Infinity);",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-words-line-first-scaled",
     "file": "src/ui/craftXpWords.js",
-    "old": "  const more = walled ? 0 : firstCraftXp(r, true);",
-    "new": "  const more = walled ? 0 : scaleXp(firstCraftXp(r, true), pay.pct ?? 0);",
+    "old": "  const more = walled ? 0 : firstCraftXp(r, true); // FIRST-BUDGET: its track's first-make share",
+    "new": "  const more = walled ? 0 : scaleXp(firstCraftXp(r, true), pay.pct ?? 0); // FIRST-BUDGET: its track's first-make share",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -173,8 +173,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-words-line-most-plain",
     "file": "src/ui/craftXpWords.js",
-    "old": "  return capLine(profession, pay, xp + more) || (walled",
-    "new": "  return capLine(profession, pay, xp) || (walled",
+    "old": "  return (\n    capLine(profession, pay, xp + more) ||",
+    "new": "  return (\n    capLine(profession, pay, xp) ||",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js",
       "test/net/fb1026b_wovenpays.test.js"
@@ -185,8 +185,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-words-dish-cap-dropped",
     "file": "src/ui/craftXpWords.js",
-    "old": "  : capLine(profession, pay, clean + firstCraftXp(r))\n    || ",
-    "new": "  : ",
+    "old": "    : capLine(profession, pay, clean + firstCraftXp(r)) ||\n      (firstCraftXp(r) > 0\n        ? owed === true\n          ? t('prof.page.fire.firstOwed', 'First time cooking this: {more, number} more {profession} experience.', {\n              more: firstCraftXp(r),\n              profession,\n            })\n          : t(\n              'prof.page.fire.first',\n              'The first time you cook this dish: {more, number} more {profession} experience.',\n              { more: firstCraftXp(r), profession },\n            )\n        : '');",
+    "new": "    : firstCraftXp(r) > 0\n      ? owed === true\n        ? t('prof.page.fire.firstOwed', 'First time cooking this: {more, number} more {profession} experience.', {\n            more: firstCraftXp(r),\n            profession,\n          })\n        : t('prof.page.fire.first', 'The first time you cook this dish: {more, number} more {profession} experience.', {\n            more: firstCraftXp(r),\n            profession,\n          })\n      : '';",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -195,8 +195,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-words-mason-cap-dropped",
     "file": "src/ui/craftXpWords.js",
-    "old": "export const masonWorksFirstLine = (rank, profession, pay = {}, owed = null) => capLine(profession, pay, scaleXp(masonXp(1, rank, { clean: true }), pay.pct ?? 0) + (owed && owed.cut === false && owed.mix === false ? 0 : workFirstXp(MASON_RECIPES[0])))\n  || ",
-    "new": "export const masonWorksFirstLine = (rank, profession, pay = {}, owed = null) => ",
+    "old": "  capLine(\n    profession,\n    pay,\n    scaleXp(masonXp(1, rank, { clean: true }), pay.pct ?? 0) +\n      (owed && owed.cut === false && owed.mix === false ? 0 : workFirstXp(MASON_RECIPES[0])),\n  ) ||\n  (owed && owed.cut !== null && owed.mix !== null\n    ? t(\n        'prof.page.mason.worksOwed',\n        'First-time bonus, {more, number} {profession} experience each: first cut {cut, select, owed {still to earn} other {made}}, first mix {mix, select, owed {still to earn} other {made}}.',\n        {\n          more: workFirstXp(MASON_RECIPES[0]),\n          profession,\n          cut: owed.cut ? 'owed' : 'made',\n          mix: owed.mix ? 'owed' : 'made',\n        },\n      )\n    : t(\n        'prof.page.mason.worksFirst',\n        'Your first cut and your first mix each earn {more, number} more {profession} experience.',\n        { more: workFirstXp(MASON_RECIPES[0]), profession },\n      ));",
+    "new": "  owed && owed.cut !== null && owed.mix !== null\n    ? t(\n        'prof.page.mason.worksOwed',\n        'First-time bonus, {more, number} {profession} experience each: first cut {cut, select, owed {still to earn} other {made}}, first mix {mix, select, owed {still to earn} other {made}}.',\n        {\n          more: workFirstXp(MASON_RECIPES[0]),\n          profession,\n          cut: owed.cut ? 'owed' : 'made',\n          mix: owed.mix ? 'owed' : 'made',\n        },\n      )\n    : t(\n        'prof.page.mason.worksFirst',\n        'Your first cut and your first mix each earn {more, number} more {profession} experience.',\n        { more: workFirstXp(MASON_RECIPES[0]), profession },\n      );",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -227,8 +227,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-words-rule-never-full",
     "file": "src/ui/craftXpWords.js",
-    "old": "full: past.length >= CRAFTS_ABOVE_JOURNEYMAN ? 'yes' : 'no'",
-    "new": "full: 'no'",
+    "old": "    {\n      max: CRAFTS_ABOVE_JOURNEYMAN,\n      full: past.length >= CRAFTS_ABOVE_JOURNEYMAN ? 'yes' : 'no',\n      crafts: craftsList(past),\n      rank: JOURNEYMAN_RANK,\n    },",
+    "new": "    { max: CRAFTS_ABOVE_JOURNEYMAN, full: 'no', crafts: craftsList(past), rank: JOURNEYMAN_RANK },",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -237,8 +237,8 @@
   {
     "name": "CRAFT-LIMIT-SAID-words-rule-always-full",
     "file": "src/ui/craftXpWords.js",
-    "old": "full: past.length >= CRAFTS_ABOVE_JOURNEYMAN ? 'yes' : 'no'",
-    "new": "full: 'yes'",
+    "old": "    {\n      max: CRAFTS_ABOVE_JOURNEYMAN,\n      full: past.length >= CRAFTS_ABOVE_JOURNEYMAN ? 'yes' : 'no',\n      crafts: craftsList(past),\n      rank: JOURNEYMAN_RANK,\n    },",
+    "new": "    { max: CRAFTS_ABOVE_JOURNEYMAN, full: 'yes', crafts: craftsList(past), rank: JOURNEYMAN_RANK },",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -583,8 +583,8 @@
   {
     "name": "L5-words-capline-rank-50",
     "file": "src/ui/craftXpWords.js",
-    "old": "      { room: limit.room, profession, crafts: craftsList(limit.by), rank: limit.rank });",
-    "new": "      { room: limit.room, profession, crafts: craftsList(limit.by), rank: JOURNEYMAN_RANK });",
+    "old": "      { room: limit.room, profession, crafts: craftsList(limit.by), rank: limit.rank },",
+    "new": "      { room: limit.room, profession, crafts: craftsList(limit.by), rank: JOURNEYMAN_RANK },",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -593,8 +593,8 @@
   {
     "name": "L5-words-word-rank-50",
     "file": "src/ui/craftXpWords.js",
-    "old": "{ xp, profession, crafts: craftsList(limit.by), rank: limit.rank })\n      : t('prof.craft.xpTop'",
-    "new": "{ xp, profession, crafts: craftsList(limit.by), rank: JOURNEYMAN_RANK })\n      : t('prof.craft.xpTop'",
+    "old": "          { xp, profession, crafts: craftsList(limit.by), rank: limit.rank },",
+    "new": "          { xp, profession, crafts: craftsList(limit.by), rank: JOURNEYMAN_RANK },",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -603,8 +603,8 @@
   {
     "name": "L5-words-word-master-as-limit",
     "file": "src/ui/craftXpWords.js",
-    "old": "    return limit.by?.length\n      ? t('prof.craft.xpLimit'",
-    "new": "    return limit\n      ? t('prof.craft.xpLimit'",
+    "old": "    return limit.by?.length",
+    "new": "    return limit",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -663,8 +663,8 @@
   {
     "name": "L5-words-list-english",
     "file": "src/ui/craftXpWords.js",
-    "old": "new Intl.ListFormat(intlLocale(), { type: 'conjunction' })",
-    "new": "new Intl.ListFormat('en', { type: 'conjunction' })",
+    "old": "    return new Intl.ListFormat(intlLocale(), { type: 'conjunction' }).format(names);",
+    "new": "    return new Intl.ListFormat('en', { type: 'conjunction' }).format(names);",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -673,8 +673,8 @@
   {
     "name": "L5-words-dish-most-clean-only",
     "file": "src/ui/craftXpWords.js",
-    "old": "capLine(profession, pay, clean + firstCraftXp(r))",
-    "new": "capLine(profession, pay, clean)",
+    "old": "    : capLine(profession, pay, clean + firstCraftXp(r)) ||",
+    "new": "    : capLine(profession, pay, clean) ||",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -683,8 +683,8 @@
   {
     "name": "L5-words-dish-most-first-only",
     "file": "src/ui/craftXpWords.js",
-    "old": "capLine(profession, pay, clean + firstCraftXp(r))",
-    "new": "capLine(profession, pay, 0 + firstCraftXp(r))",
+    "old": "    : capLine(profession, pay, clean + firstCraftXp(r)) ||",
+    "new": "    : capLine(profession, pay, 0 + firstCraftXp(r)) ||",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -693,8 +693,8 @@
   {
     "name": "L5-words-mason-most-first-only",
     "file": "src/ui/craftXpWords.js",
-    "old": "capLine(profession, pay, scaleXp(masonXp(1, rank, { clean: true }), pay.pct ?? 0) + (owed && owed.cut === false && owed.mix === false ? 0 : workFirstXp(MASON_RECIPES[0])))",
-    "new": "capLine(profession, pay, (owed && owed.cut === false && owed.mix === false ? 0 : workFirstXp(MASON_RECIPES[0])))",
+    "old": "  capLine(\n    profession,\n    pay,\n    scaleXp(masonXp(1, rank, { clean: true }), pay.pct ?? 0) +\n      (owed && owed.cut === false && owed.mix === false ? 0 : workFirstXp(MASON_RECIPES[0])),\n  ) ||",
+    "new": "  capLine(profession, pay, owed && owed.cut === false && owed.mix === false ? 0 : workFirstXp(MASON_RECIPES[0])) ||",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -703,8 +703,8 @@
   {
     "name": "L5-words-mason-most-plain",
     "file": "src/ui/craftXpWords.js",
-    "old": "capLine(profession, pay, scaleXp(masonXp(1, rank, { clean: true })",
-    "new": "capLine(profession, pay, scaleXp(masonXp(1, rank, { clean: false })",
+    "old": "    scaleXp(masonXp(1, rank, { clean: true }), pay.pct ?? 0) +",
+    "new": "    scaleXp(masonXp(1, rank, { clean: false }), pay.pct ?? 0) +",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],
@@ -713,8 +713,8 @@
   {
     "name": "L5-words-mason-most-unscaled",
     "file": "src/ui/craftXpWords.js",
-    "old": "scaleXp(masonXp(1, rank, { clean: true }), pay.pct ?? 0) + (owed && owed.cut",
-    "new": "masonXp(1, rank, { clean: true }) + (owed && owed.cut",
+    "old": "    scaleXp(masonXp(1, rank, { clean: true }), pay.pct ?? 0) +",
+    "new": "    masonXp(1, rank, { clean: true }) +",
     "tests": [
       "test/net/fb1018f_craftlimit.test.js"
     ],

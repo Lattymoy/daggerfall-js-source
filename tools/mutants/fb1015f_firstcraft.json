@@ -2,8 +2,8 @@
   {
     "name": "FB1015C-line-shop-never",
     "file": "src/ui/craftXpWords.js",
-    "old": "  return capLine(profession, pay, xp + more) || (walled\n",
-    "new": "  return capLine(profession, pay, xp + more) || (false\n",
+    "old": "    (walled",
+    "new": "    (false",
     "tests": [
       "test/net/fb1015f_firstcraft.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "FB1015C-line-shop-always",
     "file": "src/ui/craftXpWords.js",
-    "old": "  return capLine(profession, pay, xp + more) || (walled\n",
-    "new": "  return capLine(profession, pay, xp + more) || (true\n",
+    "old": "    (walled",
+    "new": "    (true",
     "tests": [
       "test/net/fb1015f_firstcraft.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "FB1015C-line-no-quarter",
     "file": "src/ui/craftXpWords.js",
-    "old": "  const xp = scaleXp(craftXp(r.tier, rank), pay.pct ?? 0);\n",
-    "new": "  const xp = scaleXp(craftXp(r.tier, 0), pay.pct ?? 0);\n",
+    "old": "  const xp = scaleXp(craftXp(r.tier, rank), pay.pct ?? 0);",
+    "new": "  const xp = scaleXp(craftXp(r.tier, 0), pay.pct ?? 0);",
     "tests": [
       "test/net/fb1015f_firstcraft.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "FB1015C-line-more-whole",
     "file": "src/ui/craftXpWords.js",
-    "old": "from cloth not bought with silver.', { xp, profession, more })",
-    "new": "from cloth not bought with silver.', { xp, profession, more: xp + more })",
+    "old": "          '{xp} {profession} experience, and {more} more the first time you make this piece at this grade from cloth not bought with silver.',\n          { xp, profession, more },",
+    "new": "          '{xp} {profession} experience, and {more} more the first time you make this piece at this grade from cloth not bought with silver.',\n          { xp, profession, more: xp + more },",
     "tests": [
       "test/net/fb1015f_firstcraft.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "FB1015C-dish-never",
     "file": "src/ui/craftXpWords.js",
-    "old": "    || (firstCraftXp(r) > 0 ? (owed === true",
-    "new": "    || (false ? (owed === true",
+    "old": "      (firstCraftXp(r) > 0",
+    "new": "      (false",
     "tests": [
       "test/net/fb1015f_firstcraft.test.js"
     ]
@@ -51,8 +51,8 @@
   {
     "name": "FB1015C-mason-works-more-whole",
     "file": "src/ui/craftXpWords.js",
-    "old": "      { more: workFirstXp(MASON_RECIPES[0]), profession }));",
-    "new": "      { more: masonXp(1, rank) + workFirstXp(MASON_RECIPES[0]), profession }));",
+    "old": "        { more: workFirstXp(MASON_RECIPES[0]), profession },",
+    "new": "        { more: masonXp(1, rank) + workFirstXp(MASON_RECIPES[0]), profession },",
     "tests": [
       "test/net/fb1015f_firstcraft.test.js",
       "test/ui/professions/crafthall.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "FB1015C-word-first-unread",
     "file": "src/ui/craftXpWords.js",
-    "old": "  if (!r || data?.first !== true) return t('prof.craft.xp'",
-    "new": "  if (!r) return t('prof.craft.xp'",
+    "old": "  if (!r || data?.first !== true) return t('prof.craft.xp', '(+{xp} {profession} experience)', { xp, profession });",
+    "new": "  if (!r) return t('prof.craft.xp', '(+{xp} {profession} experience)', { xp, profession });",
     "tests": [
       "test/net/fb1015f_firstcraft.test.js"
     ]
@@ -71,8 +71,8 @@
   {
     "name": "FB1015C-word-shop-never",
     "file": "src/ui/craftXpWords.js",
-    "old": "  return (typeof data.firstPaid === 'boolean' ? data.firstPaid : firstCraftPays(r))\n    ? t('prof.craft.xpFirst'",
-    "new": "  return true\n    ? t('prof.craft.xpFirst'",
+    "old": "  return (typeof data.firstPaid === 'boolean' ? data.firstPaid : firstCraftPays(r))",
+    "new": "  return true",
     "tests": [
       "test/net/fb1015f_firstcraft.test.js"
     ],
@@ -81,8 +81,8 @@
   {
     "name": "FB1015C-word-shop-always",
     "file": "src/ui/craftXpWords.js",
-    "old": "  return (typeof data.firstPaid === 'boolean' ? data.firstPaid : firstCraftPays(r))\n    ? t('prof.craft.xpFirst'",
-    "new": "  return false\n    ? t('prof.craft.xpFirst'",
+    "old": "  return (typeof data.firstPaid === 'boolean' ? data.firstPaid : firstCraftPays(r))",
+    "new": "  return false",
     "tests": [
       "test/net/fb1015f_firstcraft.test.js"
     ],

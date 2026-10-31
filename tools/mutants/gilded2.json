@@ -220,8 +220,8 @@
   {
     "name": "GILDED2-AUDIT-collections-blind-to-the-rung",
     "file": "src/ui/collectionsPage.js",
-    "old": "  for (const r of codexGilded()) gilded.append(...codexLine(el, r, rerender));\n",
-    "new": "",
+    "old": "  for (const r of codexGilded()) gilded.append(...codexLine(el, r, rerender));\n  detail.append(gilded);",
+    "new": "  detail.append(gilded);",
     "tests": [
       "test/systems/auditcards5_ui.test.js"
     ]

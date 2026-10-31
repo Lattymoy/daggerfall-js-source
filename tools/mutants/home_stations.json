@@ -76,8 +76,8 @@
   {
     "name": "HOME-STATIONS-station-holds-things",
     "file": "src/ui/decorPanel.js",
-    "old": "(it.piece.storage && it.holds) || !!it.piece.station || door;",
-    "new": "(it.piece.storage && it.holds) || door;",
+    "old": "    storeBtn.disabled = !it || !!it.piece.item || (it.piece.storage && it.holds) || !!it.piece.station || door; // HOME-STATIONS: a station holds nothing",
+    "new": "    storeBtn.disabled = !it || !!it.piece.item || (it.piece.storage && it.holds) || door; // HOME-STATIONS: a station holds nothing",
     "tests": [
       "test/ui/homestations.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "HOME-STATIONS-chooser-stuck",
     "file": "src/ui/decorPanel.js",
-    "old": "const o = stationsOffered(view?.trader !== false); stationOffer = o[(o.indexOf(stationOffer) + 1) % o.length];",
-    "new": "const o = stationsOffered(view?.trader !== false); stationOffer = o[0];",
+    "old": "    stationOffer = o[(o.indexOf(stationOffer) + 1) % o.length];",
+    "new": "    stationOffer = o[0];",
     "tests": [
       "test/ui/homestations.test.js"
     ],

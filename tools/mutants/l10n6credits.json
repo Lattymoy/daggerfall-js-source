@@ -2,8 +2,8 @@
   {
     "name": "L10N6-credits-checked-unsaid",
     "file": "src/ui/credits.js",
-    "old": "    if (i.source === 'machine') {\n      lines.push(people.length\n",
-    "new": "    if (i.source === 'machine') {\n      lines.push(false\n",
+    "old": "        lines.push(\n          people.length\n            ? t('credits.l10n.checked', 'Machine translation by Claude, checked and corrected by {names}.', {",
+    "new": "        lines.push(\n          false\n            ? t('credits.l10n.checked', 'Machine translation by Claude, checked and corrected by {names}.', {",
     "tests": [
       "test/systems/l10n6_credits.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "L10N6-credits-hidden-credited",
     "file": "src/ui/credits.js",
-    "old": "i.code !== PSEUDO_LOCALE && !i.hidden)",
-    "new": "i.code !== PSEUDO_LOCALE)",
+    "old": "    .filter((i) => i.code !== BASE_LOCALE && i.code !== PSEUDO_LOCALE && !i.hidden)",
+    "new": "    .filter((i) => i.code !== BASE_LOCALE && i.code !== PSEUDO_LOCALE)",
     "tests": [
       "test/systems/l10n6_credits.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "L10N6-credits-english-credited",
     "file": "src/ui/credits.js",
-    "old": "infos.filter((i) => i.code !== BASE_LOCALE && i.code !== PSEUDO_LOCALE",
-    "new": "infos.filter((i) => i.code !== PSEUDO_LOCALE",
+    "old": "    .filter((i) => i.code !== BASE_LOCALE && i.code !== PSEUDO_LOCALE && !i.hidden)",
+    "new": "    .filter((i) => i.code !== PSEUDO_LOCALE && !i.hidden)",
     "tests": [
       "test/systems/l10n6_credits.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "L10N6-credits-pack-authors-dropped",
     "file": "src/ui/credits.js",
-    "old": "    const authors = [...(pack?.authors ?? []), ...people];",
-    "new": "    const authors = [...people];",
+    "old": "      const authors = [...(pack?.authors ?? []), ...people];",
+    "new": "      const authors = [...people];",
     "tests": [
       "test/systems/l10n6_credits.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "L10N6-credits-pack-unsaid",
     "file": "src/ui/credits.js",
-    "old": "    if (pack) lines.push(t('credits.l10n.bundled'",
-    "new": "    if (false) lines.push(t('credits.l10n.bundled'",
+    "old": "      if (pack)",
+    "new": "      if (false)",
     "tests": [
       "test/systems/l10n6_credits.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "L10N6-credits-terms-dropped",
     "file": "src/ui/credits.js",
-    "old": "      ...(pack ? { terms: t(",
-    "new": "      ...(false ? { terms: t(",
+    "old": "        what: lines.join(' '),\n        ...(pack",
+    "new": "        what: lines.join(' '),\n        ...(false",
     "tests": [
       "test/systems/l10n6_credits.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "L10N6-credits-any-source-a-link",
     "file": "src/ui/credits.js",
-    "old": "      ...(pack && /^https?:\\/\\//.test(pack.source) ? { link: pack.source } : {}),",
-    "new": "      ...(pack ? { link: pack.source } : {}),",
+    "old": "        ...(pack && /^https?:\\/\\//.test(pack.source) ? { link: pack.source } : {}),",
+    "new": "        ...(pack ? { link: pack.source } : {}),",
     "tests": [
       "test/systems/l10n6_credits.test.js"
     ]
@@ -65,7 +65,7 @@
   {
     "name": "L10N6-credits-english-list",
     "file": "src/ui/credits.js",
-    "old": "  try { return new Intl.ListFormat(intlLocale(), { type: 'conjunction' }).format(names); } catch { return names.join(', '); }",
+    "old": "  try {\n    return new Intl.ListFormat(intlLocale(), { type: 'conjunction' }).format(names);\n  } catch {\n    return names.join(', ');\n  }",
     "new": "  return names.join(', ');",
     "tests": [
       "test/systems/l10n6_credits.test.js"

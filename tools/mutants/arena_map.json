@@ -65,8 +65,8 @@
   {
     "name": "ARENAMAP-CLASSIC-PLATE-ASTRAY",
     "file": "src/ui/exteriorAutomapWindow.js",
-    "old": "      const anchor = nameplateAnchor(bl.x, bl.y, lm.position);",
-    "new": "      const anchor = nameplateAnchor(bl.y, bl.x, lm.position);",
+    "old": "        const anchor = nameplateAnchor(bl.x, bl.y, lm.position);",
+    "new": "        const anchor = nameplateAnchor(bl.y, bl.x, lm.position);",
     "tests": [
       "test/ui/town/arena_townmap.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "ARENAMAP-CLASSIC-RENAMED",
     "file": "src/ui/exteriorAutomapWindow.js",
-    "old": "    if (!p || p.isResidence || p.landmark) return;",
-    "new": "    if (!p || p.isResidence) return;",
+    "old": "    if (!p || p.isResidence || p.landmark) return; // ARENA-MAP: a landmark is no building to rename",
+    "new": "    if (!p || p.isResidence) return; // ARENA-MAP: a landmark is no building to rename",
     "tests": [
       "test/ui/town/arena_townmap.test.js"
     ]

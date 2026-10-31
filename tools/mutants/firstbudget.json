@@ -121,8 +121,8 @@
   {
     "name": "FIRST-BUDGET-words-unformatted",
     "file": "src/ui/craftXpWords.js",
-    "old": "'{xp} {profession} experience, and {more, number} more the first time you make this piece at this grade.'",
-    "new": "'{xp} {profession} experience, and {more} more the first time you make this piece at this grade.'",
+    "old": "            '{xp} {profession} experience, and {more, number} more the first time you make this piece at this grade.',",
+    "new": "            '{xp} {profession} experience, and {more} more the first time you make this piece at this grade.',",
     "tests": [
       "test/net/firstbudget_law.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "FIRST-BUDGET-words-dish-the-old-500",
     "file": "src/ui/craftXpWords.js",
-    "old": "t('prof.page.fire.first', 'The first time you cook this dish: {more, number} more {profession} experience.', { more: firstCraftXp(r), profession })",
-    "new": "t('prof.page.fire.first', 'The first time you cook this dish: {more, number} more {profession} experience.', { more: 500, profession })",
+    "old": "              { more: firstCraftXp(r), profession },",
+    "new": "              { more: 500, profession },",
     "tests": [
       "test/net/firstbudget_law.test.js"
     ]

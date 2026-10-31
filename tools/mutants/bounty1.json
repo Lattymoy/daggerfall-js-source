@@ -204,8 +204,8 @@
   {
     "name": "DEATH-PENALTY-3-the-offline-screen-claims-gold",
     "file": "src/ui/deathScreen.js",
-    "old": "this.goldLoss = respawns && penalty !== false && !isCasual(entity) ? deathGoldLoss(goldPiecesOf(entity)) : 0;",
-    "new": "this.goldLoss = deathGoldLoss(goldPiecesOf(entity));",
+    "old": "    this.goldLoss = respawns && penalty !== false && !isCasual(entity) ? deathGoldLoss(goldPiecesOf(entity)) : 0;",
+    "new": "    this.goldLoss = deathGoldLoss(goldPiecesOf(entity));",
     "tests": [
       "test/systems/deathpenalty.test.js",
       "test/scenes/donline1_respawn.test.js",

@@ -26,17 +26,30 @@
 // comes from and how it is had, worn from here), then this character's Codex and Cards. The switch is a row of tiles,
 // each its part's name over its count and a meter of it, so the page opens on how much of everything is collected.
 
-import { codexRows, codexSets, codexCount, codexGilded } from '../systems/loot/lootCodex.js';   // AUDIT WORLD-REWARDS A5: and the Gilded rung's rows
+import { codexRows, codexSets, codexCount, codexGilded } from '../systems/loot/lootCodex.js'; // AUDIT WORLD-REWARDS A5: and the Gilded rung's rows
 import { lootRarityOn, powerLine, legendaryById, affixLine, RARITIES } from '../systems/loot/lootRarity.js';
 import { gildedById } from '../systems/gilded.js';
 import { setById } from '../systems/sigil/sigilSets.js';
 import { cardsPartShown, drawCardsPart, resetCardsPart, disarmCardsPart, deckCards } from './card/cardBinderPage.js';
-import { collectionOf } from '../systems/iliac/iliacItems.js';   // COLLECTIONS-II: the Cards tile's count
+import { collectionOf } from '../systems/iliac/iliacItems.js'; // COLLECTIONS-II: the Cards tile's count
 import { t } from '../systems/textManager.js';
-import { wardrobeCount, wordPair } from './collections/wardrobeCatalogue.js';   // COLLECTIONS-II: the wardrobe's parts
-import { GATHERED_PARTS, isGatheredPart, gatheredCount, drawGatheredPart } from './collections/gatheredPart.js';   // HUNTERS-MARK: the Trophies, the Fish, the Annals
-import { drawWardrobePart, wardrobeAccount, wardrobeOfFlow, resetWardrobePart, rereadWardrobeAccount, WARDROBE_PART_CSS, WARDROBE_THEME_CSS } from './collections/wardrobePart.js';
-import { drawAppearancesPart, resetAppearancesPart, appearancesCount, LOOKS_PART_CSS } from './collections/appearancesPart.js';   // APPEARANCES: the character's looks (bible/04-Characters/Wardrobe.md)
+import { wardrobeCount, wordPair } from './collections/wardrobeCatalogue.js'; // COLLECTIONS-II: the wardrobe's parts
+import { GATHERED_PARTS, isGatheredPart, gatheredCount, drawGatheredPart } from './collections/gatheredPart.js'; // HUNTERS-MARK: the Trophies, the Fish, the Annals
+import {
+  drawWardrobePart,
+  wardrobeAccount,
+  wardrobeOfFlow,
+  resetWardrobePart,
+  rereadWardrobeAccount,
+  WARDROBE_PART_CSS,
+  WARDROBE_THEME_CSS,
+} from './collections/wardrobePart.js';
+import {
+  drawAppearancesPart,
+  resetAppearancesPart,
+  appearancesCount,
+  LOOKS_PART_CSS,
+} from './collections/appearancesPart.js'; // APPEARANCES: the character's looks (bible/04-Characters/Wardrobe.md)
 
 export const COLLECTION_PAGE_SECTIONS = Object.freeze([Object.freeze(['collections', 'Collections'])]);
 export const COLLECTION_PAGE_STYLE_ID = 'collections-page-css';
@@ -45,38 +58,59 @@ export const COLLECTION_PAGE_STYLE_ID = 'collections-page-css';
 export const COLLECTION_PARTS = Object.freeze([
   wordPair('titles', () => t('coll.part.titles', 'Titles')),
   wordPair('auras', () => t('coll.part.auras', 'Auras')),
-  wordPair('armory', () => t('coll.part.armory', 'Aura Armory')),   // ARMORY: the pieces worn on the body
+  wordPair('armory', () => t('coll.part.armory', 'Aura Armory')), // ARMORY: the pieces worn on the body
   wordPair('icons', () => t('coll.part.icons', 'Icons')),
   wordPair('glyphs', () => t('coll.part.glyphs', 'Glyphs')),
-  wordPair('appearances', () => t('coll.part.appearances', 'Appearances')),   // APPEARANCES: the character's looks, first of its own parts
+  wordPair('appearances', () => t('coll.part.appearances', 'Appearances')), // APPEARANCES: the character's looks, first of its own parts
   wordPair('codex', () => t('coll.part.codex', 'Codex')),
   wordPair('cards', () => t('coll.part.cards', 'Cards')),
-  ...GATHERED_PARTS,   // HUNTERS-MARK (Collections.md section 10): what a character gathers, then the account's pages
+  ...GATHERED_PARTS, // HUNTERS-MARK (Collections.md section 10): what a character gathers, then the account's pages
 ]);
 /** COLLECTIONS-II: the wardrobe's parts and the kind each lists (ui/collections/wardrobeCatalogue.js WARDROBE_KINDS). */
-export const WARDROBE_PARTS = Object.freeze({ titles: 'title', auras: 'aura', armory: 'armory', icons: 'icon', glyphs: 'glyph' });
-const partOfKind = (/** @type {string} */ kind) => Object.keys(WARDROBE_PARTS).find((id) => WARDROBE_PARTS[/** @type {keyof typeof WARDROBE_PARTS} */ (id)] === kind) ?? null;
+export const WARDROBE_PARTS = Object.freeze({
+  titles: 'title',
+  auras: 'aura',
+  armory: 'armory',
+  icons: 'icon',
+  glyphs: 'glyph',
+});
+const partOfKind = (/** @type {string} */ kind) =>
+  Object.keys(WARDROBE_PARTS).find((id) => WARDROBE_PARTS[/** @type {keyof typeof WARDROBE_PARTS} */ (id)] === kind) ??
+  null;
 
 /** COLLECTIONS-II: THE RAIL SHOWS THE PAGE ALWAYS - the wardrobe's catalogue is every player's to read, held or not
  *  (until then the page showed only while the codex or the cards had something). */
 export const collectionsPageShown = (_player = null) => true;
 /** The parts shown now, in order: the wardrobe's four always, the codex while Loot rarity makes Legendaries, the cards
  *  while the character carries a Card Binder. */
-export const collectionParts = (player = null) => COLLECTION_PARTS.filter(([id]) => (id === 'codex' ? lootRarityOn() : id === 'cards' ? cardsPartShown(player) : true));
+export const collectionParts = (player = null) =>
+  COLLECTION_PARTS.filter(([id]) => (id === 'codex' ? lootRarityOn() : id === 'cards' ? cardsPartShown(player) : true));
 
 let _part = 'titles';
-let _picked = null;   // the codex row opened whole
+let _picked = null; // the codex row opened whole
 /** The page forgotten (a load, a new character): back to its first part. COLLECTIONS-II: and the wardrobe's rows, its
  *  filter and its account read. */
-export function resetCollectionsPage() { _part = 'titles'; _picked = null; resetCardsPart(); resetWardrobePart(); resetAppearancesPart(); }
+export function resetCollectionsPage() {
+  _part = 'titles';
+  _picked = null;
+  resetCardsPart();
+  resetWardrobePart();
+  resetAppearancesPart();
+}
 /** AUDIT CARDS-5 D5: leaving the page (another rail page, another tab) disarms what was armed on it. (AUDIT COLLECTIONS-II,
  *  lane 2: the account's read is the menu visit's, kept across leaving - resetCollectionsPage lets it go.) */
-export function disarmCollectionsPage() { disarmCardsPart(); }
+export function disarmCollectionsPage() {
+  disarmCardsPart();
+}
 /** AUDIT COLLECTIONS-II (lane 2): the account card closed - the page's read of the account asked again (a wear, a
  *  sign-out or another account there is the service's to say). */
-export function rereadCollectionsAccount() { rereadWardrobeAccount(); }
+export function rereadCollectionsAccount() {
+  rereadWardrobeAccount();
+}
 /** AUDIT CARDS-5 D14: a landing names the part to open on ('codex' | 'cards'; COLLECTIONS-II: or a wardrobe kind's). */
-export function setCollectionsPart(/** @type {string} */ part) { if (COLLECTION_PARTS.some(([id]) => id === part)) _part = part; }
+export function setCollectionsPart(/** @type {string} */ part) {
+  if (COLLECTION_PARTS.some(([id]) => id === part)) _part = part;
+}
 
 export const COLLECTION_PAGE_CSS = `
 .px-sys .coll-parts { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; margin: 2px 0 12px; }
@@ -100,7 +134,7 @@ function ensureStyle(doc) {
   if (!doc?.getElementById || doc.getElementById(COLLECTION_PAGE_STYLE_ID)) return;
   const st = doc.createElement('style');
   st.id = COLLECTION_PAGE_STYLE_ID;
-  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${WARDROBE_THEME_CSS}${LOOKS_PART_CSS}`;   // APPEARANCES: and the looks' part's   // COLLECTIONS-II: and the wardrobe's parts' sheet - AUDIT COLLECTIONS-II: and its Stone theme's
+  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${WARDROBE_THEME_CSS}${LOOKS_PART_CSS}`; // APPEARANCES: and the looks' part's   // COLLECTIONS-II: and the wardrobe's parts' sheet - AUDIT COLLECTIONS-II: and its Stone theme's
   doc.head?.appendChild(st);
 }
 
@@ -113,16 +147,24 @@ function ensureStyle(doc) {
  */
 export function drawCollectionsPage(detail, rerender, kit) {
   ensureStyle(typeof document === 'undefined' ? null : document);
-  const flow = wardrobeAccount(kit, rerender);   // COLLECTIONS-II: the account's wardrobe, asked once a visit
+  const flow = wardrobeAccount(kit, rerender); // COLLECTIONS-II: the account's wardrobe, asked once a visit
   const parts = collectionParts(kit.player ?? null);
   if (!parts.some(([id]) => id === _part)) _part = parts[0][0];
   detail.append(partTiles(kit, parts, wardrobeOfFlow(flow), rerender));
   const kind = WARDROBE_PARTS[/** @type {keyof typeof WARDROBE_PARTS} */ (_part)];
-  const goTo = (/** @type {string} */ k) => { const id = partOfKind(k); if (id) { _part = id; disarmCardsPart(); } };
+  const goTo = (/** @type {string} */ k) => {
+    const id = partOfKind(k);
+    if (id) {
+      _part = id;
+      disarmCardsPart();
+    }
+  };
   if (kind) drawWardrobePart(detail, rerender, { ...kit, goTo }, kind, flow);
-  else if (_part === 'appearances') drawAppearancesPart(detail, rerender, kit);   // APPEARANCES
+  else if (_part === 'appearances')
+    drawAppearancesPart(detail, rerender, kit); // APPEARANCES
   else if (_part === 'codex') drawCodexPart(detail, rerender, kit);
-  else if (isGatheredPart(_part)) drawGatheredPart(detail, kit, _part, wardrobeOfFlow(flow));   // HUNTERS-MARK
+  else if (isGatheredPart(_part))
+    drawGatheredPart(detail, kit, _part, wardrobeOfFlow(flow)); // HUNTERS-MARK
   else drawCardsPart(detail, rerender, kit);
 }
 
@@ -131,17 +173,28 @@ export function drawCollectionsPage(detail, rerender, kit) {
  *  pieces), the cards' every card of the catalog the binder holds one of. */
 export function partCount(/** @type {string} */ id, /** @type {any} */ wardrobe, /** @type {any} */ player = null) {
   const kind = WARDROBE_PARTS[/** @type {keyof typeof WARDROBE_PARTS} */ (id)];
-  if (kind) { const n = wardrobeCount(kind, wardrobe); return { held: wardrobe ? n.held : null, total: n.total }; }
-  if (id === 'appearances') return appearancesCount(player);   // APPEARANCES: every look there is, and those the character holds
-  if (isGatheredPart(id)) return gatheredCount(id, wardrobe);   // HUNTERS-MARK
-  if (id === 'codex') { const n = codexCount(); return { held: n.gilded + n.legendary + n.aetheric, total: n.gildeds + n.legendaries + n.aetherics }; }
+  if (kind) {
+    const n = wardrobeCount(kind, wardrobe);
+    return { held: wardrobe ? n.held : null, total: n.total };
+  }
+  if (id === 'appearances') return appearancesCount(player); // APPEARANCES: every look there is, and those the character holds
+  if (isGatheredPart(id)) return gatheredCount(id, wardrobe); // HUNTERS-MARK
+  if (id === 'codex') {
+    const n = codexCount();
+    return { held: n.gilded + n.legendary + n.aetheric, total: n.gildeds + n.legendaries + n.aetherics };
+  }
   const have = collectionOf(player?.items);
   const all = deckCards();
   return { held: all.filter((c) => have.has(c.id)).length, total: all.length };
 }
 
 /** COLLECTIONS-II: THE SWITCH - a tile a part, its name over its count and a meter of it; the one shown brass. */
-function partTiles(/** @type {any} */ kit, /** @type {ReadonlyArray<readonly [string, () => string]>} */ parts, /** @type {any} */ wardrobe, /** @type {() => void} */ rerender) {
+function partTiles(
+  /** @type {any} */ kit,
+  /** @type {ReadonlyArray<readonly [string, () => string]>} */ parts,
+  /** @type {any} */ wardrobe,
+  /** @type {() => void} */ rerender,
+) {
   const { el } = kit;
   const sw = el('div', 'coll-parts');
   for (const [id, label] of parts) {
@@ -150,9 +203,16 @@ function partTiles(/** @type {any} */ kit, /** @type {ReadonlyArray<readonly [st
     b.type = 'button';
     b.setAttribute('data-focus', `coll-part-${id}`);
     b.setAttribute('aria-pressed', id === _part ? 'true' : 'false');
-    b.append(el('span', 'coll-pname', label()), el('span', 'coll-pcount', t('coll.count', '{held} / {total}', { held: n.held ?? '–', total: n.total })));
+    b.append(
+      el('span', 'coll-pname', label()),
+      el('span', 'coll-pcount', t('coll.count', '{held} / {total}', { held: n.held ?? '–', total: n.total })),
+    );
     if (typeof kit.meter === 'function') b.append(kit.meter(n.held ?? 0, n.total));
-    b.onclick = () => { _part = id; disarmCardsPart(); rerender(); };
+    b.onclick = () => {
+      _part = id;
+      disarmCardsPart();
+      rerender();
+    };
     sw.append(b);
   }
   return sw;
@@ -164,19 +224,39 @@ function partTiles(/** @type {any} */ kit, /** @type {ReadonlyArray<readonly [st
 function drawCodexPart(detail, rerender, { el, divider }) {
   const n = codexCount();
   const rows = codexRows();
-  detail.append(divider(t('coll.codex.gilded', 'Gilded - {n} of {total} found', { n: n.gilded, total: n.gildeds })));   // AUDIT COLLECTIONS-II (lanes 3, 5): the codex's words in the player's language, on a page every player opens
+  detail.append(divider(t('coll.codex.gilded', 'Gilded - {n} of {total} found', { n: n.gilded, total: n.gildeds }))); // AUDIT COLLECTIONS-II (lanes 3, 5): the codex's words in the player's language, on a page every player opens
   const gilded = el('div', 'codex-list');
   for (const r of codexGilded()) gilded.append(...codexLine(el, r, rerender));
   detail.append(gilded);
-  detail.append(divider(t('coll.codex.legendaries', 'Legendaries - {n} of {total} found', { n: n.legendary, total: n.legendaries })));
+  detail.append(
+    divider(
+      t('coll.codex.legendaries', 'Legendaries - {n} of {total} found', { n: n.legendary, total: n.legendaries }),
+    ),
+  );
   const list = el('div', 'codex-list');
   for (const r of rows) list.append(...codexLine(el, r, rerender));
   detail.append(list);
-  detail.append(divider(t('coll.codex.aetheric', 'Aetheric - {n} of {total} found', { n: n.aetheric, total: n.aetherics })));
+  detail.append(
+    divider(t('coll.codex.aetheric', 'Aetheric - {n} of {total} found', { n: n.aetheric, total: n.aetherics })),
+  );
   for (const s of codexSets()) {
     const p = el('p', 'codex-set');
-    p.append(el('span', null, t('coll.codex.set', '{name} - {n} of {total}:', { name: setById(s.set)?.name ?? s.set, n: s.pieces.filter((x) => x.found).length, total: s.pieces.length })), el('span', null, ' '));   // AUDIT CARDS-5 D12: each set's count, as the Reforge's
-    s.pieces.forEach((x, i) => { if (i) p.append(el('span', null, ' · ')); p.append(el('span', x.found ? null : 'unfound', x.found ? x.name : '?')); });
+    p.append(
+      el(
+        'span',
+        null,
+        t('coll.codex.set', '{name} - {n} of {total}:', {
+          name: setById(s.set)?.name ?? s.set,
+          n: s.pieces.filter((x) => x.found).length,
+          total: s.pieces.length,
+        }),
+      ),
+      el('span', null, ' '),
+    ); // AUDIT CARDS-5 D12: each set's count, as the Reforge's
+    s.pieces.forEach((x, i) => {
+      if (i) p.append(el('span', null, ' · '));
+      p.append(el('span', x.found ? null : 'unfound', x.found ? x.name : '?'));
+    });
     detail.append(p);
   }
 }
@@ -187,9 +267,21 @@ function codexLine(el, r, rerender) {
     const line = el('button', `codex-line${r.found ? ' found' : ''}${_picked === r.id ? ' on' : ''}`);
     line.type = 'button';
     line.dataset.record = r.id;
-    line.append(el('span', 'nm', r.found ? r.name : t('coll.codex.unfound', 'Unfound')), el('span', 'sub', r.found ? t('coll.codex.foundOn', '{group} · found on day {day}', { group: r.group, day: r.day }) : `${r.group} · ${r.hint}`));
+    line.append(
+      el('span', 'nm', r.found ? r.name : t('coll.codex.unfound', 'Unfound')),
+      el(
+        'span',
+        'sub',
+        r.found
+          ? t('coll.codex.foundOn', '{group} · found on day {day}', { group: r.group, day: r.day })
+          : `${r.group} · ${r.hint}`,
+      ),
+    );
     line.setAttribute('data-focus', `codex-row-${r.id}`);
-    line.onclick = () => { _picked = _picked === r.id ? null : r.id; rerender(); };
+    line.onclick = () => {
+      _picked = _picked === r.id ? null : r.id;
+      rerender();
+    };
     if (r.kind === 'gilded' && r.found) line.dataset.rarity = 'gilded';
     out.push(line);
     if (_picked === r.id) out.push(codexWhole(el, r));
@@ -199,10 +291,13 @@ function codexLine(el, r, rerender) {
 /** A codex row opened whole: what the record is (found), or where it is said to be. */
 function codexWhole(el, r) {
   const ul = el('ul', 'codex-whole');
-  ul.append(el('li', null, `${RARITIES[r.kind]?.label ?? 'Legendary'} · ${r.group}`));   // AUDIT CARDS-5 D12: the Reforge's own lines, in its order
+  ul.append(el('li', null, `${RARITIES[r.kind]?.label ?? 'Legendary'} · ${r.group}`)); // AUDIT CARDS-5 D12: the Reforge's own lines, in its order
   if (r.found) {
-    const rec = r.kind === 'gilded' ? gildedById(r.id) : legendaryById(r.id);   // AUDIT WORLD-REWARDS A5: a Gilded record's lines, as the Reforge's
-    for (const a of rec?.affixes ?? []) { const line = affixLine({ rarity: r.kind ?? 'legendary', affixes: [a] }, 0); if (line) ul.append(el('li', null, line)); }
+    const rec = r.kind === 'gilded' ? gildedById(r.id) : legendaryById(r.id); // AUDIT WORLD-REWARDS A5: a Gilded record's lines, as the Reforge's
+    for (const a of rec?.affixes ?? []) {
+      const line = affixLine({ rarity: r.kind ?? 'legendary', affixes: [a] }, 0);
+      if (line) ul.append(el('li', null, line));
+    }
     if (r.power) ul.append(el('li', null, powerLine(r.power)));
     if (r.lore) ul.append(el('li', null, r.lore));
     ul.append(el('li', null, t('coll.codex.firstFound', 'First found on day {day}', { day: r.day })));

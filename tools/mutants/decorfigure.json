@@ -72,8 +72,8 @@
   {
     "name": "DECOR-FIGURE-buttons-kept",
     "file": "src/ui/decorPanel.js",
-    "old": "      if (!browse && !!smaller.hidden === sized) { smaller.hidden = !sized; bigger.hidden = !sized; drawKeys(sized); }\n",
-    "new": "",
+    "old": "      if (!browse && !!smaller.hidden === sized) {\n        smaller.hidden = !sized;\n        bigger.hidden = !sized;\n        drawKeys(sized);\n      }\n      catalog.hidden = !browse;",
+    "new": "      catalog.hidden = !browse;",
     "tests": [
       "test/systems/decor/decorfigure.test.js"
     ],

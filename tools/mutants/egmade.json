@@ -189,8 +189,8 @@
   {
     "name": "EGMADE-the-screen-ignores-penalty",
     "file": "src/ui/deathScreen.js",
-    "old": "this.goldLoss = respawns && penalty !== false && !isCasual(entity) ? deathGoldLoss(goldPiecesOf(entity)) : 0;",
-    "new": "this.goldLoss = respawns && !isCasual(entity) ? deathGoldLoss(goldPiecesOf(entity)) : 0;",
+    "old": "    this.goldLoss = respawns && penalty !== false && !isCasual(entity) ? deathGoldLoss(goldPiecesOf(entity)) : 0;",
+    "new": "    this.goldLoss = respawns && !isCasual(entity) ? deathGoldLoss(goldPiecesOf(entity)) : 0;",
     "tests": [
       "test/systems/eliteGates/egmade_law.test.js"
     ]

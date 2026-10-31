@@ -915,8 +915,8 @@
   {
     "name": "DPW-off-deck-set",
     "file": "src/ui/deckPlanWindow.js",
-    "old": "  if (!deck?.walkable?.(at[0], at[1])) return t('naval.deck.offDeck',",
-    "new": "  if (false) return t('naval.deck.offDeck',",
+    "old": "  if (!deck?.walkable?.(at[0], at[1])) return t('naval.deck.offDeck', \"That spot isn't on the open deck.\");",
+    "new": "  if (false) return t('naval.deck.offDeck', \"That spot isn't on the open deck.\");",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -924,8 +924,8 @@
   {
     "name": "DPW-crowd-set",
     "file": "src/ui/deckPlanWindow.js",
-    "old": "  if (others.some((f) => Math.hypot(f.x - at[0], f.z - at[1]) < FITTING_GAP)) return",
-    "new": "  if (false) return",
+    "old": "  if (others.some((f) => Math.hypot(f.x - at[0], f.z - at[1]) < FITTING_GAP))\n    return t('naval.deck.crowded', 'Too close to another fitting.');",
+    "new": "  if (false) return t('naval.deck.crowded', 'Too close to another fitting.');",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -933,8 +933,8 @@
   {
     "name": "DPW-most-past",
     "file": "src/ui/deckPlanWindow.js",
-    "old": "    if (list.length >= DECK_FITTINGS_MAX) { tell(",
-    "new": "    if (false) { tell(",
+    "old": "    if (list.length >= DECK_FITTINGS_MAX) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -942,8 +942,8 @@
   {
     "name": "DPW-taken-never",
     "file": "src/ui/deckPlanWindow.js",
-    "old": "    const i = under(sx, sy);\n    if (i >= 0) {",
-    "new": "    const i = -1;\n    if (i >= 0) {",
+    "old": "    const i = under(sx, sy);",
+    "new": "    const i = -1;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -951,8 +951,8 @@
   {
     "name": "DPW-turn-unwrapped",
     "file": "src/ui/deckPlanWindow.js",
-    "old": "const f = list[picked], yaw = (f.yaw + d + YAW_STEPS) % YAW_STEPS;",
-    "new": "const f = list[picked], yaw = Math.max(0, f.yaw + d);",
+    "old": "      yaw = (f.yaw + d + YAW_STEPS) % YAW_STEPS;",
+    "new": "      yaw = Math.max(0, f.yaw + d);",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -978,8 +978,8 @@
   {
     "name": "DPW-saved-raw-closed",
     "file": "src/ui/deckPlanWindow.js",
-    "old": "    if (r?.ok) close(); else tell(",
-    "new": "    close(); if (!r?.ok) tell(",
+    "old": "    if (r?.ok) close();\n    else tell(r?.text ?? t('naval.deck.bad', \"Those fittings can't be placed on this ship.\"), true);",
+    "new": "    close();\n    if (!r?.ok) tell(r?.text ?? t('naval.deck.bad', \"Those fittings can't be placed on this ship.\"), true);",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -987,8 +987,8 @@
   {
     "name": "DPW-turn-anticlockwise",
     "file": "src/ui/deckPlanWindow.js",
-    "old": "ctx.rotate((f.yaw / YAW_STEPS) * Math.PI * 2 + (view.laid ? Math.PI / 2 : 0));",
-    "new": "ctx.rotate(-(f.yaw / YAW_STEPS) * Math.PI * 2 + (view.laid ? Math.PI / 2 : 0));",
+    "old": "      ctx.rotate((f.yaw / YAW_STEPS) * Math.PI * 2 + (view.laid ? Math.PI / 2 : 0));",
+    "new": "      ctx.rotate(-(f.yaw / YAW_STEPS) * Math.PI * 2 + (view.laid ? Math.PI / 2 : 0));",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -996,8 +996,8 @@
   {
     "name": "DPW-laid-unturned",
     "file": "src/ui/deckPlanWindow.js",
-    "old": "ctx.rotate((f.yaw / YAW_STEPS) * Math.PI * 2 + (view.laid ? Math.PI / 2 : 0));",
-    "new": "ctx.rotate((f.yaw / YAW_STEPS) * Math.PI * 2);",
+    "old": "      ctx.rotate((f.yaw / YAW_STEPS) * Math.PI * 2 + (view.laid ? Math.PI / 2 : 0));",
+    "new": "      ctx.rotate((f.yaw / YAW_STEPS) * Math.PI * 2);",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -1014,8 +1014,8 @@
   {
     "name": "DPW-laid-todeck-unswapped",
     "file": "src/ui/deckPlanWindow.js",
-    "old": "(view.laid ? [(sy - view.oy) / view.s, (sx - view.ox) / view.s] :",
-    "new": "(view.laid ? [(sx - view.ox) / view.s, (sy - view.oy) / view.s] :",
+    "old": "    view.laid ? [(sy - view.oy) / view.s, (sx - view.ox) / view.s] : [(sx - view.ox) / view.s, (view.oy - sy) / view.s];",
+    "new": "    view.laid ? [(sx - view.ox) / view.s, (sy - view.oy) / view.s] : [(sx - view.ox) / view.s, (view.oy - sy) / view.s];",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]

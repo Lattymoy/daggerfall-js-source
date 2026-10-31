@@ -302,8 +302,8 @@
   {
     "name": "SAFE-AUDIT-CLIENT-10-escape-unread",
     "file": "src/ui/conductCard.js",
-    "old": "        win?.addEventListener?.('keydown', onKey, true);\n",
-    "new": "",
+    "old": "        win?.addEventListener?.('keydown', onKey, true);\n        try {",
+    "new": "        try {",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],
@@ -312,8 +312,8 @@
   {
     "name": "SAFE-AUDIT-CLIENT-10-the-stack-never-told",
     "file": "src/ui/conductCard.js",
-    "old": "        unregister = register(() => answer(later));   // AUDIT SAFE CLIENT-10: the QuickDial key puts it away, as Not now\n",
-    "new": "",
+    "old": "        unregister = register(() => answer(later)); // AUDIT SAFE CLIENT-10: the QuickDial key puts it away, as Not now\n        win?.addEventListener?.('keydown', onKey, true);",
+    "new": "        win?.addEventListener?.('keydown', onKey, true);",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],

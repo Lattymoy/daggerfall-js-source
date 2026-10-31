@@ -2,8 +2,8 @@
   {
     "name": "BOOT2-the-cursor-takes-the-helper-from-the-hud-again",
     "file": "src/ui/cursor.js",
-    "old": "import { APP_ROOT } from '../systems/appRoot.js';",
-    "new": "import { APP_ROOT } from '../systems/appRoot.js';\nimport { drawHud } from './hud/hud.js';",
+    "old": "import { APP_ROOT } from '../systems/appRoot.js';\n",
+    "new": "import { APP_ROOT } from '../systems/appRoot.js';\nimport { drawHud } from './hud/hud.js';\n",
     "tests": [
       "test/render/boot2.test.js"
     ]

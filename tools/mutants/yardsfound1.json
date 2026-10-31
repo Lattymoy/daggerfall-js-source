@@ -56,8 +56,8 @@
   {
     "name": "YARDS-FOUND-the-classic-windows-places-unread",
     "file": "src/ui/exteriorAutomapWindow.js",
-    "old": "      for (const lm of [bl?.landmark, ...(bl?.places ?? [])]) {\n        if (!lm?.name) continue;\n        const anchor",
-    "new": "      for (const lm of [bl?.landmark]) {\n        if (!lm?.name) continue;\n        const anchor",
+    "old": "      for (const lm of [bl?.landmark, ...(bl?.places ?? [])]) {",
+    "new": "      for (const lm of [bl?.landmark]) {",
     "tests": [
       "test/systems/yardsfound1.test.js"
     ]

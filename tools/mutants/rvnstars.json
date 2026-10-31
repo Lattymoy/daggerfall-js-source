@@ -524,8 +524,8 @@
   {
     "name": "RVN-STARS-page-door-unread",
     "file": "src/ui/companionRoster.js",
-    "old": "b.onclick = () => { _notice = null; stars(r.id); };",
-    "new": "b.onclick = () => { _notice = null; };",
+    "old": "        stars(r.id);\n      };",
+    "new": "      };",
     "tests": [
       "test/systems/revenant/rvnstars.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "RVN-STARS-page-road-unread",
     "file": "src/ui/companionRoster.js",
-    "old": "const mins = errandMinutes(r, p);",
-    "new": "const mins = p.days * MINUTES_PER_DAY;",
+    "old": "    const mins = errandMinutes(r, p); // RVN-STARS: its road - a share off the days",
+    "new": "    const mins = p.days * MINUTES_PER_DAY; // RVN-STARS: its road - a share off the days",
     "tests": [
       "test/systems/revenant/rvnstars.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "RVN-STARS-page-line-unsaid",
     "file": "src/ui/companionRoster.js",
-    "old": "  text.append(el('span', `cmp-stars${state !== 'errand' && rvnStarsOf(r).points > rvnStarsOf(r).set ? ' is-left' : ''}`, starsLine(r)));   // RVN-STARS - AUDIT RVN-STARS S28: gold only where its Stars can set them\n",
-    "new": "",
+    "old": "  text.append(\n    el(\n      'span',\n      `cmp-stars${state !== 'errand' && rvnStarsOf(r).points > rvnStarsOf(r).set ? ' is-left' : ''}`,\n      starsLine(r),\n    ),\n  ); // RVN-STARS - AUDIT RVN-STARS S28: gold only where its Stars can set them\n  if (_notice?.id === r.id) text.append(el('span', 'cmp-why', _notice.text));",
+    "new": "  if (_notice?.id === r.id) text.append(el('span', 'cmp-why', _notice.text));",
     "tests": [
       "test/systems/revenant/rvnstars.test.js"
     ]
@@ -821,8 +821,8 @@
   {
     "name": "RVN-STARS-rail-english",
     "file": "src/ui/companionRoster.js",
-    "old": "get: () => t('rvn.roster.rail', 'Companions')",
-    "new": "get: () => 'Companions'",
+    "old": "    Object.defineProperty(row, 1, { enumerable: true, get: () => t('rvn.roster.rail', 'Companions') });",
+    "new": "    Object.defineProperty(row, 1, { enumerable: true, get: () => 'Companions' });",
     "tests": [
       "test/systems/revenant/rvnstars.test.js"
     ]
@@ -849,8 +849,8 @@
   {
     "name": "RVN-STARS-none-unsaid",
     "file": "src/ui/companionRoster.js",
-    "old": "  if (!s.points) return t('rvn.roster.starsNone',",
-    "new": "  if (false) return t('rvn.roster.starsNone',",
+    "old": "  if (!s.points) return t('rvn.roster.starsNone', 'Level {level} · no stars to set yet', { level: s.level });",
+    "new": "  if (false) return t('rvn.roster.starsNone', 'Level {level} · no stars to set yet', { level: s.level });",
     "tests": [
       "test/systems/revenant/rvnstars.test.js"
     ]
@@ -858,8 +858,8 @@
   {
     "name": "RVN-STARS-gold-abroad",
     "file": "src/ui/companionRoster.js",
-    "old": "`cmp-stars${state !== 'errand' && rvnStarsOf",
-    "new": "`cmp-stars${rvnStarsOf",
+    "old": "  text.append(\n    el(\n      'span',\n      `cmp-stars${state !== 'errand' && rvnStarsOf(r).points > rvnStarsOf(r).set ? ' is-left' : ''}`,\n      starsLine(r),\n    ),\n  ); // RVN-STARS - AUDIT RVN-STARS S28: gold only where its Stars can set them",
+    "new": "  text.append(el('span', `cmp-stars${rvnStarsOf(r).points > rvnStarsOf(r).set ? ' is-left' : ''}`, starsLine(r))); // RVN-STARS - AUDIT RVN-STARS S28: gold only where its Stars can set them",
     "tests": [
       "test/systems/revenant/rvnstars.test.js"
     ]

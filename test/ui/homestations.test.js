@@ -225,7 +225,7 @@ test('AUDIT HOME-STATIONS S3 + S6 + S9: the room\'s view repaints when a piece\'
   assert.equal(rig.standing[0].station, undefined);
   assert.equal(btn(root, /^Make station/)?.textContent, 'Make station - 50,000 gold', 'the button says what the piece now is');
   const P = src('src/ui/decorPanel.js');
-  assert.match(P, /const what = stationBtn\.dataset\.what;\s*\n\s*if \(what === 'arm'\) \{ stationArmed = it\.piece\.id; paintRoomSide\(\); return; \}\s*\n\s*stationArmed = null;\s*\n\s*if \(what\) onToggle\(it\.piece, what\);/, 'the act the button says');
+  assert.match(P, /const what = stationBtn\.dataset\.what;\n\s*if \(what === 'arm'\) \{\n\s*stationArmed = it\.piece\.id;\n\s*paintRoomSide\(\);\n\s*return;\n\s*\}\n\s*stationArmed = null;\n\s*if \(what\) onToggle\(it\.piece, what\);/, 'the act the button says');
   assert.match(P, /stationBtn\.dataset\.what = words\.what;/);
 });
 

@@ -204,8 +204,8 @@
   {
     "name": "AUDITBR5-the-decor-line-named",
     "file": "src/ui/decorPanel.js",
-    "old": "can each take another look from the original game.",
-    "new": "can each take another look from Daggerfall.",
+    "old": "      : 'Walls, windows, roof and door can each take another look from the original game.';",
+    "new": "      : 'Walls, windows, roof and door can each take another look from Daggerfall.';",
     "tests": [
       "test/ui/brand.test.js"
     ],

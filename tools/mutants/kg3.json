@@ -1247,8 +1247,8 @@
   {
     "name": "KG3-L-credit-title-literal",
     "file": "src/ui/credits.js",
-    "old": "      get title() { return t('credits.kingsGambit.title', 'The King\\u2019s Gambit'); },",
-    "new": "      title: 'The King\\u2019s Gambit',",
+    "old": "      get title() {\n        return t('credits.kingsGambit.title', 'The King\\u2019s Gambit');\n      }, // the game's name as its table says it (L10N4)",
+    "new": "      title: 'The King\\u2019s Gambit', // the game's name as its table says it (L10N4)",
     "tests": [
       "test/systems/l10n4_hardcoded.test.js"
     ]

@@ -276,8 +276,8 @@
   {
     "name": "AUDIT-GUILD-YARD-the-bars-word-your-yard",
     "file": "src/ui/decorPanel.js",
-    "old": "(hall ? \"The hall's yard\" : 'Your yard')",
-    "new": "'Your yard'",
+    "old": "  if (count >= cap)\n    return `${yard ? (hall ? \"The hall's yard\" : 'Your yard') : 'This room'} already holds ${cap} pieces.`; // HOME-YARD (AUDIT): a yard said \"this room\"; AUDIT GUILD-YARD: a hall's yard is nobody's own",
+    "new": "  if (count >= cap) return `${yard ? 'Your yard' : 'This room'} already holds ${cap} pieces.`; // HOME-YARD (AUDIT): a yard said \"this room\"; AUDIT GUILD-YARD: a hall's yard is nobody's own",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -285,8 +285,8 @@
   {
     "name": "AUDIT-GUILD-YARD-the-panels-hall-unsent",
     "file": "src/ui/decorPanel.js",
-    "old": "yard: !!view?.yard, hall: !!view?.hall }) : null;",
-    "new": "yard: !!view?.yard }) : null;",
+    "old": "            hall: !!view?.hall,\n          })",
+    "new": "          })",
     "tests": [
       "test/net/guild_yard.test.js"
     ]

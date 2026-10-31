@@ -48,8 +48,8 @@
   {
     "name": "DRAGON3-move-never",
     "file": "src/ui/dragonBar.js",
-    "old": "dagon: false, move: !!b.atk.aimed }",
-    "new": "dagon: false, move: false }",
+    "old": "          move: !!b.atk.aimed,",
+    "new": "          move: false,",
     "tests": [
       "test/net/dragon/dragon3_client.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "DRAGON3-the-climb-always-counted",
     "file": "src/ui/dragonBar.js",
-    "old": "    wrath: !b.fell && leaveIn <= DRAGON_LEAVE_WARN_MS ?",
-    "new": "    wrath: !b.fell ?",
+    "old": "    wrath: !b.fell && leaveIn <= DRAGON_LEAVE_WARN_MS ? DRAGON_BAR_WORDS.climbs(countdownText(leaveIn)) : null,",
+    "new": "    wrath: !b.fell ? DRAGON_BAR_WORDS.climbs(countdownText(leaveIn)) : null,",
     "tests": [
       "test/net/dragon/dragon3_client.test.js"
     ]

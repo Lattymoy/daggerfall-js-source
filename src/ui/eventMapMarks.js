@@ -52,7 +52,10 @@ const clockText = (minute) => {
 };
 
 /** A raiding party as a player reads it: "Orcs", "Bandits", "Knights" (raidTypeName's words, capitalised). */
-export const raidPartyWord = (type) => { const w = raidTypeName(type); return w[0].toUpperCase() + w.slice(1); };
+export const raidPartyWord = (type) => {
+  const w = raidTypeName(type);
+  return w[0].toUpperCase() + w.slice(1);
+};
 
 /**
  * The raids a map marks at `nowMinutes` (classic minutes, the raids' own clock - systems/worldTick.js worldMinutes):
@@ -83,7 +86,13 @@ export function raidMapMarks(raids, nowMinutes, { regionName = () => '', localTi
     if (killed > 0 && target > 0) lines.push(`${Math.min(killed, target)} of ${target} driven off`);
     const local = typeof localTime === 'function' ? localTime(r.endMinute) : null;
     lines.push(local ? `Withdraws at ${local} your time` : `Withdraws at ${clockText(r.endMinute)}`);
-    out.push({ key: raidKey(r), px: r.px, py: r.py, label: `${town} - under attack`, tip: { title: RAID_TIP_TITLE, lines } });
+    out.push({
+      key: raidKey(r),
+      px: r.px,
+      py: r.py,
+      label: `${town} - under attack`,
+      tip: { title: RAID_TIP_TITLE, lines },
+    });
   }
   return out;
 }
@@ -95,7 +104,10 @@ export function readTip(tip, { textMax = TIP_TEXT_MAX, linesMax = TIP_LINES_MAX 
   if (!tip || typeof tip !== 'object') return null;
   const title = String(tip.title ?? '').slice(0, TIP_TEXT_MAX);
   if (!title) return null;
-  const lines = (Array.isArray(tip.lines) ? tip.lines : []).slice(0, linesMax).map((l) => String(l ?? '').slice(0, textMax)).filter(Boolean);
+  const lines = (Array.isArray(tip.lines) ? tip.lines : [])
+    .slice(0, linesMax)
+    .map((l) => String(l ?? '').slice(0, textMax))
+    .filter(Boolean);
   return Object.freeze({ title, lines: Object.freeze(lines) });
 }
 
@@ -120,26 +132,50 @@ export function readRaidMarks(fn, size = BAY) {
  *  @param {(() => any) | undefined} fn @param {{x0:number, y0:number, w:number, h:number}} box */
 export function readRaidMarksIn(fn, box) {
   let list = null;
-  try { list = typeof fn === 'function' ? fn() : null; } catch { return []; }
+  try {
+    list = typeof fn === 'function' ? fn() : null;
+  } catch {
+    return [];
+  }
   if (!Array.isArray(list)) return [];
   const out = [];
   for (const m of list) {
     if (!m || typeof m !== 'object') continue;
     const { px, py } = m;
-    if (!Number.isInteger(px) || !Number.isInteger(py) || px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;
-    out.push(Object.freeze({ key: String(m.key ?? `${px},${py}`), px, py, x: px + 0.5, y: py + 0.5, label: String(m.label ?? '').slice(0, TIP_TEXT_MAX), tip: readTip(m.tip) }));
+    if (
+      !Number.isInteger(px) ||
+      !Number.isInteger(py) ||
+      px < box.x0 ||
+      py < box.y0 ||
+      px >= box.x0 + box.w ||
+      py >= box.y0 + box.h
+    )
+      continue;
+    out.push(
+      Object.freeze({
+        key: String(m.key ?? `${px},${py}`),
+        px,
+        py,
+        x: px + 0.5,
+        y: py + 0.5,
+        label: String(m.label ?? '').slice(0, TIP_TEXT_MAX),
+        tip: readTip(m.tip),
+      }),
+    );
   }
   return out;
 }
 /** What the held map repaints its raids on: where they stand and what they say. */
-export const raidMarksKey = (marks) => marks.map((m) => `${m.key}@${m.px},${m.py}|${m.label}|${tipKey(m.tip)}`).join(';');
+export const raidMarksKey = (marks) =>
+  marks.map((m) => `${m.key}@${m.px},${m.py}|${m.label}|${tipKey(m.tip)}`).join(';');
 
 /**
  * Where a tip card stands: beside the pointer (down and right by `gap`), turned to the other side of it where the
  * viewport would cut it, and never off the viewport's edge. Pure: the card's measured size in, its corner out.
  */
 export function placeTip(x, y, w, h, vw, vh, gap = 16, edge = 8) {
-  let left = x + gap, top = y + gap;
+  let left = x + gap,
+    top = y + gap;
   if (left + w > vw - edge) left = x - gap - w;
   if (top + h > vh - edge) top = y - gap - h;
   return { left: Math.max(edge, Math.min(left, vw - edge - w)), top: Math.max(edge, Math.min(top, vh - edge - h)) };

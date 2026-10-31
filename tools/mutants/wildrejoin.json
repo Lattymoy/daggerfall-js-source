@@ -130,8 +130,8 @@
   {
     "name": "WILD-REJOIN-the-screens-full-two-minutes",
     "file": "src/ui/deathScreen.js",
-    "old": "WILD_DEATH_HOLD_S - (this.wild.served ?? 0) : DEATH_AUTO_RISE_S",
-    "new": "WILD_DEATH_HOLD_S : DEATH_AUTO_RISE_S",
+    "old": "    return this.wild ? WILD_DEATH_HOLD_S - (this.wild.served ?? 0) : DEATH_AUTO_RISE_S;",
+    "new": "    return this.wild ? WILD_DEATH_HOLD_S : DEATH_AUTO_RISE_S;",
     "tests": [
       "test/systems/wild/wildrejoin.test.js"
     ]

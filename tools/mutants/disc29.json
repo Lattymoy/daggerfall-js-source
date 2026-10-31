@@ -254,8 +254,8 @@
   {
     "name": "DISC29-D-disarm-keeps-count",
     "file": "src/ui/drawWatchdog.js",
-    "old": "  h.live = false;\n  armed--;",
-    "new": "  h.live = false;",
+    "old": "  armed--;\n  if (h.t != null) {",
+    "new": "  if (h.t != null) {",
     "tests": [
       "test/ui/enhanced/disc29_watchdog.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "DISC29-D-arm-never-ticks",
     "file": "src/ui/drawWatchdog.js",
-    "old": "  armed++;\n  startTicking();",
-    "new": "  armed++;",
+    "old": "  startTicking();\n  const check = () => {",
+    "new": "  const check = () => {",
     "tests": [
       "test/ui/enhanced/disc29_watchdog.test.js"
     ]

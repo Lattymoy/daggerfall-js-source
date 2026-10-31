@@ -56,8 +56,8 @@
   {
     "name": "WAGONS2-FINAL-a-trader-offered-in-a-caravan",
     "file": "src/ui/decorPanel.js",
-    "old": "(k === VENDOR_STATION ? trader && forgeOffered() : ",
-    "new": "(k === VENDOR_STATION ? forgeOffered() : ",
+    "old": "  DECOR_STATIONS.filter((k) =>\n    k === VENDOR_STATION ? trader && forgeOffered() : !PROF_STATIONS.includes(k) || forgeOffered(),\n  ); // PROF4: the workbench as the forge",
+    "new": "  DECOR_STATIONS.filter((k) => (k === VENDOR_STATION ? forgeOffered() : !PROF_STATIONS.includes(k) || forgeOffered())); // PROF4: the workbench as the forge",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "WAGONS2-FINAL-the-second-strip-unmarked",
     "file": "src/ui/duelPrompt.js",
-    "old": "${second ? ' second' : ''}",
-    "new": "",
+    "old": "  const root = el('div', `dfduel-toast${touch ? ' touch' : ''}${second ? ' second' : ''}`);",
+    "new": "  const root = el('div', `dfduel-toast${touch ? ' touch' : ''}`);",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]

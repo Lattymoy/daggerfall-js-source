@@ -559,8 +559,8 @@
   {
     "name": "EVENTS1-a-raid-count-on-every-row",
     "file": "src/ui/eventBoard.js",
-    "old": "set(p.detail, r.kind === 'raid' && r.live ? r.detail : '');",
-    "new": "set(p.detail, r.detail);",
+    "old": "    set(p.detail, r.kind === 'raid' && r.live ? r.detail : ''); // a raid's count; the rest on its news",
+    "new": "    set(p.detail, r.detail); // a raid's count; the rest on its news",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -568,8 +568,8 @@
   {
     "name": "EVENTS1-never-hidden",
     "file": "src/ui/eventBoard.js",
-    "old": "const want = classes('evhud', !on && 'hidden');",
-    "new": "const want = classes('evhud');",
+    "old": "  const want = classes('evhud', !on && 'hidden');",
+    "new": "  const want = classes('evhud');",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -577,8 +577,8 @@
   {
     "name": "EVENTS1-no-home",
     "file": "src/ui/eventBoard.js",
-    "old": "const home = Math.min(460, Math.max(244, 0.4 * vh));",
-    "new": "const home = 0.4 * vh;",
+    "old": "  const home = Math.min(460, Math.max(244, 0.4 * vh));",
+    "new": "  const home = 0.4 * vh;",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -586,8 +586,8 @@
   {
     "name": "EVENTS1-a-star-line-under-a-star",
     "file": "src/ui/eventBoard.js",
-    "old": "  if (!EVENT_SINGLE_KINDS.includes(c.kind)) return null;\n",
-    "new": "",
+    "old": "  if (!EVENT_SINGLE_KINDS.includes(c.kind)) return null;\n  const ofKind = rows.filter((r) => r.kind === c.kind);",
+    "new": "  const ofKind = rows.filter((r) => r.kind === c.kind);",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -595,8 +595,8 @@
   {
     "name": "EVENTS1-the-shadow-on-the-wrapper",
     "file": "src/ui/eventBoard.js",
-    "old": "border-style: solid; color: #e9e4d9; text-shadow: ${PIXEL_TEXT_SHADOW}; }",
-    "new": "border-style: solid; }",
+    "old": ".evboard { box-sizing: border-box; padding: 7px 10px 8px; border-width: 2px; border-style: solid; color: #e9e4d9; text-shadow: ${PIXEL_TEXT_SHADOW}; }",
+    "new": ".evboard { box-sizing: border-box; padding: 7px 10px 8px; border-width: 2px; border-style: solid; }",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -604,8 +604,8 @@
   {
     "name": "EVENTS1-any-board-selector",
     "file": "src/ui/eventBoard.js",
-    "old": "/\\.evboard(?![\\w-])/.test(sel)",
-    "new": "/\\.evboard/.test(sel)",
+    "old": "export const isEventBoardSelector = (/** @type {string} */ sel) => /\\.evboard(?![\\w-])/.test(sel);",
+    "new": "export const isEventBoardSelector = (/** @type {string} */ sel) => /\\.evboard/.test(sel);",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -631,8 +631,8 @@
   {
     "name": "EVENTS1-the-chat-over-it",
     "file": "src/ui/eventBoard.js",
-    "old": "const top = Math.max(home, ...above.filter(crosses).map((r) => r.bottom + EVENT_GAP_PX));",
-    "new": "const top = home;",
+    "old": "  const top = Math.max(home, ...above.filter(crosses).map((r) => r.bottom + EVENT_GAP_PX));",
+    "new": "  const top = home;",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -640,8 +640,8 @@
   {
     "name": "EVENTS1-the-span-ignored",
     "file": "src/ui/eventBoard.js",
-    "old": "const crosses = (r) => r && r.right > left && r.left < right && r.bottom > r.top;",
-    "new": "const crosses = (r) => r && r.bottom > r.top;",
+    "old": "  const crosses = (r) => r && r.right > left && r.left < right && r.bottom > r.top;",
+    "new": "  const crosses = (r) => r && r.bottom > r.top;",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -649,8 +649,8 @@
   {
     "name": "EVENTS1-a-bar-across-its-top",
     "file": "src/ui/eventBoard.js",
-    "old": "...below.filter((r) => crosses(r) && r.bottom > top)",
-    "new": "...below.filter((r) => crosses(r) && r.top > top)",
+    "old": "    ...below.filter((r) => crosses(r) && r.bottom > top).map((r) => r.top - EVENT_GAP_PX),",
+    "new": "    ...below.filter((r) => crosses(r) && r.top > top).map((r) => r.top - EVENT_GAP_PX),",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -658,8 +658,8 @@
   {
     "name": "EVENTS1-a-bare-plate-stands",
     "file": "src/ui/eventBoard.js",
-    "old": "return shown > 0 && !(plateHeight() > room);",
-    "new": "return !(plateHeight() > room);",
+    "old": "  return shown > 0 && !(plateHeight() > room);",
+    "new": "  return !(plateHeight() > room);",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -667,8 +667,8 @@
   {
     "name": "EVENTS1-over-the-canvas-vitals",
     "file": "src/ui/eventBoard.js",
-    "old": "classic ? vh * (1 - EVENT_CLASSIC_FOOT) : vh - EVENT_GAP_PX",
-    "new": "vh - EVENT_GAP_PX",
+    "old": "    classic ? vh * (1 - EVENT_CLASSIC_FOOT) : vh - EVENT_GAP_PX,",
+    "new": "    vh - EVENT_GAP_PX,",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -676,7 +676,7 @@
   {
     "name": "EVENTS1-never-fitted",
     "file": "src/ui/eventBoard.js",
-    "old": "for (let guard = 0; guard <= EVENT_TALL_ROWS && plateHeight() > room && rowsCap > 0; guard++) { rowsCap--; once(); }",
+    "old": "  for (let guard = 0; guard <= EVENT_TALL_ROWS && plateHeight() > room && rowsCap > 0; guard++) {\n    rowsCap--;\n    once();\n  }",
     "new": "",
     "tests": [
       "test/ui/events1_board_ui.test.js"
@@ -685,8 +685,8 @@
   {
     "name": "EVENTS1-no-room-no-word",
     "file": "src/ui/eventBoard.js",
-    "old": "    eventHudLine(w.line || w.kind);",
-    "new": "    void 0;",
+    "old": "    eventHudLine(w.line || w.kind); // the board's own line, a moment's - never the journal's",
+    "new": "    void 0; // the board's own line, a moment's - never the journal's",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -694,7 +694,7 @@
   {
     "name": "EVENTS1-an-empty-plate-stands",
     "file": "src/ui/eventBoard.js",
-    "old": "  if (!model.rows.length && !toasts.cards().length) { stand(doc, false); return; }",
+    "old": "  if (!model.rows.length && !toasts.cards().length) {\n    stand(doc, false);\n    return;\n  }",
     "new": "  if (!model.rows.length && !toasts.cards().length) return;",
     "tests": [
       "test/ui/events1_board_ui.test.js"
@@ -703,8 +703,8 @@
   {
     "name": "EVENTS1-the-scale-uncopied",
     "file": "src/ui/eventBoard.js",
-    "old": "if (scale) root.style?.setProperty?.('--hud-scale', scale); else",
-    "new": "if (!scale) ",
+    "old": "    if (scale) root.style?.setProperty?.('--hud-scale', scale);\n    else root.style?.removeProperty?.('--hud-scale');",
+    "new": "    if (!scale) root.style?.removeProperty?.('--hud-scale');",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -712,8 +712,8 @@
   {
     "name": "EVENTS1-the-watch-moves",
     "file": "src/ui/eventBoard.js",
-    "old": "if (src && watchFrom == null && Number.isFinite(model.now)) watchFrom = model.now;",
-    "new": "if (src && Number.isFinite(model.now)) watchFrom = model.now;",
+    "old": "    if (src && watchFrom == null && Number.isFinite(model.now)) watchFrom = model.now;",
+    "new": "    if (src && Number.isFinite(model.now)) watchFrom = model.now;",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -721,8 +721,8 @@
   {
     "name": "EVENTS1-a-line-under-anothers-row",
     "file": "src/ui/eventBoard.js",
-    "old": "  if (c.id) return rows.find((x) => x.id === c.id) ?? null;\n",
-    "new": "",
+    "old": "  if (c.id) return rows.find((x) => x.id === c.id) ?? null;\n  if (!EVENT_SINGLE_KINDS.includes(c.kind)) return null;",
+    "new": "  if (!EVENT_SINGLE_KINDS.includes(c.kind)) return null;",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -730,8 +730,8 @@
   {
     "name": "EVENTS1-the-news-row-twice",
     "file": "src/ui/eventBoard.js",
-    "old": "const rows = model.rows.filter((r) => !inNews.has(r.id)).slice(",
-    "new": "const rows = model.rows.slice(",
+    "old": "  const rows = model.rows.filter((r) => !inNews.has(r.id)).slice(0, Math.max(0, rowsCap));",
+    "new": "  const rows = model.rows.slice(0, Math.max(0, rowsCap));",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -739,8 +739,8 @@
   {
     "name": "EVENTS1-the-news-counted-more",
     "file": "src/ui/eventBoard.js",
-    "old": "const shownIds = new Set([...rows.map((r) => r.id), ...inNews]);",
-    "new": "const shownIds = new Set(rows.map((r) => r.id));",
+    "old": "  const shownIds = new Set([...rows.map((r) => r.id), ...inNews]);",
+    "new": "  const shownIds = new Set(rows.map((r) => r.id));",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -748,8 +748,8 @@
   {
     "name": "EVENTS1-the-way-last",
     "file": "src/ui/eventBoard.js",
-    "old": "const whereOf = (r) => [r?.way?.text, r?.where].filter(Boolean)",
-    "new": "const whereOf = (r) => [r?.where, r?.way?.text].filter(Boolean)",
+    "old": "const whereOf = (r) => [r?.way?.text, r?.where].filter(Boolean).join(' · ');",
+    "new": "const whereOf = (r) => [r?.where, r?.way?.text].filter(Boolean).join(' · ');",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -757,8 +757,8 @@
   {
     "name": "EVENTS1-the-voice-every-frame",
     "file": "src/ui/eventBoard.js",
-    "old": "if (live && voice !== spoken)",
-    "new": "if (live)",
+    "old": "    if (live && voice !== spoken) {",
+    "new": "    if (live) {",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -775,8 +775,8 @@
   {
     "name": "EVENTS1-a-line-lost-off",
     "file": "src/ui/eventBoard.js",
-    "old": "for (const l of lines) eventNoticeElsewhere(l.kind, l.text, true);",
-    "new": "void lines;",
+    "old": "    for (const l of lines) eventNoticeElsewhere(l.kind, l.text, true);",
+    "new": "    void lines;",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -784,8 +784,8 @@
   {
     "name": "EVENTS1-unbuilt-remembers",
     "file": "src/ui/eventBoard.js",
-    "old": "if (root || seen.size || watchFrom != null) reset();",
-    "new": "if (root) reset();",
+    "old": "    if (root || seen.size || watchFrom != null) reset();",
+    "new": "    if (root) reset();",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -1158,8 +1158,8 @@
   {
     "name": "EVENTS2-the-drop-unasked",
     "file": "src/ui/eventBoard.js",
-    "old": "  for (const k of hiddenKinds) toasts.drop(k);\n",
-    "new": "",
+    "old": "  for (const k of hiddenKinds) toasts.drop(k);\n  const hiddenKey = hiddenKinds.join();",
+    "new": "  const hiddenKey = hiddenKinds.join();",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -1167,8 +1167,8 @@
   {
     "name": "EVENTS2-the-waiting-kept",
     "file": "src/ui/eventBoard.js",
-    "old": "for (const l of lines) if (!hiddenKinds.includes(l.kind)) toasts.note(",
-    "new": "for (const l of lines) if (l) toasts.note(",
+    "old": "  for (const l of lines) if (!hiddenKinds.includes(l.kind)) toasts.note(l.kind, l.text, l.at, l.id); // EVENTS2: a line waiting when its kind went off, let go",
+    "new": "  for (const l of lines) if (l) toasts.note(l.kind, l.text, l.at, l.id); // EVENTS2: a line waiting when its kind went off, let go",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -1176,8 +1176,8 @@
   {
     "name": "EVENTS2-the-read-not-forced",
     "file": "src/ui/eventBoard.js",
-    "old": "if (hiddenKey !== lastHidden) { lastHidden = hiddenKey; readAt = -Infinity; }",
-    "new": "if (hiddenKey !== lastHidden) { lastHidden = hiddenKey; }",
+    "old": "    readAt = -Infinity;\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -1185,8 +1185,8 @@
   {
     "name": "EVENTS2-the-model-unfiltered",
     "file": "src/ui/eventBoard.js",
-    "old": "model = eventBoardModel(src, { max: EVENT_TALL_ROWS, shown: eventKindShown });",
-    "new": "model = eventBoardModel(src, { max: EVENT_TALL_ROWS });",
+    "old": "    model = eventBoardModel(src, { max: EVENT_TALL_ROWS, shown: eventKindShown }); // cut again to the plate's rows (eventRowsFor, the room)",
+    "new": "    model = eventBoardModel(src, { max: EVENT_TALL_ROWS }); // cut again to the plate's rows (eventRowsFor, the room)",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -1194,8 +1194,8 @@
   {
     "name": "EVENTS2-the-announce-over-the-shown",
     "file": "src/ui/eventBoard.js",
-    "old": "eventAnnouncements(model.every, seen, watchFrom, eventKindShown)",
-    "new": "eventAnnouncements(model.all, seen, watchFrom, eventKindShown)",
+    "old": "    if (src) for (const a of eventAnnouncements(model.every, seen, watchFrom, eventKindShown)) toasts.announce(a);",
+    "new": "    if (src) for (const a of eventAnnouncements(model.all, seen, watchFrom, eventKindShown)) toasts.announce(a);",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -1203,8 +1203,8 @@
   {
     "name": "EVENTS2-the-announce-unfiltered",
     "file": "src/ui/eventBoard.js",
-    "old": "eventAnnouncements(model.every, seen, watchFrom, eventKindShown)",
-    "new": "eventAnnouncements(model.every, seen, watchFrom)",
+    "old": "    if (src) for (const a of eventAnnouncements(model.every, seen, watchFrom, eventKindShown)) toasts.announce(a);",
+    "new": "    if (src) for (const a of eventAnnouncements(model.every, seen, watchFrom)) toasts.announce(a);",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]
@@ -1212,8 +1212,8 @@
   {
     "name": "EVENTS2-a-kind-without-its-mark",
     "file": "src/ui/eventBoard.js",
-    "old": "raid: '#f2c46b', festival: '#9fd18b',",
-    "new": "raid: '#f2c46b',",
+    "old": "  festival: '#9fd18b',\n});",
+    "new": "});",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]

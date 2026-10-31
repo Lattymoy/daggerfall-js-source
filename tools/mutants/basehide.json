@@ -174,8 +174,8 @@
   {
     "name": "BASEHIDE-all-out-takes-a-holder",
     "file": "src/ui/decorPanel.js",
-    "old": "roomed(view?.base ?? []).filter((it) => !it.hidden && !it.holds && !it.door).map((it) => it.key); if (ks.length) onBase(ks, true);",
-    "new": "roomed(view?.base ?? []).filter((it) => !it.hidden && !it.door).map((it) => it.key); if (ks.length) onBase(ks, true);",
+    "old": "      .filter((it) => !it.hidden && !it.holds && !it.door)",
+    "new": "      .filter((it) => !it.hidden && !it.door)",
     "tests": [
       "test/server/basehide.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "BASEHIDE-the-tab-uncounted",
     "file": "src/ui/decorPanel.js",
-    "old": "      chip(`Built in (${k})`, mode === 'base', () => setMode('base'), 'furniture'),",
-    "new": "      chip('Built in', mode === 'base', () => setMode('base'), 'furniture'),",
+    "old": "      chip(`Built in (${k})`, mode === 'base', () => setMode('base'), 'furniture'), // BASE-HIDE: the room's own furniture",
+    "new": "      chip('Built in', mode === 'base', () => setMode('base'), 'furniture'), // BASE-HIDE: the room's own furniture",
     "tests": [
       "test/server/basehide.test.js"
     ]

@@ -209,8 +209,8 @@
   {
     "name": "PVP-HUD-the-head-unread-classic",
     "file": "src/ui/deathScreen.js",
-    "old": "[wildDeathSlain(this.wild), ...wildDeathLines(this.wild)]",
-    "new": "[...wildDeathLines(this.wild)]",
+    "old": "    for (const l of [wildDeathSlain(this.wild), ...wildDeathLines(this.wild)].filter(Boolean)) {",
+    "new": "    for (const l of [...wildDeathLines(this.wild)].filter(Boolean)) {",
     "tests": [
       "test/ui/pvphud.test.js"
     ]

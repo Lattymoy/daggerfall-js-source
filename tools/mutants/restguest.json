@@ -74,8 +74,8 @@
   {
     "name": "RESTGUEST-chip-hidden",
     "file": "src/ui/decorPanel.js",
-    "old": "      rest.hidden = !browse || !restWord;",
-    "new": "      rest.hidden = true;",
+    "old": "      rest.hidden = !browse || !restWord; // REST-GUEST: the owner's own home alone",
+    "new": "      rest.hidden = true; // REST-GUEST: the owner's own home alone",
     "tests": [
       "test/systems/decor/restguest.test.js"
     ]

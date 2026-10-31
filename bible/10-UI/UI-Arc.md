@@ -9923,7 +9923,7 @@ classic book here keeps that. Now the book draws through ui/domRepaint.js
 list and the page scroll each in their own column (the grimoire dress's
 book, worn plain - `.sb-shell .px-body` holds them and scrolls neither), and
 the page names the spell it shows (`data-scroll-key`, the helper's new
-word: domRepaint.js:"const key = n.getAttribute?.('data-scroll-key');"), so
+word: domRepaint.js:"const key = n.getAttribute?.('data-scroll-key')"), so
 another spell's page starts at its top - named by the spell's own index,
 never its row (AUDIT FB1018f L2-2: a delete kept the row, and the next spell
 opened at the deleted one's offset). The helper finds a saved pane by its
@@ -16027,7 +16027,7 @@ status strip on a phone sits under the touch layer's two top-left buttons
 exactly as the classic did; the enhanced HUD has no arrow counter (AUDIT
 28 W2a's classic-arm feature) - not a font matter. AND THE CANVAS NATIVE
 WINDOWS, which the first record did not name: under the enhanced skin the
-death screen (`ui/deathScreen.js:"font, died, (canvas.width - measureText(font.fnt, died) * s)"`), the rest window's rows
+death screen (`ui/deathScreen.js:"const died = t('death.title', 'YOU HAVE DIED')".."font,"`), the rest window's rows
 (`ui/restWindow.js:"rows = this.endLines"`), the save window (`ui/saveWindow.js`, eight
 `shadowText` sites), the travel popup (`ui/travel/travelPopUp.js:"font, r.text ?? r"`), the quest
 journal (`ui/quest/questJournal.js:"font, line, m.ox + (lx + 1)"`), every MessageBox row

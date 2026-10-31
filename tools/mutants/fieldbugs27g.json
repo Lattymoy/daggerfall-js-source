@@ -326,8 +326,8 @@
   {
     "name": "DECOR-ROOMS-no-tabs",
     "file": "src/ui/decorPanel.js",
-    "old": "    if (!roomsUp()) return [];\n    const placed = view.placed ?? [];",
-    "new": "    return [];\n    const placed = view.placed ?? [];",
+    "old": "    if (!roomsUp()) return [];",
+    "new": "    return [];",
     "tests": [
       "test/systems/decor/decorrooms.test.js"
     ]

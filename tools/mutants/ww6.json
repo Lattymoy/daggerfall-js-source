@@ -512,8 +512,8 @@
   {
     "name": "WW6-marks-unshifted",
     "file": "src/ui/eventMapMarks.js",
-    "old": "px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h",
-    "new": "px < 0 || py < 0 || px >= box.w || py >= box.h",
+    "old": "    if (\n      !Number.isInteger(px) ||\n      !Number.isInteger(py) ||\n      px < box.x0 ||\n      py < box.y0 ||\n      px >= box.x0 + box.w ||\n      py >= box.y0 + box.h\n    )\n      continue;",
+    "new": "    if (!Number.isInteger(px) || !Number.isInteger(py) || px < 0 || py < 0 || px >= box.w || py >= box.h) continue;",
     "note": "Re-aimed by content (AUDIT BAY-LEFT, its packages merged): WW6's and BAY-LEFT-MAPS' readRaidMarksIn met; the one kept bounds the marks by the box itself, so the box's origin ignored is the marks read unshifted.",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"

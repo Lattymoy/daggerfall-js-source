@@ -291,8 +291,8 @@
   {
     "name": "COMPANION-ROSTER-release-at-one-press",
     "file": "src/ui/companionRoster.js",
-    "old": "    rel.onclick = () => { _confirm = r.id; _notice = null; rerender(); };",
-    "new": "    rel.onclick = () => { releaseRevenant(r.id); rerender(); };",
+    "old": "      _confirm = r.id;\n      _notice = null;",
+    "new": "      releaseRevenant(r.id);",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "COMPANION-ROSTER-the-refusal-unsaid",
     "file": "src/ui/companionRoster.js",
-    "old": "      call.onclick = () => { const no = callRevenant(r.id, now); _notice = no ? { id: r.id, text: no } : null; rerender(); };",
-    "new": "      call.onclick = () => { callRevenant(r.id, now); rerender(); };",
+    "old": "        const no = callRevenant(r.id, now);\n        _notice = no ? { id: r.id, text: no } : null;",
+    "new": "        callRevenant(r.id, now);",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]

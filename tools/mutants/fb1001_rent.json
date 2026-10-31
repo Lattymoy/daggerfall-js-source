@@ -181,8 +181,8 @@
   {
     "name": "RENT-FRESH-the-read-unsigned",
     "file": "src/ui/decorPanel.js",
-    "old": "${view.rent.busy ? 1 : 0}${view.rent.loaded ? 1 : 0}${view.rent.finding ? 1 : 0}",
-    "new": "${view.rent.busy ? 1 : 0}${view.rent.finding ? 1 : 0}",
+    "old": "        ? `${view.rent.due}:${view.rent.busy ? 1 : 0}${view.rent.loaded ? 1 : 0}${view.rent.finding ? 1 : 0}:${(view.rent.rows ?? []).map((r) => `${rentKeyOf(r)}:${r.offer ? `${r.offer.price}.${r.offer.taken ? 1 : 0}.${r.offer.listed ? 1 : 0}.${r.offer.until ?? ''}` : '-'}`).join(',')}`",
+    "new": "        ? `${view.rent.due}:${view.rent.busy ? 1 : 0}${view.rent.finding ? 1 : 0}:${(view.rent.rows ?? []).map((r) => `${rentKeyOf(r)}:${r.offer ? `${r.offer.price}.${r.offer.taken ? 1 : 0}.${r.offer.listed ? 1 : 0}.${r.offer.until ?? ''}` : '-'}`).join(',')}`",
     "tests": [
       "test/systems/fb1001_rent.test.js"
     ]
@@ -208,8 +208,8 @@
   {
     "name": "RENT-ORPHANS-finding-said-as-one-room",
     "file": "src/ui/decorPanel.js",
-    "old": "view.rent.finding ? DECOR_RENT_FINDING : DECOR_RENT_ONE_ROOM",
-    "new": "view.rent.rooms ? DECOR_RENT_FINDING : DECOR_RENT_ONE_ROOM",
+    "old": "          : [el('div', 'dfdecor-empty', view.rent.finding ? DECOR_RENT_FINDING : DECOR_RENT_ONE_ROOM)]),",
+    "new": "          : [el('div', 'dfdecor-empty', view.rent.rooms ? DECOR_RENT_FINDING : DECOR_RENT_ONE_ROOM)]),",
     "tests": [
       "test/systems/fb1001_rent.test.js"
     ]
@@ -217,8 +217,8 @@
   {
     "name": "RENT-ORPHANS-the-finding-unsigned",
     "file": "src/ui/decorPanel.js",
-    "old": "${view.rent.loaded ? 1 : 0}${view.rent.finding ? 1 : 0}",
-    "new": "${view.rent.loaded ? 1 : 0}",
+    "old": "        ? `${view.rent.due}:${view.rent.busy ? 1 : 0}${view.rent.loaded ? 1 : 0}${view.rent.finding ? 1 : 0}:${(view.rent.rows ?? []).map((r) => `${rentKeyOf(r)}:${r.offer ? `${r.offer.price}.${r.offer.taken ? 1 : 0}.${r.offer.listed ? 1 : 0}.${r.offer.until ?? ''}` : '-'}`).join(',')}`",
+    "new": "        ? `${view.rent.due}:${view.rent.busy ? 1 : 0}${view.rent.loaded ? 1 : 0}:${(view.rent.rows ?? []).map((r) => `${rentKeyOf(r)}:${r.offer ? `${r.offer.price}.${r.offer.taken ? 1 : 0}.${r.offer.listed ? 1 : 0}.${r.offer.until ?? ''}` : '-'}`).join(',')}`",
     "tests": [
       "test/systems/fb1001_rent.test.js"
     ],

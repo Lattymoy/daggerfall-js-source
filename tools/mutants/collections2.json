@@ -120,8 +120,8 @@
   {
     "name": "C2-the-count-without-the-account",
     "file": "src/ui/collectionsPage.js",
-    "old": "return { held: wardrobe ? n.held : null, total: n.total };",
-    "new": "return { held: n.held, total: n.total };",
+    "old": "    return { held: wardrobe ? n.held : null, total: n.total };",
+    "new": "    return { held: n.held, total: n.total };",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "C2A-leaving-lets-the-read-go",
     "file": "src/ui/collectionsPage.js",
-    "old": "export function disarmCollectionsPage() { disarmCardsPart(); }",
-    "new": "export function disarmCollectionsPage() { disarmCardsPart(); resetWardrobePart(); }",
+    "old": "  disarmCardsPart();\n}",
+    "new": "  disarmCardsPart();\n  resetWardrobePart();\n}",
     "tests": [
       "test/ui/collections2.test.js",
       "test/systems/auditcards5_ui.test.js"
@@ -448,8 +448,8 @@
   {
     "name": "C2A-the-meter-never-drawn",
     "file": "src/ui/collectionsPage.js",
-    "old": "    if (typeof kit.meter === 'function') b.append(kit.meter(n.held ?? 0, n.total));\n",
-    "new": "",
+    "old": "    if (typeof kit.meter === 'function') b.append(kit.meter(n.held ?? 0, n.total));\n    b.onclick = () => {",
+    "new": "    b.onclick = () => {",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -457,8 +457,8 @@
   {
     "name": "C2A-the-codex-count-short",
     "file": "src/ui/collectionsPage.js",
-    "old": "return { held: n.gilded + n.legendary + n.aetheric, total: n.gildeds + n.legendaries + n.aetherics }; }",
-    "new": "return { held: n.legendary + n.aetheric, total: n.gildeds + n.legendaries + n.aetherics }; }",
+    "old": "    return { held: n.gilded + n.legendary + n.aetheric, total: n.gildeds + n.legendaries + n.aetherics };",
+    "new": "    return { held: n.legendary + n.aetheric, total: n.gildeds + n.legendaries + n.aetherics };",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -484,8 +484,8 @@
   {
     "name": "C2A-the-sheet-never-laid",
     "file": "src/ui/collectionsPage.js",
-    "old": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${WARDROBE_THEME_CSS}${LOOKS_PART_CSS}`;",
-    "new": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_THEME_CSS}${LOOKS_PART_CSS}`;",
+    "old": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${WARDROBE_THEME_CSS}${LOOKS_PART_CSS}`; // APPEARANCES: and the looks' part's   // COLLECTIONS-II: and the wardrobe's parts' sheet - AUDIT COLLECTIONS-II: and its Stone theme's",
+    "new": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_THEME_CSS}${LOOKS_PART_CSS}`; // APPEARANCES: and the looks' part's   // COLLECTIONS-II: and the wardrobe's parts' sheet - AUDIT COLLECTIONS-II: and its Stone theme's",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -556,8 +556,8 @@
   {
     "name": "C2A-the-stone-theme-never-laid",
     "file": "src/ui/collectionsPage.js",
-    "old": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${WARDROBE_THEME_CSS}${LOOKS_PART_CSS}`;",
-    "new": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${LOOKS_PART_CSS}`;",
+    "old": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${WARDROBE_THEME_CSS}${LOOKS_PART_CSS}`; // APPEARANCES: and the looks' part's   // COLLECTIONS-II: and the wardrobe's parts' sheet - AUDIT COLLECTIONS-II: and its Stone theme's",
+    "new": "  st.textContent = `${COLLECTION_PAGE_CSS}${WARDROBE_PART_CSS}${LOOKS_PART_CSS}`; // APPEARANCES: and the looks' part's   // COLLECTIONS-II: and the wardrobe's parts' sheet - AUDIT COLLECTIONS-II: and its Stone theme's",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -700,8 +700,8 @@
   {
     "name": "C2A-the-codex-in-english",
     "file": "src/ui/collectionsPage.js",
-    "old": "divider(t('coll.codex.gilded', 'Gilded - {n} of {total} found', { n: n.gilded, total: n.gildeds }))",
-    "new": "divider(`Gilded - ${n.gilded} of ${n.gildeds} found`)",
+    "old": "  detail.append(divider(t('coll.codex.gilded', 'Gilded - {n} of {total} found', { n: n.gilded, total: n.gildeds }))); // AUDIT COLLECTIONS-II (lanes 3, 5): the codex's words in the player's language, on a page every player opens",
+    "new": "  detail.append(divider(`Gilded - ${n.gilded} of ${n.gildeds} found`)); // AUDIT COLLECTIONS-II (lanes 3, 5): the codex's words in the player's language, on a page every player opens",
     "tests": [
       "test/ui/collections2.test.js",
       "test/systems/l10n4_hardcoded.test.js"

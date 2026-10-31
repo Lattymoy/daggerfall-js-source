@@ -2320,8 +2320,8 @@
   {
     "name": "BLOOD2e-the-bleed-flash-is-a-blow-s",
     "file": "src/ui/damageFlash.js",
-    "old": "    bleed() { alpha = Math.max(alpha, BLEED_FLASH_ALPHA); fadingOut = true; },",
-    "new": "    bleed() { alpha = FLASH_ALPHA; fadingOut = true; },",
+    "old": "      alpha = Math.max(alpha, BLEED_FLASH_ALPHA);",
+    "new": "      alpha = FLASH_ALPHA;",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -2329,8 +2329,8 @@
   {
     "name": "BLOOD2e-the-bleed-flash-lowers-a-blow-s",
     "file": "src/ui/damageFlash.js",
-    "old": "    bleed() { alpha = Math.max(alpha, BLEED_FLASH_ALPHA); fadingOut = true; },",
-    "new": "    bleed() { alpha = BLEED_FLASH_ALPHA; fadingOut = true; },",
+    "old": "      alpha = Math.max(alpha, BLEED_FLASH_ALPHA);",
+    "new": "      alpha = BLEED_FLASH_ALPHA;",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -2581,8 +2581,8 @@
   {
     "name": "AUDIT5-a-blow-latches-for-ever",
     "file": "src/ui/damageFlash.js",
-    "old": "    takeBlow() { const b = blow; blow = false; return b; },",
-    "new": "    takeBlow() { return blow; },",
+    "old": "      const b = blow;\n      blow = false;\n      return b;",
+    "new": "      return blow;",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -2590,8 +2590,8 @@
   {
     "name": "AUDIT5-a-drip-is-a-blow",
     "file": "src/ui/damageFlash.js",
-    "old": "    bleed() { alpha = Math.max(alpha, BLEED_FLASH_ALPHA); fadingOut = true; },",
-    "new": "    bleed() { alpha = Math.max(alpha, BLEED_FLASH_ALPHA); fadingOut = true; blow = true; },",
+    "old": "      fadingOut = true;\n    },",
+    "new": "      fadingOut = true;\n      blow = true;\n    },",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]

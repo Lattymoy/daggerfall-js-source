@@ -945,7 +945,7 @@ AUDIT (2026-10-16, the slice's own audit - `01-Overview/bugs/Field-Bugs-2026-10-
   to take back.
 - R2 - below ten frames a second the open zone's death screen counted the frames' clamped time while the hold ran on the
   wall clock: the window closed (a Resurrect refused "fallen for good") with the screen still saying "RISING IN 15".
-  FIXED: an online death screen counts the wall clock (`deathScreen.js:"if (this.online) this.clock = Math.max(this.clock, (Number(this._wall()) - this._fellAt) / 1000 || 0);"`),
+  FIXED: an online death screen counts the wall clock (`deathScreen.js:"if (this.online)"`),
   never behind the frames' own count.
 - R3 - this section said "relay world208": the relay that carries `fg` is world212 (world208, world209 and world210
   went to other branches) - corrected above.

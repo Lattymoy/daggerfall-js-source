@@ -287,7 +287,7 @@ test('AUDIT 2 a fitting\'s whole box on the plan: its turned corners on her deck
   const a = fittingCorners(0, 0, 2, [1, 1]), b = fittingCorners(1.2, 0, 2, [1, 1]);
   assert.equal(boxesMeet(a, b), true, 'two turned an eighth, their corners in each other');
   assert.equal(boxesMeet(fittingCorners(0, 0, 0, [1, 1]), fittingCorners(1.2, 0, 0, [1, 1])), false);
-  assert.match(rd('src/ui/deckPlanWindow.js'), /const why = placeRefusal\(deck, \[f\.x, f\.z\], list\.filter\(\(_, i\) => i !== picked\), \{ m: f\.m, yaw \}, footprint\);\n\s*if \(why\) \{ tell\(why, true\); return; \}/, 'turned as it is set');
+  assert.match(rd('src/ui/deckPlanWindow.js'), /const why = placeRefusal\(\n\s*deck,\n\s*\[f\.x, f\.z\],\n\s*list\.filter\(\(_, i\) => i !== picked\),\n\s*\{ m: f\.m, yaw \},\n\s*footprint,\n\s*\);\n\s*if \(why\) \{\n\s*tell\(why, true\);\n\s*return;\n\s*\}/, 'turned as it is set');
   const asked = [];
   const boat = { hull: 2, MeshObject: { children: [], addChild() {}, worldMatrix: () => new Float32Array(16) } };
   fitBoats([boat], () => fittingsOf([{ m: 41812, x: 0, z: 0 }]), { ctx: { modelBounds: () => ({ min: [0, 0, 0], max: [1, 1, 1] }) }, deckOf: () => null, load: (m) => asked.push(m) });

@@ -360,8 +360,8 @@ member's Resurrect, and the body still lies the minute. The raise window is the 
 rises after its three seconds.
 
 DEATH-10 (2026-10-30, the owner: "give death a 10 second timer let them click respawn now but at 10 auto respawn
-them", "for pve and pvp"): online, Enter rises at once (`deathScreen.js:"export const DEATH_RISE_MIN_S = 0;"`) and the
-screen rises by itself at `deathScreen.js:"export const DEATH_AUTO_RISE_S = 10;"`, in the zone
+them", "for pve and pvp"): online, Enter rises at once (`deathScreen.js:"export const DEATH_RISE_MIN_S"`) and the
+screen rises by itself at `deathScreen.js:"export const DEATH_AUTO_RISE_S"`, in the zone
 `wildZone.js:"export const WILD_DEATH_HOLD_S"`. The referee keeps a fallen down 10 s
 (`wildRef.js:"riseMs: 10_000,"`, the wire's word at most `wire.js:"export const WILD_DOWN_MS_MAX = 10_000;"`). A step
 out of the zone still heals whole only after the minute (`awayMs`). A party Resurrect has those 10 s, and the body

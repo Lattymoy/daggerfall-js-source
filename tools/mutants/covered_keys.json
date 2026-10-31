@@ -47,8 +47,8 @@
   {
     "name": "CK-the-chronicle-door-names-no-window",
     "file": "src/ui/chronicleDoor.js",
-    "old": "onExit: close, owner: overlay }",
-    "new": "onExit: close, owner: null }",
+    "old": "      view = mountEnhancedChronicle(host, { ...deps, section, onExit: close, owner: overlay });",
+    "new": "      view = mountEnhancedChronicle(host, { ...deps, section, onExit: close, owner: null });",
     "tests": [
       "test/ui/coveredkeys.test.js"
     ]

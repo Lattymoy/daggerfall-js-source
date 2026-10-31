@@ -94,7 +94,7 @@ DFU's book never moves on a pick: ListBox.MouseClick (ListBox.cs:465-504) only s
 
 FIXED. The book draws through the repaint (`enhancedSpellbook.js:"if (host) repaintKeepingScroll(host, paint);"`); the
 list and the page scroll each in their own column (`.sb-shell .px-body` holds them and scrolls neither - the grimoire
-dress's book, worn plain); and a pane names what it shows (`domRepaint.js:"const key = n.getAttribute?.('data-scroll-key');"`),
+dress's book, worn plain); and a pane names what it shows (`domRepaint.js:"const key = n.getAttribute?.('data-scroll-key')"`),
 so another spell's page starts at its top while the list keeps its place. AUDIT FB1018f L2-2: the page is named by its
 spell (its `index`, the port's name for a spell, the quickslot's and the hotbar's), not its row - a delete kept the row,
 and the spell after a deleted one opened at the deleted one's offset; a rename keeps the page. L2-1: a key also names

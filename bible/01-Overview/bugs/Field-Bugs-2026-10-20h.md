@@ -694,7 +694,7 @@ Every in-game DOM button, read from every module that builds one, by where it st
   standing over play. Social stays after its own press, so its focus was pressed again by the next Space.
 - AFFECTED by the walk only: each of these goes when it is pressed, so its focus falls back to the page.
   - the friends panel's invitation toast, Accept and Decline (`socialPanel.js:"const toastYes = el('button', 'dfsocial-btn', 'Accept'); toastYes.type = 'button';"`);
-  - the duel prompt (`duelPrompt.js:"const yes = el('button', 'dfduel-btn', 'Accept'); yes.type = 'button';"`);
+  - the duel prompt (`duelPrompt.js:"const yes = el('button', 'dfduel-btn', 'Accept')"`);
   - the Elite Breach's call (`egCall.js:"const btn = el('button', 'dfegcall-btn', 'Answer')"`);
   - the Code of Conduct card;
   - the arena session's button (`arenaSessionButton.js:"members, Make Red"`);

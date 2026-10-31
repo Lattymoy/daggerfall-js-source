@@ -318,8 +318,8 @@
   {
     "name": "A2-fit-over-rail",
     "file": "src/ui/deckPlanWindow.js",
-    "old": "  if (!box.every(([x, z]) => deck.walkable(x, z))) return",
-    "new": "  if (false) return",
+    "old": "  if (!box.every(([x, z]) => deck.walkable(x, z))) return t('naval.deck.offDeck', \"That spot isn't on the open deck.\");",
+    "new": "  if (false) return t('naval.deck.offDeck', \"That spot isn't on the open deck.\");",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "A2-fit-into-another",
     "file": "src/ui/deckPlanWindow.js",
-    "old": "  if (others.some((f) => { const o = footprint(f.m); return !!o && boxesMeet(",
-    "new": "  if (false && others.some((f) => { const o = footprint(f.m); return !!o && boxesMeet(",
+    "old": "    others.some((f) => {",
+    "new": "    false &&\n    others.some((f) => {",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -336,7 +336,7 @@
   {
     "name": "A2-fit-turn-free",
     "file": "src/ui/deckPlanWindow.js",
-    "old": "    if (why) { tell(why, true); return; }\n    list[picked] = { ...f, yaw };",
+    "old": "    if (why) {\n      tell(why, true);\n      return;\n    }\n    list[picked] = { ...f, yaw };",
     "new": "    list[picked] = { ...f, yaw };",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"

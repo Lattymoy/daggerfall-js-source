@@ -402,8 +402,8 @@
   {
     "name": "AUDITCC-UI-S8-nothing-taken",
     "file": "src/ui/credits.js",
-    "old": "Boons (the default: neglect costs nothing, and staying",
-    "new": "Boons (the default: nothing taken, and staying",
+    "old": "          'Survival. You feel the temperature from the climate, season, hour, weather, clothes and armor. Hunger, thirst, sleep and wetness are needs, food spoils, you can make camp and light campfires, and where you sleep matters. There are four tiers in Settings: Off, Boons (the default: neglect costs nothing, and staying fed, watered and rested gives bonuses), Casual (neglect only borrows stamina, which comes back once the need is met) and Hard (needs can hurt your attributes and health and make you sick).',",
+    "new": "          'Survival. You feel the temperature from the climate, season, hour, weather, clothes and armor. Hunger, thirst, sleep and wetness are needs, food spoils, you can make camp and light campfires, and where you sleep matters. There are four tiers in Settings: Off, Boons (the default: nothing taken, and staying fed, watered and rested gives bonuses), Casual (neglect only borrows stamina, which comes back once the need is met) and Hard (needs can hurt your attributes and health and make you sick).',",
     "why": "the credits say Boons takes nothing: the drink swings the attributes there",
     "note": "BOONS-DEFAULT (2026-10-13): re-aimed by content - the credits name Boons the default.",
     "tests": [

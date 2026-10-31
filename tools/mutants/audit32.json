@@ -524,8 +524,8 @@
   {
     "name": "AUDIT32-P3-focus-given-back-never",
     "file": "src/ui/domRepaint.js",
-    "old": "  if (kept) giveFocus(host, kept);\n",
-    "new": "",
+    "old": "  if (kept) giveFocus(host, kept);\n  if (!saved.length || !host) return;",
+    "new": "  if (!saved.length || !host) return;",
     "tests": [
       "test/ui/audit32_pages.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "AUDIT32-P3-words-unread",
     "file": "src/ui/domRepaint.js",
-    "old": "  if (k.words != null && (!n || n.textContent !== k.words)) n = [...host.querySelectorAll(k.tag)].find((x) => x.textContent === k.words) ?? null;\n",
-    "new": "",
+    "old": "    if (k.words != null && (!n || n.textContent !== k.words))\n      n = [...host.querySelectorAll(k.tag)].find((x) => x.textContent === k.words) ?? null;\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/audit32_pages.test.js"
     ]

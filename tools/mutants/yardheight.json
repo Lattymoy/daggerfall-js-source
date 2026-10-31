@@ -62,8 +62,8 @@
   {
     "name": "DECOR-TURN-direction",
     "file": "src/ui/decorPanel.js",
-    "old": "turnBtn('Turn left', -1), turnRightBtn = turnBtn('Turn right', 1);",
-    "new": "turnBtn('Turn left', 1), turnRightBtn = turnBtn('Turn right', 1);",
+    "old": "  const turnLeftBtn = turnBtn('Turn left', -1),",
+    "new": "  const turnLeftBtn = turnBtn('Turn left', 1),",
     "tests": [
       "test/net/yardheight.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "DECOR-TURN-door-turned",
     "file": "src/ui/decorPanel.js",
-    "old": "    turnLeftBtn.disabled = turnRightBtn.disabled = !it || door;",
-    "new": "    turnLeftBtn.disabled = turnRightBtn.disabled = !it;",
+    "old": "    turnLeftBtn.disabled = turnRightBtn.disabled = !it || door; // DECOR-TURN: a door is turned by its doorway (Move)",
+    "new": "    turnLeftBtn.disabled = turnRightBtn.disabled = !it; // DECOR-TURN: a door is turned by its doorway (Move)",
     "tests": [
       "test/net/yardheight.test.js"
     ],

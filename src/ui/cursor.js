@@ -25,7 +25,8 @@ import { APP_ROOT } from '../systems/appRoot.js';
 /** DFU's default cursor: the served file and its hotspot (ProjectSettings `cursorHotspot`). */
 export const DFU_CURSOR_FILE = 'art/dfu-cursor/Cursor2.png';
 export const DFU_CURSOR_HOTSPOT = Object.freeze([0, 0]);
-export const dfuCursorUrl = (root = APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/') => new URL(DFU_CURSOR_FILE, root).href;
+export const dfuCursorUrl = (root = APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/') =>
+  new URL(DFU_CURSOR_FILE, root).href;
 
 /** CURSOR-EDGE: no custom cursor past 32 DIP a side - Chromium shows a larger one only while the whole image lies inside
  *  the viewport, and the OS arrow anywhere else. DFU's arrow is 32x32, drawn at 1x: exactly the limit. */
@@ -60,7 +61,8 @@ export function installCursor(doc = globalThis.document, { classic = !isEnhanced
   const lay = (id, css) => {
     if (doc.getElementById?.(id)) return;
     const st = doc.createElement('style');
-    st.id = id; st.textContent = css;
+    st.id = id;
+    st.textContent = css;
     doc.head.append(st);
   };
   lay(CLASSIC_CURSOR_STYLE_ID, classicCursorCss());

@@ -599,8 +599,8 @@
   {
     "name": "HUNTERS-MARK-part-count-unread",
     "file": "src/ui/collectionsPage.js",
-    "old": "  if (isGatheredPart(id)) return gatheredCount(id, wardrobe);   // HUNTERS-MARK\n",
-    "new": "",
+    "old": "  if (isGatheredPart(id)) return gatheredCount(id, wardrobe); // HUNTERS-MARK\n  if (id === 'codex') {",
+    "new": "  if (id === 'codex') {",
     "tests": [
       "test/systems/huntersmark_trophies.test.js"
     ]

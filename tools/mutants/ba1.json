@@ -328,8 +328,8 @@
   {
     "name": "flash-drops-amount",
     "file": "src/ui/damageFlash.js",
-    "old": "  _removeHealthListener?.(amount);",
-    "new": "  _removeHealthListener?.(0);",
+    "old": "  playerDamageFlash.flash();\n  _removeHealthListener?.(amount);",
+    "new": "  playerDamageFlash.flash();\n  _removeHealthListener?.(0);",
     "tests": [
       "test/systems/ba1_betterambience.test.js"
     ]

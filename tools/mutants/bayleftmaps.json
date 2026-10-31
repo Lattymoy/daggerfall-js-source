@@ -140,8 +140,8 @@
   {
     "name": "BLM-C1-the-raids-box-west-the-bay's",
     "file": "src/ui/eventMapMarks.js",
-    "old": "px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
-    "new": "px < 0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
+    "old": "      px < box.x0 ||",
+    "new": "      px < 0 ||",
     "tests": [
       "test/ui/bayleft_marks.test.js"
     ]

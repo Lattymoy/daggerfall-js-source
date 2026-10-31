@@ -65,8 +65,8 @@
   {
     "name": "OFFLINE-ROAD-the-page-s-word-unsaid",
     "file": "src/ui/companionRoster.js",
-    "old": "other {# real hours}} for each day abroad. Resting",
-    "new": "other {# real hours}} for each day. Resting",
+    "old": "          \"Online, a mission keeps real time: it goes on while you're away, {h, plural, one {# real hour} other {# real hours}} for each day abroad. Resting, waiting or traveling doesn't speed it up.\",",
+    "new": "          \"Online, a mission keeps real time: it goes on while you're away, {h, plural, one {# real hour} other {# real hours}} for each day. Resting, waiting or traveling doesn't speed it up.\",",
     "tests": [
       "test/systems/revenant/fb1021_offlineroad.test.js"
     ]

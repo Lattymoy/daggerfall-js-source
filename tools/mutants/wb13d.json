@@ -95,8 +95,8 @@
   {
     "name": "WB13d-the-shake-flashes",
     "file": "src/ui/damageFlash.js",
-    "old": "export function shakePlayerDamage(amount = 0) { _removeHealthListener?.(amount); }",
-    "new": "export function shakePlayerDamage(amount = 0) { playerDamageFlash.flash(); _removeHealthListener?.(amount); }",
+    "old": "export function shakePlayerDamage(amount = 0) {\n  _removeHealthListener?.(amount);",
+    "new": "export function shakePlayerDamage(amount = 0) {\n  playerDamageFlash.flash();\n  _removeHealthListener?.(amount);",
     "tests": [
       "test/ui/gate/wb13d_blows.test.js"
     ]

@@ -425,8 +425,8 @@
   {
     "name": "RVN11a-page-row-dropped",
     "file": "src/ui/companionRoster.js",
-    "old": "  text.append(...loyaltyRow(el, r, meter));   // RVN11 (22.4): its loyalty, wherever it is\n",
-    "new": "",
+    "old": "  text.append(...loyaltyRow(el, r, meter)); // RVN11 (22.4): its loyalty, wherever it is\n  const art = artWords(r, { sworn: true }); // RVN-ARTS: its art, for me",
+    "new": "  const art = artWords(r, { sworn: true }); // RVN-ARTS: its art, for me",
     "tests": [
       "test/systems/revenant/rvn11a_loyalty.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "RVN11a-page-away-unshown",
     "file": "src/ui/companionRoster.js",
-    "old": "  text.append(...loyaltyRow(el, r, meter));",
-    "new": "  if (state === 'with') text.append(...loyaltyRow(el, r, meter));",
+    "old": "  text.append(...loyaltyRow(el, r, meter)); // RVN11 (22.4): its loyalty, wherever it is",
+    "new": "  if (state === 'with') text.append(...loyaltyRow(el, r, meter)); // RVN11 (22.4): its loyalty, wherever it is",
     "tests": [
       "test/systems/revenant/rvn11a_loyalty.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "RVN11a-page-word-class",
     "file": "src/ui/companionRoster.js",
-    "old": "el('span', `cmp-loyw is-${word.toLowerCase()}`, word)",
-    "new": "el('span', 'cmp-loyw', word)",
+    "old": "  lb.append(\n    ...(typeof meter === 'function' ? [meter(v, 100, '')] : []),\n    el('span', `cmp-loyw is-${word.toLowerCase()}`, word),\n  );",
+    "new": "  lb.append(...(typeof meter === 'function' ? [meter(v, 100, '')] : []), el('span', 'cmp-loyw', word));",
     "tests": [
       "test/systems/revenant/rvn11a_loyalty.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "RVN11a-page-title",
     "file": "src/ui/companionRoster.js",
-    "old": "  lb.title = `Loyalty ${v} of 100`;\n",
-    "new": "",
+    "old": "  lb.title = `Loyalty ${v} of 100`;\n  lb.append(",
+    "new": "  lb.append(",
     "tests": [
       "test/systems/revenant/rvn11a_loyalty.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "RVN11a-page-bar-max",
     "file": "src/ui/companionRoster.js",
-    "old": "meter(v, 100, '')",
-    "new": "meter(v, 90, '')",
+    "old": "    ...(typeof meter === 'function' ? [meter(v, 100, '')] : []),",
+    "new": "    ...(typeof meter === 'function' ? [meter(v, 90, '')] : []),",
     "tests": [
       "test/systems/revenant/rvn11a_loyalty.test.js"
     ]

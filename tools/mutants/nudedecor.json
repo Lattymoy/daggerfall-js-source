@@ -75,8 +75,8 @@
   {
     "name": "NUDEDECOR-panel-placed-row-key-unread",
     "file": "src/ui/decorPanel.js",
-    "old": "    if (shape.flat && it.entry) {\n      const img = el('img', '');\n      img.setAttribute('alt', '');\n      thumb.append(img);\n      const known = thumbs.get(thumbKeyOf(shape));",
-    "new": "    if (shape.flat && it.entry) {\n      const img = el('img', '');\n      img.setAttribute('alt', '');\n      thumb.append(img);\n      const known = thumbs.get(shape.key);",
+    "old": "      thumb.append(img);\n      const known = thumbs.get(thumbKeyOf(shape));",
+    "new": "      thumb.append(img);\n      const known = thumbs.get(shape.key);",
     "tests": [
       "test/scenes/nudedecor.test.js"
     ]

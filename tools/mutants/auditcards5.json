@@ -1391,8 +1391,8 @@
   {
     "name": "AC5-D-C02-codex-part-always",
     "file": "src/ui/collectionsPage.js",
-    "old": "(id === 'codex' ? lootRarityOn() : id === 'cards'",
-    "new": "(id === 'codex' ? true : id === 'cards'",
+    "old": "  COLLECTION_PARTS.filter(([id]) => (id === 'codex' ? lootRarityOn() : id === 'cards' ? cardsPartShown(player) : true));",
+    "new": "  COLLECTION_PARTS.filter(([id]) => (id === 'codex' ? true : id === 'cards' ? cardsPartShown(player) : true));",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -1403,8 +1403,8 @@
   {
     "name": "AC5-D-C04-reset-keeps-part",
     "file": "src/ui/collectionsPage.js",
-    "old": "{ _part = 'titles'; _picked = null; resetCardsPart(); resetWardrobePart(); resetAppearancesPart(); }",
-    "new": "{ _picked = null; resetCardsPart(); resetWardrobePart(); resetAppearancesPart(); }",
+    "old": "  _part = 'titles';\n  _picked = null;",
+    "new": "  _picked = null;",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -1415,8 +1415,8 @@
   {
     "name": "AC5-D-C09-switch-on-class",
     "file": "src/ui/collectionsPage.js",
-    "old": "`coll-part${id === _part ? ' on' : ''}`",
-    "new": "'coll-part'",
+    "old": "    const b = el('button', `coll-part${id === _part ? ' on' : ''}`);",
+    "new": "    const b = el('button', 'coll-part');",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -1427,8 +1427,8 @@
   {
     "name": "AC5-D-C10-leg-count-swap",
     "file": "src/ui/collectionsPage.js",
-    "old": "{ n: n.legendary, total: n.legendaries }",
-    "new": "{ n: n.legendaries, total: n.legendary }",
+    "old": "      t('coll.codex.legendaries', 'Legendaries - {n} of {total} found', { n: n.legendary, total: n.legendaries }),",
+    "new": "      t('coll.codex.legendaries', 'Legendaries - {n} of {total} found', { n: n.legendaries, total: n.legendary }),",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -1439,8 +1439,8 @@
   {
     "name": "AC5-D-C11-unfound-name-leak",
     "file": "src/ui/collectionsPage.js",
-    "old": "r.found ? r.name : t('coll.codex.unfound', 'Unfound')",
-    "new": "r.found ? r.name : r.id",
+    "old": "      el('span', 'nm', r.found ? r.name : t('coll.codex.unfound', 'Unfound')),",
+    "new": "      el('span', 'nm', r.found ? r.name : r.id),",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -1451,8 +1451,8 @@
   {
     "name": "AC5-D-C13-no-day",
     "file": "src/ui/collectionsPage.js",
-    "old": "t('coll.codex.foundOn', '{group} · found on day {day}', { group: r.group, day: r.day })",
-    "new": "`${r.group}`",
+    "old": "      el(\n        'span',\n        'sub',\n        r.found\n          ? t('coll.codex.foundOn', '{group} · found on day {day}', { group: r.group, day: r.day })\n          : `${r.group} · ${r.hint}`,\n      ),",
+    "new": "      el('span', 'sub', r.found ? `${r.group}` : `${r.group} · ${r.hint}`),",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -1463,8 +1463,8 @@
   {
     "name": "AC5-D-C14-no-toggle",
     "file": "src/ui/collectionsPage.js",
-    "old": "_picked = _picked === r.id ? null : r.id;",
-    "new": "_picked = r.id;",
+    "old": "      _picked = _picked === r.id ? null : r.id;",
+    "new": "      _picked = r.id;",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -1475,8 +1475,8 @@
   {
     "name": "AC5-D-C15-never-whole",
     "file": "src/ui/collectionsPage.js",
-    "old": "if (_picked === r.id) out.push(codexWhole(el, r));",
-    "new": "",
+    "old": "    if (_picked === r.id) out.push(codexWhole(el, r));\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -1487,8 +1487,8 @@
   {
     "name": "AC5-D-C16-whole-no-day",
     "file": "src/ui/collectionsPage.js",
-    "old": "ul.append(el('li', null, t('coll.codex.firstFound', 'First found on day {day}', { day: r.day })));",
-    "new": "",
+    "old": "    ul.append(el('li', null, t('coll.codex.firstFound', 'First found on day {day}', { day: r.day })));\n  } else ul.append(el('li', null, t('coll.codex.notFound', 'Not yet found')));",
+    "new": "  } else ul.append(el('li', null, t('coll.codex.notFound', 'Not yet found')));",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -1499,7 +1499,7 @@
   {
     "name": "AC5-D-C17-whole-no-lore",
     "file": "src/ui/collectionsPage.js",
-    "old": "if (r.lore) ul.append(el('li', null, r.lore));",
+    "old": "    if (r.lore) ul.append(el('li', null, r.lore));",
     "new": "",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
@@ -1511,8 +1511,8 @@
   {
     "name": "AC5-D-C20-aeth-count-swap",
     "file": "src/ui/collectionsPage.js",
-    "old": "{ n: n.aetheric, total: n.aetherics }",
-    "new": "{ n: n.aetherics, total: n.aetherics }",
+    "old": "    divider(t('coll.codex.aetheric', 'Aetheric - {n} of {total} found', { n: n.aetheric, total: n.aetherics })),",
+    "new": "    divider(t('coll.codex.aetheric', 'Aetheric - {n} of {total} found', { n: n.aetherics, total: n.aetherics })),",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -1523,8 +1523,8 @@
   {
     "name": "AC5-D-C21-found-class",
     "file": "src/ui/collectionsPage.js",
-    "old": "`codex-line${r.found ? ' found' : ''}",
-    "new": "`codex-line${''}",
+    "old": "    const line = el('button', `codex-line${r.found ? ' found' : ''}${_picked === r.id ? ' on' : ''}`);",
+    "new": "    const line = el('button', `codex-line${''}${_picked === r.id ? ' on' : ''}`);",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -3768,8 +3768,8 @@
   {
     "name": "AC5-D-C03-reset-keeps-cards",
     "file": "src/ui/collectionsPage.js",
-    "old": "{ _part = 'titles'; _picked = null; resetCardsPart(); resetWardrobePart(); resetAppearancesPart(); }",
-    "new": "{ _part = 'titles'; _picked = null; resetWardrobePart(); resetAppearancesPart(); }",
+    "old": "  resetCardsPart();\n  resetWardrobePart();",
+    "new": "  resetWardrobePart();",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -3780,8 +3780,8 @@
   {
     "name": "AC5-D-C05-reset-keeps-picked",
     "file": "src/ui/collectionsPage.js",
-    "old": "{ _part = 'titles'; _picked = null; resetCardsPart(); resetWardrobePart(); resetAppearancesPart(); }",
-    "new": "{ _part = 'titles'; resetCardsPart(); resetWardrobePart(); resetAppearancesPart(); }",
+    "old": "  _picked = null;\n  resetCardsPart();",
+    "new": "  resetCardsPart();",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -3792,7 +3792,7 @@
   {
     "name": "AC5-D-C06-part-no-fallback",
     "file": "src/ui/collectionsPage.js",
-    "old": "if (!parts.some(([id]) => id === _part)) _part = parts[0][0];",
+    "old": "  if (!parts.some(([id]) => id === _part)) _part = parts[0][0];",
     "new": "",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
@@ -3804,8 +3804,8 @@
   {
     "name": "AC5-D-C12-no-hint",
     "file": "src/ui/collectionsPage.js",
-    "old": "`${r.group} · ${r.hint}`",
-    "new": "`${r.group}`",
+    "old": "          : `${r.group} · ${r.hint}`,",
+    "new": "          : `${r.group}`,",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",
@@ -3816,7 +3816,7 @@
   {
     "name": "AC5-D-C18-whole-no-power",
     "file": "src/ui/collectionsPage.js",
-    "old": "if (r.power) ul.append(el('li', null, powerLine(r.power)));",
+    "old": "    if (r.power) ul.append(el('li', null, powerLine(r.power)));",
     "new": "",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
@@ -3828,8 +3828,8 @@
   {
     "name": "AC5-D-C19-aeth-name-leak",
     "file": "src/ui/collectionsPage.js",
-    "old": "x.found ? x.name : '?'",
-    "new": "x.name ?? x.id",
+    "old": "      p.append(el('span', x.found ? null : 'unfound', x.found ? x.name : '?'));",
+    "new": "      p.append(el('span', x.found ? null : 'unfound', x.name ?? x.id));",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/item/cards8_binder.test.js",

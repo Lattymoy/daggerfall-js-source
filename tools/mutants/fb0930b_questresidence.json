@@ -29,7 +29,7 @@
   {
     "name": "RES-RING-the-classic-plate-stamped-on-the-override-arm",
     "file": "src/ui/exteriorAutomapWindow.js",
-    "old": "    if (rec.isOverrideName) continue;   // :676-682 - the display-name arm returns first (the classic plate, unchanged)",
+    "old": "    if (rec.isOverrideName) continue; // :676-682 - the display-name arm returns first (the classic plate, unchanged)",
     "new": "",
     "tests": [
       "test/systems/fb0930b_questresidence.test.js"

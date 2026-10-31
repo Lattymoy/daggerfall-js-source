@@ -807,7 +807,7 @@ town map painting none", its own comment says.
 - **The classic window painted it magenta.** Its ladder gives a byte in no group DFU's debug red, (255, 0, byte)
   (ExteriorAutomap.cs:1535-1540) - (255, 0, 254) here: 118,671 of the 262,144 pixels of a Market District slice, and the
   White-Gold Tower and the palace solid magenta. The closed byte paints nothing now, for every capital, as the held
-  map's sheet paints it (`exteriorAutomapWindow.js:"if (byte === 0 || byte === CAPITAL_CLOSED_BYTE) continue;"`). No
+  map's sheet paints it (`exteriorAutomapWindow.js:"if (byte === 0 || byte === CAPITAL_CLOSED_BYTE)"`). No
   Daggerfall block writes the byte - every RMB in BLOCKS.BSA reads 0 to 24, 117, 250 and 251 - so DFU's ladder is
   unchanged on DFU's own data, and a Bay town's map is the same byte for byte: no departure from DFU, only our blocks'
   byte taken out of its debug arm.

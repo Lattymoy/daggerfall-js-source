@@ -2,8 +2,8 @@
   {
     "name": "EVENT-TIP-a-raid-marked-before-or-after-it-runs",
     "file": "src/ui/eventMapMarks.js",
-    "old": "if (!r || !raidActive(r, nowMinutes) || !Number.isInteger(r.px)",
-    "new": "if (!r || !Number.isInteger(r.px)",
+    "old": "    if (!r || !raidActive(r, nowMinutes) || !Number.isInteger(r.px) || !Number.isInteger(r.py)) continue;",
+    "new": "    if (!r || !Number.isInteger(r.px) || !Number.isInteger(r.py)) continue;",
     "tests": [
       "test/ui/eventtip.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "EVENT-TIP-no-deaths-said-as-none",
     "file": "src/ui/eventMapMarks.js",
-    "old": "if (killed > 0 && target > 0) lines.push",
-    "new": "if (target > 0) lines.push",
+    "old": "    if (killed > 0 && target > 0) lines.push(`${Math.min(killed, target)} of ${target} driven off`);",
+    "new": "    if (target > 0) lines.push(`${Math.min(killed, target)} of ${target} driven off`);",
     "tests": [
       "test/ui/eventtip.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EVENT-TIP-deaths-past-the-target",
     "file": "src/ui/eventMapMarks.js",
-    "old": "`${Math.min(killed, target)} of ${target} driven off`",
-    "new": "`${killed} of ${target} driven off`",
+    "old": "    if (killed > 0 && target > 0) lines.push(`${Math.min(killed, target)} of ${target} driven off`);",
+    "new": "    if (killed > 0 && target > 0) lines.push(`${killed} of ${target} driven off`);",
     "tests": [
       "test/ui/eventtip.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EVENT-TIP-withdraws-at-its-start",
     "file": "src/ui/eventMapMarks.js",
-    "old": "lines.push(local ? `Withdraws at ${local} your time` : `Withdraws at ${clockText(r.endMinute)}`);",
-    "new": "lines.push(local ? `Withdraws at ${local} your time` : `Withdraws at ${clockText(r.startMinute)}`);",
+    "old": "    lines.push(local ? `Withdraws at ${local} your time` : `Withdraws at ${clockText(r.endMinute)}`);",
+    "new": "    lines.push(local ? `Withdraws at ${local} your time` : `Withdraws at ${clockText(r.startMinute)}`);",
     "tests": [
       "test/ui/eventtip.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EVENT-TIP-the-clock-past-midnight-unwrapped",
     "file": "src/ui/eventMapMarks.js",
-    "old": "const m = ((Math.floor(minute) % 1440) + 1440) % 1440;",
-    "new": "const m = Math.floor(minute);",
+    "old": "  const m = ((Math.floor(minute) % 1440) + 1440) % 1440;",
+    "new": "  const m = Math.floor(minute);",
     "tests": [
       "test/ui/eventtip.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "EVENT-TIP-a-raid-off-the-bay-read",
     "file": "src/ui/eventMapMarks.js",
-    "old": "px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
-    "new": "px < box.x0 || py < box.y0) continue;",
+    "old": "    if (\n      !Number.isInteger(px) ||\n      !Number.isInteger(py) ||\n      px < box.x0 ||\n      py < box.y0 ||\n      px >= box.x0 + box.w ||\n      py >= box.y0 + box.h\n    )\n      continue;",
+    "new": "    if (!Number.isInteger(px) || !Number.isInteger(py) || px < box.x0 || py < box.y0) continue;",
     "tests": [
       "test/ui/eventtip.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "EVENT-TIP-a-card-without-bounds",
     "file": "src/ui/eventMapMarks.js",
-    "old": "(Array.isArray(tip.lines) ? tip.lines : []).slice(0, linesMax).map(",
-    "new": "(Array.isArray(tip.lines) ? tip.lines : []).map(",
+    "old": "    .slice(0, linesMax)\n    .map((l) => String(l ?? '').slice(0, textMax))",
+    "new": "    .map((l) => String(l ?? '').slice(0, textMax))",
     "tests": [
       "test/ui/eventtip.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "EVENT-TIP-the-card-cut-at-the-right-edge",
     "file": "src/ui/eventMapMarks.js",
-    "old": "  if (left + w > vw - edge) left = x - gap - w;\n",
-    "new": "",
+    "old": "  if (left + w > vw - edge) left = x - gap - w;\n  if (top + h > vh - edge) top = y - gap - h;",
+    "new": "  if (top + h > vh - edge) top = y - gap - h;",
     "tests": [
       "test/ui/eventtip.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "EVENT-TIP-a-death-never-repaints",
     "file": "src/ui/eventMapMarks.js",
-    "old": "`${m.key}@${m.px},${m.py}|${m.label}|${tipKey(m.tip)}`",
-    "new": "`${m.key}@${m.px},${m.py}|${m.label}`",
+    "old": "export const raidMarksKey = (marks) =>\n  marks.map((m) => `${m.key}@${m.px},${m.py}|${m.label}|${tipKey(m.tip)}`).join(';');",
+    "new": "export const raidMarksKey = (marks) => marks.map((m) => `${m.key}@${m.px},${m.py}|${m.label}`).join(';');",
     "tests": [
       "test/ui/eventtip.test.js"
     ]

@@ -175,8 +175,8 @@
   {
     "name": "CLOTHGEMS-words-own-unread",
     "file": "src/ui/craftXpWords.js",
-    "old": "  const more = walled ? 0 : firstCraftXp(r, true);",
-    "new": "  const more = walled ? 0 : firstCraftXp(r);",
+    "old": "  const more = walled ? 0 : firstCraftXp(r, true); // FIRST-BUDGET: its track's first-make share",
+    "new": "  const more = walled ? 0 : firstCraftXp(r); // FIRST-BUDGET: its track's first-make share",
     "tests": [
       "test/net/fb1015f_firstcraft.test.js",
       "test/systems/clothgems_client.test.js"
@@ -195,8 +195,8 @@
   {
     "name": "CLOTHGEMS-words-answer-unread",
     "file": "src/ui/craftXpWords.js",
-    "old": "(typeof data.firstPaid === 'boolean' ? data.firstPaid : firstCraftPays(r))",
-    "new": "firstCraftPays(r)",
+    "old": "  return (typeof data.firstPaid === 'boolean' ? data.firstPaid : firstCraftPays(r))",
+    "new": "  return firstCraftPays(r)",
     "tests": [
       "test/systems/clothgems_client.test.js"
     ]

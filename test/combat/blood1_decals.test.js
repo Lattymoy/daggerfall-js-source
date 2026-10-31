@@ -3574,7 +3574,7 @@ test('BLOOD2e: blood on the lens - a real blow throws drops that slide and fade,
   const detector = hud.indexOf('const rig = updateHudVitals(');
   const artReturn = hud.indexOf('  if (!art) return;');
   assert.ok(detector > 0 && spat > detector && tick > spat && draw > tick && draw < artReturn, 'after the detector, before the art return');
-  assert.match(a4Read('src/ui/damageFlash.js'), /export function flashPlayerBleed\(\) \{ playerDamageFlash\.bleed\(\); \}/);
+  assert.match(a4Read('src/ui/damageFlash.js'), /export function flashPlayerBleed\(\) \{\n\s*playerDamageFlash\.bleed\(\);\n\s*\}/);
 });
 
 

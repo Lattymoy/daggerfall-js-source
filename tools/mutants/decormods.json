@@ -144,8 +144,8 @@
   {
     "name": "DECORMODS-late-unlisted",
     "file": "src/ui/decorPanel.js",
-    "old": "view?.ready ? 1 : 0, view?.sized ?? 0, view?.gold ?? 0,",
-    "new": "view?.ready ? 1 : 0, view?.gold ?? 0,",
+    "old": "      view?.sized ?? 0,\n      view?.gold ?? 0,",
+    "new": "      view?.gold ?? 0,",
     "tests": [
       "test/systems/decor/decormods.test.js"
     ],

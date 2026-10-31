@@ -382,8 +382,8 @@
   {
     "name": "MASTER-ART-craft-word-xp",
     "file": "src/ui/craftXpWords.js",
-    "old": "if (data?.master === true) return t('prof.craft.master', '(a Master\\'s work)');",
-    "new": "if (data?.master === 1) return t('prof.craft.master', '(a Master\\'s work)');",
+    "old": "  if (data?.master === true) return t('prof.craft.master', \"(a Master's work)\"); // MASTER-ART: no experience past Master to say",
+    "new": "  if (data?.master === 1) return t('prof.craft.master', \"(a Master's work)\"); // MASTER-ART: no experience past Master to say",
     "tests": [
       "test/net/masterart_service.test.js"
     ]

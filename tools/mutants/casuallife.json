@@ -22,8 +22,8 @@
   {
     "name": "CASUAL-LIFE-screen-claims-gold",
     "file": "src/ui/deathScreen.js",
-    "old": "this.goldLoss = respawns && penalty !== false && !isCasual(entity) ? deathGoldLoss(goldPiecesOf(entity)) : 0;",
-    "new": "this.goldLoss = respawns && penalty !== false ? deathGoldLoss(goldPiecesOf(entity)) : 0;",
+    "old": "    this.goldLoss = respawns && penalty !== false && !isCasual(entity) ? deathGoldLoss(goldPiecesOf(entity)) : 0;",
+    "new": "    this.goldLoss = respawns && penalty !== false ? deathGoldLoss(goldPiecesOf(entity)) : 0;",
     "tests": [
       "test/systems/legacy/casuallife.test.js"
     ],

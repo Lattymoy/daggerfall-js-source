@@ -649,8 +649,8 @@
   {
     "name": "APPEARANCES-the-tile-missing",
     "file": "src/ui/collectionsPage.js",
-    "old": "  wordPair('appearances', () => t('coll.part.appearances', 'Appearances')),",
-    "new": "",
+    "old": "  wordPair('appearances', () => t('coll.part.appearances', 'Appearances')), // APPEARANCES: the character's looks, first of its own parts",
+    "new": "  // APPEARANCES: the character's looks, first of its own parts",
     "tests": [
       "test/ui/appearances_part.test.js"
     ]
@@ -658,8 +658,8 @@
   {
     "name": "APPEARANCES-the-count-not-the-characters",
     "file": "src/ui/collectionsPage.js",
-    "old": "  if (id === 'appearances') return appearancesCount(player);",
-    "new": "",
+    "old": "  if (id === 'appearances') return appearancesCount(player); // APPEARANCES: every look there is, and those the character holds",
+    "new": "  // APPEARANCES: every look there is, and those the character holds",
     "tests": [
       "test/ui/appearances_part.test.js"
     ]

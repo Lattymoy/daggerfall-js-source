@@ -236,8 +236,8 @@
   {
     "name": "RVN-ERRAND-recall-unasked",
     "file": "src/ui/companionRoster.js",
-    "old": "back.onclick = () => { _notice = null; _recall = r.id; rerender(); };",
-    "new": "back.onclick = () => { _notice = null; recallFromErrand(r.id); rerender(); };",
+    "old": "      _recall = r.id;",
+    "new": "      recallFromErrand(r.id);",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "RVN-ERRAND-lived-said-offline",
     "file": "src/ui/companionRoster.js",
-    "old": "  if (sharedClockOn()) box.append(",
-    "new": "  if (true) box.append(",
+    "old": "  if (sharedClockOn())",
+    "new": "  if (true)",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "RVN-ERRAND-hard-share-unsaid",
     "file": "src/ui/companionRoster.js",
-    "old": "{ pct: Math.round(ERRAND.HARD_SHARE * 100), n: ERRAND.MAX }",
-    "new": "{ pct: 50 + 1, n: ERRAND.MAX }",
+    "old": "        { pct: Math.round(ERRAND.HARD_SHARE * 100), n: ERRAND.MAX },",
+    "new": "        { pct: 50 + 1, n: ERRAND.MAX },",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "RVN-ERRAND-odds-unsaid",
     "file": "src/ui/companionRoster.js",
-    "old": "    name.append(el('span', ODDS_CLASS[oddsKind(odds)], t('rvn.roster.odds', '{word} {pct}%', { word: oddsWord(odds), pct: Math.round(odds * 100) })));\n",
-    "new": "",
+    "old": "    name.append(\n      el(\n        'span',\n        ODDS_CLASS[oddsKind(odds)],\n        t('rvn.roster.odds', '{word} {pct}%', { word: oddsWord(odds), pct: Math.round(odds * 100) }),\n      ),\n    );\n    const go = keyed(",
+    "new": "    const go = keyed(",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "RVN-ERRAND-release-left-abroad",
     "file": "src/ui/companionRoster.js",
-    "old": "  } else if (state === 'errand') {   // RVN-ERRAND",
-    "new": "  } else if (false) {   // RVN-ERRAND",
+    "old": "  } else if (state === 'errand') {",
+    "new": "  } else if (false) {",
     "tests": [
       "test/systems/revenant/rvnerrand.test.js"
     ]

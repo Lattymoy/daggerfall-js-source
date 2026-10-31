@@ -675,8 +675,8 @@
   {
     "name": "REZ-BLOODLINE-R2-the-screen-counts-the-frames",
     "file": "src/ui/deathScreen.js",
-    "old": "    if (this.online) this.clock = Math.max(this.clock, (Number(this._wall()) - this._fellAt) / 1000 || 0);\n",
-    "new": "",
+    "old": "    if (this.online) this.clock = Math.max(this.clock, (Number(this._wall()) - this._fellAt) / 1000 || 0);\n    if (this.online && this.clock >= this.holdSeconds) {",
+    "new": "    if (this.online && this.clock >= this.holdSeconds) {",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ],
@@ -685,8 +685,8 @@
   {
     "name": "REZ-BLOODLINE-R2-the-screen-the-wall-alone",
     "file": "src/ui/deathScreen.js",
-    "old": "this.clock = Math.max(this.clock, (Number(this._wall()) - this._fellAt) / 1000 || 0);",
-    "new": "this.clock = (Number(this._wall()) - this._fellAt) / 1000 || 0;",
+    "old": "    if (this.online) this.clock = Math.max(this.clock, (Number(this._wall()) - this._fellAt) / 1000 || 0);",
+    "new": "    if (this.online) this.clock = (Number(this._wall()) - this._fellAt) / 1000 || 0;",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]

@@ -634,8 +634,8 @@
   {
     "name": "HOME-YARD-a-full-yard-a-room",
     "file": "src/ui/decorPanel.js",
-    "old": "  if (count >= cap) return `${yard ? (hall ? \"The hall's yard\" : 'Your yard') : 'This room'} already holds ${cap} pieces.`;",
-    "new": "  if (count >= cap) return `This room already holds ${cap} pieces.`;",
+    "old": "  if (count >= cap)\n    return `${yard ? (hall ? \"The hall's yard\" : 'Your yard') : 'This room'} already holds ${cap} pieces.`; // HOME-YARD (AUDIT): a yard said \"this room\"; AUDIT GUILD-YARD: a hall's yard is nobody's own",
+    "new": "  if (count >= cap) return `This room already holds ${cap} pieces.`; // HOME-YARD (AUDIT): a yard said \"this room\"; AUDIT GUILD-YARD: a hall's yard is nobody's own",
     "tests": [
       "test/scenes/homeyard.test.js"
     ]
@@ -680,8 +680,8 @@
   {
     "name": "HOME-LOOK-every-style-offered",
     "file": "src/ui/decorPanel.js",
-    "old": "r <= 15 && (have == null || r < have); r++)",
-    "new": "r <= 15; r++)",
+    "old": "      for (let r = 0; styles.length < DECOR_LOOK_STYLES && r <= 15 && (have == null || r < have); r++)",
+    "new": "      for (let r = 0; styles.length < DECOR_LOOK_STYLES && r <= 15; r++)",
     "tests": [
       "test/net/homelook.test.js"
     ]

@@ -41,8 +41,24 @@
 // leaves the plate at once (the source read again, its rows dropped before the cut), its lines still waiting are let go
 // and a news of it standing is taken down (its lines are in the journal, where the door filed them). Nothing is
 // announced for what stood while it was off: the announcements' memory reads every kind.
-import { eventBoardModel, eventAnnouncements, createEventToasts, EVENT_KIND_TEXT, EVENT_BOARD_TEXT, EVENT_BOARD_ROWS, EVENT_SINGLE_KINDS } from '../systems/eventBoard.js';
-import { takeEventNotices, eventBoardSource, eventBoardOn, eventNoticeElsewhere, eventHudLine, eventKindShown, EVENT_NOTICE_KINDS } from '../systems/eventNotices.js';
+import {
+  eventBoardModel,
+  eventAnnouncements,
+  createEventToasts,
+  EVENT_KIND_TEXT,
+  EVENT_BOARD_TEXT,
+  EVENT_BOARD_ROWS,
+  EVENT_SINGLE_KINDS,
+} from '../systems/eventBoard.js';
+import {
+  takeEventNotices,
+  eventBoardSource,
+  eventBoardOn,
+  eventNoticeElsewhere,
+  eventHudLine,
+  eventKindShown,
+  EVENT_NOTICE_KINDS,
+} from '../systems/eventNotices.js';
 import { timerText } from '../systems/eventTimers.js';
 import { t } from '../systems/textManager.js';
 import { FRAME_TONES, frameCss, scopeRules } from './enhanced/enhancedFrame.js';
@@ -69,7 +85,16 @@ export const EVENT_TALL_PX = 900;
 export const eventRowsFor = (h) => (h >= EVENT_TALL_PX ? EVENT_TALL_ROWS : EVENT_BOARD_ROWS);
 /** What stands above the plate's edge (it stands under them) and below it (it keeps over them). */
 export const EVENT_ABOVE = Object.freeze(['.dfchat', '.dfsocial[data-open="1"]']);
-export const EVENT_BELOW = Object.freeze(['.hud .hud-stat', '.hud .hud-quick', '.hud .hb', '.hud .hud-bars', '.hud .hud-temp', '.dftouch-btn', '.travelpanel-bar', '.dfparty']);
+export const EVENT_BELOW = Object.freeze([
+  '.hud .hud-stat',
+  '.hud .hud-quick',
+  '.hud .hb',
+  '.hud .hud-bars',
+  '.hud .hud-temp',
+  '.dftouch-btn',
+  '.travelpanel-bar',
+  '.dfparty',
+]);
 /** Where no enhanced HUD stands (the classic skin's is drawn in the canvas, its vitals at the bottom left): the plate
  *  keeps over this share of the screen's foot. */
 export const EVENT_CLASSIC_FOOT = 0.22;
@@ -77,7 +102,12 @@ export const EVENT_CLASSIC_FOOT = 0.22;
  *  the same in both; the festival's is the board's own (the window has no row of it). One per kind of the kinds' one home
  *  (systems/features.js EVENT_KINDS - EVENTS2's pin holds them to it). */
 export const EVENT_KIND_CSS = Object.freeze({
-  gate: '#e2554c', serpent: SERPENT_RING_MAP_CSS, super: SD_RING_MAP_CSS, star: STAR_VIOLET_CSS, raid: '#f2c46b', festival: '#9fd18b',
+  gate: '#e2554c',
+  serpent: SERPENT_RING_MAP_CSS,
+  super: SD_RING_MAP_CSS,
+  star: STAR_VIOLET_CSS,
+  raid: '#f2c46b',
+  festival: '#9fd18b',
 });
 
 /**
@@ -93,11 +123,16 @@ export function eventBoardPlace({ vh, left, right, above = [], below = [], class
   const top = Math.max(home, ...above.filter(crosses).map((r) => r.bottom + EVENT_GAP_PX));
   // whatever reaches below the plate's top - a bar that starts a pixel above it too (a phone on its side: the hotbar, the
   // quick slots' column) - ends its room
-  const floor = Math.min(classic ? vh * (1 - EVENT_CLASSIC_FOOT) : vh - EVENT_GAP_PX, ...below.filter((r) => crosses(r) && r.bottom > top).map((r) => r.top - EVENT_GAP_PX));
+  const floor = Math.min(
+    classic ? vh * (1 - EVENT_CLASSIC_FOOT) : vh - EVENT_GAP_PX,
+    ...below.filter((r) => crosses(r) && r.bottom > top).map((r) => r.top - EVENT_GAP_PX),
+  );
   return { top, room: Math.max(0, floor - top) };
 }
 
-const kindRules = Object.entries(EVENT_KIND_CSS).map(([k, c]) => `.evboard .ev-${k} { --ev-kind: ${c}; }`).join('\n');
+const kindRules = Object.entries(EVENT_KIND_CSS)
+  .map(([k, c]) => `.evboard .ev-${k} { --ev-kind: ${c}; }`)
+  .join('\n');
 export const EVENT_BOARD_CSS = `
 .evhud { position: fixed; left: calc(14px + var(--ui-pillar, 0px) + env(safe-area-inset-left, 0px)); top: clamp(244px, 40vh, 460px); z-index: 4;
   pointer-events: none; box-sizing: border-box; width: min(300px, calc((100vw - 28px) / var(--hud-scale, 1)));
@@ -139,15 +174,30 @@ ${kindRules}
 /** The kit's selector of the board (its classic copy is the kit's rules cut to it). */
 export const isEventBoardSelector = (/** @type {string} */ sel) => /\.evboard(?![\w-])/.test(sel);
 
-let root = null, board = null, newsBox = null, list = null, more = null, live = null, readAt = -Infinity, layoutAt = -Infinity;
+let root = null,
+  board = null,
+  newsBox = null,
+  list = null,
+  more = null,
+  live = null,
+  readAt = -Infinity,
+  layoutAt = -Infinity;
 let model = { rows: [], more: 0, all: [], every: [], now: NaN };
-let watchFrom = null, offsetMs = 0, rowsCap = EVENT_BOARD_ROWS, room = Infinity, spoken = '', lastScale = '', lastFitKey = '', lastHidden = '';
+let watchFrom = null,
+  offsetMs = 0,
+  rowsCap = EVENT_BOARD_ROWS,
+  room = Infinity,
+  spoken = '',
+  lastScale = '',
+  lastFitKey = '',
+  lastHidden = '';
 const seen = new Map();
 const toasts = createEventToasts({ shown: 1 });
 /** news key -> its node and parts */
 const newsNodes = new Map();
 /** row id -> its parts, and the shape the rows were built for */
-let rowNodes = new Map(), shape = null;
+let rowNodes = new Map(),
+  shape = null;
 
 function ensureStyle(doc) {
   const lay = (id, text) => {
@@ -161,15 +211,23 @@ function ensureStyle(doc) {
   if (doc.head) injectEnhancedFonts(doc);
   if (!isEnhancedPlus()) lay(EVENT_BOARD_KIT_ID, scopeRules(frameCss(), isEventBoardSelector));
 }
-const part = (doc, cls, text = '') => { const n = doc.createElement('div'); n.className = cls; if (text) n.textContent = text; return n; };
-const set = (n, v) => { const s = v ?? ''; if (n.textContent !== s) n.textContent = s; };
+const part = (doc, cls, text = '') => {
+  const n = doc.createElement('div');
+  n.className = cls;
+  if (text) n.textContent = text;
+  return n;
+};
+const set = (n, v) => {
+  const s = v ?? '';
+  if (n.textContent !== s) n.textContent = s;
+};
 /** A class list from its parts, the false ones left out. */
 const classes = (...parts) => parts.filter(Boolean).join(' ');
 
 function build(doc) {
   ensureStyle(doc);
   root = part(doc, 'evhud');
-  root.setAttribute?.('aria-hidden', 'true');   // AUDIT EVENTS1 B7: the board's voice speaks; the plate never does
+  root.setAttribute?.('aria-hidden', 'true'); // AUDIT EVENTS1 B7: the board's voice speaks; the plate never does
   board = part(doc, 'evboard');
   newsBox = part(doc, 'evboard-news');
   list = part(doc, 'evboard-rows');
@@ -191,7 +249,8 @@ function stand(doc, on) {
 }
 
 /** A row's or a news's clock: to its end while live, to its start while coming. */
-const clockOf = (r, now) => (r ? (r.live ? EVENT_BOARD_TEXT.left(timerText(r.at - now)) : EVENT_BOARD_TEXT.starts(timerText(r.at - now))) : '');
+const clockOf = (r, now) =>
+  r ? (r.live ? EVENT_BOARD_TEXT.left(timerText(r.at - now)) : EVENT_BOARD_TEXT.starts(timerText(r.at - now))) : '';
 /** How far and which way, then where - the way first, so a long place name cut at the plate's edge never cuts it. */
 const whereOf = (r) => [r?.way?.text, r?.where].filter(Boolean).join(' · ');
 
@@ -215,7 +274,12 @@ function drawRows(doc, now, inNews) {
     for (const r of rows) {
       const row = part(doc, classes('evrow', `ev-${r.kind}`, r.live && 'live'));
       const top = part(doc, 'evrow-top');
-      const p = { title: part(doc, 'evrow-title'), clock: part(doc, 'evrow-clock'), where: part(doc, 'evrow-where'), detail: part(doc, 'evrow-detail') };
+      const p = {
+        title: part(doc, 'evrow-title'),
+        clock: part(doc, 'evrow-clock'),
+        where: part(doc, 'evrow-where'),
+        detail: part(doc, 'evrow-detail'),
+      };
       top.append(p.title, p.clock);
       row.append(top, p.where, p.detail);
       list.append(row);
@@ -225,8 +289,10 @@ function drawRows(doc, now, inNews) {
   for (const r of rows) {
     const p = rowNodes.get(r.id);
     if (!p) continue;
-    set(p.title, r.title); set(p.clock, clockOf(r, now)); set(p.where, whereOf(r));
-    set(p.detail, r.kind === 'raid' && r.live ? r.detail : '');   // a raid's count; the rest on its news
+    set(p.title, r.title);
+    set(p.clock, clockOf(r, now));
+    set(p.where, whereOf(r));
+    set(p.detail, r.kind === 'raid' && r.live ? r.detail : ''); // a raid's count; the rest on its news
   }
   // AUDIT EVENTS1 A9: what stands that the plate shows nowhere - every event less its rows and its news's own
   const shownIds = new Set([...rows.map((r) => r.id), ...inNews]);
@@ -240,23 +306,40 @@ function drawRows(doc, now, inNews) {
 function newsWords(c, r, now) {
   const heading = EVENT_KIND_TEXT[c.kind]?.() ?? '';
   const phase = !c.phase ? '' : c.phase === 'soon' && !r?.live ? EVENT_BOARD_TEXT.soon() : EVENT_BOARD_TEXT.begun();
-  return { kind: phase ? `${heading} · ${phase}` : heading, line: r ? EVENT_BOARD_TEXT.alone(heading, [r.title, whereOf(r)].filter(Boolean).join(', '), clockOf(r, now)) : '' };
+  return {
+    kind: phase ? `${heading} · ${phase}` : heading,
+    line: r ? EVENT_BOARD_TEXT.alone(heading, [r.title, whereOf(r)].filter(Boolean).join(', '), clockOf(r, now)) : '',
+  };
 }
 
 function drawNews(doc, now, inNews) {
   const shown = toasts.cards();
   const keep = new Set(shown.map((c) => c.key));
-  for (const [key, n] of newsNodes) if (!keep.has(key)) { newsNodes.delete(key); n.root.remove?.(); }
+  for (const [key, n] of newsNodes)
+    if (!keep.has(key)) {
+      newsNodes.delete(key);
+      n.root.remove?.();
+    }
   for (const c of shown) {
     let n = newsNodes.get(c.key);
     if (!n) {
-      n = { root: part(doc, classes('evnews', `ev-${c.kind}`, 'enter')), kind: part(doc, 'evnews-kind'), title: part(doc, 'evnews-title'), where: part(doc, 'evnews-where'), clock: part(doc, 'evnews-clock'), detail: part(doc, 'evnews-detail'), notes: part(doc, 'evnews-notes'), said: '', entering: true };
+      n = {
+        root: part(doc, classes('evnews', `ev-${c.kind}`, 'enter')),
+        kind: part(doc, 'evnews-kind'),
+        title: part(doc, 'evnews-title'),
+        where: part(doc, 'evnews-where'),
+        clock: part(doc, 'evnews-clock'),
+        detail: part(doc, 'evnews-detail'),
+        notes: part(doc, 'evnews-notes'),
+        said: '',
+        entering: true,
+      };
       const top = part(doc, 'evnews-top');
       top.append(n.title, n.clock);
       n.root.append(n.kind, top, n.where, n.detail, n.notes);
       newsBox.append(n.root);
       newsNodes.set(c.key, n);
-      void n.root.offsetWidth;   // the resting style computed first, so the slide has a "before" (ui/enhanced/enhancedNotice.js's law)
+      void n.root.offsetWidth; // the resting style computed first, so the slide has a "before" (ui/enhanced/enhancedNotice.js's law)
     } else n.entering = false;
     const r = newsRowOf(c, model.all);
     if (r) inNews.add(r.id);
@@ -276,7 +359,10 @@ function drawNews(doc, now, inNews) {
     }
     // the board's voice: a news said once when it first shows, and again only when a line joins it (never its clock)
     const voice = `${c.key}|${w.kind}|${c.notes.length}`;
-    if (live && voice !== spoken) { spoken = voice; live.textContent = [w.kind, r?.title, whereOf(r), ...c.notes].filter(Boolean).join('. '); }
+    if (live && voice !== spoken) {
+      spoken = voice;
+      live.textContent = [w.kind, r?.title, whereOf(r), ...c.notes].filter(Boolean).join('. ');
+    }
   }
   return shown.length;
 }
@@ -287,12 +373,33 @@ function measure(doc) {
   const vh = Number(win.innerHeight) || 720;
   const hud = doc.querySelector?.('.hud');
   const scale = hud?.style?.getPropertyValue?.('--hud-scale') || '';
-  if (scale !== lastScale) { lastScale = scale; if (scale) root.style?.setProperty?.('--hud-scale', scale); else root.style?.removeProperty?.('--hud-scale'); }
-  if (root.hasAttribute?.('data-hm-moved')) { room = Infinity; return; }   // where the player put it, theirs to keep
-  const box = (n) => { const r = n?.getBoundingClientRect?.(); return r && r.height > 0 && r.width > 0 ? r : null; };
-  const all = (sels) => sels.flatMap((s) => { try { return [...(doc.querySelectorAll?.(s) ?? [])]; } catch { return []; } }).map(box).filter(Boolean);
+  if (scale !== lastScale) {
+    lastScale = scale;
+    if (scale) root.style?.setProperty?.('--hud-scale', scale);
+    else root.style?.removeProperty?.('--hud-scale');
+  }
+  if (root.hasAttribute?.('data-hm-moved')) {
+    room = Infinity;
+    return;
+  } // where the player put it, theirs to keep
+  const box = (n) => {
+    const r = n?.getBoundingClientRect?.();
+    return r && r.height > 0 && r.width > 0 ? r : null;
+  };
+  const all = (sels) =>
+    sels
+      .flatMap((s) => {
+        try {
+          return [...(doc.querySelectorAll?.(s) ?? [])];
+        } catch {
+          return [];
+        }
+      })
+      .map(box)
+      .filter(Boolean);
   const me = box(root) ?? box(board);
-  const left = me?.left ?? 14, right = me ? me.right : left + 300;
+  const left = me?.left ?? 14,
+    right = me ? me.right : left + 300;
   const place = eventBoardPlace({ vh, left, right, above: all(EVENT_ABOVE), below: all(EVENT_BELOW), classic: !hud });
   const top = `${Math.round(place.top)}px`;
   if (root.style && root.style.top !== top) root.style.top = top;
@@ -303,21 +410,46 @@ const plateHeight = () => Number(board?.getBoundingClientRect?.()?.height) || 0;
 
 /** Every memory of the board let go, its plate and its voice taken down (the switch off, a reset). */
 function reset() {
-  root?.remove?.(); live?.remove?.();
-  root = null; board = null; newsBox = null; list = null; more = null; live = null; readAt = -Infinity; layoutAt = -Infinity;
+  root?.remove?.();
+  live?.remove?.();
+  root = null;
+  board = null;
+  newsBox = null;
+  list = null;
+  more = null;
+  live = null;
+  readAt = -Infinity;
+  layoutAt = -Infinity;
   model = { rows: [], more: 0, all: [], every: [], now: NaN };
-  watchFrom = null; offsetMs = 0; rowsCap = EVENT_BOARD_ROWS; room = Infinity; spoken = ''; lastScale = ''; lastFitKey = ''; lastHidden = '';
-  seen.clear(); toasts.clear(); newsNodes.clear(); rowNodes = new Map(); shape = null;
+  watchFrom = null;
+  offsetMs = 0;
+  rowsCap = EVENT_BOARD_ROWS;
+  room = Infinity;
+  spoken = '';
+  lastScale = '';
+  lastFitKey = '';
+  lastHidden = '';
+  seen.clear();
+  toasts.clear();
+  newsNodes.clear();
+  rowNodes = new Map();
+  shape = null;
 }
 
 /** Draw the news and the rows; where the plate stands taller than its room, a row fewer until it fits. False where it
  *  does not, or where nothing is left on it (a title over "more in Timers" is no board). */
 function drawFitted(doc, now, fit) {
   let shown = 0;
-  const once = () => { const inNews = new Set(); shown = drawNews(doc, now, inNews) + drawRows(doc, now, inNews); };
+  const once = () => {
+    const inNews = new Set();
+    shown = drawNews(doc, now, inNews) + drawRows(doc, now, inNews);
+  };
   once();
   if (!fit || !Number.isFinite(room)) return shown > 0;
-  for (let guard = 0; guard <= EVENT_TALL_ROWS && plateHeight() > room && rowsCap > 0; guard++) { rowsCap--; once(); }
+  for (let guard = 0; guard <= EVENT_TALL_ROWS && plateHeight() > room && rowsCap > 0; guard++) {
+    rowsCap--;
+    once();
+  }
   return shown > 0 && !(plateHeight() > room);
 }
 
@@ -327,28 +459,41 @@ function drawFitted(doc, now, fit) {
  * seconds; `nowMs` this machine's clock (the tests'); `height` the screen's (its rows at most).
  * @param {{ hidden?: boolean, dt?: number, doc?: any, nowMs?: number, height?: number }} [o]
  */
-export function drawEventBoard({ hidden = false, dt = 0, doc = globalThis.document, nowMs = Date.now(), height = Number(globalThis.innerHeight) || 720 } = {}) {
+export function drawEventBoard({
+  hidden = false,
+  dt = 0,
+  doc = globalThis.document,
+  nowMs = Date.now(),
+  height = Number(globalThis.innerHeight) || 720,
+} = {}) {
   const lines = takeEventNotices();
   // AUDIT EVENTS1 C4 / B9: off, a line taken in this frame goes where it went before, and the board forgets everything
-  if (!eventBoardOn()) { for (const l of lines) eventNoticeElsewhere(l.kind, l.text, true); if (root || seen.size || watchFrom != null) reset(); return; }
+  if (!eventBoardOn()) {
+    for (const l of lines) eventNoticeElsewhere(l.kind, l.text, true);
+    if (root || seen.size || watchFrom != null) reset();
+    return;
+  }
   if (!doc?.createElement) return;
   // EVENTS2: the kinds the player turned off, this frame - a chip pressed takes its kind's news down, and the source is
   // read again at once so its rows leave the plate (their lines, said already, are in the journal)
   const hiddenKinds = EVENT_NOTICE_KINDS.filter((k) => !eventKindShown(k));
   for (const k of hiddenKinds) toasts.drop(k);
   const hiddenKey = hiddenKinds.join();
-  if (hiddenKey !== lastHidden) { lastHidden = hiddenKey; readAt = -Infinity; }
+  if (hiddenKey !== lastHidden) {
+    lastHidden = hiddenKey;
+    readAt = -Infinity;
+  }
   if (nowMs - readAt >= EVENT_READ_MS) {
     const src = eventBoardSource();
     readAt = nowMs;
-    model = eventBoardModel(src, { max: EVENT_TALL_ROWS, shown: eventKindShown });   // cut again to the plate's rows (eventRowsFor, the room)
+    model = eventBoardModel(src, { max: EVENT_TALL_ROWS, shown: eventKindShown }); // cut again to the plate's rows (eventRowsFor, the room)
     offsetMs = Number.isFinite(model.now) ? model.now - nowMs : 0;
     // AUDIT EVENTS1 A5: the board watches from its first read of the world; what came onto it before that is no news
     if (src && watchFrom == null && Number.isFinite(model.now)) watchFrom = model.now;
     // EVENTS2: the memory reads every kind (`every`), so a kind turned back on announces nothing that stood while it was off
     if (src) for (const a of eventAnnouncements(model.every, seen, watchFrom, eventKindShown)) toasts.announce(a);
   }
-  for (const l of lines) if (!hiddenKinds.includes(l.kind)) toasts.note(l.kind, l.text, l.at, l.id);   // EVENTS2: a line waiting when its kind went off, let go
+  for (const l of lines) if (!hiddenKinds.includes(l.kind)) toasts.note(l.kind, l.text, l.at, l.id); // EVENTS2: a line waiting when its kind went off, let go
   const on = !hidden;
   if (on) toasts.step((Number(dt) || 0) * 1000);
   if (!root) {
@@ -357,14 +502,24 @@ export function drawEventBoard({ hidden = false, dt = 0, doc = globalThis.docume
   }
   const want = classes('evhud', !on && 'hidden');
   if (root.className !== want) root.className = want;
-  if (!on) return;   // hidden, the whole of it is - news behind a window keeps its place and its time
+  if (!on) return; // hidden, the whole of it is - news behind a window keeps its place and its time
   const now = nowMs + offsetMs;
-  if (!model.rows.length && !toasts.cards().length) { stand(doc, false); return; }
+  if (!model.rows.length && !toasts.cards().length) {
+    stand(doc, false);
+    return;
+  }
   stand(doc, true);
   const layoutDue = nowMs - layoutAt >= EVENT_LAYOUT_MS;
-  if (layoutDue) { layoutAt = nowMs; rowsCap = eventRowsFor(height); measure(doc); }
+  if (layoutDue) {
+    layoutAt = nowMs;
+    rowsCap = eventRowsFor(height);
+    measure(doc);
+  }
   // fitted again whenever what it shows changes (a row on or off, a news or a line joining it), from its full count
-  const fitKey = `${model.rows.map((r) => r.id).join()}|${toasts.cards().map((c) => `${c.key}:${c.notes.length}`).join()}`;
+  const fitKey = `${model.rows.map((r) => r.id).join()}|${toasts
+    .cards()
+    .map((c) => `${c.key}:${c.notes.length}`)
+    .join()}`;
   const refit = fitKey !== lastFitKey;
   lastFitKey = fitKey;
   if (refit && !layoutDue) rowsCap = eventRowsFor(height);
@@ -372,8 +527,8 @@ export function drawEventBoard({ hidden = false, dt = 0, doc = globalThis.docume
   // no room even for its news: each said on the HUD's line, and the plate stands down until there is room again
   for (const c of toasts.cards()) {
     const w = newsWords(c, newsRowOf(c, model.all), now);
-    eventHudLine(w.line || w.kind);   // the board's own line, a moment's - never the journal's
-    for (const s of c.notes) eventHudLine(s);   // the door filed each already
+    eventHudLine(w.line || w.kind); // the board's own line, a moment's - never the journal's
+    for (const s of c.notes) eventHudLine(s); // the door filed each already
     toasts.take(c.key);
   }
   for (const [, n] of newsNodes) n.root.remove?.();
@@ -390,8 +545,11 @@ export function buildEventBoardPreview(doc) {
   b.append(part(doc, 'evboard-title', EVENT_BOARD_TEXT.title()));
   const row = part(doc, 'evrow ev-star live');
   const top = part(doc, 'evrow-top');
-  top.append(part(doc, 'evrow-title', t('menu.hud.preview.events', '{kind} (preview)', { kind: EVENT_KIND_TEXT.star() })), part(doc, 'evrow-clock', EVENT_BOARD_TEXT.left('12:00')));
-  row.append(top, part(doc, 'evrow-where', EVENT_BOARD_TEXT.way(4.2, t('events.dir.ne', 'NE'))));   // AUDIT EVENTS1 B6: in the player's words
+  top.append(
+    part(doc, 'evrow-title', t('menu.hud.preview.events', '{kind} (preview)', { kind: EVENT_KIND_TEXT.star() })),
+    part(doc, 'evrow-clock', EVENT_BOARD_TEXT.left('12:00')),
+  );
+  row.append(top, part(doc, 'evrow-where', EVENT_BOARD_TEXT.way(4.2, t('events.dir.ne', 'NE')))); // AUDIT EVENTS1 B6: in the player's words
   const rows = part(doc, 'evboard-rows');
   rows.append(row);
   b.append(rows);
@@ -400,4 +558,6 @@ export function buildEventBoardPreview(doc) {
 }
 
 /** The board taken down (a reset, the tests): nothing waiting is kept. */
-export function destroyEventBoard() { reset(); }
+export function destroyEventBoard() {
+  reset();
+}

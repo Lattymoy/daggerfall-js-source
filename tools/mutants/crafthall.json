@@ -119,8 +119,8 @@
   {
     "name": "CRAFT-HALL-spent-line-where-unknown",
     "file": "src/ui/craftXpWords.js",
-    "old": "  if (owed === false) return capLine(profession, pay, xp) ||",
-    "new": "  if (owed !== true) return capLine(profession, pay, xp) ||",
+    "old": "  if (owed === false)",
+    "new": "  if (owed !== true)",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "CRAFT-HALL-owed-line-where-unknown",
     "file": "src/ui/craftXpWords.js",
-    "old": "    return capLine(profession, pay, xp + more) || (owed === true\n",
-    "new": "    return capLine(profession, pay, xp + more) || (owed !== false\n",
+    "old": "      (owed === true",
+    "new": "      (owed !== false",
     "tests": [
       "test/ui/professions/crafthall.test.js"
     ]
