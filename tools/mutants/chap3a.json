@@ -599,8 +599,8 @@
   {
     "name": "CHAP3A-CARD-KIND",
     "file": "src/ui/noticeWindow.js",
-    "old": "{ return w.kind === 'member' ? 'Your chapter writ' : isChapterWrit(w.kind) ? 'Chapter writ' : 'Court writ'; }",
-    "new": "{ return isChapterWrit(w.kind) ? 'Chapter writ' : 'Court writ'; }",
+    "old": "    return w.kind === 'member' ? 'Your chapter writ' : isChapterWrit(w.kind) ? 'Chapter writ' : 'Court writ';",
+    "new": "    return isChapterWrit(w.kind) ? 'Chapter writ' : 'Court writ';",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -608,8 +608,8 @@
   {
     "name": "CHAP3A-CARD-POSTER",
     "file": "src/ui/noticeWindow.js",
-    "old": "const poster = isChapterWrit(w.kind) ? hallPosterName(w.faction) ?? 'guild' : null;",
-    "new": "const poster = w.kind === 'hall' ? hallPosterName(w.faction) ?? 'guild' : null;",
+    "old": "    const poster = isChapterWrit(w.kind) ? (hallPosterName(w.faction) ?? 'guild') : null;",
+    "new": "    const poster = w.kind === 'hall' ? (hallPosterName(w.faction) ?? 'guild') : null;",
     "tests": [
       "test/net/chap3a_merit.test.js",
       "test/net/chap2_halls.test.js",
@@ -619,8 +619,8 @@
   {
     "name": "CHAP3A-CARD-PAY",
     "file": "src/ui/noticeWindow.js",
-    "old": "${own && earns ? `, standing and Merit with the ${poster}` : poster",
-    "new": "${own && earns ? ` and standing with the ${poster}` : poster",
+    "old": "        `Pays ${w.pay.toLocaleString('en-US')} silver, ${w.renown.toLocaleString('en-US')} Renown${own && earns ? `, standing and Merit with the ${poster}` : poster ? ` and standing with the ${poster}` : ''}`,",
+    "new": "        `Pays ${w.pay.toLocaleString('en-US')} silver, ${w.renown.toLocaleString('en-US')} Renown${own && earns ? ` and standing with the ${poster}` : poster ? ` and standing with the ${poster}` : ''}`,",
     "tests": [
       "test/net/chap3a_merit.test.js",
       "test/net/audit_chap3.test.js"
@@ -629,8 +629,8 @@
   {
     "name": "CHAP3A-CARD-LINES",
     "file": "src/ui/noticeWindow.js",
-    "old": "    if (merit) card.append(el('p', 'notice-merit', `${meritLineOf(merit, nowS())}.`));   // CHAP3a: the account's Merit here (W12: a sentence)\n",
-    "new": "",
+    "old": "    if (merit) card.append(el('p', 'notice-merit', `${meritLineOf(merit, nowS())}.`)); // CHAP3a: the account's Merit here (W12: a sentence)\n    // CHAP4d: and its Master's Focus this week - and, for its Master, the families to choose it from",
+    "new": "    // CHAP4d: and its Master's Focus this week - and, for its Master, the families to choose it from",
     "tests": [
       "test/net/chap3a_merit.test.js",
       "test/net/guild3_plain.test.js"

@@ -1343,8 +1343,8 @@
   {
     "name": "T-BOARD-SEAL",
     "file": "src/ui/noticeWindow.js",
-    "old": "${poster ? 'seal-guild' : 'seal-court'}",
-    "new": "${poster ? 'seal-court' : 'seal-court'}",
+    "old": "      `notice-card notice-writ ${poster ? 'seal-guild' : 'seal-court'}${w.state !== 'open' ? ' done' : ''}`,",
+    "new": "      `notice-card notice-writ ${poster ? 'seal-court' : 'seal-court'}${w.state !== 'open' ? ' done' : ''}`,",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",
@@ -1357,8 +1357,8 @@
   {
     "name": "T-BOARD-KIND-TEXT",
     "file": "src/ui/noticeWindow.js",
-    "old": "isChapterWrit(w.kind) ? 'Chapter writ' : 'Court writ'",
-    "new": "isChapterWrit(w.kind) ? 'Court writ' : 'Court writ'",
+    "old": "    return w.kind === 'member' ? 'Your chapter writ' : isChapterWrit(w.kind) ? 'Chapter writ' : 'Court writ';",
+    "new": "    return w.kind === 'member' ? 'Your chapter writ' : isChapterWrit(w.kind) ? 'Court writ' : 'Court writ';",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",
@@ -1371,8 +1371,8 @@
   {
     "name": "T-BOARD-PAY-STANDING",
     "file": "src/ui/noticeWindow.js",
-    "old": " : poster ? ` and standing with the ${poster}` : ''}`",
-    "new": " : ''}`",
+    "old": "        `Pays ${w.pay.toLocaleString('en-US')} silver, ${w.renown.toLocaleString('en-US')} Renown${own && earns ? `, standing and Merit with the ${poster}` : poster ? ` and standing with the ${poster}` : ''}`,",
+    "new": "        `Pays ${w.pay.toLocaleString('en-US')} silver, ${w.renown.toLocaleString('en-US')} Renown${own && earns ? `, standing and Merit with the ${poster}` : ''}`,",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",
@@ -1385,8 +1385,8 @@
   {
     "name": "T-BOARD-TODAY-LABEL",
     "file": "src/ui/noticeWindow.js",
-    "old": "`Writs today: ${today.filled} of ${today.max}",
-    "new": "`Court writs today: ${today.filled} of ${today.max}",
+    "old": "        `Writs today: ${today.filled} of ${today.max}${writsStale ? ' - the list may be out of date' : ''}`,",
+    "new": "        `Court writs today: ${today.filled} of ${today.max}${writsStale ? ' - the list may be out of date' : ''}`,",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",
@@ -1572,8 +1572,8 @@
   {
     "name": "AUDIT-CHAP2-C1-BOARD-ORDER",
     "file": "src/ui/noticeWindow.js",
-    "old": "    const said = r?.ok ? work.onTaken?.(r) : null;\n    if (!alive) { if (said) work.sayLate?.(said); return; }",
-    "new": "    if (!alive) return;\n    const said = r?.ok ? work.onTaken?.(r) : null;",
+    "old": "    const said = r?.ok ? work.onTaken?.(r) : null;\n    if (!alive) {\n      if (said) work.sayLate?.(said);\n      return;\n    } // AUDIT CHAP3 C5: the line said in the chat, not lost with the board",
+    "new": "    if (!alive) return;\n    const said = r?.ok ? work.onTaken?.(r) : null; // AUDIT CHAP3 C5: the line said in the chat, not lost with the board",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",

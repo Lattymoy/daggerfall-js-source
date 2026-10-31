@@ -14,8 +14,8 @@
   {
     "name": "AUDIT-PACK-PICK-C02-refused-fold-toggle-unkept",
     "file": "src/ui/packPicker.js",
-    "old": "      sift.refusedOpen = !!fold.open;\n",
-    "new": "\n",
+    "old": "      sift.refusedOpen = !!fold.open;",
+    "new": "",
     "tests": [
       "test/ui/packpick.test.js",
       "test/systems/fb1001_market_goods.test.js",
@@ -26,8 +26,8 @@
   {
     "name": "AUDIT-PACK-PICK-C03-show-everything-shuts-fold",
     "file": "src/ui/packPicker.js",
-    "old": "Object.assign(sift, { ...freshPackSift(), refusedOpen: sift.refusedOpen });",
-    "new": "Object.assign(sift, freshPackSift());",
+    "old": "      Object.assign(sift, { ...freshPackSift(), refusedOpen: sift.refusedOpen });",
+    "new": "      Object.assign(sift, freshPackSift());",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -35,8 +35,8 @@
   {
     "name": "AUDIT-PACK-PICK-C04-menu-counts-unsaid",
     "file": "src/ui/packPicker.js",
-    "old": "c.id === 'all' ? c.label : `${c.label} (${c.count})`",
-    "new": "c.label",
+    "old": "      const opt = /** @type {HTMLOptionElement} */ (\n        el('option', null, c.id === 'all' ? c.label : `${c.label} (${c.count})`)\n      );",
+    "new": "      const opt = /** @type {HTMLOptionElement} */ (el('option', null, c.label));",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -44,8 +44,8 @@
   {
     "name": "AUDIT-PACK-PICK-C05-search-case-unfolded",
     "file": "src/ui/packPicker.js",
-    "old": "String(e.name ?? '').toLowerCase().includes(q)",
-    "new": "String(e.name ?? '').includes(q)",
+    "old": "      (!q ||\n        String(e.name ?? '')\n          .toLowerCase()\n          .includes(q)),",
+    "new": "      (!q || String(e.name ?? '').includes(q)),",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -53,8 +53,8 @@
   {
     "name": "AUDIT-PACK-PICK-C06-refused-unsifted",
     "file": "src/ui/packPicker.js",
-    "old": "const offShown = () => (ok.length ? siftEntries(refused, sift) : refused);",
-    "new": "const offShown = () => refused;",
+    "old": "  const offShown = () => (ok.length ? siftEntries(refused, sift) : refused);",
+    "new": "  const offShown = () => refused;",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -62,8 +62,8 @@
   {
     "name": "AUDIT-PACK-PICK-C07-page-menu-without-a-choice",
     "file": "src/ui/packPicker.js",
-    "old": "if (pages.length > 2 || sift.cat !== 'all')",
-    "new": "if (pages.length > 1 || sift.cat !== 'all')",
+    "old": "  if (pages.length > 2 || sift.cat !== 'all') menu(pages, 'cat', t('pack.pick.page', 'Kind of piece'));",
+    "new": "  if (pages.length > 1 || sift.cat !== 'all') menu(pages, 'cat', t('pack.pick.page', 'Kind of piece'));",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -71,8 +71,8 @@
   {
     "name": "AUDIT-PACK-PICK-C08-tier-menu-ladder-off",
     "file": "src/ui/packPicker.js",
-    "old": "const tiers = lootRarityOn() ? safe(() => storeRarityOptions(items, sift.rarity), []) : [];",
-    "new": "const tiers = safe(() => storeRarityOptions(items, sift.rarity), []);",
+    "old": "  const tiers = lootRarityOn() ? safe(() => storeRarityOptions(items, sift.rarity), []) : [];",
+    "new": "  const tiers = safe(() => storeRarityOptions(items, sift.rarity), []);",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -80,8 +80,8 @@
   {
     "name": "AUDIT-PACK-PICK-C09-metal-menu-gone",
     "file": "src/ui/packPicker.js",
-    "old": "  if (metals.length > 1) menu(metals, 'material',",
-    "new": "  if (false) menu(metals, 'material',",
+    "old": "  if (metals.length > 1) menu(metals, 'material', t('pack.pick.metal', 'Material'));",
+    "new": "  if (false) menu(metals, 'material', t('pack.pick.metal', 'Material'));",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -89,8 +89,8 @@
   {
     "name": "AUDIT-PACK-PICK-C10-search-value-lost-on-redraw",
     "file": "src/ui/packPicker.js",
-    "old": "  find.value = sift.query;\n",
-    "new": "\n",
+    "old": "  find.value = sift.query;",
+    "new": "",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "AUDIT-PACK-PICK-C39-tile-title-gone",
     "file": "src/ui/packPicker.js",
-    "old": "    b.setAttribute('title', e.name);\n",
-    "new": "\n",
+    "old": "    b.setAttribute('title', e.name);",
+    "new": "",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -373,8 +373,8 @@
   {
     "name": "AUDIT-PACK-PICK-C41-find-focus-key-gone",
     "file": "src/ui/packPicker.js",
-    "old": "  find.setAttribute('data-focus', `${o.focus}|find`);\n",
-    "new": "\n",
+    "old": "  find.setAttribute('data-focus', `${o.focus}|find`);",
+    "new": "",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -382,8 +382,8 @@
   {
     "name": "AUDIT-PACK-PICK-C42-many-counts-all-entries",
     "file": "src/ui/packPicker.js",
-    "old": "'{n, plural, one {# piece} other {# pieces}}', { n: ok.length }",
-    "new": "'{n, plural, one {# piece} other {# pieces}}', { n: o.entries.length }",
+    "old": "      ? t('pack.pick.many', '{n, plural, one {# piece} other {# pieces}}', { n: ok.length })",
+    "new": "      ? t('pack.pick.many', '{n, plural, one {# piece} other {# pieces}}', { n: o.entries.length })",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -400,8 +400,8 @@
   {
     "name": "AUDIT-PACK-PICK-C45-scroll-restored-before-attach",
     "file": "src/ui/packPicker.js",
-    "old": "  if (top > 0 || offTop > 0) Promise.resolve().then(() => { grid.scrollTop = top; offList.scrollTop = offTop; });",
-    "new": "  if (top > 0 || offTop > 0) { grid.scrollTop = top; offList.scrollTop = offTop; }",
+    "old": "  if (top > 0 || offTop > 0)\n    Promise.resolve().then(() => {\n      grid.scrollTop = top;\n      offList.scrollTop = offTop;\n    }); // once the window has drawn it (marketTab.js toTop's way)",
+    "new": "  if (top > 0 || offTop > 0) {\n    grid.scrollTop = top;\n    offList.scrollTop = offTop;\n  } // once the window has drawn it (marketTab.js toTop's way)",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -409,8 +409,8 @@
   {
     "name": "AUDIT-PACK-PICK-C46-tile-sub-on-off-tile-only",
     "file": "src/ui/packPicker.js",
-    "old": "  if (e.sub) w.append(el('span', 'packpick-sub', e.sub));\n  if (why",
-    "new": "  if (e.sub && why) w.append(el('span', 'packpick-sub', e.sub));\n  if (why",
+    "old": "  if (e.sub) w.append(el('span', 'packpick-sub', e.sub));",
+    "new": "  if (e.sub && why) w.append(el('span', 'packpick-sub', e.sub));",
     "tests": [
       "test/ui/packpick.test.js",
       "test/net/marketaudit.test.js"
@@ -437,8 +437,8 @@
   {
     "name": "AUDIT-PACK-PICK-C49-menu-choice-lost-on-redraw-both",
     "file": "src/ui/packPicker.js",
-    "old": "      if (c.id === sift[key]) opt.selected = true;\n      s.append(opt);\n    }\n    s.value = sift[key];\n",
-    "new": "      s.append(opt);\n    }\n",
+    "old": "      if (c.id === sift[key]) opt.selected = true;\n      s.append(opt);\n    }\n    s.value = sift[key];",
+    "new": "      s.append(opt);\n    }",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -446,8 +446,8 @@
   {
     "name": "AUDIT-PACK-PICK-C50-metal-menu-at-one-metal-vs-pages",
     "file": "src/ui/packPicker.js",
-    "old": "  if (metals.length > 1) menu(metals, 'material',",
-    "new": "  if (metals.length > 2) menu(metals, 'material',",
+    "old": "  if (metals.length > 1) menu(metals, 'material', t('pack.pick.metal', 'Material'));",
+    "new": "  if (metals.length > 2) menu(metals, 'material', t('pack.pick.metal', 'Material'));",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -455,8 +455,8 @@
   {
     "name": "AUDIT-PACK-PICK-C51-tier-menu-at-one-tier",
     "file": "src/ui/packPicker.js",
-    "old": "  if (tiers.length > 2 || sift.rarity !== 'all') menu(tiers, 'rarity',",
-    "new": "  if (tiers.length > 1 || sift.rarity !== 'all') menu(tiers, 'rarity',",
+    "old": "  if (tiers.length > 2 || sift.rarity !== 'all') menu(tiers, 'rarity', t('pack.pick.tier', 'Rarity'));",
+    "new": "  if (tiers.length > 1 || sift.rarity !== 'all') menu(tiers, 'rarity', t('pack.pick.tier', 'Rarity'));",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -464,8 +464,8 @@
   {
     "name": "AUDIT-PACK-PICK-C52-page-menu-dropped-when-chosen-empties",
     "file": "src/ui/packPicker.js",
-    "old": "  if (pages.length > 2 || sift.cat !== 'all') menu(pages, 'cat',",
-    "new": "  if (pages.length > 2) menu(pages, 'cat',",
+    "old": "  if (pages.length > 2 || sift.cat !== 'all') menu(pages, 'cat', t('pack.pick.page', 'Kind of piece'));",
+    "new": "  if (pages.length > 2) menu(pages, 'cat', t('pack.pick.page', 'Kind of piece'));",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "AUDIT-PACK-PICK-A1-folded-never-pictured",
     "file": "src/ui/packPicker.js",
-    "old": "      if (opened) fillOff();   // now pictured\n",
-    "new": "\n",
+    "old": "      if (opened) fillOff(); // now pictured\n    });",
+    "new": "    });",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -544,8 +544,8 @@
   {
     "name": "AUDIT-PACK-PICK-A2-choice-unmarked",
     "file": "src/ui/packPicker.js",
-    "old": "    s.onchange = () => { s.setAttribute('data-chosen', '1'); sift[key] = s.value; refill(); };",
-    "new": "    s.onchange = () => { sift[key] = s.value; refill(); };",
+    "old": "      s.setAttribute('data-chosen', '1');\n      sift[key] = s.value;",
+    "new": "      sift[key] = s.value;",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -554,8 +554,8 @@
   {
     "name": "AUDIT-PACK-PICK-A3-fold-counts-unsifted",
     "file": "src/ui/packPicker.js",
-    "old": "{ what: o.refusedWhat, n: off.length }",
-    "new": "{ what: o.refusedWhat, n: refused.length }",
+    "old": "    said.textContent = t('pack.pick.refused', '{what} ({n, number})', { what: o.refusedWhat, n: off.length });",
+    "new": "    said.textContent = t('pack.pick.refused', '{what} ({n, number})', { what: o.refusedWhat, n: refused.length });",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -564,8 +564,8 @@
   {
     "name": "AUDIT-PACK-PICK-A3-leftover-sift-hides",
     "file": "src/ui/packPicker.js",
-    "old": "const offShown = () => (ok.length ? siftEntries(refused, sift) : refused);",
-    "new": "const offShown = () => siftEntries(refused, sift);",
+    "old": "  const offShown = () => (ok.length ? siftEntries(refused, sift) : refused);",
+    "new": "  const offShown = () => siftEntries(refused, sift);",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -574,8 +574,8 @@
   {
     "name": "AUDIT-PACK-PICK-A4-double-press-lets-go",
     "file": "src/ui/packPicker.js",
-    "old": " if ((ev?.detail ?? 0) > 1) return;",
-    "new": "",
+    "old": "      if ((ev?.detail ?? 0) > 1) return;\n      o.pick(e.item);",
+    "new": "      o.pick(e.item);",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -614,8 +614,8 @@
   {
     "name": "AUDIT-PACK-PICK-A8-tile-keyed-by-place",
     "file": "src/ui/packPicker.js",
-    "old": "    return [e, e.key ?? `${e.name}#${n}`];",
-    "new": "    return [e, e.key ?? String(entries.indexOf(e))];",
+    "old": "      return [e, e.key ?? `${e.name}#${n}`];",
+    "new": "      return [e, e.key ?? String(entries.indexOf(e))];",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -624,8 +624,8 @@
   {
     "name": "AUDIT-PACK-PICK-A8-show-everything-unkeyed",
     "file": "src/ui/packPicker.js",
-    "old": "    all.setAttribute('data-focus', `${o.focus}|all`);\n",
-    "new": "\n",
+    "old": "    all.setAttribute('data-focus', `${o.focus}|all`);",
+    "new": "",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -634,8 +634,8 @@
   {
     "name": "AUDIT-PACK-PICK-A8-fold-unkeyed",
     "file": "src/ui/packPicker.js",
-    "old": "  said.setAttribute('data-focus', `${o.focus}|refused`);\n",
-    "new": "\n",
+    "old": "  said.setAttribute('data-focus', `${o.focus}|refused`);",
+    "new": "",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -644,8 +644,8 @@
   {
     "name": "AUDIT-PACK-PICK-A9-card-live",
     "file": "src/ui/packPicker.js",
-    "old": "  const card = marked(el('div', 'packpick-card'), e.item);\n  const head",
-    "new": "  const card = marked(el('div', 'packpick-card'), e.item);\n  card.setAttribute('aria-live', 'polite');\n  const head",
+    "old": "  const head = el('div', 'packpick-cardhead');",
+    "new": "  card.setAttribute('aria-live', 'polite');\n  const head = el('div', 'packpick-cardhead');",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -674,8 +674,8 @@
   {
     "name": "AUDIT-PACK-PICK-B-folded-scroll-unkept",
     "file": "src/ui/packPicker.js",
-    "old": "  offList.addEventListener?.('scroll', () => { sift.offTop = offList.scrollTop; });   // AUDIT PACK-PICK B: the folded scroll too\n",
-    "new": "\n",
+    "old": "  offList.addEventListener?.('scroll', () => {\n    sift.offTop = offList.scrollTop;\n  }); // AUDIT PACK-PICK B: the folded scroll too",
+    "new": "",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -684,8 +684,8 @@
   {
     "name": "AUDIT-PACK-PICK-B-folded-scroll-unrestored",
     "file": "src/ui/packPicker.js",
-    "old": " offList.scrollTop = offTop; });",
-    "new": " });",
+    "old": "      offList.scrollTop = offTop;\n    }); // once the window has drawn it (marketTab.js toTop's way)",
+    "new": "    }); // once the window has drawn it (marketTab.js toTop's way)",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -694,8 +694,8 @@
   {
     "name": "AUDIT-PACK-PICK-B-folded-scroll-over-new-sift",
     "file": "src/ui/packPicker.js",
-    "old": " sift.offTop = 0; offList.scrollTop = 0; }",
-    "new": " }",
+    "old": "      sift.offTop = 0;\n      offList.scrollTop = 0;\n    }",
+    "new": "    }",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -714,8 +714,8 @@
   {
     "name": "AUDIT-PACK-PICK-B1-paint-after-a-microtask",
     "file": "src/ui/noticeWindow.js",
-    "old": "if (pressWait) { pressWait = false; setTimeout(() => render(), 0); }",
-    "new": "if (pressWait) { pressWait = false; Promise.resolve().then(() => render()); }",
+    "old": "      setTimeout(() => render(), 0);",
+    "new": "      Promise.resolve().then(() => render());",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -734,8 +734,8 @@
   {
     "name": "AUDIT-PACK-PICK-B2-every-tile-a-stop",
     "file": "src/ui/packPicker.js",
-    "old": "    b.setAttribute('tabindex', '-1');\n    b.onkeydown",
-    "new": "    b.onkeydown",
+    "old": "    b.setAttribute('tabindex', '-1');\n    b.onkeydown = (ev) => {",
+    "new": "    b.onkeydown = (ev) => {",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -744,8 +744,8 @@
   {
     "name": "AUDIT-PACK-PICK-B2-arrows-deaf",
     "file": "src/ui/packPicker.js",
-    "old": "      walk(b, ev.key);\n",
-    "new": "\n",
+    "old": "      walk(b, ev.key);\n    };",
+    "new": "    };",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -804,8 +804,8 @@
   {
     "name": "AUDIT-PACK-PICK-B6-pack-words-on-the-search",
     "file": "src/ui/packPicker.js",
-    "old": "  find.placeholder = o.words?.find ?? t(",
-    "new": "  find.placeholder = t(",
+    "old": "  find.placeholder = o.words?.find ?? t('pack.pick.find', 'Search your pack');",
+    "new": "  find.placeholder = t('pack.pick.find', 'Search your pack');",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -814,8 +814,8 @@
   {
     "name": "AUDIT-PACK-PICK-B6-pack-words-on-nothing",
     "file": "src/ui/packPicker.js",
-    "old": "o.words?.none ?? t('pack.pick.none'",
-    "new": "t('pack.pick.none'",
+    "old": "    const p = el(\n      'p',\n      'notice-tip packpick-none',\n      o.words?.none ?? t('pack.pick.none', 'Nothing in your pack matches.'),\n    );",
+    "new": "    const p = el('p', 'notice-tip packpick-none', t('pack.pick.none', 'Nothing in your pack matches.'));",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -864,8 +864,8 @@
   {
     "name": "AUDIT-PACK-PICK-B-fold-name-never-given-back",
     "file": "src/ui/noticeWindow.js",
-    "old": "win.querySelectorAll?.('input, select, textarea, button, summary')",
-    "new": "win.querySelectorAll?.('input, select, textarea, button')",
+    "old": "      [...(win.querySelectorAll?.('input, select, textarea, button, summary') ?? [])].find(",
+    "new": "      [...(win.querySelectorAll?.('input, select, textarea, button') ?? [])].find(",
     "tests": [
       "test/ui/packpick.test.js"
     ],

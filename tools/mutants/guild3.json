@@ -63,8 +63,8 @@
   {
     "name": "GUILD3a-your-writ-again",
     "file": "src/ui/noticeWindow.js",
-    "old": "'member' ? 'Your chapter writ' : isChapterWrit",
-    "new": "'member' ? 'Your writ' : isChapterWrit",
+    "old": "    return w.kind === 'member' ? 'Your chapter writ' : isChapterWrit(w.kind) ? 'Chapter writ' : 'Court writ';",
+    "new": "    return w.kind === 'member' ? 'Your writ' : isChapterWrit(w.kind) ? 'Chapter writ' : 'Court writ';",
     "tests": [
       "test/net/guild3_plain.test.js",
       "test/net/chap3a_merit.test.js"
@@ -353,8 +353,8 @@
   {
     "name": "GUILD3d-the-card-no-band-line",
     "file": "src/ui/noticeWindow.js",
-    "old": "    if (band) card.append(el('p', 'notice-chapter notice-band', band));\n",
-    "new": "",
+    "old": "    if (band) card.append(el('p', 'notice-chapter notice-band', band));\n    if (merit) card.append(el('p', 'notice-merit', `${meritLineOf(merit, nowS())}.`)); // CHAP3a: the account's Merit here (W12: a sentence)",
+    "new": "    if (merit) card.append(el('p', 'notice-merit', `${meritLineOf(merit, nowS())}.`)); // CHAP3a: the account's Merit here (W12: a sentence)",
     "tests": [
       "test/net/guild3_plain.test.js",
       "test/net/chap3b_strength.test.js"
@@ -363,8 +363,8 @@
   {
     "name": "GUILD3d-the-card-no-duties",
     "file": "src/ui/noticeWindow.js",
-    "old": "    if (duties) card.append(el('p', 'notice-chapter notice-duties', duties));\n",
-    "new": "",
+    "old": "    if (duties) card.append(el('p', 'notice-chapter notice-duties', duties));\n    return card;",
+    "new": "    return card;",
     "tests": [
       "test/net/guild3_plain.test.js",
       "test/net/chap2b_receipts.test.js"
@@ -373,8 +373,8 @@
   {
     "name": "GUILD3d-merit-said-twice",
     "file": "src/ui/noticeWindow.js",
-    "old": "for (const m of writs?.merit ?? []) if (!carded.has(m.faction)) body.append(",
-    "new": "for (const m of writs?.merit ?? []) body.append(",
+    "old": "    for (const m of writs?.merit ?? [])\n      if (!carded.has(m.faction)) body.append(el('p', 'notice-merit', meritLineOf(m, nowS())));",
+    "new": "    for (const m of writs?.merit ?? []) body.append(el('p', 'notice-merit', meritLineOf(m, nowS())));",
     "tests": [
       "test/net/guild3_plain.test.js",
       "test/net/chap3a_merit.test.js"
@@ -383,8 +383,8 @@
   {
     "name": "GUILD3d-the-card-no-heading",
     "file": "src/ui/noticeWindow.js",
-    "old": "    card.append(el('h3', null, `${hallPosterName(c.faction) ?? 'Guild'} - ${chapterBandOf(c.strength).name}`));\n",
-    "new": "",
+    "old": "    card.append(el('h3', null, `${hallPosterName(c.faction) ?? 'Guild'} - ${chapterBandOf(c.strength).name}`));\n    card.append(el('p', 'notice-chapter', `${chapterLineOf(c)}.`)); // CHAP3b: the chapter here, its Strength (AUDIT GUILD3 W12: a sentence, as the card's others)",
+    "new": "    card.append(el('p', 'notice-chapter', `${chapterLineOf(c)}.`)); // CHAP3b: the chapter here, its Strength (AUDIT GUILD3 W12: a sentence, as the card's others)",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]

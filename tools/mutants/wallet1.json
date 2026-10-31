@@ -313,8 +313,8 @@
   {
     "name": "WALLET1-page-wallet-misc",
     "file": "src/ui/packPages.js",
-    "old": "if (VALUABLES.has(g) || isWalletItem(it) || (g === 'MiscItems'",
-    "new": "if (VALUABLES.has(g) || (g === 'MiscItems'",
+    "old": "  if (VALUABLES.has(g) || isWalletItem(it) || (g === 'MiscItems' && it.templateIndex === LETTER_OF_CREDIT_TEMPLATE))\n    return 'valuables'; // before the ingredient test: a gem is both, and a player looks here",
+    "new": "  if (VALUABLES.has(g) || (g === 'MiscItems' && it.templateIndex === LETTER_OF_CREDIT_TEMPLATE)) return 'valuables'; // before the ingredient test: a gem is both, and a player looks here",
     "why": "the wallet off Valuables",
     "tests": [
       "test/systems/wallet1.test.js",
@@ -324,8 +324,8 @@
   {
     "name": "WALLET1-page-letters-misc",
     "file": "src/ui/packPages.js",
-    "old": "|| (g === 'MiscItems' && it.templateIndex === LETTER_OF_CREDIT_TEMPLATE)) return 'valuables';",
-    "new": ") return 'valuables';",
+    "old": "  if (VALUABLES.has(g) || isWalletItem(it) || (g === 'MiscItems' && it.templateIndex === LETTER_OF_CREDIT_TEMPLATE))\n    return 'valuables'; // before the ingredient test: a gem is both, and a player looks here",
+    "new": "  if (VALUABLES.has(g) || isWalletItem(it)) return 'valuables'; // before the ingredient test: a gem is both, and a player looks here",
     "why": "the letters of credit back on Misc (the page's bug)",
     "tests": [
       "test/systems/wallet1.test.js",

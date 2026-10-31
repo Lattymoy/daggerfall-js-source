@@ -29,8 +29,8 @@
   {
     "name": "BOARD-UI-tab-counts-the-old-notes",
     "file": "src/ui/noticeWindow.js",
-    "old": "if (id === 'notices') return noticeCards({ town: deps.town, board, seenAt: seenAtOpen }).filter((c) => c.isNew).length || null;",
-    "new": "if (id === 'notices') return noticeCards({ town: deps.town, board, seenAt: seenAtOpen }).length || null;",
+    "old": "    if (id === 'notices')\n      return noticeCards({ town: deps.town, board, seenAt: seenAtOpen }).filter((c) => c.isNew).length || null;",
+    "new": "    if (id === 'notices') return noticeCards({ town: deps.town, board, seenAt: seenAtOpen }).length || null;",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "BOARD-UI-tab-counts-every-writ",
     "file": "src/ui/noticeWindow.js",
-    "old": "if (id === 'work' && writs) return (writs.writs ?? []).filter((w) => w.state === 'open').length",
-    "new": "if (id === 'work' && writs) return (writs.writs ?? []).length",
+    "old": "        (writs.writs ?? []).filter((w) => w.state === 'open').length +",
+    "new": "        (writs.writs ?? []).length +",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "BOARD-UI-the-day-at-the-foot",
     "file": "src/ui/noticeWindow.js",
-    "old": "    body.append(el('p', 'notice-worktoday', `Writs today: ${today.filled} of ${today.max}${writsStale ? ' - the list may be out of date' : ''}`));\n    // CRAFT-WRITS: the character's crafting writs above the Court's",
-    "new": "    // CRAFT-WRITS: the character's crafting writs above the Court's",
+    "old": "    body.append(\n      el(\n        'p',\n        'notice-worktoday',\n        `Writs today: ${today.filled} of ${today.max}${writsStale ? ' - the list may be out of date' : ''}`,\n      ),\n    );\n    // CRAFT-WRITS: the character's crafting writs above the Court's - its own three, the day's count beside them. BOARD-SIFT",
+    "new": "    // CRAFT-WRITS: the character's crafting writs above the Court's - its own three, the day's count beside them. BOARD-SIFT",
     "tests": [
       "test/ui/board_ui.test.js"
     ],
@@ -57,8 +57,8 @@
   {
     "name": "BOARD-UI-news-unnamed",
     "file": "src/ui/noticeWindow.js",
-    "old": "if (news.length) body.append(sectionHead(BOARD_WORDS.news), gridOf(news));",
-    "new": "if (news.length) body.append(gridOf(news));",
+    "old": "    if (news.length) body.append(sectionHead(BOARD_WORDS.news), gridOf(news));",
+    "new": "    if (news.length) body.append(gridOf(news));",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "BOARD-UI-notes-uncounted",
     "file": "src/ui/noticeWindow.js",
-    "old": "body.append(sectionHead(BOARD_WORDS.notes, board ? notes.length : null));",
-    "new": "body.append(sectionHead(BOARD_WORDS.notes));",
+    "old": "    body.append(sectionHead(BOARD_WORDS.notes, board ? notes.length : null));",
+    "new": "    body.append(sectionHead(BOARD_WORDS.notes));",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "BOARD-UI-no-market-prefetch",
     "file": "src/ui/noticeWindow.js",
-    "old": "  if (market && marketShown()) market.prefetch?.();\n",
-    "new": "",
+    "old": "  if (market && marketShown()) market.prefetch?.();\n  return {",
+    "new": "  return {",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "BOARD-UI-the-read-said-twice",
     "file": "src/ui/noticeWindow.js",
-    "old": "    else if (board && !notes.length) grid.append(",
-    "new": "    else if (!board && busy) grid.append(el('li', 'notice-empty', BOARD_WORDS.reading));\n    else if (board && !notes.length) grid.append(",
+    "old": "    } else if (board && !notes.length)",
+    "new": "    } else if (!board && busy) grid.append(el('li', 'notice-empty', BOARD_WORDS.reading));\n    else if (board && !notes.length)",
     "tests": [
       "test/ui/board_ui.test.js"
     ]

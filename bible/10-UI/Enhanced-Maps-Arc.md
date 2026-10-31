@@ -346,7 +346,7 @@ that inks nothing.
   a building an NPC marked on a crowded plan had no mark at all: with
   both town packs, Daggerfall with 152 others found lettered 85 of its
   153 names at rest and not the marked one. Now the surrendered plate is
-  lettered `nameplateLayout.js:"export const STAR_PLATE = '*';"` - one
+  lettered `nameplateLayout.js:"export const STAR_PLATE"` - one
   word both maps read - where the solver left it
   (`townSheet.js:"          text: s.replaced ? STAR_PLATE : n.text, name: n.text,"`),
   ticked and inked as any name, and the pointer over it reads its

@@ -168,8 +168,8 @@
   {
     "name": "REST3-every-fire-in-the-dungeon-on-the-strip",
     "file": "src/ui/nodeMarks.js",
-    "old": "    if (!(d <= reach)) continue;\n",
-    "new": "",
+    "old": "    if (!(d <= reach)) continue;\n    const p = (_firePool[used] ??= { xz: [0, 0], mark: 'fire', a: 1 });",
+    "new": "    const p = (_firePool[used] ??= { xz: [0, 0], mark: 'fire', a: 1 });",
     "tests": [
       "test/systems/survival/rest3_dungeonfires.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "REST3-the-fires-draw-over-the-nodes",
     "file": "src/ui/nodeMarks.js",
-    "old": "  if (points) for (const p of points) _fires.push(p);\n  return _fires;",
-    "new": "  if (points) _fires.unshift(...points);\n  return _fires;",
+    "old": "  if (points) for (const p of points) _fires.push(p);",
+    "new": "  if (points) _fires.unshift(...points);",
     "tests": [
       "test/systems/survival/rest3_dungeonfires.test.js"
     ]

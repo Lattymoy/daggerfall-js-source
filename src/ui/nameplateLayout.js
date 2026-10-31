@@ -24,7 +24,7 @@
 // a parallel array of { offY, replaced } - replaced plates render as
 // "*" (:1365-1376), DFU's own surrender for a spot it cannot clear.
 
-import { RMB_DIMENSION } from '../formats/blocksFile.js';   // BlocksFile.RMBDimension - one home
+import { RMB_DIMENSION } from '../formats/blocksFile.js'; // BlocksFile.RMBDimension - one home
 
 /**
  * ROAD-C c2/S10 HALF B - THE ANCHOR, and it is the last real 1:1 gap
@@ -52,7 +52,7 @@ import { RMB_DIMENSION } from '../formats/blocksFile.js';   // BlocksFile.RMBDim
  * texture's own bottom-up rows), origin at the layout's south-west
  * corner. The window subtracts half the layout to reach world.
  */
-export const NAMEPLATE_BLOCK_PX = 64;            // blockSizeWidth/Height
+export const NAMEPLATE_BLOCK_PX = 64; // blockSizeWidth/Height
 
 /** EM4: WORLD UNITS PER LAYOUT PIXEL, one home. An RMB block is
  *  RMB_DIMENSION * GLOBAL_SCALE world units across and
@@ -73,9 +73,9 @@ export function nameplateAnchor(blockX, blockY, position, globalScale = 0.025) {
  *  :993-1010): vertical overlap within the summed half-heights AND
  *  horizontal distance inside the LEFTMOST plate's width. */
 export function nameplatesIntersect(a, b) {
-  const dy = Math.abs((a.y + a.offY) - (b.y + b.offY));
+  const dy = Math.abs(a.y + a.offY - (b.y + b.offY));
   const ySize = a.h / 2 + b.h / 2;
-  const xSize = (a.x <= b.x ? a : b).w;   // width of whichever is leftmost (:998-1003)
+  const xSize = (a.x <= b.x ? a : b).w; // width of whichever is leftmost (:998-1003)
   return dy < ySize && Math.abs(a.x - b.x) < xSize;
 }
 
@@ -84,7 +84,8 @@ export function nameplatesIntersect(a, b) {
  *  whatever +1 means in the caller's y - the law only needs the two
  *  to part. */
 const dirsOf = (a, b) => {
-  const ya = a.y + a.offY, yb = b.y + b.offY;
+  const ya = a.y + a.offY,
+    yb = b.y + b.offY;
   if (ya === yb) return [1, -1];
   const s = Math.sign(ya - yb);
   return [s, -s];
@@ -94,7 +95,10 @@ const countAll = (plates) => {
   for (const p of plates) p.count = 0;
   for (let i = 0; i < plates.length; i++) {
     for (let j = i + 1; j < plates.length; j++) {
-      if (nameplatesIntersect(plates[i], plates[j])) { plates[i].count++; plates[j].count++; }
+      if (nameplatesIntersect(plates[i], plates[j])) {
+        plates[i].count++;
+        plates[j].count++;
+      }
     }
   }
 };
@@ -122,9 +126,18 @@ export const STAR_PLATE = '*';
  * the final pass is placed as a "*" (:1362-1376).
  */
 export function resolveNameplates(input) {
-  const plates = input.map((p) => ({ x: p.x, y: p.y, w: p.w, h: p.h, offY: 0, placed: false, count: 0, replaced: false }));
+  const plates = input.map((p) => ({
+    x: p.x,
+    y: p.y,
+    w: p.w,
+    h: p.h,
+    offY: 0,
+    placed: false,
+    count: 0,
+    replaced: false,
+  }));
   for (let iter = 0; iter < 3; iter++) {
-    if (iter === 0) countAll(plates);   // recompute on the FIRST iteration only (:1105-1121)
+    if (iter === 0) countAll(plates); // recompute on the FIRST iteration only (:1105-1121)
     for (const p of plates) if (!p.placed && p.count === 0) p.placed = true;
     for (const p of plates) {
       if (p.placed || p.count !== 1) continue;
@@ -137,8 +150,12 @@ export function resolveNameplates(input) {
       // collider was placed mid-pass lands here. Skipped, it fell to
       // the ±h hop and then to the "*" surrender F139 already caught
       // on the neighbouring arm.
-      if (!q) { p.count = 0; p.placed = true; continue; }
-      const dy = Math.abs((p.y + p.offY) - (q.y + q.offY));
+      if (!q) {
+        p.count = 0;
+        p.placed = true;
+        continue;
+      }
+      const dy = Math.abs(p.y + p.offY - (q.y + q.offY));
       const ySize = p.h / 2 + q.h / 2;
       const [dp, dq] = dirsOf(p, q);
       if (q.count === 1) {
@@ -147,7 +164,8 @@ export function resolveNameplates(input) {
         // between them.
         const bias = (ySize - dy) * 0.5;
         if (clearOfPlaced(p, dp * bias, plates, q) && clearOfPlaced(q, dq * bias, plates, p)) {
-          p.offY += dp * bias; q.offY += dq * bias;
+          p.offY += dp * bias;
+          q.offY += dq * bias;
           p.placed = q.placed = true;
         } else if (clearOfPlaced(p, dp * bias * 2, plates, q)) {
           // AUDIT 26 F139: the 2x fallback places p on ITS OWN check
@@ -176,23 +194,36 @@ export function resolveNameplates(input) {
         // the collider is entangled elsewhere: shift THIS plate a
         // full ySize, trying away-from then toward (:1277-1308)
         if (clearOfPlaced(p, dp * ySize, plates, q)) {
-          p.offY += dp * ySize; p.placed = true; q.count--;
+          p.offY += dp * ySize;
+          p.placed = true;
+          q.count--;
         } else if (clearOfPlaced(p, -dp * ySize, plates, q)) {
-          p.offY += -dp * ySize; p.placed = true; q.count--;
+          p.offY += -dp * ySize;
+          p.placed = true;
+          q.count--;
         }
       }
       // q.count === 0: NEITHER arm - C#'s `else if (> 1)` leaves a
       // partner whose count was already talked down alone this pass.
     }
-    for (const p of plates) if (!p.placed && p.count === 0) p.placed = true;   // re-place, no recompute (:1317-1318)
+    for (const p of plates) if (!p.placed && p.count === 0) p.placed = true; // re-place, no recompute (:1317-1318)
     for (const p of plates) {
       // the last-resort whole-height hop, up then down (:1320-1359)
       if (p.placed) continue;
-      if (clearOfPlaced(p, p.h, plates, null)) { p.offY += p.h; p.placed = true; }
-      else if (clearOfPlaced(p, -p.h, plates, null)) { p.offY += -p.h; p.placed = true; }
+      if (clearOfPlaced(p, p.h, plates, null)) {
+        p.offY += p.h;
+        p.placed = true;
+      } else if (clearOfPlaced(p, -p.h, plates, null)) {
+        p.offY += -p.h;
+        p.placed = true;
+      }
     }
   }
-  for (const p of plates) if (!p.placed && p.count === 0) p.placed = true;   // final zero pass (:1362-1363)
-  for (const p of plates) if (!p.placed) { p.placed = true; p.replaced = true; }   // the "*" surrender (:1365-1376)
+  for (const p of plates) if (!p.placed && p.count === 0) p.placed = true; // final zero pass (:1362-1363)
+  for (const p of plates)
+    if (!p.placed) {
+      p.placed = true;
+      p.replaced = true;
+    } // the "*" surrender (:1365-1376)
   return plates.map((p) => ({ offY: p.offY, replaced: p.replaced }));
 }

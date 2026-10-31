@@ -424,7 +424,7 @@ test('NOTICE1 the wiring (NOTICE-PANEL, PIN MOVED: the town panel is the board\'
   assert.equal((all.match(/createNoticeOverlay\(/g) ?? []).length, 1, 'the board is built in one place');
   assert.doesNotMatch(all, /mountNoticeBoard\(/, 'and mounted only through its door');
   // PIN MOVED (QL-OFFERED): the door hands the board the page's questline offers beside the host's own deps
-  assert.match(src('src/ui/noticeDoor.js'), /mount: \(m\) => \{ view = m\.mountNoticeBoard\(host, \{ questlines: lineBoard, \.\.\.deps, onExit: close \}\); \}/);
+  assert.match(src('src/ui/noticeDoor.js'), /mount: \(m\) => \{\n\s*view = m\.mountNoticeBoard\(host, \{ questlines: lineBoard, \.\.\.deps, onExit: close \}\);\n\s*\}/);
   // THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD: `done` true only once the DOM is gone, the host told last
   const door = src('src/ui/noticeDoor.js');
   const close = door.slice(door.indexOf('const close = () => {'), door.indexOf('\n  };', door.indexOf('const close = () => {')));

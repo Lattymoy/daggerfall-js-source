@@ -70,8 +70,8 @@
   {
     "name": "PACK-PICK-typing-redraws",
     "file": "src/ui/packPicker.js",
-    "old": "  find.oninput = () => { sift.query = find.value; typed(); };",
-    "new": "  find.oninput = () => { sift.query = find.value; o.redraw(); };",
+    "old": "    typed();",
+    "new": "    o.redraw();",
     "tests": [
       "test/ui/packpick.test.js"
     ],
@@ -80,8 +80,8 @@
   {
     "name": "PACK-PICK-search-unread",
     "file": "src/ui/packPicker.js",
-    "old": "    && (!q || String(e.name ?? '').toLowerCase().includes(q)));",
-    "new": "    && true);",
+    "old": "      ) &&\n      (!q ||\n        String(e.name ?? '')\n          .toLowerCase()\n          .includes(q)),",
+    "new": "      ) && true,",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -89,8 +89,8 @@
   {
     "name": "PACK-PICK-page-unread",
     "file": "src/ui/packPicker.js",
-    "old": "storeFilterAccepts(e.item, s.cat) && ",
-    "new": "",
+    "old": "      safe(\n        () =>\n          storeFilterAccepts(e.item, s.cat) &&\n          storeRarityAccepts(e.item, s.rarity) &&\n          storeMaterialAccepts(e.item, s.material),\n        false,\n      ) &&",
+    "new": "      safe(() => storeRarityAccepts(e.item, s.rarity) && storeMaterialAccepts(e.item, s.material), false) &&",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -98,8 +98,8 @@
   {
     "name": "PACK-PICK-refused-pressable",
     "file": "src/ui/packPicker.js",
-    "old": "const d = marked(el('div', 'packpick-tile off'), e.item);",
-    "new": "const d = marked(el('button', 'packpick-tile off'), e.item);",
+    "old": "    const d = marked(el('div', 'packpick-tile off'), e.item);",
+    "new": "    const d = marked(el('button', 'packpick-tile off'), e.item);",
     "tests": [
       "test/ui/packpick.test.js",
       "test/ui/homevendor_ui.test.js"
@@ -119,8 +119,8 @@
   {
     "name": "PACK-PICK-tier-unmarked",
     "file": "src/ui/packPicker.js",
-    "old": "if (r) n.setAttribute('data-rarity', r); return n;",
-    "new": "return n;",
+    "old": "  if (r) n.setAttribute('data-rarity', r);\n  return n;",
+    "new": "  return n;",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PACK-PICK-menus-gone",
     "file": "src/ui/packPicker.js",
-    "old": "  if (pages.length > 2 || sift.cat !== 'all') menu(pages, 'cat',",
-    "new": "  if (false) menu(pages, 'cat',",
+    "old": "  if (pages.length > 2 || sift.cat !== 'all') menu(pages, 'cat', t('pack.pick.page', 'Kind of piece'));",
+    "new": "  if (false) menu(pages, 'cat', t('pack.pick.page', 'Kind of piece'));",
     "tests": [
       "test/ui/packpick.test.js"
     ]
@@ -137,7 +137,7 @@
   {
     "name": "PACK-PICK-scroll-unkept",
     "file": "src/ui/packPicker.js",
-    "old": "  if (top > 0 || offTop > 0) Promise.resolve().then(() => { grid.scrollTop = top; offList.scrollTop = offTop; });   // once the window has drawn it (marketTab.js toTop's way)",
+    "old": "  if (top > 0 || offTop > 0)\n    Promise.resolve().then(() => {\n      grid.scrollTop = top;\n      offList.scrollTop = offTop;\n    }); // once the window has drawn it (marketTab.js toTop's way)",
     "new": "",
     "tests": [
       "test/ui/packpick.test.js"
@@ -147,8 +147,8 @@
   {
     "name": "PACK-PICK-scroll-over-new-sift",
     "file": "src/ui/packPicker.js",
-    "old": "    if (moved) { sift.top = 0; grid.scrollTop = 0; sift.offTop = 0; offList.scrollTop = 0; }",
-    "new": "",
+    "old": "    if (moved) {\n      sift.top = 0;\n      grid.scrollTop = 0;\n      sift.offTop = 0;\n      offList.scrollTop = 0;\n    }\n    const shown = siftEntries(ok, sift);",
+    "new": "    const shown = siftEntries(ok, sift);",
     "tests": [
       "test/ui/packpick.test.js"
     ]

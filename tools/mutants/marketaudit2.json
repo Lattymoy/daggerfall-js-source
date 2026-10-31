@@ -164,8 +164,8 @@
   {
     "name": "MARKET-AUDIT2-act-throw-greys",
     "file": "src/ui/noticeWindow.js",
-    "old": "      try { r = await start(); } catch (e) { console.warn('[board] act', e); r = { ok: false, text: accountRefusalText('server') }; } finally { marketBusy = false; }",
-    "new": "      try { r = await start(); } finally { marketBusy = false; }",
+    "old": "            r = await start();\n          } catch (e) {\n            console.warn('[board] act', e);\n            r = { ok: false, text: accountRefusalText('server') };\n          } finally {\n            marketBusy = false;",
+    "new": "            r = await start();\n          } finally {\n            marketBusy = false;",
     "tests": [
       "test/systems/marketaudit2.test.js"
     ]

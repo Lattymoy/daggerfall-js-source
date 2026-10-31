@@ -140,8 +140,8 @@
   {
     "name": "AUDIT657-B5-the-tab-hidden-on-the-early-read",
     "file": "src/ui/noticeWindow.js",
-    "old": "(marketAtOpen || marketHost.book?.state?.open !== false || tab === 'market')",
-    "new": "(marketHost.book?.state?.open !== false || tab === 'market')",
+    "old": "  const marketShown = () =>\n    !!marketHost && (marketAtOpen || marketHost.book?.state?.open !== false || tab === 'market');",
+    "new": "  const marketShown = () => !!marketHost && (marketHost.book?.state?.open !== false || tab === 'market');",
     "tests": [
       "test/ui/audit657_board.test.js"
     ]

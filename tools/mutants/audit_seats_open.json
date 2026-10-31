@@ -150,8 +150,8 @@
   {
     "name": "ASO-board-records",
     "file": "src/ui/noticeWindow.js",
-    "old": "...(deps.seatRecords ? { readRecords: deps.seatRecords } : {})",
-    "new": "...{}",
+    "old": "          ...(deps.seatRecords ? { readRecords: deps.seatRecords } : {}),",
+    "new": "          ...{},",
     "tests": [
       "test/net/seats_finish.test.js"
     ]

@@ -374,8 +374,8 @@
   {
     "name": "BOARD-SIFT-window-the-bar-unwired",
     "file": "src/ui/noticeWindow.js",
-    "old": "const bar = entries.length ? workSiftBar(sift, entries, () => refresh()) : null;",
-    "new": "const bar = null;",
+    "old": "    const bar = entries.length ? workSiftBar(sift, entries, () => refresh()) : null;",
+    "new": "    const bar = null;",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -383,8 +383,8 @@
   {
     "name": "BOARD-SIFT-window-the-search-redraws-the-window",
     "file": "src/ui/noticeWindow.js",
-    "old": "const bar = entries.length ? workSiftBar(sift, entries, () => refresh()) : null;",
-    "new": "const bar = entries.length ? workSiftBar(sift, entries, () => render()) : null;",
+    "old": "    const bar = entries.length ? workSiftBar(sift, entries, () => refresh()) : null;",
+    "new": "    const bar = entries.length ? workSiftBar(sift, entries, () => render()) : null;",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -392,8 +392,8 @@
   {
     "name": "BOARD-SIFT-window-every-card-drawn",
     "file": "src/ui/noticeWindow.js",
-    "old": "grid.replaceChildren(...sifted.rows.map((e) => e.card()), ...gridWords());",
-    "new": "grid.replaceChildren(...entries.map((e) => e.card()), ...gridWords());",
+    "old": "      grid.replaceChildren(...sifted.rows.map((e) => e.card()), ...gridWords());",
+    "new": "      grid.replaceChildren(...entries.map((e) => e.card()), ...gridWords());",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "BOARD-SIFT-window-the-fill-law-not-the-takes",
     "file": "src/ui/noticeWindow.js",
-    "old": "fill: open && work.book.held(w.material) >= w.qty && !writsFull(), pay",
-    "new": "fill: open, pay",
+    "old": "      fill: open && work.book.held(w.material) >= w.qty && !writsFull(),",
+    "new": "      fill: open,",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "BOARD-SIFT-window-the-days-allowance-unread",
     "file": "src/ui/noticeWindow.js",
-    "old": ">= w.qty && !writsFull(), pay",
-    "new": ">= w.qty, pay",
+    "old": "      fill: open && work.book.held(w.material) >= w.qty && !writsFull(),",
+    "new": "      fill: open && work.book.held(w.material) >= w.qty,",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -419,8 +419,8 @@
   {
     "name": "BOARD-SIFT-window-a-chapter-writ-as-the-courts",
     "file": "src/ui/noticeWindow.js",
-    "old": "kind: chapter ? 'chapter' : 'court', open",
-    "new": "kind: 'court', open",
+    "old": "      kind: chapter ? 'chapter' : 'court',",
+    "new": "      kind: 'court',",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -428,8 +428,8 @@
   {
     "name": "BOARD-SIFT-window-the-singular-unindexed",
     "file": "src/ui/noticeWindow.js",
-    "old": "wordsOf(name, work.countName(w.material, 1), writKindText(w),",
-    "new": "wordsOf(name, writKindText(w),",
+    "old": "      words: wordsOf(name, work.countName(w.material, 1), writKindText(w), chapter ? hallPosterName(w.faction) : null),",
+    "new": "      words: wordsOf(name, writKindText(w), chapter ? hallPosterName(w.faction) : null),",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -437,8 +437,8 @@
   {
     "name": "BOARD-SIFT-window-the-cards-kind-unindexed",
     "file": "src/ui/noticeWindow.js",
-    "old": "wordsOf(name, work.countName(w.material, 1), writKindText(w), chapter",
-    "new": "wordsOf(name, work.countName(w.material, 1), chapter",
+    "old": "      words: wordsOf(name, work.countName(w.material, 1), writKindText(w), chapter ? hallPosterName(w.faction) : null),",
+    "new": "      words: wordsOf(name, work.countName(w.material, 1), chapter ? hallPosterName(w.faction) : null),",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -446,8 +446,8 @@
   {
     "name": "BOARD-SIFT-window-the-sift-the-windows-own",
     "file": "src/ui/noticeWindow.js",
-    "old": "const sift = work?.book?.state ? (work.book.state.workSift ??= freshSift()) : freshSift();",
-    "new": "const sift = freshSift();",
+    "old": "  const sift = work?.book?.state ? (work.book.state.workSift ??= freshSift()) : freshSift();",
+    "new": "  const sift = freshSift();",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -455,8 +455,8 @@
   {
     "name": "BOARD-SIFT-window-the-chapters-head-gone",
     "file": "src/ui/noticeWindow.js",
-    "old": "if (writs?.chapters?.length || (writs?.merit ?? []).some((m) => !carded.has(m.faction))) body.append(sectionHead(",
-    "new": "if (writs?.chapters?.length) body.append(sectionHead(",
+    "old": "    if (writs?.chapters?.length || (writs?.merit ?? []).some((m) => !carded.has(m.faction)))",
+    "new": "    if (writs?.chapters?.length)",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -464,8 +464,8 @@
   {
     "name": "BOARD-SIFT-window-the-none-today-under-a-filter",
     "file": "src/ui/noticeWindow.js",
-    "old": "return writs && !list.length && (!entries.length || !sifting) ?",
-    "new": "return writs && !list.length ?",
+    "old": "      return writs && !list.length && (!entries.length || !sifting)\n        ? [el('li', 'notice-empty', BOARD_WORDS.writsNone(work.regionName))]\n        : [];",
+    "new": "      return writs && !list.length ? [el('li', 'notice-empty', BOARD_WORDS.writsNone(work.regionName))] : [];",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "BOARD-SIFT-window-the-paint-over-a-composed-word",
     "file": "src/ui/noticeWindow.js",
-    "old": "    if (composing() || pressing()) return;\n",
-    "new": "    if (pressing()) return;\n",
+    "old": "    if (composing() || pressing()) return;",
+    "new": "    if (pressing()) return;",
     "tests": [
       "test/ui/boardsift.test.js"
     ]
@@ -482,8 +482,8 @@
   {
     "name": "BOARD-SIFT-window-the-pages-unkeyed",
     "file": "src/ui/noticeWindow.js",
-    "old": "'input, select, textarea, button, summary'",
-    "new": "'input, select, textarea'",
+    "old": "      [...(win.querySelectorAll?.('input, select, textarea, button, summary') ?? [])].find(",
+    "new": "      [...(win.querySelectorAll?.('input, select, textarea') ?? [])].find(",
     "tests": [
       "test/ui/boardsift.test.js"
     ]

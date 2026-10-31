@@ -48,8 +48,8 @@
   {
     "name": "TS1-overworld-on-the-prefab",
     "file": "src/ui/overworldModel.js",
-    "old": "const TRUE_VERTICAL = STREAMING_TERRAIN_SCALE;",
-    "new": "const TRUE_VERTICAL = 1.5;",
+    "old": "const TRUE_VERTICAL = STREAMING_TERRAIN_SCALE; // the streamed world's own - sample * 1539 * 1.25 (TERRAIN-SCALE1)",
+    "new": "const TRUE_VERTICAL = 1.5; // the streamed world's own - sample * 1539 * 1.25 (TERRAIN-SCALE1)",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
     ]

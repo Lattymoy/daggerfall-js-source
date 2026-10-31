@@ -517,8 +517,8 @@
   {
     "name": "CROWN1C-tab-hook",
     "file": "src/ui/noticeWindow.js",
-    "old": "...(deps.seatRoyal ? { enterRoyal: deps.seatRoyal } : {}),",
-    "new": "",
+    "old": "          ...(deps.seatRoyal ? { enterRoyal: deps.seatRoyal } : {}),\n          ...(deps.seatRecords ? { readRecords: deps.seatRecords } : {}),",
+    "new": "          ...(deps.seatRecords ? { readRecords: deps.seatRecords } : {}),",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]

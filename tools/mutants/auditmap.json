@@ -147,8 +147,8 @@
   {
     "name": "tracer-skips-loops",
     "file": "src/ui/overworldModel.js",
-    "old": "  for (let i = 0; i < mask.length; i++) {   // pure loops\n    const m = mask[i];\n    if (!m) continue;\n    for (let d = 0; d < 8; d++) if ((m & DIR_BIT[d]) && !(walked[i] & DIR_BIT[d])) walk(i, d);\n  }\n",
-    "new": "",
+    "old": "  for (let i = 0; i < mask.length; i++) {\n    // pure loops\n    const m = mask[i];\n    if (!m) continue;\n    for (let d = 0; d < 8; d++) if (m & DIR_BIT[d] && !(walked[i] & DIR_BIT[d])) walk(i, d);\n  }\n  return chains;",
+    "new": "  return chains;",
     "tests": [
       "test/ui/heldmap.test.js",
       "test/world/road/roads.test.js"

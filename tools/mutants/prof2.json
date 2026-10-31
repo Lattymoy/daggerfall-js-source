@@ -627,8 +627,8 @@
   {
     "name": "DEEP-OPEN-card-dungeons-the-surface",
     "file": "src/ui/oreMapTip.js",
-    "old": "t('ore.tip.dungeons', 'Dungeons: {ores}', { ores: words(DUNGEON_VEINS) })",
-    "new": "t('ore.tip.dungeons', 'Dungeons: {ores}', { ores: words(table) })",
+    "old": "    t('ore.tip.dungeons', 'Dungeons: {ores}', { ores: words(DUNGEON_VEINS) }),",
+    "new": "    t('ore.tip.dungeons', 'Dungeons: {ores}', { ores: words(table) }),",
     "tests": [
       "test/net/deepopen.test.js",
       "test/ui/fb1011_oremap.test.js"

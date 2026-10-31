@@ -538,8 +538,8 @@
   {
     "name": "AUDIT31-tab-focus-lost",
     "file": "src/ui/noticeWindow.js",
-    "old": "    giveBack(kept);\n  }",
-    "new": "    void kept;\n  }",
+    "old": "    giveBack(kept);",
+    "new": "    void kept;",
     "tests": [
       "test/ui/audit31_tabs.test.js"
     ]
@@ -547,8 +547,8 @@
   {
     "name": "AUDIT31-tab-scroll-lost",
     "file": "src/ui/noticeWindow.js",
-    "old": "    if (b && k.top && k.where === `${tab}|${view}`) b.scrollTop = k.top;\n",
-    "new": "",
+    "old": "    if (b && k.top && k.where === `${tab}|${view}`) b.scrollTop = k.top;\n    if (!k.key) return;",
+    "new": "    if (!k.key) return;",
     "tests": [
       "test/ui/audit31_tabs.test.js"
     ]
@@ -557,7 +557,7 @@
     "name": "AUDIT31-tab-two-grids",
     "file": "src/ui/noticeWindow.js",
     "old": "      grid.replaceChildren(...sifted.rows.map((e) => e.card()), ...gridWords());",
-    "new": "      const g2 = el('ul', 'notice-grid'); grid.replaceChildren(...sifted.rows.filter((e) => e.kind === 'court' || e.kind === 'chapter').map((e) => e.card()), ...gridWords()); g2.replaceChildren(...sifted.rows.filter((e) => e.kind !== 'court' && e.kind !== 'chapter').map((e) => e.card())); if (g2.children.length) body.append(g2);",
+    "new": "      const g2 = el('ul', 'notice-grid');\n      grid.replaceChildren(\n        ...sifted.rows.filter((e) => e.kind === 'court' || e.kind === 'chapter').map((e) => e.card()),\n        ...gridWords(),\n      );\n      g2.replaceChildren(...sifted.rows.filter((e) => e.kind !== 'court' && e.kind !== 'chapter').map((e) => e.card()));\n      if (g2.children.length) body.append(g2);",
     "tests": [
       "test/ui/audit31_tabs.test.js"
     ]
@@ -574,8 +574,8 @@
   {
     "name": "AUDIT31-tab-note-button-shut",
     "file": "src/ui/noticeWindow.js",
-    "old": "      else if (n.button === 'commission' && !commissionsOpen()) { b.disabled = true;",
-    "new": "      else if (false) { b.disabled = true;",
+    "old": "      else if (n.button === 'commission' && !commissionsOpen()) {",
+    "new": "      else if (false) {",
     "tests": [
       "test/ui/audit31_tabs.test.js"
     ]
@@ -674,8 +674,8 @@
   {
     "name": "AUDIT31-tab-escape-window",
     "file": "src/ui/noticeWindow.js",
-    "old": "    if (tab === 'work' && workMore?.closeForm()) { render(); return; }   // AUDIT 31 U12: Escape closes an open form first\n",
-    "new": "",
+    "old": "    if (tab === 'work' && workMore?.closeForm()) {\n      render();\n      return;\n    } // AUDIT 31 U12: Escape closes an open form first\n    if (tab === 'work' || tab === 'market' || tab === 'seat' || tab === 'vendors' || view === 'board') exit();",
+    "new": "    if (tab === 'work' || tab === 'market' || tab === 'seat' || tab === 'vendors' || view === 'board') exit();",
     "tests": [
       "test/ui/audit31_tabs.test.js"
     ]

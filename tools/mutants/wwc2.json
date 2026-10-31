@@ -252,7 +252,7 @@
   {
     "name": "WWC2-the-summary-off-its-id",
     "file": "src/ui/overworldModel.js",
-    "old": "export const summaryPixel = (summary) => (summary?.pixel ? { x: summary.pixel.x, y: summary.pixel.y } : getPixelFromPixelID(summary.id));",
+    "old": "export const summaryPixel = (summary) =>\n  summary?.pixel ? { x: summary.pixel.x, y: summary.pixel.y } : getPixelFromPixelID(summary.id);",
     "new": "export const summaryPixel = (summary) => getPixelFromPixelID(summary.id);",
     "tests": [
       "test/world/worldWide/wwc2_zone.test.js"

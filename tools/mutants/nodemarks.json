@@ -152,8 +152,8 @@
   {
     "name": "NODE-MARKS-the-order-kept",
     "file": "src/ui/nodeMarks.js",
-    "old": "  if (marks) for (let i = marks.length - 1; i >= 0; i--) { const m = marks[i]; put(m.at[0], m.at[2], m.profession, nodeMarkAlpha(m.d, m.reach)); }",
-    "new": "  if (marks) for (let i = 0; i < marks.length; i++) { const m = marks[i]; put(m.at[0], m.at[2], m.profession, nodeMarkAlpha(m.d, m.reach)); }",
+    "old": "    for (let i = marks.length - 1; i >= 0; i--) {",
+    "new": "    for (let i = 0; i < marks.length; i++) {",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ]
@@ -161,8 +161,8 @@
   {
     "name": "NODE-MARKS-the-opacity-flat",
     "file": "src/ui/nodeMarks.js",
-    "old": "put(m.at[0], m.at[2], m.profession, nodeMarkAlpha(m.d, m.reach));",
-    "new": "put(m.at[0], m.at[2], m.profession, 1);",
+    "old": "      put(m.at[0], m.at[2], m.profession, nodeMarkAlpha(m.d, m.reach));",
+    "new": "      put(m.at[0], m.at[2], m.profession, 1);",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ]

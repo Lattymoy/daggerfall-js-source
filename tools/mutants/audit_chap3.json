@@ -226,8 +226,8 @@
   {
     "name": "A3-C7-RELOAD",
     "file": "src/ui/noticeWindow.js",
-    "old": " || r?.error === 'no-writ' || r?.error === 'chapters-closed') loadWrits(true);",
-    "new": ") loadWrits(true);",
+    "old": "      if (\n        r?.error === 'writ-taken' ||\n        r?.error === 'writ-expired' ||\n        r?.error === 'no-writ' ||\n        r?.error === 'chapters-closed'\n      )\n        loadWrits(true);",
+    "new": "      if (r?.error === 'writ-taken' || r?.error === 'writ-expired') loadWrits(true);",
     "tests": [
       "test/net/audit_chap3.test.js"
     ]

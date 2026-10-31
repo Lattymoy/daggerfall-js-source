@@ -240,8 +240,8 @@
   {
     "name": "AUDIT28-N9-a-double-press-acts-twice",
     "file": "src/ui/noticeWindow.js",
-    "old": "  async function act(start, after = 'board') {\n    if (busy) return;",
-    "new": "  async function act(start, after = 'board') {",
+    "old": "    if (busy) return;\n    busy = true;",
+    "new": "    busy = true;",
     "tests": [
       "test/net/audit28_notice.test.js"
     ]
@@ -276,8 +276,8 @@
   {
     "name": "AUDIT28-N13-the-draft-dies-with-the-window",
     "file": "src/ui/noticeWindow.js",
-    "old": "  const draft = deps.book.draft?.(map) ?? {",
-    "new": "  const draft = {",
+    "old": "  const draft = deps.book.draft?.(map) ?? { subject: '', body: '', days: NOTE_DAYS[NOTE_DAYS.length - 1], button: '' };",
+    "new": "  const draft = { subject: '', body: '', days: NOTE_DAYS[NOTE_DAYS.length - 1], button: '' };",
     "tests": [
       "test/net/audit28_notice.test.js"
     ]

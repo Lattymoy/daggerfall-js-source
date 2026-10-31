@@ -329,8 +329,8 @@
   {
     "name": "CHAP7B-BOARD-PATRON",
     "file": "src/ui/noticeWindow.js",
-    "old": "    if (patronLine) card.append(el('p', 'notice-chapter notice-patron', patronLine));\n",
-    "new": "",
+    "old": "    if (patronLine) card.append(el('p', 'notice-chapter notice-patron', patronLine));\n    const bidLine = work.patron ? chapterPatronBidLine(c.patronBid) : null;",
+    "new": "    const bidLine = work.patron ? chapterPatronBidLine(c.patronBid) : null;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "CHAP7B-BOARD-HEAD",
     "file": "src/ui/noticeWindow.js",
-    "old": "c.patronBid.marks > 0 ? 'Raise the bid to: ' : 'Bid for it: '",
-    "new": "'Bid for it: '",
+    "old": "      const row = el(\n        'p',\n        'notice-chapter notice-patron-pick',\n        c.patronBid.marks > 0 ? 'Raise the bid to: ' : 'Bid for it: ',\n      );",
+    "new": "      const row = el('p', 'notice-chapter notice-patron-pick', 'Bid for it: ');",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "CHAP7B-BOARD-PRESS",
     "file": "src/ui/noticeWindow.js",
-    "old": "() => bidPatron(c, m)));",
-    "new": "() => bidPatron(c, 0)));",
+    "old": "        row.append(button('', `${m.toLocaleString('en-US')} silver`, () => bidPatron(c, m)));",
+    "new": "        row.append(button('', `${m.toLocaleString('en-US')} silver`, () => bidPatron(c, 0)));",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -365,8 +365,8 @@
   {
     "name": "CHAP7B-BOARD-SAID",
     "file": "src/ui/noticeWindow.js",
-    "old": "const said = r?.ok ? { ok: true, text: chapterPatronBidSaid(c.faction, r.data?.season ?? c.patronBid?.season, marks) ?? 'Bid made.' }",
-    "new": "const said = r?.ok ? { ok: true, text: 'Bid made.' }",
+    "old": "    const said = r?.ok\n      ? { ok: true, text: chapterPatronBidSaid(c.faction, r.data?.season ?? c.patronBid?.season, marks) ?? 'Bid made.' }\n      : { ok: false, text: accountRefusalText(r?.error) };",
+    "new": "    const said = r?.ok ? { ok: true, text: 'Bid made.' } : { ok: false, text: accountRefusalText(r?.error) };",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -374,8 +374,8 @@
   {
     "name": "CHAP7B-BOARD-REFUSED",
     "file": "src/ui/noticeWindow.js",
-    "old": ": { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { work.sayLate?.(said.text); return; }\n    busy = false;\n    word = said;\n    loadWrits(true);\n  }\n\n  async function setFocus",
-    "new": ": { ok: false, text: 'No.' };\n    if (!alive) { work.sayLate?.(said.text); return; }\n    busy = false;\n    word = said;\n    loadWrits(true);\n  }\n\n  async function setFocus",
+    "old": "      ? { ok: true, text: chapterPatronBidSaid(c.faction, r.data?.season ?? c.patronBid?.season, marks) ?? 'Bid made.' }\n      : { ok: false, text: accountRefusalText(r?.error) };",
+    "new": "      ? { ok: true, text: chapterPatronBidSaid(c.faction, r.data?.season ?? c.patronBid?.season, marks) ?? 'Bid made.' }\n      : { ok: false, text: 'No.' };",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -383,8 +383,8 @@
   {
     "name": "CHAP7B-BOARD-LATE",
     "file": "src/ui/noticeWindow.js",
-    "old": "    const r = await work.patron(c.faction, marks);\n    const said",
-    "new": "    const r = await work.patron(c.faction, marks);\n    if (!alive) return;\n    const said",
+    "old": "    const r = await work.patron(c.faction, marks);\n    const said = r?.ok",
+    "new": "    const r = await work.patron(c.faction, marks);\n    if (!alive) return;\n    const said = r?.ok",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -392,8 +392,8 @@
   {
     "name": "CHAP7B-BOARD-READ",
     "file": "src/ui/noticeWindow.js",
-    "old": "    word = said;\n    loadWrits(true);\n  }\n\n  async function setFocus",
-    "new": "    word = said;\n    render();\n  }\n\n  async function setFocus",
+    "old": "    }\n    busy = false;\n    word = said;\n    loadWrits(true);\n  }\n\n  async function setFocus(faction, focus) {",
+    "new": "    }\n    busy = false;\n    word = said;\n    render();\n  }\n\n  async function setFocus(faction, focus) {",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]

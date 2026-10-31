@@ -443,8 +443,8 @@
   {
     "name": "SEAT-WORDS-the-guides-writ-not-the-laws",
     "file": "src/ui/noticeWindow.js",
-    "old": "{ max: ROLL_GAIN_DAY_MAX, writ: HALL_WRIT_REP, receipt: RECEIPT_REP }",
-    "new": "{ max: ROLL_GAIN_DAY_MAX, writ: 3, receipt: RECEIPT_REP }",
+    "old": "        { max: ROLL_GAIN_DAY_MAX, writ: HALL_WRIT_REP, receipt: RECEIPT_REP },",
+    "new": "        { max: ROLL_GAIN_DAY_MAX, writ: 3, receipt: RECEIPT_REP },",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1282,8 +1282,8 @@
   {
     "name": "WORDS-II-C5-the-hall-writ",
     "file": "src/ui/noticeWindow.js",
-    "old": "a chapter writ (yours or the chapter\\'s) adds {writ}",
-    "new": "a hall writ adds {writ}",
+    "old": "        \"Your standing with each of these guilds is kept online. Quests raise it by at most {max} a real day for each guild (days start at midnight UTC), and any more is paid on later days. On top of that, a chapter writ (yours or the chapter's) adds {writ}, and closing a Breach or defending a town adds {receipt} to each of your guilds with a chapter there ({writ} more for the first each day, if the chapter asks for it).\",",
+    "new": "        'Your standing with each of these guilds is kept online. Quests raise it by at most {max} a real day for each guild (days start at midnight UTC), and any more is paid on later days. On top of that, a hall writ adds {writ}, and closing a Breach or defending a town adds {receipt} to each of your guilds with a chapter there ({writ} more for the first each day, if the chapter asks for it).',",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]

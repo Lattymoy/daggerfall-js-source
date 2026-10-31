@@ -273,8 +273,8 @@
   {
     "name": "QLO-the-door-unposted",
     "file": "src/ui/noticeDoor.js",
-    "old": "{ questlines: lineBoard, ...deps, onExit: close }",
-    "new": "{ ...deps, onExit: close }",
+    "old": "      view = m.mountNoticeBoard(host, { questlines: lineBoard, ...deps, onExit: close });",
+    "new": "      view = m.mountNoticeBoard(host, { ...deps, onExit: close });",
     "tests": [
       "test/systems/questlines/qloffered.test.js"
     ],
@@ -283,8 +283,8 @@
   {
     "name": "QLO-the-board-section-dropped",
     "file": "src/ui/noticeWindow.js",
-    "old": "    if (work.length) body.append(sectionHead(t('ql.board.head', 'Help wanted'), work.length), gridOf(work));\n",
-    "new": "",
+    "old": "    if (work.length) body.append(sectionHead(t('ql.board.head', 'Help wanted'), work.length), gridOf(work));\n    body.append(sectionHead(BOARD_WORDS.notes, board ? notes.length : null));",
+    "new": "    body.append(sectionHead(BOARD_WORDS.notes, board ? notes.length : null));",
     "tests": [
       "test/systems/questlines/qloffered.test.js"
     ],
@@ -303,8 +303,8 @@
   {
     "name": "QLO-the-board-card-left-up",
     "file": "src/ui/noticeWindow.js",
-    "old": "        if (r.ok && lineOffers) lineOffers = { ...lineOffers, cards: lineOffers.cards.filter((x) => x.id !== c.line.id) };\n",
-    "new": "",
+    "old": "        if (r.ok && lineOffers)\n          lineOffers = { ...lineOffers, cards: lineOffers.cards.filter((x) => x.id !== c.line.id) };\n        word = { ok: !!r.ok, text: r.text ?? '' };",
+    "new": "        word = { ok: !!r.ok, text: r.text ?? '' };",
     "tests": [
       "test/systems/questlines/qloffered.test.js"
     ],

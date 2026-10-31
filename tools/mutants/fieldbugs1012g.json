@@ -337,8 +337,8 @@
   {
     "name": "LODE-MARK-minings-copper",
     "file": "src/ui/nodeMarks.js",
-    "old": "profession === 'motherlode' ? MOTHERLODE_MARK_CSS : NODE_MARK_CSS[profession]",
-    "new": "profession === 'motherlode' ? NODE_MARK_CSS.mining : NODE_MARK_CSS[profession]",
+    "old": "      ? MOTHERLODE_MARK_CSS",
+    "new": "      ? NODE_MARK_CSS.mining",
     "tests": [
       "test/net/fb1012g_lodemark.test.js"
     ]

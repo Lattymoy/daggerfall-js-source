@@ -513,8 +513,8 @@
   {
     "name": "PROF1-57-take-without-the-stores",
     "file": "src/ui/noticeWindow.js",
-    "old": "      b.disabled = busy || workBusy || held < w.qty || full;",
-    "new": "      b.disabled = busy || workBusy || full;",
+    "old": "      b.disabled = busy || workBusy || held < w.qty || full; // AUDIT 31 B10: nor while a guild writ's or a commission's act is out",
+    "new": "      b.disabled = busy || workBusy || full; // AUDIT 31 B10: nor while a guild writ's or a commission's act is out",
     "tests": [
       "test/systems/prof1_client.test.js"
     ]

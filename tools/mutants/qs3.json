@@ -123,8 +123,8 @@
   {
     "name": "QS3-the-glyph-is-drawn-smooth-rather-than-crisp",
     "file": "src/ui/padGlyphs.js",
-    "old": "viewBox=\"0 0 ${W} ${W}\" shape-rendering=\"crispEdges\"",
-    "new": "viewBox=\"0 0 ${W} ${W}\"",
+    "old": "  const svg = `<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"${size}\" height=\"${size}\" viewBox=\"0 0 ${W} ${W}\" shape-rendering=\"crispEdges\">${rects}</svg>`;",
+    "new": "  const svg = `<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"${size}\" height=\"${size}\" viewBox=\"0 0 ${W} ${W}\">${rects}</svg>`;",
     "tests": [
       "test/ui/enhanced/qs3_hud.test.js"
     ]
@@ -132,8 +132,8 @@
   {
     "name": "QS3-the-marks-accent-is-painted-in-the-shapes-colour",
     "file": "src/ui/padGlyphs.js",
-    "old": "fill=\"${ch === 'o' ? ink : color}\"",
-    "new": "fill=\"${color}\"",
+    "old": "      rects += `<rect x=\"${x}\" y=\"${y}\" width=\"${run}\" height=\"1\" fill=\"${ch === 'o' ? ink : color}\"/>`;",
+    "new": "      rects += `<rect x=\"${x}\" y=\"${y}\" width=\"${run}\" height=\"1\" fill=\"${color}\"/>`;",
     "tests": [
       "test/ui/enhanced/qs3_hud.test.js"
     ]

@@ -175,8 +175,8 @@
   {
     "name": "GUILD1e-tab-unshown",
     "file": "src/ui/noticeWindow.js",
-    "old": "...(guildsShown() ? [['guilds', 'Guilds']] : []), ...(seatShown() ? [['seat', 'Seat']] : [])];",
-    "new": "...(seatShown() ? [['seat', 'Seat']] : [])];",
+    "old": "            ...(guildsShown() ? [['guilds', 'Guilds']] : []),\n            ...(seatShown() ? [['seat', 'Seat']] : []),",
+    "new": "            ...(seatShown() ? [['seat', 'Seat']] : []),",
     "tests": [
       "test/net/guild1e_client.test.js"
     ],
@@ -185,8 +185,8 @@
   {
     "name": "GUILD1e-posters-any-note",
     "file": "src/ui/noticeWindow.js",
-    "old": "(n) => n?.button === 'guild' && n.guild);",
-    "new": "(n) => !!n?.guild);",
+    "old": "export const recruitPosters = (board) => (board?.notes ?? []).filter((n) => n?.button === 'guild' && n.guild);",
+    "new": "export const recruitPosters = (board) => (board?.notes ?? []).filter((n) => !!n?.guild);",
     "tests": [
       "test/net/guild1e_client.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "GUILD1e-banner-never",
     "file": "src/ui/noticeWindow.js",
-    "old": "    if (!heraldry) return null;\n    const img",
-    "new": "    return null;\n    const img",
+    "old": "    if (!heraldry) return null;",
+    "new": "    return null;",
     "tests": [
       "test/net/guild1e_client.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "GUILD1e-hall-reads-the-town",
     "file": "src/ui/noticeWindow.js",
-    "old": "    if (guildOnly) { loadGuild(force); return; }",
-    "new": "    if (guildOnly) { loadGuild(force); }",
+    "old": "      return;\n    } // GUILD1e: the hall's board reads no town",
+    "new": "    } // GUILD1e: the hall's board reads no town",
     "tests": [
       "test/net/guild1e_client.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "GUILD1e-anyone-takes-down",
     "file": "src/ui/noticeWindow.js",
-    "old": "if (c.gnote && (c.gnote.mine || gme().keeper))",
-    "new": "if (c.gnote && (c.gnote.mine || true))",
+    "old": "    if (c.gnote && (c.gnote.mine || gme().keeper))",
+    "new": "    if (c.gnote && (c.gnote.mine || true))",
     "tests": [
       "test/net/guild1e_client.test.js"
     ]

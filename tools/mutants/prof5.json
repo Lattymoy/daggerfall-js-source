@@ -914,7 +914,7 @@
   {
     "name": "PROF5-window-market-always",
     "file": "src/ui/noticeWindow.js",
-    "old": "  const marketShown = () => !!marketHost && (marketAtOpen || marketHost.book?.state?.open !== false || tab === 'market');",
+    "old": "  const marketShown = () =>\n    !!marketHost && (marketAtOpen || marketHost.book?.state?.open !== false || tab === 'market');",
     "new": "  const marketShown = () => !!marketHost;",
     "tests": [
       "test/net/prof5_client.test.js"
@@ -923,8 +923,8 @@
   {
     "name": "PROF5-window-market-hidden",
     "file": "src/ui/noticeWindow.js",
-    "old": "...(workShown() ? [['work', 'Work']] : []), ...(marketShown() ? [['market', 'Market']] : []), ...(vendorTab ? [['vendors', 'Vendors']] : []), ...(guildsShown() ? [['guilds', 'Guilds']] : []), ...(seatShown() ? [['seat', 'Seat']] : [])];",
-    "new": "...(workShown() ? [['work', 'Work']] : []), ...(vendorTab ? [['vendors', 'Vendors']] : []), ...(guildsShown() ? [['guilds', 'Guilds']] : []), ...(seatShown() ? [['seat', 'Seat']] : [])];",
+    "old": "            ...(marketShown() ? [['market', 'Market']] : []),\n            ...(vendorTab ? [['vendors', 'Vendors']] : []),",
+    "new": "            ...(vendorTab ? [['vendors', 'Vendors']] : []),",
     "tests": [
       "test/net/prof5_client.test.js"
     ],

@@ -102,8 +102,8 @@
   {
     "name": "PAD1-D-dpad-up-marks-down",
     "file": "src/ui/padGlyphs.js",
-    "old": "  const u = dir === 'up' ? 'o' : '.', d = dir === 'down' ? 'o' : '.';",
-    "new": "  const u = dir === 'down' ? 'o' : '.', d = dir === 'up' ? 'o' : '.';",
+    "old": "  const u = dir === 'up' ? 'o' : '.',\n    d = dir === 'down' ? 'o' : '.';",
+    "new": "  const u = dir === 'down' ? 'o' : '.',\n    d = dir === 'up' ? 'o' : '.';",
     "tests": [
       "test/ui/pad1.test.js"
     ]

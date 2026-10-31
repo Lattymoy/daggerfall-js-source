@@ -375,8 +375,8 @@
   {
     "name": "CHAP4D-BOARD-LINE",
     "file": "src/ui/noticeWindow.js",
-    "old": "if (focusLine) card.append(el('p', 'notice-chapter notice-focus', focusLine));",
-    "new": "/* gone */",
+    "old": "    if (focusLine) card.append(el('p', 'notice-chapter notice-focus', focusLine));",
+    "new": "    /* gone */",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]
@@ -384,8 +384,8 @@
   {
     "name": "CHAP4D-BOARD-OFFER",
     "file": "src/ui/noticeWindow.js",
-    "old": "if (c.master && c.focuses?.length && work.setFocus) {",
-    "new": "if (c.focuses?.length && work.setFocus) {",
+    "old": "    if (c.master && c.focuses?.length && work.setFocus) {",
+    "new": "    if (c.focuses?.length && work.setFocus) {",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]
@@ -393,8 +393,8 @@
   {
     "name": "CHAP4D-BOARD-MARK",
     "file": "src/ui/noticeWindow.js",
-    "old": "row.append(button(f === c.focus ? 'on' : '', f, () => setFocus(c.faction, f)));",
-    "new": "row.append(button('', f, () => setFocus(c.faction, f)));",
+    "old": "      for (const f of c.focuses) row.append(button(f === c.focus ? 'on' : '', f, () => setFocus(c.faction, f)));",
+    "new": "      for (const f of c.focuses) row.append(button('', f, () => setFocus(c.faction, f)));",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]
@@ -402,8 +402,8 @@
   {
     "name": "CHAP4D-BOARD-PRESS",
     "file": "src/ui/noticeWindow.js",
-    "old": "    const r = await work.setFocus(faction, focus);\n",
-    "new": "    const r = { ok: true };\n",
+    "old": "    const r = await work.setFocus(faction, focus);",
+    "new": "    const r = { ok: true };",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]
@@ -411,8 +411,8 @@
   {
     "name": "CHAP4D-BOARD-RELOAD",
     "file": "src/ui/noticeWindow.js",
-    "old": "    word = said;\n    loadWrits(true);\n  }\n\n  async function takeWrit",
-    "new": "    word = said;\n    render();\n  }\n\n  async function takeWrit",
+    "old": "    } // AUDIT CHAP4 C: a Focus set as the board closed is said in the chat, as a Take is\n    busy = false;\n    word = said;\n    loadWrits(true);\n  }\n",
+    "new": "    } // AUDIT CHAP4 C: a Focus set as the board closed is said in the chat, as a Take is\n    busy = false;\n    word = said;\n    render();\n  }\n",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ],

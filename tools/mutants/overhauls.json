@@ -77,8 +77,8 @@
     "tests": [
       "test/ui/overhauls.test.js"
     ],
-    "old": "{ smooth: true, alpha: true }",
-    "new": "{ smooth: true }"
+    "old": "      return renderer.uploadTexture('pack', url, px, { smooth: true, alpha: true });",
+    "new": "      return renderer.uploadTexture('pack', url, px, { smooth: true });"
   },
   {
     "name": "OVH-loadimg-hands-the-pack-size",

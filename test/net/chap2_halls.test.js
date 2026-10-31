@@ -511,7 +511,7 @@ test('CHAP2a the wiring: the halls witnessed at the town\'s entry edge off the r
   assert.match(world, /if \(isChapterWrit\(d\.writ\?\.kind\)\) rollTracker\?\.refresh\(\);\n\s+const hall = isChapterWrit\(d\.writ\?\.kind\) && !d\.repeat && rollTracker\?\.held \? hallPosterName\(d\.writ\.faction\) : null;/);
   assert.match(world, /\$\{hall \? ` The \$\{hall\} will remember it\$\{merit\}\.` : ''\}/);
   const board = src('src/ui/noticeWindow.js');
-  assert.match(board, /const poster = isChapterWrit\(w\.kind\) \? hallPosterName\(w\.faction\) \?\? 'guild' : null;/);   // PIN MOVED (CHAP3a)
+  assert.match(board, /const poster = isChapterWrit\(w\.kind\) \? \(hallPosterName\(w\.faction\) \?\? 'guild'\) : null;/);   // PIN MOVED (CHAP3a)
   assert.match(board, /`Wanted: \$\{w\.qty\} \$\{work\.countName\(w\.material, w\.qty\)\}, for the \$\{poster\} in \$\{work\.regionName\}`/);
   assert.match(src('server-account/src/service.js'), /'\/v1\/chapters\/witness'/);
   assert.match(src('server-account/src/index.js'), /path === '\/v1\/chapters\/witness' \? await witnessHall\(ctx, who\.player, env, body\)/);

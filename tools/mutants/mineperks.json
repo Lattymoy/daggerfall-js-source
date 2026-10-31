@@ -140,8 +140,8 @@
   {
     "name": "MINE-PERKS-ore-card-table-held",
     "file": "src/ui/oreMapTip.js",
-    "old": "(!surveyed && tierOf(k) > UNCONFIRMED_VEIN_TIER)",
-    "new": "(!false && tierOf(k) > UNCONFIRMED_VEIN_TIER)",
+    "old": "    ...new Set([...table.filter((k) => !own.includes(k) || (!surveyed && tierOf(k) > UNCONFIRMED_VEIN_TIER)), ...ores]),",
+    "new": "    ...new Set([...table.filter((k) => !own.includes(k) || (!false && tierOf(k) > UNCONFIRMED_VEIN_TIER)), ...ores]),",
     "tests": [
       "test/ui/mineperks.test.js"
     ],

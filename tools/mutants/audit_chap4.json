@@ -492,8 +492,8 @@
   {
     "name": "AUDIT-CHAP4-T4-FOCUS-WORD",
     "file": "src/ui/noticeWindow.js",
-    "old": "const said = r?.ok ? { ok: true, text: chapterFocusLineOf(faction, focus) ?? 'Focus set.' } : { ok: false, text: accountRefusalText(r?.error) };",
-    "new": "const said = { ok: true, text: 'Focus set.' };",
+    "old": "    const said = r?.ok\n      ? { ok: true, text: chapterFocusLineOf(faction, focus) ?? 'Focus set.' }\n      : { ok: false, text: accountRefusalText(r?.error) };",
+    "new": "    const said = { ok: true, text: 'Focus set.' };",
     "tests": [
       "test/net/audit_chap4.test.js"
     ],
@@ -502,8 +502,8 @@
   {
     "name": "AUDIT-CHAP4-T9-FOCUS-BUSY",
     "file": "src/ui/noticeWindow.js",
-    "old": "if (busy || workBusy || !work.setFocus) return;",
-    "new": "if (!work.setFocus) return;",
+    "old": "    if (busy || workBusy || !work.setFocus) return;",
+    "new": "    if (!work.setFocus) return;",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]
@@ -638,8 +638,8 @@
   {
     "name": "AUDIT-CHAP4-C-FOCUS-LATE",
     "file": "src/ui/noticeWindow.js",
-    "old": "const said = r?.ok ? { ok: true, text: chapterFocusLineOf(faction, focus) ?? 'Focus set.' } : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { work.sayLate?.(said.text); return; }",
-    "new": "const said = r?.ok ? { ok: true, text: chapterFocusLineOf(faction, focus) ?? 'Focus set.' } : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { return; }",
+    "old": "    if (!alive) {\n      work.sayLate?.(said.text);\n      return;\n    } // AUDIT CHAP4 C: a Focus set as the board closed is said in the chat, as a Take is",
+    "new": "    if (!alive) {\n      return;\n    } // AUDIT CHAP4 C: a Focus set as the board closed is said in the chat, as a Take is",
     "tests": [
       "test/net/audit_chap4.test.js"
     ],

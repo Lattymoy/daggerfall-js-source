@@ -345,8 +345,8 @@
   {
     "name": "CHAP6C-BOARD-LINES",
     "file": "src/ui/noticeWindow.js",
-    "old": "    for (const line of chapterSeasonLines(c.faction, work.region, c)) card.append(el('p', 'notice-chapter notice-season', line));\n",
-    "new": "",
+    "old": "    for (const line of chapterSeasonLines(c.faction, work.region, c))\n      card.append(el('p', 'notice-chapter notice-season', line));\n    const choices = work.back && merit ? chapterBackChoices(c.faction, work.region, c) : [];",
+    "new": "    const choices = work.back && merit ? chapterBackChoices(c.faction, work.region, c) : [];",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "CHAP6C-BOARD-MEMBER",
     "file": "src/ui/noticeWindow.js",
-    "old": "work.back && merit ? chapterBackChoices(",
-    "new": "work.back ? chapterBackChoices(",
+    "old": "    const choices = work.back && merit ? chapterBackChoices(c.faction, work.region, c) : [];",
+    "new": "    const choices = work.back ? chapterBackChoices(c.faction, work.region, c) : [];",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "CHAP6C-BOARD-DOOR",
     "file": "src/ui/noticeWindow.js",
-    "old": "work.back && merit ? chapterBackChoices(",
-    "new": "merit ? chapterBackChoices(",
+    "old": "    const choices = work.back && merit ? chapterBackChoices(c.faction, work.region, c) : [];",
+    "new": "    const choices = merit ? chapterBackChoices(c.faction, work.region, c) : [];",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -372,8 +372,8 @@
   {
     "name": "CHAP6C-BOARD-MARK",
     "file": "src/ui/noticeWindow.js",
-    "old": "row.append(button(ch.side === c.backed ? 'on' : '', ch.label,",
-    "new": "row.append(button('', ch.label,",
+    "old": "      for (const ch of choices)\n        row.append(button(ch.side === c.backed ? 'on' : '', ch.label, () => backSide(c, ch.side)));",
+    "new": "      for (const ch of choices) row.append(button('', ch.label, () => backSide(c, ch.side)));",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "CHAP6C-BOARD-HEADING",
     "file": "src/ui/noticeWindow.js",
-    "old": "c.event === 'schism' ? 'Back a side: ' : 'Name who follows: '",
-    "new": "'Back a side: '",
+    "old": "      const row = el(\n        'p',\n        'notice-chapter notice-back-pick',\n        c.event === 'schism' ? 'Back a side: ' : 'Name who follows: ',\n      );",
+    "new": "      const row = el('p', 'notice-chapter notice-back-pick', 'Back a side: ');",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -390,8 +390,8 @@
   {
     "name": "CHAP6C-BACK-SIDE",
     "file": "src/ui/noticeWindow.js",
-    "old": "    const r = await work.back(c.faction, side);\n",
-    "new": "    const r = await work.back(c.faction, 0);\n",
+    "old": "    const r = await work.back(c.faction, side);",
+    "new": "    const r = await work.back(c.faction, 0);",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "CHAP6C-BACK-WORD",
     "file": "src/ui/noticeWindow.js",
-    "old": "text: chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' }",
-    "new": "text: 'Done.' }",
+    "old": "    const said = r?.ok\n      ? { ok: true, text: chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' }\n      : { ok: false, text: accountRefusalText(r?.error) };",
+    "new": "    const said = r?.ok ? { ok: true, text: 'Done.' } : { ok: false, text: accountRefusalText(r?.error) };",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -408,8 +408,8 @@
   {
     "name": "CHAP6C-BACK-REFUSAL",
     "file": "src/ui/noticeWindow.js",
-    "old": "text: chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: accountRefusalText(r?.error) };",
-    "new": "text: chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: 'No.' };",
+    "old": "      ? { ok: true, text: chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' }\n      : { ok: false, text: accountRefusalText(r?.error) };",
+    "new": "      ? { ok: true, text: chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' }\n      : { ok: false, text: 'No.' };",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -417,8 +417,8 @@
   {
     "name": "CHAP6C-BACK-LATE",
     "file": "src/ui/noticeWindow.js",
-    "old": "chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { work.sayLate?.(said.text); return; }",
-    "new": "chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { return; }",
+    "old": "      ? { ok: true, text: chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' }\n      : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) {\n      work.sayLate?.(said.text);\n      return;\n    }\n    busy = false;",
+    "new": "      ? { ok: true, text: chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' }\n      : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) {\n      return;\n    }\n    busy = false;",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ],
@@ -427,8 +427,8 @@
   {
     "name": "CHAP6C-BACK-RELOAD",
     "file": "src/ui/noticeWindow.js",
-    "old": "chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { work.sayLate?.(said.text); return; }\n    busy = false;\n    word = said;\n    loadWrits(true);",
-    "new": "chapterBackedLine(c.faction, work.region, c, side) ?? 'Done.' } : { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { work.sayLate?.(said.text); return; }\n    busy = false;\n    word = said;\n    render();",
+    "old": "    }\n    busy = false;\n    word = said;\n    loadWrits(true);\n  }\n\n  /** CHAP7b: a guildmaster bids its guild's silver for a chapter's patronage in the Season after - said as a backing is,",
+    "new": "    }\n    busy = false;\n    word = said;\n    render();\n  }\n\n  /** CHAP7b: a guildmaster bids its guild's silver for a chapter's patronage in the Season after - said as a backing is,",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ],

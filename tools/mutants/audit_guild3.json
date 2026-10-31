@@ -263,8 +263,8 @@
   {
     "name": "AG3-L2-the-card-no-merit",
     "file": "src/ui/noticeWindow.js",
-    "old": "chapterDutiesLine(c.faction, writs?.receipts, merit);",
-    "new": "chapterDutiesLine(c.faction, writs?.receipts, null);",
+    "old": "    const duties = chapterDutiesLine(c.faction, writs?.receipts, merit); // AUDIT GUILD3 L2: Merit promised where the reader earns it",
+    "new": "    const duties = chapterDutiesLine(c.faction, writs?.receipts, null); // AUDIT GUILD3 L2: Merit promised where the reader earns it",
     "tests": [
       "test/net/audit_guild3.test.js",
       "test/net/chap2b_receipts.test.js",
@@ -283,8 +283,8 @@
   {
     "name": "AG3-L3-the-card-unshut",
     "file": "src/ui/noticeWindow.js",
-    "old": "{ shut: !!chapterSeasonOf(c)?.shut }",
-    "new": "{ shut: false }",
+    "old": "    const band = chapterBandEffectsLine(c.strength, c.faction, { shut: !!chapterSeasonOf(c)?.shut });",
+    "new": "    const band = chapterBandEffectsLine(c.strength, c.faction, { shut: false });",
     "tests": [
       "test/net/audit_guild3.test.js",
       "test/net/chap3b_strength.test.js"

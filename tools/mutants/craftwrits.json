@@ -344,8 +344,8 @@
   {
     "name": "CRAFT-WRITS-board-waits-not",
     "file": "src/ui/noticeWindow.js",
-    "old": "      b.disabled = busy || workBusy || !h.ready || full;\n",
-    "new": "      b.disabled = busy || workBusy || full;\n",
+    "old": "      b.disabled = busy || workBusy || !h.ready || full;",
+    "new": "      b.disabled = busy || workBusy || full;",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "CRAFT-WRITS-board-head",
     "file": "src/ui/noticeWindow.js",
-    "old": "      body.append(sectionHead(t('notice.craftWrit.head', 'Crafting writs - {filled, number} of {max, number} today', { filled: writs.crafts.today.filled, max: writs.crafts.today.max })));",
-    "new": "      body.append(sectionHead(t('notice.craftWrit.head', 'Crafting writs - {filled, number} of {max, number} today', { filled: 0, max: writs.crafts.today.max })));",
+    "old": "            filled: writs.crafts.today.filled,",
+    "new": "            filled: 0,",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]
@@ -742,8 +742,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-C6-silence",
     "file": "src/ui/noticeWindow.js",
-    "old": "    if (r?.unknown) return t('notice.craftWrit.unknown',",
-    "new": "    if (false) return t('notice.craftWrit.unknown',",
+    "old": "    if (r?.unknown)",
+    "new": "    if (false)",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]
@@ -751,8 +751,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-C6-elsewhere",
     "file": "src/ui/noticeWindow.js",
-    "old": "    if (r?.elsewhere || r?.error === 'elsewhere') return t('notice.craftWrit.elsewhere',",
-    "new": "    if (false) return t('notice.craftWrit.elsewhere',",
+    "old": "    if (r?.elsewhere || r?.error === 'elsewhere')",
+    "new": "    if (false)",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]
@@ -805,8 +805,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-C9-board-held",
     "file": "src/ui/noticeWindow.js",
-    "old": "    try { r = await work.crafts.deliver(w); } catch (e) { console.warn('[work] a crafting writ would not deliver', e); r = { ok: false, error: 'server' }; }   // C9: never a board held busy\n",
-    "new": "    r = await work.crafts.deliver(w);\n",
+    "old": "    try {\n      r = await work.crafts.deliver(w);\n    } catch (e) {\n      console.warn('[work] a crafting writ would not deliver', e);\n      r = { ok: false, error: 'server' };\n    } // C9: never a board held busy",
+    "new": "    r = await work.crafts.deliver(w);",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]
@@ -814,8 +814,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T5-tab-uncounted",
     "file": "src/ui/noticeWindow.js",
-    "old": " + (work?.crafts ? (writs.crafts?.writs ?? []).filter((w) => w.state === 'open').length : 0)",
-    "new": "",
+    "old": "          (work?.crafts ? (writs.crafts?.writs ?? []).filter((w) => w.state === 'open').length : 0) +\n          (writs.writsOpen === true",
+    "new": "          (writs.writsOpen === true",
     "tests": [
       "test/net/craftwrits_client.test.js"
     ]

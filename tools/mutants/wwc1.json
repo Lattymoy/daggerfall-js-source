@@ -176,8 +176,8 @@
   {
     "name": "WWC1-the-card-cyrodiils-line",
     "file": "src/ui/oreMapTip.js",
-    "old": "  if (at === CYRODIIL_REGION) lines.push(`Cyrodiil holds every province's ores and metals${times}`);\n  else if (sig)",
-    "new": "  if (sig)",
+    "old": "  if (at === CYRODIIL_REGION) lines.push(`Cyrodiil holds every province's ores and metals${times}`);\n  else if (sig) {",
+    "new": "  if (sig) {",
     "tests": [
       "test/ui/fb1011_oremap.test.js"
     ]
