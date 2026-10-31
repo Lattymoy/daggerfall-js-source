@@ -12,8 +12,8 @@
   {
     "name": "AUDIT-GALLEON-2-RG1-the-walk-drops-every-frame",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "...(cadence?.everyFrame ? { everyFrame: true } : {})",
-    "new": "...({})",
+    "old": "        val3.addComponent({\n          type: 'FixDeformations',\n          interval: 0.1,\n          timer: cadence?.timer ?? 0,\n          ...(cadence?.everyFrame ? { everyFrame: true } : {}),\n        }),",
+    "new": "        val3.addComponent({ type: 'FixDeformations', interval: 0.1, timer: cadence?.timer ?? 0, ...{} }),",
     "tests": [
       "test/systems/comeSailAway/auditgalleon2_rig.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "AUDIT-GALLEON-2-RG1-the-mods-timer-moved",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "timer: cadence?.timer ?? 0,",
-    "new": "timer: cadence?.timer ?? 0.05,",
+    "old": "          timer: cadence?.timer ?? 0,",
+    "new": "          timer: cadence?.timer ?? 0.05,",
     "tests": [
       "test/systems/comeSailAway/auditgalleon2_rig.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "AUDIT-GALLEON-2-RG9-the-phase-dropped-from-the-holder",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "timer: cadence?.timer ?? 0,",
-    "new": "timer: 0,",
+    "old": "          timer: cadence?.timer ?? 0,",
+    "new": "          timer: 0,",
     "tests": [
       "test/systems/comeSailAway/auditgalleon2_rig.test.js"
     ],

@@ -2,8 +2,8 @@
   {
     "name": "ST-cache-never-asked",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "if (had && had.stamp === stamp) return had.list;",
-    "new": "if (false && had) return had.list;",
+    "old": "  if (had && had.stamp === stamp) return had.list;",
+    "new": "  if (false && had) return had.list;",
     "tests": [
       "test/systems/comeSailAway/fb1011c_seatown.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ST-stamp-not-asked",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "if (had && had.stamp === stamp) return had.list;",
-    "new": "if (had) return had.list;",
+    "old": "  if (had && had.stamp === stamp) return had.list;",
+    "new": "  if (had) return had.list;",
     "tests": [
       "test/systems/comeSailAway/fb1011c_seatown.test.js"
     ]

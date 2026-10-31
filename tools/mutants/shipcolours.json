@@ -308,8 +308,8 @@
   {
     "name": "SC-wire-always",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "...(flagged ? { f } : {}), ...(painted",
-    "new": "...{ f }, ...(painted",
+    "old": "    ...(flagged ? { f } : {}),",
+    "new": "    ...{ f },",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "SC-wire-door",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "    const flag = Array.isArray(raw.f) && raw.f.length === raw.b.length ? flagOfCode(raw.f[boats.length]) : null;",
-    "new": "    const flag = Array.isArray(raw.f) ? raw.f[boats.length] : null;",
+    "old": "    const flag = Array.isArray(raw.f) && raw.f.length === raw.b.length ? flagOfCode(raw.f[boats.length]) : null; // SHIP-COLOURS: hers, where she flies one",
+    "new": "    const flag = Array.isArray(raw.f) ? raw.f[boats.length] : null; // SHIP-COLOURS: hers, where she flies one",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "SC-wire-key-blind",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "rec.n ?? null, rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null, rec.h ?? null]",
-    "new": "rec.n ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null, rec.h ?? null]",
+    "old": "              rec.f ?? null,\n              rec.l ?? null,",
+    "new": "              rec.l ?? null,",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]

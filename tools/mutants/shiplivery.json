@@ -771,8 +771,8 @@
   {
     "name": "WIRE-l-always",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "...(painted ? { l } : {}),",
-    "new": "...{ l },",
+    "old": "    ...(painted ? { l } : {}),",
+    "new": "    ...{ l },",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -780,8 +780,8 @@
   {
     "name": "WIRE-d-always",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "...(fitted ? { d } : {}), ...(boarded",
-    "new": "...{ d }, ...(boarded",
+    "old": "    ...(fitted ? { d } : {}),",
+    "new": "    ...{ d },",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -789,8 +789,8 @@
   {
     "name": "WIRE-l-raw",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "? liveryOfCode(raw.l[boats.length]) : null;",
-    "new": "? raw.l[boats.length] : null;",
+    "old": "    const paint = Array.isArray(raw.l) && raw.l.length === raw.b.length ? liveryOfCode(raw.l[boats.length]) : null; // SHIP-LIVERY: hers, where she is painted",
+    "new": "    const paint = Array.isArray(raw.l) && raw.l.length === raw.b.length ? raw.l[boats.length] : null; // SHIP-LIVERY: hers, where she is painted",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -798,8 +798,8 @@
   {
     "name": "WIRE-d-raw",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "? fittingsOfCode(raw.d[boats.length]) : [];",
-    "new": "? raw.d[boats.length] ?? [] : [];",
+    "old": "    const fits = Array.isArray(raw.d) && raw.d.length === raw.b.length ? fittingsOfCode(raw.d[boats.length]) : []; // DECK-PROPS: hers, where she is fitted",
+    "new": "    const fits = Array.isArray(raw.d) && raw.d.length === raw.b.length ? (raw.d[boats.length] ?? []) : []; // DECK-PROPS: hers, where she is fitted",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -807,8 +807,8 @@
   {
     "name": "WIRE-key-paint-blind",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null, rec.h ?? null]",
-    "new": "rec.f ?? null, rec.d ?? null, rec.p ?? null, rec.h ?? null]",
+    "old": "              rec.l ?? null,\n              rec.d ?? null,",
+    "new": "              rec.d ?? null,",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -816,8 +816,8 @@
   {
     "name": "WIRE-key-fittings-blind",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null, rec.h ?? null]",
-    "new": "rec.f ?? null, rec.l ?? null, rec.p ?? null, rec.h ?? null]",
+    "old": "              rec.d ?? null,\n              rec.p ?? null,",
+    "new": "              rec.p ?? null,",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]

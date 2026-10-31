@@ -211,8 +211,8 @@
   {
     "name": "FLEET-wire-n-always",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "...(named ? { n } : {}), ...(flagged",
-    "new": "n, ...(flagged",
+    "old": "    ...(named ? { n } : {}),",
+    "new": "    n,",
     "tests": [
       "test/systems/naval/fleet.test.js"
     ],

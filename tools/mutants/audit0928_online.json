@@ -11,8 +11,8 @@
   {
     "name": "A0928-O1-door-dropped",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "    if (HULL_VARIANT_COUNTS[w[0]] > 0 && w[1] >= HULL_VARIANT_COUNTS[w[0]]) return null;",
-    "new": "    if (HULL_VARIANT_COUNTS[w[0]] < 0) return null;",
+    "old": "    if (HULL_VARIANT_COUNTS[w[0]] > 0 && w[1] >= HULL_VARIANT_COUNTS[w[0]]) return null; // AUDIT PRE-MERGE 0928 O1: a hull with variants names one of its own - SpawnBoat throws on any other",
+    "new": "    if (HULL_VARIANT_COUNTS[w[0]] < 0) return null; // AUDIT PRE-MERGE 0928 O1: a hull with variants names one of its own - SpawnBoat throws on any other",
     "tests": [
       "test/scenes/audit0928_online.test.js",
       "test/systems/comeSailAway/csa_online.test.js"
@@ -21,8 +21,8 @@
   {
     "name": "A0928-O1-door-off-by-one",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "w[1] >= HULL_VARIANT_COUNTS[w[0]]) return null;",
-    "new": "w[1] > HULL_VARIANT_COUNTS[w[0]]) return null;",
+    "old": "    if (HULL_VARIANT_COUNTS[w[0]] > 0 && w[1] >= HULL_VARIANT_COUNTS[w[0]]) return null; // AUDIT PRE-MERGE 0928 O1: a hull with variants names one of its own - SpawnBoat throws on any other",
+    "new": "    if (HULL_VARIANT_COUNTS[w[0]] > 0 && w[1] > HULL_VARIANT_COUNTS[w[0]]) return null; // AUDIT PRE-MERGE 0928 O1: a hull with variants names one of its own - SpawnBoat throws on any other",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]

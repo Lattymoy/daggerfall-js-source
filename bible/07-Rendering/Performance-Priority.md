@@ -2230,7 +2230,7 @@ and no answer moves.
    mutant (the stamps kept every frame) was the same answer, and BO-tree-stamps-never-kept is re-aimed onto the line.
 2. *A parent no root of mine has.* `createBoatLives` read a boat's place as `root.parent ? root.position :
    root.localPosition`, the pool's `lifeOf`'s shape; a boat of mine is SpawnBoat's
-   (`comeSailAwayBoat.js:"newBoat.GameObject = new PrefabNode('Boat');"`) and nothing in the tree hangs that root under
+   (`comeSailAwayBoat.js:"newBoat.GameObject ="`) and nothing in the tree hangs that root under
    another node, so the first branch was never taken and its mutant survived every pin. It reads `root.localPosition`,
    and says why; BO-lives-eye-unread and BO-lives-range-unread are re-aimed onto it. The pool's `lifeOf` has the same
    branch over roots built the same way, and keeps it: it is not this record's line.

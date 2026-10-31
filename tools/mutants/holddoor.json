@@ -2,8 +2,8 @@
   {
     "name": "HOLD-storage-unsaid",
     "file": "src/systems/comeSailAway/comeSailAwayItems.js",
-    "old": "playerOwned: cargo.playerOwned !== false, storage: true });",
-    "new": "playerOwned: cargo.playerOwned !== false });",
+    "old": "  storage: true,\n});",
+    "new": "});",
     "tests": [
       "test/scenes/holddoor.test.js"
     ]

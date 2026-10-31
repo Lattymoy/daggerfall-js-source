@@ -382,8 +382,8 @@
   {
     "name": "CSA-J-bounds-box-size",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "extent: [s.x / 2, s.y / 2, s.z / 2]",
-    "new": "extent: [s.x, s.y, s.z]",
+    "old": "  return worldBounds(hit.n, { center: [c.x, c.y, c.z], extent: [s.x / 2, s.y / 2, s.z / 2] });",
+    "new": "  return worldBounds(hit.n, { center: [c.x, c.y, c.z], extent: [s.x, s.y, s.z] });",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "CSA-J-bounds-inactive-root",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "  if (!node?.activeInHierarchy) return null;\n  const first",
-    "new": "  if (!node) return null;\n  const first",
+    "old": "  if (!node?.activeInHierarchy) return null;",
+    "new": "  if (!node) return null;",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js"
     ]
@@ -400,8 +400,8 @@
   {
     "name": "CSA-J-wire-no-round",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "b.push([v.hull, v.variant | 0, r2(p[0]), r2(p[1]), r2(p[2]),",
-    "new": "b.push([v.hull, v.variant | 0, r4(p[0]), r2(p[1]), r2(p[2]),",
+    "old": "      r2(p[0]),",
+    "new": "      r4(p[0]),",
     "tests": [
       "test/systems/comeSailAway/csa_online.test.js"
     ]
@@ -418,8 +418,8 @@
   {
     "name": "CSA-J-wire-any-hull",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "    if (!v || !int(v.hull, 0, HULL_NAMES.length - 1) || !finite3(v.position)",
-    "new": "    if (!v || !finite3(v.position)",
+    "old": "    if (\n      !v ||\n      !int(v.hull, 0, HULL_NAMES.length - 1) ||\n      !finite3(v.position) ||\n      !Array.isArray(v.rotation) ||\n      v.rotation.length !== 4\n    )\n      continue;",
+    "new": "    if (!v || !finite3(v.position) || !Array.isArray(v.rotation) || v.rotation.length !== 4) continue;",
     "tests": [
       "test/systems/comeSailAway/csa_online.test.js"
     ]
@@ -436,8 +436,8 @@
   {
     "name": "CSA-J-valid-fields",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "if (!Array.isArray(w) || w.length !== 12 || !w.every(Number.isFinite)) return null;",
-    "new": "if (!Array.isArray(w) || w.length < 11 || !w.every(Number.isFinite)) return null;",
+    "old": "    if (!Array.isArray(w) || w.length !== 12 || !w.every(Number.isFinite)) return null;",
+    "new": "    if (!Array.isArray(w) || w.length < 11 || !w.every(Number.isFinite)) return null;",
     "tests": [
       "test/systems/comeSailAway/csa_online.test.js"
     ]
@@ -445,8 +445,8 @@
   {
     "name": "CSA-J-valid-hull",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "if (!int(w[0], 0, HULL_NAMES.length - 1) || !int(w[1], 0, CSA_WIRE_VARIANTS - 1)) return null;",
-    "new": "if (!int(w[0], 0, HULL_NAMES.length) || !int(w[1], 0, CSA_WIRE_VARIANTS - 1)) return null;",
+    "old": "    if (!int(w[0], 0, HULL_NAMES.length - 1) || !int(w[1], 0, CSA_WIRE_VARIANTS - 1)) return null;",
+    "new": "    if (!int(w[0], 0, HULL_NAMES.length) || !int(w[1], 0, CSA_WIRE_VARIANTS - 1)) return null;",
     "tests": [
       "test/systems/comeSailAway/csa_online.test.js"
     ]
@@ -454,8 +454,8 @@
   {
     "name": "CSA-J-valid-variant",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "!int(w[1], 0, CSA_WIRE_VARIANTS - 1)) return null;",
-    "new": "!int(w[1], -1, CSA_WIRE_VARIANTS)) return null;",
+    "old": "    if (!int(w[0], 0, HULL_NAMES.length - 1) || !int(w[1], 0, CSA_WIRE_VARIANTS - 1)) return null;",
+    "new": "    if (!int(w[0], 0, HULL_NAMES.length - 1) || !int(w[1], -1, CSA_WIRE_VARIANTS)) return null;",
     "tests": [
       "test/systems/comeSailAway/csa_online.test.js"
     ]
@@ -463,8 +463,8 @@
   {
     "name": "CSA-J-valid-bounds",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "    if (!inBounds(p)) return null;\n    const q = [w[5]",
-    "new": "    const q = [w[5]",
+    "old": "    if (!inBounds(p)) return null;\n    const q = [w[5], w[6], w[7], w[8]];",
+    "new": "    const q = [w[5], w[6], w[7], w[8]];",
     "tests": [
       "test/systems/comeSailAway/csa_online.test.js"
     ]
@@ -481,8 +481,8 @@
   {
     "name": "CSA-J-valid-normalize",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "rotation: q.map((v) => v / len)",
-    "new": "rotation: q",
+    "old": "      rotation: q.map((v) => v / len),",
+    "new": "      rotation: q,",
     "tests": [
       "test/systems/comeSailAway/csa_online.test.js"
     ]
@@ -508,8 +508,8 @@
   {
     "name": "CSA-J-valid-all-or-none",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "  for (const w of raw.b) {\n    if (!Array.isArray(w) || w.length !== 12",
-    "new": "  for (const w of raw.b) {\n    if (!Array.isArray(w)) continue;\n    if (w.length !== 12",
+    "old": "    if (!Array.isArray(w) || w.length !== 12 || !w.every(Number.isFinite)) return null;",
+    "new": "    if (!Array.isArray(w)) continue;\n    if (w.length !== 12 || !w.every(Number.isFinite)) return null;",
     "tests": [
       "test/systems/comeSailAway/csa_online.test.js"
     ]
@@ -1095,8 +1095,8 @@
   {
     "name": "CSA-J-materials-in-place",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
-    "old": "    if (inRange) { renderer.materials = materials; written += n; }",
-    "new": "    renderer.materials = materials; written += n;",
+    "old": "    if (inRange) {\n      renderer.materials = materials;\n      written += n;\n    } // meshRenderer.sharedMaterials = materials, past the loop",
+    "new": "    renderer.materials = materials;\n    written += n; // meshRenderer.sharedMaterials = materials, past the loop",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js"
     ]

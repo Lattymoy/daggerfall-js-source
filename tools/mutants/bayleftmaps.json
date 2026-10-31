@@ -898,8 +898,8 @@
   {
     "name": "BLM-C12-the-cross-on-the-bay's-scale",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "    const [cx, cy] = sheet ? tamrielCrossAt(o.pixel, r) : [",
-    "new": "    const [cx, cy] = false ? tamrielCrossAt(o.pixel, r) : [",
+    "old": "    const [cx, cy] = sheet",
+    "new": "    const [cx, cy] = false",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -907,8 +907,8 @@
   {
     "name": "BLM-C12-the-markers-of-every-sheet",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "  const shown = o.markers.filter((m) => (m.sheet ?? null) === sheet);",
-    "new": "  const shown = o.markers;",
+    "old": "  const shown = o.markers.filter((m) => (m.sheet ?? null) === sheet); // BAY-LEFT-MAPS: the sheet's own markers",
+    "new": "  const shown = o.markers; // BAY-LEFT-MAPS: the sheet's own markers",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -934,8 +934,8 @@
   {
     "name": "BLM-C12-the-sheet-not-kept",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "(sheet ? { position, label, color, sheet } : { position, label, color });",
-    "new": "({ position, label, color });",
+    "old": "export const placedMarker = (position, label, color, sheet = null) =>\n  sheet ? { position, label, color, sheet } : { position, label, color };",
+    "new": "export const placedMarker = (position, label, color, sheet = null) => ({ position, label, color });",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -943,8 +943,8 @@
   {
     "name": "BLM-C12-marked-across-sheets",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "export const markerOn = (m, pos, sheet = null) => (m.sheet ?? null) === (sheet ?? null) && m.position[0]",
-    "new": "export const markerOn = (m, pos, sheet = null) => m.position[0]",
+    "old": "export const markerOn = (m, pos, sheet = null) =>\n  (m.sheet ?? null) === (sheet ?? null) && m.position[0] === pos[0] && m.position[1] === pos[1];",
+    "new": "export const markerOn = (m, pos, sheet = null) => m.position[0] === pos[0] && m.position[1] === pos[1];",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -952,8 +952,8 @@
   {
     "name": "BLM-C12-the-distance-across-sheets",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "((m.sheet ?? null) === (sheet ?? null) ? vector2IntDistance(m.position, pos) : Infinity);",
-    "new": "vector2IntDistance(m.position, pos);",
+    "old": "export const markerDistance = (m, pos, sheet = null) =>\n  (m.sheet ?? null) === (sheet ?? null) ? vector2IntDistance(m.position, pos) : Infinity;",
+    "new": "export const markerDistance = (m, pos, sheet = null) => vector2IntDistance(m.position, pos);",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -961,8 +961,8 @@
   {
     "name": "BLM-C12-the-save-drops-the-sheet",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "color: m.color, ...(m.sheet ? { sheet: m.sheet } : {}) });",
-    "new": "color: m.color });",
+    "old": "  ...(m.sheet ? { sheet: m.sheet } : {}),\n});",
+    "new": "});",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]

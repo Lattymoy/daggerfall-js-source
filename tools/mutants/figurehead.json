@@ -371,8 +371,8 @@
   {
     "name": "W-said-always",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "...(carved ? { h } : {})",
-    "new": "...({ h })",
+    "old": "    ...(carved ? { h } : {}),",
+    "new": "    ...{ h },",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "W-writer-undoored",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "const carving = figureheadOfCode(v.figurehead);",
-    "new": "const carving = v.figurehead | 0;",
+    "old": "    const carving = figureheadOfCode(v.figurehead); // FIGUREHEAD: her carving, or 0 - none",
+    "new": "    const carving = v.figurehead | 0; // FIGUREHEAD: her carving, or 0 - none",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "W-reader-any-length",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "Array.isArray(raw.h) && raw.h.length === raw.b.length ? figureheadOfCode",
-    "new": "Array.isArray(raw.h) ? figureheadOfCode",
+    "old": "    const carving = Array.isArray(raw.h) && raw.h.length === raw.b.length ? figureheadOfCode(raw.h[boats.length]) : 0; // FIGUREHEAD: hers, where she is carved - never a reason to drop the word",
+    "new": "    const carving = Array.isArray(raw.h) ? figureheadOfCode(raw.h[boats.length]) : 0; // FIGUREHEAD: hers, where she is carved - never a reason to drop the word",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "W-reader-undoored",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "? figureheadOfCode(raw.h[boats.length]) : 0;",
-    "new": "? raw.h[boats.length] : 0;",
+    "old": "    const carving = Array.isArray(raw.h) && raw.h.length === raw.b.length ? figureheadOfCode(raw.h[boats.length]) : 0; // FIGUREHEAD: hers, where she is carved - never a reason to drop the word",
+    "new": "    const carving = Array.isArray(raw.h) && raw.h.length === raw.b.length ? raw.h[boats.length] : 0; // FIGUREHEAD: hers, where she is carved - never a reason to drop the word",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "W-key-unsaid",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "rec.p || rec.h ? [",
-    "new": "rec.p ? [",
+    "old": "        rec.u || rec.cabin || rec.n || rec.f || rec.l || rec.d || rec.p || rec.h",
+    "new": "        rec.u || rec.cabin || rec.n || rec.f || rec.l || rec.d || rec.p",
     "tests": [
       "test/systems/naval/figurehead.test.js"
     ]

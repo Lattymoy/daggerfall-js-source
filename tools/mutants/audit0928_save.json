@@ -101,7 +101,7 @@
   {
     "name": "S3-kind-unregistered",
     "file": "src/systems/comeSailAway/comeSailAwayItems.js",
-    "old": "registerModEffectKind(WATER_WALKING_SILENT_KIND, csaLoaded);",
+    "old": "registerModEffectKind(WATER_WALKING_SILENT_KIND, csaLoaded);\n",
     "new": "",
     "tests": [
       "test/systems/comeSailAway/audit0928_save.test.js"

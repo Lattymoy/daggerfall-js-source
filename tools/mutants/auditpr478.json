@@ -158,8 +158,8 @@
   {
     "name": "ABM-C6-aimed-unread",
     "file": "src/systems/comeSailAway/csaBoatMenu.js",
-    "old": "  if (aimed && list.includes(aimed)) return aimed;",
-    "new": "",
+    "old": "  if (aimed && list.includes(aimed)) return aimed; // AUDIT BOAT-MENU C6: the box aimed at, where it is the verb's",
+    "new": "  // AUDIT BOAT-MENU C6: the box aimed at, where it is the verb's",
     "tests": [
       "test/systems/comeSailAway/boatmenu.test.js"
     ]

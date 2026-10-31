@@ -20,8 +20,8 @@
   {
     "name": "SC-deed-no-message",
     "file": "src/systems/comeSailAway/comeSailAwayItems.js",
-    "old": "  deed.message = boatItemMessage(hull, variant);\n",
-    "new": "",
+    "old": "  deed.message = boatItemMessage(hull, variant);\n  deed.value = value;",
+    "new": "  deed.value = value;",
     "tests": [
       "test/systems/naval/shipclaim.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SC-deed-no-value",
     "file": "src/systems/comeSailAway/comeSailAwayItems.js",
-    "old": "  deed.value = value;\n",
-    "new": "",
+    "old": "  deed.value = value;\n  deed.name = boatItemName(deed.name, hull, variant);",
+    "new": "  deed.name = boatItemName(deed.name, hull, variant);",
     "tests": [
       "test/systems/naval/shipclaim.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SC-deed-no-name",
     "file": "src/systems/comeSailAway/comeSailAwayItems.js",
-    "old": "  deed.name = boatItemName(deed.name, hull, variant);\n",
-    "new": "",
+    "old": "  deed.name = boatItemName(deed.name, hull, variant);\n  return deed;",
+    "new": "  return deed;",
     "tests": [
       "test/systems/naval/shipclaim.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SC-deed-uid-unpassed",
     "file": "src/systems/comeSailAway/comeSailAwayItems.js",
-    "old": "const deed = mintBoatItem(BOAT_DEED_TEMPLATE, uid);",
-    "new": "const deed = mintBoatItem(BOAT_DEED_TEMPLATE, 0);",
+    "old": "  const deed = mintBoatItem(BOAT_DEED_TEMPLATE, uid);",
+    "new": "  const deed = mintBoatItem(BOAT_DEED_TEMPLATE, 0);",
     "tests": [
       "test/systems/naval/shipclaim.test.js"
     ]

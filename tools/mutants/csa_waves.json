@@ -20,8 +20,8 @@
   {
     "name": "CSA-F-wave-land-at-margin",
     "file": "src/systems/comeSailAway/comeSailAwayWaves.js",
-    "old": "    return !!hit && f(hit.point[1]) > landAbove;",
-    "new": "    return !!hit && f(hit.point[1]) >= landAbove;",
+    "old": "    return !!hit && f(hit.point[1]) > landAbove; // Debug.DrawRay's green, red and yellow draw nothing",
+    "new": "    return !!hit && f(hit.point[1]) >= landAbove; // Debug.DrawRay's green, red and yellow draw nothing",
     "tests": [
       "test/systems/comeSailAway/csa_waves.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CSA-F-wave-j-north",
     "file": "src/systems/comeSailAway/comeSailAwayWaves.js",
-    "old": "      const vx = f(f(819.2) * i), vz = f(f(819.2) * -j);",
-    "new": "      const vx = f(f(819.2) * i), vz = f(f(819.2) * j);",
+    "old": "        vz = f(f(819.2) * -j);",
+    "new": "        vz = f(f(819.2) * j);",
     "tests": [
       "test/systems/comeSailAway/csa_waves.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CSA-F-wave-j-outer",
     "file": "src/systems/comeSailAway/comeSailAwayWaves.js",
-    "old": "  for (let i = -waveDistance; i < waveDistance + 1; i++) {\n    for (let j = -waveDistance; j < waveDistance + 1; j++) {\n      if (heightMapValue(currentMapPixel.X + i, currentMapPixel.Y + j) > num) continue;",
-    "new": "  for (let j = -waveDistance; j < waveDistance + 1; j++) {\n    for (let i = -waveDistance; i < waveDistance + 1; i++) {\n      if (heightMapValue(currentMapPixel.X + i, currentMapPixel.Y + j) > num) continue;",
+    "old": "  for (let i = -waveDistance; i < waveDistance + 1; i++) {\n    for (let j = -waveDistance; j < waveDistance + 1; j++) {",
+    "new": "  for (let j = -waveDistance; j < waveDistance + 1; j++) {\n    for (let i = -waveDistance; i < waveDistance + 1; i++) {",
     "tests": [
       "test/systems/comeSailAway/csa_waves.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CSA-F-wave-neighbour-rise-fixed",
     "file": "src/systems/comeSailAway/comeSailAwayWaves.js",
-    "old": "          if (hitsLand([f(cx - QUARTER), RAY_RISE, f(cz - QUARTER)])) array[k + 1][l + 1] = true;   // back + left",
-    "new": "          if (hitsLand([f(cx - QUARTER), f(wcy + RAY_RISE), f(cz - QUARTER)])) array[k + 1][l + 1] = true;   // back + left",
+    "old": "          if (hitsLand([f(cx - QUARTER), RAY_RISE, f(cz - QUARTER)])) array[k + 1][l + 1] = true; // back + left",
+    "new": "          if (hitsLand([f(cx - QUARTER), f(wcy + RAY_RISE), f(cz - QUARTER)])) array[k + 1][l + 1] = true; // back + left",
     "tests": [
       "test/systems/comeSailAway/csa_waves.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "CSA-F-wave-neighbours-player-only",
     "file": "src/systems/comeSailAway/comeSailAwayWaves.js",
-    "old": "        if (k === 0 && l === 0) currentNeighbors = array;   // every pixel's own middle (kept)",
-    "new": "        if (k === 0 && l === 0 && item[0] === currentMapPixel.X && item[1] === currentMapPixel.Y) currentNeighbors = array;",
+    "old": "        if (k === 0 && l === 0) currentNeighbors = array; // every pixel's own middle (kept)",
+    "new": "        if (k === 0 && l === 0 && item[0] === currentMapPixel.X && item[1] === currentMapPixel.Y)\n          currentNeighbors = array;",
     "tests": [
       "test/systems/comeSailAway/csa_waves.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "CSA-F-wave-fan-uv",
     "file": "src/systems/comeSailAway/comeSailAwayWaves.js",
-    "old": "[[0.25, 0.25], [-0.25, 0.25], [-0.5, 0.5], [0, 1], [0.5, 0.5]], [[0.25, 1], [0.75, 1], [1, 0.75], [0.5, 0.25], [0, 0.75]], [0, 1, 4, 1, 2, 4, 2, 3, 4]);",
-    "new": "[[0.25, 0.25], [-0.25, 0.25], [-0.5, 0.5], [0, 1], [0.5, 0.5]], [[0.25, 1], [0.75, 1], [1, 0.75], [0.5, 0.5], [0, 0.75]], [0, 1, 4, 1, 2, 4, 2, 3, 4]);",
+    "old": "        ],\n        [\n          [0.25, 1],\n          [0.75, 1],\n          [1, 0.75],\n          [0.5, 0.25],\n          [0, 0.75],\n        ],\n        [0, 1, 4, 1, 2, 4, 2, 3, 4],\n      );\n      if (array[0][0]) {",
+    "new": "        ],\n        [\n          [0.25, 1],\n          [0.75, 1],\n          [1, 0.75],\n          [0.5, 0.5],\n          [0, 0.75],\n        ],\n        [0, 1, 4, 1, 2, 4, 2, 3, 4],\n      );\n      if (array[0][0]) {",
     "tests": [
       "test/systems/comeSailAway/csa_waves.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "CSA-F-wave-fan-winding",
     "file": "src/systems/comeSailAway/comeSailAwayWaves.js",
-    "old": "[[0.25, 0.25], [-0.25, 0.25], [-0.5, 0.5], [0, 1], [0.5, 0.5]], [[0.25, 1], [0.75, 1], [1, 0.75], [0.5, 0.25], [0, 0.75]], [0, 1, 4, 1, 2, 4, 2, 3, 4]);",
-    "new": "[[0.25, 0.25], [-0.25, 0.25], [-0.5, 0.5], [0, 1], [0.5, 0.5]], [[0.25, 1], [0.75, 1], [1, 0.75], [0.5, 0.25], [0, 0.75]], [0, 4, 1, 1, 2, 4, 2, 3, 4]);",
+    "old": "          [0, 0.75],\n        ],\n        [0, 1, 4, 1, 2, 4, 2, 3, 4],\n      );\n      if (array[0][0]) {",
+    "new": "          [0, 0.75],\n        ],\n        [0, 4, 1, 1, 2, 4, 2, 3, 4],\n      );\n      if (array[0][0]) {",
     "tests": [
       "test/systems/comeSailAway/csa_waves.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "CSA-F-wave-corner-arm",
     "file": "src/systems/comeSailAway/comeSailAwayWaves.js",
-    "old": "    if (array[1][0]) {\n      let count = list2.length;",
-    "new": "    if (array[1][2]) {\n      let count = list2.length;",
+    "old": "    }\n    if (array[1][0]) {",
+    "new": "    }\n    if (array[1][2]) {",
     "tests": [
       "test/systems/comeSailAway/csa_waves.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "CSA-F-wave-bayer-cell",
     "file": "src/systems/comeSailAway/comeSailAwayWaves.js",
-    "old": "  3, 192, 50, 239, 16, 204, 63, 251,",
-    "new": "  3, 192, 50, 239, 16, 204, 64, 251,",
+    "old": "  3, 192, 50, 239, 16, 204, 63, 251, 129, 66, 177, 114, 141, 78, 188, 126, 34, 224, 20, 208, 47, 235, 30, 220, 161, 98,",
+    "new": "  3, 192, 50, 239, 16, 204, 64, 251, 129, 66, 177, 114, 141, 78, 188, 126, 34, 224, 20, 208, 47, 235, 30, 220, 161, 98,",
     "tests": [
       "test/systems/comeSailAway/csa_waves.test.js"
     ]
@@ -911,8 +911,8 @@
   {
     "name": "CSA-F-boat-no-systems",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "  instanceParticleSystems(go, { random: ctx.particleRandom });\n",
-    "new": "",
+    "old": "  instanceParticleSystems(go, { random: ctx.particleRandom });\n  go.name = `${goModelName(modelId)} [Replacement]`;",
+    "new": "  go.name = `${goModelName(modelId)} [Replacement]`;",
     "tests": [
       "test/systems/comeSailAway/csa_effects.test.js"
     ]

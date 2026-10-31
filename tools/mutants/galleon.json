@@ -76,8 +76,8 @@
   {
     "name": "GALLEON-loader-no-fallback",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
-    "old": "      if (!answer.ok) { log?.warn?.(",
-    "new": "      if (!answer.ok) { throw answer.error; log?.warn?.(",
+    "old": "        log?.warn?.(`[come-sail-away] the new ${ship.title} did not load - ${standsAs}`, answer.error);",
+    "new": "        throw answer.error;\n        log?.warn?.(`[come-sail-away] the new ${ship.title} did not load - ${standsAs}`, answer.error);",
     "tests": [
       "test/world/ships/galleon_model.test.js"
     ]

@@ -1136,8 +1136,8 @@
   {
     "name": "CSA-E-boat-no-animators",
     "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
-    "old": "    for (const c of n.getComponents('Animator')) c.animator = createAnimator(n, c, ctx.models.animation ?? {});",
-    "new": "",
+    "old": "    for (const c of n.getComponents('Animator')) c.animator = createAnimator(n, c, ctx.models.animation ?? {});\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/comeSailAway/csa_boats.test.js",
       "test/systems/comeSailAway/csa_animator.test.js",

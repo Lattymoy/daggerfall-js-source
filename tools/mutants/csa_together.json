@@ -2,8 +2,8 @@
   {
     "name": "CSAK-wire-turn-only",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "if (way[0] || way[1] || way[2]) underWay = true;",
-    "new": "if (way[0] || way[1]) underWay = true;",
+    "old": "    if (way[0] || way[1] || way[2]) underWay = true;",
+    "new": "    if (way[0] || way[1]) underWay = true;",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CSAK-wire-m-always",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "return { b, ...(underWay ? { m } : {}), ...(u.some(Boolean) ? { u } : {}),",
-    "new": "return { b, m, ...(u.some(Boolean) ? { u } : {}),",
+    "old": "    ...(underWay ? { m } : {}),",
+    "new": "    m,",
     "tests": [
       "test/systems/csa_together.test.js"
     ],
@@ -21,8 +21,8 @@
   {
     "name": "CSAK-wire-way-not-converted",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "const at = vel ? toWire([v.position[0] + vel[0], v.position[1] + vel[1], v.position[2] + vel[2]]) : p;",
-    "new": "const at = vel ? [v.position[0] + vel[0], v.position[1] + vel[1], v.position[2] + vel[2]] : p;",
+    "old": "    const at = vel ? toWire([v.position[0] + vel[0], v.position[1] + vel[1], v.position[2] + vel[2]]) : p;",
+    "new": "    const at = vel ? [v.position[0] + vel[0], v.position[1] + vel[1], v.position[2] + vel[2]] : p;",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "CSAK-wire-m-length",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "if (!Array.isArray(m) || m.length !== raw.b.length) return null;",
-    "new": "if (!Array.isArray(m) || m.length > raw.b.length) return null;",
+    "old": "    if (!Array.isArray(m) || m.length !== raw.b.length) return null;",
+    "new": "    if (!Array.isArray(m) || m.length > raw.b.length) return null;",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "CSAK-wire-way-three",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "if (!Array.isArray(way) || way.length !== 3 || !way.every(Number.isFinite)) return null;",
-    "new": "if (!Array.isArray(way) || way.length < 3 || !way.every(Number.isFinite)) return null;",
+    "old": "      if (!Array.isArray(way) || way.length !== 3 || !way.every(Number.isFinite)) return null;",
+    "new": "      if (!Array.isArray(way) || way.length < 3 || !way.every(Number.isFinite)) return null;",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "CSAK-wire-way-finite",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "if (!Array.isArray(way) || way.length !== 3 || !way.every(Number.isFinite)) return null;",
-    "new": "if (!Array.isArray(way) || way.length !== 3) return null;",
+    "old": "      if (!Array.isArray(way) || way.length !== 3 || !way.every(Number.isFinite)) return null;",
+    "new": "      if (!Array.isArray(way) || way.length !== 3) return null;",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "CSAK-wire-speed-one-axis",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "if (Math.hypot(way[0], way[1]) > CSA_WIRE_SPEED_MAX || Math.abs(way[2]) > CSA_WIRE_TURN_MAX) return null;",
-    "new": "if (Math.abs(way[0]) > CSA_WIRE_SPEED_MAX || Math.abs(way[2]) > CSA_WIRE_TURN_MAX) return null;",
+    "old": "      if (Math.hypot(way[0], way[1]) > CSA_WIRE_SPEED_MAX || Math.abs(way[2]) > CSA_WIRE_TURN_MAX) return null;",
+    "new": "      if (Math.abs(way[0]) > CSA_WIRE_SPEED_MAX || Math.abs(way[2]) > CSA_WIRE_TURN_MAX) return null;",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "CSAK-wire-turn-one-side",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "if (Math.hypot(way[0], way[1]) > CSA_WIRE_SPEED_MAX || Math.abs(way[2]) > CSA_WIRE_TURN_MAX) return null;",
-    "new": "if (Math.hypot(way[0], way[1]) > CSA_WIRE_SPEED_MAX || way[2] > CSA_WIRE_TURN_MAX) return null;",
+    "old": "      if (Math.hypot(way[0], way[1]) > CSA_WIRE_SPEED_MAX || Math.abs(way[2]) > CSA_WIRE_TURN_MAX) return null;",
+    "new": "      if (Math.hypot(way[0], way[1]) > CSA_WIRE_SPEED_MAX || way[2] > CSA_WIRE_TURN_MAX) return null;",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "CSAK-wire-velocity-axes",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "boat.velocity = [way[0], 0, way[1]];",
-    "new": "boat.velocity = [way[0], 0, way[0]];",
+    "old": "      boat.velocity = [way[0], 0, way[1]];",
+    "new": "      boat.velocity = [way[0], 0, way[0]];",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "CSAK-wire-key-no-way",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "rec.p || rec.h ? [rec.b, rec.m ?? null, rec.u ?? null, rec.cabin ?? null, rec.n ?? null, rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null, rec.h ?? null] : rec.m ? [rec.b, rec.m] : rec.b)",
-    "new": "rec.p || rec.h ? [rec.b, null, rec.u ?? null, rec.cabin ?? null, rec.n ?? null, rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null, rec.h ?? null] : rec.b)",
+    "old": "              rec.m ?? null,\n              rec.u ?? null,\n              rec.cabin ?? null,\n              rec.n ?? null,\n              rec.f ?? null,\n              rec.l ?? null,\n              rec.d ?? null,\n              rec.p ?? null,\n              rec.h ?? null,\n            ]\n          : rec.m\n            ? [rec.b, rec.m]\n            : rec.b,",
+    "new": "              null,\n              rec.u ?? null,\n              rec.cabin ?? null,\n              rec.n ?? null,\n              rec.f ?? null,\n              rec.l ?? null,\n              rec.d ?? null,\n              rec.p ?? null,\n              rec.h ?? null,\n            ]\n          : rec.b,",
     "tests": [
       "test/systems/csa_together.test.js",
       "test/systems/comeSailAway/csa_online.test.js"

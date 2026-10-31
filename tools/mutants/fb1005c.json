@@ -66,8 +66,8 @@
   {
     "name": "FB1005C-hold-menu-word",
     "file": "src/systems/comeSailAway/csaBoatMenu.js",
-    "old": "        : s.tooHeavy ? BOAT_MENU_WHY.tooHeavy : null;",
-    "new": "        : null;",
+    "old": "            : s.tooHeavy\n              ? BOAT_MENU_WHY.tooHeavy\n              : null; // HOLD-WEIGHT: her parts heavier than the bearer's most (the runtime's partsTooHeavy)",
+    "new": "            : null; // HOLD-WEIGHT: her parts heavier than the bearer's most (the runtime's partsTooHeavy)",
     "tests": [
       "test/systems/comeSailAway/fb1005c_holdweight.test.js"
     ]

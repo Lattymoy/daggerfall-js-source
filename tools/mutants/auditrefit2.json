@@ -272,8 +272,8 @@
   {
     "name": "A2-key-board-blind",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "rec.d ?? null, rec.p ?? null, rec.h ?? null] : rec.m",
-    "new": "rec.d ?? null, rec.h ?? null] : rec.m",
+    "old": "              rec.p ?? null,\n              rec.h ?? null,",
+    "new": "              rec.h ?? null,",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "A2-key-board-unkeyed",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "|| rec.d || rec.p || rec.h ? [",
-    "new": "|| rec.d || rec.h ? [",
+    "old": "        rec.u || rec.cabin || rec.n || rec.f || rec.l || rec.d || rec.p || rec.h",
+    "new": "        rec.u || rec.cabin || rec.n || rec.f || rec.l || rec.d || rec.h",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]

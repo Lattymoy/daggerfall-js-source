@@ -452,8 +452,8 @@
   {
     "name": "WI-unnamed-said",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "    const shows = v.plaque === true && !!(name?.ok && name.name);",
-    "new": "    const shows = v.plaque === true;",
+    "old": "    const shows = v.plaque === true && !!(name?.ok && name.name); // SHIP-PLAQUE: her name on her bows - a named boat's",
+    "new": "    const shows = v.plaque === true; // SHIP-PLAQUE: her name on her bows - a named boat's",
     "tests": [
       "test/systems/naval/shipplaque.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "WI-always-said",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "...(boarded ? { p: pl } : {})",
-    "new": "p: pl",
+    "old": "    ...(boarded ? { p: pl } : {}),",
+    "new": "    p: pl,",
     "tests": [
       "test/systems/naval/shipplaque.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "WI-any-length",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "Array.isArray(raw.p) && raw.p.length === raw.b.length && raw.p[boats.length] === 1",
-    "new": "Array.isArray(raw.p) && raw.p[boats.length] === 1",
+    "old": "    if (name && Array.isArray(raw.p) && raw.p.length === raw.b.length && raw.p[boats.length] === 1) boat.plaque = true; // SHIP-PLAQUE: her name on her bows - never a reason to drop the word",
+    "new": "    if (name && Array.isArray(raw.p) && raw.p[boats.length] === 1) boat.plaque = true; // SHIP-PLAQUE: her name on her bows - never a reason to drop the word",
     "tests": [
       "test/systems/naval/shipplaque.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "WI-unnamed-read",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "if (name && Array.isArray(raw.p) &&",
-    "new": "if (Array.isArray(raw.p) &&",
+    "old": "    if (name && Array.isArray(raw.p) && raw.p.length === raw.b.length && raw.p[boats.length] === 1) boat.plaque = true; // SHIP-PLAQUE: her name on her bows - never a reason to drop the word",
+    "new": "    if (Array.isArray(raw.p) && raw.p.length === raw.b.length && raw.p[boats.length] === 1) boat.plaque = true; // SHIP-PLAQUE: her name on her bows - never a reason to drop the word",
     "tests": [
       "test/systems/naval/shipplaque.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "CSA-I-pic-no-offset",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "bitmap.data[(sy + REGION_PANEL_OFFSET) * bitmap.width + sx]",
-    "new": "bitmap.data[sy * bitmap.width + sx]",
+    "old": "      const c = colorOf(bitmap.data[(sy + REGION_PANEL_OFFSET) * bitmap.width + sx]);",
+    "new": "      const c = colorOf(bitmap.data[sy * bitmap.width + sx]);",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CSA-I-pic-floor",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "const sx = Math.min(iw - 1, Math.round((x + 0.5) * iw / width - 0.5));",
-    "new": "const sx = Math.min(iw - 1, Math.floor(x * iw / width));",
+    "old": "      const sx = Math.min(iw - 1, Math.round(((x + 0.5) * iw) / width - 0.5));",
+    "new": "      const sx = Math.min(iw - 1, Math.floor((x * iw) / width));",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CSA-I-pic-y-floor",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "const sy = Math.min(ih - 1, Math.round((y + 0.5) * ih / height - 0.5));",
-    "new": "const sy = Math.min(ih - 1, Math.floor(y * ih / height));",
+    "old": "    const sy = Math.min(ih - 1, Math.round(((y + 0.5) * ih) / height - 0.5));",
+    "new": "    const sy = Math.min(ih - 1, Math.floor((y * ih) / height));",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CSA-I-pic-alpha",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "data[i + 3] = 255;",
-    "new": "data[i + 3] = 0;",
+    "old": "      data[i + 3] = 255;",
+    "new": "      data[i + 3] = 0;",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CSA-I-rect-centred",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "x: f(f(f(screenRect.x ?? 0) + f(f(f(screenRect.width) * screenScaleX) / 2)) - f(num2 / 2)),",
-    "new": "x: f(f(f(screenRect.x ?? 0) + f(f(screenRect.width) / 2)) - f(num2 / 2)),",
+    "old": "    x: f(f(f(screenRect.x ?? 0) + f(f(f(screenRect.width) * screenScaleX) / 2)) - f(num2 / 2)),",
+    "new": "    x: f(f(f(screenRect.x ?? 0) + f(f(screenRect.width) / 2)) - f(num2 / 2)),",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CSA-I-rect-y",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "y: f(f(f(screenRect.y ?? 0) + f(f(f(screenRect.height) * screenScaleY) / 2)) - f(num3 / 2)),",
-    "new": "y: f(f(f(screenRect.y ?? 0) + f(f(f(screenRect.height) * screenScaleY) / 2)) - f(num3 / 3)),",
+    "old": "    y: f(f(f(screenRect.y ?? 0) + f(f(f(screenRect.height) * screenScaleY) / 2)) - f(num3 / 2)),",
+    "new": "    y: f(f(f(screenRect.y ?? 0) + f(f(f(screenRect.height) * screenScaleY) / 2)) - f(num3 / 3)),",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "CSA-I-contains-max-in",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "p[0] < f(r.x + r.w)",
-    "new": "p[0] <= f(r.x + r.w)",
+    "old": "export const guiRectContains = (r, p) => p[0] >= r.x && p[0] < f(r.x + r.w) && p[1] >= r.y && p[1] < f(r.y + r.h);",
+    "new": "export const guiRectContains = (r, p) => p[0] >= r.x && p[0] <= f(r.x + r.w) && p[1] >= r.y && p[1] < f(r.y + r.h);",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CSA-I-contains-min-out",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "export const guiRectContains = (r, p) => p[0] >= r.x",
-    "new": "export const guiRectContains = (r, p) => p[0] > r.x",
+    "old": "export const guiRectContains = (r, p) => p[0] >= r.x && p[0] < f(r.x + r.w) && p[1] >= r.y && p[1] < f(r.y + r.h);",
+    "new": "export const guiRectContains = (r, p) => p[0] > r.x && p[0] < f(r.x + r.w) && p[1] >= r.y && p[1] < f(r.y + r.h);",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "CSA-I-suffix-22",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "d === 2 || d === 22 ? 'nd'",
-    "new": "d === 2 ? 'nd'",
+    "old": "  const s = d === 1 || d === 21 ? 'st' : d === 2 || d === 22 ? 'nd' : d === 3 || d === 23 ? 'rd' : 'th';",
+    "new": "  const s = d === 1 || d === 21 ? 'st' : d === 2 ? 'nd' : d === 3 || d === 23 ? 'rd' : 'th';",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "CSA-I-suffix-zero-based",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "  const d = day + 1;\n",
-    "new": "  const d = day;\n",
+    "old": "  const d = day + 1;",
+    "new": "  const d = day;",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "CSA-I-label-form",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "`(${pos[0]}, ${pos[1]}) - ${dayWithSuffix} of ${monthName}`",
-    "new": "`(${pos[0]},${pos[1]}) - ${dayWithSuffix} of ${monthName}`",
+    "old": "  `(${pos[0]}, ${pos[1]}) - ${dayWithSuffix} of ${monthName}`;",
+    "new": "  `(${pos[0]},${pos[1]}) - ${dayWithSuffix} of ${monthName}`;",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "CSA-I-g7-bound",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "if (exp >= 7 || exp <= -5) {",
-    "new": "if (exp >= 7 || exp < -5) {",
+    "old": "  if (exp >= 7 || exp <= -5) {",
+    "new": "  if (exp >= 7 || exp < -5) {",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "CSA-I-g7-precision",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "const fixed = Math.abs(v).toPrecision(7);",
-    "new": "const fixed = Math.abs(v).toPrecision(9);",
+    "old": "  const fixed = Math.abs(v).toPrecision(7);",
+    "new": "  const fixed = Math.abs(v).toPrecision(9);",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "CSA-I-g7-exp-digits",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "String(Math.abs(exp)).padStart(2, '0')",
-    "new": "String(Math.abs(exp))",
+    "old": "    return `${sign}${mant}E${exp < 0 ? '-' : '+'}${String(Math.abs(exp)).padStart(2, '0')}`;",
+    "new": "    return `${sign}${mant}E${exp < 0 ? '-' : '+'}${String(Math.abs(exp))}`;",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "CSA-I-yellow",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "rgba(1, 0.92156863, 0.015686275),   // Color.yellow",
-    "new": "rgba(1, 1, 0),   // Color.yellow",
+    "old": "  rgba(1, 0.92156863, 0.015686275), // Color.yellow",
+    "new": "  rgba(1, 1, 0), // Color.yellow",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "CSA-I-gray",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "rgba(0.5, 0.5, 0.5),   // Color.gray",
-    "new": "rgba(0.5, 0.5, 0.5, 0.5),   // Color.gray",
+    "old": "  rgba(0.5, 0.5, 0.5), // Color.gray",
+    "new": "  rgba(0.5, 0.5, 0.5, 0.5), // Color.gray",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "CSA-I-backdrop-opaque",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "quad('line', 0, 0, o.screen[0], o.screen[1], { ...COLOR_BLACK, a: f(o.opacity) });",
-    "new": "quad('line', 0, 0, o.screen[0], o.screen[1], COLOR_BLACK);",
+    "old": "  quad('line', 0, 0, o.screen[0], o.screen[1], { ...COLOR_BLACK, a: f(o.opacity) });",
+    "new": "  quad('line', 0, 0, o.screen[0], o.screen[1], COLOR_BLACK);",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "CSA-I-blink-always",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "if (o.showingPosition && f(Math.sin(f(f(o.unscaledTime) * 5))) > 0) {",
-    "new": "if (o.showingPosition) {",
+    "old": "  if (o.showingPosition && f(Math.sin(f(f(o.unscaledTime) * 5))) > 0) {",
+    "new": "  if (o.showingPosition) {",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "CSA-I-blink-reading",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "if (o.showingPosition && f(Math.sin(",
-    "new": "if (f(Math.sin(",
+    "old": "  if (o.showingPosition && f(Math.sin(f(f(o.unscaledTime) * 5))) > 0) {",
+    "new": "  if (f(Math.sin(f(f(o.unscaledTime) * 5))) > 0) {",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "CSA-I-cross-unscaled",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": ": [f(f(o.pixel[0]) * o.scale[0]), f(f(o.pixel[1]) * o.scale[1])];",
-    "new": ": [f(o.pixel[0]), f(f(o.pixel[1]) * o.scale[1])];",
+    "old": "    const [cx, cy] = sheet\n      ? tamrielCrossAt(o.pixel, r)\n      : [f(f(o.pixel[0]) * o.scale[0]), f(f(o.pixel[1]) * o.scale[1])];",
+    "new": "    const [cx, cy] = sheet ? tamrielCrossAt(o.pixel, r) : [f(o.pixel[0]), f(f(o.pixel[1]) * o.scale[1])];",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "CSA-I-help-spacing",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "MAP_HELP_LINES.forEach((line, i) => text(line, [0, 20 * i], 3,",
-    "new": "MAP_HELP_LINES.forEach((line, i) => text(line, [0, 16 * i], 3,",
+    "old": "  MAP_HELP_LINES.forEach((line, i) => text(line, [0, 20 * i], 3, DAGGERFALL_DEFAULT_TEXT_COLOR, shadow3));",
+    "new": "  MAP_HELP_LINES.forEach((line, i) => text(line, [0, 16 * i], 3, DAGGERFALL_DEFAULT_TEXT_COLOR, shadow3));",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "CSA-I-colour-line-y",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "[0, f(o.screen[1] - 20)], 3,",
-    "new": "[0, f(o.screen[1] - 40)], 3,",
+    "old": "    [0, f(o.screen[1] - 20)],",
+    "new": "    [0, f(o.screen[1] - 40)],",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "CSA-I-colour-line-mode",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "`Current marker color is ${MAP_MARKER_MODE_LABELS[o.markerMode]}`",
-    "new": "`Current marker color is ${MAP_MARKER_MODE_LABELS[0]}`",
+    "old": "    `Current marker color is ${MAP_MARKER_MODE_LABELS[o.markerMode]}`,",
+    "new": "    `Current marker color is ${MAP_MARKER_MODE_LABELS[0]}`,",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "CSA-I-text-shadow",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "const shadow3 = [DAGGERFALL_DEFAULT_SHADOW_POS[0] * 3, DAGGERFALL_DEFAULT_SHADOW_POS[1] * 3];",
-    "new": "const shadow3 = [DAGGERFALL_DEFAULT_SHADOW_POS[0], DAGGERFALL_DEFAULT_SHADOW_POS[1]];",
+    "old": "  const shadow3 = [DAGGERFALL_DEFAULT_SHADOW_POS[0] * 3, DAGGERFALL_DEFAULT_SHADOW_POS[1] * 3];",
+    "new": "  const shadow3 = [DAGGERFALL_DEFAULT_SHADOW_POS[0], DAGGERFALL_DEFAULT_SHADOW_POS[1]];",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "CSA-I-outline-always",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "if (ot !== 0) quad('line', f(x - ot)",
-    "new": "quad('line', f(x - ot)",
+    "old": "    if (ot !== 0) quad('line', f(x - ot), f(y - ot), w + ot * 2, h + ot * 2, COLOR_BLACK);",
+    "new": "    quad('line', f(x - ot), f(y - ot), w + ot * 2, h + ot * 2, COLOR_BLACK);",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "CSA-I-marker-y",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "const x = f(f(r.x + m.position[0]) - t), y = f(f(r.y - t) + m.position[1]), w = 1 + t * 2, h = 1 + t * 2;",
-    "new": "const x = f(f(r.x + m.position[0]) - t), y = f(r.y + m.position[1]), w = 1 + t * 2, h = 1 + t * 2;",
+    "old": "      y = f(f(r.y - t) + m.position[1]),",
+    "new": "      y = f(r.y + m.position[1]),",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "CSA-I-label-offset",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "text(m.label, [f(x + 10), f(y - 20)], 3,",
-    "new": "text(m.label, [f(x + 10), f(y + 20)], 3,",
+    "old": "      text(m.label, [f(x + 10), f(y - 20)], 3, DAGGERFALL_DEFAULT_TEXT_COLOR, shadow3);",
+    "new": "      text(m.label, [f(x + 10), f(y + 20)], 3, DAGGERFALL_DEFAULT_TEXT_COLOR, shadow3);",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "CSA-I-label-range",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "if (vector2IntDistance(val4, m.position) <= o.clickRange) text(",
-    "new": "if (vector2IntDistance(val4, m.position) < o.clickRange) text(",
+    "old": "    if (vector2IntDistance(val4, m.position) <= o.clickRange)",
+    "new": "    if (vector2IntDistance(val4, m.position) < o.clickRange)",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "CSA-I-marked-any",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "&& m.position[0] === pos[0] && m.position[1] === pos[1];",
-    "new": "&& m.position[0] === pos[0];",
+    "old": "export const markerOn = (m, pos, sheet = null) =>\n  (m.sheet ?? null) === (sheet ?? null) && m.position[0] === pos[0] && m.position[1] === pos[1];",
+    "new": "export const markerOn = (m, pos, sheet = null) => (m.sheet ?? null) === (sheet ?? null) && m.position[0] === pos[0];",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]

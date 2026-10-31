@@ -102,8 +102,8 @@
   {
     "name": "AUDIT-CC-A9-no-uid-row",
     "file": "src/systems/comeSailAway/csaBoatMenu.js",
-    "old": "if (s.crewed && s.companions !== false) rows.push",
-    "new": "if (s.crewed) rows.push",
+    "old": "    if (s.crewed && s.companions !== false) rows.push({ id: BOAT_VERB.companions, label: BOAT_MENU_TEXT.companions }); // CREW-COMPANIONS - AUDIT CC-A9: not on a boat with no deed number (`companions` false)",
+    "new": "    if (s.crewed) rows.push({ id: BOAT_VERB.companions, label: BOAT_MENU_TEXT.companions }); // CREW-COMPANIONS - AUDIT CC-A9: not on a boat with no deed number (`companions` false)",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"

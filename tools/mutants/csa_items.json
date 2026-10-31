@@ -2,8 +2,8 @@
   {
     "name": "CSA-H-row-price",
     "file": "src/systems/comeSailAway/comeSailAwayItems.js",
-    "old": "basePrice: 6000,",
-    "new": "basePrice: 4000,",
+    "old": "    basePrice: 6000,",
+    "new": "    basePrice: 4000,",
     "tests": [
       "test/systems/csa_items.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CSA-H-row-weight",
     "file": "src/systems/comeSailAway/comeSailAwayItems.js",
-    "old": "name: 'Parts of', baseWeight: 120,",
-    "new": "name: 'Parts of', baseWeight: 30,",
+    "old": "    baseWeight: 120,",
+    "new": "    baseWeight: 30,",
     "tests": [
       "test/systems/csa_items.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CSA-H-mint-uid",
     "file": "src/systems/comeSailAway/comeSailAwayItems.js",
-    "old": "message: 0, stackCount: 1, UID: uid }",
-    "new": "message: 0, stackCount: 1 }",
+    "old": "      UID: uid,\n    }),",
+    "new": "    }),",
     "tests": [
       "test/systems/csa_items.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CSA-H-group-parts",
     "file": "src/systems/comeSailAway/comeSailAwayItems.js",
-    "old": "import { registerCustomTemplates, setItemFields, mintCondition } from '../item/itemTemplates.js';",
-    "new": "import { registerCustomTemplates, setItemFields, mintCondition, registerCustomItemGroup } from '../item/itemTemplates.js'; registerCustomItemGroup(1320, 'UselessItems2');",
+    "old": "import { registerCustomTemplates, setItemFields, mintCondition } from '../item/itemTemplates.js'; // CSA-H: the rows' one table; SHIPYARDS: RegisterCustomItem's group no longer stocks them (below)",
+    "new": "import {\n  registerCustomTemplates,\n  setItemFields,\n  mintCondition,\n  registerCustomItemGroup,\n} from '../item/itemTemplates.js';\nregisterCustomItemGroup(1320, 'UselessItems2'); // CSA-H: the rows' one table; SHIPYARDS: RegisterCustomItem's group no longer stocks them (below)",
     "why": "SHIPYARDS (2026-10-11) retired the row: the law now is that the parts stand on no shelf, so the mutant puts the row back",
     "tests": [
       "test/systems/csa_items.test.js"
@@ -39,7 +39,7 @@
   {
     "name": "CSA-H-group-always",
     "file": "src/systems/comeSailAway/comeSailAwayItems.js",
-    "old": "  try { return modSetting('come-sail-away', 'Enabled') !== false; } catch { return false; }",
+    "old": "  try {\n    return modSetting('come-sail-away', 'Enabled') !== false;\n  } catch {\n    return false;\n  }",
     "new": "  return true;",
     "tests": [
       "test/systems/csa_items.test.js"
@@ -48,8 +48,8 @@
   {
     "name": "CSA-H-name-no-throw",
     "file": "src/systems/comeSailAway/comeSailAwayItems.js",
-    "old": "  if (!(Number.isInteger(i) && i >= 0 && i < table.length)) throw",
-    "new": "  if (false) throw",
+    "old": "  if (!(Number.isInteger(i) && i >= 0 && i < table.length))",
+    "new": "  if (false)",
     "tests": [
       "test/systems/csa_items.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "CSA-H-shelf-deed-no-price",
     "file": "src/systems/comeSailAway/comeSailAwayItems.js",
-    "old": "      item.value = at(HULL_PRICES, num, 'hull');\n",
-    "new": "",
+    "old": "      item.value = at(HULL_PRICES, num, 'hull');\n      item.name = boatItemName(item.name, num, num2);",
+    "new": "      item.name = boatItemName(item.name, num, num2);",
     "tests": [
       "test/systems/csa_items.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "CSA-H-shelf-parts-no-weight",
     "file": "src/systems/comeSailAway/comeSailAwayItems.js",
-    "old": "      item.weightInKg = HULL_WEIGHTS[num3];\n",
-    "new": "",
+    "old": "      item.weightInKg = HULL_WEIGHTS[num3];\n      item.name = boatItemName(item.name, num3, num4);",
+    "new": "      item.name = boatItemName(item.name, num3, num4);",
     "tests": [
       "test/systems/csa_items.test.js"
     ]
@@ -457,8 +457,8 @@
   {
     "name": "CSA-H-shelf-uid-overwrite",
     "file": "src/systems/comeSailAway/comeSailAwayItems.js",
-    "old": " && item.UID == null) item.UID = uid();",
-    "new": ") item.UID = uid();",
+    "old": "    if ((item.templateIndex === BOAT_PARTS_TEMPLATE || item.templateIndex === BOAT_DEED_TEMPLATE) && item.UID == null)\n      item.UID = uid();",
+    "new": "    if (item.templateIndex === BOAT_PARTS_TEMPLATE || item.templateIndex === BOAT_DEED_TEMPLATE) item.UID = uid();",
     "tests": [
       "test/systems/csa_items.test.js"
     ]
@@ -466,8 +466,8 @@
   {
     "name": "CSA-H-shelf-uid-any-item",
     "file": "src/systems/comeSailAway/comeSailAwayItems.js",
-    "old": "if ((item.templateIndex === BOAT_PARTS_TEMPLATE || item.templateIndex === BOAT_DEED_TEMPLATE) && item.UID == null)",
-    "new": "if (item.UID == null)",
+    "old": "  for (const item of items)\n    if ((item.templateIndex === BOAT_PARTS_TEMPLATE || item.templateIndex === BOAT_DEED_TEMPLATE) && item.UID == null)\n      item.UID = uid();",
+    "new": "  for (const item of items) if (item.UID == null) item.UID = uid();",
     "tests": [
       "test/systems/csa_items.test.js"
     ]
@@ -475,8 +475,8 @@
   {
     "name": "CSA-H-shelf-uid-deeds-only",
     "file": "src/systems/comeSailAway/comeSailAwayItems.js",
-    "old": "if ((item.templateIndex === BOAT_PARTS_TEMPLATE || item.templateIndex === BOAT_DEED_TEMPLATE) && item.UID == null)",
-    "new": "if ((item.templateIndex === BOAT_DEED_TEMPLATE) && item.UID == null)",
+    "old": "  for (const item of items)\n    if ((item.templateIndex === BOAT_PARTS_TEMPLATE || item.templateIndex === BOAT_DEED_TEMPLATE) && item.UID == null)\n      item.UID = uid();",
+    "new": "  for (const item of items) if (item.templateIndex === BOAT_DEED_TEMPLATE && item.UID == null) item.UID = uid();",
     "tests": [
       "test/systems/csa_items.test.js"
     ]
@@ -484,8 +484,8 @@
   {
     "name": "CSA-H-host-cargo-owner",
     "file": "src/systems/comeSailAway/comeSailAwayItems.js",
-    "old": "playerOwned: cargo.playerOwned !== false, storage: true });",
-    "new": "playerOwned: false, storage: true });",
+    "old": "  playerOwned: cargo.playerOwned !== false,",
+    "new": "  playerOwned: false,",
     "tests": [
       "test/systems/csa_items.test.js"
     ]
@@ -493,8 +493,8 @@
   {
     "name": "CSA-H-cargo-items-array",
     "file": "src/systems/comeSailAway/comeSailAwayItems.js",
-    "old": "({ items: () => cargo.Items, ",
-    "new": "({ items: cargo.Items, ",
+    "old": "  items: () => cargo.Items,",
+    "new": "  items: cargo.Items,",
     "tests": [
       "test/systems/csa_items.test.js"
     ]
@@ -502,8 +502,8 @@
   {
     "name": "CSA-H-cargo-items-copied",
     "file": "src/systems/comeSailAway/comeSailAwayItems.js",
-    "old": "({ items: () => cargo.Items, ",
-    "new": "({ items: () => [...cargo.Items], ",
+    "old": "  items: () => cargo.Items,",
+    "new": "  items: () => [...cargo.Items],",
     "tests": [
       "test/systems/csa_items.test.js"
     ]
@@ -511,8 +511,8 @@
   {
     "name": "CSA-H-cargo-image-value",
     "file": "src/systems/comeSailAway/comeSailAwayItems.js",
-    "old": "containerImage: () => cargo.ContainerImage,",
-    "new": "containerImage: cargo.ContainerImage,",
+    "old": "  containerImage: () => cargo.ContainerImage,",
+    "new": "  containerImage: cargo.ContainerImage,",
     "tests": [
       "test/systems/csa_items.test.js"
     ]

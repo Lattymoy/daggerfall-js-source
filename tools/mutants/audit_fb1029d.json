@@ -242,8 +242,8 @@
   {
     "name": "A2-her-own-unread",
     "file": "src/systems/comeSailAway/csaPixel.js",
-    "old": "  if (boat.MapPixel != null) return boat.MapPixel;\n",
-    "new": "",
+    "old": "  if (boat.MapPixel != null) return boat.MapPixel;\n  const t0 = boat.inside || deps.isPlayerInside() ? null : deps.playerTerrain?.();",
+    "new": "  const t0 = boat.inside || deps.isPlayerInside() ? null : deps.playerTerrain?.();",
     "tests": [
       "test/systems/comeSailAway/audit_fb1029d.test.js"
     ],

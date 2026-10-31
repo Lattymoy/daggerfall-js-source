@@ -23,8 +23,8 @@
   {
     "name": "AUDIT-GN2-PF4-her-model-after-the-five",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
-    "old": "    const own = (url) => (url ? get(url, false).then(",
-    "new": "    const own = (url) => (url ? new Promise((r) => setTimeout(r, 60)).then(() => get(url, false)).then(",
+    "old": "        ? get(url, false).then(\n            (json) => ({ ok: true, json, error: null }),\n            (error) => ({ ok: false, json: null, error }),\n          )",
+    "new": "        ? new Promise((r) => setTimeout(r, 60))\n            .then(() => get(url, false))\n            .then(\n              (json) => ({ ok: true, json, error: null }),\n              (error) => ({ ok: false, json: null, error }),\n            )",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -33,8 +33,8 @@
   {
     "name": "AUDIT-GN2-PF4-built-every-time",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
-    "old": "  if (was && was.sha256 === json.sha256 && was.bake === bake && was.base === base && was.old === old) return was.built;\n",
-    "new": "",
+    "old": "  if (was && was.sha256 === json.sha256 && was.bake === bake && was.base === base && was.old === old) return was.built;\n  if (ship.key === 'galleon' && base !== prefabs.components.length)",
+    "new": "  if (ship.key === 'galleon' && base !== prefabs.components.length)",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -43,8 +43,8 @@
   {
     "name": "AUDIT-GN2-PF4-keyed-by-the-hash-alone",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
-    "old": "  if (was && was.sha256 === json.sha256 && was.bake === bake && ",
-    "new": "  if (was && was.sha256 === json.sha256 && ",
+    "old": "  if (was && was.sha256 === json.sha256 && was.bake === bake && was.base === base && was.old === old) return was.built;",
+    "new": "  if (was && was.sha256 === json.sha256 && was.base === base && was.old === old) return was.built;",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js",
       "test/world/ships/galleon_model.test.js"
@@ -54,8 +54,8 @@
   {
     "name": "AUDIT-GN2-PF4-another-table-its-components",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
-    "old": " && was.base === base && was.old === old) return",
-    "new": " && was.old === old) return",
+    "old": "  if (was && was.sha256 === json.sha256 && was.bake === bake && was.base === base && was.old === old) return was.built;",
+    "new": "  if (was && was.sha256 === json.sha256 && was.bake === bake && was.old === old) return was.built;",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -64,8 +64,8 @@
   {
     "name": "AUDIT-GN2-PF4-another-table-its-galleon",
     "file": "src/systems/comeSailAway/comeSailAwayModels.js",
-    "old": " && was.old === old) return",
-    "new": ") return",
+    "old": "  if (was && was.sha256 === json.sha256 && was.bake === bake && was.base === base && was.old === old) return was.built;",
+    "new": "  if (was && was.sha256 === json.sha256 && was.bake === bake && was.base === base) return was.built;",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
