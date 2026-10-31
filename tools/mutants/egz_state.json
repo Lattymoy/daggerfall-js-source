@@ -633,8 +633,8 @@
   {
     "name": "EGZJ-link-feet-dropped",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "y: t[13] ?? 0, hp: t[6]",
-    "new": "y: 0, hp: t[6]",
+    "old": "    y: t[13] ?? 0,",
+    "new": "    y: 0,",
     "tests": [
       "test/net/eliteGates/egz_state.test.js"
     ]
@@ -642,8 +642,8 @@
   {
     "name": "EGZJ-link-walk-height-dropped",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "at: t[12], y: t[13] ?? 0, ty: t[14] ?? t[13] ?? 0 } : null, born",
-    "new": "at: t[12], y: 0, ty: 0 } : null, born",
+    "old": "    mv:\n      t[11] > 0\n        ? { x: t[4], z: t[5], tx: t[9], tz: t[10], v: t[11], at: t[12], y: t[13] ?? 0, ty: t[14] ?? t[13] ?? 0 }\n        : null,",
+    "new": "    mv: t[11] > 0 ? { x: t[4], z: t[5], tx: t[9], tz: t[10], v: t[11], at: t[12], y: 0, ty: 0 } : null,",
     "tests": [
       "test/net/eliteGates/egz_state.test.js"
     ]
@@ -651,8 +651,8 @@
   {
     "name": "EGZJ-link-object-state-dropped",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "if (t[1] === EG_ROLE.obj) { b.st = t[15] ?? 0; b.stAt = t[16] ?? 0; }",
-    "new": "if (t[1] === EG_ROLE.obj) { b.st = 0; b.stAt = 0; }",
+    "old": "    b.st = t[15] ?? 0;\n    b.stAt = t[16] ?? 0;",
+    "new": "    b.st = 0;\n    b.stAt = 0;",
     "tests": [
       "test/net/eliteGates/egz_state.test.js"
     ]
@@ -660,8 +660,8 @@
   {
     "name": "EGZJ-link-lord-phase-dropped",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "{ b.ph = t[15] ?? 0; b.sz =",
-    "new": "{ b.ph = 0; b.sz =",
+    "old": "    b.ph = t[15] ?? 0;",
+    "new": "    b.ph = 0;",
     "tests": [
       "test/net/eliteGates/egz_state.test.js"
     ]
@@ -669,8 +669,8 @@
   {
     "name": "EGZJ-link-fall-from-now",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "b.fellAt = t[16] || had?.fellAt || now;",
-    "new": "b.fellAt = now;",
+    "old": "    if ((t[8] & EG_FL.fell) !== 0) b.fellAt = t[16] || had?.fellAt || now;",
+    "new": "    if ((t[8] & EG_FL.fell) !== 0) b.fellAt = now;",
     "tests": [
       "test/net/eliteGates/egz_state.test.js"
     ]
@@ -678,8 +678,8 @@
   {
     "name": "EGZJ-link-born-anew",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "born: had ? had.born : born, yaw:",
-    "new": "born, yaw:",
+    "old": "    born: had ? had.born : born,",
+    "new": "    born,",
     "tests": [
       "test/net/eliteGates/egz_state.test.js"
     ]
@@ -687,8 +687,8 @@
   {
     "name": "EGZJ-link-joiner-sees-them-rise",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "egBodyOf(t, now, had?.get(t[0]) ?? null, 0, w.r?.[j])",
-    "new": "egBodyOf(t, now, had?.get(t[0]) ?? null, now, w.r?.[j])",
+    "old": "        bodies: w.b.map((t, j) => egBodyOf(t, now, had?.get(t[0]) ?? null, 0, w.r?.[j])),",
+    "new": "        bodies: w.b.map((t, j) => egBodyOf(t, now, had?.get(t[0]) ?? null, now, w.r?.[j])),",
     "tests": [
       "test/net/eliteGates/egz_state.test.js"
     ],
@@ -697,8 +697,8 @@
   {
     "name": "EGZJ-link-zones-unheard",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "zones: w.zs ?? (same ? f.zones : []),",
-    "new": "zones: same ? f.zones : [],",
+    "old": "        zones: w.zs ?? (same ? f.zones : []),",
+    "new": "        zones: same ? f.zones : [],",
     "tests": [
       "test/net/eliteGates/egz_state.test.js"
     ]
@@ -724,8 +724,8 @@
   {
     "name": "EGZJ-link-walk-word-height-dropped",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "y: t[7] ?? b.y, yaw: Number.isFinite(t[9]) ? t[9] : b.yaw, mv: t[5] > 0 ? { x: t[1], z: t[2], tx: t[3], tz: t[4], v: t[5], at: t[6], y: t[7] ?? b.y, ty: t[8] ?? t[7] ?? b.y } : null",
-    "new": "y: b.y, yaw: Number.isFinite(t[9]) ? t[9] : b.yaw, mv: t[5] > 0 ? { x: t[1], z: t[2], tx: t[3], tz: t[4], v: t[5], at: t[6], y: b.y, ty: b.y } : null",
+    "old": "                y: t[7] ?? b.y,\n                yaw: Number.isFinite(t[9]) ? t[9] : b.yaw,\n                mv:\n                  t[5] > 0\n                    ? {\n                        x: t[1],\n                        z: t[2],\n                        tx: t[3],\n                        tz: t[4],\n                        v: t[5],\n                        at: t[6],\n                        y: t[7] ?? b.y,\n                        ty: t[8] ?? t[7] ?? b.y,\n                      }\n                    : null,",
+    "new": "                y: b.y,\n                yaw: Number.isFinite(t[9]) ? t[9] : b.yaw,\n                mv: t[5] > 0 ? { x: t[1], z: t[2], tx: t[3], tz: t[4], v: t[5], at: t[6], y: b.y, ty: b.y } : null,",
     "tests": [
       "test/net/eliteGates/egz_state.test.js"
     ]
@@ -733,8 +733,8 @@
   {
     "name": "EGZJ-link-fallen-flag-unread",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "if ((b.fl & EG_FL.fell) !== 0) b.fellAt ??= now;",
-    "new": "if ((b.fl & EG_FL.fell) !== 0) void 0;",
+    "old": "  if ((b.fl & EG_FL.fell) !== 0) b.fellAt ??= now;",
+    "new": "  if ((b.fl & EG_FL.fell) !== 0) void 0;",
     "tests": [
       "test/net/eliteGates/egz_state.test.js"
     ]
@@ -751,8 +751,8 @@
   {
     "name": "EGZJ-link-flags-plain",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "fellOf({ ...b, fl: w.fl }, now)",
-    "new": "{ ...b, fl: w.fl }",
+    "old": "      return { ...f, bodies: f.bodies.map((b) => (b.i === w.i ? fellOf({ ...b, fl: w.fl }, now) : b)) }; // EG-ZJ: a lord fallen lies down at once, one raised again stands",
+    "new": "      return { ...f, bodies: f.bodies.map((b) => (b.i === w.i ? { ...b, fl: w.fl } : b)) }; // EG-ZJ: a lord fallen lies down at once, one raised again stands",
     "tests": [
       "test/net/eliteGates/egz_state.test.js"
     ]
@@ -778,7 +778,7 @@
   {
     "name": "EGZJ-walk-height-uncarried-on-screen",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "export const egBodyHeight = (b, now) => (b?.mv ? egWalkY(b.mv, now) : b?.y ?? 0);",
+    "old": "export const egBodyHeight = (b, now) => (b?.mv ? egWalkY(b.mv, now) : (b?.y ?? 0));",
     "new": "export const egBodyHeight = (b, now) => b?.y ?? 0;",
     "tests": [
       "test/net/eliteGates/egz_state.test.js"

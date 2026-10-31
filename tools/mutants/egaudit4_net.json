@@ -245,8 +245,8 @@
   {
     "name": "AUDIT-EG-IV-net-receipt-falls-unbounded",
     "file": "src/net/eliteGates/egReceipt.js",
-    "old": "  if (c.fl !== undefined && !int(c.fl, 0, 2)) return false;\n",
-    "new": "",
+    "old": "  if (c.fl !== undefined && !int(c.fl, 0, 2)) return false;\n  if (c.lb !== undefined && (c.q !== 'w' || c.lb !== 1)) return false;",
+    "new": "  if (c.lb !== undefined && (c.q !== 'w' || c.lb !== 1)) return false;",
     "tests": [
       "test/net/eliteGates/egaudit4_net_relay.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "AUDIT-EG-IV-net-receipt-lone-on-an-end",
     "file": "src/net/eliteGates/egReceipt.js",
-    "old": "(c.q !== 'w' || c.lb !== 1)",
-    "new": "(c.lb !== 1)",
+    "old": "  if (c.lb !== undefined && (c.q !== 'w' || c.lb !== 1)) return false;",
+    "new": "  if (c.lb !== undefined && c.lb !== 1) return false;",
     "tests": [
       "test/net/eliteGates/egaudit4_net_relay.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "AUDIT-EG-IV-net-receipt-vestiges-on-an-end",
     "file": "src/net/eliteGates/egReceipt.js",
-    "old": "(c.q !== 'w' || !Array.isArray(c.vs)",
-    "new": "(!Array.isArray(c.vs)",
+    "old": "    (c.q !== 'w' ||\n      !Array.isArray(c.vs) ||",
+    "new": "    (!Array.isArray(c.vs) ||",
     "tests": [
       "test/net/eliteGates/egaudit4_net_relay.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AUDIT-EG-IV-net-receipt-vestige-rank",
     "file": "src/net/eliteGates/egReceipt.js",
-    "old": "int(p[0], 0, 99) && int(p[1], 1, 3)",
-    "new": "int(p[0], 0, 99) && int(p[1], 1, 9)",
+    "old": "      !c.vs.every((p) => Array.isArray(p) && p.length === 2 && int(p[0], 0, 99) && int(p[1], 1, 3)))",
+    "new": "      !c.vs.every((p) => Array.isArray(p) && p.length === 2 && int(p[0], 0, 99) && int(p[1], 1, 9)))",
     "tests": [
       "test/net/eliteGates/egaudit4_net_relay.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "AUDIT-EG-IV-net-receipt-relics-on-a-redoubt",
     "file": "src/net/eliteGates/egReceipt.js",
-    "old": "(c.q !== 'x' || !Array.isArray(c.rl)",
-    "new": "(!Array.isArray(c.rl)",
+    "old": "    (c.q !== 'x' || !Array.isArray(c.rl) || c.rl.length > EG_RECEIPT_RELS_MAX || !c.rl.every((w) => int(w, 1, 19_999)))",
+    "new": "    (!Array.isArray(c.rl) || c.rl.length > EG_RECEIPT_RELS_MAX || !c.rl.every((w) => int(w, 1, 19_999)))",
     "tests": [
       "test/net/eliteGates/egaudit4_net_relay.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "AUDIT-EG-IV-net-receipt-wager-unbounded",
     "file": "src/net/eliteGates/egReceipt.js",
-    "old": "  if (c.wg !== undefined && (!Array.isArray(c.wg) || c.wg.length > 3 || !c.wg.every((d) => int(d, 0, 31)))) return false;\n",
-    "new": "",
+    "old": "  if (c.wg !== undefined && (!Array.isArray(c.wg) || c.wg.length > 3 || !c.wg.every((d) => int(d, 0, 31))))\n    return false;\n  if ((c.lk !== undefined || c.ft !== undefined) && c.q !== 'w') return false;",
+    "new": "  if ((c.lk !== undefined || c.ft !== undefined) && c.q !== 'w') return false;",
     "tests": [
       "test/net/eliteGates/egaudit4_net_relay.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "AUDIT-EG-IV-net-receipt-feats-on-an-end",
     "file": "src/net/eliteGates/egReceipt.js",
-    "old": "  if ((c.lk !== undefined || c.ft !== undefined) && c.q !== 'w') return false;\n",
-    "new": "",
+    "old": "  if ((c.lk !== undefined || c.ft !== undefined) && c.q !== 'w') return false;\n  if (c.q === 'w') return int(c.w, 1, 19_999) && c.why === undefined;",
+    "new": "  if (c.q === 'w') return int(c.w, 1, 19_999) && c.why === undefined;",
     "tests": [
       "test/net/eliteGates/egaudit4_net_relay.test.js"
     ]

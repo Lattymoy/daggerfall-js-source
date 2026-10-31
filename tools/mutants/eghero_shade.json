@@ -191,8 +191,8 @@
   {
     "name": "EGHERO-SHADE-the-thicket-left-out-of-the-law-registry",
     "file": "src/net/eliteGates/egHeroFrags.js",
-    "old": "  EG_HERO_GLOAM_LAW,\n",
-    "new": "",
+    "old": "  EG_HERO_GLOAM_LAW,\n  EG_HERO_ECLIPSE_LAW,",
+    "new": "  EG_HERO_ECLIPSE_LAW,",
     "tests": [
       "test/tooling/eghero_shade.test.js"
     ]

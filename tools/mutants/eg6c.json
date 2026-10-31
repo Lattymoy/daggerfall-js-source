@@ -11,8 +11,8 @@
   {
     "name": "EG6C-a-passage-under-its-headroom",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "Object.freeze({ passage: 350, chamber: 600, shaft: 350, course: 450 })",
-    "new": "Object.freeze({ passage: 340, chamber: 600, shaft: 350, course: 450 })",
+    "old": "export const EG_FRAG_HEADROOM_CM = Object.freeze({ passage: 350, chamber: 600, shaft: 350, course: 450 });",
+    "new": "export const EG_FRAG_HEADROOM_CM = Object.freeze({ passage: 340, chamber: 600, shaft: 350, course: 450 });",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js",
       "test/tooling/eg6c_bake.test.js"
@@ -21,8 +21,8 @@
   {
     "name": "EG6C-a-chamber-under-its-headroom",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "Object.freeze({ passage: 350, chamber: 600, shaft: 350, course: 450 })",
-    "new": "Object.freeze({ passage: 350, chamber: 590, shaft: 350, course: 450 })",
+    "old": "export const EG_FRAG_HEADROOM_CM = Object.freeze({ passage: 350, chamber: 600, shaft: 350, course: 450 });",
+    "new": "export const EG_FRAG_HEADROOM_CM = Object.freeze({ passage: 350, chamber: 590, shaft: 350, course: 450 });",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "EG6C-the-course-under-the-fast-build",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "Object.freeze({ passage: 350, chamber: 600, shaft: 350, course: 450 })",
-    "new": "Object.freeze({ passage: 350, chamber: 600, shaft: 350, course: 440 })",
+    "old": "export const EG_FRAG_HEADROOM_CM = Object.freeze({ passage: 350, chamber: 600, shaft: 350, course: 450 });",
+    "new": "export const EG_FRAG_HEADROOM_CM = Object.freeze({ passage: 350, chamber: 600, shaft: 350, course: 440 });",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js",
       "test/tooling/eg6c_bake.test.js"
@@ -59,8 +59,8 @@
   {
     "name": "EG6C-the-drawn-budget",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "Object.freeze({ tris: 12000, collider: 3000, lights: 4, draws: 12 })",
-    "new": "Object.freeze({ tris: 12001, collider: 3000, lights: 4, draws: 12 })",
+    "old": "export const EG_FRAG_BUDGET = Object.freeze({ tris: 12000, collider: 3000, lights: 4, draws: 12 });",
+    "new": "export const EG_FRAG_BUDGET = Object.freeze({ tris: 12001, collider: 3000, lights: 4, draws: 12 });",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -68,8 +68,8 @@
   {
     "name": "EG6C-the-collider-budget",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "Object.freeze({ tris: 12000, collider: 3000, lights: 4, draws: 12 })",
-    "new": "Object.freeze({ tris: 12000, collider: 3001, lights: 4, draws: 12 })",
+    "old": "export const EG_FRAG_BUDGET = Object.freeze({ tris: 12000, collider: 3000, lights: 4, draws: 12 });",
+    "new": "export const EG_FRAG_BUDGET = Object.freeze({ tris: 12000, collider: 3001, lights: 4, draws: 12 });",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -77,8 +77,8 @@
   {
     "name": "EG6C-the-lights-budget",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "Object.freeze({ tris: 12000, collider: 3000, lights: 4, draws: 12 })",
-    "new": "Object.freeze({ tris: 12000, collider: 3000, lights: 5, draws: 12 })",
+    "old": "export const EG_FRAG_BUDGET = Object.freeze({ tris: 12000, collider: 3000, lights: 4, draws: 12 });",
+    "new": "export const EG_FRAG_BUDGET = Object.freeze({ tris: 12000, collider: 3000, lights: 5, draws: 12 });",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js",
       "test/tooling/eg6c_bake.test.js"
@@ -87,8 +87,8 @@
   {
     "name": "EG6C-the-draws-budget",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "Object.freeze({ tris: 12000, collider: 3000, lights: 4, draws: 12 })",
-    "new": "Object.freeze({ tris: 12000, collider: 3000, lights: 4, draws: 13 })",
+    "old": "export const EG_FRAG_BUDGET = Object.freeze({ tris: 12000, collider: 3000, lights: 4, draws: 12 });",
+    "new": "export const EG_FRAG_BUDGET = Object.freeze({ tris: 12000, collider: 3000, lights: 4, draws: 13 });",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -123,8 +123,8 @@
   {
     "name": "EG6C-a-fire-fall-said-as-spots",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "EG_HAZARD_SHAPES = Object.freeze({ fall: 'sh',",
-    "new": "EG_HAZARD_SHAPES = Object.freeze({ fall: 'spots',",
+    "old": "  fall: 'sh',",
+    "new": "  fall: 'spots',",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -132,8 +132,8 @@
   {
     "name": "EG6C-the-area-half-taken",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "a += p[0] * q[1] - q[0] * p[1]; }",
-    "new": "a += p[0] * q[1]; }",
+    "old": "    a += p[0] * q[1] - q[0] * p[1];",
+    "new": "    a += p[0] * q[1];",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js",
       "test/tooling/eg6c_bake.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "EG6C-an-edge-not-its-own",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "&& z >= Math.min(az, bz) && z <= Math.max(az, bz)) return true;",
-    "new": "&& z >= Math.min(az, bz) && z <= Math.max(az, bz)) return false;",
+    "old": "      return true;",
+    "new": "      return false;",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js",
       "test/tooling/eg6c_bake.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "EG6C-the-crossings-uncounted",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if ((az > z) !== (bz > z) && x < ax + ((bx - ax) * (z - az)) / (bz - az)) inside = !inside;",
-    "new": "if ((az > z) !== (bz > z) && x < ax + ((bx - ax) * (z - az)) / (bz - az)) inside = true;",
+    "old": "    if (az > z !== bz > z && x < ax + ((bx - ax) * (z - az)) / (bz - az)) inside = !inside;",
+    "new": "    if (az > z !== bz > z && x < ax + ((bx - ax) * (z - az)) / (bz - az)) inside = true;",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js",
       "test/tooling/eg6c_bake.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "EG6C-a-ceiling-at-the-floor-counted",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "for (const c of rec.ceil ?? []) if (c.y > y && (best === null",
-    "new": "for (const c of rec.ceil ?? []) if (c.y >= y && (best === null",
+    "old": "    if (c.y > y && (best === null || c.y < best) && egFragInPoly(c.poly, x, z)) best = c.y;",
+    "new": "    if (c.y >= y && (best === null || c.y < best) && egFragInPoly(c.poly, x, z)) best = c.y;",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -171,8 +171,8 @@
   {
     "name": "EG6C-the-highest-ceiling-taken",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "(best === null || c.y < best) && egFragInPoly(c.poly, x, z)) best = c.y;",
-    "new": "(best === null || c.y > best) && egFragInPoly(c.poly, x, z)) best = c.y;",
+    "old": "    if (c.y > y && (best === null || c.y < best) && egFragInPoly(c.poly, x, z)) best = c.y;",
+    "new": "    if (c.y > y && (best === null || c.y > best) && egFragInPoly(c.poly, x, z)) best = c.y;",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -180,8 +180,8 @@
   {
     "name": "EG6C-apart-not-exactly-2-m",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "  a[3] + margin <= b[0] || b[3] + margin <= a[0] ||",
-    "new": "  a[3] + margin < b[0] || b[3] + margin < a[0] ||",
+    "old": "  a[3] + margin <= b[0] ||\n  b[3] + margin <= a[0] ||",
+    "new": "  a[3] + margin < b[0] ||\n  b[3] + margin < a[0] ||",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -189,8 +189,8 @@
   {
     "name": "EG6C-apart-forgets-z",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "a[4] + margin <= b[1] || b[4] + margin <= a[1] || a[5] + margin <= b[2] || b[5] + margin <= a[2];",
-    "new": "a[4] + margin <= b[1] || b[4] + margin <= a[1];",
+    "old": "  a[3] + margin <= b[0] ||\n  b[3] + margin <= a[0] ||\n  a[4] + margin <= b[1] ||\n  b[4] + margin <= a[1] ||\n  a[5] + margin <= b[2] ||\n  b[5] + margin <= a[2];",
+    "new": "  a[3] + margin <= b[0] || b[3] + margin <= a[0] || a[4] + margin <= b[1] || b[4] + margin <= a[1];",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -198,8 +198,8 @@
   {
     "name": "EG6C-apart-forgets-y-below",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "a[4] + margin <= b[1] || b[4] + margin <= a[1] || a[5]",
-    "new": "a[4] + margin <= b[1] || a[5]",
+    "old": "  b[4] + margin <= a[1] ||\n  a[5] + margin <= b[2] ||",
+    "new": "  a[5] + margin <= b[2] ||",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -207,8 +207,8 @@
   {
     "name": "EG6C-a-box-laid-without-its-z",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "rec.box[2] + z, rec.box[3] + x",
-    "new": "rec.box[2], rec.box[3] + x",
+    "old": "  rec.box[2] + z,",
+    "new": "  rec.box[2],",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -216,8 +216,8 @@
   {
     "name": "EG6C-a-drift-unswept",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "const ax = c.kind === 'drift' || c.kind === 'slag' ? c.amp",
-    "new": "const ax = c.kind === 'slag' ? c.amp",
+    "old": "  const ax =\n    c.kind === 'drift' || c.kind === 'slag'\n      ? c.amp\n      : c.kind === 'pend'\n        ? Math.round((EG_PEND_REACH + EG_PEND_HALF) * 100)\n        : 0;",
+    "new": "  const ax = c.kind === 'slag' ? c.amp : c.kind === 'pend' ? Math.round((EG_PEND_REACH + EG_PEND_HALF) * 100) : 0;",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js",
       "test/tooling/eg6c_bake.test.js"
@@ -226,8 +226,8 @@
   {
     "name": "EG6C-a-spill-unswept",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "const ax = c.kind === 'drift' || c.kind === 'slag' ? c.amp",
-    "new": "const ax = c.kind === 'drift' ? c.amp",
+    "old": "  const ax =\n    c.kind === 'drift' || c.kind === 'slag'\n      ? c.amp\n      : c.kind === 'pend'\n        ? Math.round((EG_PEND_REACH + EG_PEND_HALF) * 100)\n        : 0;",
+    "new": "  const ax = c.kind === 'drift' ? c.amp : c.kind === 'pend' ? Math.round((EG_PEND_REACH + EG_PEND_HALF) * 100) : 0;",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -235,8 +235,8 @@
   {
     "name": "EG6C-the-weight-without-its-half",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "Math.round((EG_PEND_REACH + EG_PEND_HALF) * 100)",
-    "new": "Math.round(EG_PEND_REACH * 100)",
+    "old": "  const ax =\n    c.kind === 'drift' || c.kind === 'slag'\n      ? c.amp\n      : c.kind === 'pend'\n        ? Math.round((EG_PEND_REACH + EG_PEND_HALF) * 100)\n        : 0;",
+    "new": "  const ax = c.kind === 'drift' || c.kind === 'slag' ? c.amp : c.kind === 'pend' ? Math.round(EG_PEND_REACH * 100) : 0;",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -244,8 +244,8 @@
   {
     "name": "EG6C-a-drum-unswept",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "const az = c.kind === 'rail' || c.kind === 'drum' ? c.amp : 0;",
-    "new": "const az = c.kind === 'rail' ? c.amp : 0;",
+    "old": "  const az = c.kind === 'rail' || c.kind === 'drum' ? c.amp : 0;",
+    "new": "  const az = c.kind === 'rail' ? c.amp : 0;",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -253,8 +253,8 @@
   {
     "name": "EG6C-a-sink-that-does-not-sink",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "c.y - (c.kind === 'sink' ? EG_SINK_GONE_M * 100 : 0)",
-    "new": "c.y",
+    "old": "    c.y - (c.kind === 'sink' ? EG_SINK_GONE_M * 100 : 0),",
+    "new": "    c.y,",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -262,8 +262,8 @@
   {
     "name": "EG6C-the-weight-not-over-its-gap",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "- az - (c.kind === 'pend' ? c.gap : 0)",
-    "new": "- az",
+    "old": "    c.z - c.d / 2 - az - (c.kind === 'pend' ? c.gap : 0),",
+    "new": "    c.z - c.d / 2 - az,",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -271,8 +271,8 @@
   {
     "name": "EG6C-a-lane-s-far-end-unplanned",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (h.sh) { take(h.sh[0], h.sh[1], h.w / 2); take(h.sh[2], h.sh[3], h.w / 2); }",
-    "new": "if (h.sh) { take(h.sh[0], h.sh[1], h.w / 2); }",
+    "old": "    take(h.sh[2], h.sh[3], h.w / 2);\n  }",
+    "new": "  }",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -280,8 +280,8 @@
   {
     "name": "EG6C-spots-without-their-reach",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "for (const s of h.spots ?? []) take(s[0], s[1], h.r);",
-    "new": "for (const s of h.spots ?? []) take(s[0], s[1], 0);",
+    "old": "  for (const s of h.spots ?? []) take(s[0], s[1], h.r);",
+    "new": "  for (const s of h.spots ?? []) take(s[0], s[1], 0);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -289,7 +289,7 @@
   {
     "name": "EG6C-a-cascade-unplanned",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "for (const q of h.lanes ?? []) { take(q[0], q[1], h.w / 2); take(q[2], q[3], h.w / 2); }",
+    "old": "  for (const q of h.lanes ?? []) {\n    take(q[0], q[1], h.w / 2);\n    take(q[2], q[3], h.w / 2);\n  }",
     "new": "",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
@@ -298,7 +298,7 @@
   {
     "name": "EG6C-a-path-unplanned",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (h.path) { take(h.path[0] - h.path[2], h.path[1] - h.path[3], 0); take(h.path[0] + h.path[2], h.path[1] + h.path[3], 0); }",
+    "old": "  if (h.path) {\n    take(h.path[0] - h.path[2], h.path[1] - h.path[3], 0);\n    take(h.path[0] + h.path[2], h.path[1] + h.path[3], 0);\n  }",
     "new": "",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
@@ -307,7 +307,7 @@
   {
     "name": "EG6C-a-tide-unplanned",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (h.kind === 'tide') take(h.x, h.z, h.r);",
+    "old": "  if (h.kind === 'tide') take(h.x, h.z, h.r);",
     "new": "",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
@@ -316,8 +316,8 @@
   {
     "name": "EG6C-the-havens-unreached",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "take(h.x, h.z, h.ring + EG_HAZARDS.eclipse.r * 100);",
-    "new": "take(h.x, h.z, h.ring);",
+    "old": "  if (h.kind === 'eclipse') take(h.x, h.z, h.ring + EG_HAZARDS.eclipse.r * 100);",
+    "new": "  if (h.kind === 'eclipse') take(h.x, h.z, h.ring);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js",
       "test/tooling/eg6c_bake.test.js"
@@ -326,8 +326,8 @@
   {
     "name": "EG6C-the-mist-given-a-place",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "return box[0] === Infinity ? null : box;",
-    "new": "return box;",
+    "old": "  return box[0] === Infinity ? null : box;",
+    "new": "  return box;",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "EG6C-a-step-not-moved",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "({ i, kind: c.kind, span: 0, x: x0 + c.x / 100,",
-    "new": "({ i, kind: c.kind, span: 0, x: c.x / 100,",
+    "old": "    x: x0 + c.x / 100,",
+    "new": "    x: c.x / 100,",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "EG6C-a-period-in-tenths",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "amp: c.amp / 100, period: c.period / 1000, phase: c.phase / 1000,",
-    "new": "amp: c.amp / 100, period: c.period / 100, phase: c.phase / 1000,",
+    "old": "    period: c.period / 1000,",
+    "new": "    period: c.period / 100,",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js",
       "test/tooling/eg6c_bake.test.js"
@@ -354,8 +354,8 @@
   {
     "name": "EG6C-a-moon-s-beat-in-seconds",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "beat: c.kind === 'moon' ? z0 + c.beat / 100 : c.beat / 1000,",
-    "new": "beat: c.beat / 1000,",
+    "old": "    beat: c.kind === 'moon' ? z0 + c.beat / 100 : c.beat / 1000,",
+    "new": "    beat: c.beat / 1000,",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "EG6C-the-ground-after-lost",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "gap: c.gap / 100, road: 0, kit: rec.kit, after: c.after / 100 }));",
-    "new": "gap: c.gap / 100, road: 0, kit: rec.kit, after: 0 }));",
+    "old": "    after: c.after / 100,",
+    "new": "    after: 0,",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js",
       "test/tooling/eg6c_bake.test.js"
@@ -373,8 +373,8 @@
   {
     "name": "EG6C-a-hazard-not-moved-along",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "const at = (p) => [x0 + p[0] / 100, z0 + p[1] / 100];",
-    "new": "const at = (p) => [x0 + p[0] / 100, p[1] / 100];",
+    "old": "  const at = (p) => [x0 + p[0] / 100, z0 + p[1] / 100];",
+    "new": "  const at = (p) => [x0 + p[0] / 100, p[1] / 100];",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -382,8 +382,8 @@
   {
     "name": "EG6C-a-hazard-s-height-not-moved",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "z: z0 + h.z / 100, y: y0 + h.y / 100, period: h.period / 1000,",
-    "new": "z: z0 + h.z / 100, y: h.y / 100, period: h.period / 1000,",
+    "old": "    y: y0 + h.y / 100,",
+    "new": "    y: h.y / 100,",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "EG6C-a-path-s-swing-in-centimetres",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "h.path[2] / 100, h.path[3] / 100] : null }));",
-    "new": "h.path[2], h.path[3] / 100] : null }));",
+    "old": "    path: h.path ? [...at([h.path[0], h.path[1]]), h.path[2] / 100, h.path[3] / 100] : null,",
+    "new": "    path: h.path ? [...at([h.path[0], h.path[1]]), h.path[2], h.path[3] / 100] : null,",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -400,8 +400,8 @@
   {
     "name": "EG6C-the-version-unasked",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!rec || rec.v !== EG_FRAG_V) return [",
-    "new": "if (!rec) return [",
+    "old": "  if (!rec || rec.v !== EG_FRAG_V) return [`not a fragment record of version ${EG_FRAG_V}`];",
+    "new": "  if (!rec) return [`not a fragment record of version ${EG_FRAG_V}`];",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -409,8 +409,8 @@
   {
     "name": "EG6C-a-float-let-through",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!Number.isInteger(v)) why.push(`${at}: ${v} is not whole`);",
-    "new": "if (false) why.push(`${at}: ${v} is not whole`);",
+    "old": "      if (!Number.isInteger(v)) why.push(`${at}: ${v} is not whole`);",
+    "new": "      if (false) why.push(`${at}: ${v} is not whole`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -418,8 +418,8 @@
   {
     "name": "EG6C-an-unknown-kit-let-through",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!F) why.push(`kit ${rec.kit}: no such fragment`);",
-    "new": "if (false) why.push(`kit ${rec.kit}: no such fragment`);",
+    "old": "  if (!F) why.push(`kit ${rec.kit}: no such fragment`);",
+    "new": "  if (false) why.push(`kit ${rec.kit}: no such fragment`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -427,8 +427,8 @@
   {
     "name": "EG6C-another-band-s-kit",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (rec.band !== F.band) why.push(",
-    "new": "if (false) why.push(",
+    "old": "    if (rec.band !== F.band) why.push(`band ${rec.band}: ${rec.kit} is band ${F.band}'s`);",
+    "new": "    if (false) why.push(`band ${rec.band}: ${rec.kit} is band ${F.band}'s`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -436,8 +436,8 @@
   {
     "name": "EG6C-a-class-the-kit-has-not",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!F.classes.includes(rec.class)) why.push(",
-    "new": "if (false) why.push(",
+    "old": "    if (!F.classes.includes(rec.class)) why.push(`class ${rec.class}: ${rec.kit} is ${F.classes.join(', ')}`);",
+    "new": "    if (false) why.push(`class ${rec.class}: ${rec.kit} is ${F.classes.join(', ')}`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -445,8 +445,8 @@
   {
     "name": "EG6C-another-reverb",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (rec.reverb !== F.reverb) why.push(",
-    "new": "if (false) why.push(",
+    "old": "    if (rec.reverb !== F.reverb) why.push(`reverb ${rec.reverb}: ${rec.kit}'s is ${F.reverb}`);",
+    "new": "    if (false) why.push(`reverb ${rec.reverb}: ${rec.kit}'s is ${F.reverb}`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -454,8 +454,8 @@
   {
     "name": "EG6C-an-unknown-play",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!Array.isArray(rec.play) || rec.play.some((p) => !EG_PLAYS.includes(p))) why.push(",
-    "new": "if (!Array.isArray(rec.play)) why.push(",
+    "old": "  if (!Array.isArray(rec.play) || rec.play.some((p) => !EG_PLAYS.includes(p)))\n    why.push(`play ${JSON.stringify(rec.play)}: not among ${EG_PLAYS.join(', ')}`);",
+    "new": "  if (!Array.isArray(rec.play)) why.push(`play ${JSON.stringify(rec.play)}: not among ${EG_PLAYS.join(', ')}`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -463,8 +463,8 @@
   {
     "name": "EG6C-a-chamber-with-no-play",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "else if (rec.class === 'chamber' && !rec.play.length) why.push(",
-    "new": "else if (false) why.push(",
+    "old": "  else if (rec.class === 'chamber' && !rec.play.length)\n    why.push('a chamber names its play (section 11.4 - never a disc with walls)');",
+    "new": "  else if (false) why.push('a chamber names its play (section 11.4 - never a disc with walls)');",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -472,8 +472,8 @@
   {
     "name": "EG6C-a-flat-box",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!Array.isArray(B) || B.length !== 6 || !(B[0] < B[3] && B[1] < B[4] && B[2] < B[5])) return",
-    "new": "if (!Array.isArray(B) || B.length !== 6) return",
+    "old": "  if (!Array.isArray(B) || B.length !== 6 || !(B[0] < B[3] && B[1] < B[4] && B[2] < B[5]))\n    return [...why, 'box: not a volume'];",
+    "new": "  if (!Array.isArray(B) || B.length !== 6) return [...why, 'box: not a volume'];",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -481,8 +481,8 @@
   {
     "name": "EG6C-nothing-outside-the-box",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (x < B[0] || x > B[3] || y < B[1] || y > B[4] || z < B[2] || z > B[5]) why.push(",
-    "new": "if (x < B[0] || y < B[1] || y > B[4] || z < B[2] || z > B[5]) why.push(",
+    "old": "    if (x < B[0] || x > B[3] || y < B[1] || y > B[4] || z < B[2] || z > B[5])\n      why.push(`${at} stands outside the fragment's box`);",
+    "new": "    if (x < B[0] || y < B[1] || y > B[4] || z < B[2] || z > B[5]) why.push(`${at} stands outside the fragment's box`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js",
       "test/tooling/eg6c_bake.test.js"
@@ -491,8 +491,8 @@
   {
     "name": "EG6C-the-mouth-anywhere",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!S.in || S.in.x !== 0 || S.in.y !== 0 || S.in.z !== 0 || S.in.yaw !== 180) why.push(",
-    "new": "if (!S.in || S.in.y !== 0 || S.in.z !== 0 || S.in.yaw !== 180) why.push(",
+    "old": "  if (!S.in || S.in.x !== 0 || S.in.y !== 0 || S.in.z !== 0 || S.in.yaw !== 180)",
+    "new": "  if (!S.in || S.in.y !== 0 || S.in.z !== 0 || S.in.yaw !== 180)",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -500,8 +500,8 @@
   {
     "name": "EG6C-the-mouth-facing-anywhere",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "S.in.z !== 0 || S.in.yaw !== 180) why.push(",
-    "new": "S.in.z !== 0) why.push(",
+    "old": "  if (!S.in || S.in.x !== 0 || S.in.y !== 0 || S.in.z !== 0 || S.in.yaw !== 180)",
+    "new": "  if (!S.in || S.in.x !== 0 || S.in.y !== 0 || S.in.z !== 0)",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -509,8 +509,8 @@
   {
     "name": "EG6C-the-box-behind-the-mouth",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (B[2] < -EG_FRAG_SOCKET_TOL_CM) why.push(",
-    "new": "if (false) why.push(",
+    "old": "  if (B[2] < -EG_FRAG_SOCKET_TOL_CM)\n    why.push(`the mouth is not the box's -Z face (the box runs ${-B[2]} cm behind it)`);",
+    "new": "  if (false) why.push(`the mouth is not the box's -Z face (the box runs ${-B[2]} cm behind it)`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js",
       "test/tooling/eg6c_bake.test.js"
@@ -519,8 +519,8 @@
   {
     "name": "EG6C-no-exit-let-through",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!Array.isArray(S.out) || !S.out.length) why.push('sockets.out: no exit');",
-    "new": "if (!Array.isArray(S.out)) why.push('sockets.out: no exit');",
+    "old": "  if (!Array.isArray(S.out) || !S.out.length) why.push('sockets.out: no exit');",
+    "new": "  if (!Array.isArray(S.out)) why.push('sockets.out: no exit');",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -528,8 +528,8 @@
   {
     "name": "EG6C-an-exit-facing-back",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (o.yaw !== 0) why.push(",
-    "new": "if (false) why.push(",
+    "old": "    if (o.yaw !== 0) why.push(`sockets.out[${k}]: an exit faces +Z`);",
+    "new": "    if (false) why.push(`sockets.out[${k}]: an exit faces +Z`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -537,8 +537,8 @@
   {
     "name": "EG6C-an-exit-off-its-face",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (Math.abs(o.z - B[5]) > EG_FRAG_SOCKET_TOL_CM) why.push(",
-    "new": "if (false) why.push(",
+    "old": "    if (Math.abs(o.z - B[5]) > EG_FRAG_SOCKET_TOL_CM)\n      why.push(`sockets.out[${k}]: not on the box's +Z face (${B[5] - o.z} cm short of it)`);",
+    "new": "    if (false) why.push(`sockets.out[${k}]: not on the box's +Z face (${B[5] - o.z} cm short of it)`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js",
       "test/tooling/eg6c_bake.test.js"
@@ -547,8 +547,8 @@
   {
     "name": "EG6C-a-crouch-let-through",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!(o.w > 0) || !(o.h >= EG_FRAG_HEADROOM_CM.passage)) why.push(",
-    "new": "if (!(o.w > 0)) why.push(",
+    "old": "    if (!(o.w > 0) || !(o.h >= EG_FRAG_HEADROOM_CM.passage))",
+    "new": "    if (!(o.w > 0))",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -556,8 +556,8 @@
   {
     "name": "EG6C-a-mouth-of-no-width",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!(o.w > 0) || !(o.h >= EG_FRAG_HEADROOM_CM.passage)) why.push(",
-    "new": "if (!(o.h >= EG_FRAG_HEADROOM_CM.passage)) why.push(",
+    "old": "    if (!(o.w > 0) || !(o.h >= EG_FRAG_HEADROOM_CM.passage))",
+    "new": "    if (!(o.h >= EG_FRAG_HEADROOM_CM.passage))",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -565,8 +565,8 @@
   {
     "name": "EG6C-no-floor-let-through",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!floors.length) why.push('no floor');",
-    "new": "if (false) why.push('no floor');",
+    "old": "  if (!floors.length) why.push('no floor');",
+    "new": "  if (false) why.push('no floor');",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -574,8 +574,8 @@
   {
     "name": "EG6C-a-chamber-with-no-fight",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (rec.class === 'chamber' && !floors.some((f) => f.fight)) why.push(",
-    "new": "if (false) why.push(",
+    "old": "  if (rec.class === 'chamber' && !floors.some((f) => f.fight)) why.push('a chamber with no fight floor');",
+    "new": "  if (false) why.push('a chamber with no fight floor');",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -583,8 +583,8 @@
   {
     "name": "EG6C-a-floor-wound-backward",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!(f.poly?.length >= 3) || !(egFragArea2(f.poly) > 0)) why.push(`floors[${i}]",
-    "new": "if (!(f.poly?.length >= 3)) why.push(`floors[${i}]",
+    "old": "    if (!(f.poly?.length >= 3) || !(egFragArea2(f.poly) > 0)) why.push(`floors[${i}]: not a counter-clockwise polygon`);",
+    "new": "    if (!(f.poly?.length >= 3)) why.push(`floors[${i}]: not a counter-clockwise polygon`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -592,8 +592,8 @@
   {
     "name": "EG6C-a-ramp-wound-backward",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!(q.poly?.length >= 3) || !(egFragArea2(q.poly.map((p) => [p[0], p[2]])) > 0)) why.push(",
-    "new": "if (!(q.poly?.length >= 3)) why.push(",
+    "old": "    if (!(q.poly?.length >= 3) || !(egFragArea2(q.poly.map((p) => [p[0], p[2]])) > 0))\n      why.push(`ramps[${i}]: not a counter-clockwise polygon`);",
+    "new": "    if (!(q.poly?.length >= 3)) why.push(`ramps[${i}]: not a counter-clockwise polygon`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -601,8 +601,8 @@
   {
     "name": "EG6C-a-ramp-s-rise-unread",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "else if (!(q.y1 > q.y0) || Math.min(...q.poly.map((p) => p[1])) !== q.y0 || Math.max(...q.poly.map((p) => p[1])) !== q.y1) why.push(",
-    "new": "else if (!(q.y1 > q.y0) || Math.min(...q.poly.map((p) => p[1])) !== q.y0) why.push(",
+    "old": "    else if (\n      !(q.y1 > q.y0) ||\n      Math.min(...q.poly.map((p) => p[1])) !== q.y0 ||\n      Math.max(...q.poly.map((p) => p[1])) !== q.y1\n    )",
+    "new": "    else if (!(q.y1 > q.y0) || Math.min(...q.poly.map((p) => p[1])) !== q.y0)",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -610,8 +610,8 @@
   {
     "name": "EG6C-a-flat-ramp",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "else if (!(q.y1 > q.y0) || Math.min(",
-    "new": "else if (Math.min(",
+    "old": "    else if (\n      !(q.y1 > q.y0) ||\n      Math.min(...q.poly.map((p) => p[1])) !== q.y0 ||\n      Math.max(...q.poly.map((p) => p[1])) !== q.y1\n    )",
+    "new": "    else if (Math.min(...q.poly.map((p) => p[1])) !== q.y0 || Math.max(...q.poly.map((p) => p[1])) !== q.y1)",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -619,8 +619,8 @@
   {
     "name": "EG6C-an-open-edge-of-nothing",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!floors[oe[0]] || !(oe[1] >= 0 && oe[1] < floors[oe[0]].poly.length)) why.push(",
-    "new": "if (!floors[oe[0]]) why.push(",
+    "old": "    if (!floors[oe[0]] || !(oe[1] >= 0 && oe[1] < floors[oe[0]].poly.length))\n      why.push(`open[${i}]: floor ${oe[0]} has no edge ${oe[1]}`);",
+    "new": "    if (!floors[oe[0]]) why.push(`open[${i}]: floor ${oe[0]} has no edge ${oe[1]}`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -628,8 +628,8 @@
   {
     "name": "EG6C-a-ceiling-wound-backward",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!(c.poly?.length >= 3) || !(egFragArea2(c.poly) > 0)) why.push('a ceiling",
-    "new": "if (!(c.poly?.length >= 3)) why.push('a ceiling",
+    "old": "    if (!(c.poly?.length >= 3) || !(egFragArea2(c.poly) > 0)) why.push('a ceiling is not a counter-clockwise polygon');",
+    "new": "    if (!(c.poly?.length >= 3)) why.push('a ceiling is not a counter-clockwise polygon');",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -637,8 +637,8 @@
   {
     "name": "EG6C-half-under-let-through",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (under.length && under.length < over.length) why.push(",
-    "new": "if (false) why.push(",
+    "old": "    if (under.length && under.length < over.length)",
+    "new": "    if (false)",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js",
       "test/tooling/eg6c_bake.test.js"
@@ -647,8 +647,8 @@
   {
     "name": "EG6C-a-floor-s-headroom-unasked",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "else if (under.length && Math.min(...under) - f.y < room) why.push(",
-    "new": "else if (false) why.push(",
+    "old": "    else if (under.length && Math.min(...under) - f.y < room)",
+    "new": "    else if (false)",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js",
       "test/tooling/eg6c_bake.test.js"
@@ -657,8 +657,8 @@
   {
     "name": "EG6C-every-class-a-passage",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "const room = EG_FRAG_HEADROOM_CM[rec.class] ?? EG_FRAG_HEADROOM_CM.passage;",
-    "new": "const room = EG_FRAG_HEADROOM_CM.passage;",
+    "old": "  const room = EG_FRAG_HEADROOM_CM[rec.class] ?? EG_FRAG_HEADROOM_CM.passage;",
+    "new": "  const room = EG_FRAG_HEADROOM_CM.passage;",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -666,8 +666,8 @@
   {
     "name": "EG6C-the-floor-s-edges-unasked",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "pts.push(p, [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2]); }",
-    "new": "pts.push(p); }",
+    "old": "      pts.push(p, [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2]);",
+    "new": "      pts.push(p);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -675,8 +675,8 @@
   {
     "name": "EG6C-a-ramp-s-headroom-unasked",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (c !== null && c - p[1] < EG_FRAG_HEADROOM_CM.passage) { why.push(",
-    "new": "if (false) { why.push(",
+    "old": "      if (c !== null && c - p[1] < EG_FRAG_HEADROOM_CM.passage) {",
+    "new": "      if (false) {",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -684,8 +684,8 @@
   {
     "name": "EG6C-the-course-s-headroom-unasked",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (low.length && Math.min(...low) - c.y < EG_FRAG_HEADROOM_CM.course) why.push(",
-    "new": "if (false) why.push(",
+    "old": "    if (low.length && Math.min(...low) - c.y < EG_FRAG_HEADROOM_CM.course)",
+    "new": "    if (false)",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js",
       "test/tooling/eg6c_bake.test.js"
@@ -694,8 +694,8 @@
   {
     "name": "EG6C-the-swing-s-ends-unasked",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "low = [[s[0], s[2]], [s[3], s[2]], [s[3], s[5]], [s[0], s[5]], [c.x, c.z]].map(",
-    "new": "low = [[c.x, c.z]].map(",
+    "old": "      low = [\n        [s[0], s[2]],\n        [s[3], s[2]],\n        [s[3], s[5]],\n        [s[0], s[5]],\n        [c.x, c.z],\n      ]\n        .map((p) => egFragCeilAt(rec, p[0], p[1], c.y))\n        .filter((y) => y !== null);",
+    "new": "      low = [[c.x, c.z]].map((p) => egFragCeilAt(rec, p[0], p[1], c.y)).filter((y) => y !== null);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -703,8 +703,8 @@
   {
     "name": "EG6C-a-node-of-no-reach",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!(r > 0)) why.push(`graph.nodes[${i}]: no reach`);",
-    "new": "if (false) why.push(`graph.nodes[${i}]: no reach`);",
+    "old": "    if (!(r > 0)) why.push(`graph.nodes[${i}]: no reach`);",
+    "new": "    if (false) why.push(`graph.nodes[${i}]: no reach`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -712,8 +712,8 @@
   {
     "name": "EG6C-a-node-in-the-air",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!on) why.push(`graph.nodes[${i}] stands on no floor",
-    "new": "if (false) why.push(`graph.nodes[${i}] stands on no floor",
+    "old": "    if (!on) why.push(`graph.nodes[${i}] stands on no floor and no ramp - the legion walks the ground (section 11.7)`);",
+    "new": "    if (false)\n      why.push(`graph.nodes[${i}] stands on no floor and no ramp - the legion walks the ground (section 11.7)`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -721,8 +721,8 @@
   {
     "name": "EG6C-a-node-at-any-height",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "const on = floors.some((f) => Math.abs(y - f.y) <= EG_FRAG_NODE_ON_CM && egFragInPoly(f.poly, x, z))",
-    "new": "const on = floors.some((f) => egFragInPoly(f.poly, x, z))",
+    "old": "      floors.some((f) => Math.abs(y - f.y) <= EG_FRAG_NODE_ON_CM && egFragInPoly(f.poly, x, z)) ||",
+    "new": "      floors.some((f) => egFragInPoly(f.poly, x, z)) ||",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -730,8 +730,8 @@
   {
     "name": "EG6C-a-node-on-a-ramp-refused",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "|| ramps.some((q) => egFragInPoly(q.poly.map((p) => [p[0], p[2]]), x, z) && y >= q.y0",
-    "new": "|| ramps.some((q) => false && y >= q.y0",
+    "old": "      ramps.some(\n        (q) =>\n          egFragInPoly(\n            q.poly.map((p) => [p[0], p[2]]),\n            x,\n            z,\n          ) &&\n          y >= q.y0 - EG_FRAG_NODE_ON_CM &&\n          y <= q.y1 + EG_FRAG_NODE_ON_CM,\n      );",
+    "new": "      ramps.some((q) => false && y >= q.y0 - EG_FRAG_NODE_ON_CM && y <= q.y1 + EG_FRAG_NODE_ON_CM);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -739,8 +739,8 @@
   {
     "name": "EG6C-an-edge-backward",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!(e[0] < e[1]) || !nodes[e[0]] || !nodes[e[1]]) why.push(",
-    "new": "if (!nodes[e[0]] || !nodes[e[1]]) why.push(",
+    "old": "    if (!(e[0] < e[1]) || !nodes[e[0]] || !nodes[e[1]])",
+    "new": "    if (!nodes[e[0]] || !nodes[e[1]])",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -748,8 +748,8 @@
   {
     "name": "EG6C-an-edge-to-no-node",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!(e[0] < e[1]) || !nodes[e[0]] || !nodes[e[1]]) why.push(",
-    "new": "if (!(e[0] < e[1]) || !nodes[e[0]]) why.push(",
+    "old": "    if (!(e[0] < e[1]) || !nodes[e[0]] || !nodes[e[1]])",
+    "new": "    if (!(e[0] < e[1]) || !nodes[e[0]])",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -757,8 +757,8 @@
   {
     "name": "EG6C-an-edge-twice",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "else if (seen.has(`${e[0]}:${e[1]}`)) why.push(",
-    "new": "else if (false) why.push(",
+    "old": "    else if (seen.has(`${e[0]}:${e[1]}`)) why.push(`graph.edges[${i}]: twice`);",
+    "new": "    else if (false) why.push(`graph.edges[${i}]: twice`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -766,8 +766,8 @@
   {
     "name": "EG6C-an-unknown-place",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!EG_FRAG_ANCHORS.includes(k)) why.push(",
-    "new": "if (false) why.push(",
+    "old": "    if (!EG_FRAG_ANCHORS.includes(k)) why.push(`anchors.${k}: no such place`);",
+    "new": "    if (false) why.push(`anchors.${k}: no such place`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -775,8 +775,8 @@
   {
     "name": "EG6C-an-unknown-hazard",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!shape) { why.push(`hazards[${i}]: no hazard ${h.kind}`); continue; }",
-    "new": "if (!shape) continue;",
+    "old": "    if (!shape) {\n      why.push(`hazards[${i}]: no hazard ${h.kind}`);\n      continue;\n    }",
+    "new": "    if (!shape) continue;",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -784,8 +784,8 @@
   {
     "name": "EG6C-a-hazard-in-another-s-shape",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (Object.entries(says).some(([k, v]) => v !== (k === shape)) ||",
-    "new": "if (Object.entries(says).some(([k, v]) => v && k !== shape) ||",
+    "old": "      Object.entries(says).some(([k, v]) => v !== (k === shape)) ||",
+    "new": "      Object.entries(says).some(([k, v]) => v && k !== shape) ||",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -793,8 +793,8 @@
   {
     "name": "EG6C-the-hazard-law-unasked",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!L.ok) why.push(`hazards[${i}]: ${L.why.join(', ')}`);",
-    "new": "if (false) why.push(`hazards[${i}]: ${L.why.join(', ')}`);",
+    "old": "    if (!L.ok) why.push(`hazards[${i}]: ${L.why.join(', ')}`);",
+    "new": "    if (false) why.push(`hazards[${i}]: ${L.why.join(', ')}`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js",
       "test/tooling/eg6c_bake.test.js"
@@ -803,8 +803,8 @@
   {
     "name": "EG6C-a-hazard-outside-let-be",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (plan) { holds(plan[0], h.y, plan[1], `hazards[${i}] (${h.kind})`); holds(plan[2], h.y, plan[3], `hazards[${i}] (${h.kind})`); }",
-    "new": "if (plan) { holds(plan[0], h.y, plan[1], `hazards[${i}] (${h.kind})`); }",
+    "old": "      holds(plan[2], h.y, plan[3], `hazards[${i}] (${h.kind})`);\n    } else holds(B[0], h.y, B[2], `hazards[${i}] (${h.kind})`);",
+    "new": "    } else holds(B[0], h.y, B[2], `hazards[${i}] (${h.kind})`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -812,8 +812,8 @@
   {
     "name": "EG6C-a-piece-of-no-size",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!(c.w > 0 && c.d > 0) || !(c.gap >= 0) || !(c.after >= 0)) why.push(",
-    "new": "if (!(c.gap >= 0) || !(c.after >= 0)) why.push(",
+    "old": "    if (!(c.w > 0 && c.d > 0) || !(c.gap >= 0) || !(c.after >= 0))\n      why.push(`course[${i}] (${c.kind}): its size, gap or ground after it`);",
+    "new": "    if (!(c.gap >= 0) || !(c.after >= 0)) why.push(`course[${i}] (${c.kind}): its size, gap or ground after it`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -821,8 +821,8 @@
   {
     "name": "EG6C-a-negative-gap",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!(c.w > 0 && c.d > 0) || !(c.gap >= 0) || !(c.after >= 0)) why.push(",
-    "new": "if (!(c.w > 0 && c.d > 0) || !(c.after >= 0)) why.push(",
+    "old": "    if (!(c.w > 0 && c.d > 0) || !(c.gap >= 0) || !(c.after >= 0))",
+    "new": "    if (!(c.w > 0 && c.d > 0) || !(c.after >= 0))",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -830,8 +830,8 @@
   {
     "name": "EG6C-a-negative-ground-after",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!(c.w > 0 && c.d > 0) || !(c.gap >= 0) || !(c.after >= 0)) why.push(",
-    "new": "if (!(c.w > 0 && c.d > 0) || !(c.gap >= 0)) why.push(",
+    "old": "    if (!(c.w > 0 && c.d > 0) || !(c.gap >= 0) || !(c.after >= 0))\n      why.push(`course[${i}] (${c.kind}): its size, gap or ground after it`);",
+    "new": "    if (!(c.w > 0 && c.d > 0) || !(c.gap >= 0)) why.push(`course[${i}] (${c.kind}): its size, gap or ground after it`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -839,8 +839,8 @@
   {
     "name": "EG6C-the-course-out-of-order",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (c.z - c.d / 2 < edge) why.push(",
-    "new": "if (false) why.push(",
+    "old": "    if (c.z - c.d / 2 < edge)\n      why.push(`course[${i}] (${c.kind}): stands over the piece before it - the course runs along +Z`);",
+    "new": "    if (false) why.push(`course[${i}] (${c.kind}): stands over the piece before it - the course runs along +Z`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -848,8 +848,8 @@
   {
     "name": "EG6C-the-course-s-swing-outside",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "holds(s[0], s[1], s[2], `course[${i}] (${c.kind})`); holds(s[3], s[4], s[5], `course[${i}] (${c.kind})`);",
-    "new": "holds(s[0], s[1], s[2], `course[${i}] (${c.kind})`);",
+    "old": "    holds(s[3], s[4], s[5], `course[${i}] (${c.kind})`);\n  }",
+    "new": "  }",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -857,8 +857,8 @@
   {
     "name": "EG6C-an-alcove-s-seal",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!EG_FRAG_SEALS.includes(a.seal) || !EG_ALCOVE_HOLDS.includes(a.holds) || (a.side !== 1 && a.side !== -1)) why.push(",
-    "new": "if (!EG_ALCOVE_HOLDS.includes(a.holds) || (a.side !== 1 && a.side !== -1)) why.push(",
+    "old": "    if (!EG_FRAG_SEALS.includes(a.seal) || !EG_ALCOVE_HOLDS.includes(a.holds) || (a.side !== 1 && a.side !== -1))",
+    "new": "    if (!EG_ALCOVE_HOLDS.includes(a.holds) || (a.side !== 1 && a.side !== -1))",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -866,8 +866,8 @@
   {
     "name": "EG6C-an-alcove-s-keep",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!EG_FRAG_SEALS.includes(a.seal) || !EG_ALCOVE_HOLDS.includes(a.holds) || (a.side !== 1 && a.side !== -1)) why.push(",
-    "new": "if (!EG_FRAG_SEALS.includes(a.seal) || (a.side !== 1 && a.side !== -1)) why.push(",
+    "old": "    if (!EG_FRAG_SEALS.includes(a.seal) || !EG_ALCOVE_HOLDS.includes(a.holds) || (a.side !== 1 && a.side !== -1))",
+    "new": "    if (!EG_FRAG_SEALS.includes(a.seal) || (a.side !== 1 && a.side !== -1))",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -875,8 +875,8 @@
   {
     "name": "EG6C-an-alcove-on-no-side",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!EG_FRAG_SEALS.includes(a.seal) || !EG_ALCOVE_HOLDS.includes(a.holds) || (a.side !== 1 && a.side !== -1)) why.push(",
-    "new": "if (!EG_FRAG_SEALS.includes(a.seal) || !EG_ALCOVE_HOLDS.includes(a.holds)) why.push(",
+    "old": "    if (!EG_FRAG_SEALS.includes(a.seal) || !EG_ALCOVE_HOLDS.includes(a.holds) || (a.side !== 1 && a.side !== -1))",
+    "new": "    if (!EG_FRAG_SEALS.includes(a.seal) || !EG_ALCOVE_HOLDS.includes(a.holds))",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -884,8 +884,8 @@
   {
     "name": "EG6C-a-light-of-no-kind",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!EG_FRAG_LIGHTS.includes(l[3])) why.push(",
-    "new": "if (false) why.push(",
+    "old": "    if (!EG_FRAG_LIGHTS.includes(l[3])) why.push(`lights[${i}]: no light ${l[3]}`);",
+    "new": "    if (false) why.push(`lights[${i}]: no light ${l[3]}`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -893,8 +893,8 @@
   {
     "name": "EG6C-a-light-outside",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "holds(l[0], l[1], l[2], `lights[${i}]`);",
-    "new": "",
+    "old": "    holds(l[0], l[1], l[2], `lights[${i}]`);\n  }",
+    "new": "  }",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -902,8 +902,8 @@
   {
     "name": "EG6C-the-budget-unasked",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!(rec.cost?.[k] >= 0) || rec.cost[k] > max) why.push(",
-    "new": "if (!(rec.cost?.[k] >= 0)) why.push(",
+    "old": "    if (!(rec.cost?.[k] >= 0) || rec.cost[k] > max)\n      why.push(`cost.${k}: ${rec.cost?.[k]} past the fragment's budget of ${max}`);",
+    "new": "    if (!(rec.cost?.[k] >= 0)) why.push(`cost.${k}: ${rec.cost?.[k]} past the fragment's budget of ${max}`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js",
       "test/tooling/eg6c_bake.test.js"
@@ -912,8 +912,8 @@
   {
     "name": "EG6C-a-cost-below-nought",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!(rec.cost?.[k] >= 0) || rec.cost[k] > max) why.push(",
-    "new": "if (rec.cost[k] > max) why.push(",
+    "old": "    if (!(rec.cost?.[k] >= 0) || rec.cost[k] > max)\n      why.push(`cost.${k}: ${rec.cost?.[k]} past the fragment's budget of ${max}`);",
+    "new": "    if (rec.cost[k] > max) why.push(`cost.${k}: ${rec.cost?.[k]} past the fragment's budget of ${max}`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -921,8 +921,8 @@
   {
     "name": "EG6C-the-lights-miscounted",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (rec.cost && rec.cost.lights !== (rec.lights ?? []).length) why.push(",
-    "new": "if (false) why.push(",
+    "old": "  if (rec.cost && rec.cost.lights !== (rec.lights ?? []).length)\n    why.push(`cost.lights: ${rec.cost.lights} where it carries ${(rec.lights ?? []).length}`);",
+    "new": "  if (false) why.push(`cost.lights: ${rec.cost.lights} where it carries ${(rec.lights ?? []).length}`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -930,8 +930,8 @@
   {
     "name": "EG6C-a-proof-of-anything",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "if (!P || !(P.moves >= 0) || !(P.crossFast >= 0) || !(P.crossSlow >= P.crossFast) || (P.moves === 0) !== !(rec.course ?? []).length) why.push(",
-    "new": "if (!P) why.push(",
+    "old": "  if (\n    !P ||\n    !(P.moves >= 0) ||\n    !(P.crossFast >= 0) ||\n    !(P.crossSlow >= P.crossFast) ||\n    (P.moves === 0) !== !(rec.course ?? []).length\n  )\n    why.push(`proof: ${JSON.stringify(P)} is not a crossing's bounds`);",
+    "new": "  if (!P) why.push(`proof: ${JSON.stringify(P)} is not a crossing's bounds`);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -939,8 +939,8 @@
   {
     "name": "EG6C-a-median-under-the-fastest",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "|| !(P.crossSlow >= P.crossFast) ||",
-    "new": "||",
+    "old": "  if (\n    !P ||\n    !(P.moves >= 0) ||\n    !(P.crossFast >= 0) ||\n    !(P.crossSlow >= P.crossFast) ||\n    (P.moves === 0) !== !(rec.course ?? []).length\n  )",
+    "new": "  if (!P || !(P.moves >= 0) || !(P.crossFast >= 0) || (P.moves === 0) !== !(rec.course ?? []).length)",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -1742,8 +1742,8 @@
   {
     "name": "EG6C-a-faulty-law-registered",
     "file": "src/net/eliteGates/egHeroFrags.js",
-    "old": "if (faults.length) throw new Error(`net/eliteGates/egHeroFrags.js:",
-    "new": "if (false) throw new Error(`net/eliteGates/egHeroFrags.js:",
+    "old": "        if (faults.length)",
+    "new": "        if (false)",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -1751,8 +1751,8 @@
   {
     "name": "EG6C-the-reference-laid",
     "file": "src/net/eliteGates/egHeroFrags.js",
-    "old": "&& law.variant !== EG_HERO_REFERENCE);",
-    "new": ");",
+    "old": "export const egHeroFragLaws = (kit, frags = EG_HERO_FRAGS) =>\n  Object.values(frags).filter((law) => law.kit === kit && law.variant !== EG_HERO_REFERENCE);",
+    "new": "export const egHeroFragLaws = (kit, frags = EG_HERO_FRAGS) => Object.values(frags).filter((law) => law.kit === kit);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -1760,8 +1760,8 @@
   {
     "name": "EG6C-every-kit-s-heroes",
     "file": "src/net/eliteGates/egHeroFrags.js",
-    "old": "filter((law) => law.kit === kit && law.variant",
-    "new": "filter((law) => law.variant",
+    "old": "  Object.values(frags).filter((law) => law.kit === kit && law.variant !== EG_HERO_REFERENCE);",
+    "new": "  Object.values(frags).filter((law) => law.variant !== EG_HERO_REFERENCE);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "ROOMS-law-9-not-in-the-table",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": ", 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });",
-    "new": ", 8: '2026-10-15', 10: '2026-10-18' });",
+    "old": "  9: '2026-10-16',\n  10: '2026-10-18',",
+    "new": "  10: '2026-10-18',",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ROOMS-the-rise-unbounded",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "if (rise < EG_ASCENT_RISE_CM[0] || rise > EG_ASCENT_RISE_CM[1]) return why(",
-    "new": "if (false) return why(",
+    "old": "  if (rise < EG_ASCENT_RISE_CM[0] || rise > EG_ASCENT_RISE_CM[1]) return why(`the way's height ${rise} cm`);",
+    "new": "  if (false) return why(`the way's height ${rise} cm`);",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ROOMS-a-hall-s-rooms-its-kind-s-not",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "export const EG_ASCENT_ROOMS = Object.freeze({ yard: [2, 4],",
-    "new": "export const EG_ASCENT_ROOMS = Object.freeze({ yard: [1, 4],",
+    "old": "  yard: [2, 4],",
+    "new": "  yard: [1, 4],",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "ROOMS-a-link-s-length-its-plan",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "len: kind === 'climb' || kind === 'drop' ? Math.abs(dy) + egIsqrt(dx * dx + dz * dz) : egIsqrt(dx * dx + dy * dy + dz * dz), one,",
-    "new": "len: egIsqrt(dx * dx + dz * dz), one,",
+    "old": "  W.links.push({\n    a,\n    b,\n    kind,\n    road,\n    len:\n      kind === 'climb' || kind === 'drop'\n        ? Math.abs(dy) + egIsqrt(dx * dx + dz * dz)\n        : egIsqrt(dx * dx + dy * dy + dz * dz),\n    one,\n    ...(climb >= 0 ? { climb } : {}),\n  });",
+    "new": "  W.links.push({ a, b, kind, road, len: egIsqrt(dx * dx + dz * dz), one, ...(climb >= 0 ? { climb } : {}) });",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "ROOMS-the-main-way-from-another-node",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "W.main = egRouteMainOf(W.nodes, W.links, 0, W.door);",
-    "new": "W.main = egRouteMainOf(W.nodes, W.links, 1, W.door);",
+    "old": "  W.main = egRouteMainOf(W.nodes, W.links, 0, W.door);",
+    "new": "  W.main = egRouteMainOf(W.nodes, W.links, 1, W.door);",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "ROOMS-a-room-s-long-way-round-on-the-main-road",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "l.kind, l.road === 0 ? 1 : l.road, l.one, cl(l));",
-    "new": "l.kind, l.road, l.one, cl(l));",
+    "old": "      else link(W, nid(l.a), nid(l.b), l.kind, l.road === 0 ? 1 : l.road, l.one, cl(l)); // the room's other ways: the long way round, a side way",
+    "new": "      else link(W, nid(l.a), nid(l.b), l.kind, l.road, l.one, cl(l)); // the room's other ways: the long way round, a side way",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "ROOMS-the-crossings-uncapped",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "  if (x > EG_ASCENT_CROSSINGS_MAX) return `the main way crosses itself",
-    "new": "  if (false) return `the main way crosses itself",
+    "old": "  if (x > EG_ASCENT_CROSSINGS_MAX) return `the main way crosses itself ${x} times, past ${EG_ASCENT_CROSSINGS_MAX}`;",
+    "new": "  if (false) return `the main way crosses itself ${x} times, past ${EG_ASCENT_CROSSINGS_MAX}`;",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "ROOMS-a-tower-s-turn-3.8-m-over-the-one-under-it",
     "file": "src/net/eliteGates/egRoomLaw.js",
-    "old": "q = between(r, turns === 2 ? 22 : 21, turns === 2 ? 37 : 25) * 5;",
-    "new": "q = between(r, turns === 2 ? 22 : 19, turns === 2 ? 37 : 25) * 5;",
+    "old": "      q = between(r, turns === 2 ? 22 : 21, turns === 2 ? 37 : 25) * 5;",
+    "new": "      q = between(r, turns === 2 ? 22 : 19, turns === 2 ? 37 : 25) * 5;",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "ROOMS-the-crossings-counted-link-by-link",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "if (!ml[i] || !ml[j] || part[i] === part[j]) continue;",
-    "new": "if (!ml[i] || !ml[j]) continue;",
+    "old": "      if (!ml[i] || !ml[j] || part[i] === part[j]) continue;",
+    "new": "      if (!ml[i] || !ml[j]) continue;",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "ROOMS-a-room-s-words-not-its-record",
     "file": "src/net/eliteGates/egRoomLaw.js",
-    "old": "room: { k: R.k, p: R.p, u: [R.inI, ...outs], t: R.t },",
-    "new": "room: { k: R.k, p: R.p, u: [R.inI, ...outs], t: 0 },",
+    "old": "    room: { k: R.k, p: R.p, u: [R.inI, ...outs], t: R.t },",
+    "new": "    room: { k: R.k, p: R.p, u: [R.inI, ...outs], t: 0 },",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "ROOMS-a-room-on-the-fight-floor",
     "file": "src/net/eliteGates/egRoomLaw.js",
-    "old": "floors: R.floors.map((f) => ({ y: f.y, poly: f.poly, fight: 0 })),",
-    "new": "floors: R.floors.map((f) => ({ y: f.y, poly: f.poly, fight: f.fight })),",
+    "old": "    floors: R.floors.map((f) => ({ y: f.y, poly: f.poly, fight: 0 })),",
+    "new": "    floors: R.floors.map((f) => ({ y: f.y, poly: f.poly, fight: f.fight })),",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "ROOMS-a-socket-off-the-route",
     "file": "src/net/eliteGates/egRoomLaw.js",
-    "old": "side: sideWay, n: K.node(x, y, z) });",
-    "new": "side: sideWay, n: K.node(x, y, z + 300) });",
+    "old": "    K.sockets.push({ x: X(x), y, z, yaw: yw, w, h, side: sideWay, n: K.node(x, y, z) });",
+    "new": "    K.sockets.push({ x: X(x), y, z, yaw: yw, w, h, side: sideWay, n: K.node(x, y, z + 300) });",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "ROOMS-the-climb-with-no-stair-round",
     "file": "src/net/eliteGates/egRoomLaw.js",
-    "old": "    K.link(K.sockets[s0].n, rd.lo, 'walk', 1); K.link(rd.hi, tp, 'walk', 1);\n    K.link(tp, m, 'walk');",
-    "new": "    K.link(K.sockets[s0].n, rd.lo, 'walk', 1);\n    K.link(tp, m, 'walk');",
+    "old": "    K.link(rd.hi, tp, 'walk', 1);\n    K.link(tp, m, 'walk');",
+    "new": "    K.link(tp, m, 'walk');",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "ROOMS-a-side-climb-under-6-m",
     "file": "src/net/eliteGates/egRoomLaw.js",
-    "old": "between(r, 2 * EG_CLIMB_PITCH_MIN_CM / 10, 2 * EG_CLIMB_PITCH_CM / 10) * 10, between(r, 7, 10) * 100,",
-    "new": "between(r, 2 * EG_CLIMB_PITCH_MIN_CM / 10, 2 * EG_CLIMB_PITCH_CM / 10) * 10, between(r, 5, 10) * 100,",
+    "old": "    between(r, 7, 10) * 100,",
+    "new": "    between(r, 5, 10) * 100,",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "ROOMS-a-climb-link-naming-another-s-climb",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "cl = (l) => (l.climb ?? -1) >= 0 ? c0 + l.climb : -1;",
-    "new": "cl = (l) => (l.climb ?? -1) >= 0 ? c0 : -1;",
+    "old": "      cl = (l) => ((l.climb ?? -1) >= 0 ? c0 + l.climb : -1);",
+    "new": "      cl = (l) => ((l.climb ?? -1) >= 0 ? c0 : -1);",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "ROOMS-the-way-round-a-stair-straight-up-beside-the-climb",
     "file": "src/net/eliteGates/egRoomLaw.js",
-    "old": "    K.link(K.sockets[s0].n, rd.lo, 'walk', 1); K.link(rd.hi, tp, 'walk', 1);\n    K.link(tp, m, 'walk');",
-    "new": "    K.link(K.sockets[s0].n, rd.hi, 'stair', 1); K.link(rd.hi, tp, 'walk', 1);\n    K.link(tp, m, 'walk');",
+    "old": "    K.link(K.sockets[s0].n, rd.lo, 'walk', 1);",
+    "new": "    K.link(K.sockets[s0].n, rd.hi, 'stair', 1);",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "ROOMS-the-stair-hall-s-climb-on-its-way-out-ahead",
     "file": "src/net/eliteGates/egRoomLaw.js",
-    "old": "const climb = drawn && used[0] === 0 && (used[1] === 3 || used[1] === 4) ? 1 : 0;",
-    "new": "const climb = drawn && used[0] === 0 && used[1] >= 3 ? 1 : 0;",
+    "old": "    const climb = drawn && used[0] === 0 && (used[1] === 3 || used[1] === 4) ? 1 : 0;",
+    "new": "    const climb = drawn && used[0] === 0 && used[1] >= 3 ? 1 : 0;",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "ROOMS-the-wake-ring-s-height-unsaid",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "  if (H.P.ring && H.P.ring.y == null) H.P.ring.y = end.y;   // the lord's wake ring on its ground's floor (net/eliteGates/egBrain.js ringWake reads it by height)\n",
-    "new": "",
+    "old": "  if (H.P.ring && H.P.ring.y == null) H.P.ring.y = end.y; // the lord's wake ring on its ground's floor (net/eliteGates/egBrain.js ringWake reads it by height)\n  for (const q of H.P.rifts) if (q.y == null) q.y = end.y;",
+    "new": "  for (const q of H.P.rifts) if (q.y == null) q.y = end.y;",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "ROOMS-sanity-a-bridge-that-climbs",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "if ((l.kind === 'walk' || l.kind === 'bridge') && dy > 0.6) return",
-    "new": "if (false) return",
+    "old": "    if ((l.kind === 'walk' || l.kind === 'bridge') && dy > 0.6) return `link ${i}: a ${l.kind} ${dy.toFixed(2)} m up`;",
+    "new": "    if (false) return `link ${i}: a ${l.kind} ${dy.toFixed(2)} m up`;",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "ROOMS-sanity-a-stair-past-its-steepest",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "if (l.kind === 'stair' && dy * 5 > (plan + 0.6) * 3) return",
-    "new": "if (false) return",
+    "old": "    if (l.kind === 'stair' && dy * 5 > (plan + 0.6) * 3)\n      return `link ${i}: a stair ${dy.toFixed(2)} m up over ${plan.toFixed(2)} m`;",
+    "new": "    if (false) return `link ${i}: a stair ${dy.toFixed(2)} m up over ${plan.toFixed(2)} m`;",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "ROOMS-sanity-a-climb-off-its-face",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "if (l.kind === 'climb' && plan > EG_ROUTE_CLIMB_PLAN_M) return",
-    "new": "if (false) return",
+    "old": "    if (l.kind === 'climb' && plan > EG_ROUTE_CLIMB_PLAN_M)\n      return `link ${i}: a climb ${plan.toFixed(2)} m from its line`;",
+    "new": "    if (false) return `link ${i}: a climb ${plan.toFixed(2)} m from its line`;",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "ROOMS-sanity-a-drop-deeper-than-a-Drop",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "if (l.kind === 'drop' && (dy > 4.6 || q[1] > p[1])) return",
-    "new": "if (false) return",
+    "old": "    if (l.kind === 'drop' && (dy > 4.6 || q[1] > p[1])) return `link ${i}: a drop of ${dy.toFixed(2)} m`;",
+    "new": "    if (false) return `link ${i}: a drop of ${dy.toFixed(2)} m`;",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "ROOMS-sanity-the-main-way-from-elsewhere",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "if (R.main[0] !== 0) return 'the main way does not begin at the arrival plate';",
-    "new": "if (false) return 'the main way does not begin at the arrival plate';",
+    "old": "  if (R.main[0] !== 0) return 'the main way does not begin at the arrival plate';",
+    "new": "  if (false) return 'the main way does not begin at the arrival plate';",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "ROOMS-sanity-the-main-way-leaps",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "if (!R.links.some((l) => l.road === 0 && ((l.a === a && l.b === b)",
-    "new": "if (false && !R.links.some((l) => l.road === 0 && ((l.a === a && l.b === b)",
+    "old": "    if (!R.links.some((l) => l.road === 0 && ((l.a === a && l.b === b) || (!l.one && l.b === a && l.a === b))))",
+    "new": "    if (false && !R.links.some((l) => l.road === 0 && ((l.a === a && l.b === b) || (!l.one && l.b === a && l.a === b))))",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "ROOMS-sanity-the-main-way-unbounded",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "  if (len > EG_ROUTE_LEN_MAX_M) return `the main way runs",
-    "new": "  if (false) return `the main way runs",
+    "old": "  if (len > EG_ROUTE_LEN_MAX_M) return `the main way runs ${len.toFixed(0)} m, past ${EG_ROUTE_LEN_MAX_M}`;",
+    "new": "  if (false) return `the main way runs ${len.toFixed(0)} m, past ${EG_ROUTE_LEN_MAX_M}`;",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "ROOMS-the-Court-s-way-run-past-its-ground",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "onLine = !!g && g.x === port.x && g.z > port.z && g.z < end.edge;",
-    "new": "onLine = false;",
+    "old": "    onLine = !!g && g.x === port.x && g.z > port.z && g.z < end.edge;",
+    "new": "    onLine = false;",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "ROOMS-the-Low-Road-s-way-off-its-bridge",
     "file": "src/net/eliteGates/egAscent.js",
-    "old": "    if (lb) {\n      link(W, a, node(W, [fork.lowX, fork.yLow, lb.az]), 'span', 1);",
-    "new": "    if (false) {\n      link(W, a, node(W, [fork.lowX, fork.yLow, lb.az]), 'span', 1);",
+    "old": "    if (lb) {",
+    "new": "    if (false) {",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "ROOMS-a-doorway-s-way-along-its-wall-no-threshold",
     "file": "src/net/eliteGates/egRoomLaw.js",
-    "old": "  A[k].build(K, p, used);\n  thresholds(K);",
-    "new": "  A[k].build(K, p, used);",
+    "old": "  thresholds(K);\n  const way = { nodes: K.nodes, links: K.links };",
+    "new": "  const way = { nodes: K.nodes, links: K.links };",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "ROOMS-the-gallery-s-rail-across-the-back-stair-s-head",
     "file": "src/net/eliteGates/egRoomLaw.js",
-    "old": "rail(K, hw - gw, 0, hw - gw, Math.min(z0, L - sw), G);",
-    "new": "rail(K, hw - gw, 0, hw - gw, z0, G);",
+    "old": "    rail(K, hw - gw, 0, hw - gw, Math.min(z0, L - sw), G);",
+    "new": "    rail(K, hw - gw, 0, hw - gw, z0, G);",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "ROOMS-the-wall-reader-blind",
     "file": "src/net/eliteGates/egRoomLaw.js",
-    "old": "      if (w.y0 < y + 180 && w.y1 > y + 30) { why.push(",
-    "new": "      if (false) { why.push(",
+    "old": "      if (w.y0 < y + 180 && w.y1 > y + 30) {",
+    "new": "      if (false) {",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]

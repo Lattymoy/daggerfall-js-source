@@ -32,8 +32,8 @@
   {
     "name": "FB1020D-read-drops-size",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "n: nat(e.n, 1, EG_PARTY_MAX) ? e.n : 0, ew:",
-    "new": "n: 0, ew:",
+    "old": "        n: nat(e.n, 1, EG_PARTY_MAX) ? e.n : 0,",
+    "new": "        n: 0,",
     "tests": [
       "test/net/eliteGates/fb1020d_loneherald.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "FB1020D-read-takes-any",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "n: nat(e.n, 1, EG_PARTY_MAX) ? e.n : 0, ew:",
-    "new": "n: Number.isSafeInteger(e.n) ? e.n : 0, ew:",
+    "old": "        n: nat(e.n, 1, EG_PARTY_MAX) ? e.n : 0,",
+    "new": "        n: Number.isSafeInteger(e.n) ? e.n : 0,",
     "tests": [
       "test/net/eliteGates/fb1020d_loneherald.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "FB1020D-fold-drops-rd",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "else owe({ kind: 'rd', o: e.o, n: e.n ?? 0,",
-    "new": "else owe({ kind: 'rd', o: e.o,",
+    "old": "        } else owe({ kind: 'rd', o: e.o, n: e.n ?? 0, w: e.w, h: e.h, t: e.t, ew: e.ew ?? 0 });",
+    "new": "        } else owe({ kind: 'rd', o: e.o, w: e.w, h: e.h, t: e.t, ew: e.ew ?? 0 });",
     "tests": [
       "test/net/eliteGates/fb1020d_loneherald.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "FB1020D-fold-drops-first",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "owe({ kind: 'first', o: e.o, n: e.n ?? 0,",
-    "new": "owe({ kind: 'first', o: e.o,",
+    "old": "          owe({ kind: 'first', o: e.o, n: e.n ?? 0, by: e.by, w: e.w, h: e.h, t: e.t, ew: e.ew ?? 0 });",
+    "new": "          owe({ kind: 'first', o: e.o, by: e.by, w: e.w, h: e.h, t: e.t, ew: e.ew ?? 0 });",
     "tests": [
       "test/net/eliteGates/fb1020d_loneherald.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "FB1020D-fold-drops-seal",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "o: e.o, n: e.n ?? 0 }); }",
-    "new": "o: e.o }); }",
+    "old": "        owe({ kind: 'seal', band: below - 1, o: e.o, n: e.n ?? 0 });",
+    "new": "        owe({ kind: 'seal', band: below - 1, o: e.o });",
     "tests": [
       "test/net/eliteGates/fb1020d_loneherald.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "FB1020D-name-taken-raw",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "(lone(n) ? heraldName(o) || 'Someone' : companyOf(o))",
-    "new": "(lone(n) ? String(o ?? '') || 'Someone' : companyOf(o))",
+    "old": "const whoOf = (o, n) => (lone(n) ? heraldName(o) || 'Someone' : companyOf(o));",
+    "new": "const whoOf = (o, n) => (lone(n) ? String(o ?? '') || 'Someone' : companyOf(o));",
     "tests": [
       "test/net/eliteGates/fb1020d_loneherald.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "FB1020D-no-name-for-nobody",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "(lone(n) ? heraldName(o) || 'Someone' : companyOf(o))",
-    "new": "(lone(n) ? heraldName(o) : companyOf(o))",
+    "old": "const whoOf = (o, n) => (lone(n) ? heraldName(o) || 'Someone' : companyOf(o));",
+    "new": "const whoOf = (o, n) => (lone(n) ? heraldName(o) : companyOf(o));",
     "tests": [
       "test/net/eliteGates/fb1020d_loneherald.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "FB1020D-rd-alone-unsaid",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "`${whoOf(o, n)} took Redoubt ${w}${lone(n) ? ' alone' : ''}`",
-    "new": "`${whoOf(o, n)} took Redoubt ${w}`",
+    "old": "  spireCard('Redoubt', `${whoOf(o, n)} took Redoubt ${w}${lone(n) ? ' alone' : ''}`, [",
+    "new": "  spireCard('Redoubt', `${whoOf(o, n)} took Redoubt ${w}`, [",
     "tests": [
       "test/net/eliteGates/fb1020d_loneherald.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "FB1020D-first-names-kept",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "const names = lone(n) ? [] : namesOf(by);",
-    "new": "const names = namesOf(by);",
+    "old": "  const names = lone(n) ? [] : namesOf(by);",
+    "new": "  const names = namesOf(by);",
     "tests": [
       "test/net/eliteGates/fb1020d_loneherald.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "FB1020D-first-alone-unsaid",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "is the first ever to take Redoubt ${w}${lone(n) ? ', alone' : ''}`",
-    "new": "is the first ever to take Redoubt ${w}`",
+    "old": "  return spireCard(\n    'First of the Spire',\n    `${whoOf(o, n)} is the first ever to take Redoubt ${w}${lone(n) ? ', alone' : ''}`,\n    [\n      ['Hall', `Hall ${h}`],\n      ['Time', egHeraldTime(t)],\n      ['Began at', fromOf(ew)],\n      ['Company', names.length ? heraldList(names) : null, false],\n    ],\n  );",
+    "new": "  return spireCard('First of the Spire', `${whoOf(o, n)} is the first ever to take Redoubt ${w}`, [\n    ['Hall', `Hall ${h}`],\n    ['Time', egHeraldTime(t)],\n    ['Began at', fromOf(ew)],\n    ['Company', names.length ? heraldList(names) : null, false],\n  ]);",
     "tests": [
       "test/net/eliteGates/fb1020d_loneherald.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "FB1020D-seal-alone-unsaid",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "is the first through${lone(n) ? ', alone' : ''}.",
-    "new": "is the first through.",
+    "old": "    `${whoOf(o, n)} is the first through${lone(n) ? ', alone' : ''}.`,",
+    "new": "    `${whoOf(o, n)} is the first through.`,",
     "tests": [
       "test/net/eliteGates/fb1020d_loneherald.test.js"
     ],

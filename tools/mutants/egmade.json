@@ -298,8 +298,8 @@
   {
     "name": "EGDUR-the-gap-kept",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "{ if (!moves || moves(o, k, v)) o[k] = v + gap; }",
-    "new": "{ /* kept */ }",
+    "old": "    if (!moves || moves(o, k, v)) o[k] = v + gap;",
+    "new": "    /* kept */",
     "tests": [
       "test/net/eliteGates/egdur_relay.test.js"
     ]
@@ -307,8 +307,8 @@
   {
     "name": "EGDUR-the-open-moved",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "const KEPT = new Set(['op', 'endAt',",
-    "new": "const KEPT = new Set(['endAt',",
+    "old": "const KEPT = new Set(['op', 'endAt', 'tk', 'gv', 'hold', 'rc', 'zs', 'co', 'owe', 'rs', 'egv', 'seed']);",
+    "new": "const KEPT = new Set(['endAt', 'tk', 'gv', 'hold', 'rc', 'zs', 'co', 'owe', 'rs', 'egv', 'seed']);",
     "tests": [
       "test/net/eliteGates/egdur_relay.test.js"
     ]
@@ -334,8 +334,8 @@
   {
     "name": "EGDUR-no-hold",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "  if (egBetween(B)) { egHoldBegin(B, last, now); return 'hold'; }\n",
-    "new": "",
+    "old": "  if (egBetween(B)) {\n    egHoldBegin(B, last, now);\n    return 'hold';\n  }\n  B.tk = now;",
+    "new": "  B.tk = now;",
     "tests": [
       "test/net/eliteGates/egdur_relay.test.js"
     ]
@@ -361,8 +361,8 @@
   {
     "name": "EGDUR-the-count-runs-through-the-hold",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "  if (B.cnt) B.cnt = egCountHold(B.cnt, at);\n",
-    "new": "",
+    "old": "  if (B.cnt) B.cnt = egCountHold(B.cnt, at);\n  B.hold = { at, until: now + EG_REJOIN_MS, ran, f: holdFind(B, at, now) }; // AUDIT EG III (lane3 #8): what the hold found - its release moves those alone; AUDIT EG V (L4-9): kept in the record",
+    "new": "  B.hold = { at, until: now + EG_REJOIN_MS, ran, f: holdFind(B, at, now) }; // AUDIT EG III (lane3 #8): what the hold found - its release moves those alone; AUDIT EG V (L4-9): kept in the record",
     "tests": [
       "test/net/eliteGates/egdur_relay.test.js"
     ]
@@ -370,8 +370,8 @@
   {
     "name": "EGDUR-the-count-never-runs-again",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "  if (h.ran && B.cnt) B.cnt = egCountRun(B.cnt, now);\n",
-    "new": "",
+    "old": "  if (h.ran && B.cnt) B.cnt = egCountRun(B.cnt, now);\n  B.tk = now;",
+    "new": "  B.tk = now;",
     "tests": [
       "test/net/eliteGates/egdur_relay.test.js"
     ]
@@ -379,7 +379,7 @@
   {
     "name": "EGDUR-a-held-alarm-kept",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "  return Number.isFinite(last) && now - last > EG_GAP_MS ? egGiveBack(B, now - last, now, (o, k, v) => v <= last || v > now) : 0;",
+    "old": "  return Number.isFinite(last) && now - last > EG_GAP_MS\n    ? egGiveBack(B, now - last, now, (o, k, v) => v <= last || v > now)\n    : 0;",
     "new": "  return 0;",
     "tests": [
       "test/net/eliteGates/egdur_relay.test.js"

@@ -392,8 +392,8 @@
   {
     "name": "EGA4L-strata-by-dice",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "const s = egSeasonStrata(arenaSeasonOf((B.op ?? 0) / 1000))[(w - 20) / 5];",
-    "new": "const s = egSeasonStrata(arenaSeasonOf((B.op ?? 0) / 1000) + (B.seed & 1))[(w - 20) / 5];",
+    "old": "  const s = egSeasonStrata(arenaSeasonOf((B.op ?? 0) / 1000))[(w - 20) / 5];",
+    "new": "  const s = egSeasonStrata(arenaSeasonOf((B.op ?? 0) / 1000) + (B.seed & 1))[(w - 20) / 5];",
     "tests": [
       "test/net/eliteGates/egaudit4_legion_run.test.js"
     ],
@@ -412,8 +412,8 @@
   {
     "name": "EGA4L-strata-to-short",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "for (let r = 20; r <= w; r += 5) egStratumAt(B, r);",
-    "new": "for (let r = 20; r < w; r += 5) egStratumAt(B, r);",
+    "old": "  for (let r = 20; r <= w; r += 5) egStratumAt(B, r);",
+    "new": "  for (let r = 20; r < w; r += 5) egStratumAt(B, r);",
     "tests": [
       "test/net/eliteGates/egaudit4_legion_run.test.js"
     ],
@@ -422,8 +422,8 @@
   {
     "name": "EGA4L-surplus-seventh",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "const more = m.offer.length < EG_OFFER_MAX ? egOfferOf(",
-    "new": "const more = true ? egOfferOf(",
+    "old": "    const more =\n      m.offer.length < EG_OFFER_MAX\n        ? egOfferOf(rng, { vs: m.vs, mast: m.mast, w: 2, extra: 1, n: o.n, kinds: m.kinds }).find(\n            (c) => !m.offer.includes(c),\n          )\n        : null;",
+    "new": "    const more = true\n      ? egOfferOf(rng, { vs: m.vs, mast: m.mast, w: 2, extra: 1, n: o.n, kinds: m.kinds }).find(\n          (c) => !m.offer.includes(c),\n        )\n      : null;",
     "tests": [
       "test/net/eliteGates/egaudit4_legion_run.test.js"
     ],
@@ -432,8 +432,8 @@
   {
     "name": "EGA4L-surplus-spent-anyway",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "    if (more == null) return null;\n    m.offer = [...m.offer, more];",
-    "new": "    if (more == null) { B.sur--; return null; }\n    m.offer = [...m.offer, more];",
+    "old": "    if (more == null) return null;",
+    "new": "    if (more == null) {\n      B.sur--;\n      return null;\n    }",
     "tests": [
       "test/net/eliteGates/egaudit4_legion_run.test.js"
     ],
@@ -442,8 +442,8 @@
   {
     "name": "EGA4L-reroll-lawless",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "const o = { w, valk, ...(m.offerO ?? {}), vs: m.vs, mast: m.mast, kinds: m.kinds };",
-    "new": "const o = { w, valk, vs: m.vs, mast: m.mast };",
+    "old": "  const o = { w, valk, ...(m.offerO ?? {}), vs: m.vs, mast: m.mast, kinds: m.kinds };",
+    "new": "  const o = { w, valk, vs: m.vs, mast: m.mast };",
     "tests": [
       "test/net/eliteGates/egaudit4_legion_run.test.js"
     ],
@@ -452,8 +452,8 @@
   {
     "name": "EGA4L-offers-company-unread",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "hollow: (B.strata ?? []).includes('hollow'), n };",
-    "new": "hollow: (B.strata ?? []).includes('hollow'), n: 0 };",
+    "old": "      n,",
+    "new": "      n: 0,",
     "tests": [
       "test/net/eliteGates/egaudit4_legion_run.test.js"
     ],
@@ -462,8 +462,8 @@
   {
     "name": "EGA4L-offers-kinds-unread",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "const cards = egOfferOf(rng, { ...m.offerO, vs: m.vs, mast: m.mast, kinds: m.kinds });",
-    "new": "const cards = egOfferOf(rng, { ...m.offerO, vs: m.vs, mast: m.mast, kinds: null });",
+    "old": "    const cards = egOfferOf(rng, { ...m.offerO, vs: m.vs, mast: m.mast, kinds: m.kinds });",
+    "new": "    const cards = egOfferOf(rng, { ...m.offerO, vs: m.vs, mast: m.mast, kinds: null });",
     "tests": [
       "test/net/eliteGates/egaudit4_legion_run.test.js"
     ],
@@ -472,8 +472,8 @@
   {
     "name": "EGA4L-shards-no-rank",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "rank: shardPicks > 0 ? 1 : 0,",
-    "new": "rank: 0, extra: shardPicks > 0 ? 1 : 0,",
+    "old": "      rank: shardPicks > 0 ? 1 : 0,",
+    "new": "      rank: 0,\n      extra: shardPicks > 0 ? 1 : 0,",
     "tests": [
       "test/net/eliteGates/egaudit4_legion_run.test.js"
     ],
@@ -482,8 +482,8 @@
   {
     "name": "EGA4L-mark-hunter-never-joins",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "const hm = cur?.hm ? 0 : egVOf(m?.vs, 'huntersmark')",
-    "new": "const hm = cur ? 0 : egVOf(m?.vs, 'huntersmark')",
+    "old": "  const hm = cur?.hm ? 0 : egVOf(m?.vs, 'huntersmark'),",
+    "new": "  const hm = cur ? 0 : egVOf(m?.vs, 'huntersmark'),",
     "tests": [
       "test/net/eliteGates/egaudit4_legion_run.test.js"
     ],
@@ -492,8 +492,8 @@
   {
     "name": "EGA4L-mark-spotter-never-joins",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "sp = !cur?.sp && m?.mast === EG_M_ID.spotter;",
-    "new": "sp = !cur && m?.mast === EG_M_ID.spotter;",
+    "old": "    sp = !cur?.sp && m?.mast === EG_M_ID.spotter;",
+    "new": "    sp = !cur && m?.mast === EG_M_ID.spotter;",
     "tests": [
       "test/net/eliteGates/egaudit4_legion_run.test.js"
     ],
@@ -502,8 +502,8 @@
   {
     "name": "EGA4L-mark-spotted-always",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "sp = !cur?.sp && m?.mast === EG_M_ID.spotter;",
-    "new": "sp = m?.mast === EG_M_ID.spotter;",
+    "old": "    sp = !cur?.sp && m?.mast === EG_M_ID.spotter;",
+    "new": "    sp = m?.mast === EG_M_ID.spotter;",
     "tests": [
       "test/net/eliteGates/egaudit4_legion_run.test.js"
     ],
@@ -512,8 +512,8 @@
   {
     "name": "EGA4L-steadfast-three",
     "file": "src/net/eliteGates/egVestige.js",
-    "old": "steadfast: Object.freeze({ ally: 4 }),",
-    "new": "steadfast: Object.freeze({ ally: 3 }),",
+    "old": "  steadfast: Object.freeze({ ally: 4 }),",
+    "new": "  steadfast: Object.freeze({ ally: 3 }),",
     "tests": [
       "test/net/eliteGates/egaudit4_legion_run.test.js"
     ],
@@ -542,8 +542,8 @@
   {
     "name": "EGA4L-acts-mastery-unread",
     "file": "src/net/eliteGates/egVestige.js",
-    "old": "EG_MASTERIES.filter((M) => M.id !== mast && egCardActs(M.key, n, kinds));",
-    "new": "EG_MASTERIES.filter((M) => M.id !== mast);",
+    "old": "    const pool = EG_MASTERIES.filter((M) => M.id !== mast && egCardActs(M.key, n, kinds));",
+    "new": "    const pool = EG_MASTERIES.filter((M) => M.id !== mast);",
     "tests": [
       "test/net/eliteGates/egaudit4_legion_run.test.js"
     ],

@@ -119,8 +119,8 @@
   {
     "name": "AUDIT EG V L1-4: Hearts Stilled by any lord's phase words",
     "file": "src/net/eliteGates/egFeats.js",
-    "old": "test: (s, F) => !(s.relit > 0) && (F?.bodies ?? []).some((b) => b.key === 'colossus' && (b.kneelUntil ?? 0) > 0) }),",
-    "new": "test: (s) => !(s.relit > 0) && (s.phase ?? 0) >= 2 }),",
+    "old": "    test: (s, F) => !(s.relit > 0) && (F?.bodies ?? []).some((b) => b.key === 'colossus' && (b.kneelUntil ?? 0) > 0),",
+    "new": "    test: (s) => !(s.relit > 0) && (s.phase ?? 0) >= 2,",
     "tests": [
       "test/net/eliteGates/egaudit5_b.test.js",
       "test/net/eliteGates/egeco_feats.test.js"
@@ -129,8 +129,8 @@
   {
     "name": "AUDIT EG V L1-5: No Ground Conceded by any object broken",
     "file": "src/net/eliteGates/egFeats.js",
-    "old": "test: (s, F) => (F?.mem?.broke?.banner ?? 0) >= 3 }),",
-    "new": "test: (s) => (s.broken ?? 0) >= 3 }),",
+    "old": "    test: (s, F) => (F?.mem?.broke?.banner ?? 0) >= 3,",
+    "new": "    test: (s) => (s.broken ?? 0) >= 3,",
     "tests": [
       "test/net/eliteGates/egaudit5_b.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "AUDIT EG V L1-6: Together within twice the window",
     "file": "src/net/eliteGates/egFeats.js",
-    "old": "Math.abs(T[0].fellAt - T[1].fellAt) <= EG_FEAT_TWINS_MS;",
-    "new": "Math.abs(T[0].fellAt - T[1].fellAt) <= EG_FEAT_TWINS_MS * 2;",
+    "old": "    T.length === 2 && T.every((b) => (b.fellAt ?? 0) > 0) && Math.abs(T[0].fellAt - T[1].fellAt) <= EG_FEAT_TWINS_MS",
+    "new": "    T.length === 2 && T.every((b) => (b.fellAt ?? 0) > 0) && Math.abs(T[0].fellAt - T[1].fellAt) <= EG_FEAT_TWINS_MS * 2",
     "tests": [
       "test/net/eliteGates/egaudit5_b.test.js",
       "test/net/eliteGates/egeco_feats.test.js"
@@ -247,8 +247,8 @@
   {
     "name": "AUDIT EG V L1-7: the screen's row facing unread",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "yaw: Number.isFinite(t[18]) ? t[18] : had?.yaw ?? 0 };",
-    "new": "yaw: had?.yaw ?? 0 };",
+    "old": "    yaw: Number.isFinite(t[18]) ? t[18] : (had?.yaw ?? 0),",
+    "new": "    yaw: had?.yaw ?? 0,",
     "tests": [
       "test/net/eliteGates/egaudit5_b.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "AUDIT EG V L1-7: the screen's walk facing unread",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "yaw: Number.isFinite(t[9]) ? t[9] : b.yaw,",
-    "new": "yaw: b.yaw,",
+    "old": "                yaw: Number.isFinite(t[9]) ? t[9] : b.yaw,",
+    "new": "                yaw: b.yaw,",
     "tests": [
       "test/net/eliteGates/egaudit5_b.test.js"
     ]
@@ -375,8 +375,8 @@
   {
     "name": "AUDIT EG V L1-10: held whatever empties the set",
     "file": "src/net/eliteGates/egFloor.js",
-    "old": "return !emptied(burns.length ? [...pending, { s: [], at: next.at }] : pending, px, pz, now, onFloor, burns);",
-    "new": "return true;",
+    "old": "  return !emptied(burns.length ? [...pending, { s: [], at: next.at }] : pending, px, pz, now, onFloor, burns);",
+    "new": "  return true;",
     "tests": [
       "test/net/eliteGates/egaudit5_b.test.js"
     ],
@@ -577,8 +577,8 @@
   {
     "name": "AUDIT EG V L1-18: the outline's lead unsaid",
     "file": "src/net/eliteGates/egShape.js",
-    "old": "  if (ol > 0) blow.ol = Math.min(EG_OUTLINE_MAX_MS, Math.round(ol));\n",
-    "new": "",
+    "old": "  if (ol > 0) blow.ol = Math.min(EG_OUTLINE_MAX_MS, Math.round(ol));\n  return blow;",
+    "new": "  return blow;",
     "tests": [
       "test/net/eliteGates/egaudit5_b.test.js",
       "test/net/eliteGates/egaudit5_b_client.test.js"

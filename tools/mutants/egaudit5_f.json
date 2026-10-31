@@ -2,8 +2,8 @@
   {
     "name": "EGA5F-law-table",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' }",
-    "new": "7: '2026-10-13', 9: '2026-10-16', 10: '2026-10-18' }",
+    "old": "  8: '2026-10-15',\n  9: '2026-10-16',",
+    "new": "  9: '2026-10-16',",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],
@@ -429,8 +429,8 @@
   {
     "name": "EGA5F-clock-piece-float",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "pieceAt(s, t, out, egLawSin);",
-    "new": "pieceAt(s, t, out, Math.sin);",
+    "old": "export const egPieceAtLaw = (s, t, out = { dx: 0, dz: 0, solid: true }) => pieceAt(s, t, out, egLawSin);",
+    "new": "export const egPieceAtLaw = (s, t, out = { dx: 0, dz: 0, solid: true }) => pieceAt(s, t, out, Math.sin);",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],
@@ -449,8 +449,8 @@
   {
     "name": "EGA5F-clock-hits-float",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "hits: (s, t, x, y, z) => pendHits(s, t, x, y, z, egLawSin)",
-    "new": "hits: (s, t, x, y, z) => pendHits(s, t, x, y, z, Math.sin)",
+    "old": "  hits: (s, t, x, y, z) => pendHits(s, t, x, y, z, egLawSin),",
+    "new": "  hits: (s, t, x, y, z) => pendHits(s, t, x, y, z, Math.sin),",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],
@@ -459,8 +459,8 @@
   {
     "name": "EGA5F-clock-lerp-dropped",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "return (a + (b - a) * f) / 1e6;",
-    "new": "return a / 1e6;",
+    "old": "  return (a + (b - a) * f) / 1e6;",
+    "new": "  return a / 1e6;",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],
@@ -469,8 +469,8 @@
   {
     "name": "EGA5F-clock-hypot",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "if (dx * dx + dz * dz > reach * reach) return false;",
-    "new": "if (Math.hypot(dx, dz) > reach) return false;",
+    "old": "  if (dx * dx + dz * dz > reach * reach) return false; // AUDIT EG V (lane5 #2): squares - IEEE's own rounding, never Math.hypot's",
+    "new": "  if (Math.hypot(dx, dz) > reach) return false; // AUDIT EG V (lane5 #2): squares - IEEE's own rounding, never Math.hypot's",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],
@@ -479,8 +479,8 @@
   {
     "name": "EGA5F-builds-float",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "((v ?? 0) >= EG_SOLVE_FLIGHT_LAW ? [LAW10_SPAN_BUILD, LAW10_FAST_BUILD] : (v ?? 0) >= EG_SOLVE_LAW ? [LAW_SPAN_BUILD, LAW_FAST_BUILD] : [SPAN_BUILD, FAST_BUILD])",
-    "new": "([SPAN_BUILD, FAST_BUILD])",
+    "old": "const buildsOf = (v) =>\n  (v ?? 0) >= EG_SOLVE_FLIGHT_LAW\n    ? [LAW10_SPAN_BUILD, LAW10_FAST_BUILD]\n    : (v ?? 0) >= EG_SOLVE_LAW\n      ? [LAW_SPAN_BUILD, LAW_FAST_BUILD]\n      : [SPAN_BUILD, FAST_BUILD];",
+    "new": "const buildsOf = (v) => [SPAN_BUILD, FAST_BUILD];",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],
@@ -489,8 +489,8 @@
   {
     "name": "EGA5F-builds-law-seven",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": ": (v ?? 0) >= EG_SOLVE_LAW ? [LAW_SPAN_BUILD, LAW_FAST_BUILD] :",
-    "new": ": (v ?? 0) >= 7 ? [LAW_SPAN_BUILD, LAW_FAST_BUILD] :",
+    "old": "    : (v ?? 0) >= EG_SOLVE_LAW",
+    "new": "    : (v ?? 0) >= 7",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],
@@ -499,8 +499,8 @@
   {
     "name": "EGA5F-margin-dropped",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "const k = law8 && (EG_SET_KITS.includes(pair.a?.kit) || EG_SET_KITS.includes(pair.b?.kit)) ? EG_SET_MARGIN : 1;",
-    "new": "const k = 1;",
+    "old": "    const k = law8 && (EG_SET_KITS.includes(pair.a?.kit) || EG_SET_KITS.includes(pair.b?.kit)) ? EG_SET_MARGIN : 1;",
+    "new": "    const k = 1;",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],
@@ -519,8 +519,8 @@
   {
     "name": "EGA5F-margin-window",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "if (w.worst12 < EG_WINDOW_MIN * k) why.push(",
-    "new": "if (w.worst12 < EG_WINDOW_MIN) why.push(",
+    "old": "    if (w.worst12 < EG_WINDOW_MIN * k)",
+    "new": "    if (w.worst12 < EG_WINDOW_MIN)",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],
@@ -529,8 +529,8 @@
   {
     "name": "EGA5F-margin-wait",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "else if (w.wait > EG_WAIT_MAX / k) why.push(",
-    "new": "else if (w.wait > EG_WAIT_MAX) why.push(",
+    "old": "    else if (w.wait > EG_WAIT_MAX / k)",
+    "new": "    else if (w.wait > EG_WAIT_MAX)",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],
@@ -539,8 +539,8 @@
   {
     "name": "EGA5F-tube-margin-dropped",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "if (spec.tube && EG_SPAN_RUN_MPS < EG_SET_MARGIN * spec.tube.mps) why.push(",
-    "new": "if (false) why.push(",
+    "old": "    if (spec.tube && EG_SPAN_RUN_MPS < EG_SET_MARGIN * spec.tube.mps)\n      why.push(`the Collapsing Tube falls at ${spec.tube.mps} m/s, past the span build's run over its margin`);",
+    "new": "    if (false) why.push(`the Collapsing Tube falls at ${spec.tube.mps} m/s, past the span build's run over its margin`);",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],
@@ -549,8 +549,8 @@
   {
     "name": "EGA5F-forge-nowhere",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "if (f.play === 'forgeline' && !egForgeLineClear(spec, f, B)) why.push(",
-    "new": "if (false) why.push(",
+    "old": "      if (f.play === 'forgeline' && !egForgeLineClear(spec, f, B))\n        why.push(`the Forge Line at ${f.z0} m: no crossing clear of its hammers from some start`);",
+    "new": "      if (false) why.push(`the Forge Line at ${f.z0} m: no crossing clear of its hammers from some start`);",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],
@@ -559,8 +559,8 @@
   {
     "name": "EGA5F-hammer-never",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "return u >= EG_HAMMER_LINE.period - EG_HAMMER_LINE.live; };",
-    "new": "return false; };",
+    "old": "  return u >= EG_HAMMER_LINE.period - EG_HAMMER_LINE.live;",
+    "new": "  return false;",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],
@@ -569,8 +569,8 @@
   {
     "name": "EGA5F-hammer-under",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "if (!on[k][i] || !clear(k, i)) continue;",
-    "new": "if (!on[k][i]) continue;",
+    "old": "        if (!on[k][i] || !clear(k, i)) continue; // a body under a live hammer is struck: it goes no further, stayed or landed",
+    "new": "        if (!on[k][i]) continue; // a body under a live hammer is struck: it goes no further, stayed or landed",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],
@@ -579,8 +579,8 @@
   {
     "name": "EGA5F-by-dropped",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "yTo = (p) => (p.b ? p.b.y : p.by ?? (p.a ? p.a.y : 0))",
-    "new": "yTo = (p) => (p.b ? p.b.y : (p.a ? p.a.y : 0))",
+    "old": "    yTo = (p) => (p.b ? p.b.y : (p.by ?? (p.a ? p.a.y : 0)));",
+    "new": "    yTo = (p) => (p.b ? p.b.y : p.a ? p.a.y : 0);",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],
@@ -590,8 +590,8 @@
   {
     "name": "EGA5F-by-unpaired",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "...(s.ya != null ? { by: s.ya } : {})",
-    "new": "",
+    "old": "    if (!meets(s, next))\n      out.push({ a: s, b: null, edge: s.z + s.d / 2 + (s.after ?? 0), ...(s.ya != null ? { by: s.ya } : {}) }); // the still ground's own edge, the real gap on (AUDIT EG V - spec law 8: at its own height, `ya`)",
+    "new": "    if (!meets(s, next)) out.push({ a: s, b: null, edge: s.z + s.d / 2 + (s.after ?? 0) }); // the still ground's own edge, the real gap on (AUDIT EG V - spec law 8: at its own height, `ya`)",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],
@@ -600,8 +600,8 @@
   {
     "name": "EGA5F-shaft-law-dropped",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "egRoadCross({ v: spec.v, steps:",
-    "new": "egRoadCross({ steps:",
+    "old": "          v: spec.v,\n          steps: (spec.steps ?? []).filter(",
+    "new": "          steps: (spec.steps ?? []).filter(",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],
@@ -610,8 +610,8 @@
   {
     "name": "EGA5F-forge-gap-old",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "const g = (o.law ?? 0) >= EG_SOLVE_LAW ? EG_GAP_MIN_CM : 320;",
-    "new": "const g = 320;",
+    "old": "  const g = (o.law ?? 0) >= EG_SOLVE_LAW ? EG_GAP_MIN_CM : 320;",
+    "new": "  const g = 320;",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],
@@ -620,8 +620,8 @@
   {
     "name": "EGA5F-eclipse-kept",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "&& !egEclipseHolds(R + EG_BALCONY_OUT_CM + EG_BALCONY_R_CM)) play = 'arch';",
-    "new": "&& false) play = 'arch';",
+    "old": "  if (\n    kit === 'eclipse' &&\n    play === 'balcony' &&\n    (o.law ?? 0) >= EG_SOLVE_LAW &&\n    !egEclipseHolds(R + EG_BALCONY_OUT_CM + EG_BALCONY_R_CM)\n  )\n    play = 'arch';",
+    "new": "  if (kit === 'eclipse' && play === 'balcony' && (o.law ?? 0) >= EG_SOLVE_LAW && false) play = 'arch';",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],
@@ -630,8 +630,8 @@
   {
     "name": "EGA5F-eclipse-loose",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "return D * D + ring * ring - D * ring <= reach * reach;",
-    "new": "return D * D + ring * ring - D * ring <= 2 * reach * reach;",
+    "old": "  return D * D + ring * ring - D * ring <= reach * reach;",
+    "new": "  return D * D + ring * ring - D * ring <= 2 * reach * reach;",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],
@@ -640,8 +640,8 @@
   {
     "name": "EGA5F-eclipse-law-seven",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "(o.law ?? 0) >= EG_SOLVE_LAW && !egEclipseHolds",
-    "new": "!egEclipseHolds",
+    "old": "  if (\n    kit === 'eclipse' &&\n    play === 'balcony' &&\n    (o.law ?? 0) >= EG_SOLVE_LAW &&\n    !egEclipseHolds(R + EG_BALCONY_OUT_CM + EG_BALCONY_R_CM)\n  )",
+    "new": "  if (kit === 'eclipse' && play === 'balcony' && !egEclipseHolds(R + EG_BALCONY_OUT_CM + EG_BALCONY_R_CM))",
     "tests": [
       "test/net/eliteGates/egaudit5_f.test.js"
     ],

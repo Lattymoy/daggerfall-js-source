@@ -301,7 +301,7 @@ alone. Left: the spoils are thrown when the account service answers the claim, n
 ### Item 5, the rest's short timer: the record's windows - and a key clash, the owner's call
 
 Measured on the real director, solo: the rest opens 6 s after the fall (EG_RD_WINDOW_MS) with the Vestige offer, the
-decrees, Ready and the respite together; each question was open 10 s (`egRun.js:"export const EG_ASK_MS = 30_000;"`, 30 s since FIELD BUGS 2026-10-25 ASK-LONGER);
+decrees, Ready and the respite together; each question was open 10 s (`egRun.js:"export const EG_ASK_MS"`, 30 s since FIELD BUGS 2026-10-25 ASK-LONGER);
 a decree no one votes takes the first shown, the offer's first card is taken at the next circle (96 s), and one yes to
 Ready ends a solo rest about 12 s later. All of it is the record's (16.2-16.4, 14, 15).
 

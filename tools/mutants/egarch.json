@@ -2,8 +2,8 @@
   {
     "name": "EGF-the-season-ignored-for-half-the-best",
     "file": "src/net/eliteGates/egStartLaw.js",
-    "old": "const deeper = taken.length ? taken : (ok(",
-    "new": "const deeper = false ? taken : (ok(",
+    "old": "  const deeper = taken.length ? taken : ok(Math.floor((Number(best) || 0) / 2)) ? [Math.floor(best / 2)] : [];",
+    "new": "  const deeper = false ? taken : ok(Math.floor((Number(best) || 0) / 2)) ? [Math.floor(best / 2)] : [];",
     "tests": [
       "test/net/eliteGates/egarch_law.test.js",
       "test/net/eliteGates/egarch_service.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "EGF-hall-1-dropped",
     "file": "src/net/eliteGates/egStartLaw.js",
-    "old": "return [...deeper.sort((a, b) => b - a), 0];",
-    "new": "return [...deeper.sort((a, b) => b - a)];",
+    "old": "  return [...deeper.sort((a, b) => b - a), 0];",
+    "new": "  return [...deeper.sort((a, b) => b - a)];",
     "tests": [
       "test/net/eliteGates/egarch_law.test.js",
       "test/net/eliteGates/egarch_service.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "EGF-shallowest-first",
     "file": "src/net/eliteGates/egStartLaw.js",
-    "old": "return [...deeper.sort((a, b) => b - a), 0];",
-    "new": "return [...deeper.sort((a, b) => a - b), 0];",
+    "old": "  return [...deeper.sort((a, b) => b - a), 0];",
+    "new": "  return [...deeper.sort((a, b) => a - b), 0];",
     "tests": [
       "test/net/eliteGates/egarch_law.test.js",
       "test/net/eliteGates/egarch_service.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "EGF-a-carry",
     "file": "src/net/eliteGates/egStartLaw.js",
-    "old": "Number.isSafeInteger(ew) && ew > 0 && starts.includes(ew));",
-    "new": "Number.isSafeInteger(ew) && ew > 0);",
+    "old": "export const egMayStart = (starts, ew) =>\n  ew === 0 || (Array.isArray(starts) && Number.isSafeInteger(ew) && ew > 0 && starts.includes(ew));",
+    "new": "export const egMayStart = (starts, ew) => ew === 0 || (Array.isArray(starts) && Number.isSafeInteger(ew) && ew > 0);",
     "tests": [
       "test/net/eliteGates/egarch_law.test.js",
       "test/net/eliteGates/egarch_service.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "EGF-two-of-a-family-wagered",
     "file": "src/net/eliteGates/egStartLaw.js",
-    "old": "if (!fam || fams.has(fam)) return null;",
-    "new": "if (!fam) return null;",
+    "old": "    if (!fam || fams.has(fam)) return null;",
+    "new": "    if (!fam) return null;",
     "tests": [
       "test/net/eliteGates/egarch_law.test.js"
     ]
@@ -51,8 +51,8 @@
   {
     "name": "EGF-a-fourth-wagered",
     "file": "src/net/eliteGates/egStartLaw.js",
-    "old": "if (!Array.isArray(ids) || ids.length > EG_WAGER_MAX) return null;",
-    "new": "if (!Array.isArray(ids)) return null;",
+    "old": "  if (!Array.isArray(ids) || ids.length > EG_WAGER_MAX) return null;",
+    "new": "  if (!Array.isArray(ids)) return null;",
     "tests": [
       "test/net/eliteGates/egarch_law.test.js"
     ]
@@ -280,8 +280,8 @@
   {
     "name": "EGF-the-site-left-out-of-the-signed-bytes",
     "file": "src/net/eliteGates/egCallSig.js",
-    "old": "|${s.px}|${s.py}|${s.x}|${s.y}|${s.z}|${s.yaw}`;",
-    "new": "|${s.px}|${s.py}|${s.yaw}`;",
+    "old": "  return `${EG_CALL_SIG_V}|${c.b}|${c.os}|${c.o}|${c.op}|${c.ew ?? 0}|${s.px}|${s.py}|${s.x}|${s.y}|${s.z}|${s.yaw}`;",
+    "new": "  return `${EG_CALL_SIG_V}|${c.b}|${c.os}|${c.o}|${c.op}|${c.ew ?? 0}|${s.px}|${s.py}|${s.yaw}`;",
     "tests": [
       "test/net/eliteGates/egarch_law.test.js"
     ]
@@ -289,7 +289,7 @@
   {
     "name": "EGF-any-signature-taken",
     "file": "src/net/eliteGates/egCallSig.js",
-    "old": "  try { return await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(egCallBytes(c))); } catch { return false; }",
+    "old": "  try {\n    return await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(egCallBytes(c)));\n  } catch {\n    return false;\n  }",
     "new": "  return true;",
     "tests": [
       "test/net/eliteGates/egarch_law.test.js",

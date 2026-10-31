@@ -2,8 +2,8 @@
   {
     "name": "EGZ-a-court-lays-no-chart",
     "file": "src/net/eliteGates/egTally.js",
-    "old": "if (F && kind === 'court') F.tl = {};",
-    "new": "if (F && kind !== 'court') F.tl = {};",
+    "old": "  if (F && kind === 'court') F.tl = {};",
+    "new": "  if (F && kind !== 'court') F.tl = {};",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "EGZ-a-blow-off-the-breach",
     "file": "src/net/eliteGates/egTally.js",
-    "old": "m.dt = (m.dt ?? 0) + got;",
-    "new": "m.dt = (m.dt ?? 0);",
+    "old": "  m.dt = (m.dt ?? 0) + got;",
+    "new": "  m.dt = m.dt ?? 0;",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EGZ-a-court-blow-uncounted",
     "file": "src/net/eliteGates/egTally.js",
-    "old": "  r[T_D] += got;\n",
-    "new": "  r[T_D] += 0;\n",
+    "old": "  r[T_D] += got;",
+    "new": "  r[T_D] += 0;",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EGZ-the-lords-part-every-blow",
     "file": "src/net/eliteGates/egTally.js",
-    "old": "if (lord) r[T_L] += got;",
-    "new": "r[T_L] += got;",
+    "old": "  if (lord) r[T_L] += got;",
+    "new": "  r[T_L] += got;",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EGZ-blows-uncounted",
     "file": "src/net/eliteGates/egTally.js",
-    "old": "r[T_H] += 1;",
-    "new": "r[T_H] += 0;",
+    "old": "  r[T_H] += 1;",
+    "new": "  r[T_H] += 0;",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "EGZ-the-heaviest-the-last",
     "file": "src/net/eliteGates/egTally.js",
-    "old": "r[T_B] = Math.max(r[T_B], got);",
-    "new": "r[T_B] = got;",
+    "old": "  r[T_B] = Math.max(r[T_B], got);",
+    "new": "  r[T_B] = got;",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "EGZ-a-fall-uncounted",
     "file": "src/net/eliteGates/egTally.js",
-    "old": "if (F?.tl) rowOf(F, sub)[T_F] += 1;",
-    "new": "if (F?.tl) rowOf(F, sub)[T_F] += 0;",
+    "old": "  if (F?.tl) rowOf(F, sub)[T_F] += 1;",
+    "new": "  if (F?.tl) rowOf(F, sub)[T_F] += 0;",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "EGZ-a-forsaken-heard",
     "file": "src/net/eliteGates/egTally.js",
-    "old": "if (!m || !m.in || m.forsaken || B.end || !Array.isArray(pairs)) return 0;",
-    "new": "if (!m || !m.in || B.end || !Array.isArray(pairs)) return 0;",
+    "old": "  if (!m || !m.in || m.forsaken || B.end || !Array.isArray(pairs)) return 0;",
+    "new": "  if (!m || !m.in || B.end || !Array.isArray(pairs)) return 0;",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "EGZ-the-bucket-deeper",
     "file": "src/net/eliteGates/egTally.js",
-    "old": "depth = HEAL_DEPTH_X * ref;",
-    "new": "depth = (HEAL_DEPTH_X + 1) * ref;",
+    "old": "    depth = HEAL_DEPTH_X * ref;",
+    "new": "    depth = (HEAL_DEPTH_X + 1) * ref;",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "EGZ-the-refill-a-second",
     "file": "src/net/eliteGates/egTally.js",
-    "old": "* (ref / HEAL_REFILL_S));",
-    "new": "* (ref / 1));",
+    "old": "      (Math.max(0, now - (Number.isFinite(m.hbAt) ? m.hbAt : now)) / 1000) * (ref / HEAL_REFILL_S),",
+    "new": "      (Math.max(0, now - (Number.isFinite(m.hbAt) ? m.hbAt : now)) / 1000) * (ref / 1),",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "EGZ-a-self-heal-credited",
     "file": "src/net/eliteGates/egTally.js",
-    "old": "if (!q || !q.in || by === sub ||",
-    "new": "if (!q || !q.in ||",
+    "old": "    if (!q || !q.in || by === sub || !Number.isFinite(n) || !(n > 0)) continue;",
+    "new": "    if (!q || !q.in || !Number.isFinite(n) || !(n > 0)) continue;",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "EGZ-the-bucket-unspent",
     "file": "src/net/eliteGates/egTally.js",
-    "old": "    m.hb -= got;\n",
-    "new": "    m.hb -= 0;\n",
+    "old": "    m.hb -= got;",
+    "new": "    m.hb -= 0;",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "EGZ-the-bucket-unbounded",
     "file": "src/net/eliteGates/egTally.js",
-    "old": "const got = Math.max(0, Math.min(n, m.hb));",
-    "new": "const got = Math.max(0, n);",
+    "old": "    const got = Math.max(0, Math.min(n, m.hb));",
+    "new": "    const got = Math.max(0, n);",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "EGZ-a-heal-uncredited",
     "file": "src/net/eliteGates/egTally.js",
-    "old": "q.ht = (q.ht ?? 0) + got;",
-    "new": "q.ht = (q.ht ?? 0);",
+    "old": "    q.ht = (q.ht ?? 0) + got;",
+    "new": "    q.ht = q.ht ?? 0;",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "EGZ-a-heal-off-the-chart",
     "file": "src/net/eliteGates/egTally.js",
-    "old": "if (B.F?.tl) rowOf(B.F, by)[T_HL] += got;",
-    "new": "if (B.F?.tl) rowOf(B.F, by)[T_HL] += 0;",
+    "old": "    if (B.F?.tl) rowOf(B.F, by)[T_HL] += got;",
+    "new": "    if (B.F?.tl) rowOf(B.F, by)[T_HL] += 0;",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "EGZ-a-stander-off-the-chart",
     "file": "src/net/eliteGates/egTally.js",
-    "old": "(F.tl[s] || (B.mem[s].in && B.mem[s].alive && !B.mem[s].home))",
-    "new": "F.tl[s]",
+    "old": "  const subs = order.filter((s) => B.mem[s] && (F.tl[s] || (B.mem[s].in && B.mem[s].alive && !B.mem[s].home)));",
+    "new": "  const subs = order.filter((s) => B.mem[s] && F.tl[s]);",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "EGZ-the-chart-unsorted",
     "file": "src/net/eliteGates/egTally.js",
-    "old": ".sort((a, b) => b[2] - a[2] || order.indexOf(a[0]) - order.indexOf(b[0]))",
-    "new": ".sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]))",
+    "old": "    .sort((a, b) => b[2] - a[2] || order.indexOf(a[0]) - order.indexOf(b[0]))",
+    "new": "    .sort((a, b) => order.indexOf(a[0]) - order.indexOf(b[0]))",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "EGZ-the-chart-healed-dropped",
     "file": "src/net/eliteGates/egTally.js",
-    "old": "r[T_F] | 0, whole(r[T_HL])];",
-    "new": "r[T_F] | 0, 0];",
+    "old": "      return [s, Math.max(1, B.mem[s].lv | 0), d, whole(r[T_L]), r[T_H] | 0, whole(r[T_B]), r[T_F] | 0, whole(r[T_HL])];",
+    "new": "      return [s, Math.max(1, B.mem[s].lv | 0), d, whole(r[T_L]), r[T_H] | 0, whole(r[T_B]), r[T_F] | 0, 0];",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "EGZ-the-tallies-healed-dropped",
     "file": "src/net/eliteGates/egTally.js",
-    "old": "whole(B.mem[c.sub].dt), whole(B.mem[c.sub].ht)]",
-    "new": "whole(B.mem[c.sub].dt), 0]",
+    "old": "    .map((c) => [c.sub, whole(B.mem[c.sub].dt), whole(B.mem[c.sub].ht)]);",
+    "new": "    .map((c) => [c.sub, whole(B.mem[c.sub].dt), 0]);",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "EGZ-the-tallies-dealt-dropped",
     "file": "src/net/eliteGates/egTally.js",
-    "old": "[c.sub, whole(B.mem[c.sub].dt),",
-    "new": "[c.sub, 0,",
+    "old": "    .map((c) => [c.sub, whole(B.mem[c.sub].dt), whole(B.mem[c.sub].ht)]);",
+    "new": "    .map((c) => [c.sub, 0, whole(B.mem[c.sub].ht)]);",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "EGZ-link-the-state-drops-its-tallies",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "        ds: w.ds ?? [],   // EG-ZF",
-    "new": "        ds: [],   // EG-ZF",
+    "old": "        ds: w.ds ?? [], // EG-ZF",
+    "new": "        ds: [], // EG-ZF",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "EGZ-link-the-redoubt-drops-its-chart",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "chart: w.dm ? { at: w.at, h: w.h, dm: w.dm } : s.chart,",
-    "new": "chart: s.chart,",
+    "old": "        chart: w.dm ? { at: w.at, h: w.h, dm: w.dm } : s.chart,",
+    "new": "        chart: s.chart,",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "EGZ-link-the-end-drops-its-chart",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "chart: w.dm ? { at: w.at, h: s.h, dm: w.dm } : s.chart,",
-    "new": "chart: s.chart,",
+    "old": "        chart: w.dm ? { at: w.at, h: s.h, dm: w.dm } : s.chart,",
+    "new": "        chart: s.chart,",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "EGZ-link-the-end-drops-its-tallies",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "ds: w.ds?.length ? w.ds : s.ds,",
-    "new": "ds: s.ds,",
+    "old": "        ds: w.ds?.length ? w.ds : s.ds,",
+    "new": "        ds: s.ds,",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]
@@ -830,8 +830,8 @@
   {
     "name": "EGZ-svc-the-heaviest-unrounded",
     "file": "src/net/eliteGates/egTally.js",
-    "old": "r[T_H] | 0, whole(r[T_B]), r[T_F] | 0",
-    "new": "r[T_H] | 0, r[T_B], r[T_F] | 0",
+    "old": "      return [s, Math.max(1, B.mem[s].lv | 0), d, whole(r[T_L]), r[T_H] | 0, whole(r[T_B]), r[T_F] | 0, whole(r[T_HL])];",
+    "new": "      return [s, Math.max(1, B.mem[s].lv | 0), d, whole(r[T_L]), r[T_H] | 0, r[T_B], r[T_F] | 0, whole(r[T_HL])];",
     "tests": [
       "test/net/eliteGates/egz_recap.test.js"
     ]

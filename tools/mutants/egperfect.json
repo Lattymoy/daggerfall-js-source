@@ -138,8 +138,8 @@
   {
     "name": "EGPERFECT-the-old-pendulum-band",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "y < s.y + 2 * EG_PEND_HALF && y + h > s.y && pendHits(s, t, x, s.y, z, Math.sin)",
-    "new": "pendHits(s, t, x, y, z, Math.sin)",
+    "old": "export const egPendHits = (s, t, x, y, z, h = EG_PEND_BODY_H) =>\n  y < s.y + 2 * EG_PEND_HALF && y + h > s.y && pendHits(s, t, x, s.y, z, Math.sin);",
+    "new": "export const egPendHits = (s, t, x, y, z, h = EG_PEND_BODY_H) => pendHits(s, t, x, y, z, Math.sin);",
     "tests": [
       "test/net/eliteGates/egperfect_pend.test.js"
     ]

@@ -90,8 +90,8 @@
   {
     "name": "EGA5H-mastery-absolute",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "m.offerO = { lean, w: nth, valk,",
-    "new": "m.offerO = { lean, w, valk,",
+    "old": "      w: nth,",
+    "new": "      w,",
     "tests": [
       "test/net/eliteGates/egaudit5_h.test.js",
       "test/net/eliteGates/egaudit5_h_client.test.js"
@@ -101,7 +101,7 @@
   {
     "name": "EGA5H-burns-ignored",
     "file": "src/net/eliteGates/egFloor.js",
-    "old": "export const egBurnsIn = (zones, now, until, y = NaN) => (zones ?? []).filter((z) => z.kind === 'burn' && z.from <= until && z.until > now && onZoneFloor(z, y));",
+    "old": "export const egBurnsIn = (zones, now, until, y = NaN) =>\n  (zones ?? []).filter((z) => z.kind === 'burn' && z.from <= until && z.until > now && onZoneFloor(z, y));",
     "new": "export const egBurnsIn = () => [];",
     "tests": [
       "test/net/eliteGates/egaudit5_h.test.js",
@@ -112,8 +112,8 @@
   {
     "name": "EGA5H-burn-lit-unread",
     "file": "src/net/eliteGates/egFloor.js",
-    "old": "|| lit.some((z) => egInShape(z.s, px + i * C, pz + j * C))) set[q] = 0;",
-    "new": ") set[q] = 0;",
+    "old": "        if (egInBlow(b, px + i * C, pz + j * C) || lit.some((z) => egInShape(z.s, px + i * C, pz + j * C))) set[q] = 0;",
+    "new": "        if (egInBlow(b, px + i * C, pz + j * C)) set[q] = 0;",
     "tests": [
       "test/net/eliteGates/egaudit5_h.test.js",
       "test/net/eliteGates/egaudit5_h_client.test.js"

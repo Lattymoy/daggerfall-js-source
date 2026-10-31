@@ -299,8 +299,8 @@
   {
     "name": "EGINT-the-vents-out-of-the-set",
     "file": "src/net/eliteGates/egFloor.js",
-    "old": "        if (at > now && at >= wokeAt && egVentAt(v, wokeAt, at).st === 'fire') out.push(",
-    "new": "        if (false) out.push(",
+    "old": "        if (at > now && at >= wokeAt && egVentAt(v, wokeAt, at).st === 'fire')\n          out.push({ s: [ventStamp(v)], at, sp: EG_VENT_FIRE_MS, ch: 0, o: 0, i: 0 });",
+    "new": "        if (false) out.push({ s: [ventStamp(v)], at, sp: EG_VENT_FIRE_MS, ch: 0, o: 0, i: 0 });",
     "tests": [
       "test/net/eliteGates/egint_relay.test.js"
     ]
@@ -508,8 +508,8 @@
   {
     "name": "EGINT-the-untell-ignored",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "    case 'untell': return { ...f, told: (f.told ?? []).filter((b) => b.i !== w.i) };",
-    "new": "    case 'untell': return f;",
+    "old": "      return { ...f, told: (f.told ?? []).filter((b) => b.i !== w.i) }; // EG-H1: a told blow the union floor held - no ghost on the floor",
+    "new": "      return f; // EG-H1: a told blow the union floor held - no ghost on the floor",
     "tests": [
       "test/net/eliteGates/egint_client.test.js"
     ]
@@ -517,8 +517,8 @@
   {
     "name": "EGINT-the-tell-never-folded",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "    case 'tell': return { ...f, told: [...(f.told ?? []).filter((b) => b.i !== w.i && now <= b.at + 1500), { ...w, heard: now }].slice(-16) };",
-    "new": "    case 'tell': return f;",
+    "old": "      return {\n        ...f,\n        told: [...(f.told ?? []).filter((b) => b.i !== w.i && now <= b.at + 1500), { ...w, heard: now }].slice(-16),\n      }; // EG-H1: Watchfire's early outline",
+    "new": "      return f; // EG-H1: Watchfire's early outline",
     "tests": [
       "test/net/eliteGates/egint_client.test.js"
     ]

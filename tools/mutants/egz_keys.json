@@ -11,8 +11,8 @@
   {
     "name": "EGZA-rcfold-expired-kept",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "!(Number.isSafeInteger(x.e) && x.e > nowS) || (!x.spent",
-    "new": "!(Number.isSafeInteger(x.e)) || (!x.spent",
+    "old": "    if (\n      !x ||\n      typeof x.id !== 'string' ||\n      !(Number.isSafeInteger(x.e) && x.e > nowS) ||\n      (!x.spent && typeof x.r !== 'string')\n    )\n      continue;",
+    "new": "    if (!x || typeof x.id !== 'string' || !Number.isSafeInteger(x.e) || (!x.spent && typeof x.r !== 'string')) continue;",
     "tests": [
       "test/net/eliteGates/egz_keys.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EGZA-rcfold-unbounded",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "  const all = [...by.values()], held = all.filter((x) => !x.spent).slice(-EG_RC_KEEP), spent = all.filter((x) => x.spent).slice(-EG_RC_KEEP);",
-    "new": "  const all = [...by.values()], held = all.filter((x) => !x.spent), spent = all.filter((x) => x.spent);",
+    "old": "    held = all.filter((x) => !x.spent).slice(-EG_RC_KEEP),\n    spent = all.filter((x) => x.spent).slice(-EG_RC_KEEP);",
+    "new": "    held = all.filter((x) => !x.spent),\n    spent = all.filter((x) => x.spent);",
     "tests": [
       "test/net/eliteGates/egz_keys.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EGZA-rclive-spent-handed",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "filter((x) => x && !x.spent && typeof x.r === 'string' && x.e > nowS)",
-    "new": "filter((x) => x && typeof x.r === 'string' && x.e > nowS)",
+    "old": "  (Array.isArray(kept) ? kept : [])\n    .filter((x) => x && !x.spent && typeof x.r === 'string' && x.e > nowS)\n    .map((x) => x.r);",
+    "new": "  (Array.isArray(kept) ? kept : []).filter((x) => x && typeof x.r === 'string' && x.e > nowS).map((x) => x.r);",
     "tests": [
       "test/net/eliteGates/egz_keys.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EGZA-voidable-called",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "!!B && !B.end && !B.called && !(B.wk > 0)",
-    "new": "!!B && !B.end && !(B.wk > 0)",
+    "old": "export const egVoidable = (B) =>\n  !!B && !B.end && !B.called && !(B.wk > 0) && !Object.values(B.mem ?? {}).some((m) => m?.in);",
+    "new": "export const egVoidable = (B) => !!B && !B.end && !(B.wk > 0) && !Object.values(B.mem ?? {}).some((m) => m?.in);",
     "tests": [
       "test/net/eliteGates/egz_keys.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "EGZA-voidable-woken",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "!B.called && !(B.wk > 0) && !Object",
-    "new": "!B.called && !Object",
+    "old": "export const egVoidable = (B) =>\n  !!B && !B.end && !B.called && !(B.wk > 0) && !Object.values(B.mem ?? {}).some((m) => m?.in);",
+    "new": "export const egVoidable = (B) => !!B && !B.end && !B.called && !Object.values(B.mem ?? {}).some((m) => m?.in);",
     "tests": [
       "test/net/eliteGates/egz_keys.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "EGZA-voidable-entered",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "!Object.values(B.mem ?? {}).some((m) => m?.in);",
-    "new": "true;",
+    "old": "export const egVoidable = (B) =>\n  !!B && !B.end && !B.called && !(B.wk > 0) && !Object.values(B.mem ?? {}).some((m) => m?.in);",
+    "new": "export const egVoidable = (B) => !!B && !B.end && !B.called && !(B.wk > 0) && true;",
     "tests": [
       "test/net/eliteGates/egz_keys.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "EGZA-force-unread",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "if (!egLawKnown(B.egv) || egForceVoided(B, voidBefore)) return 'void';",
-    "new": "if (!egLawKnown(B.egv)) return 'void';",
+    "old": "  if (!egLawKnown(B.egv) || egForceVoided(B, voidBefore)) return 'void'; // EG-ZA: and THE FORCE VOID - a breach live at a `force` deploy's stamp",
+    "new": "  if (!egLawKnown(B.egv)) return 'void'; // EG-ZA: and THE FORCE VOID - a breach live at a `force` deploy's stamp",
     "tests": [
       "test/net/eliteGates/egz_keys.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "EGZA-force-every-breach",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "before > 0 && !!B && !B.end && B.op < before;",
-    "new": "before > 0 && !!B && !B.end;",
+    "old": "  Number.isSafeInteger(before) && before > 0 && !!B && !B.end && B.op < before;",
+    "new": "  Number.isSafeInteger(before) && before > 0 && !!B && !B.end;",
     "tests": [
       "test/net/eliteGates/egz_keys.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "EGZA-tick-closing-foe-unseen",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "(B.sg === 'closing' && (B.F?.bodies",
-    "new": "(B.sg === 'nope' && (B.F?.bodies",
+    "old": "    (B.sg === 'closing' &&",
+    "new": "    (B.sg === 'nope' &&",
     "tests": [
       "test/net/eliteGates/egz_keys.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "EGZA-td-on-redoubt",
     "file": "src/net/eliteGates/egReceipt.js",
-    "old": "(c.q !== 'x' || !int(c.td, 0, 7 * 24 * 3600))",
-    "new": "(!int(c.td, 0, 7 * 24 * 3600))",
+    "old": "  if (c.td !== undefined && (c.q !== 'x' || !int(c.td, 0, 7 * 24 * 3600))) return false;",
+    "new": "  if (c.td !== undefined && !int(c.td, 0, 7 * 24 * 3600)) return false;",
     "tests": [
       "test/net/eliteGates/egz_keys.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "EGZA-share-unbounded",
     "file": "src/net/eliteGates/egReceipt.js",
-    "old": "!int(c.sh, 0, EG_SHARE_WHOLE)",
-    "new": "!int(c.sh, -1e9, 1e9)",
+    "old": "  if (c.sh !== undefined && (c.q !== 'w' || !int(c.sh, 0, EG_SHARE_WHOLE))) return false;",
+    "new": "  if (c.sh !== undefined && (c.q !== 'w' || !int(c.sh, -1e9, 1e9))) return false;",
     "tests": [
       "test/net/eliteGates/egz_keys.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "EGZA-measures-unvalidated",
     "file": "src/net/eliteGates/egReceipt.js",
-    "old": "(c.q !== 'w' || !egMeasuresValid(c.m))",
-    "new": "(c.q !== 'w')",
+    "old": "  if (c.m !== undefined && (c.q !== 'w' || !egMeasuresValid(c.m))) return false;",
+    "new": "  if (c.m !== undefined && c.q !== 'w') return false;",
     "tests": [
       "test/net/eliteGates/egz_keys.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "EGZA-co-tag-unsorted",
     "file": "src/net/eliteGates/egReceipt.js",
-    "old": "[...subs].map(String).sort().join(',')",
-    "new": "[...subs].map(String).join(',')",
+    "old": "  for (const b of enc.encode([...subs].map(String).sort().join(','))) h = ((h ^ BigInt(b)) * FNV64_PRIME) & U64;",
+    "new": "  for (const b of enc.encode([...subs].map(String).join(','))) h = ((h ^ BigInt(b)) * FNV64_PRIME) & U64;",
     "tests": [
       "test/net/eliteGates/egz_keys.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "EGZA-co-tag-prime",
     "file": "src/net/eliteGates/egReceipt.js",
-    "old": "FNV64_PRIME = 0x100000001b3n",
-    "new": "FNV64_PRIME = 0x100000001b5n",
+    "old": "  FNV64_PRIME = 0x100000001b3n,",
+    "new": "  FNV64_PRIME = 0x100000001b5n,",
     "tests": [
       "test/net/eliteGates/egz_keys.test.js"
     ]

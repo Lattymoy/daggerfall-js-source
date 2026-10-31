@@ -335,8 +335,8 @@
   {
     "name": "EGHERO-GALLERIES-registry-the-stacks-law-left-out",
     "file": "src/net/eliteGates/egHeroFrags.js",
-    "old": "  EG_HERO_STACKS_LAW,\n",
-    "new": "",
+    "old": "  EG_HERO_STACKS_LAW,\n  EG_HERO_COLONNADE_LAW,",
+    "new": "  EG_HERO_COLONNADE_LAW,",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]

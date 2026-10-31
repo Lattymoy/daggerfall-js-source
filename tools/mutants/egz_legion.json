@@ -499,8 +499,8 @@
   {
     "name": "EGZ-the-bridges-unburned",
     "file": "src/net/eliteGates/egFeats.js",
-    "old": "test: (s, F) => (F.mem?.burnI ?? -1) >= 0 && ",
-    "new": "test: (s, F) => ",
+    "old": "    test: (s, F) => (F.mem?.burnI ?? -1) >= 0 && !egCaughtBy(F, EG_FEAT_BRIDGE).length,",
+    "new": "    test: (s, F) => !egCaughtBy(F, EG_FEAT_BRIDGE).length,",
     "tests": [
       "test/net/eliteGates/egz_legion.test.js"
     ]

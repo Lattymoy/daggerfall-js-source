@@ -560,8 +560,8 @@
   {
     "name": "EGHL-poly-edges-not-its-own",
     "file": "src/net/eliteGates/egShape.js",
-    "old": "return inside || egPolyEdgeDist(poly, x, z) <= Math.max(0, pad) + 1e-9;",
-    "new": "return inside;",
+    "old": "  return inside || egPolyEdgeDist(poly, x, z) <= Math.max(0, pad) + 1e-9;",
+    "new": "  return inside;",
     "tests": [
       "test/net/eliteGates/eghero_lay.test.js"
     ]
@@ -569,7 +569,7 @@
   {
     "name": "EGHL-poly-dist-unsigned",
     "file": "src/net/eliteGates/egShape.js",
-    "old": "export const egPolyDist = (poly, x, z) => (egPolyIn(poly, x, z) ? -egPolyEdgeDist(poly, x, z) : egPolyEdgeDist(poly, x, z));",
+    "old": "export const egPolyDist = (poly, x, z) =>\n  egPolyIn(poly, x, z) ? -egPolyEdgeDist(poly, x, z) : egPolyEdgeDist(poly, x, z);",
     "new": "export const egPolyDist = (poly, x, z) => egPolyEdgeDist(poly, x, z);",
     "tests": [
       "test/net/eliteGates/eghero_lay.test.js"
@@ -578,8 +578,8 @@
   {
     "name": "EGHL-poly-keep-outward",
     "file": "src/net/eliteGates/egShape.js",
-    "old": "const q = [best[0] + best[2] * inset, best[1] + best[3] * inset];",
-    "new": "const q = [best[0] - best[2] * inset, best[1] - best[3] * inset];",
+    "old": "  const q = [best[0] + best[2] * inset, best[1] + best[3] * inset];",
+    "new": "  const q = [best[0] - best[2] * inset, best[1] - best[3] * inset];",
     "tests": [
       "test/net/eliteGates/eghero_lay.test.js"
     ]
@@ -587,8 +587,8 @@
   {
     "name": "EGHL-piece-inset-unread",
     "file": "src/net/eliteGates/egShape.js",
-    "old": "&& (pad >= 0 || egPolyEdgeDist(f.poly, x, z) >= -pad)",
-    "new": "&& true",
+    "old": "    ? egPolyIn(f.poly, x, z, Math.max(0, pad)) && (pad >= 0 || egPolyEdgeDist(f.poly, x, z) >= -pad)",
+    "new": "    ? egPolyIn(f.poly, x, z, Math.max(0, pad)) && true",
     "tests": [
       "test/net/eliteGates/eghero_lay.test.js"
     ]
@@ -848,8 +848,8 @@
   {
     "name": "EGHL-piece-size-unread",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "const S = o.size ?? sizes[kind], z = L.edge + g + S.d / 2;",
-    "new": "const S = sizes[kind], z = L.edge + g + S.d / 2;",
+    "old": "    const S = o.size ?? sizes[kind],",
+    "new": "    const S = sizes[kind],",
     "tests": [
       "test/net/eliteGates/eghero_lay.test.js"
     ]

@@ -47,8 +47,8 @@
   {
     "name": "EGFULL-an-offer-to-everyone",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "    out.push({ k: 'offer', to: sub, v: cards, n: m.picks });",
-    "new": "    out.push({ k: 'offer', s: sub, v: cards, n: m.picks });",
+    "old": "    out.push({ k: 'offer', to: sub, v: cards, n: m.picks }); // a member's own offer, to their sockets alone (the room's _egFan)",
+    "new": "    out.push({ k: 'offer', s: sub, v: cards, n: m.picks }); // a member's own offer, to their sockets alone (the room's _egFan)",
     "tests": [
       "test/net/eliteGates/egfull_relay.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "EGFULL-the-budget-far-blows-first",
     "file": "src/net/eliteGates/egShape.js",
-    "old": "me && (egInBlow(b, me[0], me[1]) || aimedAt(b)) ? 0 : 1",
-    "new": "me && (egInBlow(b, me[0], me[1]) || aimedAt(b)) ? 1 : 0",
+    "old": "    me && (egInBlow(b, me[0], me[1]) || aimedAt(b)) ? 0 : 1,",
+    "new": "    me && (egInBlow(b, me[0], me[1]) || aimedAt(b)) ? 1 : 0,",
     "tests": [
       "test/net/eliteGates/egfull_law.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "EGFULL-a-stamp-unbounded",
     "file": "src/net/eliteGates/egShape.js",
-    "old": "    case 'd': return s.length === 4 && n(1) && n(2) && n(3, 0.1, 80);",
-    "new": "    case 'd': return s.length === 4;",
+    "old": "      return s.length === 4 && n(1) && n(2) && n(3, 0.1, 80);",
+    "new": "      return s.length === 4;",
     "tests": [
       "test/net/eliteGates/egfull_law.test.js"
     ]

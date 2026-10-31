@@ -220,8 +220,8 @@
   {
     "name": "EGZQ-link-size-unread",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "b.sz = t[17] > 0 ? t[17] / 1000 : 1;",
-    "new": "b.sz = 1;",
+    "old": "    b.sz = t[17] > 0 ? t[17] / 1000 : 1;",
+    "new": "    b.sz = 1;",
     "tests": [
       "test/net/eliteGates/egz_relay.test.js"
     ]

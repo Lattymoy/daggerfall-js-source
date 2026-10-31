@@ -112,8 +112,8 @@
   {
     "name": "EG5D-L4-9-the-finding-taken-again",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "  if (B.hold) return 'hold';",
-    "new": "  if (B.hold) { B.hold.f = holdFind(B, B.hold.at, now); return 'hold'; }",
+    "old": "  if (B.hold) return 'hold'; // woken again inside a hold: its release gives the whole gap back (AUDIT EG III: to what it found - AUDIT EG V: the record's)",
+    "new": "  if (B.hold) {\n    B.hold.f = holdFind(B, B.hold.at, now);\n    return 'hold';\n  } // woken again inside a hold: its release gives the whole gap back (AUDIT EG III: to what it found - AUDIT EG V: the record's)",
     "tests": [
       "test/net/eliteGates/egaudit5_d_relay.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "EG5D-L4-9-the-finding-not-kept",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "ran, f: holdFind(B, at, now) };",
-    "new": "ran, f: null };",
+    "old": "  B.hold = { at, until: now + EG_REJOIN_MS, ran, f: holdFind(B, at, now) }; // AUDIT EG III (lane3 #8): what the hold found - its release moves those alone; AUDIT EG V (L4-9): kept in the record",
+    "new": "  B.hold = { at, until: now + EG_REJOIN_MS, ran, f: null }; // AUDIT EG III (lane3 #8): what the hold found - its release moves those alone; AUDIT EG V (L4-9): kept in the record",
     "tests": [
       "test/net/eliteGates/egaudit5_d_relay.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "EG5D-L4-9-before-the-sleep-left",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "(_o, _k, v) => v <= h.at || found.has(v)",
-    "new": "(_o, _k, v) => found.has(v)",
+    "old": "  const gap = egGiveBack(B, Math.max(0, now - h.at), now, found ? (_o, _k, v) => v <= h.at || found.has(v) : null);",
+    "new": "  const gap = egGiveBack(B, Math.max(0, now - h.at), now, found ? (_o, _k, v) => found.has(v) : null);",
     "tests": [
       "test/net/eliteGates/egaudit5_d_relay.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "EG5D-L4-9-the-found-deadline-left",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "(_o, _k, v) => v <= h.at || found.has(v)",
-    "new": "(_o, _k, v) => v <= h.at",
+    "old": "  const gap = egGiveBack(B, Math.max(0, now - h.at), now, found ? (_o, _k, v) => v <= h.at || found.has(v) : null);",
+    "new": "  const gap = egGiveBack(B, Math.max(0, now - h.at), now, found ? (_o, _k, v) => v <= h.at : null);",
     "tests": [
       "test/net/eliteGates/egaudit5_d_relay.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "EG5D-L4-9-everything-found",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "  instantsOf(B, now, (_o, _k, v) => { if (v > at) f.add(v); });",
-    "new": "  instantsOf(B, now, (_o, _k, v) => { f.add(v); });",
+    "old": "    if (v > at) f.add(v);",
+    "new": "    f.add(v);",
     "tests": [
       "test/net/eliteGates/egaudit5_d_relay.test.js"
     ],
@@ -259,8 +259,8 @@
   {
     "name": "EG5D-L4-4-the-call-wipes-the-breach",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "    case 'call': return s.b === w.b || egLiveHeld(s) ?",
-    "new": "    case 'call': return s.b === w.b ?",
+    "old": "      return s.b === w.b || egLiveHeld(s)",
+    "new": "      return s.b === w.b",
     "tests": [
       "test/systems/eliteGates/egaudit5_d_client.test.js"
     ]
@@ -629,8 +629,8 @@
   {
     "name": "EG5D-L9-5-the-valkynaz-odds-the-floors",
     "file": "src/net/eliteGates/egPay.js",
-    "old": "export const egPanoplyIn = (w) => (egValkRedoubt(w) ? EG_PANOPLY_VALK_IN : Math.max(4,",
-    "new": "export const egPanoplyIn = (w) => (egValkRedoubt(w) && false ? EG_PANOPLY_VALK_IN : Math.max(4,",
+    "old": "  egValkRedoubt(w) ? EG_PANOPLY_VALK_IN : Math.max(4, 12 - Math.floor(Math.max(1, w | 0) / 2));",
+    "new": "  egValkRedoubt(w) && false ? EG_PANOPLY_VALK_IN : Math.max(4, 12 - Math.floor(Math.max(1, w | 0) / 2));",
     "tests": [
       "test/net/eliteGates/egeco_pay.test.js"
     ]
@@ -639,7 +639,7 @@
     "name": "EG5D-L9-5-the-panoply-on-the-spoils-own-stream",
     "file": "src/net/eliteGates/egPay.js",
     "old": "export const egPanoplyDraw = (seed, pass) => mix((egPassSeed(seed, pass) ^ 0x7a40b1e5) >>> 0) / 4294967296;",
-    "new": "export const egPanoplyDraw = (seed, pass) => { const a = (egPassSeed(seed, pass) + 0x6D2B79F5) >>> 0; let t = Math.imul(a ^ (a >>> 15), a | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };",
+    "new": "export const egPanoplyDraw = (seed, pass) => {\n  const a = (egPassSeed(seed, pass) + 0x6d2b79f5) >>> 0;\n  let t = Math.imul(a ^ (a >>> 15), a | 1);\n  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);\n  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;\n};",
     "tests": [
       "test/net/eliteGates/egeco_pay.test.js"
     ]
@@ -647,8 +647,8 @@
   {
     "name": "EG5D-L9-5-the-first-this-season-ember-dropped",
     "file": "src/net/eliteGates/egPay.js",
-    "old": " + (firstThisSeason ? 1 : 0);",
-    "new": " + 0;",
+    "old": "export const egEmbersOf = (w, firstThisSeason) =>\n  (egValkRedoubt(w) ? 1 + Math.floor(w / 10) : 0) + (firstThisSeason ? 1 : 0);",
+    "new": "export const egEmbersOf = (w, firstThisSeason) => (egValkRedoubt(w) ? 1 + Math.floor(w / 10) : 0) + 0;",
     "tests": [
       "test/net/eliteGates/egeco_pay.test.js"
     ]
@@ -665,8 +665,8 @@
   {
     "name": "EG5D-L9-5-the-legendary-share-steeper",
     "file": "src/net/eliteGates/egPay.js",
-    "old": "Math.min(0.65, 0.2 + 0.03 *",
-    "new": "Math.min(0.65, 0.2 + 0.04 *",
+    "old": "export const egLegendaryShare = (w) => Math.min(0.65, 0.2 + 0.03 * (Math.max(1, w | 0) - 1));",
+    "new": "export const egLegendaryShare = (w) => Math.min(0.65, 0.2 + 0.04 * (Math.max(1, w | 0) - 1));",
     "tests": [
       "test/net/eliteGates/egeco_pay.test.js",
       "test/net/eliteGates/egaudit5_d_service.test.js"

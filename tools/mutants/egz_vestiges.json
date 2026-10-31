@@ -64,8 +64,8 @@
   {
     "name": "EGZR-second-wind-line-literal",
     "file": "src/net/eliteGates/egVestige.js",
-    "old": "falling under ${pc(EG_SECOND_WIND_UNDER)} health heals",
-    "new": "falling under ${pc(EG_BLOODIED_UNDER)} health heals",
+    "old": "    line: (v) => `Once a hall, falling under ${pc(EG_SECOND_WIND_UNDER)} health heals you ${pc(v)}.`,",
+    "new": "    line: (v) => `Once a hall, falling under ${pc(EG_BLOODIED_UNDER)} health heals you ${pc(v)}.`,",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -74,8 +74,8 @@
   {
     "name": "EGZR-momentum-line-literal",
     "file": "src/net/eliteGates/egVestige.js",
-    "old": "adds ${pc(EG_MOMENTUM_STEP)} damage",
-    "new": "adds ${pc(EG_ECHO_SHARE)} damage",
+    "old": "    line: (v) => `Each hit on one target adds ${pc(EG_MOMENTUM_STEP)} damage, up to ${v} times.`,",
+    "new": "    line: (v) => `Each hit on one target adds ${pc(EG_ECHO_SHARE)} damage, up to ${v} times.`,",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -84,8 +84,8 @@
   {
     "name": "EGZR-hymn-one-member",
     "file": "src/net/eliteGates/egVestige.js",
-    "old": "rally.some((r) => r.sub !== b.sub && ",
-    "new": "rally.some((r) => ",
+    "old": "    .filter(\n      (b) =>\n        egRankOf(b.vs, 'bastion') > 0 &&\n        rally.some((r) => r.sub !== b.sub && Math.hypot(r.x - b.x, r.z - b.z) <= EG_ACCORD_M),\n    )",
+    "new": "    .filter((b) => egRankOf(b.vs, 'bastion') > 0 && rally.some((r) => Math.hypot(r.x - b.x, r.z - b.z) <= EG_ACCORD_M))",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -94,8 +94,8 @@
   {
     "name": "EGZR-hymn-reach-open",
     "file": "src/net/eliteGates/egVestige.js",
-    "old": "Math.hypot(r.x - b.x, r.z - b.z) <= EG_ACCORD_M",
-    "new": "Math.hypot(r.x - b.x, r.z - b.z) < EG_ACCORD_M",
+    "old": "        rally.some((r) => r.sub !== b.sub && Math.hypot(r.x - b.x, r.z - b.z) <= EG_ACCORD_M),",
+    "new": "        rally.some((r) => r.sub !== b.sub && Math.hypot(r.x - b.x, r.z - b.z) < EG_ACCORD_M),",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -104,8 +104,8 @@
   {
     "name": "EGZR-hymn-reach-z",
     "file": "src/net/eliteGates/egVestige.js",
-    "old": "Math.hypot(r.x - b.x, r.z - b.z) <= EG_ACCORD_M",
-    "new": "Math.hypot(r.x - b.x, 0) <= EG_ACCORD_M",
+    "old": "        egRankOf(b.vs, 'bastion') > 0 &&\n        rally.some((r) => r.sub !== b.sub && Math.hypot(r.x - b.x, r.z - b.z) <= EG_ACCORD_M),",
+    "new": "        egRankOf(b.vs, 'bastion') > 0 && rally.some((r) => r.sub !== b.sub && Math.hypot(r.x - b.x, 0) <= EG_ACCORD_M),",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js",
       "test/net/eliteGates/egz_vestiges_hymn.test.js"
@@ -115,8 +115,8 @@
   {
     "name": "EGZR-hymn-bastion-unread",
     "file": "src/net/eliteGates/egVestige.js",
-    "old": "return ms.filter((b) => egRankOf(b.vs, 'bastion') > 0 && rally.some(",
-    "new": "return ms.filter((b) => rally.some(",
+    "old": "    .filter(\n      (b) =>\n        egRankOf(b.vs, 'bastion') > 0 &&\n        rally.some((r) => r.sub !== b.sub && Math.hypot(r.x - b.x, r.z - b.z) <= EG_ACCORD_M),\n    )",
+    "new": "    .filter((b) => rally.some((r) => r.sub !== b.sub && Math.hypot(r.x - b.x, r.z - b.z) <= EG_ACCORD_M))",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -125,8 +125,8 @@
   {
     "name": "EGZR-hymn-rally-unread",
     "file": "src/net/eliteGates/egVestige.js",
-    "old": "const rally = ms.filter((m) => egRankOf(m.vs, 'rally') > 0);",
-    "new": "const rally = ms;",
+    "old": "  const rally = ms.filter((m) => egRankOf(m.vs, 'rally') > 0);",
+    "new": "  const rally = ms;",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],

@@ -137,8 +137,8 @@
   {
     "name": "EGSEAM-the-checkpoint-low",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "checkpoints.push({ x: x0, y, z, r: spec.checkR });",
-    "new": "checkpoints.push({ x: x0, y: 0, z, r: spec.checkR });",
+    "old": "      checkpoints.push({ x: x0, y, z, r: spec.checkR });",
+    "new": "      checkpoints.push({ x: x0, y: 0, z, r: spec.checkR });",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "EGSEAM-the-line-lost",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "  const x0 = spec.x ?? 0, spire = spec.road != null;",
-    "new": "  const x0 = 0, spire = spec.road != null;",
+    "old": "  const x0 = spec.x ?? 0,",
+    "new": "  const x0 = 0,",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "EGSEAM-the-start-flat",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "let edge = spec.start.z + spec.start.r, y = spec.start.y ?? 0;",
-    "new": "let edge = spec.start.z + spec.start.r, y = 0;",
+    "old": "    y = spec.start.y ?? 0;",
+    "new": "    y = 0;",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]

@@ -306,8 +306,8 @@
   {
     "name": "EGA5A2-herald-read-drops",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "ew: nat(e.ew, 0, 19_999) ? e.ew : 0, o: str(e.o), by });",
-    "new": "o: str(e.o), by });",
+    "old": "        ew: nat(e.ew, 0, 19_999) ? e.ew : 0,\n        o: str(e.o),",
+    "new": "        o: str(e.o),",
     "tests": [
       "test/net/eliteGates/egaudit5_a2.test.js"
     ],
@@ -316,8 +316,8 @@
   {
     "name": "EGA5A2-herald-fold-drops-first",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "t: e.t, ew: e.ew ?? 0 }); }",
-    "new": "t: e.t }); }",
+    "old": "          owe({ kind: 'first', o: e.o, n: e.n ?? 0, by: e.by, w: e.w, h: e.h, t: e.t, ew: e.ew ?? 0 });",
+    "new": "          owe({ kind: 'first', o: e.o, n: e.n ?? 0, by: e.by, w: e.w, h: e.h, t: e.t });",
     "tests": [
       "test/net/eliteGates/egaudit5_a2.test.js"
     ],
@@ -326,8 +326,8 @@
   {
     "name": "EGA5A2-herald-fold-drops-rd",
     "file": "src/net/eliteGates/egHerald.js",
-    "old": "else owe({ kind: 'rd', o: e.o, n: e.n ?? 0, w: e.w, h: e.h, t: e.t, ew: e.ew ?? 0 });",
-    "new": "else owe({ kind: 'rd', o: e.o, n: e.n ?? 0, w: e.w, h: e.h, t: e.t });",
+    "old": "        } else owe({ kind: 'rd', o: e.o, n: e.n ?? 0, w: e.w, h: e.h, t: e.t, ew: e.ew ?? 0 });",
+    "new": "        } else owe({ kind: 'rd', o: e.o, n: e.n ?? 0, w: e.w, h: e.h, t: e.t });",
     "tests": [
       "test/net/eliteGates/egaudit5_a2.test.js"
     ],
@@ -426,8 +426,8 @@
   {
     "name": "EGA5A2-link-digest-kept",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "...(w.h !== s.h ? { dg: 0 } : {}), ",
-    "new": "",
+    "old": "        ...(w.h !== s.h ? { dg: 0 } : {}),\n        fight: w.h === s.fight.h ? s.fight : EG_FIGHT_EMPTY,",
+    "new": "        fight: w.h === s.fight.h ? s.fight : EG_FIGHT_EMPTY,",
     "tests": [
       "test/net/eliteGates/egaudit5_a2_client.test.js"
     ],

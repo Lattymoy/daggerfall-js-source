@@ -192,8 +192,8 @@
   {
     "name": "TURNED-BLOW-wake-a-phase-turn",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "phases: w.ph > 1 ? keepLast(f.phases, { i: w.i, ph: w.ph, at: now }, 6) : f.phases",
-    "new": "phases: keepLast(f.phases, { i: w.i, ph: w.ph, at: now }, 6)",
+    "old": "        phases: w.ph > 1 ? keepLast(f.phases, { i: w.i, ph: w.ph, at: now }, 6) : f.phases,",
+    "new": "        phases: keepLast(f.phases, { i: w.i, ph: w.ph, at: now }, 6),",
     "tests": [
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
     ],
@@ -322,8 +322,8 @@
   {
     "name": "TURNED-BLOW-radius-unfolded-risen",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "[egBodyOf(t, now, null, now, w.r?.[j])]",
-    "new": "[egBodyOf(t, now, null, now)]",
+    "old": "        bodies: [...f.bodies, ...w.a.flatMap((t, j) => (had.has(t[0]) ? [] : [egBodyOf(t, now, null, now, w.r?.[j])]))],",
+    "new": "        bodies: [...f.bodies, ...w.a.flatMap((t, j) => (had.has(t[0]) ? [] : [egBodyOf(t, now, null, now)]))],",
     "tests": [
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
     ],
@@ -332,8 +332,8 @@
   {
     "name": "TURNED-BLOW-radius-unfolded-whole",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "egBodyOf(t, now, had?.get(t[0]) ?? null, 0, w.r?.[j])",
-    "new": "egBodyOf(t, now, had?.get(t[0]) ?? null, 0)",
+    "old": "        bodies: w.b.map((t, j) => egBodyOf(t, now, had?.get(t[0]) ?? null, 0, w.r?.[j])),",
+    "new": "        bodies: w.b.map((t, j) => egBodyOf(t, now, had?.get(t[0]) ?? null, 0)),",
     "tests": [
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
     ],
@@ -342,8 +342,8 @@
   {
     "name": "TURNED-BLOW-L3-object-radius-half",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "if (Number.isFinite(r)) b.r = r;",
-    "new": "if (Number.isFinite(r)) b.r = r / 2;",
+    "old": "  if (Number.isFinite(r)) b.r = r; // AUDIT FB1018f L3-4: the relay's own radius",
+    "new": "  if (Number.isFinite(r)) b.r = r / 2; // AUDIT FB1018f L3-4: the relay's own radius",
     "tests": [
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
     ],

@@ -128,8 +128,8 @@
   {
     "name": "EGHERO-CAIRN-the-ossuary-unregistered",
     "file": "src/net/eliteGates/egHeroFrags.js",
-    "old": "  EG_HERO_OSSUARY_LAW,\n",
-    "new": "",
+    "old": "  EG_HERO_OSSUARY_LAW,\n  EG_HERO_MIST_STAIR_LAW,",
+    "new": "  EG_HERO_MIST_STAIR_LAW,",
     "tests": [
       "test/tooling/eghero_cairn.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "EGHERO-CAIRN-the-ossuarys-piece-another",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "ossuary: Object.freeze(['bone'])",
-    "new": "ossuary: Object.freeze(['ledge'])",
+    "old": "  ossuary: Object.freeze(['bone']),",
+    "new": "  ossuary: Object.freeze(['ledge']),",
     "tests": [
       "test/tooling/eghero_cairn.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "EGHERO-CAIRN-the-ossuarys-height-moved",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "halfW = 300; height = 560; chasm = 1000;",
-    "new": "halfW = 300; height = 570; chasm = 1000;",
+    "old": "    height = 560;",
+    "new": "    height = 570;",
     "tests": [
       "test/tooling/eghero_cairn.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "EGHERO-CAIRN-the-mist-shafts-line-moved",
     "file": "src/net/eliteGates/egFragLaw.js",
-    "old": "else if (kit === 'mist') hazards.push({ kind: 'mist', y: yB - 300,",
-    "new": "else if (kit === 'mist') hazards.push({ kind: 'mist', y: yB - 290,",
+    "old": "  else if (kit === 'mist') hazards.push({ kind: 'mist', y: yB - 300, phase: between(r, 0, 119) * 100 });",
+    "new": "  else if (kit === 'mist') hazards.push({ kind: 'mist', y: yB - 290, phase: between(r, 0, 119) * 100 });",
     "tests": [
       "test/tooling/eghero_cairn.test.js"
     ]

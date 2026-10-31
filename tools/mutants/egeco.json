@@ -11,8 +11,8 @@
   {
     "name": "EGECO-a-slow-fall-swift",
     "file": "src/net/eliteGates/egFeats.js",
-    "old": "ctx.now - F.lordAt <= EG_FEAT_SWIFT_MS) bits |= 2;",
-    "new": "ctx.now - F.lordAt <= EG_FEAT_SWIFT_MS * 10) bits |= 2;",
+    "old": "  if ((F.lordAt ?? 0) > 0 && ctx.now - F.lordAt <= EG_FEAT_SWIFT_MS) bits |= 2;",
+    "new": "  if ((F.lordAt ?? 0) > 0 && ctx.now - F.lordAt <= EG_FEAT_SWIFT_MS * 10) bits |= 2;",
     "tests": [
       "test/net/eliteGates/egeco_feats.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EGECO-a-bridges-catch-forgiven",
     "file": "src/net/eliteGates/egFeats.js",
-    "old": " && !egCaughtBy(F, EG_FEAT_BRIDGE).length }",
-    "new": " }",
+    "old": "    test: (s, F) => (F.mem?.burnI ?? -1) >= 0 && !egCaughtBy(F, EG_FEAT_BRIDGE).length,",
+    "new": "    test: (s, F) => (F.mem?.burnI ?? -1) >= 0,",
     "tests": [
       "test/net/eliteGates/egeco_feats.test.js"
     ]

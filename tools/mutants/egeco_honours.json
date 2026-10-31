@@ -128,8 +128,8 @@
   {
     "name": "EGECO2-annals-on-a-redoubt",
     "file": "src/net/eliteGates/egReceipt.js",
-    "old": "if (c.an !== undefined && (c.q !== 'x' || !int(c.an, 0, EG_ANNALS_BITS_MAX))) return false;",
-    "new": "if (c.an !== undefined && !int(c.an, 0, EG_ANNALS_BITS_MAX)) return false;",
+    "old": "  if (c.an !== undefined && (c.q !== 'x' || !int(c.an, 0, EG_ANNALS_BITS_MAX))) return false;",
+    "new": "  if (c.an !== undefined && !int(c.an, 0, EG_ANNALS_BITS_MAX)) return false;",
     "tests": [
       "test/net/eliteGates/egeco_honours.test.js"
     ]

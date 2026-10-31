@@ -13,8 +13,8 @@
   {
     "name": "EGA5A1-dec-vote-ignored",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "    const at = egAskResult(a, true), id = a.o[at] ?? a.o[0];",
-    "new": "    const at = 0, id = a.o[at] ?? a.o[0];",
+    "old": "    const at = egAskResult(a, true),",
+    "new": "    const at = 0,",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],
@@ -74,8 +74,8 @@
   {
     "name": "EGA5A1-nx-link",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "dc: w.dc, nx: w.nx ?? [], pr: w.pr,",
-    "new": "dc: w.dc, pr: w.pr,",
+    "old": "        nx: w.nx ?? [],\n        pr: w.pr,",
+    "new": "        pr: w.pr,",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],
@@ -166,8 +166,8 @@
   {
     "name": "EGA5A1-bargain-held-family",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "  const used = new Set([...egStandingFams(B), ...(B.dc ?? []).map(([id]) => EG_DECREES[id]?.fam)]);\n  return EG_DECREE_FAMILIES",
-    "new": "  const used = new Set([...egStandingFams(B)]);\n  return EG_DECREE_FAMILIES",
+    "old": "  const used = new Set([...egStandingFams(B), ...(B.dc ?? []).map(([id]) => EG_DECREES[id]?.fam)]);",
+    "new": "  const used = new Set([...egStandingFams(B)]);",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],
@@ -176,8 +176,8 @@
   {
     "name": "EGA5A1-twist-shown",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "EG_DECREE_FAMILIES.every((f) => (dc ?? []).some(([id]) => EG_DECREES[id]?.fam === f)) ? null",
-    "new": "false ? null",
+    "old": "export const egTwistShown = (spec, dc) =>\n  spec?.twist === 'bargain' && EG_DECREE_FAMILIES.every((f) => (dc ?? []).some(([id]) => EG_DECREES[id]?.fam === f))\n    ? null\n    : (spec?.twist ?? null);",
+    "new": "export const egTwistShown = (spec, dc) => (spec?.twist === 'bargain' && false ? null : (spec?.twist ?? null));",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],
@@ -216,8 +216,8 @@
   {
     "name": "EGA5A1-bargain-band",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "D.key !== 'crumbling' && decreeOpen(D, c, B.seed, from));",
-    "new": "D.key !== 'crumbling');",
+    "old": "  return EG_DECREES.filter(\n    (D) => D.fam === f && D.key !== 'gale' && D.key !== 'crumbling' && decreeOpen(D, c, B.seed, from),\n  );",
+    "new": "  return EG_DECREES.filter((D) => D.fam === f && D.key !== 'gale' && D.key !== 'crumbling');",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],
@@ -226,8 +226,8 @@
   {
     "name": "EGA5A1-bargain-spans",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "D.fam === f && D.key !== 'gale' && D.key !== 'crumbling' && decreeOpen",
-    "new": "D.fam === f && decreeOpen",
+    "old": "  return EG_DECREES.filter(\n    (D) => D.fam === f && D.key !== 'gale' && D.key !== 'crumbling' && decreeOpen(D, c, B.seed, from),\n  );",
+    "new": "  return EG_DECREES.filter((D) => D.fam === f && decreeOpen(D, c, B.seed, from));",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],
@@ -236,8 +236,8 @@
   {
     "name": "EGA5A1-fray-flat",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "EG_FRAYING_FRAY + 2 * Math.floor((Math.max(1, c) - 1) / 5) - (rank",
-    "new": "EG_FRAYING_FRAY - (rank",
+    "old": "export const egFrayOf = (c, rank = 1) =>\n  Math.min(\n    SD_FRAY_MAX,\n    EG_FRAYING_FRAY + 2 * Math.floor((Math.max(1, c) - 1) / 5) - (rank >= 2 ? EG_FRAYING_II_TURNS : 0),\n  );",
+    "new": "export const egFrayOf = (c, rank = 1) => Math.min(SD_FRAY_MAX, EG_FRAYING_FRAY - (rank >= 2 ? EG_FRAYING_II_TURNS : 0));",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],
@@ -246,8 +246,8 @@
   {
     "name": "EGA5A1-fray-rank",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "(rank >= 2 ? EG_FRAYING_II_TURNS : 0)",
-    "new": "(rank >= 3 ? EG_FRAYING_II_TURNS : 0)",
+    "old": "    EG_FRAYING_FRAY + 2 * Math.floor((Math.max(1, c) - 1) / 5) - (rank >= 2 ? EG_FRAYING_II_TURNS : 0),",
+    "new": "    EG_FRAYING_FRAY + 2 * Math.floor((Math.max(1, c) - 1) / 5) - (rank >= 3 ? EG_FRAYING_II_TURNS : 0),",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],
@@ -256,8 +256,8 @@
   {
     "name": "EGA5A1-fray-uncapped",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "export const egFrayOf = (c, rank = 1) => Math.min(SD_FRAY_MAX, EG_FRAYING_FRAY",
-    "new": "export const egFrayOf = (c, rank = 1) => Math.min(Infinity, EG_FRAYING_FRAY",
+    "old": "    SD_FRAY_MAX,",
+    "new": "    Infinity,",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],
@@ -266,8 +266,8 @@
   {
     "name": "EGA5A1-fray-deep",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "export const egFrayingOpen = (seed, c, from = 1) => egFrayOf(c) < SD_FRAY_MAX && egCirclePlan",
-    "new": "export const egFrayingOpen = (seed, c, from = 1) => egCirclePlan",
+    "old": "  egFrayOf(c) < SD_FRAY_MAX && egCirclePlan(seed, c).some((p, i) => p.kind === 'athenaeum' && i + 1 >= from);",
+    "new": "  egCirclePlan(seed, c).some((p, i) => p.kind === 'athenaeum' && i + 1 >= from);",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],
@@ -276,8 +276,8 @@
   {
     "name": "EGA5A1-fray-any-circle",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "egCirclePlan(seed, c).some((p, i) => p.kind === 'athenaeum' && i + 1 >= from);",
-    "new": "egCirclePlan(seed, c).some((p, i) => i + 1 >= from);",
+    "old": "  egFrayOf(c) < SD_FRAY_MAX && egCirclePlan(seed, c).some((p, i) => p.kind === 'athenaeum' && i + 1 >= from);",
+    "new": "  egFrayOf(c) < SD_FRAY_MAX && egCirclePlan(seed, c).some((p, i) => i + 1 >= from);",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],
@@ -286,8 +286,8 @@
   {
     "name": "EGA5A1-fray-behind",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "p.kind === 'athenaeum' && i + 1 >= from);",
-    "new": "p.kind === 'athenaeum');",
+    "old": "  egFrayOf(c) < SD_FRAY_MAX && egCirclePlan(seed, c).some((p, i) => p.kind === 'athenaeum' && i + 1 >= from);",
+    "new": "  egFrayOf(c) < SD_FRAY_MAX && egCirclePlan(seed, c).some((p, i) => p.kind === 'athenaeum');",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],
@@ -296,8 +296,8 @@
   {
     "name": "EGA5A1-fray-open",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "&& (D.key !== 'fraying' || egFrayingOpen(seed, c, from));",
-    "new": ";",
+    "old": "const decreeOpen = (D, c, seed = 0, from = 1) =>\n  !((D.key === 'swarm' || D.key === 'gale') && egBandOfCircle(c) < 1) &&\n  (D.key !== 'fraying' || egFrayingOpen(seed, c, from));",
+    "new": "const decreeOpen = (D, c, seed = 0, from = 1) => !((D.key === 'swarm' || D.key === 'gale') && egBandOfCircle(c) < 1);",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],
@@ -306,8 +306,8 @@
   {
     "name": "EGA5A1-fray-seed",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "D.fam === f && decreeOpen(D, c, B.seed)).sort(",
-    "new": "D.fam === f && decreeOpen(D, c)).sort(",
+    "old": "    const pool = EG_DECREES.filter((D) => D.fam === f && decreeOpen(D, c, B.seed))",
+    "new": "    const pool = EG_DECREES.filter((D) => D.fam === f && decreeOpen(D, c))",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],
@@ -348,8 +348,8 @@
   {
     "name": "EGA5A1-fray-wager-family",
     "file": "src/net/eliteGates/egStartLaw.js",
-    "old": "'lord', 'lord', 'lord', 'lord', 'ground',",
-    "new": "'lord', 'lord', 'lord', 'lord', 'legion',",
+    "old": "  'ground', // AUDIT EG V (L2-10): 19 The Fraying, the ground's",
+    "new": "  'legion', // AUDIT EG V (L2-10): 19 The Fraying, the ground's",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js",
       "test/net/eliteGates/egarch_law.test.js"
@@ -359,8 +359,8 @@
   {
     "name": "EGA5A1-lean-first-only",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "const first = nth === 1;",
-    "new": "const first = w === 1;",
+    "old": "  const first = nth === 1; // AUDIT EG V (L2-13): THE LEAN at the breach's first Redoubt - a deeper start's too",
+    "new": "  const first = w === 1; // AUDIT EG V (L2-13): THE LEAN at the breach's first Redoubt - a deeper start's too",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],
@@ -380,8 +380,8 @@
   {
     "name": "EGA5A1-lean-vestige",
     "file": "src/net/eliteGates/egVestige.js",
-    "old": "  const leanFam = lean != null ? (lean === 0",
-    "new": "  const leanFam = w === 1 && lean != null ? (lean === 0",
+    "old": "  const leanFam = lean != null ? (lean === 0 ? 'blade' : lean === 1 ? 'hunt' : 'arcana') : null; // AUDIT EG V (L2-13): `lean` given at the breach's first Redoubt alone (net/eliteGates/egRun.js egOffers), a deeper start's too",
+    "new": "  const leanFam = w === 1 && lean != null ? (lean === 0 ? 'blade' : lean === 1 ? 'hunt' : 'arcana') : null; // AUDIT EG V (L2-13): `lean` given at the breach's first Redoubt alone (net/eliteGates/egRun.js egOffers), a deeper start's too",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],
@@ -400,8 +400,8 @@
   {
     "name": "EGA5A1-picks-open",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "    m.offer = null; m.picks = 0;\n",
-    "new": "",
+    "old": "    m.offer = null;\n    m.picks = 0;\n  }",
+    "new": "  }",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],
@@ -500,8 +500,8 @@
   {
     "name": "EGA5A1-due-home",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "filter((o) => o.alive && o.in && !o.home).map((o) => egVOf(o.vs, 'fallensdue'))",
-    "new": "filter((o) => o.alive && o.in).map((o) => egVOf(o.vs, 'fallensdue'))",
+    "old": "      .filter((o) => o.alive && o.in && !o.home)",
+    "new": "      .filter((o) => o.alive && o.in)",
     "tests": [
       "test/net/eliteGates/egaudit5_a1_legion.test.js"
     ],

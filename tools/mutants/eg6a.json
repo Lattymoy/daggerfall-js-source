@@ -2,8 +2,8 @@
   {
     "name": "EG6A-the-ground-dropped",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "      if (p.ground != null) { edge += p.ground; continue; }   // EG6a: still ground run over - no step",
-    "new": "      if (p.ground != null) { continue; }   // EG6a: still ground run over - no step",
+    "old": "        edge += p.ground;\n        continue;",
+    "new": "        continue;",
     "tests": [
       "test/net/eliteGates/eg6a_span.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "EG6A-a-piece-s-own-x-lost",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "x: x == null ? x0 : x0 + x, y, z,",
-    "new": "x: x0, y, z,",
+    "old": "    const s = {\n      i: i ?? steps.length,\n      kind,\n      span,\n      x: x == null ? x0 : x0 + x,\n      y,\n      z,\n      w: size.w,\n      d: size.d,\n      amp,\n      period,\n      phase,\n      beat,\n    };",
+    "new": "    const s = { i: i ?? steps.length, kind, span, x: x0, y, z, w: size.w, d: size.d, amp, period, phase, beat };",
     "tests": [
       "test/net/eliteGates/eg6a_span.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EG6A-the-roads-out-of-count",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "const s = { i: i ?? steps.length, kind,",
-    "new": "const s = { i: steps.length, kind,",
+    "old": "      i: i ?? steps.length,",
+    "new": "      i: steps.length,",
     "tests": [
       "test/net/eliteGates/eg6a_span.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EG6A-the-hall-s-fields-unsaid",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "steps.push(spire ? Object.assign(s, { gap, road: spec.road, kit, after: 0 }) : s);",
-    "new": "steps.push(s);",
+    "old": "    steps.push(spire ? Object.assign(s, { gap, road: spec.road, kit, after: 0 }) : s);",
+    "new": "    steps.push(s);",
     "tests": [
       "test/net/eliteGates/eg6a_span.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "EG6A-the-ground-run-over-unsaid",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "      if (edge !== L.edge) { L.y = y; said({ ground: edge - L.edge }); L.edge = edge; }",
-    "new": "      if (edge !== L.edge) { L.y = y; L.edge = edge; }",
+    "old": "        said({ ground: edge - L.edge });\n        L.edge = edge;",
+    "new": "        L.edge = edge;",
     "tests": [
       "test/net/eliteGates/eg6a_span.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "EG6A-an-island-s-height-unsaid",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "      if (L.y !== L.said) said({ ground: 0 });",
-    "new": "",
+    "old": "      if (L.y !== L.said) said({ ground: 0 });\n      const z = L.edge + g + checkR;",
+    "new": "      const z = L.edge + g + checkR;",
     "tests": [
       "test/net/eliteGates/eg6a_span.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "EG6A-the-span-never-counted",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "      L.edge = z + checkR;\n      span++;",
-    "new": "      L.edge = z + checkR;",
+    "old": "      span++;\n      L.spec.sections.push({ span, pieces: [] });",
+    "new": "      L.spec.sections.push({ span, pieces: [] });",
     "tests": [
       "test/net/eliteGates/eg6a_span.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "EG6A-the-riser-twice",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "const riserAt = count >= 5 && !risen ? egDieBetween(r, 2, count - 2) : -1;",
-    "new": "const riserAt = count >= 5 ? egDieBetween(r, 2, count - 2) : -1;",
+    "old": "        const riserAt = count >= 5 && !risen ? egDieBetween(r, 2, count - 2) : -1; // one riser a hall: the climb down after it stays short",
+    "new": "        const riserAt = count >= 5 ? egDieBetween(r, 2, count - 2) : -1; // one riser a hall: the climb down after it stays short",
     "tests": [
       "test/net/eliteGates/eg6a_span.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "EG6A-a-crumble-stepping-under",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "{ if (L.y > L.base) L.y = Math.max(L.base, L.y - drop); step('crumble', gap(), { x, kit }); }",
-    "new": "{ if (L.y > L.base) L.y = L.y - drop - 1; step('crumble', gap(), { x, kit }); }",
+    "old": "          if (L.y > L.base) L.y = Math.max(L.base, L.y - drop);",
+    "new": "          if (L.y > L.base) L.y = L.y - drop - 1;",
     "tests": [
       "test/net/eliteGates/eg6a_span.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "EG6A-a-road-begun-on-the-last",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "    if (!roads.has(k)) roads.set(k, { spec: { road: k, start: { ...from }, checkR, toEnd: 0, sections: [{ span, pieces: [] }] }, edge: from.z + from.r, y: from.y, said: from.y, base: floors ? from.y : 0 });",
-    "new": "    if (!roads.has(k)) roads.set(k, { spec: { road: k, start: { ...start }, checkR, toEnd: 0, sections: [{ span, pieces: [] }] }, edge: start.z + start.r, y: start.y, said: start.y, base: floors ? start.y : 0 });",
+    "old": "        spec: { road: k, start: { ...from }, checkR, toEnd: 0, sections: [{ span, pieces: [] }] },\n        edge: from.z + from.r,\n        y: from.y,\n        said: from.y,\n        base: floors ? from.y : 0,",
+    "new": "        spec: { road: k, start: { ...start }, checkR, toEnd: 0, sections: [{ span, pieces: [] }] },\n        edge: start.z + start.r,\n        y: start.y,\n        said: start.y,\n        base: floors ? start.y : 0,",
     "tests": [
       "test/net/eliteGates/eg6a_span.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "EG6A-the-roads-laid-unsorted",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "lay() { return [...this.courses().flatMap((c) => c.steps), ...free.map((q) => ({ ...q }))].sort((a, b) => a.i - b.i); },",
-    "new": "lay() { return [...this.courses().flatMap((c) => c.steps), ...free.map((q) => ({ ...q }))]; },",
+    "old": "      return [...this.courses().flatMap((c) => c.steps), ...free.map((q) => ({ ...q }))].sort((a, b) => a.i - b.i);",
+    "new": "      return [...this.courses().flatMap((c) => c.steps), ...free.map((q) => ({ ...q }))];",
     "tests": [
       "test/net/eliteGates/eg6a_span.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "EG6A-no-leap-past-a-piece",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "    for (let j = k; j < m; j++) {\n      const pk = path[k], pj = path[j];",
-    "new": "    for (let j = k; j < k + 1; j++) {\n      const pk = path[k], pj = path[j];",
+    "old": "    for (let j = k; j < m; j++) {",
+    "new": "    for (let j = k; j < k + 1; j++) {",
     "tests": [
       "test/net/eliteGates/eg6a_span.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "EG6A-the-leap-lands-at-its-launch",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "nz0 = b ? b.z + PB.dz - b.d / 2 : pair.to ?? pair.edge,",
-    "new": "nz0 = b ? b.z + PB.dz - b.d / 2 : pair.edge,",
+    "old": "  const nz0 = b ? b.z + PB.dz - b.d / 2 : (pair.to ?? pair.edge),",
+    "new": "  const nz0 = b ? b.z + PB.dz - b.d / 2 : pair.edge,",
     "tests": [
       "test/net/eliteGates/eg6a_span.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "EG6A-the-leap-from-the-landing-s-height",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "const ay = (pair.ay ?? (a ? a.y : (b ? b.y : 0)))",
-    "new": "const ay = ((a ? a.y : (b ? b.y : 0)))",
+    "old": "  const ay = (pair.ay ?? (a ? a.y : b ? b.y : 0)) - (a?.kind === 'sink' ? EG_SINK_MPS * EG_SINK_ON_S : 0),",
+    "new": "  const ay = (a ? a.y : b ? b.y : 0) - (a?.kind === 'sink' ? EG_SINK_MPS * EG_SINK_ON_S : 0),",
     "tests": [
       "test/net/eliteGates/eg6a_span.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "EG6A-the-low-road-without-its-trunk",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "fork ? roadOf(p) === 1 || (roadOf(p) === 0 && launch(p) < spec.fork.z - 0.01) : roadOf(p) === road));\n  const last",
-    "new": "fork ? roadOf(p) === 1 : roadOf(p) === road));\n  const last",
+    "old": "  const path = egSpanPairs(spec).filter((p) =>\n    fork ? roadOf(p) === 1 || (roadOf(p) === 0 && launch(p) < spec.fork.z - 0.01) : roadOf(p) === road,\n  );",
+    "new": "  const path = egSpanPairs(spec).filter((p) => (fork ? roadOf(p) === 1 : roadOf(p) === road));",
     "tests": [
       "test/net/eliteGates/eg6a_span.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "EG6A-another-answer-than-the-windows",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": "export const egJumpLands = (pair, t, B = SPAN_BUILD) => jumpLands(pair, t, B);",
-    "new": "export const egJumpLands = (pair, t, B = SPAN_BUILD) => jumpLands(pair, t, FAST_BUILD);",
+    "old": "export const egJumpLands = (pair, t, B = SPAN_BUILD) => jumpLands(pair, t, B); // (THE AUDIT: a build named - egSpanBuildOf)",
+    "new": "export const egJumpLands = (pair, t, B = SPAN_BUILD) => jumpLands(pair, t, FAST_BUILD); // (THE AUDIT: a build named - egSpanBuildOf)",
     "tests": [
       "test/net/eliteGates/eg6a_span.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "EG6A-the-end-plate-s-middle",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": ": road !== 0 ? last.z + last.d / 2 : spec.end ? spec.end.z - spec.end.r : spec.len;",
-    "new": ": road !== 0 ? last.z + last.d / 2 : spec.end ? spec.end.z : spec.len;",
+    "old": "        ? spec.end.z - spec.end.r",
+    "new": "        ? spec.end.z",
     "tests": [
       "test/net/eliteGates/eg6a_span.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "EG6A-the-low-road-s-end-its-middle",
     "file": "src/net/eliteGates/egSpanLaw.js",
-    "old": ": road !== 0 ? last.z + last.d / 2 : spec.end",
-    "new": ": road !== 0 ? last.z : spec.end",
+    "old": "      ? last.z + last.d / 2",
+    "new": "      ? last.z",
     "tests": [
       "test/net/eliteGates/eg6a_span.test.js"
     ]

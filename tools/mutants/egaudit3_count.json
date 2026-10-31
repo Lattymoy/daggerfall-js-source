@@ -407,8 +407,8 @@
   {
     "name": "EGA3-count-lifeline-iii-past-cap",
     "file": "src/net/eliteGates/egVestige.js",
-    "old": "v: [0.20, 0.25, 0.30], by: 'word'",
-    "new": "v: [0.20, 0.25, 0.40], by: 'word'",
+    "old": "    v: [0.2, 0.25, 0.3],",
+    "new": "    v: [0.2, 0.25, 0.4],",
     "tests": [
       "test/net/eliteGates/egaudit3_count.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "EGA3-count-lifeline-ii-at-cap",
     "file": "src/net/eliteGates/egVestige.js",
-    "old": "v: [0.20, 0.25, 0.30], by: 'word'",
-    "new": "v: [0.20, 0.30, 0.30], by: 'word'",
+    "old": "    v: [0.2, 0.25, 0.3],",
+    "new": "    v: [0.2, 0.3, 0.3],",
     "tests": [
       "test/net/eliteGates/egaudit3_count.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "EGA3-count-mark-distance-unread",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "if (r !== HIT_KINDS.Shaft || !(d > EG_FAR_M)) return false;",
-    "new": "if (r !== HIT_KINDS.Shaft) return false;",
+    "old": "  if (r !== HIT_KINDS.Shaft || !(d > EG_FAR_M)) return false;",
+    "new": "  if (r !== HIT_KINDS.Shaft) return false;",
     "tests": [
       "test/net/eliteGates/egaudit3_count.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "EGA3-count-mark-kind-unread",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "if (r !== HIT_KINDS.Shaft || !(d > EG_FAR_M)) return false;",
-    "new": "if (!(d > EG_FAR_M)) return false;",
+    "old": "  if (r !== HIT_KINDS.Shaft || !(d > EG_FAR_M)) return false;",
+    "new": "  if (!(d > EG_FAR_M)) return false;",
     "tests": [
       "test/net/eliteGates/egaudit3_count.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "EGA3-count-mark-twelve-beyond",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "if (r !== HIT_KINDS.Shaft || !(d > EG_FAR_M)) return false;",
-    "new": "if (r !== HIT_KINDS.Shaft || !(d >= EG_FAR_M)) return false;",
+    "old": "  if (r !== HIT_KINDS.Shaft || !(d > EG_FAR_M)) return false;",
+    "new": "  if (r !== HIT_KINDS.Shaft || !(d >= EG_FAR_M)) return false;",
     "tests": [
       "test/net/eliteGates/egaudit3_count.test.js"
     ]
@@ -534,8 +534,8 @@
   {
     "name": "EGA3-count-run-circles-unsaid",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "m.mast ?? -1, (m.rel ?? []).slice(-EG_RUN_REL_MAX)];",
-    "new": "m.mast ?? -1];",
+    "old": "  (m.rel ?? []).slice(-EG_RUN_REL_MAX),\n];",
+    "new": "];",
     "tests": [
       "test/net/eliteGates/egaudit3_count.test.js",
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
@@ -544,8 +544,8 @@
   {
     "name": "EGA3-count-run-circles-oldest",
     "file": "src/net/eliteGates/egRun.js",
-    "old": "(m.rel ?? []).slice(-EG_RUN_REL_MAX)];",
-    "new": "(m.rel ?? []).slice(0, EG_RUN_REL_MAX)];",
+    "old": "  (m.rel ?? []).slice(-EG_RUN_REL_MAX),",
+    "new": "  (m.rel ?? []).slice(0, EG_RUN_REL_MAX),",
     "tests": [
       "test/net/eliteGates/egaudit3_count.test.js"
     ]
@@ -853,8 +853,8 @@
   {
     "name": "EGA3-count-link-circles-dropped",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "rw: Array.isArray(r[8]) ? r[8] : [] }",
-    "new": "rw: [] }",
+    "old": "    ? {\n        rel: r[1],\n        lumen: r[2],\n        shards: r[3],\n        tonics: r[4],\n        cant: r[5],\n        vs: r[6],\n        mast: r[7],\n        rw: Array.isArray(r[8]) ? r[8] : [],\n      }",
+    "new": "    ? { rel: r[1], lumen: r[2], shards: r[3], tonics: r[4], cant: r[5], vs: r[6], mast: r[7], rw: [] }",
     "tests": [
       "test/net/eliteGates/egaudit3_count_spoils.test.js"
     ]

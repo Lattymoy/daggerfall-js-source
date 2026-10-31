@@ -128,8 +128,8 @@
   {
     "name": "EGA4-lords-blowon-by-stamps",
     "file": "src/net/eliteGates/egShape.js",
-    "old": "(blow?.on ? sub != null && blow.on.includes(sub) : egInBlow(blow, px, pz))",
-    "new": "egInBlow(blow, px, pz)",
+    "old": "export const egBlowOn = (blow, sub, px, pz) =>\n  blow?.on ? sub != null && blow.on.includes(sub) : egInBlow(blow, px, pz);",
+    "new": "export const egBlowOn = (blow, sub, px, pz) => egInBlow(blow, px, pz);",
     "tests": [
       "test/net/eliteGates/egaudit4_lords_errands.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "EGA4-lords-blowof-drops-on",
     "file": "src/net/eliteGates/egShape.js",
-    "old": "  if (on?.length) blow.on = [...on];\n",
-    "new": "",
+    "old": "  if (on?.length) blow.on = [...on];\n  if (ol > 0) blow.ol = Math.min(EG_OUTLINE_MAX_MS, Math.round(ol));",
+    "new": "  if (ol > 0) blow.ol = Math.min(EG_OUTLINE_MAX_MS, Math.round(ol));",
     "tests": [
       "test/net/eliteGates/egaudit4_lords_errands.test.js"
     ]
