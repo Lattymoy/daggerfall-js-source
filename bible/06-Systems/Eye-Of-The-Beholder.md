@@ -1199,6 +1199,19 @@ every view, `LAYERED_WARM_A_FRAME` a frame. A walker's drawn weapon's swing is q
 **Pins.** `eotb_body.test.js` ATTACK-TURN (a swing, a cast and a loose steered on the move show their own frame every
 tick) and ATTACK-WARM; `test/net/layered_peers.test.js` ATTACK-WARM; `tools/mutants/attackmove.json` (11, all dead).
 
+## TURN-FREE (2026-10-31): a readied body keeps its own facing
+
+The owner: "Allow players to view all rotations of their character when idle or moving in a direction with the camera
+facing another direction". The bundle ships `Graphics.TurnToView` at 2, When Weapon Readied: with a weapon out or a
+spell readied the body faced the camera, so it only ever showed its back. The port ships 1, Only When Animating: the
+body faces its walk, and stood still its last facing, so the eye goes round it through all eight views; a blow or a
+cast turns it to the camera while it plays, so it strikes where the player looks. The ladder is the IL's and the pane
+keeps all four. A DEPARTURE from the bundle's settings, the eighth, in the Ledger row.
+
+**Pins.** `eotb_body.test.js` TURN-FREE (the bundle's value read from `modsettings.json`; stood still, all eight views;
+walking aside, its side; a blow, the eye's); the IL's own pins at 2 set it (PIN MOVED); `tools/mutants/turnfree.json`
+(3, all dead).
+
 ## BACK-HOLSTER (2026-10-30): the sheathed weapon on the sprite's back - NOT the mod's
 
 Mac: "For layered/skins in third person. I want to implement back holstered weapon visuals for the sprites which rotate

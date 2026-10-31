@@ -146,7 +146,7 @@ function look() {
     wornArmour: layeredGenderOf(s['Graphics.LayeredGear']) != null,   // LAYERED-GEAR: the skin chosen on the profile (player/eyeOfTheBeholder/layeredArmor.js)
     layeredChoice: s['Graphics.LayeredGear'] ?? 0,                    // LAYERED-GEAR-ON: the choice, LAYERED_OWN (the default) the character's own body
     layeredGender: layeredGenderOf(s['Graphics.LayeredGear'], playerEntity?.gender),   // LAYERED-GEAR: and its body, female or male
-    turnToView: s['Graphics.TurnToView'] ?? 2,
+    turnToView: s['Graphics.TurnToView'] ?? 1,   // TURN-FREE: the port's default, not the bundle's (modSettings.js)
     attackStrings: s['Graphics.AttackStrings'] ?? 3,
     mirrorTime: s['Graphics.MirrorTime'] ?? 3,
     visibility: s['Graphics.FirstPersonBillboard'] ?? 1,       // [IL] `visibility`: 0 none, 1 "Shadows Only", 2 visible

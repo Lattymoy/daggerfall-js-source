@@ -11,7 +11,7 @@ import {
 import { createEotbBody, bodyState } from '../../../src/player/eyeOfTheBeholder/eotbBody.js';
 import { createEotbCamera, eotbCamera } from '../../../src/player/eyeOfTheBeholder/eotbCamera.js';
 import { ARCHIVE_FOOT, ARCHIVE_HORSE, frameTime, TABLE_FRAMES } from '../../../src/player/eyeOfTheBeholder/eotbBillboard.js';
-import { setModSetting, _resetModSettings } from '../../../src/systems/modSettings.js';
+import { setModSetting, _resetModSettings, MOD_SETTINGS } from '../../../src/systems/modSettings.js';
 import { createWeapon } from '../../../src/combat/enemyEquipment.js';
 import { WEAPONS } from '../../../src/characters/weapons.js';
 import { warmFramesOf, warmSigOf, LAYERED_WARM_A_FRAME } from '../../../src/player/eyeOfTheBeholder/layeredWarm.js';
@@ -364,7 +364,10 @@ test('AUDIT-EOTB F7b: the MIRROR reaches the UPLOAD, and the draw keeps the LAST
   } finally { gate.open = true; }
 });
 
-test('EOTB-IL: the placement is UpdateBillboard’s - the feet on the ground, sunk by a crouch, the top at the swim line, the XML X along the right', async () => {
+test('EOTB-IL: the placement is UpdateBillboard’s - the feet on the ground, sunk by a crouch, the top at the swim line, the XML X along the right', async (t) => {
+  // PIN MOVED (TURN-FREE): the IL's ladder at the bundle's default, When Weapon Readied - the port ships Only When Animating
+  setModSetting(MOD, 'Graphics.TurnToView', 2);
+  t.after(() => setModSetting(MOD, 'Graphics.TurnToView', 1));
   const { b } = await liveBody();
   ticks(b, 10, still());
   b.draw(null, { eye: [0, 1.5, -2], feet: [0, 0, 0], yaw: 0 });
@@ -664,4 +667,26 @@ test('ATTACK-WARM: the frames a look queues - its swing (each hand\'s for a pair
   assert.deepEqual([...new Set(warmFramesOf({ ...base, weapon: 'lb0' }, fc, 8).map((x) => x[0]))], ['AttackRanged']);
   assert.deepEqual([...new Set(warmFramesOf({ ...base, weapon: null, cast: 2 }, fc, 8).map((x) => x[0]))], ['AttackMelee', 'AttackSpell']);
   assert.deepEqual(warmFramesOf({ ...base, wornArmour: false }, fc, 8), []);
+});
+
+test('TURN-FREE (the owner, 2026-10-31: "Allow players to view all rotations of their character when idle or moving in a direction with the camera facing another direction"): a readied body keeps its own facing - stood still, the eye goes round it and sees all eight views; walking aside it faces its walk; a blow turns it to the eye', async () => {
+  const vendored = JSON.parse(readFileSync(join(root, 'vendor/eye-of-the-beholder/modsettings.json'), 'utf8'));
+  const shipped = vendored.Sections.find((s) => s.Name === 'Graphics').Keys.find((k) => k.Name === 'TurnToView').Value;
+  assert.equal(shipped, 2, 'the bundle ships When Weapon Readied');
+  assert.equal(MOD_SETTINGS[MOD].keys['Graphics.TurnToView'].default, 1, 'the port ships Only When Animating - a departure');
+  const { b } = await liveBody();
+  const eye = (th, extra = {}) => ({ ...extra, yaw: th, cameraPos: [-2 * Math.sin(th), 1.5, -2 * Math.cos(th)] });
+  ticks(b, 30, walk({ sheathed: false, ...eye(0) }));   // walked ahead, the weapon out
+  const seen = new Set();
+  for (let i = 0; i < 64; i++) { ticks(b, 8, still({ sheathed: false, ...eye((i / 64) * 2 * Math.PI) })); seen.add(b.state().shown.orientation); }
+  assert.equal(seen.size, 8, `stood still, all eight views as the eye goes round (${[...seen].sort()})`);
+  ticks(b, 30, walk({ sheathed: false, ...eye(0) }));
+  const back = b.state().shown.orientation;
+  const aside = { motion: { forward: 0, strafe: 1, standing: false, speed: 3, grounded: true, height: 1.8 }, feet: [0, 0, 0], sheathed: false, ...eye(0) };
+  ticks(b, 30, aside);
+  assert.notEqual(b.state().shown.orientation, back, 'walking aside, the eye behind: its side, not its back');
+  b.tick(1 / 60, { ...aside, attacking: true, swingN: 7 });
+  ticks(b, 6, { ...aside, swingN: 7 });
+  assert.ok(b.state().clip, 'swinging');
+  assert.equal(b.state().shown.orientation, back, 'a blow turns it to the eye');
 });
