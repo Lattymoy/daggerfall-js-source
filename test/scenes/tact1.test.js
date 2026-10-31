@@ -187,10 +187,10 @@ test('TACT1: every host stands its cover on its collider, under the switch; ever
   assert.match(rd('src/scenes/interiorContext.js'), /if \(isCoverFlat\(archive, record, size\)\) collider\.cover\.add\('tact1:flats', centers\.map\(\(c\) => coverProxy\(c, size\)\)\);/);
   assert.equal((rd('src/scenes/exterior.js').match(/collider\.cover\.add\('tact1:flats'/g) ?? []).length, 3);   // the seasonal, the classic and (LPT1) a low-poly tree's far pictures - the flat's own size
   for (const f of ['src/scenes/hostMagic.js', 'src/scenes/dungeonContext.js']) {
-    assert.match(rd(f), /const _cs = flightStop\(collider, m\.pos, _unit, reach, step \* _len(?:, !!m\.fromPlayer)?\);[^\n]*\n\s*const hitWall = _cs\.stop;/, `${f}: the bolts (AUDIT TACT B5: cover met by touch) - through the one flight law (AUDIT GROUND-BOLT C6)`);
+    assert.match(rd(f), /const _cs = flightStop\(collider, m\.pos, _unit, reach, step \* _len, (?:false|!!m\.fromPlayer), flightBodies\((?:foes\(\)|foes), playerFeet, playerHeight\)\);[^\n]*\n\s*const hitWall = _cs\.stop;/, `${f}: the bolts (AUDIT TACT B5: cover met by touch) - through the one flight law (AUDIT GROUND-BOLT C6), never short of a body in cover (TRUNK-FOES)`);
     assert.match(rd(f), /const _adv = step \* _cs\.advance;/, `${f}: no further than cover's touch`);
   }
-  assert.match(rd('src/scenes/hostMagic.js'), /const cs = coverStep\(coverDistance\(collider, pos, unit, reach\), collider\.raycast\(pos, unit, reach\), reach, radius, stepLen, swept\);/, 'flightStop: cover met by touch (AUDIT TACT B5), the wall at the reach (WALL-SHAFT: by touch for a swept shaft)');
+  assert.match(rd('src/scenes/hostMagic.js'), /const cs = coverStep\(coverDistance\(collider, pos, unit, reach, false, holds\), collider\.raycast\(pos, unit, reach\), reach, radius, stepLen, swept\);/, 'flightStop: cover met by touch (AUDIT TACT B5), the wall at the reach (WALL-SHAFT: by touch for a swept shaft)');
   assert.equal((rd('src/scenes/cityGuards.js').match(/coverDistance\(collider, eye, dir, dist, true\) < dist - 1e-3/g) ?? []).length, 2, 'the witness and the guard who sees him - lines of sight (AUDIT TACT B2)');
   assert.match(rd('src/player/collider.js'), /this\.cover\?\.remove\(bucketKey\);/);
 });

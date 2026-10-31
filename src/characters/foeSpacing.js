@@ -46,6 +46,7 @@ function supported(collider, ai, feet) {
  *  @param skip     (f, i) => true for a body that neither pushes nor is pushed */
 export function spaceFoes(foes, collider, dt, skip = spacingSkips) {
   const n = foes?.length ?? 0;
+  if (n && dt > 0 && collider?.move) keepFoesOffBodies(foes, collider, skip);   // TRUNK-FOES: a lone foe too
   if (n < 2 || !(dt > 0) || !collider?.move) return 0;
   if (_push.length < n * 2) _push = new Float64Array(n * 2);
   if (_live.length < n) _live = new Uint8Array(n);
@@ -88,6 +89,33 @@ export function spaceFoes(foes, collider, dt, skip = spacingSkips) {
     const r = collider.move(feet, px, 0, pz, sweepHeight(ai), !airborne);
     if (!airborne && ((r && !r.grounded) || !supported(collider, ai, feet))) { feet[0] = _was[0]; feet[1] = _was[1]; feet[2] = _was[2]; continue; }   // never off an edge
     moved++;
+  }
+  return moved;
+}
+
+/**
+ * TRUNK-FOES (FIELD FEEDBACK 2026-10-31, #feature-feedback: "Jungle trees need better or more collision, enemies just
+ * hide in them it sucks."): a foe standing in a NATURE body (world/propBodies.js - a trunk, a rock, a landmark) is put
+ * at its edge along the line from its middle, as the player's clamp puts the feet (player/bodyClamp.js keepOffBodies),
+ * at once: a walk into a trunk slides round it. Through the collider, and never off an edge (spaceFoes' law). A made
+ * thing's body holds no foe: its path through a street or a dungeon is a navmesh's that knows no body. Answers how many
+ * moved. @param skip (f, i) => true for a body that is not moved
+ */
+export function keepFoesOffBodies(foes, collider, skip = spacingSkips) {
+  const cover = collider?.cover;
+  if (!cover?.near || !collider.move) return 0;
+  let moved = 0;
+  for (let i = 0; i < foes.length; i++) {
+    const f = foes[i];
+    if (skip(f, i)) continue;
+    const ai = f.ai, feet = ai.feet, rad = ai.radius ?? CAPSULE_RADIUS, tall = ai.height ?? CAPSULE_HEIGHT;   // its full height: the duck is the Move's alone
+    cover.near(feet, rad, (it, cx, cy, cz) => {
+      if (!it.nature || cy >= feet[1] + tall || cy + it.h <= feet[1]) return;   // over its head, or under its feet
+      const R = it.r + rad, dx = feet[0] - cx, dz = feet[2] - cz, d = Math.hypot(dx, dz);
+      if (d >= R) return;
+      const nx = d > 1e-6 ? dx / d : 1, nz = d > 1e-6 ? dz / d : 0;
+      if (nudge(ai, nx * (R - d), nz * (R - d), R, collider)) moved++;   // to its edge in one frame
+    });
   }
   return moved;
 }

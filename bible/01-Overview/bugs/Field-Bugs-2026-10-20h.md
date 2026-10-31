@@ -502,8 +502,8 @@ Every interior flat of BLOCKS.BSA and both packs was swept: one alone is taller 
 TEXTURE.210 record 24, a 4.55 m lamp in the classic data (1,498 placements) - no statue. Every scaled model in the Mara
 rooms is scaled as the pack's author wrote it, by `rmbLayout.js:"export function modelScaleVector(obj) {"`'s rule
 (RMBLayout.cs:74-77, DaggerfallInterior.cs:445), Mara's tapestry 45147 at 1.3 and 1.5 among them, and each placement is
-drawn and collided from the same mesh and matrix. In the five room variants every flat's solid body (PROP-BODIES) sits
-inside its drawn picture, at its foot (`propBodies.js:"  return body(c, (footShare(t, record, size) * w) / 2, h * COVER_HEIGHT_FRAC);"`,
+drawn and collided from the same mesh and matrix. In the five room variants every flat's body (PROP-BODIES) sits
+inside its drawn picture, at its foot (`propBodies.js:"  return body(c, (footShare(t, record, size) * w) / 2, h * COVER_HEIGHT_FRAC, isNatureArchive(archive));"`,
 from `interiorContext.js:"collider.cover.add('prop-bodies', flatBodies(t, archive, record, size, centers));"`); no flat
 without a picture has one (the 0.025 m statue is under STEP_OFFSET), and no floor or ceiling cuts a body but one 2 cm
 ceiling touch (211.47, the pack design's lower storey). Outside, the Mara blocks hold no statue: the tallest flats are

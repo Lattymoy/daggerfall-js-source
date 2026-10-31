@@ -1,0 +1,184 @@
+[
+  {
+    "name": "TRUNK-FOES-the-call-gone",
+    "file": "src/characters/foeSpacing.js",
+    "old": "  if (n && dt > 0 && collider?.move) keepFoesOffBodies(foes, collider, skip);   // TRUNK-FOES: a lone foe too\n",
+    "new": "",
+    "tests": ["test/characters/trunkfoes.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-a-lone-foe-skipped",
+    "file": "src/characters/foeSpacing.js",
+    "old": "  if (n && dt > 0 && collider?.move) keepFoesOffBodies(",
+    "new": "  if (n > 1 && dt > 0 && collider?.move) keepFoesOffBodies(",
+    "tests": ["test/characters/trunkfoes.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-a-held-frame-pushes",
+    "file": "src/characters/foeSpacing.js",
+    "old": "  if (n && dt > 0 && collider?.move) keepFoesOffBodies(",
+    "new": "  if (n && collider?.move) keepFoesOffBodies(",
+    "tests": ["test/characters/trunkfoes.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-the-nature-unread",
+    "file": "src/characters/foeSpacing.js",
+    "old": "      if (!it.nature || cy >= feet[1] + tall",
+    "new": "      if (cy >= feet[1] + tall",
+    "tests": ["test/characters/trunkfoes.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-the-span-unread",
+    "file": "src/characters/foeSpacing.js",
+    "old": "      if (!it.nature || cy >= feet[1] + tall || cy + it.h <= feet[1]) return;",
+    "new": "      if (!it.nature) return;",
+    "tests": ["test/characters/trunkfoes.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-the-reach-without-the-foe-s-radius",
+    "file": "src/characters/foeSpacing.js",
+    "old": "      const R = it.r + rad, dx = feet[0] - cx",
+    "new": "      const R = it.r, dx = feet[0] - cx",
+    "tests": ["test/characters/trunkfoes.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-the-push-past-the-edge-rule",
+    "file": "src/characters/foeSpacing.js",
+    "old": "      if (nudge(ai, nx * (R - d), nz * (R - d), R, collider)) moved++;",
+    "new": "      if (collider.move(feet, nx * (R - d), 0, nz * (R - d), tall, true)) moved++;",
+    "tests": ["test/characters/trunkfoes.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-a-tree-flat-no-nature",
+    "file": "src/world/propBodies.js",
+    "old": "h * COVER_CROWN_FROM, true);",
+    "new": "h * COVER_CROWN_FROM, false);",
+    "tests": ["test/characters/trunkfoes.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-a-still-record-no-nature",
+    "file": "src/world/propBodies.js",
+    "old": "h * COVER_HEIGHT_FRAC, isNatureArchive(archive));",
+    "new": "h * COVER_HEIGHT_FRAC, false);",
+    "tests": ["test/characters/trunkfoes.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-a-prop-nature",
+    "file": "src/world/propBodies.js",
+    "old": "h * COVER_HEIGHT_FRAC, isNatureArchive(archive));",
+    "new": "h * COVER_HEIGHT_FRAC, true);",
+    "tests": ["test/characters/trunkfoes.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-the-jungle-s-trunk-no-nature",
+    "file": "src/world/propBodies.js",
+    "old": "lift: 0, body: true, nature: true, _mark: 0 };",
+    "new": "lift: 0, body: true, nature: false, _mark: 0 };",
+    "tests": ["test/characters/trunkfoes.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-the-graht-oak-no-nature",
+    "file": "src/world/jungle/grahtOaks.js",
+    "old": "h: (m.crownFrom + 4) * s, lift: 0, body: true, nature: true, _mark: 0 }];",
+    "new": "h: (m.crownFrom + 4) * s, lift: 0, body: true, nature: false, _mark: 0 }];",
+    "tests": ["test/characters/trunkfoes.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-the-landmark-no-nature",
+    "file": "src/world/lands/landProps.js",
+    "old": "h: q.h * s, lift: 0, body: true, nature: true, _mark: 0 }));",
+    "new": "h: q.h * s, lift: 0, body: true, nature: false, _mark: 0 }));",
+    "tests": ["test/characters/trunkfoes.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-the-box-unfilled",
+    "file": "src/ai/cover.js",
+    "old": "    box[0] = Math.min(box[0], x - it.r); box[1] = Math.min(box[1], z - it.r); box[2] = Math.max(box[2], x + it.r); box[3] = Math.max(box[3], z + it.r);\n",
+    "new": "",
+    "tests": ["test/characters/trunkfoes.test.js", "test/player/propbodies.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-the-box-read-the-wrong-way",
+    "file": "src/ai/cover.js",
+    "old": "|| x - reach > box[2] ||",
+    "new": "|| x - reach > box[0] ||",
+    "tests": ["test/characters/trunkfoes.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-the-holds-unread",
+    "file": "src/ai/cover.js",
+    "old": "    if (hx * hx + hz * hz <= r * r && hy >= cy && hy <= top) return Infinity;\n",
+    "new": "",
+    "tests": ["test/characters/trunkfoes.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-their-frame-unread",
+    "file": "src/ai/cover.js",
+    "old": "_holds[k] = holds[k] - t[k % 3];",
+    "new": "_holds[k] = holds[k];",
+    "tests": ["test/characters/trunkfoes.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-coverDistance-drops-them",
+    "file": "src/ai/cover.js",
+    "old": "  return cover.hit(origin, dir, maxDist, sight, holds);",
+    "new": "  return cover.hit(origin, dir, maxDist, sight);",
+    "tests": ["test/characters/trunkfoes.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-the-arrow-s-holds-none",
+    "file": "src/combat/arrowFlight.js",
+    "old": "struckBy?.length ? struckPoints(m.pos, unit, struckBy, _struck) : null",
+    "new": "null",
+    "tests": ["test/characters/trunkfoes.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-a-body-struck-off-the-line",
+    "file": "src/systems/spellcast.js",
+    "old": "    if (!missileHitsCapsule(_at, f, b.height, b.radius ?? BODY_CAPSULE_RADIUS)) continue;\n",
+    "new": "",
+    "tests": ["test/characters/trunkfoes.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-the-body-s-middle-not-the-line-s-height",
+    "file": "src/systems/spellcast.js",
+    "old": "out.push(f[0], Math.min(Math.max(_at[1], f[1]), f[1] + (b.height ?? CAPSULE_HEIGHT)), f[2]);",
+    "new": "out.push(f[0], f[1] + (b.height ?? CAPSULE_HEIGHT) / 2, f[2]);",
+    "tests": ["test/characters/trunkfoes.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-the-player-no-body",
+    "file": "src/systems/spellcast.js",
+    "old": "  if (playerFeet) out.push({ feet: playerFeet, height: playerHeight, radius: PLAYER_BODY_RADIUS });\n",
+    "new": "",
+    "tests": ["test/characters/trunkfoes.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-a-corpse-a-body",
+    "file": "src/systems/spellcast.js",
+    "old": "if (f && !f.dead && f.ai?.feet) out.push(f.ai);",
+    "new": "if (f && f.ai?.feet) out.push(f.ai);",
+    "tests": ["test/characters/trunkfoes.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-flightStop-s-holds-none",
+    "file": "src/scenes/hostMagic.js",
+    "old": "coverDistance(collider, pos, unit, reach, false, holds)",
+    "new": "coverDistance(collider, pos, unit, reach, false, null)",
+    "tests": ["test/characters/trunkfoes.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-the-bolt-s-bodies-none",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, false, flightBodies(foes(), playerFeet, playerHeight));",
+    "new": "      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, false);",
+    "tests": ["test/scenes/tact1.test.js"]
+  },
+  {
+    "name": "TRUNK-FOES-the-dungeon-s-bolt-s-bodies-none",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, !!m.fromPlayer, flightBodies(foes, playerFeet, playerHeight));",
+    "new": "      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, !!m.fromPlayer);",
+    "tests": ["test/scenes/tact1.test.js"]
+  }
+]

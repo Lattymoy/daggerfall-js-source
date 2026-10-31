@@ -160,8 +160,9 @@ as it did and the canopy's light kept. `?jungle=off` takes them with the jungle.
    to the crowns', or its ground lifted by their height - is the ring's own change, left for a slice of its own.
 4. **No graht-oak in a town.** A town's trunks stand round its rect and its clearing; their crowns overhang its edge. A
    village built in the trees - Falinesti on its walking oak, Elden Root in its crown - is another slice's.
-5. **Collision is the player's** (PROP-BODIES' law): the trunk and the buttresses turn the player, on foot or mounted;
-   foes, peers, arrows and the camera pass through them as through every flat's body, and no one climbs them.
+5. **Collision is the player's and the foes'** (PROP-BODIES' law): the trunk and the buttresses turn the player, on foot
+   or mounted, and since TRUNK-FOES a foe (a nature body, `Player-Arc.md`); peers, arrows and the camera pass through
+   them as through every flat's body, and no one climbs them.
 6. **Not Logging's.** A graht-oak is no tree a player fells; Logging's jungle trees stand under it.
 
 ## Departures from DFU (Port-Ledger A, TAMRIEL'S BIOMES)

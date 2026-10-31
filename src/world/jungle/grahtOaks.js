@@ -174,17 +174,17 @@ export function grahtFootMask(trees, tiles, tileM) {
 }
 
 /**
- * A TREE'S BODIES (world/propBodies.js's shape: `{ c, r, h, lift, body, _mark }`, its foot `c` pixel-local): the trunk to
+ * A TREE'S BODIES (world/propBodies.js's shape: `{ c, r, h, lift, body, nature, _mark }`, its foot `c` pixel-local): the trunk to
  * where its limbs begin, and each buttress a run of bodies from the trunk to its foot.
  * @param {ArrayLike<number>} trees a set's floats @param {number} i the tree's first
  */
 export function grahtBodies(trees, i) {
   const x = trees[i], y = trees[i + 1], z = trees[i + 2], yaw = trees[i + 3], s = trees[i + 4], m = GRAHT_MEASURES[trees[i + 5]];
-  const out = [{ c: [x, y, z], r: m.trunk * s, h: (m.crownFrom + 4) * s, lift: 0, body: true, _mark: 0 }];
+  const out = [{ c: [x, y, z], r: m.trunk * s, h: (m.crownFrom + 4) * s, lift: 0, body: true, nature: true, _mark: 0 }];
   const c = Math.cos(yaw), sn = Math.sin(yaw);
   for (const [bx, bz, bh] of m.finBodies) {
     // in the world, turned and scaled as the mesh is (BB_VS's mesh mode: x' = c x + s z, z' = -s x + c z)
-    out.push({ c: [x + (c * bx + sn * bz) * s, y, z + (-sn * bx + c * bz) * s], r: GRAHT_FIN_BODY_R * s, h: Math.max(2, bh * s + 1), lift: 0, body: true, _mark: 0 });
+    out.push({ c: [x + (c * bx + sn * bz) * s, y, z + (-sn * bx + c * bz) * s], r: GRAHT_FIN_BODY_R * s, h: Math.max(2, bh * s + 1), lift: 0, body: true, nature: true, _mark: 0 });
   }
   return out;
 }

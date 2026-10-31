@@ -340,7 +340,7 @@ test('GRAHT1: the sky is the trees\' - from the forest floor their crowns close 
 test('GRAHT1: the bodies - the trunk to where its limbs begin, each buttress a run of bodies out to its foot, turned as the billboard program turns the mesh; each on the drawn buttress', () => {
   const tree = [300, 12, 400, 1.1, 1.13, 2], [x, y, z, yaw, s, v] = tree, M = GRAHT_MEASURES[v];
   const bodies = grahtBodies(tree, 0);
-  assert.deepEqual(bodies[0], { c: [x, y, z], r: M.trunk * s, h: (M.crownFrom + 4) * s, lift: 0, body: true, _mark: 0 }, 'the trunk');
+  assert.deepEqual(bodies[0], { c: [x, y, z], r: M.trunk * s, h: (M.crownFrom + 4) * s, lift: 0, body: true, nature: true, _mark: 0 }, 'the trunk');   // TRUNK-FOES: a nature body - foes kept out
   assert.equal(bodies.length, 1 + M.finBodies.length);
   assert.ok(M.finBodies.length >= grahtSkeleton(v).fins.length * 2, 'every buttress a run');
   assert.ok(bodies.every((b) => b.body && b.r >= GRAHT_FIN_BODY_R * s - 1e-9 && b.h >= 2 && b.c.length === 3));

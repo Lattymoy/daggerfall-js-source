@@ -4,11 +4,11 @@
 // so a player walked through every tree, rock, barrel and statue. Here a SOLID flat stands a BODY - an upright cylinder
 // at its foot - and the player, on foot or mounted, is kept out of it (player/bodyClamp.js, after the collider's move).
 //
-// A body rides the cover index (ai/cover.js, a proxy marked `body`): the same sets, frames and lifecycle as a flat's
-// cover, so a pixel, a building or a dungeon that leaves takes its bodies with it, a recentre moves them, and a felled
-// tree's body is gone with its tree (FELLED). Never the collider: the collider is shared, and a column there would stop
-// arrows, foes, the camera and every activation ray - and a 0.3 m trunk in its triangle soup is walked through anyway
-// (opposing pushes cancel on thin geometry). Foes, peers and the navmesh are as they were.
+// A body rides the cover index (ai/cover.js, a proxy marked `body`): a flat's cover's sets, frames and lifecycle, so a
+// pixel, a building or a dungeon that leaves takes its bodies with it, a recentre moves them, and a felled tree's body
+// goes with its tree (FELLED). Never the collider: it is shared, and a column there would stop arrows, foes, the camera
+// and every activation ray - and a 0.3 m trunk in its triangle soup is walked through anyway. TRUNK-FOES: a `nature`
+// body keeps the foes out too (characters/foeSpacing.js); a made thing's does not. Peers and the navmesh are as they were.
 //
 // WHICH FLATS (the owner's "all props" - the solid ones; the flora a body walks through, as one walks through ferns):
 //   - a TREE its trunk, never its crown: a Tree record of its climate (terrainNature.js TREE_RECORDS) or a record
@@ -37,11 +37,11 @@ export function flatBody(c, t, archive, record, size, { tree = false } = {}) {
   if (NOT_COVER_ARCHIVES.has(archive) || c?.noCover) return null;
   const w = size?.w ?? 0, h = size?.h ?? 0;
   const sway = isNatureArchive(archive) ? responseByte(archive, record) : 0;
-  if (tree || sway === RESPONSE.full) return body(c, Math.min(w * COVER_RADIUS_FRAC, COVER_TRUNK_R), h * COVER_CROWN_FROM);
+  if (tree || sway === RESPONSE.full) return body(c, Math.min(w * COVER_RADIUS_FRAC, COVER_TRUNK_R), h * COVER_CROWN_FROM, true);
   if (sway !== 0) return null;   // the flora, Low and Medium
-  return body(c, (footShare(t, record, size) * w) / 2, h * COVER_HEIGHT_FRAC);
+  return body(c, (footShare(t, record, size) * w) / 2, h * COVER_HEIGHT_FRAC, isNatureArchive(archive));
 }
-const body = (c, r, h) => (r > 0 && h >= STEP_OFFSET ? { c, r, h, lift: 0, body: true, _mark: 0 } : null);   // MEM-AUDIT: born with the index's mark (cover.js fileIn)
+const body = (c, r, h, nature) => (r > 0 && h >= STEP_OFFSET ? { c, r, h, lift: 0, body: true, nature, _mark: 0 } : null);   // MEM-AUDIT: born with the index's mark (cover.js fileIn)
 
 /** A group's bodies (flatBody for each foot), for a host's cover list. */
 export function flatBodies(t, archive, record, size, centers, opts = {}) {
@@ -89,5 +89,5 @@ export function footShare(t, record, size) {
  *  jungleCover's trunk - the measures a table, so a client whose files did not load stands the same bodies). */
 export function jungleBody(c, species, scale) {
   const m = JUNGLE_MEASURES[species];
-  return { c, r: m.trunk * scale, h: m.crownFrom * scale, lift: 0, body: true, _mark: 0 };   // MEM-AUDIT: born with the index's mark
+  return { c, r: m.trunk * scale, h: m.crownFrom * scale, lift: 0, body: true, nature: true, _mark: 0 };   // MEM-AUDIT: born with the index's mark
 }

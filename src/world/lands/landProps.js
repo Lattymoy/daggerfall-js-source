@@ -268,7 +268,7 @@ export function flatsOffProps(flats, props, tileM) {
 }
 
 /**
- * A LANDMARK'S BODIES (world/propBodies.js's shape: `{ c, r, h, lift, body, _mark }`, its foot `c` pixel-local): each solid
+ * A LANDMARK'S BODIES (world/propBodies.js's shape: `{ c, r, h, lift, body, nature, _mark }`, its foot `c` pixel-local): each solid
  * part one (landMeasures' `parts` - a stalk, a column, a lump of rock, a trunk: a crag's three lumps, a grove of three's
  * stalks, the xylaria's cluster), turned by its yaw as the draw turns its mesh (x' = c x + s z, z' = -s x + c z) - none
  * for the reeds and the vines (LAND_KIND_LAW.body).
@@ -278,7 +278,7 @@ export function landPropBodies(props, i) {
   const kind = LAND_KINDS[props[i + 5]];
   if (!(/** @type {any} */ (LAND_KIND_LAW)[kind])) return [];
   const m = landMeasures(kind, props[i + 6]), s = props[i + 4], c = Math.cos(props[i + 3]), sn = Math.sin(props[i + 3]);   // an unbodied kind's parts none (landMeasures)
-  return m.parts.map((q) => ({ c: [props[i] + (c * q.x + sn * q.z) * s, props[i + 1], props[i + 2] + (-sn * q.x + c * q.z) * s], r: Math.max(0.3, q.r) * s, h: q.h * s, lift: 0, body: true, _mark: 0 }));
+  return m.parts.map((q) => ({ c: [props[i] + (c * q.x + sn * q.z) * s, props[i + 1], props[i + 2] + (-sn * q.x + c * q.z) * s], r: Math.max(0.3, q.r) * s, h: q.h * s, lift: 0, body: true, nature: true, _mark: 0 }));
 }
 
 /**

@@ -2492,12 +2492,38 @@ it - and takes away the airborne momentum that points into it; a rock under the 
 step BEGAN inside (a spawn, a teleport, a mount taken beside a tree) is never a trap: the feet are put back no deeper
 than they stood, so they walk out. The put-back is the collider's own move, so a wall still stops it. Nothing holds a
 body that nothing holds a wall for: a body the motor holds, the hands (a climb, a wall, a parkour move), a journey's
-pace. Foes, peers, the navmesh and the camera are as they were - the clamp is the player's; online nothing crosses the
-wire (a body's place is the layout's, the same on every client, and a felled tree's the character's own).
+pace. Peers, the navmesh and the camera are as they were (foes: TRUNK-FOES, below); online nothing crosses the wire (a
+body's place is the layout's, the same on every client, and a felled tree's the character's own).
 
 Pinned by `test/player/propbodies.test.js` (the real motor and collider walking into a trunk, sliding round one, under a
 crown, through a felled tree; the clamp; the foot; which flats; the index; the hosts by source) and
 `tools/mutants/propbodies.json` (26, all dead). Port-Ledger A, THE SOLID FLATS STAND BODIES.
+
+## TRUNK-FOES - a foe kept out of a tree, and shot in a crown (FIELD FEEDBACK 2026-10-31)
+
+#feature-feedback: "Jungle trees need better or more collision, enemies just hide in them it sucks." PROP-BODIES' clamp
+was the player's alone, so a foe walked into a jungle trunk (1-2 m thick) and stood in it. Cover lets a ray that starts
+inside a proxy out (`ai/cover.js` `rayUpright`), and a missile from outside stopped at its side: a foe in a trunk or
+a low crown shot out, and the player's arrows and spells did not reach it.
+
+**The foes' clamp** (`characters/foeSpacing.js` `keepFoesOffBodies`, called from `spaceFoes` before its pairs, so a
+lone foe too: the street's and the interior's pools, the watch, the dungeon). A foe whose feet stand in a NATURE body
+(`nature`: a tree or a still nature flat, the jungle's trunks, Valenwood's graht-oaks, the landmarks past the Bay) is put
+at its edge along the line from its middle in that frame, through the collider and never off an edge (FOE-SPACING's
+`nudge`). A made thing's body (a barrel, a statue, a cart) holds no foe: a street's or a dungeon's path is a navmesh's
+that knows no body, and a foe held at a barrel in a corridor would stand there. Each set keeps its bodies' box, so a foe
+asks only the sets near it: 30 foes over 121 pixels' 363,000 bodies, 0.09 ms a frame.
+
+**The missile** (`systems/spellcast.js` `flightBodies`, `struckPoints`; `ai/cover.js` `holds`). A step names the bodies
+its line would strike (missileHitsCapsule's law at its nearest pass: the live foes and the player), and a proxy that
+holds one is no wall in front of it - AUDIT TACT B2's two-way sight law, for a shot. The arrows (`arrowFlight.js`) and
+the one bolt law (`hostMagic.js` `flightStop`, the dungeon's too) pass them. A crown that holds nobody still stops a
+shot, and a trunk in front of a foe still shields it.
+
+Pinned by `test/characters/trunkfoes.test.js` (a foe in a banyan's trunk at its edge in one frame, alone or in a pack;
+the Bay's trees and rocks, a graht-oak and a Hist out, a barrel and a statue not; the edge; the real encounter pool;
+the player's arrow at a foe pressed to a trunk and in a young banyan's crown; the bolts) and
+`tools/mutants/trunkfoes.json` (26, all dead).
 
 ## SIGN-PASS - a shop's sign stops a body where it stands, never where it hangs (FIELD BUGS 2026-10-25i)
 

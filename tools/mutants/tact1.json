@@ -83,8 +83,8 @@
   {
     "name": "TACT1-first-not-nearest",
     "file": "src/ai/cover.js",
-    "old": "            mark[i] = stamp;\n            const s = rayUpright(lo, dir, bases[i], rs[i], hs[i], lifts[i], Math.min(maxDist, best), endAt);\n            if (s < best) best = s;",
-    "new": "            mark[i] = stamp;\n            const s = rayUpright(lo, dir, bases[i], rs[i], hs[i], lifts[i], Math.min(maxDist, best), endAt);\n            if (s < best) return s;",
+    "old": "            mark[i] = stamp;\n            const s = rayUpright(lo, dir, bases[i], rs[i], hs[i], lifts[i], Math.min(maxDist, best), endAt, _holds, nHolds);\n            if (s < best) best = s;",
+    "new": "            mark[i] = stamp;\n            const s = rayUpright(lo, dir, bases[i], rs[i], hs[i], lifts[i], Math.min(maxDist, best), endAt, _holds, nHolds);\n            if (s < best) return s;",
     "tests": [
       "test/scenes/tact1.test.js"
     ],
@@ -156,8 +156,8 @@
   {
     "name": "TACT1-arrow-through",
     "file": "src/combat/arrowFlight.js",
-    "old": "      const cs = c ? coverStep(coverDistance(c, m.pos, unit, reach), c.raycast(m.pos, unit, reach),",
-    "new": "      const cs = c ? coverStep(Infinity, c.raycast(m.pos, unit, reach),",
+    "old": "coverDistance(c, m.pos, unit, reach, false, struckBy?.length ? struckPoints(m.pos, unit, struckBy, _struck) : null)",
+    "new": "Infinity",
     "tests": [
       "test/scenes/tact1.test.js"
     ]
@@ -192,7 +192,7 @@
   {
     "name": "TACT1-bolt-through",
     "file": "src/scenes/hostMagic.js",
-    "old": "  const cs = coverStep(coverDistance(collider, pos, unit, reach), collider.raycast(pos, unit, reach), reach, radius, stepLen, swept);",
+    "old": "  const cs = coverStep(coverDistance(collider, pos, unit, reach, false, holds), collider.raycast(pos, unit, reach), reach, radius, stepLen, swept);",
     "new": "  const cs = coverStep(Infinity, collider.raycast(pos, unit, reach), reach, radius, stepLen, swept);",
     "tests": [
       "test/scenes/tact1.test.js"
