@@ -10,8 +10,7 @@ in a fight, the owner chose "Carry lines only": the fists' own damage, and the w
 `src/characters/handWrapsIds.js`) are a weapon worn in either hand. With them on, the player fights with the bare hands:
 the fists' art and swing, the Hand-to-Hand skill, both fists up. The blow is the fists' blow. What the wraps add is what
 they carry: a DFU enchantment (the item maker's, a Magic piece's) and the loot ladder's lines. The fists glow by the
-Aura Armory weapon piece alone, or a staff `/glow` (WRAPS-AURA, 2026-10-30, mob: "wraps are glowing without the aura
-on"; `05-Combat/Weapon-Glow.md` law 10): an element or an enchantment lights them no more.
+Aura Armory weapon piece alone, or a staff `/glow` (WRAPS-AURA, 2026-10-30, as the owner asked; `05-Combat/Weapon-Glow.md` law 10): an element or an enchantment lights them no more.
 
 They are cloth. Every mint is material 0, whatever a shelf or the random weapon roll asked, and the name says no metal.
 A weaponsmith shelves them and the random weapon roll finds them (`registerCustomItemGroup`), at rarity 3. The list shows
@@ -55,7 +54,7 @@ Strikes' `durabilityLoss`), so a pair can break and is repaired. A line's number
 The wraps key as the empty hand (`combat/fpArm.js` `fpWeaponKey`), so nothing is held. The arm takes the wraps' glow
 through `setHandGlow` and lays it on its first- and third-person meshes as `handGlow` while the fists are up: drawn, no
 spell readied, not climbing, no sheet held up, and the empty hand's key worn (a swap from a blade has landed). Put
-away, the third-person body keeps the glow (WRAPS-AWAY, 2026-10-30, mob: "keep glow on wrap whern put away"). Drawn
+away, the third-person body keeps the glow (WRAPS-AWAY, 2026-10-30, as the owner asked). Drawn
 fists put the torch away (`carriedLeftVisible`), so the glow never lights one. The renderer draws it as a weapon's glow
 over the hands' shown ranges (`render/renderer.js` `inGlowSlot` 'hands': the skin's `hand` row and a glove's `right
 hand (...)` and `left hand (...)` parts). A glove is one mesh to the elbow, so its cuff glows too.
@@ -105,8 +104,7 @@ its own probe (`tools/weaponGlowProbe.mjs`).
 
 ## WERE-WRAPS, WERE-LOOT, WERE-POTIONS: the beast keeps its wraps
 
-2026-10-30, the owner: "let them keep the wraps and let them loot and use potions just dont let them open inventory",
-"keep wraps and make them useful". A DEPARTURE from DFU's MorphSelf, which empties both hands: the change takes a weapon
+2026-10-30, as the owner asked. A DEPARTURE from DFU's MorphSelf, which empties both hands: the change takes a weapon
 off and leaves a pair of Hand Wraps on (`lycanthropy.js:"if (!isHandWraps(equipTableOf(entity)[slot])) unequipSlot"`).
 The claws strike in them (`playerWeapon.js:"get wraps() {"`): their damage
 lines and gems ride the claws' roll as a fist's, their skill lines and enchantments count while worn, and between players

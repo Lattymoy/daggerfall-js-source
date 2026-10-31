@@ -1,5 +1,4 @@
-// STAFF-VIEW1 (2026-10-23, mob: "np player esp in staff panel?", "i need staff panel to have esp", "i told you to add the
-// opther parts to the menu?", "wtf u had all this build"; design doc "DFO Staff Panel: design", In game: the staff view) -
+// STAFF-VIEW1 (2026-10-23, as the owner asked; design doc "DFO Staff Panel: design", In game: the staff view) -
 // THE STAFF TAGS, driven headless: scenes/staffViewHost.js over a fake follow (the page's, scenes/staffFollowHost.js
 // staffFollowOnPage's shape) and ui/staffTags.js over a fake document of this file's own - test/net/name1_bubbles.test.js's
 // shape, COPIED rather than shared, with the same write counter, because "one element per player, moved and never
@@ -234,7 +233,7 @@ test('STAFF-VIEW1 an Admin\'s monsters: the game\'s own puppets by their sender 
   assert.equal(r.layer.lineSets.at(-1).length, STAFF_LINES_MAX);
 });
 
-test('STAFF-LINES-SEA (mob, 2026-10-25: "not draw line to player from sea creature", "they arnt a threat"): a Slaughterfish, a Dreugh or a Lamia draws no line to its owner on the Overworld and is not in the tag\'s count; a land monster still is (mutants: the sea lined, the sea counted, every monster dropped)', () => {
+test('STAFF-LINES-SEA (as the owner asked): a Slaughterfish, a Dreugh or a Lamia draws no line to its owner on the Overworld and is not in the tag\'s count; a land monster still is (mutants: the sea lined, the sea counted, every monster dropped)', () => {
   assert.deepEqual([...STAFF_SEA_TYPES].sort((a, b) => a - b), [11, 41, 42], 'the relay\'s FOE_SEA_TYPES');
   const foes = [11, 41, 42, 7].map((t, i) => ({ puppet: 'p1', mobileType: t, ai: { feet: [i * 2 - 3, 0, -30] } }));
   const follow = fakeFollow({ room: [peer('p1', 0, -30)] });
@@ -246,7 +245,7 @@ test('STAFF-LINES-SEA (mob, 2026-10-25: "not draw line to player from sea creatu
   assert.equal(r.layer.lineSets.at(-1).length, 1, 'the Orc alone lined');
 });
 
-test('STAFF-VIEW-SWITCH (mob, 2026-10-25: "need option in setting to turn of monster lines and player esp to play normal"): Your settings\' esp off - no tags, no flag lines, the travel view\'s marks untouched; lines off - an Admin\'s monster lines gone, the tags kept; an answer that names neither keeps both on (mutants: a switch unread, read the other way, esp off still taking the marks)', () => {
+test('STAFF-VIEW-SWITCH (as the owner asked): Your settings\' esp off - no tags, no flag lines, the travel view\'s marks untouched; lines off - an Admin\'s monster lines gone, the tags kept; an answer that names neither keeps both on (mutants: a switch unread, read the other way, esp off still taking the marks)', () => {
   assert.deepEqual([validTags({ list: [] }).esp, validTags({ list: [] }).lines], [true, true], 'an older panel: both on');
   assert.deepEqual([validTags({ list: [], esp: false }).esp, validTags({ list: [], lines: false }).lines], [false, false]);
   const foes = [{ puppet: 'p1', mobileType: 7, ai: { feet: [0, 0, -31] } }];
@@ -552,7 +551,7 @@ test('STAFF-FLATMAP Shift+N: staff only, a trusted press with Shift alone, anywh
   assert.equal(noMap.host.key(press()), false, 'no map link: nothing');
 });
 
-test('FOLLOW-GROUND-HINT (mob: "following from ground does not work", "panel open said locked never moved"): a pick of a player drawn on my own ground hands the follow my room, its layer and their socket; a traveller\'s mark, or a pick while a follow is locked, hands none (mutants: the hint dropped, a hint while locked)', () => {
+test('FOLLOW-GROUND-HINT (as the owner asked): a pick of a player drawn on my own ground hands the follow my room, its layer and their socket; a traveller\'s mark, or a pick while a follow is locked, hands none (mutants: the hint dropped, a hint while locked)', () => {
   const follow = fakeFollow({ room: [peer('p-1', 0, 0, { sub: 'acct-room' })] });
   follow.roomKey = 'cell:100,100';
   const r = rig({ follow, book: [{ id: 'p-9', sub: 'acct-book', name: 'Far' }] });
@@ -565,7 +564,7 @@ test('FOLLOW-GROUND-HINT (mob: "following from ground does not work", "panel ope
   assert.equal(follow.hints.at(-1), null, 'locked: the followed room is not mine');
 });
 
-test('STAFF-FLAG-LINES (mob: "need to port over my watch lines and review lines for flags in staff esp", "helps flag bad players"): from the screen\'s middle a line to each flagged player in front of the eye - a report\'s red (review) - past the nameplate distance too; none to a player with no flag, a watch alone (STAFF-LINES-REVIEW, mob: "no watch line gold show just a red review") or behind the eye; on the Overworld to its tags; for a Moderator as for an Admin (mutants: a watch lined again, the distance cut on the lines, no lines on the Overworld)', () => {
+test('STAFF-FLAG-LINES (as the owner asked): from the screen\'s middle a line to each flagged player in front of the eye - a report\'s red (review) - past the nameplate distance too; none to a player with no flag, a watch alone (STAFF-LINES-REVIEW, as the owner asked) or behind the eye; on the Overworld to its tags; for a Moderator as for an Admin (mutants: a watch lined again, the distance cut on the lines, no lines on the Overworld)', () => {
   const tags = validTags({ dist: 50, list: [{ sub: 'acct-w', watch: true }, { sub: 'acct-r', level: 'low', why: '1 report' }, { sub: 'acct-far', level: 'high', why: '3 reports' }, { sub: 'acct-back', level: 'high', why: '3 reports' }] });
   const follow = fakeFollow({ room: [peer('p1', 0, -20, { sub: 'acct-w' }), peer('p2', 10, -20, { sub: 'acct-r' }), peer('p3', 0, -400, { sub: 'acct-far' }), peer('p4', 0, -25, { sub: 'acct-none' }), peer('p5', 0, 40, { sub: 'acct-back' })], tags });
   const r = rig({ glyphs: ['mod'], follow });
@@ -581,7 +580,7 @@ test('STAFF-FLAG-LINES (mob: "need to port over my watch lines and review lines 
   assert.equal(kinds().length, 2, 'the Overworld: the same two');
 });
 
-test('CROWD-CHIPS (mob: "to many ocerlapping how would we clean thaT UP"; the card\'s pick "Merge close boxes, count only"): boxes that would touch merge into the one that leads until none does; ones clear of each other stay apart (mutants: no merge; a crowd that opens its names unasked)', () => {
+test('CROWD-CHIPS (as the owner asked; the card\'s pick "Merge close boxes, count only"): boxes that would touch merge into the one that leads until none does; ones clear of each other stay apart (mutants: no merge; a crowd that opens its names unasked)', () => {
   const tag = (id, x, y, name = 'Bran', line = '') => ({ p: { x, y }, m: { id, name, line } });
   // two lone names side by side, overlapping on the screen but past the old 28 px: one chip
   assert.deepEqual(crowded([tag('a', 100, 100), tag('b', 130, 105)]).map((g) => [g.key, g.members.map((m) => m.id)]), [['crowd:a', ['a', 'b']]]);
@@ -619,7 +618,7 @@ test('CROWD-CHIPS the chip: a crowd shows its count alone; its names open while 
   assert.equal(list.style.display, 'none', 'a second click shuts it');
 });
 
-test('FLAG-DISMISS (mob, 2026-10-24: "need a dismiss button on players name plates for flags"; the card\'s pick "Hide it for me only"): a flagged player\'s tag menu has Dismiss flag; it leaves that flag off my tag and lines, kept in this browser across a reload, and a new flag on them shows again; an unflagged player\'s menu has none (mutants: no row, the dismissal not kept, any flag hidden once dismissed)', () => {
+test('FLAG-DISMISS (as the owner asked; the card\'s pick "Hide it for me only"): a flagged player\'s tag menu has Dismiss flag; it leaves that flag off my tag and lines, kept in this browser across a reload, and a new flag on them shows again; an unflagged player\'s menu has none (mutants: no row, the dismissal not kept, any flag hidden once dismissed)', () => {
   const store = new Map();
   const storage = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, String(v)) };
   const tagsOf = (why) => validTags({ list: [{ sub: 'acct-bran', level: 'high', why }] });

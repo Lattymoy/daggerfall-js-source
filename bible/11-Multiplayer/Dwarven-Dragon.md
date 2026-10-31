@@ -48,7 +48,7 @@ call it **Aetherbright**: its plates are the blue of the crystal, its wings the 
 
 ## 2. When and where - the relay's secret, told near its cell
 
-DRAGON-HIDDEN (the owner: "people are able to predict the dragon spawn by looking at source code"): the rolls were a
+DRAGON-HIDDEN (as the owner asked): the rolls were a
 public salt's, so anyone could count every dragon to come. Every roll now takes an omen `{w, s}` (net/dragon/dragonLaw.js),
 its seed an HMAC of the relay's `GATE_SIGNING_KEY` under its own label (net/dragon/dragonSeed.js). DRAGON-CELL: the relay
 told the seed to every screen at the landing, and the seed named the pixel; now only a player near its cell is told.
@@ -197,13 +197,13 @@ the row stands names the tame, so a lost answer is told again. The device keeps 
 Dwarven Dragon**, in the Transportation group - goes into the pack at the claim's answer, or at the character's next
 stand-up when another stood then (`scenes/dragonRewards.js` bind), once DRAGON_MOUNT_ONLINE is on (section 13, DRAGON5a).
 
-**The title** (WYRM-RIDER, 2026-10-30, the owner: "we need a title thats basd ass for this DRAGON TAMER"). An account
+**The title** (WYRM-RIDER, 2026-10-30, as the owner asked). An account
 that holds a tamed brass dragon (a `dragon_mounts` row, look 0) holds **Wyrm Rider**; one that holds an Aetherbright
 (look 1) holds **Aether Rider**. The earliest tame of each look (by its time, then its id) also holds **First Wyrm
-Rider** or **First Aether Rider**. A developer's tame is never a First (the owner: "DONT COUNT ADMINS"). They are
+Rider** or **First Aether Rider**. A developer's tame is never a First (as the owner asked). They are
 derived like the Marks of Mastery (`net/huntLaw.js` DRAGON_TITLES, `server-account/src/hunts.js` DRAGON_COUNTS_SQL),
 signed into the token (relay world294) and shown in the wardrobe under the Dwarven Dragon. Each is worn on a metal
-name plate (the owner: "naw just make the name plate"): brass, aetherium, and the Firsts' gold and ice
+name plate (as the owner asked): brass, aetherium, and the Firsts' gold and ice
 (`ui/titleFlame.js` TITLE_PLATE and plateCss).
 
 **A named First** (FIRST-WYRM, 2026-10-31, the owner: "Seasoning needs to be granted the first dragon rider. He hasnt
@@ -219,8 +219,7 @@ derived.
   its walk while it moves, its attack frames at a landing, its hurt frame when a share of its health goes, and the
   Aetherbright's palette when it is the shiny (section 11). Aloft it stands at its altitude
   over the land under it.
-- **At rest in the air it hovers** (DRAGON-HOVER, 2026-10-29, the owner: "we need a fly animation for the dragon when it
-  idle"): records 20-24, eight frames a facing, the wings beating and the body bobbing, on the mobile's RangedAttack1
+- **At rest in the air it hovers** (DRAGON-HOVER, 2026-10-29, as the owner asked): records 20-24, eight frames a facing, the wings beating and the body bobbing, on the mobile's RangedAttack1
   table (it has no ranged blow). The world's dragon hovers while aloft and still; another screen draws a resting dragon
   rider so (`characters/dwarvenDragonId.js` `dragonHoverFrame`). Grounded, it stands on its idle.
 - **The telegraphs** are the gate's renderer (`render/gate/gateTelegraph.js`) laid on a grid draped over the land's
@@ -437,14 +436,14 @@ saddlebags' load is lost. PINS MOVED: the two switches, the bind's off case (`dr
 (`dragonaudit_account`), the online stock (`dragon5c_care`, `merchantyards1`); two mutants whose gate stands open now
 mutate its other side (`DRAGON5c-the-oil-kept-off-online`, `AUDIT-DRAGON-the-waiting-line-with-the-ride-on`).
 
-**DRAGON-HARDER (2026-10-29, the owner: "The dragon is way too easy to kill wtf").** A fighter's share was 200 seconds
+**DRAGON-HARDER (2026-10-29, as the owner asked).** A fighter's share was 200 seconds
 of its reference damage (`dpsRef`, 5 + level), but the gate's bucket lets it deal three times that, fifteen deep: one
 fighter at the cap took its share in about a minute, and more fighters only brought more shares. `DRAGON_TTK_S` is 720:
 twelve minutes at the reference, about four at the cap - over the Ketch Warden's 600 (KETCH-LONGER, the same finding),
 the rarest world boss the longest fight. Relay world293, world289, world290, world291 then world292 on its branch until HAND-WRAPS, PVP-LINGER, GILDED-GLOW and DELVE II took them (`DRAGON_RIDE_RELAY_MIN` stays 288). PINS MOVED: the relay
 version's (each note before the last), `dragon2_law`'s; `DRAGON2-the-share-the-gates` mutates 720 to 600.
 
-**DRAGON-HIDDEN (2026-10-29, the owner: "people are able to predict the dragon spawn by looking at source code").**
+**DRAGON-HIDDEN (2026-10-29, as the owner asked).**
 Every roll was `gateHash(DRAGON_SALT, w, k)`, the salt in the client, so the source counted each dragon to come, its
 province and its pixel. The rolls take a watch's omen now (section 2): the relay's seed, told at its landing, never
 before; the site's number is the seed's, not the watch's. A modified client still learns a site at its landing - it
@@ -453,7 +452,7 @@ must, to draw it - but never a watch ahead, and a forged site still stands a fig
 ride's 288. Pinned by `test/net/dragon/dragonhidden.test.js` (5); `tools/mutants/dragonhidden.json`, 11 dead; eight
 records re-aimed onto the omen, dead.
 
-**AUDIT DRAGON-HIDDEN (2026-10-30, the owner: "Audit this"; `01-Overview/audits/Audit-Dragon-Hidden.md`).** Three lanes
+**AUDIT DRAGON-HIDDEN (2026-10-30, as the owner asked; `01-Overview/audits/Audit-Dragon-Hidden.md`).** Three lanes
 read DRAGON-HARDER and DRAGON-HIDDEN cold. The relay holds a forged site to a pixel's centre on its omen's side of the
 Bay's edge (`dragonSiteOk`), and a cell waking lets go of an unslain fight an older law made. An `ask` goes down whatever
 room the player stands in - a siege's battle and a tourney drew no dragon - and is answered each time, asked again after

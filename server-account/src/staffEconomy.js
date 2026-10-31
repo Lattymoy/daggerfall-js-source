@@ -137,7 +137,7 @@ const GUILD_SORTS = Object.freeze({
   members: 'members',
 });
 
-/** ECON-LEFT-OUT (mob, 2026-10-25: "we need to remove gold of banned or trade held player in staff menu data", "economy"):
+/** ECON-LEFT-OUT (as the owner asked):
  *  A CHARACTER THE ECONOMY LEAVES OUT - its account banned now, or a trade hold standing on it (realm.js holdStandsSql) -
  *  as SQL over the character aliased `c` and its account `p`, either of them perhaps missing (a LEFT JOIN). Their gold is
  *  never touched: it is only kept out of the economy's totals and lists, and its sum said beside them. */
@@ -867,8 +867,7 @@ export function economy(db, nowS, days) {
           (SELECT m.gold FROM market_gold m WHERE m.player = c.player AND m.char_id = c.id) AS market_gold
         FROM realm_characters c LEFT JOIN players p ON p.id = c.player
         WHERE c.wealth >= ${RICH_FLOOR} AND c.dead_at IS NULL AND NOT ${out} ORDER BY c.wealth DESC LIMIT ${RICHEST}`),
-        // ECON-WORTH (mob, 2026-10-25: "we need a total games worth as well with hover break down on gold held bank held
-        // and item total"): every living character the census has counted, the left out apart - the judge's wealth at
+        // ECON-WORTH (as the owner asked): every living character the census has counted, the left out apart - the judge's wealth at
         // its last checkpoint (judge.js wealthOf), and its census tally's purse and banks (staffCensus.js censusTally).
         // A tally written before ECON-WORTH has no `b`: its purse and banks are one figure until its next checkpoint. A
         // character the judge never weighed (no `wealth`) is worth its gold, and no items.

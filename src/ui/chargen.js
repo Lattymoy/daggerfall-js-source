@@ -293,7 +293,7 @@ export class ChargenFlow {
     // without a source the box opens EMPTY: a refusal with no reason
     // in it, which reads as a dead button.
     this.bonusPointsRows = () => bonusPointsRows();
-    // LEVEL-45 (2026-10-27, mob: "get rid of it for online"): ONLINE THERE IS NO BIOGRAPHY - the class goes straight to
+    // LEVEL-45 (2026-10-27, as the owner asked): ONLINE THERE IS NO BIOGRAPHY - the class goes straight to
     // the name, so no answer's skill, reputation, item or gold lands on a new online character. Injectable for the pins.
     this.biographyOff = isOnlinePage();
     this.cursor = 0;          // the BIOGRAPHY screen's answer cursor

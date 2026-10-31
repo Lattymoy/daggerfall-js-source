@@ -1,4 +1,4 @@
-// DRAGON-HOVER (2026-10-29, mob: "we need a fly animation for the dragon when it idle"): at rest in the air the Dwarven Dragon
+// DRAGON-HOVER (2026-10-29, as the owner asked): at rest in the air the Dwarven Dragon
 // hovers - records 20-24 - and the ground's still idle stays the ground's.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

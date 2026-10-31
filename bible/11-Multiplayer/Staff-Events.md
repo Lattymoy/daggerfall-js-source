@@ -1,11 +1,7 @@
 # Staff events - monsters staged on a town or an area, a hidden kill meter and a yellow mini boss (STAFF-EVENT)
 
-> Design page and record, written 2026-10-24 with the build. mob: "lets start making an event tool for staff to use /
-> need to be scalable by amount of enemy and customizable by type of enemys / need to have a hidden meter that killing
-> enemys build up into a mini boss / mini boss need to be a single enlarges version of the mob spawns / instead of the
-> blue elite glow lets make the mini boss have a yellow glow / needs to be bale to select a town or area for these
-> events"; then "need to be able to scal amount for the meter as well", "show the meter to staff", "should allow all of
-> the monster in the game", "also let staff pick the miniboss", "needs the mini bosses health on the start panel".
+> Design page and record, written 2026-10-24 with the build. The owner then asked for a meter staff can size and see, every monster in the game on offer,
+> a mini boss staff can pick, and its health on the start panel.
 >
 > OFFLINE ONLY until mob tries it live. Staff work: no player patch notes describe it.
 
@@ -26,10 +22,9 @@
 Up to four events run at once (`STAFF_EVENTS_MAX`). The page lists every event with its meter (kills / kills to the
 boss, kills / total), its boss's state (not yet, due, up, fallen), the players fighting, and **Spawn mini boss now** and
 A staging the law refuses is answered with the field it is refused for (`event-bad-<field>`, EVENT-FAULT:
-`staffEventLaw.js` `staffEventFault`), and the panel says which. **End**, and on an event that is over **Clear** (EVENT-CLEAR, 2026-10-25, mob: "let me clear other events as well form
-history" - one row, or **Clear ended events** for every one over; a running one never; the hub is not asked; audited
+`staffEventLaw.js` `staffEventFault`), and the panel says which. **End**, and on an event that is over **Clear** (EVENT-CLEAR, 2026-10-25, as the owner asked - one row, or **Clear ended events** for every one over; a running one never; the hub is not asked; audited
 `event-clear`). The list is read again every 5 s while an event runs, and only a row whose words moved is drawn again,
-in place (Staff Panel 0.2.9; mob: "event windows refreshses alot"). Players never see the meter.
+in place (Staff Panel 0.2.9; as the owner asked). Players never see the meter.
 
 ## 2. One law, three readers (`src/net/staffEvent/staffEventLaw.js`)
 
@@ -55,7 +50,7 @@ service, the relay and the game all import. It imports nothing (`raidLaw.js`'s r
    a word only in the cell the event's pixel stands in, never in a layer, credits it only from a socket whose pose stands
    on the pixel, the most each account said, under a cap of 10 at once and four a second after. At the meter it calls
    the boss (`bd`), and again each time the meter fills - every `m` kills - once the last boss fell (BOSS-AGAIN, 2026-10-25,
-   mob: "boss seems to not spawn every time"; `mc` the meter's calls); each hand call is one more (`hc` the hands taken).
+   as the owner asked; `mc` the meter's calls); each hand call is one more (`hc` the hands taken).
    Every call is the next `fc`. It hears the boss stand (`bu`) and fall (`bk`) from the one who
    stands it, says its ledger to the place (`k:'st'` - the game reads the count only to stop standing monsters at the
    total), and tells the hub (at once for a boss moment, else every 3 s). Done by its ledger - the boss fell with
@@ -68,13 +63,10 @@ it: one player in the place runs it (the raid's election, by its words) and stan
 there stands them as puppets. A town's event runs while the player stands outdoors in its rect (the raid's own test);
 an area's while the player stands outdoors on its pixel (`townHere(true)`). Differences from a day's raid:
 
-- its monsters are staff's kinds, stood in PACKS (`raidingParties.js` `staffPackStep`; mob, 2026-10-25: "they need to be
-  spread all over not a SINGLE SPAWN POINT", "3-5 per pack of the monster chosen trhis need to feel like a take over",
-  "and packs quickly to the 25 cap", then "make it take ... 20-45" seconds and "it can be pack of any of the selected
-  monsterts"): 3-5 a pack, each one any of staff's kinds, its leader stood anywhere around the runner (any bearing, 20-60
+- its monsters are staff's kinds, stood in PACKS (`raidingParties.js` `staffPackStep`; as the owner asked; a pack may mix any of the
+  selected monsters): 3-5 a pack, each one any of staff's kinds, its leader stood anywhere around the runner (any bearing, 20-60
   units off, in view too - nearer when no spot is that far), the rest within 6 of the leader 0.15 s apart, the packs
-  paced so the raid's cap of 25 stands 20-45 s in (the pace rolled once an event); PACK-SPREAD (2026-10-25, mob: "evenly
-  swap them between all player in a city"): each pack is led from around the next player in the town in turn - the
+  paced so the raid's cap of 25 stands 20-45 s in (the pace rolled once an event); PACK-SPREAD (2026-10-25, as the owner asked): each pack is led from around the next player in the town in turn - the
   runner, then each peer standing in its rect, by id (`raidingParties.js` `staffPackPlayer`, the host's `peerFeetInTown`) - never more standing or killed than its total
   (`staffRaidRoom`). A day's raid keeps the mod's one foe at a time just out of view;
 - no town guards come out to defend it;
@@ -82,8 +74,7 @@ an area's while the player stands outdoors on its pixel (`townHere(true)`). Diff
 - the boss's death is its own word (`bk`), never a kill on the meter;
 - its end comes from the hub; its monsters are routed out of sight and the end is said.
 
-Lines said in the place (through `t()`, `staffEvent.*`), each naming a city or an area (mob, 2026-10-24: "make sure to
-add that it is a city when we are targeting a city and make sure to say its an area if it not"): "The city of X is
+Lines said in the place (through `t()`, `staffEvent.*`), each naming a city or an area (as the owner asked): "The city of X is
 under attack!" / "The area of X is under attack!", "A mighty KIND has come to the city of X!", and at the end "The KIND
 has fallen. The city of X is safe." or "The attack on the city of X is over." ("the area of X" for an area). A city is
 the event's `ct` or a town of the player's own map.
@@ -96,13 +87,13 @@ An elite (the flag, the 3x blows, the elite's drop), staff's size and health, an
 place of the elite's blue. A puppet boss is promoted from the frame's `sb` side list (`[[record, size %]]`,
 `world/raidShared.js` `validStaffBossTags`, one a frame); its health is its owner's.
 
-BOSS-LOST (2026-10-25, mob: "boss seems to not spawn every time"): a boss stand that does not answer in
+BOSS-LOST (2026-10-25, as the owner asked): a boss stand that does not answer in
 `PENDING_TIMEOUT_S` is given up and asked again (`raidingParties.js` `cancelPending`); and a boss that stood but stands
 nowhere now - not fallen, not mine, no puppet of it - for `STAFF_BOSS_LOST_MS` (a jump's sweep, a removal, a runner
 gone) is stood again by the one who runs the event, for the same call (`staffEvents.js` `staffBossLost`). The wait lets
 a fallen runner's boss come over first.
 
-BOSS-CLEAR (2026-10-25, mob: "make sure all those mob are dead not spawned befor the bosss"; then BOSS-CLEAR-CALL, mob:
+BOSS-CLEAR (2026-10-25, as the owner asked; then BOSS-CLEAR-CALL, mob:
 "no only the mini boss need to wait for everything to be dead to count to spawn"): the packs come on all the while; the
 meter's boss waits until every monster of the event that stood at its call is dead or gone - mine and the puppets of it,
 taken once at the first ask (`clearWait`), so a pack stood since never holds it - or `STAFF_BOSS_CLEAR_MAX_MS` (2 min)
@@ -110,20 +101,18 @@ for one nobody can reach. Staff's **Spawn mini boss now** stands
 at once (`staffBossByHand`: the book's `fb` past the last I stood). Its line is said once it stands (`bu`), not at its
 call.
 
-BOSS-UNSHAKEN (2026-10-25, mob: "he got stun locked lets stop him from getting stunned", "make the boss not able to be
-stun locked", "just the mini bosses we spawn in event"): a mini boss takes no shove and no Hurt from a player's blow
+BOSS-UNSHAKEN (2026-10-25, as the owner asked): a mini boss takes no shove and no Hurt from a player's blow
 (`scenes/exteriorFoes.js`) or a foe's (`scenes/hostCombat.js`), a struck wind-up never staggers it (`ai/tactics.js`
 `windupStruck` - the held blow only), a puppet of it plays no Hurt on its health's fall, and Paralysis never holds it
 (`systems/effects.js` `isImmuneToParalysis`). A departure: DFU has no such foe. Only a staff event's mini boss - every
 other foe and boss is unchanged.
 
-BOSS-HARD (2026-10-25, mob: "apply this logic to all mini bosses we spawn we want them to be very hard for the
-players"): every mini boss is held to the Enemy Expansion Troll's rules (`MonsterBase.mdb.csv` row 272) on top of its
+BOSS-HARD (2026-10-25, as the owner asked): every mini boss is held to the Enemy Expansion Troll's rules (`MonsterBase.mdb.csv` row 272) on top of its
 health - `STAFF_BOSS_MIN_METAL` Silver (a blade below Silver does nothing, `combat/formulas.js`
 `dropWeaponIfTargetImmune`; hand-to-hand lands, as DFU's does) and `STAFF_BOSS_ARMOR` 10 (the Troll's ArmorValue 2 x 5,
 EnemyEntity.cs:264-267) as its worst armour on any part. Owner and puppet alike, so a peer's blow is held to it too.
 
-BOSS-BOUND (2026-10-25, mob: "heal was set to 10000 for zombie its wromng", "the event boss had to low of health"):
+BOSS-BOUND (2026-10-25, as the owner asked):
 FOE-BOUNDS (`net/foeBounds.js`, Spawn-Grants section 19) judged a peer's mini boss as a plain elite of its kind, so every
 copy but its owner's took a boss past that bound - an exact health of 10,000, or a large multiplier - down as impossible.
 A record its frame tags both the event's raider (`rz`) and its boss (`sb`), of an event live in my own book, is held
@@ -131,38 +120,37 @@ instead to that event's health: its `hp`, or its kind's bound times its `bh`, wh
 (`systems/staffEvents.js` `staffBossBound`, read by `scenes/grantHost.js` `statsRefused`). Past it, or of no event I
 hold, the plain bound stands. The relay's strip (`grantStrip`, off) still judges it plain.
 
-BOSS-SPOT (2026-10-25, mob: "spawn it on the highest lvl player in the town or area", "or largewst groupoing"; card:
+BOSS-SPOT (2026-10-25, as the owner asked; card:
 "Biggest group, ties by level"): the one who runs the event stands its mini boss beside the player with the most players
 within `STAFF_BOSS_GROUP_M` (30 m) of them, themselves counted - a tie to the group whose highest level is higher, then
 the lower id (`raidingParties.js` `staffBossSpot`, off the host's `peerFeetInTown`: me first, then each player in the
 place's rect, each with their level). Beside me when it is me.
 
-PACK-SCALE (2026-10-25, mob: "they arnt spawn ing quick enough"; card: "Scale with players in town"): an event's packs
+PACK-SCALE (2026-10-25, as the owner asked; card: "Scale with players in town"): an event's packs
 by the players in its place, me counted (`raidingParties.js` `staffPackScale`) - one alone as ever (`MAX_RAID_ENEMIES`
 standing, the event's pace); each more player `STAFF_PACK_CAP_PER` (5) more standing, to `STAFF_PACK_CAP_MAX` (40), and
 the pace a quarter quicker, to twice. A reader stands as many of a runner's raiders (`world/raidShared.js`
 `RAID_PUPPETS_MAX`, 40; a runner's raiders, its watch and its loose stands still ride one frame).
 
-BOSS-EXACT (2026-10-25, mob: "the rat isnt takeing any dmage", "i have daedric", "and no players magic was working"): a
+BOSS-EXACT (2026-10-25, as the owner asked): a
 mini boss's health is the exact number staff typed, so the players fighting it never make it tougher - its owner's
 damage door and heal skip PSCALE1's toughness (`scenes/exteriorFoes.js` `_toughFoe`). Eight fighting a 10,000-health
 boss divided every blow by 4.5: a Daedric blow of about 20 took 4, and the bar did not move. Its blows at the players
 still weigh by how many fight it (`partyHit`). A departure from PSCALE1 for this one foe alone.
 
-BOSS-BIG-HIT and BOSS-BAR (2026-10-25, mob: "magic hits 10 of thousands", "i hit 500", "the bar never moved"): the
+BOSS-BIG-HIT and BOSS-BAR (2026-10-25, as the owner asked): the
 owner refuses a peer's blow past `PEER_HIT_DMG_MAX` (10,000) whole - a mini boss takes it at 10,000 instead (every other
 foe still refuses it). And a foe's record says its health within the wire's `FOE_HEALTH_MAX` (100,000): a mini boss
 past it is said at the same share of 100,000 (`wireHealth`), so every player's bar falls with the owner's - clamped,
 a 1,000,000-health boss read full until 900,000 were gone. Both in `scenes/exteriorFoes.js`.
 
-BOSS-SPELL-WARD (2026-10-25, mob: "use crazy spell reduction on mini bosses like 90%", "of all spell damage"): a mini
+BOSS-SPELL-WARD (2026-10-25, as the owner asked): a mini
 boss takes `STAFF_BOSS_SPELL_TAKEN` (a tenth, `systems/eliteFoes.js`) of every spell's damage - a peer's and the
 owner's, a lasting spell's rounds, a weapon's strike spell - at least 1; a whole-health spell (a Disintegrate) takes a
 tenth of its health and never kills it. Cut once, where its health is (`scenes/exteriorFoes.js` `damageFoe`): a puppet
 sends its owner the spell whole. A departure: DFU has no such foe.
 
-BOSS-HIT-SHARE (2026-10-25, mob: "needs to scal with players", "1% per heaslth with 40 player ins much", "magfic and
-melee", "just make this the stock option so it always is challenging bosss"): one hit on a mini boss - a blade's, a
+BOSS-HIT-SHARE (2026-10-25, as the owner asked): one hit on a mini boss - a blade's, a
 spell's after its cut, a round's, a peer's or the owner's - takes at most `STAFF_BOSS_HIT_SHARE` (1%) of its maximum
 divided by the players fighting it (`systems/eliteFoes.js` `staffBossHit`; PSCALE1's 30-second window, counted to
 `STAFF_BOSS_FIGHTERS_MAX` 100, not the party's eight seats: `systems/party/partyScale.js` `foeFightersUpTo`), at least 1.
@@ -217,7 +205,7 @@ bring one to any province's town, Cyrodiil's included (staff's call: the open zo
   once - so a fighter who drops at that moment misses theirs. The spoils are spent once a receipt on a device, not once
   an account: no account service claim, as a town raid's has.
 
-## 9. The reward (THE REWARD - 2026-10-24, mob: "what should we do for the mini bosses drop for loot?", "something like dagons leaderboard", "but not his ghear", "build that base", "but we will tweak the drop table")
+## 9. The reward (THE REWARD - 2026-10-24, as the owner asked)
 
 Dagon's way, without Dagon's gear. At the FIRST fall of an event's mini boss the place's cell
 (`server/src/staffEvents.js` `payReward`) pays before it says a word of the fall:
@@ -225,8 +213,7 @@ Dagon's way, without Dagon's gear. At the FIRST fall of an event's mini boss the
 - **Who earns** (`staffEventLaw.js` `staffEventEarned`): every account (never a guest's socket) with
   `STAFF_EVENT_EARN_KILLS` (3) kills of its own - a monster that fell after a blow of theirs, whoever stood it (a word's
   `h`: `raidingParties.js` counts its own struck monsters and a fallen puppet it struck, once; the meter's `n` is the
-  runner's, who stands them all). One reward an account an event. REWARD-KILLS (2026-10-25, mob: "im getting drops
-  even tho i barlky particpate"; card "Kills only (3+)"; world264, world258 then world262 on its branch): a stand alone - a word every
+  runner's, who stands them all). One reward an account an event. REWARD-KILLS (2026-10-25, as the owner asked; card "Kills only (3+)"; world264, world258 then world262 on its branch): a stand alone - a word every
   `STAFF_EVENT_STAND_TICK_MS` (4 s) from a pose on the pixel, half the run - earned it before and earns nothing now; it
   still breaks a tie on the board.
 - **The board** (`staffEventBoard`): the earners' top `STAFF_EVENT_BOARD_MAX` (10) by kills, the killing blow before
@@ -243,7 +230,7 @@ Dagon's way, without Dagon's gear. At the FIRST fall of an event's mini boss the
   more, Legendary a tenth of the time, else Rare or better. None of Dagon's: no Sigil Stone, no Regalia, no Dragonfire
   Oath, nothing gilded.
 
-## 10. Play as boss (STAFF-PILOT - 2026-10-26, mob: "could we do something were a staff can become a boss", "like play as a boss as attack players", the card's pick "Take over the boss", "can we do this wouthout a relay update?", "add it to the pr")
+## 10. Play as boss (STAFF-PILOT - 2026-10-26, as the owner asked, the card's pick "Take over the boss", with no relay update, in the same PR)
 
 A staff member steers their event's mini boss. A departure from DFU, which has no such thing. Game page and Staff Panel
 only - no relay, no account service: it rides words the wire already carries (`src/systems/staffBossPilot.js`, the page's
@@ -318,11 +305,11 @@ member is told so, and a player without staff glyphs never sees the command.
   with no dragon in its pose law, so other players saw an Admin on a cart. The gate now lives in `net/wire.js` beside
   `POSE_RIDE`, the relay that keeps the dragon is world281, and `test/net/dragonride_wire.test.js` holds the gate and
   the law to each other at this wire's own version.
-- **DRAGON-SHOTS (2026-10-29, the owner: "the dragons spells are not seeable by others").** The pose's cast count
+- **DRAGON-SHOTS (2026-10-29, as the owner asked).** The pose's cast count
   (`cn`) was the rig's alone, counted as the hands play a cast, and the cannons play none, so no other player saw a ball.
   Each volley now counts (`systems/staffDragon.js` `dragonWireCast`, a ranged shock), and another screen draws a dragon
   rider's cast from both barrels (`drawPeerCast`, `dragonVolley`); a rider the relay draws on foot shows one ball from the eye.
-- **DRAGON-BLUE (2026-10-29, the owner: "can i get a blue aetherbright version").** `/dragon blue` (or `aether`,
+- **DRAGON-BLUE (2026-10-29, as the owner asked).** `/dragon blue` (or `aether`,
   `aetherbright`) mounts the Aetherbright, `/dragon brass` the brass, and either changes the look in the saddle. The look
   rides the pose's `rc` (1 the Aetherbright), as a tamed dragon's does (`Dwarven-Dragon.md` section 11), and the saddle
   takes its colours.

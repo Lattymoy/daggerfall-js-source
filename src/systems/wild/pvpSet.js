@@ -1,6 +1,5 @@
 // @ts-check
-// PVP-SET (the owner, 2026-10-29: "player should get a whole second hot bar of the one we have", "need a menu to make
-// spells for thr hot bar small easy", "hot bar need to use exsistning one"): THE PVP SET'S LAW. While my flag is up in
+// PVP-SET (as the owner asked): THE PVP SET'S LAW. While my flag is up in
 // the zone, the hotbar shows and fires a second set of its own slots (systems/quickslots.js useHotbarSet): toolkit
 // spells made in the PvP menu, and items. The set cannot change while the PvP combat lock runs. Pure. A departure: DFU
 // has no PvP.

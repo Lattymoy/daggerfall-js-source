@@ -1,7 +1,5 @@
 // @ts-check
-// STAFF-MAP (2026-10-24, mob: "were is the map too?", "also need the map done as well cant see players far", "need esp to be
-// far as possible"; design doc "DFO Staff Panel: design", Flat map - mob 2026-10-22: "flat map work per region?", "then we
-// can just select regions?") - THE STAFF PANEL'S REGION MAP, the game's half. The Staff Panel names one region; the game
+// STAFF-MAP (2026-10-24, as the owner asked; design doc "DFO Staff Panel: design", Flat map - as the owner asked) - THE STAFF PANEL'S REGION MAP, the game's half. The Staff Panel names one region; the game
 // holds one more link, to that region's channel (net/wire.js chatRegionRoom), and hands the panel the travellers' marks
 // the room keeps (TV3: a map pixel, its fraction, the way they go, the relay's name and account beside it).
 //

@@ -1,5 +1,5 @@
 // @ts-check
-// STAFF-CHAT-RED (2026-10-23, mob, a game admin: "give me a option next to chat to chat as /red or myself at all times")
+// STAFF-CHAT-RED (2026-10-23, as the owner asked)
 // - THE VOICE AN ADMIN'S CHAT SPEAKS IN. A switch beside the chat's field, Me or Red (ui/chatPanel.js draws it), kept
 // across reloads (uiPrefs `chatAs`), so every line goes out that way without typing /red:
 //

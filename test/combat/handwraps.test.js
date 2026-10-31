@@ -141,7 +141,7 @@ test('HAND-WRAPS the Stats page: a plain pair reads as the fists, and the wraps\
   try { assert.deepEqual(computeCombatStats(A, { weapon: w, core: 'classic' }).head.byFoe[0].dmg.parts.roll, bare.parts.roll.map((r) => r + 2)); } finally { registerWeaponDamageMod('handwraps-stats', null); }
 });
 
-test('HAND-WRAPS the glow, WRAPS-AURA (mob: "wraps are glowing without the aura on"): wraps glow by the weapon aura alone - no element, no arcane outline - and a blade\'s classic outline is unmoved (mutants: the aura rule dropped; arcane for every classic hand)', () => {
+test('HAND-WRAPS the glow, WRAPS-AURA (as the owner asked): wraps glow by the weapon aura alone - no element, no arcane outline - and a blade\'s classic outline is unmoved (mutants: the aura rule dropped; arcane for every classic hand)', () => {
   on();
   const f = fireWraps();
   assert.equal(WG.spriteGlow(f, { on: true }), null, 'an element line: none');

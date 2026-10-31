@@ -366,7 +366,7 @@ test('WOLF-KIT turned beast, the chest, arm and leg pieces stay worn on the wolf
   assert.equal(+wl.B[1].toFixed(3), +wolfBack.pts[POSE_AT.ftL + 1].toFixed(3), 'the wolf\'s topped at the hock');
   assert.ok(Math.abs(wl.A[1] - 0.1 * ARMORY_BEAST_FIT) < 1e-6 && Math.abs(wl.A[0] - wl.B[0]) < 1e-6, 'and straight down to its toes');
   poseAtRest(wolfBack); assert.deepEqual([wolfBack.arm, wolfBack.hock, wolfBack.back], [1, false, 0], 'the rest pose a person\'s - nothing of the wolf left on it');
-  // the classic sprite's lycanthrope wears none (mob: "just remove them from the paperdoll")
+  // the classic sprite's lycanthrope wears none (as the owner asked)
   const lyc = newPose(); poseFromFigure({ base: 0.1, mpp: 0.029, beast: true, marks: null }, lyc);
   pass.draw([wearer({ pose: lyc })], I, I, [0, 1.6, 3], 1, null, true);
   assert.equal(pass.drawn, 0, 'the paperdoll\'s wolf bare');

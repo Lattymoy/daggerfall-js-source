@@ -221,7 +221,7 @@ test('PORTAL-BAY a refused step is refused BEFORE the black, said, and the scree
   const zone = buildWildMask({ width: 100, height: 100, ox: imperial.pixel.x - 50, oy: imperial.pixel.y - 50, inZone: () => true });
   const blacks = countBlacks();
   try {
-    // PVP-PORTAL (the owner: "they need to work all over"): online, a pixel of the zone no settlement stands on (the
+    // PVP-PORTAL (as the owner asked): online, a pixel of the zone no settlement stands on (the
     // harness stands none) - the pick spends one stone and opens the portal, the step arrives under the black
     let W = worldHost({ online: { wildOk: true }, wildMapMask: () => zone });
     let s = stoneHost(W);
@@ -299,7 +299,7 @@ const IC_BASE = { name: 'B', regionIndex: 1, regionName: 'R', politic: 129, clim
 const IC_NAMES = new Map(['GENR', 'ARMR', 'ALCH', 'GEMS', 'BOOK', 'PAWN', 'BANK', 'TVRN', 'RESI', 'FIGH', 'TEMP', 'LIBR', 'THIE', 'MAGE'].map((k) => [k, [`${k}AA00.RMB`]]));
 const capitalSliceAt = (x, y) => { const on = capitalOnPixel(x, y); return on ? synthesizeCapitalLocation(on, { base: IC_BASE, names: IC_NAMES, blockOf: (n) => (n.startsWith('TES') ? null : IC_FH), px: x, py: y }) : null; };
 
-test('WILD-CITY-PORT (the owner: "Even with the open pvp, players should be able to teleport in and out of the cities"): online, every teleport goes into and out of the zone at a settlement - the guild\'s, Recall, a stone\'s door, pick and step - over the Imperial City\'s own slices, and asks no zone fare; the zone\'s other land, and a dungeon under the city, still refused to the guild\'s and Recall - a stone\'s door anywhere (PVP-PORTAL) (mutants: the city end refused; the end I stand at refused; a dungeon free; the old law; the teleport the journey\'s)', async () => {
+test('WILD-CITY-PORT (as the owner asked): online, every teleport goes into and out of the zone at a settlement - the guild\'s, Recall, a stone\'s door, pick and step - over the Imperial City\'s own slices, and asks no zone fare; the zone\'s other land, and a dungeon under the city, still refused to the guild\'s and Recall - a stone\'s door anywhere (PVP-PORTAL) (mutants: the city end refused; the end I stand at refused; a dungeon free; the old law; the teleport the journey\'s)', async () => {
   skin('enhanced');
   globalThis.document = fakeDocument();
   setCapitalsStanding(true);
@@ -349,8 +349,7 @@ test('WILD-CITY-PORT (the owner: "Even with the open pvp, players should be able
     await W.scope.recallToAnchor().catch(() => {});
     assert.deepEqual(W.jumps.map((j) => [j.px, j.py]), reached ? [[bare.x, bare.y]] : [], reached ? 'a Mark in the village\'s streets' : 'a Mark past its walls');
   }
-  // A STONE: its door in the city's streets (outdoors, settledAt's frame) opens; PVP-PORTAL (the owner: "they need to work
-  // all over"): in the open country past it too - the zone's law is not a stone's
+  // A STONE: its door in the city's streets (outdoors, settledAt's frame) opens; PVP-PORTAL (as the owner asked): in the open country past it too - the zone's law is not a stone's
   const loc = capitalSliceAt(ic.x, ic.y), r = locationWorldRect(loc, ic.x, ic.y);
   const street = [(r.minX + r.maxX) / 2, 0, (r.minZ + r.maxZ) / 2], country = [r.maxX + 40 * 4096, 0, (r.minZ + r.maxZ) / 2];
   for (const [feet, where] of [[street, 'in the city\'s streets'], [country, 'in the open country']]) {

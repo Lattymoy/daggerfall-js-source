@@ -97,7 +97,7 @@ under a name with no top, fails the source sweep.
 | mastery | +400% | the climb's own +80% (an axe or a hammer at a skill of 200, which reads as 140 effective: 2% an effective point past 100) and, WEAPON-GEAR, its gear's most, +320% (0.44% a point of gear on the skill), added |
 | the paths | +40% | a martial path's own cap (`MARTIAL_BLOW_MOST`) |
 
-Together, x119.95 - x43.18 before WEAPON-GEAR (2026-10-27, mob: "Bow and weapon fix"; `Martial-Specialisations.md` section 4) raised mastery's top (`systems/powerCeiling.js:"export const BLOW_MOST"`).
+Together, x119.95 - x43.18 before WEAPON-GEAR (2026-10-27, as the owner asked; `Martial-Specialisations.md` section 4) raised mastery's top (`systems/powerCeiling.js:"export const BLOW_MOST"`).
 
 AUDIT HORIZONTAL D7: mastery's row read as 200%. The skill pays through the soft cap, so a raw 200 is 140 effective
 and pays 40 points (`tools/powerCeiling.mjs:"export const masteryBlowTop"`; a measure that read the raw skill

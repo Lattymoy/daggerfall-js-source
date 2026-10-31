@@ -8,7 +8,7 @@ reference it reads. It ships in stages; this page holds what is built.
 
 - **PVP-HEALTH.** The referee's pool is the player's real maximum health, reported on the `vit` frame (`x`) and held to
   `refereeHealthShare.js:"export const PVP_HEALTH_MAX"`. In a fight a rising maximum adds no health.
-- **PVP-HIT** (the owner: "so let cap at 45%", "so its 3 hits"; the triangle's 34%, still three hits). One blow or cast
+- **PVP-HIT** (as the owner asked; the triangle's 34%, still three hits). One blow or cast
   takes at most 34% of the whole (`siegeRef.js:"export const PVP_HIT"`). BAL8's 180 in 5 s is retired; the swing law
   and `siegeRef.js:"export const PVP_CASTS"` pace a fight.
 - **PVP-HEAL.** For 30 s after a player's blow, all heals together restore 25% of the whole a 15 s, plus 1% for each 20
@@ -41,7 +41,7 @@ Last Stand under its line, Bedrock's stacks and Hex's window from player hits ta
 the relay reads the same `g`, and the client is trusted for its gear as for its armour. The Raven is not a
 share: PVP-EVADE rolls it on the relay as a miss.
 
-Not between players: a slayer, bane or foe-group line (the owner: "same as human"); the splash of Chain Lightning and
+Not between players: a slayer, bane or foe-group line (as the owner asked); the splash of Chain Lightning and
 Earthshaker (one blow, one target). Vigil, Divine Grace, Hist-Sap, Unyielding and the kill effects need the relay to
 keep a heal or a count.
 
@@ -278,8 +278,7 @@ spells reach a player (`world.js:"if (!wildFair(peerId) || !sp?.pvpKit) return f
 (`pvpKit.js:"export const PVP_KIT"`) are carried
 into the set. Outside PvP the spell keys work as before.
 
-PVP-SET (the owner, 2026-10-29: "player should get a whole second hot bar of the one we have", "hot bar need to use
-exsistning one u stack one on top", "need a menu to make spells for thr hot bar small easy"): the hotbar has two sets of
+PVP-SET (as the owner asked): the hotbar has two sets of
 the same slots (`quickslots.js:"export function useHotbarSet"`). The PvP set is in force while my flag is up in
 the zone or the PvP menu is open (`pvpSpellMenu.js:"const inForce = ()"`): the same bar and
 place, keys 1 to 0, held up whatever the bar's style (`uiSkin.js:"export function forceHotbar"`). It takes toolkit
@@ -321,7 +320,7 @@ as health credit for the minute, at most `regenKit` (4%) a second (`pvpVitals.js
 saved Cure slot loads as Regenerate
 (`pvpKit.js:"if (raw?.id === 'cure')"`). A departure: DFU has no PvP.
 
-PVP-KIT-REZ (the owner, 2026-10-29: "Add resurrection to the. Mages tool belt"): Resurrect is a slot spell at 25% of
+PVP-KIT-REZ (as the owner asked): Resurrect is a slot spell at 25% of
 maximum magicka (`pvpKit.js:"resurrect: Object.freeze"`). It is the shop's own Resurrection,
 by touch (`pvpKit.js:"case 'resurrect':"`), with no 15 m gift: it goes
 through RESURRECT1's path, a fallen party member's body within RESURRECT_REACH
@@ -369,8 +368,7 @@ member's Resurrect, and the body still lies the minute. The raise window is the 
 `revived.js:"export const REZ_HOLD_S"` (150 while the zone held two minutes). Relay world282. A departure: DFU
 rises after its three seconds.
 
-DEATH-10 (2026-10-30, the owner: "give death a 10 second timer let them click respawn now but at 10 auto respawn
-them", "for pve and pvp"): online, Enter rises at once (`deathScreen.js:"export const DEATH_RISE_MIN_S"`) and the
+DEATH-10 (2026-10-30, as the owner asked): online, Enter rises at once (`deathScreen.js:"export const DEATH_RISE_MIN_S"`) and the
 screen rises by itself at `deathScreen.js:"export const DEATH_AUTO_RISE_S"`, in the zone
 `wildZone.js:"export const WILD_DEATH_HOLD_S"`. The referee keeps a fallen down 10 s
 (`wildRef.js:"riseMs: 10_000,"`, the wire's word at most `wire.js:"export const WILD_DOWN_MS_MAX = 10_000;"`). A step
@@ -475,7 +473,7 @@ not, PVP-PORTAL), rest (`pvpRulesHost.js:"const restLock ="`,
 asked before the flag's own line) and the end, "You are out of combat." (`pvpFlagHost.js:"const beat = () =>"`).
 Log out in combat is the relay's, built apart.
 
-**PVP-PORTAL** (2026-10-30, the owner: "they need to work all over", held only by "agro or flag time cool down"): a
+**PVP-PORTAL** (2026-10-30, as the owner asked, held only by the aggro or flag cooldown): a
 Portal Stone asks none of the zone's teleport law, flagged or not - its door, its pick and its step go into, out of and
 across Cyrodiil (`portalStoneHost.js:"const teleportRefused = (to) =>"`). Two holds stand in the zone: the combat lock
 after a PvP blow, whatever the flag (`portalStoneHost.js:"const lockRefused = () => {"`), and a monster alerted to me -

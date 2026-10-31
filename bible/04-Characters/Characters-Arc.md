@@ -3481,7 +3481,7 @@ corpse field's packed int unpacks. The page's AUDIT MM1 section.
 
 ## STAFF-UNSEEN (2026-10-24): HIDDEN STAFF ARE NO ONE TO A FOE - a departure
 
-mob, 2026-10-24: "staff in overworld and flat need to stay in it and not have mobs pull them out"; the card's pick
+as the owner asked; the card's pick
 "Monsters ignore hidden staff". DFU has no such state: its nearest is invisibility, which BlockedByIllusionEffect lets a
 seer see through and which leaves the 12.5 s blind pursuit (giveUpTimer) running. A staff member hidden from players
 (the account service's hidden token, net/staffMap.js noteHidden) is hidden from foes too, harder than invisible:

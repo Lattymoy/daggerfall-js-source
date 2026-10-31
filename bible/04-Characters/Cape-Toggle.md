@@ -45,7 +45,7 @@ Every drawer of the player's own body reads `drawnEquipTable`, never `equipTable
 
 ## 4. The aura
 
-AURA-STAYS (2026-10-30, mob: *"aura turn off when u toggle cap"*, *"it saposta help show the aura not tuen it off"*):
+AURA-STAYS (2026-10-30, as the owner asked):
 the switch hides the cloak alone. The aura stays on, mine and every peer's, whatever the switch or a look's `hc` says
 (`scenes/auraHost.js`): taking the cloak off is how a player shows their aura. The first build (2026-10-29) hid the aura
 with the cloak, per the table in section 1; that answer is superseded.

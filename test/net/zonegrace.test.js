@@ -75,7 +75,7 @@ test('ZONE-GRACE THE LAW, NO WAY OUT OF A FIGHT: a fighter that steps out of the
   assert.equal(wildGraceLeft(st, 'acct-b', t + 2_000 + WILD_GRACE.awayMs), G);
 });
 
-test('ZONE-GRACE THE LAW, A RISE AND A CROSSING: a fallen rising on its word has no safe passage (PVP-DEATH, the owner 2026-10-29: "when u die u need to take away player protection"); a cell crossed inside the zone - a new room\'s fighter with its carry - is no entry, and keeps the passage it had (mutants: the rise graced; a crossing a fresh passage; the passage dropped at the crossing; the carry\'s words unread)', () => {
+test('ZONE-GRACE THE LAW, A RISE AND A CROSSING: a fallen rising on its word has no safe passage (PVP-DEATH, as the owner asked); a cell crossed inside the zone - a new room\'s fighter with its carry - is no entry, and keeps the passage it had (mutants: the rise graced; a crossing a fresh passage; the passage dropped at the crossing; the carry\'s words unread)', () => {
   const st = enter(-G);
   let k = 0, r;
   do { r = hit(st, 1_000 + 300 * k++); } while (!r.fell && k < 400);
@@ -253,7 +253,7 @@ test('ZONE-GRACE AUDIT PVP-EASE L3-1, L3-2, L3-5 THE LAW: A CROSSING AND A WAKE 
   assert.equal(wildGraceLeft(e2, 'acct-a', 4_000), 0, 'the newer word: ended');
 });
 
-test('ZONE-GRACE AUDIT PVP-EASE L3-6 + L3-4 THE LAW: no rise grants the minute - a death to a foe neither (PVP-DEATH, the owner 2026-10-29: "they go to town in a safe zone when dead"), carried to the town\'s cell; the next entry from outside does; and a take from a remains ends it (the owner: "Any take ends passage") (mutants: a foe\'s rise graced; `dd` uncarried; a take unread)', () => {
+test('ZONE-GRACE AUDIT PVP-EASE L3-6 + L3-4 THE LAW: no rise grants the minute - a death to a foe neither (PVP-DEATH, as the owner asked), carried to the town\'s cell; the next entry from outside does; and a take from a remains ends it (as the owner asked) (mutants: a foe\'s rise graced; `dd` uncarried; a take unread)', () => {
   const st = enter(-G);
   hit(st, 1_000);
   wildZone(st, 'acct-b', { id: 'peer-b', lv: 10, died: true }, false, at(1), 2_000);   // a foe's kill, said on its way out

@@ -436,7 +436,7 @@ export function blowSchedule(m, liveSpeed, animCtx = null, dt = 0) {
   };
 }
 
-/** MW-SHOT-PACE (the owner, 2026-10-30: "morrowind hand shoot bow slow"): A BOW'S SHOT, TIMED AS blowSchedule TIMES A
+/** MW-SHOT-PACE (as the owner asked): A BOW'S SHOT, TIMED AS blowSchedule TIMES A
  *  BLOW - when the loose (HIT_FRAME_BOW) lands and when the release ends, from the frame the shot stands on (a drawn idle
  *  bow starts at BOW_DRAWN_HOLD_FRAME). The Morrowind arm fits its draw into it (combat/fpArm.js blowPace), so its
  *  "shoot release" comes with the classic loose and a shot repeats as fast on both looks. Null for anything but a bow's
@@ -447,7 +447,7 @@ export function shotSchedule(m, dt = 0) {
   if (!(tick > 0) || !Number.isFinite(tick)) return null;
   const at = m.frame > 0 ? m.frame | 0 : 0;
   const drawUp = m.state === 'StrikeUp';
-  // MW-DRAW-PACE (mob, 2026-10-30: "Long bow shoot same speed in Morrowind as short"): Bow Drawback's draw, timed to
+  // MW-DRAW-PACE (as the owner asked): Bow Drawback's draw, timed to
   // the hold frame the classic bow stops on, so the arm's long bow comes to full draw as soon as the sprite's
   if (drawUp && at >= BOW_DRAWN_HOLD_FRAME) return null;
   const hitFrame = m.hitFrame ?? HIT_FRAME_BOW;

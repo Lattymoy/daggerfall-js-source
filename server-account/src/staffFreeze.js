@@ -3,7 +3,7 @@
 // STAFF-PANEL5-FREEZE (2026-10-22; design doc "DFO Staff Panel: design", Freeze player, and its weak spots) - FREEZE PLAYER
 // AND THE STAFF CHAT, the account service's half.
 //
-// A FREEZE IS A SANCTION OF ITS OWN, beside the mute and the ban (mob, 03:05Z: "the player can only look around"): an Admin's
+// A FREEZE IS A SANCTION OF ITS OWN, beside the mute and the ban (as the owner asked): an Admin's
 // act with a reason and a duration, Admins alone both ways, kept on the account's row with who made it
 // (`players.frozen_until`, `frozen_reason`, `frozen_by` - migration 0160). Every relay token minted while it stands carries
 // it (`fz`, identityToken.js), so a reload never sheds it (Weak spots: "A reload sheds a freeze"); its own order kind
@@ -26,7 +26,7 @@
 // (market.js) - a frozen account's listings sell nothing (Weak spots: "A banned, frozen or held player's market listings
 // keep selling").
 //
-// THE STAFF CHAT (mob, 03:18Z, 04:23Z: "while frozen they can only talk to staff"; Weak spots: "Staff chat members and
+// THE STAFF CHAT (as the owner asked; Weak spots: "Staff chat members and
 // threads are undefined", "Freeze chat and Message on screen have nowhere to be stored"): ONE THREAD A PLAYER, keyed on the
 // account id. A freeze opens it with the player in it; Talk opens one outside a freeze, and the player joins on the first
 // staff line. Every line is stored HERE FIRST and written in the audit log by its id and length - never its words, the log

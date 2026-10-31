@@ -82,7 +82,7 @@ export function standLooseFoe({ collider, feet, yawRad, fovDegrees, foes, spawn 
   let spot = null;
   for (let i = 0; i < attempts && !spot; i++) {
     spot = placeFoeFreely(env, { minDistance, maxDistance, lineOfSightCheck });
-    if (spot && open && !raidSpotOpen(collider, spot)) spot = null;   // PACK-OPEN (mob: "make sure they dont spawn in houses"): a spot in a building is another attempt
+    if (spot && open && !raidSpotOpen(collider, spot)) spot = null;   // PACK-OPEN (as the owner asked): a spot in a building is another attempt
     if (spot && reach && !reach([spot.x, spot.y, spot.z])) spot = null;   // RAID-REACH: a spot with no street to its player (in a wall, a closed yard) is another attempt
   }
   if (!spot) return null;

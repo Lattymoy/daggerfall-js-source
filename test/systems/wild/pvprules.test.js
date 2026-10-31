@@ -92,7 +92,7 @@ test('PVP-RULES THE SPELLS REFUSED UNDER THE FLAG: Levitate at any range, a PvE 
   assert.match(readFileSync('src/scenes/hostMagic.js', 'utf8'), /\?\? sandSpellRefusal\(sp\) \?\? pvpSpellRefusal\(sp\);/, 'every host\'s one cast engine asks');
 });
 
-test('PVP-RULES THE BUFFS END: the flag going up ends every PvE buff (a potion\'s, a Shield) and arms the spare for a Levitate; after it my own casts and a mate\'s gifts but Shield go; a worn item\'s buff goes each poll (the owner: "Item buff no"); a worn item\'s utility, a curse, a harm, a duel\'s and a utility stay (mutants: the edge read as later; a worn item kept; a worn utility stripped; a curse stripped; a potion\'s stripped after the edge)', () => {
+test('PVP-RULES THE BUFFS END: the flag going up ends every PvE buff (a potion\'s, a Shield) and arms the spare for a Levitate; after it my own casts and a mate\'s gifts but Shield go; a worn item\'s buff goes each poll (as the owner asked); a worn item\'s utility, a curse, a harm, a duel\'s and a utility stay (mutants: the edge read as later; a worn item kept; a worn utility stripped; a curse stripped; a potion\'s stripped after the edge)', () => {
   const fx = () => [
     { kind: 'fortifyAttribute', bundleSelfCast: true }, { kind: 'shield', bundleSelfCast: true }, { kind: 'jumping' },
     { kind: 'chameleonNormal', heldItem: {} }, { kind: 'fortifyAttribute', permanent: true, bundleSelfCast: true }, { kind: 'continuousDamage' },
@@ -133,7 +133,7 @@ test('PVP-RULES THE HOST: held only flagged in the zone; the rest window refused
   assert.equal(h.flag.on(), true);
 });
 
-test('PVP-RULES NO SADDLE (the owner: "No horse u demoibt", "Demount"): flagged in the zone a rider is set on foot each poll and the saddle refused; off the flag a worn buff taken is recast; the PvP bar\'s spells and buffs are the flag\'s own (mutants: the kit stripped; the kit refused; the bar unasked; the rider kept; the recast unasked)', () => {
+test('PVP-RULES NO SADDLE (as the owner asked): flagged in the zone a rider is set on foot each poll and the saddle refused; off the flag a worn buff taken is recast; the PvP bar\'s spells and buffs are the flag\'s own (mutants: the kit stripped; the kit refused; the bar unasked; the rider kept; the recast unasked)', () => {
   let on = true, zone = true;
   const said = [], motor = { grounded: true, transportMode: TRANSPORT_MODES.Horse }, entity = { activeEffects: [{ kind: 'chameleonNormal', heldItem: { equipSlot: 1 } }], items: [] };
   const h = createPvpRulesHost({ on: () => on }, motor, entity, (l) => said.push(l), { zone: () => zone, every: null });

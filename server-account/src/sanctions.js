@@ -274,7 +274,7 @@ export async function strikesLook({ db, nowS }, actor, env, { target, name, row:
   if (!canModerate(actor, env)) return { error: 'not-moderator' };
   const row = found ?? (await findAccount(db, { target, name }));
   if ('error' in row) return row;
-  // STAFF-PANEL-SPEED (mob: "The click takes a while before the new page shows"): the strikes and the history, one trip
+  // STAFF-PANEL-SPEED (as the owner asked): the strikes and the history, one trip
   const [strikes, acts] = await Promise.all([
     strikesOf(db, row.id, nowS),
     db

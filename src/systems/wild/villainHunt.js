@@ -87,6 +87,6 @@ export const villainHunted = (
 /** ZONE-SAFE with the villain's exception: is a point at peace - in a settlement's streets, and not a red villain's. */
 export const peaceFor = (/** @type {boolean} */ settled, /** @type {boolean} */ red) => !!settled && !red;
 
-/** PVP-SAFE-HIT (the owner: "Let them hit them jit ge that back in safezone"): may I strike from where I stand - out of a
+/** PVP-SAFE-HIT (as the owner asked): may I strike from where I stand - out of a
  *  settlement's safe streets (`streets`, zoneSafe's word), anyone fair; in them, a red villain alone. */
 export const streetsStrike = (/** @type {boolean} */ streets, /** @type {boolean} */ red) => !streets || !!red;

@@ -198,7 +198,7 @@ the carry was put for a struck fighter alone and read within the mend's half min
 and a walker were granted a fresh minute at every cell they crossed, and every keepalive into a woken cell. A RISE NO LONGER
 grants it (PVP-DEATH, `PvP-Rework.md`, over AUDIT PVP-EASE L3-6's "Yes, every rise"): neither a fallen standing again
 after `WILD_REF.riseMs` nor a death the referee did not keep - a foe's, said `died` on its way out (`wildZone`'s `died`,
-carried as `dd` to the town's cell) - rising inside, at its ring's town (section 4). A TAKE ENDS IT (AUDIT PVP-EASE L3-4, the owner: "Any take ends passage"): taking from a remains - one's own or
+carried as `dd` to the town's cell) - rising inside, at its ring's town (section 4). A TAKE ENDS IT (AUDIT PVP-EASE L3-4, as the owner asked): taking from a remains - one's own or
 another's - ends the taker's passage as its blow does (`wildGraceTaken`, `_wildGraceTake`), so the rise's minute is no
 untouchable run back to the body. SHIPS' GUNS KEEP IT (AUDIT PVP-EASE L3-3): a ship whose captain is under it takes no
 shot (`seaRef.js` `seaShot`'s `grace`), a captain's own shot ends its passage, and a gunfight is a fight for both, for an
@@ -443,8 +443,7 @@ both ends read (`src/systems/wild/wildInsureLaw.js`):
 
 ### INSURE-ALL: every piece of gear, at its price
 
-INSURE-ALL (2026-10-29, the owner: "make sure all equpiment cost even old ones"; reported with it: "there no cost to
-insure rares that are fully enchanted"). EVERY PIECE OF GEAR A KILL COULD TAKE MAY BE INSURED - a weapon, armour, a
+INSURE-ALL (2026-10-29, as as the owner asked). EVERY PIECE OF GEAR A KILL COULD TAKE MAY BE INSURED - a weapon, armour, a
 shield, jewellery, clothing (`WILD_GEAR_GROUPS`), plain or of any tier, found before the ledger or after - at a fifth of
 its worth. Before, a policy needed a ledger key, so a plain piece was never insurable and showed no price. Never a
 stack, a bound or quest piece, a letter of credit, or a piece `wildCanLose` refuses. A classic save's piece and a

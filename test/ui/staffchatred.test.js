@@ -1,4 +1,4 @@
-// STAFF-CHAT-RED (2026-10-23, mob, a game admin: "give me a option next to chat to chat as /red or myself at all times").
+// STAFF-CHAT-RED (2026-10-23, as the owner asked).
 // The switch beside the chat's field, Me or Red: an Admin's alone (the dev glyph, the relay's own test for /red), kept
 // across reloads, Red sending each line as "/red <line>" would and a command as typed, and Me while hidden asking first
 // and then asking the Staff Panel to turn Hide off. Its mutants are tools/mutants/staff-chat-red.json.

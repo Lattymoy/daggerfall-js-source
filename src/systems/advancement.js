@@ -86,8 +86,7 @@ export const SKILL_RAISE_CHECK_INTERVAL = 360; // classic minutes
 export const LEVELUP_BONUS_POOL_MIN = 4; // FormulaHelper.BonusPool
 export const LEVELUP_BONUS_POOL_MAX = 6;
 
-/** LEVEL-45 (2026-10-27, a player through mob: "-4% exp/level to apply even to people who stuck to lvl 1 - could u level
- *  skill and not level up?"): THE LEVEL A RAISE IS PRICED AT. A level owed is never taken until the player opens the
+/** LEVEL-45 (2026-10-27, a player through as the owner asked): THE LEVEL A RAISE IS PRICED AT. A level owed is never taken until the player opens the
  *  window (LV2), and the 1.04^level above read the level TAKEN - so a character that left every level owed trained at
  *  level 1's price for good. Online the price reads the level its skills have earned (levelClimb.js), owed or not; offline
  *  it is DFU's `Level`. */

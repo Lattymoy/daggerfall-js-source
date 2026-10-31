@@ -1,5 +1,4 @@
-// STAFF-PANEL-SPEED (2026-10-23, mob: "slow when moving in menus", "The click takes a while before the new page shows
-// (it's waiting on the server)", "it need to not hurt server performance") - THE TRIPS A PLAYERS CLICK WAITS ON: the search
+// STAFF-PANEL-SPEED (2026-10-23, as the owner asked) - THE TRIPS A PLAYERS CLICK WAITS ON: the search
 // (server-account/src/staffPlayers.js), a profile opened and each of its tabs, the devices, and the desk's reads
 // (server-account/src/staffDesk.js: notes, the watchlist and its events, your settings, the reported board notes and
 // market listings, the AI check's scorecard). Counted over the real Worker on test/accountDb.mjs with

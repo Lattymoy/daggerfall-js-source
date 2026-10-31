@@ -139,7 +139,7 @@ pace there is less than x1.4 (recorded, section 9).
 Online alone, as BAL9b and SCHOOLS2: offline the game is Daggerfall's. MY blow at a foe - never a player, never the
 Warden's ward, never in a refereed fight, never the beast's claws.
 
-**WEAPON-GEAR** (2026-10-27, mob: "Bow and weapon fix", "Those are needed for pve"; the design in the project thread
+**WEAPON-GEAR** (2026-10-27, as the owner asked; the design in the project thread
 "Find my level fix"). The climb above reads the TRAINED skill alone, so a weapon skill's gear - an Enhances Skill
 enchantment, a Rare's or a Legendary's skill line - bought the to-hit and nothing past it, while the fists read the live
 skill whole in their roll (H2H / 10 + 1 to H2H / 5 + 1). At one kit (skill 872, Critical Strike 860) a Daedric Longsword
@@ -147,8 +147,7 @@ struck ~390 to a fist's ~1,360.
 
 Now every weapon's blow - the four melee families' and the bow's, the Thunderlock's on
 Archery - is also worth 0.44% for each point of gear on its skill (`skills.js` skillModOf), from the first point, ADDED
-to the climb's (`weaponMastery.js:"export function weaponGearPct"`; GEAR-ADDS, mob: "they should both just stack
-additively", "need to be the same end result but also help the begingin" - the first build took the greater of the
+to the climb's (`weaponMastery.js:"export function weaponGearPct"`; GEAR-ADDS, as the owner asked - the first build took the greater of the
 two, and gear paid nothing below a live 200):
 
 | trained + gear | the climb's | the gear's | the blow |

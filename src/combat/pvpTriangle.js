@@ -1,5 +1,4 @@
-// PVP-TRIANGLE (the PvP rework, the owner 2026-10-29: "archer face mage better, mage faces warrior better, warrior faces
-// archer better", "tune it to 55% win", "just barely"): a player's arrows and harmful spells at a player, scaled by the
+// PVP-TRIANGLE (the PvP rework, as the owner asked): a player's arrows and harmful spells at a player, scaled by the
 // striker's level. The sim's numbers (bible/11-Multiplayer/PvP-Rework.md PVP-TRIANGLE); the Shield's share and the hit
 // cap are the referee's (net/siege/refereeHealthShare.js PVP_SHIELD, siegeRef.js PVP_HIT).
 

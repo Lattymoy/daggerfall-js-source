@@ -372,7 +372,7 @@ Pinned by `test/net/fb1019f_pursemend.test.js` over the real Worker, a record th
 after the old counter's sale, checkpointed so the judge holds it; `tools/mutants/fb1019f_pursemend.json` (28, dead - AUDIT FB1019f's four among them: the
 lift's guard unread and unenforced, a letter and a faucet row of nothing).
 
-STAFF-SET-BANK (2026-10-23, mob: "we need a set bank setting"; asked before how to adjust a player's bank, and nothing
+STAFF-SET-BANK (2026-10-23, as the owner asked; asked before how to adjust a player's bank, and nothing
 could) added a fourth, the Staff Panel's alone: `/v1/staff/fix/bank { id, ticket, was, gold, note }`, an Admin's, with
 Fix account's note (`staffRealm.js`), the review's `bank` act (`review.js bankAct`). Online a character keeps one
 account, the Empire's (`banking.js` EMPIRE-ACCOUNT), and the panel's profile says the bank as one number, every
@@ -390,7 +390,7 @@ so the finding and the panel's audit row are its record. No hold is lifted. The 
 `tools/mutants/staff-set-bank.json` (31, dead).
 
 GUILD-LETTER-FIX (2026-10-25, a player's level 10 vampire: the Dark Brotherhood's tally at InviteSent, no letter
-pending, The Acceptance Test nowhere in the save; mob: "do it") added a fifth, the Staff Panel's alone:
+pending, The Acceptance Test nowhere in the save; as the owner asked) added a fifth, the Staff Panel's alone:
 `/v1/staff/fix/letter { id, ticket, guild, op, note }`, an Admin's (`staffRealm.js`), the review's `letter` act
 (`review.js letterAct`) over `repairLaw.js applyGuildLetter`. DFU parks the crime-guild tally and clears its clock before
 the initiation quest starts, and a quest that will not parse answers nothing, so a letter whose quest could not be made
@@ -406,8 +406,8 @@ record seized one sequence on, the act among the findings; no gold moves. Folded
 by `test/server/staffguildletter.test.js` and `test/systems/crimeguilds.test.js`; `tools/mutants/guildletterfix.json`
 (12, dead) and `tools/mutants/dbletter.json` (4, dead).
 
-STAFF-GIVE (2026-10-24, mob: "add yes we will work on add as well", the card's pick "Pick from the item list", "include
-enchants") is Remove from a player's twin, an Admin's: `/v1/staff/item/catalogue` (the game's item list - each template
+STAFF-GIVE (2026-10-24, as the owner asked, the card's pick "Pick from the item list", with enchantments
+included) is Remove from a player's twin, an Admin's: `/v1/staff/item/catalogue` (the game's item list - each template
 with its groups and whether it stacks, a weapon's and an armour's materials, the item maker's enchantments with their
 settings and costs) and `/v1/staff/item/give { id, template, group?, material?, count?, gold?, enchant?, seq, confirm,
 reason, note }` (`server-account/src/staffGive.js`). The panel never writes the piece: the service mints it with the

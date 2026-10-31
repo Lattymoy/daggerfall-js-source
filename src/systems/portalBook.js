@@ -1,6 +1,5 @@
 // @ts-check
-// PORTAL-BOOK (2026-10-31, the owner: "Portal stone to one of your houses or to the guildhal - portal book (lets you keep
-// spot to summon stones to like your houses guild hall friends houses)"): the house doors a character's Portal Stones
+// PORTAL-BOOK (2026-10-31, as the owner asked): the house doors a character's Portal Stones
 // open on (bible/06-Systems/Portal-Stone.md PORTAL-BOOK). A spot is kept from inside a house the player could walk into -
 // their home, their guild's hall, a friend's home - and is the front door outside it. One stone opens a portal there
 // (scenes/portalStoneHost.js openToSpot). The spots are the character's (`portalBook` on the save), never the item's.

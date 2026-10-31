@@ -1,6 +1,5 @@
 // @ts-check
-// MUSIC-BOX (2026-10-31, the owner: "Music box with unlockable existing tracks to play inside of the house"; "this is a
-// collectable - not just given to player"; bible/06-Systems/Online-Arc.md MUSIC-BOX). The port's own - DFU has none.
+// MUSIC-BOX (2026-10-31, as the owner asked; bible/06-Systems/Online-Arc.md MUSIC-BOX). The port's own - DFU has none.
 // THE TUNES: the General MIDI songs of SongManager's playlists, each once, named by where the game plays them.
 // THE SHEETS: a tune is collected by reading its Sheet music, which a foe of my killing blow may drop into my pack (a
 // tune not yet held three times in four); a known tune's sheet is kept to sell.

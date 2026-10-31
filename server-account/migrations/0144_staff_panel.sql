@@ -1,12 +1,11 @@
--- STAFF-PANEL1 (2026-10-22, mob: "a staff admin panel", design doc "DFO Staff Panel: design", build step 1): THE STAFF PANEL'S
+-- STAFF-PANEL1 (2026-10-22, as the owner asked, design doc "DFO Staff Panel: design", build step 1): THE STAFF PANEL'S
 -- SIGN-IN - the password, a key only the staff member's own copy of the staff panel extension holds, and the role lists -
 -- and a short staff session, beside the game's own sessions and never one of them (server-account/src/staff.js says why).
--- mob, 06:18Z: "lets get rid of asuthernticator for now", "and we will do just password and extension".
+-- as the owner asked.
 --
 --   npx wrangler d1 migrations apply daggerfall-accounts --remote
 --
--- players.staff_mod  1 for a Moderator an Admin added from the panel (mob, 07:42Z: "add it so admins can add or remove
---                 moderatoers") - beside MODERATOR_HANDLES, which names the config's own. The account's, not its handle's.
+-- players.staff_mod  1 for a Moderator an Admin added from the panel (as the owner asked) - beside MODERATOR_HANDLES, which names the config's own. The account's, not its handle's.
 -- staff_keys      an extension's Ed25519 public key, registered to one account with an owner's invite (an owner's
 --                 first key is named in the config, OWNER_KEYS). Bound to the handle it was registered under - a rename
 --                 (0134) leaves it behind, so a handle a role list names is never enough on its own. `last_ts` the newest
@@ -17,7 +16,7 @@
 -- staff_invites   a one-time code an owner hands a staff member to register their extension (24 h), kept as its hash.
 -- staff_sessions  the panel's session, kept as its hash: 30 minutes idle, 8 hours at most, and dead with its key.
 -- staff_audit     every sign-in, refusal and staff act, and whether it was done (`outcome` ok), refused by a role's door
---                 (denied) or changed nothing (failed). APPEND-ONLY for 30 days (mob, 12:12Z: "only keep for one month"):
+--                 (denied) or changed nothing (failed). APPEND-ONLY for 30 days (as the owner asked):
 --                 the triggers below refuse an UPDATE, and a DELETE of a row newer, so no route, and no staff member
 --                 through one, can edit what was done; past it the hourly job deletes it (cron.js staff-audit). No
 --                 foreign keys - a row outlives the accounts it names.

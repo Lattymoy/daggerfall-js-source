@@ -1,4 +1,4 @@
-// STAFF-PANEL3-PLAYERS (2026-10-22, mob: "do all 6"; design doc "DFO Staff Panel: design", build step 3, "Players and
+// STAFF-PANEL3-PLAYERS (2026-10-22, as the owner asked; design doc "DFO Staff Panel: design", build step 3, "Players and
 // nameplates") - THE PANEL'S PLAYERS (server-account/src/staffPlayers.js), driven through the real Worker on the
 // node:sqlite database every account pin stands on (test/accountDb.mjs): the search, a profile's card and badges and each
 // tab, the devices and Sign out everywhere, and the rename of a handle or a character's name - Admins alone, every read
@@ -533,7 +533,7 @@ test('STAFF-PANEL3-PLAYERS: SERVER LOAD - the trades read and the search by a ch
   assert.doesNotMatch(online, /SCAN players\b/, online);
 });
 
-test('INV-HOVER (mob: "hover for item here with descriptons", "so i can see what enchants and amounts of gold on parchment are"): a save row carries what its hover says - its enchantments as [type, param] (the item maker\'s cost rows left out, ITEM_ENCH_MAX at most), its condition, its value, its message and a quest\'s mark - and only what the piece has (mutants: the maker rows kept, the condition unread)', () => {
+test('INV-HOVER (as the owner asked): a save row carries what its hover says - its enchantments as [type, param] (the item maker\'s cost rows left out, ITEM_ENCH_MAX at most), its condition, its value, its message and a quest\'s mark - and only what the piece has (mutants: the maker rows kept, the condition unread)', () => {
   const ench = [{ type: 4, param: 0 }, { type: 0, param: 77, enchantCost: 10 }, { type: 26 }, { type: 'x', param: 1 }];
   const v = saveViewOf({ items: [{ name: 'Blade', templateIndex: 120, enchantments: ench, currentCondition: 40, maxCondition: 100, value: 300, questItem: true, message: 9 }, { name: 'Bread', templateIndex: 9999 }] });
   const [blade, bread] = v.items;

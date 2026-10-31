@@ -1,5 +1,4 @@
-// PVP-EVADE (2026-10-30, the owner: "if ur above other in lvl you shoulfd b harder to hit", "dodge mneed to worjk as well
-// in pvp"): a swing or a shaft that hit a player is still evaded whole - live Dodging 0.05% a point to 25%, 2% a level
+// PVP-EVADE (2026-10-30, as the owner asked): a swing or a shaft that hit a player is still evaded whole - live Dodging 0.05% a point to 25%, 2% a level
 // over the striker to 20%, a gear power's evade, all to 40%. The relay rolls it; a spell is never evaded.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

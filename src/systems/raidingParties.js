@@ -1820,14 +1820,11 @@ export const STAFF_RAID_TYPE = 9; // no party of the mod's (0-2), and never the 
 export const STAFF_SPAWN_INTERVAL_MIN_S = 0.5;
 export const STAFF_SPAWN_INTERVAL_MAX_S = 2;
 /**
- * STAFF-EVENT PACKS (2026-10-25, mob: "when we do a raid spawn they need to be spread all over not a SINGLE SPAWN POINT
- * ... SHOULD DO PACK SPAWNING", "3-5 per pack of the monster chosen trhis need to feel like a take over", "and packs
- * quickly to the 25 cap", "it can be pack of any of the selected monsterts"): a staff event stands its monsters in PACKS of
+ * STAFF-EVENT PACKS (2026-10-25, as the owner asked): a staff event stands its monsters in PACKS of
  * STAFF_PACK_MIN to STAFF_PACK_MAX, each one any of staff's kinds -
  * a leader anywhere around me (any bearing, STAFF_PACK_FAR_MIN to STAFF_PACK_FAR_MAX off, in front of me too), its pack
  * within STAFF_PACK_NEAR of it, STAFF_PACK_STEP_S apart - and the next pack after a gap paced so the event stands its
- * MAX_RAID_ENEMIES in STAFF_PACK_FILL_MIN_S to STAFF_PACK_FILL_MAX_S (mob 2026-10-25: "make it take 120-45 secdon for a
- * pack to full hit 25", then "20-45" - the event's own pace, rolled once, each gap its pack's share of it). A leader with no spot that far is tried nearer (a narrow street) - never lost. A
+ * MAX_RAID_ENEMIES in STAFF_PACK_FILL_MIN_S to STAFF_PACK_FILL_MAX_S (as the owner asked - the event's own pace, rolled once, each gap its pack's share of it). A leader with no spot that far is tried nearer (a narrow street) - never lost. A
  * town raid keeps the mod's one foe at a time just out of view.
  */
 export const STAFF_PACK_MIN = 3;
@@ -1836,7 +1833,7 @@ export const STAFF_PACK_FAR_MIN = 20;
 export const STAFF_PACK_FAR_MAX = 60;
 export const STAFF_PACK_NEAR = 6;
 export const STAFF_PACK_STEP_S = 0.15;
-// PACK-FAST (mob 2026-10-26: "wayy slowwwwwww", "needt to be x3"): three times the pace - 20-45 s was 7-15 s.
+// PACK-FAST (as the owner asked): three times the pace - 20-45 s was 7-15 s.
 export const STAFF_PACK_FILL_MIN_S = 7;
 export const STAFF_PACK_FILL_MAX_S = 15;
 /** A pack's gap after it: its share of the event's pace (`paceS`). The first pack comes at once, so the cap stands when
@@ -1852,7 +1849,7 @@ export const staffPackPaceS = (roll) =>
     STAFF_PACK_FILL_MAX_S,
     roll,
   );
-/** PACK-EVERY (mob 2026-10-26: "make sure we spawn a pack on every player in town"): whether a peer's `feet` stand in
+/** PACK-EVERY (as the owner asked): whether a peer's `feet` stand in
  *  my event's place - the town's rect where I am in one (`inRect`, the host's test of a foe's feet), or, out of any town
  *  (a staff AREA event: systems/staffEvents.js staffRaidHere), my own map pixel `me`. Out of a town the rect answered no
  *  one, and every pack, the scale and the boss went to me. @param {number[]|null} feet @param {((f: any) => boolean)|null} inRect
@@ -1864,7 +1861,7 @@ export function peerInEventPlace(feet, inRect, world, me) {
     at = worldCoordToMapPixel(wc.x, wc.z);
   return at.x === me.x && at.y === me.y;
 }
-/** PACK-STALL (mob 2026-10-26: "town was not spawning enemy on every player"): a pack whose leader found no spot this
+/** PACK-STALL (as the owner asked): a pack whose leader found no spot this
  *  many times about its player goes to the next player in turn. It was tried about the same player for ever, and while
  *  it tried, no pack stood anywhere - for anyone. */
 export const STAFF_PACK_LEADER_TRIES = 3;
@@ -1902,7 +1899,7 @@ function staffPackStep(raid, standing) {
   return 'raider';
 }
 /**
- * PACK-SCALE (2026-10-25, mob: "they arnt spawn ing quick enough", card "Scale with players in town"): an event's packs
+ * PACK-SCALE (2026-10-25, as the owner asked, card "Scale with players in town"): an event's packs
  * by the players in its place (me counted) - one alone as ever (MAX_RAID_ENEMIES standing, the event's pace); each more
  * player STAFF_PACK_CAP_PER more standing, to STAFF_PACK_CAP_MAX, and the pace a quarter quicker, to twice. Pure.
  * @param {number} players @returns {{ cap: number, speed: number }}
@@ -1919,8 +1916,7 @@ export const STAFF_PACK_CAP_MAX = 40;
 /** PACK-SCALE: the more standing each player past the first brings. */
 export const STAFF_PACK_CAP_PER = 5;
 /**
- * PACK-SPREAD (mob 2026-10-25: "make sure we spread spawn all over the citys player not just the bottom left", "evenly
- * swap them between all player in a city"): each pack goes to the next player in the town in turn - me, then each peer
+ * PACK-SPREAD (as the owner asked): each pack goes to the next player in the town in turn - me, then each peer
  * standing in its rect, by id - and is led from around that player's feet. Answers the feet, or null for my own.
  */
 function staffPackPlayer() {
@@ -1932,7 +1928,7 @@ function staffPackPlayer() {
   return all[_packTurn++ % all.length][1];
 }
 /**
- * BOSS-SPOT (2026-10-25, mob: "spawn it on the highest lvl player in the town or area", "or largewst groupoing"; card:
+ * BOSS-SPOT (2026-10-25, as the owner asked; card:
  * "Biggest group, ties by level"): the player a mini boss stands beside - the one with the most players within
  * STAFF_BOSS_GROUP_M of them (themselves counted), a tie to the group whose highest level is higher, then the lower id.
  * Pure. @param {[string, number[], number][]} players `[id, feet, level]` @returns {[string, number[], number]|null}
@@ -1965,7 +1961,7 @@ function staffBossPlace(raid = null) {
   const at = staffBossSpot(host().peerFeetInTown?.() ?? []);
   return at && at[0] !== me ? { near: at[1] } : undefined;
 }
-/** BOSS-RETRY (mob 2026-10-26: "mini boss sometimes doent spawn"): the boss's tries in a row that found no spot. A miss
+/** BOSS-RETRY (as the owner asked): the boss's tries in a row that found no spot. A miss
  *  used to clear the field's wait, so the boss waited for the whole field again (up to STAFF_BOSS_CLEAR_MAX_MS) and
  *  tried the same group's spot - which missed again. Now the wait holds, and past STAFF_PACK_LEADER_TRIES misses it
  *  stands about me. */
@@ -1994,7 +1990,7 @@ function staffClearLong(raid, t) {
 export const STAFF_BOSS_CLEAR_MAX_MS = 120000;
 /** BOSS-CLEAR: is every monster of it that stood at the boss's call dead or gone - mine and the puppets of another's (a
  *  boss aside)? The field is taken once, at the first ask (`clearWait`); a pack stood since never holds the boss
- *  (BOSS-CLEAR-CALL, mob 2026-10-25: "no only the mini boss need to wait for everything to be dead"). @param {any} raid @param {any} h */
+ *  (BOSS-CLEAR-CALL, as the owner asked). @param {any} raid @param {any} h */
 function staffFieldClear(raid, h) {
   const key = raidKey(raid);
   const pups = h.raidPuppets?.() ?? [];
@@ -2037,7 +2033,7 @@ function staffPlaceName(r) {
 const staffTownOf = (r) => (r.locationIndex === STAFF_EVENT_AREA ? null : townOfRaid(r));
 const kindName = (t) => enemyDisplayName(t) ?? 'monster';
 /** Is a staff event's place a city? The panel's word (`ct`, off the game's map), or a town of my own map. Anything else
- *  is said as an area (mob 2026-10-24: "make sure to add that it is a city ... and make sure to say its an area if it not"). */
+ *  is said as an area (as the owner asked). */
 const staffCity = (r) => r.locationIndex !== STAFF_EVENT_AREA && (r.staff?.ct === 1 || !!staffTownOf(r));
 export const staffAttackLine = (r) =>
   staffCity(r)

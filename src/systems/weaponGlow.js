@@ -92,7 +92,7 @@ function specOf(item, arcane, on, ladder) {
     const set = glowFromWord(item.glowSet);
     if (set) return set;
   } // GLOW-SET: law 9, a staff's pick, first
-  if (isHandWraps(item)) return fistGlow(undefined, true); // WRAPS-AURA (mob: "wraps are glowing without the aura on"): wraps glow by the weapon aura alone
+  if (isHandWraps(item)) return fistGlow(undefined, true); // WRAPS-AURA (as the owner asked): wraps glow by the weapon aura alone
   if (isGilded(item) && (ladder ?? lootRarityOn())) return glowSpec('gilded', GILDED_LEVEL); // GILDED-GLOW: law 8, first
   const i = elementIndex(item, ladder ?? lootRarityOn());
   if (i >= 0) return glowSpec(PROC_ELEMENTS[i], glowLevel(_total));
@@ -112,7 +112,7 @@ export function armoryWeaponLook(kit = ownArmory()) {
   const key = armoryKitPieces(kit).weapon;
   return key ? (ARMORY_GLOW[/** @type {keyof typeof ARMORY_GLOW} */ (key)] ?? null) : null;
 }
-/** ARMORY-FISTS (2026-10-30, mob: "can we use the glow from wepon aura ... cause we lose out as a hand to hand"): law 7
+/** ARMORY-FISTS (2026-10-30, as the owner asked): law 7
  *  on a BARE fist. A fist in Hand Wraps already wears it through the wraps; one with nothing wears the kit's weapon
  *  piece itself. `kit` is mine by default, a peer's as their token says it. */
 export function fistGlow(kit = ownArmory(), on = weaponGlowOn()) {
@@ -123,7 +123,7 @@ export function fistGlow(kit = ownArmory(), on = weaponGlowOn()) {
  *  since the body pass draws no weapon piece; null for any other kit. Pure. */
 export const armoryWeaponStage = (/** @type {unknown} */ kit) =>
   Object.entries(armoryKitPieces(kit)).every(([s, k]) => s === 'weapon' || !k) ? armoryWeaponLook(kit) : null;
-/** GLOW-SET (2026-10-30, mob: "can we set the glow on wepaoins say like hand wraps?"): LAW 9, A GLOW SET ON THE PIECE.
+/** GLOW-SET (2026-10-30, as the owner asked): LAW 9, A GLOW SET ON THE PIECE.
  *  A staff member's `/glow` (systems/staffGlow.js) writes one of the wire's words on the weapon or Hand Wraps in hand, as
  *  `glowSet`. It shows over every other law: it is a choice, where the others are a reading. A word the wire does not
  *  take is ignored. */

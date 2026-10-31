@@ -1,12 +1,10 @@
 // @ts-check
-// STAFF-VIEW1 (2026-10-23, mob: "np player esp in staff panel?", "i need staff panel to have esp", "i told you to add the
-// opther parts to the menu?", "wtf u had all this build"; design doc "DFO Staff Panel: design", In game: the staff view -
+// STAFF-VIEW1 (2026-10-23, as the owner asked; design doc "DFO Staff Panel: design", In game: the staff view -
 // "Shift+M switches between the Overworld view and the ground view. In the Overworld every player has a name tag, and
 // crowded tags group", "Tags show the player's name and their most urgent flag ... Admins also see the monsters each
 // player owns, with lines to their owner. Moderators see report flags and WATCH on players they watch", "Clicking a tag
 // follows that player at once, invisibly (Invisible follow), and opens a small card") - THE STAFF VIEW, out of bootWorld
-// (HOST-SPLIT: THE HOSTS DO NOT GROW). The Overworld is the game's own travel view (mob: "lets use my tools overworld
-// system to have as a base in game"), entered and left with Shift+M; the ground view is wherever the staff member stands,
+// (HOST-SPLIT: THE HOSTS DO NOT GROW). The Overworld is the game's own travel view (as the owner asked), entered and left with Shift+M; the ground view is wherever the staff member stands,
 // indoors and in dungeons too.
 //
 // WHO IS TAGGED. Every player the game receives - the followed room's while a follow is locked (the host has left its
@@ -53,7 +51,7 @@ export const STAFF_OW_TAGS_MAX = 256;
 export const STAFF_TAGS_ASK_MS = 60_000;
 /** How long a tag click waits for the hub's search before it says no account was found (ms). */
 export const STAFF_FIND_WAIT_MS = 5000;
-/** STAFF-LINES-SEA (mob, 2026-10-25: "not draw line to player from sea creature", "they arnt a threat"): the sea's
+/** STAFF-LINES-SEA (as the owner asked): the sea's
  *  monsters, the relay's own list (server/src/staffFeeds.js FOE_SEA_TYPES) - no line to their owner and not in a tag's
  *  count; Monster watch still counts them apart, as sea. */
 export const STAFF_SEA_TYPES = new Set([MOBILE_TYPES.Slaughterfish, MOBILE_TYPES.Dreugh, MOBILE_TYPES.Lamia]);
@@ -98,7 +96,7 @@ function touching(a, b) {
   return Math.abs(a.x - b.x) * 2 < A.w + B.w && Math.abs(a.y - A.h / 2 - (b.y - B.h / 2)) * 2 < A.h + B.h;
 }
 /** Tags this near one another on the screen as one box, in the order given (the nearest first leads) - and CROWD-CHIPS
- *  (2026-10-24, mob: "to many ocerlapping how would we clean thaT UP"; the card's pick "Merge close boxes, count only"):
+ *  (2026-10-24, as the owner asked; the card's pick "Merge close boxes, count only"):
  *  boxes that would still touch merged into the one that leads, until none does, so no two overlap.
  *  @param {Array<{ p: { x: number, y: number }, m: { id: string } }>} tagged */
 export function crowded(tagged) {
@@ -238,7 +236,7 @@ export function createStaffViewHost({
     }
     return okSub(tv.get(id)?.sub) ?? known.get(id) ?? null;
   }
-  /** STAFF-TAG-MENU (2026-10-24, mob: "when u lcick on someon", "i mean the pop up"): a picked player's menu - the chat
+  /** STAFF-TAG-MENU (2026-10-24, as the owner asked): a picked player's menu - the chat
    *  line menu's staff acts (`acts`, scenes/chatSafetyHost.js playerActions), its Follow this view's own (`go`, which
    *  opens the panel's card); with no acts on this page, the follow at once, as before. */
   function chosen(
@@ -257,7 +255,7 @@ export function createStaffViewHost({
     if (rows.length && layer) layer.menu(name || sub, rows, ...(where ? [where] : []));
     else go(sub, name, hint);
   }
-  /** FOLLOW-GROUND-HINT (mob: "following from ground does not work"): a player drawn on my own ground stands in my own
+  /** FOLLOW-GROUND-HINT (as the owner asked): a player drawn on my own ground stands in my own
    *  room - its key, its layer and their socket there, for the follow to go to at once - else null (a traveller's mark,
    *  the flat map's dot, or the followed room's while a follow is locked: the hub says where those are). @param {string} id */
   function groundOf(id) {
@@ -344,7 +342,7 @@ export function createStaffViewHost({
     });
     return flat;
   };
-  /** FLAG-DISMISS (mob, 2026-10-24: "need a dismiss button on players name plates for flags"; the card's pick "Hide it for
+  /** FLAG-DISMISS (as the owner asked; the card's pick "Hide it for
    *  me only"): a flag this staff member dismissed is left off their own tags, lines and flat map - by what it says
    *  (`staffFlagKey`), so a new flag on that player shows again. Kept in this browser alone (nothing is sent: the flag stands
    *  for every other staff member), DISMISSED_FLAGS_MAX at most, the oldest let go first. */
@@ -376,8 +374,7 @@ export function createStaffViewHost({
   /** STAFF-FLAG-LINES: a flag's line - a report waiting on review (any level) red, else none; STAFF-LINES-REVIEW: a watch
    *  alone draws none (it was gold). @param {any} flag */
   const lineOf = (flag) => (flag?.level ? STAFF_LINE.review : null);
-  /** STAFF-FLAG-LINES (2026-10-24, mob: "need to port over my watch lines and review lines for flags in staff esp",
-   *  "helps flag bad players"): a line from the screen's middle to each flagged player in front of the eye, however far
+  /** STAFF-FLAG-LINES (2026-10-24, as the owner asked): a line from the screen's middle to each flagged player in front of the eye, however far
    *  (the tags stop at the nameplate distance; a flag's line does not), STAFF_LINES_MAX at most with the others.
    *  @param {number[][]} segs @param {Array<{ at: number[], kind: number|null }>} who @param {(p: number[]) => any} at @param {number} w @param {number} h */
   function flagLines(segs, who, at, w, h) {
@@ -498,8 +495,7 @@ export function createStaffViewHost({
     },
     /** THE OVERWORLD'S MARKS (the travel view's `marks`, scenes/travelViewMarks.js): a player's list goes back untouched.
      *  Staff's player marks leave the travel view's canvas for the staff tags (frame, `owTags`) - STAFF-OW-TAGS (2026-10-24,
-     *  mob: "overworl map is missing alot?", "like it show enemy to player but no players", "no esp no clickable tags", "no
-     *  menu pop up"): on the canvas the player's own Travellers and who switches hid them, and a crowd of them was one
+     *  as the owner asked): on the canvas the player's own Travellers and who switches hid them, and a crowd of them was one
      *  unclickable "N travellers"; as tags every player stands whatever those switches say, wears their true name (a
      *  Stranger's too) and the flag, and a crowd is a box with a row a player, each a click. The players the travel view
      *  cut (past NAME_RANGE, concealed, veiled, hidden by the open zone) are tagged as well. @param {any[]} list */

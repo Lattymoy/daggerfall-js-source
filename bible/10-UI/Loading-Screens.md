@@ -180,7 +180,7 @@ The owner: in Chrome the game froze for 30-60 s in the world after each update, 
 it) fills as the programs started at page load report done. It reads
 `glProgram.js:"export const startedPrograms"`, never `startPrograms`' `ready()`, which starts again a program
 a build took; a taken program counts as done. Full, it says "Graphics ready" and holds while the menu stands.
-GFX-ALWAYS (the owner: "dont see shader bar"): a warm cache, or a build done during the intro, shows ready at once.
+GFX-ALWAYS (as the owner asked): a warm cache, or a build done during the intro, shows ready at once.
 No KHR_parallel_shader_compile shows no bar. It never holds Play.
 
 **FIX-STUTTER.** A page cannot clear the browser's shader cache. A Chromium tab gets a Fix stutter button whose panel

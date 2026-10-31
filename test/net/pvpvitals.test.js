@@ -1,5 +1,4 @@
-// PVP-VITALS (2026-10-30, the owner: "we need to make sure players cant cheat health in pvp", "cheat health mana or
-// fatigue"): a flagged fighter's health rises, magicka and fatigue are the relay's (net/wild/pvpVitals.js). Pinned: a
+// PVP-VITALS (2026-10-30, as the owner asked): a flagged fighter's health rises, magicka and fatigue are the relay's (net/wild/pvpVitals.js). Pinned: a
 // frozen or set bar buys nothing, an honest one is never refused, and the client tells what it drank and cast.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

@@ -910,7 +910,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   /** AUDIT (the pre-merge audit, Q4): a party member within `r` of my shared quest foe - the fight is theirs too, and the
    *  cull that takes a foe past my own relevance took it off their screen with no fall (their copy had counted the
    *  wave as placed, so the quest stood nothing of its own and waited on a kill that could not come). */
-  /** PACK-KEEP (mob 2026-10-26: "if enemy despawn dont count them as well respawn them on another player"): a raid's or a
+  /** PACK-KEEP (as the owner asked): a raid's or a
    *  staff event's monster (`raidKey`) stands while ANY player is near it. Its packs are stood about every player in the
    *  town (PACK-SPREAD), and the runner's 120 m cull took each one stood about a player that far from the runner on the
    *  frame it stood - never counted (no corpse), stood again about the same player, taken again. */
@@ -924,7 +924,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   /** AUDIT PSCALE1 (Mac: "Whoever fights it"): how many players fight `f` - my own foe's, counted at this door from
    *  every blow it takes (systems/party/partyScale.js foeFighters); another player's puppet's, its owner's word on its record
    *  (`n`). Kept on the foe (`_fightN`) for the readers outside this pool (the Renown bonus, the sigil's forge). */
-  /** BOSS-EXACT (mob 2026-10-25: "the rat isnt takeing any dmage"): a shared foe whose health its fighters' toughness weighs -
+  /** BOSS-EXACT (as the owner asked): a shared foe whose health its fighters' toughness weighs -
    *  never a staff event's mini boss, whose health is the exact number staff typed (BOSS-HP); over eight fighters' 4.5 a
    *  Daedric blow on a 10,000-health boss took four. Its blows at me still weigh by them (partyHit). */
   const _toughFoe = (f) => _sharedFoe(f) && !f.entity?.staffBoss;
@@ -1134,7 +1134,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       weight: () => enemyWeightClassicUnits(isClass, f.gender, mobileWeight, f.entity?.items),
     }, { audio, hitEffects, shake: fromPlayer && !peer && !striker ? shake : null, rolls });   // AUDIT TELL H6: my own blow's kick alone
     if (_tell === 'hold') return;
-    if (knockDir && !f.entity?.staffBoss && weaponKnockbackApplies(f.ai.knockbackSpeed, isClass, mobileWeight)) {   // BOSS-UNSHAKEN (mob 2026-10-25: "he got stun locked lets stop him from getting stunned"): a staff event's mini boss takes no shove and no Hurt
+    if (knockDir && !f.entity?.staffBoss && weaponKnockbackApplies(f.ai.knockbackSpeed, isClass, mobileWeight)) {   // BOSS-UNSHAKEN (as the owner asked): a staff event's mini boss takes no shove and no Hurt
       // EW1: the foe's own kit is half of DFU's weight
       const w = enemyWeightClassicUnits(isClass, f.gender, mobileWeight, f.entity?.items);
       f.ai.knockbackSpeed = weaponKnockbackSpeed(damage, w) * (_tell === 'stagger' ? TELL.STAGGER_KNOCK : 1);
@@ -2528,7 +2528,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
    *  it, t the species, x the gender bit, f the feet in the world frame, y the yaw, h the health, d dead, a the attack
    *  count with the ranged bit low, m moving. CURSE-SYNC: a world quest's foe is no quest's here - it rides as an
    *  encounter's (`_questLike`). */
-  /** BOSS-BAR (mob 2026-10-25: "the bar never moved"): a foe's health as its record says it - past the wire's
+  /** BOSS-BAR (as the owner asked): a foe's health as its record says it - past the wire's
    *  FOE_HEALTH_MAX (a staff event's mini boss, up to 1,000,000) at the same share of FOE_HEALTH_MAX its record's `k`
    *  holds, so every reader's bar falls with its owner's; clamped at the bound, it read full until 900,000 were gone. */
   const wireHealth = (e) => {
@@ -3068,7 +3068,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     const dmg = Number(data.dmg);
     if (f?.dead && data.cs === 1 && foes.includes(f)) { const s = hitSpellOf(data); return !!s && !!f.corpsePrefab?.struck(s.spell, s.level, null); }   // DEX5b: a copy's missile on my foe's prefab body (its bundle, the body's own entity)   // QUEST-PARTY: a quest's foe takes a peer's blow only from the party it rides to - any peer's word used to land on one it could not even see
     if (!f || f.dead || !Number.isFinite(dmg) || dmg < 0 || (dmg > PEER_HIT_DMG_MAX && !f.entity?.staffBoss)) return false;   // BOSS-BIG-HIT: a staff event's mini boss takes a blow past the bound at the bound (below) - every other foe refuses it whole
-    const blow = Math.min(PEER_HIT_DMG_MAX, dmg);   // BOSS-BIG-HIT (mob 2026-10-25: "magic hits 10 of thousands"): a peer's spell of tens of thousands on the mini boss lands as 10,000 - it was thrown away
+    const blow = Math.min(PEER_HIT_DMG_MAX, dmg);   // BOSS-BIG-HIT (as the owner asked): a peer's spell of tens of thousands on the mini boss lands as 10,000 - it was thrown away
     // AUDIT CC-E1: ANOTHER's foe mauled my companion where it stands - the blow lands here, where he is real: the foe's
     // blow, not a player's (the knock-out arm his death), and he turns on the striker's puppet
     if (data.fb === 1) {

@@ -1,6 +1,6 @@
 // @ts-check
-// PVP-HUD (the owner's mockup of the PvP screens, 2026-10-29: "do we show comag timer rong and cooldown flkag rinf?",
-// "was in mock up"): THE COMBAT LOCK, SHOWN. A red ring round the flag button empties over the lock and fills again at
+// PVP-HUD (the owner's mockup of the PvP screens, 2026-10-29: the combat timer ring and the
+// flag cooldown ring, as the mockup showed): THE COMBAT LOCK, SHOWN. A red ring round the flag button empties over the lock and fills again at
 // each PvP blow, its seconds under it; a small banner top-centre says "In combat"; a panel bottom right lists my last
 // three PvP blows. Each piece reads the flag host's own state (scenes/pvpFlagHost.js) - this file holds no rule. The
 // lines a refused door says in the lock live here too. A departure: DFU has no PvP.

@@ -3286,7 +3286,7 @@ export class OnlineSession {
 
   /** LEASE1 (net/roomLease.js): my hub's lease, kept for this session's lease rooms - its own and each halo's. Nothing goes
    *  now: each lease room's socket hands it just ahead of the next frame it sends there (`_leased`), so a room where I do
-   *  nothing is woken by nothing (mob's load check, 07:57Z: "if we affected server performasnce" - every room a player
+   *  nothing is woken by nothing (as the owner asked - every room a player
    *  stood idle in was woken every LEASE_MS). KEPT WHEREVER I STAND (a review of the PR: one that came while I stood in a
    *  dungeon's floor, a gate or my home, or before this socket's welcome, was thrown away, and the next lease room heard
    *  nothing of me until the hub's next) - `_leased` hands it on only in a lease room of a relay that knows the frame.
@@ -4315,7 +4315,7 @@ export class OnlineSession {
       // is mine alone - the relay and the service hold me to it whatever it shows. On the relay's word's own bucket; my hub's
       // next lease asked at once, so every room I hold learns it from my hand as soon as theirs.
       if (!Number.isSafeInteger(m.until) || m.until < 0 || !this._lawIn(room, now)) return;
-      // STAFF-FREEZE-ASK (mob, 2026-10-23: "froze a player he still moves"): asked as soon as the hub's meter takes it - the
+      // STAFF-FREEZE-ASK (as the owner asked): asked as soon as the hub's meter takes it - the
       // hub hears one lease frame a socket in LEASE_FRAME_MIN_MS, so an ask sooner after the last was dropped, and every
       // other room heard the freeze only at the next ask, LEASE_MS on (the player walked on for them until then)
       if (isSocialRoom(room)) { this.staffOk = true; this._leaseOnce = true; this._leaseAskAt = Math.max(now, this._leaseAskAt + LEASE_FRAME_MIN_MS + LEASE_ASK_SLACK_MS) - LEASE_MS; }
