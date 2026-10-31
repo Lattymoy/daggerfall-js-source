@@ -40,8 +40,8 @@
   {
     "name": "AUTOHOLD-the-locked-unanswered",
     "file": "server-account/src/realm.js",
-    "old": ", locked: v.locked };",
-    "new": " };",
+    "old": "  return {\n    ok: true,\n    seq,\n    tradeHeld: stood.held ?? null,\n    ...(stood === v.set && v.why ? { tradeHeldWhy: v.why } : {}),\n    locked: v.locked,\n  };",
+    "new": "  return { ok: true, seq, tradeHeld: stood.held ?? null, ...(stood === v.set && v.why ? { tradeHeldWhy: v.why } : {}) };",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "AUTOHOLD-the-clear-keeps-the-timed",
     "file": "server-account/src/review.js",
-    "old": "held = NULL, held_at = NULL, held_until = NULL, strikes = 0, law_holds = 0, law_at = NULL, review = NULL,\n",
-    "new": "held = NULL, held_at = NULL, strikes = 0, review = NULL,\n",
+    "old": "          `UPDATE realm_characters SET held = NULL, held_at = NULL, held_until = NULL, strikes = 0, law_holds = 0, law_at = NULL, review = NULL,",
+    "new": "          `UPDATE realm_characters SET held = NULL, held_at = NULL, strikes = 0, review = NULL,",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "AUTOHOLD-AUDIT-the-dead-carrying-freed",
     "file": "server-account/src/realm.js",
-    "old": "AND ${a}.held_until <= ${now} AND ${a}.law_sig IS NULL))`;",
-    "new": "AND ${a}.held_until <= ${now}))`;",
+    "old": "  AND ${a}.held = 'law' AND ${a}.held_until IS NOT NULL AND ${a}.held_until <= ${now} AND ${a}.law_sig IS NULL))`;",
+    "new": "  AND ${a}.held = 'law' AND ${a}.held_until IS NOT NULL AND ${a}.held_until <= ${now}))`;",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "AUTOHOLD-AUDIT-the-living-freed",
     "file": "server-account/src/realm.js",
-    "old": "NOT (${a}.dead_at IS NOT NULL\n",
-    "new": "NOT (1\n",
+    "old": "export const holdStandsSql = (\n  /** @type {string} */ a,\n  /** @type {string} */ now,\n) => `(${a}.held IS NOT NULL AND NOT (${a}.dead_at IS NOT NULL",
+    "new": "export const holdStandsSql = (/** @type {string} */ a, /** @type {string} */ now) => `(${a}.held IS NOT NULL AND NOT (1",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "AUTOHOLD-AUDIT-the-craft-hold-blind",
     "file": "server-account/src/realm.js",
-    "old": "WHERE p.provenance = ?1 AND ${holdStandsSql('r', '?3')}`)",
-    "new": "WHERE p.provenance = ?1 AND r.held IS NOT NULL`)",
+    "old": "    WHERE p.provenance = ?1 AND ${holdStandsSql('r', '?3')}`,",
+    "new": "    WHERE p.provenance = ?1 AND r.held IS NOT NULL`,",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -526,8 +526,8 @@
   {
     "name": "AUTOHOLD-AUDIT-twice-unasked-by-a-route",
     "file": "server-account/src/realm.js",
-    "old": "  const why = take ? null : twice.length ? 'piece-dupe' : leaving.length ?",
-    "new": "  const why = take ? null : leaving.length ?",
+    "old": "  const why = take\n    ? null\n    : twice.length\n      ? 'piece-dupe'\n      : leaving.length\n        ? await piecesRefusal(db, at.id, leaving)\n        : null;",
+    "new": "  const why = take ? null : leaving.length ? await piecesRefusal(db, at.id, leaving) : null;",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -535,8 +535,8 @@
   {
     "name": "AUTOHOLD-AUDIT-twice-unasked-by-a-trade",
     "file": "server-account/src/realmTrade.js",
-    "old": "    ?? (leftA.twice.length || leftB.twice.length ? 'piece-dupe' : null)\n",
-    "new": "",
+    "old": "    (leftA.twice.length || leftB.twice.length ? 'piece-dupe' : null) ??\n    (await piecesRefusal(db, t.a_char, leftA.leaving)) ??",
+    "new": "    (await piecesRefusal(db, t.a_char, leftA.leaving)) ??",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -544,8 +544,8 @@
   {
     "name": "AUTOHOLD-AUDIT-twice-unasked-of-the-first-half",
     "file": "server-account/src/realmTrade.js",
-    "old": "(leftA.twice.length || leftB.twice.length ?",
-    "new": "(leftB.twice.length ?",
+    "old": "    (leftA.twice.length || leftB.twice.length ? 'piece-dupe' : null) ??",
+    "new": "    (leftB.twice.length ? 'piece-dupe' : null) ??",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -553,8 +553,8 @@
   {
     "name": "AUTOHOLD-AUDIT-twice-unasked-of-the-second-half",
     "file": "server-account/src/realmTrade.js",
-    "old": "(leftA.twice.length || leftB.twice.length ?",
-    "new": "(leftA.twice.length ?",
+    "old": "    (leftA.twice.length || leftB.twice.length ? 'piece-dupe' : null) ??",
+    "new": "    (leftA.twice.length ? 'piece-dupe' : null) ??",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -589,8 +589,8 @@
   {
     "name": "AUTOHOLD-AUDIT-the-locked-said-only-when-some",
     "file": "server-account/src/realm.js",
-    "old": ", locked: v.locked };",
-    "new": ", ...(v.locked.length ? { locked: v.locked } : {}) };",
+    "old": "    locked: v.locked,",
+    "new": "    ...(v.locked.length ? { locked: v.locked } : {}),",
     "tests": [
       "test/server/autohold.test.js",
       "test/server/realm1.test.js",

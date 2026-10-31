@@ -1140,7 +1140,7 @@ offline game's voyages are on its own clock, and a copy brought online starts th
 **THE SERVICE** (`server-account/src/seaSeason.js`; the table `migrations/0147_sea_season.sql`; the law both ends read,
 `src/net/sea/seaSeasonLaw.js`):
 
-- A CLEAN CHECKPOINT CARRIES THEM, in its own batch (`server-account/src/realm.js:"...(v.clean ? seaSeasonSteps(db, { player: playerId, char: id }, save, nowS) : []),"`):
+- A CLEAN CHECKPOINT CARRIES THEM, in its own batch (`server-account/src/realm.js:"? seaSeasonSteps"`):
   read through the law (`seaSeasonFigures` - this season's; the deepest no further than the sea goes, `SEA_DEEPEST_MAX`
   1,365 leagues at its west edge; the legends no more than the six could have risen since the season began,
   `seaLegendsPossible` - each once, and once more each `SEA_LEGEND_RISE_S`, the sixty hours of wall time that

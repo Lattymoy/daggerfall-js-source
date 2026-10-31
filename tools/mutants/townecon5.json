@@ -83,8 +83,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC2-unseated",
     "file": "server-account/src/progress.js",
-    "old": "  '/v1/towns/watch': Object.freeze(['watch', false]),\n",
-    "new": "",
+    "old": "  '/v1/towns/watch': Object.freeze(['watch', false]),\n  '/v1/marks/find': Object.freeze(['find', false]),",
+    "new": "  '/v1/marks/find': Object.freeze(['find', false]),",
     "tests": [
       "test/server/townecon_service.test.js"
     ],

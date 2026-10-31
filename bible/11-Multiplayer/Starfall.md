@@ -580,7 +580,7 @@ three are witnessed (`net/questlineClaims.js` QL_SERVICE_LINES).
 2`), each newer than the earlier witnessed step's `seen_at` - so QLTF01's star is never one of QLTF03's three. AUDIT
 STARFALL B2: that floor held only once QLTF01 was done, and QLTF03's end asked first read its window from the line's
 opening - the first star counted for both steps, and the Starwarden was paid on three stars, not four. An end now waits
-while an earlier witnessed step of its line is not done (`server-account/src/questlines.js:"export function qlInOrderSql(lineId, step) {"`):
+while an earlier witnessed step of its line is not done (`server-account/src/questlines.js:"export function qlInOrderSql"`):
 answered `witnessed: false`, and asked again by the runner as every unwitnessed end is.
 
 **THE STARWARDEN'S PURSE (T-B, AS BUILT).** The title's write lays 30 Soul Cakes (`net/festivalLaw.js:"export const QL_STARWARDEN_CAKES"`)

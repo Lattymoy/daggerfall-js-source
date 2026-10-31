@@ -1788,8 +1788,8 @@
   {
     "name": "PROF-541-B5-delete",
     "file": "server-account/src/realm.js",
-    "old": "'DELETE FROM prof_unbruised WHERE player = ? AND char_id = ?'",
-    "new": "'DELETE FROM prof_unbruised WHERE player = ? AND char_id = ? AND 0'",
+    "old": "    db.prepare('DELETE FROM prof_unbruised WHERE player = ? AND char_id = ?').bind(playerId, id), // AUDIT PROF-541 B5: the unbruised count goes with the Stores it counts",
+    "new": "    db.prepare('DELETE FROM prof_unbruised WHERE player = ? AND char_id = ? AND 0').bind(playerId, id), // AUDIT PROF-541 B5: the unbruised count goes with the Stores it counts",
     "tests": [
       "test/net/prof12_service.test.js"
     ]

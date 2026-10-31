@@ -1266,21 +1266,21 @@ read, `06-Systems/Integrity-Arc.md`). A rollback loses every hour played since t
 could not see the purse at all: the wealth counts a purse below nothing as none.
 
 THE FIX. The review's third act on one character, `realm-mend { id, ticket, was, gold, note? }`
-(`review.js:"async function mendAct(ctx, row, by, note, body) {"`; its law
+(`review.js:"async function mendAct"`; its law
 `repairLaw.js:"export function applyPurseMend"`, the service's and the tool's). The record's
 purse, still the `was` staff reckoned from (`mend-moved` otherwise: played since, or the wrong character) and below
 nothing (`mend-not-negative` otherwise), is SET to nothing - never added to - and `gold`, what the character is owed (0
 to one int's worth), comes as ONE LETTER OF CREDIT at the front of the pack. That is what the trade window itself pays
 for a sum the pack cannot carry (`tradeModes.js:"export function sellProceeds"`, DaggerfallTradeWindow's
 sell arm), so it is how an honest sale of a lot that big pays; a purse of coin would weigh tonnes. The act shares the
-repair's machinery, which both run now (`review.js:"async function staffMend(ctx, row, kind, ticket, change, steps, answer) {"`):
+repair's machinery, which both run now (`review.js:"async function staffMend"`):
 a developer's alone, the dead never, once a ticket in `realm_repairs` (a mend's row names no faction and no bit, 0 and 0,
 `was` the purse it found and `gold` the letter - so no migration; a ticket names one act, and the other kind's is
 `repair-ticket`), the record seized one sequence on with its seat taken from any tab, the gold witnessed and counted as
 the `repair` faucet, the act written among the findings. AND THE HOLD THE PURSE MADE GOES WITH IT. When the hold is the
 law's, the finding it stands on is the purse's alone (`PURSE_SIG`, `lawSigOf` of the judge's `gold`) and no timed hold
 stands, the mend lifts it as the next clean checkpoint would
-(`review.js:"const lift = row.held === 'law' && row.law_sig === PURSE_SIG && !(row.held_until > nowS);"`): the hold
+(`review.js:"const lift = row.held"`): the hold
 and its signature go, `judge_rev` moves one on, guarded on the judgement the act read. The strike stands and fades as
 every strike does - which strike the purse struck, the row does not say. Any other hold stands: the law's beside another
 finding and a timed one are the next checkpoint's, and staff's own is staff's. `realm-findings` says the purse

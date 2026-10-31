@@ -142,7 +142,7 @@
     "name": "PRIMARYFOLD-claim-head-asked-again",
     "file": "server-account/src/npcRoll.js",
     "old": "  const head = headQ?.results?.[0] ?? null;",
-    "new": "  const head = headQ?.results?.[0] ? await db.prepare('SELECT seq, kseq, last_rid FROM npc_roll_heads WHERE char_id = ? AND player = ?').bind(who.character, player.id).first() : null;",
+    "new": "  const head = headQ?.results?.[0]\n    ? await db\n        .prepare('SELECT seq, kseq, last_rid FROM npc_roll_heads WHERE char_id = ? AND player = ?')\n        .bind(who.character, player.id)\n        .first()\n    : null;",
     "tests": [
       "test/server/primaryfold.test.js"
     ]
@@ -150,8 +150,8 @@
   {
     "name": "PRIMARYFOLD-step-no-fill",
     "file": "server-account/src/progress.js",
-    "old": "t.start + CAST((?5 * t.played) / 3600.0 AS INTEGER)",
-    "new": "t.start",
+    "old": "const BUCKET_STEP_SQL = `SELECT t.now, t.played, (CASE WHEN t.start >= ?4 THEN t.start ELSE MIN(?4, t.start + CAST((?5 * t.played) / 3600.0 AS INTEGER)) END) - MAX(0, ?6) AS left",
+    "new": "const BUCKET_STEP_SQL = `SELECT t.now, t.played, (CASE WHEN t.start >= ?4 THEN t.start ELSE MIN(?4, t.start) END) - MAX(0, ?6) AS left",
     "tests": [
       "test/server/primaryfold.test.js"
     ],
@@ -160,8 +160,8 @@
   {
     "name": "PRIMARYFOLD-step-fill-rounded",
     "file": "server-account/src/progress.js",
-    "old": "CAST((?5 * t.played) / 3600.0 AS INTEGER)",
-    "new": "ROUND((?5 * t.played) / 3600.0)",
+    "old": "const BUCKET_STEP_SQL = `SELECT t.now, t.played, (CASE WHEN t.start >= ?4 THEN t.start ELSE MIN(?4, t.start + CAST((?5 * t.played) / 3600.0 AS INTEGER)) END) - MAX(0, ?6) AS left",
+    "new": "const BUCKET_STEP_SQL = `SELECT t.now, t.played, (CASE WHEN t.start >= ?4 THEN t.start ELSE MIN(?4, t.start + ROUND((?5 * t.played) / 3600.0)) END) - MAX(0, ?6) AS left",
     "tests": [
       "test/server/primaryfold.test.js"
     ],
@@ -170,8 +170,8 @@
   {
     "name": "PRIMARYFOLD-step-past-the-cap",
     "file": "server-account/src/progress.js",
-    "old": "ELSE MIN(?4, t.start + CAST",
-    "new": "ELSE MAX(?4, t.start + CAST",
+    "old": "const BUCKET_STEP_SQL = `SELECT t.now, t.played, (CASE WHEN t.start >= ?4 THEN t.start ELSE MIN(?4, t.start + CAST((?5 * t.played) / 3600.0 AS INTEGER)) END) - MAX(0, ?6) AS left",
+    "new": "const BUCKET_STEP_SQL = `SELECT t.now, t.played, (CASE WHEN t.start >= ?4 THEN t.start ELSE MAX(?4, t.start + CAST((?5 * t.played) / 3600.0 AS INTEGER)) END) - MAX(0, ?6) AS left",
     "tests": [
       "test/server/primaryfold.test.js"
     ],
@@ -180,8 +180,8 @@
   {
     "name": "PRIMARYFOLD-step-full-refilled",
     "file": "server-account/src/progress.js",
-    "old": "CASE WHEN t.start >= ?4 THEN t.start ELSE MIN(",
-    "new": "CASE WHEN t.start > ?4 THEN t.start ELSE MIN(",
+    "old": "const BUCKET_STEP_SQL = `SELECT t.now, t.played, (CASE WHEN t.start >= ?4 THEN t.start ELSE MIN(?4, t.start + CAST((?5 * t.played) / 3600.0 AS INTEGER)) END) - MAX(0, ?6) AS left",
+    "new": "const BUCKET_STEP_SQL = `SELECT t.now, t.played, (CASE WHEN t.start > ?4 THEN t.start ELSE MIN(?4, t.start + CAST((?5 * t.played) / 3600.0 AS INTEGER)) END) - MAX(0, ?6) AS left",
     "tests": [
       "test/server/primaryfold.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "PRIMARYFOLD-step-start-nothing",
     "file": "server-account/src/progress.js",
-    "old": "COALESCE(b.allowance, ?4) AS start",
-    "new": "COALESCE(b.allowance, 0) AS start",
+    "old": "  FROM (SELECT COALESCE(p.played_s, 0) AS now, CASE WHEN b.played_at IS NULL THEN 0 ELSE MAX(0, COALESCE(p.played_s, 0) - b.played_at) END AS played, COALESCE(b.allowance, ?4) AS start",
+    "new": "  FROM (SELECT COALESCE(p.played_s, 0) AS now, CASE WHEN b.played_at IS NULL THEN 0 ELSE MAX(0, COALESCE(p.played_s, 0) - b.played_at) END AS played, COALESCE(b.allowance, 0) AS start",
     "tests": [
       "test/server/primaryfold.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "PRIMARYFOLD-step-debt-measured",
     "file": "server-account/src/progress.js",
-    "old": "CASE WHEN ?7 THEN s.left ELSE MAX(0, s.left) END",
-    "new": "s.left",
+    "old": "      SELECT ?1, ?2, CASE WHEN ?7 THEN s.left ELSE MAX(0, s.left) END, s.now, ?3 FROM (${BUCKET_STEP_SQL}) s WHERE true",
+    "new": "      SELECT ?1, ?2, s.left, s.now, ?3 FROM (${BUCKET_STEP_SQL}) s WHERE true",
     "tests": [
       "test/server/primaryfold.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "PRIMARYFOLD-step-played-from-zero",
     "file": "server-account/src/progress.js",
-    "old": "CASE WHEN b.played_at IS NULL THEN 0 ELSE MAX(0, COALESCE(p.played_s, 0) - b.played_at) END AS played",
-    "new": "COALESCE(p.played_s, 0) AS played",
+    "old": "  FROM (SELECT COALESCE(p.played_s, 0) AS now, CASE WHEN b.played_at IS NULL THEN 0 ELSE MAX(0, COALESCE(p.played_s, 0) - b.played_at) END AS played, COALESCE(b.allowance, ?4) AS start",
+    "new": "  FROM (SELECT COALESCE(p.played_s, 0) AS now, COALESCE(p.played_s, 0) AS played, COALESCE(b.allowance, ?4) AS start",
     "tests": [
       "test/server/primaryfold.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "PRIMARYFOLD-step-over-unsaid",
     "file": "server-account/src/progress.js",
-    "old": "CASE WHEN s.left < 0 THEN -s.left ELSE 0 END, 1 FROM",
-    "new": "0, 1 FROM",
+    "old": "      SELECT ?1, ?2, ?8, ?6, s.played, CASE WHEN s.left < 0 THEN -s.left ELSE 0 END, 1 FROM (${BUCKET_STEP_SQL}) s WHERE true",
+    "new": "      SELECT ?1, ?2, ?8, ?6, s.played, 0, 1 FROM (${BUCKET_STEP_SQL}) s WHERE true",
     "tests": [
       "test/server/primaryfold.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "PRIMARYFOLD-step-claim-untaken",
     "file": "server-account/src/progress.js",
-    "old": "END) - MAX(0, ?6) AS left",
-    "new": "END) AS left",
+    "old": "const BUCKET_STEP_SQL = `SELECT t.now, t.played, (CASE WHEN t.start >= ?4 THEN t.start ELSE MIN(?4, t.start + CAST((?5 * t.played) / 3600.0 AS INTEGER)) END) - MAX(0, ?6) AS left",
+    "new": "const BUCKET_STEP_SQL = `SELECT t.now, t.played, (CASE WHEN t.start >= ?4 THEN t.start ELSE MIN(?4, t.start + CAST((?5 * t.played) / 3600.0 AS INTEGER)) END) AS left",
     "tests": [
       "test/server/primaryfold.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "PRIMARYFOLD-step-moved-now",
     "file": "server-account/src/progress.js",
-    "old": "MAX(0, s.left) END, s.now, ?3 FROM",
-    "new": "MAX(0, s.left) END, ?3, ?3 FROM",
+    "old": "      SELECT ?1, ?2, CASE WHEN ?7 THEN s.left ELSE MAX(0, s.left) END, s.now, ?3 FROM (${BUCKET_STEP_SQL}) s WHERE true",
+    "new": "      SELECT ?1, ?2, CASE WHEN ?7 THEN s.left ELSE MAX(0, s.left) END, ?3, ?3 FROM (${BUCKET_STEP_SQL}) s WHERE true",
     "tests": [
       "test/server/primaryfold.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "PRIMARYFOLD-step-read-then-write",
     "file": "server-account/src/progress.js",
-    "old": "  if (!line || !Number.isFinite(amount) || amount <= 0) return null;\n  const hour = nowS - (nowS % 3600);\n",
-    "new": "  if (!line || !Number.isFinite(amount) || amount <= 0) return null;\n  { const _b = await bucketOf(db, playerId, stream); if (_b) { const st = stepBudget({ allowance: _b.allowance, played: playedSince(_b), gain: Math.trunc(amount), band: line, enforce: config.enforce }); await db.batch([db.prepare('INSERT INTO progress_play (player, stream, allowance, played_at, at) VALUES (?1, ?2, ?3, ?4, ?5) ON CONFLICT (player, stream) DO UPDATE SET allowance = excluded.allowance, played_at = excluded.played_at, at = excluded.at').bind(playerId, stream, st.allowance, _b.now, nowS)]); return { allowance: st.allowance }; } }\n  const hour = nowS - (nowS % 3600);\n",
+    "old": "  const hour = nowS - (nowS % 3600);",
+    "new": "  {\n    const _b = await bucketOf(db, playerId, stream);\n    if (_b) {\n      const st = stepBudget({\n        allowance: _b.allowance,\n        played: playedSince(_b),\n        gain: Math.trunc(amount),\n        band: line,\n        enforce: config.enforce,\n      });\n      await db.batch([\n        db\n          .prepare(\n            'INSERT INTO progress_play (player, stream, allowance, played_at, at) VALUES (?1, ?2, ?3, ?4, ?5) ON CONFLICT (player, stream) DO UPDATE SET allowance = excluded.allowance, played_at = excluded.played_at, at = excluded.at',\n          )\n          .bind(playerId, stream, st.allowance, _b.now, nowS),\n      ]);\n      return { allowance: st.allowance };\n    }\n  }\n  const hour = nowS - (nowS % 3600);",
     "tests": [
       "test/server/primaryfold.test.js"
     ],
@@ -310,8 +310,8 @@
   {
     "name": "PRIMARYFOLD-claim-rate-after-reads",
     "file": "server-account/src/npcRoll.js",
-    "old": "  if (await overRate({ db, nowS }, `roll-claim:${who.character}`, ROLL_CLAIMS_HOUR, 3600)) return { error: 'roll-rate' };\n  // PRIMARY-FOLD (bible/11-Multiplayer/Scale-Arc.md THE PLAN PAST 1,000): the head, the Roll's rows and the record's\n  // word of this claim's id in one trip, each asked as it was alone\n  const [headQ, rowsQ, takenQ] = await db.batch([\n    db.prepare('SELECT seq, kseq, last_rid FROM npc_roll_heads WHERE char_id = ? AND player = ?').bind(who.character, player.id),\n    rowsRead(db, who.character),\n    db.prepare('SELECT 1 FROM npc_rep_events WHERE char_id = ? AND rid = ? LIMIT 1').bind(who.character, rid),\n  ]);\n",
-    "new": "  // PRIMARY-FOLD (bible/11-Multiplayer/Scale-Arc.md THE PLAN PAST 1,000): the head, the Roll's rows and the record's\n  // word of this claim's id in one trip, each asked as it was alone\n  const [headQ, rowsQ, takenQ] = await db.batch([\n    db.prepare('SELECT seq, kseq, last_rid FROM npc_roll_heads WHERE char_id = ? AND player = ?').bind(who.character, player.id),\n    rowsRead(db, who.character),\n    db.prepare('SELECT 1 FROM npc_rep_events WHERE char_id = ? AND rid = ? LIMIT 1').bind(who.character, rid),\n  ]);\n  if (await overRate({ db, nowS }, `roll-claim:${who.character}`, ROLL_CLAIMS_HOUR, 3600)) return { error: 'roll-rate' };\n",
+    "old": "  if (await overRate({ db, nowS }, `roll-claim:${who.character}`, ROLL_CLAIMS_HOUR, 3600))\n    return { error: 'roll-rate' };\n  // PRIMARY-FOLD (bible/11-Multiplayer/Scale-Arc.md THE PLAN PAST 1,000): the head, the Roll's rows and the record's\n  // word of this claim's id in one trip, each asked as it was alone\n  const [headQ, rowsQ, takenQ] = await db.batch([\n    db\n      .prepare('SELECT seq, kseq, last_rid FROM npc_roll_heads WHERE char_id = ? AND player = ?')\n      .bind(who.character, player.id),\n    rowsRead(db, who.character),\n    db.prepare('SELECT 1 FROM npc_rep_events WHERE char_id = ? AND rid = ? LIMIT 1').bind(who.character, rid),\n  ]);",
+    "new": "  // PRIMARY-FOLD (bible/11-Multiplayer/Scale-Arc.md THE PLAN PAST 1,000): the head, the Roll's rows and the record's\n  // word of this claim's id in one trip, each asked as it was alone\n  const [headQ, rowsQ, takenQ] = await db.batch([\n    db\n      .prepare('SELECT seq, kseq, last_rid FROM npc_roll_heads WHERE char_id = ? AND player = ?')\n      .bind(who.character, player.id),\n    rowsRead(db, who.character),\n    db.prepare('SELECT 1 FROM npc_rep_events WHERE char_id = ? AND rid = ? LIMIT 1').bind(who.character, rid),\n  ]);\n  if (await overRate({ db, nowS }, `roll-claim:${who.character}`, ROLL_CLAIMS_HOUR, 3600))\n    return { error: 'roll-rate' };",
     "tests": [
       "test/server/primaryfold.test.js"
     ],
@@ -320,8 +320,8 @@
   {
     "name": "PRIMARYFOLD-claim-rate-after-repeat",
     "file": "server-account/src/npcRoll.js",
-    "old": "  if (await overRate({ db, nowS }, `roll-claim:${who.character}`, ROLL_CLAIMS_HOUR, 3600)) return { error: 'roll-rate' };\n  // PRIMARY-FOLD (bible/11-Multiplayer/Scale-Arc.md THE PLAN PAST 1,000): the head, the Roll's rows and the record's\n  // word of this claim's id in one trip, each asked as it was alone\n  const [headQ, rowsQ, takenQ] = await db.batch([\n    db.prepare('SELECT seq, kseq, last_rid FROM npc_roll_heads WHERE char_id = ? AND player = ?').bind(who.character, player.id),\n    rowsRead(db, who.character),\n    db.prepare('SELECT 1 FROM npc_rep_events WHERE char_id = ? AND rid = ? LIMIT 1').bind(who.character, rid),\n  ]);\n  const head = headQ?.results?.[0] ?? null;\n  if (!head) return { error: 'roll-unseeded' };\n  const seq = Number(head.seq), kseq = Number(head.kseq);\n  const rows = rowsFrom(rowsQ?.results ?? []);\n  // AUDIT CHAP S6: a repeat is the head's last id, or any id the record still holds - an older claim replayed after a\n  // newer one is the same claim\n  const taken = head.last_rid === rid || !!takenQ?.results?.[0];\n  if (taken) return { roll: viewOf(kseq, rows), repeat: true };\n",
-    "new": "  // PRIMARY-FOLD (bible/11-Multiplayer/Scale-Arc.md THE PLAN PAST 1,000): the head, the Roll's rows and the record's\n  // word of this claim's id in one trip, each asked as it was alone\n  const [headQ, rowsQ, takenQ] = await db.batch([\n    db.prepare('SELECT seq, kseq, last_rid FROM npc_roll_heads WHERE char_id = ? AND player = ?').bind(who.character, player.id),\n    rowsRead(db, who.character),\n    db.prepare('SELECT 1 FROM npc_rep_events WHERE char_id = ? AND rid = ? LIMIT 1').bind(who.character, rid),\n  ]);\n  const head = headQ?.results?.[0] ?? null;\n  if (!head) return { error: 'roll-unseeded' };\n  const seq = Number(head.seq), kseq = Number(head.kseq);\n  const rows = rowsFrom(rowsQ?.results ?? []);\n  // AUDIT CHAP S6: a repeat is the head's last id, or any id the record still holds - an older claim replayed after a\n  // newer one is the same claim\n  const taken = head.last_rid === rid || !!takenQ?.results?.[0];\n  if (taken) return { roll: viewOf(kseq, rows), repeat: true };\n  if (await overRate({ db, nowS }, `roll-claim:${who.character}`, ROLL_CLAIMS_HOUR, 3600)) return { error: 'roll-rate' };\n",
+    "old": "  if (await overRate({ db, nowS }, `roll-claim:${who.character}`, ROLL_CLAIMS_HOUR, 3600))\n    return { error: 'roll-rate' };\n  // PRIMARY-FOLD (bible/11-Multiplayer/Scale-Arc.md THE PLAN PAST 1,000): the head, the Roll's rows and the record's\n  // word of this claim's id in one trip, each asked as it was alone\n  const [headQ, rowsQ, takenQ] = await db.batch([\n    db\n      .prepare('SELECT seq, kseq, last_rid FROM npc_roll_heads WHERE char_id = ? AND player = ?')\n      .bind(who.character, player.id),\n    rowsRead(db, who.character),\n    db.prepare('SELECT 1 FROM npc_rep_events WHERE char_id = ? AND rid = ? LIMIT 1').bind(who.character, rid),\n  ]);\n  const head = headQ?.results?.[0] ?? null;\n  if (!head) return { error: 'roll-unseeded' };\n  const seq = Number(head.seq),\n    kseq = Number(head.kseq);\n  const rows = rowsFrom(rowsQ?.results ?? []);\n  // AUDIT CHAP S6: a repeat is the head's last id, or any id the record still holds - an older claim replayed after a\n  // newer one is the same claim\n  const taken = head.last_rid === rid || !!takenQ?.results?.[0];\n  if (taken) return { roll: viewOf(kseq, rows), repeat: true };",
+    "new": "  // PRIMARY-FOLD (bible/11-Multiplayer/Scale-Arc.md THE PLAN PAST 1,000): the head, the Roll's rows and the record's\n  // word of this claim's id in one trip, each asked as it was alone\n  const [headQ, rowsQ, takenQ] = await db.batch([\n    db\n      .prepare('SELECT seq, kseq, last_rid FROM npc_roll_heads WHERE char_id = ? AND player = ?')\n      .bind(who.character, player.id),\n    rowsRead(db, who.character),\n    db.prepare('SELECT 1 FROM npc_rep_events WHERE char_id = ? AND rid = ? LIMIT 1').bind(who.character, rid),\n  ]);\n  const head = headQ?.results?.[0] ?? null;\n  if (!head) return { error: 'roll-unseeded' };\n  const seq = Number(head.seq),\n    kseq = Number(head.kseq);\n  const rows = rowsFrom(rowsQ?.results ?? []);\n  // AUDIT CHAP S6: a repeat is the head's last id, or any id the record still holds - an older claim replayed after a\n  // newer one is the same claim\n  const taken = head.last_rid === rid || !!takenQ?.results?.[0];\n  if (taken) return { roll: viewOf(kseq, rows), repeat: true };\n  if (await overRate({ db, nowS }, `roll-claim:${who.character}`, ROLL_CLAIMS_HOUR, 3600))\n    return { error: 'roll-rate' };",
     "tests": [
       "test/server/primaryfold.test.js"
     ],
@@ -360,8 +360,8 @@
   {
     "name": "PRIMARYFOLD-hour-over-not-summed",
     "file": "server-account/src/progress.js",
-    "old": "over = over + excluded.over, claims",
-    "new": "over = excluded.over, claims",
+    "old": "        over = over + excluded.over, claims = claims + 1`,",
+    "new": "        over = excluded.over, claims = claims + 1`,",
     "tests": [
       "test/server/primaryfold.test.js"
     ],
@@ -370,8 +370,8 @@
   {
     "name": "PRIMARYFOLD-hour-claims-not-counted",
     "file": "server-account/src/progress.js",
-    "old": "over = over + excluded.over, claims = claims + 1`",
-    "new": "over = over + excluded.over, claims = 1`",
+    "old": "        over = over + excluded.over, claims = claims + 1`,",
+    "new": "        over = over + excluded.over, claims = 1`,",
     "tests": [
       "test/server/primaryfold.test.js"
     ],
@@ -380,8 +380,8 @@
   {
     "name": "PRIMARYFOLD-bucket-at-unmoved",
     "file": "server-account/src/progress.js",
-    "old": "played_at = excluded.played_at, at = excluded.at",
-    "new": "played_at = excluded.played_at, at = progress_play.at",
+    "old": "      ON CONFLICT (player, stream) DO UPDATE SET allowance = excluded.allowance, played_at = excluded.played_at, at = excluded.at",
+    "new": "      ON CONFLICT (player, stream) DO UPDATE SET allowance = excluded.allowance, played_at = excluded.played_at, at = progress_play.at",
     "tests": [
       "test/server/primaryfold.test.js"
     ],
@@ -392,8 +392,8 @@
   {
     "name": "PRIMARYFOLD-claim-untruncated",
     "file": "server-account/src/progress.js",
-    "old": "line.rate, Math.trunc(amount), config.enforce",
-    "new": "line.rate, amount, config.enforce",
+    "old": "  const args = [playerId, stream, nowS, line.cap, line.rate, Math.trunc(amount), config.enforce ? 1 : 0, hour];",
+    "new": "  const args = [playerId, stream, nowS, line.cap, line.rate, amount, config.enforce ? 1 : 0, hour];",
     "tests": [
       "test/server/primaryfold.test.js"
     ],
@@ -404,8 +404,8 @@
   {
     "name": "PRIMARYFOLD-returning-the-start",
     "file": "server-account/src/progress.js",
-    "old": "      RETURNING allowance`)",
-    "new": "      RETURNING (SELECT allowance FROM progress_play WHERE player = ?1 AND stream = ?2) AS allowance`)",
+    "old": "      RETURNING allowance`,",
+    "new": "      RETURNING (SELECT allowance FROM progress_play WHERE player = ?1 AND stream = ?2) AS allowance`,",
     "tests": [
       "test/server/primaryfold.test.js"
     ],

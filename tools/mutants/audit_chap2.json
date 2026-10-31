@@ -399,8 +399,8 @@
   {
     "name": "T-SVC-ROWS-RANK",
     "file": "server-account/src/npcRoll.js",
-    "old": "rank: x.rank == null ? null : Number(x.rank)",
-    "new": "rank: Number(x.rank)",
+    "old": "      rank: x.rank == null ? null : Number(x.rank),",
+    "new": "      rank: Number(x.rank),",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",
@@ -411,8 +411,8 @@
   {
     "name": "T-SVC-CLAIM-EMPTY",
     "file": "server-account/src/npcRoll.js",
-    "old": "!(empty || rollDeltasOk(deltas))",
-    "new": "!rollDeltasOk(deltas)",
+    "old": "  if (!rid || !(empty || rollDeltasOk(deltas)) || !(members === null || rollMembersOk(members)))\n    return { error: 'roll-claim' };",
+    "new": "  if (!rid || !rollDeltasOk(deltas) || !(members === null || rollMembersOk(members))) return { error: 'roll-claim' };",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",
@@ -423,8 +423,8 @@
   {
     "name": "T-SVC-LINES-ALL",
     "file": "server-account/src/npcRoll.js",
-    "old": "const lines = changed.filter(([, , asked]) => asked);",
-    "new": "const lines = changed;",
+    "old": "  const lines = changed.filter(([, , asked]) => asked);",
+    "new": "  const lines = changed;",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",
@@ -1051,8 +1051,8 @@
   {
     "name": "T-SVC-VIEW-OWED",
     "file": "server-account/src/npcRoll.js",
-    "old": "if (row.owed > 0) owed[f] = row.owed;",
-    "new": "owed[f] = row.owed;",
+    "old": "    if (row.owed > 0) owed[f] = row.owed;",
+    "new": "    owed[f] = row.owed;",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",
@@ -1063,8 +1063,8 @@
   {
     "name": "T-SVC-DRAIN-OWEDCHG",
     "file": "server-account/src/npcRoll.js",
-    "old": "if (d.credited !== 0 || d.owed !== row.owed) paid.push(",
-    "new": "if (d.credited !== 0) paid.push(",
+    "old": "      if (d.credited !== 0 || d.owed !== row.owed)",
+    "new": "      if (d.credited !== 0)",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",
@@ -1088,8 +1088,8 @@
   {
     "name": "T-SVC-READ-RACE",
     "file": "server-account/src/npcRoll.js",
-    "old": "    if (!moved?.meta?.changes) {\n      const why = await heldUnder(db, player.id, who.character, who.lease);\n      return 'error' in why ? why : { error: 'roll-busy' };\n    }\n    for (const [f, r] of paid)",
-    "new": "    for (const [f, r] of paid)",
+    "old": "    if (!moved?.meta?.changes) {\n      const why = await heldUnder(db, player.id, who.character, who.lease);\n      return 'error' in why ? why : { error: 'roll-busy' };\n    }\n    for (const [f, r] of paid) rows.set(f, r);",
+    "new": "    for (const [f, r] of paid) rows.set(f, r);",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",
@@ -1100,8 +1100,8 @@
   {
     "name": "T-SVC-SEED-NULLMEMBERS",
     "file": "server-account/src/npcRoll.js",
-    "old": "!(seed?.members === null || rollMembersOk(seed?.members))",
-    "new": "!rollMembersOk(seed?.members)",
+    "old": "  if (!rollSeedOk(seed?.factions) || !(seed?.members === null || rollMembersOk(seed?.members)))\n    return { error: 'roll-seed' };",
+    "new": "  if (!rollSeedOk(seed?.factions) || !rollMembersOk(seed?.members)) return { error: 'roll-seed' };",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",
@@ -1112,8 +1112,8 @@
   {
     "name": "T-SVC-SEED-AFTER",
     "file": "server-account/src/npcRoll.js",
-    "old": "  if (!after) {\n    const why = await heldUnder(db, player.id, who.character, who.lease);\n    return 'error' in why ? why : { error: 'roll-busy' };\n  }\n",
-    "new": "",
+    "old": "  if (!after) {\n    const why = await heldUnder(db, player.id, who.character, who.lease);\n    return 'error' in why ? why : { error: 'roll-busy' };\n  }\n  // AUDIT CHAP S8: `seeded` only for the seed that made the Roll - a seed that lost its race to another is answered with",
+    "new": "  // AUDIT CHAP S8: `seeded` only for the seed that made the Roll - a seed that lost its race to another is answered with",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",
@@ -1124,8 +1124,8 @@
   {
     "name": "T-SVC-CLAIM-SEQ",
     "file": "server-account/src/npcRoll.js",
-    "old": "return { roll: viewOf(kseq + (lines.length > 0 ? 1 : 0), rows), credited, paid: drained };",
-    "new": "return { roll: viewOf(kseq, rows), credited, paid: drained };",
+    "old": "  return { roll: viewOf(kseq + (lines.length > 0 ? 1 : 0), rows), credited, paid: drained };",
+    "new": "  return { roll: viewOf(kseq, rows), credited, paid: drained };",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",
@@ -1137,8 +1137,8 @@
   {
     "name": "T-SVC-HELD-REALMID",
     "file": "server-account/src/npcRoll.js",
-    "old": "!REALM_ID_RE.test(character) || typeof lease",
-    "new": "typeof lease",
+    "old": "  if (\n    typeof character !== 'string' ||\n    !REALM_ID_RE.test(character) ||\n    typeof lease !== 'string' ||\n    !LEASE_RE.test(lease)\n  )\n    return { error: 'body' };",
+    "new": "  if (typeof character !== 'string' || typeof lease !== 'string' || !LEASE_RE.test(lease)) return { error: 'body' };",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",
@@ -1524,8 +1524,8 @@
   {
     "name": "AUDIT-CHAP2-C1-KSEQ-EVERY",
     "file": "server-account/src/npcRoll.js",
-    "old": ".bind(claimed ? 1 : 0, tag, rid, nowS, who.character, seq, who.character, who.player, who.lease);",
-    "new": ".bind(1, tag, rid, nowS, who.character, seq, who.character, who.player, who.lease);",
+    "old": "    .bind(claimed ? 1 : 0, tag, rid, nowS, who.character, seq, who.character, who.player, who.lease);",
+    "new": "    .bind(1, tag, rid, nowS, who.character, seq, who.character, who.player, who.lease);",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",
@@ -1548,7 +1548,7 @@
   {
     "name": "AUDIT-CHAP2-C1-DRAIN-SEQ",
     "file": "server-account/src/npcRoll.js",
-    "old": "    return { roll: viewOf(kseq, rows), from: kseq, paid: drained };   // AUDIT CHAP2 C1: owed paid is the service's own credit",
+    "old": "    return { roll: viewOf(kseq, rows), from: kseq, paid: drained }; // AUDIT CHAP2 C1: owed paid is the service's own credit",
     "new": "    return { roll: viewOf(seq + 1, rows), from: seq, paid: drained };",
     "tests": [
       "test/net/audit_chap1.test.js",
@@ -1695,8 +1695,8 @@
   {
     "name": "AUDIT-CHAP2-S7-OWED-JOIN",
     "file": "server-account/src/npcRoll.js",
-    "old": "line.rep + line.owed), f)",
-    "new": "line.rep), f)",
+    "old": "      const member =\n        ranks.has(f) && (row.member || joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f));",
+    "new": "      const member = ranks.has(f) && (row.member || joinRecordable(Math.max(row.rep + row.owed, line.rep), f));",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",
@@ -1842,8 +1842,8 @@
   {
     "name": "AUDIT-CHAP2-E2-RATE",
     "file": "server-account/src/npcRoll.js",
-    "old": "  if (await overRate({ db, nowS }, `roll-claim:${who.character}`, ROLL_CLAIMS_HOUR, 3600)) return { error: 'roll-rate' };\n",
-    "new": "",
+    "old": "  if (await overRate({ db, nowS }, `roll-claim:${who.character}`, ROLL_CLAIMS_HOUR, 3600))\n    return { error: 'roll-rate' };\n  // PRIMARY-FOLD (bible/11-Multiplayer/Scale-Arc.md THE PLAN PAST 1,000): the head, the Roll's rows and the record's",
+    "new": "  // PRIMARY-FOLD (bible/11-Multiplayer/Scale-Arc.md THE PLAN PAST 1,000): the head, the Roll's rows and the record's",
     "tests": [
       "test/net/audit_chap1.test.js",
       "test/net/audit_chap2.test.js",

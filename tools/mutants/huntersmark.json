@@ -193,8 +193,8 @@
   {
     "name": "HUNTERS-MARK-spend-unrecorded",
     "file": "server-account/src/progress.js",
-    "old": "case '/v1/hunt/clear': if (a.recorded === true) add('bounty', 1); break;",
-    "new": "case '/v1/hunt/clear': add('bounty', 1); break;",
+    "old": "      if (a.recorded === true) add('bounty', 1);",
+    "new": "      add('bounty', 1);",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "HUNTERS-MARK-seat-unasked",
     "file": "server-account/src/progress.js",
-    "old": "'/v1/hunt/clear': Object.freeze(['bounty', true]),",
-    "new": "'/v1/hunt/clear': Object.freeze(['bounty', false]),",
+    "old": "  '/v1/hunt/clear': Object.freeze(['bounty', true]), // HUNTERS-MARK: a bounty board's clear (hunts.js)",
+    "new": "  '/v1/hunt/clear': Object.freeze(['bounty', false]), // HUNTERS-MARK: a bounty board's clear (hunts.js)",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]

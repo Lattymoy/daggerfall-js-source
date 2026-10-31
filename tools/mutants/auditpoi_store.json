@@ -20,8 +20,8 @@
   {
     "name": "AUDITPOI-S1-the-decision-not-held-to-the-document-read",
     "file": "server-account/src/poi.js",
-    "old": "AND state = 'submitted' AND doc_sha IS ?9`).bind(",
-    "new": "AND state = 'submitted' AND (doc_sha IS ?9 OR 1)`).bind(",
+    "old": "      WHERE poi_id = ?1 AND rev = ?2 AND state = 'submitted' AND doc_sha IS ?9`,",
+    "new": "      WHERE poi_id = ?1 AND rev = ?2 AND state = 'submitted' AND (doc_sha IS ?9 OR 1)`,",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDITPOI-S1-one-mark-for-every-decision",
     "file": "server-account/src/poi.js",
-    "old": "  const mark = decisionMark(ctx);\n  const decided = 'EXISTS",
-    "new": "  const mark = 'every decision';\n  const decided = 'EXISTS",
+    "old": "  const mark = decisionMark(ctx);",
+    "new": "  const mark = 'every decision';",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDITPOI-S1-the-queue-unnamed",
     "file": "server-account/src/poi.js",
-    "old": "docSha: r.doc_sha ?? null,",
-    "new": "docSha: null,",
+    "old": "      docSha: r.doc_sha ?? null,",
+    "new": "      docSha: null,",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDITPOI-S1-a-submission-not-held-to-the-document-checked",
     "file": "server-account/src/poi.js",
-    "old": "AND state = 'draft' AND doc_sha = ?\").bind(",
-    "new": "AND state = 'draft' AND (doc_sha = ? OR 1)\").bind(",
+    "old": "      \"UPDATE poi_revs SET state = 'submitted', submitted_at = ? WHERE poi_id = ? AND rev = ? AND state = 'draft' AND doc_sha = ?\",",
+    "new": "      \"UPDATE poi_revs SET state = 'submitted', submitted_at = ? WHERE poi_id = ? AND rev = ? AND state = 'draft' AND (doc_sha = ? OR 1)\",",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDITPOI-S3-the-list-reading-the-documents",
     "file": "server-account/src/poi.js",
-    "old": "d.live_by, n.name, n.px, n.py,",
-    "new": "d.live_by, json_extract(n.doc, '$.name') AS name, json_extract(n.doc, '$.place.px') AS px, json_extract(n.doc, '$.place.py') AS py,",
+    "old": "          `SELECT d.id, d.created_by, d.created_at, d.live_rev, d.live_at, d.live_by, n.name, n.px, n.py,",
+    "new": "          `SELECT d.id, d.created_by, d.created_at, d.live_rev, d.live_at, d.live_by, json_extract(n.doc, '$.name') AS name, json_extract(n.doc, '$.place.px') AS px, json_extract(n.doc, '$.place.py') AS py,",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AUDITPOI-S3-the-name-not-written",
     "file": "server-account/src/poi.js",
-    "old": "SELECT ?1, n.next, 'doc', ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 'draft'",
-    "new": "SELECT ?1, n.next, 'doc', ?2, ?3, NULL, ?5, ?6, ?7, ?8, ?9, ?10, 'draft'",
+    "old": "      SELECT ?1, n.next, 'doc', ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 'draft' FROM (SELECT COALESCE(MAX(rev), 0) + 1 AS next FROM poi_revs WHERE poi_id = ?1) n",
+    "new": "      SELECT ?1, n.next, 'doc', ?2, ?3, NULL, ?5, ?6, ?7, ?8, ?9, ?10, 'draft' FROM (SELECT COALESCE(MAX(rev), 0) + 1 AS next FROM poi_revs WHERE poi_id = ?1) n",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "AUDITPOI-S4-live-never-cleared",
     "file": "server-account/src/poi.js",
-    "old": "live = EXISTS (SELECT 1 FROM poi_rev_assets ra JOIN poi_docs d ON d.id = ra.poi_id AND d.live_rev = ra.rev WHERE ra.sha = poi_assets.sha)",
-    "new": "live = MAX(live, EXISTS (SELECT 1 FROM poi_rev_assets ra JOIN poi_docs d ON d.id = ra.poi_id AND d.live_rev = ra.rev WHERE ra.sha = poi_assets.sha))",
+    "old": ") => `UPDATE poi_assets SET live = EXISTS (SELECT 1 FROM poi_rev_assets ra JOIN poi_docs d ON d.id = ra.poi_id AND d.live_rev = ra.rev WHERE ra.sha = poi_assets.sha)",
+    "new": ") => `UPDATE poi_assets SET live = MAX(live, EXISTS (SELECT 1 FROM poi_rev_assets ra JOIN poi_docs d ON d.id = ra.poi_id AND d.live_rev = ra.rev WHERE ra.sha = poi_assets.sha))",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDITPOI-S4-the-rollback-not-recomputing",
     "file": "server-account/src/poi.js",
-    "old": "    ctx.db.prepare(liveRecomputed('1')).bind(id),\n",
-    "new": "",
+    "old": "    ctx.db.prepare(liveRecomputed('1')).bind(id),\n    ctx.db.prepare(\"UPDATE poi_feed SET v = v + 1, at = ? WHERE k = 'feed'\").bind(now),",
+    "new": "    ctx.db.prepare(\"UPDATE poi_feed SET v = v + 1, at = ? WHERE k = 'feed'\").bind(now),",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "AUDITPOI-S7-the-save-writing-over-a-submission",
     "file": "server-account/src/poi.js",
-    "old": "WHERE poi_id = ?1 AND author = ?8 AND state = 'draft' AND kind = 'doc' RETURNING rev",
-    "new": "WHERE poi_id = ?1 AND author = ?8 AND state IN ('draft', 'submitted') AND kind = 'doc' RETURNING rev",
+    "old": "      WHERE poi_id = ?1 AND author = ?8 AND state = 'draft' AND kind = 'doc' RETURNING rev`,",
+    "new": "      WHERE poi_id = ?1 AND author = ?8 AND state IN ('draft', 'submitted') AND kind = 'doc' RETURNING rev`,",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "AUDITPOI-S7-the-withdrawal-guessing",
     "file": "server-account/src/poi.js",
-    "old": "  if (!r) return stateNow(ctx.db, id, rev, 'poi-state');\n  return { id, rev, state: r.state };",
-    "new": "  if (!r) return { id, rev, state: 'draft' };\n  return { id, rev, state: r.state };",
+    "old": "  if (!r) return stateNow(ctx.db, id, rev, 'poi-state');",
+    "new": "  if (!r) return { id, rev, state: 'draft' };",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AUDITPOI-S9-the-bound-unreserved",
     "file": "server-account/src/poi.js",
-    "old": "DO UPDATE SET bytes = bytes + excluded.bytes WHERE bytes + excluded.bytes <= ?4",
-    "new": "DO UPDATE SET bytes = bytes + excluded.bytes WHERE ?4 > 0",
+    "old": "    ON CONFLICT (by, day) DO UPDATE SET bytes = bytes + excluded.bytes WHERE bytes + excluded.bytes <= ?4`,",
+    "new": "    ON CONFLICT (by, day) DO UPDATE SET bytes = bytes + excluded.bytes WHERE ?4 > 0`,",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "AUDITPOI-S9-a-failed-store-keeping-its-bytes",
     "file": "server-account/src/poi.js",
-    "old": "  } catch (e) {\n    await giveBack();\n    throw e;",
-    "new": "  } catch (e) {\n    throw e;",
+    "old": "    await giveBack();\n    throw e;",
+    "new": "    throw e;",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "AUDITPOI-S10-open-revisions-unbounded",
     "file": "server-account/src/poi.js",
-    "old": "state IN ('draft', 'submitted')) < ${POI_OPEN_REVS}`;",
-    "new": "state IN ('draft', 'submitted')) < ${POI_OPEN_REVS * 2}`;",
+    "old": "  const room = `(SELECT COUNT(*) FROM poi_revs WHERE author = ?8 AND state IN ('draft', 'submitted')) < ${POI_OPEN_REVS}`;",
+    "new": "  const room = `(SELECT COUNT(*) FROM poi_revs WHERE author = ?8 AND state IN ('draft', 'submitted')) < ${POI_OPEN_REVS * 2}`;",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "AUDITPOI-S10-the-shelf-ever-unbounded",
     "file": "server-account/src/poi.js",
-    "old": "(SELECT COUNT(*) FROM poi_shelf WHERE by = ?8) < ${POI_SHELF_EVER}",
-    "new": "(SELECT COUNT(*) FROM poi_shelf WHERE by = ?8) < ${POI_SHELF_EVER * 2}",
+    "old": "      WHERE (SELECT COUNT(*) FROM poi_shelf WHERE by = ?8 AND gone_at IS NULL) < ${POI_SHELF_MAX} AND (SELECT COUNT(*) FROM poi_shelf WHERE by = ?8) < ${POI_SHELF_EVER}",
+    "new": "      WHERE (SELECT COUNT(*) FROM poi_shelf WHERE by = ?8 AND gone_at IS NULL) < ${POI_SHELF_MAX} AND (SELECT COUNT(*) FROM poi_shelf WHERE by = ?8) < ${POI_SHELF_EVER * 2}",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "AUDITPOI-S10-the-list-every-revision",
     "file": "server-account/src/poi.js",
-    "old": "FROM poi_revs WHERE poi_id IN (SELECT id FROM poi_docs ORDER BY created_at DESC LIMIT ${POI_LIST_MAX})) WHERE k <= ${POI_LIST_REVS}",
-    "new": "FROM poi_revs) WHERE k <= ${POI_LIST_REVS}",
+    "old": "    FROM poi_revs WHERE poi_id IN (SELECT id FROM poi_docs ORDER BY created_at DESC LIMIT ${POI_LIST_MAX})) WHERE k <= ${POI_LIST_REVS} ORDER BY poi_id, rev`,",
+    "new": "    FROM poi_revs) WHERE k <= ${POI_LIST_REVS} ORDER BY poi_id, rev`,",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "AUDITPOI-S10-the-list-every-revision-of-each",
     "file": "server-account/src/poi.js",
-    "old": "WHERE k <= ${POI_LIST_REVS} ORDER BY poi_id, rev",
-    "new": "WHERE k <= ${POI_LIST_REVS} + 1000 ORDER BY poi_id, rev",
+    "old": "    FROM poi_revs WHERE poi_id IN (SELECT id FROM poi_docs ORDER BY created_at DESC LIMIT ${POI_LIST_MAX})) WHERE k <= ${POI_LIST_REVS} ORDER BY poi_id, rev`,",
+    "new": "    FROM poi_revs WHERE poi_id IN (SELECT id FROM poi_docs ORDER BY created_at DESC LIMIT ${POI_LIST_MAX})) WHERE k <= ${POI_LIST_REVS} + 1000 ORDER BY poi_id, rev`,",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "AUDITPOI-S11-a-weak-tag-a-stranger",
     "file": "server-account/src/poi.js",
-    "old": "(?:W\\/)?\"poi-(\\d{1,15})\"",
-    "new": "\"poi-(\\d{1,15})\"",
+    "old": "  for (const m of String(header ?? '').matchAll(/(?:^|,)\\s*(?:W\\/)?\"poi-(\\d{1,15})\"\\s*(?=,|$)/g))",
+    "new": "  for (const m of String(header ?? '').matchAll(/(?:^|,)\\s*\"poi-(\\d{1,15})\"\\s*(?=,|$)/g))",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "AUDITPOI-S14-the-rollback-base-unrecorded",
     "file": "server-account/src/poi.js",
-    "old": "SELECT ?1, n.next, 'rollback', NULL, ?2, ?3",
-    "new": "SELECT ?1, n.next, 'rollback', NULL, NULL, ?3",
+    "old": "      SELECT ?1, n.next, 'rollback', NULL, ?2, ?3, ?4, ?5, 'approved', ?3, ?4, ?5 FROM (SELECT COALESCE(MAX(rev), 0) + 1 AS next FROM poi_revs WHERE poi_id = ?1) n`,",
+    "new": "      SELECT ?1, n.next, 'rollback', NULL, NULL, ?3, ?4, ?5, 'approved', ?3, ?4, ?5 FROM (SELECT COALESCE(MAX(rev), 0) + 1 AS next FROM poi_revs WHERE poi_id = ?1) n`,",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "AUDITPOI-S14-a-withdrawn-retirement-a-rejection",
     "file": "server-account/src/poi.js",
-    "old": "THEN 'draft' ELSE 'withdrawn' END",
-    "new": "THEN 'draft' ELSE 'rejected' END",
+    "old": "    (SELECT 1 FROM poi_revs o WHERE o.poi_id = ?1 AND o.author = ?3 AND o.state = 'draft' AND o.kind = 'doc') THEN 'draft' ELSE 'withdrawn' END",
+    "new": "    (SELECT 1 FROM poi_revs o WHERE o.poi_id = ?1 AND o.author = ?3 AND o.state = 'draft' AND o.kind = 'doc') THEN 'draft' ELSE 'rejected' END",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "AUDITPOI-U13-taken-off-not-found",
     "file": "server-account/src/poi.js",
-    "old": "  if (r.gone_at != null) return { error: 'poi-gone' };   // AUDIT POI U13: taken off the shelf",
-    "new": "  if (r.gone_at != null) return { error: 'not-found' };   // AUDIT POI U13: taken off the shelf",
+    "old": "  if (r.gone_at != null) return { error: 'poi-gone' }; // AUDIT POI U13: taken off the shelf - said so, not \"the service does not know that request\"",
+    "new": "  if (r.gone_at != null) return { error: 'not-found' }; // AUDIT POI U13: taken off the shelf - said so, not \"the service does not know that request\"",
     "tests": [
       "test/poi/auditpoi_store.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "AUDITPOI-U13-a-full-shelf-a-full-day",
     "file": "server-account/src/poi.js",
-    "old": "? { error: 'poi-shelf-full', max: POI_SHELF_MAX }",
-    "new": "? { error: 'poi-quota', max: POI_SHELF_MAX }",
+    "old": "        ? { error: 'poi-shelf-full', max: POI_SHELF_MAX }",
+    "new": "        ? { error: 'poi-quota', max: POI_SHELF_MAX }",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]

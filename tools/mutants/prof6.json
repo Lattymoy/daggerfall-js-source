@@ -508,8 +508,8 @@
   {
     "name": "PROF6-svc-sweep-keeps-nothing",
     "file": "server-account/src/marks.js",
-    "old": "      AND NOT ${guildKeepsSql('?1')}   -- PROF6: a guild that keeps its Stores or a writ does not go, so its Marks stay\n",
-    "new": "",
+    "old": "      AND NOT ${guildKeepsSql('?1')}   -- PROF6: a guild that keeps its Stores or a writ does not go, so its Marks stay\n      AND (?8 = 0 OR (SELECT COUNT(*) FROM guild_members WHERE guild_id = ?1) = 1)`,",
+    "new": "      AND (?8 = 0 OR (SELECT COUNT(*) FROM guild_members WHERE guild_id = ?1) = 1)`,",
     "tests": [
       "test/net/prof6_service.test.js"
     ]
@@ -517,8 +517,8 @@
   {
     "name": "PROF6-svc-report-orders-alone",
     "file": "server-account/src/marks.js",
-    "old": "    - COALESCE(SUM(CASE WHEN src_kind = 'escrow' THEN amount ELSE 0 END), 0) AS s FROM marks_ledger WHERE dst_kind = 'escrow' OR src_kind = 'escrow'`).first();",
-    "new": "    - COALESCE(SUM(CASE WHEN src_kind = 'escrow' THEN amount ELSE 0 END), 0) AS s FROM marks_ledger WHERE kind LIKE 'order-%'`).first();",
+    "old": "    - COALESCE(SUM(CASE WHEN src_kind = 'escrow' THEN amount ELSE 0 END), 0) AS s FROM marks_ledger WHERE dst_kind = 'escrow' OR src_kind = 'escrow'`,",
+    "new": "    - COALESCE(SUM(CASE WHEN src_kind = 'escrow' THEN amount ELSE 0 END), 0) AS s FROM marks_ledger WHERE kind LIKE 'order-%'`,",
     "tests": [
       "test/net/prof6_service.test.js"
     ]

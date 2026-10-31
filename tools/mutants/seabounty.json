@@ -254,8 +254,8 @@
   {
     "name": "SEA-BOUNTY-kill-anywhere",
     "file": "server-account/src/seaBounty.js",
-    "old": "if (!k || !c || typeof kc !== 'string' || !REALM_CHARACTER_RE.test(kc) || !seaRoomOf(m)) return [];",
-    "new": "if (!k || !c || typeof kc !== 'string' || !REALM_CHARACTER_RE.test(kc)) return [];",
+    "old": "  if (!k || !c || typeof kc !== 'string' || !REALM_CHARACTER_RE.test(kc) || !seaRoomOf(m)) return [];",
+    "new": "  if (!k || !c || typeof kc !== 'string' || !REALM_CHARACTER_RE.test(kc)) return [];",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "SEA-BOUNTY-kill-unnamed",
     "file": "server-account/src/seaBounty.js",
-    "old": "if (!k || !c || typeof kc !== 'string' || !REALM_CHARACTER_RE.test(kc) || !seaRoomOf(m)) return [];",
-    "new": "if (!k || !c || !seaRoomOf(m)) return [];",
+    "old": "  if (!k || !c || typeof kc !== 'string' || !REALM_CHARACTER_RE.test(kc) || !seaRoomOf(m)) return [];",
+    "new": "  if (!k || !c || !seaRoomOf(m)) return [];",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "SEA-BOUNTY-claim-again",
     "file": "server-account/src/seaBounty.js",
-    "old": " AND NOT EXISTS (SELECT 1 FROM sea_kills WHERE r = ?1)').bind(r, c),",
-    "new": "').bind(r, c),",
+    "old": "    db\n      .prepare(\n        'UPDATE sea_bounties SET claimed_r = ?1 WHERE target_char = ?2 AND claimed_r IS NULL AND NOT EXISTS (SELECT 1 FROM sea_kills WHERE r = ?1)',\n      )\n      .bind(r, c),",
+    "new": "    db.prepare('UPDATE sea_bounties SET claimed_r = ?1 WHERE target_char = ?2 AND claimed_r IS NULL').bind(r, c),",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "SEA-BOUNTY-kill-twice",
     "file": "server-account/src/seaBounty.js",
-    "old": "db.prepare('INSERT OR IGNORE INTO sea_kills",
-    "new": "db.prepare('INSERT INTO sea_kills",
+    "old": "        'INSERT OR IGNORE INTO sea_kills (r, killer, killer_char, victim, victim_char, at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',",
+    "new": "        'INSERT INTO sea_kills (r, killer, killer_char, victim, victim_char, at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)',",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "SEA-BOUNTY-owed-twice",
     "file": "server-account/src/seaBounty.js",
-    "old": "db.prepare('INSERT OR IGNORE INTO sea_bounty_owed",
-    "new": "db.prepare('INSERT INTO sea_bounty_owed",
+    "old": "        'INSERT OR IGNORE INTO sea_bounty_owed (r, killer, killer_char, target_char, gold, at) SELECT ?1, ?2, ?3, ?4, SUM(gold), ?5 FROM sea_bounties WHERE claimed_r = ?1 HAVING SUM(gold) > 0',",
+    "new": "        'INSERT INTO sea_bounty_owed (r, killer, killer_char, target_char, gold, at) SELECT ?1, ?2, ?3, ?4, SUM(gold), ?5 FROM sea_bounties WHERE claimed_r = ?1 HAVING SUM(gold) > 0',",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "SEA-BOUNTY-owed-every-claim",
     "file": "server-account/src/seaBounty.js",
-    "old": "FROM sea_bounties WHERE claimed_r = ?1 HAVING SUM(gold) > 0')",
-    "new": "FROM sea_bounties WHERE claimed_r IS NOT NULL HAVING SUM(gold) > 0')",
+    "old": "        'INSERT OR IGNORE INTO sea_bounty_owed (r, killer, killer_char, target_char, gold, at) SELECT ?1, ?2, ?3, ?4, SUM(gold), ?5 FROM sea_bounties WHERE claimed_r = ?1 HAVING SUM(gold) > 0',",
+    "new": "        'INSERT OR IGNORE INTO sea_bounty_owed (r, killer, killer_char, target_char, gold, at) SELECT ?1, ?2, ?3, ?4, SUM(gold), ?5 FROM sea_bounties WHERE claimed_r IS NOT NULL HAVING SUM(gold) > 0',",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "SEA-BOUNTY-owed-nothing",
     "file": "server-account/src/seaBounty.js",
-    "old": "FROM sea_bounties WHERE claimed_r = ?1 HAVING SUM(gold) > 0')",
-    "new": "FROM sea_bounties WHERE claimed_r = ?1 HAVING SUM(gold) > 0 AND 0')",
+    "old": "        'INSERT OR IGNORE INTO sea_bounty_owed (r, killer, killer_char, target_char, gold, at) SELECT ?1, ?2, ?3, ?4, SUM(gold), ?5 FROM sea_bounties WHERE claimed_r = ?1 HAVING SUM(gold) > 0',",
+    "new": "        'INSERT OR IGNORE INTO sea_bounty_owed (r, killer, killer_char, target_char, gold, at) SELECT ?1, ?2, ?3, ?4, SUM(gold), ?5 FROM sea_bounties WHERE claimed_r = ?1 HAVING SUM(gold) > 0 AND 0',",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "SEA-BOUNTY-claim-none",
     "file": "server-account/src/seaBounty.js",
-    "old": "UPDATE sea_bounties SET claimed_r = ?1 WHERE target_char = ?2 AND claimed_r IS NULL",
-    "new": "UPDATE sea_bounties SET claimed_r = ?1 WHERE target_char = ?2 AND claimed_r IS NULL AND 0",
+    "old": "        'UPDATE sea_bounties SET claimed_r = ?1 WHERE target_char = ?2 AND claimed_r IS NULL AND NOT EXISTS (SELECT 1 FROM sea_kills WHERE r = ?1)',",
+    "new": "        'UPDATE sea_bounties SET claimed_r = ?1 WHERE target_char = ?2 AND claimed_r IS NULL AND 0 AND NOT EXISTS (SELECT 1 FROM sea_kills WHERE r = ?1)',",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "SEA-BOUNTY-claim-every-head",
     "file": "server-account/src/seaBounty.js",
-    "old": "UPDATE sea_bounties SET claimed_r = ?1 WHERE target_char = ?2 AND claimed_r IS NULL",
-    "new": "UPDATE sea_bounties SET claimed_r = ?1 WHERE ?2 = ?2 AND claimed_r IS NULL",
+    "old": "        'UPDATE sea_bounties SET claimed_r = ?1 WHERE target_char = ?2 AND claimed_r IS NULL AND NOT EXISTS (SELECT 1 FROM sea_kills WHERE r = ?1)',",
+    "new": "        'UPDATE sea_bounties SET claimed_r = ?1 WHERE ?2 = ?2 AND claimed_r IS NULL AND NOT EXISTS (SELECT 1 FROM sea_kills WHERE r = ?1)',",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "SEA-BOUNTY-board-smallest-first",
     "file": "server-account/src/seaBounty.js",
-    "old": "    ORDER BY bounty DESC, kills DESC, rc.name LIMIT ?2",
-    "new": "    ORDER BY bounty ASC, kills DESC, rc.name LIMIT ?2",
+    "old": "    ORDER BY bounty DESC, kills DESC, rc.name LIMIT ?2`,",
+    "new": "    ORDER BY bounty ASC, kills DESC, rc.name LIMIT ?2`,",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "SEA-BOUNTY-board-fewest-kills",
     "file": "server-account/src/seaBounty.js",
-    "old": "    ORDER BY bounty DESC, kills DESC, rc.name LIMIT ?2",
-    "new": "    ORDER BY bounty DESC, kills ASC, rc.name LIMIT ?2",
+    "old": "    ORDER BY bounty DESC, kills DESC, rc.name LIMIT ?2`,",
+    "new": "    ORDER BY bounty DESC, kills ASC, rc.name LIMIT ?2`,",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "SEA-BOUNTY-board-no-standing-heads",
     "file": "server-account/src/seaBounty.js",
-    "old": "SELECT killer_char AS ch FROM sea_kills WHERE at >= ?1 UNION SELECT target_char FROM sea_bounties WHERE claimed_r IS NULL",
-    "new": "SELECT killer_char AS ch FROM sea_kills WHERE at >= ?1",
+    "old": "      SELECT killer_char AS ch FROM sea_kills WHERE at >= ?1 UNION SELECT target_char FROM sea_bounties WHERE claimed_r IS NULL",
+    "new": "      SELECT killer_char AS ch FROM sea_kills WHERE at >= ?1",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "SEA-BOUNTY-board-claimed-standing",
     "file": "server-account/src/seaBounty.js",
-    "old": "LEFT JOIN (SELECT target_char, SUM(gold) AS gold FROM sea_bounties WHERE claimed_r IS NULL GROUP BY target_char)",
-    "new": "LEFT JOIN (SELECT target_char, SUM(gold) AS gold FROM sea_bounties GROUP BY target_char)",
+    "old": "    LEFT JOIN (SELECT target_char, SUM(gold) AS gold FROM sea_bounties WHERE claimed_r IS NULL GROUP BY target_char) b ON b.target_char = w.ch",
+    "new": "    LEFT JOIN (SELECT target_char, SUM(gold) AS gold FROM sea_bounties GROUP BY target_char) b ON b.target_char = w.ch",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "SEA-BOUNTY-board-owed-paid",
     "file": "server-account/src/seaBounty.js",
-    "old": "FROM sea_bounty_owed WHERE killer = ?1 AND killer_char = ?2 AND paid_at IS NULL').bind(player.id, character).first()",
-    "new": "FROM sea_bounty_owed WHERE killer = ?1 AND killer_char = ?2').bind(player.id, character).first()",
+    "old": "            .prepare(\n              'SELECT COALESCE(SUM(gold), 0) AS n FROM sea_bounty_owed WHERE killer = ?1 AND killer_char = ?2 AND paid_at IS NULL',\n            )",
+    "new": "            .prepare('SELECT COALESCE(SUM(gold), 0) AS n FROM sea_bounty_owed WHERE killer = ?1 AND killer_char = ?2')",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "SEA-BOUNTY-board-owed-anyone",
     "file": "server-account/src/seaBounty.js",
-    "old": "FROM sea_bounty_owed WHERE killer = ?1 AND killer_char = ?2 AND paid_at IS NULL').bind(player.id, character).first()",
-    "new": "FROM sea_bounty_owed WHERE paid_at IS NULL').bind(player.id, character).first()",
+    "old": "            .prepare(\n              'SELECT COALESCE(SUM(gold), 0) AS n FROM sea_bounty_owed WHERE killer = ?1 AND killer_char = ?2 AND paid_at IS NULL',\n            )",
+    "new": "            .prepare('SELECT COALESCE(SUM(gold), 0) AS n FROM sea_bounty_owed WHERE paid_at IS NULL')",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "SEA-BOUNTY-board-mine-none",
     "file": "server-account/src/seaBounty.js",
-    "old": "    owed, refund, mine: character ? await standing(db, character) : 0,",
-    "new": "    owed, refund, mine: 0,",
+    "old": "    mine: character ? await standing(db, character) : 0,",
+    "new": "    mine: 0,",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "SEA-BOUNTY-post-no-realm",
     "file": "server-account/src/seaBounty.js",
-    "old": "  if (!side.at) return { error: 'sea-bounty-realm' };\n  if (typeof rid",
-    "new": "  if (typeof rid",
+    "old": "  if (!side.at) return { error: 'sea-bounty-realm' };\n  if (typeof rid !== 'string' || !SEA_BOUNTY_RID_RE.test(rid)) return { error: 'bad-rid' };",
+    "new": "  if (typeof rid !== 'string' || !SEA_BOUNTY_RID_RE.test(rid)) return { error: 'bad-rid' };",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "SEA-BOUNTY-post-twice",
     "file": "server-account/src/seaBounty.js",
-    "old": "  if (prior) return { ok: true, repeat: true,",
-    "new": "  if (false) return { ok: true, repeat: true,",
+    "old": "  if (prior)",
+    "new": "  if (false)",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "SEA-BOUNTY-post-any-region",
     "file": "server-account/src/seaBounty.js",
-    "old": "  if (!regionOk(region)) return { error: 'bad-region' };\n  if (!seaBountyGoldOk(gold))",
-    "new": "  if (!seaBountyGoldOk(gold))",
+    "old": "  if (!regionOk(region)) return { error: 'bad-region' };\n  if (!seaBountyGoldOk(gold)) return { error: 'sea-bounty-gold' };",
+    "new": "  if (!seaBountyGoldOk(gold)) return { error: 'sea-bounty-gold' };",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ],
@@ -471,8 +471,8 @@
   {
     "name": "SEA-BOUNTY-post-dead-wanted",
     "file": "server-account/src/seaBounty.js",
-    "old": "  const wanted = await db.prepare(`SELECT player FROM realm_characters WHERE id = ?1 AND dead_at IS NULL AND (",
-    "new": "  const wanted = await db.prepare(`SELECT player FROM realm_characters WHERE id = ?1 AND (",
+    "old": "      `SELECT player FROM realm_characters WHERE id = ?1 AND dead_at IS NULL AND (",
+    "new": "      `SELECT player FROM realm_characters WHERE id = ?1 AND (",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -480,8 +480,8 @@
   {
     "name": "SEA-BOUNTY-post-old-kills",
     "file": "server-account/src/seaBounty.js",
-    "old": "      EXISTS (SELECT 1 FROM sea_kills WHERE killer_char = ?1 AND at >= ?2) OR",
-    "new": "      EXISTS (SELECT 1 FROM sea_kills WHERE killer_char = ?1) OR",
+    "old": "      EXISTS (SELECT 1 FROM sea_kills WHERE killer_char = ?1 AND at >= ?2) OR EXISTS (SELECT 1 FROM sea_bounties WHERE target_char = ?1 AND claimed_r IS NULL))`,",
+    "new": "      EXISTS (SELECT 1 FROM sea_kills WHERE killer_char = ?1) OR EXISTS (SELECT 1 FROM sea_bounties WHERE target_char = ?1 AND claimed_r IS NULL))`,",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -489,8 +489,8 @@
   {
     "name": "SEA-BOUNTY-post-bounty-not-wanted",
     "file": "server-account/src/seaBounty.js",
-    "old": " OR EXISTS (SELECT 1 FROM sea_bounties WHERE target_char = ?1 AND claimed_r IS NULL))`)",
-    "new": ")`)",
+    "old": "      EXISTS (SELECT 1 FROM sea_kills WHERE killer_char = ?1 AND at >= ?2) OR EXISTS (SELECT 1 FROM sea_bounties WHERE target_char = ?1 AND claimed_r IS NULL))`,",
+    "new": "      EXISTS (SELECT 1 FROM sea_kills WHERE killer_char = ?1 AND at >= ?2))`,",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -507,8 +507,8 @@
   {
     "name": "SEA-BOUNTY-post-own-head",
     "file": "server-account/src/seaBounty.js",
-    "old": "  if (wanted.player === player.id) return { error: 'sea-bounty-self' };",
-    "new": "",
+    "old": "  if (wanted.player === player.id) return { error: 'sea-bounty-self' }; // a head of one's own account: a bounty one's own hand could collect",
+    "new": "  // a head of one's own account: a bounty one's own hand could collect",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -516,8 +516,8 @@
   {
     "name": "SEA-BOUNTY-post-free",
     "file": "server-account/src/seaBounty.js",
-    "old": "(save) => (payFromSave(save, gold, region) ? null : 'realm-gold'), { outbound: true });",
-    "new": "() => null, { outbound: true });",
+    "old": "  const prep = await prepareRealmRecord(\n    ctx,\n    player.id,\n    side.at,\n    (save) => (payFromSave(save, gold, region) ? null : 'realm-gold'),\n    { outbound: true },\n  );",
+    "new": "  const prep = await prepareRealmRecord(ctx, player.id, side.at, () => null, { outbound: true });",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -525,8 +525,8 @@
   {
     "name": "SEA-BOUNTY-post-held",
     "file": "server-account/src/seaBounty.js",
-    "old": "(save) => (payFromSave(save, gold, region) ? null : 'realm-gold'), { outbound: true });",
-    "new": "(save) => (payFromSave(save, gold, region) ? null : 'realm-gold'));",
+    "old": "  const prep = await prepareRealmRecord(\n    ctx,\n    player.id,\n    side.at,\n    (save) => (payFromSave(save, gold, region) ? null : 'realm-gold'),\n    { outbound: true },",
+    "new": "  const prep = await prepareRealmRecord(ctx, player.id, side.at, (save) =>\n    payFromSave(save, gold, region) ? null : 'realm-gold',",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -534,8 +534,8 @@
   {
     "name": "SEA-BOUNTY-post-unwritten",
     "file": "server-account/src/seaBounty.js",
-    "old": "      db.prepare('INSERT INTO sea_bounties (id, poster, poster_char, rid, target_char, gold, at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)').bind(id, player.id, character, rid, target, gold, nowS),\n",
-    "new": "",
+    "old": "    await db.batch([\n      ...prep.steps,\n      db\n        .prepare(\n          'INSERT INTO sea_bounties (id, poster, poster_char, rid, target_char, gold, at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)',\n        )\n        .bind(id, player.id, character, rid, target, gold, nowS),\n    ]);",
+    "new": "    await db.batch([...prep.steps]);",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -543,8 +543,8 @@
   {
     "name": "SEA-BOUNTY-collect-no-realm",
     "file": "server-account/src/seaBounty.js",
-    "old": "  if (!side.at) return { error: 'sea-bounty-realm' };\n  if (!regionOk(region)) return { error: 'bad-region' };\n  await db.batch(seaRefundSteps",
-    "new": "  if (!regionOk(region)) return { error: 'bad-region' };\n  await db.batch(seaRefundSteps",
+    "old": "  if (!side.at) return { error: 'sea-bounty-realm' };\n  if (!regionOk(region)) return { error: 'bad-region' };",
+    "new": "  if (!regionOk(region)) return { error: 'bad-region' };",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ],
@@ -553,8 +553,8 @@
   {
     "name": "SEA-BOUNTY-collect-paid-again",
     "file": "server-account/src/seaBounty.js",
-    "old": "WHERE killer = ?1 AND killer_char = ?2 AND paid_at IS NULL ORDER BY at, r LIMIT ?3",
-    "new": "WHERE killer = ?1 AND killer_char = ?2 ORDER BY at, r LIMIT ?3",
+    "old": "        .prepare(\n          'SELECT r, gold FROM sea_bounty_owed WHERE killer = ?1 AND killer_char = ?2 AND paid_at IS NULL ORDER BY at, r LIMIT ?3',\n        )",
+    "new": "        .prepare('SELECT r, gold FROM sea_bounty_owed WHERE killer = ?1 AND killer_char = ?2 ORDER BY at, r LIMIT ?3')",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -562,8 +562,8 @@
   {
     "name": "SEA-BOUNTY-collect-purse",
     "file": "server-account/src/seaBounty.js",
-    "old": "(save) => (creditSave(save, gold, { bank: region }) ? null : 'bad-gold')",
-    "new": "(save) => (creditSave(save, gold) ? null : 'bad-gold')",
+    "old": "    creditSave(save, gold, { bank: region }) ? null : 'bad-gold',",
+    "new": "    creditSave(save, gold) ? null : 'bad-gold',",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -571,8 +571,8 @@
   {
     "name": "SEA-BOUNTY-collect-unpaid",
     "file": "server-account/src/seaBounty.js",
-    "old": "(save) => (creditSave(save, gold, { bank: region }) ? null : 'bad-gold')",
-    "new": "() => null",
+    "old": "  const prep = await prepareRealmRecord(ctx, player.id, side.at, (save) =>\n    creditSave(save, gold, { bank: region }) ? null : 'bad-gold',\n  );",
+    "new": "  const prep = await prepareRealmRecord(ctx, player.id, side.at, () => null);",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -580,8 +580,8 @@
   {
     "name": "SEA-BOUNTY-collect-unsettled",
     "file": "server-account/src/seaBounty.js",
-    "old": "    await db.batch([...prep.steps, settle, mustChange(db, rs.length)]);",
-    "new": "    await db.batch([...prep.steps]);",
+    "old": "    await db.batch([...prep.steps, settle, mustChange(db, rs.length)]); // every row this collect read, once - another collect that landed first fails it whole",
+    "new": "    await db.batch([...prep.steps]); // every row this collect read, once - another collect that landed first fails it whole",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]

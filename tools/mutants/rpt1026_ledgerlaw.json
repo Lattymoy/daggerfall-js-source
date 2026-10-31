@@ -82,8 +82,8 @@
   {
     "name": "RPT1026-LEDGERLAW-99-clear-writes-no-values",
     "file": "server-account/src/review.js",
-    "old": "law_excused = CASE WHEN law_v IS NULL THEN law_sig ELSE law_sig || '|' || law_v END,",
-    "new": "law_excused = law_sig,",
+    "old": "        law_excused = CASE WHEN law_v IS NULL THEN law_sig ELSE law_sig || '|' || law_v END, allowance = NULL, judge_rev = judge_rev + 1 WHERE id = ?`,",
+    "new": "        law_excused = law_sig, allowance = NULL, judge_rev = judge_rev + 1 WHERE id = ?`,",
     "tests": [
       "test/server/rpt1026_ledgerlaw.test.js"
     ],

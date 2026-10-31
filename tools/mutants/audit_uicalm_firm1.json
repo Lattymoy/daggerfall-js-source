@@ -209,8 +209,8 @@
   {
     "name": "AUF-L2L2-delete-keeps-sky",
     "file": "server-account/src/realm.js",
-    "old": "    db.prepare('DELETE FROM firmament WHERE player = ? AND char_id = ?').bind(playerId, id),",
-    "new": "",
+    "old": "    db.prepare('DELETE FROM firmament WHERE player = ? AND char_id = ?').bind(playerId, id), // AUDIT UICALM-FIRM1 L2 L2: its sky with it (firmament_sets stay - the ids' memory, so a replay is answered, never made again)",
+    "new": "    // AUDIT UICALM-FIRM1 L2 L2: its sky with it (firmament_sets stay - the ids' memory, so a replay is answered, never made again)",
     "tests": [
       "test/systems/audit_uicalm_firm1.test.js"
     ]

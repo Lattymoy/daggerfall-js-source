@@ -113,8 +113,8 @@
   {
     "name": "GOLDMARKET-delete-with-gold-held",
     "file": "server-account/src/realm.js",
-    "old": "\n  + (SELECT COUNT(*) FROM market_gold WHERE player = ?1 AND char_id = ?2 AND gold > 0)",
-    "new": "",
+    "old": "  + (SELECT COUNT(*) FROM market_deliveries WHERE player = ?1 AND char_id = ?2 AND collected = 0)\n  + (SELECT COUNT(*) FROM market_gold WHERE player = ?1 AND char_id = ?2 AND gold > 0) AS n`;",
+    "new": "  + (SELECT COUNT(*) FROM market_deliveries WHERE player = ?1 AND char_id = ?2 AND collected = 0) AS n`;",
     "tests": [
       "test/net/goldmarket_service.test.js"
     ]

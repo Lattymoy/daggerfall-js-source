@@ -137,8 +137,8 @@
   {
     "name": "LEGACY7W-delete-keeps-union",
     "file": "server-account/src/realm.js",
-    "old": "    endUnionsOf(db, id, nowS, 'gone'),",
-    "new": "",
+    "old": "    endUnionsOf(db, id, nowS, 'gone'), // LEGACY7 part three: a union ends with the character",
+    "new": "    // LEGACY7 part three: a union ends with the character",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]

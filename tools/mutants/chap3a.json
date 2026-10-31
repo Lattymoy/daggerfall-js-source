@@ -193,8 +193,8 @@
   {
     "name": "CHAP3A-SQL-TENURE",
     "file": "server-account/src/npcMerit.js",
-    "old": " AND member = 1 AND dormant = 0 AND joined_at <= ?8 - ?10)",
-    "new": " AND member = 1 AND dormant = 0)",
+    "old": "      AND EXISTS (SELECT 1 FROM npc_roll WHERE char_id = ?2 AND player = ?1 AND faction_id = ?3 AND member = 1 AND dormant = 0 AND joined_at <= ?8 - ?10)",
+    "new": "      AND EXISTS (SELECT 1 FROM npc_roll WHERE char_id = ?2 AND player = ?1 AND faction_id = ?3 AND member = 1 AND dormant = 0)",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "CHAP3A-SQL-TENURE-EDGE",
     "file": "server-account/src/npcMerit.js",
-    "old": "AND joined_at <= ?8 - ?10)",
-    "new": "AND joined_at < ?8 - ?10)",
+    "old": "      AND EXISTS (SELECT 1 FROM npc_roll WHERE char_id = ?2 AND player = ?1 AND faction_id = ?3 AND member = 1 AND dormant = 0 AND joined_at <= ?8 - ?10)",
+    "new": "      AND EXISTS (SELECT 1 FROM npc_roll WHERE char_id = ?2 AND player = ?1 AND faction_id = ?3 AND member = 1 AND dormant = 0 AND joined_at < ?8 - ?10)",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "CHAP3A-SQL-MEMBER",
     "file": "server-account/src/npcMerit.js",
-    "old": "AND faction_id = ?3 AND member = 1 AND dormant = 0 AND joined_at",
-    "new": "AND faction_id = ?3 AND dormant = 0 AND joined_at",
+    "old": "      AND EXISTS (SELECT 1 FROM npc_roll WHERE char_id = ?2 AND player = ?1 AND faction_id = ?3 AND member = 1 AND dormant = 0 AND joined_at <= ?8 - ?10)",
+    "new": "      AND EXISTS (SELECT 1 FROM npc_roll WHERE char_id = ?2 AND player = ?1 AND faction_id = ?3 AND dormant = 0 AND joined_at <= ?8 - ?10)",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "CHAP3A-SQL-PLAYER",
     "file": "server-account/src/npcMerit.js",
-    "old": "WHERE char_id = ?2 AND player = ?1 AND faction_id = ?3",
-    "new": "WHERE char_id = ?2 AND faction_id = ?3",
+    "old": "      AND EXISTS (SELECT 1 FROM npc_roll WHERE char_id = ?2 AND player = ?1 AND faction_id = ?3 AND member = 1 AND dormant = 0 AND joined_at <= ?8 - ?10)",
+    "new": "      AND EXISTS (SELECT 1 FROM npc_roll WHERE char_id = ?2 AND faction_id = ?3 AND member = 1 AND dormant = 0 AND joined_at <= ?8 - ?10)",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ],
@@ -231,8 +231,8 @@
   {
     "name": "CHAP3A-SQL-DEAD",
     "file": "server-account/src/npcMerit.js",
-    "old": "      AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?2 AND player = ?1 AND dead_at IS NULL)\n",
-    "new": "",
+    "old": "      AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?2 AND player = ?1 AND dead_at IS NULL)\n      AND NOT EXISTS (SELECT 1 FROM npc_chapter_merit WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region <> ?4)`,",
+    "new": "      AND NOT EXISTS (SELECT 1 FROM npc_chapter_merit WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region <> ?4)`,",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -240,8 +240,8 @@
   {
     "name": "CHAP3A-SQL-ELSEWHERE",
     "file": "server-account/src/npcMerit.js",
-    "old": "\n      AND NOT EXISTS (SELECT 1 FROM npc_chapter_merit WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region <> ?4)`)",
-    "new": "`)",
+    "old": "      AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?2 AND player = ?1 AND dead_at IS NULL)\n      AND NOT EXISTS (SELECT 1 FROM npc_chapter_merit WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region <> ?4)`,",
+    "new": "      AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?2 AND player = ?1 AND dead_at IS NULL)`,",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -249,8 +249,8 @@
   {
     "name": "CHAP3A-SQL-ELSEWHERE-WEEK",
     "file": "server-account/src/npcMerit.js",
-    "old": "WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region <> ?4)",
-    "new": "WHERE account = ?1 AND faction = ?3 AND region <> ?4)",
+    "old": "      AND NOT EXISTS (SELECT 1 FROM npc_chapter_merit WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region <> ?4)`,",
+    "new": "      AND NOT EXISTS (SELECT 1 FROM npc_chapter_merit WHERE account = ?1 AND faction = ?3 AND region <> ?4)`,",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -258,8 +258,8 @@
   {
     "name": "CHAP3A-SQL-CAP-ACCOUNT",
     "file": "server-account/src/npcMerit.js",
-    "old": "WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region = ?4), 0))",
-    "new": "WHERE week = ?5 AND char_id = ?2 AND faction = ?3 AND region = ?4), 0))",
+    "old": "        WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region = ?4), 0)) AS INTEGER) AS got)",
+    "new": "        WHERE week = ?5 AND char_id = ?2 AND faction = ?3 AND region = ?4), 0)) AS INTEGER) AS got)",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -267,8 +267,8 @@
   {
     "name": "CHAP3A-SQL-CAP-REGION",
     "file": "server-account/src/npcMerit.js",
-    "old": "WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region = ?4), 0))",
-    "new": "WHERE week = ?5 AND account = ?1 AND faction = ?3), 0))",
+    "old": "        WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region = ?4), 0)) AS INTEGER) AS got)",
+    "new": "        WHERE week = ?5 AND account = ?1 AND faction = ?3), 0)) AS INTEGER) AS got)",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ],
@@ -278,8 +278,8 @@
   {
     "name": "CHAP3A-SQL-CAP-WEEK",
     "file": "server-account/src/npcMerit.js",
-    "old": "WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region = ?4), 0))",
-    "new": "WHERE account = ?1 AND faction = ?3 AND region = ?4), 0))",
+    "old": "        WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region = ?4), 0)) AS INTEGER) AS got)",
+    "new": "        WHERE account = ?1 AND faction = ?3 AND region = ?4), 0)) AS INTEGER) AS got)",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -287,8 +287,8 @@
   {
     "name": "CHAP3A-SQL-GOT",
     "file": "server-account/src/npcMerit.js",
-    "old": "WHERE got >= 1 AND ${guard}",
-    "new": "WHERE got >= 0 AND ${guard}",
+    "old": "    WHERE got >= 1 AND ${guard}",
+    "new": "    WHERE got >= 0 AND ${guard}",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ],
@@ -298,8 +298,8 @@
   {
     "name": "CHAP3A-SQL-CAST",
     "file": "server-account/src/npcMerit.js",
-    "old": "(SELECT CAST(MIN(${amountSql}, ?9 - COALESCE((SELECT SUM(amount) FROM npc_chapter_merit\n        WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region = ?4), 0)) AS INTEGER) AS got)",
-    "new": "(SELECT MIN(${amountSql}, ?9 - COALESCE((SELECT SUM(amount) FROM npc_chapter_merit\n        WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region = ?4), 0)) AS got)",
+    "old": "    SELECT ?5, ?3, ?4, ?1, ?2, ?6, got, ?7, ?8 FROM (SELECT CAST(MIN(${amountSql}, ?9 - COALESCE((SELECT SUM(amount) FROM npc_chapter_merit\n        WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region = ?4), 0)) AS INTEGER) AS got)",
+    "new": "    SELECT ?5, ?3, ?4, ?1, ?2, ?6, got, ?7, ?8 FROM (SELECT MIN(${amountSql}, ?9 - COALESCE((SELECT SUM(amount) FROM npc_chapter_merit\n        WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region = ?4), 0)) AS got)",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -307,8 +307,8 @@
   {
     "name": "CHAP3A-SQL-GUARD",
     "file": "server-account/src/npcMerit.js",
-    "old": "WHERE got >= 1 AND ${guard}",
-    "new": "WHERE got >= 1",
+    "old": "    WHERE got >= 1 AND ${guard}",
+    "new": "    WHERE got >= 1",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -316,8 +316,8 @@
   {
     "name": "CHAP3A-SQL-WEEKBIND",
     "file": "server-account/src/npcMerit.js",
-    "old": ".bind(player, character, faction, region, meritWeekOf(nowS), source,",
-    "new": ".bind(player, character, faction, region, meritWeekOf(nowS) + 1, source,",
+    "old": "      meritWeekOf(nowS),",
+    "new": "      meritWeekOf(nowS) + 1,",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -325,8 +325,8 @@
   {
     "name": "CHAP3A-ASKS-ELSEWHERE",
     "file": "server-account/src/npcMerit.js",
-    "old": "elsewhere: mine.some((/** @type {any} */ r) => Number(r.region) !== region)",
-    "new": "elsewhere: mine.some((/** @type {any} */ r) => Number(r.region) === region)",
+    "old": "      elsewhere: mine.some((/** @type {any} */ r) => Number(r.region) !== region),",
+    "new": "      elsewhere: mine.some((/** @type {any} */ r) => Number(r.region) === region),",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -334,8 +334,8 @@
   {
     "name": "CHAP3A-ASKS-FROM",
     "file": "server-account/src/npcMerit.js",
-    "old": "from: from !== null && from > nowS ? from : null",
-    "new": "from",
+    "old": "      from: from !== null && from > nowS ? from : null,",
+    "new": "      from,",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -343,8 +343,8 @@
   {
     "name": "CHAP3A-ASKS-REGION",
     "file": "server-account/src/npcMerit.js",
-    "old": "merit: Number(mine.find((/** @type {any} */ r) => Number(r.region) === region)?.n ?? 0)",
-    "new": "merit: Number(mine[0]?.n ?? 0)",
+    "old": "      merit: Number(mine.find((/** @type {any} */ r) => Number(r.region) === region)?.n ?? 0),",
+    "new": "      merit: Number(mine[0]?.n ?? 0),",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -352,8 +352,8 @@
   {
     "name": "CHAP3A-ASKS-WEEK",
     "file": "server-account/src/npcMerit.js",
-    "old": "FROM npc_chapter_merit WHERE week = ?1 AND account = ?2 GROUP BY faction, region",
-    "new": "FROM npc_chapter_merit WHERE ?1 = ?1 AND account = ?2 GROUP BY faction, region",
+    "old": "      'SELECT faction, region, SUM(amount) AS n FROM npc_chapter_merit WHERE week = ?1 AND account = ?2 GROUP BY faction, region',",
+    "new": "      'SELECT faction, region, SUM(amount) AS n FROM npc_chapter_merit WHERE ?1 = ?1 AND account = ?2 GROUP BY faction, region',",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -361,8 +361,8 @@
   {
     "name": "CHAP3A-ASKS-CHAPTERS",
     "file": "server-account/src/npcMerit.js",
-    "old": "const here = members.filter((f) => chapters.has(f));",
-    "new": "const here = members;",
+    "old": "  const here = members.filter((f) => chapters.has(f));",
+    "new": "  const here = members;",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -370,8 +370,8 @@
   {
     "name": "CHAP3A-RCPT-MERIT",
     "file": "server-account/src/npcReceipts.js",
-    "old": "...own.map((c) => meritStatement(db, {",
-    "new": "...own.filter(() => false).map((c) => meritStatement(db, {",
+    "old": "      ...own.map((c) =>\n        meritStatement(db, {\n          player: player.id,\n          character,\n          faction: c.faction,\n          region,\n          source: kind,\n          ref: c.ref,\n          nowS,\n          amountSql: '?11',\n          guard:\n            'EXISTS (SELECT 1 FROM npc_receipt_credits WHERE char_id = ?2 AND faction_id = ?3 AND ref = ?7 AND tag = ?12)',\n          binds: [meritOfReceipt(own.length), tag],\n        }),\n      ),",
+    "new": "      ...own\n        .filter(() => false)\n        .map((c) =>\n          meritStatement(db, {\n            player: player.id,\n            character,\n            faction: c.faction,\n            region,\n            source: kind,\n            ref: c.ref,\n            nowS,\n            amountSql: '?11',\n            guard:\n              'EXISTS (SELECT 1 FROM npc_receipt_credits WHERE char_id = ?2 AND faction_id = ?3 AND ref = ?7 AND tag = ?12)',\n            binds: [meritOfReceipt(own.length), tag],\n          }),\n        ),",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -379,8 +379,8 @@
   {
     "name": "CHAP3A-RCPT-WRITREF",
     "file": "server-account/src/npcReceipts.js",
-    "old": "const own = credits.filter((c) => c.ref === receiptRef(kind, id));",
-    "new": "const own = credits;",
+    "old": "    const own = credits.filter((c) => c.ref === receiptRef(kind, id));",
+    "new": "    const own = credits;",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -388,8 +388,8 @@
   {
     "name": "CHAP3A-RCPT-TAG",
     "file": "server-account/src/npcReceipts.js",
-    "old": "AND ref = ?7 AND tag = ?12)', binds: [meritOfReceipt(own.length), tag],",
-    "new": "AND ref = ?7 AND ?12 = ?12)', binds: [meritOfReceipt(own.length), tag],",
+    "old": "            'EXISTS (SELECT 1 FROM npc_receipt_credits WHERE char_id = ?2 AND faction_id = ?3 AND ref = ?7 AND tag = ?12)',",
+    "new": "            'EXISTS (SELECT 1 FROM npc_receipt_credits WHERE char_id = ?2 AND faction_id = ?3 AND ref = ?7 AND ?12 = ?12)',",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ],
@@ -399,8 +399,8 @@
   {
     "name": "CHAP3A-RCPT-ANSWER",
     "file": "server-account/src/npcReceipts.js",
-    "old": "merit: await meritOfAct(db, character, kind, receiptRef(kind, id)),",
-    "new": "merit: [],",
+    "old": "      merit: await meritOfAct(db, character, kind, receiptRef(kind, id)),",
+    "new": "      merit: [],",
     "tests": [
       "test/net/chap3a_merit.test.js",
       "test/net/chap2_halls.test.js",
@@ -410,8 +410,8 @@
   {
     "name": "CHAP3A-RCPT-SOURCE",
     "file": "server-account/src/npcReceipts.js",
-    "old": "player: player.id, character, faction: c.faction, region, source: kind, ref: c.ref,",
-    "new": "player: player.id, character, faction: c.faction, region, source: 'gate', ref: c.ref,",
+    "old": "          source: kind,",
+    "new": "          source: 'gate',",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -419,8 +419,8 @@
   {
     "name": "CHAP3A-RCPT-AMOUNT",
     "file": "server-account/src/npcReceipts.js",
-    "old": "binds: [meritOfReceipt(own.length), tag],",
-    "new": "binds: [100, tag],",
+    "old": "          binds: [meritOfReceipt(own.length), tag],",
+    "new": "          binds: [100, tag],",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]

@@ -253,8 +253,8 @@
   {
     "name": "HACKED-GOLD-the-gains-unlisted",
     "file": "server-account/src/review.js",
-    "old": "  if (act === 'gains') return gainsMeasure(db, nowS, Number.isSafeInteger(body.days) && body.days >= 1 && body.days <= 30 ? body.days : 7);\n",
-    "new": "",
+    "old": "  if (act === 'gains')\n    return gainsMeasure(db, nowS, Number.isSafeInteger(body.days) && body.days >= 1 && body.days <= 30 ? body.days : 7);\n  if (act === 'characters') {",
+    "new": "  if (act === 'characters') {",
     "tests": [
       "test/systems/hackedgold.test.js"
     ]
@@ -271,8 +271,8 @@
   {
     "name": "HACKED-GOLD-the-trades-unlisted",
     "file": "server-account/src/review.js",
-    "old": "  if (act === 'trades') return tradesOf(db, row);\n",
-    "new": "",
+    "old": "  if (act === 'trades') return tradesOf(db, row);\n  if (act === 'findings') {",
+    "new": "  if (act === 'findings') {",
     "tests": [
       "test/systems/hackedgold.test.js"
     ]
@@ -280,8 +280,8 @@
   {
     "name": "HACKED-GOLD-gave-and-got-crossed",
     "file": "server-account/src/review.js",
-    "old": "      gave: receiptOf(r[theirs]), got: receiptOf(r[mine]),",
-    "new": "      gave: receiptOf(r[mine]), got: receiptOf(r[theirs]),",
+    "old": "      gave: receiptOf(r[theirs]),\n      got: receiptOf(r[mine]),",
+    "new": "      gave: receiptOf(r[mine]),\n      got: receiptOf(r[theirs]),",
     "tests": [
       "test/systems/hackedgold.test.js"
     ]

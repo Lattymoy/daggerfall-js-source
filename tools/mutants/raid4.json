@@ -2,8 +2,8 @@
   {
     "name": "RAID4-day-unbounded",
     "file": "server-account/src/raids.js",
-    "old": "       WHERE (SELECT COUNT(*) FROM raid_cleanses WHERE account = ?2 AND day = ?3) < ?9\n",
-    "new": "       WHERE ?9 > 0\n",
+    "old": "       WHERE (SELECT COUNT(*) FROM raid_cleanses WHERE account = ?2 AND day = ?3) < ?9",
+    "new": "       WHERE ?9 > 0",
     "tests": [
       "test/net/raid4_rewards.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RAID4-guest-counted",
     "file": "server-account/src/raids.js",
-    "old": "  if (!player.handle) {   // a guest: never counted - but thanked, once\n    const spoils = thanks ? thanksAnswer((await db.batch(thanksOf(db, c.w, player.id, cid, nowS)))[1], cid) : false;\n    return { recorded: false, why: 'guest', ...(await raidRecordOf({ db }, player.id)), spoils };\n  }\n",
-    "new": "",
+    "old": "  if (!player.handle) {\n    // a guest: never counted - but thanked, once\n    const spoils = thanks ? thanksAnswer((await db.batch(thanksOf(db, c.w, player.id, cid, nowS)))[1], cid) : false;\n    return { recorded: false, why: 'guest', ...(await raidRecordOf({ db }, player.id)), spoils };\n  }\n  if (typeof character !== 'string' || !renownCharacterOk(character)) return { error: 'renown-character' };",
+    "new": "  if (typeof character !== 'string' || !renownCharacterOk(character)) return { error: 'renown-character' };",
     "tests": [
       "test/net/raid4_rewards.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RAID4-not-yours",
     "file": "server-account/src/raids.js",
-    "old": "  if (c.s !== player.id) return { error: 'not-yours' };\n",
-    "new": "",
+    "old": "  if (c.s !== player.id) return { error: 'not-yours' };\n  const thanks = typeof cid === 'string' && RAID_CID_RE.test(cid);",
+    "new": "  const thanks = typeof cid === 'string' && RAID_CID_RE.test(cid);",
     "tests": [
       "test/net/raid4_rewards.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "RAID4-rose-always",
     "file": "server-account/src/raids.js",
-    "old": "rose: renownForXp(total) > renownForXp(was) },",
-    "new": "rose: true },",
+    "old": "            rose: renownForXp(total) > renownForXp(was),",
+    "new": "            rose: true,",
     "tests": [
       "test/net/raid4_rewards.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "RAID4-day-full-said-claimed",
     "file": "server-account/src/raids.js",
-    "old": "why: had ? 'claimed' : 'day-full'",
-    "new": "why: 'claimed'",
+    "old": "    return { recorded: false, why: had ? 'claimed' : 'day-full', defended, spoils };",
+    "new": "    return { recorded: false, why: 'claimed', defended, spoils };",
     "tests": [
       "test/net/raid4_rewards.test.js"
     ]

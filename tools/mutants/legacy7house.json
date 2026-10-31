@@ -113,8 +113,8 @@
   {
     "name": "LEGACY7-tile-no-house",
     "file": "server-account/src/realm.js",
-    "old": "    house: r.line ? houseOn(r.line, r.person_id) : null,",
-    "new": "    house: null,",
+    "old": "    house: r.line ? houseOn(r.line, r.person_id) : null, // LEGACY7 part two: its house, for the tile (net/houseLaw.js)",
+    "new": "    house: null, // LEGACY7 part two: its house, for the tile (net/houseLaw.js)",
     "tests": [
       "test/net/legacy7_house.test.js"
     ]

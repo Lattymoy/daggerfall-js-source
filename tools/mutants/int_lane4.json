@@ -92,8 +92,8 @@
   {
     "name": "INT17-asked-not-credited",
     "file": "server-account/src/progress.js",
-    "old": "    case '/v1/renown/xp': add('renown', n(a.credited)); break;",
-    "new": "    case '/v1/renown/xp': add('renown', n(a.xp)); break;",
+    "old": "      add('renown', n(a.credited));",
+    "new": "      add('renown', n(a.xp));",
     "why": "the measure counts the track's total, never what this report credited",
     "tests": [
       "test/server/int16_progress.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "INT17-first-claim-empty",
     "file": "server-account/src/progress.js",
-    "old": "CASE WHEN b.played_at IS NULL THEN 0 ELSE MAX(0, COALESCE(p.played_s, 0) - b.played_at) END AS played",
-    "new": "CASE WHEN b.played_at IS NULL THEN COALESCE(p.played_s, 0) ELSE MAX(0, COALESCE(p.played_s, 0) - b.played_at) END AS played",
+    "old": "  FROM (SELECT COALESCE(p.played_s, 0) AS now, CASE WHEN b.played_at IS NULL THEN 0 ELSE MAX(0, COALESCE(p.played_s, 0) - b.played_at) END AS played, COALESCE(b.allowance, ?4) AS start",
+    "new": "  FROM (SELECT COALESCE(p.played_s, 0) AS now, CASE WHEN b.played_at IS NULL THEN COALESCE(p.played_s, 0) ELSE MAX(0, COALESCE(p.played_s, 0) - b.played_at) END AS played, COALESCE(b.allowance, ?4) AS start",
     "why": "a first claim credits the account's whole life of play to the hour it lands in",
     "tests": [
       "test/server/int16_progress.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "INT17-measure-keeps-debt",
     "file": "server-account/src/progress.js",
-    "old": "SELECT ?1, ?2, CASE WHEN ?7 THEN s.left ELSE MAX(0, s.left) END, s.now, ?3",
-    "new": "SELECT ?1, ?2, s.left, s.now, ?3",
+    "old": "      SELECT ?1, ?2, CASE WHEN ?7 THEN s.left ELSE MAX(0, s.left) END, s.now, ?3 FROM (${BUCKET_STEP_SQL}) s WHERE true",
+    "new": "      SELECT ?1, ?2, s.left, s.now, ?3 FROM (${BUCKET_STEP_SQL}) s WHERE true",
     "why": "a measured week's debt holds every claimant the day staff turn the line on (AUDIT INT's lesson, the budget's)",
     "tests": [
       "test/server/int16_progress.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "INT17-the-line-kept-past-a-write",
     "file": "server-account/src/review.js",
-    "old": "      forgetProgressConfig(db);",
-    "new": "",
+    "old": "      forgetProgressConfig(db);\n    }",
+    "new": "    }",
     "why": "the line staff wrote waits a minute where they wrote it - the old one kept",
     "tests": [
       "test/server/int16_progress.test.js"

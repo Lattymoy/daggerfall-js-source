@@ -2,8 +2,8 @@
   {
     "name": "AUDITFB1029F-A1-delete-keeps-rows",
     "file": "server-account/src/realm.js",
-    "old": "    db.prepare(`DELETE FROM decor_access WHERE EXISTS (SELECT 1 FROM homes h WHERE h.map_id = decor_access.map_id\n      AND h.building_key = decor_access.building_key AND h.player = ? AND h.char_id = ?)`).bind(playerId, id),\n",
-    "new": "",
+    "old": "    db\n      .prepare(\n        `DELETE FROM decor_access WHERE EXISTS (SELECT 1 FROM homes h WHERE h.map_id = decor_access.map_id\n      AND h.building_key = decor_access.building_key AND h.player = ? AND h.char_id = ?)`,\n      )\n      .bind(playerId, id),\n    db.prepare('DELETE FROM homes WHERE player = ? AND char_id = ?').bind(playerId, id),",
+    "new": "    db.prepare('DELETE FROM homes WHERE player = ? AND char_id = ?').bind(playerId, id),",
     "tests": [
       "test/server/restorphans.test.js"
     ]

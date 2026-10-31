@@ -25,8 +25,8 @@
   {
     "name": "ACCOUNT-HOMES-rent-the-buyer-again",
     "file": "server-account/src/rent.js",
-    "old": "const OWNS = 'EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND (deed = 0 OR char_id = ?))';",
-    "new": "const OWNS = 'EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND char_id = ?)';",
+    "old": "  'EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND (deed = 0 OR char_id = ?))';",
+    "new": "  'EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND char_id = ?)';",
     "tests": [
       "test/server/account_homes.test.js"
     ],
@@ -35,8 +35,8 @@
   {
     "name": "ACCOUNT-HOMES-rent-a-hall-the-accounts",
     "file": "server-account/src/rent.js",
-    "old": "const OWNS = 'EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND (deed = 0 OR char_id = ?))';",
-    "new": "const OWNS = 'EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND (deed = 0 OR char_id = ?))';",
+    "old": "  'EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND (deed = 0 OR char_id = ?))';",
+    "new": "  'EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND (deed = 0 OR char_id = ?))';",
     "tests": [
       "test/server/account_homes.test.js"
     ],
@@ -45,8 +45,8 @@
   {
     "name": "ACCOUNT-HOMES-collect-the-buyer-again",
     "file": "server-account/src/rent.js",
-    "old": "  const home = await db.prepare(`SELECT rent_due, region FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND (deed = 0 OR char_id = ?)`)",
-    "new": "  const home = await db.prepare(`SELECT rent_due, region FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND char_id = ?`)",
+    "old": "      `SELECT rent_due, region FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND (deed = 0 OR char_id = ?)`,",
+    "new": "      `SELECT rent_due, region FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND char_id = ?`,",
     "tests": [
       "test/server/account_homes.test.js"
     ],
@@ -158,8 +158,8 @@
   {
     "name": "ACCOUNT-HOMES-delete-stock-unasked",
     "file": "server-account/src/realm.js",
-    "old": "  if (Number((await db.prepare(HOME_VENDOR_STOCK_SQL).bind(playerId, id).first())?.n ?? 0) > 0) return { error: 'home-vendor-stocked' };\n",
-    "new": "",
+    "old": "  if (Number((await db.prepare(HOME_VENDOR_STOCK_SQL).bind(playerId, id).first())?.n ?? 0) > 0)\n    return { error: 'home-vendor-stocked' };\n  // AUDIT CARDS-4 A3: a card table's stake still held comes home to this character first (cards.js cashoutCards)",
+    "new": "  // AUDIT CARDS-4 A3: a card table's stake still held comes home to this character first (cards.js cashoutCards)",
     "tests": [
       "test/server/account_homes.test.js"
     ],

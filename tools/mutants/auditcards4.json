@@ -74,8 +74,8 @@
   {
     "name": "AC4-A3-delete-with-stake-held",
     "file": "server-account/src/realm.js",
-    "old": "  if (await db.prepare(`SELECT 1 FROM card_stakes WHERE player = ? AND char_id = ? AND status = 'held' LIMIT 1`).bind(playerId, id).first()) return { error: 'cards-held' };\n",
-    "new": "",
+    "old": "  if (\n    await db\n      .prepare(`SELECT 1 FROM card_stakes WHERE player = ? AND char_id = ? AND status = 'held' LIMIT 1`)\n      .bind(playerId, id)\n      .first()\n  )\n    return { error: 'cards-held' };\n  // AUDIT SEA VENTURES B4: gold owed it at sea, a wreck's goods held for it, and its own hold's goods due back come home",
+    "new": "  // AUDIT SEA VENTURES B4: gold owed it at sea, a wreck's goods held for it, and its own hold's goods due back come home",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",

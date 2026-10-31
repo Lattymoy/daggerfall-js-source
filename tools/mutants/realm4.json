@@ -83,8 +83,8 @@
   {
     "name": "REALM4-guard-never-trips",
     "file": "server-account/src/realmTrade.js",
-    "old": ") AS n) WHERE n != 3\",",
-    "new": ") AS n) WHERE n != n\",",
+    "old": "            \" + (SELECT COUNT(*) FROM realm_trades WHERE sid = ? AND state = 'done' AND b_char = ?) AS n) WHERE n != 3\",",
+    "new": "            \" + (SELECT COUNT(*) FROM realm_trades WHERE sid = ? AND state = 'done' AND b_char = ?) AS n) WHERE n != n\",",
     "tests": [
       "test/net/realm4.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "REALM4-never-expires",
     "file": "server-account/src/realmTrade.js",
-    "old": "  if (nowS - t.created_at > REALM_TRADE_TTL_S) return refuse(db, sid, 'expired', playerId, asker, !first);   // either side learns it\n",
-    "new": "",
+    "old": "  if (nowS - t.created_at > REALM_TRADE_TTL_S) return refuse(db, sid, 'expired', playerId, asker, !first); // either side learns it\n  if (first) return { state: 'waiting' };",
+    "new": "  if (first) return { state: 'waiting' };",
     "tests": [
       "test/net/realm4.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "REALM4-anyone-told",
     "file": "server-account/src/realmTrade.js",
-    "old": "  if (!side) return { error: 'trade-spent' };\n",
-    "new": "  const side2 = side ?? 'a';\n  if (!side2) return { error: 'trade-spent' };\n",
+    "old": "  if (!side) return { error: 'trade-spent' };",
+    "new": "  const side2 = side ?? 'a';\n  if (!side2) return { error: 'trade-spent' };",
     "tests": [
       "test/net/realm4.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "REALM4-outcome-not-first",
     "file": "server-account/src/realmTrade.js",
-    "old": "  if (t && t.state !== 'waiting') return outcomeFor(t, playerId, asker);\n  if (row.seq !== seq",
-    "new": "  if (row.seq !== seq",
+    "old": "  if (t && t.state !== 'waiting') return outcomeFor(t, playerId, asker);\n  if (row.seq !== seq || !row.bytes || !row.obj) return { error: 'seq', seq: row.seq };",
+    "new": "  if (row.seq !== seq || !row.bytes || !row.obj) return { error: 'seq', seq: row.seq };",
     "tests": [
       "test/net/realm4.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "REALM4-lost-settle-keeps-objects",
     "file": "server-account/src/realmTrade.js",
-    "old": "    await dropIfUnnamed(db, bucket, t.a_player, t.a_char, keyA);\n    await dropIfUnnamed(db, bucket, playerId, id, keyB);\n",
-    "new": "",
+    "old": "    await dropIfUnnamed(db, bucket, t.a_player, t.a_char, keyA);\n    await dropIfUnnamed(db, bucket, playerId, id, keyB);\n    return refuse(db, sid, 'moved', playerId, asker, true);",
+    "new": "    return refuse(db, sid, 'moved', playerId, asker, true);",
     "tests": [
       "test/net/realm4.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "REALM4-second-unrecorded",
     "file": "server-account/src/realmTrade.js",
-    "old": ".bind(why, second ? playerId : null, second ? asker.id : null, second ? asker.seq : null, second ? canon(asker.half) : null, sid).run();",
-    "new": ".bind(why, null, null, null, null, sid).run();",
+    "old": "    .bind(\n      why,\n      second ? playerId : null,\n      second ? asker.id : null,\n      second ? asker.seq : null,\n      second ? canon(asker.half) : null,\n      sid,\n    )",
+    "new": "    .bind(why, null, null, null, null, sid)",
     "tests": [
       "test/net/realm4.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "REALM4-prev-never-kept",
     "file": "server-account/src/realm.js",
-    "old": "'UPDATE realm_characters SET seq = ?, bytes = ?, obj = ?, prev = obj, lease_at = ?,",
-    "new": "'UPDATE realm_characters SET seq = ?, bytes = ?, obj = ?, lease_at = ?,",
+    "old": "          'UPDATE realm_characters SET seq = ?, bytes = ?, obj = ?, prev = obj, lease_at = ?, summary = COALESCE(?, summary), updated_at = ? WHERE id = ? AND player = ? AND lease = ? AND seq = ?',",
+    "new": "          'UPDATE realm_characters SET seq = ?, bytes = ?, obj = ?, lease_at = ?, summary = COALESCE(?, summary), updated_at = ? WHERE id = ? AND player = ? AND lease = ? AND seq = ?',",
     "tests": [
       "test/server/realm1.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "REALM4-lost-checkpoint-keeps-object",
     "file": "server-account/src/realm.js",
-    "old": "  await dropObjects(bucket, [key]);\n  return false;\n",
-    "new": "  return false;\n",
+    "old": "  await dropObjects(bucket, [key]);\n  return false;",
+    "new": "  return false;",
     "tests": [
       "test/net/realm4.test.js"
     ]

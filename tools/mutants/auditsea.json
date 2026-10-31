@@ -218,8 +218,8 @@
   {
     "name": "AUDIT-SEA-B4-refund-unpaid",
     "file": "server-account/src/seaBounty.js",
-    "old": "  await db.batch(seaRefundSteps(db, player.id, character, nowS));",
-    "new": "",
+    "old": "  await db.batch(seaRefundSteps(db, player.id, character, nowS)); // AUDIT SEA VENTURES B4: its posts on heads gone, owed back to it first",
+    "new": "  // AUDIT SEA VENTURES B4: its posts on heads gone, owed back to it first",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "AUDIT-SEA-B4-deleted-with-gold-owed",
     "file": "server-account/src/realm.js",
-    "old": ".bind(playerId, id, nowS).first()) return { error: 'sea-held' };",
-    "new": ".bind(playerId, id, nowS).first() && false) return { error: 'sea-held' };",
+    "old": "    await db\n      .prepare(\n        `SELECT 1 FROM sea_bounty_owed WHERE killer = ?1 AND killer_char = ?2 AND paid_at IS NULL\n    UNION ALL SELECT 1 FROM sea_prizes WHERE killer = ?1 AND killer_char = ?2 AND state = 'held' AND until_s > ?3\n    UNION ALL SELECT 1 FROM sea_prizes WHERE victim = ?1 AND victim_char = ?2 AND state = 'held' AND until_s <= ?3 LIMIT 1`,\n      )\n      .bind(playerId, id, nowS)\n      .first()",
+    "new": "    (await db\n      .prepare(\n        `SELECT 1 FROM sea_bounty_owed WHERE killer = ?1 AND killer_char = ?2 AND paid_at IS NULL\n    UNION ALL SELECT 1 FROM sea_prizes WHERE killer = ?1 AND killer_char = ?2 AND state = 'held' AND until_s > ?3\n    UNION ALL SELECT 1 FROM sea_prizes WHERE victim = ?1 AND victim_char = ?2 AND state = 'held' AND until_s <= ?3 LIMIT 1`,\n      )\n      .bind(playerId, id, nowS)\n      .first()) &&\n    false",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "AUDIT-SEA-B5-standing-swept",
     "file": "server-account/src/seaBounty.js",
-    "old": "WHERE claimed_r IS NOT NULL AND at < ?1 LIMIT ?2",
-    "new": "WHERE at < ?1 LIMIT ?2",
+    "old": "      'DELETE FROM sea_bounties WHERE id IN (SELECT id FROM sea_bounties WHERE claimed_r IS NOT NULL AND at < ?1 LIMIT ?2)',",
+    "new": "      'DELETE FROM sea_bounties WHERE id IN (SELECT id FROM sea_bounties WHERE at < ?1 LIMIT ?2)',",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]

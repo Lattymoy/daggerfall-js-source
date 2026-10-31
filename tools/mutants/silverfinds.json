@@ -138,8 +138,8 @@
   {
     "name": "SILVER-FINDS-days-shared",
     "file": "server-account/src/marks.js",
-    "old": "AND kind = '${kind}' AND day = ${d})`;",
-    "new": "AND kind IN ('gather', 'find') AND day = ${d})`;",
+    "old": "  AND kind = '${kind}' AND day = ${d})`;",
+    "new": "  AND kind IN ('gather', 'find') AND day = ${d})`;",
     "why": "a harvest's and a loot's day one count",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -148,8 +148,8 @@
   {
     "name": "SILVER-FINDS-last-find-whole",
     "file": "server-account/src/marks.js",
-    "old": "const pay = `MIN(?2, ?6 - ${earned})`;",
-    "new": "const pay = '?2';",
+    "old": "  const pay = `MIN(?2, ?6 - ${earned})`;",
+    "new": "  const pay = '?2';",
     "why": "the day's last find struck whole past the cap",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -158,8 +158,8 @@
   {
     "name": "SILVER-FINDS-cap-unread",
     "file": "server-account/src/marks.js",
-    "old": "    WHERE ${earned} < ?6\n      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ${pay} <= ?7",
-    "new": "    WHERE 1\n      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ${pay} <= ?7",
+    "old": "    WHERE ${earned} < ?6",
+    "new": "    WHERE 1",
     "why": "the day met, struck all the same",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -168,8 +168,8 @@
   {
     "name": "SILVER-FINDS-purse-unread",
     "file": "server-account/src/marks.js",
-    "old": "      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ${pay} <= ?7\n      AND NOT EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?5)\n      AND ${guard}`)",
-    "new": "      AND NOT EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?5)\n      AND ${guard}`)",
+    "old": "    WHERE ${earned} < ?6\n      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ${pay} <= ?7\n      AND NOT EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?5)",
+    "new": "    WHERE ${earned} < ?6\n      AND NOT EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?5)",
     "why": "a purse at its most struck past it",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -178,8 +178,8 @@
   {
     "name": "SILVER-FINDS-gather-switch-unread",
     "file": "server-account/src/marks.js",
-    "old": "  if (!strikesFor(player, env) || !findsOpenFor(player, ctx.nowS) || !(amount > 0)",
-    "new": "  if (!findsOpenFor(player, ctx.nowS) || !(amount > 0)",
+    "old": "  if (\n    !strikesFor(player, env) ||\n    !findsOpenFor(player, ctx.nowS) ||\n    !(amount > 0) ||\n    typeof rid !== 'string' ||\n    typeof nonce !== 'string'\n  )",
+    "new": "  if (!findsOpenFor(player, ctx.nowS) || !(amount > 0) || typeof rid !== 'string' || typeof nonce !== 'string')",
     "why": "a harvest finds silver with the switch shut",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -189,7 +189,7 @@
   {
     "name": "SILVER-FINDS-switch-before-the-line",
     "file": "server-account/src/marks.js",
-    "old": "  if (accountKind(player) !== 'linked') return [];   // a guest is never struck: no line to look for",
+    "old": "  if (accountKind(player) !== 'linked') return []; // a guest is never struck: no line to look for",
     "new": "  if (!strikesFor(player, env)) return [];",
     "why": "a find made, answered \"none\" after the switch shut (AUDIT 28 M2)",
     "tests": [
@@ -200,8 +200,8 @@
   {
     "name": "SILVER-FINDS-days-crossed-in-answer",
     "file": "server-account/src/marks.js",
-    "old": "today: { found: Number((line.kind === 'gather' ? f?.gathered : f?.found) ?? 0),",
-    "new": "today: { found: Number((line.kind === 'gather' ? f?.found : f?.gathered) ?? 0),",
+    "old": "      found: Number((line.kind === 'gather' ? f?.gathered : f?.found) ?? 0),",
+    "new": "      found: Number((line.kind === 'gather' ? f?.found : f?.gathered) ?? 0),",
     "why": "a harvest's answer says the loot's day",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -211,8 +211,8 @@
   {
     "name": "SILVER-FINDS-gather-max-the-loots",
     "file": "server-account/src/marks.js",
-    "old": "max: MARKS_FAUCETS[line.kind].perDay } };",
-    "new": "max: MARKS_FAUCETS.find.perDay } };",
+    "old": "    today: {\n      found: Number((line.kind === 'gather' ? f?.gathered : f?.found) ?? 0),\n      max: MARKS_FAUCETS[line.kind].perDay,\n    },",
+    "new": "    today: { found: Number((line.kind === 'gather' ? f?.gathered : f?.found) ?? 0), max: MARKS_FAUCETS.find.perDay },",
     "why": "a harvest's day said against 20",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -221,8 +221,8 @@
   {
     "name": "SILVER-FINDS-rid-of-another-act",
     "file": "server-account/src/marks.js",
-    "old": "if (prior) return prior.kind === 'find' ? answer({ repeat: true }) : { error: 'marks-rid' };",
-    "new": "if (prior) return answer({ repeat: true });",
+    "old": "  if (prior) return prior.kind === 'find' ? answer({ repeat: true }) : { error: 'marks-rid' }; // AUDIT 28 M2: before the switch",
+    "new": "  if (prior) return answer({ repeat: true }); // AUDIT 28 M2: before the switch",
     "why": "an id another act took answered as a find",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -251,8 +251,8 @@
   {
     "name": "SILVER-FINDS-rate-unasked",
     "file": "server-account/src/marks.js",
-    "old": "  if (await overRate(ctx, `marks:${player.id}`, MARKS_OPS_MAX, MARKS_OPS_WINDOW_S)) return { error: 'marks-rate' };\n  await decide(findStrikeStatement(",
-    "new": "  await decide(findStrikeStatement(",
+    "old": "  if (await overRate(ctx, `marks:${player.id}`, MARKS_OPS_MAX, MARKS_OPS_WINDOW_S)) return { error: 'marks-rate' };\n  await decide(findStrikeStatement(ctx, player, 'find', rid, lootFindOf(dice(rand))));",
+    "new": "  await decide(findStrikeStatement(ctx, player, 'find', rid, lootFindOf(dice(rand))));",
     "why": "finds past the hour's acts",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -261,8 +261,8 @@
   {
     "name": "SILVER-FINDS-amount-not-the-dice",
     "file": "server-account/src/marks.js",
-    "old": "lootFindOf(dice(rand))",
-    "new": "lootFindOf(0)",
+    "old": "  await decide(findStrikeStatement(ctx, player, 'find', rid, lootFindOf(dice(rand))));",
+    "new": "  await decide(findStrikeStatement(ctx, player, 'find', rid, lootFindOf(0)));",
     "why": "every loot find 1",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -271,8 +271,8 @@
   {
     "name": "SILVER-FINDS-why-always-cap",
     "file": "server-account/src/marks.js",
-    "old": "why: today.found >= max ? 'cap' : 'full' };",
-    "new": "why: 'cap' };",
+    "old": "      why: today.found >= max ? 'cap' : 'full',",
+    "new": "      why: 'cap',",
     "why": "a full purse said as the day met",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -281,8 +281,8 @@
   {
     "name": "SILVER-FINDS-card-counts-swapped",
     "file": "server-account/src/marks.js",
-    "old": "gathered: Number(f?.gathered ?? 0), found: Number(f?.found ?? 0) };",
-    "new": "gathered: Number(f?.found ?? 0), found: Number(f?.gathered ?? 0) };",
+    "old": "    gathered: Number(f?.gathered ?? 0),\n    found: Number(f?.found ?? 0),",
+    "new": "    gathered: Number(f?.found ?? 0),\n    found: Number(f?.gathered ?? 0),",
     "why": "the card's finds crossed",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -291,8 +291,8 @@
   {
     "name": "SILVER-FINDS-card-maxes",
     "file": "server-account/src/marks.js",
-    "old": "gathered: today.gathered, gatherMax: MARKS_FAUCETS.gather.perDay, found: today.found, findMax: MARKS_FAUCETS.find.perDay,",
-    "new": "gathered: today.gathered, gatherMax: MARKS_FAUCETS.find.perDay, found: today.found, findMax: MARKS_FAUCETS.find.perDay,",
+    "old": "      gatherMax: MARKS_FAUCETS.gather.perDay,",
+    "new": "      gatherMax: MARKS_FAUCETS.find.perDay,",
     "why": "the gathering's day said against 20",
     "tests": [
       "test/net/silverfinds_service.test.js"

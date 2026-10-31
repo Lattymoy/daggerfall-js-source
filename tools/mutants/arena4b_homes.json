@@ -175,8 +175,8 @@
   {
     "name": "ARENA4B-ROOMS-MOVED-DROPPED",
     "file": "server-account/src/rent.js",
-    "old": "if (!anchor && !moved) continue;",
-    "new": "if (!anchor) continue;",
+    "old": "    if (!anchor && !moved) continue;",
+    "new": "    if (!anchor) continue;",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]

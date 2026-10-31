@@ -20,8 +20,8 @@
   {
     "name": "SCALE1-B-the-point-never-written",
     "file": "server-account/src/metrics.js",
-    "old": "    sink.writeDataPoint({",
-    "new": "    void ({",
+    "old": "    sink.writeDataPoint({\n      indexes: [route],\n      blobs: [route, request.method, String(res.status), await refusalOf(res), tablesBlob(tally.tables), parts], // SCALE4h: the tables written, a heartbeat's parts\n      doubles: [\n        Date.now() - started,\n        res.status,\n        tally.n,\n        tally.rw,\n        tally.ms,\n        tally.rr,\n        tally.replica, // SCALE4f: rows written, D1's wait, rows read, a replica's statements\n        ...HOT_TABLES.map((t) => tally.tables[t] ?? 0),\n      ], // SCALE4h: the hot rows, by table\n    });",
+    "new": "    void {\n      indexes: [route],\n      blobs: [route, request.method, String(res.status), await refusalOf(res), tablesBlob(tally.tables), parts], // SCALE4h: the tables written, a heartbeat's parts\n      doubles: [\n        Date.now() - started,\n        res.status,\n        tally.n,\n        tally.rw,\n        tally.ms,\n        tally.rr,\n        tally.replica, // SCALE4f: rows written, D1's wait, rows read, a replica's statements\n        ...HOT_TABLES.map((t) => tally.tables[t] ?? 0),\n      ], // SCALE4h: the hot rows, by table\n    };",
     "tests": [
       "test/net/scale1.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SCALE1-B-statements-uncounted",
     "file": "server-account/src/metrics.js",
-    "old": "tally.n += 1; return timedStatement(target.prepare(...args), tally, args[0]);",
-    "new": "return timedStatement(target.prepare(...args), tally, args[0]);",
+    "old": "          tally.n += 1;\n          return timedStatement(target.prepare(...args), tally, args[0]);",
+    "new": "          return timedStatement(target.prepare(...args), tally, args[0]);",
     "tests": [
       "test/net/scale1.test.js"
     ],
@@ -57,8 +57,8 @@
   {
     "name": "SCALE1-B-a-throwing-sink-costs-the-request",
     "file": "server-account/src/metrics.js",
-    "old": "  } catch { /* a metric never costs a request */ }",
-    "new": "  } finally { /* a metric never costs a request */ }",
+    "old": "    });\n  } catch {",
+    "new": "    });\n  } finally {",
     "tests": [
       "test/net/scale1.test.js"
     ]

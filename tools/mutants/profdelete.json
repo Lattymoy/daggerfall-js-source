@@ -2,8 +2,8 @@
   {
     "name": "PROF-DELETE-the-stores-left",
     "file": "server-account/src/realm.js",
-    "old": "    db.prepare('DELETE FROM prof_stores WHERE player = ? AND char_id = ?').bind(playerId, id),   // PROF-DELETE\n",
-    "new": "",
+    "old": "    db.prepare('DELETE FROM prof_stores WHERE player = ? AND char_id = ?').bind(playerId, id), // PROF-DELETE\n    db.prepare('DELETE FROM prof_tracks WHERE player = ? AND char_id = ?').bind(playerId, id), // PROF-DELETE",
+    "new": "    db.prepare('DELETE FROM prof_tracks WHERE player = ? AND char_id = ?').bind(playerId, id), // PROF-DELETE",
     "tests": [
       "test/server/profdelete.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PROF-DELETE-the-tracks-left",
     "file": "server-account/src/realm.js",
-    "old": "    db.prepare('DELETE FROM prof_tracks WHERE player = ? AND char_id = ?').bind(playerId, id),   // PROF-DELETE\n",
-    "new": "",
+    "old": "    db.prepare('DELETE FROM prof_tracks WHERE player = ? AND char_id = ?').bind(playerId, id), // PROF-DELETE\n    db.prepare('DELETE FROM firmament WHERE player = ? AND char_id = ?').bind(playerId, id), // AUDIT UICALM-FIRM1 L2 L2: its sky with it (firmament_sets stay - the ids' memory, so a replay is answered, never made again)",
+    "new": "    db.prepare('DELETE FROM firmament WHERE player = ? AND char_id = ?').bind(playerId, id), // AUDIT UICALM-FIRM1 L2 L2: its sky with it (firmament_sets stay - the ids' memory, so a replay is answered, never made again)",
     "tests": [
       "test/server/profdelete.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PROF-DELETE-another-characters-stores-taken",
     "file": "server-account/src/realm.js",
-    "old": "    db.prepare('DELETE FROM prof_stores WHERE player = ? AND char_id = ?').bind(playerId, id),   // PROF-DELETE",
-    "new": "    db.prepare('DELETE FROM prof_stores WHERE player = ? AND ? IS NOT NULL').bind(playerId, id),   // PROF-DELETE",
+    "old": "    db.prepare('DELETE FROM prof_stores WHERE player = ? AND char_id = ?').bind(playerId, id), // PROF-DELETE",
+    "new": "    db.prepare('DELETE FROM prof_stores WHERE player = ? AND ? IS NOT NULL').bind(playerId, id), // PROF-DELETE",
     "tests": [
       "test/server/profdelete.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PROF-DELETE-the-market-unread",
     "file": "server-account/src/realm.js",
-    "old": "  if (Number((await db.prepare(REALM_MARKET_OPEN_SQL).bind(playerId, id).first())?.n ?? 0) > 0) return { error: 'realm-market-open' };\n",
-    "new": "",
+    "old": "  if (Number((await db.prepare(REALM_MARKET_OPEN_SQL).bind(playerId, id).first())?.n ?? 0) > 0)\n    return { error: 'realm-market-open' };\n  // ACCOUNT-HOMES (2026-10-06): the homes it bought go with it (\"Deleted characters should remove their houses from",
+    "new": "  // ACCOUNT-HOMES (2026-10-06): the homes it bought go with it (\"Deleted characters should remove their houses from",
     "tests": [
       "test/server/profdelete.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PROF-DELETE-refused-after-the-objects-go",
     "file": "server-account/src/realm.js",
-    "old": "  if (Number((await db.prepare(REALM_MARKET_OPEN_SQL).bind(playerId, id).first())?.n ?? 0) > 0) return { error: 'realm-market-open' };\n",
-    "new": "  await dropCharacterObjects(bucket, playerId, id, [row.obj, row.prev]);\n  if (Number((await db.prepare(REALM_MARKET_OPEN_SQL).bind(playerId, id).first())?.n ?? 0) > 0) return { error: 'realm-market-open' };\n",
+    "old": "  if (Number((await db.prepare(REALM_MARKET_OPEN_SQL).bind(playerId, id).first())?.n ?? 0) > 0)",
+    "new": "  await dropCharacterObjects(bucket, playerId, id, [row.obj, row.prev]);\n  if (Number((await db.prepare(REALM_MARKET_OPEN_SQL).bind(playerId, id).first())?.n ?? 0) > 0)",
     "tests": [
       "test/server/profdelete.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PROF-DELETE-a-leading-bid-unread",
     "file": "server-account/src/realm.js",
-    "old": "char_id = ?2 AND state = 'high')",
-    "new": "char_id = ?2 AND state = 'won')",
+    "old": "  + (SELECT COUNT(*) FROM market_bids WHERE bidder = ?1 AND char_id = ?2 AND state = 'high')",
+    "new": "  + (SELECT COUNT(*) FROM market_bids WHERE bidder = ?1 AND char_id = ?2 AND state = 'won')",
     "tests": [
       "test/server/profdelete.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PROF-DELETE-a-buy-order-unread",
     "file": "server-account/src/realm.js",
-    "old": "  + (SELECT COUNT(*) FROM market_orders WHERE poster = ?1 AND char_id = ?2 AND state = 'open')\n",
-    "new": "",
+    "old": "  + (SELECT COUNT(*) FROM market_orders WHERE poster = ?1 AND char_id = ?2 AND state = 'open')\n  + (SELECT COUNT(*) FROM commissions WHERE poster = ?1 AND poster_char = ?2 AND state = 'open')",
+    "new": "  + (SELECT COUNT(*) FROM commissions WHERE poster = ?1 AND poster_char = ?2 AND state = 'open')",
     "tests": [
       "test/server/profdelete.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "PROF-DELETE-a-commission-unread",
     "file": "server-account/src/realm.js",
-    "old": "  + (SELECT COUNT(*) FROM commissions WHERE poster = ?1 AND poster_char = ?2 AND state = 'open')\n",
-    "new": "",
+    "old": "  + (SELECT COUNT(*) FROM commissions WHERE poster = ?1 AND poster_char = ?2 AND state = 'open')\n  + (SELECT COUNT(*) FROM market_sales WHERE buyer = ?1 AND char_id = ?2 AND kind = 'material' AND delivered = 0)",
+    "new": "  + (SELECT COUNT(*) FROM market_sales WHERE buyer = ?1 AND char_id = ?2 AND kind = 'material' AND delivered = 0)",
     "tests": [
       "test/server/profdelete.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PROF-DELETE-the-road-unread",
     "file": "server-account/src/realm.js",
-    "old": "  + (SELECT COUNT(*) FROM market_sales WHERE buyer = ?1 AND char_id = ?2 AND kind = 'material' AND delivered = 0)\n",
-    "new": "",
+    "old": "  + (SELECT COUNT(*) FROM market_sales WHERE buyer = ?1 AND char_id = ?2 AND kind = 'material' AND delivered = 0)\n  + (SELECT COUNT(*) FROM market_deliveries WHERE player = ?1 AND char_id = ?2 AND collected = 0)",
+    "new": "  + (SELECT COUNT(*) FROM market_deliveries WHERE player = ?1 AND char_id = ?2 AND collected = 0)",
     "tests": [
       "test/server/profdelete.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PROF-DELETE-a-piece-to-collect-unread",
     "file": "server-account/src/realm.js",
-    "old": "  + (SELECT COUNT(*) FROM market_deliveries WHERE player = ?1 AND char_id = ?2 AND collected = 0)\n",
-    "new": "",
+    "old": "  + (SELECT COUNT(*) FROM market_deliveries WHERE player = ?1 AND char_id = ?2 AND collected = 0)\n  + (SELECT COUNT(*) FROM market_gold WHERE player = ?1 AND char_id = ?2 AND gold > 0) AS n`;",
+    "new": "  + (SELECT COUNT(*) FROM market_gold WHERE player = ?1 AND char_id = ?2 AND gold > 0) AS n`;",
     "tests": [
       "test/server/profdelete.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PROF-DELETE-a-settled-bid-holds-it-up",
     "file": "server-account/src/realm.js",
-    "old": "char_id = ?2 AND state = 'high')",
-    "new": "char_id = ?2 AND state IN ('high', 'outbid'))",
+    "old": "  + (SELECT COUNT(*) FROM market_bids WHERE bidder = ?1 AND char_id = ?2 AND state = 'high')",
+    "new": "  + (SELECT COUNT(*) FROM market_bids WHERE bidder = ?1 AND char_id = ?2 AND state IN ('high', 'outbid'))",
     "tests": [
       "test/server/profdelete.test.js"
     ]

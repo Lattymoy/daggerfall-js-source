@@ -56,8 +56,8 @@
   {
     "name": "LEGACY7-dead-joined",
     "file": "server-account/src/realm.js",
-    "old": "played_at = (SELECT played_s FROM players WHERE id = ?2) WHERE id = ?1 AND player = ?2 AND dead_at IS NULL'",
-    "new": "played_at = (SELECT played_s FROM players WHERE id = ?2) WHERE id = ?1 AND player = ?2'",
+    "old": "      'UPDATE realm_characters SET lease = ?3, lease_at = ?4, played_at = (SELECT played_s FROM players WHERE id = ?2) WHERE id = ?1 AND player = ?2 AND dead_at IS NULL',",
+    "new": "      'UPDATE realm_characters SET lease = ?3, lease_at = ?4, played_at = (SELECT played_s FROM players WHERE id = ?2) WHERE id = ?1 AND player = ?2',",
     "tests": [
       "test/server/legacy7_service.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LEGACY7-dead-checkpointed",
     "file": "server-account/src/realm.js",
-    "old": "if (row.dead_at != null) return { error: 'dead' };   // LEGACY7: the tombstone - nothing of the dead is written again",
-    "new": "// LEGACY7: the tombstone - nothing of the dead is written again",
+    "old": "  if (row.dead_at != null) return { error: 'dead' }; // LEGACY7: the tombstone - nothing of the dead is written again",
+    "new": "  // LEGACY7: the tombstone - nothing of the dead is written again",
     "tests": [
       "test/server/legacy7_service.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "LEGACY7-dead-listed",
     "file": "server-account/src/realm.js",
-    "old": "    + ' WHERE r.player = ? AND r.dead_at IS NULL ORDER BY r.updated_at DESC LIMIT ?',",
-    "new": "    + ' WHERE r.player = ? ORDER BY r.updated_at DESC LIMIT ?',",
+    "old": "        ' WHERE r.player = ? AND r.dead_at IS NULL ORDER BY r.updated_at DESC LIMIT ?',",
+    "new": "        ' WHERE r.player = ? ORDER BY r.updated_at DESC LIMIT ?',",
     "tests": [
       "test/server/legacy7_service.test.js"
     ],
@@ -95,8 +95,8 @@
   {
     "name": "LEGACY7-dead-hold-a-slot",
     "file": "server-account/src/realm.js",
-    "old": "WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ?'\n      // AUDIT FB1029e F4",
-    "new": "WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ?) < ?'\n      // AUDIT FB1029e F4",
+    "old": "          ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, NULL, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ?' +",
+    "new": "          ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, NULL, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ?) < ?' +",
     "tests": [
       "test/server/legacy7_service.test.js"
     ],

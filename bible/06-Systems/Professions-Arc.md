@@ -6618,7 +6618,7 @@ possible. No exceptions and no band aids." The decisions below are the record's,
   (`masterLaw.js:"export function masterRecordLinesValid"`), never to today's pool: the law of the day it was made
   was the service's. MINT_V_MASTER stays 4: no deployed service ever signed the old shape, so no record needs reading.
 
-- **The service** - `masterWork.js:"export async function masterWork("`, `/v1/prof/master`: one batch, as the anvil's -
+- **The service** - `masterWork.js:"export async function"`, `/v1/prof/master`: one batch, as the anvil's -
   the rank read, the day's row, every good and catalyst held as it is spent (a Pearl jewel's own Pearl beside its three),
   the products row and signed record, the goods out a station's way, the catalysts bought first. A progression claim of
   the seated character (`progress.js` PROGRESS_ROUTES). Migration `0179_master_work.sql`. The state says whether today's

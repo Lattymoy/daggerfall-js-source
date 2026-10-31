@@ -892,8 +892,8 @@
   {
     "name": "LANE-E-SV-before-owed-dropped",
     "file": "server-account/src/npcRoll.js",
-    "old": "joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f)",
-    "new": "joinRecordable(Math.max(row.rep, line.rep + line.owed), f)",
+    "old": "      const member =\n        ranks.has(f) && (row.member || joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f));",
+    "new": "      const member = ranks.has(f) && (row.member || joinRecordable(Math.max(row.rep, line.rep + line.owed), f));",
     "tests": [
       "test/net/chap2_halls.test.js"
     ]
@@ -901,8 +901,8 @@
   {
     "name": "LANE-E-SV-min",
     "file": "server-account/src/npcRoll.js",
-    "old": "joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f)",
-    "new": "joinRecordable(Math.min(row.rep + row.owed, line.rep + line.owed), f)",
+    "old": "        ranks.has(f) && (row.member || joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f));",
+    "new": "        ranks.has(f) && (row.member || joinRecordable(Math.min(row.rep + row.owed, line.rep + line.owed), f));",
     "tests": [
       "test/net/chap2_halls.test.js"
     ]
@@ -910,8 +910,8 @@
   {
     "name": "LANE-E-SV-before-alone",
     "file": "server-account/src/npcRoll.js",
-    "old": "joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f)",
-    "new": "joinRecordable(row.rep + row.owed, f)",
+    "old": "      const member =\n        ranks.has(f) && (row.member || joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f));",
+    "new": "      const member = ranks.has(f) && (row.member || joinRecordable(row.rep + row.owed, f));",
     "tests": [
       "test/net/chap2_halls.test.js"
     ]
@@ -1128,8 +1128,8 @@
   {
     "name": "PAID-II-the-reads-payment",
     "file": "server-account/src/npcRoll.js",
-    "old": "      if (d.credited > 0) drained[f] = d.credited;\n    }\n    if (!paid.length)",
-    "new": "    }\n    if (!paid.length)",
+    "old": "        paid.push([f, { ...row, rep: d.rep, gainedDay: d.gainedDay, gained: d.gained, owed: d.owed }]);\n      if (d.credited > 0) drained[f] = d.credited;\n    }",
+    "new": "        paid.push([f, { ...row, rep: d.rep, gainedDay: d.gainedDay, gained: d.gained, owed: d.owed }]);\n    }",
     "tests": [
       "test/net/chap2_halls.test.js"
     ]
@@ -1137,8 +1137,8 @@
   {
     "name": "PAID-II-the-claims-payment",
     "file": "server-account/src/npcRoll.js",
-    "old": "      if (d.credited > 0) drained[f] = d.credited;\n    }\n    const asked",
-    "new": "    }\n    const asked",
+    "old": "      line = { ...line, rep: d.rep, gainedDay: d.gainedDay, gained: d.gained, owed: d.owed };\n      if (d.credited > 0) drained[f] = d.credited;\n    }",
+    "new": "      line = { ...line, rep: d.rep, gainedDay: d.gainedDay, gained: d.gained, owed: d.owed };\n    }",
     "tests": [
       "test/net/chap2_halls.test.js"
     ]

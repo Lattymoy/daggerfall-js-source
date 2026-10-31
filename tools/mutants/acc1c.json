@@ -2,8 +2,8 @@
   {
     "name": "ACC1c-1-the-salt-is-a-pepper",
     "file": "server-account/src/password.js",
-    "old": "  const salt = new Uint8Array(SALT_BYTES);\n  rand(salt);",
-    "new": "  const salt = new Uint8Array(SALT_BYTES);",
+    "old": "  rand(salt);\n  const out = await derive(pw, salt, iters, subtle);",
+    "new": "  const out = await derive(pw, salt, iters, subtle);",
     "tests": [
       "test/server/accountworker.test.js"
     ],
@@ -63,8 +63,8 @@
   {
     "name": "ACC1c-7-Q-is-folded-onto-zero-again",
     "file": "server-account/src/password.js",
-    "old": "    .replace(/O/g, '0').replace(/[IL]/g, '1');",
-    "new": "    .replace(/[OQ]/g, '0').replace(/[IL]/g, '1');",
+    "old": "  const s = input.toUpperCase().replace(/[\\s-]/g, '').replace(/O/g, '0').replace(/[IL]/g, '1');",
+    "new": "  const s = input.toUpperCase().replace(/[\\s-]/g, '').replace(/[OQ]/g, '0').replace(/[IL]/g, '1');",
     "tests": [
       "test/server/accountworker.test.js"
     ],

@@ -347,8 +347,8 @@
   {
     "name": "CHAP4A-ROLL-SEED",
     "file": "server-account/src/npcRoll.js",
-    "old": "rank: member ? rollBookRankOf(reported.get(f), values[f]) : null,",
-    "new": "rank: member ? reported.get(f) : null,",
+    "old": "      rank: member ? rollBookRankOf(reported.get(f), values[f]) : null,",
+    "new": "      rank: member ? reported.get(f) : null,",
     "tests": [
       "test/net/chap4a_seats.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "CHAP4A-ROLL-CLAIM",
     "file": "server-account/src/npcRoll.js",
-    "old": "rank: member ? rollBookRankOf(ranks.get(f), line.rep) : null,",
-    "new": "rank: member ? ranks.get(f) : null,",
+    "old": "        rank: member ? rollBookRankOf(ranks.get(f), line.rep) : null,",
+    "new": "        rank: member ? ranks.get(f) : null,",
     "tests": [
       "test/net/chap4a_seats.test.js"
     ]
@@ -365,8 +365,8 @@
   {
     "name": "CHAP4A-ROLL-BOOKLESS",
     "file": "server-account/src/npcRoll.js",
-    "old": "line = { ...line, rank: rollBookRankOf(line.rank, line.rep) };",
-    "new": "line = { ...line, rank: line.rank };",
+    "old": "      line = { ...line, rank: rollBookRankOf(line.rank, line.rep) };",
+    "new": "      line = { ...line, rank: line.rank };",
     "tests": [
       "test/net/chap4a_seats.test.js"
     ]
@@ -374,8 +374,8 @@
   {
     "name": "CHAP4A-DELETE-SEATS",
     "file": "server-account/src/realm.js",
-    "old": "    db.prepare('DELETE FROM npc_chapter_seats WHERE account = ? AND char_id = ?').bind(playerId, id),   // CHAP4a: and its seats (the Chronicle keeps their story)\n",
-    "new": "",
+    "old": "    db.prepare('DELETE FROM npc_chapter_seats WHERE account = ? AND char_id = ?').bind(playerId, id), // CHAP4a: and its seats (the Chronicle keeps their story)\n    db.prepare('DELETE FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId),",
+    "new": "    db.prepare('DELETE FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId),",
     "tests": [
       "test/net/chap4a_seats.test.js"
     ]

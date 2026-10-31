@@ -56,8 +56,8 @@
   {
     "name": "RENOWN1-hour-spend-matches-nothing",
     "file": "server-account/src/renownTracks.js",
-    "old": "       WHERE id = ?1\n       RETURNING renown_last_credit AS credit, (${track}) AS before, ${repeat} AS repeat, ${refused} AS refused, renown_hour_xp AS hour_xp`,",
-    "new": "       WHERE id = ?1 AND ?2 IS NULL\n       RETURNING renown_last_credit AS credit, (${track}) AS before, ${repeat} AS repeat, ${refused} AS refused, renown_hour_xp AS hour_xp`,",
+    "old": "         renown_hour = MAX(renown_hour, ?6)\n       WHERE id = ?1",
+    "new": "         renown_hour = MAX(renown_hour, ?6)\n       WHERE id = ?1 AND ?2 IS NULL",
     "tests": [
       "test/net/renown1.test.js"
     ],
@@ -111,8 +111,8 @@
   {
     "name": "RENOWN1-rose-always",
     "file": "server-account/src/renownTracks.js",
-    "old": "rose: level > renownForXp(before),",
-    "new": "rose: level >= renownForXp(before),",
+    "old": "    rose: level > renownForXp(before),",
+    "new": "    rose: level >= renownForXp(before),",
     "tests": [
       "test/net/renown1.test.js"
     ]

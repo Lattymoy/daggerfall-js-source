@@ -415,8 +415,8 @@
   {
     "name": "AINT14-RANK-ROUNDED-WRONG",
     "file": "server-account/src/review.js",
-    "old": "Math.min(n - 1, Math.ceil(q * n) - 1)",
-    "new": "Math.min(n - 1, Math.floor(q * n))",
+    "old": "  for (const q of MEASURE_QUANTILES) quantiles.push([q, n ? await at(Math.min(n - 1, Math.ceil(q * n) - 1)) : null]);",
+    "new": "  for (const q of MEASURE_QUANTILES) quantiles.push([q, n ? await at(Math.min(n - 1, Math.floor(q * n))) : null]);",
     "tests": [
       "test/net/int_lane3_audit.test.js",
       "test/net/int12_body_relay.test.js",

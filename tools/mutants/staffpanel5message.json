@@ -232,8 +232,8 @@
   {
     "name": "STAFF-PANEL5-MESSAGE-hear-dropped",
     "file": "server-account/src/sanctions.js",
-    "old": "    else hear?.(said);\n",
-    "new": "",
+    "old": "    else hear?.(said);\n    return res.ok && said?.ok !== false;",
+    "new": "    return res.ok && said?.ok !== false;",
     "why": "the hub's count never read: every message Sent",
     "tests": [
       "test/server/staffpanel5message.test.js"

@@ -2,8 +2,8 @@
   {
     "name": "STAFF-PANEL2-FIX-take-twice",
     "file": "server-account/src/safety.js",
-    "old": "AND status = 'open' AND (act_click IS NULL OR act_at < ?3 - ${CASE_ACT_S})",
-    "new": "AND status = 'open'",
+    "old": "        `UPDATE mod_cases SET act_click = ?2, act_at = ?3 WHERE id = ?1 AND status = 'open' AND (act_click IS NULL OR act_at < ?3 - ${CASE_ACT_S})",
+    "new": "        `UPDATE mod_cases SET act_click = ?2, act_at = ?3 WHERE id = ?1 AND status = 'open'",
     "why": "a case another act took is taken again - two strikes on one case",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "STAFF-PANEL2-FIX-repeat-unread",
     "file": "server-account/src/safety.js",
-    "old": "    click ? db.prepare('SELECT 1 AS y FROM mod_actions WHERE click = ?1')",
-    "new": "    false ? db.prepare('SELECT 1 AS y FROM mod_actions WHERE click = ?1')",
+    "old": "    click ? db.prepare('SELECT 1 AS y FROM mod_actions WHERE click = ?1').bind(click).first() : null,",
+    "new": "    false ? db.prepare('SELECT 1 AS y FROM mod_actions WHERE click = ?1').bind(click).first() : null,",
     "why": "a press sent twice is not known for the first",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "STAFF-PANEL2-FIX-case-of-another",
     "file": "server-account/src/safety.js",
-    "old": "'SELECT * FROM mod_cases WHERE id = ?1 AND target = ?2'",
-    "new": "'SELECT * FROM mod_cases WHERE id = ?1 AND ?2 IS NOT NULL'",
+    "old": "          ? db.prepare('SELECT * FROM mod_cases WHERE id = ?1 AND target = ?2').bind(ask.caseId, row.id).first()",
+    "new": "          ? db.prepare('SELECT * FROM mod_cases WHERE id = ?1 AND ?2 IS NOT NULL').bind(ask.caseId, row.id).first()",
     "why": "a case named that is another account's",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "STAFF-PANEL2-FIX-reread-words",
     "file": "server-account/src/safety.js",
-    "old": "now?.status === 'open' ? 'case-acted' : 'case-closed'",
-    "new": "now?.status === 'open' ? 'case-closed' : 'case-acted'",
+    "old": "              ? 'case-acted'\n              : 'case-closed',",
+    "new": "              ? 'case-closed'\n              : 'case-acted',",
     "why": "an act in flight said as done, a done case as in flight",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "STAFF-PANEL2-FIX-holder-refused",
     "file": "server-account/src/safety.js",
-    "old": "      AND (claimed_by IS ?4 OR NOT ${claimHeldSql('mod_cases', 3)})`)",
-    "new": "      AND (claimed_by IS NULL OR NOT ${claimHeldSql('mod_cases', 3)})`)",
+    "old": "      AND (claimed_by IS ?4 OR NOT ${claimHeldSql('mod_cases', 3)})`,",
+    "new": "      AND (claimed_by IS NULL OR NOT ${claimHeldSql('mod_cases', 3)})`,",
     "why": "the claim's own holder refused at the game's door",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "STAFF-PANEL2-FIX-open-case-one-kind",
     "file": "server-account/src/safety.js",
-    "old": "discordOn(env) ? 'due' : 'off', kind).run();",
-    "new": "discordOn(env) ? 'due' : 'off', 'chat').run();",
+    "old": "      kind,",
+    "new": "      'chat',",
     "why": "a spawn case opened as a chat case",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "STAFF-PANEL2-FIX-game-list-spawn",
     "file": "server-account/src/safety.js",
-    "old": "    AND (c.kind = 'chat' OR ?2 = 1) ORDER BY c.credible DESC",
-    "new": "    AND (1 OR ?2 = 1) ORDER BY c.credible DESC",
+    "old": "    AND (c.kind = 'chat' OR ?2 = 1) ORDER BY c.credible DESC, c.reports DESC, c.updated_at DESC LIMIT ?1`,",
+    "new": "    AND (1 OR ?2 = 1) ORDER BY c.credible DESC, c.reports DESC, c.updated_at DESC LIMIT ?1`,",
     "why": "a Moderator's list in the game shows spawn cases",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "STAFF-PANEL2-FIX-game-case-spawn",
     "file": "server-account/src/safety.js",
-    "old": "AND (?2 IS NULL OR id = ?2) AND (kind = 'chat' OR ?3 = 1)",
-    "new": "AND (?2 IS NULL OR id = ?2) AND (1 OR ?3 = 1)",
+    "old": "      `SELECT * FROM mod_cases WHERE target = ?1 AND status = 'open' AND (?2 IS NULL OR id = ?2) AND (kind = 'chat' OR ?3 = 1)",
+    "new": "      `SELECT * FROM mod_cases WHERE target = ?1 AND status = 'open' AND (?2 IS NULL OR id = ?2) AND (1 OR ?3 = 1)",
     "why": "a Moderator reads a spawn case in the game",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "STAFF-PANEL2-FIX-fallback-spawn",
     "file": "server-account/src/safety.js",
-    "old": "WHERE target = ?1 AND status = 'open' AND (kind = 'chat' OR ?2 = 1)\n      ORDER BY",
-    "new": "WHERE target = ?1 AND status = 'open' AND (1 OR ?2 = 1)\n      ORDER BY",
+    "old": "              `SELECT * FROM mod_cases WHERE target = ?1 AND status = 'open' AND (kind = 'chat' OR ?2 = 1)",
+    "new": "              `SELECT * FROM mod_cases WHERE target = ?1 AND status = 'open' AND (1 OR ?2 = 1)",
     "why": "a Moderator's act that names no case takes a spawn case",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "STAFF-PANEL2-FIX-fallback-no-dev",
     "file": "server-account/src/safety.js",
-    "old": "      ORDER BY kind = 'chat' DESC LIMIT 1`).bind(row.id, isDeveloper(actor, env) ? 1 : 0).first(),",
-    "new": "      ORDER BY kind = 'chat' DESC LIMIT 1`).bind(row.id, 0).first(),",
+    "old": "            .bind(row.id, isDeveloper(actor, env) ? 1 : 0)",
+    "new": "            .bind(row.id, 0)",
     "why": "an Admin's act in the game misses the spawn case it was shown",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "STAFF-PANEL2-FIX-unban-admin-unguarded",
     "file": "server-account/src/sanctions.js",
-    "old": "  if (row.ban_admin === 1 && !isDeveloper(actor, env)) return { error: 'admin-sanction' };",
-    "new": "  if (false) return { error: 'admin-sanction' };",
+    "old": "  if (row.ban_admin === 1 && !isDeveloper(actor, env)) return { error: 'admin-sanction' }; // STAFF-PANEL2-FIX: an Admin's ban, an Admin's to lift",
+    "new": "  if (false) return { error: 'admin-sanction' }; // STAFF-PANEL2-FIX: an Admin's ban, an Admin's to lift",
     "why": "a Moderator lifts an Admin's ban",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "STAFF-PANEL2-FIX-ban-setter-unwritten",
     "file": "server-account/src/sanctions.js",
-    "old": "banned_by = CASE WHEN ?5 = 1 THEN banned_by ELSE ?4 END",
-    "new": "banned_by = CASE WHEN ?5 = 1 THEN banned_by ELSE 'x' || ?4 END",
+    "old": "        `UPDATE players SET banned_until = ?1, ban_reason = ?2, banned_by = CASE WHEN ?5 = 1 THEN banned_by ELSE ?4 END,",
+    "new": "        `UPDATE players SET banned_until = ?1, ban_reason = ?2, banned_by = CASE WHEN ?5 = 1 THEN banned_by ELSE 'x' || ?4 END,",
     "why": "who set the ban not kept",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -222,8 +222,8 @@
   {
     "name": "STAFF-PANEL2-FIX-ban-admin-unwritten",
     "file": "server-account/src/sanctions.js",
-    "old": "keptOld ? 1 : 0, admin || adminHeld ? 1 : 0)",
-    "new": "keptOld ? 1 : 0, adminHeld ? 1 : 0)",
+    "old": "      .bind(until, why, row.id, actor.id, keptOld ? 1 : 0, admin || adminHeld ? 1 : 0),",
+    "new": "      .bind(until, why, row.id, actor.id, keptOld ? 1 : 0, adminHeld ? 1 : 0),",
     "why": "an Admin's ban not marked an Admin's",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -232,8 +232,8 @@
   {
     "name": "STAFF-PANEL2-FIX-unban-leaves-admin",
     "file": "server-account/src/sanctions.js",
-    "old": "banned_by = NULL, ban_admin = NULL WHERE id = ?1",
-    "new": "banned_by = NULL WHERE id = ?1",
+    "old": "      .prepare(\n        'UPDATE players SET banned_until = NULL, ban_reason = NULL, banned_by = NULL, ban_admin = NULL WHERE id = ?1',\n      )",
+    "new": "      .prepare('UPDATE players SET banned_until = NULL, ban_reason = NULL, banned_by = NULL WHERE id = ?1')",
     "why": "a lifted ban still an Admin's",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -282,8 +282,8 @@
   {
     "name": "STAFF-PANEL2-FIX-claim-outlives-session",
     "file": "server-account/src/safety.js",
-    "old": "\n  AND EXISTS (SELECT 1 FROM staff_sessions cs WHERE cs.token_hash = ${t}.claim_session AND cs.expires_at > ?${n} AND cs.last_act + ${STAFF_IDLE_S} > ?${n}))`;",
-    "new": ")`;",
+    "old": "export const claimHeldSql = (\n  /** @type {string} */ t,\n  /** @type {number} */ n,\n) => `(${t}.claimed_by IS NOT NULL AND ${t}.claim_until > ?${n}\n  AND EXISTS (SELECT 1 FROM staff_sessions cs WHERE cs.token_hash = ${t}.claim_session AND cs.expires_at > ?${n} AND cs.last_act + ${STAFF_IDLE_S} > ?${n}))`;",
+    "new": "export const claimHeldSql = (/** @type {string} */ t, /** @type {number} */ n) =>\n  `(${t}.claimed_by IS NOT NULL AND ${t}.claim_until > ?${n})`;",
     "why": "a claim stands after its session ended",
     "tests": [
       "test/server/staffpanel2fix.test.js",
@@ -293,8 +293,8 @@
   {
     "name": "STAFF-PANEL2-FIX-claim-outlives-idle",
     "file": "server-account/src/safety.js",
-    "old": " AND cs.last_act + ${STAFF_IDLE_S} > ?${n}))`;",
-    "new": "))`;",
+    "old": "  AND EXISTS (SELECT 1 FROM staff_sessions cs WHERE cs.token_hash = ${t}.claim_session AND cs.expires_at > ?${n} AND cs.last_act + ${STAFF_IDLE_S} > ?${n}))`;",
+    "new": "  AND EXISTS (SELECT 1 FROM staff_sessions cs WHERE cs.token_hash = ${t}.claim_session AND cs.expires_at > ?${n}))`;",
     "why": "a claim stands while its session is idle past STAFF_IDLE_S",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -303,8 +303,8 @@
   {
     "name": "STAFF-PANEL2-FIX-claim-outlives-life",
     "file": "server-account/src/safety.js",
-    "old": "cs.token_hash = ${t}.claim_session AND cs.expires_at > ?${n} AND",
-    "new": "cs.token_hash = ${t}.claim_session AND",
+    "old": "  AND EXISTS (SELECT 1 FROM staff_sessions cs WHERE cs.token_hash = ${t}.claim_session AND cs.expires_at > ?${n} AND cs.last_act + ${STAFF_IDLE_S} > ?${n}))`;",
+    "new": "  AND EXISTS (SELECT 1 FROM staff_sessions cs WHERE cs.token_hash = ${t}.claim_session AND cs.last_act + ${STAFF_IDLE_S} > ?${n}))`;",
     "why": "a claim stands past its session's whole life",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -523,8 +523,8 @@
   {
     "name": "STAFF-PANEL2-FIX-R1-lease-never-lapses",
     "file": "server-account/src/safety.js",
-    "old": "(act_click IS NULL OR act_at < ?3 - ${CASE_ACT_S})",
-    "new": "(act_click IS NULL)",
+    "old": "        `UPDATE mod_cases SET act_click = ?2, act_at = ?3 WHERE id = ?1 AND status = 'open' AND (act_click IS NULL OR act_at < ?3 - ${CASE_ACT_S})",
+    "new": "        `UPDATE mod_cases SET act_click = ?2, act_at = ?3 WHERE id = ?1 AND status = 'open' AND (act_click IS NULL)",
     "why": "a take nobody gave back holds the case for good (review finding 1)",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -533,8 +533,8 @@
   {
     "name": "STAFF-PANEL2-FIX-R1-lease-lapses-at-once",
     "file": "server-account/src/safety.js",
-    "old": "act_at < ?3 - ${CASE_ACT_S}",
-    "new": "act_at <= ?3",
+    "old": "        `UPDATE mod_cases SET act_click = ?2, act_at = ?3 WHERE id = ?1 AND status = 'open' AND (act_click IS NULL OR act_at < ?3 - ${CASE_ACT_S})",
+    "new": "        `UPDATE mod_cases SET act_click = ?2, act_at = ?3 WHERE id = ?1 AND status = 'open' AND (act_click IS NULL OR act_at <= ?3)",
     "why": "an act in flight loses its case to the next press",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -543,8 +543,8 @@
   {
     "name": "STAFF-PANEL2-FIX-R1-throw-unwritten",
     "file": "server-account/src/safety.js",
-    "old": "      await write(ask.act, at.target, detail(null, {",
-    "new": "      if (false) await write(ask.act, at.target, detail(null, {",
+    "old": "      await write(\n        ask.act,\n        at.target,\n        detail(null, {\n          error: String(/** @type {any} */ (e)?.message ?? e).slice(0, 200),\n          ...(at.landed ? { landed: true } : {}),\n        }),\n        { outcome: 'failed' },\n      )\n        .run()\n        .catch(() => {});",
+    "new": "      if (false)\n        await write(\n          ask.act,\n          at.target,\n          detail(null, {\n            error: String(/** @type {any} */ (e)?.message ?? e).slice(0, 200),\n            ...(at.landed ? { landed: true } : {}),\n          }),\n          { outcome: 'failed' },\n        )\n          .run()\n          .catch(() => {});",
     "why": "an act that threw leaves no row",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -563,8 +563,8 @@
   {
     "name": "STAFF-PANEL2-FIX-R2-refused-not-first",
     "file": "server-account/src/safety.js",
-    "old": "const first = !at.landed && at.click ?",
-    "new": "const first = false && at.click ?",
+    "old": "      !at.landed && at.click",
+    "new": "      false && at.click",
     "why": "the second of two same presses throws instead of being answered as the first",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -573,8 +573,8 @@
   {
     "name": "STAFF-PANEL2-FIX-R3-doors-unwritten",
     "file": "server-account/src/safety.js",
-    "old": "  await write(ask.act, at.target, detail(r), {",
-    "new": "  if (audit) await write(ask.act, at.target, detail(r), {",
+    "old": "  await write(ask.act, at.target, detail(r), {\n    outcome: r.error ? (ACT_DENIED.includes(r.error) ? 'denied' : 'failed') : 'ok',\n  }).run();",
+    "new": "  if (audit)\n    await write(ask.act, at.target, detail(r), {\n      outcome: r.error ? (ACT_DENIED.includes(r.error) ? 'denied' : 'failed') : 'ok',\n    }).run();",
     "why": "the game's and Discord's acts never reach the audit log (review finding 3)",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -583,8 +583,8 @@
   {
     "name": "STAFF-PANEL2-FIX-R3-door-unnamed",
     "file": "server-account/src/safety.js",
-    "old": "door: ask.from ?? null",
-    "new": "door: null",
+    "old": "    door: ask.from ?? null,",
+    "new": "    door: null,",
     "why": "a row that does not say which door acted",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -593,8 +593,8 @@
   {
     "name": "STAFF-PANEL2-FIX-R3-denied-as-failed",
     "file": "server-account/src/safety.js",
-    "old": "ACT_DENIED.includes(r.error) ? 'denied' : 'failed'",
-    "new": "'failed'",
+    "old": "  await write(ask.act, at.target, detail(r), {\n    outcome: r.error ? (ACT_DENIED.includes(r.error) ? 'denied' : 'failed') : 'ok',\n  }).run();",
+    "new": "  await write(ask.act, at.target, detail(r), { outcome: r.error ? 'failed' : 'ok' }).run();",
     "why": "a role's or a claim's refusal written as a failure",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -603,8 +603,8 @@
   {
     "name": "STAFF-PANEL2-FIX-R3-claimed-not-denied",
     "file": "server-account/src/safety.js",
-    "old": "Object.freeze(['staff-claimed', 'not-developer', 'admin-sanction'])",
-    "new": "Object.freeze(['not-developer', 'admin-sanction'])",
+    "old": "const ACT_DENIED = Object.freeze(['staff-claimed', 'not-developer', 'admin-sanction']);",
+    "new": "const ACT_DENIED = Object.freeze(['not-developer', 'admin-sanction']);",
     "why": "a claim's refusal written as a failure",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -613,8 +613,8 @@
   {
     "name": "STAFF-PANEL2-FIX-R3-spawn-not-denied",
     "file": "server-account/src/safety.js",
-    "old": "Object.freeze(['staff-claimed', 'not-developer', 'admin-sanction'])",
-    "new": "Object.freeze(['staff-claimed', 'admin-sanction'])",
+    "old": "const ACT_DENIED = Object.freeze(['staff-claimed', 'not-developer', 'admin-sanction']);",
+    "new": "const ACT_DENIED = Object.freeze(['staff-claimed', 'admin-sanction']);",
     "why": "a kind's refusal written as a failure",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -623,8 +623,8 @@
   {
     "name": "STAFF-PANEL2-FIX-R3-admin-not-denied",
     "file": "server-account/src/safety.js",
-    "old": "Object.freeze(['staff-claimed', 'not-developer', 'admin-sanction'])",
-    "new": "Object.freeze(['staff-claimed', 'not-developer'])",
+    "old": "const ACT_DENIED = Object.freeze(['staff-claimed', 'not-developer', 'admin-sanction']);",
+    "new": "const ACT_DENIED = Object.freeze(['staff-claimed', 'not-developer']);",
     "why": "an Admin's sanction's refusal written as a failure",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -633,8 +633,8 @@
   {
     "name": "STAFF-PANEL2-FIX-R3-repeat-unsaid",
     "file": "server-account/src/safety.js",
-    "old": "...(r?.repeat ? { repeat: true } : {})",
-    "new": "...({})",
+    "old": "    ...(r?.repeat ? { repeat: true } : {}),",
+    "new": "    ...{},",
     "why": "a press sent again reads as a second act",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -713,8 +713,8 @@
   {
     "name": "STAFF-PANEL2-FIX-R3-game-dismiss-door",
     "file": "server-account/src/safety.js",
-    "old": "caseId, from: 'in the game' }, { push: (o) => pushLaw(env, fetchFn, o) }",
-    "new": "caseId }, { push: (o) => pushLaw(env, fetchFn, o) }",
+    "old": ") =>\n  modAct(\n    ctx,\n    actor,\n    env,\n    { act: 'dismiss', target, name, caseId, from: 'in the game' },\n    { push: (o) => pushLaw(env, fetchFn, o) },\n  );",
+    "new": ") => modAct(ctx, actor, env, { act: 'dismiss', target, name, caseId }, { push: (o) => pushLaw(env, fetchFn, o) });",
     "why": "the game's dismiss's row names no door",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -743,8 +743,8 @@
   {
     "name": "STAFF-PANEL2-FIX-B3-kept-apart",
     "file": "server-account/src/safety.js",
-    "old": "await db.batch([actionStatement(db, { target: row.id, kind: 'mute', until: r.until, reason: reasonOf(ask.reason), actor: actor.id, actorName: by, caseId, click, at: nowS }), ...closing(r, mutedTill(r))]);",
-    "new": "await actionStatement(db, { target: row.id, kind: 'mute', until: r.until, reason: reasonOf(ask.reason), actor: actor.id, actorName: by, caseId, click, at: nowS }).run(); await db.batch(closing(r, mutedTill(r)));",
+    "old": "        await db.batch([\n          actionStatement(db, {\n            target: row.id,\n            kind: 'mute',\n            until: r.until,\n            reason: reasonOf(ask.reason),\n            actor: actor.id,\n            actorName: by,\n            caseId,\n            click,\n            at: nowS,\n          }),\n          ...closing(r, mutedTill(r)),\n        ]);",
+    "new": "        await actionStatement(db, {\n          target: row.id,\n          kind: 'mute',\n          until: r.until,\n          reason: reasonOf(ask.reason),\n          actor: actor.id,\n          actorName: by,\n          caseId,\n          click,\n          at: nowS,\n        }).run();\n        await db.batch(closing(r, mutedTill(r)));",
     "why": "a button's kept mute recorded apart from its case's close",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -753,8 +753,8 @@
   {
     "name": "STAFF-PANEL2-FIX-B4-dismiss-apart",
     "file": "server-account/src/safety.js",
-    "old": "    await db.batch([resolveCase(db, { caseId, status: 'dismissed', by: displayName(actor), resolution: 'no action', nowS }),\n      actionStatement(db, { target: row.id, kind: 'dismiss', actor: actor.id, actorName: by, caseId, click, at: nowS })]);",
-    "new": "    await resolveCase(db, { caseId, status: 'dismissed', by: displayName(actor), resolution: 'no action', nowS }).run();\n    await actionStatement(db, { target: row.id, kind: 'dismiss', actor: actor.id, actorName: by, caseId, click, at: nowS }).run();",
+    "old": "    await db.batch([\n      resolveCase(db, { caseId, status: 'dismissed', by: displayName(actor), resolution: 'no action', nowS }),\n      actionStatement(db, { target: row.id, kind: 'dismiss', actor: actor.id, actorName: by, caseId, click, at: nowS }),\n    ]);",
+    "new": "    await resolveCase(db, { caseId, status: 'dismissed', by: displayName(actor), resolution: 'no action', nowS }).run();\n    await actionStatement(db, {\n      target: row.id,\n      kind: 'dismiss',\n      actor: actor.id,\n      actorName: by,\n      caseId,\n      click,\n      at: nowS,\n    }).run();",
     "why": "a dismiss closes its case apart from its record",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -763,8 +763,8 @@
   {
     "name": "STAFF-PANEL2-FIX-B5-ban-unclosed",
     "file": "server-account/src/safety.js",
-    "old": "also: (x) => closing(x, 'banned') })",
-    "new": "also: () => [] })",
+    "old": "            also: (x) => closing(x, 'banned'),",
+    "new": "            also: () => [],",
     "why": "a ban leaves its case open",
     "tests": [
       "test/server/staffpanel2fix.test.js"

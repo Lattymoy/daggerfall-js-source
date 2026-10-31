@@ -132,8 +132,8 @@
   {
     "name": "SCALE4h-service-spend-unreturned",
     "file": "server-account/src/renownTracks.js",
-    "old": ", ${refused} AS refused, renown_hour_xp AS hour_xp`,",
-    "new": ", ${refused} AS refused`,",
+    "old": "       RETURNING renown_last_credit AS credit, (${track}) AS before, ${repeat} AS repeat, ${refused} AS refused, renown_hour_xp AS hour_xp`,",
+    "new": "       RETURNING renown_last_credit AS credit, (${track}) AS before, ${repeat} AS repeat, ${refused} AS refused`,",
     "tests": [
       "test/server/scale4h.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "SCALE4h-table-uncharged",
     "file": "server-account/src/metrics.js",
-    "old": "  if (t) { const by = tally.tables ??= {}; by[t] = (by[t] ?? 0) + m.rows_written; }",
-    "new": "",
+    "old": "  if (t) {\n    const by = (tally.tables ??= {});\n    by[t] = (by[t] ?? 0) + m.rows_written;\n  }\n}",
+    "new": "}",
     "tests": [
       "test/server/scale4h.test.js"
     ],
@@ -232,7 +232,7 @@
   {
     "name": "SCALE4h-batch-one-table",
     "file": "server-account/src/metrics.js",
-    "old": "            if (Array.isArray(rs)) rs.forEach((r, i) => noteMeta(r, tally, Array.isArray(list) ? SQL.get(list[i]) : null));",
+    "old": "            if (Array.isArray(rs))\n              rs.forEach((r, i) => noteMeta(r, tally, Array.isArray(list) ? SQL.get(list[i]) : null));",
     "new": "            if (Array.isArray(rs)) rs.forEach((r) => noteMeta(r, tally, Array.isArray(list) ? SQL.get(list[0]) : null));",
     "tests": [
       "test/server/scale4h.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "SCALE4h-blob-order",
     "file": "server-account/src/metrics.js",
-    "old": "  .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, 8)",
-    "new": "  .slice(0, 8)",
+    "old": "    .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))\n    .slice(0, 8)",
+    "new": "    .slice(0, 8)",
     "tests": [
       "test/server/scale4h.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "SCALE4h-hot-doubles-dropped",
     "file": "server-account/src/metrics.js",
-    "old": "      doubles: [Date.now() - started, res.status, tally.n, tally.rw, tally.ms, tally.rr, tally.replica,   // SCALE4f: rows written, D1's wait, rows read, a replica's statements\n        ...HOT_TABLES.map((t) => tally.tables[t] ?? 0)],",
-    "new": "      doubles: [Date.now() - started, res.status, tally.n, tally.rw, tally.ms, tally.rr, tally.replica],",
+    "old": "      doubles: [\n        Date.now() - started,\n        res.status,\n        tally.n,\n        tally.rw,\n        tally.ms,\n        tally.rr,\n        tally.replica, // SCALE4f: rows written, D1's wait, rows read, a replica's statements\n        ...HOT_TABLES.map((t) => tally.tables[t] ?? 0),\n      ], // SCALE4h: the hot rows, by table",
+    "new": "      doubles: [Date.now() - started, res.status, tally.n, tally.rw, tally.ms, tally.rr, tally.replica], // SCALE4h: the hot rows, by table",
     "tests": [
       "test/server/scale4h.test.js"
     ],
@@ -272,8 +272,8 @@
   {
     "name": "SCALE4h-parts-after-serve",
     "file": "server-account/src/metrics.js",
-    "old": "  const parts = typeof said.parts === 'string' ? said.parts : '';   // AUDIT SCALE II A-3: the service's own word on the body it read\n",
-    "new": "  const parts = '';\n",
+    "old": "  const parts = typeof said.parts === 'string' ? said.parts : ''; // AUDIT SCALE II A-3: the service's own word on the body it read",
+    "new": "  const parts = '';",
     "tests": [
       "test/server/scale4h.test.js"
     ],

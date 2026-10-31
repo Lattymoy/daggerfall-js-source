@@ -29,8 +29,8 @@
   {
     "name": "POI4B-another-builder-changes-it",
     "file": "server-account/src/poi.js",
-    "old": "      if (had.by !== player.id && !roles.approver) return { error: 'poi-not-author' };\n",
-    "new": "\n",
+    "old": "      if (had.by !== player.id && !roles.approver) return { error: 'poi-not-author' };",
+    "new": "",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ],
@@ -39,8 +39,8 @@
   {
     "name": "POI4B-taken-off-by-anyone",
     "file": "server-account/src/poi.js",
-    "old": "  if (r.by !== player.id && !roles.approver) return { error: 'poi-not-author' };\n  const w = await ctx.db.prepare('UPDATE poi_shelf SET gone_at",
-    "new": "  const w = await ctx.db.prepare('UPDATE poi_shelf SET gone_at",
+    "old": "  if (r.by !== player.id && !roles.approver) return { error: 'poi-not-author' };\n  const w = await ctx.db",
+    "new": "  const w = await ctx.db",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ],
@@ -49,8 +49,8 @@
   {
     "name": "POI4B-a-taken-off-entry-listed",
     "file": "server-account/src/poi.js",
-    "old": "    WHERE gone_at IS NULL ORDER BY updated_at DESC, id",
-    "new": "    ORDER BY updated_at DESC, id",
+    "old": "    WHERE gone_at IS NULL ORDER BY updated_at DESC, id LIMIT ${POI_SHELF_LIST}`,",
+    "new": "    ORDER BY updated_at DESC, id LIMIT ${POI_SHELF_LIST}`,",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "POI4B-the-triangles-uncounted",
     "file": "server-account/src/poi.js",
-    "old": "(Number(facts.get(part.mesh)?.triangles) || 0)",
-    "new": "0",
+    "old": "  const triangles = item.parts.reduce((n, part) => n + (Number(facts.get(part.mesh)?.triangles) || 0), 0);",
+    "new": "  const triangles = item.parts.reduce((n, part) => n + 0, 0);",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "POI4B-the-count-unbounded",
     "file": "server-account/src/poi.js",
-    "old": "WHERE by = ?8 AND gone_at IS NULL) < ${POI_SHELF_MAX}",
-    "new": "WHERE by = ?8 AND gone_at IS NULL) < ${POI_SHELF_MAX * 2}",
+    "old": "      WHERE (SELECT COUNT(*) FROM poi_shelf WHERE by = ?8 AND gone_at IS NULL) < ${POI_SHELF_MAX} AND (SELECT COUNT(*) FROM poi_shelf WHERE by = ?8) < ${POI_SHELF_EVER}",
+    "new": "      WHERE (SELECT COUNT(*) FROM poi_shelf WHERE by = ?8 AND gone_at IS NULL) < ${POI_SHELF_MAX * 2} AND (SELECT COUNT(*) FROM poi_shelf WHERE by = ?8) < ${POI_SHELF_EVER}",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ],

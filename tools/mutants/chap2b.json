@@ -92,8 +92,8 @@
   {
     "name": "CHAP2B-SWITCH",
     "file": "server-account/src/npcReceipts.js",
-    "old": "    if (!chaptersOpenFor(player, env)) return { counted: false, why: 'chapters-closed' };\n    if (!RECEIPT_KINDS",
-    "new": "    if (!RECEIPT_KINDS",
+    "old": "    if (!chaptersOpenFor(player, env)) return { counted: false, why: 'chapters-closed' };\n    if (!RECEIPT_KINDS.includes(kind) || id == null || id === '') return { counted: false, why: 'no-receipt' };",
+    "new": "    if (!RECEIPT_KINDS.includes(kind) || id == null || id === '') return { counted: false, why: 'no-receipt' };",
     "tests": [
       "test/net/chap2b_receipts.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "CHAP2B-MEMBERS-PLAYER",
     "file": "server-account/src/npcReceipts.js",
-    "old": "WHERE char_id = ?1 AND player = ?2 AND member = 1 AND dormant = 0\n    AND EXISTS",
-    "new": "WHERE char_id = ?1 AND member = 1 AND dormant = 0\n    AND EXISTS",
+    "old": "      `SELECT faction_id FROM npc_roll WHERE char_id = ?1 AND player = ?2 AND member = 1 AND dormant = 0",
+    "new": "      `SELECT faction_id FROM npc_roll WHERE char_id = ?1 AND member = 1 AND dormant = 0",
     "tests": [
       "test/net/chap2b_receipts.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "CHAP2B-MEMBERS-DEAD",
     "file": "server-account/src/npcReceipts.js",
-    "old": "\n    AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?1 AND player = ?2 AND dead_at IS NULL) ORDER BY faction_id`).bind(character, player).all();",
-    "new": " ORDER BY faction_id`).bind(character, player).all();",
+    "old": "      `SELECT faction_id FROM npc_roll WHERE char_id = ?1 AND player = ?2 AND member = 1 AND dormant = 0\n    AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?1 AND player = ?2 AND dead_at IS NULL) ORDER BY faction_id`,",
+    "new": "      `SELECT faction_id FROM npc_roll WHERE char_id = ?1 AND player = ?2 AND member = 1 AND dormant = 0 ORDER BY faction_id`,",
     "tests": [
       "test/net/chap2b_receipts.test.js",
       "test/net/audit_chap3.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "CHAP2B-STOOD",
     "file": "server-account/src/npcReceipts.js",
-    "old": "    if (credits.every((c) => stood.has(`${c.faction}|${c.ref}`))) return { counted: false, why: 'credited' };\n",
-    "new": "",
+    "old": "    if (credits.every((c) => stood.has(`${c.faction}|${c.ref}`))) return { counted: false, why: 'credited' };\n    const tag = mintTag(rand);",
+    "new": "    const tag = mintTag(rand);",
     "tests": [
       "test/net/chap2b_receipts.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "CHAP2B-TAG",
     "file": "server-account/src/npcReceipts.js",
-    "old": "        SELECT ?1, ?3, ?4, ?5, ?6, ?2, ?7 WHERE ${tagged}`)",
-    "new": "        SELECT ?1, ?3, ?4, ?5, ?6, ?2, ?7`)",
+    "old": "        SELECT ?1, ?3, ?4, ?5, ?6, ?2, ?7 WHERE ${tagged}`,",
+    "new": "        SELECT ?1, ?3, ?4, ?5, ?6, ?2, ?7`,",
     "tests": [
       "test/net/chap2b_receipts.test.js"
     ]
@@ -140,8 +140,8 @@
   {
     "name": "CHAP2B-CAP",
     "file": "server-account/src/npcReceipts.js",
-    "old": "db.prepare(`UPDATE npc_roll SET rep = MIN(?4, rep + ${sum}),",
-    "new": "db.prepare(`UPDATE npc_roll SET rep = MAX(?4, rep + ${sum}),",
+    "old": "            `UPDATE npc_roll SET rep = MIN(?4, rep + ${sum}),",
+    "new": "            `UPDATE npc_roll SET rep = MAX(?4, rep + ${sum}),",
     "tests": [
       "test/net/chap2b_receipts.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "CHAP2B-OWED",
     "file": "server-account/src/npcReceipts.js",
-    "old": "        owed = MAX(0, MIN(owed, ?4 - MIN(?4, rep + ${sum}))) WHERE",
-    "new": "        owed = owed WHERE",
+    "old": "        owed = MAX(0, MIN(owed, ?4 - MIN(?4, rep + ${sum}))) WHERE char_id = ?1 AND faction_id = ?3 AND ${tagged}`,",
+    "new": "        owed = owed WHERE char_id = ?1 AND faction_id = ?3 AND ${tagged}`,",
     "tests": [
       "test/net/chap2b_receipts.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "CHAP2B-CATCH",
     "file": "server-account/src/npcReceipts.js",
-    "old": "  } catch {\n    return { counted: false, why: 'server' };\n  }",
-    "new": "  } catch (e) {\n    throw e;\n  }",
+    "old": "  } catch {\n    return { counted: false, why: 'server' };",
+    "new": "  } catch (e) {\n    throw e;",
     "tests": [
       "test/net/chap2b_receipts.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "CHAP2B-ASKS-HIDDEN",
     "file": "server-account/src/npcReceipts.js",
-    "old": "    if (hallHidden(f) && !members.has(f)) continue;\n",
-    "new": "",
+    "old": "    if (hallHidden(f) && !members.has(f)) continue;\n    for (const kind of hallReceiptKindsOf(f))",
+    "new": "    for (const kind of hallReceiptKindsOf(f))",
     "tests": [
       "test/net/chap2b_receipts.test.js"
     ]
@@ -176,8 +176,8 @@
   {
     "name": "CHAP2B-ASKS-DONE",
     "file": "server-account/src/npcReceipts.js",
-    "old": "done: done.has(`${f}|${receiptWritRef(kind, day)}`) });",
-    "new": "done: false });",
+    "old": "    for (const kind of hallReceiptKindsOf(f))\n      out.push({ faction: f, kind, member: members.has(f), done: done.has(`${f}|${receiptWritRef(kind, day)}`) });",
+    "new": "    for (const kind of hallReceiptKindsOf(f)) out.push({ faction: f, kind, member: members.has(f), done: false });",
     "tests": [
       "test/net/chap2b_receipts.test.js"
     ]
@@ -260,8 +260,8 @@
   {
     "name": "CHAP2B-DELETE",
     "file": "server-account/src/realm.js",
-    "old": "    db.prepare('DELETE FROM npc_receipt_credits WHERE player = ? AND char_id = ?').bind(playerId, id),   // CHAP2b: and what its receipts gave\n    db.prepare('DELETE FROM npc_chapter_seats",
-    "new": "    db.prepare('DELETE FROM npc_chapter_seats",
+    "old": "    db.prepare('DELETE FROM npc_receipt_credits WHERE player = ? AND char_id = ?').bind(playerId, id), // CHAP2b: and what its receipts gave\n    db.prepare('DELETE FROM npc_chapter_seats WHERE account = ? AND char_id = ?').bind(playerId, id), // CHAP4a: and its seats (the Chronicle keeps their story)",
+    "new": "    db.prepare('DELETE FROM npc_chapter_seats WHERE account = ? AND char_id = ?').bind(playerId, id), // CHAP4a: and its seats (the Chronicle keeps their story)",
     "tests": [
       "test/net/chap2b_receipts.test.js"
     ]

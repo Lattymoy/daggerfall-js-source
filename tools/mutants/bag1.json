@@ -734,8 +734,8 @@
   {
     "name": "AUDIT2-BAG1-S8-the-twin-cutting",
     "file": "server-account/src/motherlodes.js",
-    "old": "twin: 'NOT EXISTS (SELECT 1 FROM motherlode_strikes WHERE player = ?1 AND rid = ?5)' })",
-    "new": "twin: '(1 OR ?1 OR ?5)' })",
+    "old": "          twin: 'NOT EXISTS (SELECT 1 FROM motherlode_strikes WHERE player = ?1 AND rid = ?5)',",
+    "new": "          twin: '(1 OR ?1 OR ?5)',",
     "tests": [
       "test/net/prof2b_motherlode.test.js"
     ]
@@ -743,8 +743,8 @@
   {
     "name": "AUDIT2-BAG1-S8-cut-against-a-stale-count",
     "file": "server-account/src/motherlodes.js",
-    "old": "seen: seenOk(body?.seen) ? body.seen : null,",
-    "new": "seen: null,",
+    "old": "          seen: seenOk(body?.seen) ? body.seen : null,",
+    "new": "          seen: null,",
     "tests": [
       "test/net/prof2b_motherlode.test.js"
     ]

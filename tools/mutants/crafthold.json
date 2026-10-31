@@ -43,8 +43,8 @@
   {
     "name": "CRAFT-HOLD-the-hold-read-off-the-owner",
     "file": "server-account/src/realm.js",
-    "old": "  const row = await db.prepare(`SELECT r.held FROM products p JOIN realm_characters r ON (r.id = p.char_id OR r.origin_id = p.char_id) AND r.player = ?2",
-    "new": "  const row = await db.prepare(`SELECT r.held FROM products p JOIN realm_characters r ON (r.id = p.owner OR r.origin_id = p.owner) AND r.player = ?2",
+    "old": "      `SELECT r.held FROM products p JOIN realm_characters r ON (r.id = p.char_id OR r.origin_id = p.char_id) AND r.player = ?2",
+    "new": "      `SELECT r.held FROM products p JOIN realm_characters r ON (r.id = p.owner OR r.origin_id = p.owner) AND r.player = ?2",
     "tests": [
       "test/server/crafthold.test.js"
     ]
@@ -52,8 +52,8 @@
   {
     "name": "AUDIT-CRAFT-HOLD-the-delete-unheld",
     "file": "server-account/src/realm.js",
-    "old": "  if (row.held && await db.prepare('SELECT 1 FROM products WHERE owner = ?1 AND (char_id = ?2 OR char_id = ?3) LIMIT 1')\n",
-    "new": "  if (false && await db.prepare('SELECT 1 FROM products WHERE owner = ?1 AND (char_id = ?2 OR char_id = ?3) LIMIT 1')\n",
+    "old": "    row.held &&",
+    "new": "    false &&",
     "tests": [
       "test/server/crafthold.test.js"
     ]
@@ -62,8 +62,8 @@
     "name": "AUDIT-CRAFT-HOLD-record-unjudged-refused",
     "file": "server-account/src/realm.js",
     "note": "AUDIT AUTO-HOLD (PIN MOVED): re-aimed by content - the hold asked through realm.js holdStandsSql (a dead maker's timed hold run out stands no more)",
-    "old": "    WHERE p.provenance = ?1 AND ${holdStandsSql('r', '?3')}`).bind(provenance, playerId, Math.floor(Date.now() / 1000)).first();\n  return row?.held ? { error: 'trade-held', held: row.held } : null;",
-    "new": "    WHERE p.provenance = ?1`).bind(provenance, playerId).first();\n  return row ? (row.held ? { error: 'trade-held', held: row.held } : { error: 'record-unjudged' }) : null;",
+    "old": "    WHERE p.provenance = ?1 AND ${holdStandsSql('r', '?3')}`,\n    )\n    .bind(provenance, playerId, Math.floor(Date.now() / 1000))\n    .first();\n  return row?.held ? { error: 'trade-held', held: row.held } : null;",
+    "new": "    WHERE p.provenance = ?1`,\n    )\n    .bind(provenance, playerId)\n    .first();\n  return row ? (row.held ? { error: 'trade-held', held: row.held } : { error: 'record-unjudged' }) : null;",
     "tests": [
       "test/server/crafthold.test.js"
     ]
@@ -71,8 +71,8 @@
   {
     "name": "AUDIT-CRAFT-HOLD-account-guard-dropped",
     "file": "server-account/src/realm.js",
-    "old": "(r.id = p.char_id OR r.origin_id = p.char_id) AND r.player = ?2\n",
-    "new": "(r.id = p.char_id OR r.origin_id = p.char_id)\n",
+    "old": "      `SELECT r.held FROM products p JOIN realm_characters r ON (r.id = p.char_id OR r.origin_id = p.char_id) AND r.player = ?2",
+    "new": "      `SELECT r.held FROM products p JOIN realm_characters r ON (r.id = p.char_id OR r.origin_id = p.char_id)",
     "tests": [
       "test/server/crafthold.test.js"
     ]
@@ -80,8 +80,8 @@
   {
     "name": "AUDIT-CRAFT-HOLD-origin-unread",
     "file": "server-account/src/realm.js",
-    "old": "(r.id = p.char_id OR r.origin_id = p.char_id) AND r.player = ?2\n",
-    "new": "r.id = p.char_id AND r.player = ?2\n",
+    "old": "      `SELECT r.held FROM products p JOIN realm_characters r ON (r.id = p.char_id OR r.origin_id = p.char_id) AND r.player = ?2",
+    "new": "      `SELECT r.held FROM products p JOIN realm_characters r ON r.id = p.char_id AND r.player = ?2",
     "tests": [
       "test/server/crafthold.test.js"
     ]
@@ -116,8 +116,8 @@
   {
     "name": "AUDIT-CRAFT-HOLD-delete-held-with-no-craft-refused",
     "file": "server-account/src/realm.js",
-    "old": "  if (row.held && await db.prepare('SELECT 1 FROM products WHERE owner = ?1 AND (char_id = ?2 OR char_id = ?3) LIMIT 1')\n",
-    "new": "  if (row.held && (true || await db.prepare('SELECT 1 FROM products WHERE owner = ?1 AND (char_id = ?2 OR char_id = ?3) LIMIT 1'))\n",
+    "old": "    (await db\n      .prepare('SELECT 1 FROM products WHERE owner = ?1 AND (char_id = ?2 OR char_id = ?3) LIMIT 1')\n      .bind(playerId, id, row.origin_id ?? id)\n      .first())",
+    "new": "    (true || (await db.prepare('SELECT 1 FROM products WHERE owner = ?1 AND (char_id = ?2 OR char_id = ?3) LIMIT 1')))\n      .bind(playerId, id, row.origin_id ?? id)\n      .first()",
     "tests": [
       "test/server/crafthold.test.js",
       "test/server/realm1.test.js",

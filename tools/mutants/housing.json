@@ -184,8 +184,8 @@
   {
     "name": "HOME-RENT-the-price-unchecked",
     "file": "server-account/src/rent.js",
-    "old": "  if (row.price !== price) return { error: 'rent-price', price: row.price };\n",
-    "new": "",
+    "old": "  if (row.price !== price) return { error: 'rent-price', price: row.price };\n  const until = rentUntil(nowS, renewing ? row.until : 0, days);",
+    "new": "  const until = rentUntil(nowS, renewing ? row.until : 0, days);",
     "tests": [
       "test/server/homerent.test.js"
     ],
@@ -195,8 +195,8 @@
   {
     "name": "HOME-RENT-the-owner-renting",
     "file": "server-account/src/rent.js",
-    "old": "  if (row.owner === player.id) return { error: 'rent-own' };\n",
-    "new": "",
+    "old": "  if (row.owner === player.id) return { error: 'rent-own' };\n  const running = row.tenant != null && row.until > nowS;",
+    "new": "  const running = row.tenant != null && row.until > nowS;",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -204,8 +204,8 @@
   {
     "name": "HOME-RENT-the-hold-unmoved",
     "file": "server-account/src/rent.js",
-    "old": "      db.prepare('UPDATE homes SET rent_due = rent_due + ? WHERE map_id = ? AND building_key = ?').bind(cost, mapId, buildingKey),",
-    "new": "      db.prepare('UPDATE homes SET rent_due = rent_due + 0 WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey),",
+    "old": "        .prepare('UPDATE homes SET rent_due = rent_due + ? WHERE map_id = ? AND building_key = ?')\n        .bind(cost, mapId, buildingKey),",
+    "new": "        .prepare('UPDATE homes SET rent_due = rent_due + 0 WHERE map_id = ? AND building_key = ?')\n        .bind(mapId, buildingKey),",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "HOME-RENT-the-withdraw-deleting-a-tenancy",
     "file": "server-account/src/rent.js",
-    "old": "AND room = ? AND (tenant IS NULL OR until <= ?) AND ${OWNS} RETURNING room`)",
-    "new": "AND room = ? AND (tenant IS NULL OR until <= ? OR 1) AND ${OWNS} RETURNING room`)",
+    "old": "        `DELETE FROM home_rooms WHERE map_id = ? AND building_key = ? AND room = ? AND (tenant IS NULL OR until <= ?) AND ${OWNS} RETURNING room`,",
+    "new": "        `DELETE FROM home_rooms WHERE map_id = ? AND building_key = ? AND room = ? AND (tenant IS NULL OR until <= ? OR 1) AND ${OWNS} RETURNING room`,",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -249,8 +249,8 @@
   {
     "name": "HOME-RENT-the-delete-unguarded",
     "file": "server-account/src/realm.js",
-    "old": "  if (Number((await db.prepare(HOME_TENANTS_SQL).bind(playerId, id, nowS).first())?.n ?? 0) > 0) return { error: 'home-tenants' };\n",
-    "new": "",
+    "old": "    if (Number((await db.prepare(HOME_TENANTS_SQL).bind(playerId, id, nowS).first())?.n ?? 0) > 0)\n      return { error: 'home-tenants' };\n    if (Number((await db.prepare(HOME_RENT_DUE_SQL).bind(playerId, id).first())?.due ?? 0) > 0)",
+    "new": "    if (Number((await db.prepare(HOME_RENT_DUE_SQL).bind(playerId, id).first())?.due ?? 0) > 0)",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -387,8 +387,8 @@
   {
     "name": "HOME-RENT-a-withdrawn-room-renewed",
     "file": "server-account/src/rent.js",
-    "old": "  if (row.listed !== 1) return { error: 'no-rent-room' };",
-    "new": "  if (row.listed !== 1 && !renewing) return { error: 'no-rent-room' };",
+    "old": "  if (row.listed !== 1) return { error: 'no-rent-room' }; // taken off the offer: a tenancy runs out, never renewed (AUDIT)",
+    "new": "  if (row.listed !== 1 && !renewing) return { error: 'no-rent-room' }; // taken off the offer: a tenancy runs out, never renewed (AUDIT)",
     "tests": [
       "test/server/homerent.test.js"
     ],
@@ -398,8 +398,8 @@
   {
     "name": "HOME-RENT-every-race-said-taken",
     "file": "server-account/src/rent.js",
-    "old": "|| (await roomMovedOf(db, mapId, buildingKey, room, price));",
-    "new": "|| { error: 'rent-taken' };",
+    "old": "    return (await recordMovedOf(db, player.id, side.at)) || (await roomMovedOf(db, mapId, buildingKey, room, price));",
+    "new": "    return (await recordMovedOf(db, player.id, side.at)) || { error: 'rent-taken' };",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "HOME-RENT-the-price-race-unsaid",
     "file": "server-account/src/rent.js",
-    "old": "  if (now.price !== price) return { error: 'rent-price', price: now.price };\n",
-    "new": "",
+    "old": "  if (now.price !== price) return { error: 'rent-price', price: now.price };\n  return { error: 'rent-taken' };",
+    "new": "  return { error: 'rent-taken' };",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "HOME-RENT-the-collection-unrated",
     "file": "server-account/src/rent.js",
-    "old": "  if (await overRate({ db, nowS: ctx.nowS }, `rent:${player.id}`, RENT_WRITES_MAX, RENT_WRITES_WINDOW_S)) return { error: 'rent-rate' };   // a collection counts, as the law says\n",
-    "new": "",
+    "old": "  if (await overRate({ db, nowS: ctx.nowS }, `rent:${player.id}`, RENT_WRITES_MAX, RENT_WRITES_WINDOW_S))\n    return { error: 'rent-rate' }; // a collection counts, as the law says\n  // ACCOUNT-HOMES: the account's home, collected by any character of it into that character's record",
+    "new": "  // ACCOUNT-HOMES: the account's home, collected by any character of it into that character's record",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "HOME-RENT-the-refused-delete-withdrawing",
     "file": "server-account/src/realm.js",
-    "old": "  const held = await homeHeld();\n  if (held) return held;\n  await db.prepare(`UPDATE home_rooms SET listed = 0",
-    "new": "  await db.prepare(`UPDATE home_rooms SET listed = 0",
+    "old": "  const held = await homeHeld();\n  if (held) return held;\n  await db",
+    "new": "  await db",
     "tests": [
       "test/server/homerent.test.js"
     ]

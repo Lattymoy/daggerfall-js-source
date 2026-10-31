@@ -1566,8 +1566,8 @@
   {
     "name": "AUDIT-LEGACY-III-O5-a-tombs-track-holds-a-place",
     "file": "server-account/src/renownTracks.js",
-    "old": " AND NOT EXISTS (SELECT 1 FROM realm_characters r WHERE r.id = t.char_id AND r.player = ${p} AND r.dead_at IS NOT NULL))`;",
-    "new": ")`;",
+    "old": "  `(SELECT COUNT(*) FROM renown_tracks t WHERE t.player = ${p} AND NOT EXISTS (SELECT 1 FROM realm_characters r WHERE r.id = t.char_id AND r.player = ${p} AND r.dead_at IS NOT NULL))`;",
+    "new": "  `(SELECT COUNT(*) FROM renown_tracks t WHERE t.player = ${p})`;",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1612,8 +1612,8 @@
   {
     "name": "AUDIT-LEGACY-III-O7-a-tombstone-deleted",
     "file": "server-account/src/realm.js",
-    "old": "  if (row.dead_at != null) return { error: 'dead' };   // AUDIT LEGACY III O7\n",
-    "new": "",
+    "old": "  if (row.dead_at != null) return { error: 'dead' }; // AUDIT LEGACY III O7\n  // AUDIT CRAFT-HOLD (the exploit audit): A HELD CHARACTER WITH CRAFTS IS NOT DELETED - its row is where its hold lives,",
+    "new": "  // AUDIT CRAFT-HOLD (the exploit audit): A HELD CHARACTER WITH CRAFTS IS NOT DELETED - its row is where its hold lives,",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1621,8 +1621,8 @@
   {
     "name": "AUDIT-LEGACY-III-O7-a-tombstone-undone",
     "file": "server-account/src/realm.js",
-    "old": "  if (row.dead_at != null) return { error: 'dead' };   // AUDIT LEGACY III O7: undone, a tombstone is deleted too\n",
-    "new": "",
+    "old": "  if (row.dead_at != null) return { error: 'dead' }; // AUDIT LEGACY III O7: undone, a tombstone is deleted too\n  return undoCustoms({ db, bucket }, playerId, id, row.origin_id);",
+    "new": "  return undoCustoms({ db, bucket }, playerId, id, row.origin_id);",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]

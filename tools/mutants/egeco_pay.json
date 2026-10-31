@@ -232,8 +232,8 @@
   {
     "name": "EGE1-the-guard-unpaid",
     "file": "server-account/src/marks.js",
-    "old": "AND w = ?${p + 1} AND nonce = ?${p + 2} AND paid = 1)`,",
-    "new": "AND w = ?${p + 1} AND nonce = ?${p + 2})`,",
+    "old": "    `EXISTS (SELECT 1 FROM eg_redoubts WHERE b = ?${p} AND account = ?1 AND w = ?${p + 1} AND nonce = ?${p + 2} AND paid = 1)`,",
+    "new": "    `EXISTS (SELECT 1 FROM eg_redoubts WHERE b = ?${p} AND account = ?1 AND w = ?${p + 1} AND nonce = ?${p + 2})`,",
     "why": "an unpaid claim marking its guild's deed",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"

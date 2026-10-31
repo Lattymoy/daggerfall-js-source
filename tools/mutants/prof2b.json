@@ -113,8 +113,8 @@
   {
     "name": "PROF2b-svc-pixel-unread",
     "file": "server-account/src/motherlodes.js",
-    "old": "c.s !== player.id || c.x !== lode.x || c.y !== lode.y ||",
-    "new": "c.s !== player.id ||",
+    "old": "  if (!c || c.s !== player.id || c.x !== lode.x || c.y !== lode.y || !motherlodeWatchOk(c.i, at))\n    return { error: 'motherlode-watch' }; // AUDIT SILVER-WAYS C1: both ways",
+    "new": "  if (!c || c.s !== player.id || !motherlodeWatchOk(c.i, at)) return { error: 'motherlode-watch' }; // AUDIT SILVER-WAYS C1: both ways",
     "tests": [
       "test/net/prof2b_motherlode.test.js"
     ]
@@ -122,8 +122,8 @@
   {
     "name": "PROF2b-svc-watch-any-age",
     "file": "server-account/src/motherlodes.js",
-    "old": "|| !motherlodeWatchOk(c.i, at)) return { error: 'motherlode-watch' };",
-    "new": ") return { error: 'motherlode-watch' };",
+    "old": "  if (!c || c.s !== player.id || c.x !== lode.x || c.y !== lode.y || !motherlodeWatchOk(c.i, at))\n    return { error: 'motherlode-watch' }; // AUDIT SILVER-WAYS C1: both ways",
+    "new": "  if (!c || c.s !== player.id || c.x !== lode.x || c.y !== lode.y) return { error: 'motherlode-watch' }; // AUDIT SILVER-WAYS C1: both ways",
     "tests": [
       "test/net/prof2b_motherlode.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "PROF2b-svc-watch-any-account",
     "file": "server-account/src/motherlodes.js",
-    "old": "if (!c || c.s !== player.id || c.x",
-    "new": "if (!c || c.x",
+    "old": "  if (!c || c.s !== player.id || c.x !== lode.x || c.y !== lode.y || !motherlodeWatchOk(c.i, at))\n    return { error: 'motherlode-watch' }; // AUDIT SILVER-WAYS C1: both ways",
+    "new": "  if (!c || c.x !== lode.x || c.y !== lode.y || !motherlodeWatchOk(c.i, at)) return { error: 'motherlode-watch' }; // AUDIT SILVER-WAYS C1: both ways",
     "tests": [
       "test/net/prof2b_motherlode.test.js"
     ]
@@ -141,8 +141,8 @@
   {
     "name": "PROF2b-svc-rank-unread",
     "file": "server-account/src/motherlodes.js",
-    "old": "  if (rank < MOTHERLODE_RANK) return { error: 'prof-rank' };\n",
-    "new": "",
+    "old": "  if (rank < MOTHERLODE_RANK) return { error: 'prof-rank' };\n  // THE ACT, bounded as a vein's: the glints at most tier 6's, a clean finish only with every strike on the glint",
+    "new": "  // THE ACT, bounded as a vein's: the glints at most tier 6's, a clean finish only with every strike on the glint",
     "tests": [
       "test/net/prof2b_motherlode.test.js"
     ]
@@ -150,8 +150,8 @@
   {
     "name": "PROF2b-svc-twenty-one",
     "file": "server-account/src/motherlodes.js",
-    "old": "AND (SELECT COUNT(*) FROM motherlode_strikes WHERE day = ?5 AND k = ?6) < ?13",
-    "new": "AND (SELECT COUNT(*) FROM motherlode_strikes WHERE day = ?5 AND k = ?6) <= ?13",
+    "old": "        AND (SELECT COUNT(*) FROM motherlode_strikes WHERE day = ?5 AND k = ?6) < ?13",
+    "new": "        AND (SELECT COUNT(*) FROM motherlode_strikes WHERE day = ?5 AND k = ?6) <= ?13",
     "tests": [
       "test/net/prof2b_motherlode.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "PROF2b-svc-silver-unstruck",
     "file": "server-account/src/motherlodes.js",
-    "old": "      .bind(player.id, rid, nonce, MOTHERLODE_SILVER, day, nowS, motherlodeRid(day), MARKS_MAX)] : []),",
-    "new": "      .bind(player.id, rid, nonce, MOTHERLODE_SILVER, day, nowS, motherlodeRid(day), MARKS_MAX)].slice(1) : []),",
+    "old": "        ]",
+    "new": "        ].slice(1)",
     "tests": [
       "test/net/prof2b_motherlode.test.js"
     ]

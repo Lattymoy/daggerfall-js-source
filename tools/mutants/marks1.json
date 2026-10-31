@@ -2,8 +2,8 @@
   {
     "name": "MARKS1-1-a-third-gate-a-day",
     "file": "server-account/src/marks.js",
-    "old": "    WHERE ${combatEarnedSql('?1', '?3')} < ?6\n",
-    "new": "    WHERE ${combatEarnedSql('?1', '?3')} <= ?6\n",
+    "old": "    WHERE ${combatEarnedSql('?1', '?3')} < ?6",
+    "new": "    WHERE ${combatEarnedSql('?1', '?3')} <= ?6",
     "tests": [
       "test/net/marks1.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "MARKS1-2-the-gate-past-the-cap",
     "file": "server-account/src/marks.js",
-    "old": "    WHERE ${combatEarnedSql('?1', '?3')} < ?6\n      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ${pay} <= ?7\n      AND NOT EXISTS",
-    "new": "    WHERE ${combatEarnedSql('?1', '?3')} < ?6\n      AND 1\n      AND NOT EXISTS",
+    "old": "    WHERE ${combatEarnedSql('?1', '?3')} < ?6\n      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ${pay} <= ?7",
+    "new": "    WHERE ${combatEarnedSql('?1', '?3')} < ?6\n      AND 1",
     "tests": [
       "test/net/marks1.test.js"
     ],
@@ -40,8 +40,8 @@
   {
     "name": "MARKS1-5-the-bank-sells-short",
     "file": "server-account/src/marks.js",
-    "old": "    WHERE COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) >= ?2\n      AND COALESCE((SELECT SUM(amount) FROM marks_ledger WHERE src_id = ?1 AND kind = 'exchange'",
-    "new": "    WHERE 1\n      AND COALESCE((SELECT SUM(amount) FROM marks_ledger WHERE src_id = ?1 AND kind = 'exchange'",
+    "old": "    WHERE COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) >= ?2",
+    "new": "    WHERE 1",
     "tests": [
       "test/net/marks1.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "MARKS1-6-no-day-cap-at-the-bank",
     "file": "server-account/src/marks.js",
-    "old": "kind = 'exchange' AND day = ?3), 0) + ?2 <= ?6`)",
-    "new": "kind = 'exchange' AND day = ?3), 0) + ?2 <= ?6 + 1000`)",
+    "old": "      AND COALESCE((SELECT SUM(amount) FROM marks_ledger WHERE src_id = ?1 AND kind = 'exchange' AND day = ?3), 0) + ?2 <= ?6`,",
+    "new": "      AND COALESCE((SELECT SUM(amount) FROM marks_ledger WHERE src_id = ?1 AND kind = 'exchange' AND day = ?3), 0) + ?2 <= ?6 + 1000`,",
     "tests": [
       "test/net/marks1.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "MARKS1-7-a-deposit-id-sold-as-gold",
     "file": "server-account/src/marks.js",
-    "old": "(line.kind !== 'exchange' ? { error: 'marks-rid' }",
-    "new": "(false ? { error: 'marks-rid' }",
+    "old": "    line.kind !== 'exchange'",
+    "new": "    false",
     "tests": [
       "test/net/marks1.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "MARKS1-10-a-deposit-past-the-balance",
     "file": "server-account/src/marks.js",
-    "old": "      WHERE COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) >= ?3\n        AND COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?2), 0) + ?3 <= ?8",
-    "new": "      WHERE 1\n        AND COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?2), 0) + ?3 <= ?8",
+    "old": "      WHERE COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) >= ?3",
+    "new": "      WHERE 1",
     "tests": [
       "test/net/marks1.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "MARKS1-12-the-report-for-anyone",
     "file": "server-account/src/marks.js",
-    "old": "  if (!isDeveloper(player, env)) return { error: 'not-developer' };\n",
-    "new": "",
+    "old": "  if (!isDeveloper(player, env)) return { error: 'not-developer' };\n  const today = utcDay(nowS);",
+    "new": "  const today = utcDay(nowS);",
     "tests": [
       "test/net/marks1.test.js"
     ]

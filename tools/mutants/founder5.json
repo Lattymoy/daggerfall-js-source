@@ -83,8 +83,8 @@
   {
     "name": "FOUNDER5-live-no-link-at-a-save",
     "file": "server-account/src/saves.js",
-    "old": "  if (!have) await linkFirstPlay({ db }, playerId, characterId);   // FOUNDER5: a new slot - the character may have arrived\n",
-    "new": "",
+    "old": "  if (!have) await linkFirstPlay({ db }, playerId, characterId); // FOUNDER5: a new slot - the character may have arrived\n  return { ok: true, created: !have };",
+    "new": "  return { ok: true, created: !have };",
     "tests": [
       "test/server/founder5.test.js"
     ],
@@ -93,8 +93,8 @@
   {
     "name": "FOUNDER5-live-no-link-at-customs",
     "file": "server-account/src/realm.js",
-    "old": "  await linkFirstPlay({ db }, playerId, origin);   // FOUNDER5: the character arrived on this account\n",
-    "new": "",
+    "old": "  await linkFirstPlay({ db }, playerId, origin); // FOUNDER5: the character arrived on this account\n  return { id, lease, seq: 0 };",
+    "new": "  return { id, lease, seq: 0 };",
     "tests": [
       "test/server/founder5.test.js"
     ],

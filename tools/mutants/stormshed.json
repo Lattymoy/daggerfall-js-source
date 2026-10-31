@@ -252,8 +252,8 @@
   {
     "name": "STORM-SHED-proxy-nameless",
     "file": "server-account/src/metrics.js",
-    "old": "      if (key === DB_ROOT) return Reflect.get(target, DB_ROOT) ?? target;\n",
-    "new": "",
+    "old": "      if (key === DB_ROOT) return Reflect.get(target, DB_ROOT) ?? target;\n      if (key === 'prepare')",
+    "new": "      if (key === 'prepare')",
     "tests": [
       "test/net/stormshed.test.js"
     ],

@@ -139,8 +139,8 @@
   {
     "name": "CHAP1-SVC-BUSY",
     "file": "server-account/src/npcRoll.js",
-    "old": "    if (now?.last_rid === rid) return { roll: await rollViewOf(db, who.character), repeat: true };   // its twin landed first\n    return { error: 'roll-busy' };",
-    "new": "    if (now?.last_rid === rid) return { roll: await rollViewOf(db, who.character), repeat: true };   // its twin landed first\n    return { roll: await rollViewOf(db, who.character), credited };",
+    "old": "    return { error: 'roll-busy' };",
+    "new": "    return { roll: await rollViewOf(db, who.character), credited };",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -150,8 +150,8 @@
   {
     "name": "CHAP1-SVC-LEASE",
     "file": "server-account/src/npcRoll.js",
-    "old": "if (row.lease !== lease) return { error: 'lease' };",
-    "new": "if (false) return { error: 'lease' };",
+    "old": "  if (row.lease !== lease) return { error: 'lease' };",
+    "new": "  if (false) return { error: 'lease' };",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -160,8 +160,8 @@
   {
     "name": "CHAP1-SVC-SEED-CAP",
     "file": "server-account/src/npcRoll.js",
-    "old": "const cap = rollSeedCapOf(held);",
-    "new": "const cap = 100;",
+    "old": "  const cap = rollSeedCapOf(held);",
+    "new": "  const cap = 100;",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -171,8 +171,8 @@
   {
     "name": "CHAP1-SVC-TENURE",
     "file": "server-account/src/npcRoll.js",
-    "old": "joinedAt: member ? (row.member ? row.joinedAt : nowS) : null,",
-    "new": "joinedAt: member ? nowS : null,",
+    "old": "        joinedAt: member ? (row.member ? row.joinedAt : nowS) : null,",
+    "new": "        joinedAt: member ? nowS : null,",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "CHAP1-SVC-SECOND-SEED",
     "file": "server-account/src/npcRoll.js",
-    "old": "  if (head) {\n    const seq = Number(head.seq), kseq = Number(head.kseq);",
-    "new": "  if (false) {\n    const seq = Number(head.seq), kseq = Number(head.kseq);",
+    "old": "  if (head) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js",
@@ -206,8 +206,8 @@
   {
     "name": "CHAP1-SVC-SWITCH-DEV",
     "file": "server-account/src/npcRoll.js",
-    "old": "return s === 'on' || (s === 'dev' && isDeveloper(player, env));",
-    "new": "return s === 'on' || s === 'dev';",
+    "old": "  return s === 'on' || (s === 'dev' && isDeveloper(player, env));",
+    "new": "  return s === 'on' || s === 'dev';",
     "tests": [
       "test/systems/guild/chap1_roll.test.js",
       "test/net/audit_chap1.test.js"

@@ -172,8 +172,8 @@
   {
     "name": "STAFF-PANEL2-held-acted-on",
     "file": "server-account/src/safety.js",
-    "old": "      AND (claimed_by IS ?4 OR NOT ${claimHeldSql('mod_cases', 3)})`)",
-    "new": "      AND (claimed_by IS ?4 OR 1 OR NOT ${claimHeldSql('mod_cases', 3)})`)",
+    "old": "      AND (claimed_by IS ?4 OR NOT ${claimHeldSql('mod_cases', 3)})`,",
+    "new": "      AND (claimed_by IS ?4 OR 1 OR NOT ${claimHeldSql('mod_cases', 3)})`,",
     "why": "a held case acted on by another",
     "tests": [
       "test/server/staffpanel2.test.js",
@@ -193,8 +193,8 @@
   {
     "name": "STAFF-PANEL2-mute-untold",
     "file": "server-account/src/safety.js",
-    "old": "  if (order) await (push ?? ",
-    "new": "  if (false) await (push ?? ",
+    "old": "  if (order) await (push ?? ((/** @type {string} */ o) => pushLaw(env, (u, i) => globalThis.fetch(u, i), o)))(order);",
+    "new": "  if (false) await (push ?? ((/** @type {string} */ o) => pushLaw(env, (u, i) => globalThis.fetch(u, i), o)))(order);",
     "why": "a mute the live rooms never hear",
     "tests": [
       "test/server/staffpanel2.test.js"
@@ -213,8 +213,8 @@
   {
     "name": "STAFF-PANEL2-mute-case-open",
     "file": "server-account/src/safety.js",
-    "old": "        ...closing(x, mutedTill(x))] });",
-    "new": "        ] });",
+    "old": "          ...closing(x, mutedTill(x)),\n        ],",
+    "new": "        ],",
     "why": "a muted account's case left open",
     "tests": [
       "test/server/staffpanel2.test.js",
@@ -234,8 +234,8 @@
   {
     "name": "STAFF-PANEL2-failed-unwritten",
     "file": "server-account/src/safety.js",
-    "old": "outcome: r.error ? (ACT_DENIED.includes(r.error) ? 'denied' : 'failed') : 'ok'",
-    "new": "outcome: 'ok'",
+    "old": "  await write(ask.act, at.target, detail(r), {\n    outcome: r.error ? (ACT_DENIED.includes(r.error) ? 'denied' : 'failed') : 'ok',\n  }).run();",
+    "new": "  await write(ask.act, at.target, detail(r), { outcome: 'ok' }).run();",
     "why": "a refused act reads as done (STAFF-PANEL2-FIX: the row is modAct's now)",
     "tests": [
       "test/server/staffpanel2.test.js"
@@ -244,8 +244,8 @@
   {
     "name": "STAFF-PANEL2-discord-press-past-claim",
     "file": "server-account/src/safety.js",
-    "old": "return { error: now?.held && now.claimed_by !== actor.id ? 'staff-claimed' : now?.status",
-    "new": "return { error: now?.status",
+    "old": "      return {\n        error:\n          now?.held && now.claimed_by !== actor.id\n            ? 'staff-claimed'\n            : now?.status === 'open'\n              ? 'case-acted'\n              : 'case-closed',\n      };",
+    "new": "      return { error: now?.status === 'open' ? 'case-acted' : 'case-closed' };",
     "why": "a Discord press on a case another holds in the panel",
     "tests": [
       "test/server/staffpanel2.test.js"

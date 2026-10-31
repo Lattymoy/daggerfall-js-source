@@ -65,8 +65,8 @@
   {
     "name": "STAR7-the-silver-unguarded",
     "file": "server-account/src/marks.js",
-    "old": "star: (p) => `EXISTS (SELECT 1 FROM stars_held WHERE star = ?${p} AND account = ?1 AND nonce = ?${p + 1})`,",
-    "new": "star: (p) => `(?${p} IS NOT NULL OR ?${p + 1} IS NOT NULL)`,",
+    "old": "  star: (p) => `EXISTS (SELECT 1 FROM stars_held WHERE star = ?${p} AND account = ?1 AND nonce = ?${p + 1})`,",
+    "new": "  star: (p) => `(?${p} IS NOT NULL OR ?${p + 1} IS NOT NULL)`,",
     "tests": [
       "test/net/starfall/star7_service.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "STAR7-the-renown-unspent",
     "file": "server-account/src/progress.js",
-    "old": "case '/v1/star/claim': if (a.recorded === true) add('renown', n(a.renown?.credited)); break;",
-    "new": "case '/v1/star/claim': break;",
+    "old": "      if (a.recorded === true) add('renown', n(a.renown?.credited));\n      break; // STAR7: the Renown a star paid (its count is bounded by the day - stars.js STAR_CLAIMS_DAY_MAX)",
+    "new": "      break; // STAR7: the Renown a star paid (its count is bounded by the day - stars.js STAR_CLAIMS_DAY_MAX)",
     "tests": [
       "test/net/starfall/star7_service.test.js"
     ]

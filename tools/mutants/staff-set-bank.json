@@ -132,8 +132,8 @@
   {
     "name": "STAFF-SET-BANK-the-act-unwired",
     "file": "server-account/src/review.js",
-    "old": "  if (act === 'bank') return bankAct(ctx, row, by, note, body);   // STAFF-SET-BANK\n",
-    "new": "",
+    "old": "  if (act === 'bank') return bankAct(ctx, row, by, note, body); // STAFF-SET-BANK\n  if (act === 'letter') return letterAct(ctx, row, by, note, body); // GUILD-LETTER-FIX",
+    "new": "  if (act === 'letter') return letterAct(ctx, row, by, note, body); // GUILD-LETTER-FIX",
     "why": "the review's bank act is reached",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "STAFF-SET-BANK-the-body-unchecked",
     "file": "server-account/src/review.js",
-    "old": "  if (!set) return { error: 'body' };\n",
-    "new": "",
+    "old": "  if (!set) return { error: 'body' };\n  let up = 0;",
+    "new": "  let up = 0;",
     "why": "a set the law refuses is the body's word (400), never a throw",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "STAFF-SET-BANK-a-bank-row-read-as-a-repair",
     "file": "server-account/src/review.js",
-    "old": "r.faction === BANK_SET_FACTION ? 'bank' : r.faction < BANK_SET_FACTION ? 'letter' : 'repair'",
-    "new": "r.faction < BANK_SET_FACTION ? 'letter' : 'repair'",
+    "old": "  r.faction === 0\n    ? 'mend'\n    : r.faction === BANK_SET_FACTION\n      ? 'bank'\n      : r.faction < BANK_SET_FACTION\n        ? 'letter'\n        : 'repair';",
+    "new": "  r.faction === 0 ? 'mend' : r.faction < BANK_SET_FACTION ? 'letter' : 'repair';",
     "why": "a bank set's row is a bank set's: its ticket asked again answers it",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "STAFF-SET-BANK-a-ticket-of-any-kind",
     "file": "server-account/src/review.js",
-    "old": "(rowKindOf(r) === kind ? answer(r, repeat) : { error: 'repair-ticket' })",
-    "new": "((rowKindOf(r) === 'mend') === (kind === 'mend') ? answer(r, repeat) : { error: 'repair-ticket' })",
+    "old": "    rowKindOf(r) === kind ? answer(r, repeat) : { error: 'repair-ticket' };",
+    "new": "    (rowKindOf(r) === 'mend') === (kind === 'mend') ? answer(r, repeat) : { error: 'repair-ticket' };",
     "why": "a ticket names one act: a repair's is no bank set's, nor a bank set's a repair's",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -172,8 +172,8 @@
   {
     "name": "STAFF-SET-BANK-the-row-naming-a-mend",
     "file": "server-account/src/review.js",
-    "old": ".bind(row.id, set.ticket, row.player, by, nowS, BANK_SET_FACTION, set.was",
-    "new": ".bind(row.id, set.ticket, row.player, by, nowS, 0, set.was",
+    "old": "        .bind(row.id, set.ticket, row.player, by, nowS, BANK_SET_FACTION, set.was, set.gold, seq, note),",
+    "new": "        .bind(row.id, set.ticket, row.player, by, nowS, 0, set.was, set.gold, seq, note),",
     "why": "the row names the bank set's faction, below every faction a repair or a mend names",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "STAFF-SET-BANK-the-row-unwritten",
     "file": "server-account/src/review.js",
-    "old": "db.prepare('INSERT INTO realm_repairs (char_id, ticket, player, by_handle, at, faction, flag, was, gold, seq, note) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)')\n      .bind(row.id, set.ticket",
-    "new": "db.prepare('SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?')\n      .bind(row.id, set.ticket",
+    "old": "        .prepare(\n          'INSERT INTO realm_repairs (char_id, ticket, player, by_handle, at, faction, flag, was, gold, seq, note) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)',\n        )",
+    "new": "        .prepare('SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?')",
     "why": "the set's row is in the record's batch: once a ticket",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "STAFF-SET-BANK-no-finding",
     "file": "server-account/src/review.js",
-    "old": "    staffFinding(db, row, nowS, { act: 'bank', by, note, ticket: set.ticket, was: set.was, gold: set.gold, from: row.seq, to: seq }),\n",
-    "new": "",
+    "old": "      staffFinding(db, row, nowS, {\n        act: 'bank',\n        by,\n        note,\n        ticket: set.ticket,\n        was: set.was,\n        gold: set.gold,\n        from: row.seq,\n        to: seq,\n      }),\n      ...(up > 0 ? [faucetStatement(db, 'repair', Math.floor(nowS / 3600), up)] : []),",
+    "new": "      ...(up > 0 ? [faucetStatement(db, 'repair', Math.floor(nowS / 3600), up)] : []),",
     "why": "the act is written among the character's findings",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "STAFF-SET-BANK-no-faucet",
     "file": "server-account/src/review.js",
-    "old": "    ...(up > 0 ? [faucetStatement(db, 'repair', Math.floor(nowS / 3600), up)] : []),\n",
-    "new": "",
+    "old": "      ...(up > 0 ? [faucetStatement(db, 'repair', Math.floor(nowS / 3600), up)] : []),\n    ],",
+    "new": "    ],",
     "why": "what the set raised the bank by is the service's own faucet",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "STAFF-SET-BANK-a-faucet-of-a-removal",
     "file": "server-account/src/review.js",
-    "old": "    ...(up > 0 ? [faucetStatement",
-    "new": "    ...(up !== 0 ? [faucetStatement",
+    "old": "      ...(up > 0 ? [faucetStatement(db, 'repair', Math.floor(nowS / 3600), up)] : []),",
+    "new": "      ...(up !== 0 ? [faucetStatement(db, 'repair', Math.floor(nowS / 3600), up)] : []),",
     "why": "a set down pays no faucet row: the service keeps no sink for staff's removals",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -222,8 +222,8 @@
   {
     "name": "STAFF-SET-BANK-the-total-below-nothing-counted",
     "file": "server-account/src/review.js",
-    "old": "g + goldOf(a?.accountGold), 0);",
-    "new": "g + (Number.isFinite(a?.accountGold) ? a.accountGold : 0), 0);",
+    "old": "          (/** @type {number} */ g, /** @type {any} */ a) => g + goldOf(a?.accountGold),",
+    "new": "          (/** @type {number} */ g, /** @type {any} */ a) => g + (Number.isFinite(a?.accountGold) ? a.accountGold : 0),",
     "why": "a bank's gold before the set is the judge's count: a branch below nothing held no gold, so the faucet is the gold the set witnessed, none for the hole",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -232,8 +232,8 @@
   {
     "name": "STAFF-SET-BANK-the-faucet-from-the-total",
     "file": "server-account/src/review.js",
-    "old": "    up = set.gold - (Array.isArray(save.bankAccounts) ? save.bankAccounts : []).reduce((/** @type {number} */ g, /** @type {any} */ a) => g + goldOf(a?.accountGold), 0);",
-    "new": "    up = set.gold - Math.max(0, set.was);",
+    "old": "      up =\n        set.gold -\n        (Array.isArray(save.bankAccounts) ? save.bankAccounts : []).reduce(\n          (/** @type {number} */ g, /** @type {any} */ a) => g + goldOf(a?.accountGold),\n          0,\n        );",
+    "new": "      up = set.gold - Math.max(0, set.was);",
     "why": "REVIEW: the faucet is the gold the set witnessed - from the total named, a hacked bank set to honest gold booked none for the gold it made, and a branch below nothing beside gold one for gold that never came in",
     "tests": [
       "test/server/staffsetbank.test.js"

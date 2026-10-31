@@ -742,7 +742,7 @@
   {
     "name": "PROF5-svc-report-escrow-unseen",
     "file": "server-account/src/marks.js",
-    "old": "  const esc = await db.prepare(`SELECT COALESCE(SUM(CASE WHEN dst_kind = 'escrow' THEN amount ELSE 0 END), 0)\n    - COALESCE(SUM(CASE WHEN src_kind = 'escrow' THEN amount ELSE 0 END), 0) AS s FROM marks_ledger WHERE dst_kind = 'escrow' OR src_kind = 'escrow'`).first();",
+    "old": "  const esc = await db\n    .prepare(\n      `SELECT COALESCE(SUM(CASE WHEN dst_kind = 'escrow' THEN amount ELSE 0 END), 0)\n    - COALESCE(SUM(CASE WHEN src_kind = 'escrow' THEN amount ELSE 0 END), 0) AS s FROM marks_ledger WHERE dst_kind = 'escrow' OR src_kind = 'escrow'`,\n    )\n    .first();",
     "new": "  const esc = await db.prepare('SELECT 0 AS s').first();",
     "tests": [
       "test/net/prof5_service.test.js"
@@ -751,8 +751,8 @@
   {
     "name": "PROF5-svc-report-no-medians",
     "file": "server-account/src/marks.js",
-    "old": "    medians,\n  };",
-    "new": "    medians: [],\n  };",
+    "old": "    medians,",
+    "new": "    medians: [],",
     "tests": [
       "test/net/prof5_service.test.js"
     ]

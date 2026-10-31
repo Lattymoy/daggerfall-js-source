@@ -412,8 +412,8 @@
   {
     "name": "STAFF-PANEL3-REALM-rollback-lifts-staff-hold",
     "file": "server-account/src/review.js",
-    "old": "\" held = CASE WHEN held = 'staff' THEN 'staff' END, held_at = CASE WHEN held = 'staff' THEN held_at END,\"",
-    "new": "\" held = NULL, held_at = NULL,\"",
+    "old": "          \" held = CASE WHEN held = 'staff' THEN 'staff' END, held_at = CASE WHEN held = 'staff' THEN held_at END,\" +",
+    "new": "          ' held = NULL, held_at = NULL,' +",
     "why": "a rollback lifts staff's own hold",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -422,8 +422,8 @@
   {
     "name": "STAFF-PANEL3-REALM-realm-take-asks-int4",
     "file": "server-account/src/realm.js",
-    "old": "const why = take ? null : twice.length",
-    "new": "const why = twice.length",
+    "old": "  const why = take\n    ? null\n    : twice.length\n      ? 'piece-dupe'\n      : leaving.length\n        ? await piecesRefusal(db, at.id, leaving)\n        : null;",
+    "new": "  const why = twice.length ? 'piece-dupe' : leaving.length ? await piecesRefusal(db, at.id, leaving) : null;",
     "why": "a copy refused by INT4's rule, so staff cannot take it",
     "tests": [
       "test/server/staffpanel3realm.test.js"

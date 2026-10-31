@@ -52,8 +52,8 @@
   {
     "name": "SAVE-BATCH-ledger-apart",
     "file": "server-account/src/realm.js",
-    "old": "    ...ledgerReads(db, id),\n",
-    "new": "",
+    "old": "    ...ledgerReads(db, id),\n    ...(keptConfig ? [] : [budgetRead(db)]),",
+    "new": "    ...(keptConfig ? [] : [budgetRead(db)]),",
     "tests": [
       "test/server/primary_trips.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "SAVE-BATCH-config-apart",
     "file": "server-account/src/realm.js",
-    "old": "    ...(keptConfig ? [] : [budgetRead(db)]),\n",
-    "new": "",
+    "old": "    ...(keptConfig ? [] : [budgetRead(db)]),\n  ]);",
+    "new": "  ]);",
     "tests": [
       "test/server/primary_trips.test.js"
     ],
@@ -163,7 +163,7 @@
     "name": "PRIMARY-TRIPS-AUDIT-config-kept-late",
     "file": "server-account/src/realm.js",
     "old": "  const known = { mine: mineRes, dupes: dupesRes, config };",
-    "new": "  const known = { mine: mineRes, dupes: dupesRes, config: keptConfig ?? budgetFrom(db, configRes?.results?.[0] ?? null) };",
+    "new": "  const known = {\n    mine: mineRes,\n    dupes: dupesRes,\n    config: keptConfig ?? budgetFrom(db, configRes?.results?.[0] ?? null),\n  };",
     "tests": [
       "test/server/primary_trips.test.js"
     ],

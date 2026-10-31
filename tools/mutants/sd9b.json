@@ -21,7 +21,7 @@
     "name": "SD9B-one-draw-for-both",
     "file": "server-account/src/sds.js",
     "old": "  return { title: r() < SD_TITLE_CHANCE, aura: r() < SD_AURA_CHANCE };",
-    "new": "  const x = r(); return { title: x < SD_TITLE_CHANCE, aura: x < SD_AURA_CHANCE };",
+    "new": "  const x = r();\n  return { title: x < SD_TITLE_CHANCE, aura: x < SD_AURA_CHANCE };",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SD9B-no-key-verified-anyway",
     "file": "server-account/src/sds.js",
-    "old": "  if (!publicKey) return { error: 'no-gate-key' };\n  const v = await verifySdReceipt(",
-    "new": "  const v = await verifySdReceipt(",
+    "old": "  if (!publicKey) return { error: 'no-gate-key' };\n  const v = await verifySdReceipt(receipt, publicKey, { subtle, nowS });",
+    "new": "  const v = await verifySdReceipt(receipt, publicKey, { subtle, nowS });",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SD9B-the-account-unchecked",
     "file": "server-account/src/sds.js",
-    "old": "  if (c.s !== player.id) return { error: 'not-yours' };\n  if (!player.handle) return { recorded: false, why: 'guest'",
-    "new": "  if (!player.handle) return { recorded: false, why: 'guest'",
+    "old": "  if (c.s !== player.id) return { error: 'not-yours' };\n  if (!player.handle) return { recorded: false, why: 'guest', ...(await sdRecordOf({ db }, player.id)) };",
+    "new": "  if (!player.handle) return { recorded: false, why: 'guest', ...(await sdRecordOf({ db }, player.id)) };",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD9B-the-guest-counted",
     "file": "server-account/src/sds.js",
-    "old": "  if (!player.handle) return { recorded: false, why: 'guest', ...(await sdRecordOf({ db }, player.id)) };\n  const draw = rand(new Uint8Array(4));",
-    "new": "  const draw = rand(new Uint8Array(4));",
+    "old": "  if (!player.handle) return { recorded: false, why: 'guest', ...(await sdRecordOf({ db }, player.id)) };\n  const draw = rand(new Uint8Array(4)); // AUDIT SD III (R4): the claim's own seed - nothing the page can read beforehand",
+    "new": "  const draw = rand(new Uint8Array(4)); // AUDIT SD III (R4): the claim's own seed - nothing the page can read beforehand",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD9B-the-grants-on-every-claim",
     "file": "server-account/src/sds.js",
-    "old": "AND EXISTS (SELECT 1 FROM sd_kills WHERE slot = ?3 AND account = ?1 AND nonce = ?4)",
-    "new": "AND EXISTS (SELECT 1 FROM sd_kills WHERE slot = ?3 AND account = ?1 AND (nonce = ?4 OR 1))",
+    "old": "        'UPDATE players SET sd_honours = sd_honours | ?2 WHERE id = ?1 AND ?2 != 0 AND EXISTS (SELECT 1 FROM sd_kills WHERE slot = ?3 AND account = ?1 AND nonce = ?4)',",
+    "new": "        'UPDATE players SET sd_honours = sd_honours | ?2 WHERE id = ?1 AND ?2 != 0 AND EXISTS (SELECT 1 FROM sd_kills WHERE slot = ?3 AND account = ?1 AND (nonce = ?4 OR 1))',",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SD9B-the-grants-cleared",
     "file": "server-account/src/sds.js",
-    "old": "'UPDATE players SET sd_honours = sd_honours | ?2 WHERE id = ?1",
-    "new": "'UPDATE players SET sd_honours = ?2 WHERE id = ?1",
+    "old": "        'UPDATE players SET sd_honours = sd_honours | ?2 WHERE id = ?1 AND ?2 != 0 AND EXISTS (SELECT 1 FROM sd_kills WHERE slot = ?3 AND account = ?1 AND nonce = ?4)',",
+    "new": "        'UPDATE players SET sd_honours = ?2 WHERE id = ?1 AND ?2 != 0 AND EXISTS (SELECT 1 FROM sd_kills WHERE slot = ?3 AND account = ?1 AND nonce = ?4)',",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SD9B-claimed-as-recorded",
     "file": "server-account/src/sds.js",
-    "old": "  if (!(Number(row?.meta?.changes ?? 0) > 0)) return { recorded: false, why: 'claimed', broken };\n",
-    "new": "",
+    "old": "  if (!(Number(row?.meta?.changes ?? 0) > 0)) return { recorded: false, why: 'claimed', broken };\n  return {",
+    "new": "  return {",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD9B-everyones-hours",
     "file": "server-account/src/sds.js",
-    "old": "const r = await db.prepare('SELECT COUNT(*) AS n FROM sd_kills WHERE account = ?1').bind(playerId).first();",
-    "new": "const r = await db.prepare('SELECT COUNT(*) AS n FROM sd_kills WHERE account = ?1 OR 1').bind(playerId).first();",
+    "old": "  const r = await db.prepare('SELECT COUNT(*) AS n FROM sd_kills WHERE account = ?1').bind(playerId).first();",
+    "new": "  const r = await db.prepare('SELECT COUNT(*) AS n FROM sd_kills WHERE account = ?1 OR 1').bind(playerId).first();",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]

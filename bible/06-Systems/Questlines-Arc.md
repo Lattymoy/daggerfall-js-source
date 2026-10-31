@@ -763,7 +763,7 @@ nothing paid - and on the client a line the service pays opens only for a regist
   SERVICE-2) - and in the line's order: newer than the receipt that witnessed an earlier step, older than one that
   witnessed a later, so one receipt witnesses one step (`seen_at`; AUDIT QUESTLINES SERVICE-5: one rite-breaking fight
   paid both of the Burning Doors' steps). THE WITNESS-ORDER RULE (AUDIT STARFALL B2): an end is not witnessed while an
-  earlier WITNESSED step of its line is not done (`server-account/src/questlines.js:"export function qlStepsBefore(lineId, step) {"`):
+  earlier WITNESSED step of its line is not done (`server-account/src/questlines.js:"export function qlStepsBefore"`):
   the earlier step's receipt is the window's floor only once it is laid, and a later step's end asked first read its
   window from the line's opening, so one receipt witnessed both (the Thirteenth of Frostfall's three stars took its
   first, the Weir Road's three Redoubts took its first). Answered `{ witnessed: false }`, and the runner asks again; the

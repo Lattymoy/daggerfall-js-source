@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-RENOWN1-repeat-credited",
     "file": "server-account/src/renownTracks.js",
-    "old": "  const want = `CASE WHEN ${repeat} OR ${refused} THEN 0 ELSE",
-    "new": "  const want = `CASE WHEN ${refused} THEN 0 ELSE",
+    "old": "  const want = `CASE WHEN ${repeat} OR ${refused} THEN 0 ELSE MIN(?3, MAX(0, ?4 - COALESCE((${track}), 0))) END`;",
+    "new": "  const want = `CASE WHEN ${refused} THEN 0 ELSE MIN(?3, MAX(0, ?4 - COALESCE((${track}), 0))) END`;",
     "tests": [
       "test/net/auditrenown1.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-RENOWN1-empty-track-made",
     "file": "server-account/src/renownTracks.js",
-    "old": "       WHERE id = ?1 AND renown_last_credit > 0\n",
-    "new": "       WHERE id = ?1\n",
+    "old": "       WHERE id = ?1 AND renown_last_credit > 0",
+    "new": "       WHERE id = ?1",
     "tests": [
       "test/net/auditrenown1.test.js"
     ]

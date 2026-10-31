@@ -75,8 +75,8 @@
   {
     "name": "REALM5-guard-never-trips",
     "file": "server-account/src/realm.js",
-    "old": "db.prepare('INSERT INTO realm_tx_guard (moved, expected) SELECT changes(), ? WHERE changes() != ?').bind(n, n);",
-    "new": "db.prepare('INSERT INTO realm_tx_guard (moved, expected) SELECT changes(), ? WHERE 0 AND ? = ?').bind(n, n, n);",
+    "old": "  db.prepare('INSERT INTO realm_tx_guard (moved, expected) SELECT changes(), ? WHERE changes() != ?').bind(n, n);",
+    "new": "  db.prepare('INSERT INTO realm_tx_guard (moved, expected) SELECT changes(), ? WHERE 0 AND ? = ?').bind(n, n, n);",
     "tests": [
       "test/net/realm5.test.js"
     ]

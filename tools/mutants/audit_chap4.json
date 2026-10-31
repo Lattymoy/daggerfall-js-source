@@ -221,8 +221,8 @@
   {
     "name": "AUDIT-CHAP4-D1-CLAIM",
     "file": "server-account/src/npcRoll.js",
-    "old": "        dormant: member && asleep.has(f),   // AUDIT CHAP4 D1: the active book's or not, as the claim says it now",
-    "new": "        dormant: line.dormant,   // AUDIT CHAP4 D1: the active book's or not, as the claim says it now",
+    "old": "        dormant: member && asleep.has(f), // AUDIT CHAP4 D1: the active book's or not, as the claim says it now",
+    "new": "        dormant: line.dormant, // AUDIT CHAP4 D1: the active book's or not, as the claim says it now",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "AUDIT-CHAP4-D1-SEED",
     "file": "server-account/src/npcRoll.js",
-    "old": "      dormant: member && asleep.has(f),\n    });",
-    "new": "      dormant: false,\n    });",
+    "old": "      joinedAt: member ? nowS : null, // CHAP4a: never a seat's rank\n      dormant: member && asleep.has(f),",
+    "new": "      joinedAt: member ? nowS : null, // CHAP4a: never a seat's rank\n      dormant: false,",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "AUDIT-CHAP4-D1-ANSWER",
     "file": "server-account/src/npcRoll.js",
-    "old": "since: row.joinedAt, ...(row.dormant ? { d: 1 } : {}) });",
-    "new": "since: row.joinedAt });",
+    "old": "    if (row.member) members.push({ f, rank: row.rank ?? 0, since: row.joinedAt, ...(row.dormant ? { d: 1 } : {}) });",
+    "new": "    if (row.member) members.push({ f, rank: row.rank ?? 0, since: row.joinedAt });",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]
@@ -248,8 +248,8 @@
   {
     "name": "AUDIT-CHAP4-D1-SAME",
     "file": "server-account/src/npcRoll.js",
-    "old": " && a.joinedAt === b.joinedAt && a.dormant === b.dormant;",
-    "new": " && a.joinedAt === b.joinedAt;",
+    "old": "  a.joinedAt === b.joinedAt &&\n  a.dormant === b.dormant;",
+    "new": "  a.joinedAt === b.joinedAt;",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "AUDIT-CHAP4-D1-MERIT",
     "file": "server-account/src/npcMerit.js",
-    "old": "faction_id = ?3 AND member = 1 AND dormant = 0 AND joined_at",
-    "new": "faction_id = ?3 AND member = 1 AND joined_at",
+    "old": "      AND EXISTS (SELECT 1 FROM npc_roll WHERE char_id = ?2 AND player = ?1 AND faction_id = ?3 AND member = 1 AND dormant = 0 AND joined_at <= ?8 - ?10)",
+    "new": "      AND EXISTS (SELECT 1 FROM npc_roll WHERE char_id = ?2 AND player = ?1 AND faction_id = ?3 AND member = 1 AND joined_at <= ?8 - ?10)",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "AUDIT-CHAP4-D1-MEMBERS",
     "file": "server-account/src/npcReceipts.js",
-    "old": "WHERE char_id = ?1 AND player = ?2 AND member = 1 AND dormant = 0\n",
-    "new": "WHERE char_id = ?1 AND player = ?2 AND member = 1\n",
+    "old": "      `SELECT faction_id FROM npc_roll WHERE char_id = ?1 AND player = ?2 AND member = 1 AND dormant = 0",
+    "new": "      `SELECT faction_id FROM npc_roll WHERE char_id = ?1 AND player = ?2 AND member = 1",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]

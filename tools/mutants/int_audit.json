@@ -187,7 +187,7 @@
     "name": "INTA-the-why-unsaid",
     "file": "server-account/src/realm.js",
     "note": "AUTO-HOLD (PIN MOVED): re-aimed by content - the answer carries `locked` beside it",
-    "old": "  return { ok: true, seq, tradeHeld: stood.held ?? null, ...(stood === v.set && v.why ? { tradeHeldWhy: v.why } : {}), locked: v.locked };",
+    "old": "  return {\n    ok: true,\n    seq,\n    tradeHeld: stood.held ?? null,\n    ...(stood === v.set && v.why ? { tradeHeldWhy: v.why } : {}),\n    locked: v.locked,\n  };",
     "new": "  return { ok: true, seq, tradeHeld: stood.held ?? null, locked: v.locked };",
     "tests": [
       "test/server/int2_judge.test.js"
@@ -333,8 +333,8 @@
   {
     "name": "INTA-the-classic-sold",
     "file": "server-account/src/realm.js",
-    "old": "  if (outbound && classicCount(save) < classicBefore) return { error: 'piece-legacy' };\n",
-    "new": "",
+    "old": "  if (outbound && classicCount(save) < classicBefore) return { error: 'piece-legacy' };\n  // INT4: a piece leaves a record only as its own - held by it, unclaimed, no copy (ledger.js piecesRefusal). A Set, never",
+    "new": "  // INT4: a piece leaves a record only as its own - held by it, unclaimed, no copy (ledger.js piecesRefusal). A Set, never",
     "tests": [
       "test/net/int6_review.test.js"
     ]
@@ -342,8 +342,8 @@
   {
     "name": "INTA-rollback-past-a-sale",
     "file": "server-account/src/review.js",
-    "old": "    if (row.svc_seq != null && row.svc_seq > (row.clean_seq ?? 0)) return { error: 'service-moved' };\n",
-    "new": "",
+    "old": "    if (row.svc_seq != null && row.svc_seq > (row.clean_seq ?? 0)) return { error: 'service-moved' };\n    const object = await bucket.get(row.clean_obj);",
+    "new": "    const object = await bucket.get(row.clean_obj);",
     "tests": [
       "test/net/int6_review.test.js"
     ]
@@ -351,8 +351,8 @@
   {
     "name": "INTA-the-dead-rolled-back",
     "file": "server-account/src/review.js",
-    "old": "    if (row.dead_at != null) return { error: 'dead' };\n",
-    "new": "",
+    "old": "    if (row.dead_at != null) return { error: 'dead' };\n    if (!row.clean_obj || !bucket) return { error: 'no-clean' };",
+    "new": "    if (!row.clean_obj || !bucket) return { error: 'no-clean' };",
     "tests": [
       "test/net/int6_review.test.js"
     ]
@@ -369,8 +369,8 @@
   {
     "name": "INTA-the-rollback-sized-wrong",
     "file": "server-account/src/review.js",
-    "old": "    ).bind(new TextEncoder().encode(text ?? '').byteLength, wealthOf(save),",
-    "new": "    ).bind(0, wealthOf(save),",
+    "old": "      .bind(new TextEncoder().encode(text ?? '').byteLength, wealthOf(save), nowS, row.id, row.clean_obj, row.seq)",
+    "new": "      .bind(0, wealthOf(save), nowS, row.id, row.clean_obj, row.seq)",
     "tests": [
       "test/server/int2_judge.test.js"
     ]
@@ -379,8 +379,8 @@
     "name": "INTA-the-excuse-unwritten",
     "file": "server-account/src/review.js",
     "note": "AUTO-HOLD (PIN MOVED): re-aimed by content - staff's clear forgets the timed hold beside it",
-    "old": "law_excused = CASE WHEN law_v IS NULL THEN law_sig ELSE law_sig || '|' || law_v END, allowance = NULL",
-    "new": "allowance = NULL",
+    "old": "        law_excused = CASE WHEN law_v IS NULL THEN law_sig ELSE law_sig || '|' || law_v END, allowance = NULL, judge_rev = judge_rev + 1 WHERE id = ?`,",
+    "new": "        allowance = NULL, judge_rev = judge_rev + 1 WHERE id = ?`,",
     "tests": [
       "test/server/int2_judge.test.js"
     ]

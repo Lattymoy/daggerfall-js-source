@@ -2,8 +2,8 @@
   {
     "name": "SERVERPOST-the-record-unwritten",
     "file": "server-account/src/post.js",
-    "old": "(save) => { giveTradeGoods(save, [rec], 0); return null; }",
-    "new": "(save) => { return null; }",
+    "old": "      giveTradeGoods(save, [rec], 0);\n      return null;",
+    "new": "      return null;",
     "tests": [
       "test/server/serverpost_service.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "SERVERPOST-a-waiting-gift-thrown-away",
     "file": "server-account/src/post.js",
-    "old": "  if (recordOf(row) && row.claimed_at == null) return { error: 'post-unclaimed' };",
-    "new": "  if (false) return { error: 'post-unclaimed' };",
+    "old": "  if (recordOf(row) && row.claimed_at == null) return { error: 'post-unclaimed' }; // the one answer the box and the claim give",
+    "new": "  if (false) return { error: 'post-unclaimed' }; // the one answer the box and the claim give",
     "tests": [
       "test/server/serverpost_service.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "SERVERPOST-read-never-stamped",
     "file": "server-account/src/post.js",
-    "old": "  if (row.read_at == null) await db.prepare('UPDATE server_post SET read_at = ? WHERE id = ? AND to_id = ? AND read_at IS NULL').bind(nowS, id, reader.id).run();\n",
-    "new": "",
+    "old": "  if (row.read_at == null)\n    await db\n      .prepare('UPDATE server_post SET read_at = ? WHERE id = ? AND to_id = ? AND read_at IS NULL')\n      .bind(nowS, id, reader.id)\n      .run();\n  return { post: { ...headOf(row), body: row.body, read: true, readAt: row.read_at ?? nowS } };",
+    "new": "  return { post: { ...headOf(row), body: row.body, read: true, readAt: row.read_at ?? nowS } };",
     "tests": [
       "test/server/serverpost_service.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "SERVERPOST-a-failed-claim-read-as-claimed",
     "file": "server-account/src/post.js",
-    "old": "again.claimed_at != null ? 'post-claimed' : 'server'",
-    "new": "'post-claimed'",
+    "old": "    return { error: !again ? 'no-post' : again.claimed_at != null ? 'post-claimed' : 'server' };",
+    "new": "    return { error: !again ? 'no-post' : 'post-claimed' };",
     "tests": [
       "test/server/serverpost_service.test.js"
     ],
@@ -213,8 +213,8 @@
   {
     "name": "SERVERPOST-the-box-newest-first-alone",
     "file": "server-account/src/post.js",
-    "old": "ORDER BY (item IS NOT NULL AND claimed_at IS NULL) DESC, (read_at IS NULL) DESC, sent_at DESC, id DESC LIMIT ?",
-    "new": "ORDER BY sent_at DESC, id DESC LIMIT ?",
+    "old": "    WHERE to_id = ? ORDER BY (item IS NOT NULL AND claimed_at IS NULL) DESC, (read_at IS NULL) DESC, sent_at DESC, id DESC LIMIT ?`,",
+    "new": "    WHERE to_id = ? ORDER BY sent_at DESC, id DESC LIMIT ?`,",
     "tests": [
       "test/server/serverpost_service.test.js"
     ],
@@ -223,8 +223,8 @@
   {
     "name": "SERVERPOST-anothers-piece-thrown-away",
     "file": "server-account/src/post.js",
-    "old": "WHERE id = ? AND to_id = ?').bind(id, reader.id).first();\n  if (!row) return { error: 'no-post' };\n  if (recordOf(row) && row.claimed_at == null)",
-    "new": "WHERE id = ?').bind(id).first();\n  if (!row) return { error: 'no-post' };\n  if (recordOf(row) && row.claimed_at == null)",
+    "old": "  const row = await db\n    .prepare('SELECT id, item, claimed_at FROM server_post WHERE id = ? AND to_id = ?')\n    .bind(id, reader.id)\n    .first();",
+    "new": "  const row = await db.prepare('SELECT id, item, claimed_at FROM server_post WHERE id = ?').bind(id).first();",
     "tests": [
       "test/server/serverpost_service.test.js"
     ],

@@ -2,8 +2,8 @@
   {
     "name": "LODEHERD-claim-unasked",
     "file": "server-account/src/motherlodes.js",
-    "old": "  if (!clock && await overRate({ db, nowS }, `${LODE_PICK_CLAIM}${day}`, 1, LODE_PICK_WINDOW_S)) return [];\n",
-    "new": "",
+    "old": "  if (!clock && (await overRate({ db, nowS }, `${LODE_PICK_CLAIM}${day}`, 1, LODE_PICK_WINDOW_S))) return [];\n  const before = day * 86400;",
+    "new": "  const before = day * 86400;",
     "tests": [
       "test/server/lode_herd.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "LODEHERD-clock-claims",
     "file": "server-account/src/motherlodes.js",
-    "old": "  if (!clock && await overRate(",
-    "new": "  if (await overRate(",
+    "old": "  if (!clock && (await overRate({ db, nowS }, `${LODE_PICK_CLAIM}${day}`, 1, LODE_PICK_WINDOW_S))) return [];",
+    "new": "  if (await overRate({ db, nowS }, `${LODE_PICK_CLAIM}${day}`, 1, LODE_PICK_WINDOW_S)) return [];",
     "tests": [
       "test/server/lode_herd.test.js"
     ],

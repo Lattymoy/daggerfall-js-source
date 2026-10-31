@@ -306,8 +306,8 @@
   {
     "name": "LOST-SPOILS-the-lost-piece-witnessed",
     "file": "server-account/src/post.js",
-    "old": "{ witness: !isLostBatch(row.batch) }",
-    "new": "{ witness: true }",
+    "old": "    { witness: !isLostBatch(row.batch) },",
+    "new": "    { witness: true },",
     "tests": [
       "test/server/lostspoils_service.test.js"
     ],
@@ -316,8 +316,8 @@
   {
     "name": "LOST-SPOILS-every-gift-unwitnessed",
     "file": "server-account/src/post.js",
-    "old": "{ witness: !isLostBatch(row.batch) }",
-    "new": "{ witness: false }",
+    "old": "    { witness: !isLostBatch(row.batch) },",
+    "new": "    { witness: false },",
     "tests": [
       "test/server/lostspoils_service.test.js"
     ],

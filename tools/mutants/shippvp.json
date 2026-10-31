@@ -1028,8 +1028,8 @@
   {
     "name": "SHIP-PVP-board-prizes-unsaid",
     "file": "server-account/src/seaBounty.js",
-    "old": "    prizes: Number(pr?.results?.[0]?.n ?? 0), back: Number(bk?.results?.[0]?.n ?? 0),",
-    "new": "    prizes: 0, back: Number(bk?.results?.[0]?.n ?? 0),",
+    "old": "    prizes: Number(pr?.results?.[0]?.n ?? 0),",
+    "new": "    prizes: 0,",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]

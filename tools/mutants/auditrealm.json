@@ -149,8 +149,8 @@
   {
     "name": "AUDIT-REALM-L1F4-the-trade-read-first",
     "file": "server-account/src/realmTrade.js",
-    "old": "  const row = await db.prepare('SELECT seq, lease, bytes, obj, prev, held, judged_seq, clean_obj FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();\n  if (!row) return { error: 'no-realm-character' };\n  if (row.lease !== lease) return { error: 'lease' };\n  // AN OUTCOME IS ANSWERED to the half that made it, whatever the record's sequence now - a settled trade moved it\n  let t = await db.prepare('SELECT * FROM realm_trades WHERE sid = ?').bind(sid).first();\n",
-    "new": "  let t = await db.prepare('SELECT * FROM realm_trades WHERE sid = ?').bind(sid).first();\n  const row = await db.prepare('SELECT seq, lease, bytes, obj, prev, held, judged_seq, clean_obj FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();\n  if (!row) return { error: 'no-realm-character' };\n  if (row.lease !== lease) return { error: 'lease' };\n",
+    "old": "  const row = await db\n    .prepare(\n      'SELECT seq, lease, bytes, obj, prev, held, judged_seq, clean_obj FROM realm_characters WHERE id = ? AND player = ?',\n    )\n    .bind(id, playerId)\n    .first();\n  if (!row) return { error: 'no-realm-character' };\n  if (row.lease !== lease) return { error: 'lease' };\n  // AN OUTCOME IS ANSWERED to the half that made it, whatever the record's sequence now - a settled trade moved it\n  let t = await db.prepare('SELECT * FROM realm_trades WHERE sid = ?').bind(sid).first();",
+    "new": "  let t = await db.prepare('SELECT * FROM realm_trades WHERE sid = ?').bind(sid).first();\n  const row = await db\n    .prepare(\n      'SELECT seq, lease, bytes, obj, prev, held, judged_seq, clean_obj FROM realm_characters WHERE id = ? AND player = ?',\n    )\n    .bind(id, playerId)\n    .first();\n  if (!row) return { error: 'no-realm-character' };\n  if (row.lease !== lease) return { error: 'lease' };",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "AUDIT-REALM-L1F6-any-first-half-told",
     "file": "server-account/src/realmTrade.js",
-    "old": "t.a_char === id && t.a_seq === seq && t.a_half === said ? 'a'",
-    "new": "t.a_char === id ? 'a'",
+    "old": "    t.a_player === playerId && t.a_char === id && t.a_seq === seq && t.a_half === said",
+    "new": "    t.a_player === playerId && t.a_char === id",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "AUDIT-REALM-L1F6-any-second-half-told",
     "file": "server-account/src/realmTrade.js",
-    "old": "t.b_char === id && t.b_seq === seq && t.b_half === said ? 'b'",
-    "new": "t.b_char === id ? 'b'",
+    "old": "      : t.b_player === playerId && t.b_char === id && t.b_seq === seq && t.b_half === said",
+    "new": "      : t.b_player === playerId && t.b_char === id",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "AUDIT-REALM-L1F6-the-settled-second-half-unsaid",
     "file": "server-account/src/realmTrade.js",
-    "old": "b_player = ?, b_char = ?, b_seq = ?, b_half = ? WHERE sid = ? AND state = 'waiting'\").bind(result, playerId, id, seq, canon(half), sid),",
-    "new": "b_player = ?, b_char = ?, b_seq = ?, b_half = ? WHERE sid = ? AND state = 'waiting'\").bind(result, playerId, id, null, null, sid),",
+    "old": "        .bind(result, playerId, id, seq, canon(half), sid),",
+    "new": "        .bind(result, playerId, id, null, null, sid),",
     "tests": [
       "test/systems/auditrealm.test.js",
       "test/net/realm4.test.js"
@@ -370,8 +370,8 @@
   {
     "name": "AUDIT-REALM-L3F2-customs-spends-its-own-account-only",
     "file": "server-account/src/realm.js",
-    "old": "db.prepare('UPDATE realm_census SET spent = 1 WHERE char_id = ?').bind(origin),",
-    "new": "db.prepare('UPDATE realm_census SET spent = 1 WHERE char_id = ? AND player = ?').bind(origin, playerId),",
+    "old": "      db.prepare('UPDATE realm_census SET spent = 1 WHERE char_id = ?').bind(origin),",
+    "new": "      db.prepare('UPDATE realm_census SET spent = 1 WHERE char_id = ? AND player = ?').bind(origin, playerId),",
     "tests": [
       "test/server/realm1.test.js"
     ]
@@ -379,8 +379,8 @@
   {
     "name": "AUDIT-REALM-L3F2-customs-without-the-bound",
     "file": "server-account/src/realm.js",
-    "old": "        + ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ?'\n",
-    "new": "        + ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ? + 100'\n",
+    "old": "            ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ?' +",
+    "new": "            ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ? + 100' +",
     "tests": [
       "test/server/realm1.test.js"
     ],
@@ -389,8 +389,8 @@
   {
     "name": "AUDIT-REALM-L3F2-a-spent-census-says-never",
     "file": "server-account/src/realm.js",
-    "old": "  if (counted?.spent) return 'customs-already';\n",
-    "new": "",
+    "old": "  if (counted?.spent) return 'customs-already';\n  if (!counted) {",
+    "new": "  if (!counted) {",
     "tests": [
       "test/server/realm1.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "AUDIT-REALM-L1F7-the-house-left",
     "file": "server-account/src/realm.js",
-    "old": "    db.prepare('DELETE FROM homes WHERE player = ? AND char_id = ?').bind(playerId, id),\n",
-    "new": "",
+    "old": "    db.prepare('DELETE FROM homes WHERE player = ? AND char_id = ?').bind(playerId, id),\n    db.prepare('DELETE FROM guild_members WHERE player = ? AND char_id = ?').bind(playerId, id),",
+    "new": "    db.prepare('DELETE FROM guild_members WHERE player = ? AND char_id = ?').bind(playerId, id),",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "AUDIT-REALM-L1F7-the-guild-place-left",
     "file": "server-account/src/realm.js",
-    "old": "    db.prepare('DELETE FROM guild_members WHERE player = ? AND char_id = ?').bind(playerId, id),\n",
-    "new": "",
+    "old": "    db.prepare('DELETE FROM guild_members WHERE player = ? AND char_id = ?').bind(playerId, id),\n    db.prepare('DELETE FROM guild_requests WHERE player = ? AND char_id = ?').bind(playerId, id), // AUDIT GUILD-RANKS B3: its requests to join",
+    "new": "    db.prepare('DELETE FROM guild_requests WHERE player = ? AND char_id = ?').bind(playerId, id), // AUDIT GUILD-RANKS B3: its requests to join",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "AUDIT-REALM-L1F7-the-renown-left",
     "file": "server-account/src/realm.js",
-    "old": "    db.prepare('DELETE FROM renown_tracks WHERE player = ? AND char_id = ?').bind(playerId, id),\n",
-    "new": "",
+    "old": "    db.prepare('DELETE FROM renown_tracks WHERE player = ? AND char_id = ?').bind(playerId, id),\n    db.prepare('DELETE FROM prof_stores WHERE player = ? AND char_id = ?').bind(playerId, id), // PROF-DELETE",
+    "new": "    db.prepare('DELETE FROM prof_stores WHERE player = ? AND char_id = ?').bind(playerId, id), // PROF-DELETE",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "AUDIT-REALM-L1F7-a-guildmaster-deleted-under-members",
     "file": "server-account/src/realm.js",
-    "old": "  if ((master?.n ?? 0) > 1) return { error: 'guild-master-leaves' };\n",
-    "new": "",
+    "old": "  if ((master?.n ?? 0) > 1) return { error: 'guild-master-leaves' };\n  if ((master?.treasury ?? 0) > 0) return { error: 'guild-treasury' };",
+    "new": "  if ((master?.treasury ?? 0) > 0) return { error: 'guild-treasury' };",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]

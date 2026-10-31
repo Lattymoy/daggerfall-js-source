@@ -121,8 +121,8 @@
   {
     "name": "STAR8-one-star-for-three",
     "file": "server-account/src/questlines.js",
-    "old": "ORDER BY s.at, s.star LIMIT 1 OFFSET 2)`,",
-    "new": "ORDER BY s.at, s.star LIMIT 1 OFFSET 1)`,",
+    "old": "  stars3: `(SELECT s.at FROM stars_held s WHERE s.account = ?1 AND ${WINDOW('s')} ORDER BY s.at, s.star LIMIT 1 OFFSET 2)`,",
+    "new": "  stars3: `(SELECT s.at FROM stars_held s WHERE s.account = ?1 AND ${WINDOW('s')} ORDER BY s.at, s.star LIMIT 1 OFFSET 1)`,",
     "tests": [
       "test/server/ql12_claim.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "T-B-the-purse-unpaid",
     "file": "server-account/src/questlines.js",
-    "old": "fest_cakes = fest_cakes + ?6 WHERE",
-    "new": "fest_cakes = fest_cakes + 0 * ?6 WHERE",
+    "old": "          `UPDATE players SET ql_titles = ql_titles | ?2, fest_cakes = fest_cakes + ?6 WHERE id = ?1 AND (ql_titles & ?2) = 0",
+    "new": "          `UPDATE players SET ql_titles = ql_titles | ?2, fest_cakes = fest_cakes + 0 * ?6 WHERE id = ?1 AND (ql_titles & ?2) = 0",
     "tests": [
       "test/server/ql12_claim.test.js"
     ],
@@ -241,8 +241,8 @@
   {
     "name": "T-B-the-days-unread",
     "file": "server-account/src/questlines.js",
-    "old": "&& festivalOpenFor(player, env) && festivalOpen(nowS * 1000) ?",
-    "new": "&& festivalOpenFor(player, env) ?",
+    "old": "    Object.hasOwn(QL_PURSES, line) && festivalOpenFor(player, env) && festivalOpen(nowS * 1000)",
+    "new": "    Object.hasOwn(QL_PURSES, line) && festivalOpenFor(player, env)",
     "tests": [
       "test/server/ql12_claim.test.js"
     ],
@@ -251,8 +251,8 @@
   {
     "name": "T-B-the-switch-unread",
     "file": "server-account/src/questlines.js",
-    "old": "Object.hasOwn(QL_PURSES, line) && festivalOpenFor(player, env) &&",
-    "new": "Object.hasOwn(QL_PURSES, line) &&",
+    "old": "    Object.hasOwn(QL_PURSES, line) && festivalOpenFor(player, env) && festivalOpen(nowS * 1000)",
+    "new": "    Object.hasOwn(QL_PURSES, line) && festivalOpen(nowS * 1000)",
     "tests": [
       "test/server/ql12_claim.test.js"
     ],
@@ -261,8 +261,8 @@
   {
     "name": "T-B-the-purse-unguarded",
     "file": "server-account/src/questlines.js",
-    "old": "fest_cakes = fest_cakes + ?6 WHERE id = ?1 AND (ql_titles & ?2) = 0",
-    "new": "fest_cakes = fest_cakes + ?6 WHERE id = ?1 AND (?6 > 0 OR (ql_titles & ?2) = 0)",
+    "old": "          `UPDATE players SET ql_titles = ql_titles | ?2, fest_cakes = fest_cakes + ?6 WHERE id = ?1 AND (ql_titles & ?2) = 0",
+    "new": "          `UPDATE players SET ql_titles = ql_titles | ?2, fest_cakes = fest_cakes + ?6 WHERE id = ?1 AND (?6 > 0 OR (ql_titles & ?2) = 0)",
     "tests": [
       "test/server/ql12_claim.test.js"
     ],
@@ -271,8 +271,8 @@
   {
     "name": "T-B-the-purse-said-to-every-claim",
     "file": "server-account/src/questlines.js",
-    "old": "...(titled && purse > 0 ? { purse } : {}),",
-    "new": "...(purse > 0 ? { purse } : {}),",
+    "old": "    ...(titled && purse > 0 ? { purse } : {}),",
+    "new": "    ...(purse > 0 ? { purse } : {}),",
     "tests": [
       "test/server/ql12_claim.test.js"
     ],

@@ -225,7 +225,7 @@ the fall's own batch (`server-account/src/villainy.js:"export function villainFa
 REPEAT-SHIELD's `wildShielded`: a shielded kill is still a kill the killer chose). The batch writes the fall's remains id,
 so a fall asked twice adds once. The meter is held to 10,000.
 
-The mint signs it as `vl` beside the realm's yes (`realm.js:"vl: villainClamp(row.villainy),"`, checked at
+The mint signs it as `vl` beside the realm's yes (`realm.js:"vl: villainClamp"`, checked at
 `identityToken.js:"if (c.vl !== undefined && !(c.rc === 1 && villainyIssuable(c.vl)))"`). The relay puts it
 on the socket (`wildRef.js:"export const wildTokenAtt"`) and the referee takes the larger of it and the carried meter
 (`wildRef.js:"if (villainClamp(vl) > villainClamp(x.vi))"`). A villain by its token is red at its

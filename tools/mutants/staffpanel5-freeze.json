@@ -272,8 +272,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-checkpoint-saves",
     "file": "server-account/src/realm.js",
-    "old": "if (Number.isSafeInteger(row.frozen_until_now) && row.frozen_until_now > nowS) return { error: 'frozen'",
-    "new": "if (false) return { error: 'frozen'",
+    "old": "  if (Number.isSafeInteger(row.frozen_until_now) && row.frozen_until_now > nowS)",
+    "new": "  if (false)",
     "why": "a frozen checkpoint saves under an old pass",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"

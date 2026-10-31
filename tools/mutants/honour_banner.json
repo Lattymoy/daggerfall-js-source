@@ -75,8 +75,8 @@
   {
     "name": "HONOUR-BANNER-every-claim-new",
     "file": "server-account/src/sds.js",
-    "old": "titleNew: title && !(prior & SD_HONOUR_TITLE)",
-    "new": "titleNew: title",
+    "old": "    titleNew: title && !(prior & SD_HONOUR_TITLE),",
+    "new": "    titleNew: title,",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "HONOUR-BANNER-every-aura-new",
     "file": "server-account/src/sds.js",
-    "old": "auraNew: aura && !(prior & SD_HONOUR_AURA)",
-    "new": "auraNew: aura",
+    "old": "    auraNew: aura && !(prior & SD_HONOUR_AURA),",
+    "new": "    auraNew: aura,",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]

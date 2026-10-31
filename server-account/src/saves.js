@@ -44,7 +44,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { SAVES_MAX, SAVE_NAME_MAX, saveKey } from './service.js';
-import { linkFirstPlay } from './founderLink.js';   // FOUNDER5: a character arriving on an account links its first play
+import { linkFirstPlay } from './founderLink.js'; // FOUNDER5: a character arriving on an account links its first play
 
 /** How many characters of a player-typed character NAME are kept. It is
  *  display only — CHARID1's whole point is that the name is not the
@@ -101,10 +101,13 @@ const cardView = (r) => ({
  *  0003 declares, and bounded by SAVES_MAX because that is the most
  *  rows that can exist. */
 export async function listSaves({ db }, playerId) {
-  const r = await db.prepare(
-    'SELECT character_id, save_name, character_name, game_time, real_time, dfu_version, save_version, bytes, shot_bytes, created_at, updated_at'
-    + ' FROM saves WHERE player_id = ? ORDER BY updated_at DESC LIMIT ?',
-  ).bind(playerId, SAVES_MAX).all();
+  const r = await db
+    .prepare(
+      'SELECT character_id, save_name, character_name, game_time, real_time, dfu_version, save_version, bytes, shot_bytes, created_at, updated_at' +
+        ' FROM saves WHERE player_id = ? ORDER BY updated_at DESC LIMIT ?',
+    )
+    .bind(playerId, SAVES_MAX)
+    .all();
   return (r?.results ?? []).map(cardView);
 }
 
@@ -121,32 +124,49 @@ export async function listSaves({ db }, playerId) {
 export async function putCard({ db, nowS }, playerId, { characterId, saveName, card }) {
   if (!playerId || !characterId || !saveName || saveName.length > SAVE_NAME_MAX) return { error: 'body' };
   if (!card) return { error: 'body' };
-  const have = await db.prepare('SELECT 1 AS one FROM saves WHERE player_id = ? AND character_id = ? AND save_name = ?')
-    .bind(playerId, characterId, saveName).first();
+  const have = await db
+    .prepare('SELECT 1 AS one FROM saves WHERE player_id = ? AND character_id = ? AND save_name = ?')
+    .bind(playerId, characterId, saveName)
+    .first();
   // AT THE BOUND, THE ANSWER IS NO. The oldest slot is never taken to
   // make room: this is a backup, and a backup that deletes things to
   // make room is not one. AUDIT 68 X7-putcard-count-toctou: the bound is
   // asked IN the write, as a letter's is - a count read before it let two
   // new slots racing for the last place both land, and the oldest backup
   // fell off listSaves' LIMIT where nothing could reach it.
-  const wrote = await db.prepare(
-    'INSERT INTO saves (player_id, character_id, save_name, character_name, game_time, real_time, dfu_version, save_version, bytes, shot_bytes, created_at, updated_at)'
-    + ' SELECT ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?'
-    + ' WHERE EXISTS (SELECT 1 FROM saves WHERE player_id = ? AND character_id = ? AND save_name = ?)'
-    + ' OR (SELECT COUNT(*) FROM saves WHERE player_id = ?) < ?'
-    + ' ON CONFLICT (player_id, character_id, save_name) DO UPDATE SET'
-    // THE BLOB COUNTS ARE NOT TOUCHED HERE. A re-written card over a
-    // slot whose data is already up would otherwise reset `bytes` to 0
-    // and make a good backup read as an unfinished one.
-    + ' character_name = excluded.character_name, game_time = excluded.game_time, real_time = excluded.real_time,'
-    + ' dfu_version = excluded.dfu_version, save_version = excluded.save_version, updated_at = excluded.updated_at',
-  ).bind(
-    playerId, characterId, saveName, card.characterName, card.gameTime, card.realTime,
-    card.dfuVersion, card.saveVersion, nowS, nowS,
-    playerId, characterId, saveName, playerId, SAVES_MAX,
-  ).run();
+  const wrote = await db
+    .prepare(
+      'INSERT INTO saves (player_id, character_id, save_name, character_name, game_time, real_time, dfu_version, save_version, bytes, shot_bytes, created_at, updated_at)' +
+        ' SELECT ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, ?' +
+        ' WHERE EXISTS (SELECT 1 FROM saves WHERE player_id = ? AND character_id = ? AND save_name = ?)' +
+        ' OR (SELECT COUNT(*) FROM saves WHERE player_id = ?) < ?' +
+        ' ON CONFLICT (player_id, character_id, save_name) DO UPDATE SET' +
+        // THE BLOB COUNTS ARE NOT TOUCHED HERE. A re-written card over a
+        // slot whose data is already up would otherwise reset `bytes` to 0
+        // and make a good backup read as an unfinished one.
+        ' character_name = excluded.character_name, game_time = excluded.game_time, real_time = excluded.real_time,' +
+        ' dfu_version = excluded.dfu_version, save_version = excluded.save_version, updated_at = excluded.updated_at',
+    )
+    .bind(
+      playerId,
+      characterId,
+      saveName,
+      card.characterName,
+      card.gameTime,
+      card.realTime,
+      card.dfuVersion,
+      card.saveVersion,
+      nowS,
+      nowS,
+      playerId,
+      characterId,
+      saveName,
+      playerId,
+      SAVES_MAX,
+    )
+    .run();
   if (!wrote.meta.changes) return { error: 'too-many-saves' };
-  if (!have) await linkFirstPlay({ db }, playerId, characterId);   // FOUNDER5: a new slot - the character may have arrived
+  if (!have) await linkFirstPlay({ db }, playerId, characterId); // FOUNDER5: a new slot - the character may have arrived
   return { ok: true, created: !have };
 }
 
@@ -162,13 +182,17 @@ export async function putCard({ db, nowS }, playerId, { characterId, saveName, c
  */
 export async function putBlob({ db, bucket, nowS }, playerId, { characterId, saveName }, part, body, bytes) {
   if (!bucket) return { error: 'no-storage' };
-  const have = await db.prepare('SELECT 1 AS one FROM saves WHERE player_id = ? AND character_id = ? AND save_name = ?')
-    .bind(playerId, characterId, saveName).first();
+  const have = await db
+    .prepare('SELECT 1 AS one FROM saves WHERE player_id = ? AND character_id = ? AND save_name = ?')
+    .bind(playerId, characterId, saveName)
+    .first();
   if (!have) return { error: 'no-slot' };
   await bucket.put(saveKey(playerId, characterId, saveName, part), body);
   const col = part === 'shot' ? 'shot_bytes' : 'bytes';
-  await db.prepare(`UPDATE saves SET ${col} = ?, updated_at = ? WHERE player_id = ? AND character_id = ? AND save_name = ?`)
-    .bind(bytes, nowS, playerId, characterId, saveName).run();
+  await db
+    .prepare(`UPDATE saves SET ${col} = ?, updated_at = ? WHERE player_id = ? AND character_id = ? AND save_name = ?`)
+    .bind(bytes, nowS, playerId, characterId, saveName)
+    .run();
   return { ok: true, bytes };
 }
 
@@ -177,8 +201,10 @@ export async function putBlob({ db, bucket, nowS }, playerId, { characterId, sav
  *  missing or somebody else's. */
 export async function getBlob({ db, bucket }, playerId, { characterId, saveName }, part) {
   if (!bucket) return { error: 'no-storage' };
-  const have = await db.prepare('SELECT 1 AS one FROM saves WHERE player_id = ? AND character_id = ? AND save_name = ?')
-    .bind(playerId, characterId, saveName).first();
+  const have = await db
+    .prepare('SELECT 1 AS one FROM saves WHERE player_id = ? AND character_id = ? AND save_name = ?')
+    .bind(playerId, characterId, saveName)
+    .first();
   if (!have) return { error: 'no-slot' };
   const obj = await bucket.get(saveKey(playerId, characterId, saveName, part));
   return obj ? { ok: true, object: obj } : { error: 'no-data' };
@@ -189,17 +215,23 @@ export async function getBlob({ db, bucket }, playerId, { characterId, saveName 
  *  halfway leaves a card whose `bytes` lie rather than an object nothing
  *  names and nothing can ever reach again. */
 export async function deleteSave({ db, bucket }, playerId, { characterId, saveName }) {
-  const have = await db.prepare('SELECT 1 AS one FROM saves WHERE player_id = ? AND character_id = ? AND save_name = ?')
-    .bind(playerId, characterId, saveName).first();
+  const have = await db
+    .prepare('SELECT 1 AS one FROM saves WHERE player_id = ? AND character_id = ? AND save_name = ?')
+    .bind(playerId, characterId, saveName)
+    .first();
   if (!have) return { error: 'no-slot' };
   if (bucket) {
     for (const part of ['data', 'shot']) {
-      try { await bucket.delete(saveKey(playerId, characterId, saveName, part)); }
-      catch { /* an object that will not go is not a reason to keep the row */ }
+      try {
+        await bucket.delete(saveKey(playerId, characterId, saveName, part));
+      } catch {
+        /* an object that will not go is not a reason to keep the row */
+      }
     }
   }
-  await db.prepare('DELETE FROM saves WHERE player_id = ? AND character_id = ? AND save_name = ?')
-    .bind(playerId, characterId, saveName).run();
+  await db
+    .prepare('DELETE FROM saves WHERE player_id = ? AND character_id = ? AND save_name = ?')
+    .bind(playerId, characterId, saveName)
+    .run();
   return { ok: true };
 }
-

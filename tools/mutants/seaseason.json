@@ -506,8 +506,8 @@
   {
     "name": "SEA-SEASON-checkpoint-none",
     "file": "server-account/src/realm.js",
-    "old": "      ...(v.clean ? seaSeasonSteps(db, { player: playerId, char: id }, save, nowS) : []),\n",
-    "new": "",
+    "old": "      ...(v.clean ? seaSeasonSteps(db, { player: playerId, char: id }, save, nowS) : []),\n    ]);",
+    "new": "    ]);",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]

@@ -242,8 +242,8 @@
   {
     "name": "TOWNECON2-raid",
     "file": "server-account/src/raids.js",
-    "old": "    ...(town ?? []),\n",
-    "new": "",
+    "old": "    ...(town ?? []),\n    villainRaidStep(db, player.id, character, c.w, nonce), // PVP-VILLAIN-KEEP: last, so no place above moves",
+    "new": "    villainRaidStep(db, player.id, character, c.w, nonce), // PVP-VILLAIN-KEEP: last, so no place above moves",
     "tests": [
       "test/server/townecon_service.test.js"
     ],

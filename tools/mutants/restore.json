@@ -258,8 +258,8 @@
   {
     "name": "RESTORE-B-the-join-hides-the-origin",
     "file": "server-account/src/realm.js",
-    "old": "origin: row?.origin_id ?? null };",
-    "new": "origin: null };",
+    "old": "  return { id, lease, seq: row?.seq ?? 0, bytes: row?.bytes ?? 0, origin: row?.origin_id ?? null };",
+    "new": "  return { id, lease, seq: row?.seq ?? 0, bytes: row?.bytes ?? 0, origin: null };",
     "tests": [
       "test/systems/restore.test.js"
     ]

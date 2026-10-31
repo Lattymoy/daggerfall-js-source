@@ -153,7 +153,7 @@
     "name": "AUDIT-SCALE-II-A3-copy-read",
     "file": "server-account/src/metrics.js",
     "old": "  const res = await serve(request, counted, said, exec);",
-    "new": "  await request.clone().text().catch(() => '');\n  const res = await serve(request, counted, said, exec);",
+    "new": "  await request\n    .clone()\n    .text()\n    .catch(() => '');\n  const res = await serve(request, counted, said, exec);",
     "tests": [
       "test/server/auditscale2_acct.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-SCALE-II-A5-pick-on-session",
     "file": "server-account/src/motherlodes.js",
-    "old": "  const db = primary;\n",
-    "new": "  const db = read;\n",
+    "old": "  const db = primary;",
+    "new": "  const db = read;",
     "tests": [
       "test/server/auditscale2_acct.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "AUDIT-SCALE-II-A5-answer-off-session",
     "file": "server-account/src/motherlodes.js",
-    "old": "  return keptOf(db);\n}",
-    "new": "  return keptOf(read);\n}",
+    "old": "  return keptOf(db);",
+    "new": "  return keptOf(read);",
     "tests": [
       "test/server/auditscale2_acct.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "AUDIT-SCALE-II-A5-primary-mark-unasked",
     "file": "server-account/src/motherlodes.js",
-    "old": "  if (db !== read && await marked(db)) return keptOf(db);\n",
-    "new": "",
+    "old": "  if (db !== read && (await marked(db))) return keptOf(db);\n  // LODE-HERD (2026-10-29, bible/11-Multiplayer/Scale-Arc.md): A READ PICKS ONLY UNDER THE DAY'S CLAIM. Every read before",
+    "new": "  // LODE-HERD (2026-10-29, bible/11-Multiplayer/Scale-Arc.md): A READ PICKS ONLY UNDER THE DAY'S CLAIM. Every read before",
     "tests": [
       "test/server/auditscale2_acct.test.js"
     ],

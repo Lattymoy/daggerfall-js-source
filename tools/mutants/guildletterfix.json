@@ -82,8 +82,8 @@
   {
     "name": "GUILD-LETTER-FIX-act-unwired",
     "file": "server-account/src/review.js",
-    "old": "  if (act === 'letter') return letterAct(ctx, row, by, note, body);   // GUILD-LETTER-FIX\n",
-    "new": "",
+    "old": "  if (act === 'letter') return letterAct(ctx, row, by, note, body); // GUILD-LETTER-FIX\n  if (act === 'rollback') {",
+    "new": "  if (act === 'rollback') {",
     "tests": [
       "test/server/staffguildletter.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "GUILD-LETTER-FIX-row-kind",
     "file": "server-account/src/review.js",
-    "old": " : r.faction < BANK_SET_FACTION ? 'letter' : 'repair');",
-    "new": " : 'repair');",
+    "old": "  r.faction === 0\n    ? 'mend'\n    : r.faction === BANK_SET_FACTION\n      ? 'bank'\n      : r.faction < BANK_SET_FACTION\n        ? 'letter'\n        : 'repair';",
+    "new": "  r.faction === 0 ? 'mend' : r.faction === BANK_SET_FACTION ? 'bank' : 'repair';",
     "tests": [
       "test/server/staffguildletter.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "GUILD-LETTER-FIX-finding",
     "file": "server-account/src/review.js",
-    "old": "    staffFinding(db, row, nowS, { act: 'letter', by, note, ticket: fix.ticket, guild: fix.guild, op: fix.op, was, from: row.seq, to: seq }),\n",
-    "new": "",
+    "old": "      staffFinding(db, row, nowS, {\n        act: 'letter',\n        by,\n        note,\n        ticket: fix.ticket,\n        guild: fix.guild,\n        op: fix.op,\n        was,\n        from: row.seq,\n        to: seq,\n      }),\n    ],",
+    "new": "    ],",
     "tests": [
       "test/server/staffguildletter.test.js"
     ],

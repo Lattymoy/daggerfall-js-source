@@ -30,7 +30,7 @@
     "name": "RENOWN-CHAR-the-raid-read-at-the-best",
     "file": "server-account/src/raids.js",
     "old": "  const before = await renownTrackOf({ db }, player.id, character);",
-    "new": "  const before = await renownTrackOf({ db }, player.id, (await db.prepare('SELECT char_id FROM renown_tracks WHERE player = ?1 ORDER BY xp DESC LIMIT 1').bind(player.id).first())?.char_id ?? character);",
+    "new": "  const before = await renownTrackOf(\n    { db },\n    player.id,\n    (\n      await db\n        .prepare('SELECT char_id FROM renown_tracks WHERE player = ?1 ORDER BY xp DESC LIMIT 1')\n        .bind(player.id)\n        .first()\n    )?.char_id ?? character,\n  );",
     "tests": [
       "test/server/renown_char.test.js"
     ]

@@ -716,8 +716,8 @@
   {
     "name": "INT14-SD-CLAIM-DROPS-BODY",
     "file": "server-account/src/sds.js",
-    "old": "nonce, nowS, c.m ? JSON.stringify(c.m) : null),",
-    "new": "nonce, nowS, null),",
+    "old": "      .bind(c.d, player.id, c.b, c.x, c.l, title ? 1 : 0, aura ? 1 : 0, nonce, nowS, c.m ? JSON.stringify(c.m) : null), // INT14: the relay's count, kept",
+    "new": "      .bind(c.d, player.id, c.b, c.x, c.l, title ? 1 : 0, aura ? 1 : 0, nonce, nowS, null), // INT14: the relay's count, kept",
     "tests": [
       "test/net/int12_body_relay.test.js"
     ]
@@ -734,8 +734,8 @@
   {
     "name": "INT14-REVIEW-FIGHT-LEFT-OUT",
     "file": "server-account/src/review.js",
-    "old": "[['gate', 'gate_kills'], ['sd', 'sd_kills'], ['serpent', 'serpent_kills']]",
-    "new": "[['gate', 'gate_kills'], ['sd', 'sd_kills']]",
+    "old": "  ['serpent', 'serpent_kills'],\n]);",
+    "new": "]);",
     "tests": [
       "test/net/int12_body_relay.test.js"
     ]
@@ -743,8 +743,8 @@
   {
     "name": "INT14-REVIEW-RATE-UNNORMALIZED",
     "file": "server-account/src/review.js",
-    "old": "* 60.0 / MAX(json_extract(body, '$[5]'), ${BODY_MEASURE_S_MIN})",
-    "new": "* 1.0",
+    "old": "  const rate = `CAST(ROUND((json_extract(body, '$[1]') + json_extract(body, '$[2]')) * 60.0 / MAX(json_extract(body, '$[5]'), ${BODY_MEASURE_S_MIN})) AS INTEGER)`;",
+    "new": "  const rate = `CAST(ROUND((json_extract(body, '$[1]') + json_extract(body, '$[2]')) * 1.0) AS INTEGER)`;",
     "tests": [
       "test/net/int12_body_relay.test.js"
     ]
@@ -752,8 +752,8 @@
   {
     "name": "INT14-REVIEW-LOST-WRONG",
     "file": "server-account/src/review.js",
-    "old": "json_extract(body, '$[4]') = 0",
-    "new": "json_extract(body, '$[4]') = 1",
+    "old": "      lost: await count(\" AND json_extract(body, '$[4]') = 0\"),",
+    "new": "      lost: await count(\" AND json_extract(body, '$[4]') = 1\"),",
     "tests": [
       "test/net/int12_body_relay.test.js"
     ]
@@ -761,8 +761,8 @@
   {
     "name": "INT14-REVIEW-OVER-WRONG",
     "file": "server-account/src/review.js",
-    "old": "json_extract(body, '$[2]') > 0",
-    "new": "json_extract(body, '$[2]') >= 0",
+    "old": "      over: await count(\" AND json_extract(body, '$[2]') > 0\"),",
+    "new": "      over: await count(\" AND json_extract(body, '$[2]') >= 0\"),",
     "tests": [
       "test/net/int12_body_relay.test.js"
     ]

@@ -38,7 +38,7 @@
   {
     "name": "AUDIT28-M2-the-switch-asked-before-the-line",
     "file": "server-account/src/marks.js",
-    "old": "  const prior = await lineOf(db, player.id, rid);\n  if (prior) return repeat(prior);   // AUDIT 28 M2: before the switch - a sale made is a sale answered\n  const closed = shut(player, env);\n  if (closed) return closed;",
+    "old": "  const prior = await lineOf(db, player.id, rid);\n  if (prior) return repeat(prior); // AUDIT 28 M2: before the switch - a sale made is a sale answered\n  const closed = shut(player, env);\n  if (closed) return closed;",
     "new": "  const closed = shut(player, env);\n  if (closed) return closed;\n  const prior = await lineOf(db, player.id, rid);\n  if (prior) return repeat(prior);",
     "tests": [
       "test/net/audit28_marks.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "AUDIT28-M10-the-report-counts-account-days",
     "file": "server-account/src/marks.js",
-    "old": "const combatCapped = await db.prepare(`SELECT COUNT(DISTINCT dst_id) AS n, COUNT(*) AS d",
-    "new": "const combatCapped = await db.prepare(`SELECT COUNT(*) AS n, COUNT(*) AS d",
+    "old": "    .prepare(\n      `SELECT COUNT(DISTINCT dst_id) AS n, COUNT(*) AS d FROM (SELECT dst_id FROM marks_ledger",
+    "new": "    .prepare(\n      `SELECT COUNT(*) AS n, COUNT(*) AS d FROM (SELECT dst_id FROM marks_ledger",
     "tests": [
       "test/net/audit28_marks.test.js"
     ]

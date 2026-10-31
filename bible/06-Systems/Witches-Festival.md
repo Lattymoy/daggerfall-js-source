@@ -193,7 +193,7 @@ is tied to the festival's own parts (AUDIT STAR8, `11-Multiplayer/Starfall.md` s
 
 The Thirteenth of Frostfall pays its title, Starwarden, on QLTF03's witnessed end - and, in the same write, 30 Soul Cakes
 (`QL_STARWARDEN_CAKES`, `src/net/festivalLaw.js`) onto `players.fest_cakes`
-(`server-account/src/questlines.js:"export const QL_PURSES = Object.freeze({ thirteenthFrostfall: QL_STARWARDEN_CAKES });"`).
+(`server-account/src/questlines.js:"export const QL_PURSES"`).
 The title's own UPDATE carries it, so the title row's guard is the purse's: once an account, never on a re-claim (which
 answers the title held). Only while the festival is open for the account at the claim's clock - its days
 (`festivalOpen`) and its switch (`festivalOpenFor`) - and never to a guest (a guest's end is refused before the batch).

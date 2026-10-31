@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-GUILD1d-S1-lone-delete-strands",
     "file": "server-account/src/realm.js",
-    "old": "  if (master?.hall) return { error: 'guild-hall' };\n",
-    "new": "",
+    "old": "  if (master?.hall) return { error: 'guild-hall' };\n  // AUDIT GUILD2 G2: and empties its guild's vault - deleted, the guild stood memberless with pieces nobody could take",
+    "new": "  // AUDIT GUILD2 G2: and empties its guild's vault - deleted, the guild stood memberless with pieces nobody could take",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "AUDIT-GUILD1d-S6-rooms-mine-for-the-anchor",
     "file": "server-account/src/rent.js",
-    "old": "  const mine = home.player === player.id && home.guild_id == null;",
-    "new": "  const mine = home.player === player.id;",
+    "old": "  const mine = home.player === player.id && home.guild_id == null; // AUDIT GUILD1d S6: a hall is no account's, the one that bought it included",
+    "new": "  const mine = home.player === player.id; // AUDIT GUILD1d S6: a hall is no account's, the one that bought it included",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]

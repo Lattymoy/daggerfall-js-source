@@ -258,8 +258,8 @@
   {
     "name": "INT9-SVC-THE-SEIZED-LEASE-KEPT",
     "file": "server-account/src/realm.js",
-    "old": "${seize ? ', lease = NULL' : ''}",
-    "new": "${seize ? '' : ''}",
+    "old": "        `UPDATE realm_characters SET seq = ?1, bytes = ?2, obj = ?3, prev = obj, updated_at = ?4, witnessed = witnessed + ?5, svc_seq = ?1${clean ? ', clean_obj = ?3, clean_seq = ?1' : ''}${seize ? ', lease = NULL' : ''}",
+    "new": "        `UPDATE realm_characters SET seq = ?1, bytes = ?2, obj = ?3, prev = obj, updated_at = ?4, witnessed = witnessed + ?5, svc_seq = ?1${clean ? ', clean_obj = ?3, clean_seq = ?1' : ''}${seize ? '' : ''}",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -907,8 +907,8 @@
   {
     "name": "INT7-AUDIT-REALM-ANOTHERS-ARMS",
     "file": "server-account/src/realm.js",
-    "old": "WHERE r.id = ? AND r.player = ?').bind(id, playerId).first();",
-    "new": "WHERE r.id = ? AND (r.player = ? OR 1)').bind(id, playerId).first();",
+    "old": "        ' FROM realm_characters r LEFT JOIN lineages l ON l.player = r.player AND l.id = r.lineage_id WHERE r.id = ? AND r.player = ?',",
+    "new": "        ' FROM realm_characters r LEFT JOIN lineages l ON l.player = r.player AND l.id = r.lineage_id WHERE r.id = ? AND (r.player = ? OR 1)',",
     "tests": [
       "test/net/arena/int7_arms.test.js"
     ],

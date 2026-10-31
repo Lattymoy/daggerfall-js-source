@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-A2-strike-unguarded",
     "file": "server-account/src/marks.js",
-    "old": "        AND ${CLAIM_GUARDS[kind](11)}`)",
-    "new": "        AND (${CLAIM_GUARDS[kind](11)} OR 1)`)",
+    "old": "        AND ${CLAIM_GUARDS[kind](11)}`,",
+    "new": "        AND (${CLAIM_GUARDS[kind](11)} OR 1)`,",
     "tests": [
       "test/net/auditsilver_service.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-C1-service-unasked",
     "file": "server-account/src/motherlodes.js",
-    "old": "c.y !== lode.y || !motherlodeWatchOk(c.i, at))",
-    "new": "c.y !== lode.y || c.i < at - 600)",
+    "old": "  if (!c || c.s !== player.id || c.x !== lode.x || c.y !== lode.y || !motherlodeWatchOk(c.i, at))",
+    "new": "  if (!c || c.s !== player.id || c.x !== lode.x || c.y !== lode.y || c.i < at - 600)",
     "tests": [
       "test/net/auditsilver_service.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-C2-full-for-any",
     "file": "server-account/src/motherlodes.js",
-    "old": "return balance + MOTHERLODE_SILVER > MARKS_MAX ? { marks: { struck: 0, balance, why: 'full' } } : {};",
-    "new": "return { marks: { struck: 0, balance, why: 'full' } };",
+    "old": "  return balance + MOTHERLODE_SILVER > MARKS_MAX ? { marks: { struck: 0, balance, why: 'full' } } : {};",
+    "new": "  return { marks: { struck: 0, balance, why: 'full' } };",
     "tests": [
       "test/net/auditsilver_service.test.js"
     ]
@@ -130,7 +130,7 @@
   {
     "name": "AUDIT-SILVER-WAYS-C3-no-mark-read",
     "file": "server-account/src/motherlodes.js",
-    "old": "  const marked = async (/** @type {any} */ db) => !!(await db.prepare('SELECT 1 FROM motherlode_days WHERE day = ?1').bind(day).first());",
+    "old": "  const marked = async (/** @type {any} */ db) =>\n    !!(await db.prepare('SELECT 1 FROM motherlode_days WHERE day = ?1').bind(day).first());",
     "new": "  const marked = async () => false;",
     "tests": [
       "test/net/auditsilver_service.test.js"
@@ -139,8 +139,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-C3-picks-unguarded",
     "file": "server-account/src/motherlodes.js",
-    "old": "WHERE EXISTS (SELECT 1 FROM motherlode_days WHERE day = ?1 AND n = ?10)`)",
-    "new": "WHERE ?10 IS NOT NULL`)",
+    "old": "      SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9 WHERE EXISTS (SELECT 1 FROM motherlode_days WHERE day = ?1 AND n = ?10)`,",
+    "new": "      SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9 WHERE ?10 IS NOT NULL`,",
     "tests": [
       "test/net/auditsilver_service.test.js"
     ]

@@ -68,8 +68,8 @@
   {
     "name": "INT3-the-outbound-unasked",
     "file": "server-account/src/realm.js",
-    "old": "  if (outbound) {\n    const held = holdRefusal(row);\n    if (held) return held;\n  }\n",
-    "new": "",
+    "old": "  if (outbound) {\n    const held = holdRefusal(row);\n    if (held) return held;\n  }\n  const object = await bucket.get(row.obj);",
+    "new": "  const object = await bucket.get(row.obj);",
     "tests": [
       "test/server/int2_judge.test.js"
     ]
@@ -77,8 +77,8 @@
   {
     "name": "INT3-the-unjudged-moves",
     "file": "server-account/src/realm.js",
-    "old": "  if (row.judged_seq == null) return { error: 'record-unjudged' };\n",
-    "new": "",
+    "old": "  if (row.judged_seq == null) return { error: 'record-unjudged' };\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/server/int2_judge.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "INT5-the-write-unwitnessed",
     "file": "server-account/src/realm.js",
-    "old": ".bind(at.seq + 1, bytes, key, nowS, witness ? wealthOf(save) - before : 0, at.id, playerId, at.lease, at.seq),",
-    "new": ".bind(at.seq + 1, bytes, key, nowS, 0, at.id, playerId, at.lease, at.seq),",
+    "old": "      .bind(at.seq + 1, bytes, key, nowS, witness ? wealthOf(save) - before : 0, at.id, playerId, at.lease, at.seq),",
+    "new": "      .bind(at.seq + 1, bytes, key, nowS, 0, at.id, playerId, at.lease, at.seq),",
     "tests": [
       "test/server/int2_judge.test.js"
     ]
@@ -122,8 +122,8 @@
   {
     "name": "INT6-review-for-anyone",
     "file": "server-account/src/review.js",
-    "old": "  if (!isDeveloper(player, env)) return { error: 'not-developer' };\n",
-    "new": "",
+    "old": "  if (!isDeveloper(player, env)) return { error: 'not-developer' };\n  const by = player.handle;",
+    "new": "  const by = player.handle;",
     "tests": [
       "test/server/int2_judge.test.js"
     ]

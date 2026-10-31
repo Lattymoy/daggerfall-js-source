@@ -255,8 +255,8 @@
   {
     "name": "CHAP2-JOIN",
     "file": "server-account/src/npcRoll.js",
-    "old": "const member = ranks.has(f) && (row.member || joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f));",
-    "new": "const member = ranks.has(f);",
+    "old": "      const member =\n        ranks.has(f) && (row.member || joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f));",
+    "new": "      const member = ranks.has(f);",
     "tests": [
       "test/net/chap2_halls.test.js",
       "test/net/audit_chap2.test.js"
@@ -266,8 +266,8 @@
   {
     "name": "CHAP2-MEMBER-STAYS",
     "file": "server-account/src/npcRoll.js",
-    "old": "const member = ranks.has(f) && (row.member || joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f));",
-    "new": "const member = ranks.has(f) && joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f);",
+    "old": "      const member =\n        ranks.has(f) && (row.member || joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f));",
+    "new": "      const member = ranks.has(f) && joinRecordable(Math.max(row.rep + row.owed, line.rep + line.owed), f);",
     "tests": [
       "test/net/chap2_halls.test.js",
       "test/net/audit_chap2.test.js"

@@ -112,8 +112,8 @@
   {
     "name": "AUDIT-FB1029e-F4-born-on-nothing",
     "file": "server-account/src/realm.js",
-    "old": "      + ' AND (? IS NULL OR EXISTS (SELECT 1 FROM lineages WHERE player = ? AND id = ?))',",
-    "new": "      + ' AND (? IS NULL OR 1)',",
+    "old": "          ' AND (? IS NULL OR EXISTS (SELECT 1 FROM lineages WHERE player = ? AND id = ?))',",
+    "new": "          ' AND (? IS NULL OR 1)',",
     "tests": [
       "test/server/family_remove.test.js"
     ],

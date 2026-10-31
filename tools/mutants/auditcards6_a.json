@@ -29,8 +29,8 @@
   {
     "name": "AC6-A1-birth-takes-a-pack",
     "file": "server-account/src/realm.js",
-    "old": " && cardPacksOf(save) === 0 ? null : { error: 'realm-birth' };",
-    "new": " ? null : { error: 'realm-birth' };",
+    "old": "      cardWorthOf(save) <= STARTER_DECK_WORTH &&\n      cardPacksOf(save) === 0",
+    "new": "      cardWorthOf(save) <= STARTER_DECK_WORTH",
     "tests": [
       "test/systems/auditcards6_a.test.js"
     ]

@@ -161,8 +161,8 @@
   {
     "name": "A3-E1-WEEK",
     "file": "server-account/src/npcReceipts.js",
-    "old": "(!Number.isSafeInteger(id) || meritWeekOf(Math.floor(gateTimes(Number(id)).riseAt / 1000)) !== meritWeekOf(nowS))",
-    "new": "(!Number.isSafeInteger(id))",
+    "old": "    if (\n      kind === 'gate' &&\n      (!Number.isSafeInteger(id) || meritWeekOf(Math.floor(gateTimes(Number(id)).riseAt / 1000)) !== meritWeekOf(nowS))\n    ) {",
+    "new": "    if (kind === 'gate' && !Number.isSafeInteger(id)) {",
     "tests": [
       "test/net/audit_chap3.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "A3-T3-DEAD",
     "file": "server-account/src/npcReceipts.js",
-    "old": "WHERE char_id = ?1 AND player = ?4\n        AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?1 AND player = ?4 AND dead_at IS NULL)`).bind(character, tag, nowS, player.id),",
-    "new": "WHERE char_id = ?1 AND player = ?4`).bind(character, tag, nowS, player.id),",
+    "old": "          `UPDATE npc_roll_heads SET seq = seq + 1, tag = ?2, updated_at = ?3 WHERE char_id = ?1 AND player = ?4\n        AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?1 AND player = ?4 AND dead_at IS NULL)`,",
+    "new": "          `UPDATE npc_roll_heads SET seq = seq + 1, tag = ?2, updated_at = ?3 WHERE char_id = ?1 AND player = ?4`,",
     "tests": [
       "test/net/audit_chap3.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "A3-T9-ORDER",
     "file": "server-account/src/npcReceipts.js",
-    "old": " ORDER BY faction_id`).bind(character, player).all();",
-    "new": "`).bind(character, player).all();",
+    "old": "    AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?1 AND player = ?2 AND dead_at IS NULL) ORDER BY faction_id`,",
+    "new": "    AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?1 AND player = ?2 AND dead_at IS NULL)`,",
     "tests": [
       "test/net/audit_chap3.test.js"
     ],
@@ -425,8 +425,8 @@
   {
     "name": "A3-E4-SHARE-UNREAD",
     "file": "server-account/src/npcReceipts.js",
-    "old": "binds: [meritOfReceipt(own.length), tag],",
-    "new": "binds: [meritOfReceipt(1), tag],",
+    "old": "          binds: [meritOfReceipt(own.length), tag],",
+    "new": "          binds: [meritOfReceipt(1), tag],",
     "tests": [
       "test/net/audit_chap3.test.js",
       "test/net/chap3b_strength.test.js",

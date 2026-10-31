@@ -228,8 +228,8 @@
   {
     "name": "MASTER-ART-service-rank-99",
     "file": "server-account/src/masterWork.js",
-    "old": "if (rank < MASTER_RANK || !recipeOpen(r, rank)) return { error: 'prof-rank' };",
-    "new": "if (rank < MASTER_RANK - 1 || !recipeOpen(r, rank)) return { error: 'prof-rank' };",
+    "old": "  if (rank < MASTER_RANK || !recipeOpen(r, rank)) return { error: 'prof-rank' };",
+    "new": "  if (rank < MASTER_RANK - 1 || !recipeOpen(r, rank)) return { error: 'prof-rank' };",
     "tests": [
       "test/net/masterart_service.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "MASTER-ART-service-catalysts-unspent",
     "file": "server-account/src/masterWork.js",
-    "old": "...spends.filter((s) => s.cat > 0).flatMap((s) => spendStatements(",
-    "new": "...spends.filter((s) => s.cat > 99).flatMap((s) => spendStatements(",
+    "old": "      .filter((s) => s.cat > 0)",
+    "new": "      .filter((s) => s.cat > 99)",
     "tests": [
       "test/net/masterart_service.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "MASTER-ART-service-loose-catalysts",
     "file": "server-account/src/masterWork.js",
-    "old": "AND ${spendableSql('?1', '?2', k)} >= ${c} + MAX(0, ${n} - ${loose})`;",
-    "new": "AND ${workableSql('?1', '?2', k)} >= ${c} + MAX(0, ${n} - ${loose})`;",
+    "old": "    return `${workableSql('?1', '?2', k)} >= ${n} + ${c} AND ${spendableSql('?1', '?2', k)} >= ${c} + MAX(0, ${n} - ${loose})`;",
+    "new": "    return `${workableSql('?1', '?2', k)} >= ${n} + ${c} AND ${workableSql('?1', '?2', k)} >= ${c} + MAX(0, ${n} - ${loose})`;",
     "tests": [
       "test/net/masterart_service.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "MASTER-ART-service-shared-key-read-once",
     "file": "server-account/src/masterWork.js",
-    "old": "by.set(c.key, { key: c.key, in: was?.in ?? 0, cat: (was?.cat ?? 0) + c.n });",
-    "new": "by.set(c.key, { key: c.key, in: 0, cat: (was?.cat ?? 0) + c.n });",
+    "old": "    by.set(c.key, { key: c.key, in: was?.in ?? 0, cat: (was?.cat ?? 0) + c.n });",
+    "new": "    by.set(c.key, { key: c.key, in: 0, cat: (was?.cat ?? 0) + c.n });",
     "tests": [
       "test/net/masterart_service.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "MASTER-ART-service-record-without-lines",
     "file": "server-account/src/masterWork.js",
-    "old": "u: dye ?? null, v: MINT_V_MASTER, l: signed }",
-    "new": "u: dye ?? null, v: MINT_V_MASTER }",
+    "old": "      l: signed,\n    },",
+    "new": "    },",
     "tests": [
       "test/net/masterart_service.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "MASTER-ART-progress-route-unseated",
     "file": "server-account/src/progress.js",
-    "old": "  '/v1/prof/master': Object.freeze(['prof', true]),",
-    "new": "  '/v1/prof/mastr': Object.freeze(['prof', true]),",
+    "old": "  '/v1/prof/master': Object.freeze(['prof', true]), // MASTER-ART: a Master's work - a piece of the seated character's",
+    "new": "  '/v1/prof/mastr': Object.freeze(['prof', true]), // MASTER-ART: a Master's work - a piece of the seated character's",
     "tests": [
       "test/net/masterart_service.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "AUDIT-HB1-record-signs-the-keys",
     "file": "server-account/src/masterWork.js",
-    "old": "u: dye ?? null, v: MINT_V_MASTER, l: signed }",
-    "new": "u: dye ?? null, v: MINT_V_MASTER, l: lines }",
+    "old": "      l: signed,",
+    "new": "      l: lines,",
     "tests": [
       "test/net/masterart_service.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "AUDIT-HB1-row-keeps-the-keys",
     "file": "server-account/src/masterWork.js",
-    "old": "JSON.stringify(signed), seed, nowS, nonce];",
-    "new": "JSON.stringify(lines), seed, nowS, nonce];",
+    "old": "  const binds = [player.id, character, rid, day, r.id, provenance, JSON.stringify(signed), seed, nowS, nonce];",
+    "new": "  const binds = [player.id, character, rid, day, r.id, provenance, JSON.stringify(lines), seed, nowS, nonce];",
     "tests": [
       "test/net/masterart_service.test.js"
     ]
@@ -464,8 +464,8 @@
   {
     "name": "AUDIT-HB3-goods-unheld",
     "file": "server-account/src/masterWork.js",
-    "old": "const held = spends.map((s, i) => {",
-    "new": "const held = spends.filter((s) => s.cat > 0).map((s, i) => {",
+    "old": "  const held = spends.map((s, i) => {\n    const [k, n, c] = [`?${11 + 3 * i}`, `?${12 + 3 * i}`, `?${13 + 3 * i}`];\n    binds.push(s.key, s.in, s.cat);\n    const loose = `COALESCE((SELECT qty FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ${k} AND origin = '${LOOSE_ORIGIN}'), 0)`;\n    return `${workableSql('?1', '?2', k)} >= ${n} + ${c} AND ${spendableSql('?1', '?2', k)} >= ${c} + MAX(0, ${n} - ${loose})`;\n  });",
+    "new": "  const held = spends\n    .filter((s) => s.cat > 0)\n    .map((s, i) => {\n      const [k, n, c] = [`?${11 + 3 * i}`, `?${12 + 3 * i}`, `?${13 + 3 * i}`];\n      binds.push(s.key, s.in, s.cat);\n      const loose = `COALESCE((SELECT qty FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ${k} AND origin = '${LOOSE_ORIGIN}'), 0)`;\n      return `${workableSql('?1', '?2', k)} >= ${n} + ${c} AND ${spendableSql('?1', '?2', k)} >= ${c} + MAX(0, ${n} - ${loose})`;\n    });",
     "tests": [
       "test/net/masterart_service.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "AUDIT-HB3-rank-off-smithing",
     "file": "server-account/src/masterWork.js",
-    "old": "const track = await trackRow(db, player.id, character, craft);",
-    "new": "const track = await trackRow(db, player.id, character, 'smithing');",
+    "old": "  const track = await trackRow(db, player.id, character, craft);",
+    "new": "  const track = await trackRow(db, player.id, character, 'smithing');",
     "tests": [
       "test/net/masterart_service.test.js"
     ]

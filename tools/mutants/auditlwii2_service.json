@@ -257,8 +257,8 @@
   {
     "name": "AUDITLWII2-S6-faucets",
     "file": "server-account/src/review.js",
-    "old": "return { days, config, isDefault: config === BUDGET_DEFAULT, bands, faucets };",
-    "new": "return { days, config, isDefault: config === BUDGET_DEFAULT, bands };",
+    "old": "  return { days, config, isDefault: config === BUDGET_DEFAULT, bands, faucets };",
+    "new": "  return { days, config, isDefault: config === BUDGET_DEFAULT, bands };",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "AUDITLWII2-S6-window",
     "file": "server-account/src/review.js",
-    "old": "FROM realm_faucets WHERE hour >= ?1 GROUP BY kind",
-    "new": "FROM realm_faucets WHERE hour >= ?1 - 1000 GROUP BY kind",
+    "old": "    .prepare('SELECT kind, SUM(gold) AS gold, SUM(n) AS n FROM realm_faucets WHERE hour >= ?1 GROUP BY kind')",
+    "new": "    .prepare('SELECT kind, SUM(gold) AS gold, SUM(n) AS n FROM realm_faucets WHERE hour >= ?1 - 1000 GROUP BY kind')",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]

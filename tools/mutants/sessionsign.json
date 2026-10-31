@@ -222,8 +222,8 @@
   {
     "name": "SESSIONSIGN-save-session-unread",
     "file": "server-account/src/realm.js",
-    "old": "  if (session != null && row.session_alive == null) return { error: 'auth' };\n",
-    "new": "",
+    "old": "  if (session != null && row.session_alive == null) return { error: 'auth' };\n  if (Number.isSafeInteger(row.ban_until_now) && row.ban_until_now > nowS)",
+    "new": "  if (Number.isSafeInteger(row.ban_until_now) && row.ban_until_now > nowS)",
     "tests": [
       "test/server/sessionsign.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "SESSIONSIGN-save-ban-unread",
     "file": "server-account/src/realm.js",
-    "old": "  if (Number.isSafeInteger(row.ban_until_now) && row.ban_until_now > nowS) return { error: 'banned', player: { banned_until: row.ban_until_now, ban_reason: row.ban_reason_now } };\n",
-    "new": "",
+    "old": "  if (Number.isSafeInteger(row.ban_until_now) && row.ban_until_now > nowS)\n    return { error: 'banned', player: { banned_until: row.ban_until_now, ban_reason: row.ban_reason_now } };\n  // STAFF-PANEL5-FREEZE (staffFreeze.js; design doc Weak spots: \"checkpoints still save\"): and the freeze - a frozen player",
+    "new": "  // STAFF-PANEL5-FREEZE (staffFreeze.js; design doc Weak spots: \"checkpoints still save\"): and the freeze - a frozen player",
     "tests": [
       "test/server/sessionsign.test.js"
     ],

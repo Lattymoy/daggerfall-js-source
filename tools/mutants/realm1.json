@@ -2,8 +2,8 @@
   {
     "name": "REALM1-checkpoint-any-lease",
     "file": "server-account/src/realm.js",
-    "old": "  if (row.lease !== lease) return { error: 'lease' };\n",
-    "new": "",
+    "old": "  if (row.lease !== lease) return { error: 'lease' };\n  if (seq !== row.seq + 1) return { error: 'seq', seq: row.seq }; // the service's own: a client whose last answer was lost resyncs",
+    "new": "  if (seq !== row.seq + 1) return { error: 'seq', seq: row.seq }; // the service's own: a client whose last answer was lost resyncs",
     "tests": [
       "test/server/realm1.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "REALM1-checkpoint-any-seq",
     "file": "server-account/src/realm.js",
-    "old": "  if (seq !== row.seq + 1) return { error: 'seq', seq: row.seq };",
-    "new": "  void 0;",
+    "old": "  if (seq !== row.seq + 1) return { error: 'seq', seq: row.seq }; // the service's own: a client whose last answer was lost resyncs",
+    "new": "  void 0; // the service's own: a client whose last answer was lost resyncs",
     "tests": [
       "test/server/realm1.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "REALM1-join-keeps-others",
     "file": "server-account/src/realm.js",
-    "old": "  await freeOthers({ db }, playerId, id);\n  const row = await db.prepare('SELECT seq, bytes, origin_id FROM realm_characters WHERE id = ? AND player = ?')",
-    "new": "  const row = await db.prepare('SELECT seq, bytes, origin_id FROM realm_characters WHERE id = ? AND player = ?')",
+    "old": "  await freeOthers({ db }, playerId, id);\n  const row = await db",
+    "new": "  const row = await db",
     "tests": [
       "test/server/realm1.test.js"
     ],
@@ -30,8 +30,8 @@
   {
     "name": "REALM1-create-keeps-others",
     "file": "server-account/src/realm.js",
-    "old": "    return { error: 'too-many-characters' };\n  }\n  await freeOthers({ db }, playerId, id);",
-    "new": "    return { error: 'too-many-characters' };\n  }",
+    "old": "  await freeOthers({ db }, playerId, id);\n  return { id, lease, seq: 0 };",
+    "new": "  return { id, lease, seq: 0 };",
     "tests": [
       "test/server/realm1.test.js"
     ],
@@ -40,8 +40,8 @@
   {
     "name": "REALM1-no-bound",
     "file": "server-account/src/realm.js",
-    "old": "AND dead_at IS NULL) < ?'\n      // AUDIT FB1029e F4",
-    "new": "AND dead_at IS NULL) < ? + 100'\n      // AUDIT FB1029e F4",
+    "old": "          ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, NULL, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ?' +",
+    "new": "          ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, NULL, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ? + 100' +",
     "tests": [
       "test/server/realm1.test.js"
     ],
@@ -50,8 +50,8 @@
   {
     "name": "REALM1-customs-no-track",
     "file": "server-account/src/realm.js",
-    "old": "' AND (EXISTS (SELECT 1 FROM realm_census WHERE player = ? AND char_id = ? AND spent = 0)'",
-    "new": "' AND (1 OR EXISTS (SELECT 1 FROM realm_census WHERE player = ? AND char_id = ? AND spent = 0)'",
+    "old": "            ' AND (EXISTS (SELECT 1 FROM realm_census WHERE player = ? AND char_id = ? AND spent = 0)' +",
+    "new": "            ' AND (1 OR EXISTS (SELECT 1 FROM realm_census WHERE player = ? AND char_id = ? AND spent = 0)' +",
     "tests": [
       "test/server/realm1.test.js"
     ]
@@ -59,8 +59,8 @@
   {
     "name": "REALM1-customs-twice",
     "file": "server-account/src/realm.js",
-    "old": "' AND (EXISTS (SELECT 1 FROM realm_census WHERE player = ? AND char_id = ? AND spent = 0)'",
-    "new": "' AND (EXISTS (SELECT 1 FROM realm_census WHERE player = ? AND char_id = ?)'",
+    "old": "            ' AND (EXISTS (SELECT 1 FROM realm_census WHERE player = ? AND char_id = ? AND spent = 0)' +",
+    "new": "            ' AND (EXISTS (SELECT 1 FROM realm_census WHERE player = ? AND char_id = ?)' +",
     "tests": [
       "test/server/realm1.test.js"
     ]
@@ -68,8 +68,8 @@
   {
     "name": "REALM1-customs-realm-origin",
     "file": "server-account/src/realm.js",
-    "old": "!ORIGIN_ID_RE.test(origin) || REALM_ID_RE.test(origin)) return { error: 'body' };",
-    "new": "!ORIGIN_ID_RE.test(origin)) return { error: 'body' };",
+    "old": "  if (typeof origin !== 'string' || !ORIGIN_ID_RE.test(origin) || REALM_ID_RE.test(origin)) return { error: 'body' };",
+    "new": "  if (typeof origin !== 'string' || !ORIGIN_ID_RE.test(origin)) return { error: 'body' };",
     "tests": [
       "test/server/realm1.test.js"
     ]
@@ -77,8 +77,8 @@
   {
     "name": "REALM1-one-object",
     "file": "server-account/src/realm.js",
-    "old": "`${realmPrefix(playerId)}${id}/${seq}-${tag}`",
-    "new": "`${realmPrefix(playerId)}${id}/0`",
+    "old": ") => `${realmPrefix(playerId)}${id}/${seq}-${tag}`;",
+    "new": ") => `${realmPrefix(playerId)}${id}/0`;",
     "tests": [
       "test/server/realm1.test.js"
     ]
@@ -86,8 +86,8 @@
   {
     "name": "REALM1-read-the-other",
     "file": "server-account/src/realm.js",
-    "old": "  const object = await bucket.get(row.obj);\n  return object ? { ok: true, object, seq: row.seq } : { error: 'no-data' };",
-    "new": "  const object = await bucket.get(row.prev);\n  return object ? { ok: true, object, seq: row.seq } : { error: 'no-data' };",
+    "old": "  if (!row.seq || !row.bytes || !row.obj) return { error: 'no-data' };\n  const object = await bucket.get(row.obj);",
+    "new": "  if (!row.seq || !row.bytes || !row.obj) return { error: 'no-data' };\n  const object = await bucket.get(row.prev);",
     "tests": [
       "test/server/realm1.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "REALM1-lease-listed",
     "file": "server-account/src/realm.js",
-    "old": "    id: r.id, name: r.name, summary, seq: r.seq, bytes: r.bytes,",
-    "new": "    id: r.id, name: r.name, summary, seq: r.seq, bytes: r.bytes, lease: r.lease,",
+    "old": "    playing: !!r.lease && nowS - r.lease_at < REALM_PLAYING_S,",
+    "new": "    lease: r.lease,\n    playing: !!r.lease && nowS - r.lease_at < REALM_PLAYING_S,",
     "tests": [
       "test/server/realm1.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "REALM1-leave-any-lease",
     "file": "server-account/src/realm.js",
-    "old": "'UPDATE realm_characters SET lease = NULL WHERE id = ? AND player = ? AND lease = ?').bind(id, playerId, lease)",
-    "new": "'UPDATE realm_characters SET lease = NULL WHERE id = ? AND player = ? AND ? IS NOT NULL').bind(id, playerId, lease)",
+    "old": "    .prepare('UPDATE realm_characters SET lease = NULL WHERE id = ? AND player = ? AND lease = ?')",
+    "new": "    .prepare('UPDATE realm_characters SET lease = NULL WHERE id = ? AND player = ? AND ? IS NOT NULL')",
     "tests": [
       "test/server/realm1.test.js"
     ]
@@ -113,8 +113,8 @@
   {
     "name": "REALM1-delete-keeps-objects",
     "file": "server-account/src/realm.js",
-    "old": "  if (!bucket) return;\n  await dropObjects(bucket, named);",
-    "new": "  if (bucket) return;\n  await dropObjects(bucket, named);",
+    "old": "  if (!bucket) return;",
+    "new": "  if (bucket) return;",
     "tests": [
       "test/server/realm1.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "REALM1-customs-leaves-life",
     "file": "server-account/src/realm.js",
-    "old": "      ...customsCarry(db, playerId, origin, id),\n",
-    "new": "",
+    "old": "      ...customsCarry(db, playerId, origin, id),\n    ]);",
+    "new": "    ]);",
     "tests": [
       "test/server/realm1.test.js"
     ]

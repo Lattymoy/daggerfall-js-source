@@ -573,7 +573,7 @@ excuse.
 
 FIXED. Every judgement keeps the character law's VALUES beside the signature (`judge.js:"export function lawValuesOf"`
 - each finding's key and the value it read, `gold@=-8000000`, `stat@agility=101`; `realm_characters.law_v`), the clear
-excuses the two together (`review.js:"law_excused = CASE WHEN law_v IS NULL THEN law_sig ELSE law_sig || '|' || law_v END,"`,
+excuses the two together (`review.js:"law_excused = CASE"`,
 `verdict.js:"export const lawExcuseOf"` - a finding of pieces alone keeps its signature as every excuse was), and a
 checkpoint the law finds nothing in ends an excuse of the values (`verdict.js:"    // RPT1026-LEDGERLAW: a checkpoint the law finds nothing in ends staff's excuse - the next finding is the law's again."`;
 AUDIT RPT1026 C2: the batch ended every excuse there, so a piece staff had cleared, put away for one checkpoint - a vault,

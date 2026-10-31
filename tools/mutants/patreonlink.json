@@ -22,8 +22,8 @@
   {
     "name": "PL-handle-guard-dropped",
     "file": "server-account/src/patreon.js",
-    "old": "  if (typeof player?.handle !== 'string' || !player.handle) return [];\n  return pledgeTitles(",
-    "new": "  return pledgeTitles(",
+    "old": "  if (typeof player?.handle !== 'string' || !player.handle) return [];\n  return pledgeTitles(tierIdsOf(player.patreon_tiers), player.patreon_status, env);",
+    "new": "  return pledgeTitles(tierIdsOf(player.patreon_tiers), player.patreon_status, env);",
     "tests": [
       "test/server/patreon_link.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "PL-title-outside-three",
     "file": "server-account/src/patreon.js",
-    "old": "PATREON_TITLES.includes(/** @type {string} */ (title))",
-    "new": "typeof title === 'string' && !!title",
+    "old": "    if (extra === undefined && PATREON_ID_RE.test(id ?? '') && PATREON_TITLES.includes(/** @type {string} */ (title)))\n      map.set(id, title);",
+    "new": "    if (extra === undefined && PATREON_ID_RE.test(id ?? '') && typeof title === 'string' && !!title) map.set(id, title);",
     "tests": [
       "test/server/patreon_link.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "PL-malformed-entry",
     "file": "server-account/src/patreon.js",
-    "old": "if (extra === undefined && PATREON_ID_RE.test(id ?? '') &&",
-    "new": "if (PATREON_ID_RE.test(id ?? '') &&",
+    "old": "    if (extra === undefined && PATREON_ID_RE.test(id ?? '') && PATREON_TITLES.includes(/** @type {string} */ (title)))\n      map.set(id, title);",
+    "new": "    if (PATREON_ID_RE.test(id ?? '') && PATREON_TITLES.includes(/** @type {string} */ (title))) map.set(id, title);",
     "tests": [
       "test/server/patreon_link.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "PL-missing-status-null",
     "file": "server-account/src/patreon.js",
-    "old": "  const status = attrs && typeof attrs === 'object' && 'patron_status' in attrs",
-    "new": "  const status = attrs && typeof attrs === 'object'",
+    "old": "    attrs && typeof attrs === 'object' && 'patron_status' in attrs",
+    "new": "    attrs && typeof attrs === 'object'",
     "tests": [
       "test/server/patreon_link.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "PL-missing-tiers-none",
     "file": "server-account/src/patreon.js",
-    "old": "    : undefined;\n  const attrs = m.attributes;",
-    "new": "    : [];\n  const attrs = m.attributes;",
+    "old": "        .filter((/** @type {any} */ id) => typeof id === 'string' && PATREON_ID_RE.test(id))\n    : undefined;",
+    "new": "        .filter((/** @type {any} */ id) => typeof id === 'string' && PATREON_ID_RE.test(id))\n    : [];",
     "tests": [
       "test/server/patreon_link.test.js"
     ],
@@ -162,7 +162,7 @@
   {
     "name": "PL-guest-given-link",
     "file": "server-account/src/patreon.js",
-    "old": "  const state = registered ? await sealPatreon('state', { p: player.id, x: nowS + PATREON_STATE_S }, env, { subtle, rand }) : null;",
+    "old": "  const state = registered\n    ? await sealPatreon('state', { p: player.id, x: nowS + PATREON_STATE_S }, env, { subtle, rand })\n    : null;",
     "new": "  const state = await sealPatreon('state', { p: player.id, x: nowS + PATREON_STATE_S }, env, { subtle, rand });",
     "tests": [
       "test/server/patreon_link.test.js"
@@ -172,8 +172,8 @@
   {
     "name": "PL-secret-in-url",
     "file": "server-account/src/patreon.js",
-    "old": "response_type: 'code', client_id: String(env.PATREON_CLIENT_ID)",
-    "new": "response_type: 'code', client_id: String(env.PATREON_CLIENT_SECRET)",
+    "old": "    response_type: 'code',\n    client_id: String(env.PATREON_CLIENT_ID),",
+    "new": "    response_type: 'code',\n    client_id: String(env.PATREON_CLIENT_SECRET),",
     "tests": [
       "test/server/patreon_link.test.js"
     ],
@@ -252,7 +252,7 @@
   {
     "name": "PL-ended-keeps-tiers",
     "file": "server-account/src/patreon.js",
-    "old": "  const tiers = ended ? '' : (m.tiers === undefined ? null : m.tiers.join(','));",
+    "old": "  const tiers = ended ? '' : m.tiers === undefined ? null : m.tiers.join(',');",
     "new": "  const tiers = m.tiers === undefined ? null : m.tiers.join(',');",
     "tests": [
       "test/server/patreon_link.test.js"
@@ -282,8 +282,8 @@
   {
     "name": "PL-the-move-not-made",
     "file": "server-account/src/patreon.js",
-    "old": "      WHERE patreon_user = ?1 AND id <> ?2 AND ${registered}`).bind(c.u, c.p),",
-    "new": "      WHERE 0 AND patreon_user = ?1 AND id <> ?2 AND ${registered}`).bind(c.u, c.p),",
+    "old": "      WHERE patreon_user = ?1 AND id <> ?2 AND ${registered}`,",
+    "new": "      WHERE 0 AND patreon_user = ?1 AND id <> ?2 AND ${registered}`,",
     "tests": [
       "test/server/patreon_link.test.js"
     ],
@@ -293,7 +293,7 @@
     "name": "PL-page-silent-move",
     "file": "server-account/src/patreon.js",
     "old": "      ...(from ? [`This Patreon is linked to ${from} now. Linking moves it to ${handle}.`] : []),",
-    "new": "      ...([]),",
+    "new": "      ...[],",
     "tests": [
       "test/server/patreon_link.test.js"
     ],
@@ -302,8 +302,8 @@
   {
     "name": "PL-unlink-keeps",
     "file": "server-account/src/patreon.js",
-    "old": "  await db.prepare('UPDATE players SET patreon_user = NULL, patreon_tiers = NULL, patreon_status = NULL, patreon_at = NULL WHERE id = ?1')",
-    "new": "  await db.prepare('UPDATE players SET patreon_at = NULL WHERE id = ?1')",
+    "old": "  await db\n    .prepare(\n      'UPDATE players SET patreon_user = NULL, patreon_tiers = NULL, patreon_status = NULL, patreon_at = NULL WHERE id = ?1',\n    )\n    .bind(playerId)\n    .run();",
+    "new": "  await db.prepare('UPDATE players SET patreon_at = NULL WHERE id = ?1').bind(playerId).run();",
     "tests": [
       "test/server/patreon_link.test.js"
     ],
@@ -352,8 +352,8 @@
   {
     "name": "PL-policy-dropped",
     "file": "server-account/src/patreon.js",
-    "old": "      'content-security-policy': `default-src 'none'; style-src 'unsafe-inline'; form-action 'self'${to}; frame-ancestors 'none'; base-uri 'none'`,\n",
-    "new": "",
+    "old": "      'content-security-policy': `default-src 'none'; style-src 'unsafe-inline'; form-action 'self'${to}; frame-ancestors 'none'; base-uri 'none'`,\n      'x-frame-options': 'DENY',",
+    "new": "      'x-frame-options': 'DENY',",
     "tests": [
       "test/server/patreon_link.test.js"
     ],

@@ -112,14 +112,20 @@ export const PASSWORD_MIN = 8;
 export const PASSWORD_MAX = 200;
 
 const enc = new TextEncoder();
-const b64 = (u) => { let s = ''; for (const b of u) s += String.fromCharCode(b); return btoa(s); };
+const b64 = (u) => {
+  let s = '';
+  for (const b of u) s += String.fromCharCode(b);
+  return btoa(s);
+};
 const unb64 = (s) => {
   try {
     const bin = atob(s);
     const out = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
     return out;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 };
 
 /** Normalise the way the person typing it would expect, and no more.
@@ -165,7 +171,8 @@ export function timingSafeEqual(a, b) {
   //
   // ANYTHING THAT IS NOT A PAIR OF BYTE ARRAYS IS NOT EQUAL.
   if (!(a instanceof Uint8Array) || !(b instanceof Uint8Array)) return false;
-  const x = a; const y = b;
+  const x = a;
+  const y = b;
   let diff = x.length ^ y.length;
   const n = Math.max(x.length, y.length);
   for (let i = 0; i < n; i++) diff |= (x[i % (x.length || 1)] ?? 0) ^ (y[i % (y.length || 1)] ?? 0);
@@ -220,7 +227,8 @@ export function parseStored(stored) {
   if (alg !== ALG) return null;
   const iters = Number(itersS);
   if (!Number.isSafeInteger(iters) || iters < 1000 || iters > 10_000_000) return null;
-  const salt = unb64(saltS); const hash = unb64(hashS);
+  const salt = unb64(saltS);
+  const hash = unb64(hashS);
   if (!salt || !hash || salt.length !== SALT_BYTES || hash.length !== DERIVED_BITS / 8) return null;
   return { alg, iters, salt, hash };
 }
@@ -233,7 +241,7 @@ export function parseStored(stored) {
 export async function verifyPassword(pw, stored, { subtle }, throwawayIters = PBKDF2_ITERS) {
   const parsed = parseStored(stored);
   const salt = parsed?.salt ?? new Uint8Array(SALT_BYTES);
-  const iters = parsed?.iters ?? throwawayIters;   // RECOVERY-SET: a throwaway costs what the row it stands for would
+  const iters = parsed?.iters ?? throwawayIters; // RECOVERY-SET: a throwaway costs what the row it stands for would
   const got = await derive(pw, salt, iters, subtle);
   if (!parsed) return false;
   return timingSafeEqual(got, parsed.hash);
@@ -298,8 +306,7 @@ export function canonicalCode(input) {
   // been used. U is excluded from the alphabet rather than folded, so a
   // U is simply not a character a code can contain and the check below
   // refuses it.
-  const s = input.toUpperCase().replace(/[\s-]/g, '')
-    .replace(/O/g, '0').replace(/[IL]/g, '1');
+  const s = input.toUpperCase().replace(/[\s-]/g, '').replace(/O/g, '0').replace(/[IL]/g, '1');
   if (s.length !== CODE_GROUPS * CODE_GROUP_LEN) return null;
   for (const c of s) if (!CODE_ALPHABET.includes(c)) return null;
   return s;
@@ -356,14 +363,16 @@ export const joinRecoverySet = (hashes) => [SET_TAG, ...hashes].join(',');
  *  does not canonicalise is refused by `hashPassword`, never stored as
  *  the empty string's hash. */
 export async function hashRecoverySet(codes, { subtle, rand }) {
-  return joinRecoverySet(await Promise.all(codes.map((c) => hashPassword(codeForHashing(c), { subtle, rand }, RECOVERY_CODE_ITERS))));
+  return joinRecoverySet(
+    await Promise.all(codes.map((c) => hashPassword(codeForHashing(c), { subtle, rand }, RECOVERY_CODE_ITERS))),
+  );
 }
 
 /** The set's hashes, or null for anything that is not one (a single
  *  code's row, a guest's NULL). */
 export function parseRecoverySet(stored) {
   if (typeof stored !== 'string' || !stored.startsWith(`${SET_TAG},`)) return null;
-  const hashes = stored.split(',').slice(1);   // never empty: 'codes,' splits to one '' that parseStored refuses
+  const hashes = stored.split(',').slice(1); // never empty: 'codes,' splits to one '' that parseStored refuses
   return hashes.every((h) => parseStored(h)) ? hashes : null;
 }
 
@@ -395,6 +404,6 @@ export async function matchRecoveryCode(canon, stored, { subtle }) {
   ]);
   if (!canon) return { ok: false, rest: null };
   if (!set) return { ok: one, rest: null };
-  const i = each.findIndex(Boolean);   // a throwaway slot never matches: verifyPassword answers false for a row it cannot parse
+  const i = each.findIndex(Boolean); // a throwaway slot never matches: verifyPassword answers false for a row it cannot parse
   return i < 0 ? { ok: false, rest: null } : { ok: true, rest: set.filter((_, j) => j !== i) };
 }

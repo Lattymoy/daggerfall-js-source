@@ -42,8 +42,8 @@
   {
     "name": "PRIVREP-the-context-stored-raw",
     "file": "server-account/src/reports.js",
-    "old": "ctxOf ? JSON.stringify(ctxOf) : null",
-    "new": "context ? JSON.stringify(context) : null",
+    "old": "      ctxOf ? JSON.stringify(ctxOf) : null,",
+    "new": "      context ? JSON.stringify(context) : null,",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "PRIVREP-the-rate-unasked",
     "file": "server-account/src/reports.js",
-    "old": "  if (await overRate({ db, nowS }, `report:${reporter.id}`, REPORT_SEND_MAX, REPORT_WINDOW_S)) return { error: 'report-rate' };\n",
-    "new": "",
+    "old": "  if (await overRate({ db, nowS }, `report:${reporter.id}`, REPORT_SEND_MAX, REPORT_WINDOW_S))\n    return { error: 'report-rate' };\n  const ctxOf = reportContextOf(context);",
+    "new": "  const ctxOf = reportContextOf(context);",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "PRIVREP-the-open-bound-uncounted",
     "file": "server-account/src/reports.js",
-    "old": "state = 'open') < ?9\n    ON CONFLICT",
-    "new": "state = 'open') < ?9 + 1000\n    ON CONFLICT",
+    "old": "    WHERE (SELECT COUNT(*) FROM private_reports WHERE from_id = ?2 AND state = 'open') < ?9",
+    "new": "    WHERE (SELECT COUNT(*) FROM private_reports WHERE from_id = ?2 AND state = 'open') < ?9 + 1000",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "PRIVREP-the-open-bound-counting-closed",
     "file": "server-account/src/reports.js",
-    "old": "WHERE from_id = ?2 AND state = 'open') < ?9",
-    "new": "WHERE from_id = ?2) < ?9",
+    "old": "    WHERE (SELECT COUNT(*) FROM private_reports WHERE from_id = ?2 AND state = 'open') < ?9",
+    "new": "    WHERE (SELECT COUNT(*) FROM private_reports WHERE from_id = ?2) < ?9",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "PRIVREP-the-list-unscoped",
     "file": "server-account/src/reports.js",
-    "old": "    WHERE from_id = ? ORDER BY sent_at DESC, id DESC LIMIT ?`)",
-    "new": "    WHERE from_id != '' OR from_id = ? ORDER BY sent_at DESC, id DESC LIMIT ?`)",
+    "old": "    WHERE from_id = ? ORDER BY sent_at DESC, id DESC LIMIT ?`,",
+    "new": "    WHERE from_id != '' OR from_id = ? ORDER BY sent_at DESC, id DESC LIMIT ?`,",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "PRIVREP-the-reader-check-gone",
     "file": "server-account/src/reports.js",
-    "old": "  && handleList(env?.REPORT_READER_HANDLES).has(player.handle.toLowerCase());",
-    "new": "  ;",
+    "old": "export const isReportReader = (player, env) =>\n  typeof player?.handle === 'string' &&\n  !!player.handle &&\n  handleList(env?.REPORT_READER_HANDLES).has(player.handle.toLowerCase());",
+    "new": "export const isReportReader = (player, env) => typeof player?.handle === 'string' && !!player.handle;",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "PRIVREP-a-missing-list-read-as-everyones",
     "file": "server-account/src/reports.js",
-    "old": "  && handleList(env?.REPORT_READER_HANDLES).has(player.handle.toLowerCase());",
-    "new": "  && (!env?.REPORT_READER_HANDLES || handleList(env?.REPORT_READER_HANDLES).has(player.handle.toLowerCase()));",
+    "old": "  handleList(env?.REPORT_READER_HANDLES).has(player.handle.toLowerCase());",
+    "new": "  (!env?.REPORT_READER_HANDLES || handleList(env?.REPORT_READER_HANDLES).has(player.handle.toLowerCase()));",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "PRIVREP-read-never-stamped",
     "file": "server-account/src/reports.js",
-    "old": "  if (row.read_at == null) await db.prepare('UPDATE private_reports SET read_at = ?, read_by = ? WHERE id = ? AND read_at IS NULL').bind(nowS, reader.id, id).run();\n",
-    "new": "",
+    "old": "  if (row.read_at == null)\n    await db\n      .prepare('UPDATE private_reports SET read_at = ?, read_by = ? WHERE id = ? AND read_at IS NULL')\n      .bind(nowS, reader.id, id)\n      .run();\n  let context = null;",
+    "new": "  let context = null;",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "PRIVREP-the-close-unscoped",
     "file": "server-account/src/reports.js",
-    "old": "END WHERE id = ?6`)",
-    "new": "END WHERE id = ?6 OR 1`)",
+    "old": "    read_by = CASE WHEN ?1 = 'open' THEN read_by ELSE COALESCE(read_by, ?5) END WHERE id = ?6`,",
+    "new": "    read_by = CASE WHEN ?1 = 'open' THEN read_by ELSE COALESCE(read_by, ?5) END WHERE id = ?6 OR 1`,",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -333,8 +333,8 @@
   {
     "name": "PRIVREP-the-rate-counted-before-the-full-queue",
     "file": "server-account/src/reports.js",
-    "old": "  if (Number(open?.n ?? 0) >= REPORT_OPEN_MAX) return { error: 'report-full' };\n",
-    "new": "",
+    "old": "  if (Number(open?.n ?? 0) >= REPORT_OPEN_MAX) return { error: 'report-full' };\n  if (await overRate({ db, nowS }, `report:${reporter.id}`, REPORT_SEND_MAX, REPORT_WINDOW_S))",
+    "new": "  if (await overRate({ db, nowS }, `report:${reporter.id}`, REPORT_SEND_MAX, REPORT_WINDOW_S))",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -343,8 +343,8 @@
   {
     "name": "PRIVREP-the-precount-counting-closed",
     "file": "server-account/src/reports.js",
-    "old": "WHERE from_id = ? AND state = 'open'\").bind(reporter.id).first();",
-    "new": "WHERE from_id = ?\").bind(reporter.id).first();",
+    "old": "    .prepare(\"SELECT COUNT(*) AS n FROM private_reports WHERE from_id = ? AND state = 'open'\")",
+    "new": "    .prepare('SELECT COUNT(*) AS n FROM private_reports WHERE from_id = ?')",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -353,8 +353,8 @@
   {
     "name": "PRIVREP-one-rate-for-everyone",
     "file": "server-account/src/reports.js",
-    "old": "`report:${reporter.id}`",
-    "new": "'report'",
+    "old": "  if (await overRate({ db, nowS }, `report:${reporter.id}`, REPORT_SEND_MAX, REPORT_WINDOW_S))\n    return { error: 'report-rate' };",
+    "new": "  if (await overRate({ db, nowS }, 'report', REPORT_SEND_MAX, REPORT_WINDOW_S)) return { error: 'report-rate' };",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -363,8 +363,8 @@
   {
     "name": "PRIVREP-the-window-a-minute",
     "file": "server-account/src/reports.js",
-    "old": "REPORT_SEND_MAX, REPORT_WINDOW_S)",
-    "new": "REPORT_SEND_MAX, 60)",
+    "old": "  if (await overRate({ db, nowS }, `report:${reporter.id}`, REPORT_SEND_MAX, REPORT_WINDOW_S))\n    return { error: 'report-rate' };",
+    "new": "  if (await overRate({ db, nowS }, `report:${reporter.id}`, REPORT_SEND_MAX, 60)) return { error: 'report-rate' };",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -373,8 +373,8 @@
   {
     "name": "PRIVREP-newest-first-alone",
     "file": "server-account/src/reports.js",
-    "old": "'(r.read_at IS NULL) DESC, r.sent_at DESC'",
-    "new": "'r.sent_at DESC'",
+    "old": "    ORDER BY ${closed ? 'r.closed_at DESC' : '(r.read_at IS NULL) DESC, r.sent_at DESC'}, r.id DESC LIMIT ? OFFSET ?`,",
+    "new": "    ORDER BY ${closed ? 'r.closed_at DESC' : 'r.sent_at DESC'}, r.id DESC LIMIT ? OFFSET ?`,",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -383,8 +383,8 @@
   {
     "name": "PRIVREP-the-closed-list-fixed-alone",
     "file": "server-account/src/reports.js",
-    "old": "\"r.state != 'open'\"",
-    "new": "\"r.state = 'fixed'\"",
+    "old": "    WHERE ${closed ? \"r.state != 'open'\" : \"r.state = 'open'\"}",
+    "new": "    WHERE ${closed ? \"r.state = 'fixed'\" : \"r.state = 'open'\"}",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -393,8 +393,8 @@
   {
     "name": "PRIVREP-the-closed-list-oldest-first",
     "file": "server-account/src/reports.js",
-    "old": "'r.closed_at DESC'",
-    "new": "'r.closed_at ASC'",
+    "old": "    ORDER BY ${closed ? 'r.closed_at DESC' : '(r.read_at IS NULL) DESC, r.sent_at DESC'}, r.id DESC LIMIT ? OFFSET ?`,",
+    "new": "    ORDER BY ${closed ? 'r.closed_at ASC' : '(r.read_at IS NULL) DESC, r.sent_at DESC'}, r.id DESC LIMIT ? OFFSET ?`,",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -403,8 +403,8 @@
   {
     "name": "PRIVREP-a-second-readers-read-over-the-first",
     "file": "server-account/src/reports.js",
-    "old": "if (row.read_at == null) await db.prepare('UPDATE private_reports SET read_at = ?, read_by = ? WHERE id = ? AND read_at IS NULL')",
-    "new": "await db.prepare('UPDATE private_reports SET read_at = ?, read_by = ? WHERE id = ?')",
+    "old": "  if (row.read_at == null)\n    await db\n      .prepare('UPDATE private_reports SET read_at = ?, read_by = ? WHERE id = ? AND read_at IS NULL')\n      .bind(nowS, reader.id, id)\n      .run();",
+    "new": "  await db.prepare('UPDATE private_reports SET read_at = ?, read_by = ? WHERE id = ?').bind(nowS, reader.id, id).run();",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -413,8 +413,8 @@
   {
     "name": "PRIVREP-a-closes-read-over-the-first",
     "file": "server-account/src/reports.js",
-    "old": "ELSE COALESCE(read_at, ?4) END",
-    "new": "ELSE ?4 END",
+    "old": "    read_at = CASE WHEN ?1 = 'open' THEN read_at ELSE COALESCE(read_at, ?4) END,",
+    "new": "    read_at = CASE WHEN ?1 = 'open' THEN read_at ELSE ?4 END,",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -423,8 +423,8 @@
   {
     "name": "PRIVREP-the-reopen-reading",
     "file": "server-account/src/reports.js",
-    "old": "read_at = CASE WHEN ?1 = 'open' THEN read_at ELSE COALESCE(read_at, ?4) END",
-    "new": "read_at = COALESCE(read_at, ?4)",
+    "old": "    read_at = CASE WHEN ?1 = 'open' THEN read_at ELSE COALESCE(read_at, ?4) END,",
+    "new": "    read_at = COALESCE(read_at, ?4),",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -433,8 +433,8 @@
   {
     "name": "PRIVREP-the-counts-counting-closed",
     "file": "server-account/src/reports.js",
-    "old": "FROM private_reports WHERE state = 'open'`).first();",
-    "new": "FROM private_reports WHERE 1`).first();",
+    "old": "    FROM private_reports WHERE state = 'open'`,",
+    "new": "    FROM private_reports WHERE 1`,",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -443,8 +443,8 @@
   {
     "name": "PRIVREP-no-next-page",
     "file": "server-account/src/reports.js",
-    "old": "more: results.length > REPORT_INBOX_MAX",
-    "new": "more: false",
+    "old": "    more: results.length > REPORT_INBOX_MAX,",
+    "new": "    more: false,",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -453,8 +453,8 @@
   {
     "name": "PRIVREP-the-page-ignored",
     "file": "server-account/src/reports.js",
-    "old": ".bind(REPORT_INBOX_MAX + 1, p * REPORT_INBOX_MAX)",
-    "new": ".bind(REPORT_INBOX_MAX + 1, 0)",
+    "old": "    .bind(REPORT_INBOX_MAX + 1, p * REPORT_INBOX_MAX)",
+    "new": "    .bind(REPORT_INBOX_MAX + 1, 0)",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -463,8 +463,8 @@
   {
     "name": "PRIVREP-the-mine-limit-gone",
     "file": "server-account/src/reports.js",
-    "old": ".bind(reporter.id, REPORT_MINE_MAX)",
-    "new": ".bind(reporter.id, -1)",
+    "old": "    .bind(reporter.id, REPORT_MINE_MAX)",
+    "new": "    .bind(reporter.id, -1)",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],

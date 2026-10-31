@@ -107,8 +107,8 @@
   {
     "name": "SAFE3-a-fresh-account-counted",
     "file": "server-account/src/safety.js",
-    "old": " && Number(player?.created_at) <= nowS - SPROUT_S",
-    "new": "",
+    "old": "export const credibleReporter = (player, nowS) =>\n  accountKind(player) === 'linked' && !isMuted(player, nowS) && Number(player?.created_at) <= nowS - SPROUT_S;",
+    "new": "export const credibleReporter = (player, nowS) => accountKind(player) === 'linked' && !isMuted(player, nowS);",
     "tests": [
       "test/server/safe_service.test.js"
     ],
@@ -137,7 +137,7 @@
   {
     "name": "SAFE4-a-moderator-auto-muted",
     "file": "server-account/src/sanctions.js",
-    "old": "export const autoMutable = (row, env, nowS) => !!row && !canModerate(row, env) && !isMuted(row, nowS) && !isBanned(row, nowS);",
+    "old": "export const autoMutable = (row, env, nowS) =>\n  !!row && !canModerate(row, env) && !isMuted(row, nowS) && !isBanned(row, nowS);",
     "new": "export const autoMutable = (row, env, nowS) => !!row && !isMuted(row, nowS) && !isBanned(row, nowS);",
     "tests": [
       "test/server/safe_service.test.js"
@@ -147,8 +147,8 @@
   {
     "name": "SAFE4-anyone-may-ban",
     "file": "server-account/src/sanctions.js",
-    "old": "  if (!canModerate(actor, env)) return { error: 'not-moderator' };\n  if (!Number.isSafeInteger(days)",
-    "new": "  if (!Number.isSafeInteger(days)",
+    "old": "  if (!canModerate(actor, env)) return { error: 'not-moderator' };\n  if (!Number.isSafeInteger(days) || /** @type {number} */ (days) < 0 || /** @type {number} */ (days) > BAN_DAYS_MAX)",
+    "new": "  if (!Number.isSafeInteger(days) || /** @type {number} */ (days) < 0 || /** @type {number} */ (days) > BAN_DAYS_MAX)",
     "tests": [
       "test/server/safe_service.test.js",
       "test/server/staffpanel2fix.test.js"
@@ -158,8 +158,8 @@
   {
     "name": "SAFE4-the-ambiguity-guessed",
     "file": "server-account/src/sanctions.js",
-    "old": "  if (guests.length > 1) return { error: 'ambiguous' };\n",
-    "new": "",
+    "old": "  if (guests.length > 1) return { error: 'ambiguous' };\n  return guests[0] ?? { error: 'no-player' };",
+    "new": "  return guests[0] ?? { error: 'no-player' };",
     "tests": [
       "test/server/safe_service.test.js"
     ],
@@ -198,8 +198,8 @@
   {
     "name": "SAFE5-an-account-named-to-the-reviewer",
     "file": "server-account/src/modAi.js",
-    "old": "const out = lines.map((l, i) => ({ i, speaker: speaker(l.sub), tab: l.tab, text: l.text }));",
-    "new": "const out = lines.map((l, i) => ({ i, speaker: l.sub, tab: l.tab, text: l.text }));",
+    "old": "  const out = lines.map((l, i) => ({ i, speaker: speaker(l.sub), tab: l.tab, text: l.text }));",
+    "new": "  const out = lines.map((l, i) => ({ i, speaker: l.sub, tab: l.tab, text: l.text }));",
     "tests": [
       "test/server/safe_review.test.js"
     ],
@@ -218,8 +218,8 @@
   {
     "name": "SAFE5-the-budget-unchecked",
     "file": "server-account/src/modAi.js",
-    "old": "  if (!(await spendAiCall(db, env, nowS, { feed }))) return { error: AI_ERRORS.budget };\n",
-    "new": "",
+    "old": "  if (!(await spendAiCall(db, env, nowS, { feed }))) return { error: AI_ERRORS.budget };\n  const { payload } = reviewPayload(lines, focus);",
+    "new": "  const { payload } = reviewPayload(lines, focus);",
     "tests": [
       "test/server/safe_review.test.js"
     ],

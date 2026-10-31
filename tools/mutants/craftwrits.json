@@ -578,8 +578,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T3-progress",
     "file": "server-account/src/progress.js",
-    "old": "    case '/v1/writs/craft': if (a.ok) { add('prof', n(a.xp)); add('renown', n(a.renown?.credited)); } break;",
-    "new": "",
+    "old": "    case '/v1/writs/craft':\n      if (a.ok) {\n        add('prof', n(a.xp));\n        add('renown', n(a.renown?.credited));\n      }\n      break; // CRAFT-WRITS: the XP the crafter's limit let in",
+    "new": "    // CRAFT-WRITS: the XP the crafter's limit let in",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
