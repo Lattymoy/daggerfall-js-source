@@ -210,8 +210,8 @@
   {
     "name": "AUDIT-ENVIRONS-I5-wind-frame-unguarded",
     "file": "src/scenes/windfallHost.js",
-    "old": "      try { return tick(f); } catch (e) {",
-    "new": "      try { return tick(f); } catch (e) { throw e;",
+    "old": "        broken = true;",
+    "new": "        throw e;\n        broken = true;",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]

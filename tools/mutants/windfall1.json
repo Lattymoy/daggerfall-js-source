@@ -524,8 +524,8 @@
   {
     "name": "WINDFALL1-runtime-lane-ignored",
     "file": "src/scenes/windfallHost.js",
-    "old": "      if (!enhanced || broken) return null;\n      try { return tick(f); }",
-    "new": "      if (broken) return null;\n      try { return tick(f); }",
+    "old": "      if (!enhanced || broken) return null;",
+    "new": "      if (broken) return null;",
     "tests": [
       "test/systems/windfall1_presentation.test.js"
     ]

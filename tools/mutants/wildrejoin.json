@@ -157,8 +157,8 @@
   {
     "name": "WILD-REJOIN-the-grace-word-dropped",
     "file": "src/scenes/wildSeizeHost.js",
-    "old": "        else if (a?.error === 'grace' && !s.graceWaited) _wildSeize.set(r, { ...s, due: Date.now() + (WILD_FALL_GRACE_S + 5) * 1000, graceWaited: true });",
-    "new": "        else void 0;",
+    "old": "          else if (a?.error === 'grace' && !s.graceWaited)\n            _wildSeize.set(r, { ...s, due: Date.now() + (WILD_FALL_GRACE_S + 5) * 1000, graceWaited: true });",
+    "new": "          else void 0;",
     "tests": [
       "test/systems/wild/wildrejoin.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "WILD-REJOIN-the-grace-waited-for-ever",
     "file": "src/scenes/wildSeizeHost.js",
-    "old": "a?.error === 'grace' && !s.graceWaited)",
-    "new": "a?.error === 'grace')",
+    "old": "          else if (a?.error === 'grace' && !s.graceWaited)",
+    "new": "          else if (a?.error === 'grace')",
     "tests": [
       "test/systems/wild/wildrejoin.test.js"
     ]

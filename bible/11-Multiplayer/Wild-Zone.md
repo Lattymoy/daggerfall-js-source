@@ -606,7 +606,7 @@ renumbered past main's SUPER-DUNGEONS (world176) - its parts written on their br
   WILD-REJOIN (world260 - world258 on its branch, renumbered past KETCH-LONGER and ASK-LONGER at the merges - account acct191, acct186 on its branch): `down` (`ms`, and `r` with `p` from the fall's own room - section 4), said
   before the receipts a socket is owed; an older client drops the kind. A fall receipt signed with its fallen gone from
   the room carries `g` 1. Deploy the account service first (an older one holds a `g` fall's killer to the grace - the
-  killer's tab then asks again past it, `wildSeizeHost.js:"a?.error === 'grace'"`), then the relay, then the site.
+  killer's tab then asks again past it, `wildSeizeHost.js:"else if (a?.error === 'grace' && !s.graceWaited)"`), then the relay, then the site.
   PVP-LOOT (world205 - world201 on its branch, one bump past main's world201 and world202 at the merge, and world203 on the integration, renumbered past main's world203 and world204 at the merge of main): the room's take asks the friend law of the drop's records alone (section 5); a guildmate is kin
   at the referee (section 3); and the two-phase handoff (section 4) - the order's `we`
   (`identityToken.js:"if (c.we !== undefined && c.we !== 1)"`), the room's `cr` word to the killer

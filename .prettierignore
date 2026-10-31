@@ -965,6 +965,8 @@
 /src/scenes/wagon/*/
 !/src/scenes/wardrobeCounter.js
 !/src/scenes/wildEscrowHost.js
+!/src/scenes/wildSeizeHost.js
+!/src/scenes/windfallHost.js
 !/src/scenes/windowWorld.js
 !/src/scenes/witchesHost.js
 !/src/scenes/worldShotHooks.js
