@@ -89,20 +89,28 @@ export const BOSS_ARMOR = 60;
  * galley's reference) and a bout's (arenaBlowCap) - so a Disintegrate counts whole and the relay's own caps clip it, as
  * a duel's stand-in counts at the wire's vital ceiling (combat/duelCombat.js DUEL_STAND_IN); and under the least ceiling
  * nobody clamps (the bout's 10,000), with the rest of a spell's room beside it. Pinned against the real constants and
- * every validator (test/net/gate/fb1019f_standinwhole.test.js). EG-MIGHT (Elite-Gates.md 21.1): and by the most a kit's might grows a breach's purse (x10), 9,750.
+ * every validator (test/net/gate/fb1019f_standinwhole.test.js).
  */
-export const STAND_IN_WHOLE = HIT_CAP_X * dpsRef(LV_MAX) * EG_BUCKET_X_MAX * (MIGHT_MOST / MIGHT_NONE);
+export const STAND_IN_WHOLE = HIT_CAP_X * dpsRef(LV_MAX) * EG_BUCKET_X_MAX;
+/** EG-MIGHT (Elite-Gates.md 21.1): AN ELITE BREACH'S STAND-IN'S WHOLE - the most a kit's might grows its purse (x10) past
+ *  STAND_IN_WHOLE, 9,750: its wire carries 1e6. AUDIT POTION-MIGHT B2: its own, so a bout's stays under its 10,000. */
+export const EG_STAND_IN_WHOLE = STAND_IN_WHOLE * (MIGHT_MOST / MIGHT_NONE);
+/** AUDIT POTION-MIGHT B2: a stand-in of the Spire's - the same body, at the breach's whole. */
+export function breachStandIn(/** @type {any} */ e) { e.maxHealth = e.health = EG_STAND_IN_WHOLE; return e; }
+/** The most a breach's bucket grows a blow by: its Vestiges' and the most might's (net/eliteGates/egBrain.js egBlow). */
+const BLOW_X_MAX = EG_BUCKET_X_MAX * (MIGHT_MOST / MIGHT_NONE);
 /**
  * STAND-IN-WHOLE: WHAT ONE BLOW OF MINE AT LEVEL `lv` CAN LAND ON STAND-IN `e` - the relay's one-blow cap (net/gate/
  * gateBrain.js applyHit and spendPurse: HIT_CAP_X times the reference at my level), grown by the factor its owner says my
- * bucket grows by (`relayBlowX` - an Elite Breach's, at most EG_BUCKET_X_MAX; 1 where none is said or it says no number).
- * Never past STAND_IN_WHOLE. The number a spell on it says (scenes/gate/standInSpell.js). Pure.
+ * bucket grows by (`relayBlowX` - an Elite Breach's, its Vestiges' and its might's, at most BLOW_X_MAX - AUDIT POTION-MIGHT
+ * B5; 1 where none is said or it says no number). Never past its whole. The number a spell on it says
+ * (scenes/gate/standInSpell.js). Pure.
  * @param {any} e @param {number} lv
  */
 export function standInBlowCap(e, lv) {
   let bx = 1;
   try { bx = typeof e?.relayBlowX === 'function' ? Number(e.relayBlowX()) : 1; } catch { bx = 1; }
-  return HIT_CAP_X * dpsRef(lv) * (Number.isFinite(bx) ? Math.max(1, Math.min(EG_BUCKET_X_MAX, bx)) : 1);
+  return HIT_CAP_X * dpsRef(lv) * (Number.isFinite(bx) ? Math.max(1, Math.min(BLOW_X_MAX, bx)) : 1);
 }
 export function bossStandIn(look, name, share = null, blowX = null) {
   const e = makeEnemyEntity(look.mobile, ENEMY_BASICS[look.mobile], null, 1, () => 0.5);

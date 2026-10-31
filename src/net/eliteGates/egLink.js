@@ -208,10 +208,11 @@ export function egGatherOf(s) {
 /**
  * THE LINK: `word(w)` folds a word (a receipt handed on to `onReceipt`, a refusal said once), `state()`, `now()` (the
  * relay's clock), `clear()` (out of the breach: the state forgotten, the call kept while it stands).
- * @param {{ now: () => number, say?: (text: string) => void, onReceipt?: (r: string) => void, onRefused?: (word: string) => (boolean|void) }} deps
- *   EG-F: `onRefused` answering true has said the refusal its own way, and the link says nothing more.
+ * @param {{ now: () => number, say?: (text: string) => void, onReceipt?: (r: string) => void, onRefused?: (word: string) => (boolean|void), might?: () => (number|null) }} deps
+ *   EG-F: `onRefused` answering true has said the refusal its own way, and the link says nothing more. AUDIT POTION-MIGHT
+ *   B5: `might` my token's (net/online.js might), which the Spire's spell numbers read.
  */
-export function createEgLink({ now, say = () => {}, onReceipt = () => {}, onRefused = () => {} }) {
+export function createEgLink({ now, say = () => {}, onReceipt = () => {}, onRefused = () => {}, might = () => null }) {
   let s = EG_STATE_EMPTY;
   return {
     word(w) {
@@ -222,6 +223,7 @@ export function createEgLink({ now, say = () => {}, onReceipt = () => {}, onRefu
     },
     state: () => /** @type {any} */ (s),
     now,
+    might,
     /** Out of the breach: everything but a call still standing forgotten. */
     clear() { s = s.call ? { ...EG_STATE_EMPTY, call: s.call, b: s.call.b, seed: s.call.seed, op: s.call.op, rh: s.call.rh } : EG_STATE_EMPTY; },
     /** The call forgotten too (its window over, or the breach ended). */

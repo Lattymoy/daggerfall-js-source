@@ -94,7 +94,7 @@ So, as decided here (each decision is argued in its section):
 - **Reliquaries**, sealed at every Redoubt that pays this week and opened only by walking home, are what a company risks
   by going on (section 16).
 - **Every hall pays something.** A cache on every trial's end plate, Cantrips to hold, lumen to spend at the Sutler, and
-  a limit of two potions a hall that makes the one life matter (section 17).
+  a clock on each kind of potion, so the one life still matters (section 17.4).
 - **The wall is the count and the last word, not a multiplier.** A model of the pace says where companies stop, and THE
   COVENANT'S PATIENCE lets a Court in progress finish (section 18).
 - **The chance, not the promise** (section 19):
@@ -112,7 +112,7 @@ Daggerfall has no Elite Breach, no torn halls and no other players, so none of t
 ELITE-GATES, is opened by the first file that cites it, and every later file that cites it is added to the row by name
 in the same change: `test/tooling/doctrine.test.js` fails a file citing Ledger A that no row names (SD2a's record). The row
 lists the Spire's departures from DFU: Resurrect refused, Levitate and Slowfall banned, a technique's flight refused on
-traversal ground, Stendarr's AvoidDeath refused, a limit of two potions a hall, a jump buffer and a late press, and no
+traversal ground, Stendarr's AvoidDeath refused, a 15-second clock on each kind of potion, a jump buffer and a late press, and no
 DEATH-PENALTY inside.
 
 ## 1. The shape, end to end
@@ -329,7 +329,7 @@ are capitalised. Hall, circle, decree, the count, the legion and a proving court
 
 **The shouted rules.** A rule's name is shouted wherever it names the rule: THE WIND-UP FLOOR, THE UNION FLOOR, THE
 ERRAND FLOOR, THE CHECK CLASS, THE WIDTH RULE, NOTHING GETS FASTER, THE ENVELOPE, THE TIMED SOLVER, THE FORK, THE GOLD
-RUN, THE CALL, THE SWAP, THE TELEGRAPH BUDGET, THE SPIRE DANGER EDGE, THE EDGE LINE, THE SEAL, THE POTION LAW, THE
+RUN, THE CALL, THE SWAP, THE TELEGRAPH BUDGET, THE SPIRE DANGER EDGE, THE EDGE LINE, THE SEAL, THE POTION CLOCK, THE
 COVENANT'S PATIENCE, THE QUIET COMPANY, THE FALL, THE RECALL, THE WITNESS VIEW, THE FAIR TRAIL, THE HOLD, THE DRAIN,
 THE COUNT CHIP, THE RECAP, THE REHEARSAL, RIDDEN POSES, THE SPIRE MIX, ROLE READS.
 
@@ -2675,22 +2675,33 @@ where no hall's fight stands, since there is nothing to show:
 
 The owner, 2026-10-31: "Allow potions in Elite Breach". Asked how, the owner chose a cooldown for each kind.
 
-Every potion is drunk in an Elite Breach. Each kind (health, magicka, other - the first effect of its recipe) waits 15 s
-after the last of its kind (`PVP_POTION_MS`). It is the PvP fight's own clock (`combat/pvpPotions.js`), run where the
-made level's law says `potions: 'timed'` (section 24; `systems/eliteGates/spireKit.js` registers it). A refused bottle is
-kept and says its wait. The bottle lands whole: the first effect alone is a fight's. No referee hears of it.
+Every potion is drunk in an Elite Breach. Each kind (health, magicka, other) waits 15 s after the last of its kind
+(`PVP_POTION_MS`). It is the PvP fight's own clock (`combat/pvpPotions.js`), run where the made level's law says
+`potions: 'timed'` (section 24; `systems/eliteGates/spireKit.js` registers it). There a bottle lands whole, so it is every
+kind its effects are (`potionKindsOf` - AUDIT POTION-MIGHT C1: a Purification heals as Heal True does, so it waits on the
+health clock). A refused bottle is kept and says its wait. No referee hears of it. A fight's bottle lands its first
+effect alone and is that effect's kind.
 
-- On the desk's HUD the potion pip says each kind still waiting: *Health potion 12 s*. Nothing waiting, no pip.
-- The made-level tile says the rule: *Each kind of potion waits 15 seconds after the last one.*
+- The potion pip says each kind still waiting, on every layout: *Health potion 12 s*. Nothing waiting, no pip.
+- The made-level tile says the rule, plural-aware in each language: *Each kind of potion waits 15 seconds after the last one.*
+- A Levitation or a Slow Falling is kept where flight is banned (`spireKit.js` flightBottleRefusal, AUDIT POTION-MIGHT C7).
 - A Spire Tonic stands outside the clock.
+- THE FOUR HOSTS (AUDIT POTION-MIGHT D7): each drinks through `systems/useItem.js`'s one potion arm, which carries the clock
+  and the flight bottle's refusal. The made level it reads is the world host's word (`scenes/world.js` registerMadeLevelHere,
+  off `scenes/worldModes.js`' dungeon mode, where the Spire stands). `scenes/exterior.js` and `scenes/dungeonContext.js`
+  stand no Spire hall: flagged, nothing to wire.
 
-It replaced THE POTION LAW (EG-FULL, 2026-10-11): two restoring potions a hall, the rest free, the count kept on the
-device so a reload refilled nothing. Players read two a hall as no potions. The attrition is the bag now. The relay's
-body count believes a member's own mend only out of its line (`net/bossBody.js` BODY_DEFAULT: a whole body held, one
-more every 20 s). A potion heals a whole body at most, so only a member drinking from near death every 15 s for
-minutes outruns it, and the count then fells them. A reload starts the clock fresh; a reload takes longer than the
-wait. Natural regeneration stays held (EVENT-RULES). Pinned by `test/systems/eliteGates/potionclock.test.js`;
-mutants `tools/mutants/potionclock.json`. A departure from DFU, in the Ledger A row.
+**The room believes it** (AUDIT POTION-MIGHT C2). A health bottle drunk in a breach is told to its room (`pot`, relays
+from world298 - `net/wire.js` relaySupportsEgPot). The room believes the most a Heal True heals at the member's level
+(`net/wild/pvpVitals.js` potionHealAt, a share of `healRef`) once in its own 15 s, outside the member's budget
+(`egBrain.js:"export function egPotion("`). Before, a Heal True every 15 s outran the count's line (`net/bossBody.js`
+BODY_DEFAULT, a body every 20 s), and the relay felled members whose screens said they stood.
+
+It replaced THE POTION LAW (EG-FULL, 2026-10-11): two restoring potions a hall, the rest free. Players read two a hall
+as no potions. The attrition is the bag now. A reload starts the screen's clock fresh but never the room's, so a
+reload's early health bottle heals nothing the count believes. Natural regeneration stays held (EVENT-RULES). Pinned by
+`test/systems/eliteGates/potionclock.test.js` and `test/net/eliteGates/auditpotionmight.test.js`; mutants
+`tools/mutants/potionclock.json` and `auditpotionmight.json`. A departure from DFU, in the Ledger A row.
 
 ## 18. Depth - what grows, and the wall
 
@@ -3314,33 +3325,52 @@ second, so once its depth is spent each blow lands what refilled since the last.
 number. The reference was set on Daggerfall's damage (a level-20 Daedric dai-katana, 26-37 a blow). The powers since
 (`systems/powerCeiling.js` BLOW_TOPS, x120 together) put an honest geared blow far past it.
 
-**The might.** The judge (`server-account/src/judge.js`) reads each judged checkpoint's kit might
-(`net/kitMight.js` kitMightOf): an upper bound of what the lawful pack can add to a blow, in whole per cent, 100 to 1000.
-Its parts are the blow registries' rooms, each at most its top: a weapon's own damage lines (to 40); the slayer lines and
-each piece's own power - a Legendary's record once, a Gilded, a Master's work - at KIT_POWER_PCT (100), to 240; the most
-pieces of one set (2, 4, 6 of 200); a weapon's blow sigil (12); a weapon skill's climb past 100 and its gear lines (to
-400); a martial path held (40). They multiply. The row keeps it (`realm_characters.might`, migration 0203).
+**The might.** The judge (`server-account/src/judge.js`) reads each judged checkpoint's kit might (`net/kitMight.js`
+kitMightOf), in whole per cent, 100 to 1000: what the lawful kit WORN AT ONCE can add to one blow or one spell, read at
+its best moment. One piece a place (the equip table's own classes), a ledger key's copies and a Legendary's record once,
+one weapon in hand (AUDIT POTION-MIGHT A1). The row keeps it (`realm_characters.might`, migration 0203).
 
-- **The mint** grows it by the Renown's sky - the Firmament's 50 at the Renown's share of RENOWN_MAX - and signs it as `mg`,
-  beside the realm's yes alone (`net/mightLaw.js` mightSigned, `net/identityToken.js` mightIssuable).
-- **The relay** puts `mg` on a breach member's socket (`net/eliteGates/egMight.js` egTokenAtt) and its admission (`egEnter`; a
-  re-entry takes the newest token's). The member's purse - its depth, its rate and its one-blow cap - grows by `mg / 100`,
-  beside the Vestiges' factor (`egBrain.js:"const bx = vx.bx * egPurseX(mm.mg);"`).
+- **The blow.** The held weapon's damage lines, heirloom generations, slayer lines of one foe's kind, power and blow
+  sigil. Every worn power by what it adds (`systems/powerBlows.js` POWER_BLOW): a guard power none, a Rare's imprint its
+  Legendary's, a Master's work none. The sets together in the nine places, at their pieces' stage (SET_TIER_BLOW). A
+  mastered weapon skill's climb, and its gear's points: lines, Enhances Skill's +15, blessings, a set tier's, the sky's.
+  A martial path held with both its skills mastered. The sky's blow off the character's own tree. Each part at most its
+  registry's top; they multiply.
+- **The spell.** Its mastered school past 100, worn potency and Surge, the sky's spell power and a path's. The might is
+  the more of the blow's and the spell's.
+- **The judge's inputs.** The checkpoint's own batch reads the tree (`realm.js` checkpointRealm, `firm_tree`); none while
+  the Firmament is shut to the account. A kit the law holds signs none (`verdict.js`); a staff rollback clears it
+  (`review.js`) until the clean save's next checkpoint.
+
+- **The mint** signs it as judged (`mg`), beside the realm's yes alone (`net/mightLaw.js` mightSigned,
+  `net/identityToken.js` mightIssuable).
+- **The relay** puts `mg` on a breach member's socket (`net/eliteGates/egMight.js` egTokenAtt) and its admission
+  (`egEnter`): the first entry's is kept, as the level is (AUDIT POTION-MIGHT B1). The member's purse - its depth, its rate
+  and its one-blow cap - grows by `mg / 100`, beside the Vestiges' factor (`egBrain.js:"const bx = vx.bx * egPurseX(mm.mg);"`).
 - **The health.** A member's share of every body its hall sizes by the company (lords, adds, objects: `F.team`, `F.mean`)
   grows by the might's square root (`EG_MIGHT_HEALTH_EXP` 0.5, `egHealthRef`). A might of 400 lands four times as much
-  and its lord holds twice the health, so the kill is twice as fast. One number moves the balance: 0 lets the whole might
-  shorten a kill, 1 none of it.
-- **A stand-in's whole** grows by the most a might grows the purse (`world/gate/gateBoss.js` STAND_IN_WHOLE): 9,750, still
-  under a bout's 10,000, so a geared spell's claim is never held under it.
+  and its lord holds twice the health, so the sustained kill is twice as fast. The depth grows by the whole might, so a
+  hall's opening blows, and a body under the depth, fall at the whole (AUDIT POTION-MIGHT B4): a geared blow says its
+  whole number.
+- **The receipt** and a hall's part judge damage at the reference (`egMight.js` egRefDealt), so a bare member of a
+  geared company earns as before (AUDIT POTION-MIGHT B3).
+- **A Spire stand-in** stands at its own whole (`world/gate/gateBoss.js` EG_STAND_IN_WHOLE, 9,750; the breach's wire
+  carries 1e6), every other at STAND_IN_WHOLE's 975, so a bout's spell fits its 10,000 (B2). The number a spell on one
+  says reads my token's might beside my Vestiges (B5).
 
-**What it reads, and what not.** An honest kit's might is at or over what it lands, and a forged client gains only the
-room its judged gear holds. Daggerfall's enchantments and the artifacts' own effects are not read: their numbers are no
-blow registry's. A character judged before EG-MIGHT carries no `mg` until its next checkpoint, and lands as before.
-Section 18's table is a company of no might; the Depths board now ranks gear and play together.
+**What it reads, and what not.** The might bounds what a kit adds; a forged client gains only the room its judged kit
+holds. A power's moment (an unaware foe, a wounded wielder) is read as met. Not read: flat adds (an elemental line,
+Venom, PotentVs's +5) - a few points a blow beside a purse refilled at three times the reference. A kit past ten times
+lands ten times (MIGHT_MOST; the ceiling's own kit is x15.5). The character law bounds a skill by SKILL_HARD_CAP alone,
+at any level; the climb is read only for a skill the save mastered. A character judged before EG-MIGHT carries no `mg`
+until its next checkpoint, and lands as before. Section 18's table is a company of no might; the Depths board now ranks
+gear and play together.
 
-**Deploy.** The account service (acct231, migration 0203) and the relay (world298) in either order: an older relay ignores
-`mg`, and an older service signs none. Then the site. Pinned by `test/net/eliteGates/egmight.test.js`; mutants
-`tools/mutants/egmight.json`.
+**Deploy.** The account service (acct231, migration 0203) and the relay (world298) in either order: an older relay
+ignores `mg`, an older service signs none, and an older relay never hears `pot`. The account deploy waits for the relay
+to serve world298 (`account-deploy.yml`, "Wait for the relay to serve this push's version"), up to 5.5 h. Then the site.
+Pinned by `test/net/eliteGates/egmight.test.js` and `auditpotionmight.test.js`; mutants `tools/mutants/egmight.json` and
+`auditpotionmight.json`. The audit: `bible/01-Overview/audits/Audit-Potion-Might.md`.
 
 ## 22. Failure and recovery
 
@@ -5408,7 +5438,8 @@ the jump buffer, the technique refusal, the slowfall ban, AvoidDeath refused, TH
 - `madeLevelOf(loc)` answers `'court'`, `'hour'`, `'spire'` or null off each made location's own predicate (`isGateArena`,
   `isSdRealm`, `isEgHall`), and the mode machine says it (`madeLevel` in scenes/worldModes.js, the dungeon mode's alone).
 - `MADE_LEVEL_RULES` is section 24's table as data, twenty rules a row (null where a level leaves the game as it is):
-  saves, rest, the map, the Mark, the Recall, the Portal Stone, companions, regeneration, THE POTION LAW (`'counted'`),
+  saves, rest, the map, the Mark, the Recall, the Portal Stone, companions, regeneration, THE POTION LAW (`'counted'`; THE
+  POTION CLOCK's `'timed'` since POTION-CLOCK, section 17.4),
   Levitate, Slowfall, a technique's flight, the jump buffer and the late press (0.12 s each in the Spire, 0 elsewhere),
   Resurrect, AvoidDeath, what a death is, DEATH-PENALTY, /unstuck, and the voice a refusal is said in. `MADE_LEVEL_TEXT` is
   each level's refusals in its own home's words (COURT_TEXT, SD_REALM_TEXT, EG_TEXT), unchanged.
@@ -5424,7 +5455,7 @@ the jump buffer, the technique refusal, the slowfall ban, AvoidDeath refused, TH
   Hour's voice or the mid-screen line), the respawn's DEATH-PENALTY and its death branches, /unstuck, the ONE Levitate
   ward (section 10.7 - EG-PLAY's second seam, `registerSpireLevitateWard`, is retired), the frame's one
   `setCourtRules`, Resurrect, and the Portal Stone's door. It registers the law's word and THE FORGIVENESS.
-- `systems/eliteGates/spireKit.js` (THE POTION LAW) and `combat/techniques.js` (the flight's refusal) ask it too.
+- `systems/eliteGates/spireKit.js` (THE POTION LAW, THE POTION CLOCK since section 17.4) and `combat/techniques.js` (the flight's refusal) ask it too.
 
 **The Burning Court and the Hour, unchanged.** Every value in their two columns is what their doors did at 4f0e71965,
 pinned rule by rule (test/systems/eliteGates/egmade_law.test.js) and by their own suites, whose pins moved to the law with `PIN MOVED` notes:

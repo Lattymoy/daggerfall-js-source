@@ -20,7 +20,7 @@
   {
     "name": "POTION-CLOCK-the-door-never-registered",
     "file": "src/systems/eliteGates/spireKit.js",
-    "old": "registerPotionClockHere(spirePotionsTimed);\n",
+    "old": "registerPotionClockHere(spirePotionsTimed, (kinds) => _told?.(kinds));\n",
     "new": "",
     "tests": [
       "test/systems/eliteGates/potionclock.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "POTION-CLOCK-one-clock-for-every-kind",
     "file": "src/combat/pvpPotions.js",
-    "old": "  last.set(kind, now);\n",
-    "new": "  last.set('health', now);\n",
+    "old": "  for (const k of kinds) last.set(k, now);\n",
+    "new": "  for (const k of kinds) last.set('health', now);\n",
     "tests": [
       "test/systems/eliteGates/potionclock.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "POTION-CLOCK-the-referee-told-in-the-spire",
     "file": "src/combat/pvpPotions.js",
-    "old": "  if (fight) declarePotion(kind);\n",
-    "new": "  declarePotion(kind);\n",
+    "old": "  if (fight) declarePotion(kinds[0]);\n",
+    "new": "  if (true) declarePotion(kinds[0]);\n",
     "tests": [
       "test/systems/eliteGates/potionclock.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "POTION-CLOCK-the-pip-run-together",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "{ kind, s })).join(' · ');",
-    "new": "{ kind, s })).join(' ');",
+    "old": ".replace(/ /g, '\\u00a0')).join(' · ');",
+    "new": ".replace(/ /g, '\\u00a0')).join(' ');",
     "tests": [
       "test/systems/eliteGates/potionclock.test.js"
     ]

@@ -22,7 +22,7 @@
 //     no blow reaches it, and the camera orbits a living member (Q and E to change whom); THE RECALL's word stands me
 //     where it calls me at its share of my health; the room's heals (a rest, a Rally, a Mending, the fray's lash); the
 //     Vestige offer and the company's word on THE PANEL (ui/eliteGates/egHud.js - keys 1-6, Y and N, or `/breach pick`, `/breach
-//     vote`); Cantrips, the Sutler, pings, forsaking and a Surplus in `/breach` words; THE POTION LAW's count; THE RECAP.
+//     vote`); Cantrips, the Sutler, pings, forsaking and a Surplus in `/breach` words; THE POTION CLOCK's pip; THE RECAP.
 //
 //   EG-H1 (EG8d, 2026-10-12; sections 21 and 10.8): WHAT THE RELAY JUDGES, this screen's half - THE SHARED CLOCK CORRECTED
 //     (net/eliteGates/egClock.js: the room's `clk` pinged, the median of five half round trips, again every 30 s - the breach's link,
@@ -141,6 +141,7 @@ import { egToDungeon } from '../../world/eliteGates/egHall.js';
 import { restackWeirKeys, setWeirKeyOpener, weirKeysHeld } from '../../systems/eliteGates/weirKey.js';   // AUDIT EG IV (lane3 #10): the keys the pack shows, for the rust's line
 import { egHudModel, drawEgHud, egPanelModel, drawEgPanel, egRecapModel } from '../../ui/eliteGates/egHud.js';
 import { potionWaits } from '../../combat/pvpPotions.js';   // POTION-CLOCK (Elite-Gates.md section 17.4): each kind's wait, the pip's
+import { registerSpirePotionTold } from '../../systems/eliteGates/spireKit.js';   // AUDIT POTION-MIGHT C2: the room told a health potion
 import { EG_CANTRIPS } from '../../net/eliteGates/egRun.js';
 import { egVOf } from '../../net/eliteGates/egVestige.js';
 import { egResonance, EG_WALL_X } from '../../net/eliteGates/egVestige.js';   // EG-ZS: Rooted's and Rallying Cry's resonance; Living Wall's share
@@ -538,7 +539,7 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
   const clock = egClockNew();
   const now = () => { const off = egClockOffset(clock); return off == null ? hostNow() : Date.now() + off; };
   const sayBody = bodySayer((v) => !!online()?.sendEg?.('vt', { v }));
-  const link = createEgLink({ now, say, onReceipt: (r) => claimAdd(r), onRefused: (w) => refused(w) });
+  const link = createEgLink({ now, say, onReceipt: (r) => claimAdd(r), onRefused: (w) => refused(w), might: () => online()?.might ?? null });
   let fight = null;
   /** an open in flight: its request id, the service's order, whether the hub took it */
   let opening = null;
@@ -580,6 +581,9 @@ export function createEgClient({ modes, online, hub, account, now: hostNow, enti
   let portalSet = null;
   const portals = () => (portalSet ??= renderer?.createBillboardBatch ? createPortalSet({ renderer, audio }) : null);
   const inSpire = () => modes()?.egHallBreach?.() != null;
+  // AUDIT POTION-MIGHT C2 (section 17.4): a health potion drunk in a breach is told to its room, which believes its heal on its
+  // own clock - outside the count's budget, which a potion every 15 s outran
+  registerSpirePotionTold((kinds) => { const o = online(); if (inSpire() && o?.egPotOk && kinds.includes('health')) o.sendEg?.('pot'); });
   // EG-ZG (Elite-Gates.md section 25.4): THE QUIET COMPANY's allies - another player's spell effects at 60% with no light of
   // their own during a trial, read by the spell engine every host shares (scenes/hostMagic.js through ui/eliteGates/egAccess.js)
   egAllyLookSet(() => { if (!inSpire()) return null; const q = egQuietCompany(link.state()?.sg); return { alpha: q.allyAlpha, glow: q.allyGlow }; });

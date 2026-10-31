@@ -146,8 +146,8 @@
   {
     "name": "EGZK-earned-by-the-even-share",
     "file": "src/net/eliteGates/egLords.js",
-    "old": "m.dc >= (total * EG_EARN_SHARE) / n",
-    "new": "m.dc >= total / n",
+    "old": "egRefDealt(m.dc, m.mg) >= (total * EG_EARN_SHARE) / n",
+    "new": "egRefDealt(m.dc, m.mg) >= total / n",
     "tests": [
       "test/net/eliteGates/egz_lords.test.js"
     ]

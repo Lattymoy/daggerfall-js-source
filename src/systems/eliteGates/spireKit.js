@@ -4,12 +4,26 @@
 // after the last of its kind - the PvP fight's own clock (combat/pvpPotions.js), run here by the made level's law
 // (`potions: 'timed'`). It replaced EG-FULL's count of two restoring potions a hall. The bag is the attrition now, and the
 // relay's count believes a mend only out of its line (net/bossBody.js). A departure from DFU: Ledger A (ELITE-GATES).
-import { madeRuleHere } from '../madeLevel.js';   // EG-H2 (Elite-Gates.md section 24): the made level's law says where potions are timed
+import { madeRuleHere, madeLevelHere, madeLevelRule, madeLevelSays } from '../madeLevel.js';   // EG-H2 (Elite-Gates.md section 24): the made level's law says where potions are timed
 import { registerPotionClockHere } from '../../combat/pvpPotions.js';
+import { potionBundle } from '../potions.js';   // AUDIT POTION-MIGHT C7: a bottle's effects
+import { BUFF_KINDS } from '../effects.js';
 
 /** Where the made level under the player times potions (the Spire's row). */
 export const spirePotionsTimed = () => madeRuleHere('potions') === 'timed';
-registerPotionClockHere(spirePotionsTimed);
+/** AUDIT POTION-MIGHT C2: who tells the breach's room a bottle drunk - its kinds - registered by the breach's client
+ *  (scenes/eliteGates/egClient.js): the room believes a health potion's heal on its own clock, outside the member's budget. */
+let _told = null;
+export function registerSpirePotionTold(fn) { _told = typeof fn === 'function' ? fn : null; }
+registerPotionClockHere(spirePotionsTimed, (kinds) => _told?.(kinds));
+/** AUDIT POTION-MIGHT C7: a bottle the place's flight ban would drink for nothing - its every effect a Levitate or a Slow
+ *  Falling the made level bans (effects.js BUFF_KINDS) - is kept, refused in the level's words for a flight; '' for none. */
+export function flightBottleRefusal(/** @type {any} */ item) {
+  const level = madeLevelHere(), says = level ? madeLevelSays(level, 'techFlight') : '';
+  const effects = says ? potionBundle(item?.potionRecipeKey ?? 0)?.effects ?? [] : [];
+  const banned = (/** @type {any} */ e) => { const k = BUFF_KINDS[`${e?.type},${e?.subType}`]; return (k === 'levitate' || k === 'slowfall') && madeLevelRule(level, k) === 'banned'; };
+  return effects.length && effects.every(banned) ? says : '';
+}
 
 /** EG-FULL LAYER TWO: Iron Footing's share off a push on this screen (net/eliteGates/egVestige.js - by: 'client'), registered by the
  *  world host from the breach's client, read by the spans (scenes/eliteGates/egSpan.js - the Gust's push, the Pendulum's touch). */

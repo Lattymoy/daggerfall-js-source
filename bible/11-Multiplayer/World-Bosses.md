@@ -2802,7 +2802,7 @@ Every relay refused the cast whole, and the spell door popped the claim. The rel
 the reference at the striker's level - section 5's bucket; an Elite Breach's grown by the Vestiges' declared factor), so
 the fix is the stand-in's, as a duel's was (`combat/duelCombat.js` DUEL_STAND_IN, whole at the wire's vital ceiling):
 
-- **THE WHOLE** (`gateBoss.js:"export const STAND_IN_WHOLE = HIT_CAP_X * dpsRef(LV_MAX) * EG_BUCKET_X_MAX * (MIGHT_MOST / MIGHT_NONE);"`, 975; 9,750 since EG-MIGHT, `Elite-Gates.md` section 21.1) - the
+- **THE WHOLE** (`gateBoss.js:"export const STAND_IN_WHOLE = HIT_CAP_X * dpsRef(LV_MAX) * EG_BUCKET_X_MAX;"`, 975) - the
   most one blow lands at any relay: the gate's cap at LV_MAX (780) grown by the most a breach's bucket grows, over the
   serpent's (SERPENT_HIT_CAP_X of a galley's reference, 182) and a bout's (`arenaBlowCap`, 122 at most); and under the least
   ceiling nobody clamps (the bout's 10,000), with the rest of a spell's room beside it. Every stand-in stands at it

@@ -93,7 +93,7 @@ import { layoutRoomKey } from '../world/interior/interiorShared.js';   // WD3 (A
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
 import { STAMP_RE } from './safety/chatStamp.js';   // SAFE2: a line's stamp, carried as the relay said it
 import { MUTE_HZ_MAX, CHAT_HZ_MAX, CHAT_MAX, relaySupportsBan } from './wire.js';   // AUDIT SAFE RELAY-2: the order meter and my own lines' pace, the relay's word on my chat's own bucket; RELAY-3: the ban frame's relay
-import { REALM_CHARACTER_RE, tokenBodyOf, TOKEN_MAX_CHARS } from './identityToken.js';   // AUDIT LEGACY III O1: a wed frame's stamped realm character, by the token's own shape; HIDDEN-UNCOUNTED: a token's hidden mark (tokenHidden)
+import { REALM_CHARACTER_RE, tokenBodyOf, TOKEN_MAX_CHARS, mightIssuable } from './identityToken.js';   // AUDIT LEGACY III O1: a wed frame's stamped realm character, by the token's own shape; HIDDEN-UNCOUNTED: a token's hidden mark (tokenHidden)
 import { leaseRoom, relaySupportsLease, LEASE_MS, LEASE_HELD_MS, LEASE_HAND_MIN_MS, LEASE_FRAME_MIN_MS } from './roomLease.js';   // LEASE1: my hub's lease, handed to every lease room I hold
 import { LEASE_WIRE_MAX } from './wire.js';
 /** LEASE1: the frames a lease room's socket sends with no lease ahead of them - the runtime's ping, the hello, a lease. */
@@ -114,7 +114,7 @@ import { dungeonRoomTag } from './wire.js';   // SD-ONLINE: a dungeon's room car
 import { nativePoseRoom } from './wire.js';   // SLIM-FRAME: the frame a room's poses are in - one home, the relay's slim pose rounds by it
 import { validSdIn, validSdOut, sdGate, sdPzGate, relaySupportsSd, sdFightGate, SD_BRAIN_V } from './wire.js';
 import { relaySupportsWw5, STAR_STARS_MAX as STAR_PER_NIGHT_WIRE, SD_LANE_KIND, sdLaneWire } from './wire.js';   // WW5: a relay that keeps the stars and the Hollows past the Bay; a star past the Bay's three is a province's
-import { validEgIn, validEgOut, egGate, relaySupportsEg, relaySupportsEgLand, EG_BRAIN_V } from './wire.js';   // EG-PLAY: an Elite Breach's frame - the open to the hub, a member's words to its room; the call, the breach and its fights in
+import { validEgIn, validEgOut, egGate, relaySupportsEg, relaySupportsEgLand, relaySupportsEgPot, EG_BRAIN_V } from './wire.js';   // EG-PLAY: an Elite Breach's frame - the open to the hub, a member's words to its room; the call, the breach and its fights in
 import { egHubGate, EG_HUB_KINDS } from './wire.js';   // AUDIT EG IV (lane3 #5): the hub's breach words on their own bucket
 import { isEgRoom } from './eliteGates/egLaw.js';   // SD3: the Super dungeon's frame - a find out, the hub's record in; SD6b: a turn out, the realm's Orrery in
 import { isSdRoom } from './superDungeon/sdLaw.js';
@@ -171,13 +171,17 @@ export const TOKEN_WAIT_MS = 8000;
 /** Whether an identity token names a hidden staff socket (`hd: 1`) - read off its body alone; the relay verifies it.
  *  HIDDEN-UNCOUNTED: here, so the session notes its own mark at its hello (`hidden`); net/staffMap.js hands it on.
  *  @param {unknown} tok */
-export function tokenHidden(tok) {
-  if (typeof tok !== 'string' || tok.length > TOKEN_MAX_CHARS) return false;
+export function tokenHidden(tok) { return tokenPeek(tok)?.hd === 1; }
+/** A token's claims read off its body alone (the relay verifies them), or null. */
+function tokenPeek(/** @type {unknown} */ tok) {
+  if (typeof tok !== 'string' || tok.length > TOKEN_MAX_CHARS) return null;
   try {
     const b = tokenBodyOf(tok).replace(/-/g, '+').replace(/_/g, '/');
-    return JSON.parse(globalThis.atob(b + '='.repeat((4 - (b.length % 4)) % 4)))?.hd === 1;
-  } catch { return false; }
+    return JSON.parse(globalThis.atob(b + '='.repeat((4 - (b.length % 4)) % 4)));
+  } catch { return null; }
 }
+/** AUDIT POTION-MIGHT B5: the kit's might a token signs (`mg`), or null - read off its body alone, as tokenHidden. */
+export function tokenMight(/** @type {unknown} */ tok) { const mg = tokenPeek(tok)?.mg; return mightIssuable(mg) ? mg : null; }
 
 export const GAP_MIN_MS = 50;
 export const GAP_MAX_MS = 1000;
@@ -1059,6 +1063,9 @@ export class OnlineSession {
     if (tok !== this._hiddenTok) { this._hiddenTok = tok; this._hiddenIs = tokenHidden(tok); }
     return this._hiddenIs;
   }
+  /** AUDIT POTION-MIGHT B5: the might my room's socket said hello on (`mg`, tokenMight) - an Elite Breach's purse grows by
+   *  it, so the Spire's spell numbers say what can land (scenes/eliteGates/egFight.js myBlowX). */
+  get might() { return tokenMight(this._ws ? this._helloTok.get(this._ws) : undefined); }
   /** HIDDEN-UNCOUNTED: my own seat in the hub's count (`{t:'n'}`) - one, or none while hidden (AUDIT HIDDEN-UNCOUNTED
    *  L1 = C2: its rule read `+ 1` for a seat a hidden socket never has, so a count one past my own shard's was thrown
    *  away; L2: and its floor of one never took a count of nobody). */
@@ -3766,6 +3773,7 @@ export class OnlineSession {
       if (primary) this.ktOk = relaySupportsKetch(relayV);   // KETCH: a relay that keeps a crew's ship - an older one closes the socket on `kt`
       if (primary) this.ktTheatresOk = relaySupportsKetchTheatres(relayV);   // KETCH-EVERYWHERE: and the stations past the Bay
       if (primary) this.egLandOk = relaySupportsEgLand(relayV);   // FIELD BUGS 2026-10-20f LANDED-WORD: a relay that says what my blows on a breach's bodies land
+      if (primary) this.egPotOk = relaySupportsEgPot(relayV);   // AUDIT POTION-MIGHT C2: and one that believes a health potion's heal
       if (primary) this.sdOk = relaySupportsSd(relayV);   // SD3: the cell hears a Hollow found - an older relay closes the socket on `sd`
       else { const h = this._halo.get(room); if (h) h.sdOk = relaySupportsSd(relayV); }
       if (primary) this.serpentSiteOk = relaySupportsSerpentSite(relayV);   // SERPENT2: the hub's serpent herald

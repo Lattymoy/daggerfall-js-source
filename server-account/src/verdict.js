@@ -43,6 +43,7 @@
 // character's baseline is a newborn's purse (REALM_BIRTH_WEALTH_MAX); one through customs, its level's allowance.
 // ═══════════════════════════════════════════════════════════════════
 
+import { treeStats, unpackTree } from '../../src/net/firmament/firmamentLaw.js';   // AUDIT POTION-MIGHT A5: the sky, for the kit's might
 import { judgeSave, judgeProducts, judgeDragons, STRIKES_FOR_TIMED, JUDGE_VERSION, FINDINGS_KEPT, WEALTH_VERSION, goodsOf, lawValuesOf, LAW_VALUES_CUT } from './judge.js';
 import { ledgerStep, chargeSteps } from './ledger.js';
 import { budgetConfig, bandOf, stepBudget } from './budget.js';
@@ -149,7 +150,7 @@ export function trustedLevel({ seen, at, level, played }) {
  * @param {{ mine: any, dupes: any, config: any } | null} [known] SAVE-BATCH: the ledger's reads and the config, answered in
  * the checkpoint's first batch (realm.js checkpointRealm) - null, and they are asked here
  */
-export async function verdictOn({ db, nowS }, { player, char, seq, key }, row, save, summary, baseline = null, known = null) {
+export async function verdictOn({ db, nowS, firmOpen = false }, { player, char, seq, key }, row, save, summary, baseline = null, known = null) {
   const first = row.wealth == null;
   const playedS = Number.isSafeInteger(row.played_now) ? row.played_now : 0;
   const lv = trustedLevel({
@@ -157,7 +158,9 @@ export async function verdictOn({ db, nowS }, { player, char, seq, key }, row, s
     at: first ? row.played_at ?? playedS : row.level_at ?? row.played_at ?? playedS,
     level: save?.level, played: playedS,
   });
-  const judged = judgeSave(save, summary, { level: lv.level });
+  // AUDIT POTION-MIGHT A5: the sky the kit's might reads - the tree the checkpoint's batch read, none while it is shut
+  const firm = firmOpen ? treeStats(unpackTree(typeof row.firm_tree === 'string' ? row.firm_tree : '')) : {};
+  const judged = judgeSave(save, summary, { level: lv.level, firm });
   const crafts = judged.provenances.length ? await judgeProducts(db, judged.provenances, player) : { findings: [], arrived: [] };
   const products = crafts.findings;
   const tames = judged.dragons.length ? await judgeDragons(db, judged.dragons, player, char) : [];   // DRAGON5: a held dragon a tame made
@@ -251,7 +254,7 @@ export async function verdictOn({ db, nowS }, { player, char, seq, key }, row, s
     // INT7: the arms the identity mint signs - the most reach of the lawful weapons in the pack, and a lawful bow
     arms_top: judged.arms[0],
     arms_bow: judged.arms[1],
-    might: judged.might,   // EG-MIGHT: the kit's might the identity mint signs (net/kitMight.js)
+    might: lawHolds > 0 ? null : judged.might,   // EG-MIGHT: the kit's might the mint signs (net/kitMight.js) - AUDIT POTION-MIGHT A2: none while the law holds it
   };
   // the first thing the law found, for the tab to name the piece to its player (only when it holds) - and a TIMED hold
   // says its end, `until` (AUTO-HOLD): the piece gone or not, that is the way out (the Ring report: held still past the

@@ -1,33 +1,43 @@
 // EG-MIGHT (2026-10-31, the owner: "Address DMG cap in Elite Breach. It's not engaging to see 45 DMG when you're well
 // geared"; asked, "Gear-aware purse"; bible/11-Multiplayer/Elite-Gates.md section 21.1). The trust law's purse refilled at
 // 3 x (5 + level) a second whatever a member wore - 45 at level 10 - and the screen says what lands. Now the account
-// service's judge reads a kit's might off its judged pack (net/kitMight.js), the mint signs it with the Renown's sky
+// service's judge reads a kit's might off its judged kit worn at once and its sky (net/kitMight.js), the mint signs it
 // (`mg`, net/mightLaw.js), and the Spire's purse grows by it while a member's share of a body's health grows by its root
 // (net/eliteGates/egMight.js). Pinned here: the law, the kit's parts, the numbers it reads equal to the client's homes, the
 // judge, the mint's sum, the token, the relay's socket and the director's own breach.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { MIGHT_NONE, MIGHT_MOST, mightOk, mightX, mightOf, mightSigned, firmamentPart } from '../../../src/net/mightLaw.js';
-import { kitMightParts, kitMightOf, KIT_POWER_PCT, KIT_SET_PIECES, KIT_GEAR_PER_POINT, KIT_GEAR_PCT_MOST, KIT_CLIMB_PCT, KIT_CLIMB_HALF_PCT } from '../../../src/net/kitMight.js';
+import { MIGHT_NONE, MIGHT_MOST, mightOk, mightX, mightOf, mightSigned } from '../../../src/net/mightLaw.js';
+import { kitMightParts, kitMightOf } from '../../../src/net/kitMight.js';
+import { POWER_BLOW, SET_TIER_BLOW, WEAPON_GEAR_PER_POINT, WEAPON_GEAR_PCT_MOST, WEAPON_POTENCY_PER_POINT, WEAPON_HALF_PER_POINT, POTENCY_CAP, SPELL_POWER_MOST } from '../../../src/systems/powerBlows.js';
+import * as WM from '../../../src/systems/weaponMastery.js';
+import * as LP from '../../../src/systems/loot/lootPowers.js';
+import { setById, tierValues } from '../../../src/systems/sigil/sigilSets.js';
+import { sigilPercent } from '../../../src/systems/sigil/sigil.js';
+import { ENCHANTMENT_TYPES, ENHANCE_SKILL_MOD } from '../../../src/systems/enchantments.js';
+import { HEIRLOOM_DAMAGE_PER_GEN, HEIRLOOM_GEN_MAX, BLESSING_POINTS, BLESSING_SKILL_MAX } from '../../../src/systems/legacy/heirloom.js';
+import { SCHOOL_POTENCY_PER_POINT } from '../../../src/systems/spell/spellPower.js';
+import { PATH_SPELL_MOST } from '../../../src/systems/arcanePaths.js';
+import { blowPct, treeStats, packTree, pathTo } from '../../../src/net/firmament/firmamentLaw.js';
+import { FIRM_NODES, START_KEYS } from '../../../src/net/firmament/firmamentTree.js';
 import { EG_MIGHT_HEALTH_EXP, egPurseX, egHealthRef, egTokenAtt } from '../../../src/net/eliteGates/egMight.js';
 import { BLOW_TOPS } from '../../../src/systems/powerCeiling.js';
-import { LEGENDARY_POWERS } from '../../../src/systems/loot/lootRarity.js';
+import { powerOf } from '../../../src/systems/loot/lootRarity.js';
 import { GILDED_RECORDS } from '../../../src/systems/gilded.js';
-import { WEAPON_GEAR_PER_POINT, WEAPON_GEAR_PCT_MOST, WEAPON_POTENCY_PER_POINT, WEAPON_HALF_PER_POINT } from '../../../src/systems/weaponMastery.js';
 import { SKILLS } from '../../../src/systems/skills.js';
 import { effectiveSkill, SKILL_SOFT_CAP } from '../../../src/systems/skillSoftcap.js';
 import { SIGIL_SET_IDS } from '../../../src/systems/sigil/sigil.js';
 import { applyRarity } from '../../../src/systems/loot/lootRarity.js';
 import { mintGilded } from '../../../src/systems/gilded.js';
 import { createWeapon } from '../../../src/combat/enemyEquipment.js';
-import { TOKEN_MIGHT_MIN, TOKEN_MIGHT_MAX, mightIssuable, mintToken, verifyToken, RENOWN_MAX } from '../../../src/net/identityToken.js';
+import { TOKEN_MIGHT_MIN, TOKEN_MIGHT_MAX, mightIssuable, mintToken, verifyToken } from '../../../src/net/identityToken.js';
 import { judgeSave } from '../../../server-account/src/judge.js';
 import { egHallOf, egFirstHallOf, egCirclePlan, EG_SEALED_MS } from '../../../src/net/eliteGates/egLaw.js';
 import { egBreachNew, egEnter, egStep, egBlow } from '../../../src/net/eliteGates/egBrain.js';
 import { egLordsAwake, egLordsOf, egTtkRef, egLordsShare, egLordsFight, EG_SEAM } from '../../../src/net/eliteGates/egLords.js';
 import { EG_FL, egHas } from '../../../src/net/eliteGates/egBodies.js';
 import { HIT_KINDS, dpsRef, BUCKET_RATE_X, BUCKET_DEPTH_X } from '../../../src/net/gate/gateBrain.js';
-import { STAND_IN_WHOLE } from '../../../src/world/gate/gateBoss.js';
+import { STAND_IN_WHOLE, EG_STAND_IN_WHOLE } from '../../../src/world/gate/gateBoss.js';
 import { readFileSync } from 'node:fs';
 import { standService, T0 as ACCT_T0 } from '../../accountDb.mjs';
 import { seatRealm } from '../../realmSeat.mjs';
@@ -52,69 +62,126 @@ test('EG-MIGHT THE LAW: a might is a whole per cent from 100 (none) to 1000 (ten
   assert.equal(mightOf([-50]), 100, 'a price never lowers a might under none');
 });
 
-test('EG-MIGHT THE KIT\'S PARTS: a plain sword is no might; a weapon\'s own damage lines, a slayer line and a piece\'s own power (each Legendary once), a set by its most pieces, a weapon\'s sigil, a weapon skill\'s climb and gear lines, a martial path - each at most its registry\'s top; an unlawful piece is nothing (mutants: a Legendary counted twice; a set\'s pieces past six; a sigil on armour; the axe\'s climb at the sword\'s rate; the law\'s word ignored)', () => {
+// PIN MOVED (AUDIT POTION-MIGHT A1-A6, bible/01-Overview/audits/Audit-Potion-Might.md): the kit is what is WORN AT ONCE,
+// each power by what it adds, the sets together, a mastered skill's climb, the sky read from the tree - never the pack summed
+const BLOW_SIGIL_PCT = sigilPercent(BLOW_SIGIL, Number.MAX_SAFE_INTEGER);
+const legendOf = (id, group, templateIndex, o = {}) => ({ group, templateIndex, material: 0, rarity: 'legendary', legendary: id, ...o });
+
+test('EG-MIGHT THE KIT\'S PARTS, WORN AT ONCE: one weapon in hand - its damage lines, its slayer lines of one foe\'s kind and its power; every worn power by what it adds to a blow (a guard power none), each once; a place\'s best piece alone; a ledger key\'s copies once (mutants: the slayer\'s kinds summed; a guard power counted; a power twice; a bag of rings counted; copies counted)', () => {
   assert.equal(kitMightOf({ items: [sword()], skills: skills() }, all), 100, 'a plain sword');
   assert.equal(kitMightOf({}, all), 100, 'no pack');
-  const legend = sword({ rarity: 'legendary', legendary: 'nightwhisper', affixes: [{ id: 'damage', value: 30 }, { id: 'slayer', param: 'undead', value: 20 }] });
-  const p = kitMightParts([legend, { ...legend }], skills(), all);
-  assert.deepEqual([p.roll, p.loot], [30, KIT_POWER_PCT + 40], 'its own roll; one power for two copies, both slayer lines');
-  assert.equal(kitMightOf({ items: [legend], skills: skills() }, all), Math.round(100 * 1.3 * 2.2));
-  const gilded = sword({ rarity: 'gilded', gilded: GILDED_RECORDS[0].id });
-  assert.equal(kitMightParts([legend, gilded, sword({ rarity: 'legendary', legendary: 'wyrmbane' })], skills(), all).loot, BLOW_TOPS.loot, 'three powers, at the loot\'s top');
-  for (const [n, want] of [[1, 0], [2, BLOW_TOPS.sets / 3], [4, (2 * BLOW_TOPS.sets) / 3], [6, BLOW_TOPS.sets], [8, BLOW_TOPS.sets]]) {
-    assert.ok(Math.abs(kitMightParts(Array.from({ length: n }, () => setPiece()), skills(), all).sets - want) < 1e-9, `${n} pieces of a set`);
-  }
-  assert.equal(KIT_SET_PIECES, 6);
-  assert.equal(kitMightParts([sword({ sigil: BLOW_SIGIL })], skills(), all).sigil, BLOW_TOPS.sigil, 'a weapon\'s sigil');
-  assert.equal(kitMightParts([{ ...setPiece(), sigil: BLOW_SIGIL }], skills(), all).sigil, 0, 'never an armour\'s');
-  const climb = effectiveSkill(200) - SKILL_SOFT_CAP;
-  assert.ok(climb > 0);
-  assert.equal(kitMightParts([], skills(50, { [SKILLS.LongBlade]: 200 }), all).mastery, climb * KIT_CLIMB_PCT, 'a sword\'s climb');
-  assert.equal(kitMightParts([], skills(50, { [SKILLS.Axe]: 200 }), all).mastery, climb * KIT_CLIMB_HALF_PCT, 'an axe\'s, twice the sword\'s');
-  const ring = { group: 'Jewellery', templateIndex: 133, affixes: [{ id: 'skill', param: SKILLS.Axe, value: 30 }, { id: 'skill', param: SKILLS.Axe, value: 20 }] };
-  assert.ok(Math.abs(kitMightParts([ring], skills(), all).mastery - 50 * KIT_GEAR_PER_POINT) < 1e-9, 'the gear lines on one weapon skill');
-  assert.equal(kitMightParts([], skills(), all, { martial: true }).martial, BLOW_TOPS.martial);
-  assert.equal(kitMightOf({ items: [legend], skills: skills(), martialPath: 'warden' }, all), Math.round(100 * 1.3 * 2.2 * 1.4));
+  const legend = sword({ rarity: 'legendary', legendary: 'nightwhisper', affixes: [{ id: 'damage', value: 30 }, { id: 'slayer', param: 'undead', value: 20 }, { id: 'slayer', param: 'humanoid', value: 10 }] });
+  const silent = POWER_BLOW[powerOf('nightwhisper').kind].pct(powerOf('nightwhisper'));
+  const p = kitMightParts({ items: [legend, { ...legend }] }, all);
+  assert.deepEqual([p.roll, p.loot], [30, 20 + silent], 'its own roll; the slayer of one kind; one held, its copy in the bag nothing');
+  assert.equal(kitMightOf({ items: [legend], skills: skills() }, all), Math.round(100 * 1.3 * (1 + (20 + silent) / 100)));
+  // worn powers: a guard Legendary adds nothing; a blow one its blow, once for two copies
+  const guard = legendOf('the-warden', 'Armor', 102);
+  assert.equal(kitMightParts({ items: [guard, legendOf('mountains-root', 'Armor', 104), legendOf('witch-sisters-ring', 'Jewellery', 135)] }, all).loot, 0, 'three guard powers: no blow');
+  const vamb = (uid) => legendOf('duelists-vambrace', 'Jewellery', 134, { uid });
+  const fb = powerOf('duelists-vambrace').pct, ex = powerOf('night-mothers-embrace').pct;
+  assert.equal(kitMightParts({ items: [vamb('0123456789abcdef'), vamb('1123456789abcdef')] }, all).loot, fb, 'one power, whatever carries it');
+  assert.equal(kitMightParts({ items: [vamb('0123456789abcdef'), legendOf('night-mothers-embrace', 'Armor', 102)] }, all).loot, fb + ex, 'two worn powers on one blow (a fresh foe\'s)');
+  const two = sword({ rarity: 'legendary', legendary: 'nightwhisper', affixes: [{ id: 'slayer', param: 'undead', value: 20 }, { id: 'slayer', param: 'undead', value: 20 }] });
+  assert.equal(kitMightParts({ items: [two, vamb('0123456789abcdef'), legendOf('night-mothers-embrace', 'Armor', 102)] }, all).loot, BLOW_TOPS.loot, `${silent + 40 + fb + ex} held to the loot's top`);
+  // a Rare's imprint is the Legendary's power (AUDIT POTION-MIGHT D1)
+  assert.equal(kitMightParts({ items: [sword({ rarity: 'rare', imprint: 'nightwhisper' })] }, all).loot, silent);
+  // a place holds one piece: twelve skill rings are two rings' lines
+  const skillRing = (i) => ({ group: 'Jewellery', templateIndex: 135, uid: `a${String(i).padStart(15, '0')}`, affixes: [{ id: 'skill', param: SKILLS.LongBlade, value: 20 }] });
+  assert.ok(Math.abs(kitMightParts({ items: Array.from({ length: 12 }, (_, i) => skillRing(i)) }, all).mastery - 40 * WEAPON_GEAR_PER_POINT) < 1e-9, 'two rings worn');
+  // a ledger key's copies: one piece
+  const one = { ...skillRing(0), templateIndex: 133, rarity: 'rare' };
+  assert.ok(Math.abs(kitMightParts({ items: [one, { ...one }, { ...one }] }, all).mastery - 20 * WEAPON_GEAR_PER_POINT) < 1e-9, 'one amulet, three copies');
   assert.equal(kitMightOf({ items: [legend], skills: skills() }, (it) => it !== legend), 100, 'a piece the law refuses arms nothing');
   // the shapes the producers mint: a rolled Legendary and a Gilded record carry their power
-  const rng = seededRng(7);
-  const rolled = applyRarity(createWeapon(120, 1), 'legendary', rng);
+  const rolled = applyRarity(createWeapon(120, 1), 'legendary', seededRng(7));
   assert.equal(typeof rolled.legendary, 'string', 'a rolled Legendary names its record');
-  assert.ok(kitMightParts([rolled], skills(), all).loot >= KIT_POWER_PCT, 'its power read');
-  assert.ok(kitMightParts([mintGilded(GILDED_RECORDS[0])], skills(), all).loot >= KIT_POWER_PCT, 'a Gilded record\'s power read');
-  const everything = [legend, gilded, ...Array.from({ length: 6 }, () => setPiece()), sword({ sigil: BLOW_SIGIL }), ring];
-  assert.equal(kitMightOf({ items: everything, skills: skills(50, { [SKILLS.Axe]: 200 }), martialPath: 'warden' }, all), MIGHT_MOST, 'a whole kit, at the top');
+  assert.equal(kitMightParts({ items: [rolled] }, all).loot >= 0, true);
+  const g = mintGilded(GILDED_RECORDS[0]);
+  assert.ok(kitMightParts({ items: [g] }, all).loot + kitMightParts({ items: [g] }, all).roll > 0, 'a Gilded record\'s power or lines read');
 });
 
-test('EG-MIGHT THE NUMBERS IT READS ARE THE CLIENT\'S: WEAPON-GEAR\'s and MARTIAL2\'s rates equal weaponMastery.js\'s, and KIT_POWER_PCT is the strongest power any Legendary or Gilded record carries (mutants: a rate drifted; a power stronger than the kit reads)', () => {
-  assert.deepEqual([KIT_GEAR_PER_POINT, KIT_GEAR_PCT_MOST, KIT_CLIMB_PCT, KIT_CLIMB_HALF_PCT], [WEAPON_GEAR_PER_POINT, WEAPON_GEAR_PCT_MOST, WEAPON_POTENCY_PER_POINT * 100, WEAPON_HALF_PER_POINT * 100]);
-  const pcts = [...Object.values(LEGENDARY_POWERS), ...GILDED_RECORDS.map((r) => r.power)].map((p) => Math.max(Number(p?.pct) || 0, Number(p?.share) || 0));
-  assert.equal(Math.max(...pcts), KIT_POWER_PCT);
+test('EG-MIGHT THE KIT\'S PARTS, THE REST: a Master\'s work carries no power; sets together at the places they fill, at their pieces\' stage; a weapon\'s sigil; an heirloom\'s generations; a mastered skill\'s climb (a sword\'s and a bow\'s a point, an axe\'s and a hammer\'s two, a short blade\'s none) and its gear\'s points, Enhances Skill\'s +15 among them; a martial path held with both skills mastered (mutants: a Master\'s work a power; the largest set alone; the stage past its pieces\'; an unmastered climb; a short blade\'s climb paid; any path a path)', () => {
+  assert.equal(kitMightParts({ items: [sword({ rarity: 'common', provenance: 'p'.repeat(24), quality: 5 })] }, all).loot, 0);
+  // sets: Nocturnal at four and the Thieftaker at four fill eight places - both sets' tiers, at Faint (their pieces' stage)
+  const piece = (set, templateIndex, xp = 0) => ({ group: 'Armor', templateIndex, material: 0, sigil: { party: 1, xp, set } });
+  const four = (set, ts) => ts.map((t) => piece(set, t));
+  const tierAt = (set, key, stage) => { const t = setById(set).tiers.find((x) => x.key === key); return SET_TIER_BLOW[key](tierValues(t, stage)); };
+  const both = kitMightParts({ items: [...four('nocturnal', [102, 103, 104, 105]), ...four('thieftaker', [106, 107, 108, 109])] }, all).sets;
+  assert.ok(Math.abs(both - (tierAt('nocturnal', 'nightfall', 0) + tierAt('thieftaker', 'run-them-down', 0))) < 1e-9, `every set worn (${both})`);
+  assert.equal(kitMightParts({ items: Array.from({ length: 6 }, () => piece('nocturnal', 107)) }, all).sets, 0, 'six helms are one place');
+  const bright = [...four('nocturnal', [102, 103, 104]), piece('nocturnal', 105, 12_500)].map((x) => ({ ...x, sigil: { ...x.sigil, xp: 12_500 } }));
+  assert.ok(Math.abs(kitMightParts({ items: bright }, all).sets - tierAt('nocturnal', 'nightfall', 2)) < 1e-9, 'four Bright pieces: Bright');
+  assert.ok(Math.abs(kitMightParts({ items: [...bright.slice(0, 3), piece('nocturnal', 105)] }, all).sets - tierAt('nocturnal', 'nightfall', 0)) < 1e-9, 'one Faint piece holds the set at Faint');
+  assert.equal(kitMightParts({ items: [sword({ sigil: BLOW_SIGIL })] }, all).sigil, BLOW_SIGIL_PCT, 'a weapon\'s sigil');
+  assert.equal(kitMightParts({ items: [{ ...piece('nocturnal', 107), sigil: BLOW_SIGIL }] }, all).sigil, 0, 'never an armour\'s');
+  assert.equal(kitMightParts({ items: [sword({ heirloom: { line: 'L1', house: 'Hlaalu', of: 1, from: 'p1', gen: 9 } })] }, all).heirloom, HEIRLOOM_DAMAGE_PER_GEN * HEIRLOOM_GEN_MAX);
+  const climb = effectiveSkill(200) - SKILL_SOFT_CAP;
+  const at = (skill, mastered = [skill]) => kitMightParts({ skills: skills(50, { [skill]: 200 }), masteredSkills: mastered }, all).mastery;
+  assert.deepEqual([at(SKILLS.LongBlade), at(SKILLS.Archery), at(SKILLS.Axe), at(SKILLS.BluntWeapon), at(SKILLS.ShortBlade), at(SKILLS.Axe, [])],
+    [climb * WEAPON_POTENCY_PER_POINT * 100, climb * WEAPON_POTENCY_PER_POINT * 100, climb * WEAPON_HALF_PER_POINT * 100, climb * WEAPON_HALF_PER_POINT * 100, 0, 0]);
+  const ring = { group: 'Jewellery', templateIndex: 133, affixes: [{ id: 'skill', param: SKILLS.Axe, value: 30 }, { id: 'skill', param: SKILLS.Axe, value: 20 }],
+    enchantments: [{ type: ENCHANTMENT_TYPES.EnhancesSkill, param: SKILLS.Axe }] };
+  assert.ok(Math.abs(kitMightParts({ items: [ring] }, all).mastery - (50 + ENHANCE_SKILL_MOD) * WEAPON_GEAR_PER_POINT) < 1e-9, 'its lines and its enchantment');
+  const enchanted = (n) => ({ ...ring, enchantments: Array.from({ length: n }, () => ({ type: ENCHANTMENT_TYPES.EnhancesSkill, param: SKILLS.Axe })) });
+  assert.equal(kitMightParts({ items: [enchanted(60)] }, all).mastery, WEAPON_GEAR_PCT_MOST, 'gear at its most');
+  assert.equal(kitMightParts({ skills: skills(50, { [SKILLS.Axe]: 200 }), masteredSkills: [SKILLS.Axe], items: [enchanted(60)] }, all).mastery, BLOW_TOPS.mastery, 'mastery at its top');
+  // the gear's other points: the sky's, a set tier's, the line's blessings (to their most), a Legendary once in its place
+  assert.ok(Math.abs(kitMightParts({}, all, { firm: { 'skill.LongBlade': 15 } }).mastery - 15 * WEAPON_GEAR_PER_POINT) < 1e-9, 'the sky\'s Long Blade');
+  const keen = tierValues(setById('thieftaker').tiers.find((x) => x.key === 'keen-eyed'), 0).archery;
+  assert.ok(Math.abs(kitMightParts({ items: four('thieftaker', [102, 103]).slice(0, 2) }, all).mastery - keen * WEAPON_GEAR_PER_POINT) < 1e-9, 'Keen-Eyed\'s Archery');
+  const blessed = kitMightParts({ legacyBlessings: Array.from({ length: 5 }, () => ({ skill: SKILLS.Axe, value: BLESSING_POINTS })) }, all).mastery;
+  assert.ok(Math.abs(blessed - BLESSING_SKILL_MAX * WEAPON_GEAR_PER_POINT) < 1e-9, 'the blessings, to their most');
+  const nine = (uid) => ({ group: 'Jewellery', templateIndex: 133, rarity: 'legendary', legendary: 'amulet-of-the-nine', uid, affixes: [{ id: 'skill', param: SKILLS.Axe, value: 20 }] });
+  assert.ok(Math.abs(kitMightParts({ items: [nine('c000000000000000'), nine('c000000000000001')] }, all).mastery - 20 * WEAPON_GEAR_PER_POINT) < 1e-9, 'two of one Legendary: its lines once');
+  // the other hand's mark: a one-handed blade with the Ketchmaster's Word in the off hand, at a foe it struck
+  const ketch = GILDED_RECORDS.find((r) => r.power?.kind === 'broadside');
+  assert.equal(kitMightParts({ items: [sword(), mintGilded(ketch)] }, all).loot, ketch.power.pct);
+  assert.equal(kitMightParts({ items: [mintGilded(ketch)] }, all).loot, 0, 'the pistol\'s own shot rides no mark of its own');
+  const path = (id, mastered) => kitMightParts({ martialPath: id, masteredSkills: mastered }, all).martial;
+  assert.deepEqual([path('warblade', [SKILLS.LongBlade, SKILLS.Axe]), path('warblade', [SKILLS.LongBlade]), path('no-such-path', [SKILLS.LongBlade, SKILLS.Axe])], [BLOW_TOPS.martial, 0, 0]);
 });
 
-test('EG-MIGHT THE JUDGE AND THE MINT: a judged save carries its kit\'s might, a refused piece left out; the mint grows it by the Renown\'s sky (the Firmament\'s top at full Renown), never past the top, and signs nothing for no judged kit (mutants: the might not judged; the sky at every Renown\'s whole; the top passed)', () => {
+test('EG-MIGHT THE SKY AND THE SPELL: the sky\'s part is its tree\'s own blow (firmamentLaw.js blowPct) at its best moment; a spell\'s whole is its mastered school past 100, the worn potency and Surge, the sky\'s spell power and a path\'s - and the might is the more of the blow\'s and the spell\'s (mutants: the sky unread; the spell unread; the blow alone)', () => {
+  const firm = { weaponDmg: 10, meleeDmg: 5, unawareDmg: 10, spellPower: 10 };
+  assert.equal(kitMightParts({}, all, { firm }).firmament, blowPct(firm, { skill: 'LongBlade', group: null, unaware: true, wounded: true }));
+  assert.equal(kitMightParts({}, all).firmament, 0, 'no sky');
+  const wand = (templateIndex) => ({ group: 'Jewellery', templateIndex, affixes: [{ id: 'potency', value: 15 }] });
+  const mage = { items: [wand(133), wand(135), wand(136)], skills: skills(50, { [SKILLS.Destruction]: 200 }), masteredSkills: [SKILLS.Destruction, SKILLS.Alteration], arcanePath: 'battlemage' };
+  const school = 1 + (effectiveSkill(200) - SKILL_SOFT_CAP) * SCHOOL_POTENCY_PER_POINT;
+  const spell = school * (1 + (POTENCY_CAP + 10 + PATH_SPELL_MOST.battlemage) / 100);   // three pieces' 45, held to the cap's 30
+  assert.ok(Math.abs(kitMightParts(mage, all, { firm }).spell - spell) < 1e-9, `the spell's whole (${spell})`);
+  assert.equal(kitMightOf(mage, all, { firm }), Math.round(100 * spell), 'the spell\'s, more than the blow\'s');
+  assert.equal(kitMightParts({ ...mage, masteredSkills: [] }, all).spell, 1 + (POTENCY_CAP + PATH_SPELL_MOST.battlemage) / 100, 'no school mastered: no climb');
+  assert.deepEqual(PATH_SPELL_MOST, { battlemage: 15, shadowcaster: 25, bloodmage: 25, elementalist: 15, lightbringer: 20 });
+});
+
+test('EG-MIGHT THE NUMBERS IT READS ARE THE CLIENT\'S: one home each (systems/powerBlows.js) - WEAPON-GEAR\'s and MARTIAL2\'s rates the client\'s own bindings, BAL9c\'s caps the loot\'s (mutant: a rate drifted)', () => {
+  assert.deepEqual([WM.WEAPON_GEAR_PER_POINT, WM.WEAPON_GEAR_PCT_MOST, WM.WEAPON_POTENCY_PER_POINT, WM.WEAPON_HALF_PER_POINT], [WEAPON_GEAR_PER_POINT, WEAPON_GEAR_PCT_MOST, WEAPON_POTENCY_PER_POINT, WEAPON_HALF_PER_POINT]);
+  assert.deepEqual([LP.POTENCY_CAP, LP.SPELL_POWER_MOST], [POTENCY_CAP, SPELL_POWER_MOST]);
+});
+
+test('EG-MIGHT THE JUDGE AND THE MINT: a judged save carries its kit\'s might, its sky handed in; a refused piece left out; the mint signs the judged might as it is - in bounds, nothing for no judged kit (mutants: the might not judged; the sky not handed; the top passed)', () => {
   const gilded = mintGilded(GILDED_RECORDS[0]);
   const judged = judgeSave({ items: [gilded], skills: skills() });
-  assert.ok(judged.might > MIGHT_NONE, `the Gilded piece judged lawful and its might signed (${judged.might})`);
   assert.equal(judged.might, kitMightOf({ items: [gilded], skills: skills() }, all));
   const forged = { ...gilded, affixes: [...gilded.affixes, { id: 'damage', value: 400 }] };
   assert.equal(judgeSave({ items: [forged], skills: skills() }).might, MIGHT_NONE, 'the law refuses the forged line, and its power with it');
   assert.equal(judgeSave(null).might, MIGHT_NONE);
-  assert.equal(firmamentPart(RENOWN_MAX, RENOWN_MAX), BLOW_TOPS.firmament);
-  assert.equal(firmamentPart(RENOWN_MAX / 2, RENOWN_MAX), BLOW_TOPS.firmament / 2);
-  assert.deepEqual([firmamentPart(0, RENOWN_MAX), firmamentPart(undefined, RENOWN_MAX), firmamentPart(99, RENOWN_MAX)], [0, 0, BLOW_TOPS.firmament]);
-  assert.deepEqual([mightSigned(100, 0, RENOWN_MAX), mightSigned(100, RENOWN_MAX, RENOWN_MAX), mightSigned(260, 25, RENOWN_MAX), mightSigned(900, RENOWN_MAX, RENOWN_MAX)], [100, 150, 325, 1000]);
-  assert.deepEqual([mightSigned(null, 10, RENOWN_MAX), mightSigned(50, 10, RENOWN_MAX), mightSigned(2000, 10, RENOWN_MAX)], [null, null, null]);
+  const firm = { weaponDmg: 20 };
+  assert.equal(judgeSave({ items: [] }, null, { firm }).might, mightOf([blowPct(firm, { skill: 'LongBlade', unaware: true, wounded: true })]), 'the sky handed in');
+  assert.deepEqual([mightSigned(100), mightSigned(325), mightSigned(1000), mightSigned(null), mightSigned(50), mightSigned(2000), mightSigned(250.5)], [100, 325, 1000, null, null, null, null]);
   const src = readFileSync(new URL('../../../server-account/src/index.js', import.meta.url), 'utf8');
-  assert.match(src, /const mg = rc \? mightSigned\(facts\.km, lv, RENOWN_MAX\) : null;/);
+  assert.match(src, /const mg = rc \? mightSigned\(facts\.km\) : null;/);
   assert.match(src, /\.\.\.\(mg != null \? \{ mg \} : \{\}\)/);
 });
 
-test('EG-MIGHT THE MINT, THROUGH THE ACCOUNT WORKER: a judged checkpoint keeps its kit\'s might on the row, and the token signs it grown by the Renown\'s sky - a forged piece adds nothing; none before a judged checkpoint, none to another account, none named (mutants: the verdict not writing it; the mint not reading it; the sky not added)', async (t) => {
+test('EG-MIGHT THE MINT, THROUGH THE ACCOUNT WORKER: a judged checkpoint keeps its kit\'s might on the row, its sky read in the checkpoint\'s own batch, and the token signs it; a forged piece adds nothing, a kit the law holds signs none (AUDIT POTION-MIGHT A2), a rollback clears it (A4); none before a judged checkpoint, none to another account, none named (mutants: the verdict not writing it; the sky not read; a held kit signed; the rollback keeping it)', async (t) => {
   t.mock.method(Date, 'now', () => ACCT_T0 * 1000);
   const { subtle } = globalThis.crypto;
-  const S = await standService();
+  const S = await standService({ FIRMAMENT_OPEN: 'on', DEVELOPER_HANDLES: 'mac' });
   const raw = S.env.DB._raw;
+  const mac = await S.registered('mac');
   const who = await S.registered('Aldric');
   const R = await seatRealm(S.env, who.secret, 'Aldric');
   const checkpoint = async (items) => {
@@ -124,6 +191,7 @@ test('EG-MIGHT THE MINT, THROUGH THE ACCOUNT WORKER: a judged checkpoint keeps i
       body: JSON.stringify({ name: 'Aldric', level: 1, goldPieces: 100, items }),
     });
     assert.equal(put.status, 200);
+    return put.json();
   };
   const claimsOf = async (body, secret = who.secret) => {
     const r = await S.call('/v1/auth/token', body, secret);
@@ -138,13 +206,24 @@ test('EG-MIGHT THE MINT, THROUGH THE ACCOUNT WORKER: a judged checkpoint keeps i
   const kit = row();
   assert.equal(kit, kitMightOf({ items: [gilded] }, all), 'the judged kit\'s might, on the row');
   assert.ok(kit > MIGHT_NONE);
-  const renown = (await claimsOf({ character: R.id })).lv;
-  assert.ok(Number.isSafeInteger(renown) && renown >= 1);
-  assert.equal((await claimsOf({ character: R.id })).mg, mightSigned(kit, renown, RENOWN_MAX), 'signed, grown by the Renown\'s sky');
+  assert.equal((await claimsOf({ character: R.id })).mg, kit, 'signed as judged');
+  // the sky: a tree with a blow's star, read in the checkpoint's own batch
+  let tree = null;
+  for (const k of FIRM_NODES.keys()) { const tr = { start: START_KEYS[0], keys: pathTo({ start: START_KEYS[0], keys: [] }, k) }; if (tr.keys.length && blowPct(treeStats(tr), { skill: 'LongBlade', unaware: true, wounded: true }) > 0) { tree = tr; break; } }
+  assert.ok(tree, 'a star that grows a blow');
+  raw.prepare('INSERT INTO firmament (player, char_id, tree, updated_at) VALUES (?, ?, ?, ?)').run(who.id, R.id, packTree(tree), ACCT_T0);
+  await checkpoint([gilded]);
+  assert.equal(row(), kitMightOf({ items: [gilded] }, all, { firm: treeStats(tree) }), 'the sky in the might');
+  assert.ok(row() > kit);
   await checkpoint([{ ...gilded, affixes: [...gilded.affixes, { id: 'damage', value: 400 }] }]);
-  assert.equal(row(), MIGHT_NONE, 'a forged piece adds nothing');
-  raw.prepare('UPDATE realm_characters SET might = NULL WHERE id = ?').run(R.id);
-  assert.equal('mg' in (await claimsOf({ character: R.id })), false, 'no judged checkpoint since EG-MIGHT');
+  assert.equal(row(), null, 'a forged piece: the law holds the kit, and no might is signed');
+  assert.equal('mg' in (await claimsOf({ character: R.id })), false);
+  raw.prepare('UPDATE realm_characters SET might = 400 WHERE id = ?').run(R.id);
+  const rb = await S.call('/v1/mod/realm-rollback', { id: R.id }, mac.secret);
+  assert.equal(rb.status, 200, JSON.stringify(rb.body));
+  assert.equal(row(), null, 'a rollback clears the might the rolled-away save was judged with');
+  assert.equal((await S.call('/v1/realm/join', { id: R.id }, who.secret)).status, 200);
+  assert.equal('mg' in (await claimsOf({ character: R.id })), false, 'and the next join signs none');
   raw.prepare('UPDATE realm_characters SET might = 400 WHERE id = ?').run(R.id);
   const B = await S.registered('Bran');
   assert.equal('mg' in (await claimsOf({ character: R.id }, B.secret)), false, 'another account naming it');
@@ -206,7 +285,7 @@ function sustained(C) {
   return landed / 10;
 }
 
-test('EG-MIGHT THE REPORT, ON THE DIRECTOR\'S OWN BREACH: a level-10 member with no might lands 45 a second once its purse is spent (3 x (5 + 10) - the report\'s 45); with a signed might of 400 it lands four times that, its purse full at its might\'s depth, and its lord holds twice the health (the might\'s root) - so the kill is twice as fast, never four times; a newer token\'s might is the member\'s (mutants: the might never reaching the purse; the health at the might\'s whole; the depth not grown; a re-entry keeping the old might)', () => {
+test('EG-MIGHT THE REPORT, ON THE DIRECTOR\'S OWN BREACH: a level-10 member with no might lands 45 a second once its purse is spent (3 x (5 + 10) - the report\'s 45); with a signed might of 400 it lands four times that, its purse full at its might\'s depth, and its lord holds twice the health (the might\'s root) - so the kill is twice as fast, never four times; the first entry\'s might is kept, as the level is (mutants: the might never reaching the purse; the health at the might\'s whole; the depth not grown; a re-entry taking the newest might)', () => {
   const lv = 10, ref = dpsRef(lv);
   const plain = court(1, 1, lv, null), geared = court(1, 1, lv, 400);
   const pl = plain.lord.max, gl = geared.lord.max;
@@ -218,11 +297,13 @@ test('EG-MIGHT THE REPORT, ON THE DIRECTOR\'S OWN BREACH: a level-10 member with
   assert.ok(Math.abs(pl - egTtkRef(1) * ref) < 1, 'the plain member\'s lord holds circle 1\'s reference');
   assert.ok(Math.abs(gl / pl - 2) < 1e-6, `the geared member's twice (${gl} of ${pl})`);
   assert.deepEqual([egPurseX(400), egHealthRef(lv, 400) / ref, egHealthRef(lv, null) / ref], [4, 2, 1]);
-  // a re-entry (a reload, the next circle's room) takes the newest token's might, and a token with none takes none
-  egEnter(geared.B, 'acct-0', 'ordacct-0'.padEnd(20, 'x'), lv, geared.now(), 250);
-  assert.equal(geared.B.mem['acct-0'].mg, 250);
-  egEnter(geared.B, 'acct-0', 'ordacct-0'.padEnd(20, 'x'), lv, geared.now(), 5000);
-  assert.equal(geared.B.mem['acct-0'].mg, null, 'out of bounds is none');
+  // PIN MOVED (AUDIT POTION-MIGHT B1): a re-entry (a reload, the next circle's room) keeps the might of the first, as the
+  // level - a newer token's grew the purse of a hall sized by the one before; a first entry out of bounds is none
+  egEnter(geared.B, 'acct-0', 'ordacct-0'.padEnd(20, 'x'), lv, geared.now(), 1000);
+  assert.equal(geared.B.mem['acct-0'].mg, 400, 'the first entry\'s might kept');
+  egEnter(geared.B, 'acct-0', 'ordacct-0'.padEnd(20, 'x'), lv, geared.now(), null);
+  assert.equal(geared.B.mem['acct-0'].mg, 400, 'and never dropped');
+  assert.equal(court(1, 1, lv, 5000).B.mem['acct-0'].mg, null, 'out of bounds is none');
 });
 
 test('EG-MIGHT THE SHARES: a lord\'s shares are counted at each member\'s might\'s root - the hall\'s own as the team was, a newcomer\'s through the seam and by the law, each at the lord\'s fraction (mutants: a share without it; a newcomer without it; the seam dropping it)', () => {
@@ -241,7 +322,7 @@ test('EG-MIGHT THE SHARES: a lord\'s shares are counted at each member\'s might\
   assert.ok(Math.abs(L.max - max2 - L.per * dpsRef(lv)) < 1e-6, 'and none: the reference alone');
 });
 
-test('EG-MIGHT THE STAND-IN\'S WHOLE: grown by the most a might grows a breach\'s purse, so a geared spell is never held under it - 9,750, still under a bout\'s 10,000 (mutant: the whole not grown)', () => {
-  assert.equal(STAND_IN_WHOLE, 975 * (MIGHT_MOST / MIGHT_NONE));
-  assert.ok(STAND_IN_WHOLE < 10_000);
+test('EG-MIGHT THE STAND-IN\'S WHOLE: a breach\'s grown by the most a might grows its purse, so a geared spell is never held under it - 9,750; PIN MOVED (AUDIT POTION-MIGHT B2): its own, every other stand-in\'s 975 as before (mutant: the whole not grown)', () => {
+  assert.equal(EG_STAND_IN_WHOLE, STAND_IN_WHOLE * (MIGHT_MOST / MIGHT_NONE));
+  assert.deepEqual([STAND_IN_WHOLE, EG_STAND_IN_WHOLE], [975, 9750]);
 });

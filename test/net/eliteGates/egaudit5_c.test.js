@@ -323,9 +323,9 @@ test('POTION-CLOCK THE CLIENT\'S PIP (section 17.4): in a breach\'s trial a heal
     const chip = () => { R.client.frame(); return find(globalThis.document.body, 'eg-potion')[0]?.textContent ?? ''; };
     assert.equal(chip(), '', 'nothing waits');
     pvpPotionDrunk({ potionRecipeKey: potionRecipeKey(POTION_RECIPES.find((r) => r.name === 'healing').ingredients) });
-    assert.equal(chip(), 'Health potion 15 s');
+    assert.equal(chip(), 'Health\u00a0potion\u00a015\u00a0s');
     R.step(6000);
-    assert.equal(chip(), 'Health potion 9 s');
+    assert.equal(chip(), 'Health\u00a0potion\u00a09\u00a0s');
     R.step(9000);
     assert.equal(chip(), '', 'drinkable again');
   } finally { destroyEgSpireHud(); destroyEgHud(); delete globalThis.document; registerMadeLevelHere(null); resetPvpPotions(); }

@@ -109,7 +109,7 @@ import { EG_HERALD_TELL_MAX } from './egHerald.js';   // EG-E3: the herald's new
 import { orreryOf, orreryFresh, orreryJudge, orreryShortest, SD_STONES, SD_HOURS } from '../superDungeon/sdBrain.js';
 import { BUCKET_DEPTH_X, GATE_HIT_HZ_MAX, HIT_KINDS,  dpsRef, clampLv } from '../gate/gateBrain.js';
 import { HIT_CAP_X, spendPurse } from '../gate/gateBrain.js';   // AUDIT EG III: Spillover's carry, within its blow's cap and out of the purse
-import { egPurseX } from './egMight.js';   // EG-MIGHT (section 21.1): a member's purse grown by its kit's signed might
+import { egPurseX, egRefDealt } from './egMight.js';   // EG-MIGHT (section 21.1): a member's purse grown by its kit's signed might; AUDIT POTION-MIGHT B3: its damage judged at the reference
 import { mightOk } from '../mightLaw.js';
 import { SAP_HEAL, SAP_FEEDS_MAX } from '../gate/gateBrain.js';   // AUDIT EG IV (lane1 #17): a Sapper feeds a lord by the gate's law, its feedings capped
 import { EG_LORDS } from './egLaw.js';   // AUDIT EG IV (section 18's strata): a lord's band, for the Twin Court's second
@@ -122,6 +122,7 @@ import { egFairNew, egFairPose, egFairOk, EG_FAIR_WORDS, egFairRefuses, egFairCr
 import { egCompanyTag, EG_SHARE_WHOLE, EG_MEASURES, EG_MEASURE_MAX } from './egReceipt.js';   // EG-ZA: the company, the share and the measures a receipt carries
 import { judgePlace } from '../bossRef.js';
 import { bodyStruck, bodySaid, bodyHealed, bodyLife } from '../bossBody.js';
+import { PVP_VITALS, potionHealAt } from '../wild/pvpVitals.js';   // AUDIT POTION-MIGHT C2: the potion clock's 15 s and a Heal True's most, the relay's own
 // EG-ZB (2026-10-12; sections 8.2, 11.7, 19 and 21): THE LEGION HUNTS - the fight ground and the walk graph (net/eliteGates/egWalkGraph.js),
 // the span's legion, the hunt, the census's drains and its Vestiges, who a place's blow caught
 import { egFightView, egGroundAt, egAirKeep, EG_STRIKE_PAD_M } from './egWalkGraph.js';
@@ -377,13 +378,14 @@ export function egAdmitWord(B, sub, now) {
   if (m?.in) return null;   // a reload, a witness: back into the hall it stands in
   return egAdmits(clockRec(B), now) ? null : 'the breach is closed';
 }
-/** A member's admission, its order verified by the room (`ez` its id): spent once; its level frozen at the first, its
- *  kit's might (`mg`, EG-MIGHT) the newest token's. Answers null, or the refusal's words. */
+/** A member's admission, its order verified by the room (`ez` its id): spent once; its level and its kit's might (`mg`,
+ *  EG-MIGHT) frozen at the first - AUDIT POTION-MIGHT B1: a might taken at a re-entry grew the purse of a hall sized by the
+ *  one before. Answers null, or the refusal's words. */
 export function egEnter(B, sub, ez, lv, now, mg = null) {
   const no = egAdmitWord(B, sub, now);
   if (no) return no;
   const might = mightOk(mg) ? mg : null;   // EG-MIGHT (section 21.1): the token's kit's might, the member's purse's
-  if (B.mem[sub]?.in) { B.mem[sub].seenAt = now; B.mem[sub].mg = might; return null; }   // counted already (a reload, a new circle's room): nothing to spend - EG-MIGHT: its might the newest token's
+  if (B.mem[sub]?.in) { B.mem[sub].seenAt = now; return null; }   // counted already (a reload, a new circle's room): nothing to spend
   if (B.zs.includes(ez)) return 'the order is spent';
   B.zs = [...B.zs, ez].slice(-64);
   const c = B.co.find((x) => x.sub === sub);
@@ -392,7 +394,7 @@ export function egEnter(B, sub, ez, lv, now, mg = null) {
   // lines (which read the fall's `fin` and the company's recall) say so
   if (!B.mem[sub]) B.mem[sub] = { name: c.name, n: c.n, in: 1, lv: clampLv(lv), alive: 1, home: 0, fellAt: 0, falls: 0, recall: B.rh ? 0 : 1, wit: 0, forsaken: 0, hereH: 0, downH: 0, dh: 0, dc: 0, act: 0, seenAt: now,
     vs: [], mast: -1, shards: 0, tonics: 0, cant: [], lumen: 0, rel: [], kinds: [0, 0, 0], offer: null, picks: 0, newestV: null, bequest: null, x: 0, mg: might, ...purseOf(clampLv(lv), now, might) };
-  else { B.mem[sub].seenAt = now; B.mem[sub].mg = might; }
+  else B.mem[sub].seenAt = now;
   return null;
 }
 
@@ -1228,18 +1230,20 @@ function forkClosing(B, spec, inHall, now) {
  * census's shares, `m.hh` its heals' shares of their receivers' bodies), or stood EG_ERRAND_STAND_MS in an errand's mark
  * (`m.erH`, errandStep), or - in a hall that is crossed (EG_TOLL_KINDS) - crossed it on a fair trail (`crossed`: a step
  * through its door, which only a fair trail takes, or its end reached on one). A step through a fight hall's door alone is
- * not activity. Pure.
+ * not activity. Damage at the reference (`dealt` too - AUDIT POTION-MIGHT B3, egRefDealt). Pure.
  * @param {any} m @param {{ h: number, n: number, dealt: number, took: number, crossed: boolean }} hall
  */
 export function egActiveIn(m, { h, n, dealt, took, crossed }) {
   const even = EG_ACTIVE_SHARE / Math.max(1, n);
-  return (m.dh > 0 && m.dh >= even * dealt) || (m.hh > 0 && took > 0 && m.hh >= even * took) || m.erH === h || crossed;
+  return (m.dh > 0 && egRefDealt(m.dh, m.mg) >= even * dealt) || (m.hh > 0 && took > 0 && m.hh >= even * took) || m.erH === h || crossed;
 }
+/** AUDIT POTION-MIGHT B3: what the company dealt in a hall, at the reference (egRefDealt) - an entered member's own each. */
+export const egHallDealt = (/** @type {Record<string, any>} */ mem) => Object.values(mem).reduce((a, m) => a + (m.in && m.dh > 0 ? egRefDealt(m.dh, m.mg) : 0), 0);
 /** A hall's part in the circle counted for each living member (egActiveIn), and the hall's measures begun again for every
  *  member. */
 function countPart(B) {
   const L = living(B), spec = specOf(B), crossHall = EG_TOLL_KINDS.includes(spec.kind);
-  const dealt = Object.values(B.mem).reduce((a, m) => a + (m.in && m.dh > 0 ? m.dh : 0), 0), took = B.ctk ?? 0;
+  const dealt = egHallDealt(B.mem), took = B.ctk ?? 0;
   for (const [sub, m] of L) {
     const crossed = crossHall && (m.downH === B.h || !!fairOfMember(B, sub)?.atEnd);
     if (egActiveIn(m, { h: B.h, n: L.length, dealt, took, crossed })) m.act++;
@@ -2537,6 +2541,16 @@ export function egCountHeals(B, frames, now, line, enforce = EG_BODY_ENFORCE) {
       else if (f.p < 0 && m.bd) m.bd.v = Math.max(0.01, m.bd.v + f.p / egCountWhole(m.vs));   // the lash: a setback, never a death (EG-ZS: of the body without the cushion)
     }
   }
+}
+/** AUDIT POTION-MIGHT C2 (section 17.4) - A HEALTH POTION DRUNK (`pot`): the count believes the most a Heal True heals at the
+ *  member's level (net/wild/pvpVitals.js potionHealAt), once in the clock's 15 s (`m.pot`, the room's own clock), as an
+ *  ally's heal is believed - outside the member's own budget, which a potion every 15 s outran. A word in the clock's 15 s,
+ *  or from a member not counted alive, is no heal. Answers the share believed. */
+export function egPotion(B, sub, now, line, enforce = EG_BODY_ENFORCE) {
+  const m = B.mem[sub];
+  if (!m || !m.in || !m.alive || m.home || B.end || now - (m.pot ?? -Infinity) < PVP_VITALS.potionMs) return 0;
+  m.pot = now;
+  return bodyHealed(m, potionHealAt(m.lv) / healRef(m.lv) / egCountWhole(m.vs), now, line, { enforce });
 }
 /** EG-H1 - A MEMBER'S OWN WORD OF ITS BODY (`vt`, thousandths - net/bossBody.js bodySaid, INT15's pace): a mend it claims
  *  believed out of its budget; from a member the breach does not count alive, not heard. EG-ZI: a word under

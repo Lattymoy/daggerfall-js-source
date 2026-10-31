@@ -1,6 +1,6 @@
 -- EG-MIGHT (2026-10-31, the owner: "Address DMG cap in Elite Breach. It's not engaging to see 45 DMG when you're well
 -- geared"; asked, "Gear-aware purse"; bible/11-Multiplayer/Elite-Gates.md section 21.1): the kit's might the identity mint
--- signs (net/identityToken.js `mg`), so an Elite Breach's purse grows with the gear a character holds.
+-- signs (net/identityToken.js `mg`), so an Elite Breach's purse grows with the gear a character wears.
 --
 --   npx wrangler d1 migrations apply daggerfall-accounts --remote
 --
@@ -8,6 +8,7 @@
 --
 -- ON THE CHARACTER'S ROW (realm_characters), written by each checkpoint's verdict (server-account/src/verdict.js) and read
 -- by the identity mint (server-account/src/realm.js realmMintFacts):
---   might  the most its judged pack's lawful pieces grow a blow over the gate's reference, whole per cent, 100 to 1000
---          (net/kitMight.js kitMightOf); NULL before its first judged checkpoint since EG-MIGHT
+--   might  what its lawful kit worn at once and its sky can grow a blow or a spell over the gate's reference, whole per
+--          cent, 100 to 1000 (net/kitMight.js kitMightOf); NULL before its first judged checkpoint since EG-MIGHT, while the
+--          law holds it, and after a staff rollback until its next checkpoint
 ALTER TABLE realm_characters ADD COLUMN might INTEGER;

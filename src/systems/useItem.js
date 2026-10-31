@@ -42,7 +42,7 @@ import { setLightSource } from './lightSource.js';   // DISC7: the light in hand
 import { localizedStrings } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { hoodCapable, hoodUp } from './survival/temperature.js';   // HOOD-SAID: the one hood law, for toggleHood
 import { sandPotionRefusal } from './arena/arenaKit.js';   // AUDIT ARENA-LADDER: no potion on the sand
-import './eliteGates/spireKit.js';   // POTION-CLOCK: the Spire's made-level law runs the potion clock below (its registration)
+import { flightBottleRefusal } from './eliteGates/spireKit.js';   // POTION-CLOCK: the Spire's made-level law runs the potion clock below (its registration); AUDIT POTION-MIGHT C7: and keeps a bottle its flight ban would waste
 import { pvpPotionRefusal, pvpPotionDrunk } from '../combat/pvpPotions.js';   // PVP-POTIONS: 15 s a kind in a fight with a player; POTION-CLOCK: and in an Elite Breach
 
 /** THE ARMS WHOSE DESTINATION WINDOW THE PORT HAS NOT BUILT, named so a use
@@ -348,6 +348,8 @@ export function useItem(item, collection, {
   // PVP-POTIONS: in a fight with a player each kind waits 15 s, and the bottle is kept (combat/pvpPotions.js); POTION-CLOCK:
   // in an Elite Breach too (systems/eliteGates/spireKit.js)
   else if (isPotion(item) && pvpPotionRefusal(item)) out = { kind: 'refused', refused: true, text: pvpPotionRefusal(item) };
+  // AUDIT POTION-MIGHT C7: a Levitation or a Slow Falling where the place bans flight is kept, never drunk for nothing
+  else if (isPotion(item) && flightBottleRefusal(item)) out = { kind: 'refused', refused: true, text: flightBottleRefusal(item) };
 
   else if (isPotion(item)) {
     // DrinkPotion + RemoveOne. AUDIT 22 F5: RemoveOne takes THIS

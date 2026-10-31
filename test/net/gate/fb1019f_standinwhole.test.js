@@ -8,7 +8,6 @@
 // blow lands at any relay, under the least ceiling nobody clamps - and the spell doors (scenes/gate/standInSpell.js, out
 // of buildDungeonContext) say what can land. Driven on the real producers: the spell maker's Disintegrate, the
 // stand-in factories, the court that sends the claim, the validators that read it and the brains that land it.
-import { MIGHT_MOST, MIGHT_NONE } from '../../../src/net/mightLaw.js';   // EG-MIGHT
 import '../../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -61,19 +60,19 @@ const standIns = () => ({
 const atLevel = (lv, fn) => { const was = playerEntity.level; playerEntity.level = lv; try { return fn(); } finally { playerEntity.level = was; } };
 
 test('STAND-IN-WHOLE THE WHOLE (world/gate/gateBoss.js STAND_IN_WHOLE): the most one blow lands at any relay - HIT_CAP_X times the reference at the level cap, grown by the most an Elite Breach\'s bucket grows - at least every relay\'s one-blow cap (the gate\'s, the Abyss\'s, a breach\'s, the serpent\'s, a bout\'s) and carried by every wire (the bout\'s 10,000 the least), each relay landing its whole cap on it; 1e9 refused by every one (mutants: 1e9 back; the breach\'s factor dropped; past the bout\'s ceiling)', () => {
-  assert.equal(STAND_IN_WHOLE, HIT_CAP_X * dpsRef(LV_MAX) * EG_BUCKET_X_MAX * (MIGHT_MOST / MIGHT_NONE));   // PIN MOVED (EG-MIGHT): and the most a kit's signed might grows a breach's purse
-  assert.equal(STAND_IN_WHOLE, 9750);
+  assert.equal(STAND_IN_WHOLE, HIT_CAP_X * dpsRef(LV_MAX) * EG_BUCKET_X_MAX);
+  assert.equal(STAND_IN_WHOLE, 975);
   assert.equal(dpsRef(999), dpsRef(LV_MAX), 'no level reads past the cap');
   // AT LEAST every relay's one-blow cap
   const bout = Math.max(arenaBlowCap({ r: ARENA_HIT.Spell }), arenaBlowCap({ r: ARENA_HIT.Melee }),
     ...Object.keys(ARENA_WEAPON_MAX).flatMap((w) => ARENA_MATERIAL_MOD.map((_, m) => arenaBlowCap({ r: ARENA_HIT.Melee, w: Number(w), m }))));
-  const caps = { gate: HIT_CAP_X * dpsRef(LV_MAX), breach: HIT_CAP_X * dpsRef(LV_MAX) * EG_BUCKET_X_MAX * (MIGHT_MOST / MIGHT_NONE), serpent: SERPENT_HIT_CAP_X * Math.max(...SHIP_REF), hand: SERPENT_HIT_CAP_X * SERPENT_HAND_REF, bout };
+  const caps = { gate: HIT_CAP_X * dpsRef(LV_MAX), breach: HIT_CAP_X * dpsRef(LV_MAX) * EG_BUCKET_X_MAX, serpent: SERPENT_HIT_CAP_X * Math.max(...SHIP_REF), hand: SERPENT_HIT_CAP_X * SERPENT_HAND_REF, bout };
   assert.deepEqual(Object.entries(caps).filter(([, c]) => !(c <= STAND_IN_WHOLE)), [], 'every relay\'s cap within the whole');
   assert.equal(caps.breach, STAND_IN_WHOLE, 'the least whole that counts them all');
   // the relays land their whole cap on it: the purse a host body, a crystal, the Abyss and a breach spend (a breach's grown)
   const purse = () => ({ lv: LV_MAX, bucket: 0, bucketAt: -1e9, clipped: 0, dealt: 0 });
   assert.equal(spendPurse(purse(), STAND_IN_WHOLE, Infinity, 0), HIT_CAP_X * dpsRef(LV_MAX), 'the gate\'s purse: its cap');
-  assert.equal(spendPurse(purse(), STAND_IN_WHOLE, Infinity, 0, EG_BUCKET_X_MAX * (MIGHT_MOST / MIGHT_NONE)), STAND_IN_WHOLE, 'a breach\'s, grown by its Vestiges and the most might: all of it');
+  assert.equal(spendPurse(purse(), STAND_IN_WHOLE, Infinity, 0, EG_BUCKET_X_MAX), STAND_IN_WHOLE, 'a breach\'s, grown: all of it');
   // AT MOST what every wire carries - the claim each exit sends of it
   const d = STAND_IN_WHOLE;
   const carried = (dd) => [
@@ -140,11 +139,12 @@ test('STAND-IN-WHOLE THE NUMBER SAYS WHAT CAN LAND (scenes/gate/standInSpell.js)
     });
     heard.length = 0;
     atLevel(60, () => { doors.spellOnBoss(DISINTEGRATE); doors.spellOnHost(DISINTEGRATE, 7); });
-    assert.deepEqual(heard, [780, 975], 'at the level cap: the gate\'s cap, a breach\'s grown by its Vestiges - PIN MOVED (EG-MIGHT): the room\'s word says what landed, the stand-in\'s whole is grown past it');
+    assert.deepEqual(heard, [780, STAND_IN_WHOLE], 'at the level cap: the gate\'s cap, a breach\'s the whole');
   } finally { setPlayerAttackHook(null); registerSpellLandedListener('fb1019f', null); }
   // the law: my bucket's factor as its owner says it, clamped to the breach's own bounds; none said, the gate's 1
   const at = (x) => standInBlowCap(bossStandIn({ mobile: 31 }, 'x', null, x), 30);
-  assert.deepEqual([at(null), at(() => 1.2), at(() => 9), at(() => 0.5), at(() => NaN), at(() => { throw new Error('no word'); })], [420, 504, 525, 420, 420, 420]);
+  // PIN MOVED (AUDIT POTION-MIGHT B5): the factor is my Vestiges' and my might's, so its bound is both's (12.5)
+  assert.deepEqual([at(null), at(() => 1.2), at(() => 9), at(() => 99), at(() => 0.5), at(() => NaN), at(() => { throw new Error('no word'); })], [420, 504, 3780, 5250, 420, 420, 420]);
   assert.deepEqual([standInBlowCap(hostStandIn({ mobile: 31, name: 'a lord' }, 1, null, () => 1.2), 30), standInBlowCap(crystalStandIn(bossLookOf('ruhn'), 0, null, () => 1.2), 30)], [504, 504], 'a host body\'s and an object\'s factory keep it');
   assert.deepEqual([standInShown(975, 300), standInShown(12.5, 300), standInShown(-4, 300)], [300, 12.5, 0]);
 });
@@ -157,7 +157,7 @@ test('STAND-IN-WHOLE NOTHING READS A STAND-IN\'S WHOLE AS ITS BODY\'S: the blood
     assert.equal(healthShare(e), null, `${who}: its share the relay's word - none heard here - never its whole's`);
   }
   assert.equal(bloodHit(500, { maxHealth: STAND_IN_WHOLE }).maxHealth, STAND_IN_WHOLE, 'a body of that whole is measured');
-  assert.equal(bloodRate(5000, STAND_IN_WHOLE), RATE_LADDER[2].rate);   // PIN MOVED (EG-MIGHT): about the share of a 9,750 whole that 500 was of 975
+  assert.equal(bloodRate(500, STAND_IN_WHOLE), RATE_LADDER[2].rate);
 });
 
 /** AN ELITE BREACH'S REAL FIGHT: the first hall of `kind` in a seed's circle woken on the relay's own brain (egBrain), its words

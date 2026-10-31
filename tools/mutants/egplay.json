@@ -29,8 +29,8 @@
   {
     "name": "EGPLAY-a-counted-member-spends-again",
     "file": "src/net/eliteGates/egBrain.js",
-    "old": "  if (B.mem[sub]?.in) { B.mem[sub].seenAt = now; B.mem[sub].mg = might; return null; }",
-    "new": "  if (false) { B.mem[sub].seenAt = now; B.mem[sub].mg = might; return null; }",
+    "old": "  if (B.mem[sub]?.in) { B.mem[sub].seenAt = now; return null; }",
+    "new": "  if (false) { B.mem[sub].seenAt = now; return null; }",
     "tests": [
       "test/net/eliteGates/egplay_relay.test.js"
     ]

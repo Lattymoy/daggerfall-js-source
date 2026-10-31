@@ -82,7 +82,7 @@ test('POTION-CLOCK THE PIP: each kind still waiting and its whole seconds, in th
     assert.deepEqual(potionWaits(t0 + PVP_POTION_MS), [['health', 4]]);
     assert.deepEqual(potionWaits(t0 + 4000 + PVP_POTION_MS), []);
     assert.equal(egPotionPip([]), '');
-    assert.equal(egPotionPip([['health', 15], ['magicka', 4], ['other', 2]]), 'Health potion 15 s · Magicka potion 4 s · Potion 2 s');
+    assert.equal(egPotionPip([['health', 15], ['magicka', 4], ['other', 2]]), ['Health potion 15 s', 'Magicka potion 4 s', 'Potion 2 s'].map((w) => w.replace(/ /g, '\u00a0')).join(' · '), 'a kind\'s words never part (AUDIT POTION-MIGHT C5)');
     // the registration is a door: one that throws runs no clock
     registerPotionClockHere(() => { throw new Error('x'); });
     assert.deepEqual(potionWaits(t0 + 4200), []);

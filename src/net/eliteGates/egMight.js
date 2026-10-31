@@ -10,6 +10,9 @@ import { mightOk, mightX } from '../mightLaw.js';
 export const EG_MIGHT_HEALTH_EXP = 0.5;
 /** The factor a member's purse grows by: its might's whole. */
 export const egPurseX = (mg) => mightX(mg);
+/** AUDIT POTION-MIGHT B3: damage `n` a member dealt, in the reference's units - its purse's factor taken out, so a share the
+ *  receipt and a hall's part judge is even between a geared member and a bare one. */
+export const egRefDealt = (n, mg) => n / egPurseX(mg);
 /** The reference damage a member's health share is counted in: the gate's at its level, grown by its might's root. */
 export const egHealthRef = (lv, mg) => dpsRef(clampLv(lv)) * mightX(mg) ** EG_MIGHT_HEALTH_EXP;
 /** What a breach member's socket carries of its token: its character level (EG-PLAY) and its kit's might. */

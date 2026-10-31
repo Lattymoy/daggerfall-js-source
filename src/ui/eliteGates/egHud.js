@@ -5,8 +5,8 @@
 //   THE TRACKER (a readout, no click): outside the Spire the call; inside, THE COUNT CHIP (gold above 10:00, white to
 //     2:00, red below and pulsing in the last 30 s; *Held* while it holds; the last word's seal when it is nearer), the
 //     circle and hall by name with its band, the objective and its progress (rifts 3 of 5, the hold's seconds, the winch,
-//     the Gauntlet's plates left), the decrees in force, my run (Reliquaries, lumen, shards, tonics, Cantrips, THE POTION LAW's
-//     pip), the marks on me, the company's rows (numerals, a cracked recall, a witness's eye, home, forsaken), a
+//     the Gauntlet's plates left), the decrees in force, my run (Reliquaries, lumen, shards, tonics, Cantrips; THE POTION CLOCK's
+//     pip is the Spire's HUD's), the marks on me, the company's rows (numerals, a cracked recall, a witness's eye, home, forsaken), a
 //     witness's own line;
 //   THE PANEL (clicked, or answered by keys and `/breach` words): the Vestige offer (each card its name, rank and line;
 //     1-6 to take), the company's word (each choice open, its options and its countdown; Y/N, 1-2), and THE RECAP at a
@@ -53,8 +53,8 @@ export const EG_HUD_GOLD_MS = 10 * 60_000;
 export const EG_MARK_NAMES = Object.freeze(['The Scent', 'Soul-mark', 'Fire-touched', 'Frost-touched', 'Chained', 'Caged', 'Challenged', 'Hunted', 'Bound']);
 /** POTION-CLOCK (section 17.4): the potion pip - each kind still waiting and its seconds (combat/pvpPotions.js potionWaits),
  *  '' when every kind may be drunk. */
-export const egPotionPip = (waits) => (Array.isArray(waits) ? waits : [])
-  .map(([kind, s]) => t('eg.potion.wait', '{kind, select, health {Health potion} magicka {Magicka potion} other {Potion}} {s} s', { kind, s })).join(' · ');
+export const egPotionPip = (waits) => (Array.isArray(waits) ? waits : [])   // AUDIT POTION-MIGHT C5: a kind's words never part, the chip wraps between kinds
+  .map(([kind, s]) => t('eg.potion.wait', '{kind, select, health {Health potion} magicka {Magicka potion} other {Potion}} {s} s', { kind, s }).replace(/ /g, '\u00a0')).join(' · ');
 export const EG_HUD_STYLE_ID = 'dagger-eg-hud-style';
 /** EG-PLUS (ui/eliteGates/egKit.js): the call's tracker is a plate over the world (the kit's `panel` - `body .eg-hud`) and
  *  the panel a breach window (`.eg-win`, the chrome's); this sheet writes their geometry and words, the kit their paint. */

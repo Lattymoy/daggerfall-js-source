@@ -58,7 +58,7 @@ import { PHASE_AT, SHIELD_MS, THREAT_PICK, THREAT_DECAY, HIT_KINDS, STUN_MS, STU
 import { ATTACKS, POOLS } from '../gate/gateBrain.js';   // AUDIT EG III (section 13.4; ONE DFU MEMBER, ONE EXPORT): the gate's Cleave, Slam, Charge and Meteor read, never copied - the Meteor's burning ground with it
 import { GATE_ASPECTS, gateAspectOf } from '../gate/gateMods.js';   // AUDIT EG III (sections 13.3 and 13.4): a lord's aspect - Garoth's in turn, an earlier band's lord re-aspected
 import { retireShare, restoreShare } from '../gate/gateBrain.js';   // EG-ZQ (section 13.2): a lord's shares - the gate's level claim, its retirement and its return
-import { egHealthRef } from './egMight.js';   // EG-MIGHT: a member's share counted at its might's root
+import { egHealthRef, egRefDealt } from './egMight.js';   // EG-MIGHT: a member's share counted at its might's root; AUDIT POTION-MIGHT B3: its damage at the reference
 import { EG_ROLE, EG_FL, EG_GONE, egBodyNew, egWalk, egStop, egPlace, egAim, egGone, egHas, egSetFl, egHpTeam, egBodiesOf, egBodyById, egMark, egUnmark, egMarkOf, egShareX, egCut, egSaid, egObSay, EG_TELL_LEAD_MS, EG_FEINT_AT } from './egBodies.js';   // EG-ZJ: egSaid, egObSay - a body's state kept as said
 import { egHitBody, egFightState } from './egBodies.js';   // EG-ZK: the seam's blow (the gate's hand and purse) and the fight's state
 import { egFace } from './egBodies.js';   // AUDIT EG V (lane1 #7): a lord's turn said
@@ -1929,7 +1929,7 @@ export const EG_SEAM = bossSeam('eg', {
   judge: (f, bodies, now) => { const hits = judgeShapes(f.F, bodies, now, f.spec); egLordsJudged(f.F, hits); return egChainShared(f.F, hits, bodies); },   // AUDIT EG III: a chained member's blow divided with its chain; AUDIT EG V (lane1 #25): its catch told its lord's kit
   earned: (f, sub) => {
     if (!f.F || !egLordsFell(f.F)) return false;
-    const co = f.ctx?.co ?? [], total = co.reduce((s, [, m]) => s + m.dc, 0), n = Math.max(1, co.length), m = co.find(([s]) => s === sub)?.[1];
-    return !!m && (m.dc >= (total * EG_EARN_SHARE) / n || m.act >= EG_EARN_HALLS);
+    const co = f.ctx?.co ?? [], total = co.reduce((s, [, m]) => s + egRefDealt(m.dc, m.mg), 0), n = Math.max(1, co.length), m = co.find(([s]) => s === sub)?.[1];
+    return !!m && (egRefDealt(m.dc, m.mg) >= (total * EG_EARN_SHARE) / n || m.act >= EG_EARN_HALLS);   // AUDIT POTION-MIGHT B3: at the reference
   },
 });

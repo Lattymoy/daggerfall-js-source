@@ -421,7 +421,7 @@ import { EG_INTERNAL_HERALD, EG_HERALD_KEY, EG_HERALD_KEEP_MS, EG_HERALD_TELL_MS
 // SHARED time (net/eliteGates/egFair.js's time law) onto its socket's trail and THE FAIR TRAIL, the Spire's blows and hazards judged on
 // those trails and the body counted, ENFORCED in the Spire (net/eliteGates/egBrain.js egCount - the member's one life), the room's
 // heals restored to it, the member's own word of its body (`vt`), the shared clock's ping answered (`clk`)
-import { egPoseIn, egCount, egCountHeals, egBodyWord, egFairWoke, EG_BODY_ENFORCE } from '../../src/net/eliteGates/egBrain.js';
+import { egPoseIn, egCount, egCountHeals, egBodyWord, egFairWoke, egPotion, EG_BODY_ENFORCE } from '../../src/net/eliteGates/egBrain.js';
 import { egHeal } from '../../src/net/eliteGates/egBrain.js';   // EG-ZF (Elite-Gates.md section 27.6): what a companion's spell healed in a member - the recap's healing
 import { EG_HEAL_CAST_MS } from '../../src/net/eliteGates/egBrain.js';   // AUDIT EG IV (lane3 #3): how far back a relayed cast corroborates a heal word's healer
 import { egPoseClock, egPoseShared, egTrailPush, EG_TRAIL_MS, EG_TS_LAG_MAX_MS } from '../../src/net/eliteGates/egFair.js';   // AUDIT EG V (L4-1): the edge no pose can still land before
@@ -9686,6 +9686,7 @@ export class Room {
     }
     if (m.k === 'clk') { this._send(ws, JSON.stringify({ t: 'eg', k: 'clk', c: m.c, now: Date.now() })); if (Number.isInteger(m.h)) { const all = (this._egClocks ??= new Map()); let c = all.get(ws); if (!c) all.set(ws, c = egPoseClock()); c.h = m.h; } return; }   // EG-H1: the shared clock's ping, answered at once (section 10.8); the delay its corrected clock measured places its poses (net/eliteGates/egFair.js egPoseShared)
     if (m.k === 'vt') { egBodyWord(B, a.sub, m.v, now, this._egLine(), EG_BODY_ENFORCE); return; }   // EG-H1: its body, in its own word
+    if (m.k === 'pot') { egPotion(B, a.sub, now, this._egLine(), EG_BODY_ENFORCE); return; }   // AUDIT POTION-MIGHT C2: a health potion, believed on the room's clock
     if (m.k === 'down') { if (egDown(B, a.sub, m.h, pose, now)) await this._egArm(now + BRAIN_TICK_MS); return; }
     if (m.k === 'spec') {
       // EG-H2 (section 22, THE LAW PIN): a hall of this circle (or the next) in the breach's own law's bytes, to the socket

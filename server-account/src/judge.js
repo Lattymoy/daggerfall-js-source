@@ -224,7 +224,7 @@ const findingsOf = (/** @type {any} */ it) => { try { return itemFindings(it); }
  * an item's), `items` the count judged, `provenances` every crafted piece's provenance, template, material and quality
  * (judgeProducts reads them), `pieces` INT4's: every valuable piece it holds, by its ledger key (ledgerPieces); `arms`
  * INT7's `[reach, bow]` (net/siege/siegeRef.js armsOf - the pack's lawful weapons alone); `might` EG-MIGHT's (net/kitMight.js).
- * @param {any} save @param {{ level?: unknown } | null} [summary] @param {{ level?: number }} [o] the level its wealth's debt is read at
+ * @param {any} save @param {{ level?: unknown } | null} [summary] @param {{ level?: number, firm?: Record<string, number> }} [o] its debt's level; its sky
  */
 export function judgeSave(save, summary = null, o = {}) {
   /** @type {any[]} */
@@ -250,9 +250,9 @@ export function judgeSave(save, summary = null, o = {}) {
   // (net/siege/siegeRef.js armsOf); the identity mint signs them (`wa`), and every referee clips a blow between players to them
   const lawful = (/** @type {any} */ it) => findingsOf(it).length === 0;
   const arms = armsOf(save.items, lawful);
-  // EG-MIGHT: AND ITS MIGHT - the most its lawful pack can grow a blow over the gate's reference (net/kitMight.js); the mint
-  // signs it (`mg`) and an Elite Breach's purse grows by it
-  return { findings, count, wealth: wealthOf(save, o), items, provenances, pieces: ledgerPieces(save), arms, might: kitMightOf(save, lawful), dragons };
+  // EG-MIGHT: AND ITS MIGHT - the most its lawful kit worn at once, and its sky, can grow a blow or a spell over the gate's
+  // reference (net/kitMight.js); the mint signs it (`mg`) and an Elite Breach's purse grows by it
+  return { findings, count, wealth: wealthOf(save, o), items, provenances, pieces: ledgerPieces(save), arms, might: kitMightOf(save, lawful, { firm: o.firm ?? {} }), dragons };
 }
 
 /** INT4: A PIECE'S KEY IN THE LEDGER - systems/item/itemIds.js ledgerKeyOf, its one home since AUTO-HOLD (the client's room

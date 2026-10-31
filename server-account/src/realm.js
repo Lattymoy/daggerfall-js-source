@@ -570,7 +570,7 @@ export async function craftHoldOf(/** @type {any} */ db, /** @type {string} */ p
  * @param {any} ctx @param {string} playerId
  * @param {{ id: string, lease: unknown, seq: unknown, summary?: unknown }} at @param {ArrayBuffer} body @param {number} bytes
  */
-export async function checkpointRealm({ db, bucket, rand, nowS }, playerId, { id, lease, seq, summary = null, session = null }, body, bytes) {
+export async function checkpointRealm({ db, bucket, rand, nowS, firmOpen = false }, playerId, { id, lease, seq, summary = null, session = null }, body, bytes) {
   if (!bucket) return { error: 'no-storage' };
   if (!REALM_ID_RE.test(id) || typeof lease !== 'string' || !LEASE_RE.test(lease) || !Number.isSafeInteger(seq) || /** @type {number} */ (seq) < 1) return { error: 'body' };
   // SAVE-BATCH (2026-10-16, the account database's primary at its ceiling of round trips - bible/11-Multiplayer/
@@ -580,7 +580,8 @@ export async function checkpointRealm({ db, bucket, rand, nowS }, playerId, { id
   const keptConfig = budgetKept(db);
   const [rowRes, mineRes, dupesRes, configRes] = await db.batch([
     // SESSION-SIGN (AUDIT PLAN-1000 E3): and the session the save is asked under, and the account's ban, as they stand;
-    // STAFF-PANEL4-CENSUS: and the census's latest tally, so an unchanged one is written nowhere (staffCensus.js censusStep)
+    // STAFF-PANEL4-CENSUS: and the census's latest tally, so an unchanged one is written nowhere (staffCensus.js censusStep);
+    // AUDIT POTION-MIGHT A5: and the character's sky, which the kit's might reads (judge.js)
     db.prepare(`SELECT seq, lease, obj, prev, origin_id, lineage_id, summary, dead_at, ${JUDGE_COLUMNS},
     (SELECT played_s FROM players p WHERE p.id = realm_characters.player) AS played_now,
     (SELECT banned_until FROM players p WHERE p.id = realm_characters.player) AS ban_until_now,
@@ -588,7 +589,8 @@ export async function checkpointRealm({ db, bucket, rand, nowS }, playerId, { id
     (SELECT frozen_until FROM players p WHERE p.id = realm_characters.player) AS frozen_until_now,
     (SELECT frozen_reason FROM players p WHERE p.id = realm_characters.player) AS frozen_reason_now,
     (SELECT 1 FROM sessions s WHERE s.id = ?3 AND s.player_id = realm_characters.player) AS session_alive,
-    (SELECT tally FROM item_census c WHERE c.char_id = realm_characters.id) AS census_tally
+    (SELECT tally FROM item_census c WHERE c.char_id = realm_characters.id) AS census_tally,
+    (SELECT tree FROM firmament f WHERE f.player = realm_characters.player AND f.char_id = realm_characters.id) AS firm_tree
     FROM realm_characters WHERE id = ?1 AND player = ?2`).bind(id, playerId, session),
     ...ledgerReads(db, id),
     ...(keptConfig ? [] : [budgetRead(db)]),
@@ -631,7 +633,7 @@ export async function checkpointRealm({ db, bucket, rand, nowS }, playerId, { id
   // the stored record measured again under the new one
   const baseline = row.wealth == null || row.wealth_v !== WEALTH_VERSION ? await baselineOf(bucket, row, save) : null;
   const known = { mine: mineRes, dupes: dupesRes, config };
-  const v = await verdictOn({ db, nowS }, { player: playerId, char: id, seq: /** @type {number} */ (seq), key }, row, save, summaryNow, baseline, known);
+  const v = await verdictOn({ db, nowS, firmOpen }, { player: playerId, char: id, seq: /** @type {number} */ (seq), key }, row, save, summaryNow, baseline, known);
   await bucket.put(key, body);
   /** @type {any} the judge's columns as they stand after the batch - the verdict's, or (its rev moved) the row's */
   let stood = null;

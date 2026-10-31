@@ -472,7 +472,7 @@ whole blow can land, at most ~300 at level 20 and 780 at 60. Duels had met the s
 had been patched at its own producer (AUDIT WBX F1).
 
 THE FIX - ONE WHOLE, ONE DOOR.
-- **The whole** (`gateBoss.js:"export const STAND_IN_WHOLE = HIT_CAP_X * dpsRef(LV_MAX) * EG_BUCKET_X_MAX * (MIGHT_MOST / MIGHT_NONE);"`, 975; 9,750 since EG-MIGHT), at the
+- **The whole** (`gateBoss.js:"export const STAND_IN_WHOLE = HIT_CAP_X * dpsRef(LV_MAX) * EG_BUCKET_X_MAX;"`, 975), at the
   stand-in (`gateBoss.js:"e.maxHealth = e.health = STAND_IN_WHOLE;"`): the most one blow lands at any relay - the gate's cap
   at LV_MAX (780) grown by the most a breach's bucket grows - over the serpent's (182) and a bout's (122), under the least
   ceiling nobody clamps (the bout's 10,000) with the rest of a spell's room beside it. A Disintegrate counts it whole, every

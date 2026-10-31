@@ -18,7 +18,7 @@
 // The Burning Court and the Hour were re-plugged unchanged (EG7) - every value for them what their doors did before this
 // law, pinned by their own tests and by the law's - and EVENT-RULES moved two rows since (AUDIT WORLD-EVENTS L5-14): their
 // regeneration held, not off, and no level refusing a party member's Resurrect. The Spire's column is section 24's, with
-// THE POTION LAW, THE FORGIVENESS (section 10.8), the flight bans (section 10.7), AvoidDeath refused and DEATH-PENALTY none.
+// THE POTION CLOCK (POTION-CLOCK, section 17.4), THE FORGIVENESS (section 10.8), the flight bans (section 10.7), AvoidDeath refused and DEATH-PENALTY none.
 //
 // Not a DFU member. Ledger A (ELITE-GATES).
 import { isGateArena, COURT_TEXT } from '../world/gate/gateArena.js';
