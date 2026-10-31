@@ -48,7 +48,7 @@ import { customItemClass } from './roleplayRealismItems/rriItems.js'; // RRI1: G
 import { localizedText, t } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 import { enchantGold } from '../net/alchemyLaw.js'; // PROF12: Enchanting's layer - the gold with the rank's share off
 import { recipeById, jewelPoints } from '../net/recipeLaw.js'; // AUDIT PROF10 J1: the most a crafted piece's recipe mints
-import { enchantmentSettings } from './enchantmentCatalogue.js'; // AUDIT PROF10 J2: a crafted piece's own enchantments, costed as the maker costs a row
+import { enchantmentSettings, forcedEnchantments } from './enchantmentCatalogue.js'; // AUDIT PROF10 J2: a crafted piece's own enchantments, costed as the maker costs a row
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js'; // and their classic type back to the catalogue's key
 import { isAetheric } from './aetheric.js'; // AETHERIC-MAKER: an Aetheric piece is the port's own tier, never the maker's
 import { isCursed, lootRarityOn, RARE_FLAVOURS } from './loot/lootRarity.js'; // MAKER-RARE: a Rare's own rows - its flavour, a curse's drawback - and the ladder's switch
@@ -144,6 +144,48 @@ export function enchantmentRowCost(e) {
 /** A row the item maker laid - the catalogue's settings row, which carries its `enchantCost` (applyEnchantments); the
  *  item law reads a row so (itemLaw.js isMakerRow), and the temple's lift never takes one (lootCurse.js liftCurse). */
 export const makerLaid = (e) => e?.enchantCost !== undefined;
+/** SOUL-KEPT: A BOUND SOUL'S SET MADE WHOLE on
+ *  load. The window's Remove took a soul's forced row with a chosen row of its kind (enchantmentCatalogue.js
+ *  removeEnchantment), so a piece could carry a Daedra Lord without its drawbacks - and the item law held its owner. Each
+ *  missing forced row is laid back after the rest; where that passes DFU's eleven rows, the newest rows the player chose
+ *  give way (never the soul, its set or the piece's own roll) - the window never let them all stand - and what laying a
+ *  row runs once runs (Extra Weight's weight). Answers how many
+ *  pieces it mended; a whole piece is left as it is. */
+export function repairSoulSets(list) {
+  let n = 0;
+  const chosen = (r) => makerLaid(r) && !r.parentEnchantment;
+  for (const it of Array.isArray(list) ? list : []) {
+    const rows = Array.isArray(it?.enchantments) ? it.enchantments : [];
+    const missing = [];
+    for (const soul of rows.filter((r) => chosen(r) && TYPE_KEY[r.type] === 'SoulBound')) {
+      const set = forcedEnchantments('SoulBound', soul.param);
+      for (const w of set ? [...set.powers, ...set.sideEffects] : []) {
+        if (
+          !rows.some(
+            (r) => r?.parentEnchantment === w.parentEnchantment && TYPE_KEY[r.type] === w.type && r.param === w.param,
+          )
+        )
+          missing.push({ ...w, type: classicEnchantmentType(w.type) });
+      }
+    }
+    if (!missing.length) continue;
+    const kept = rows.slice();
+    for (
+      let over = kept.length + missing.length - (MAX_ENCHANTMENTS + 1), i = kept.length - 1;
+      over > 0 && i >= 0;
+      i--
+    ) {
+      if (chosen(kept[i]) && TYPE_KEY[kept[i].type] !== 'SoulBound') {
+        kept.splice(i, 1);
+        over--;
+      }
+    }
+    it.enchantments = [...kept, ...missing];
+    doEnchantedPayloads(it, missing); // what laying them runs once - Extra Weight's fourfold weight
+    n++;
+  }
+  return n;
+}
 /**
  * MAKER-RARE (FIELD BUGS 2026-10-26, the owner: "You cant enchant masterwork/rare armor"): A RARE THE ITEM MAKER TAKES.
  * A Rare - a loot door's, or a Masterwork's (smithItems.js mintPiece) - carries one of DFU's catalogue enchantments as

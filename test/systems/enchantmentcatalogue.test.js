@@ -367,7 +367,7 @@ test('M4: removing a PARENT takes its children; removing a child takes nothing',
 
   // a CHILD removed on its own takes only itself
   const child = sideEffects[0];
-  const afterChild = removeEnchantment(list, child.key);
+  const afterChild = removeEnchantment(list, child.key, child.parentEnchantment);
   assert.equal(afterChild.length, 4);
   assert.ok(!afterChild.includes(child));
   assert.ok(afterChild.includes(chosen), 'and the parent stays');
