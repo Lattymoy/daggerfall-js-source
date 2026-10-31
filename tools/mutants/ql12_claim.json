@@ -290,8 +290,8 @@
   {
     "name": "QL12-held-title-never-told",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "const title = d.title ?? (c.lost ? d.titleHeld ?? null : null);",
-    "new": "const title = d.title ?? null;",
+    "old": "      const title = d.title ?? (c.lost ? (d.titleHeld ?? null) : null);",
+    "new": "      const title = d.title ?? null;",
     "tests": [
       "test/server/ql12_claim.test.js"
     ],
@@ -300,8 +300,8 @@
   {
     "name": "QL12-held-title-told-every-answer",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "const title = d.title ?? (c.lost ? d.titleHeld ?? null : null);",
-    "new": "const title = d.title ?? d.titleHeld ?? null;",
+    "old": "      const title = d.title ?? (c.lost ? (d.titleHeld ?? null) : null);",
+    "new": "      const title = d.title ?? d.titleHeld ?? null;",
     "tests": [
       "test/server/ql12_claim.test.js"
     ],
@@ -310,8 +310,8 @@
   {
     "name": "QL12-restored-end-never-lost",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "if (c && (said == null || said === 'opened')) c.lost = true;",
-    "new": "",
+    "old": "            if (c && (said == null || said === 'opened')) c.lost = true;\n          } else if (!ended && !rec.done && !said) queueClaim(id, i, 'open');",
+    "new": "          } else if (!ended && !rec.done && !said) queueClaim(id, i, 'open');",
     "tests": [
       "test/server/ql12_claim.test.js"
     ],
@@ -360,8 +360,8 @@
   {
     "name": "QL-OFFERED-no-letter-read-as-a-letter",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "if (r.lettered > 0 && r.lettered > s - STEP_GAP_S) return false;",
-    "new": "if (r.lettered > s - STEP_GAP_S) return false;",
+    "old": "      if (r.lettered > 0 && r.lettered > s - STEP_GAP_S) return false; // 0: no letter yet, on any clock",
+    "new": "      if (r.lettered > s - STEP_GAP_S) return false; // 0: no letter yet, on any clock",
     "tests": [
       "test/server/ql12_claim.test.js"
     ],

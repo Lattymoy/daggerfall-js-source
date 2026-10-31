@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-QL-ACTS-M4-qlEliteFoe-any-dungeon-s-elite-a-Super-dungeon-s-six",
     "file": "src/systems/questlines/qlEliteFoe.js",
-    "old": "&& !!entity.elite && dungeonTier(loc) === 'elite';",
-    "new": "&& !!entity.elite && dungeonTier(loc) != null;",
+    "old": "  !!entity?.eliteFoe && !!entity.elite && dungeonTier(loc) === 'elite';",
+    "new": "  !!entity?.eliteFoe && !!entity.elite && dungeonTier(loc) != null;",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-QL-ACTS-M4b-qlEliteFoe-the-elite-mark-unread",
     "file": "src/systems/questlines/qlEliteFoe.js",
-    "old": "!!entity?.eliteFoe && !!entity.elite && ",
-    "new": "!!entity?.eliteFoe && ",
+    "old": "  !!entity?.eliteFoe && !!entity.elite && dungeonTier(loc) === 'elite';",
+    "new": "  !!entity?.eliteFoe && dungeonTier(loc) === 'elite';",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-QL-ACTS-M4c-qlEliteFoe-the-eliteFoe-mark-unread",
     "file": "src/systems/questlines/qlEliteFoe.js",
-    "old": "!!entity?.eliteFoe && !!entity.elite && ",
-    "new": "!!entity?.elite && ",
+    "old": "  !!entity?.eliteFoe && !!entity.elite && dungeonTier(loc) === 'elite';",
+    "new": "  !!entity?.elite && dungeonTier(loc) === 'elite';",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ]

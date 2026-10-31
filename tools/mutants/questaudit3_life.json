@@ -524,8 +524,8 @@
   {
     "name": "QA3L-RESTART-WORDS-end-keeps-the-stall",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "      rec.stalled = false;   // QUEST-AUDIT III RESTART-WORDS: a step that ended began - a restart's drop is not a stall\n",
-    "new": "",
+    "old": "      rec.stalled = false; // QUEST-AUDIT III RESTART-WORDS: a step that ended began - a restart's drop is not a stall\n      if (!good && at.index === 0) {",
+    "new": "      if (!good && at.index === 0) {",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "QA3L-RESTART-WORDS-look-keeps-the-stall",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "        if (rec.stalled && !rec.done && runningStep(l.steps[rec.step]?.quest)) { rec.stalled = false; rec.wait = 0; }\n",
-    "new": "",
+    "old": "        if (rec.stalled && !rec.done && runningStep(l.steps[rec.step]?.quest)) {\n          rec.stalled = false;\n          rec.wait = 0;\n        }\n        // QL-OFFERED: a first step with no quest (gone without its end, or a save's line whose first step never began) is",
+    "new": "        // QL-OFFERED: a first step with no quest (gone without its end, or a save's line whose first step never began) is",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "QA3L-RESTART-WORDS-look-keeps-the-wait",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "{ rec.stalled = false; rec.wait = 0; }",
-    "new": "{ rec.stalled = false; }",
+    "old": "          rec.wait = 0;\n        }",
+    "new": "        }",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "QA3L-RESTART-WORDS-look-lets-a-true-stall-go",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "if (rec.stalled && !rec.done && runningStep(l.steps[rec.step]?.quest)) {",
-    "new": "if (rec.stalled && !rec.done) {",
+    "old": "        if (rec.stalled && !rec.done && runningStep(l.steps[rec.step]?.quest)) {",
+    "new": "        if (rec.stalled && !rec.done) {",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]

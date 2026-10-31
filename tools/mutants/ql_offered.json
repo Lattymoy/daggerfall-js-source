@@ -2,8 +2,8 @@
   {
     "name": "QLO-look-begins-a-line",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "        if (!rec) continue;\n",
-    "new": "        if (!rec) { if (lineOpens(l, probe)) runner.takeLine(l.id); continue; }\n",
+    "old": "        if (!rec) continue;",
+    "new": "        if (!rec) {\n          if (lineOpens(l, probe)) runner.takeLine(l.id);\n          continue;\n        }",
     "tests": [
       "test/systems/questlines/qloffered.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "QLO-the-take-ungated",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "      if (!lineOpens(l, probe)) return { ok: false, line: id, reason: 'closed' };\n",
-    "new": "",
+    "old": "      if (!lineOpens(l, probe)) return { ok: false, line: id, reason: 'closed' };\n      const first = l.steps[0].quest;",
+    "new": "      const first = l.steps[0].quest;",
     "tests": [
       "test/systems/questlines/qloffered.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "QLO-the-post-unsaid",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "          post: !rec && (l.post !== 'board' || online()) ? l.post ?? null : null,",
-    "new": "          post: null,",
+    "old": "          post: !rec && (l.post !== 'board' || online()) ? (l.post ?? null) : null, // a first step set aside is the journal's to take back",
+    "new": "          post: null, // a first step set aside is the journal's to take back",
     "tests": [
       "test/systems/questlines/qloffered.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "QLO-the-board-offline",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "          post: !rec && (l.post !== 'board' || online()) ? l.post ?? null : null,",
-    "new": "          post: !rec ? l.post ?? null : null,",
+    "old": "          post: !rec && (l.post !== 'board' || online()) ? (l.post ?? null) : null, // a first step set aside is the journal's to take back",
+    "new": "          post: !rec ? (l.post ?? null) : null, // a first step set aside is the journal's to take back",
     "tests": [
       "test/systems/questlines/qloffered.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "QLO-the-look-re-sends",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "        if (!rec.done && rec.step === 0 && !runningStep(l.steps[0].quest)) { reoffer(l.id); continue; }\n",
-    "new": "",
+    "old": "        if (!rec.done && rec.step === 0 && !runningStep(l.steps[0].quest)) {\n          reoffer(l.id);\n          continue;\n        }\n        if (rec.done || rec.wait > s) continue;",
+    "new": "        if (rec.done || rec.wait > s) continue;",
     "tests": [
       "test/systems/questlines/qloffered.test.js",
       "test/systems/questlines/ql12_lines.test.js"
@@ -63,8 +63,8 @@
   {
     "name": "QLO-the-end-re-sends",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "      if (!good && at.index === 0) { reoffer(at.line.id); return { line: at.line.id, step: 0, moved: false, reoffered: true }; }\n",
-    "new": "",
+    "old": "      if (!good && at.index === 0) {\n        reoffer(at.line.id);\n        return { line: at.line.id, step: 0, moved: false, reoffered: true };\n      }\n      // AUDIT QUESTLINES UI-7: a failed step is the window's to say (\"offered again\"), not a quiet wait",
+    "new": "      // AUDIT QUESTLINES UI-7: a failed step is the window's to say (\"offered again\"), not a quiet wait",
     "tests": [
       "test/systems/questlines/ql12_lines.test.js"
     ],
@@ -93,8 +93,8 @@
   {
     "name": "QLO-later-steps-left-to-a-take",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "        startStep(l, rec);\n",
-    "new": "",
+    "old": "        startStep(l, rec);\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/questlines/qloffered.test.js"
     ],
@@ -103,8 +103,8 @@
   {
     "name": "QLO-the-save-migration-unread",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "        if (!r.taken && !r.done && (r.step ?? 0) === 0 && sentUndelivered(l.steps[0].quest)) continue;\n",
-    "new": "",
+    "old": "        if (!r.taken && !r.done && (r.step ?? 0) === 0 && sentUndelivered(l.steps[0].quest)) continue;\n        const step = Math.max(0, Math.min(l.steps.length, Number.isSafeInteger(r.step) ? r.step : 0));",
+    "new": "        const step = Math.max(0, Math.min(l.steps.length, Number.isSafeInteger(r.step) ? r.step : 0));",
     "tests": [
       "test/systems/questlines/qloffered.test.js"
     ],
@@ -113,8 +113,8 @@
   {
     "name": "QLO-the-taken-let-go",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "        if (!r.taken && !r.done && (r.step ?? 0) === 0 && sentUndelivered(l.steps[0].quest)) continue;\n",
-    "new": "        if (!r.done && (r.step ?? 0) === 0 && sentUndelivered(l.steps[0].quest)) continue;\n",
+    "old": "        if (!r.taken && !r.done && (r.step ?? 0) === 0 && sentUndelivered(l.steps[0].quest)) continue;",
+    "new": "        if (!r.done && (r.step ?? 0) === 0 && sentUndelivered(l.steps[0].quest)) continue;",
     "tests": [
       "test/systems/questlines/qloffered.test.js"
     ],

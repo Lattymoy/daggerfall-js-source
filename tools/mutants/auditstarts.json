@@ -403,8 +403,8 @@
   {
     "name": "AUDIT-STARTS-P7-layer-skips-the-bay-alone",
     "file": "src/systems/questlines/qlLayer.js",
-    "old": "!isStartQuestName(quest?.questName)",
-    "new": "quest?.questName !== '_STARTIB'",
+    "old": "        !isStartQuestName(quest?.questName) &&",
+    "new": "        quest?.questName !== '_STARTIB' &&",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]

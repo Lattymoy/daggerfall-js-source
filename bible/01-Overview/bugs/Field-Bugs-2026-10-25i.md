@@ -150,7 +150,7 @@ showing them), S0000503's hoard by its `_item_` alone (B3: `_S.30_` asks on DFU'
 so a look and a walk out reached `_S.28_`, `take _item_ from pc`, and `_S.29_`; a party copy has the latch by the merge,
 `qlState.js` mergeSharedState). A SAVE FROM BEFORE (B4): each rebound objective names its mend (`"reread":"fb1025i"`), and
 a state that has not taken it forgets that objective's latch once at its first read
-(`qlLaw.js:"const unmended = (st, o) => !!o?.reread && !(st?.reread ?? []).includes(o.reread);"`); a fresh state takes it
+(`qlLaw.js:"const unmended ="`); a fresh state takes it
 at once, and a latch this build wrote stands through a load (`06-Systems/Questlines-Arc.md` 2.2). QUEST-MARK: a quest's
 item says "quest item" on its row and names its quest on its card in the Enhanced pack and a body's list
 (`enhancedInventory.js:"quest: item?.questItem ? (deps.getQuest?.(item.questUID)?.displayName ?? '') : null,"`) - "Quest

@@ -65,8 +65,8 @@
   {
     "name": "QA3S-SHARER-GONE-sharer-unread",
     "file": "src/systems/questlines/qlActions.js",
-    "old": " && quest.hooks?.sharerHere?.(quest) !== false;",
-    "new": ";",
+    "old": "  (quest.hooks?.partySize?.() ?? quest.hooks?.rewardShares?.(quest) ?? 1) > 1 &&\n  quest.hooks?.sharerHere?.(quest) !== false;",
+    "new": "  (quest.hooks?.partySize?.() ?? quest.hooks?.rewardShares?.(quest) ?? 1) > 1;",
     "tests": [
       "test/systems/quest/questaudit3_share.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "QA3S-SHARER-GONE-party-as-holders",
     "file": "src/systems/questlines/qlActions.js",
-    "old": "(quest.hooks?.partySize?.() ?? quest.hooks?.rewardShares?.(quest) ?? 1) > 1",
-    "new": "(quest.hooks?.rewardShares?.(quest) ?? 1) > 1",
+    "old": "  (quest.hooks?.partySize?.() ?? quest.hooks?.rewardShares?.(quest) ?? 1) > 1 &&",
+    "new": "  (quest.hooks?.rewardShares?.(quest) ?? 1) > 1 &&",
     "tests": [
       "test/systems/quest/questaudit3_share.test.js"
     ]

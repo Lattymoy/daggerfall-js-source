@@ -2,8 +2,8 @@
   {
     "name": "STAR8-the-event-dropped",
     "file": "src/systems/questlines/qlLines.js",
-    "old": "opens: { level: 6, online: true, account: true, event: 'starfall' },",
-    "new": "opens: { level: 6, online: true, account: true },",
+    "old": "    opens: { level: 6, online: true, account: true, event: 'starfall' },",
+    "new": "    opens: { level: 6, online: true, account: true },",
     "tests": [
       "test/systems/questlines/star8_frostfall.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "STAR8-the-level",
     "file": "src/systems/questlines/qlLines.js",
-    "old": "opens: { level: 6, online: true, account: true, event: 'starfall' },",
-    "new": "opens: { level: 5, online: true, account: true, event: 'starfall' },",
+    "old": "    opens: { level: 6, online: true, account: true, event: 'starfall' },",
+    "new": "    opens: { level: 5, online: true, account: true, event: 'starfall' },",
     "tests": [
       "test/systems/questlines/star8_frostfall.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "STAR8-the-first-step-any-night",
     "file": "src/systems/questlines/qlLines.js",
-    "old": "{ quest: 'QLTF01', title: () => t('ql.step.QLTF01', 'Music in the Woods'), needs: ['starfall'] },",
-    "new": "{ quest: 'QLTF01', title: () => t('ql.step.QLTF01', 'Music in the Woods') },",
+    "old": "      { quest: 'QLTF01', title: () => t('ql.step.QLTF01', 'Music in the Woods'), needs: ['starfall'] },",
+    "new": "      { quest: 'QLTF01', title: () => t('ql.step.QLTF01', 'Music in the Woods') },",
     "tests": [
       "test/systems/questlines/star8_frostfall.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "STAR8-three-stars-any-night",
     "file": "src/systems/questlines/qlLines.js",
-    "old": "{ quest: 'QLTF03', title: () => t('ql.step.QLTF03', 'Three Stars'), needs: ['starfall'] },",
-    "new": "{ quest: 'QLTF03', title: () => t('ql.step.QLTF03', 'Three Stars') },",
+    "old": "      { quest: 'QLTF03', title: () => t('ql.step.QLTF03', 'Three Stars'), needs: ['starfall'] },",
+    "new": "      { quest: 'QLTF03', title: () => t('ql.step.QLTF03', 'Three Stars') },",
     "tests": [
       "test/systems/questlines/star8_frostfall.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "STAR8-the-opener-unread",
     "file": "src/systems/questlines/qlLines.js",
-    "old": "  if (o.event && !eventHolds(l, probe)) return false;   // STAR8",
-    "new": "  if (false) return false;   // STAR8",
+    "old": "  if (o.event && !eventHolds(l, probe)) return false; // STAR8: a seasonal line begins only while its event is staged",
+    "new": "  if (false) return false; // STAR8: a seasonal line begins only while its event is staged",
     "tests": [
       "test/systems/questlines/star8_frostfall.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "STAR8-said-twice",
     "file": "src/systems/questlines/qlLines.js",
-    "old": "const needs = new Set([...(o.event && !eventHolds(l, probe) ? [o.event] : []), ...unmetNeeds(l, step, probe)]);",
-    "new": "const needs = [...(o.event && !eventHolds(l, probe) ? [o.event] : []), ...unmetNeeds(l, step, probe)];",
+    "old": "  const needs = new Set([...(o.event && !eventHolds(l, probe) ? [o.event] : []), ...unmetNeeds(l, step, probe)]);",
+    "new": "  const needs = [...(o.event && !eventHolds(l, probe) ? [o.event] : []), ...unmetNeeds(l, step, probe)];",
     "tests": [
       "test/systems/questlines/star8_frostfall.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "STAR8-the-need-off-the-clock",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "  const need = (n) => { try { return !!NEED_CHECKS[n]?.(nowMs()); } catch { return false; } };",
-    "new": "  const need = (n) => { try { return !!NEED_CHECKS[n]?.(); } catch { return false; } };",
+    "old": "      return !!NEED_CHECKS[n]?.(nowMs());",
+    "new": "      return !!NEED_CHECKS[n]?.();",
     "tests": [
       "test/systems/questlines/star8_frostfall.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "STAR8-the-foe-unnamed",
     "file": "src/systems/questlines/qlActions.js",
-    "old": "    if (foe) {\n      foe.displayName = this.given;",
-    "new": "    if (foe) {\n      foe.displayName = foe.displayName;",
+    "old": "      foe.displayName = this.given;",
+    "new": "      foe.displayName = foe.displayName;",
     "tests": [
       "test/systems/questlines/star8_frostfall.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "STAR8-the-gender-unread",
     "file": "src/systems/questlines/qlActions.js",
-    "old": "foe.humanoidGender = this.gender === 'female' ? GENDERS.Female : GENDERS.Male;",
-    "new": "foe.humanoidGender = GENDERS.Male;",
+    "old": "      if (this.gender && isClassEnemyId(foe.foeType))\n        foe.humanoidGender = this.gender === 'female' ? GENDERS.Female : GENDERS.Male;",
+    "new": "      if (this.gender && isClassEnemyId(foe.foeType)) foe.humanoidGender = GENDERS.Male;",
     "tests": [
       "test/systems/questlines/star8_frostfall.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "STAR8-a-monster-made-a-woman",
     "file": "src/systems/questlines/qlActions.js",
-    "old": "if (this.gender && isClassEnemyId(foe.foeType)) foe.humanoidGender",
-    "new": "if (this.gender) foe.humanoidGender",
+    "old": "      if (this.gender && isClassEnemyId(foe.foeType))\n        foe.humanoidGender = this.gender === 'female' ? GENDERS.Female : GENDERS.Male;",
+    "new": "      if (this.gender) foe.humanoidGender = this.gender === 'female' ? GENDERS.Female : GENDERS.Male;",
     "tests": [
       "test/systems/questlines/star8_frostfall.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "STAR8-the-gender-unsaved",
     "file": "src/systems/questlines/qlActions.js",
-    "old": "  get saveShape() { return [['personSymbol', 'sym'], ['given'], ['gender']]; }",
-    "new": "  get saveShape() { return [['personSymbol', 'sym'], ['given']]; }",
+    "old": "    return [['personSymbol', 'sym'], ['given'], ['gender']];",
+    "new": "    return [['personSymbol', 'sym'], ['given']];",
     "tests": [
       "test/systems/questlines/star8_frostfall.test.js"
     ],
@@ -340,8 +340,8 @@
   {
     "name": "T-A-another-family",
     "file": "src/systems/questlines/qlActs.js",
-    "old": "  'heart-star-held': 'endgame',",
-    "new": "  'heart-star-held': 'world',",
+    "old": "  'heart-star-held': 'endgame', // the Heart-Star held - the Witches' Night's last star; said in the same turn as its `star-held`, so the festival's finds count one deed (festivalClient.js ONE DEED, ONE FIND)",
+    "new": "  'heart-star-held': 'world', // the Heart-Star held - the Witches' Night's last star; said in the same turn as its `star-held`, so the festival's finds count one deed (festivalClient.js ONE DEED, ONE FIND)",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js",
       "test/net/starfall/star7_claims.test.js"

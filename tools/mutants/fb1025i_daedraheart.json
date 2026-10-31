@@ -312,8 +312,8 @@
   {
     "name": "REREAD-a-load-forgets-its-mends",
     "file": "src/systems/questlines/qlState.js",
-    "old": "    reread: idList(data.reread),",
-    "new": "    reread: [],",
+    "old": "    reread: idList(data.reread), // HEART-TAKEN (AUDIT FB1025i B4): an older save's is empty - its mends are taken at its first read",
+    "new": "    reread: [], // HEART-TAKEN (AUDIT FB1025i B4): an older save's is empty - its mends are taken at its first read",
     "tests": [
       "test/systems/questlines/fb1025i_daedraheart.test.js"
     ],

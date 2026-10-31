@@ -11,14 +11,32 @@
 // the character's from the moment they are rolled, until one is taken - the gold a running quest has paid (REWARD-3: its
 // end settles it), and the questlines begun (QL12-QL16: its line runner's records, qlLineRunner.js - QL-OFFERED: each one
 // the player took).
-import { startStamp, isStamped, observe, readObjectives, outcomeOf, outcomeNow, fallbackOutcome, questTierOf } from './qlLaw.js';
+import {
+  startStamp,
+  isStamped,
+  observe,
+  readObjectives,
+  outcomeOf,
+  outcomeNow,
+  fallbackOutcome,
+  questTierOf,
+} from './qlLaw.js';
 import { sheetFor } from './qlSheets.js';
-import { scaleGold, goldFactor, goldStillOwed, rewardTier, payProfileOf, rollRewardChoice, rewardSeed, standingMovesOf } from './qlRewards.js';
+import {
+  scaleGold,
+  goldFactor,
+  goldStillOwed,
+  rewardTier,
+  payProfileOf,
+  rollRewardChoice,
+  rewardSeed,
+  standingMovesOf,
+} from './qlRewards.js';
 import { isGoldPieces } from '../inventory.js';
-import { t, textRevision } from '../textManager.js';   // REWARD-3: the settled gold's line; LAW-11: a row read again when the words could read otherwise
+import { t, textRevision } from '../textManager.js'; // REWARD-3: the settled gold's line; LAW-11: a row read again when the words could read otherwise
 import { createLineRunner } from './qlLineRunner.js';
-import { noteFirstUse } from '../tutorials.js';   // QL2: the Tutorials' Questlines page, the first quest stamped
-import { isStartQuestName } from '../starts/starts.js';   // START1: a start's quest is begun on a new character, never taken
+import { noteFirstUse } from '../tutorials.js'; // QL2: the Tutorials' Questlines page, the first quest stamped
+import { isStartQuestName } from '../starts/starts.js'; // START1: a start's quest is begun on a new character, never taken
 
 /** How many rewards may wait to be chosen at once - a player who never chooses keeps the last few, never a hoard. */
 export const OFFERS_MAX = 12;
@@ -39,7 +57,8 @@ export function trimOffers(list) {
  *  kind - an objective's `<QUEST>.o.<id>`, an outcome's `<QUEST>.r.<id>`, a branch's `<QUEST>.b.<id>` and its choice's
  *  `<QUEST>.b.<id>.<choice>`. A sheet's ids are unique within each list only: one `<QUEST>.<id>` read two lines (21 in 19
  *  sheets - A0C10Y05's `wed` an objective and an outcome). No translation pack ships them yet: nothing to move. */
-export const sheetTextKey = (sheet, kind, id, choice = null) => `${sheet?.quest}.${kind}.${id}${choice != null ? `.${choice}` : ''}`;
+export const sheetTextKey = (sheet, kind, id, choice = null) =>
+  `${sheet?.quest}.${kind}.${id}${choice != null ? `.${choice}` : ''}`;
 
 /** AUDIT QUESTLINES REWARD-6/LAW-3: whether a quest's script can pay at all - a `give pc` that is no letter (`give pc
  *  nothing` too: its box is the reward turned down, and the layer hears it as paid), `ql paid`, or `train pc` (DFU's other
@@ -50,7 +69,14 @@ function scriptPays(quest) {
   let pays = false;
   for (const task of quest?.tasks?.values?.() ?? []) {
     for (const a of task?.actions ?? []) {
-      if (a.typeName === 'QlPaid' || a.typeName === 'TrainPc' || (a.typeName === 'GivePc' && (a.isNothing || quest.getItem?.(a.itemSymbol)?.itemName !== 'letter'))) { pays = true; break; }
+      if (
+        a.typeName === 'QlPaid' ||
+        a.typeName === 'TrainPc' ||
+        (a.typeName === 'GivePc' && (a.isNothing || quest.getItem?.(a.itemSymbol)?.itemName !== 'letter'))
+      ) {
+        pays = true;
+        break;
+      }
     }
     if (pays) break;
   }
@@ -92,7 +118,9 @@ export function createQuestlines({ machine, questLists = null, ctx = {}, service
   let history = {};
   /** QL12-QL16: the questlines, run over this machine. */
   const runner = createLineRunner({
-    machine, service, nowMs,
+    machine,
+    service,
+    nowMs,
     ctx: {
       level: () => ctx.playerEntity?.level ?? 1,
       online: () => !!ctx.online?.(),
@@ -113,9 +141,15 @@ export function createQuestlines({ machine, questLists = null, ctx = {}, service
       // a start's quest - START1, systems/starts/starts.js - and the lists' init rows): the page popped at character
       // creation, ahead of the Quests page itself. Nor _BRISIEN, the main quest's opener, which a start's commission
       // starts: the story's own, never a quest taken
-      if (sheetFor(quest?.questName) && !['S0000977', '_BRISIEN'].includes(quest?.questName) && !isStartQuestName(quest?.questName) && meta?.scope !== 'init') noteFirstUse('questlines');
+      if (
+        sheetFor(quest?.questName) &&
+        !['S0000977', '_BRISIEN'].includes(quest?.questName) &&
+        !isStartQuestName(quest?.questName) &&
+        meta?.scope !== 'init'
+      )
+        noteFirstUse('questlines');
       st.tier = questTierOf({
-        minReq: meta?.scope === 'init' ? null : meta?.quest?.minReq ?? null,
+        minReq: meta?.scope === 'init' ? null : (meta?.quest?.minReq ?? null),
         social: meta?.scope === 'social',
         level: ctx.playerEntity?.level ?? 1,
         sheetTier: sheetFor(quest?.questName)?.tier ?? null,
@@ -132,9 +166,10 @@ export function createQuestlines({ machine, questLists = null, ctx = {}, service
         const sheet = sheetFor(quest.questName);
         if (!sheet) continue;
         const moved = observe(quest, sheet, probe);
-        if (moved.done.length || moved.failed.length || moved.chose.length || moved.outcome) news.push({ quest, ...moved });
+        if (moved.done.length || moved.failed.length || moved.chose.length || moved.outcome)
+          news.push({ quest, ...moved });
       }
-      runner.look();   // QL12: each line's next step, when it is due
+      runner.look(); // QL12: each line's next step, when it is due
       return news;
     },
 
@@ -167,13 +202,24 @@ export function createQuestlines({ machine, questLists = null, ctx = {}, service
         return kept.row;
       }
       const objectives = read.map((x) => ({ ...x, text: expand(quest, x.text, sheetTextKey(sheet, 'o', x.id)) }));
-      const choices = (sheet.branches ?? []).filter((b) => quest.ql.choices[b.id]).map((b) => {
-        const c = b.choices.find((x) => x.id === quest.ql.choices[b.id]);
-        return { branch: b.id, text: expand(quest, b.text, sheetTextKey(sheet, 'b', b.id)), choice: c ? expand(quest, c.text, sheetTextKey(sheet, 'b', b.id, c.id)) : '' };
-      });
+      const choices = (sheet.branches ?? [])
+        .filter((b) => quest.ql.choices[b.id])
+        .map((b) => {
+          const c = b.choices.find((x) => x.id === quest.ql.choices[b.id]);
+          return {
+            branch: b.id,
+            text: expand(quest, b.text, sheetTextKey(sheet, 'b', b.id)),
+            choice: c ? expand(quest, c.text, sheetTextKey(sheet, 'b', b.id, c.id)) : '',
+          };
+        });
       const row = {
-        tier: quest.ql.tier, family: sheet.family ?? null, objectives, choices,
-        outcome: o ? { id: o.id, text: expand(quest, o.text, sheetTextKey(sheet, 'r', o.id)), failure: !!o.failure } : null,
+        tier: quest.ql.tier,
+        family: sheet.family ?? null,
+        objectives,
+        choices,
+        outcome: o
+          ? { id: o.id, text: expand(quest, o.text, sheetTextKey(sheet, 'r', o.id)), failure: !!o.failure }
+          : null,
         gear,
       };
       rows.set(quest, { sig, rev, expand, row, ended: !!quest.questComplete });
@@ -191,13 +237,21 @@ export function createQuestlines({ machine, questLists = null, ctx = {}, service
      */
     reward(quest, dfItem, resource = null) {
       if (!isStamped(quest)) return;
-      if (resource?.itemName === 'letter') { runner.lettered(quest); return; }   // FB1020c LETTER-PACE: the next courier waits an hour from it
+      if (resource?.itemName === 'letter') {
+        runner.lettered(quest);
+        return;
+      } // FB1020c LETTER-PACE: the next courier waits an hour from it
       const sheet = sheetFor(quest.questName);
       if (sheet) observe(quest, sheet, probe);
       if (sheet && dfItem && !quest.ql.paid) {
         const now = outcomeNow(quest, sheet, probe) ?? fallbackOutcome({ ...quest, questSuccess: true }, sheet);
         const scaled = scaleGold(dfItem, now, isGoldPieces(dfItem));
-        if (scaled) golds.set(quest.uid, { base: scaled.before, factor: goldFactor(now), shares: Math.max(1, Math.trunc(quest.hooks?.rewardShares?.(quest) ?? 1) || 1) });
+        if (scaled)
+          golds.set(quest.uid, {
+            base: scaled.before,
+            factor: goldFactor(now),
+            shares: Math.max(1, Math.trunc(quest.hooks?.rewardShares?.(quest) ?? 1) || 1),
+          });
       }
       quest.ql.paid = true;
     },
@@ -219,8 +273,9 @@ export function createQuestlines({ machine, questLists = null, ctx = {}, service
       observe(quest, sheet, probe, { settle: true, ending: true });
       quest.ql.moved = true;
       const outcome = outcomeOf(quest, sheet);
-      runner.ended(quest, outcome);   // QL12: a line's step - the line moves on, or offers it again
-      if (outcome ? !outcome.failure : quest.questSuccess) history[String(quest.questName).toUpperCase()] = outcome?.id ?? 'done';
+      runner.ended(quest, outcome); // QL12: a line's step - the line moves on, or offers it again
+      if (outcome ? !outcome.failure : quest.questSuccess)
+        history[String(quest.questName).toUpperCase()] = outcome?.id ?? 'done';
       const paidGold = golds.get(quest.uid);
       golds.delete(quest.uid);
       if (!outcome) return null;
@@ -228,12 +283,15 @@ export function createQuestlines({ machine, questLists = null, ctx = {}, service
       // spends a countdown on a journey, a quest that ends unfinished costs no faction anything; offline it stands.
       // Moved flat, each named faction once - a sheet names every faction it moves (Port-Ledger: no propagation).
       const failureFree = !!outcome.failure && !!quest.hooks?.sharedClock?.();
-      if (!failureFree) for (const st of standingMovesOf(outcome)) ctx.changeReputation?.(st.factionId, st.amount, false);
+      if (!failureFree)
+        for (const st of standingMovesOf(outcome)) ctx.changeReputation?.(st.factionId, st.amount, false);
       if (Number.isSafeInteger(outcome.legal) && outcome.legal !== 0) ctx.changeLegalRep?.(outcome.legal);
-      const owed = goldStillOwed(paidGold, outcome);   // REWARD-3
+      const owed = goldStillOwed(paidGold, outcome); // REWARD-3
       if (owed > 0) {
         quest.hooks?.addGold?.(owed);
-        quest.hooks?.addHUDText?.(t('ql.reward.goldSettled', 'You receive {gold} more gold pieces for how it ended.', { gold: owed }));
+        quest.hooks?.addHUDText?.(
+          t('ql.reward.goldSettled', 'You receive {gold} more gold pieces for how it ended.', { gold: owed }),
+        );
       }
       if (!payProfileOf(outcome).gear || outcome.failure || !(quest.ql.paid || quest.questSuccess)) return null;
       const tier = rewardTier(quest.ql.tier, outcome);
@@ -243,15 +301,33 @@ export function createQuestlines({ machine, questLists = null, ctx = {}, service
       // dropped at OFFERS_MAX or another card chosen lost it for good - and a name a waiting offer already holds is not
       // rolled twice
       const line = quest.questName;
-      const named = outcome.named && !history[`named:${line}`] && !offers.some((x) => x.questName === line && x.pieces.some((p) => p.named)) ? outcome.named : null;
-      const pieces = rollRewardChoice({ seed: rewardSeed(quest), level: ctx.playerEntity?.level ?? 1, tier, entity: ctx.playerEntity ?? null, named });
+      const named =
+        outcome.named &&
+        !history[`named:${line}`] &&
+        !offers.some((x) => x.questName === line && x.pieces.some((p) => p.named))
+          ? outcome.named
+          : null;
+      const pieces = rollRewardChoice({
+        seed: rewardSeed(quest),
+        level: ctx.playerEntity?.level ?? 1,
+        tier,
+        entity: ctx.playerEntity ?? null,
+        named,
+      });
       if (!pieces.length) return null;
-      const offer = { id: nextOffer++, questName: quest.questName, title: quest.displayName || quest.questName, outcome: outcome.id, tier, pieces };
+      const offer = {
+        id: nextOffer++,
+        questName: quest.questName,
+        title: quest.displayName || quest.questName,
+        outcome: outcome.id,
+        tier,
+        pieces,
+      };
       offers.push(offer);
       // LINES-20: the oldest offer naming no piece goes first; AUDIT QUESTLINES REWARD-8: and its going is said (the bridge's)
       const dropped = trimOffers(offers);
       for (const gone of dropped) ctx.onOfferDropped?.(gone);
-      if (dropped.includes(offer)) return null;   // twelve named pieces wait: this one, naming none, is the one that goes
+      if (dropped.includes(offer)) return null; // twelve named pieces wait: this one, naming none, is the one that goes
       ctx.onQuestlineOffer?.(offer);
       return offer;
     },
@@ -312,22 +388,45 @@ export function createQuestlines({ machine, questLists = null, ctx = {}, service
     /** The layer's own save: the rewards waiting, the gold the running quests paid (REWARD-3: only quests the machine
      *  still holds), and the questlines begun. */
     snapshot: () => ({
-      offers: structuredClone(offers), nextOffer, lines: runner.snapshot(), history: { ...history },
-      gold: Object.fromEntries([...golds].filter(([uid]) => machine.quests?.has?.(uid)).map(([uid, g]) => [uid, { ...g }])),
+      offers: structuredClone(offers),
+      nextOffer,
+      lines: runner.snapshot(),
+      history: { ...history },
+      gold: Object.fromEntries(
+        [...golds].filter(([uid]) => machine.quests?.has?.(uid)).map(([uid, g]) => [uid, { ...g }]),
+      ),
     }),
     restore(data) {
       runner.restore(data?.lines);
       history = {};
-      if (data?.history && typeof data.history === 'object') for (const [k, v] of Object.entries(data.history)) if (typeof v === 'string' && /^(named:)?[A-Z0-9$_]{1,12}$/.test(k)) history[k] = v;
-      offers = Array.isArray(data?.offers) ? data.offers.filter((o) => o && Number.isSafeInteger(o.id) && Array.isArray(o.pieces) && o.pieces.length).map((o) => structuredClone(o)) : [];
-      trimOffers(offers);   // LINES-20's cut, as the ending's
-      nextOffer = Math.max(Number.isSafeInteger(data?.nextOffer) ? data.nextOffer : 1, ...offers.map((o) => o.id + 1), 1);
+      if (data?.history && typeof data.history === 'object')
+        for (const [k, v] of Object.entries(data.history))
+          if (typeof v === 'string' && /^(named:)?[A-Z0-9$_]{1,12}$/.test(k)) history[k] = v;
+      offers = Array.isArray(data?.offers)
+        ? data.offers
+            .filter((o) => o && Number.isSafeInteger(o.id) && Array.isArray(o.pieces) && o.pieces.length)
+            .map((o) => structuredClone(o))
+        : [];
+      trimOffers(offers); // LINES-20's cut, as the ending's
+      nextOffer = Math.max(
+        Number.isSafeInteger(data?.nextOffer) ? data.nextOffer : 1,
+        ...offers.map((o) => o.id + 1),
+        1,
+      );
       // REWARD-3: a record of its own kind, for a quest the loaded machine holds (the bridge restores the machine first)
       golds = new Map();
       if (data?.gold && typeof data.gold === 'object') {
         for (const [k, g] of Object.entries(data.gold)) {
           const uid = Number(k);
-          if (machine.quests?.has?.(uid) && Number.isSafeInteger(g?.base) && g.base >= 0 && Number.isFinite(g?.factor) && Number.isSafeInteger(g?.shares) && g.shares >= 1) golds.set(uid, { base: g.base, factor: g.factor, shares: g.shares });
+          if (
+            machine.quests?.has?.(uid) &&
+            Number.isSafeInteger(g?.base) &&
+            g.base >= 0 &&
+            Number.isFinite(g?.factor) &&
+            Number.isSafeInteger(g?.shares) &&
+            g.shares >= 1
+          )
+            golds.set(uid, { base: g.base, factor: g.factor, shares: g.shares });
         }
       }
     },

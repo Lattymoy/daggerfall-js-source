@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-QL-VOICE-an-armourer-back-as-a-line-s-giver",
     "file": "src/systems/questlines/qlLines.js",
-    "old": "t('ql.line.introGear.giver', 'an armorer')",
-    "new": "t('ql.line.introGear.giver', 'an armourer')",
+    "old": "    giver: () => t('ql.line.introGear.giver', 'an armorer'),",
+    "new": "    giver: () => t('ql.line.introGear.giver', 'an armourer'),",
     "tests": [
       "test/systems/questlines/qlvoice.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-STAR8-S2-the-running-steps-needs-unread",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "        if (stepQuest) keepSeason(l, rec, stepQuest);",
-    "new": "        if (false) keepSeason(l, rec, stepQuest);",
+    "old": "        if (stepQuest) keepSeason(l, rec, stepQuest); // AUDIT STAR8 S2: online or not",
+    "new": "        if (false) keepSeason(l, rec, stepQuest); // AUDIT STAR8 S2: online or not",
     "tests": [
       "test/systems/questlines/star8_frostfall.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-STAR8-S2-aside-unsaved",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "retry: !!r.retry, aside: !!r.aside,",
-    "new": "retry: !!r.retry, aside: false,",
+    "old": "          aside: !!r.aside,",
+    "new": "          aside: false,",
     "tests": [
       "test/systems/questlines/star8_frostfall.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-STAR8-S2-the-row-shelved",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "running ? 'running' : shelved && !aside ? 'shelved'",
-    "new": "running ? 'running' : shelved ? 'shelved'",
+    "old": "              : shelved && !aside",
+    "new": "              : shelved",
     "tests": [
       "test/systems/questlines/star8_frostfall.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-STAR8-S1-gone-on-the-first-alone",
     "file": "src/systems/questlines/qlActions.js",
-    "old": "    if (foes.some((f) => stands(quest, f))) { this.seen = true; return false; }",
-    "new": "    if (stands(quest, foes[0])) { this.seen = true; return false; }",
+    "old": "    if (foes.some((f) => stands(quest, f))) {",
+    "new": "    if (stands(quest, foes[0])) {",
     "tests": [
       "test/systems/questlines/star8_frostfall.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-STAR8-S1-seen-unsaved",
     "file": "src/systems/questlines/qlActions.js",
-    "old": "  get saveShape() { return [['foeSymbols', 'symArray'], ['seen']]; }",
-    "new": "  get saveShape() { return [['foeSymbols', 'symArray']]; }",
+    "old": "    return [['foeSymbols', 'symArray'], ['seen']];",
+    "new": "    return [['foeSymbols', 'symArray']];",
     "tests": [
       "test/systems/questlines/star8_frostfall.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-STAR8-S1-the-pattern-any-count",
     "file": "src/systems/questlines/qlActions.js",
-    "old": "  get pattern() { return /^\\s*ql gone((?: _[a-zA-Z0-9_.]+_){1,4})\\s*$/; }",
-    "new": "  get pattern() { return /^\\s*ql gone((?: _[a-zA-Z0-9_.]+_)*)\\s*$/; }",
+    "old": "    return /^\\s*ql gone((?: _[a-zA-Z0-9_.]+_){1,4})\\s*$/;",
+    "new": "    return /^\\s*ql gone((?: _[a-zA-Z0-9_.]+_)*)\\s*$/;",
     "tests": [
       "test/systems/questlines/star8_frostfall.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "AUDIT-STAR8-T1-the-kind",
     "file": "src/systems/questlines/qlActs.js",
-    "old": "  'wyrd-met': 'world',",
-    "new": "  'wyrd-mett': 'world',",
+    "old": "  'wyrd-met': 'world', // a Wyrd Sister's window opened at a tavern's door (the Witches' Festival - AUDIT STAR8 T1: Morwen's letter); never a find (festivalClient.js ACT_NOT_FOUND)",
+    "new": "  'wyrd-mett': 'world', // a Wyrd Sister's window opened at a tavern's door (the Witches' Festival - AUDIT STAR8 T1: Morwen's letter); never a find (festivalClient.js ACT_NOT_FOUND)",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ]

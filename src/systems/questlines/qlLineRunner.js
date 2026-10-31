@@ -30,7 +30,16 @@
 // dropped after five minutes left a step no deed could witness). An end the service has not witnessed is the step's
 // `unseen` in the window: a later deed's receipt witnesses it. The line moves on the client's own quest either way: the
 // service pays, it does not gate.
-import { QL_LINES, lineById, lineStepOf, lineOpens, opensWords, witnessOf, lineServiceOf, unmetNeeds } from './qlLines.js';
+import {
+  QL_LINES,
+  lineById,
+  lineStepOf,
+  lineOpens,
+  opensWords,
+  witnessOf,
+  lineServiceOf,
+  unmetNeeds,
+} from './qlLines.js';
 import { QL_SERVICE_LINES, qlStepClaimed } from '../../net/questlineClaims.js';
 import { questlinesOn } from './qlLaw.js';
 import { t } from '../textManager.js';
@@ -39,7 +48,7 @@ import { getPref } from '../uiPrefs.js';
 import { KINGS_GAMBIT_KEY } from '../features.js';
 import { modSetting } from '../modSettings.js';
 import { revenantHeld } from '../revenant/revenant.js';
-import { starfallRuns } from '../../net/starfall/starfallLaw.js';   // STAR8: the Witches' Festival's stars falling
+import { starfallRuns } from '../../net/starfall/starfallLaw.js'; // STAR8: the Witches' Festival's stars falling
 
 /** AUDIT QUESTLINES ACTS-2, LINES-3, LINES-6: WHAT A STEP'S DEED NEEDS, read where the game reads it - Loot rarity's own
  *  switch (a socket, a reforge refuse 'off' without it), The King's Gambit's (no table offers the game), the sea's
@@ -51,7 +60,15 @@ import { starfallRuns } from '../../net/starfall/starfallLaw.js';   // STAR8: th
 export const NEED_CHECKS = Object.freeze({
   lootRarity: () => lootRarityOn(),
   kingsGambit: () => !!getPref(KINGS_GAMBIT_KEY),
-  naval: () => getPref('naval') !== false && (() => { try { return modSetting('come-sail-away', 'Enabled') !== false; } catch { return false; } })(),
+  naval: () =>
+    getPref('naval') !== false &&
+    (() => {
+      try {
+        return modSetting('come-sail-away', 'Enabled') !== false;
+      } catch {
+        return false;
+      }
+    })(),
   renown: () => !revenantHeld(),
   starfall: (/** @type {number} */ nowMs) => starfallRuns(nowMs),
 });
@@ -72,7 +89,17 @@ export const CLAIM_SLOW_MS = 600_000;
  *  reached the player (FB1020c LETTER-PACE: the take's own, then each courier's), 0 before any; `aside` its running step's quest set aside by the runner
  *  itself for a need that stopped holding (AUDIT STAR8 S2); `taken` the player's (QL-OFFERED: a record without it is a
  *  save's from before, read once at its load). */
-const freshLine = (begun = 0) => ({ step: 0, outcomes: {}, done: false, wait: 0, claims: {}, begun, lettered: 0, aside: false, taken: true });
+const freshLine = (begun = 0) => ({
+  step: 0,
+  outcomes: {},
+  done: false,
+  wait: 0,
+  claims: {},
+  begun,
+  lettered: 0,
+  aside: false,
+  taken: true,
+});
 
 /** FB1020c LETTER-PACE: whether a step's quest still holds its letter back - running, not set aside (QUEST-SHELF), with a
  *  `give pc <letter> notify` not yet done. GivePc waits for a town, outdoors, by day (GivePc.cs:78-97, quest/actions.js
@@ -86,16 +113,18 @@ export function letterOnItsWay(quest) {
   if (!quest || quest.questComplete || quest.shelvedAt != null) return false;
   for (const task of quest.tasks?.values?.() ?? []) {
     const clock = quest.getClock?.(task.symbol);
-    if (!task.triggered && !(clock?.clockEnabled && !clock.clockFinished)) continue;   // not sent yet
+    if (!task.triggered && !(clock?.clockEnabled && !clock.clockFinished)) continue; // not sent yet
     if (task.actions?.some((a) => courierGive(quest, a))) return true;
   }
   return false;
 }
 
 /** A courier's letter not yet handed over: a `give pc <Item ... letter> notify` still to do. */
-const courierGive = (quest, a) => a.typeName === 'GivePc' && a.textId && !a.isComplete && quest.getItem?.(a.itemSymbol)?.itemName === 'letter';
+const courierGive = (quest, a) =>
+  a.typeName === 'GivePc' && a.textId && !a.isComplete && quest.getItem?.(a.itemSymbol)?.itemName === 'letter';
 /** Whether a quest's script has a courier's letter still to hand over, sent or not. */
-const hasCourier = (quest) => [...(quest?.tasks?.values?.() ?? [])].some((t) => t.actions?.some((a) => courierGive(quest, a)));
+const hasCourier = (quest) =>
+  [...(quest?.tasks?.values?.() ?? [])].some((t) => t.actions?.some((a) => courierGive(quest, a)));
 
 /**
  * @param {{ machine: any, ctx?: any, service?: any, nowMs?: () => number }} deps
@@ -120,7 +149,13 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
   const now = () => ctx.nowSeconds?.() ?? 0;
   /** A registered account signed in: never a guest's (AUDIT QUESTLINES LINES-2). */
   const registered = () => !!service && !service.guest?.();
-  const need = (n) => { try { return !!NEED_CHECKS[n]?.(nowMs()); } catch { return false; } };
+  const need = (n) => {
+    try {
+      return !!NEED_CHECKS[n]?.(nowMs());
+    } catch {
+      return false;
+    }
+  };
   const probe = { level, online, registered, need, lineDone: (id) => !!lines[id]?.done };
 
   /** The step's quest on the machine (by name) - running, or scheduled for the next tick - or null. */
@@ -134,7 +169,8 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
   /** A claim to ask: the `open` of every step of a line the service pays (its first is the witness's window - AUDIT
    *  QUESTLINES SERVICE-2), the `end` of a step it pays. */
   function queueClaim(lineId, step, phase, choice = null) {
-    if (!service || !(phase === 'open' ? Object.hasOwn(QL_SERVICE_LINES, lineId) : qlStepClaimed(lineId, step))) return null;
+    if (!service || !(phase === 'open' ? Object.hasOwn(QL_SERVICE_LINES, lineId) : qlStepClaimed(lineId, step)))
+      return null;
     if (pending.some((c) => c.line === lineId && c.step === step && c.phase === phase)) return null;
     const c = { line: lineId, step, choice, phase, next: 0, tries: 0 };
     pending.push(c);
@@ -144,23 +180,40 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
   async function ask(c) {
     const gen = generation;
     let a;
-    try { a = await service.claim({ line: c.line, step: c.step, phase: c.phase, ...(c.choice ? { choice: c.choice } : {}) }); } catch { a = { ok: false, error: 'offline' }; }
-    if (gen !== generation) return;   // LINES-21: a load came between - another character's records now, its own claims asked
+    try {
+      a = await service.claim({
+        line: c.line,
+        step: c.step,
+        phase: c.phase,
+        ...(c.choice ? { choice: c.choice } : {}),
+      });
+    } catch {
+      a = { ok: false, error: 'offline' };
+    }
+    if (gen !== generation) return; // LINES-21: a load came between - another character's records now, its own claims asked
     const rec = lines[c.line];
     if (!rec) return;
-    const d = a?.ok ? a.data ?? {} : null;
+    const d = a?.ok ? (a.data ?? {}) : null;
     // answered for good: an open written, an end witnessed, or a step the service pays nothing - and the pay told once.
     // A guest's end, and an end not witnessed yet, are kept and asked again (a guest may register; a later deed's receipt
     // witnesses the step)
     const answered = !!d && (d.why === 'unpaid' || (c.phase === 'open' ? !!d.opened : d.witnessed === true));
     if (answered) {
       pending = pending.filter((x) => x !== c);
-      rec.claims[c.step] = d.why === 'unpaid' ? 'refused:unpaid' : c.phase === 'open' ? (rec.claims[c.step] ?? 'opened') : 'witnessed';
+      rec.claims[c.step] =
+        d.why === 'unpaid' ? 'refused:unpaid' : c.phase === 'open' ? (rec.claims[c.step] ?? 'opened') : 'witnessed';
       // AUDIT QUESTLINES SERVICE-7 (c): a title the service answers HELD (`titleHeld` - laid by an earlier attempt) is told
       // only for a claim an earlier attempt of which went unanswered: its answer may have carried the title, lost after the
       // commit. An answer that arrived told it then, or another character's line laid it
-      const title = d.title ?? (c.lost ? d.titleHeld ?? null : null);
-      if (title || d.key || d.keyHeld) ctx.onHonour?.({ line: c.line, title, key: !!d.key, keys: Number.isSafeInteger(d.keys) ? d.keys : null, keyHeld: !!d.keyHeld });
+      const title = d.title ?? (c.lost ? (d.titleHeld ?? null) : null);
+      if (title || d.key || d.keyHeld)
+        ctx.onHonour?.({
+          line: c.line,
+          title,
+          key: !!d.key,
+          keys: Number.isSafeInteger(d.keys) ? d.keys : null,
+          keyHeld: !!d.keyHeld,
+        });
       return;
     }
     // SERVICE-7 (c): no service's answer (offline, a timeout, a 5xx, a body that never came) - it may have committed
@@ -197,13 +250,20 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
     // LINES-18: a step's quest already running (a copy kept from before) is the step - its opening asked all the same
     // QL-OFFERED: a first step never reaches here without its quest - look puts its line back on offer first - so what
     // starts here is a later step of a line the player took
-    if (runningStep(step.quest)) { if (!rec.claims[rec.step]) queueClaim(l.id, rec.step, 'open'); return; }
-    if (unmetNeeds(l, rec.step, probe).length) return;   // ACTS-2, LINES-3, LINES-6: it waits, and the window says on what
-    if (!courierMay(now())) return;   // FB1020c LETTER-PACE, re-aimed: a later step's courier waits for the last one
+    if (runningStep(step.quest)) {
+      if (!rec.claims[rec.step]) queueClaim(l.id, rec.step, 'open');
+      return;
+    }
+    if (unmetNeeds(l, rec.step, probe).length) return; // ACTS-2, LINES-3, LINES-6: it waits, and the window says on what
+    if (!courierMay(now())) return; // FB1020c LETTER-PACE, re-aimed: a later step's courier waits for the last one
     const q = machine.scheduleQuestByName(step.quest);
     // a script that will not parse (the machine has said why - a place this region lacks) is tried again a day later,
     // never every tick, and the window says it could not begin (LINES-19)
-    if (!q) { rec.wait = now() + RETRY_GAP_S; rec.stalled = true; return; }
+    if (!q) {
+      rec.wait = now() + RETRY_GAP_S;
+      rec.stalled = true;
+      return;
+    }
     rec.stalled = false;
     rec.retry = false;
     queueClaim(l.id, rec.step, 'open');
@@ -228,15 +288,19 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
    *  A step set out this look and not yet started (the machine's next tick runs its start-up) holds the rest while its
    *  script has a courier: whether that courier set out is its start-up's to say, and two set out in one breath landed
    *  together. */
-  const courierMay = (s) => Object.entries(lines).every(([id, r]) => {
-    if (r.lettered > 0 && r.lettered > s - STEP_GAP_S) return false;   // 0: no letter yet, on any clock
-    const q = r.done ? null : runningStep(lineById(id)?.steps[r.step]?.quest ?? '');
-    return !letterOnItsWay(q) && !(q && machine.questsToInvoke?.includes?.(q) && hasCourier(q));
-  });
+  const courierMay = (s) =>
+    Object.entries(lines).every(([id, r]) => {
+      if (r.lettered > 0 && r.lettered > s - STEP_GAP_S) return false; // 0: no letter yet, on any clock
+      const q = r.done ? null : runningStep(lineById(id)?.steps[r.step]?.quest ?? '');
+      return !letterOnItsWay(q) && !(q && machine.questsToInvoke?.includes?.(q) && hasCourier(q));
+    });
 
   /** QL-OFFERED: a line back on offer - its record gone, and with it the claims still to ask for it (the service's
    *  opening is written once whatever is asked again: server-account/src/questlines.js INSERT OR IGNORE). */
-  const reoffer = (id) => { delete lines[id]; pending = pending.filter((c) => c.line !== id); };
+  const reoffer = (id) => {
+    delete lines[id];
+    pending = pending.filter((c) => c.line !== id);
+  };
 
   /** QL-OFFERED (restore): a save's first step SENT and never delivered - begun by QL0's runner, unasked, its quest
    *  (running, set aside or scheduled) still with nothing in its journal: every first step writes its first entry as its
@@ -252,7 +316,11 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
       machine.removeQuest?.(q);
     }
     const held = machine.questsToInvoke ?? [];
-    for (let i = held.length - 1; i >= 0; i--) if (held[i]?.questName === questName && undelivered(held[i])) { held.splice(i, 1); found = true; }
+    for (let i = held.length - 1; i >= 0; i--)
+      if (held[i]?.questName === questName && undelivered(held[i])) {
+        held.splice(i, 1);
+        found = true;
+      }
     return found;
   };
 
@@ -276,19 +344,31 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
         if (!rec) continue;
         // QUEST-AUDIT III RESTART-WORDS: a step dropped by the journal's Restart runs again at once (machine.js restartQuest
         // drops the old copy, then starts the new) - the drop's day of waiting and its "could not begin" are let go
-        if (rec.stalled && !rec.done && runningStep(l.steps[rec.step]?.quest)) { rec.stalled = false; rec.wait = 0; }
+        if (rec.stalled && !rec.done && runningStep(l.steps[rec.step]?.quest)) {
+          rec.stalled = false;
+          rec.wait = 0;
+        }
         // QL-OFFERED: a first step with no quest (gone without its end, or a save's line whose first step never began) is
         // its line back on offer - never started again unasked
-        if (!rec.done && rec.step === 0 && !runningStep(l.steps[0].quest)) { reoffer(l.id); continue; }
+        if (!rec.done && rec.step === 0 && !runningStep(l.steps[0].quest)) {
+          reoffer(l.id);
+          continue;
+        }
         if (rec.done || rec.wait > s) continue;
         const stepQuest = runningStep(l.steps[rec.step]?.quest);
-        if (stepQuest) keepSeason(l, rec, stepQuest);   // AUDIT STAR8 S2: online or not
-        if (l.opens.online && !online()) continue;   // an endgame line waits, offline, where it stood
-        if (l.opens.account && !registered()) continue;   // LINES-2: and a guest's page, where it stood
+        if (stepQuest) keepSeason(l, rec, stepQuest); // AUDIT STAR8 S2: online or not
+        if (l.opens.online && !online()) continue; // an endgame line waits, offline, where it stood
+        if (l.opens.account && !registered()) continue; // LINES-2: and a guest's page, where it stood
         startStep(l, rec);
       }
       const ms = nowMs();
-      for (const c of pending) if (c.next <= ms && !c.busy) { c.busy = true; ask(c).finally(() => { c.busy = false; }); }
+      for (const c of pending)
+        if (c.next <= ms && !c.busy) {
+          c.busy = true;
+          ask(c).finally(() => {
+            c.busy = false;
+          });
+        }
     },
 
     /**
@@ -303,10 +383,17 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
       const rec = lines[at.line.id];
       if (!rec || rec.done || rec.step !== at.index) return null;
       const good = outcome ? !outcome.failure : !!quest.questSuccess;
-      rec.stalled = false;   // QUEST-AUDIT III RESTART-WORDS: a step that ended began - a restart's drop is not a stall
-      if (!good && at.index === 0) { reoffer(at.line.id); return { line: at.line.id, step: 0, moved: false, reoffered: true }; }
+      rec.stalled = false; // QUEST-AUDIT III RESTART-WORDS: a step that ended began - a restart's drop is not a stall
+      if (!good && at.index === 0) {
+        reoffer(at.line.id);
+        return { line: at.line.id, step: 0, moved: false, reoffered: true };
+      }
       // AUDIT QUESTLINES UI-7: a failed step is the window's to say ("offered again"), not a quiet wait
-      if (!good) { rec.wait = now() + RETRY_GAP_S; rec.retry = true; return { line: at.line.id, step: at.index, moved: false }; }
+      if (!good) {
+        rec.wait = now() + RETRY_GAP_S;
+        rec.retry = true;
+        return { line: at.line.id, step: at.index, moved: false };
+      }
       rec.retry = false;
       rec.outcomes[at.index] = { id: outcome?.id ?? 'done', text: ctx.outcomeText?.(quest) ?? null };
       queueClaim(at.line.id, at.index, 'end', outcome?.id ?? null);
@@ -324,7 +411,7 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
     dropped(quest) {
       const at = lineStepOf(quest?.questName);
       const rec = at ? lines[at.line.id] : null;
-      if (!rec || rec.done || rec.step !== at.index || quest.questComplete || rec.wait > now()) return;   // ended() has it
+      if (!rec || rec.done || rec.step !== at.index || quest.questComplete || rec.wait > now()) return; // ended() has it
       rec.wait = now() + RETRY_GAP_S;
       rec.stalled = true;
     },
@@ -353,11 +440,18 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
       // LINES-18: a copy of the first step already running (a party's shared copy) is the step - adopted, never a second
       // started beside it; one set aside comes back with the take
       const copy = runningStep(first);
-      if (copy?.shelvedAt != null && !machine.reclaimQuest?.(copy.uid)?.ok) return { ok: false, line: id, reason: 'begun' };
-      const read = !copy && quest && String(quest.questName).toUpperCase() === first && !quest.questComplete ? quest : null;
+      if (copy?.shelvedAt != null && !machine.reclaimQuest?.(copy.uid)?.ok)
+        return { ok: false, line: id, reason: 'begun' };
+      const read =
+        !copy && quest && String(quest.questName).toUpperCase() === first && !quest.questComplete ? quest : null;
       let q = copy;
       if (read) {
-        try { q = machine.startQuestImmediate(read); } catch (e) { console.warn(`[questlines] ${first} could not start (${e?.message ?? e})`); q = null; }
+        try {
+          q = machine.startQuestImmediate(read);
+        } catch (e) {
+          console.warn(`[questlines] ${first} could not start (${e?.message ?? e})`);
+          q = null;
+        }
       } else if (!q) q = machine.scheduleQuestByName(first);
       if (!q) return { ok: false, line: id, reason: 'noplace' };
       // FB1020c LETTER-PACE: the take is a letter's moment - the letter is in hand (its start-up's `get item`), and no
@@ -375,7 +469,7 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
       const l = lineById(id);
       if (!l || !questlinesOn() || lines[id] || !lineOpens(l, probe)) return null;
       const source = machine.deps?.getQuestSourceLines?.(l.steps[0].quest);
-      return source ? machine.parseQuestForLists?.(source, 0) ?? null : null;
+      return source ? (machine.parseQuestForLists?.(source, 0) ?? null) : null;
     },
 
     /** QL-OFFERED: whether the line is on offer now - its gate holds and it is not begun, or its first step was set aside
@@ -387,7 +481,10 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
 
     /** QL-OFFERED: the first step the player set aside, when its line is on offer again for it - the quest a take
      *  reclaims (an offer reads its letter, not a new draw's). */
-    shelvedFirst: (id) => { const l = lineById(id); return l ? firstShelved(l, lines[id]) : null; },
+    shelvedFirst: (id) => {
+      const l = lineById(id);
+      return l ? firstShelved(l, lines[id]) : null;
+    },
 
     /**
      * The window's rows: every line begun or on offer - `{ id, group, title, lead, giver, state, steps, opens, outcome,
@@ -410,26 +507,57 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
         const stepQuest = rec && !rec.done ? runningStep(l.steps[rec.step]?.quest) : null;
         const shelved = stepQuest?.shelvedAt != null;
         const running = !!stepQuest && !shelved;
-        const aside = shelved && !!rec?.aside;   // AUDIT STAR8 S2: set aside by the runner, out of season - it waits
-        const offered = !rec || !!firstShelved(l, rec);   // QL-OFFERED
+        const aside = shelved && !!rec?.aside; // AUDIT STAR8 S2: set aside by the runner, out of season - it waits
+        const offered = !rec || !!firstShelved(l, rec); // QL-OFFERED
         const steps = l.steps.map((s, i) => {
           // UI-7: the step at the line's place is `current` only while its quest runs - between steps it is still to come
-          const state = offered ? 'next' : rec.done || i < rec.step ? 'done' : i === rec.step && (running || shelved) ? 'current' : 'next';
+          const state = offered
+            ? 'next'
+            : rec.done || i < rec.step
+              ? 'done'
+              : i === rec.step && (running || shelved)
+                ? 'current'
+                : 'next';
           // `seen` the service witnessed it; `unseen` done, and not witnessed yet (a later deed's receipt witnesses it)
           const said = rec?.claims?.[i];
           // UI-19: `refused` the service's refusal of this step's claim (its error word), while the claim waits
           const refused = pending.find((c) => c.line === l.id && c.step === i && c.refused)?.refused ?? null;
-          return { quest: s.quest, title: s.title(), state, witnessed: !!witnessOf(l, i), seen: said === 'witnessed', unseen: state === 'done' && !!witnessOf(l, i) && said !== 'witnessed', outcome: rec?.outcomes?.[i]?.text ?? null, refused };
+          return {
+            quest: s.quest,
+            title: s.title(),
+            state,
+            witnessed: !!witnessOf(l, i),
+            seen: said === 'witnessed',
+            unseen: state === 'done' && !!witnessOf(l, i) && said !== 'witnessed',
+            outcome: rec?.outcomes?.[i]?.text ?? null,
+            refused,
+          };
         });
         // UI-7: a failed step offered again (`retry`), a step's quest set aside in the journal (`shelved`)
-        const state = offered ? 'offered' : rec.done ? 'done' : running ? 'running' : shelved && !aside ? 'shelved' : rec.retry ? 'retry' : 'waiting';
+        const state = offered
+          ? 'offered'
+          : rec.done
+            ? 'done'
+            : running
+              ? 'running'
+              : shelved && !aside
+                ? 'shelved'
+                : rec.retry
+                  ? 'retry'
+                  : 'waiting';
         const last = rec?.outcomes?.[l.steps.length - 1] ?? null;
         return {
-          id: l.id, group: l.group, title: l.title(), lead: l.lead(), giver: l.giver(), state, steps,
+          id: l.id,
+          group: l.group,
+          title: l.title(),
+          lead: l.lead(),
+          giver: l.giver(),
+          state,
+          steps,
           opens: state === 'waiting' || state === 'retry' ? waitingWords(l, rec) : null,
-          outcome: rec?.done ? last?.text ?? null : null,
+          outcome: rec?.done ? (last?.text ?? null) : null,
           honour: lineServiceOf(l)?.title ?? null,
-          post: !rec && (l.post !== 'board' || online()) ? l.post ?? null : null,   // a first step set aside is the journal's to take back
+          post: !rec && (l.post !== 'board' || online()) ? (l.post ?? null) : null, // a first step set aside is the journal's to take back
         };
       });
     },
@@ -462,9 +590,15 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
         if (!r.taken && !r.done && (r.step ?? 0) === 0 && sentUndelivered(l.steps[0].quest)) continue;
         const step = Math.max(0, Math.min(l.steps.length, Number.isSafeInteger(r.step) ? r.step : 0));
         lines[id] = {
-          step, done: !!r.done || step >= l.steps.length, wait: Number.isFinite(r.wait) ? r.wait : 0,
-          begun: Number.isFinite(r.begun) ? r.begun : 0, lettered: Number.isFinite(r.lettered) ? r.lettered : 0, stalled: !!r.stalled, retry: !!r.retry, aside: !!r.aside,
-          taken: true,   // QL-OFFERED: a line kept by a load is the player's - taken, or QL0's delivered
+          step,
+          done: !!r.done || step >= l.steps.length,
+          wait: Number.isFinite(r.wait) ? r.wait : 0,
+          begun: Number.isFinite(r.begun) ? r.begun : 0,
+          lettered: Number.isFinite(r.lettered) ? r.lettered : 0,
+          stalled: !!r.stalled,
+          retry: !!r.retry,
+          aside: !!r.aside,
+          taken: true, // QL-OFFERED: a line kept by a load is the player's - taken, or QL0's delivered
           outcomes: r.outcomes && typeof r.outcomes === 'object' ? structuredClone(r.outcomes) : {},
           claims: r.claims && typeof r.claims === 'object' ? { ...r.claims } : {},
         };
@@ -474,8 +608,10 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
           const said = rec.claims[i];
           // SERVICE-7 (c): an end the save never heard answered (nothing said, or only its opening) may have been answered
           // and lost - its held title is told when its retry answers it
-          if (ended && said !== 'witnessed' && said !== 'refused:unpaid') { const c = queueClaim(id, i, 'end', rec.outcomes[i]?.id ?? null); if (c && (said == null || said === 'opened')) c.lost = true; }
-          else if (!ended && !rec.done && !said) queueClaim(id, i, 'open');
+          if (ended && said !== 'witnessed' && said !== 'refused:unpaid') {
+            const c = queueClaim(id, i, 'end', rec.outcomes[i]?.id ?? null);
+            if (c && (said == null || said === 'opened')) c.lost = true;
+          } else if (!ended && !rec.done && !said) queueClaim(id, i, 'open');
         }
       }
     },

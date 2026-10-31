@@ -547,10 +547,10 @@ own lore holds with the canon (section "The lore"): FACTION.TXT's Glenmoril Witc
 of the Bluff are #423, the Order of Arkay #82.
 
 **THE SEASON.** `opens.event` names a step need; the line opens only while it holds
-(`systems/questlines/qlLines.js:"export const eventHolds = (l, probe) =>"`), and the window's rows leave out a line not
-begun while it does not (`systems/questlines/qlLineRunner.js:"return QL_LINES.filter((l) => lines[l.id] ||"`). The need
+(`systems/questlines/qlLines.js:"export const eventHolds"`), and the window's rows leave out a line not
+begun while it does not (`systems/questlines/qlLineRunner.js:"return QL_LINES.filter"`). The need
 `starfall` is the festival's calendar at the runner's clock
-(`systems/questlines/qlLineRunner.js:"starfall: (/** @type {number} */ nowMs) => starfallRuns(nowMs),"`) - the same answer
+(`systems/questlines/qlLineRunner.js:"starfall: (/** @type {number} */ nowMs)"`) - the same answer
 the Starfall's host and the relay give. (As first built the need also waited on a staged live event, kept for the runner
 in a leaf of its own; the festival's calendar made both unneeded when its pull request was folded in, and they are gone.)
 
@@ -615,7 +615,7 @@ _spindle_ and _who_ clicked`.
   edge, InitialiseOnSet).
 - **S2 - a star step the Festival ends under.** Its needs were read only as it started, so its sixty days ran down on a
   deed no star was left to do. The runner sets it aside, fail-free, and takes it up at the next Festival
-  (`systems/questlines/qlLineRunner.js:"function keepSeason(l, rec, q) {"`); the row waits, "Opens during the Witches'
+  (`systems/questlines/qlLineRunner.js:"function keepSeason"`); the row waits, "Opens during the Witches'
   Festival.".
 - **S4 - the priest of Arkay in Arkay's temple.** `Place _temple_ remote temple` took any god's (396 of the Bay's 2,980
   temples are Arkay's). The questlines lay a row of their own on Quests-Places, `templeArkay` (p3 21, FACTION.TXT's
