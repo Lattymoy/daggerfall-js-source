@@ -82,8 +82,8 @@
   {
     "name": "DEX3-the-rect-flag-starts-in",
     "file": "src/world/playerGps.js",
-    "old": "const start = () => { _climate = 0; _inRect = false; };",
-    "new": "const start = () => { _climate = 0; _inRect = true; };",
+    "old": "  _inRect = false;",
+    "new": "  _inRect = true;",
     "why": "the first reading inside a town raises no entry - PlayerGPS's flag starts false",
     "tests": [
       "test/systems/enemyExpansion/dex3_encounters.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "DEX3-the-rect-events-swapped",
     "file": "src/world/playerGps.js",
-    "old": "(_inRect ? l.enterLocationRect : l.exitLocationRect)",
-    "new": "(_inRect ? l.exitLocationRect : l.enterLocationRect)",
+    "old": "  for (const l of _listeners) (_inRect ? l.enterLocationRect : l.exitLocationRect)?.(_climate);",
+    "new": "  for (const l of _listeners) (_inRect ? l.exitLocationRect : l.enterLocationRect)?.(_climate);",
     "why": "an entry heard as an exit",
     "tests": [
       "test/systems/enemyExpansion/dex3_encounters.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "AUDIT-DEX-C1-reset-state-keeps-the-flag",
     "file": "src/world/playerGps.js",
-    "old": "export function resetPlayerGpsState(jump) { if (RESET_ON.has(jump)) _inRect = false; }",
-    "new": "export function resetPlayerGpsState(jump) { }",
+    "old": "export function resetPlayerGpsState(jump) {\n  if (RESET_ON.has(jump)) _inRect = false;\n}",
+    "new": "export function resetPlayerGpsState(jump) {}",
     "why": "PlayerGPS.ResetState keeps the rect flag: a fast travel into another climate's town raises no entry, and its city night is never drawn",
     "tests": [
       "test/systems/enemyExpansion/dex3_encounters.test.js"
@@ -292,8 +292,8 @@
   {
     "name": "AUDIT-DEX-C1-every-jump-resets",
     "file": "src/world/playerGps.js",
-    "old": "export function resetPlayerGpsState(jump) { if (RESET_ON.has(jump)) _inRect = false; }",
-    "new": "export function resetPlayerGpsState(jump) { _inRect = false; }",
+    "old": "  if (RESET_ON.has(jump)) _inRect = false;",
+    "new": "  _inRect = false;",
     "why": "a Recall or a guild teleport resets the flag too, where DFU raises ResetState only on a load's start and a fast travel's end (HOST-SPLIT at DEX's merge: the rule moved from the jump core into the module)",
     "tests": [
       "test/systems/enemyExpansion/dex3_encounters.test.js"

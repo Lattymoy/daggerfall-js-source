@@ -521,8 +521,8 @@
   {
     "name": "WB12d-the-sigil-flat-on-a-slope",
     "file": "src/world/riteModel.js",
-    "old": "row.push({ p: [x, ride(x, z) + RITE_SIGIL_LIFT, z]",
-    "new": "row.push({ p: [x, RITE_SIGIL_LIFT, z]",
+    "old": "        row.push({ p: [x, ride(x, z) + RITE_SIGIL_LIFT, z], uv: uvOf(x, z) });",
+    "new": "        row.push({ p: [x, RITE_SIGIL_LIFT, z], uv: uvOf(x, z) });",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -530,8 +530,8 @@
   {
     "name": "WB12d-the-sigil-facing-down",
     "file": "src/world/riteModel.js",
-    "old": "else f.quad(RITE_SIGIL_RECORD, a.p, d.p, c.p, b.p, a.uv, d.uv, c.uv, b.uv);",
-    "new": "else f.quad(RITE_SIGIL_RECORD, a.p, b.p, c.p, d.p, a.uv, b.uv, c.uv, d.uv);",
+    "old": "        else f.quad(RITE_SIGIL_RECORD, a.p, d.p, c.p, b.p, a.uv, d.uv, c.uv, b.uv);",
+    "new": "        else f.quad(RITE_SIGIL_RECORD, a.p, b.p, c.p, d.p, a.uv, b.uv, c.uv, d.uv);",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -539,8 +539,8 @@
   {
     "name": "WB12d-the-ring-closed-on-the-gate",
     "file": "src/world/riteModel.js",
-    "old": "const a = behind + ((i + 1) / (n + 1) - 0.5) * 1.75 * Math.PI;",
-    "new": "const a = behind + (i / n) * 2 * Math.PI;",
+    "old": "        const a = behind + ((i + 1) / (n + 1) - 0.5) * 1.75 * Math.PI;",
+    "new": "        const a = behind + (i / n) * 2 * Math.PI;",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -548,8 +548,8 @@
   {
     "name": "WB12d-the-camp-before-the-circle",
     "file": "src/world/riteModel.js",
-    "old": "const [x, z] = dir(behind + d, RITE_TENT_R);",
-    "new": "const [x, z] = dir(facing + d, RITE_TENT_R);",
+    "old": "    const [x, z] = dir(behind + d, RITE_TENT_R);",
+    "new": "    const [x, z] = dir(facing + d, RITE_TENT_R);",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -819,8 +819,8 @@
   {
     "name": "WB12d-the-fold-through-the-sigil",
     "file": "src/world/riteModel.js",
-    "old": "const ride = (x, z) => Math.max(h(x, z), h(x + K, z), h(x - K, z), h(x, z + K), h(x, z - K), h(x + D, z + D), h(x - D, z + D), h(x + D, z - D), h(x - D, z - D));",
-    "new": "const ride = (x, z) => h(x, z);",
+    "old": "  const ride = (x, z) =>\n    Math.max(\n      h(x, z),\n      h(x + K, z),\n      h(x - K, z),\n      h(x, z + K),\n      h(x, z - K),\n      h(x + D, z + D),\n      h(x - D, z + D),\n      h(x + D, z - D),\n      h(x - D, z - D),\n    );",
+    "new": "  const ride = (x, z) => h(x, z);",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -828,8 +828,8 @@
   {
     "name": "WB12d-the-fold-on-the-straight-alone",
     "file": "src/world/riteModel.js",
-    "old": ", h(x + D, z + D), h(x - D, z + D), h(x + D, z - D), h(x - D, z - D));",
-    "new": ");",
+    "old": "  const ride = (x, z) =>\n    Math.max(\n      h(x, z),\n      h(x + K, z),\n      h(x - K, z),\n      h(x, z + K),\n      h(x, z - K),\n      h(x + D, z + D),\n      h(x - D, z + D),\n      h(x + D, z - D),\n      h(x - D, z - D),\n    );",
+    "new": "  const ride = (x, z) => Math.max(h(x, z), h(x + K, z), h(x - K, z), h(x, z + K), h(x, z - K));",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -837,8 +837,8 @@
   {
     "name": "WB12d-a-box-on-air",
     "file": "src/world/riteModel.js",
-    "old": "const y0 = Math.min(...foot.map(([fx, fz]) => ground(fx, fz))) - 0.15,",
-    "new": "const y0 = ground(x, z) - 0.15,",
+    "old": "  const y0 = Math.min(...foot.map(([fx, fz]) => ground(fx, fz))) - 0.15,",
+    "new": "  const y0 = ground(x, z) - 0.15,",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -846,8 +846,8 @@
   {
     "name": "WB12d-a-brazier-on-air",
     "file": "src/world/riteModel.js",
-    "old": "const y0 = Math.min(h(x, z), ...rim) - 0.3,",
-    "new": "const y0 = h(x, z) - 0.3,",
+    "old": "      const y0 = Math.min(h(x, z), ...rim) - 0.3,",
+    "new": "      const y0 = h(x, z) - 0.3,",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -1863,8 +1863,8 @@
   {
     "name": "AUDIT-WB12d-the-heart-facing-down",
     "file": "src/world/riteModel.js",
-    "old": "if (ri === 0) f.tri(RITE_SIGIL_RECORD, a.p, d.p, c.p, a.uv, d.uv, c.uv);",
-    "new": "if (ri === 0) f.tri(RITE_SIGIL_RECORD, a.p, c.p, d.p, a.uv, c.uv, d.uv);",
+    "old": "        if (ri === 0) f.tri(RITE_SIGIL_RECORD, a.p, d.p, c.p, a.uv, d.uv, c.uv);",
+    "new": "        if (ri === 0) f.tri(RITE_SIGIL_RECORD, a.p, c.p, d.p, a.uv, c.uv, d.uv);",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -1890,8 +1890,8 @@
   {
     "name": "AUDIT-WB12d-the-art-unturned",
     "file": "src/world/riteModel.js",
-    "old": "uvOf = (x, z) => [0.5 + (x * cf - z * sf) / (2 * RITE_SIGIL_R), 0.5 + (x * sf + z * cf) / (2 * RITE_SIGIL_R)];",
-    "new": "uvOf = (x, z) => [0.5 + x / (2 * RITE_SIGIL_R), 0.5 + z / (2 * RITE_SIGIL_R)];",
+    "old": "    uvOf = (x, z) => [0.5 + (x * cf - z * sf) / (2 * RITE_SIGIL_R), 0.5 + (x * sf + z * cf) / (2 * RITE_SIGIL_R)];",
+    "new": "    uvOf = (x, z) => [0.5 + x / (2 * RITE_SIGIL_R), 0.5 + z / (2 * RITE_SIGIL_R)];",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -1935,8 +1935,8 @@
   {
     "name": "AUDIT-WB12d-one-strip-turned",
     "file": "src/world/riteModel.js",
-    "old": "u = j * 0.15;",
-    "new": "u = 0;",
+    "old": "          u = j * 0.15;",
+    "new": "          u = 0;",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -3141,8 +3141,8 @@
   {
     "name": "AUDIT-WB12d-the-cap-a-tenth",
     "file": "src/world/riteModel.js",
-    "old": "[0.5 + Math.cos(a1) * 0.3, 0.5 + Math.sin(a1) * 0.3], [0.5 + Math.cos(a0) * 0.3, 0.5 + Math.sin(a0) * 0.3]",
-    "new": "[0.6, 0.5], [0.5, 0.6]",
+    "old": "        f.tri(\n          GATE_STONE_RECORD,\n          [x, y1, z],\n          p(a1, y1),\n          p(a0, y1),\n          [0.5, 0.5],\n          [0.5 + Math.cos(a1) * 0.3, 0.5 + Math.sin(a1) * 0.3],\n          [0.5 + Math.cos(a0) * 0.3, 0.5 + Math.sin(a0) * 0.3],\n        );",
+    "new": "        f.tri(GATE_STONE_RECORD, [x, y1, z], p(a1, y1), p(a0, y1), [0.5, 0.5], [0.6, 0.5], [0.5, 0.6]);",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]

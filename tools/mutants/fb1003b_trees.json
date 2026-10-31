@@ -137,8 +137,8 @@
   {
     "name": "TREES-range-max",
     "file": "src/world/rmbFlats.js",
-    "old": "archive >= NATURE_ARCHIVE_MIN && archive <= NATURE_ARCHIVE_MAX;",
-    "new": "archive >= NATURE_ARCHIVE_MIN && archive < NATURE_ARCHIVE_MAX;",
+    "old": "export const isNatureArchive = (archive) => archive >= NATURE_ARCHIVE_MIN && archive <= NATURE_ARCHIVE_MAX;",
+    "new": "export const isNatureArchive = (archive) => archive >= NATURE_ARCHIVE_MIN && archive < NATURE_ARCHIVE_MAX;",
     "tests": [
       "test/world/fb1003b_trees.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "TREES-range-min",
     "file": "src/world/rmbFlats.js",
-    "old": "archive >= NATURE_ARCHIVE_MIN && archive <= NATURE_ARCHIVE_MAX;",
-    "new": "archive > NATURE_ARCHIVE_MIN && archive <= NATURE_ARCHIVE_MAX;",
+    "old": "export const isNatureArchive = (archive) => archive >= NATURE_ARCHIVE_MIN && archive <= NATURE_ARCHIVE_MAX;",
+    "new": "export const isNatureArchive = (archive) => archive > NATURE_ARCHIVE_MIN && archive <= NATURE_ARCHIVE_MAX;",
     "tests": [
       "test/world/fb1003b_trees.test.js"
     ]

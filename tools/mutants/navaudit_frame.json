@@ -110,8 +110,8 @@
   {
     "name": "NAVF-reach-test-turned",
     "file": "src/world/prefabColliders.js",
-    "old": "+ REACH_SLACK < off) continue;",
-    "new": "+ REACH_SLACK > off) continue;",
+    "old": "    if (rootStretch * chainReach(ix, e, shape ? shape.radius : boxRadius(collider)) + REACH_SLACK < off) continue;",
+    "new": "    if (rootStretch * chainReach(ix, e, shape ? shape.radius : boxRadius(collider)) + REACH_SLACK > off) continue;",
     "tests": [
       "test/world/navaudit_frame.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "NAVF-grid-wide-unasked",
     "file": "src/world/prefabColliders.js",
-    "old": "  for (const k of gr.wide) ask(k);\n",
-    "new": "",
+    "old": "  for (const k of gr.wide) ask(k);\n  // the segment's stretch over the grid's own x-z box (an origin inside it included)",
+    "new": "  // the segment's stretch over the grid's own x-z box (an origin inside it included)",
     "tests": [
       "test/world/navaudit_frame.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "NAVF-grid-stop-early",
     "file": "src/world/prefabColliders.js",
-    "old": "walked <= tOut && (best == null || walked <= best)) {",
-    "new": "walked <= tOut && (best == null || walked < best - 1)) {",
+    "old": "  while (cx >= 0 && cx < gr.nx && cz >= 0 && cz < gr.nz && walked <= tOut && (best == null || walked <= best)) {",
+    "new": "  while (cx >= 0 && cx < gr.nx && cz >= 0 && cz < gr.nz && walked <= tOut && (best == null || walked < best - 1)) {",
     "tests": [
       "test/world/navaudit_frame.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "NAVF-index-kept-past-stamp",
     "file": "src/world/prefabColliders.js",
-    "old": "  if (had && had.stamp === stamp) return had;\n  const found = [];",
-    "new": "  if (had) return had;\n  const found = [];",
+    "old": "  if (had && had.stamp === stamp) return had;",
+    "new": "  if (had) return had;",
     "tests": [
       "test/world/navaudit_frame.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "NAVF-inverse-never-retaken",
     "file": "src/world/prefabColliders.js",
-    "old": "  if (ix.invOf[i] !== w) { ix.inv[i] = invertAffine(w); ix.invOf[i] = w; }",
-    "new": "  if (!ix.inv[i]) { ix.inv[i] = invertAffine(w); ix.invOf[i] = w; }",
+    "old": "  if (ix.invOf[i] !== w) {",
+    "new": "  if (!ix.inv[i]) {",
     "tests": [
       "test/world/navaudit_frame.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "NAVF-stamp-setParent",
     "file": "src/world/prefabNode.js",
-    "old": "reshaped(left); reshaped(this);",
-    "new": "",
+    "old": "    reshaped(left);\n    reshaped(this); // ...and the tree it joins (itself again, hung under nothing now)",
+    "new": "    // ...and the tree it joins (itself again, hung under nothing now)",
     "tests": [
       "test/world/navaudit_frame.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "NAVF-stamp-addComponent",
     "file": "src/world/prefabNode.js",
-    "old": "  addComponent(c) { this.components.push(c); reshaped(this); return c; }",
-    "new": "  addComponent(c) { this.components.push(c); return c; }",
+    "old": "    reshaped(this);\n    return c;",
+    "new": "    return c;",
     "tests": [
       "test/world/navaudit_frame.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "NAVF-world-z-unread",
     "file": "src/world/prefabNode.js",
-    "old": "      && k[4] === t[0] && k[5] === t[1] && k[6] === t[2] && k[7] === s[0]",
-    "new": "      && k[4] === t[0] && k[5] === t[1] && k[7] === s[0]",
+    "old": "      k[6] === t[2] &&\n      k[7] === s[0] &&",
+    "new": "      k[7] === s[0] &&",
     "tests": [
       "test/world/navaudit_frame.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "NAVF-world-parent-matrix-unchecked",
     "file": "src/world/prefabNode.js",
-    "old": "    if (k && this._wParent === p && this._wParentM === pw && k[0] === q[0]",
-    "new": "    if (k && this._wParent === p && k[0] === q[0]",
+    "old": "      this._wParentM === pw &&\n      k[0] === q[0] &&",
+    "new": "      k[0] === q[0] &&",
     "tests": [
       "test/world/navaudit_frame.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "NAVF-rotation-handed-out",
     "file": "src/world/prefabNode.js",
-    "old": "    return [...this._r];\n",
-    "new": "    return this._r;\n",
+    "old": "    return [...this._r];",
+    "new": "    return this._r;",
     "tests": [
       "test/world/navaudit_frame.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "NAVF-rotation-parent-unchecked",
     "file": "src/world/prefabNode.js",
-    "old": "    if (!(k && this._rParent === p && this._rParentQ === pr && k[0] === q[0]",
-    "new": "    if (!(k && this._rParent === p && k[0] === q[0]",
+    "old": "    if (!(\n      k &&\n      this._rParent === p &&\n      this._rParentQ === pr &&\n      k[0] === q[0] &&\n      k[1] === q[1] &&\n      k[2] === q[2] &&\n      k[3] === q[3]\n    )) {",
+    "new": "    if (!(k && this._rParent === p && k[0] === q[0] && k[1] === q[1] && k[2] === q[2] && k[3] === q[3])) {",
     "tests": [
       "test/world/navaudit_frame.test.js"
     ]

@@ -478,7 +478,7 @@ needs to be addressed. No exceptions.", 2026-10-26): the pits' abyss id stands i
 (`03-World/World-Wide.md` WORLD-LANES).
 
 What stands now:
-- **The hold is the world's grid** (`world/oceanHoles.js:"export const pitPixelOk = (mapPixelX, mapPixelY) => inWorldGrid(mapPixelX, mapPixelY);"`):
+- **The hold is the world's grid** (`world/oceanHoles.js:"export const pitPixelOk"`):
   the Bay's sea, the continent's past it (the Topal Bay, the Sea of Ghosts) and the Eltheric Ocean's. The bake
   still says where the sea is, and every other gate of the queue is the mod's, in its order.
 - **An abyss past the Bay is named in the world's abyss lane** (`world/worldWide/worldLanes.js` ABYSS_WORLD_LANE, 0x600 to

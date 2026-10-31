@@ -245,8 +245,8 @@
   {
     "name": "OWD-331s-stone-a-door",
     "file": "src/world/meshReader.js",
-    "old": "return textureRecord > 0 ? DOOR_TYPE.DUNGEON_ENTRANCE : DOOR_TYPE.NONE;",
-    "new": "return DOOR_TYPE.DUNGEON_ENTRANCE;",
+    "old": "      return textureRecord > 0 ? DOOR_TYPE.DUNGEON_ENTRANCE : DOOR_TYPE.NONE; // Dungeon ruins index 0 is just a stone texture",
+    "new": "      return DOOR_TYPE.DUNGEON_ENTRANCE; // Dungeon ruins index 0 is just a stone texture",
     "tests": [
       "test/world/owdungeons.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "OWD-Scourg-reduced",
     "file": "src/world/meshReader.js",
-    "old": "    doorArchive !== DUNGEON_RUIN_ENTER_DOORS &&\n    doorArchive !== SCOURG_EXTERIOR\n  ) {",
-    "new": "    doorArchive !== DUNGEON_RUIN_ENTER_DOORS\n  ) {",
+    "old": "  if (doorArchive > 100 && doorArchive !== DUNGEON_RUIN_ENTER_DOORS && doorArchive !== SCOURG_EXTERIOR) {",
+    "new": "  if (doorArchive > 100 && doorArchive !== DUNGEON_RUIN_ENTER_DOORS) {",
     "tests": [
       "test/world/owdungeons.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "OWD-the-table-moved",
     "file": "src/world/meshReader.js",
-    "old": "const doorType = subMeshDoorType(sm.textureArchive, sm.textureRecord);",
-    "new": "const doorType = DOOR_TYPE.NONE;",
+    "old": "    const doorType = subMeshDoorType(sm.textureArchive, sm.textureRecord);",
+    "new": "    const doorType = DOOR_TYPE.NONE;",
     "tests": [
       "test/world/owdungeons.test.js"
     ]

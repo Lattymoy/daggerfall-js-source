@@ -110,8 +110,8 @@
   {
     "name": "OW-HITCH-clean-edge-dropped",
     "file": "src/world/puddleMask.js",
-    "old": "        if (x === 0 || y === 0 || x === w - 1 || y === h - 1) edge = true;\n        if (x > 0 && !seen[i - 1]",
-    "new": "        if (x === 0 || y === 0 || x === w - 1) edge = true;\n        if (x > 0 && !seen[i - 1]",
+    "old": "        if (x === 0 || y === 0 || x === w - 1 || y === h - 1) edge = true;",
+    "new": "        if (x === 0 || y === 0 || x === w - 1) edge = true;",
     "tests": [
       "test/render/owhitch.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "OW-HITCH-clean-neighbour-missed",
     "file": "src/world/puddleMask.js",
-    "old": "        if (y < h - 1 && !seen[i + w] && wet[i + w] === want) { seen[i + w] = 1; stack[top++] = i + w; }\n",
-    "new": "",
+    "old": "        if (y < h - 1 && !seen[i + w] && wet[i + w] === want) {\n          seen[i + w] = 1;\n          stack[top++] = i + w;\n        }\n      }",
+    "new": "      }",
     "tests": [
       "test/render/owhitch.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "OW-HITCH-mark-no-yield",
     "file": "src/world/puddleMask.js",
-    "old": "    out[rec] = { ...layer, colors: b };\n    yield;\n  }\n  return yield* markShoreWaterSteps(out);",
-    "new": "    out[rec] = { ...layer, colors: b };\n  }\n  return yield* markShoreWaterSteps(out);",
+    "old": "    out[rec] = { ...layer, colors: b };\n    yield;\n  }\n  return yield* markShoreWaterSteps(out); // SHORE-SILT: and each shore's painted water, by its own rule (markShoreWater)",
+    "new": "    out[rec] = { ...layer, colors: b };\n  }\n  return yield* markShoreWaterSteps(out); // SHORE-SILT: and each shore's painted water, by its own rule (markShoreWater)",
     "tests": [
       "test/render/owhitch.test.js"
     ]

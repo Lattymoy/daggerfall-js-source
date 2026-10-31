@@ -274,8 +274,8 @@
   {
     "name": "A0928-R5-rotation-allocates",
     "file": "src/world/prefabNode.js",
-    "old": "mat4FromQuatPosScale(this.rotation, ZERO3, ONE3, _rotScratch)",
-    "new": "mat4FromQuatPosScale(this.rotation, ZERO3, ONE3)",
+    "old": "    const R = mat4FromQuatPosScale(this.rotation, ZERO3, ONE3, _rotScratch);",
+    "new": "    const R = mat4FromQuatPosScale(this.rotation, ZERO3, ONE3);",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "A0928-R5-quat-into-drifts",
     "file": "src/world/quat.js",
-    "old": "out[1] = 2 * (xy + wz);",
-    "new": "out[1] = 2 * (xy - wz);",
+    "old": "  out[1] = 2 * (xy + wz);",
+    "new": "  out[1] = 2 * (xy - wz);",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]

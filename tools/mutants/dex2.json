@@ -112,8 +112,8 @@
   {
     "name": "DEX2-the-xml-size-never-kept",
     "file": "src/world/rmbFlats.js",
-    "old": "  if (!x || x.s !== s || x.gen !== gen) { x = {",
-    "new": "  if (true) { x = {",
+    "old": "  if (!x || x.s !== s || x.gen !== gen) {",
+    "new": "  if (true) {",
     "why": "AUDIT DEX B7: two objects minted per foe per frame for a stand-in the xml scales",
     "tests": [
       "test/systems/enemyExpansion/dex2_sprites.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "DEX2-the-xml-size-blind-to-a-switch",
     "file": "src/world/rmbFlats.js",
-    "old": "  if (!x || x.s !== s || x.gen !== gen) { x = {",
-    "new": "  if (!x || x.gen !== gen) { x = {",
+    "old": "  if (!x || x.s !== s || x.gen !== gen) {",
+    "new": "  if (!x || x.gen !== gen) {",
     "why": "AUDIT DEX B7: a registrant's switch turned and the cached size kept",
     "tests": [
       "test/systems/enemyExpansion/dex2_sprites.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "DEX2-the-xml-size-blind-to-a-registration",
     "file": "src/world/rmbFlats.js",
-    "old": "  if (!x || x.s !== s || x.gen !== gen) { x = {",
-    "new": "  if (!x || x.s !== s) { x = {",
+    "old": "  if (!x || x.s !== s || x.gen !== gen) {",
+    "new": "  if (!x || x.s !== s) {",
     "why": "AUDIT DEX B7: a table registered again and the cached size kept",
     "tests": [
       "test/systems/enemyExpansion/dex2_sprites.test.js"

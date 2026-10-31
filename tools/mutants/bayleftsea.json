@@ -680,8 +680,8 @@
   {
     "name": "BLS-rows-port-old-law",
     "file": "src/world/pastBayRows.js",
-    "old": "          port: capitalSlicePort(k, s, pin?.port),",
-    "new": "          port: capitalSlicePort(k, s, false),",
+    "old": "          port: capitalSlicePort(k, s, pin?.port), // NIBEN-SEA: its harbour's slice (the Imperial City's Waterfront, on its canal); BAY-LEFT-SEA: the slice's own port byte's law",
+    "new": "          port: capitalSlicePort(k, s, false), // NIBEN-SEA: its harbour's slice (the Imperial City's Waterfront, on its canal); BAY-LEFT-SEA: the slice's own port byte's law",
     "tests": [
       "test/world/worldWide/bayleftsea_capitals.test.js"
     ]

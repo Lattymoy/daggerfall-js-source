@@ -2,8 +2,8 @@
   {
     "name": "OH-B-hash-arithmetic-shift",
     "file": "src/world/oceanHoles.js",
-    "old": "const num2 = Math.imul(num ^ (num >>> 16), 2146121005);",
-    "new": "const num2 = Math.imul(num ^ (num >> 16), 2146121005);",
+    "old": "  const num2 = Math.imul(num ^ (num >>> 16), 2146121005);",
+    "new": "  const num2 = Math.imul(num ^ (num >> 16), 2146121005);",
     "tests": [
       "test/world/oh_placement.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "OH-B-hash-unsalted",
     "file": "src/world/oceanHoles.js",
-    "old": "Math.imul(mapPixelY, 19349663) ^ (salt | 0);",
-    "new": "Math.imul(mapPixelY, 19349663);",
+    "old": "  const num = Math.imul(mapPixelX, 73856093) ^ Math.imul(mapPixelY, 19349663) ^ (salt | 0);",
+    "new": "  const num = Math.imul(mapPixelX, 73856093) ^ Math.imul(mapPixelY, 19349663);",
     "tests": [
       "test/world/oh_placement.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "OH-B-pit-rate-one-bucket",
     "file": "src/world/oceanHoles.js",
-    "old": "Math.trunc(f32(clamp01(f32(Number(rate) || 0))) * (2.0 * num2));",
-    "new": "Math.trunc(f32(clamp01(f32(Number(rate) || 0))) * num2);",
+    "old": "  const num4 = Math.trunc(f32(clamp01(f32(Number(rate) || 0))) * (2.0 * num2));",
+    "new": "  const num4 = Math.trunc(f32(clamp01(f32(Number(rate) || 0))) * num2);",
     "tests": [
       "test/world/oh_placement.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "OH-B-pit-buckets-unshuffled",
     "file": "src/world/oceanHoles.js",
-    "old": "const num3 = (num % 48) * num2 + Math.floor(num / 48);",
-    "new": "const num3 = num;",
+    "old": "  const num3 = (num % 48) * num2 + Math.floor(num / 48);",
+    "new": "  const num3 = num;",
     "tests": [
       "test/world/oh_placement.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "OH-B-placement-unsalted",
     "file": "src/world/oceanHoles.js",
-    "old": "stableHash(mapPixelX, mapPixelY, (PLACEMENT_SALT ^ salt) >>> 0) & 0xffff;",
-    "new": "stableHash(mapPixelX, mapPixelY, salt) & 0xffff;",
+    "old": "  const h = stableHash(mapPixelX, mapPixelY, (PLACEMENT_SALT ^ salt) >>> 0) & 0xffff;",
+    "new": "  const h = stableHash(mapPixelX, mapPixelY, salt) & 0xffff;",
     "tests": [
       "test/world/oh_placement.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "OH-B-placement-to-the-edge",
     "file": "src/world/oceanHoles.js",
-    "old": "return f32(f32(0.28) + f32(f32(f32(h) / 65535) * f32(0.44)));",
-    "new": "return f32(f32(f32(h) / 65535));",
+    "old": "  return f32(f32(0.28) + f32(f32(f32(h) / 65535) * f32(0.44)));",
+    "new": "  return f32(f32(f32(h) / 65535));",
     "tests": [
       "test/world/oh_placement.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "OH-B-pit-depth-unscaled",
     "file": "src/world/oceanHoles.js",
-    "old": "  const num = f32(32 * scale);\n  const num2 = f32(9 * scale);\n  if (distance >= num) return 0;",
-    "new": "  const num = 32;\n  const num2 = 9;\n  if (distance >= num) return 0;",
+    "old": "  const num = f32(32 * scale);\n  const num2 = f32(9 * scale);",
+    "new": "  const num = 32;\n  const num2 = 9;",
     "tests": [
       "test/world/oh_placement.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "OH-B-flatten-always",
     "file": "src/world/oceanHoles.js",
-    "old": "const flattened = !!allowFlatten && num5 > 0 && num8 > 5;",
-    "new": "const flattened = !!allowFlatten && num5 > 0;",
+    "old": "  const flattened = !!allowFlatten && num5 > 0 && num8 > 5;",
+    "new": "  const flattened = !!allowFlatten && num5 > 0;",
     "tests": [
       "test/world/oh_placement.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "OH-B-flatten-unverified",
     "file": "src/world/oceanHoles.js",
-    "old": "const flattened = !!allowFlatten && num5 > 0 && num8 > 5;",
-    "new": "const flattened = num5 > 0 && num8 > 5;",
+    "old": "  const flattened = !!allowFlatten && num5 > 0 && num8 > 5;",
+    "new": "  const flattened = num5 > 0 && num8 > 5;",
     "tests": [
       "test/world/oh_placement.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "OH-B-carve-grid-only",
     "file": "src/world/oceanHoles.js",
-    "old": "  if (!positions || positions.length < 3) return null;\n  const n = Math.floor(positions.length / 3);",
-    "new": "  if (!positions || positions.length < 3) return null;\n  const n = Math.min(4225, Math.floor(positions.length / 3));",
+    "old": "  const n = Math.floor(positions.length / 3);",
+    "new": "  const n = Math.min(4225, Math.floor(positions.length / 3));",
     "tests": [
       "test/world/oh_placement.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "OH-B-grid-reads-the-walls",
     "file": "src/world/oceanHoles.js",
-    "old": "  if (!grid || positions.length / 3 < num) return grid;\n  for (let i = 0; i < num; i++)",
-    "new": "  if (!grid) return grid;\n  for (let i = 0; i < positions.length / 3; i++)",
+    "old": "  if (!grid || positions.length / 3 < num) return grid;\n  for (let i = 0; i < num; i++) grid[i] = positions[i * 3 + 1];",
+    "new": "  if (!grid) return grid;\n  for (let i = 0; i < positions.length / 3; i++) grid[i] = positions[i * 3 + 1];",
     "tests": [
       "test/world/oh_placement.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "OH-B-ray-from-the-sea",
     "file": "src/world/oceanHoles.js",
-    "old": "const top = f32(surfaceY + 5);",
-    "new": "const top = f32(surfaceY);",
+    "old": "  const top = f32(surfaceY + 5);",
+    "new": "  const top = f32(surfaceY);",
     "tests": [
       "test/world/oh_placement.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "OH-B-opening-lowest",
     "file": "src/world/oceanHoles.js",
-    "old": "if (y != null) floorY = Math.max(floorY, y);",
-    "new": "if (y != null) floorY = Math.min(floorY, y);",
+    "old": "    if (y != null) floorY = Math.max(floorY, y);",
+    "new": "    if (y != null) floorY = Math.min(floorY, y);",
     "tests": [
       "test/world/oh_placement.test.js",
       "test/scenes/oh_host.test.js"
@@ -273,8 +273,8 @@
   {
     "name": "OH-C-miasma-no-prewarm",
     "file": "src/world/oceanHolesMiasma.js",
-    "old": "  for (let t = 0; t < DEFAULT_DURATION; t += 1 / 60) step(1 / 60);\n",
-    "new": "",
+    "old": "  for (let t = 0; t < DEFAULT_DURATION; t += 1 / 60) step(1 / 60);\n  return {",
+    "new": "  return {",
     "tests": [
       "test/world/oh_placement.test.js"
     ]
@@ -642,7 +642,7 @@
   {
     "name": "OH-E-bonus-counts-nothing",
     "file": "src/world/oceanHoles.js",
-    "old": "    if (it) { items.push(it); num++; }   // AddItem(item, AddPosition.Back)",
+    "old": "    if (it) {\n      items.push(it);\n      num++;\n    } // AddItem(item, AddPosition.Back)",
     "new": "    if (it) items.push(it);\n    num++;",
     "tests": [
       "test/scenes/oh_abyss.test.js"
@@ -651,7 +651,7 @@
   {
     "name": "OH-E-arrow-spared",
     "file": "src/world/oceanHoles.js",
-    "old": "    if (item.group === 'Weapons') {   // && GroupIndex != 131 - always so (the header)",
+    "old": "    if (item.group === 'Weapons') {\n      // && GroupIndex != 131 - always so (the header)",
     "new": "    if (item.group === 'Weapons' && item.templateIndex !== 131) {",
     "tests": [
       "test/scenes/oh_abyss.test.js"
@@ -669,8 +669,8 @@
   {
     "name": "OH-E-stack-kept",
     "file": "src/world/oceanHoles.js",
-    "old": "    Object.assign(item, fresh, { flags: 0, stackCount: 1 });",
-    "new": "    Object.assign(item, fresh, { flags: 0 });",
+    "old": "    Object.assign(item, fresh, { flags: 0, stackCount: 1 }); // SetItem (DaggerfallUnityItem.cs:565, :572), then the material pass",
+    "new": "    Object.assign(item, fresh, { flags: 0 }); // SetItem (DaggerfallUnityItem.cs:565, :572), then the material pass",
     "tests": [
       "test/scenes/oh_abyss.test.js"
     ]
@@ -678,7 +678,7 @@
   {
     "name": "OH-E-magic-not-kept",
     "file": "src/world/oceanHoles.js",
-    "old": "    if (enchanted) for (const [k, v] of Object.entries(kept)) { if (v === undefined) delete item[k]; else item[k] = v; }",
+    "old": "    if (enchanted)\n      for (const [k, v] of Object.entries(kept)) {\n        if (v === undefined) delete item[k];\n        else item[k] = v;\n      }",
     "new": "    void kept;",
     "tests": [
       "test/scenes/oh_abyss.test.js"
@@ -687,8 +687,8 @@
   {
     "name": "OH-E-identified-kept-plain",
     "file": "src/world/oceanHoles.js",
-    "old": "    delete item.isIdentified;\n",
-    "new": "",
+    "old": "    delete item.isIdentified;\n    if (enchanted)",
+    "new": "    if (enchanted)",
     "tests": [
       "test/scenes/oh_abyss.test.js"
     ]
@@ -696,8 +696,8 @@
   {
     "name": "OH-E-variant-reset",
     "file": "src/world/oceanHoles.js",
-    "old": "fresh = remintArmor(item.templateIndex, next, clampArmorVariant(item.templateIndex, item.material ?? 0, item.variant ?? 0));",
-    "new": "fresh = remintArmor(item.templateIndex, next, 0);",
+    "old": "      if (next !== (item.material ?? 0))\n        fresh = remintArmor(\n          item.templateIndex,\n          next,\n          clampArmorVariant(item.templateIndex, item.material ?? 0, item.variant ?? 0),\n        );",
+    "new": "      if (next !== (item.material ?? 0)) fresh = remintArmor(item.templateIndex, next, 0);",
     "tests": [
       "test/scenes/oh_abyss.test.js"
     ]
@@ -860,8 +860,8 @@
   {
     "name": "OH-F-A2-no-drift",
     "file": "src/world/oceanHolesMiasma.js",
-    "old": "out = radius + DRIFT * SURFACE_MIASMA_LIFETIME + half;",
-    "new": "out = radius + half;",
+    "old": "    out = radius + DRIFT * SURFACE_MIASMA_LIFETIME + half;",
+    "new": "    out = radius + half;",
     "tests": [
       "test/scenes/oh_host.test.js"
     ]
@@ -869,8 +869,8 @@
   {
     "name": "OH-F-A2-no-rise",
     "file": "src/world/oceanHolesMiasma.js",
-    "old": "return [-out, -half, -out, out, height + half, out];",
-    "new": "return [-out, -half, -out, out, half, out];",
+    "old": "  return [-out, -half, -out, out, height + half, out];",
+    "new": "  return [-out, -half, -out, out, half, out];",
     "tests": [
       "test/scenes/oh_host.test.js"
     ]
@@ -1043,8 +1043,8 @@
   {
     "name": "OH-F-C8-raw-variant",
     "file": "src/world/oceanHoles.js",
-    "old": "fresh = remintArmor(item.templateIndex, next, clampArmorVariant(item.templateIndex, item.material ?? 0, item.variant ?? 0));",
-    "new": "fresh = remintArmor(item.templateIndex, next, item.variant ?? 0);",
+    "old": "      if (next !== (item.material ?? 0))\n        fresh = remintArmor(\n          item.templateIndex,\n          next,\n          clampArmorVariant(item.templateIndex, item.material ?? 0, item.variant ?? 0),\n        );",
+    "new": "      if (next !== (item.material ?? 0)) fresh = remintArmor(item.templateIndex, next, item.variant ?? 0);",
     "tests": [
       "test/scenes/oh_abyss.test.js"
     ]

@@ -269,11 +269,11 @@ test('AUDIT 64 F13: the layout carries SetLayoutData(RdbObject) inputs, and the 
   // StaticNPC.cs:149-151 hashes the RAW, UN-NEGATED XPos/YPos/ZPos (the
   // billboard's -YPos is the render transform only), and :154 seeds the
   // name off the FLAT RESOURCE's stream position, not obj.Position.
-  assert.ok(l.includes('rawX: obj.xPos, rawY: obj.yPos, rawZ: obj.zPos,'),
+  assert.ok(l.includes('rawX: obj.xPos,\n          rawY: obj.yPos,\n          rawZ: obj.zPos,'),
     'the un-negated record ints ride the flat');
   assert.ok(l.includes('flatPosition: fr.position,'),
     'nameSeed reads the flat resource offset, not the object offset');
-  assert.ok(l.includes('factionID: fr.factionOrMobileId, flags: fr.flags,'));
+  assert.ok(l.includes('factionID: fr.factionOrMobileId,\n          flags: fr.flags,'));
   const d = src('src/scenes/dungeonContext.js');
   assert.ok(d.includes('context: NPC_CONTEXT.Dungeon,'),
     'StaticNPC.cs:159 - the ONLY producer of Context.Dungeon, which topicTree reads');

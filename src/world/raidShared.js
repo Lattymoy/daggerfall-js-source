@@ -14,8 +14,8 @@
 // runner alone.
 
 import { FOE_SEQ_MAX } from '../net/wire.js';
-import { RAID_KEY_RE } from '../net/raid/raidLaw.js';   // RAID3: a raid's key has one home, the relay's law beside it
-import { STAFF_EVENT_KEY_RE, STAFF_BOSS_SIZE_MIN, STAFF_BOSS_SIZE_MAX } from '../net/staffEvent/staffEventLaw.js';   // STAFF-EVENT: an event runs as a raid, under its own key
+import { RAID_KEY_RE } from '../net/raid/raidLaw.js'; // RAID3: a raid's key has one home, the relay's law beside it
+import { STAFF_EVENT_KEY_RE, STAFF_BOSS_SIZE_MIN, STAFF_BOSS_SIZE_MAX } from '../net/staffEvent/staffEventLaw.js'; // STAFF-EVENT: an event runs as a raid, under its own key
 /** A raid's key, or a staff event's (net/staffEvent/staffEventLaw.js - it runs as a raid: its raiders tagged, its words
  *  said, its runner elected by the raid's own law). @param {unknown} key */
 const raidLikeKey = (key) => typeof key === 'string' && (RAID_KEY_RE.test(key) || STAFF_EVENT_KEY_RE.test(key));
@@ -25,7 +25,8 @@ const raidLikeKey = (key) => typeof key === 'string' && (RAID_KEY_RE.test(key) |
  *  place of the world (world/arenaLocations.js, world/tamrielCapitals.js), whose stood record's region is its pixel's as
  *  the land read it then. A staff event's town too (systems/staffEvents.js staffRaidHere).
  *  @param {{ regionIndex: number, locationIndex: number }} r @param {{ regionIndex: number, locationIndex: number }|null|undefined} town */
-export const raidTownIs = (r, town) => !!town && r.locationIndex === town.locationIndex && (r.locationIndex < 0 || r.regionIndex === town.regionIndex);
+export const raidTownIs = (r, town) =>
+  !!town && r.locationIndex === town.locationIndex && (r.locationIndex < 0 || r.regionIndex === town.regionIndex);
 /** Two claims inside this window (a frame's latency, generously) are a race, settled by id - WOD7's own number
  *  (wodShared.js WOD_CLAIM_WINDOW_MS). */
 export const RAID_CLAIM_WINDOW_MS = 5000;
@@ -83,7 +84,8 @@ export function validRaidObjWords(raw) {
     const [key, k, a, b] = e;
     if (!raidLikeKey(key) || seen.has(key)) continue;
     if (!Number.isInteger(k) || k < 1 || k >= RAID_OBJ_KINDS) continue;
-    if (!Number.isInteger(a) || a < 0 || a > RAID_OBJ_MAX || !Number.isInteger(b) || b < 0 || b > RAID_OBJ_MAX) continue;
+    if (!Number.isInteger(a) || a < 0 || a > RAID_OBJ_MAX || !Number.isInteger(b) || b < 0 || b > RAID_OBJ_MAX)
+      continue;
     seen.add(key);
     out.push({ key, k, a, b });
   }
@@ -114,7 +116,8 @@ export function validStaffBossTags(raw) {
     if (out.size >= 1) break;
     if (!Array.isArray(e) || e.length !== 2) continue;
     const [i, sz] = e;
-    if (recordNumber(i) && Number.isSafeInteger(sz) && sz >= STAFF_BOSS_SIZE_MIN && sz <= STAFF_BOSS_SIZE_MAX) out.set(i, sz);
+    if (recordNumber(i) && Number.isSafeInteger(sz) && sz >= STAFF_BOSS_SIZE_MIN && sz <= STAFF_BOSS_SIZE_MAX)
+      out.set(i, sz);
   }
   return out;
 }

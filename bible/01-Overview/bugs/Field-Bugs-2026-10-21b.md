@@ -116,7 +116,7 @@ THE LAW NOW.
 - The departure is the log's own (`captainLedger.js` newLog `departed`, restored only where it lies within its log's way):
   a load keeps the voyage its save was on.
 - The port a pixel lies in is the nearest within SEA_RING by the crow's flight, exact on every engine
-  (`portSites.js:"export function boardPortAt(ports, x, y) {"`, the world's navalPortHere through it - code out of bootWorld). Inside a
+  (`portSites.js:"export function boardPortAt"`, the world's navalPortHere through it - code out of bootWorld). Inside a
   ring of two it differs from the squares on a tie alone: Pencart now names 5,923 squares of ship water, nine neighbours
   trade tied pixels, and no board port names none.
 - The quest says what counts: QLIS01's letter, log and the harbourmaster's word now ask for "the harbor of another, a

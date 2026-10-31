@@ -62,8 +62,8 @@
   {
     "name": "AUDIT-MEND-THIRD-L3-4-stale-mark-kept",
     "file": "src/world/oceanHoles.js",
-    "old": "    if (!enchanted) dropFoundMark(item);\n",
-    "new": "",
+    "old": "    if (!enchanted) dropFoundMark(item);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/auditmendthird.test.js"
     ],

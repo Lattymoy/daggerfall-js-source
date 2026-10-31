@@ -47,8 +47,8 @@
   {
     "name": "TT-no-head",
     "file": "src/world/placedCardTable.js",
-    "old": "Object.freeze([0.6, 1.5])",
-    "new": "Object.freeze([0.6])",
+    "old": "export const PLACE_CLEAR_HEIGHTS = Object.freeze([0.6, 1.5]);",
+    "new": "export const PLACE_CLEAR_HEIGHTS = Object.freeze([0.6]);",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "TT-slack-strict",
     "file": "src/world/placedCardTable.js",
-    "old": "Math.abs(fy - floor0) <= PLACE_STOREY_SLACK",
-    "new": "Math.abs(fy - floor0) < PLACE_STOREY_SLACK",
+    "old": "        Math.abs(fy - floor0) <= PLACE_STOREY_SLACK &&",
+    "new": "        Math.abs(fy - floor0) < PLACE_STOREY_SLACK &&",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "TT-slack-above-only",
     "file": "src/world/placedCardTable.js",
-    "old": "Math.abs(fy - floor0) <= PLACE_STOREY_SLACK",
-    "new": "fy - floor0 <= PLACE_STOREY_SLACK",
+    "old": "        Math.abs(fy - floor0) <= PLACE_STOREY_SLACK &&",
+    "new": "        fy - floor0 <= PLACE_STOREY_SLACK &&",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "TT-start-metre",
     "file": "src/world/placedCardTable.js",
-    "old": "probe.floor(sx, start[1] + 1, sz)",
-    "new": "probe.floor(sx, start[1] + 2, sz)",
+    "old": "  const floor0 = probe.floor(sx, start[1] + 1, sz);",
+    "new": "  const floor0 = probe.floor(sx, start[1] + 2, sz);",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "TT-start-ring",
     "file": "src/world/placedCardTable.js",
-    "old": "for (let r = 0; r <= 2 && first < 0; r++) {",
-    "new": "for (let r = 0; r <= 3 && first < 0; r++) {",
+    "old": "  for (let r = 0; r <= 2 && first < 0; r++) {",
+    "new": "  for (let r = 0; r <= 3 && first < 0; r++) {",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "TT-start-ring-short",
     "file": "src/world/placedCardTable.js",
-    "old": "for (let r = 0; r <= 2 && first < 0; r++) {",
-    "new": "for (let r = 0; r <= 1 && first < 0; r++) {",
+    "old": "  for (let r = 0; r <= 2 && first < 0; r++) {",
+    "new": "  for (let r = 0; r <= 1 && first < 0; r++) {",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "TT-walk-order",
     "file": "src/world/placedCardTable.js",
-    "old": "[[1, 0], [-1, 0], [0, 1], [0, -1]]) {\n      const ni = i + di",
-    "new": "[[-1, 0], [1, 0], [0, 1], [0, -1]]) {\n      const ni = i + di",
+    "old": "      [1, 0],\n      [-1, 0],",
+    "new": "      [-1, 0],\n      [1, 0],",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "TT-from-door-le",
     "file": "src/world/placedCardTable.js",
-    "old": "if (dist[c] < fromDoor) continue;",
-    "new": "if (dist[c] <= fromDoor) continue;",
+    "old": "    if (dist[c] < fromDoor) continue;",
+    "new": "    if (dist[c] <= fromDoor) continue;",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "TT-ring-floor",
     "file": "src/world/placedCardTable.js",
-    "old": "Math.ceil((hx - PLACE_BODY_R) / PLACE_CELL)",
-    "new": "Math.ceil(hx / PLACE_CELL)",
+    "old": "    const ri = Math.max(0, Math.ceil((hx - PLACE_BODY_R) / PLACE_CELL)),",
+    "new": "    const ri = Math.max(0, Math.ceil(hx / PLACE_CELL)),",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "TT-ring-unwalked",
     "file": "src/world/placedCardTable.js",
-    "old": "dist[(k + dk) * side + (i + di)] < 0) ok = false;",
-    "new": "dist[(k + dk) * side + (i + di)] < -1) ok = false;",
+    "old": "          if (i + di < 0 || k + dk < 0 || i + di >= side || k + dk >= side || dist[(k + dk) * side + (i + di)] < 0)",
+    "new": "          if (i + di < 0 || k + dk < 0 || i + di >= side || k + dk >= side || dist[(k + dk) * side + (i + di)] < -1)",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "TT-ring-past-grid",
     "file": "src/world/placedCardTable.js",
-    "old": "if (i + di < 0 || k + dk < 0 || i + di >= side || k + dk >= side || dist[",
-    "new": "if (dist[",
+    "old": "          if (i + di < 0 || k + dk < 0 || i + di >= side || k + dk >= side || dist[(k + dk) * side + (i + di)] < 0)\n            ok = false;",
+    "new": "          if (dist[(k + dk) * side + (i + di)] < 0) ok = false;",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "TT-avoid-le",
     "file": "src/world/placedCardTable.js",
-    "old": "Math.abs(ax - cx) < w.hx + r && Math.abs(az - cz) < w.hz + r",
-    "new": "Math.abs(ax - cx) <= w.hx + r && Math.abs(az - cz) < w.hz + r",
+    "old": "      if (near.some(([ax, , az, r, rz = r]) => Math.abs(ax - cx) < w.hx + r && Math.abs(az - cz) < w.hz + rz)) continue;",
+    "new": "      if (near.some(([ax, , az, r, rz = r]) => Math.abs(ax - cx) <= w.hx + r && Math.abs(az - cz) < w.hz + rz))\n        continue;",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "TT-avoid-no-reach",
     "file": "src/world/placedCardTable.js",
-    "old": "Math.abs(ax - cx) < w.hx + r && Math.abs(az - cz) < w.hz + r",
-    "new": "Math.abs(ax - cx) < w.hx && Math.abs(az - cz) < w.hz + r",
+    "old": "      if (near.some(([ax, , az, r, rz = r]) => Math.abs(ax - cx) < w.hx + r && Math.abs(az - cz) < w.hz + rz)) continue;",
+    "new": "      if (near.some(([ax, , az, r, rz = r]) => Math.abs(ax - cx) < w.hx && Math.abs(az - cz) < w.hz + rz)) continue;",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "TT-avoid-dy-strict",
     "file": "src/world/placedCardTable.js",
-    "old": "Math.abs(a[1] - floor0) <= PLACE_AVOID_DY",
-    "new": "Math.abs(a[1] - floor0) < PLACE_AVOID_DY",
+    "old": "  const near = avoid.filter((a) => Math.abs(a[1] - floor0) <= PLACE_AVOID_DY);",
+    "new": "  const near = avoid.filter((a) => Math.abs(a[1] - floor0) < PLACE_AVOID_DY);",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "TT-y-origin",
     "file": "src/world/placedCardTable.js",
-    "old": "y: fy - y0,",
-    "new": "y: fy,",
+    "old": "      return { x: cx - w.mx, y: fy - y0, z: cz - w.mz, yawDeg: w.yawDeg, cx, cz, hx: w.hx, hz: w.hz };",
+    "new": "      return { x: cx - w.mx, y: fy, z: cz - w.mz, yawDeg: w.yawDeg, cx, cz, hx: w.hx, hz: w.hz };",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "TT-x-middle",
     "file": "src/world/placedCardTable.js",
-    "old": "x: cx - w.mx,",
-    "new": "x: cx,",
+    "old": "      return { x: cx - w.mx, y: fy - y0, z: cz - w.mz, yawDeg: w.yawDeg, cx, cz, hx: w.hx, hz: w.hz };",
+    "new": "      return { x: cx, y: fy - y0, z: cz - w.mz, yawDeg: w.yawDeg, cx, cz, hx: w.hx, hz: w.hz };",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "TT-z-middle",
     "file": "src/world/placedCardTable.js",
-    "old": "z: cz - w.mz,",
-    "new": "z: cz,",
+    "old": "      return { x: cx - w.mx, y: fy - y0, z: cz - w.mz, yawDeg: w.yawDeg, cx, cz, hx: w.hx, hz: w.hz };",
+    "new": "      return { x: cx - w.mx, y: fy - y0, z: cz, yawDeg: w.yawDeg, cx, cz, hx: w.hx, hz: w.hz };",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "TT-grid-z-only",
     "file": "src/world/placedCardTable.js",
-    "old": "const sx = start[0] + PLACE_GRID_OFF[0], sz = start[2] + PLACE_GRID_OFF[1];",
-    "new": "const sx = start[0], sz = start[2] + PLACE_GRID_OFF[1];",
+    "old": "  const sx = start[0] + PLACE_GRID_OFF[0],",
+    "new": "  const sx = start[0],",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -587,8 +587,8 @@
   {
     "name": "TT-no-quarter-turn",
     "file": "src/world/placedCardTable.js",
-    "old": "const ways = [0, 90].map(",
-    "new": "const ways = [0].map(",
+    "old": "  const ways = [0, 90].map((yawDeg) => {",
+    "new": "  const ways = [0].map((yawDeg) => {",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -596,8 +596,8 @@
   {
     "name": "TT-turn-first",
     "file": "src/world/placedCardTable.js",
-    "old": "const ways = [0, 90].map(",
-    "new": "const ways = [90, 0].map(",
+    "old": "  const ways = [0, 90].map((yawDeg) => {",
+    "new": "  const ways = [90, 0].map((yawDeg) => {",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "TT-turn-swap-missing",
     "file": "src/world/placedCardTable.js",
-    "old": "const [ax, az] = yawDeg ? [(z1 - z0) / 2, (x1 - x0) / 2] : [(x1 - x0) / 2, (z1 - z0) / 2];",
-    "new": "const [ax, az] = [(x1 - x0) / 2, (z1 - z0) / 2];",
+    "old": "    const [ax, az] = yawDeg ? [(z1 - z0) / 2, (x1 - x0) / 2] : [(x1 - x0) / 2, (z1 - z0) / 2];",
+    "new": "    const [ax, az] = [(x1 - x0) / 2, (z1 - z0) / 2];",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -614,8 +614,8 @@
   {
     "name": "TT-turn-middle",
     "file": "src/world/placedCardTable.js",
-    "old": "const m = transformPoint(trs(0, 0, 0, 0, yawDeg, 0), mid[0], 0, mid[1]);",
-    "new": "const m = [mid[0], 0, mid[1]];",
+    "old": "    const m = transformPoint(trs(0, 0, 0, 0, yawDeg, 0), mid[0], 0, mid[1]); // its middle, turned with it",
+    "new": "    const m = [mid[0], 0, mid[1]]; // its middle, turned with it",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -623,8 +623,8 @@
   {
     "name": "TT-floor-entrance",
     "file": "src/world/placedCardTable.js",
-    "old": "for (let dk = -w.tk; dk <= w.tk; dk++) for (let di = -w.ti; di <= w.ti; di++) fy = Math.max(fy, floorOf[(k + dk) * side + (i + di)]);",
-    "new": "fy = floor0;",
+    "old": "      for (let dk = -w.tk; dk <= w.tk; dk++)\n        for (let di = -w.ti; di <= w.ti; di++) fy = Math.max(fy, floorOf[(k + dk) * side + (i + di)]);",
+    "new": "      fy = floor0;",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -632,8 +632,8 @@
   {
     "name": "TT-floor-centre-only",
     "file": "src/world/placedCardTable.js",
-    "old": "const ti = Math.floor(ax / PLACE_CELL), tk = Math.floor(az / PLACE_CELL);",
-    "new": "const ti = 0, tk = 0;",
+    "old": "    const ti = Math.floor(ax / PLACE_CELL),\n      tk = Math.floor(az / PLACE_CELL); // the cells under its top",
+    "new": "    const ti = 0,\n      tk = 0; // the cells under its top",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]
@@ -641,8 +641,8 @@
   {
     "name": "TT-floor-lowest",
     "file": "src/world/placedCardTable.js",
-    "old": "fy = Math.max(fy, floorOf[",
-    "new": "fy = Math.min(fy === -Infinity ? Infinity : fy, floorOf[",
+    "old": "        for (let di = -w.ti; di <= w.ti; di++) fy = Math.max(fy, floorOf[(k + dk) * side + (i + di)]);",
+    "new": "        for (let di = -w.ti; di <= w.ti; di++)\n          fy = Math.min(fy === -Infinity ? Infinity : fy, floorOf[(k + dk) * side + (i + di)]);",
     "tests": [
       "test/world/card/taverntable.test.js"
     ]

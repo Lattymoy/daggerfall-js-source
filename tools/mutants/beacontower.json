@@ -119,8 +119,8 @@
   {
     "name": "BEACON-the-flame-without-holes",
     "file": "src/world/portArt.js",
-    "old": "    if (heat < 0) { img.colors[i + 3] = 0; continue; }",
-    "new": "    if (heat < 0) { put(img, x, y, [0, 0, 0]); continue; }",
+    "old": "        img.colors[i + 3] = 0;",
+    "new": "        put(img, x, y, [0, 0, 0]);",
     "tests": [
       "test/world/beacontower.test.js"
     ]

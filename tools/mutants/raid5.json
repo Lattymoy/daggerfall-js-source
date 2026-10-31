@@ -75,8 +75,8 @@
   {
     "name": "RAID5-the-word-lets-the-classic-through",
     "file": "src/world/raidShared.js",
-    "old": "if (!Number.isInteger(k) || k < 1 || k >= RAID_OBJ_KINDS) continue;",
-    "new": "if (!Number.isInteger(k) || k < 0 || k >= RAID_OBJ_KINDS) continue;",
+    "old": "    if (!Number.isInteger(k) || k < 1 || k >= RAID_OBJ_KINDS) continue;",
+    "new": "    if (!Number.isInteger(k) || k < 0 || k >= RAID_OBJ_KINDS) continue;",
     "tests": [
       "test/systems/raid5_kinds.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "RAID5-the-words-bound-off-by-one",
     "file": "src/world/raidShared.js",
-    "old": "a < 0 || a > RAID_OBJ_MAX ||",
-    "new": "a < 0 || a >= RAID_OBJ_MAX ||",
+    "old": "    if (!Number.isInteger(a) || a < 0 || a > RAID_OBJ_MAX || !Number.isInteger(b) || b < 0 || b > RAID_OBJ_MAX)",
+    "new": "    if (!Number.isInteger(a) || a < 0 || a >= RAID_OBJ_MAX || !Number.isInteger(b) || b < 0 || b > RAID_OBJ_MAX)",
     "tests": [
       "test/systems/raid5_kinds.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "RAID5-a-duplicate-word-kept",
     "file": "src/world/raidShared.js",
-    "old": "if (!raidLikeKey(key) || seen.has(key)) continue;\n    if (!Number.isInteger(k) || k < 1",
-    "new": "if (!raidLikeKey(key)) continue;\n    if (!Number.isInteger(k) || k < 1",
+    "old": "    const [key, k, a, b] = e;\n    if (!raidLikeKey(key) || seen.has(key)) continue;",
+    "new": "    const [key, k, a, b] = e;\n    if (!raidLikeKey(key)) continue;",
     "tests": [
       "test/systems/raid5_kinds.test.js"
     ]

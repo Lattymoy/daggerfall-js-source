@@ -390,8 +390,8 @@
   {
     "name": "BAY-LEFT-GROUND-D1-places-shore-capitals-taken",
     "file": "src/world/pastBayRows.js",
-    "old": "if (D.w * D.h > 1 || cap.shore || capitalCanalOpen(k) || !cap.plan) return;",
-    "new": "if (D.w * D.h > 1 || capitalCanalOpen(k) || !cap.plan) return;",
+    "old": "      if (D.w * D.h > 1 || cap.shore || capitalCanalOpen(k) || !cap.plan) return; // its own ground's law",
+    "new": "      if (D.w * D.h > 1 || capitalCanalOpen(k) || !cap.plan) return; // its own ground's law",
     "tests": [
       "test/world/terrain/bayleftground_sites.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "BAY-LEFT-GROUND-D1-places-capitals-over-several-pixels-taken",
     "file": "src/world/pastBayRows.js",
-    "old": "if (D.w * D.h > 1 || cap.shore || capitalCanalOpen(k) || !cap.plan) return;",
-    "new": "if (cap.shore || capitalCanalOpen(k) || !cap.plan) return;",
+    "old": "      if (D.w * D.h > 1 || cap.shore || capitalCanalOpen(k) || !cap.plan) return; // its own ground's law",
+    "new": "      if (cap.shore || capitalCanalOpen(k) || !cap.plan) return; // its own ground's law",
     "tests": [
       "test/world/terrain/bayleftground_sites.test.js"
     ],
@@ -410,8 +410,8 @@
   {
     "name": "BAY-LEFT-GROUND-D1-places-the-pinned-place-twice",
     "file": "src/world/pastBayRows.js",
-    "old": "    if (p.pinned && capitals) continue;   // a site already: it stands as its capital (above)\n",
-    "new": "",
+    "old": "    if (p.pinned && capitals) continue; // a site already: it stands as its capital (above)\n    const template = templateOf(p);",
+    "new": "    const template = templateOf(p);",
     "tests": [
       "test/world/terrain/bayleftground_sites.test.js"
     ]

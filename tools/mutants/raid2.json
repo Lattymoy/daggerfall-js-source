@@ -2,8 +2,8 @@
   {
     "name": "RAID2-words-past-four",
     "file": "src/world/raidShared.js",
-    "old": "    if (out.length >= RAID_WORDS_MAX) break;\n    if (!Array.isArray(e) || e.length !== 3) continue;\n",
-    "new": "    if (!Array.isArray(e) || e.length !== 3) continue;\n",
+    "old": "    if (out.length >= RAID_WORDS_MAX) break;\n    if (!Array.isArray(e) || e.length !== 3) continue;",
+    "new": "    if (!Array.isArray(e) || e.length !== 3) continue;",
     "tests": [
       "test/systems/raid2_raidsOnline.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RAID2-word-twice-for-a-raid",
     "file": "src/world/raidShared.js",
-    "old": "if (!raidLikeKey(key) || seen.has(key)) continue;\n    if (!Number.isInteger(n) || n < 0",
-    "new": "if (!raidLikeKey(key)) continue;\n    if (!Number.isInteger(n) || n < 0",
+    "old": "    const [key, n, age] = e;\n    if (!raidLikeKey(key) || seen.has(key)) continue;",
+    "new": "    const [key, n, age] = e;\n    if (!raidLikeKey(key)) continue;",
     "tests": [
       "test/systems/raid2_raidsOnline.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RAID2-deaths-bound-off-by-one",
     "file": "src/world/raidShared.js",
-    "old": "n > RAID_KILLS_WIRE_MAX) continue;",
-    "new": "n > RAID_KILLS_WIRE_MAX + 1) continue;",
+    "old": "    if (!Number.isInteger(n) || n < 0 || n > RAID_KILLS_WIRE_MAX) continue;",
+    "new": "    if (!Number.isInteger(n) || n < 0 || n > RAID_KILLS_WIRE_MAX + 1) continue;",
     "tests": [
       "test/systems/raid2_raidsOnline.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RAID2-claim-age-floor-off-by-one",
     "file": "src/world/raidShared.js",
-    "old": "age < -1 || age > RAID_CLAIM_AGE_MAX) continue;",
-    "new": "age < -2 || age > RAID_CLAIM_AGE_MAX) continue;",
+    "old": "    if (!Number.isInteger(age) || age < -1 || age > RAID_CLAIM_AGE_MAX) continue;",
+    "new": "    if (!Number.isInteger(age) || age < -2 || age > RAID_CLAIM_AGE_MAX) continue;",
     "tests": [
       "test/systems/raid2_raidsOnline.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RAID2-claim-age-ceiling-off-by-one",
     "file": "src/world/raidShared.js",
-    "old": "age < -1 || age > RAID_CLAIM_AGE_MAX) continue;",
-    "new": "age < -1 || age >= RAID_CLAIM_AGE_MAX) continue;",
+    "old": "    if (!Number.isInteger(age) || age < -1 || age > RAID_CLAIM_AGE_MAX) continue;",
+    "new": "    if (!Number.isInteger(age) || age < -1 || age >= RAID_CLAIM_AGE_MAX) continue;",
     "tests": [
       "test/systems/raid2_raidsOnline.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "RAID2-tag-any-key",
     "file": "src/world/raidShared.js",
-    "old": "if (recordNumber(i) && raidLikeKey(key)) out.set(i, key);",
-    "new": "if (recordNumber(i) && typeof key === 'string') out.set(i, key);",
+    "old": "    if (recordNumber(i) && raidLikeKey(key)) out.set(i, key);",
+    "new": "    if (recordNumber(i) && typeof key === 'string') out.set(i, key);",
     "tests": [
       "test/systems/raid2_raidsOnline.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RAID2-tags-past-the-frame",
     "file": "src/world/raidShared.js",
-    "old": "    if (out.size >= RAID_TAGS_MAX) break;\n    if (!Array.isArray(e) || e.length !== 2) continue;\n    const [i, key] = e;",
-    "new": "    if (!Array.isArray(e) || e.length !== 2) continue;\n    const [i, key] = e;",
+    "old": "    if (out.size >= RAID_TAGS_MAX) break;\n    if (!Array.isArray(e) || e.length !== 2) continue;",
+    "new": "    if (!Array.isArray(e) || e.length !== 2) continue;",
     "tests": [
       "test/systems/raid2_raidsOnline.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "RAID2-record-number-bound",
     "file": "src/world/raidShared.js",
-    "old": "i >= 0 && i <= FOE_SEQ_MAX;",
-    "new": "i >= 0 && i < FOE_SEQ_MAX;",
+    "old": "const recordNumber = (i) => Number.isInteger(i) && i >= 0 && i <= FOE_SEQ_MAX;",
+    "new": "const recordNumber = (i) => Number.isInteger(i) && i >= 0 && i < FOE_SEQ_MAX;",
     "tests": [
       "test/systems/raid2_raidsOnline.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RAID2-window-edge",
     "file": "src/world/raidShared.js",
-    "old": "Math.abs(win.age - c.age) <= RAID_CLAIM_WINDOW_MS",
-    "new": "Math.abs(win.age - c.age) < RAID_CLAIM_WINDOW_MS",
+    "old": "      if (Math.abs(win.age - c.age) <= RAID_CLAIM_WINDOW_MS && c.id < win.id) win = c;",
+    "new": "      if (Math.abs(win.age - c.age) < RAID_CLAIM_WINDOW_MS && c.id < win.id) win = c;",
     "tests": [
       "test/systems/raid2_raidsOnline.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "RAID2-race-to-the-larger-id",
     "file": "src/world/raidShared.js",
-    "old": "<= RAID_CLAIM_WINDOW_MS && c.id < win.id) win = c;",
-    "new": "<= RAID_CLAIM_WINDOW_MS && c.id > win.id) win = c;",
+    "old": "      if (Math.abs(win.age - c.age) <= RAID_CLAIM_WINDOW_MS && c.id < win.id) win = c;",
+    "new": "      if (Math.abs(win.age - c.age) <= RAID_CLAIM_WINDOW_MS && c.id > win.id) win = c;",
     "tests": [
       "test/systems/raid2_raidsOnline.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RAID2-newest-claim-first",
     "file": "src/world/raidShared.js",
-    "old": "sort((a, b) => b.age - a.age ||",
-    "new": "sort((a, b) => a.age - b.age ||",
+    "old": "    const oldest = [...live].sort((a, b) => b.age - a.age || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));",
+    "new": "    const oldest = [...live].sort((a, b) => a.age - b.age || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));",
     "tests": [
       "test/systems/raid2_raidsOnline.test.js"
     ]

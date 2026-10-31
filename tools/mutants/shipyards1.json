@@ -282,8 +282,8 @@
   {
     "name": "SHIPYARDS-the-face-unread",
     "file": "src/world/portSites.js",
-    "old": "let score = field.kind === 'middle' ? 0 : FACE_K * Math.max(0, depth - (field.at(fx, fy) - back));",
-    "new": "let score = 0;",
+    "old": "        let score = field.kind === 'middle' ? 0 : FACE_K * Math.max(0, depth - (field.at(fx, fy) - back));",
+    "new": "        let score = 0;",
     "tests": [
       "test/world/shipyards1_place.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "SHIPYARDS-the-light-beside-the-yard",
     "file": "src/world/portSites.js",
-    "old": "          if (apart) score -= LIGHT_APART_K",
-    "new": "          if (false) score -= LIGHT_APART_K",
+    "old": "          if (apart)",
+    "new": "          if (false)",
     "tests": [
       "test/world/shipyards1_place.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "SHIPYARDS-the-maps-y-unturned",
     "file": "src/world/portSites.js",
-    "old": "      sx += dx * w; sz -= dy * w;",
-    "new": "      sx += dx * w; sz += dy * w;",
+    "old": "      sz -= dy * w;",
+    "new": "      sz += dy * w;",
     "tests": [
       "test/world/shipyards1_place.test.js"
     ]
@@ -318,8 +318,8 @@
   {
     "name": "SHIPYARDS-a-pond-the-sea",
     "file": "src/world/portSites.js",
-    "old": "    if (!edge || body.length < SEA_CELLS_MIN ||",
-    "new": "    if (body.length < SEA_CELLS_MIN ||",
+    "old": "    if (!edge || body.length < SEA_CELLS_MIN || againstBearing(body, W, H, bearing)) continue;",
+    "new": "    if (body.length < SEA_CELLS_MIN || againstBearing(body, W, H, bearing)) continue;",
     "tests": [
       "test/world/shipyards1_place.test.js"
     ]
@@ -507,8 +507,8 @@
   {
     "name": "PIERS-the-dress-unbuilt",
     "file": "src/world/quayModel.js",
-    "old": "  pierDress(m, loose, plan);\n",
-    "new": "",
+    "old": "  pierDress(m, loose, plan);\n  // the cargo: crates, some stacked two high, and barrels",
+    "new": "  // the cargo: crates, some stacked two high, and barrels",
     "tests": [
       "test/systems/naval/piers1.test.js"
     ]

@@ -574,8 +574,8 @@
   {
     "name": "WITCH1-AUDIT-stand-in-foot-unmeasured",
     "file": "src/world/propBodies.js",
-    "old": "bmp?.rgba?.length >= bmp?.width * bmp?.height * 4 ? (",
-    "new": "false ? (",
+    "old": "    : bmp?.rgba?.length >= bmp?.width * bmp?.height * 4",
+    "new": "    : false",
     "tests": [
       "test/world/witch1_decor.test.js"
     ],

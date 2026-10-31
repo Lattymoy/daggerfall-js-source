@@ -339,7 +339,7 @@ Small Ship lies in within a pixel of Daggerfall, Wayrest, Holwych, Ripmore, Isfa
 Wilderham, Longwich End, Longmore Field or Wartale - no voyage into or out of one counted, no cargo for one could be
 delivered, no shipwright stood there. Within SEA_RING - the open sea's reach that makes a town a port
 (`portSites.js seaBears`) - every one of the 106 has it. So the port lain at is the nearest board port within SEA_RING
-(`portSites.js:"export function boardPortAt(ports, x, y) {"` - by the crow's flight since VOYAGE-HOLD: by the ring's
+(`portSites.js:"export function boardPortAt"` - by the crow's flight since VOYAGE-HOLD: by the ring's
 squares a tie went to the list's first, and Pencart's every pixel of water tied Longham's), handed whether or not a flagged place is within a
 pixel (`world.js:"nearPort, port: navalPortHere(), waters:"`); the berth, the shipwright and the crew's port read the two
 through one question (`navalHost.js:"const inPortWaters = () => { const w = where(); return !!(w.nearPort || w.port); };"`);

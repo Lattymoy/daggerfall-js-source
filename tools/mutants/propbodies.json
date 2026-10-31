@@ -101,8 +101,8 @@
   {
     "name": "PROP-BODIES-the-full-tier-flora",
     "file": "src/world/propBodies.js",
-    "old": "if (tree || sway === RESPONSE.full) return body(",
-    "new": "if (tree) return body(",
+    "old": "  if (tree || sway === RESPONSE.full)\n    return body(c, Math.min(w * COVER_RADIUS_FRAC, COVER_TRUNK_R), h * COVER_CROWN_FROM);",
+    "new": "  if (tree) return body(c, Math.min(w * COVER_RADIUS_FRAC, COVER_TRUNK_R), h * COVER_CROWN_FROM);",
     "tests": [
       "test/player/propbodies.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PROP-BODIES-the-flora-solid",
     "file": "src/world/propBodies.js",
-    "old": "  if (sway !== 0) return null;   // the flora, Low and Medium\n",
-    "new": "",
+    "old": "  if (sway !== 0) return null; // the flora, Low and Medium\n  return body(c, (footShare(t, record, size) * w) / 2, h * COVER_HEIGHT_FRAC);",
+    "new": "  return body(c, (footShare(t, record, size) * w) / 2, h * COVER_HEIGHT_FRAC);",
     "tests": [
       "test/player/propbodies.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PROP-BODIES-the-flora-unasked",
     "file": "src/world/propBodies.js",
-    "old": "const sway = isNatureArchive(archive) ? responseByte(archive, record) : 0;",
-    "new": "const sway = 0;",
+    "old": "  const sway = isNatureArchive(archive) ? responseByte(archive, record) : 0;",
+    "new": "  const sway = 0;",
     "tests": [
       "test/player/propbodies.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PROP-BODIES-the-step-unasked",
     "file": "src/world/propBodies.js",
-    "old": "(r > 0 && h >= STEP_OFFSET ? ",
-    "new": "(r > 0 ? ",
+    "old": "const body = (c, r, h) => (r > 0 && h >= STEP_OFFSET ? { c, r, h, lift: 0, body: true, _mark: 0 } : null); // MEM-AUDIT: born with the index's mark (cover.js fileIn)",
+    "new": "const body = (c, r, h) => (r > 0 ? { c, r, h, lift: 0, body: true, _mark: 0 } : null); // MEM-AUDIT: born with the index's mark (cover.js fileIn)",
     "tests": [
       "test/player/propbodies.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "PROP-BODIES-the-never-cover-archives-a-body",
     "file": "src/world/propBodies.js",
-    "old": "if (NOT_COVER_ARCHIVES.has(archive) || c?.noCover) return null;",
-    "new": "if (c?.noCover) return null;",
+    "old": "  if (NOT_COVER_ARCHIVES.has(archive) || c?.noCover) return null;",
+    "new": "  if (c?.noCover) return null;",
     "tests": [
       "test/player/propbodies.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PROP-BODIES-the-step-s-rows-read",
     "file": "src/world/propBodies.js",
-    "old": "hi = bmp.height - 1 - Math.round(STEP_OFFSET / perRow);",
-    "new": "hi = bmp.height - 1;",
+    "old": "      hi = bmp.height - 1 - Math.round(STEP_OFFSET / perRow);",
+    "new": "      hi = bmp.height - 1;",
     "tests": [
       "test/player/propbodies.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "PROP-BODIES-the-rows-over-the-head-read",
     "file": "src/world/propBodies.js",
-    "old": "Math.min(size.h, CAPSULE_HEIGHT) / perRow",
-    "new": "size.h / perRow",
+    "old": "    const lo = Math.max(0, bmp.height - Math.round(Math.min(size.h, CAPSULE_HEIGHT) / perRow)),",
+    "new": "    const lo = Math.max(0, bmp.height - Math.round(size.h / perRow)),",
     "tests": [
       "test/player/propbodies.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "PROP-BODIES-the-widest-row",
     "file": "src/world/propBodies.js",
-    "old": "share = spans[spans.length >> 1];",
-    "new": "share = spans[spans.length - 1];",
+    "old": "      share = spans[spans.length >> 1];",
+    "new": "      share = spans[spans.length - 1];",
     "tests": [
       "test/player/propbodies.test.js"
     ]
@@ -174,7 +174,7 @@
     "name": "PROP-BODIES-the-extent-not-the-picture",
     "file": "src/world/propBodies.js",
     "old": "      let n = 0;\n      for (let x = 0; x < bmp.width; x++) if (solid(y * bmp.width + x)) n++;",
-    "new": "      let a = -1, n = 0;\n      for (let x = 0; x < bmp.width; x++) if (solid(y * bmp.width + x)) { if (a < 0) a = x; n = x - a + 1; }",
+    "new": "      let a = -1,\n        n = 0;\n      for (let x = 0; x < bmp.width; x++)\n        if (solid(y * bmp.width + x)) {\n          if (a < 0) a = x;\n          n = x - a + 1;\n        }",
     "tests": [
       "test/player/propbodies.test.js"
     ]

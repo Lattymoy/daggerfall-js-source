@@ -382,8 +382,8 @@
   {
     "name": "DW-E3-mackerel-weight",
     "file": "src/world/passiveFish.js",
-    "old": "species(9005, 'Mackerel', 46, 15,",
-    "new": "species(9005, 'Mackerel', 46, 14,",
+    "old": "  species(9005, 'Mackerel', 46, 15, 0.8, 2.2666667, 'mackerel', 1.1, 1.1, 5, 12, B.Any, 0.1, 1, 0.8, 1.2, 0.9, 1.8),",
+    "new": "  species(9005, 'Mackerel', 46, 14, 0.8, 2.2666667, 'mackerel', 1.1, 1.1, 5, 12, B.Any, 0.1, 1, 0.8, 1.2, 0.9, 1.8),",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "DW-E3-finulon-depth-band",
     "file": "src/world/passiveFish.js",
-    "old": "B.OpenOcean | B.Cold, 0.6, 1, 0.8, 1.1, 1.4, 2.6)",
-    "new": "B.OpenOcean | B.Cold, 0.5, 1, 0.8, 1.1, 1.4, 2.6)",
+    "old": "    0.6,",
+    "new": "    0.5,",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -400,8 +400,8 @@
   {
     "name": "DW-E3-mackerel-dart-hold",
     "file": "src/world/passiveFish.js",
-    "old": "0.8, 1.2, 0.9, 1.8),",
-    "new": "0.8, 1.2, 0.9, 1.9),",
+    "old": "  species(9005, 'Mackerel', 46, 15, 0.8, 2.2666667, 'mackerel', 1.1, 1.1, 5, 12, B.Any, 0.1, 1, 0.8, 1.2, 0.9, 1.8),",
+    "new": "  species(9005, 'Mackerel', 46, 15, 0.8, 2.2666667, 'mackerel', 1.1, 1.1, 5, 12, B.Any, 0.1, 1, 0.8, 1.2, 0.9, 1.9),",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -409,8 +409,8 @@
   {
     "name": "DW-E3-height-multiplier-unclamped",
     "file": "src/world/passiveFish.js",
-    "old": "const minH = Math.max(f32(0.05), f32(minHeightMultiplier));",
-    "new": "const minH = f32(minHeightMultiplier);",
+    "old": "  const minH = Math.max(f32(0.05), f32(minHeightMultiplier));",
+    "new": "  const minH = f32(minHeightMultiplier);",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -427,8 +427,8 @@
   {
     "name": "DW-E3-biome-mask-ignored",
     "file": "src/world/passiveFish.js",
-    "old": "if ((s.biomes & biome) === 0) return 0;",
-    "new": "if ((s.biomes & biome) === 0 && false) return 0;",
+    "old": "  if ((s.biomes & biome) === 0) return 0;",
+    "new": "  if ((s.biomes & biome) === 0 && false) return 0;",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -436,8 +436,8 @@
   {
     "name": "DW-E3-no-bare-weight-fallback",
     "file": "src/world/passiveFish.js",
-    "old": "if (sum <= 0) return pickSpeciesByWeight(spawnable, roll);",
-    "new": "if (sum <= 0) return null;",
+    "old": "  if (sum <= 0) return pickSpeciesByWeight(spawnable, roll);",
+    "new": "  if (sum <= 0) return null;",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -445,8 +445,8 @@
   {
     "name": "DW-E3-slerp-unclamped",
     "file": "src/world/passiveFish.js",
-    "old": "export function vector3Slerp(a, b, t) {\n  t = clamp01(t);\n",
-    "new": "export function vector3Slerp(a, b, t) {\n",
+    "old": "  t = clamp01(t);\n  const am = Math.hypot(a[0], a[1], a[2]),",
+    "new": "  const am = Math.hypot(a[0], a[1], a[2]),",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -454,8 +454,8 @@
   {
     "name": "DW-E3-slerp-axis",
     "file": "src/world/passiveFish.js",
-    "old": "else out = rotateAbout(an, normalized(cross3(a, b)), Math.acos(d) * t);",
-    "new": "else out = rotateAbout(an, normalized(cross3(b, a)), Math.acos(d) * t);",
+    "old": "  else out = rotateAbout(an, normalized(cross3(a, b)), Math.acos(d) * t);",
+    "new": "  else out = rotateAbout(an, normalized(cross3(b, a)), Math.acos(d) * t);",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -517,8 +517,8 @@
   {
     "name": "DW-E3-school-twice-a-frame",
     "file": "src/world/passiveFish.js",
-    "old": "    if (this.lastUpdateFrame === f.frame) return;\n",
-    "new": "",
+    "old": "    if (this.lastUpdateFrame === f.frame) return;\n    this.lastUpdateFrame = f.frame;",
+    "new": "    this.lastUpdateFrame = f.frame;",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -526,8 +526,8 @@
   {
     "name": "DW-E3-school-flatten",
     "file": "src/world/passiveFish.js",
-    "old": "    c[1] *= 0.15;\n",
-    "new": "    c[1] *= 0.25;\n",
+    "old": "    c[1] *= 0.15;",
+    "new": "    c[1] *= 0.25;",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -535,8 +535,8 @@
   {
     "name": "DW-E3-school-threat-flatten",
     "file": "src/world/passiveFish.js",
-    "old": "const a = [awayFromPlayer[0], awayFromPlayer[1] * 0.25, awayFromPlayer[2]];",
-    "new": "const a = [awayFromPlayer[0], awayFromPlayer[1] * 0.5, awayFromPlayer[2]];",
+    "old": "    const a = [awayFromPlayer[0], awayFromPlayer[1] * 0.25, awayFromPlayer[2]];",
+    "new": "    const a = [awayFromPlayer[0], awayFromPlayer[1] * 0.5, awayFromPlayer[2]];",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -589,8 +589,8 @@
   {
     "name": "DW-E3-shallow-no-return",
     "file": "src/world/passiveFish.js",
-    "old": "      if (this.hasLastSafePosition) this.position = [...this.lastSafePosition];\n",
-    "new": "",
+    "old": "      if (this.hasLastSafePosition) this.position = [...this.lastSafePosition];\n      this.swimDirection = this.swimDirection.map((c) => -c);",
+    "new": "      this.swimDirection = this.swimDirection.map((c) => -c);",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -598,8 +598,8 @@
   {
     "name": "DW-E3-shallow-no-turn",
     "file": "src/world/passiveFish.js",
-    "old": "      if (this.hasLastSafePosition) this.position = [...this.lastSafePosition];\n      this.swimDirection = this.swimDirection.map((c) => -c);\n",
-    "new": "      if (this.hasLastSafePosition) this.position = [...this.lastSafePosition];\n",
+    "old": "      this.swimDirection = this.swimDirection.map((c) => -c);\n      return;",
+    "new": "      return;",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -616,8 +616,8 @@
   {
     "name": "DW-E3-distant-jitter",
     "file": "src/world/passiveFish.js",
-    "old": "if (distant) this.nextDistantUpdateTime = f.time + DISTANT_UPDATE_INTERVAL + f.roll() * 0.05;",
-    "new": "if (distant) this.nextDistantUpdateTime = f.time + DISTANT_UPDATE_INTERVAL;",
+    "old": "    if (distant) this.nextDistantUpdateTime = f.time + DISTANT_UPDATE_INTERVAL + f.roll() * 0.05;",
+    "new": "    if (distant) this.nextDistantUpdateTime = f.time + DISTANT_UPDATE_INTERVAL;",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -625,8 +625,8 @@
   {
     "name": "DW-E3-probe-every-frame",
     "file": "src/world/passiveFish.js",
-    "old": "    if ((f.frame + this.obstacleProbeFrameOffset) % OBSTACLE_PROBE_FRAME_INTERVAL !== 0) return false;\n",
-    "new": "",
+    "old": "    if ((f.frame + this.obstacleProbeFrameOffset) % OBSTACLE_PROBE_FRAME_INTERVAL !== 0) return false;\n    const reach = Math.max(",
+    "new": "    const reach = Math.max(",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -634,8 +634,8 @@
   {
     "name": "DW-E3-probe-reach",
     "file": "src/world/passiveFish.js",
-    "old": "Math.hypot(step[0], step[1], step[2]) * 5 + COLLISION_PROBE_MARGIN);",
-    "new": "Math.hypot(step[0], step[1], step[2]) * 4 + COLLISION_PROBE_MARGIN);",
+    "old": "      Math.hypot(step[0], step[1], step[2]) * 5 + COLLISION_PROBE_MARGIN,",
+    "new": "      Math.hypot(step[0], step[1], step[2]) * 4 + COLLISION_PROBE_MARGIN,",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -688,8 +688,8 @@
   {
     "name": "DW-E3-separation",
     "file": "src/world/passiveFish.js",
-    "old": "const SCHOOL_MEMBER_MIN_SEPARATION_SQ = f32(4.84);",
-    "new": "const SCHOOL_MEMBER_MIN_SEPARATION_SQ = f32(1.44);",
+    "old": "const SCHOOL_MEMBER_MIN_SEPARATION_SQ = f32(4.84); // IsFarEnoughFromSchoolmates' literal",
+    "new": "const SCHOOL_MEMBER_MIN_SEPARATION_SQ = f32(1.44); // IsFarEnoughFromSchoolmates' literal",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -697,8 +697,8 @@
   {
     "name": "DW-E3-mate-depth-spread",
     "file": "src/world/passiveFish.js",
-    "old": "pos[1] = Math.min(hi, Math.max(lo, center[1] + rangeFloat(-1, 1, f.roll)));",
-    "new": "pos[1] = Math.min(hi, Math.max(lo, center[1] + rangeFloat(-2, 2, f.roll)));",
+    "old": "      pos[1] = Math.min(hi, Math.max(lo, center[1] + rangeFloat(-1, 1, f.roll)));",
+    "new": "      pos[1] = Math.min(hi, Math.max(lo, center[1] + rangeFloat(-2, 2, f.roll)));",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -706,8 +706,8 @@
   {
     "name": "DW-E3-attempts-rounding",
     "file": "src/world/passiveFish.js",
-    "old": "return Math.max(0, roundToInt(f32(FISH_ATTEMPTS_PER_PIXEL",
-    "new": "return Math.max(0, Math.round(f32(FISH_ATTEMPTS_PER_PIXEL",
+    "old": "    roundToInt(f32(FISH_ATTEMPTS_PER_PIXEL * f32(f32(frequency) / PASSIVE_FISH_FREQUENCY_AT_MIDPOINT))),",
+    "new": "    Math.round(f32(FISH_ATTEMPTS_PER_PIXEL * f32(f32(frequency) / PASSIVE_FISH_FREQUENCY_AT_MIDPOINT))),",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -715,8 +715,8 @@
   {
     "name": "DW-E3-school-radius",
     "file": "src/world/passiveFish.js",
-    "old": "Math.min(5, Math.max(1.2, 2.5 + schoolSize * 0.45));",
-    "new": "Math.min(5, Math.max(1.2, 2.5 + schoolSize * 0.5));",
+    "old": "export const schoolRadius = (schoolSize) => Math.min(5, Math.max(1.2, 2.5 + schoolSize * 0.45));",
+    "new": "export const schoolRadius = (schoolSize) => Math.min(5, Math.max(1.2, 2.5 + schoolSize * 0.5));",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -733,8 +733,8 @@
   {
     "name": "DW-E3-icon-rounding",
     "file": "src/world/passiveFish.js",
-    "old": "const w = Math.max(1, roundToInt(f32(src.height * f32(aspect))));",
-    "new": "const w = Math.max(1, Math.floor(f32(src.height * f32(aspect))));",
+    "old": "  const w = Math.max(1, roundToInt(f32(src.height * f32(aspect))));",
+    "new": "  const w = Math.max(1, Math.floor(f32(src.height * f32(aspect))));",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -742,8 +742,8 @@
   {
     "name": "DW-E3-icon-sample",
     "file": "src/world/passiveFish.js",
-    "old": "Math.floor(((x + 0.5) / w) * src.width));",
-    "new": "Math.floor((x / w) * src.width));",
+    "old": "    const sx = Math.min(src.width - 1, Math.floor(((x + 0.5) / w) * src.width)); // the Blit's point sample at the pixel's centre",
+    "new": "    const sx = Math.min(src.width - 1, Math.floor((x / w) * src.width)); // the Blit's point sample at the pixel's centre",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]

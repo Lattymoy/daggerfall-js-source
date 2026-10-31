@@ -2,8 +2,8 @@
   {
     "name": "PITS-WORLD-the-lane-gone",
     "file": "src/world/oceanHoles.js",
-    "old": "export const getAbyssMapId = (pitMapX, pitMapY) => (inBay(pitMapX, pitMapY)",
-    "new": "export const getAbyssMapId = (pitMapX, pitMapY) => (true",
+    "old": "  inBay(pitMapX, pitMapY)",
+    "new": "  true",
     "tests": [
       "test/world/pitsworld.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "PITS-WORLD-the-Bay's-arm-gone",
     "file": "src/world/oceanHoles.js",
-    "old": "export const getAbyssMapId = (pitMapX, pitMapY) => (inBay(pitMapX, pitMapY)",
-    "new": "export const getAbyssMapId = (pitMapX, pitMapY) => (false",
+    "old": "  inBay(pitMapX, pitMapY)",
+    "new": "  false",
     "tests": [
       "test/world/pitsworld.test.js",
       "test/world/oh_placement.test.js"
@@ -23,8 +23,8 @@
   {
     "name": "PITS-WORLD-isAbyss-the-Bay's-bound",
     "file": "src/world/oceanHoles.js",
-    "old": "  return ((v >>> 20) === 0x600 && (v & 0xfffff) < 500000) || worldLaneOf(v) === ABYSS_WORLD_LANE;",
-    "new": "  return ((v >>> 20) === 0x600) || worldLaneOf(v) === ABYSS_WORLD_LANE;",
+    "old": "  return (v >>> 20 === 0x600 && (v & 0xfffff) < 500000) || worldLaneOf(v) === ABYSS_WORLD_LANE;",
+    "new": "  return v >>> 20 === 0x600 || worldLaneOf(v) === ABYSS_WORLD_LANE;",
     "tests": [
       "test/world/pitsworld.test.js"
     ],
@@ -33,8 +33,8 @@
   {
     "name": "PITS-WORLD-isAbyss-no-world-lane",
     "file": "src/world/oceanHoles.js",
-    "old": "  return ((v >>> 20) === 0x600 && (v & 0xfffff) < 500000) || worldLaneOf(v) === ABYSS_WORLD_LANE;",
-    "new": "  return ((v >>> 20) === 0x600 && (v & 0xfffff) < 500000);",
+    "old": "  return (v >>> 20 === 0x600 && (v & 0xfffff) < 500000) || worldLaneOf(v) === ABYSS_WORLD_LANE;",
+    "new": "  return v >>> 20 === 0x600 && (v & 0xfffff) < 500000;",
     "tests": [
       "test/world/pitsworld.test.js"
     ],
@@ -43,8 +43,8 @@
   {
     "name": "PITS-WORLD-isAbyss-any-world-lane",
     "file": "src/world/oceanHoles.js",
-    "old": "  return ((v >>> 20) === 0x600 && (v & 0xfffff) < 500000) || worldLaneOf(v) === ABYSS_WORLD_LANE;",
-    "new": "  return ((v >>> 20) === 0x600 && (v & 0xfffff) < 500000) || worldLaneOf(v) >= 0;",
+    "old": "  return (v >>> 20 === 0x600 && (v & 0xfffff) < 500000) || worldLaneOf(v) === ABYSS_WORLD_LANE;",
+    "new": "  return (v >>> 20 === 0x600 && (v & 0xfffff) < 500000) || worldLaneOf(v) >= 0;",
     "tests": [
       "test/world/pitsworld.test.js"
     ],
@@ -53,8 +53,8 @@
   {
     "name": "PITS-WORLD-isAbyss-the-old-range",
     "file": "src/world/oceanHoles.js",
-    "old": "  if (!Number.isSafeInteger(v) || v < 0 || v > 0xffffffff) return false;\n  return ((v >>> 20) === 0x600",
-    "new": "  if (!Number.isSafeInteger(v) || v < 0 || v > 0xffffffff) return false;\n  return v >= 0x60000000 || ((v >>> 20) === 0x600",
+    "old": "  return (v >>> 20 === 0x600 && (v & 0xfffff) < 500000) || worldLaneOf(v) === ABYSS_WORLD_LANE;",
+    "new": "  return v >= 0x60000000 || (v >>> 20 === 0x600 && (v & 0xfffff) < 500000) || worldLaneOf(v) === ABYSS_WORLD_LANE;",
     "tests": [
       "test/world/pitsworld.test.js"
     ],
@@ -64,7 +64,7 @@
     "name": "PITS-WORLD-the-hold-the-Bay's",
     "file": "src/world/oceanHoles.js",
     "old": "export const pitPixelOk = (mapPixelX, mapPixelY) => inWorldGrid(mapPixelX, mapPixelY);",
-    "new": "export const pitPixelOk = (mapPixelX, mapPixelY) => mapPixelX >= 0 && mapPixelY >= 0 && mapPixelX < 1000 && mapPixelY < 500;",
+    "new": "export const pitPixelOk = (mapPixelX, mapPixelY) =>\n  mapPixelX >= 0 && mapPixelY >= 0 && mapPixelX < 1000 && mapPixelY < 500;",
     "tests": [
       "test/world/pitsworld.test.js",
       "test/scenes/oh_host.test.js"

@@ -367,8 +367,8 @@
   {
     "name": "WW6-client-town-by-region",
     "file": "src/world/raidShared.js",
-    "old": " && (r.locationIndex < 0 || r.regionIndex === town.regionIndex);",
-    "new": " && r.regionIndex === town.regionIndex;",
+    "old": "  !!town && r.locationIndex === town.locationIndex && (r.locationIndex < 0 || r.regionIndex === town.regionIndex);",
+    "new": "  !!town && r.locationIndex === town.locationIndex && r.regionIndex === town.regionIndex;",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]

@@ -298,7 +298,7 @@
   {
     "name": "RAID1-current-raid-any-town-of-the-region",
     "file": "src/world/raidShared.js",
-    "old": "export const raidTownIs = (r, town) => !!town && r.locationIndex === town.locationIndex && (r.locationIndex < 0 || r.regionIndex === town.regionIndex);",
+    "old": "export const raidTownIs = (r, town) =>\n  !!town && r.locationIndex === town.locationIndex && (r.locationIndex < 0 || r.regionIndex === town.regionIndex);",
     "new": "export const raidTownIs = (r, town) => !!town && (r.locationIndex < 0 || r.regionIndex === town.regionIndex);",
     "tests": [
       "test/systems/raid1_raidingParties.test.js"
@@ -307,7 +307,7 @@
   {
     "name": "RAID1-current-raid-any-region",
     "file": "src/world/raidShared.js",
-    "old": "export const raidTownIs = (r, town) => !!town && r.locationIndex === town.locationIndex && (r.locationIndex < 0 || r.regionIndex === town.regionIndex);",
+    "old": "export const raidTownIs = (r, town) =>\n  !!town && r.locationIndex === town.locationIndex && (r.locationIndex < 0 || r.regionIndex === town.regionIndex);",
     "new": "export const raidTownIs = (r, town) => !!town && r.locationIndex === town.locationIndex;",
     "tests": [
       "test/systems/raid1_raidingParties.test.js"

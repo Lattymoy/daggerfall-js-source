@@ -317,8 +317,8 @@
   {
     "name": "AUDIT-WATER-NEXT-m8-the-tie-to-the-last",
     "file": "src/world/puddleDry.js",
-    "old": "for (const [bits, n] of count) if (n > most)",
-    "new": "for (const [bits, n] of count) if (n >= most)",
+    "old": "          if (n > most) {",
+    "new": "          if (n >= most) {",
     "tests": [
       "test/world/terrain/audit_waternext.test.js"
     ]

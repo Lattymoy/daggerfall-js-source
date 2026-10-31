@@ -317,8 +317,8 @@
   {
     "name": "AUDIT-SHIPYARDS-a-lake-the-sea",
     "file": "src/world/portSites.js",
-    "old": "  if (!sx && !sz) return false;\n",
-    "new": "  return false;\n",
+    "old": "  if (!sx && !sz) return false;",
+    "new": "  return false;",
     "tests": [
       "test/systems/shipyards1_audit_port.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "AUDIT-SHIPYARDS-the-crew-hall-at-the-gate",
     "file": "src/world/portSites.js",
-    "old": "const [x, z] = siteToLocation(site, crewAt[0], crewAt[1]);",
-    "new": "const [x, z] = siteToLocation(site, crewAt[1], crewAt[0]);",
+    "old": "      const [x, z] = siteToLocation(site, crewAt[0], crewAt[1]);",
+    "new": "      const [x, z] = siteToLocation(site, crewAt[1], crewAt[0]);",
     "tests": [
       "test/systems/shipyards1_audit_port.test.js"
     ]
@@ -561,8 +561,8 @@
   {
     "name": "AUDIT-SHIPYARDS-the-joists-collided",
     "file": "src/world/quayModel.js",
-    "old": "  for (let z = q.z0 + 0.3; z <= q.z1 - 0.3 + 1e-6; z += JOIST_STEP) loose.box(",
-    "new": "  for (let z = q.z0 + 0.3; z <= q.z1 - 0.3 + 1e-6; z += JOIST_STEP) m.box(",
+    "old": "    loose.box(WOOD_DARK, [(q.x0 + q.x1) / 2, under - JOIST_H / 2, z], [q.x1 - q.x0 - 0.5, JOIST_H, 0.12], 1);",
+    "new": "    m.box(WOOD_DARK, [(q.x0 + q.x1) / 2, under - JOIST_H / 2, z], [q.x1 - q.x0 - 0.5, JOIST_H, 0.12], 1);",
     "tests": [
       "test/systems/shipyards1_audit_port.test.js"
     ]

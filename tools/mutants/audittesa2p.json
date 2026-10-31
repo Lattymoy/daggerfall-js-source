@@ -217,8 +217,8 @@
   {
     "name": "P7-pinned-twice",
     "file": "src/world/pastBayRows.js",
-    "old": "    if (p.pinned && capitals) continue;   // it stands as its capital (above)\n",
-    "new": "",
+    "old": "    if (p.pinned && capitals) continue; // it stands as its capital (above)\n    const template = templateOf(p);",
+    "new": "    const template = templateOf(p);",
     "tests": [
       "test/world/audittesa2p_world.test.js"
     ]
@@ -226,8 +226,8 @@
   {
     "name": "P7-one-slice",
     "file": "src/world/pastBayRows.js",
-    "old": "for (let s = 0; s < D.w * D.h; s++) {",
-    "new": "for (let s = 0; s < 1; s++) {",
+    "old": "      for (let s = 0; s < D.w * D.h; s++) {",
+    "new": "      for (let s = 0; s < 1; s++) {",
     "tests": [
       "test/world/audittesa2p_world.test.js"
     ]
@@ -235,8 +235,8 @@
   {
     "name": "P7-port-unsaid",
     "file": "src/world/pastBayRows.js",
-    "old": "port: !!p.port, location: arenaLocationIndex(p) });",
-    "new": "port: false, location: arenaLocationIndex(p) });",
+    "old": "      port: !!p.port,",
+    "new": "      port: false,",
     "tests": [
       "test/world/audittesa2p_world.test.js"
     ]
@@ -244,8 +244,8 @@
   {
     "name": "P7-capital-port-unsaid",
     "file": "src/world/pastBayRows.js",
-    "old": "port: capitalSlicePort(k, s, pin?.port),",
-    "new": "port: false,",
+    "old": "          port: capitalSlicePort(k, s, pin?.port), // NIBEN-SEA: its harbour's slice (the Imperial City's Waterfront, on its canal); BAY-LEFT-SEA: the slice's own port byte's law",
+    "new": "          port: false, // NIBEN-SEA: its harbour's slice (the Imperial City's Waterfront, on its canal); BAY-LEFT-SEA: the slice's own port byte's law",
     "tests": [
       "test/world/audittesa2p_world.test.js"
     ],
@@ -254,8 +254,8 @@
   {
     "name": "P7-no-clone-stands",
     "file": "src/world/pastBayRows.js",
-    "old": "    if (!template) continue;   // no clone of its kind: no location stands\n",
-    "new": "",
+    "old": "    if (!template) continue; // no clone of its kind: no location stands\n    const ed = template.exterior?.exteriorData;",
+    "new": "    const ed = template.exterior?.exteriorData;",
     "tests": [
       "test/world/audittesa2p_world.test.js"
     ]

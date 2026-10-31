@@ -12,8 +12,8 @@
   {
     "name": "FB1021-tree-left-unstamped",
     "file": "src/world/prefabNode.js",
-    "old": "reshaped(left); reshaped(this);",
-    "new": "reshaped(this);",
+    "old": "    reshaped(left);\n    reshaped(this); // ...and the tree it joins (itself again, hung under nothing now)",
+    "new": "    reshaped(this); // ...and the tree it joins (itself again, hung under nothing now)",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js",
       "test/world/navaudit_frame.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "FB1021-tree-joined-unstamped",
     "file": "src/world/prefabNode.js",
-    "old": "reshaped(left); reshaped(this);",
-    "new": "reshaped(left);",
+    "old": "    reshaped(left);\n    reshaped(this); // ...and the tree it joins (itself again, hung under nothing now)",
+    "new": "    reshaped(left); // ...and the tree it joins (itself again, hung under nothing now)",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js",
       "test/world/navaudit_frame.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "FB1021-node-stamped-not-its-top",
     "file": "src/world/prefabNode.js",
-    "old": "const reshaped = (n) => { topOf(n)._treeStamp = ++_shapeCount; };",
-    "new": "const reshaped = (n) => { n._treeStamp = ++_shapeCount; };",
+    "old": "  topOf(n)._treeStamp = ++_shapeCount;",
+    "new": "  n._treeStamp = ++_shapeCount;",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js",
       "test/world/navaudit_frame.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "FB1021-a-count-per-tree",
     "file": "src/world/prefabNode.js",
-    "old": "const reshaped = (n) => { topOf(n)._treeStamp = ++_shapeCount; };",
-    "new": "const reshaped = (n) => { topOf(n)._treeStamp++; };",
+    "old": "  topOf(n)._treeStamp = ++_shapeCount;",
+    "new": "  topOf(n)._treeStamp++;",
     "tests": [
       "test/world/navaudit_frame.test.js"
     ]
@@ -51,8 +51,8 @@
   {
     "name": "FB1021-component-stamps-nothing",
     "file": "src/world/prefabNode.js",
-    "old": "  addComponent(c) { this.components.push(c); reshaped(this); return c; }",
-    "new": "  addComponent(c) { this.components.push(c); return c; }",
+    "old": "    reshaped(this);\n    return c;",
+    "new": "    return c;",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -252,8 +252,8 @@
   {
     "name": "FB1021-setActive-unstamped",
     "file": "src/world/prefabNode.js",
-    "old": "if (this.activeSelf !== on) { this.activeSelf = on; topOf(this)._treeSwitch = ++_shapeCount; }",
-    "new": "if (this.activeSelf !== on) { this.activeSelf = on; }",
+    "old": "      topOf(this)._treeSwitch = ++_shapeCount;\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -261,8 +261,8 @@
   {
     "name": "FB1021-switch-stamped-on-the-node",
     "file": "src/world/prefabNode.js",
-    "old": "topOf(this)._treeSwitch = ++_shapeCount;",
-    "new": "this._treeSwitch = ++_shapeCount;",
+    "old": "      topOf(this)._treeSwitch = ++_shapeCount;",
+    "new": "      this._treeSwitch = ++_shapeCount;",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -270,8 +270,8 @@
   {
     "name": "FB1021-every-setActive-a-switch",
     "file": "src/world/prefabNode.js",
-    "old": "if (this.activeSelf !== on) { this.activeSelf = on;",
-    "new": "{ this.activeSelf = on;",
+    "old": "    if (this.activeSelf !== on) {",
+    "new": "    {",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "FB1021-parent-under-its-own-node",
     "file": "src/world/prefabNode.js",
-    "old": "for (let p = parent; p; p = p.parent) if (p === this) throw",
-    "new": "for (let p = parent; p; p = p.parent) if (p === null) throw",
+    "old": "      if (p === this)",
+    "new": "      if (p === null)",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]

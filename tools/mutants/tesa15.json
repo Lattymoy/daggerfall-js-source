@@ -47,8 +47,8 @@
   {
     "name": "TESA15-a-bin-unstamped",
     "file": "src/world/pastBayPlaces.js",
-    "old": "    bin.v = _version;\n",
-    "new": "",
+    "old": "    bin.v = _version;\n  }",
+    "new": "  }",
     "tests": [
       "test/tesa15_mapfidelity.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TESA15-the-rectangle-edge",
     "file": "src/world/pastBayPlaces.js",
-    "old": "if (p.x >= x0 && p.x < x1 && p.y >= y0 && p.y < y1) out.push(p);",
-    "new": "if (p.x >= x0 && p.x <= x1 && p.y >= y0 && p.y < y1) out.push(p);",
+    "old": "        if (p.x >= x0 && p.x < x1 && p.y >= y0 && p.y < y1) out.push(p);",
+    "new": "        if (p.x >= x0 && p.x <= x1 && p.y >= y0 && p.y < y1) out.push(p);",
     "tests": [
       "test/tesa15_mapfidelity.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "TESA15-a-reset-keeps",
     "file": "src/world/pastBayPlaces.js",
-    "old": "  _bins = new Map();\n  _version++;\n}",
-    "new": "  _version++;\n}",
+    "old": "  _bins = new Map();\n  _version++;",
+    "new": "  _version++;",
     "tests": [
       "test/tesa15_mapfidelity.test.js"
     ]

@@ -12,7 +12,7 @@
     "name": "INLAND-PORTS-every-water-the-sea",
     "file": "src/world/portSites.js",
     "old": "  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (isWater(x, y)) wet[y * W + x] = 1;",
-    "new": "  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (isWater(x, y)) { wet[y * W + x] = 1; sea[y * W + x] = 1; }",
+    "new": "  for (let y = 0; y < H; y++)\n    for (let x = 0; x < W; x++)\n      if (isWater(x, y)) {\n        wet[y * W + x] = 1;\n        sea[y * W + x] = 1;\n      }",
     "tests": [
       "test/systems/naval/fb1014_inlandports.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "INLAND-PORTS-the-south-edge-unseeded",
     "file": "src/world/portSites.js",
-    "old": "  for (let x = 0; x < W; x++) { reach(x); reach((H - 1) * W + x); }",
-    "new": "  for (let x = 0; x < W; x++) { reach(x); }",
+    "old": "    reach((H - 1) * W + x);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/naval/fb1014_inlandports.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "INLAND-PORTS-the-east-edge-unseeded",
     "file": "src/world/portSites.js",
-    "old": "  for (let y = 0; y < H; y++) { reach(y * W); reach(y * W + W - 1); }",
-    "new": "  for (let y = 0; y < H; y++) { reach(y * W); }",
+    "old": "    reach(y * W + W - 1);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/naval/fb1014_inlandports.test.js"
     ]

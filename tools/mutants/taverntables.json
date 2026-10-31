@@ -65,8 +65,8 @@
   {
     "name": "TTS-walk-box-square",
     "file": "src/world/placedCardTable.js",
-    "old": "Math.abs(az - cz) < w.hz + rz)",
-    "new": "Math.abs(az - cz) < w.hz + r)",
+    "old": "      if (near.some(([ax, , az, r, rz = r]) => Math.abs(ax - cx) < w.hx + r && Math.abs(az - cz) < w.hz + rz)) continue;",
+    "new": "      if (near.some(([ax, , az, r, rz = r]) => Math.abs(ax - cx) < w.hx + r && Math.abs(az - cz) < w.hz + r)) continue;",
     "tests": [
       "test/systems/card/taverntables.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "TTS-walk-no-ring",
     "file": "src/world/placedCardTable.js",
-    "old": "yawDeg: w.yawDeg, cx, cz, hx: w.hx, hz: w.hz };",
-    "new": "yawDeg: w.yawDeg, cx, cz, hx: w.hx - PLACE_RING_M, hz: w.hz - PLACE_RING_M };",
+    "old": "      return { x: cx - w.mx, y: fy - y0, z: cz - w.mz, yawDeg: w.yawDeg, cx, cz, hx: w.hx, hz: w.hz };",
+    "new": "      return {\n        x: cx - w.mx,\n        y: fy - y0,\n        z: cz - w.mz,\n        yawDeg: w.yawDeg,\n        cx,\n        cz,\n        hx: w.hx - PLACE_RING_M,\n        hz: w.hz - PLACE_RING_M,\n      };",
     "tests": [
       "test/systems/card/taverntables.test.js"
     ]

@@ -112,8 +112,8 @@
   {
     "name": "CROPS-12-the-turn-read",
     "file": "src/world/rmbFlats.js",
-    "old": "(obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE, { climateIndex, solid }));",
-    "new": "(obj.zPos + RMB_DIMENSION + (obj.yRotation ?? 0)) * GLOBAL_SCALE, { climateIndex, solid }));",
+    "old": "          (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE,",
+    "new": "          (obj.zPos + RMB_DIMENSION + (obj.yRotation ?? 0)) * GLOBAL_SCALE,",
     "tests": [
       "test/world/fb1004d_crops.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "CROPS-13-foot-on-the-record",
     "file": "src/world/rmbFlats.js",
-    "old": "(-obj.yPos + PROPS_OFFSET_Y) * GLOBAL_SCALE, (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE, { climateIndex, solid }));",
-    "new": "-obj.yPos * GLOBAL_SCALE, (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE, { climateIndex, solid }));",
+    "old": "          (-obj.yPos + PROPS_OFFSET_Y) * GLOBAL_SCALE,",
+    "new": "          -obj.yPos * GLOBAL_SCALE,",
     "tests": [
       "test/world/fb1004d_crops.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "CROPS-14-collector-drops-the-batch",
     "file": "src/world/rmbFlats.js",
-    "old": "(obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE, { climateIndex, solid }));",
-    "new": "(obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE, {}));",
+    "old": "          { climateIndex, solid },",
+    "new": "          {},",
     "tests": [
       "test/world/fb1004d_crops.test.js"
     ],
