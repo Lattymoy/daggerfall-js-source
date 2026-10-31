@@ -16,7 +16,7 @@ import { validDragonOut, DRAGON_FIGHT_KEY, DRAGON_TELL_RETRY_MS, cellRoomOfWire,
 import { foldDragon, DRAGON_STATE_EMPTY } from '../../../src/net/dragon/dragonLink.js';
 import { sweepDragonReceipts } from '../../../server/src/dragonFights.js';
 import { fakeRooms } from '../../fakeRoom.mjs';
-import { RELAY_KEY, dragonOmenFrom } from '../../dragonOmen.mjs';
+import { RELAY_KEY, dragonOmenFrom, siteOf } from '../../dragonOmen.mjs';
 
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const seeded = (s = 7) => () => ((s = (Math.imul(s, 1103515245) + 12345) >>> 0) / 4294967296);
@@ -112,7 +112,7 @@ test('AUDIT DRAGON the hub\'s receipts: every expired one swept in its page, a l
 });
 
 test('AUDIT DRAGON a kill whose receipts fail to mint is tried again at DRAGON_TELL_RETRY_MS, never left to the fight\'s end two hours on, and then said (mutants: no retry)', async () => {
-  const PX = 205, PY = 214, SX = (PX + 0.5) * PIXEL_UNITS, SZ = (499 - PY + 0.5) * PIXEL_UNITS;
+  const { px: PX, py: PY } = siteOf(OMEN), SX = (PX + 0.5) * PIXEL_UNITS, SZ = (499 - PY + 0.5) * PIXEL_UNITS;   // DRAGON-CELL: a pixel of its omen's cell
   const ID = dragonFightId(W, SX, SZ);
   const at = (mx, mz) => ({ x: SX + mx * DRAGON_NATIVE_PER_M, y: 0, z: SZ + mz * DRAGON_NATIVE_PER_M, yaw: 0, pitch: 0 });
   const subtle = globalThis.crypto.subtle;

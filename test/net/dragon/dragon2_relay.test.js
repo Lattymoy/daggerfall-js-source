@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DRAGON_FIGHT_KEY, SOCIAL_ROOM, cellRoomOfWire, PIXEL_UNITS } from '../../../src/net/wire.js';
 import { dragonTimes, dragonFightId, DRAGON_BRAIN_V, DRAGON_NATIVE_PER_M, DRAGON_CLIMB_MS } from '../../../src/net/dragon/dragonLaw.js';
-import { RELAY_KEY, dragonOmenFrom } from '../../dragonOmen.mjs';
+import { RELAY_KEY, dragonOmenFrom, siteOf } from '../../dragonOmen.mjs';
 import { DRAGON_TICK_MS, DRAGON_OPENING_MS, DRAGON_FAN_R, DRAGON_ADMIT_R, DRAGON_TTK_S } from '../../../src/net/dragon/dragonBrain.js';
 import { dpsRef } from '../../../src/net/gate/gateBrain.js';
 import { verifyDragonReceipt } from '../../../src/net/dragon/dragonReceipt.js';
@@ -16,7 +16,7 @@ import { fakeRooms } from '../../fakeRoom.mjs';
 const subtle = globalThis.crypto.subtle;
 const OMEN = await dragonOmenFrom(500_000), { w: W } = OMEN;   // DRAGON-HIDDEN: a dragon's watch under the relay's own secret
 const TT = dragonTimes(OMEN);
-const PX = 205, PY = 214;
+const { px: PX, py: PY } = siteOf(OMEN);   // DRAGON-CELL: a pixel of its omen's cell
 const SX = (PX + 0.5) * PIXEL_UNITS, SZ = (499 - PY + 0.5) * PIXEL_UNITS;
 const CELL = cellRoomOfWire(SX, SZ);
 const ID = dragonFightId(W, SX, SZ), FIGHT_AT = `${DRAGON_FIGHT_KEY}:${ID}`;

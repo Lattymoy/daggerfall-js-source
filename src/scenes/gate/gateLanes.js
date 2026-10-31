@@ -22,6 +22,8 @@ import { createGateOmen } from '../../systems/gate/gateOmen.js';
 import { theatreGateScanner, findTheatreGateSite, theatreGateAreas } from '../../systems/gate/theatreGateSite.js';
 import { gateLaneOf, GATE_LANES, gateLaneOpen } from '../../net/gate/gateLaw.js';
 import { theatreAt, areaAt, BAY_THEATRE } from '../../world/worldWide/worldGrid.js';
+import { GATE_TOWN_MAX_PX } from '../../systems/gate/gateSite.js';   // DRAGON-CELL: how far about a square its towns are read
+import { inBay } from '../../world/tamriel/tamrielFrame.js';   // DRAGON-CELL: a square's ground past the Bay; the Bay's is its own scan's
 
 /**
  * WW-GATES-EVERYWHERE (A2c): the page's idle moments - the browser's idle callback, else (a page with none: Safari) a
@@ -59,9 +61,10 @@ export function createTheatreGateScans({ places, wet, spawnSalt, land = () => 0,
   /** @type {Map<number, import('../../systems/gate/theatreGateSite.js').TheatreGateScan>} */ const scans = new Map();
   /** @type {Map<number, ReturnType<typeof theatreGateScanner>>} */ const scanners = new Map();
   /** @type {Map<number, boolean>} */ const grounds = new Map();   // a whole scan's: whether it offers a gate ground
+  /** @type {Map<string, import('../../systems/gate/theatreGateSite.js').TheatreGateScan>} */ const grounds8 = new Map();   // DRAGON-CELL: a square's (groundIn)
   /** @type {number[]|null} */ let theatres = null;
   let warming = false;
-  const fresh = () => { if (places.generation() !== gen || land() !== ver) { gen = places.generation(); ver = land(); scans.clear(); scanners.clear(); grounds.clear(); theatres = null; } };
+  const fresh = () => { if (places.generation() !== gen || land() !== ver) { gen = places.generation(); ver = land(); scans.clear(); scanners.clear(); grounds.clear(); grounds8.clear(); theatres = null; } };
   /** @param {number} t */
   const scannerOf = (t) => {
     let s = scanners.get(t);
@@ -116,10 +119,31 @@ export function createTheatreGateScans({ places, wet, spawnSalt, land = () => 0,
      *  into; with none, or for a theatre the warm does not make (a lane no gate stands on), made where it is asked, as
      *  scanOf. @param {number} t */
     wholeScan: (t) => { fresh(); const s = scans.get(t); if (s || !idle) return s ?? scanOf(t); if (!wanted().includes(t)) return scanOf(t); warm(); return null; },
+    /** DRAGON-CELL (bible/11-Multiplayer/Dwarven-Dragon.md section 2): the gate's ground in one square past the Bay, `side`
+     *  pixels from (x0, y0) - each pixel on a lane that stands, its towns every place of a town's kind about it, the
+     *  countryside's among them (a theatre's scan lists its listed towns alone). Kept for the generation, the last few.
+     *  @param {number} x0 @param {number} y0 @param {number} side */
+    groundIn(x0, y0, side) {
+      fresh();
+      const key = `${x0},${y0},${side}`;
+      let g = grounds8.get(key);
+      if (g) return g;
+      const towns = [], R = GATE_TOWN_MAX_PX, laneOk = (/** @type {number} */ t) => t !== BAY_THEATRE && t < GATE_LANES && open(t);
+      for (let y = y0 - R; y < y0 + side + R; y++) for (let x = x0 - R; x < x0 + side + R; x++) {
+        const p = inBay(x, y) ? null : places.at(x, y);
+        if (p && p.px === x && p.py === y) towns.push(p);
+      }
+      const inside = (/** @type {number} */ x, /** @type {number} */ y) => x >= x0 && y >= y0 && x < x0 + side && y < y0 + side && laneOk(theatreAt(x, y));
+      g = theatreGateScanner({ towns, placeAt: places.at, inTheatre: inside, areaAt: (x, y) => areaAt(x, y, () => -1), wet, theatre: -1, spawnSalt }).step();
+      grounds8.set(key, g);
+      if (grounds8.size > 8) grounds8.delete(/** @type {string} */ (grounds8.keys().next().value));
+      return g;
+    },
   });
 }
 /** @typedef {{ scanOf: (t: number) => import('../../systems/gate/theatreGateSite.js').TheatreGateScan, theatres: () => number[], siteOf: (n: number) => any,
- *   wholeScan?: (t: number) => (import('../../systems/gate/theatreGateSite.js').TheatreGateScan | null) }} TheatreGateScans */
+ *   wholeScan?: (t: number) => (import('../../systems/gate/theatreGateSite.js').TheatreGateScan | null),
+ *   groundIn?: (x0: number, y0: number, side: number) => import('../../systems/gate/theatreGateSite.js').TheatreGateScan }} TheatreGateScans */
 /** @type {TheatreGateScans|null} */
 let _kept = null;
 /** WW5 (bible/03-World/World-Wide.md WW5): the world host's theatre scans as it made them (scenes/world.js - online alone),

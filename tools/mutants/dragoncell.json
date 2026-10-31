@@ -1,0 +1,200 @@
+[
+  {
+    "name": "DRAGON-CELL-the-box-no-margin",
+    "file": "src/net/dragon/dragonLaw.js",
+    "old": "export const DRAGON_TELL_PX = 6;",
+    "new": "export const DRAGON_TELL_PX = 5;",
+    "tests": [
+      "test/net/dragon/dragoncell.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-CELL-the-box-one-side",
+    "file": "src/net/dragon/dragonLaw.js",
+    "old": "span = DRAGON_CELL_PX + 2 * DRAGON_TELL_PX;",
+    "new": "span = DRAGON_CELL_PX + DRAGON_TELL_PX;",
+    "tests": [
+      "test/net/dragon/dragoncell.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-CELL-the-cell-the-watchs",
+    "file": "src/net/dragon/dragonLaw.js",
+    "old": "  const n = dragonRoll(o, 7) % (DRAGON_CELLS.cols * DRAGON_CELLS.rows);",
+    "new": "  const n = o.w % (DRAGON_CELLS.cols * DRAGON_CELLS.rows);",
+    "tests": [
+      "test/net/dragon/dragon2_law.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-CELL-the-frame-shrunk",
+    "file": "src/net/dragon/dragonLaw.js",
+    "old": "export const DRAGON_CELLS = Object.freeze({ cx0: -54, cy0: -61, cols: 376, rows: 235 });",
+    "new": "export const DRAGON_CELLS = Object.freeze({ cx0: 0, cy0: 0, cols: 63, rows: 32 });",
+    "tests": [
+      "test/net/dragon/dragon2_law.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-CELL-the-site-any-cell",
+    "file": "src/net/dragon/dragonLaw.js",
+    "old": "  return Math.floor(px / DRAGON_CELL_PX) === cell.cx && Math.floor(py / DRAGON_CELL_PX) === cell.cy && sx === c.sx && sz === c.sz;",
+    "new": "  return sx === c.sx && sz === c.sz;",
+    "tests": [
+      "test/net/dragon/dragonhiddenaudit.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-CELL-the-omens-unspaced",
+    "file": "src/net/dragon/dragonLaw.js",
+    "old": "return Math.max(Math.abs(e.cx - cell.cx), Math.abs(e.cy - cell.cy)) <= 2; })) continue;",
+    "new": "return Math.max(Math.abs(e.cx - cell.cx), Math.abs(e.cy - cell.cy)) < 0; })) continue;",
+    "tests": [
+      "test/net/dragon/dragoncell.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-CELL-the-omen-the-watchs-seed",
+    "file": "src/net/dragon/dragonLaw.js",
+    "old": "    const c = { w: o.w, s: dragonRoll(o, 100 + i) }, cell = dragonCellOf(c);",
+    "new": "    const c = { w: o.w, s: i ? dragonRoll(o, 100 + i) : o.s }, cell = dragonCellOf(c);",
+    "tests": [
+      "test/net/dragon/dragoncell.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-CELL-told-to-every-pose",
+    "file": "src/net/dragon/dragonLaw.js",
+    "old": "  return Number.isInteger(px) && Number.isInteger(py) && px >= x0 && py >= y0 && px < x0 + span && py < y0 + span;",
+    "new": "  return Number.isInteger(px) && Number.isInteger(py);",
+    "tests": [
+      "test/net/dragon/dragoncell.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-CELL-the-cover-unread",
+    "file": "server/src/dragonFights.js",
+    "old": "a.pose && !a.pose.dd && inCover(a, cellRoomOfWire(a.pose.x, a.pose.z)) ? mapPixelOfWire",
+    "new": "a.pose && !a.pose.dd ? mapPixelOfWire",
+    "tests": [
+      "test/net/dragon/dragoncell.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-CELL-the-far-told-at-once",
+    "file": "server/src/dragonFights.js",
+    "old": "  if (now >= dragonQuietAt(m.w)) say(room, ws, { k: 'omen', w: m.w, s: null });",
+    "new": "  say(room, ws, { k: 'omen', w: m.w, s: null });",
+    "tests": [
+      "test/net/dragon/dragoncell.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-CELL-the-far-never-told",
+    "file": "server/src/dragonFights.js",
+    "old": "  if (now >= dragonQuietAt(m.w)) say(room, ws, { k: 'omen', w: m.w, s: null });",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragoncell.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-CELL-the-in-any-site",
+    "file": "src/net/dragon/dragonLaw.js",
+    "old": "dragonCandidates(o).find((c) => dragonSiteOk(c, sx, sz)) ?? null;",
+    "new": "dragonCandidates(o)[0] ?? null;",
+    "tests": [
+      "test/net/dragon/dragonhiddenaudit.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-CELL-the-null-asked-again-here",
+    "file": "src/scenes/dragonHost.js",
+    "old": "(omens.has(w) && toldNoneAt.get(w) === pixelHere())",
+    "new": "false",
+    "tests": [
+      "test/net/dragon/dragoncell.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-CELL-the-null-never-asked-again",
+    "file": "src/scenes/dragonHost.js",
+    "old": "if (omens.get(w) != null || (omens.has(w)",
+    "new": "if (omens.has(w) || (omens.has(w)",
+    "tests": [
+      "test/net/dragon/dragoncell.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-CELL-the-site-a-pixel-outside",
+    "file": "src/systems/dragon/dragonSite.js",
+    "old": "        if (inCell(x, y)) ground.push(",
+    "new": "        if (inCell(x, y) || x >= 0) ground.push(",
+    "tests": [
+      "test/net/dragon/dragon3_client.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-CELL-the-site-the-first",
+    "file": "src/systems/dragon/dragonSite.js",
+    "old": "ground[dragonSitePick(o) % ground.length]",
+    "new": "ground[0]",
+    "tests": [
+      "test/net/dragon/dragon3_client.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-CELL-the-site-the-wild-zone",
+    "file": "src/systems/dragon/dragonSite.js",
+    "old": "      if (r === WILD_REGION) continue;",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragon3_client.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-CELL-the-none-forgotten",
+    "file": "src/systems/dragon/dragonSite.js",
+    "old": "      found.clear(); found.set(key, s || null);",
+    "new": "      if (s) { found.clear(); found.set(key, s); }",
+    "tests": [
+      "test/net/dragon/dragon3_client.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-CELL-the-square-the-listed-towns",
+    "file": "src/scenes/gate/gateLanes.js",
+    "old": "        if (p && p.px === x && p.py === y) towns.push(p);",
+    "new": "",
+    "tests": [
+      "test/net/dragon/dragoncell.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-CELL-the-square-unbounded",
+    "file": "src/scenes/gate/gateLanes.js",
+    "old": "const inside = (/** @type {number} */ x, /** @type {number} */ y) => x >= x0 && y >= y0 && x < x0 + side && y < y0 + side && laneOk(theatreAt(x, y));",
+    "new": "const inside = (/** @type {number} */ x, /** @type {number} */ y) => laneOk(theatreAt(x, y));",
+    "tests": [
+      "test/net/dragon/dragoncell.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-CELL-the-square-any-lane",
+    "file": "src/scenes/gate/gateLanes.js",
+    "old": "y < y0 + side && laneOk(theatreAt(x, y));",
+    "new": "y < y0 + side;",
+    "tests": [
+      "test/net/dragon/dragoncell.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON-CELL-the-square-not-kept",
+    "file": "src/scenes/gate/gateLanes.js",
+    "old": "      if (g) return g;\n      const towns = [], R = GATE_TOWN_MAX_PX",
+    "new": "      const towns = [], R = GATE_TOWN_MAX_PX",
+    "tests": [
+      "test/net/dragon/dragoncell.test.js"
+    ]
+  }
+]

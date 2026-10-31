@@ -3,12 +3,14 @@
 // bible/11-Multiplayer/Dwarven-Dragon.md sections 2 and 4): THE DRAGON'S LAW - which watches bring a dragon down, which
 // is the Aetherbright, where its site is rolled, how its fight is named. DRAGON-HIDDEN (the owner: "people are able to
 // predict the dragon spawn by looking at source code"): every roll takes a watch's omen `{w, s}`, its seed the relay's
-// secret (net/dragon/dragonSeed.js), told only once its landing is past. The site is the client's to find over the
-// world's own data (systems/dragon/dragonSite.js); the relay never reads a map. Pure. Not a DFU member. Ledger A (DRAGON).
+// secret (net/dragon/dragonSeed.js), told only once its landing is past. DRAGON-CELL (2026-10-31, the owner chose
+// "Cell-scoped"): the seed picks a cell, and only a player near it is told. The site in the cell is the client's to find
+// over the world's own data (systems/dragon/dragonSite.js); the relay never reads a map. Pure. Not a DFU member. Ledger A (DRAGON).
 import { gateHash } from '../gate/gateLaw.js';
-import { GATE_LANES_OPEN, PIXEL_UNITS, mapPixelOfWire, gateLanePixelOk } from '../wire.js';
+import { PIXEL_UNITS, WORLD_CELL, mapPixelOfWire } from '../wire.js';
 
-/** A watch of the real clock, ms; one in DRAGON_WATCH_ONE_IN brings a dragon down (about eight a day). */
+/** A watch of the real clock, ms; one omen in DRAGON_WATCH_ONE_IN brings a dragon down. DRAGON-CELL: a watch holds
+ *  DRAGON_CELLS_A_WATCH omens (dragonCandidates), each its own cell, and one comes down only where its cell has ground. */
 export const DRAGON_WATCH_MS = 3_600_000;
 export const DRAGON_WATCH_ONE_IN = 3;
 /** How long it stays before it climbs away unslain, ms. DRAGON-HIDDEN-TIME (2026-10-30, the owner: "dragon location and
@@ -57,23 +59,57 @@ export const dragonAdmits = (o, nowMs) => { if (!isDragonOmen(o)) return false; 
 /** May a fighter already in it be in it now (a reconnect after a blip) - until its climb is over? @param {any} o @param {number} nowMs */
 export const dragonHolds = (o, nowMs) => { if (!isDragonOmen(o)) return false; const t = dragonTimes(o); return nowMs >= t.landAt && nowMs < t.leaveAt + DRAGON_CLIMB_MS; };
 
-// THE SITE. The gate's site law (systems/gate/gateSite.js findGateSite, theatreGateSite.js for a province) under a number of
-// the dragon's own: DRAGON_SITE_BASE past every game day the gate will see for millennia and below the lanes' span, so no
-// gate, star or Hollow ever names the same.
-export const DRAGON_SITE_BASE = 50_000_000;
-/** The gate site law's number for an omen's site, on its lane's own day count - its own roll (DRAGON-HIDDEN: never the
- *  watch's number, which anyone counts). @param {{w: number, s: number}} o */
-export const dragonSiteDay = (o) => DRAGON_SITE_BASE + (dragonRoll(o, 5) % DRAGON_SITE_BASE);
-/** Which theatre (the gate's lane) an omen's dragon comes down in - any that stands. @param {{w: number, s: number}} o */
-export const dragonLaneOf = (o) => GATE_LANES_OPEN[dragonRoll(o, 2) % GATE_LANES_OPEN.length];
+// THE CELL (DRAGON-CELL; a player read every dragon's pixel off the omen the relay told the whole world at its landing).
+// The seed picks one of the relay's world cells (wire.js WORLD_CELL) in a box the relay knows with no map, and the relay
+// tells the omen only to a socket standing within DRAGON_TELL_PX of it. The client finds the site in that cell
+// (systems/dragon/dragonSite.js); a cell with no ground brings no dragon down.
+/** A cell's side, pixels: the relay's own cells, so a site's fight stands in its cell's room. */
+export const DRAGON_CELL_PX = WORLD_CELL;
+/** The cells a seed picks from: the continent's frame at its authored fit (world/tamriel/tamrielFrame.js BAY_ORIGIN 862,
+ *  975, 6000 x 3750 pixels), which holds the land at any fit the game makes. */
+export const DRAGON_CELLS = Object.freeze({ cx0: -54, cy0: -61, cols: 376, rows: 235 });
+/** How far past its cell a player is told its omen, pixels: DRAGON_SIGHT_R (4 km, scenes/dragonHost.js) and its roost
+ *  (dragonBody.js ROOST_R) from the cell's edge, at 0.8192 km a pixel. */
+export const DRAGON_TELL_PX = 6;
+/** An omen's cell. @param {{w: number, s: number}} o @returns {{cx: number, cy: number}} */
+export function dragonCellOf(o) {
+  const n = dragonRoll(o, 7) % (DRAGON_CELLS.cols * DRAGON_CELLS.rows);
+  return { cx: DRAGON_CELLS.cx0 + (n % DRAGON_CELLS.cols), cy: DRAGON_CELLS.cy0 + Math.floor(n / DRAGON_CELLS.cols) };
+}
+/** Is map pixel (px, py) within DRAGON_TELL_PX of an omen's cell - may a player standing there be told it?
+ *  @param {{w: number, s: number}} o @param {number} px @param {number} py */
+export function dragonToldAt(o, px, py) {
+  const { cx, cy } = dragonCellOf(o), x0 = cx * DRAGON_CELL_PX - DRAGON_TELL_PX, y0 = cy * DRAGON_CELL_PX - DRAGON_TELL_PX, span = DRAGON_CELL_PX + 2 * DRAGON_TELL_PX;
+  return Number.isInteger(px) && Number.isInteger(py) && px >= x0 && py >= y0 && px < x0 + span && py < y0 + span;
+}
+/** How many omens a watch holds. Measured on the freeware (tools/dragonCellProbe.mjs): 27.7% of DRAGON_CELLS hold ground,
+ *  so four, one in three a dragon, bring some eight a day down - as one in three watches did before. */
+export const DRAGON_CELLS_A_WATCH = 4;
+/** A watch's omens: each `{w, s}` with a seed of the watch's seed `o.s`, the relay's alone, so each is an omen as the law
+ *  reads one. One within two cells of an earlier one's is dropped, so a player stands near one at most.
+ *  @param {{w: number, s: number}} o */
+export function dragonCandidates(o) {
+  /** @type {Array<{w: number, s: number}>} */ const out = [];
+  for (let i = 0; i < DRAGON_CELLS_A_WATCH; i++) {
+    const c = { w: o.w, s: dragonRoll(o, 100 + i) }, cell = dragonCellOf(c);
+    if (out.some((d) => { const e = dragonCellOf(d); return Math.max(Math.abs(e.cx - cell.cx), Math.abs(e.cy - cell.cy)) <= 2; })) continue;
+    out.push(c);
+  }
+  return out;
+}
+/** The omen of a watch's that a player on map pixel (px, py) may be told, or null. @param {{w: number, s: number}} o @param {number} px @param {number} py */
+export const dragonCandidateAt = (o, px, py) => dragonCandidates(o).find((c) => dragonToldAt(c, px, py)) ?? null;
+/** The omen of a watch's whose dragon could stand at this site, or null. @param {{w: number, s: number}} o @param {number} sx @param {number} sz */
+export const dragonCandidateOf = (o, sx, sz) => dragonCandidates(o).find((c) => dragonSiteOk(c, sx, sz)) ?? null;
+/** Which of its cell's grounds an omen's site is: its own roll, never the watch's number. @param {{w: number, s: number}} o */
+export const dragonSitePick = (o) => dragonRoll(o, 5);
 /** A map pixel's centre, in native units (x east, z north) - every site's point. @param {number} px @param {number} py */
 export const pixelCentreNative = (px, py) => ({ sx: (px + 0.5) * PIXEL_UNITS, sz: (499 - py + 0.5) * PIXEL_UNITS });
-/** AUDIT DRAGON-HIDDEN A1: could an omen's dragon stand at this site, as far as a relay with no map can judge - a pixel's
- *  centre on its theatre's side of the Bay's edge (wire.js gateLanePixelOk; no province's border is the relay's).
+/** Could an omen's dragon stand at this site, as far as a relay with no map can judge - a pixel's centre in its cell.
  *  @param {{w: number, s: number}} o @param {number} sx @param {number} sz */
 export function dragonSiteOk(o, sx, sz) {
-  const [px, py] = mapPixelOfWire(sx, sz), c = pixelCentreNative(px, py);
-  return gateLanePixelOk(dragonLaneOf(o), px, py) && sx === c.sx && sz === c.sz;
+  const [px, py] = mapPixelOfWire(sx, sz), c = pixelCentreNative(px, py), cell = dragonCellOf(o);
+  return Math.floor(px / DRAGON_CELL_PX) === cell.cx && Math.floor(py / DRAGON_CELL_PX) === cell.cy && sx === c.sx && sz === c.sz;
 }
 
 /** Native units to the metre (wire.js PIXEL_UNITS over gateLaw.js PIXEL_M - pinned equal, serpentLaw.js's own). */
@@ -86,5 +122,5 @@ export const dragonFightId = (w, sx, sz) => `${w}@${dragonSiteKey(sx, sz)}`;
 export const DRAGON_SITES_MAX = 3;
 
 /** The brain's law a client fights by: the relay tells an older game to reload (the gate's GATE-RELOAD law). */
-export const DRAGON_BRAIN_V = 2;
-export const DRAGON_BRAIN_MIN = 2;   // DRAGON-HIDDEN: a game that rolls the old public salt is told to reload
+export const DRAGON_BRAIN_V = 3;
+export const DRAGON_BRAIN_MIN = 3;   // DRAGON-HIDDEN: a game that rolls the old public salt is told to reload; DRAGON-CELL: one that finds a site off a lane

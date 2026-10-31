@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   DRAGON_WATCH_MS, DRAGON_WATCH_ONE_IN, DRAGON_LAND_SPAN_MS, DRAGON_STAY_MS, dragonLandOf, dragonQuietAt, dragonAskEnd, DRAGON_CLIMB_MS, DRAGON_SHINY_ONE_IN, dragonWatchAt, isDragonOmen, dragonOmenOk,
-  dragonShinyOf, dragonLookOf, dragonTimes, dragonSeedTold, dragonWatchesAbout, dragonAdmits, dragonHolds, dragonSiteDay, dragonLaneOf, DRAGON_SITE_BASE, dragonFightId, dragonSiteKey,
+  dragonShinyOf, dragonLookOf, dragonTimes, dragonSeedTold, dragonWatchesAbout, dragonAdmits, dragonHolds, dragonCellOf, dragonSitePick, DRAGON_CELLS, DRAGON_CELL_PX, dragonFightId, dragonSiteKey,
 } from '../../../src/net/dragon/dragonLaw.js';
 import { lineLeg, orbitLeg, dragonLegAt, planAt, planEnd, orbitFrom, fallLeg, roostLeg, ROOST_ALT, ROOST_R, FLY_V, EASE, DRAGON_BODY_R } from '../../../src/net/dragon/dragonBody.js';
 import * as B from '../../../src/net/dragon/dragonBrain.js';
@@ -14,9 +14,9 @@ import { judgeDragon } from '../../../src/net/bossRef.js';
 import { DRAGON_SEAM, BOSS_SEAM_KEYS } from '../../../src/net/bossSeam.js';
 import { egWindupFloorMs, egInShape } from '../../../src/net/eliteGates/egShape.js';
 import { HIT_KINDS, dpsRef, BUCKET_DEPTH_X, HIT_CAP_X } from '../../../src/net/gate/gateBrain.js';
-import { gameDayAt, GATE_LANE_SPAN, gateLaneOf } from '../../../src/net/gate/gateLaw.js';
+import { BAY_ORIGIN, TAMRIEL_W, TAMRIEL_H } from '../../../src/world/tamriel/tamrielFrame.js';   // DRAGON-CELL: the frame the cells are drawn from
 import {
-  GATE_LANES_OPEN, validDragonIn, validDragonOut, parseClient, DRAGON_KINDS, DRAGON_OUT_KINDS, DRAGON_NO_WORDS, DRAGON_LEGS_MAX,
+  validDragonIn, validDragonOut, parseClient, DRAGON_KINDS, DRAGON_OUT_KINDS, DRAGON_NO_WORDS, DRAGON_LEGS_MAX,
   DRAGON_BLOWS_WIRE_MAX, DRAGON_BLOW_KINDS, DRAGON_CHART_MAX, DRAGON_RECEIPT_WIRE_MAX, relaySupportsDragon, DRAGON_RELAY_MIN, DRAGON_RIDE_RELAY_MIN, RELAY_VERSION,
 } from '../../../src/net/wire.js';
 import { DRAGON_RECEIPT_V, DRAGON_RECEIPT_TTL_S, DRAGON_RECEIPT_MAX, dragonReceiptValid, mintDragonReceipt, readDragonReceipt, verifyDragonReceipt } from '../../../src/net/dragon/dragonReceipt.js';
@@ -77,18 +77,20 @@ test('DRAGON2 law: one watch in three brings a dragon down, one dragon in twenty
   assert.deepEqual([...fates].sort(), [false, true]);
 });
 
-test('DRAGON2 law: its site is rolled by the gate\'s site law under a number no gate, star or Hollow names, on any lane that stands; a fight is named by its watch and its site to the whole unit (mutants: the site day a gate\'s; a lane past the open ones)', () => {
-  const today = gameDayAt(Date.parse('2026-10-29T12:00:00Z'));
-  for (const w of [0, W, 49_999_999, 50_000_000, 123_456_789]) {
-    const d = dragonSiteDay(om(w));
-    assert.ok(d >= DRAGON_SITE_BASE && d < GATE_LANE_SPAN, 'below the lanes\' span, so every lane reads it as its own day');
-    assert.ok(d > today * 100, 'past every game day the gate will see for millennia');
-    assert.equal(gateLaneOf(d + 3 * GATE_LANE_SPAN), 3);
+test('DRAGON2 law: its site is in the cell its omen rolls (DRAGON-CELL - PIN MOVED: the gate\'s site law on a lane, until the relay told the omen to the whole world) - any cell of the continent\'s frame at its authored fit, the Bay\'s and past it, its own roll and never the watch\'s number; a fight is named by its watch and its site to the whole unit (mutants: the cell\'s roll the watch\'s; the frame shrunk)', () => {
+  const frame = { cx0: Math.floor(-BAY_ORIGIN.x / DRAGON_CELL_PX), cy0: Math.floor(-BAY_ORIGIN.y / DRAGON_CELL_PX) };
+  assert.deepEqual(DRAGON_CELLS, { ...frame, cols: Math.ceil((TAMRIEL_W - BAY_ORIGIN.x) / DRAGON_CELL_PX) - frame.cx0, rows: Math.ceil((TAMRIEL_H - BAY_ORIGIN.y) / DRAGON_CELL_PX) - frame.cy0 });
+  let bay = 0, past = 0, x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (let w = 0; w < 20_000; w++) {
+    const { cx, cy } = dragonCellOf(om(w));
+    x0 = Math.min(x0, cx); x1 = Math.max(x1, cx); y0 = Math.min(y0, cy); y1 = Math.max(y1, cy);
+    if (cx >= 0 && cy >= 0 && cx * DRAGON_CELL_PX < 1000 && cy * DRAGON_CELL_PX < 500) bay++; else past++;
   }
-  const lanes = new Set();
-  for (let w = 0; w < 2000; w++) lanes.add(dragonLaneOf(om(w)));
-  assert.notEqual(dragonSiteDay(om(W, 1)), dragonSiteDay(om(W, 2)), 'the site day is the seed\'s, never the watch\'s number');
-  assert.deepEqual([...lanes].sort((a, b) => a - b), [...GATE_LANES_OPEN]);
+  assert.ok(x0 >= DRAGON_CELLS.cx0 && y0 >= DRAGON_CELLS.cy0 && x1 < DRAGON_CELLS.cx0 + DRAGON_CELLS.cols && y1 < DRAGON_CELLS.cy0 + DRAGON_CELLS.rows, 'inside the frame');
+  assert.ok(x0 <= DRAGON_CELLS.cx0 + 2 && x1 >= DRAGON_CELLS.cx0 + DRAGON_CELLS.cols - 3 && y0 <= DRAGON_CELLS.cy0 + 2 && y1 >= DRAGON_CELLS.cy0 + DRAGON_CELLS.rows - 3, 'and over the whole of it');
+  assert.ok(bay > 0 && past > bay * 10, `the Bay\'s cells and the world\'s (${bay}, ${past})`);
+  assert.notDeepEqual(dragonCellOf(om(W, 1)), dragonCellOf(om(W, 2)), 'the cell is the seed\'s, never the watch\'s number');
+  assert.notEqual(dragonSitePick(om(W, 1)), dragonSitePick(om(W, 2)), 'and its ground\'s pick');
   assert.equal(dragonSiteKey(1234.4, -5.6), '1234,-6');
   assert.equal(dragonFightId(W, 1234.4, -5.6), `${W}@1234,-6`);
 });
@@ -292,7 +294,7 @@ test('DRAGON2 wire: the client says two things, `in` and `hit`, projected field 
   assert.ok('error' in parseClient(JSON.stringify({ t: 'dragon', k: 'hit', d: 9, r: 1 }), { hasHello: false }));
   assert.equal(relaySupportsDragon(RELAY_VERSION), true);
   assert.equal(relaySupportsDragon(`world${DRAGON_RELAY_MIN - 1}`), false);
-  assert.deepEqual([DRAGON_RELAY_MIN, DRAGON_RIDE_RELAY_MIN], [294, 288], 'PIN MOVED (DRAGON-HIDDEN, world294 past WYRM-RIDER and PVP-VITALS): the fight past the ride - the first relay that answers `ask` (290, 291 then 292 on its branch, renumbered past PVP-LINGER, GILDED-GLOW and DELVE II)');
+  assert.deepEqual([DRAGON_RELAY_MIN, DRAGON_RIDE_RELAY_MIN], [298, 288], 'PIN MOVED (DRAGON-CELL, world298: the relay that tells an omen near its cell alone; DRAGON-HIDDEN, world294 past WYRM-RIDER and PVP-VITALS): the fight past the ride - the first relay that answers `ask` (290, 291 then 292 on its branch, renumbered past PVP-LINGER, GILDED-GLOW and DELVE II)');
   assert.equal(relaySupportsDragon('world289'), false, 'HAND-WRAPS\' relay closes the socket on `ask`');
   assert.equal(relaySupportsDragon('world290'), false, 'and PVP-LINGER\'s');
   assert.equal(relaySupportsDragon('world291'), false, 'and GILDED-GLOW\'s');

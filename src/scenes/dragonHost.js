@@ -11,7 +11,7 @@ import { DRAGON_BLOWS, DRAGON_BLOW, DRAGON_ADMIT_R, DRAGON_FAN_R, DRAGON_ENGAGE_
 import { HIT_KINDS } from '../net/gate/gateBrain.js';
 import { strikeDamage, savedShare } from '../net/gate/gateStrike.js';
 import { egBlowVerdict } from '../net/eliteGates/egShape.js';
-import { cellRoomOfWire } from '../net/wire.js';
+import { cellRoomOfWire, mapPixelOfWire } from '../net/wire.js';
 import { bossStandIn, bossFrame, bossReach, hostCue, gateHitFlash, standInBlowCap } from '../world/gate/gateBoss.js';
 import { wordShare } from '../combat/healthShare.js';
 import { calculateAttackDamage } from '../combat/formulas.js';
@@ -128,16 +128,19 @@ export function createDragonHost(deps) {
   const player = deps.player ?? (() => playerEntity);
   const judged = new Set(), cued = new Set(), heardLand = new Set(), meshes = new Map();
   let memW = null, lastIn = { w: null, at: -Infinity }, noticed = null, nearSince = null, roarSlot = null;
-  const omens = new Map(), asked = new Map();   // DRAGON-HIDDEN: each watch's seed its cell told (null: none here), and when I last asked
+  const omens = new Map(), asked = new Map(), toldNoneAt = new Map();   // DRAGON-HIDDEN: each watch's seed its cell told (null: none here), and when I last asked
   const seedOf = (w) => omens.get(w);
+  /** DRAGON-CELL: the map pixel I stand on, as a word - a `null` answer is asked again from another. */
+  const pixelHere = () => { const f = deps.feet?.(); if (!f) return ''; const n = deps.native(f[0], f[2]); return mapPixelOfWire(n[0], n[1]).join(','); };
   /** DRAGON-HIDDEN: an `ask` for each watch about whose landing is past, until it is answered - down whatever room I
-   *  stand in (AUDIT DRAGON-HIDDEN B1: net/online.js sendDragon - a siege's battle sees the sky too). */
+   *  stand in (AUDIT DRAGON-HIDDEN B1: net/online.js sendDragon - a siege's battle sees the sky too). DRAGON-CELL: the relay
+   *  tells a seed only near its cell, so a `null` (nothing near me) is asked again once I stand on another pixel. */
   function ask(t) {
     for (const w of dragonWatchesAbout(t)) {
-      if (omens.has(w) || t < dragonQuietAt(w) - DRAGON_LAND_SPAN_MS || t >= dragonAskEnd(w) || t - (asked.get(w) ?? -Infinity) < DRAGON_ASK_RETRY_MS) continue;   // DRAGON-HIDDEN-TIME: from the watch's start, its landing being nobody's to count
+      if (omens.get(w) != null || (omens.has(w) && toldNoneAt.get(w) === pixelHere()) || t < dragonQuietAt(w) - DRAGON_LAND_SPAN_MS || t >= dragonAskEnd(w) || t - (asked.get(w) ?? -Infinity) < DRAGON_ASK_RETRY_MS) continue;   // DRAGON-HIDDEN-TIME: from the watch's start, its landing being nobody's to count
       if (deps.online?.send?.({ k: 'ask', w })) asked.set(w, t);
     }
-    for (const m of [omens, asked]) for (const w of m.keys()) if (!dragonWatchesAbout(t).includes(w)) m.delete(w);
+    for (const m of [omens, asked, toldNoneAt]) for (const w of m.keys()) if (!dragonWatchesAbout(t).includes(w)) m.delete(w);
   }
   let lastPh = 1, lastMd = DRAGON_MODE.air, saidFell = false, saidGone = false, landed = false;
   let hpSeen = null, hurtAt = -Infinity, roomAt = -Infinity, heardHurt = -Infinity;
@@ -423,8 +426,9 @@ export function createDragonHost(deps) {
     tames: () => rewards().tames(),
     /** The site this frame's dragon is of (`{w, sx, sz}`), or null - the link folds its words alone. */
     site: () => live?.site ?? null,
-    /** DRAGON-HIDDEN: a watch's omen as its cell told it (`s` null: no dragon at this relay). @param {{w: number, s: number|null}} o */
-    omen(o) { omens.set(o.w, o.s); },
+    /** DRAGON-HIDDEN: a watch's omen as its cell told it (`s` null: none near me - DRAGON-CELL - or no dragon at this relay).
+     *  @param {{w: number, s: number|null}} o */
+    omen(o) { omens.set(o.w, o.s); if (o.s == null) toldNoneAt.set(o.w, pixelHere()); else toldNoneAt.delete(o.w); },
     /** Test seams. */
     _queue: () => queue,
     _live: () => live,

@@ -12,7 +12,7 @@ import { DRAGON_SEAM } from '../../../src/net/bossSeam.js';
 import { roostLeg } from '../../../src/net/dragon/dragonBody.js';
 import { DRAGON_TICK_MS } from '../../../src/net/dragon/dragonBrain.js';
 import { mintDragonReceipt, readDragonReceipt, verifyDragonReceipt } from '../../../src/net/dragon/dragonReceipt.js';
-import { cellRoomOfWire, GATE_LANES_OPEN, DRAGON_FIGHT_KEY, DRAGON_FIGHTS_KEY, DRAGON_RC_PREFIX, DRAGON_RELAY_MIN, SOCIAL_ROOM, RELAY_VERSION } from '../../../src/net/wire.js';
+import { cellRoomOfWire, DRAGON_FIGHT_KEY, DRAGON_FIGHTS_KEY, DRAGON_RC_PREFIX, DRAGON_RELAY_MIN, SOCIAL_ROOM, RELAY_VERSION } from '../../../src/net/wire.js';
 import { siegeRoomKey } from '../../../src/net/siege/siegeRef.js';
 import { OnlineSession } from '../../../src/net/online.js';
 import { createDragonHost, createDragonSky, DRAGON_ASK_RETRY_MS, DRAGON_NOTICE_WAIT_MS } from '../../../src/scenes/dragonHost.js';
@@ -20,14 +20,13 @@ import { createDragonLink } from '../../../src/net/dragon/dragonLink.js';
 import { dragonFights, dragonFellInternal } from '../../../server/src/dragonFights.js';
 import { fakeRooms } from '../../fakeRoom.mjs';
 import { fakeSocketClass } from '../../fakeSocket.mjs';
-import { RELAY_KEY, dragonOmenFrom } from '../../dragonOmen.mjs';
+import { RELAY_KEY, dragonOmenFrom, siteOf } from '../../dragonOmen.mjs';
 
 const subtle = globalThis.crypto.subtle;
 const OMEN = await dragonOmenFrom(500_000), W = OMEN.w, TT = Law.dragonTimes(OMEN);
-const PROV = GATE_LANES_OPEN.find((l) => l !== 0);
-const FAR = await dragonOmenFrom(W + 1, { lane: PROV });   // a dragon past the Bay's edge
+const FAR = await dragonOmenFrom(W + 1, { bay: false });   // a dragon past the Bay's edge (DRAGON-CELL: in a cell off it)
 const SHINY = await dragonOmenFrom(W + 1, { look: 1 });   // the Aetherbright, in the Bay
-const PX = 205, PY = 214, { sx: SX, sz: SZ } = Law.pixelCentreNative(PX, PY), CELL = cellRoomOfWire(SX, SZ);
+const { px: PX, py: PY, sx: SX, sz: SZ } = siteOf(OMEN), CELL = cellRoomOfWire(SX, SZ);
 const at = (mx, mz) => ({ x: SX + mx * Law.DRAGON_NATIVE_PER_M, y: 0, z: SZ + mz * Law.DRAGON_NATIVE_PER_M, yaw: 0, pitch: 0 });
 const IN = (o = {}) => ({ k: 'in', w: W, bv: Law.DRAGON_BRAIN_V, lv: 20, sx: SX, sz: SZ, ...o });
 const words = (ws, k) => ws.sent.filter((m) => m.t === 'dragon' && (!k || m.k === k));
@@ -46,13 +45,14 @@ async function withRelay(fn, { start = TT.landAt + 60_000, key = CELL } = {}) {
 }
 
 test('AUDIT DRAGON-HIDDEN A1 the site: a relay with no map holds a forged one to what it can judge - a pixel\'s centre on its omen\'s side of the Bay\'s edge; off it, the dragon is gone there and no fight stands (mutants: the theatre unchecked; the centre unchecked; its north unchecked; the cell\'s check dropped)', async () => {
-  assert.equal(Law.dragonSiteOk(OMEN, SX, SZ), true, 'the Bay\'s dragon at a Bay pixel\'s centre');
+  assert.equal(Law.dragonSiteOk(OMEN, SX, SZ), true, 'its dragon at a pixel\'s centre in its cell');
   assert.equal(Law.dragonSiteOk(OMEN, SX + 1, SZ), false, 'east of its centre');
   assert.equal(Law.dragonSiteOk(OMEN, SX, SZ - 1), false, 'south of it');
-  assert.equal(Law.dragonSiteOk(FAR, SX, SZ), false, 'a province\'s dragon never in the Bay');
-  const east = Law.pixelCentreNative(1200, PY);
-  assert.equal(Law.dragonSiteOk(FAR, east.sx, east.sz), true, 'past the Bay\'s edge');
-  assert.equal(Law.dragonSiteOk(OMEN, east.sx, east.sz), false, 'and the Bay\'s never past it');
+  const next = Law.pixelCentreNative(PX + Law.DRAGON_CELL_PX, PY);
+  assert.equal(Law.dragonSiteOk(OMEN, next.sx, next.sz), false, 'DRAGON-CELL: never in the next cell');
+  const F = siteOf(FAR);
+  assert.equal(Law.dragonSiteOk(FAR, F.sx, F.sz), true, 'past the Bay\'s edge, in its own cell');
+  assert.equal(Law.dragonSiteOk(FAR, SX, SZ), false, 'a province\'s dragon never in the Bay\'s cell');
   await withRelay(async ({ r, say }) => {
     const a = r.connect();
     await r.hello(a, 'peer-0001', at(40, 0));
@@ -83,19 +83,19 @@ test('AUDIT DRAGON-HIDDEN A4 the deploy: a cell waking lets go of an unslain fig
   });
 });
 
-test('AUDIT DRAGON-HIDDEN B1 the relay: an `ask` is answered in any room - a siege\'s battle too - while an `in` and a blow there are junk, a fight being its cell\'s (mutants: an ask in a battle junked; a battle\'s blow let through)', async () => {
+test('AUDIT DRAGON-HIDDEN B1 the relay: an `ask` is answered in any room - a siege\'s battle too - while an `in` and a blow there are junk, a fight being its cell\'s. DRAGON-CELL: a battle holds no pose of the world, so it is told null, as a quiet watch is (mutants: an ask in a battle junked; a battle\'s blow let through)', async () => {
   await withRelay(async ({ r, say }) => {
     const a = r.connect();
     await r.hello(a, 'peer-0001', { x: 0, y: 0, z: 0, yaw: 0, pitch: 0 }, { glyphs: ['dev'] });
     await say(a, { k: 'ask', w: W });
-    assert.deepEqual(words(a, 'omen').map(({ w, s }) => [w, s]), [[W, OMEN.s]]);
+    assert.deepEqual(words(a, 'omen').map(({ w, s }) => [w, s]), [[W, null]]);
     assert.equal(a.meters.junk ?? 0, 0);
     await say(a, { k: 'hit', d: 10, r: 0 });
     assert.equal(a.meters.junk, 1, 'a blow is a cell\'s');
     await say(a, IN());
     assert.equal(a.meters.junk, 2, 'and an `in`');
     assert.equal(r.room._dg.fights, undefined, 'no fight read here');
-  }, { key: siegeRoomKey(3021, 20) });
+  }, { key: siegeRoomKey(3021, 20), start: Law.dragonQuietAt(W) });
 });
 
 test('AUDIT DRAGON-HIDDEN B1 the client: an `ask` goes down my primary whatever its room, at a relay that answers it, and its omen is heard there - never the hub\'s; a fight\'s word still wants its cell\'s socket (mutants: the ask wants a cell; the battle\'s omen dropped)', () => {
@@ -123,12 +123,13 @@ test('AUDIT DRAGON-HIDDEN B1 the client: an `ask` goes down my primary whatever 
 });
 
 test('AUDIT DRAGON-HIDDEN A3, C2 the Aetherbright: its omen\'s look is its fight\'s, its killer\'s receipt\'s, and - the hub rolling no watch - a party-mate\'s share takes it from a dealer\'s receipt (mutants: the fight brass; the share brass)', async () => {
+  const S = siteOf(SHINY), atS = (mx, mz) => ({ x: S.sx + mx * Law.DRAGON_NATIVE_PER_M, y: 0, z: S.sz + mz * Law.DRAGON_NATIVE_PER_M, yaw: 0, pitch: 0 });   // DRAGON-CELL: its own cell
   await withRelay(async ({ world, r, say, tick, now }) => {
     const a = r.connect();
-    await r.hello(a, 'peer-0001', at(40, 0));
-    await say(a, IN({ w: SHINY.w }));
+    await r.hello(a, 'peer-0001', atS(40, 0));
+    await say(a, IN({ w: SHINY.w, sx: S.sx, sz: S.sz }));
     assert.equal(words(a, 'st')[0].b, 1, 'its fight');
-    const f = r.room._dg.fights.get(Law.dragonFightId(SHINY.w, SX, SZ));
+    const f = r.room._dg.fights.get(Law.dragonFightId(SHINY.w, S.sx, S.sz));
     await tick(1);
     f.hp = 5; f.players['acct-peer-0001'].dealt = 1000;
     await say(a, { k: 'hit', d: 40, r: 1 });
@@ -145,7 +146,7 @@ test('AUDIT DRAGON-HIDDEN A3, C2 the Aetherbright: its omen\'s look is its fight
     assert.equal((await dragonFellInternal(hub.room, new Request('https://relay.internal/', { method: 'POST', body: JSON.stringify(body) }))).status, 200);
     const c = readDragonReceipt(hub.store.get(`${DRAGON_RC_PREFIX}acct-peer-0007`)?.r);
     assert.deepEqual([c?.s, c?.x, c?.l, c?.b], ['acct-peer-0007', 'stood', 18, 1], 'a party-mate\'s share, the Aetherbright\'s');
-  }, { start: Law.dragonTimes(SHINY).landAt + 60_000 });
+  }, { start: Law.dragonTimes(SHINY).landAt + 60_000, key: cellRoomOfWire(S.sx, S.sz) });
 });
 
 test('AUDIT DRAGON-HIDDEN B4 the omen word is the host\'s, every other the fight\'s link\'s (mutant: the omen to the link)', () => {
@@ -192,7 +193,7 @@ test('AUDIT DRAGON-HIDDEN B5 the ask\'s bounds: soon again after an ask before t
   assert.equal(B.mid.filter((x) => /A blue dragon circles/.test(x)).length, 1, B.mid.join(' | '));
 });
 
-test('AUDIT DRAGON-HIDDEN A6 the fight\'s gate is the relay that answers an `ask`: its version\'s note names DRAGON-HIDDEN, so a renumbering past another\'s number shows', () => {
+test('AUDIT DRAGON-HIDDEN A6 the fight\'s gate is the relay that answers an `ask`: its version\'s note names DRAGON-CELL (PIN MOVED: DRAGON-HIDDEN\'s until the relay told an omen near its cell alone), so a renumbering past another\'s number shows', () => {
   const wire = readFileSync(new URL('../../../src/net/wire.js', import.meta.url), 'utf8');
-  assert.match(wire, new RegExp(`(?:RELAY_VERSION = 'world${DRAGON_RELAY_MIN}';\\s+)?// world${DRAGON_RELAY_MIN}: [^\\n]*DRAGON-HIDDEN`));
+  assert.match(wire, new RegExp(`(?:RELAY_VERSION = 'world${DRAGON_RELAY_MIN}';\\s+)?// world${DRAGON_RELAY_MIN}: [^\\n]*DRAGON-CELL`));
 });

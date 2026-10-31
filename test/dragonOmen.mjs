@@ -1,8 +1,10 @@
 // DRAGON-HIDDEN: the dragon tests' relay secret and its omens. The relay rolls a watch with HMAC of its GATE_SIGNING_KEY
 // (src/net/dragon/dragonSeed.js), so a test that stands a fight finds its dragon's watch under the key its relay holds.
 // One Ed25519 key serves both: it signs the receipts and seeds the watches, as GATE_SIGNING_KEY does in production.
+// DRAGON-CELL: a watch's omens are its candidates (dragonCandidates), each in a cell of its own - the one a player near it is
+// told and a fight stands by - so a test's site is a pixel of its omen's cell (siteOf).
 import { dragonWatchKeyOf, dragonWatchSeed } from '../src/net/dragon/dragonSeed.js';
-import { isDragonOmen, dragonLookOf, dragonLaneOf } from '../src/net/dragon/dragonLaw.js';
+import { isDragonOmen, dragonLookOf, dragonCandidates, dragonCellOf, pixelCentreNative, DRAGON_CELL_PX } from '../src/net/dragon/dragonLaw.js';
 
 const subtle = globalThis.crypto.subtle;
 const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
@@ -10,13 +12,24 @@ const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify'
 export const RELAY_KEY = Object.freeze({ pkcs8: Buffer.from(await subtle.exportKey('pkcs8', kp.privateKey)).toString('base64'), publicKey: kp.publicKey });
 const seedKey = await dragonWatchKeyOf(RELAY_KEY.pkcs8, { subtle });
 
-/** Watch `w`'s omen under the tests' relay secret. @param {number} w */
+/** Watch `w`'s own omen under the tests' relay secret - never told, its candidates are. @param {number} w */
 export const omenOf = async (w) => ({ w, s: await dragonWatchSeed(seedKey, w, { subtle }) });
-/** The first watch from `from` whose omen brings a dragon down of this look in this theatre - the brass, in the Bay,
- *  unless named. AUDIT DRAGON-HIDDEN C1: the key is new each run, so a test names every roll it reads (null: any). */
-export async function dragonOmenFrom(from, { look = 0, lane = 0 } = {}) {
+/** Is an omen's cell wholly on the Bay's map (true), wholly off it (false), or across its edge (null)? */
+export function cellInBay(o) {
+  const { cx, cy } = dragonCellOf(o), x0 = cx * DRAGON_CELL_PX, y0 = cy * DRAGON_CELL_PX, x1 = x0 + DRAGON_CELL_PX, y1 = y0 + DRAGON_CELL_PX;
+  if (x0 >= 0 && y0 >= 0 && x1 <= 1000 && y1 <= 500) return true;
+  return x1 <= 0 || y1 <= 0 || x0 >= 1000 || y0 >= 500 ? false : null;
+}
+/** The first omen, from watch `from` on, that brings a dragon down of this look in a cell on the Bay's map (`bay` true) or
+ *  off it (false) - the brass, in the Bay, unless named. AUDIT DRAGON-HIDDEN C1: the key is new each run, so a test names
+ *  every roll it reads (null: any). */
+export async function dragonOmenFrom(from, { look = 0, bay = true } = {}) {
   for (let w = from; ; w++) {
-    const o = await omenOf(w);
-    if (isDragonOmen(o) && (look === null || dragonLookOf(o) === look) && (lane === null || dragonLaneOf(o) === lane)) return o;
+    for (const c of dragonCandidates(await omenOf(w))) if (isDragonOmen(c) && (look === null || dragonLookOf(c) === look) && (bay === null || cellInBay(c) === bay)) return c;
   }
+}
+/** A site in an omen's cell: the pixel `dx`, `dy` from the cell's corner, and its native centre. */
+export function siteOf(o, dx = 5, dy = 6) {
+  const { cx, cy } = dragonCellOf(o), px = cx * DRAGON_CELL_PX + dx, py = cy * DRAGON_CELL_PX + dy;
+  return { px, py, ...pixelCentreNative(px, py) };
 }

@@ -8,11 +8,11 @@ import { cellRoomOfWire, PIXEL_UNITS } from '../../../src/net/wire.js';
 import { dragonTimes, dragonFightId, DRAGON_BRAIN_V, DRAGON_NATIVE_PER_M, DRAGON_CLIMB_MS, DRAGON_REMAINS_MS } from '../../../src/net/dragon/dragonLaw.js';
 import { DRAGON_TICK_MS, DRAGON_STATE_SEND_MS } from '../../../src/net/dragon/dragonBrain.js';
 import { fakeRooms } from '../../fakeRoom.mjs';
-import { RELAY_KEY, dragonOmenFrom } from '../../dragonOmen.mjs';
+import { RELAY_KEY, dragonOmenFrom, siteOf } from '../../dragonOmen.mjs';
 
 const OMEN = await dragonOmenFrom(500_000), { w: W } = OMEN;   // DRAGON-HIDDEN: a dragon's watch under the relay's own secret
 const TT = dragonTimes(OMEN);
-const PX = 205, PY = 214;
+const { px: PX, py: PY } = siteOf(OMEN);   // DRAGON-CELL: a pixel of its omen's cell
 const SX = (PX + 0.5) * PIXEL_UNITS, SZ = (499 - PY + 0.5) * PIXEL_UNITS;
 const CELL = cellRoomOfWire(SX, SZ);
 const ID = dragonFightId(W, SX, SZ);

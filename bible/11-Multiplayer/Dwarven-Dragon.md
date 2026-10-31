@@ -46,27 +46,34 @@ judges what it found, and fights what comes near. Imrah Bel-Tavir's reading, nev
 that keeps the Mzunthar over the Bay. One dragon in twenty runs on an aetherium heart instead of a brass coil. Sailors
 call it **Aetherbright**: its plates are the blue of the crystal, its wings the violet of its light.
 
-## 2. When and where - the relay's secret, told once it lands
+## 2. When and where - the relay's secret, told near its cell
 
 DRAGON-HIDDEN (the owner: "people are able to predict the dragon spawn by looking at source code"): the rolls were a
-public salt's, so anyone could count every dragon to come. Every roll now takes a watch's omen `{w, s}` (DRAGON-LAW,
-net/dragon/dragonLaw.js), its seed `s` HMAC of the relay's `GATE_SIGNING_KEY` under its own label (net/dragon/dragonSeed.js).
+public salt's, so anyone could count every dragon to come. Every roll now takes an omen `{w, s}` (net/dragon/dragonLaw.js),
+its seed from HMAC of the relay's `GATE_SIGNING_KEY` under its own label (net/dragon/dragonSeed.js). DRAGON-CELL: the relay
+told that seed to every screen at the landing, and the seed named the pixel; now only a player near its cell is told.
 
-- **The watch.** The real clock is cut into watches of `DRAGON_WATCH_MS` (one hour). Each watch's omen draws whether a
-  dragon comes down: one watch in three (`DRAGON_WATCH_ONE_IN`), about eight a day. *When* is public - a quarter past;
-  *whether* and *where* are not.
-- **Told once it lands.** A client asks (`ask`) for this watch and the last once its landing is past
-  (`dragonSeedTold`), down whatever room it stands in; the relay answers `omen` each time, never for a watch to come.
-  No secret, no dragon. Rotating `GATE_SIGNING_KEY` moves every dragon, one standing now too.
-- **Its life.** It comes down at `DRAGON_LAND_AT_MS` into the watch, stays until slain or `DRAGON_STAY_MS` (40 minutes)
-  later, then climbs away. So at most one true dragon stands at once, worldwide.
-- **The shiny.** The omen draws one dragon in `DRAGON_SHINY_ONE_IN` (20) as Aetherbright. The fight, its receipt and the
-  account's row carry it.
-- **Where.** The omen picks a theatre among those that stand (`dragonLaneOf`) and a number of its own (`dragonSiteDay`),
-  and the gate's site law finds the pixel over the world's own data (`systems/dragon/dragonSite.js`). The relay never
-  reads the map: it holds a fight at the site an `in` names in its own cell, at most `DRAGON_SITES_MAX` a watch, at a
-  pixel's centre on its theatre's side of the Bay's edge (`dragonSiteOk`; no province's border is the relay's). A
-  forged site within that stands a fight of its own that nobody else draws (the serpent's AUDIT SERPENT S1 law).
+- **The watch.** The real clock is cut into watches of `DRAGON_WATCH_MS` (one hour). A watch holds `DRAGON_CELLS_A_WATCH`
+  (4) omens, each a seed of the watch's own seed (`dragonCandidates`). One omen in `DRAGON_WATCH_ONE_IN` (3) brings a
+  dragon down where its cell has ground: about eight a day.
+- **When.** An omen's landing is a whole second its seed rolls in the watch's first `DRAGON_LAND_SPAN_MS` (20 minutes,
+  DRAGON-HIDDEN-TIME), so the clock tells nobody when.
+- **Where.** An omen picks a cell (`dragonCellOf`): one of the relay's 16-pixel world cells in the continent's frame at
+  its authored fit (`DRAGON_CELLS`), a box the relay knows with no map. The client finds the site in it over the world's
+  own data (`systems/dragon/dragonSite.js`): the Bay's gate scan on the Bay, and past it the gate's law over the towns
+  about the cell, the countryside's among them (`scenes/gate/gateLanes.js` groundIn). Its own roll picks one pixel. A
+  cell with no ground brings no dragon. An omen within two cells of an earlier one of its watch is dropped.
+- **Told near its cell.** A client asks (`ask`) for this watch and the last, down whatever room it stands in. The relay
+  tells an omen's seed only to a socket posed within `DRAGON_TELL_PX` (6 pixels, the dragon's sight) of its cell, in a
+  cell that socket covers, once it has landed. Any other socket is told null, no sooner than a quiet watch
+  (`dragonQuietAt`), and asks again from another pixel. The watch's own seed is never told. No secret, no dragon.
+- **Its life.** It stays until slain or `DRAGON_STAY_MS` (40 minutes) after its landing, then climbs away. Two may stand
+  at once, in cells far apart.
+- **The shiny.** One omen in `DRAGON_SHINY_ONE_IN` (20) is the Aetherbright. The fight, its receipt and the account's
+  row carry it.
+- **The fight's site.** The relay holds a fight at the site an `in` names in its own cell, at most `DRAGON_SITES_MAX` a
+  watch, at a pixel's centre in the cell of an omen of that watch (`dragonCandidateOf`, `dragonSiteOk`). A forged site
+  within that stands a fight of its own that nobody else draws (the serpent's AUDIT SERPENT S1 law).
 
 No line in chat and no ring on the map. The dragon is found by being seen.
 
@@ -441,6 +448,23 @@ Pinned by `test/net/dragon/dragonhiddenaudit.test.js` (8); `tools/mutants/dragon
 `dragonhidden`'s answer (each time, not once a socket - `DRAGON-HIDDEN-told-twice` retired with the code) and its ask
 (no cell); `dragon3_host`'s two `online.js` lines; `DRAGON3-the-hub-says-every-word` re-aimed by content. The two records
 `dragonhidden`'s titles named and nobody wrote are added: `dragonhidden.json` 12, dead.
+
+**DRAGON-CELL (2026-10-31, from Discord: a player read each dragon's pixel off the omen frame; the owner chose
+"Cell-scoped").** DRAGON-HIDDEN told a watch's seed to every screen at the landing, and the seed named the pixel, so a
+watcher on the desktop app's debugging port read each dragon's site. The relay has no map, so it cannot
+tell who stands near a pixel. The seed picks a cell now, which the relay can judge: it tells an omen only to a socket
+posed within six pixels of its cell, and null to any other at a quiet watch's time (section 2). A watch holds four
+omens, because a cell holds ground about 28% of the time: on the freeware 1,220 of the Bay's 2,016 cells, and past the
+Bay at most 23,281 of 86,344 (`tools/dragonCellProbe.mjs`). No host line changed. Relay world298, `DRAGON_RELAY_MIN`
+298, `DRAGON_BRAIN_MIN` 3. Deploy the relay first.
+
+Pinned by `test/net/dragon/dragoncell.test.js` (4); `tools/mutants/dragoncell.json`, 22 dead. PINS MOVED: the relay
+version's 46 files and its law's row; `dragon2_law`'s site and relay floor; `dragon3_client`'s site; `dragonhidden`'s
+tell and quiet watch; `dragonhiddenaudit`'s A1, B1, A3 and A6. Re-aimed by content and run, dead: DRAGON2-the-site-day-a-gates,
+DRAGON3-the-gates-day and -a-site-asked-every-frame, AUDIT-DRAGON-the-gate-its-own-number, two of `dragonhidden`'s, the
+three A1 of `dragonhiddenaudit`'s, and the relay version's three. Retired with their code: AUDIT-DRAGON-HIDDEN-A1-the-cells-check-dropped
+and -B5-asked-after-a-null-omen (DRAGON-CELL-the-in-any-site and -the-null-asked-again-here hold their laws).
+DRAGON-HIDDEN-asked-before-the-landing was alive on main too: recorded equivalent, with why. The version line carries STOREFRONT's rollback floor and kill fields, so WIREAUDIT-6 and -9 aim there.
 
 **DRAGON7 - the Aetherbright (2026-10-29).** `characters/dwarvenDragonShiny.js` turns each PLTE colour at load - the brass
 and copper to aetherium's blue, the wings' olive membrane to its violet, the greys cooled - and writes the chunk's CRC

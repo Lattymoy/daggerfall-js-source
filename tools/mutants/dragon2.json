@@ -32,12 +32,12 @@
   {
     "name": "DRAGON2-the-site-day-a-gates",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "export const dragonSiteDay = (o) => DRAGON_SITE_BASE + (dragonRoll(o, 5) % DRAGON_SITE_BASE);",
-    "new": "export const dragonSiteDay = (o) => o.w;",
+    "old": "export const dragonSitePick = (o) => dragonRoll(o, 5);",
+    "new": "export const dragonSitePick = (o) => o.w;",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ],
-    "note": "Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed."
+    "note": "Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed. Re-aimed by content again (DRAGON-CELL)."
   },
   {
     "name": "DRAGON2-the-orbits-pace",
