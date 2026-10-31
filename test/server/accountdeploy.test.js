@@ -599,7 +599,9 @@ test('AUDIT B1 (SHADOW-FANG, 2026-09-26): the service deploys only once the rela
   const wait = step('Wait for the relay to serve this push\'s version');
   const deploy = step('Deploy');
   assert.ok(wait < deploy, 'the relay first, then the service');
-  const body = wf.slice(wait, deploy);
+  // AUDIT STOREFRONT lane 3 F1: and before the migrations - a migration's letter waits for the service that shows it
+  assert.ok(wait < step('Record the database\'s bookmark before the migrations') && wait < step('Apply migrations'), 'the relay first, then the migrations');
+  const body = wf.slice(wait, wf.indexOf('- name: ', wait + 8));
   const live = body.split('\n').filter((l) => !/^\s*#/.test(l)).join('\n');
   assert.match(live, /grep -oP "\^export const RELAY_VERSION = '\\K\[\^'\]\+" src\/net\/wire\.js/, 'the version wire.js names - one home');
   assert.match(live, /grep -oP "\^export const DEFAULT_SERVER = 'wss:\/\/\\K\[\^'\/\]\+" src\/net\/online\.js/, 'the relay\'s address, the client\'s own');
@@ -629,4 +631,12 @@ test('INT1 (its audit): THE ACCOUNT WORKER LOADS WHERE A MODULE\'S URL IS NO URL
     const m = await import(pathToFileURL(file).href);
     assert.equal(typeof m.default?.fetch, 'function', 'the Worker\'s fetch, loaded');
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('BIRTH-SKILL (#1484): the post-deploy smoke\'s first realm save is one the first-save law takes', async () => {
+  // main's account deploy went red on 'realm-birth' when #1484 judged a first save's skills and the smoke sent none
+  const m = rd(WF).match(/put \/tmp\/realmsave\.json "\$base\/v1\/realm\/\$rc\/data" '([^']+)'/);
+  assert.ok(m, 'the smoke\'s realm first save, found in the workflow');
+  const { firstSaveRefusal } = await import(pathToFileURL(join(root, 'server-account/src/realm.js')).href);
+  assert.equal(firstSaveRefusal(m[1], { origin_id: null, lineage_id: null }), null, 'a fresh character\'s first save is taken');
 });

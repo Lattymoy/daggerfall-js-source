@@ -757,8 +757,8 @@
   {
     "name": "AUDIT31-guild-look-cached",
     "file": "src/ui/socialPanel.js",
-    "old": "  const lookAtGuild = () => { guildUi.storesAsked = false; guildUi.vaultAsked = false; if (guild?.stale?.()) guild.refresh(); };",
-    "new": "  const lookAtGuild = () => { guildUi.vaultAsked = false; if (guild?.stale?.()) guild.refresh(); };",
+    "old": "  const lookAtGuild = () => { guildUi.storesAsked = false; guildUi.vaultAsked = false; guildUi.shopAsked = false; if (guild?.stale?.()) guild.refresh(); };",
+    "new": "  const lookAtGuild = () => { guildUi.vaultAsked = false; guildUi.shopAsked = false; if (guild?.stale?.()) guild.refresh(); };",
     "tests": [
       "test/net/audit31_client.test.js"
     ],

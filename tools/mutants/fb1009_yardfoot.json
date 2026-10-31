@@ -2,8 +2,8 @@
   {
     "name": "FB1009-a-wall-covers-ground",
     "file": "src/scenes/homeYards.js",
-    "old": "    if (Math.abs((bx - ax) * (cz - az) - (cx - ax) * (bz - az)) < 2e-3) {",
-    "new": "    if (Math.abs((bx - ax) * (cz - az) - (cx - ax) * (bz - az)) < 0) {",
+    "old": "    if (Math.abs(up) < 2e-3) continue;   // a wall: no ground under it",
+    "new": "    if (Math.abs(up) < 0) continue;",
     "tests": [
       "test/world/fb1009_yardfoot.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "FB1009-the-turn-dropped",
     "file": "src/scenes/homeYards.js",
-    "old": "    const b = transformedAabb([rx0, 0, rz0, rx1, 0, rz1], m);",
-    "new": "    const b = [rx0 + m[12], 0, rz0 + m[14], rx1 + m[12], 0, rz1 + m[14]];",
+    "old": "    const b = transformedAabb([rx0, y ?? 0, rz0, rx1, y ?? 0, rz1], m);",
+    "new": "    const b = [rx0 + m[12], y ?? 0, rz0 + m[14], rx1 + m[12], y ?? 0, rz1 + m[14]];",
     "tests": [
       "test/world/fb1009_yardfoot.test.js"
     ]
@@ -38,7 +38,7 @@
   {
     "name": "FB1009-the-lots-ground-its-box",
     "file": "src/scenes/homeYards.js",
-    "old": "  const walls = Array.isArray(rects) && rects.length ? rects.map((r) => [r[0] - origin[0], r[1] - origin[2], r[2] - origin[0], r[3] - origin[2]]) : [house];",
+    "old": "  const walls = known ? rects.map(from) : [house];",
     "new": "  const walls = [house];",
     "tests": [
       "test/world/fb1009_yardfoot.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "FB1009-the-rects-left-in-the-boxs-frame",
     "file": "src/scenes/homeYards.js",
-    "old": "  const walls = Array.isArray(rects) && rects.length ? rects.map((r) => [r[0] - origin[0], r[1] - origin[2], r[2] - origin[0], r[3] - origin[2]]) : [house];",
-    "new": "  const walls = Array.isArray(rects) && rects.length ? rects.map((r) => [r[0], r[1], r[2], r[3]]) : [house];",
+    "old": "  const from = (r) => [r[0] - origin[0], r[1] - origin[2], r[2] - origin[0], r[3] - origin[2]];",
+    "new": "  const from = (r) => [r[0], r[1], r[2], r[3]];",
     "tests": [
       "test/world/fb1009_yardfoot.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "FB1009-the-house-asked-by-its-box",
     "file": "src/scenes/homeYards.js",
-    "old": "  if ((lot.walls ?? [lot.house]).some(meets)) return YARD_IN_HOUSE;",
-    "new": "  if ([lot.house].some(meets)) return YARD_IN_HOUSE;",
+    "old": "  if ((lot.walls ?? [lot.house]).some(meets) && yardInHouse(lot, pos, ground, pos[1] + (/** @type {any} */ (foot)?.bottom ?? 0))) return YARD_IN_HOUSE;",
+    "new": "  if ([lot.house].some(meets) && yardInHouse({ ...lot, walls: [lot.house], grounds: null }, pos, ground, 0)) return YARD_IN_HOUSE;",
     "tests": [
       "test/world/fb1009_yardfoot.test.js"
     ]
@@ -74,7 +74,7 @@
   {
     "name": "FB1009-the-yard-made-without-its-ground",
     "file": "src/scenes/homeYards.js",
-    "old": "  if (!frame?.terraced) return yardLot(frame.at, frame.box, YARD_MARGIN, frame.rects);",
+    "old": "  if (!frame?.terraced) return yardLot(frame.at, frame.box, YARD_MARGIN, frame.rects, frame);",
     "new": "  if (!frame?.terraced) return yardLot(frame.at, frame.box);",
     "tests": [
       "test/world/fb1009_yardfoot.test.js"
@@ -93,7 +93,7 @@
   {
     "name": "FB1009-the-host-records-no-ground",
     "file": "src/scenes/pixelBuild.js",
-    "old": "pixelHomeFrames.set(homeKey, { at, box: [...box], rects, type:",
+    "old": "pixelHomeFrames.set(homeKey, { at, box: [...box], rects, grounds: [ground], type:",
     "new": "pixelHomeFrames.set(homeKey, { at, box: [...box], type:",
     "tests": [
       "test/world/fb1009_yardfoot.test.js"
@@ -102,7 +102,7 @@
   {
     "name": "FB1009-a-second-models-ground-dropped",
     "file": "src/scenes/pixelBuild.js",
-    "old": " f.rects.push(...rects); f.parts?.push([cpu, local]); }",
+    "old": " f.rects.push(...rects); f.grounds?.push(ground); f.parts?.push([cpu, local]); }",
     "new": " f.parts?.push([cpu, local]); }",
     "tests": [
       "test/world/fb1009_yardfoot.test.js"

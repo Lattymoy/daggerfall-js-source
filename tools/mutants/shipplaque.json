@@ -335,8 +335,8 @@
   {
     "name": "PL-never-swept",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    plaques.sweep();\n    return n;",
-    "new": "    return n;",
+    "old": "    plaques.sweep();\n    figureheads.sweep();",
+    "new": "    figureheads.sweep();",
     "tests": [
       "test/systems/naval/shipplaque.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "FL-unsaved",
     "file": "src/systems/fleet.js",
-    "old": ", ...(r.plaque ? { plaque: true } : {}) })),",
-    "new": ", })),",
+    "old": ", ...(r.plaque ? { plaque: true } : {}), ...(r.figurehead",
+    "new": ", ...(r.figurehead",
     "tests": [
       "test/systems/naval/shipplaque.test.js"
     ]

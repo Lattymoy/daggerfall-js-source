@@ -23,6 +23,7 @@
 import { LOCATION_TYPES } from '../formats/mapsFile.js';
 import { ARENA_TEMPLATE_KINDS, arenaPlaceId, arenaLocationIndex } from './arenaLocations.js';
 import { CAPITALS, capitalPin, capitalSliceOrdinal, capitalSliceName, capitalPlaceId, capitalLocationIndex, capitalSlicePort, capitalDims, capitalCanalOpen } from './tamrielCapitals.js';
+import { THEATRE_KEYS, areaOfDistrict, districtOf } from './worldWide/worldGrid.js';   // FOUNDATION F1: a capital's slice its province's
 
 /** The registry's name for the places past the Bay. */
 export const PAST_BAY_SOURCE = 'tesa';
@@ -44,10 +45,13 @@ export function pastBayPlaceRows({ pixels, templateOf, capitals }) {
       // eight blocks square where there are several; a square's n by n read Alinor's and Torval's harbours out
       const D = capitalDims(cap), many = D.w * D.h > 1;
       const pin = pixels?.byPixel.get(`${at.px},${at.py}`) ?? null;   // the place of its name, pinned on its centre
+      // FOUNDATION F1: every slice in its capital's province - Alinor's harbour and Torval's docks stand on the picture's
+      // sea, where the pixel's own read named no province (region -1)
+      const t = THEATRE_KEYS.indexOf(cap.province);
       for (let s = 0; s < D.w * D.h; s++) {
-        const sx = s % D.w, sy = (s - sx) / D.w;
+        const sx = s % D.w, sy = (s - sx) / D.w, px = at.px + sx - D.mx, py = at.py + sy - D.my, [cx, cy] = districtOf(px, py);
         rows.push({
-          mapId: capitalPlaceId(k, capitalSliceOrdinal(cap, s)), name: capitalSliceName(cap, s), px: at.px + sx - D.mx, py: at.py + sy - D.my,
+          mapId: capitalPlaceId(k, capitalSliceOrdinal(cap, s)), name: capitalSliceName(cap, s), px, py, ...(t > 0 ? { area: areaOfDistrict(t, cx, cy) } : {}),
           type: LOCATION_TYPES.TownCity, w: many ? 8 : cap.plan[0].length, h: many ? 8 : cap.plan.length,
           port: capitalSlicePort(k, s, pin?.port),   // NIBEN-SEA: its harbour's slice (the Imperial City's Waterfront, on its canal); BAY-LEFT-SEA: the slice's own port byte's law
           location: capitalLocationIndex(k, capitalSliceOrdinal(cap, s)),   // WW7-5: its location's index (a town past the Bay reports itself)

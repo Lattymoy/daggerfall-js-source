@@ -68,7 +68,7 @@ test('MW-MAP1: by source - every host with a rig hands sheetHolderOf(() => its r
   assert.match(w, /holder: sheetHolderOf\(\(\) => weaponRig\),\s*\n\s*\.\.\.extra,/, 'the V-key travel builder');
   // PIN MOVED (FB1020c STREETS-TAB, at the merge of STAR0's move): the bag (with the holder) built by `townHere`, then into the head, then the town plan
   assert.match(w, /if \(!townMapDoorReady\(\)\) return;[^\n]*\n\s*mwViewFirstPerson\(\);[^\n]*\n\s*townTalk\.showOverlay\(createTownMapWindow\(here\.deps\)\);/, 'the world host\'s M: into the head, then the town plan');
-  assert.match(w, /return \{ mapId: dfLoc\.mapTableData\?\.mapId, deps: \{\s*\n\s*holder: sheetHolderOf\(\(\) => weaponRig\),/, '...with the holder');
+  assert.match(w, /return \{ mapId: dfLoc\.mapTableData\?\.mapId, region: dfLoc\.regionIndex, deps: \{\s*\n\s*holder: sheetHolderOf\(\(\) => weaponRig\),/, '...with the holder');   // PIN MOVED (VENDOR-HOUSES: and the town's region)
   assert.equal((w.match(/hold: \(spec, opts\)/g) ?? []).length, 0, 'no inline holder left in world.js');
   const e = rd('src/scenes/exterior.js');
   assert.match(e, /if \(!townMapDoorReady\(\)\) return;[^\n]*\n\s*mwViewFirstPerson\(\);[^\n]*\n\s*townTalk\.showOverlay\(createTownMapWindow\(\{\s*\n\s*holder: sheetHolderOf\(\(\) => weaponRig\),/, 'the ?exterior host\'s M');

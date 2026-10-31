@@ -3360,6 +3360,74 @@ the largest the sampling profile named the city's replacement blocks (`worldData
 MAPS records and the deep waters' location rects, as MEM-AUDIT found at Knightstale - and the pixel builds' own
 allocations.
 
+## OW-WIDE — the Overworld's stutter past the Bay
+
+*The owner (2026-10-30): "I want to improve overworld travel performance. It currently seems like there is stutter due
+to our larger map".*
+
+**The probe, mended first.** `tools/owHitchProbe.mjs` measured nothing on main. A new character's tutorial pages open one
+after another, each a pause that brings the Overworld down. A Living World band by Knightstale noticed the traveller and
+brought it down again: `&nofoes` empties a dungeon, not the wild. The run walked on foot. The probe now turns the popups
+off and holds the player unseen (STAFF-UNSEEN's law, pinned against the staff host's own write; `FOES=1` keeps the
+foes). It raises a fallen view again, starts from any pixel (`AT=x,y`), and fails a run whose view was down for half its
+samples.
+
+**How it was measured.** The freeware ARENA2. The Colovian Highlands (1575,405) past the Bay and Knightstale in it, W
+held at x60 for 60 s under one CPU profile. SwiftShader with the draws stubbed, on four shared cores: the figures rank
+the costs, they are not a player's milliseconds. A base arm is this tree with `src/` stashed (a worktree lacks the
+generated assets the page needs, so `TREE=` timed out here).
+
+**Found past the Bay** (the base):
+- `floraSeat.js` standsOnGround: single tasks of 484, 165 and 144 ms in a pixel's build. FLORA-GROUND's WeakSet held
+  every wild flat standing, and its growth rehashed the whole table in one add (node: 2 M adds 2.8 s, the longest 207
+  ms). A large weak table is dear to the collector too.
+- A crossing's demotions built inline: 24-130 ms a crossing, the worst 190 and 395 ms. Past the Bay their ghost rows read
+  the continent's ground; PERF-EXT26 kept them inline at 0.21 ms, in the Bay.
+- The far ring built again at each tree art landed: 11-19 builds of 20-147 ms in a minute, in bursts.
+
+**The fixes:**
+- **OW-SEAT** (`floraSeat.js`): the mark is a symbol on the centre's own array. The same plants stand on the same ground.
+- **OW-DEMOTE** (`world.js` restrideOffThread): with the terrain worker up, a demotion's grid is the worker's, as a
+  promotion's is. The finer surface stands for one round trip, as a promotion's coarser one does.
+- **OW-RING** (`farRing.js` _floraDue): a tree's art rebuilds the ring once the far-flora book has stood still
+  FLORA_SETTLE_MS (1.5 s), or FLORA_WAIT_MAX_MS (6 s) after the first art. A zone's burst is one build.
+
+**Measured** (60 s each; the province's base twice):
+
+| | province base | province OW-WIDE | Knightstale base | Knightstale OW-WIDE |
+|---|---|---|---|---|
+| frames | 6,133 / 6,245 | 6,665 | 5,126 | 5,071 |
+| over 100 ms / over 200 ms | 43 / 8, 27 / 8 | 22 / 2 | 38 / 6 | 23 / 8 |
+| the longest frame, ms | 610 / 615 | 503 | 428 | 430 |
+| long tasks' time, s | 8.7 / 8.6 | 7.0 | 15.4 | 14.0 |
+| the collector, s (longest pause, ms) | 2.6 (275) / 2.5 (618) | 1.7 (137) | 2.6 (261) | 2.6 (252) |
+| a pixel build's longest task, ms | 487 / 535 | 44 | 318 | 39 |
+| far ring builds | 14 / 11 | 9, 5 over 16 ms | 19 | 3 |
+
+The Knightstale fix run travelled 12 pixels to the base's 10. Past the Bay the stutter falls by every measure. In the
+Bay the long frames fall and the rest is the same.
+
+**Tried and taken out: OW-WAYS.** The living world's ways past the Bay plan two to five whole windows in one frame
+(`beyondWays.js` plan, 10-35 ms here). Walked a slice a frame, then planned a few a frame with the narrow answer kept,
+the longest fell to 14-24 ms, but the trips waited longer for their ways. Waiting trips are asked again every frame
+(PERF-WAYS1), and walked across frames the planner's scratch outlived the young generation: the collector went from 2.5
+to 3.5-5.2 s past the Bay. The planner is as it was. Its arrays a box (`travelRoute.js` searchSteps) are what a later
+pass would pool.
+
+**What is left.** The collector's pauses, the pixel builds' 25-45 ms units, a restride's swap on the main thread
+(`seatFlora` moves every group's batch, 20-70 ms here), the Overworld's HUD (`travelViewHud.js` drawMarks, 2-4 ms a
+frame) and the frame's read of the canvas's size, which lays out the page's changed DOM.
+
+**The four hosts.** `scenes/world.js` wired: it alone streams pixels, restrides them and keeps the far ring.
+`scenes/exterior.js` (one fixed city: no stream, no restride, no far ring), `scenes/worldModes.js` (a building) and `scenes/dungeonContext.js` (a dungeon) stand no streamed pixel. Not a DFU member:
+DFU's StreamingWorld has no worker, no far ring and no plant mark.
+
+Pins: `test/scenes/ow_wide.test.js` (OW-SEAT). PIN MOVED: `restrideworker.test.js` (OW-DEMOTE: the stride the job asked;
+a demotion the worker's), `landform.test.js` and `audit_waternext.test.js` (the job's stride), `distantland.test.js` (the swap's call), `farflora.test.js` (OW-RING: the settle, the burst, the wait let go at a build),
+`floraground_rings.test.js` (the centres' places compared, the mark riding the array). Mutants:
+`tools/mutants/ow_wide.json`, 8, all dead; re-aimed by content: `floraground.json` (the mark unread), `perfextc.json`
+(three), `stream1.json` (one), all dead.
+
 ## For the owner
 
 - **The A/B this branch owes**: on a machine with the data, `ARENA2_PATH=... node tools/frameProbe.mjs knight night`
@@ -3376,4 +3444,6 @@ allocations.
   tools/owHitchProbe.mjs` with `TREE=` the base, then this branch (OUT= one file; p50, p95, max and the frames over 33 ms
   of `gap`, the long tasks); `tools/heldMapLoadProbe.mjs` the same two ways (the frames to whole and the holes at each
   view); `tools/horizonProbe.mjs` for the picture. On a GPU the far plane's fragments are the cost to watch.
+- **OW-WIDE's A/B on a GPU**: `ARENA2_PATH=... node tools/owHitchProbe.mjs` with `AT=1575,405` (the Colovian Highlands)
+  and without it (Knightstale), on main and on this branch, one after the other - the long frames and the collector's.
 - **The picture's levers** above (1, 4, 6b, 7) are yours - and 5's distance is the Other players card's now (PEER-RANGE): each trades a little of what is seen for frame time.

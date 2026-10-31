@@ -227,7 +227,7 @@
   {
     "name": "WL1-no-fade",
     "file": "src/render/windowLight.js",
-    "old": "      const fade = c.d <= cut * WL_FADE_FROM ? 1 : (cut - c.d) / (cut * (1 - WL_FADE_FROM));",
+    "old": "      const fade = wlFade(c.d, cut);",
     "new": "      const fade = 1;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
@@ -254,7 +254,7 @@
   {
     "name": "WL1-curtains-pass-nothing",
     "file": "src/render/windowLight.js",
-    "old": "    if (curtains && this._aperture(c, null, this._whole)) l.area += (this._whole.area - l.area) * WL_CURTAIN_PASS;",
+    "old": "    if (whole) l.area += (whole.area - l.area) * WL_CURTAIN_PASS;",
     "new": "    if (false) l.area += 0;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
@@ -326,20 +326,22 @@
   {
     "name": "WL1-block-on-point-zero",
     "file": "src/render/renderer.js",
-    "old": "gl.uniformBlockBinding(p, bi, WL_UBO_BINDING);",
-    "new": "gl.uniformBlockBinding(p, bi, 0);",
+    "old": "[['WinLights', WL_UBO_BINDING], ['WinFar', WL_FAR_UBO_BINDING]]",
+    "new": "[['WinLights', 0], ['WinFar', WL_FAR_UBO_BINDING]]",
     "tests": [
       "test/render/wl1_windowlight.test.js"
-    ]
+    ],
+    "why": "LIGHT-REACH: re-aimed by content - the law moved with the code that carries it."
   },
   {
     "name": "WL1-band-over-the-lanterns",
     "file": "src/render/renderer.js",
-    "old": "    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, WL_GRID_ROW, CLUSTER_GRID_W",
-    "new": "    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, CLUSTER_GRID_W",
+    "old": "{ sp: this._wl.space, row: WL_GRID_ROW, base: WL_LIST_BASE }",
+    "new": "{ sp: this._wl.space, row: 0, base: WL_LIST_BASE }",
     "tests": [
       "test/render/wl1_windowlight.test.js"
-    ]
+    ],
+    "why": "LIGHT-REACH: re-aimed by content - the law moved with the code that carries it."
   },
   {
     "name": "WL1-draw-never-noted",
@@ -533,8 +535,8 @@
   {
     "name": "WL1-far-placement-gathered",
     "file": "src/render/windowLight.js",
-    "old": "      if (far(p.all, 0)) continue;\n      for (let ci = 0; ci < p.tiles.length; ci++) {\n        if (far(p.ball, ci * 4)) continue;\n        if (p.tiles[ci])",
-    "new": "      for (let ci = 0; ci < p.tiles.length; ci++) {\n        if (far(p.ball, ci * 4)) continue;\n        if (p.tiles[ci])",
+    "old": "      if (pastBall(p.all, 0, eye, reach)) continue;\n      for (let ci = 0; ci < p.tiles.length; ci++) {\n        if (pastBall(p.ball, ci * 4, eye, reach)) continue;\n        if (p.tiles[ci])",
+    "new": "      for (let ci = 0; ci < p.tiles.length; ci++) {\n        if (pastBall(p.ball, ci * 4, eye, reach)) continue;\n        if (p.tiles[ci])",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ],
@@ -571,11 +573,12 @@
   {
     "name": "WL1-overflow-drops-all",
     "file": "src/render/windowLight.js",
-    "old": "    while (fit > 0 && !buildLightClusters(this.spheres, fit, view, proj, this.space)) fit = Math.min(fit - 1, Math.floor(fit * CLUSTER_LIST_CAP / this.space.need * 0.9));",
-    "new": "    if (!buildLightClusters(this.spheres, fit, view, proj, this.space)) fit = 0;",
+    "old": "    while (fit > 0 && !buildLightClusterBoxes(boxes, fit, view, proj, space)) fit = Math.min(fit - 1, Math.floor(fit * CLUSTER_LIST_CAP / space.need * 0.9));",
+    "new": "    if (!buildLightClusterBoxes(boxes, fit, view, proj, space)) fit = 0;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
-    ]
+    ],
+    "why": "LIGHT-REACH: re-aimed by content - the law moved with the code that carries it."
   },
   {
     "name": "WL1-sliver-kept",
@@ -643,11 +646,12 @@
   {
     "name": "WL1-beam-ball-at-the-glass",
     "file": "src/render/windowLight.js",
-    "old": "    const h = faces ? WL_SUN_REACH / 2 : 0;",
-    "new": "    const h = 0;",
+    "old": "      nHi = Math.max(nHi, en);",
+    "new": "      nHi = Math.max(nHi, 0);",
     "tests": [
       "test/render/wl1_windowlight.test.js"
-    ]
+    ],
+    "why": "LIGHT-REACH: re-aimed by content - the law moved with the code that carries it."
   },
   {
     "name": "WL1-build-unbudgeted",
@@ -742,11 +746,12 @@
   {
     "name": "WL1-overflow-cut-stays",
     "file": "src/render/windowLight.js",
-    "old": "    if (fit < w) this._cuts[kind] = Math.min(this._cuts[kind], this._ld[fit]);",
-    "new": "    // the cut stays",
+    "old": "    if (fit < n) { cut(fit); this.stats.dropped += n - fit; }",
+    "new": "    if (fit < n) { this.stats.dropped += n - fit; }",
     "tests": [
       "test/render/wl1_windowlight.test.js"
-    ]
+    ],
+    "why": "LIGHT-REACH: re-aimed by content - the law moved with the code that carries it."
   },
   {
     "name": "WL1-glass-depth-cold",

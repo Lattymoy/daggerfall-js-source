@@ -28,7 +28,7 @@ import { fakeRoom } from '../fakeRoom.mjs';
 import { withClock, WIDE_POSE, HEAL_SPELL, PLACE_ATTACH_FIELDS, PLACE_METER_FIELDS, SEAT_ATTACH_FIELDS, widestPlace } from '../placeWidest.mjs';
 
 
-test('AUDIT ATTACH A1: the WIDEST attachment a place socket carries - the widest room key, an id and an account at ID_RE\'s bound, the name at NAME_MAX, the longest title, every glyph, a mute, a pose at its bounds - with every arm it can send spent once and its funnel full, is what a wake must recompute and nothing else, its field list closed both ways, measured at half the runtime\'s 2 KiB (mutants: a meter written back onto the attachment; the pose write dropped)', () => withClock(async (tick) => {
+test('AUDIT ATTACH A1: the WIDEST attachment a place socket carries - the widest room key, an id and an account at ID_RE\'s bound, the name at NAME_MAX, the longest title, every glyph, every worn claim and as many hidden glyphs as a token takes, a mute, a pose with every field at its bounds - with every arm it can send spent once and its funnel full, is what a wake must recompute and nothing else, its field list closed both ways, measured under the runtime\'s 2 KiB (mutants: a meter written back onto the attachment; the pose write dropped)', () => withClock(async (tick) => {
   const { me } = await widestPlace(tick);
   assert.equal(me.closed, null, 'never "hello too large", never a close for a refused write');
   const fields = Object.keys(me.att);
@@ -50,11 +50,17 @@ test('AUDIT ATTACH A1: the WIDEST attachment a place socket carries - the widest
   // PIN MOVED (TESA x MAIN, the merge of main into TESA): both, 1206 measured - the seven crowns (+70) and the secret (+56)
   // PIN MOVED (NIRNROOT-SAGE): the Nirnroot Sage's glyph word ('nirnrootsage', its quotes and comma) - the second merge measures all three: 1221
   // PIN MOVED (SHOP, its fold into #1184): the Origin's glyph word beside the crowns, every glyph at once - 1230, 818 under the runtime's 2048
-  assert.ok(bytes <= 1230, `the widest place attachment is ${bytes} bytes - about half the runtime's 2048 at most, so the next field is measured with room to spare`);
-  assert.ok(bytes > 500, `and it is the wide one: ${bytes} bytes`);
+  // PIN MOVED (STOREFRONT): the glyphs held as their mask over GLYPHS (server/src/index.js packAttach), as the WIKIMAID note
+  // foresaw - 958, 1090 under the runtime's 2048
+  // PIN MOVED (STOREFRONT, the wire audit): 1704 measured, from 958. That fixture's token carried neither kit, no aura, icon,
+  // ribbon, arms, villain meter or hidden glyph, and its pose no blow, kill or ten other fields (placeWidest.mjs WIDE_WORN,
+  // WIDE_REST), though this note said the kits were on it. The widest is 344 under the runtime's 2048, not half of it;
+  // the hidden glyphs as a mask, as `gb` is, would take back some 200.
+  assert.ok(bytes <= 1750, `the widest place attachment is ${bytes} bytes - under the runtime's 2048 with room for the next field`);
+  assert.ok(bytes > 1500, `and it is the wide one: ${bytes} bytes`);
 }));
 
-test('AUDIT ATTACH A1 (AUDIT FB1018D L4-4): THE WIDEST DUNGEON INSTANCE SOCKET - its key at its widest, its attachment SEAT-LIVE\'s two stamps beside every field a building\'s carries, and still about half the runtime\'s 2048', () => withClock(async (tick) => {
+test('AUDIT ATTACH A1 (AUDIT FB1018D L4-4): THE WIDEST DUNGEON INSTANCE SOCKET - its key at its widest, its attachment SEAT-LIVE\'s two stamps beside every field a building\'s carries, and still under the runtime\'s 2048', () => withClock(async (tick) => {
   // PIN MOVED (WW-C2, bible/03-World/World-Wide.md WW-C): the widest key that is no zone hall's - the halls' lane is the
   // high four bits' 0xF (net/wire.js WDUN_WORLD_LANE), every id from 4,026,531,840 a hall's room, which keeps no instance;
   // the widest instance key below it is as wide (ten digits)
@@ -71,7 +77,10 @@ test('AUDIT ATTACH A1 (AUDIT FB1018D L4-4): THE WIDEST DUNGEON INSTANCE SOCKET -
   // PIN MOVED (TESA x MAIN, the merge of main into TESA): both, 1261 measured - the crowns and the secret on the wider key
   // PIN MOVED (NIRNROOT-SAGE): the Nirnroot Sage's glyph word, every glyph at once - the second merge measures all three: 1276
   // PIN MOVED (SHOP, its fold into #1184): the Origin's glyph word on the dungeon's wider key - 1285
-  assert.ok(bytes <= 1285, `the widest dungeon instance attachment is ${bytes} bytes`);
+  // PIN MOVED (STOREFRONT): the glyphs as their mask on the dungeon's wider key - 1013
+  // PIN MOVED (STOREFRONT, the wire audit): 1760 measured, from 1013 - the worn claims, the hidden glyphs and the pose's
+  // fields the fixture left out (the building's note above); 288 under the runtime's 2048
+  assert.ok(bytes <= 1800, `the widest dungeon instance attachment is ${bytes} bytes`);
 }));
 
 // Each arm's flood, at one instant: `passes` frames through the bucket, then a strike a frame (`key`), closed past `max`.

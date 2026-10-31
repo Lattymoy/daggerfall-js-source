@@ -25,6 +25,7 @@ import { checkName, textCaught } from '../net/nameFilter.js';
 import { shipFlagOf } from './naval/shipFlag.js';   // SHIP-COLOURS: her flag, through its door
 import { liveryOf, LIVERY_PARTS, isPaint } from './naval/shipLivery.js';   // SHIP-LIVERY: her paint, through its door
 import { fittingsOf } from './naval/deckFittings.js';   // DECK-PROPS: her fittings, through their door
+import { figureheadOf } from './naval/figurehead.js';   // FIGUREHEAD: her carving, through its door
 import { plateMetal } from './armorMaterials.js';   // REFIT-ORES: a piece of plate's metal
 import { isLocked } from './item/itemLock.js';   // REFIT-ORES: a locked piece is never melted down
 import { isBound } from './item/itemBound.js';   // REFIT-ORES: nor a bound one
@@ -315,7 +316,7 @@ const variantOfItem = (it) => (it?.message | 0) % 10;
 function recordFor(uid, hull, variant, value) {
   let r = _ships.get(uid);
   if (!r) {
-    r = { uid, hull, variant, value: Number.isFinite(value) ? value : HULL_PRICES[hull] ?? 0, name: '', upgrades: upgradesBlank(), credit: null, port: null, colours: null, livery: null, cabin: 0, deck: [], plaque: false };   // SHIP-PLAQUE: `plaque` her name on her bows; DECK-PROPS: `deck` her fittings   // SHIP-COLOURS: `colours` her flag (null: the mod's pennant); SHIP-LIVERY: `livery` her paint (null: as built), `cabin` her cabin's stain (0: as built)
+    r = { uid, hull, variant, value: Number.isFinite(value) ? value : HULL_PRICES[hull] ?? 0, name: '', upgrades: upgradesBlank(), credit: null, port: null, colours: null, livery: null, cabin: 0, deck: [], plaque: false, figurehead: 0 };   // FIGUREHEAD: `figurehead` her carving (0: none); SHIP-PLAQUE: `plaque` her name on her bows; DECK-PROPS: `deck` her fittings   // SHIP-COLOURS: `colours` her flag (null: the mod's pennant); SHIP-LIVERY: `livery` her paint (null: as built), `cabin` her cabin's stain (0: as built)
     _ships.set(uid, r);
   }
   return r;
@@ -411,6 +412,17 @@ export function setShipPlaque(uid, on) {
   r.plaque = on;
   return true;
 }
+/** FIGUREHEAD (bible/03-World/Naval-Refit.md): her carving at her stem - systems/naval/figurehead.js figureheadOf's, 0
+ *  none; a hull with no stem for one takes none. Answers whether she has it now. */
+export function setShipFigurehead(uid, raw) {
+  const r = _ships.get(uid);
+  const n = r ? figureheadOf(raw, r.hull) : null;
+  if (!r || n == null || n !== raw) return false;
+  r.figurehead = n;
+  return true;
+}
+/** FIGUREHEAD: the carving a boat of mine stands at her stem, by her number (0: none, or no ship of mine). */
+export const shipFigureheadOf = (boat) => (boat?.uid ? fleetShip(boat.uid)?.figurehead ?? 0 : 0);
 /** DECK-PROPS (bible/03-World/Naval-Refit.md): her deck's fittings set - systems/naval/deckFittings.js fittingsOf's (a
  *  fitting it refuses left out). Answers whether she has them now. */
 export function setShipFittings(uid, raw) {
@@ -443,7 +455,7 @@ export function fleetSaveData() {
   return {
     v: FLEET_SAVE_VERSION,
     ships: [..._ships.values()].map((r) => ({ uid: r.uid, hull: r.hull, variant: r.variant, value: r.value, name: r.name, upgrades: { ...r.upgrades },
-      credit: r.credit ? { ...r.credit } : null, port: r.port ? { ...r.port } : null, title: !!titleOf(r.uid), ...(r.colours ? { colours: { ...r.colours } } : {}), ...(r.livery ? { livery: { ...r.livery } } : {}), ...(r.cabin ? { cabin: r.cabin } : {}), ...(r.deck?.length ? { deck: r.deck.map((f) => ({ ...f })) } : {}), ...(r.plaque ? { plaque: true } : {}) })),   // SHIP-COLOURS; SHIP-LIVERY; DECK-PROPS; SHIP-PLAQUE
+      credit: r.credit ? { ...r.credit } : null, port: r.port ? { ...r.port } : null, title: !!titleOf(r.uid), ...(r.colours ? { colours: { ...r.colours } } : {}), ...(r.livery ? { livery: { ...r.livery } } : {}), ...(r.cabin ? { cabin: r.cabin } : {}), ...(r.deck?.length ? { deck: r.deck.map((f) => ({ ...f })) } : {}), ...(r.plaque ? { plaque: true } : {}), ...(r.figurehead ? { figurehead: r.figurehead } : {}) })),   // SHIP-COLOURS; SHIP-LIVERY; DECK-PROPS; SHIP-PLAQUE; FIGUREHEAD
     crossed: [..._crossed],   // AUDIT SHIPYARDS L1-2: the numbers that came through customs
   };
 }
@@ -472,6 +484,7 @@ export function restoreFleetSaveData(data) {
     r.cabin = isPaint(s.cabin) ? s.cabin : 0;   // CABIN-LOOK: her cabin's stain
     r.deck = fittingsOf(s.deck);   // DECK-PROPS: her fittings, as the door takes them
     r.plaque = s.plaque === true && !!r.name;   // SHIP-PLAQUE: her name on her bows - a named ship's
+    r.figurehead = figureheadOf(s.figurehead, r.hull) ?? 0;   // FIGUREHEAD: her carving, as the door takes it (one it refuses: none)
     if (s.title) _book.push(mintDeed(r.hull, r.variant, r.uid, r.value));
   }
 }

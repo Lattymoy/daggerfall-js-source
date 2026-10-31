@@ -47,6 +47,7 @@
 // (design step 4). A harvest's `at` is the game's own clock, held within HARVEST_LATE_S of the service's; the hours a
 // player harvested (progress_hours) are the service's.
 import { displayName } from './accounts.js';
+import { shopDemand } from './staffShop.js';   // STOREFRONT: the shop's demand
 import { findAccount } from './sanctions.js';
 import { holdStandsSql } from './realm.js';
 import { readAll, DB_ROOT } from './service.js';
@@ -108,7 +109,7 @@ export const GUILDS_PAGE = 50;
 /** A read is written in the audit log once in this, a member and a view (staff.js STAFF_READ_ROW_S's reason). */
 const READ_ROW_S = 10 * 60;
 
-export const ECON_ROUTES = Object.freeze(['/v1/staff/econ/stream', '/v1/staff/econ/harvests', '/v1/staff/econ/economy', '/v1/staff/econ/guilds']);
+export const ECON_ROUTES = Object.freeze(['/v1/staff/econ/stream', '/v1/staff/econ/harvests', '/v1/staff/econ/economy', '/v1/staff/econ/guilds', '/v1/staff/econ/shop']);   // STOREFRONT: and the shop's demand (staffShop.js)
 
 const STREAM_KINDS = Object.freeze(['sale', 'fill', 'bid', 'trade', 'vault']);
 const LEVELS = Object.freeze(['low', 'medium', 'high']);
@@ -743,6 +744,12 @@ export async function staffEconomy(ctx, env, path, body, who, audit) {
     const days = Math.min(int(body.days, 1, Number.MAX_SAFE_INTEGER) ?? ECON_DAYS_DEFAULT, ECON_DAYS_MAX);
     // STAFF-PANEL-SPEED: the audit row with the economy's reads, one trip
     const [answer] = await Promise.all([staffKept(ctx, `econ:economy:${days}`, ECON_KEEP_S, ECON_STALE_S, () => economy(db, nowS, days)), audit('economy-read', null, { days }, { onceIn: READ_ROW_S }).run()]);
+    return answer;
+  }
+
+  if (path === '/v1/staff/econ/shop') {
+    // STOREFRONT (bible/06-Systems/Storefront.md section 3.3): the shop's sales by day and ware, the featured windows beside
+    const [answer] = await Promise.all([shopDemand(db, env, nowS, body.days), audit('shop-demand-read', null, { days: body.days ?? null }, { onceIn: READ_ROW_S }).run()]);
     return answer;
   }
 

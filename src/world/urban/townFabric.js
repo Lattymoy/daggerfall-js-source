@@ -35,6 +35,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { NAV_CELL, WATER_RECORDS_ENHANCED } from '../city/cityNavigation.js';
 import { ROAD_RECORDS } from '../road/roadEdge.js';   // ROAD-LOOK: Daggerfall's road tiles, their one home
+import { SHOWALL_SET } from '../../ui/town/townQuarters.js';   // AUDIT PROP-GROUND: the town map's furniture bytes
 
 /** A block's cells a side - its town map's (64 x 64, NAV_CELL each). */
 export const FABRIC_CELLS = 64;
@@ -72,6 +73,20 @@ export const FABRIC_KIND = Object.freeze({ off: 0, built: 1, main: 2, pave: 3, s
  *  Daggerfall's wall's, 117 and 250-251 its specials': props). */
 const isHouseByte = (a) => a >= 1 && a <= 23;
 const WATER = new Set(WATER_RECORDS_ENHANCED);
+/** AUDIT PROP-GROUND: the town map's bytes for its furniture, not its buildings (ui/town/townQuarters.js SHOWALL_SET - 250
+ *  a misc model's own cell, 251 a ground flat's): a prop's, the street laid under it. */
+const FURNITURE = new Set(SHOWALL_SET);
+/**
+ * AUDIT PROP-GROUND: Daggerfall's misc models with a face looking up at a street face's height, as the RMB blocks place
+ * them (measured over BLOCKS.BSA and ARCH3D.BSA - test/world/urban/propground.test.js holds them to the data): `road` at
+ * the setts' (y 0), each its foot plate's rectangle in its own metres [x0, z0, x1, z1] - nothing laid on the cells under
+ * it, a street there would flicker with it; `flags` at the flags' (0.08 m, within 2 cm) - no flags round them, setts.
+ */
+export const FOOT_FACED = Object.freeze({
+  road: Object.freeze({ 41712: Object.freeze([-1.06, 0.34, 0.09, 1.24]), 43603: Object.freeze([-0.57, 0.43, 0.59, 2.45]) }),
+  flags: Object.freeze([41214, 43011, 43012, 43013, 43014, 43019, 43020, 43021, 43022, 43300, 43301, 43303, 43306]),
+});
+const FACED_FLAGS = new Set(FOOT_FACED.flags);
 /** Daggerfall's road tiles - its town's own ways, a tile wide (CityNavigation.GetTileWeight's "Roads are great!"); their one
  *  home is world/road/roadEdge.js (ROAD-LOOK), read here. */
 export { ROAD_RECORDS };
@@ -81,11 +96,11 @@ const ROADS = new Set(ROAD_RECORDS);
  * THE TOWN'S GROUND, cell by cell (row-major from the south-west, x east, z north - the walkers' grid): `town` its blocks'
  * own cells on the town's ground (none for a block `blockAt` answers null - a left-out cell, a wall's carrier, a
  * capital's own - and none `onGround` refuses: TOWN-BOARDS, the land past the outline TS2 flattens), `built` a
- * building's, a prop's, a flat's or the water's, `house` a building's alone, `grass` Daggerfall's grass (ground record 2),
- * `road` its other ground.
+ * building's, a prop's, a flat's or the water's, `house` a building's alone, `prop` a prop's clearance or furniture byte
+ * (PROP-GROUND: the street laid under it; `flagless` no flags), `grass` Daggerfall's grass (record 2), `road` the rest.
  * @param {number} w @param {number} h
  * @param {(bx: number, by: number) => (null | { automap: ArrayLike<number>, ground: (tx: number, ty: number) => number,
- *   records?: Array<{ x: number, z: number }> })} blockAt a block's town map (rows from the north), its ground tile's record
+ *   records?: Array<{ x: number, z: number, id?: number, plate?: ArrayLike<number> }> })} blockAt a block's town map (rows from the north), its ground tile's record
  *   (tx, ty: ty from the north - GroundTiles[x][y]) and its misc models' and flats' places (the block's metres, x east, z north)
  * @param {{ onGround?: ((x: number, z: number) => boolean) | null, onRoad?: ((x: number, z: number) => boolean) | null }} [o]
  *   TOWN-BOARDS, each of a cell (x east, z north, in the grid's cells; world/townShape.js onTownTile, the walkers' own law):
@@ -98,6 +113,7 @@ const ROADS = new Set(ROAD_RECORDS);
 export function fabricGrid(w, h, blockAt, { onGround = null, onRoad = null } = {}) {
   const C = FABRIC_CELLS, W = w * C, H = h * C, n = W * H;
   const town = new Uint8Array(n), built = new Uint8Array(n), house = new Uint8Array(n), grass = new Uint8Array(n), road = new Uint8Array(n);
+  const prop = new Uint8Array(n), bare = new Uint8Array(n), flagless = new Uint8Array(n);
   for (let by = 0; by < h; by++) {
     for (let bx = 0; bx < w; bx++) {
       const b = blockAt(bx, by);
@@ -106,25 +122,33 @@ export function fabricGrid(w, h, blockAt, { onGround = null, onRoad = null } = {
         for (let ax = 0; ax < C; ax++) {
           const i = (by * C + (C - 1 - ay)) * W + bx * C + ax;
           town[i] = !onGround || onGround(i % W, (i - (i % W)) / W) ? 1 : 0;   // TOWN-BOARDS: on the town's ground alone
-          const a = b.automap?.[ay * C + ax] ?? 0;
-          if (a) { built[i] = 1; if (isHouseByte(a)) house[i] = 1; continue; }
-          const rec = b.ground(ax >> 2, ay >> 2) & 0x3f;
+          const a = b.automap?.[ay * C + ax] ?? 0, rec = b.ground(ax >> 2, ay >> 2) & 0x3f;
+          if (a) { built[i] = 1; if (isHouseByte(a)) house[i] = 1; else if (FURNITURE.has(a) && !WATER.has(rec)) prop[i] = 1; continue; }
           if (WATER.has(rec)) built[i] = 1;
           else if (onRoad && onRoad(i % W, (i - (i % W)) / W)) road[i] = 1;   // TOWN-BOARDS: a painted road the town's road (TS10)
           else if (rec === 2) grass[i] = 1;
           else if (ROADS.has(rec)) road[i] = 1;
         }
       }
-      for (const r of b.records ?? []) {   // a prop or a flat the town map does not draw: its cell and the eight round it
+      for (const r of b.records ?? []) {   // a prop or a flat: its cell and the eight round it
         const ci = Math.floor(r.x / NAV_CELL), cj = Math.floor(r.z / NAV_CELL);
         for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
           const x = ci + di, z = cj + dj;
-          if (x >= 0 && z >= 0 && x < C && z < C) built[(by * C + z) * W + bx * C + x] = 1;
+          if (x < 0 || z < 0 || x >= C || z >= C) continue;
+          const i = (by * C + z) * W + bx * C + x;
+          if (!built[i]) prop[i] = 1;   // PROP-GROUND: a building's byte or the water first
+          built[i] = 1;
+          if (FACED_FLAGS.has(r.id)) flagless[i] = 1;
+        }
+        if (!r.plate) continue;   // AUDIT PROP-GROUND: a foot plate's cells (FOOT_FACED.road), the block's metres
+        for (let z = Math.max(0, Math.floor(r.plate[1] / NAV_CELL)); z <= Math.min(C - 1, Math.floor(r.plate[3] / NAV_CELL)); z++) {
+          for (let x = Math.max(0, Math.floor(r.plate[0] / NAV_CELL)); x <= Math.min(C - 1, Math.floor(r.plate[2] / NAV_CELL)); x++) bare[(by * C + z) * W + bx * C + x] = 1;
         }
       }
     }
   }
-  return { w, h, W, H, town, built, house, grass, road };
+  for (let i = 0; i < n; i++) if (bare[i]) prop[i] = 0;   // AUDIT PROP-GROUND: whichever record marked it first
+  return { w, h, W, H, town, built, house, prop, flagless, grass, road };
 }
 
 /** A chamfer distance (3-4: a cell's side 3, its diagonal 4) to the nearest cell `from` marks, in cells - every cell's,
@@ -287,10 +311,10 @@ function pieces(g, inSet) {
 const edgeOf = (inner, outer, dir) => ({ inner, outer, dir });
 
 /**
- * A TOWN'S PLAN (the module's header): `kind` each cell's FABRIC_KIND; `fences` and `walls` the edges a yard's fence and a
- * dead end's wall close (each `{ inner, outer, dir }`, dir the step from inner to outer), `gates` the fence edges left
- * open; `dead` each dead end's dressed cells; `shut` the cells no walker treads; `paths` each main street's walk; `ends`
- * and `centre` the cells they run between; `counts`.
+ * A TOWN'S PLAN (the module's header): `kind` each cell's FABRIC_KIND, `under` a prop's cell's surface (propGround);
+ * `fences` and `walls` the edges a yard's fence and a dead end's wall close (each `{ inner, outer, dir }`, dir the step
+ * from inner to outer), `gates` the fence edges left open; `dead` each dead end's dressed cells; `shut` the cells no
+ * walker treads; `paths` each main street's walk; `ends` and `centre` the cells they run between; `counts`.
  * @param {ReturnType<typeof fabricGrid>} g
  * @param {{ ends?: Array<[number, number]>, centre?: [number, number], seed?: number, mains?: boolean, outWalls?: boolean }} [o]
  *   `ends` the main streets' ends and `centre` the town's middle (cells, x east, z north; the grid's middle where none),
@@ -311,14 +335,14 @@ export function fabricPlan(g, o = {}) {
  * flag on its own in the stone styles, a board alone on the forest floor in the planks' - and is not laid: its cells are
  * the street's own surface, the carriageway's where it meets it (the setts, or the forest floor between the planks'
  * boardwalks), else no street's (the town's own ground, read on by the ways and the yards). It is never joined through a
- * prop's clearance: that is the cell and the eight round a model or a flat of Daggerfall's (fabricGrid), whose foot a
- * slab 0.13 m high would bury and a kerb cut through. Last, a piece of the carriageway no walk runs down (`walk`) and as
- * short - a cell or two of setts the houses' pavements closed round - is the pavement's where it meets it (its patch in
- * the flags, its hole in the boardwalk), else no street's. In place over `kind`.
+ * prop's ground (fabricGrid), no walk's (its street propGround's). Last, a piece of the carriageway no walk runs down
+ * (`walk`) and as short - a cell or two of setts the houses' pavements closed round - is the pavement's where it meets it
+ * (its patch in the flags, its hole in the boardwalk), else no street's. In place over `kind`, on the cells `may` allows.
  * @param {{ W: number, H: number }} g @param {Uint8Array} kind @param {?ArrayLike<number>} [walk] the main streets' walks
+ * @param {((i: number) => boolean) | null} [may] AUDIT PROP-GROUND: the cells it may change (all where none)
  */
-export function paveWalks(g, kind, walk = null) {
-  const K = FABRIC_KIND, isPave = (i) => kind[i] === K.pave;
+export function paveWalks(g, kind, walk = null, may = null) {
+  const K = FABRIC_KIND, isPave = (i) => kind[i] === K.pave, can = (i) => !may || may(i);
   /** A piece's extent along its longer side, and whether a cell of it is beside one of kind `k` (four ways). */
   const reach = (cells, k) => {
     let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity, meets = false;
@@ -336,7 +360,7 @@ export function paveWalks(g, kind, walk = null) {
         const a = z * g.W + x, b = a + 1, c = a + g.W, d = c + 1;
         const between = isPave(a) && isPave(d) && !isPave(b) && !isPave(c) ? [b, c] : isPave(b) && isPave(c) && !isPave(a) && !isPave(d) ? [a, d] : null;
         if (!between) continue;
-        const fill = between.find((i) => kind[i] === K.main) ?? between.find((i) => kind[i] === K.open);
+        const fill = between.find((i) => can(i) && kind[i] === K.main) ?? between.find((i) => can(i) && kind[i] === K.open);
         if (fill === undefined) continue;   // two buildings' or props' corners between them: no ground to join on
         kind[fill] = K.pave;
         joined = true;
@@ -346,14 +370,14 @@ export function paveWalks(g, kind, walk = null) {
   for (const cells of pieces(g, isPave).list) {
     const { long, meets } = reach(cells, K.main);
     if (long) continue;
-    for (const i of cells) kind[i] = meets ? K.main : K.open;
+    for (const i of cells) if (can(i)) kind[i] = meets ? K.main : K.open;
   }
   if (!walk) return;
   for (const cells of pieces(g, (i) => kind[i] === K.main).list) {
     if (cells.some((i) => walk[i])) continue;
     const { long, meets } = reach(cells, K.pave);
     if (long) continue;
-    for (const i of cells) kind[i] = meets ? K.pave : K.open;
+    for (const i of cells) if (can(i)) kind[i] = meets ? K.pave : K.open;
   }
 }
 
@@ -371,6 +395,8 @@ export function* planSteps(g, { ends = [], centre = null, seed = 0, mains = true
   // ---- the main streets
   const paths = [], endCells = [];
   let centreCell = -1;
+  /** @type {?Uint8Array} */
+  let onWalk = null;   // AUDIT PROP-GROUND: the walks, read again under the props
   if (mains && open.some((v) => v)) {
     const [cx, cz] = centre ?? [g.W / 2, g.H / 2];
     centreCell = nearestOpen(g, open, clear, cx, cz, FABRIC.mainWant);
@@ -405,7 +431,7 @@ export function* planSteps(g, { ends = [], centre = null, seed = 0, mains = true
     // TOWN-BOARDS 2: the carriageway is the street's own - reached from the walk without crossing a building or a prop; a
     // cell within FABRIC.carriage of it in a straight line past a building's or a prop's corner is no street's (it was a
     // patch of setts on its own beyond them)
-    const onWalk = new Uint8Array(n);
+    onWalk = new Uint8Array(n);
     for (const path of paths) for (const p of path) onWalk[p] = 1;
     const near = labelPieces(g.W, g.H, Uint8Array.from(fromWalk, (d) => (d <= FABRIC.carriage ? 1 : 0))), reached = new Set();
     for (let i = 0; i < n; i++) if (onWalk[i] && near.id[i] >= 0) reached.add(near.id[i]);
@@ -581,7 +607,110 @@ export function* planSteps(g, { ends = [], centre = null, seed = 0, mains = true
   }
   const deadEnds = dead.filter((d) => !d.walled || walls.some((wl) => wl.alley === d.alley)).map((d) => d.cells);
   counts.dead = deadEnds.length;
-  return { W: g.W, H: g.H, kind, fences, gates, walls: walls.flatMap((wl) => wl.edges), dead: deadEnds, props, shut, paths, ends: endCells, centre: centreCell, counts };
+  yield;
+  const under = propGround(g, kind, { walk: onWalk, nearHouse });
+  return { W: g.W, H: g.H, kind, under, fences, gates, walls: walls.flatMap((wl) => wl.edges), dead: deadEnds, props, shut, paths, ends: endCells, centre: centreCell, counts };
+}
+
+/** PROP-GROUND's choice among a cell's neighbours' surfaces, tied: a street's face before none, the setts and cobbles (the
+ *  ground's own level) before the flags. */
+const UNDER_ORDER = Object.freeze([FABRIC_KIND.main, FABRIC_KIND.side, FABRIC_KIND.pave, 0]);
+/**
+ * PROP-GROUND (the owner, 2026-10-30: "props still sit on old textures"): THE STREET UNDER A PROP. Its cells (fabricGrid
+ * `prop`) stay built in `kind`; each takes the surface of the nearest ground outside them (a walk four ways; the most
+ * common face one step nearer, a tie by UNDER_ORDER), 0 Daggerfall's own. A house, the water or a foot plate is no
+ * source. AUDIT PROP-GROUND: then the street's lines through it (propLines) and its own laws over them (propLaws).
+ * @param {{ W: number, H: number, prop?: ArrayLike<number>, flagless?: ArrayLike<number>, house?: ArrayLike<number> }} g
+ * @param {Uint8Array} kind @param {{ walk?: ?ArrayLike<number>, nearHouse?: ?ArrayLike<number> }} [o]
+ */
+export function propGround(g, kind, { walk = null, nearHouse = null } = {}) {
+  const n = g.W * g.H, K = FABRIC_KIND, under = new Uint8Array(n), depth = new Int32Array(n).fill(-1);
+  if (!g.prop) return under;
+  const isProp = (i) => kind[i] === K.built && g.prop[i] === 1;
+  const near = (i) => { const x = i % g.W, out = []; if (x > 0) out.push(i - 1); if (x < g.W - 1) out.push(i + 1); if (i >= g.W) out.push(i - g.W); if (i + g.W < n) out.push(i + g.W); return out; };
+  const pick = (faces) => {
+    const count = new Map();
+    for (const f of faces) count.set(f, (count.get(f) ?? 0) + 1);
+    let best = 0, most = 0;
+    for (const f of UNDER_ORDER) if ((count.get(f) ?? 0) > most) { best = f; most = count.get(f); }
+    return best;
+  };
+  let layer = [];
+  for (let i = 0; i < n; i++) {
+    if (!isProp(i)) continue;
+    const faces = near(i).filter((j) => kind[j] !== K.built).map((j) => faceOf(kind[j]));
+    if (faces.length) { depth[i] = 1; under[i] = pick(faces); layer.push(i); }
+  }
+  for (let d = 2; layer.length; d++) {
+    const next = [];
+    for (const i of layer) for (const j of near(i)) if (isProp(j) && depth[j] < 0) { depth[j] = d; next.push(j); }
+    for (const j of next) under[j] = pick(near(j).filter((k) => depth[k] === d - 1).map((k) => under[k]));
+    layer = next;
+  }
+  propLines(g, kind, under, isProp);
+  propLaws(g, kind, under, isProp, walk, nearHouse ?? chamferField(g.house ?? new Uint8Array(n), g.W, g.H));
+  return under;
+}
+/** A kind's face under a prop: a street's (main, pave, side) or none (0). */
+const faceOf = (k) => (k === FABRIC_KIND.main || k === FABRIC_KIND.pave || k === FABRIC_KIND.side ? k : 0);
+
+/**
+ * AUDIT PROP-GROUND: THE STREET'S LINES THROUGH A PROP. From each of its cells, along its row and its column through the
+ * prop's ground to the first cell past it either way: where both ends are one face (a building, the grid's edge or the
+ * land past the town no end), the street runs on through the cell with it - the shorter such line where row and column
+ * disagree, the nearest ground's (propGround) where they tie or neither holds. A pavement's line and a carriageway's run
+ * on through a lamp or a sign that stands across them, whichever side of it is nearer.
+ */
+function propLines(g, kind, under, isProp) {
+  const n = g.W * g.H, K = FABRIC_KIND, out = Uint8Array.from(under);
+  /** The face past the prop's ground from cell i along a step, and how far: null where no face ends it. */
+  const end = (i, dx, dz) => {
+    let x = i % g.W, z = (i - x) / g.W, d = 0;
+    for (;;) {
+      x += dx; z += dz; d++;
+      if (x < 0 || z < 0 || x >= g.W || z >= g.H) return null;
+      const j = z * g.W + x;
+      if (isProp(j)) continue;
+      return kind[j] === K.built || kind[j] === K.off ? null : { face: faceOf(kind[j]), d };
+    }
+  };
+  const line = (i, dx, dz) => { const a = end(i, dx, dz), b = end(i, -dx, -dz); return a && b && a.face === b.face ? { face: a.face, span: a.d + b.d } : null; };
+  for (let i = 0; i < n; i++) {
+    if (!isProp(i)) continue;
+    const row = line(i, 1, 0), col = line(i, 0, 1);
+    let pick = row ?? col;
+    if (row && col && row.face !== col.face) pick = row.span === col.span ? null : row.span < col.span ? row : col;
+    if (pick) out[i] = pick.face;
+  }
+  under.set(out);
+}
+
+/**
+ * AUDIT PROP-GROUND: THE STREET'S LAWS UNDER THE PROPS, on the cells propGround laid (`under`, in place), a flagless
+ * cell's never flags: (1) the setts keep their kerb - a cell of setts beside other ground by the eight ways (FABRIC.kerb),
+ * or within FABRIC.pave of a house, is the pavement's; (2) the pavement's ring - a cell not setts or flags beside the
+ * setts by the eight ways is the pavement's; (3) paveWalks over the street as laid, on these cells alone: no lone slab,
+ * no island of setts. The laws of planSteps' main streets, so a prop's street reads as the street round it.
+ */
+function propLaws(g, kind, under, isProp, walk, nearHouse) {
+  const n = g.W * g.H, K = FABRIC_KIND, flagless = (i) => !!g.flagless?.[i];
+  for (let i = 0; i < n; i++) if (isProp(i) && flagless(i) && under[i] === K.pave) under[i] = K.main;
+  const may = (i) => isProp(i) && !flagless(i);
+  const eff = Uint8Array.from(kind, (k, i) => (isProp(i) ? under[i] || K.open : k));
+  const other = maxNear(Uint8Array.from(eff, (k) => (k && k !== K.main && k !== K.pave && k !== K.built ? 1 : 0)), g.W, g.H, FABRIC.kerb);
+  for (let i = 0; i < n; i++) if (may(i) && eff[i] === K.main && (other[i] || nearHouse[i] <= FABRIC.pave)) eff[i] = K.pave;
+  const ring = maxNear(Uint8Array.from(eff, (k) => (k === K.main ? 1 : 0)), g.W, g.H, FABRIC.kerb);
+  for (let i = 0; i < n; i++) if (may(i) && eff[i] !== K.main && eff[i] !== K.pave && ring[i]) eff[i] = K.pave;
+  paveWalks(g, eff, walk, may);
+  // a slab it lays down that meets no setts is the ground round it: cobbles where they lie on as many of its sides as the
+  // bare ground does (four ways, no building)
+  for (let i = 0; i < n; i++) {
+    if (!isProp(i)) continue;
+    if (eff[i] !== K.open) { under[i] = eff[i]; continue; }
+    const x = i % g.W, sides = [x > 0 ? i - 1 : -1, x < g.W - 1 ? i + 1 : -1, i - g.W, i + g.W].filter((j) => j >= 0 && j < n && eff[j] !== K.built && eff[j] !== K.off);
+    const cob = sides.filter((j) => eff[j] === K.side).length;
+    under[i] = cob && cob >= sides.filter((j) => eff[j] !== K.side && eff[j] !== K.main && eff[j] !== K.pave).length ? K.side : 0;
+  }
 }
 
 /** An edge's line: the axis it runs along and where - a step east or west closes a cell's side along z (a line of

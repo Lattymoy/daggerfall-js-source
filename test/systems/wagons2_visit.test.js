@@ -32,6 +32,7 @@ import { readCaravanRoom, isCaravanRoom, turnCaravanScene, CARAVAN_TEXT } from '
 import { worldCoordToMapPixel } from '../../src/world/streamingWorld.js';
 import { validLootItem } from '../../src/systems/loot/loot.js';
 import { RECEIVER_MARKS } from '../../src/net/realm/realmTradeLaw.js';
+import { withIndoorFloor, indoorSceneY } from '../../src/net/peer/indoorFloor.js';   // INDOOR-FLOOR: the key block's pose and law read a room's floor
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const bakeOf = (kind) => JSON.parse(read(`src/assets/wagons/${kind}.json`));
@@ -403,7 +404,7 @@ test('WAGONS2-VISIT THE KNOWN BUG: inside my caravan online my room is the carav
   assert.ok(start > -1 && end > start);
   const args = { modes: { mode: 'interior', sailingCabin: null, roomIdentity: () => ({ kind: 'interior', private: true, privateRoom: visitRoom }) },
     state: { compensation: [0, 100, 0], localFromWorld: (x, z) => [x - 500, z - 600], worldCoords: (p) => ({ x: p[0] + 500, z: p[2] + 600 }) },
-    player: { pos: [1, -30, 2] }, cam: { yaw: 0.2, pitch: 0.1 }, worldCoordToMapPixel, roomKeyFor, privateInteriorOf,
+    player: { pos: [1, -30, 2] }, cam: { yaw: 0.2, pitch: 0.1 }, worldCoordToMapPixel, roomKeyFor, privateInteriorOf, withIndoorFloor, indoorSceneY,
     _questLoc: () => null, privateRoomHere: town.privateRoomHere, siegeSession: null, royalSession: null, campToWire: (p) => [p[0] + 500, p[1] - 100, p[2] + 600] };
   const route = new Function(...Object.keys(args), `let onlineToScene, sceneToOnline; ${W.slice(start, end)} return { key, pose, onlineToScene };`)(...Object.values(args));
   assert.equal(route.key, visitRoom);
@@ -545,7 +546,7 @@ test('WAGONS2-VISIT THE INTERIOR HOST\'S ROOM: a visitor is a caravan\'s guest o
 
 test('WAGONS2-VISIT THE INTERIOR HOST, BY SOURCE: its storage is shut to the guest in the owner\'s name (a home\'s words), its stations serve the guest, its bed rests the guest (over a home\'s bed, never under it), every craft\'s station the guest\'s, the caravan\'s visit read only while its room stands, and a save made visiting comes back outside (mutants: the storage refusal unsaid, the stations shut, the bed refused, a visit\'s save restored inside)', () => {
   const wm = read('src/scenes/worldModes.js');
-  assert.match(wm, /if \(piece\?\.station\) \{ useDecorStation\(piece\); return; \}[^\n]*\n\s+if \(piece\?\.storage && caravanGuestHere\(\)\) \{ say\(homeBelongsLine\(\{ owner: privateVisitOwner \}\)\); return; \}[^\n]*\n\s+if \(isHallBoard\(piece\)\)/, 'a station serves it (above); its storage is shut in its owner\'s name, before anything else of a storage piece');
+  assert.match(wm, /if \(piece\?\.station\) \{ useDecorStation\(piece\); return; \}[^\n]*\n\s+if \(piece\?\.storage && caravanGuestHere\(\)\) \{ say\(homeBelongsLine\(\{ owner: privateVisitOwner \}\)\); return; \}[^\n]*\n\s+if \(hallPiecePress\(piece, isHallBoard\(piece\)/, 'a station serves it (above); its storage is shut in its owner\'s name, before anything else of a storage piece');
   assert.match(wm, /if \(!hallMemberHere\(\) \|\| decorStationShut\(piece\.id\)\) \{   \/\/ GUILD1d: a hall's stations are its members'[^\n]*\n\s+if \(interiorHome\) say\(homeBelongsLine\(interiorHome\)\);\n\s+if \(!caravanGuestHere\(\)\) return;/);
   assert.match(wm, /homeBed: homeBedIsMine\(interiorHome, [^\n]*\n\s+\.\.\.\(caravanGuestHere\(\) \? \{ homeBed: true \} : \{\}\),/, 'after the home\'s bed - a later key wins');
   for (const s of ['forge', 'workbench', 'loom', 'mason', 'jeweller', 'alchemy', 'enchant']) assert.match(wm, new RegExp(`station === '${s}'\\)\\) return \\{ kind: 'home', fee: 0 \\};[^\\n]*\\n\\s+return caravanGuestStation\\('${s}'\\);`), s);

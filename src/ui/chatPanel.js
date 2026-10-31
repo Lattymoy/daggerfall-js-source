@@ -1550,7 +1550,7 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
     if (e.target === input) {
       // the field's key (CG2): stopped here, so the host's ring never fills from a chat line
       if (e.isComposing || e.keyCode === 229) { e.stopPropagation(); return; }   // C3: the IME's own Enter commits a candidate, not a line
-      if (capsFixKey(e, input)) { e.stopPropagation(); return; }   // PVP-FLAG-CAPS: the flag's Caps Lock never types capitals here
+      if (capsFixKey(e, input)) { e.stopPropagation(); return; }   // PVP-FLAG-CAPS: a game action's Caps Lock never types capitals here
       // AUDIT SOC C2/C14: a surface OVER the chat owns Escape - the key is left whole for it, and the field keeps its line
       if (e.code === 'Escape') {
         if (above()) { e.stopPropagation(); return; }

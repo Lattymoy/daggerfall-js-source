@@ -262,8 +262,8 @@
   {
     "name": "AUDIT-REALM-L1F3-the-old-treasury-withdrawn",
     "file": "server-account/src/guilds.js",
-    "old": " WHERE id = ?2 AND treasury >= ?1 AND realm_gold >= ?1')",
-    "new": " WHERE id = ?2 AND treasury >= ?1')",
+    "old": " WHERE id = ?2 AND treasury >= ?1 AND realm_gold >= ?1\n",
+    "new": " WHERE id = ?2 AND treasury >= ?1\n",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]

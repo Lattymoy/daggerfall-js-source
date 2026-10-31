@@ -3,6 +3,8 @@
 // A guild hall does too: the keeper pays for what is placed, and what comes back goes to the guild's treasury.
 // A palace keeps the one-piece writes (seat-batch).
 import { accountKind, displayName } from './accounts.js';
+import { guildPieceRule, guildStockGuard, guildStockSpent, guildStockLeft } from './guildFurniture.js';
+import { guildWareOfModel } from '../../src/net/guild/guildShopLaw.js';   // GUILD-SHOP: a guild's own furniture, in its hall
 import { GUILD_TREASURY_MAX } from '../../src/net/guild/guildLaw.js';
 import { CHAR_ID_RE } from './service.js';
 import { homeMapIdOk, homeBuildingKeyOk } from '../../src/net/homeLaw.js';
@@ -121,6 +123,7 @@ export async function commitDecorBatch(ctx, player, body = {}) {
     puts.push(p);
   }
   if (hall) for (const p of puts) if (p.item) return { error: 'hall-item' };
+  for (const p of puts) { const g = guildPieceRule(p, { hall, yard }); if (g) return { error: g }; }   // GUILD-SHOP: a guild's own piece, in its hall alone
 
   const out = yard ? 1 : 0;
   const { results = [] } = await db.prepare('SELECT * FROM home_decor WHERE map_id = ? AND building_key = ? AND yard = ?')
@@ -164,6 +167,12 @@ export async function commitDecorBatch(ctx, player, body = {}) {
     next.set(p.id, { piece: p });
   }
   if (next.size > cap) return { error: yard ? 'yard-cap' : 'decor-cap' };
+  // GUILD-SHOP: the guild's own pieces this batch stands new, against what its stock has left (each INSERT's guard holds a race)
+  const wanted = new Map();
+  for (const w of writes) if (!w.had && guildWareOfModel(w.p.model)) wanted.set(w.p.model, { p: w.p, n: (wanted.get(w.p.model)?.n ?? 0) + 1 });
+  // AUDIT GUILD-SHOP S6: and the batch's own drops of the same piece give theirs back - a swap is no new piece
+  for (const id of drops) { const m = have.get(id)?.piece.model; const w = wanted.get(m); if (w) w.n--; }
+  for (const { p, n } of wanted.values()) if (n > 0 && (await guildStockLeft(db, p, mapId, buildingKey)) < n) return { error: 'guild-ware-none' };
   const delta = hall ? -pay : net;
   if (hall && refund > 0) {
     const g = await db.prepare('SELECT treasury FROM guilds WHERE id = ?').bind(home.guild_id).first();
@@ -223,10 +232,11 @@ export async function commitDecorBatch(ctx, player, body = {}) {
     } else {
       const pv = typeof w.p.item?.pv === 'string' ? w.p.item.pv : null;
       const pvSql = pv ? ' AND EXISTS (SELECT 1 FROM products WHERE provenance = ? AND owner = ? AND listed = 0)' : '';
+      const [stockSql, stockBinds] = guildStockGuard(w.p, mapId, buildingKey);   // GUILD-SHOP: each one the guild owns, counted as the batch stands them
       steps.push(db.prepare(`INSERT OR IGNORE INTO home_decor (map_id, building_key, id, model, flat_archive, flat_record, place, placed_at, item, paid, yard)
-        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${OWNS} AND (SELECT COUNT(*) FROM home_decor WHERE map_id = ? AND building_key = ? AND yard = ?) < ?${pvSql}`)
+        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${OWNS} AND (SELECT COUNT(*) FROM home_decor WHERE map_id = ? AND building_key = ? AND yard = ?) < ?${pvSql}${stockSql}`)
         .bind(mapId, buildingKey, w.p.id, w.p.model, w.p.flat?.[0] ?? null, w.p.flat?.[1] ?? null, placeJson(w.p), nowS,
-          w.p.item ? JSON.stringify(w.p.item) : null, w.ledger, out, ...ownsTail, mapId, buildingKey, out, cap, ...(pv ? [pv, player.id] : [])));
+          w.p.item ? JSON.stringify(w.p.item) : null, w.ledger, out, ...ownsTail, mapId, buildingKey, out, cap, ...(pv ? [pv, player.id] : []), ...stockBinds));
     }
     steps.push(mustChange(db));
   }
@@ -255,6 +265,7 @@ export async function commitDecorBatch(ctx, player, body = {}) {
     const nowRev = Number((await db.prepare('SELECT rev FROM decor_rev WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first())?.rev) || 0;
     if (nowRev !== curRev) return { error: 'decor-rev' };
     const owns = await db.prepare(`SELECT ${OWNS} AS owns`).bind(...ownsTail).first();
+    for (const w of writes) if (!w.had && await guildStockSpent(db, w.p, mapId, buildingKey)) return { error: 'guild-ware-none' };   // GUILD-SHOP: the guild's stock spent
     return { error: owns?.owns ? 'decor-cap' : 'no-home' };
   }
   if (prep) await dropObjects(ctx.bucket, [prep.prev]);

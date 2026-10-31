@@ -208,6 +208,14 @@ export const ACTIONS = Object.freeze([
   // The decorator. Ships with no key: every letter is spent, and F1-F4 are the browser's or already bound.
   // A player gives it one in Controls. It answers only where the Decorate button would stand.
   'Decorate',
+  // TECH-KEY2 (Mac, 2026-10-30, forwarding #feature-feedback: "Have a key bindable for your 2nd weapon technique"): the
+  // held martial path's signature, whatever line the weapon carries (combat/techniques.js). Ships with no key, as
+  // Decorate does. Appended, like every port action before it.
+  'SignatureTechnique',
+  // PVP-KEY (Discord #suggestions, WiKeD: "please let us remap the PVP to a key of our choosing like most things"): the
+  // PvP flag's key (scenes/pvpFlagHost.js). It was Caps Lock read raw, so a player who bound Caps Lock to another
+  // action got both. Caps Lock is still its default. Appended, like every port action before it.
+  'PvpFlag',
 ]);
 
 /** AUDIT SOC D3: THE PORT'S OWN ROWS, NAMED SO THE CLASSIC WINDOWS CAN YIELD THEM.
@@ -225,7 +233,7 @@ export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'Quick
   'TorchToggleLight', 'TorchDrop', 'TorchThrow', 'ShoulderSwitch', 'AutoPerspective', 'FollowPaths', 'HorseMount', 'HorseSummon', 'DebugOverlay',
   'BoatDisembark', 'BoatToggleLight', 'BoatToggleSail', 'BoatTrimRight', 'BoatTrimLeft', 'BoatTrimModifier',
   'BoatTimeScaleUp', 'BoatTimeScaleDown', 'BoatTimeScaleReset', 'TravelView', 'WalkMode', 'TogglePerspective', 'ActChoice', 'BoatSailUp', 'BoatSailDown', 'Professions',
-  'LegacyFamily', 'ModeWheel', 'WeaponTechnique', 'Spyglass', 'SaddlePanel', 'ShipHold', 'ShotCycle', 'PartyPing', 'Decorate']);   // PARTY-PING: the party's ping   // the decorator, unbound   // SHOT-KINDS: the guns' load   // CARGO-ANYWHERE: the ship's hold   // SPYGLASS: the captain's glass   // TECH1: the weapon's technique   // LEGACY1: Project Legacy's family tree; MODE-WHEEL: the mode wheel   // KB1; TV1; PADWALK; VIEW-TOGGLE; PROF1   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
+  'LegacyFamily', 'ModeWheel', 'WeaponTechnique', 'Spyglass', 'SaddlePanel', 'ShipHold', 'ShotCycle', 'PartyPing', 'Decorate', 'SignatureTechnique', 'PvpFlag']);   // TECH-KEY2   // PARTY-PING: the party's ping   // the decorator, unbound   // SHOT-KINDS: the guns' load   // CARGO-ANYWHERE: the ship's hold   // SPYGLASS: the captain's glass   // TECH1: the weapon's technique   // LEGACY1: Project Legacy's family tree; MODE-WHEEL: the mode wheel   // KB1; TV1; PADWALK; VIEW-TOGGLE; PROF1   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
 
 const ACTION_SET = new Set(ACTIONS);
 
@@ -421,6 +429,8 @@ export const DEFAULT_BINDINGS = Object.freeze([
   // ships on F3, which every host already swallows (the browser's find).
   ['Mouse2', 'PartyPing'],
   ['F3', 'AutoRun'],
+  // PVP-KEY: the key the flag always had. A file that already spends Caps Lock keeps it, and the flag waits for a key.
+  ['CapsLock', 'PvpFlag'],
 ]);
 
 /**
@@ -552,6 +562,7 @@ export const ACTION_GROUPS = Object.freeze([
   g('Combat', [
     ['ReadyWeapon', 'Ready or sheathe weapon'], ['SwingWeapon', 'Swing weapon'], ['SwitchHand', 'Switch hand'],
     ['WeaponTechnique', 'Weapon technique (hold to aim)'],   // TECH1
+    ['SignatureTechnique', 'Martial technique (hold to aim)'],   // TECH-KEY2: the held path's signature
     ['ShotCycle', 'Shot (aboard)'],   // SHOT-KINDS: the guns' load at a helm, stepped on
   ]),
   g('Magic', [
@@ -584,6 +595,7 @@ export const ACTION_GROUPS = Object.freeze([
   ]),
   g('Online', [
     ['SocialInteract', 'Interact with player'],
+    ['PvpFlag', t('input.action.pvpFlag', 'PvP on / off')],   // PVP-KEY
   ]),
   g('Professions', [
     ['ActChoice', 'Next action at a profession node'],   // PROF-MENU: the node's list is the plaque's - the key steps its light
@@ -1416,8 +1428,10 @@ export function repairUnloseableBindings(store) {
 }
 
 /** KB1: THE FILE'S VERSION. 1 is every file before the keybinding standard (it carried no field); 2 is the standard;
- *  3 is MODE-WHEEL's (Left Alt let go of Sneak, so the wheel can land on it). */
-export const KEYBINDS_VERSION = 3;
+ *  3 is MODE-WHEEL's (Left Alt let go of Sneak, so the wheel can land on it); 4 is PVP-KEY's (the flag told, keyless). */
+export const KEYBINDS_VERSION = 4;
+/** The actions a later version added, by that version: a file older than it is told when the action lands keyless. */
+const ADDED_AT = Object.freeze({ ModeWheel: 3, PvpFlag: 4 });
 
 /** KB1's step-1 rows, `[code, old default, the version that moved it]`: a file older than the version lets the code
  *  go where it still holds the old default. MODE-WHEEL: Left Alt was Sneak's until v3; a v2 file let go of it once, so
@@ -1489,7 +1503,7 @@ export function migrateKeyBinds(store, fromVersion) {
     }
   }
   for (const [code, action] of DEFAULT_BINDINGS) {
-    if (fromVersion >= 2 && action !== 'ModeWheel') continue;   // MODE-WHEEL: a v2 file was told its losses at v2; v3 adds only the wheel
+    if (fromVersion >= 2 && fromVersion >= (ADDED_AT[action] ?? 2)) continue;   // a v2 file was told its losses at v2; then the wheel (v3) and the flag (v4, AUDIT PVP-KEY B7)
     if (getBinding(store, action, true) != null || store.removedPrimary.has(action)) continue;
     report.lost.push({ action, code, holder: actionForCode(store, code) });
   }

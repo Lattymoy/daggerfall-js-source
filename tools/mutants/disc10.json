@@ -540,6 +540,33 @@
     ]
   },
   {
+    "name": "WERE-PICK-every-beast-press-the-lot",
+    "file": "src/systems/quickLoot.js",
+    "old": "  if (how === 'all' || (beast && !quickLootOn())) {",
+    "new": "  if (how === 'all' || beast) {",
+    "tests": [
+      "test/systems/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "WERE-PICK-the-beast-never-takes-the-lot",
+    "file": "src/systems/quickLoot.js",
+    "old": "  if (how === 'all' || (beast && !quickLootOn())) {",
+    "new": "  if (how === 'all') {",
+    "tests": [
+      "test/systems/disc10_lycan.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WERE-PICK-P1-no-first-row",
+    "file": "src/systems/quickLoot.js",
+    "old": "  const item = quickLootItemAt(key, items) ?? (beast ? hoverItemAt(items, 0, Infinity) : null);",
+    "new": "  const item = quickLootItemAt(key, items);",
+    "tests": [
+      "test/systems/disc10_lycan.test.js"
+    ]
+  },
+  {
     "name": "DISC10-E-L3-the-street-pack-mounts-a-null",
     "file": "src/scenes/world.js",
     "old": "    openPack: () => { const w = makeInventoryWindow(); if (w) townTalk.showOverlay(w); return !!w; },   // DISC10-E L3: a refused pack is null\n",

@@ -18,6 +18,15 @@ export { DRAGON_VIEW_REACH_M };
 export const DRAGON_VIEW_SEAT = 0.75;
 /** The seat's height (m) until the sprite's pictures are up. */
 export const DRAGON_VIEW_SEAT_M = 4;
+/** AURA-ON-DRAGON (2026-10-30, mob: "aura float below on dragon"): how far under the rider's seat the ground a horse's rider
+ *  stands on would be (m) - an aura and the armory hang a rider's rest pose over that ground lifted by the saddle's
+ *  AURA_SADDLE_M (render/auraRing.js, render/armoryPose.js poseAtRest), so the dragon's rider wears them where the art
+ *  sits them, never at the dragon's feet. */
+export const DRAGON_AURA_DROP_M = 1.7;
+/** The seat over a dragon's feet (m) by its sprite's drawn height `h` (DRAGON_VIEW_SEAT_M until it is up). Pure. */
+export const dragonSeatOver = (/** @type {number} */ h) => (h > 0 ? h * DRAGON_VIEW_SEAT : DRAGON_VIEW_SEAT_M);
+/** AURA-ON-DRAGON: how far over a dragon's feet its rider's cosmetics stand (m), by its sprite's drawn height `h`. Pure. */
+export const dragonAuraLift = (/** @type {number} */ h) => dragonSeatOver(h) - DRAGON_AURA_DROP_M;
 /** Below this many metres a second the dragon stands (hovers) rather than walks. */
 const MOVING_MPS = 0.3;
 
@@ -44,7 +53,7 @@ export function createDragonViewHost(renderer, deps, third = mwViewThirdPerson) 
      *  pivot, or 0 on no dragon. @param {any} player @param {any[]} items */
     ride(player, items) {
       ride = dragonRidden(player, items);
-      return ride ? (height > 0 ? height * DRAGON_VIEW_SEAT : DRAGON_VIEW_SEAT_M) : 0;
+      return ride ? dragonSeatOver(height) : 0;
     },
     /** Each frame after the camera: my dragon stood at my `feet`, facing `yaw`, when the camera is out of the head, seen
      *  from `eye`. @param {ArrayLike<number>} feet @param {number} yaw @param {ArrayLike<number>} eye @param {number} dt */
@@ -61,6 +70,9 @@ export function createDragonViewHost(renderer, deps, third = mwViewThirdPerson) 
     },
     /** Whether my dragon stands in the world this frame. */
     shown: () => shown,
+    /** AURA-ON-DRAGON: how far over my feet my aura and armory stand this frame (m) - on my dragon drawn in the world, the
+     *  rider's (dragonAuraLift); 0 in first person or off it, where my body is where my feet are. */
+    auraLift: () => (shown ? dragonAuraLift(height) : 0),
     /** Its batch, for the host's billboard pass (none in first person). */
     batches: () => (shown ? layer.batches() : []),
     /** Its batch onto the street's billboard list `out` (none in first person). @param {any[]} out */

@@ -13,6 +13,7 @@ import { C, galleonArt, GALLEON_ARCHIVE, GALLEON_NIGHT, galleonGlow, TEX as GALL
 import { CARRACK_PALETTE as CARRACK_K, carrackArt, CARRACK_ARCHIVE, CARRACK_NIGHT, carrackGlow, TEX as CARRACK_TEX } from './carrackArt.js';
 import { LARGE_BOAT_PALETTE as LARGE_BOAT_K, largeBoatArt, LARGE_BOAT_ARCHIVE, TEX as LARGE_BOAT_TEX } from './largeBoatArt.js';
 import { SHIP_PAINTS, paintFamilies, lumOf } from '../../systems/naval/shipLivery.js';
+import { clothPicture } from '../../systems/naval/sailCloth.js';   // GUILD-SHOP: her sailcloth's pattern and arms
 
 const GILT = [C.gilt, C.giltDark, C.giltLit];
 /** The galleon's strake: her oxblood, its light, and the seams and trenails its planks and lids are painted with. */
@@ -51,10 +52,10 @@ export function warmLiveryArt() { for (const archive of Object.keys(LIVERY_ART))
  * A livery over one port ship's pictures: each record it changes, `{ record, picture, glow, night }` - its picture
  * repainted (before Daggerfall's look - world/dfLook.js - as its stand-in is built), and for a see-through record its
  * glass's glow and its night twin's record (null for one with none). [] for an archive no port ship's, or a livery that
- * paints none of hers.
- * @param {number} archive @param {{ strake: number, accent: number, sail: number } | null} livery
+ * paints none of hers. GUILD-SHOP: her canvas in her sailcloth, `emblem` its arms; `canvasOnly`, that canvas alone.
+ * @param {number} archive @param {{ strake: number, accent: number, sail: number, cloth?: any } | null} livery @param {any} [emblem] @param {{ canvasOnly?: boolean }} [o]
  */
-export function liveryArtOf(archive, livery) {
+export function liveryArtOf(archive, livery, emblem = null, { canvasOnly = false } = {}) {
   const a = LIVERY_ART[archive];
   if (!a || !livery) return [];
   const paint = (i) => SHIP_PAINTS[i]?.rgb ?? null;
@@ -66,10 +67,12 @@ export function liveryArtOf(archive, livery) {
   const out = [];
   for (const [record, pic] of artOf(archive)) {
     if (record === a.canvas) {
-      if (sail) out.push({ record, picture: shadeCloth(pic, sail), glow: null, night: null });
+      const cloth = livery.cloth ?? null;
+      if (cloth) out.push({ record, picture: clothPicture(pic, sail ?? C.canvas, paint(cloth.second) ?? C.canvas, cloth, C.canvas, emblem), glow: null, night: null });
+      else if (sail) out.push({ record, picture: shadeCloth(pic, sail), glow: null, night: null });
       continue;
     }
-    if (!a.records.includes(record) || !families.some((f) => f.paint)) continue;
+    if (canvasOnly || !a.records.includes(record) || !families.some((f) => f.paint)) continue;
     const { picture, changed } = paintFamilies(pic, a.palette, families);
     if (!changed) continue;
     const night = a.night[record] ?? null;

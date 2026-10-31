@@ -13,6 +13,7 @@ TESA12), the countryside's towns (TESA7), the Imperial City's outskirts (TS5) an
 | U2 | the towns' own pictures - each province's paving, cobbles and walls; cut stone, brick and half-timbering on the capitals' landmarks (`world/urban/urbanArt.js`, `world/urban/urbanRecords.js`) | BUILT |
 | U3 | a town's fabric - main streets with pavements, side streets, alleys, dead ends, fenced yards with gates and woodpiles (`world/urban/townFabric.js`, `townFabricModel.js`, `townFabricStand.js`) | BUILT |
 | TOWN-BOARDS | the boards on the ground in the smaller towns: the pavement a ring round the carriageway, the fabric on the town's ground alone (section 9) | FIXED |
+| PROP-GROUND | the street laid under Daggerfall's props: no square of the old ground round a sign, a well or a lamp (section 10; AUDIT PROP-GROUND, section 11: a lamp's own cell, the street's laws, the flats on it) | FIXED |
 
 ## 1. What stood (DFU's reference, measured on the freeware)
 
@@ -316,3 +317,137 @@ and past it). Mutants `tools/mutants/townboards.json` (12, all dead). PINS MOVED
 walk), `test/world/urban/urban3_stand.test.js` (the host's line, its `ground`). Mutant records re-aimed by content:
 `tools/mutants/urban.json` U3-the-pavement-band-swapped (the ring's line), `tools/mutants/townfollow.json`
 TF-the-origin-unread and TF-the-rows-turned (shutOffGround through onTownGround).
+
+## 10. PROP-GROUND - the street under a prop (FIXED, 2026-10-30)
+
+The owner's field report, 2026-10-30, a picture from Alinor: *"Ever since we changed town lauouts and stuff props
+still sit on old textures"*.
+
+**What the player saw.** A shop's hanging sign on its post stood in a square of Daggerfall's old ground, dark flagstones
+4.8 m a side, with the new setts on one side and the pavement's flags on the other. Every misc model and flat of
+Daggerfall's in a street past the Bay stood the same way: a sign, a well, a lamp, a tree in a square.
+
+**Why.** `fabricGrid` builds a prop's cell and the eight round it (section 4), so no walk, pavement or yard runs
+through it. The model laid its setts, flags and cobbles by `kind` alone, and a built cell got none: the terrain's own
+ground tile showed through, 5 cm under the street.
+
+**The fix.** The cells stay built in the plan: the walkers, the yards (MERCHANT-YARDS reads `kind`) and the pavement's
+joins (`paveWalks`) see the prop as before. Beside `kind` the plan carries `under` (`world/urban/townFabric.js`
+propGround): each clearance cell takes the surface of the nearest ground outside it, by a walk four ways through the
+clearance - the most common face one step nearer, a tie the setts' and the cobbles' (the ground's level) before the
+flags', a street's before none. A house, the water or a special's town-map byte is no source, so a sign between a shop
+and the street stands on the street. A cell nearest a yard, an alley or open ground keeps Daggerfall's ground, as round
+it. The audit (section 11) found this short of the street's own laws and rebuilt it there.
+
+**Heights.** The setts and the cobbles are at a misc model's own foot (FABRIC_ROAD_Y 0); a model in the pavement stands
+in its flags 8 to 10.5 cm deep (FABRIC_PAVE_Y), under the walker's 0.1 m step. AUDIT PROP-GROUND corrected this
+paragraph: it said Daggerfall's flats stand 15 cm into the ground. 11,293 of the 11,335 drawn misc flats stand on the
+land itself (yPos -4: 5 cm under the setts, 13 cm under the flags); section 11 stands them on the street.
+
+**Measured on the freeware** (the slice's scratch measure, every template past the Bay cloned and outlined as section
+4's table, and the capitals but the Imperial City; a "hole" is a clearance every ground beside which is a laid street):
+
+| | holes, their cells | bare after | clearances half in a street | their cells left bare (nearest other ground) |
+|---|---|---|---|---|
+| 407 cities | 23,902, 91,475 | 0 | 45,292 | 108,315 |
+| 1,200 hamlets | 1,903, 5,651 | 0 | 9,904 | 20,912 |
+| 459 villages (every fourth) | 0 - no main streets, Daggerfall's lanes | - | 0 | - |
+| Alinor | 85, 308 | 0 | 151, 966 cells | 343 |
+| Solitude, Mournhold, Falinesti, Torval, Helstrom | 57 to 131 each | 0 | 137 to 236 each | 322 to 534 each |
+
+Every hole had been bare: the old model laid by `kind`, which this did not change. Looked at on Alinor's grid, cell by
+cell: a sign's clearance at a cobbled side street's edge laid in cobbles on the street's side and Daggerfall's dirt on
+the open ground's. The running game was not photographed. AUDIT PROP-GROUND: the table counts `prop` cells alone, so the
+lamps' own cells (bytes 250 and 251) never entered it; Falinesti and Helstrom are of the planks' style, where `main`
+and `side` are labels the model draws nothing for.
+
+**THE FOUR HOSTS.** `scenes/world.js` - WIRED through its pixel build, which stands the fabric's model (no host line
+moved). `scenes/worldModes.js` (interiors) - no street. `scenes/dungeonContext.js` - no street. `scenes/exterior.js` -
+streams no land past the Bay. The Bay's towns stand no fabric (`fabricTown`): their props stand on the ground their
+blocks lay, as Daggerfall's do.
+
+**Pins**: `test/world/urban/propground.test.js`, rewritten by the audit (section 11). Mutant record re-aimed by content:
+`tools/mutants/urban.json` U3M-a-kerb-against-a-house (the kerb's test reads the laid surface).
+
+## 11. AUDIT PROP-GROUND - the street under a prop, read cold (FIXED, 2026-10-31)
+
+The owner: *"Audit"*, of PROP-GROUND (section 10, `3582fe992`). Three cold lanes on that frozen head, each given the code
+and not its writer's reading, each finding proven on the freeware: A the plan, B what is drawn, C the pins and the
+record. Every finding below is fixed; every number in section 10's table reproduced.
+
+**Paid.**
+- **A lamp still stood on old ground** (A1, C1). The town map marks a misc model's own cell 250 and a ground flat's 251
+  (`ui/town/townQuarters.js` SHOWALL_SET - furniture, not buildings), and `fabricGrid` kept them off `prop`: in the
+  cities 4,197 of the 9,755 records the street closed round stood on a bare cell; 112 of 915 street lamps in a 3.2 m square.
+- **Lone flags** (A2): the last step laid single flags the TOWN-BOARDS law forbids - 745 pieces in 102 cities.
+- **Notches and setts on the dirt** (A3): a cell laid in cobbles in the setts' ring broke the pavement; setts met other
+  ground with no pavement between.
+- **Flats under the street** (B1, C4): a misc flat stands on the land, 5 cm under the setts and 13 cm under the flags -
+  31,632 flats in 1,607 towns newly on laid cells, a town horse's hooves among them.
+- **A foot plate flickering** (B3): ARCH3D 41712's foot plate lay in the setts' own plane in 9 towns and under the flags
+  in 2. Measuring every RMB block's misc models found 43603's too, 4 mm under the setts.
+- **Kerb feet hung** (B5): a kerb ran from the setts' height whatever lay past it, 5 cm over the land - an older edge the
+  slice added 22,952 of (619,907 to 642,859 over 1,607 towns).
+- **Pins that did not pin** (C2, C3, C5): six mutants lived (a prop's cobbles unlaid, a kerb onto them, the tie order,
+  the walk's layers); the ARENA2 pin restated its own rule; two fixtures were shapes no producer mints.
+- **The record** (B2, B6, C4, C6, C7): the 15 cm claim, the planks' capitals' labels, the model's header, a test name's
+  mutant that did not exist, `01-Overview/Active-Arcs.md`'s line. A4: a breath before the props' street.
+
+**The street under a prop, as built.** The grid (`world/urban/townFabric.js` fabricGrid): `prop` is a record's cell and
+the eight round it, and the town map's furniture bytes on land. A model with a face at a street face's height
+(FOOT_FACED, measured) is read from its record's id: at the setts' height its foot plate's cells are bare (footPlate,
+`townFabricStand.js` - the plate where RMBLayout stands the model, `world/rmbLayout.js` miscModelMatrix, now one
+export); at the flags' height its ground is `flagless`. Then `propGround` lays each prop cell:
+
+1. the nearest ground's face (the slice's walk, kept);
+2. THE STREET'S LINES (propLines): where a row or a column through the prop's ground meets one face at both ends, that
+   face - the shorter line where they disagree;
+3. THE STREET'S LAWS (propLaws), on the props' cells alone: a flagless cell never flags; setts beside other ground by
+   the eight ways, or before a house, the pavement's; a cell beside the setts the pavement's (the ring); `paveWalks`
+   over the street as laid, its new `may` the props' cells - no lone slab, no island, with the main streets' walks. A slab
+   it drops that meets no setts takes the cobbles round it where they hold as many sides as the bare ground.
+
+Why the lines: a walk detours round a prop. At the well of section 10's own pins the nearest ground put dirt in the
+pavement's line and pushed flags into the setts; the main streets' law read again with the props' ground open was
+tried and left: from the detoured walk it read the well's pavement line as past the street and laid cobbles in it.
+
+**What is drawn.** `fabricFaces` (`townFabricModel.js`) is the one law the model lays by and a flat is stood on: setts
+where the style lays a carriageway, cobbles on a city's side streets, flags. A kerb runs from the flags down to the face
+laid past it, or to the land (FABRIC_LAND_Y, -0.05 m - `scenes/pixelBuild.js` locLocal's 2 x 0.025). THE HOST: the
+pixel build stands every block flat but the nature's on the street its fabric lays (`townFabricStand.js` fabricLift):
+its misc flats, its town horses and people (STAND-FLAT), its StaticNPCs, its animals' and springs' places. DEPARTURE
+(named; Port-Ledger section A, URBANIZER): from `RMBLayout.AddMiscBlockFlats`, which stands a flat at its record's
+height on the land.
+
+**Measured on the freeware** (every fourth city, every twelfth hamlet, the capitals but the Imperial City, as section
+10's table clones them; before at `3582fe992`, after on this branch):
+
+| | 102 cities | 100 hamlets | 6 capitals |
+|---|---|---|---|
+| a prop's cells inside the laid street (water's furniture aside) | 27,876 | 516 | 2,431 |
+| of them bare, before -> after | 11,965 -> 0 | 332 -> 0 | 1,085 -> 0 |
+| lone flags with a prop's cell, before -> after | 745 -> 0 | 348 -> 0 | 37 -> 0 |
+| a prop's cobbles beside the setts | 1,176 -> 67 | 392 -> 17 | 73 -> 0 |
+| a prop's bare cell beside the setts | 13,299 -> 211 | 4,974 -> 74 | 595 -> 3 |
+| a prop's setts beside other ground | 5,669 -> 536 | 1,995 -> 186 | 326 -> 9 |
+
+In the same 202 towns, each laid in a stone style, 9,720 of 46,324 misc flats stand on the street now - 7,968 on setts
+or cobbles (5 cm up), 1,752 on flags (13 cm up), 5,827 of them lamps. The island law moves a prop's cell in 4 towns of 1,007 (6 cells).
+
+**Known edges.** What is left beside the setts is `paveWalks`' own law: a slab it drops back to setts may meet other
+ground, as on the street's own cells. A misc model is not lifted: in the pavement it stands in its flags 8 to 10.5 cm.
+FOOT_FACED is measured on ARENA2's blocks; the world-data packs' blocks and models are not. A flags edge onto a prop's
+bare cell still has no kerb. The running game was not photographed.
+
+**THE FOUR HOSTS.** `scenes/world.js` - WIRED, through its pixel build (the flats' lift, `scenes/pixelBuild.js`).
+`scenes/worldModes.js` (interiors) - no street. `scenes/dungeonContext.js` - no street. `scenes/exterior.js` - streams no
+land past the Bay. The Bay's towns stand no fabric (`fabricTown`).
+
+**Pins**: `test/world/urban/propground.test.js` (8 - the grid, the laws and their corners, the plan over its walks, the
+model, the faces and the lift, the host's flats, a foot plate turned, and with ARENA2 FOOT_FACED and the plates measured
+again, the towns' laws, Stoking's island and a Bay town). Mutants `tools/mutants/propground.json` (41, all dead), lane
+C's six survivors among them. PINS MOVED: `urban3_fabric.test.js` and `urban3_stand.test.js` (a fifth breath, a
+record's id and plate), `urban3_model.test.js` (`under` as the producer mints it, the kerbs' feet),
+`test/world/solitude_relief.test.js` (its people's and flats' lines, a kerb's foot on a tier's land),
+`test/world/terrain/natureground.test.js` and `test/world/fb1003b_trees.test.js` (a flat's line). Mutant records re-aimed by content: `natureground.json` (2),
+`townboards.json` (4, `paveWalks`' `may`), `urban.json` U3M-cobbles-in-a-hamlet (fabricFaces).

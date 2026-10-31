@@ -250,7 +250,7 @@ test('HALO-THIN the host: the halos whole while a duel stands (it is refereed in
   const w = read('src/scenes/world.js');
   const line = /\n\s*online\.haloWhole = !!duelMgr\.duel \|\| _serpentFight;[^\n]*\n\s*if \(!modes\?\.caravanVisit\) caravanVisitLink\.close\(\);[^\n]*\n\s*if \(!key\) \{ if \(online\.room\) online\.leave\(\); \}/;   // above the caravan's close, which WAGONS2-VISIT holds against the join (test/systems/wagons2_visit.test.js)
   assert.match(w, line, 'the word, just before the frame\'s join or pose');
-  assert.ok(w.indexOf('online.haloWhole = ') < w.indexOf('    else online.sendPose({ ...pose, ...arm, ...poseFx() });'));
+  assert.ok(w.indexOf('online.haloWhole = ') < w.indexOf('    else online.sendPose({ ...pose, ...arm, ...poseFx(sceneToOnline) });'));   // PIN MOVED (STOREFRONT): my kills' places in the pose's own frame
   assert.match(w, /\n\s*_serpentFight = false;\n\s*if \(!serpentHost\) return;/, 'put down each frame first');
   assert.match(w, /try \{ fight = street && serpentHost\.frame\(\); \} catch \(e\) \{[^\n]*\}\n\s*_serpentFight = !!fight;/, 'then this frame\'s fight');
   const of = w.indexOf('  const onlineFrame = (now, dt) => {');

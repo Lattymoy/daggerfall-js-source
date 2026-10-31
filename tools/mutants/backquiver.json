@@ -1,0 +1,290 @@
+[
+  {
+    "name": "QUIVER-the-long-bow-left-out",
+    "file": "src/player/eyeOfTheBeholder/eotbQuiver.js",
+    "old": "export const QUIVER_BOWS = Object.freeze([129, 130]);",
+    "new": "export const QUIVER_BOWS = Object.freeze([129]);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-the-thunderlock-given-one",
+    "file": "src/player/eyeOfTheBeholder/eotbQuiver.js",
+    "old": "export const quiverRidesWith = (item) => QUIVER_BOWS.includes(item?.templateIndex);",
+    "new": "export const quiverRidesWith = (item) => QUIVER_BOWS.includes(item?.templateIndex) || item?.templateIndex === 560;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-no-arrows-ever",
+    "file": "src/player/eyeOfTheBeholder/eotbQuiver.js",
+    "old": "const T = QUIVER_TUBE, arrows = full && arrow?.width",
+    "new": "const T = QUIVER_TUBE, arrows = false && arrow?.width",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-the-arrows-sunk-in-the-tube",
+    "file": "src/player/eyeOfTheBeholder/eotbQuiver.js",
+    "old": "const top = T.h + T.rise + ARROW_LIFTS[i]",
+    "new": "const top = T.h + ARROW_LIFTS[i]",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-the-rim-lost",
+    "file": "src/player/eyeOfTheBeholder/eotbQuiver.js",
+    "old": "const c = y >= T.h - 2 ? L.rim : ",
+    "new": "const c = false ? L.rim : ",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-flat-shading",
+    "file": "src/player/eyeOfTheBeholder/eotbQuiver.js",
+    "old": "Math.round(c[0] * SHADE[x])",
+    "new": "Math.round(c[0] * 1)",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-the-mirror-the-same",
+    "file": "src/player/eyeOfTheBeholder/eotbQuiver.js",
+    "old": "[[out, x], [mirror, W - 1 - x]]",
+    "new": "[[out, x], [mirror, x]]",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-the-empty-asks-the-arrow",
+    "file": "src/player/eyeOfTheBeholder/eotbQuiver.js",
+    "old": "if (full && !made[1]) {",
+    "new": "if (!made[1]) {",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-uploaded-every-time",
+    "file": "src/player/eyeOfTheBeholder/eotbQuiver.js",
+    "old": "} else if (renderer.textures?.has && !renderer.textures.has(`${a.archive}_0`)) upload(renderer, a);",
+    "new": "} else upload(renderer, a);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-a-failure-never-asked-again",
+    "file": "src/player/eyeOfTheBeholder/eotbQuiver.js",
+    "old": "if (!arrow || (arrow.failedAt != null && clock() - arrow.failedAt >= HOLSTER_RETRY_MS)) ask();",
+    "new": "if (!arrow) ask();",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-asked-again-at-once",
+    "file": "src/player/eyeOfTheBeholder/eotbQuiver.js",
+    "old": "clock() - arrow.failedAt >= HOLSTER_RETRY_MS)) ask();",
+    "new": "clock() - arrow.failedAt >= 0)) ask();",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-no-tube-meanwhile",
+    "file": "src/player/eyeOfTheBeholder/eotbQuiver.js",
+    "old": "        if (arrow instanceof Promise || arrow.failedAt != null) full = false;   // the empty tube meanwhile\n",
+    "new": "\n",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-no-side",
+    "file": "src/player/eyeOfTheBeholder/eotbQuiver.js",
+    "old": "nudge: 0.03, side: 0.08 });",
+    "new": "nudge: 0.03, side: 0 });",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-behind-the-bow",
+    "file": "src/player/eyeOfTheBeholder/eotbQuiver.js",
+    "old": "tilt: 18 * Math.PI / 180, back: 0.12,",
+    "new": "tilt: 18 * Math.PI / 180, back: 0.2,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-the-bows-slant",
+    "file": "src/player/eyeOfTheBeholder/eotbQuiver.js",
+    "old": "tilt: 18 * Math.PI / 180, back: 0.12,",
+    "new": "tilt: 35 * Math.PI / 180, back: 0.12,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-HANG-side-ignored",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": " + (B.side ?? 0) * k * (rx * camRight[0] + rz * camRight[2]), half",
+    "new": ", half",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-HANG-side-in-every-view",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": " + (B.side ?? 0) * k * (rx * camRight[0] + rz * camRight[2]), half",
+    "new": " + (B.side ?? 0) * k, half",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-B-the-sheathed-gate-kept",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "    const item = activeFlag && !died && !last.died && !last.transformed ? handItemNow() : null;\n    const art = quiverRidesWith(item)",
+    "new": "    const item = activeFlag && !died && !last.died && !last.transformed && last.sheathed ? handItemNow() : null;\n    const art = quiverRidesWith(item)",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-B-the-arrows-ignored",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "quiverArt.ensure(arrowsNow(item))",
+    "new": "quiverArt.ensure(true)",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-B-the-rigs-word-ignored",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "(last.hasAmmo !== undefined ? !!last.hasAmmo : ",
+    "new": "(false ? !!last.hasAmmo : ",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-B-never-listed",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "    backList.push(quiver);\n",
+    "new": "\n",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-B-never-drawn",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "      if (grow === 1) drawQuiver(camRight); else dropQuiver();",
+    "new": "      dropQuiver();",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-B-a-giant-carries-one",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "      if (grow === 1) drawQuiver(camRight); else dropQuiver();",
+    "new": "      drawQuiver(camRight);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-B-kept-at-stand-down",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "standDown() { dropLantern(); dropHolster(); dropQuiver(); }",
+    "new": "standDown() { dropLantern(); dropHolster(); }",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-P-the-walkers-never-sling-it",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "      slingQuiver(r, peer, g > 1 ? null : pose, feet, view, eye, right);   // QUIVER\n",
+    "new": "\n",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-P-am-ignored",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "store.quiver?.ensure(!!pose.am)",
+    "new": "store.quiver?.ensure(true)",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-P-the-hand-in-use-ignored",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "    const item = pose ? holsterItemOfLook(peer.look?.items, !!pose.lh) : null;\n    const art = quiverRidesWith(item)",
+    "new": "    const item = pose ? holsterItemOfLook(peer.look?.items, false) : null;\n    const art = quiverRidesWith(item)",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-P-not-veiled",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "    r.quiver = l;\n    mintSpriteHolster(l, store.renderer).conceal = r.veil ?? null;",
+    "new": "    r.quiver = l;\n    mintSpriteHolster(l, store.renderer).conceal = null;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-P-left-behind",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "    if (r?.quiver) dropSpriteHolster(r.quiver, renderer);   // QUIVER: and its quiver\n",
+    "new": "\n",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-P-the-origin-shift-misses-it",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "r.holster?.batch?.origin, r.quiver?.batch?.origin, r.paceFeet]",
+    "new": "r.holster?.batch?.origin, r.paceFeet]",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-P-a-grown-walker-carries-one",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "      slingQuiver(r, peer, g > 1 ? null : pose,",
+    "new": "      slingQuiver(r, peer, pose,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  },
+  {
+    "name": "QUIVER-RIG-never-says",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "    hasAmmo: hasAmmoFor(entity?.items, playerWeapon.handItem(playerWeapon.leadHand)),   // QUIVER",
+    "new": "    // QUIVER",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backquiver.test.js"
+    ]
+  }
+]

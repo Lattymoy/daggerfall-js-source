@@ -198,7 +198,7 @@ test('PENITENT grant: Diggleborf alone holds it, case-folded, title and glyph to
   }
   assert.equal(equipRefusal('penitent', row('Diggleborf'), env), null, 'theirs to wear');
   assert.equal(titleWorn(row('Diggleborf', { title: 'penitent' }), env), 'penitent');
-  assert.deepEqual(wardrobeOf(row('diggleborf', { title: 'penitent' }), env, nowS), { titles: ['penitent'], title: 'penitent', glyphs: ['penitent'], auras: [], aura: null, insignia: [], icons: [], icon: null, armoryHeld: [], armory: null });   // WB9g: and no aura, no insignia bought; PIN MOVED (WITCH1): and no profile icon; PIN MOVED (ARMORY): and no Aura Armory piece
+  assert.deepEqual(wardrobeOf(row('diggleborf', { title: 'penitent' }), env, nowS), { titles: ['penitent'], title: 'penitent', glyphs: ['penitent'], auras: [], aura: null, insignia: [], icons: [], icon: null, armoryHeld: [], armory: null, effectsHeld: { kill: [], portal: [], mount: [] }, effects: null });   // WB9g: and no aura, no insignia bought; PIN MOVED (WITCH1): and no profile icon; PIN MOVED (ARMORY): and no Aura Armory piece; PIN MOVED (STOREFRONT): and no effect
   // a Founder holds both, and wears the one stored until they press the other on the account card
   const founder = row('Diggleborf', { created_at: FOUNDER_UNTIL - 86_400, title: 'founder' });
   assert.deepEqual(titlesHeld(founder, env), ['founder', 'penitent']);

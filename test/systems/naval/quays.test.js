@@ -578,7 +578,7 @@ test('QUAYS THE WORLD\'S WIRING: the pool made beside the farms over the world\'
   assert.ok(frameAt > 0 && frameAt < lightsAt && lightsAt < drawAt, 'stood before the lights, drawn in the world pass');
   // AUDIT HOLDINGS Q3: scene lights in the boats' selection, in the lanterns' hours alone - never the player's extras
   // PIN MOVED (LIGHT-ID): the record made each frame for a quay's lantern takes that lantern's identity (render/lightId.js)
-  assert.match(w, /if \(lightsOnAt\(minute\)\) for \(const l of quays\?\.lights\(\) \?\? \[\]\) csaLit\.push\(adoptLight\(\{ x: l\.x, y: l\.y, z: l\.z, range: l\.range, color: CITY_LIGHT_COLOR_F32 \}, l\)\);/);
+  assert.match(w, /if \(lightsOnAt\(minute\)\) for \(const l of quays\?\.lights\(\) \?\? \[\]\) csaLit\.push\(adoptLight\(\{ x: l\.x, y: l\.y, z: l\.z, range: l\.range \* streetLightReach\(lightingOn\), color: CITY_LIGHT_COLOR_F32 \}, l\)\);/);   // PIN MOVED (AUDIT LIGHT-REACH S5): at the lane's reach
   assert.ok(w.indexOf('csaLit.push(') < lightsAt, 'into the selection before it is made');
   assert.equal((w.match(/quays\?\.lights\(\)/g) ?? []).length, 1, 'nowhere else - not the extras');
   assert.equal((w.match(/quays\?\.destroyAll\(\);/g) ?? []).length, 2, 'down with a re-anchor and a load');

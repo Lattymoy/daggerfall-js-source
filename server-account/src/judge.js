@@ -49,6 +49,7 @@ import { possessedItemLists } from '../../src/systems/item/possessedItems.js';  
 import { MAX_STAT_VALUE } from '../../src/systems/statMods.js';
 import { SKILL_HARD_CAP } from '../../src/systems/skillSoftcap.js';
 import { STAT_KEYS_ORDER } from '../../src/systems/statMods.js';
+import { ROLLED_START_MIN } from '../../src/systems/levelClimb.js';   // LEVEL-45: a start no creation gives holds trade
 import { pathFindings } from '../../src/systems/arcanePaths.js';   // SCHOOLS5: a save's specialisation
 import { isMasterWork, masterSignature, masterLinesOfRecord } from '../../src/net/masterLaw.js';   // MASTER-ART: a Master's work's lines, its record's
 import { readProductRecord } from '../../src/net/productRecord.js';
@@ -143,8 +144,9 @@ const goldWord = (/** @type {unknown} */ v) => v == null || (Number.isSafeIntege
 const purseWord = (/** @type {unknown} */ v) => goldWord(v) && !(/** @type {number} */ (v) > GOLD_INT_MAX);
 
 /**
- * THE CHARACTER LAW: a level the summary agrees with, attributes and skills inside the port's own caps, its gold - the
- * purse, each account and each loan - written as gold is. Answers the findings, as `{ code }` records.
+ * THE CHARACTER LAW: a level the summary agrees with, attributes and skills inside the port's own caps, a starting skill
+ * sum a creation gives (LEVEL-45: below ROLLED_START_MIN holds trade), its gold - the purse, each account and each loan -
+ * written as gold is. Answers the findings, as `{ code }` records.
  * @param {any} save @param {{ level?: unknown } | null} summary
  */
 export function characterFindings(save, summary) {
@@ -168,6 +170,10 @@ export function characterFindings(save, summary) {
       if (v != null && !(typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= SKILL_HARD_CAP)) out.push({ code: 'skill', at: i });
     });
   }
+  // LEVEL-45: a start no creation gives (skills zeroed before the first save) - the join converts it; a checkpoint that
+  // keeps or writes one below the floor holds trade
+  const start = save?.startingLevelUpSkillSum;
+  if (start != null && !(Number.isFinite(start) && /** @type {number} */ (start) >= ROLLED_START_MIN)) out.push({ code: 'skill-start' });
   for (const f of pathFindings(save)) out.push(f);   // SCHOOLS5: an honest save never breaks it - only the choice writes the path
   return out;
 }
@@ -182,6 +188,7 @@ function lawValueOf(/** @type {any} */ save, /** @type {any} */ summary, /** @ty
   if (f.code === 'bank') { const a = arrayOf(save?.bankAccounts)[f.at]; return [a?.accountGold, a?.loanTotal]; }
   if (f.code === 'stat') return save?.stats?.[f.at];
   if (f.code === 'skill') return save?.skills?.[f.at];
+  if (f.code === 'skill-start') return save?.startingLevelUpSkillSum;
   if (f.code === 'path') return save?.arcanePath;
   return undefined;
 }

@@ -332,8 +332,8 @@
   {
     "name": "HOME-VOTE-trader-withheld",
     "file": "server-account/src/decor.js",
-    "old": "pieces: await shopOf(db, mapId, pieces), hidden: [], rev, cap };",
-    "new": "pieces: [], hidden: [], rev, cap };",
+    "old": "pieces: await shopOf(db, mapId, pieces), hidden: [], rev, cap, ...arms };",
+    "new": "pieces: [], hidden: [], rev, cap, ...arms };",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -953,8 +953,8 @@
   {
     "name": "DECOR-BATCH-the-room-three-trips",
     "file": "server-account/src/decor.js",
-    "old": "const [{ results = [] }, shown, hidden, revRow, capRow] = await db.batch([piecesRead, homeShownRead(db, mapId, buildingKey, player?.id), hiddenRead(db, mapId, buildingKey), revRead, capRead]);",
-    "new": "const [{ results = [] }, shown, hidden, revRow, capRow] = [await piecesRead.all(), { results: [await homeShownRead(db, mapId, buildingKey, player?.id).first()] }, { results: [await hiddenRead(db, mapId, buildingKey).first()] }, { results: [await revRead.first()] }, { results: [await capRead.first()] }];",
+    "old": "const [{ results = [] }, shown, hidden, revRow, capRow, armsRow] = await db.batch([piecesRead, homeShownRead(db, mapId, buildingKey, player?.id), hiddenRead(db, mapId, buildingKey), revRead, capRead, armsRead]);",
+    "new": "const [{ results = [] }, shown, hidden, revRow, capRow, armsRow] = [await piecesRead.all(), { results: [await homeShownRead(db, mapId, buildingKey, player?.id).first()] }, { results: [await hiddenRead(db, mapId, buildingKey).first()] }, { results: [await revRead.first()] }, { results: [await capRead.first()] }, { results: [await armsRead.first()] }];",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -973,8 +973,8 @@
   {
     "name": "DECOR-BATCH-hidden-dropped",
     "file": "server-account/src/decor.js",
-    "old": "return { mapId, buildingKey, pieces, hidden: hiddenListOf(hidden?.results?.[0] ?? null), rev, cap, measured: home?.ground != null };",
-    "new": "return { mapId, buildingKey, pieces, hidden: [], rev, cap, measured: home?.ground != null };",
+    "old": "return { mapId, buildingKey, pieces, hidden: hiddenListOf(hidden?.results?.[0] ?? null), rev, cap, measured: home?.ground != null, ...arms };",
+    "new": "return { mapId, buildingKey, pieces, hidden: [], rev, cap, measured: home?.ground != null, ...arms };",
     "tests": [
       "test/net/homevote.test.js"
     ],

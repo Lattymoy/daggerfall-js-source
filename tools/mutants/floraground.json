@@ -333,7 +333,7 @@
   {
     "name": "FLORA-GROUND-RINGS-the-mark-unread",
     "file": "src/scenes/floraSeat.js",
-    "old": "    if (!ON_GROUND.has(c)) continue;\n",
+    "old": "    if (c[ON_GROUND] !== true) continue;\n",
     "new": "",
     "tests": [
       "test/world/terrain/floraground_rings.test.js"

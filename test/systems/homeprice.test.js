@@ -30,6 +30,10 @@ import { createBankAccounts, createHouses, sellHouse, houseSellPrice, EMPIRE_ACC
 import { EXT_NUM_MAX_BLOCKS } from '../../src/ui/automap/automapCamera.js';
 import { accountRefusalText } from '../../src/net/accountClient.js';
 import { GLOBAL_SCALE } from '../../src/world/meshReader.js';
+import { homeListedPrice } from '../../src/net/homeListingLaw.js';   // FOUNDATION F3: the door's price reads a row's
+
+/** The door's town of a building (worldModes.js homeTownOf), its record's. */
+const townOf = (b) => b?.townMapId ?? 0;
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const RICH = (name) => ({ name, level: 9, goldPieces: 2_000_000, items: [], bankAccounts: new Array(62).fill(0).map(() => ({ accountGold: 0 })) });
@@ -169,7 +173,7 @@ test('HOME-PRICE the door\'s chain, run (AUDIT HOME-PRICE D5): worldModes\' hous
   const m = src('src/scenes/worldModes.js');
   const chain = `${lift(m, '  function houseFootprintM2(building) {', '\n  }')}\n${lift(m, '  function homeListPrice(bd) {', '\n  }')}\nreturn { houseFootprintM2, homeListPrice };`;
   const arch = { getRecordIndex: (id) => (id === 456 ? 3 : -1), getMesh: (rec) => (rec === 3 ? { radius: 400, size: { x: 400, y: 300, z: 480 } } : null) };
-  const door = new Function('arch', 'homeFootprintM2', 'GLOBAL_SCALE', 'homeOnlinePrice', 'homePriceOk', chain)(arch, homeFootprintM2, GLOBAL_SCALE, homeOnlinePrice, homePriceOk);
+  const door = new Function('arch', 'homeFootprintM2', 'GLOBAL_SCALE', 'homeOnlinePrice', 'homePriceOk', 'homeListedPrice', 'homeTownOf', 'homeClaimLayout', chain)(arch, homeFootprintM2, GLOBAL_SCALE, homeOnlinePrice, homePriceOk, homeListedPrice, townOf, () => null);   // PIN MOVED (AUDIT FOUNDATION II P6): the town's layout - Daggerfall's own here
   assert.equal(door.houseFootprintM2({ modelIdNum: 456 }), 120);
   assert.deepEqual([door.homeListPrice({ modelIdNum: 456, townBlocks: 9 }), door.homeListPrice({ modelIdNum: 456, townBlocks: 64 }), door.homeListPrice({ modelIdNum: 456 })], [54_000, 99_000, 36_000]);
   assert.deepEqual([door.homeListPrice({ modelIdNum: 999, townBlocks: 9 }), door.homeListPrice({ townBlocks: 9 })], [0, 0], 'no record, no sale');
@@ -185,7 +189,7 @@ test('IC-HOMES the door\'s chain over a building the port made (the owner: "Are 
   const m = src('src/scenes/worldModes.js');
   const chain = `${lift(m, '  function houseFootprintM2(building) {', '\n  }')}\n${lift(m, '  function homeListPrice(bd) {', '\n  }')}\nreturn { houseFootprintM2, homeListPrice };`;
   const arch = { getRecordIndex: (id) => (id === 456 ? 3 : -1), getMesh: (rec) => (rec === 3 ? { radius: 400, size: { x: 400, y: 300, z: 480 } } : null) };
-  const door = new Function('arch', 'homeFootprintM2', 'GLOBAL_SCALE', 'homeOnlinePrice', 'homePriceOk', chain)(arch, homeFootprintM2, GLOBAL_SCALE, homeOnlinePrice, homePriceOk);
+  const door = new Function('arch', 'homeFootprintM2', 'GLOBAL_SCALE', 'homeOnlinePrice', 'homePriceOk', 'homeListedPrice', 'homeTownOf', 'homeClaimLayout', chain)(arch, homeFootprintM2, GLOBAL_SCALE, homeOnlinePrice, homePriceOk, homeListedPrice, townOf, () => null);   // PIN MOVED (AUDIT FOUNDATION II P6): the town's layout - Daggerfall's own here
   const FABRIC_DOOR = 7_200_000;
   assert.equal(door.houseFootprintM2({ modelIdNum: FABRIC_DOOR, footprintM2: 150 }), 150, 'its plot\'s ground');
   assert.equal(door.homeListPrice({ modelIdNum: FABRIC_DOOR, footprintM2: 150, townBlocks: 64 }), homeOnlinePrice(150, 64), 'priced as any house of that ground in a city that size');
@@ -206,8 +210,8 @@ test('HOME-PRICE a knightly order\'s free house, online (AUDIT HOME-PRICE C1): t
   const m = src('src/scenes/worldModes.js');
   const chain = `${lift(m, '  function houseFootprintM2(building) {', '\n  }')}\n${lift(m, '  function homeListPrice(bd) {', '\n  }')}\n${lift(m, '  function deedSellPrice(owned) {', '\n  }')}\nreturn deedSellPrice;`;
   const arch = { getRecordIndex: (id) => (id === 456 ? 3 : -1), getMesh: () => ({ radius: 400, size: { x: 400, y: 300, z: 480 } }) };
-  const priced = (online) => new Function('arch', 'homeFootprintM2', 'GLOBAL_SCALE', 'homeOnlinePrice', 'homePriceOk', 'homeRefund', 'houseSellPrice', 'houseMeshRadius', 'isOnlinePage', 'buildingDirectory', chain)(
-    arch, homeFootprintM2, GLOBAL_SCALE, homeOnlinePrice, homePriceOk, homeRefund, houseSellPrice, () => 400, () => online, () => ({ townBlocks: 64 }));
+  const priced = (online) => new Function('arch', 'homeFootprintM2', 'GLOBAL_SCALE', 'homeOnlinePrice', 'homePriceOk', 'homeListedPrice', 'homeTownOf', 'homeRefund', 'houseSellPrice', 'houseMeshRadius', 'isOnlinePage', 'buildingDirectory', 'homeClaimLayout', chain)(
+    arch, homeFootprintM2, GLOBAL_SCALE, homeOnlinePrice, homePriceOk, homeListedPrice, townOf, homeRefund, houseSellPrice, () => 400, () => online, () => ({ townBlocks: 64 }), () => null);   // PIN MOVED (AUDIT FOUNDATION II P6)
   assert.equal(priced(true)({ modelIdNum: 456 }), homeRefund(99_000), 'online: 120 m2 in an 8 x 8 city, its share');
   assert.equal(priced(false)({ modelIdNum: 456 }), houseSellPrice(400), 'offline: Daggerfall\'s');
   assert.equal(priced(true)(null), 0);

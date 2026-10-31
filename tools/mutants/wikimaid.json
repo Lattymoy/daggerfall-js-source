@@ -72,8 +72,8 @@
   {
     "name": "WIKIMAID-button-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
-    "new": "lilacwarren: 'aegis', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis' });",
+    "old": "lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker', vampirichaze: 'coldharbour' });",
+    "new": "lilacwarren: 'aegis', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker', vampirichaze: 'coldharbour' });",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
@@ -215,7 +215,7 @@
   {
     "name": "WIKIMAID-glyph-word",
     "file": "server-account/src/titles.js",
-    "old": "crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });",
+    "old": "crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage', coldharbour: 'coldharbour' });",
     "new": "crystalfist: 'crystalfist', wikimaid: 'crystalfist' });",
     "tests": [
       "test/net/wikimaid.test.js"
@@ -225,7 +225,7 @@
   {
     "name": "WIKIMAID-aura-not-granted",
     "file": "server-account/src/titles.js",
-    "old": "crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
+    "old": "crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });",
     "new": "crystalfist: 'resonance' });",
     "tests": [
       "test/net/wikimaid.test.js"
@@ -245,8 +245,8 @@
   {
     "name": "WIKIMAID-aura-not-in-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal']);",
-    "new": "'burningstair', 'firstlight', 'witchfire', 'sagesmoke', 'eternal']);",
+    "old": "'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings', 'vampirichaze']);",
+    "new": "'burningstair', 'firstlight', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings', 'vampirichaze']);",
     "tests": [
       "test/net/wikimaid.test.js"
     ],

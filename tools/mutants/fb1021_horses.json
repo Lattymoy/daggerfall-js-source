@@ -83,8 +83,8 @@
   {
     "name": "HORSE-VIEW-pool-step-posing",
     "file": "src/scenes/horseCartPool.js",
-    "old": "look: lookOfOwner(owner), pose: false });",
-    "new": "look: lookOfOwner(owner) });",
+    "old": "look: lookOfOwner(owner, h.position), pose: false });",
+    "new": "look: lookOfOwner(owner, h.position) });",
     "tests": [
       "test/systems/horse/fb1021_horses.test.js"
     ]

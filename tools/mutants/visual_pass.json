@@ -1,0 +1,56 @@
+[
+  {
+    "name": "VISUAL-PASS-the-gilded-coil-cream",
+    "file": "src/render/auraRing.js",
+    "old": "export const GILDED_RGB = Object.freeze({ ...HELIX_RGB, shine: Object.freeze(NUMIDIUM_GOLD.slice(0, 3)), bright: 1.3 });",
+    "new": "export const GILDED_RGB = Object.freeze({ ...HELIX_RGB, brass: Object.freeze(DWEMER_SHINE.slice(0, 3)), shine: Object.freeze(NUMIDIUM_GOLD.slice(0, 3)), bright: 1.3 });",
+    "tests": [
+      "test/ui/storefront_badges.test.js"
+    ]
+  },
+  {
+    "name": "VISUAL-PASS-the-tonal-rings-in-metres",
+    "file": "src/render/killFx.js",
+    "old": "s1: w * (2.8 + k * 0.4),",
+    "new": "s1: 4 + k * 0.8,",
+    "tests": [
+      "test/render/killfx.test.js"
+    ]
+  },
+  {
+    "name": "VISUAL-PASS-the-daedric-iron-black",
+    "file": "src/scenes/portalSkins.js",
+    "old": "const IRON_DARK = [34, 22, 27], IRON_LIT = [98, 70, 78];",
+    "new": "const IRON_DARK = [10, 4, 6], IRON_LIT = [36, 22, 28];",
+    "tests": [
+      "test/scenes/portalskins.test.js"
+    ]
+  },
+  {
+    "name": "VISUAL-PASS-the-sheen-left-the-bays",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": "export const POINT_SPECK = 3;",
+    "new": "export const POINT_SPECK = 9;",
+    "tests": [
+      "test/systems/horse/mountlook.test.js"
+    ]
+  },
+  {
+    "name": "VISUAL-PASS-the-toes-sheen-on-nothing",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": " else if (hsv(src[o], src[o + 1], src[o + 2])[1] < POINT_SAT) sheen[i] = 2;",
+    "new": "",
+    "tests": [
+      "test/systems/horse/mountlook.test.js"
+    ]
+  },
+  {
+    "name": "VISUAL-PASS-the-sheen-narrowed",
+    "file": "src/systems/horse/horseCoats.js",
+    "old": "return H[0] >= 290 && H[0] < 345 && H[1] >= 0.2; };",
+    "new": "return H[0] >= 330 && H[0] < 345 && H[1] >= 0.2; };",
+    "tests": [
+      "test/systems/horse/mountlook.test.js"
+    ]
+  }
+]

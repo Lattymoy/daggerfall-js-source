@@ -187,7 +187,7 @@ import { ListPickerWindow, listPickerArtLoaded, preloadListPickerArt } from '../
 import { createItemLabels, grantCreatedItem, lastCreateItemIndex, setLastCreateItemIndex } from '../systems/createItem.js';   // X11b
 import {
   missileArchive, MISSILE_SPEED, ARROW_FLIGHT_SPEED, missileReach,   // ROAD-H tail: the reach along the normalised direction; BAL-ARCHERY: a shaft's speed
-  MISSILE_LIFESPAN_S,
+  MISSILE_LIFESPAN_S, sweepFrom,   // AUDIT WALL-SHAFT W1
   missileHitsFoe, missileHitsCapsule, playerShotOrigin, PLAYER_BODY_RADIUS,   // FIELD-GUN17: playerMuzzleOrigin - the gun's own barrel, where GetAimPosition speaks for the bow   // AUDIT 62 F21: the capsule contact test DFU spherecasts against   // ROAD-H H1c: GetAimPosition's player arrow arm (DaggerfallMissile.cs:540-550)   // AUDIT 65 CV-2: measured at the player's own controller radius
 } from '../systems/spellcast.js';
 import { silenceBlocksCast, attemptSoulTrap, peerSoulTrapOf, SOUL_TRAP_TEXT, dispelNearby, fillEmptyTrap, liveBundles, dispelBundle, dispellableBundles, DISPEL_MAGIC_TEXT } from '../systems/mysticism.js';   // S27; X5 the soul trap's kill intercept; DR1: X10's bundle picker, in this host too
@@ -333,7 +333,7 @@ const LOOSE_PUPPETS_MAX = Math.max(24, CELL_LOOSE_PUPPETS);
 export const LAYOUT_MISMATCH_TEXT = 'Another player here has this dungeon laid out differently, maybe from an older version of the game. Reload the page so you all see the same monsters.';
 import { partyFoeLoses, partyFoeHits, partyFoeHeals, noteFighter, foeFighters, takeWholeBlow, PARTY_ME } from '../systems/party/partyScale.js';   // PSCALE1: a shared foe weighs whoever fights it
 import { renownFoeStruck, renownFoeDied, renownFoeCarry, renownFoeRevived } from '../net/renownTracker.js';   // RENOWN1: a foe the player fought pays its Renown XP when it dies, by any hand   // AUDIT RENOWN1 GAME-10: a rebuilt foe keeps my blows, a revived one forgets them
-import { reportPlayerKill } from '../systems/playerKills.js';   // SET2: my own kills, told
+import { reportPlayerKill, killFxOf } from '../systems/playerKills.js';   // SET2: my own kills, told
 import { hearEliteFoesIn } from '../systems/questlines/qlEliteFoe.js';   // QL11: an elite foe of an Elite dungeon, slain - the act's own module (AUDIT QUESTLINES ACTS-8)
 import { sparedByPlayer } from '../combat/friendlyFire.js';   // AUDIT CC-B6: the thrown torch's pass
 /** AUDIT SET P-M3: a kill the host's record names me for - its kind, as the exterior owner's `slain` word says it. */
@@ -364,6 +364,7 @@ import { createSearchRoom } from './searchRoom.js';   // GRAVE-PARTY: whose a se
 import { monsterVolume } from '../systems/monsterVolume.js';   // MONSTER-VOL: a monster's pain cry rides the Audio tab's Monster Volume
 import { isAbyssMapId } from '../world/oceanHoles.js';   // PITS-WORLD: an Ocean Hole's abyss, the Bay's or one past it - never a hall's or an Abyss Dungeon's id
 import { dungeonIdentity } from './dungeonIdentity.js';   // AUDIT TAMRIEL-WIDE C3: the professions' name for a dungeon, past the Bay too
+import { standAurumCache } from './aurumCacheHost.js';   // AURUM-CACHES: today's Aurum coffer, where this dungeon holds one
 import { bowShotAim, bowShotExtra } from '../ui/bowBloomRing.js';   // BOW-BLOOM: the player's bow shot inside its circle; BOW-FAST: its stacks
 
 
@@ -421,6 +422,8 @@ const FOES_FRAME_SLACK = 64;
  *  maleTexture (ENEMY_BASICS[39] has 0), and without this the rebuild fell to the build-time flat fallback, never
  *  stood, and was retried on every frame of the stream. ONE HOME for the two readings. */
 const canStandFoe = (mobileType) => !!ENEMY_BASICS[mobileType]?.maleTexture;
+/** PlayerActivate.cs:745-751: a person whose flat shows text is that text's, never talked to (npcTargets). */
+const showsText = (pn) => pn?.action?.actionFlag === ACTION_FLAGS.ShowText || pn?.action?.actionFlag === ACTION_FLAGS.ShowTextWithInput;
 
 /** WATER-D1: the dungeon water plane's colour - the classic water tile
  *  (the climate ground archive's record 0, the 0xFF tilemap sentinel's
@@ -705,7 +708,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // the missiles above have flown since S5. `drawn` is false for an
   // acting MARKER (archive 199), which has no billboard in this port
   // at all - its chain and its state machine are the whole of it.
-  const registerFlatAction = async (ns, position, action, x, y, z, archive, record, drawn = true) => {
+  const registerFlatAction = async (ns, position, action, x, y, z, archive, record, drawn = true, person = false) => {
     let aabb = null;
     const t = await getTexture(archive);
     if (t && record < t.recordCount) {
@@ -722,7 +725,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const o = actions.addMoveFlat(ns, position, action, [x, y, z], aabb);
       moveFlats.push({ o, archive, record, drawn });
     } else {
-      actions.addRelay(ns, position, action, aabb, [x, y, z]);
+      // CASTLE-TALK (FIELD BUGS 2026-10-30b): a person's own Dialogue is no target of its own - its box was the person's,
+      // and it won every tie within 3.2 m, so the court said nothing. DFU's ladder fires both on one hit; none of the
+      // game's 80 person relays chains on - 28 rang a sound byte (their faction's high byte), lost (AUDIT FB1030 D2).
+      actions.addRelay(ns, position, action, person ? null : aabb, [x, y, z]);
     }
   };
 
@@ -967,7 +973,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       } else if (f.archive === ANIMALS_ARCHIVE && ANIMAL_SOUND_BY_RECORD[f.record] != null) {
         ambientAnimals.push({ pos: [f.x + b.originX, f.y, f.z + b.originZ], sound: ANIMAL_SOUND_BY_RECORD[f.record] });
       }
-      if (f.action) await registerFlatAction(bi, f.position, f.action, f.x + b.originX, f.y, f.z + b.originZ, f.archive, f.record);
+      if (f.action) await registerFlatAction(bi, f.position, f.action, f.x + b.originX, f.y, f.z + b.originZ, f.archive, f.record, true, !!pn && !showsText(pn));   // CASTLE-TALK
       // HEARTH1 (Mac: "Does this version of C&C not let you use braziers
       // as extra campfires to cook from?"): a dungeon's own fires. The
       // block frame, off the walk that was already reading every flat -
@@ -2157,7 +2163,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (id === 'spare') {
       const sp = beginSpare(playerEntity, f, { now: Date.now() });
       if (!sp) return false;
-      portals.open(at);
+      portals.openMine(at);   // STOREFRONT: my spared revenant's portal, in the skin I wear
       fateSay(sp.event);
       return true;
     }
@@ -2209,19 +2215,19 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     else f._mout = kneelPose(f, eye, now);
     return f.dead ? 'gone' : 'held';
   }
-  /** COMPANION-PORTAL: the place's portal work for the companion layer (crewAshore.js `place.fx`). */
+  /** COMPANION-PORTAL: the place's portal work for the companion layer (crewAshore.js `place.fx`) - STOREFRONT: in the skin I wear. */
   const companionFx = {
-    arrive(rec) { if (!rec?.ai) return; portals.open(rec.ai.feet); rec.portalFx = { dir: 'in', at: Date.now(), delay: 220, ms: 640 }; },
+    arrive(rec) { if (!rec?.ai) return; portals.openMine(rec.ai.feet); rec.portalFx = { dir: 'in', at: Date.now(), delay: 220, ms: 640 }; },
     leave(rec, done) {
       if (!rec?.ai || rec.dead) { done(); return; }
-      portals.open(rec.ai.feet);
+      portals.openMine(rec.ai.feet);
       rec.portalFx = { dir: 'out', at: Date.now(), delay: 180, ms: 600 };
       rec.leaving = { at: Date.now(), done };
     },
     jump(rec, from) {
       if (!rec?.ai) return;
-      portals.open(from, { short: true });
-      portals.open(rec.ai.feet, { short: true, quiet: true });
+      portals.openMine(from, { short: true });
+      portals.openMine(rec.ai.feet, { short: true, quiet: true });
       rec.portalFx = { dir: 'in', at: Date.now(), delay: 140, ms: 480 };
     },
   };
@@ -2636,7 +2642,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // a window - the refusal's box is already on this host's stack.
     return createInventoryWindow({
       ...packDoors,   // UI2: the book, the camp and the spellbook - one bag with the hotbar's Use
-      postItem: (text, item) => opts.postItem?.(text, item) ?? false, linkItem: (item) => opts.linkItem?.(item) ?? false, canPostItem: () => opts.canPostItem?.() ?? false,   // CHAT-POST: through the outer host
+      linkItem: (item) => opts.linkItem?.(item) ?? false, canPostItem: () => opts.canPostItem?.() ?? false,   // CHAT-POST: through the outer host
       usingRightHand: () => weaponRig.playerWeapon.usingRightHand,   // DISC12: the pack's figure holds the hand in USE
       say: (l) => hudText.add(l),   // FX1 (F128): the "Equipping %s" cue on close
       items: () => (playerEntity.items ??= []),
@@ -4153,8 +4159,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const t = await getTexture(RANDOM_TREASURE_ARCHIVE);
     if (!t || pile.record >= t.recordCount) continue;
     uploadRecord(RANDOM_TREASURE_ARCHIVE, pile.record);
-    const size = billboardSize(t, pile.record);
-    pile.half = [size.w / 2, size.h / 2];
+    const size = billboardSize(t, pile.record), law = classicBillboardSize(t, pile.record);
+    // AUDIT-STOREFRONT III D1: and its size from the archive (`lawHalf`), which the Aurum coffer keeps clear of - the same
+    // on every client, where a texture mod's XML scale is this device's alone (scenes/aurumCacheHost.js aurumCacheFoot)
+    [pile.half, pile.lawHalf] = [[size.w / 2, size.h / 2], [law.w / 2, law.h / 2]];
     // AUDIT 64 F16: a FIXED (archive 216) pile is not grounded.
     // AssignFixedTreasure (RDBLayout.cs:417-427) passes
     // adjustPosition:false - "Add fixed treasure flat with same archive
@@ -4797,7 +4805,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const { unit: _unit, reach } = missileReach(m.dir, step);   // ROAD-H tail: DaggerfallMissile.cs:333/:337-339's reach along the normalised direction
       // TACT1: cover stops a bolt, and an area spell bursts on it; AUDIT TACT B5: by touch, the bodies before it tested first
       const _len = Math.hypot(m.dir[0], m.dir[1], m.dir[2]) || 1;
-      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len);   // AUDIT GROUND-BOLT C6: the cast engine's one flight law (no terrain underground: the meshes and cover)
+      const _cs = flightStop(collider, m.pos, _unit, reach, step * _len, !!m.fromPlayer);   // AUDIT GROUND-BOLT C6: the cast engine's one flight law (no terrain underground: the meshes and cover)   // WALL-SHAFT: a player's shaft is swept, so a foe before a wall is met first
       const hitWall = _cs.stop;
       if (Number.isFinite(hitWall) && hitWall <= reach) {
         // AUDIT 23 (magic-2) - DaggerfallMissile.cs:399-402 DoCollision:
@@ -4820,6 +4828,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         continue;
       }
       const _adv = step * _cs.advance;   // AUDIT TACT B5: no further than cover's touch
+      const _from = m.fromPlayer ? sweepFrom(m.pos, collider) : null;   // SHAFT-SWEEP: the step's start - a player's shaft meets a body anywhere along the step (AUDIT WALL-SHAFT W1: never through a wall)
       m.pos[0] += m.dir[0] * _adv; m.pos[1] += m.dir[1] * _adv; m.pos[2] += m.dir[2] * _adv;
       // The batch was built ONCE at the fire position; flight rides
       // the batch's origin uniform (zero GL churn - the same thrash
@@ -4843,7 +4852,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // once (`struck`), a piercing one flying on through (combat/arrowFlight.js techniquePierces, the street's own law)
           const struckBy = (b) => !!m.technique?.struck?.includes(b);
           const boss = struckBy(gateBossBody()) ? null : gateBossBody();
-          if (boss && missileHitsCapsule(m.pos, boss.ai.feet, boss.ai.height, boss.ai.radius)) {
+          if (boss && missileHitsCapsule(m.pos, boss.ai.feet, boss.ai.height, boss.ai.radius, _from)) {
             if (boss.warded) { wardTurns(boss); reportPlayerAttack({ hit: true, damage: 0, target: boss.entity }); }   // AUDIT FB1018f L3-7: a shaft his ward turns says "Warded", as a swing's formula does on his stand-in (WB13d)
             else playerArrowHitFoe(m, boss, { playerEntity, playerWeapon, playerFeet, audio, hitEffects, say: (l) => hudText.add(l), dealDamage: (t, d) => landOnBoss(boss, bossStrikeAt(boss.entity, d, 'arrow', null, null, false, (n) => hurtPlayer(n)), HIT_KINDS.Shaft) });   // BOSS-TRAITS: resisted, its thorns at me
             if (!boss.warded && techniquePierces(m, boss)) continue;
@@ -4852,14 +4861,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           }
           // ARENA4: a shaft meets my opponent on a relay's sand by their whole body - the number to the referee
           const rv = m.technique ? null : arenaRivalBody();   // TECH1: a technique's shaft passes a player's body by (TECH law 3)
-          if (rv && missileHitsCapsule(m.pos, rv.ai.feet, rv.ai.height, rv.ai.radius)) {
+          if (rv && missileHitsCapsule(m.pos, rv.ai.feet, rv.ai.height, rv.ai.radius, _from)) {
             nextArenaQ();   // ARENA4b: each shaft its own blow
             playerArrowHitFoe(m, rv, { playerEntity, playerWeapon, playerFeet: null, audio, hitEffects, say: (l) => hudText.add(l), dealDamage: (t, d) => landOnRival(rv, d, 'arrow') });   // BAL8: no backstab at a player (the stand-in's yaw is no one's)
             retireMissile(m);
             continue;
           }
           // WB9c: a shaft meets a crystal by its whole body - the one player-arrow law against its stand-in (no blood)
-          const cr = gateCrystalBodies().find((q) => !struckBy(q) && missileHitsCapsule(m.pos, q.ai.feet, q.ai.height, q.ai.radius));   // TECH1: a piercing shot flies on through a crystal it has struck (AUDIT TECH1: and meets the next one under it, overlapping)
+          const cr = gateCrystalBodies().find((q) => !struckBy(q) && missileHitsCapsule(m.pos, q.ai.feet, q.ai.height, q.ai.radius, _from));   // TECH1: a piercing shot flies on through a crystal it has struck (AUDIT TECH1: and meets the next one under it, overlapping)
           if (cr) {
             // AUDIT WB11 W2: no backstab - a crystal faces nowhere (its `yaw` 0 made every shaft from its -z side one)
             playerArrowHitFoe(m, cr, { playerEntity, playerWeapon, playerFeet: null, audio, hitEffects: null, say: (l) => hudText.add(l), dealDamage: (t, d) => landOnCrystal(cr, d, HIT_KINDS.Shaft) });
@@ -4868,7 +4877,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
             continue;
           }
           // WB11c: a shaft meets one of his host by its whole body - the one player-arrow law against its stand-in
-          const hb = gateHostBodies().find((q) => !struckBy(q) && missileHitsCapsule(m.pos, q.ai.feet, q.ai.height, q.ai.radius));   // TECH1: and one of his host it has struck (AUDIT TECH1: the next one under it met)
+          const hb = gateHostBodies().find((q) => !struckBy(q) && missileHitsCapsule(m.pos, q.ai.feet, q.ai.height, q.ai.radius, _from));   // TECH1: and one of his host it has struck (AUDIT TECH1: the next one under it met)
           if (hb) {
             // AUDIT WB11 W2: no backstab, as no swing on one has (its `yaw` 0 is no facing - every shaft from its -z side was
             // a backstab, x3 and a Backstabbing use); W5: its blood laddered against its own whole (`bloodOf`)
@@ -4881,7 +4890,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           for (const f of foes) {
             if (f.dead || f.companion != null) continue;   // AUDIT CC-B1: the player's shaft flies past a companion (the street's and a building's spare him already)
             if (struckBy(f)) continue;   // TECH1: a piercing shot flies past a foe it has struck
-            if (missileHitsFoe(m.pos, f)) {   // ROAD-H tail: DaggerfallMissile.cs:339's SphereCast meets the foe's CAPSULE (REVIEW 2026-09-05 had its centre as a point)
+            if (missileHitsFoe(m.pos, f, _from)) {   // ROAD-H tail: DaggerfallMissile.cs:339's SphereCast meets the foe's CAPSULE (REVIEW 2026-09-05 had its centre as a point)
               nextArenaQ();   // ARENA4b: each shaft its own blow to the referee (a relay's fighter's puppet - damageFoe's lane)
               _arenaQ = shaftSequence(m, _arenaQ);   // AUDIT TECH1: a piercing shaft's later bodies ride its first one's sequence while it is the newest - one shaft, one blow
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
@@ -5836,7 +5845,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
     // AUDIT SET P-M3: THE HOST'S WORD THAT MY BLOW KILLED IT (its record's `v`, roomRecord's) - read before the death below
     // lays the body, once: the frame after finds the foe dead
-    if (r.d === 1 && !f.dead && r.v != null && r.v === (opts.selfId?.() ?? null)) reportPlayerKill(f.entity, REMOTE_KILL);
+    if (r.d === 1 && !f.dead && r.v != null && r.v === (opts.selfId?.() ?? null)) reportPlayerKill(f.entity, { ...REMOTE_KILL, fx: killFxOf(f) });   // STOREFRONT: and where it falls
     if (r.d === 1 && !f.dead && r.v != null && r.v === (opts.selfId?.() ?? null)) egFindStruck(f.entity, roomLootOn() && roomCanonOfFoe(f) != null).catch(() => {});   // EG-E3: my blow killed an elite - my client asks the find (systems/eliteGates/egFind.js); a room's body's key to my pack (PARTY-LOOT)
     // LOOT7-CHECK DUNGEON-DIED: ...and the kill notice with it - the striker's own, said at the striker (damageFoe's death
     // arm speaks none for a peer's blow at the host); a death the host's record names nobody for is the host's to say
@@ -6959,7 +6968,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       foe._killedBy = fromPlayer && peer && typeof peerId === 'string' ? peerId : null;   // AUDIT SET P-M3: whose blow - the joiner's own record says so (roomRecord's `v`)
       foe._killedAt = performance.now();   // AUDIT FINAL F7: ...for KILLED_BY_MS
       foe.dead = true;
-      if (fromPlayer && !peer) reportPlayerKill(foe.entity, { kind });   // SET2: MY blow killed it (a set's "each kill")
+      if (fromPlayer && !peer) reportPlayerKill(foe.entity, { kind, fx: killFxOf(foe) });   // SET2: MY blow killed it (a set's "each kill"); STOREFRONT: and where it falls
       renownFoeDied(foe);   // RENOWN1: whoever struck last - it pays me if a blow of mine is recent
       // E-slice: EnemyDeath:132-136 - the targeting foe's death
       // clears the alert (survivors re-raise it next update).
@@ -7296,12 +7305,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  Same block lookup as the water surface above, because it is the same
    *  question: which RDB block is the player standing in. */
   function castleBlockAt(x, z) {
-    for (const b of dungeon.blocks) {
-      if (x >= b.originX && x < b.originX + RDB_SIDE && z >= b.originZ && z < b.originZ + RDB_SIDE) {
-        return Boolean(b.layout.castleBlock);
-      }
-    }
-    return false;
+    return Boolean(blockAtXZ(x, z)?.layout.castleBlock);   // AURUM-CACHES (HOST-SPLIT): the one block lookup, blockAtXZ above
   }
   /** AUDIT 26 F183: the castle block's sibling. SpecialAreaCheck
    *  (PlayerEnterExit.cs:1221-1238) switches on the block NAME and has
@@ -10453,9 +10457,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       return f._pupQuest ? (ownShare()?.behaviourFor?.(f._pupQuest) ?? null) : null;
     },
     npcTargets() {
-      return people.filter((pn) => pn.active !== false && pn.width
-        && !(pn.action && (pn.action.actionFlag === ACTION_FLAGS.ShowText
-          || pn.action.actionFlag === ACTION_FLAGS.ShowTextWithInput)));
+      return people.filter((pn) => pn.active !== false && pn.width && !showsText(pn));
     },
     /**
      * WORLD-HOVER: THE ONE CONSTRUCTION SEAM for this dungeon's
@@ -10640,6 +10642,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // outdoors and indoors.
       if (kind === 'camp' || kind === 'hearth') return camps.activate(key, mode, plaqueActionFor(key)) ? 1 : 0;   // REST2: the plaque's lit row
       if (kind === 'delve') return delve.press(key, mode);   // DELVE II: a vault - sealed, said; won, opened
+      if (kind === 'aurum') return _aurumCache?.press(key) ? 1 : 0;   // AURUM-CACHES: today's coffer, claimed (scenes/aurumCacheHost.js)
       if (kind === 'search') return activateSearchable(i, mode);   // SEARCH1
       let source = null;
       let onEmptied = null;
@@ -10910,6 +10913,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     setFoeDead(f, true);
   }
   for (const [i, p] of lootPiles.entries()) if (p.stopKey && _deepCleared.has(p.stopKey) && !p.items.length) settleLootFlat(i);
+  const _aurumCache = standAurumCache(api, dfLocation, lootPiles, { meshes: deps });   // AURUM-CACHES: stood once the level and its piles are, beside one of them - CHEST3D: a model, through the pipeline's door
   // DELVE II (DLV2): THE DUNGEON'S ENCOUNTERS - the site law on the built collider, the fire plan's doors and fires, the
   // dungeon's own pile roll; its targets and plaque through the api's own doors (scenes/delve/delveHost.js)
   const delve = createDelveHost({ api, deps, location: dfLocation, blocks: dungeon.blocks, hearths: dungeonHearths, fires: dungeonFires, player: () => playerEntity, rollPile: rollPileItems, online: onlineRoom });

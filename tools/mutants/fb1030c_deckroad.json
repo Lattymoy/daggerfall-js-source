@@ -1,0 +1,6 @@
+[
+  {"name": "DECK-ROAD-the-deck-unread", "file": "src/scenes/homeYards.js", "old": "  roads = yardRoadsUnder(lot, pos, ground, pos[1] + (/** @type {any} */ (foot)?.bottom ?? 0), roads);   // DECK-ROAD: a deck over the road is the house's\n", "new": "", "tests": ["test/world/fb1030c_deckroad.test.js"]},
+  {"name": "DECK-ROAD-every-height-a-decks", "file": "src/scenes/homeYards.js", "old": "d[4] <= bottom + YARD_DECK_SLACK && meets(d)", "new": "meets(d)", "tests": ["test/world/fb1030c_deckroad.test.js"]},
+  {"name": "DECK-ROAD-the-whole-piece-let-off", "file": "src/scenes/homeYards.js", "old": "    return groundSamples(ground, pos[0], pos[2], b).some(([x, z]) => !under.some((w) => inRect(x, z, w)));", "new": "    return under.length < 0 && b.length < 0;", "tests": ["test/world/fb1030c_deckroad.test.js"]},
+  {"name": "DECK-ROAD-the-deck-it-stands-on-alone-the-houses", "file": "src/scenes/homeYards.js", "old": "  const house = lot.walls ?? [lot.house];", "new": "  const house = lot.grounds.flatMap((g) => g.decks.filter((d) => d[4] <= bottom + YARD_DECK_SLACK));", "tests": ["test/world/fb1030c_deckroad.test.js"]}
+]

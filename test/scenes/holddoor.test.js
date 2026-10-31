@@ -195,7 +195,7 @@ test('CARGO-ANYWHERE the helm\'s Hold and the hold\'s key: a hook button on the 
   const base = { hasSails: true, sailsUp: true, light: false };
   assert.ok(helmButtons({ ...base, cargo: true }).some((b) => b.act === 'cargo' && b.label === 'Hold' && b.kind === 'hook'));
   assert.ok(!helmButtons({ ...base, cargo: false }).some((b) => b.act === 'cargo'));
-  assert.equal(ACTIONS.at(-4), 'ShipHold');   // PIN MOVED (SHOT-KINDS: ShotCycle appended after; PARTY-PING: PartyPing after that; Decorate after that)
+  assert.equal(ACTIONS.at(-6), 'ShipHold');   // PIN MOVED (TECH-KEY2: SignatureTechnique appended last; SHOT-KINDS: ShotCycle appended after; PARTY-PING: PartyPing after that; Decorate after that)   // PIN MOVED (PVP-KEY: PvpFlag appended last)
   assert.ok(PORT_ACTIONS.includes('ShipHold'));
   assert.ok(DEFAULT_BINDINGS.some(([c, a]) => c === 'F4' && a === 'ShipHold'));
   assert.ok(MOD_ACTIONS['come-sail-away'].some((r) => r.action === 'ShipHold' && r.legacy === null));

@@ -81,7 +81,7 @@ import { setDefaultEnchantCtx } from '../systems/enchantments.js';   // AUDIT 58
 import { createEnchantCtx, standLooseFoe, LOOSE_FOE_PLACE_ATTEMPTS } from './hostEnchant.js';   // FS1 (wave D): the ONE ctx body + SD1's loose-foe placement
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { realWindowsMode, clockFogColor } from '../render/realWindows.js';   // RW1: the rooms behind the glass, and the street a building's glass looks out on
-import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights } from '../world/city/cityLights.js';
+import { CITY_LIGHT_COLOR, LIGHTS_ARCHIVE, collectCityLights, nearestLights, streetLanternAnimator, streetLightRange } from '../world/city/cityLights.js';
 import { isHearthFlat } from '../systems/survival/hearth.js';   // HEARTH1: which of those lanterns is a fire you could cook on
 import { syncLightingLane, lanternColor } from '../render/enhancedLighting.js';   // EL1
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
@@ -102,6 +102,7 @@ import { horseNameTooltip } from '../ui/horseNameTooltip.js';   // AUDIT HCC U6:
 import { createHorseCartPool } from './horseCartPool.js';   // HCC: the presentation, world.js's twin on this host
 import { wagonPoolDeps } from '../world/wagonModels.js';   // WAGONS1: the pool's two words, one seam for both hosts
 import { birthHorses, riddenHorseLook } from '../systems/horse/horseCoats.js';   // COATS1: the horses born; COATS3D: and the ridden one's look, for the 3D horse
+import { ownMountLook } from '../systems/horse/mountLook.js';   // STOREFRONT: the 3D horse under me in my mount look
 import { createHorseCartRuntime } from '../systems/horse/horseCart.js';   // HCC: TrailingWagonRuntime over this host's seams
 import { setHoldingsProvider, stableProviderFor } from '../ui/holdingsPages.js';   // HOLDINGS: the Stable page over this host's horse and wagon (no boats here)
 import { isQualifyingThreatState } from '../systems/horse/horseFollow.js';   // HCC: CollectThreats' qualification
@@ -126,7 +127,7 @@ import { collectExteriorNpcs, exteriorNpcRecord } from '../characters/exteriorNp
 import { createStandingHorses, isStandingHorseFlat } from '../world/standingHorses.js';   // STAND-HORSE: the location's town horses as the 3D horse
 import { isStandFlat, standFlatId, standFlatRecord } from '../world/standFlats.js';   // STAND-FLAT: a town horse and a person's flat no StaticNPC holds, a batch each   // C2 / AUDIT 26: RMBLayout's street StaticNPCs
 import { drawnFlat } from '../characters/nudeFlats.js';   // NUDE-FLATS: Show Nudity off draws a nude figure's clothed stand-in
-import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime, viewOutLight } from '../world/worldClock.js';
+import { SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime, viewOutLight } from '../world/worldClock.js';
 import { audio } from '../systems/audio.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
 import { createWeatherFront, blendTerms, soundWeather, fallTerms } from '../systems/weather/weatherFront.js';   // WX2: the front reaches the ground; RAIN-SPRINKLE: the look of what falls
@@ -168,7 +169,7 @@ import { getNameBankOfRegion } from '../characters/nameHelper.js';   // AUDIT 23
 import { createHitEffects } from './hitEffects.js';
 import { createTownScratch, createPersonTextureKeys } from './townScratch.js';   // PERF-TOWN1: the town loop's per-frame seats, and the memoised texture key
 import { createDroppedTorches } from './droppedTorches.js';
-import { createLefayMonument } from './lefayMonumentHost.js'; import { isLefayTown, lefaySpotOf, lefayExitOf, carveLefay } from '../world/lefayMonument.js'; import { dungeonEntranceLanding } from '../player/enterExit.js';   // LEFAY1: the monument to Julian LeFay, when the place on the bench is Privateer's Hold (HOLD-MONUMENT)
+import { createMonuments } from './lefayMonumentHost.js'; import { isLefayTown, monumentSpotOf, carveLefay } from '../world/lefayMonument.js';   // LEFAY1: the monuments (GOTHWAY-MONUMENT: Gothway Garden's stands on the bench)
 import { createCamps } from './camps.js'; import { PORTAL_TEXT } from '../systems/portalStone.js';   // SURV3: the camps this host stands; PORTAL1: the street's own refusal
 import { drinkAtSource, isWaterSourceFlat, isDrySourceFlat, WATER_SOURCE_MODELS, DRY_SOURCE_TEXT } from '../systems/survival/items.js';   // SURV3: the mod's water sources
 import { survivalOn } from '../systems/survival/switch.js';   // HT1: Handheld Torches' dropped lights, thrown torches and burning foes   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
@@ -714,7 +715,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const staticBuildings = [];
   const animalAmbience = createAnimalAmbience(audio, () => ambientAnimals);
   const cityNav = new CityNavigation(loc.width, loc.height);   // T1 towns
-  let lefaySpot = null;   // LEFAY1: world.js's spot - this host's frame is the location's own (HOLD-MONUMENT: outside Privateer's Hold, measured once its blocks stand)
+  let lefaySpot = null;   // LEFAY1: world.js's spot (world/lefayMonument.js monumentSpotOf) - this host's frame is the location's own
   for (const b of loc.blocks) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
     if (b.blockName === ARENA_BLOCK && isArenaCity(dfLocation)) arenaCityOrigin = [b.originX, 0, b.originZ];   // ARENA-FIX 12
@@ -903,12 +904,9 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (isHearthFlat(LIGHTS_ARCHIVE, light.record)) cityHearths.push({ ...l, foot: light.foot, w: light.w, h: light.h });   // FIX-D: and its sprite, for the eye's box
     }
   }
-  // HOLD-MONUMENT (AUDIT FIVE-ASKS B1): world.js's spot, beside the Hold's way out - DFU's exit landing over the dungeon-entrance
-  // doors this host's blocks stood (its frame the location's own), clear of World of Daggerfall's camp on or off
-  if (isLefayTown(dfLocation)) {
-    lefaySpot = lefaySpotOf(loc, { camp: { block: PRIVATEERS_HOLD_BLOCK, models: HOLD_MODELS }, exit: lefayExitOf(dungeonEntranceLanding(buildingDoors.filter((e) => e.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE).map((e) => e.door))) });
-    if (!lefaySpot) console.warn('[lefay] no open ground for the monument outside Privateer\'s Hold');   // AUDIT FIVE-ASKS B8: never silent
-  }
+  // GOTHWAY-MONUMENT, STEWART-MONUMENT: world.js's spot, a function of the layout alone
+  lefaySpot = monumentSpotOf(dfLocation, loc);
+  if (isLefayTown(dfLocation) && !lefaySpot) console.warn('[lefay] no open ground for the monument in Gothway Garden');   // AUDIT FIVE-ASKS B8: never silent
   // WOD4: THE CAMP AT PRIVATEER'S HOLD (world/worldOfDaggerfall/wodPrivateersHold.js),
   // world.js's stand in this host's location frame: the models with the
   // location's climate (DaggerfallLocation re-skins every mesh under its
@@ -1753,15 +1751,15 @@ export async function bootExterior(canvas, renderer, params, status) {
     say: (l) => townTalk.say(l), showOverlay: (w) => townTalk.showOverlay(w), openRest: () => { townTalk.closeOverlay(); toggleRest(); },
     advanceMinutes: (n) => { playerTicker.advance(n); runEncounterTick(walkMode ? player.pos : cam.pos, true); },   // CAMP-REST: a camp meal is a skip - no group roll on the replay
   });
-  // LEFAY1: THE MONUMENT TO JULIAN LEFAY (scenes/lefayMonumentHost.js) - world.js's twin: on the bench the location's
-  // frame is the scene's, so its spot stands still and the ground is the one plane
+  // LEFAY1: THE MONUMENTS (scenes/lefayMonumentHost.js) - world.js's twin: on the bench the location's frame is the
+  // scene's, so a spot stands still and the ground is the one plane
   const _lefaySite = lefaySpot ? [lefaySpot.x, lefaySpot.z] : null;
-  const lefay = createLefayMonument({
+  const lefay = createMonuments({
     renderer, getTexture, uploadRecord, billboardSize, collider: () => collider,
-    site: () => (_mode() === 'exterior' ? _lefaySite : null),
+    site: (id) => (_mode() === 'exterior' && lefaySpot?.id === id ? _lefaySite : null),
     groundAt: () => GROUND_OFFSET * 0.025,
     eye: () => cam.pos, feet: () => (walkMode ? player.pos : null),
-    tribute: () => playerEntity.lefayTribute, keep: (next) => { playerEntity.lefayTribute = next; },
+    tribute: (field) => playerEntity[field], keep: (field, next) => { playerEntity[field] = next; },
     say: (text) => townTalk.say(text), midText: (text) => setMidScreenText(text),
     sound: () => audio.playOneShot(SOUND.SwingHighPitch, 0.4),
   });
@@ -1913,7 +1911,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       ? waterSourceHoverName(!!springAt(key)?.dry) : null),
     (key) => wagonHoverName(key),
     (key) => hcc.hoverName(key),   // HCC
-    (key) => lefay.hoverName(key),   // LEFAY1: the monument to Julian LeFay - last, as world.js's twin
+    (key) => lefay.hoverName(key),   // LEFAY1: the monuments - last, as world.js's twin
   ];
   /**
    * WORLD-HOVER H2: THE MOD'S MOBILE BAND (.cs:297-320), IN ITS OWN
@@ -4580,7 +4578,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // the same list the activation ray reads for a building's people,
     // one mode up (PlayerActivate.ActivateStaticNPC :741-767).
     npcTargets: () => exteriorNpcs,
-    monumentTargets: () => lefay.targets(),   // LEFAY1: the monument to Julian LeFay, in the street's one ray
+    monumentTargets: () => lefay.targets(),   // LEFAY1: the monuments, in the street's one ray
     activateMonument: (key, mode, verb) => lefay.activate(key, mode, verb),   // LEFAY1: read it, or throw it a flower
     // PlayerGPS's building directory: this host knows its own location
     // outright, so it hands over the same bag the world host builds -
@@ -4989,7 +4987,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     },
   });
 
-  const lightAnimator = new CityLightAnimator(cityLights.length, CITY_LIGHT_RANGE);
+  const lightAnimator = streetLanternAnimator(cityLights.length, lightingOn);   // LIGHT-REACH: the lane's lanterns reach farther
   // WOD4: the Hold's FireLights burn at every hour, each in its own
   // colour: with the lanterns (while lit) through the one nearest-N
   // selection and its colour arm - world.js's _wodSelect, fixed frame.
@@ -5001,7 +4999,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (!lanternsOn) return nearestLights(holdLights, eye, renderer.maxPointLights, _holdOnlyRanges, (l) => l.color);
     const animated = Math.min(cityLights.length, lightAnimator.ranges.length);
     _holdAllRanges.set(lightAnimator.ranges.subarray(0, animated), 0);
-    _holdAllRanges.fill(CITY_LIGHT_RANGE, animated, cityLights.length);
+    _holdAllRanges.fill(streetLightRange(lightingOn), animated, cityLights.length);
     return nearestLights(_holdAll, eye, renderer.maxPointLights, _holdAllRanges, (l, i) => (i < cityLights.length ? CITY_LIGHT_COLOR_F32 : l.color));
   };
   const nightAmbientFloor = new Float32Array([0.25, 0.25, 0.25]);
@@ -5694,7 +5692,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     const mwv = (!shotMode || walkMode) && !riding
       ? mwViewFrame({ fpEye: cam.pos, feet: player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,
           dt, riding: !!player.riding && !_driverSeat && !(player.transportMode === TRANSPORT_MODES.Cart && hcc.benchKind()),   // AUDIT-EOTB F3/F4: the host's own clock, and the one state only it has; WAGONS3: the bench is no saddle (AUDIT WAGONS3 B2: on a frame with no seat either)
-          horse: player.transportMode === TRANSPORT_MODES.Horse ? { look: riddenHorseLook(playerEntity.items ?? []), slow: player.slowRide } : null,   // COATS3D: on a horse (never the cart), the Morrowind body sits a 3D horse in this look; HORSE-WALK: held under the gallop on a slow ride
+          horse: player.transportMode === TRANSPORT_MODES.Horse ? { look: ownMountLook(riddenHorseLook(playerEntity.items ?? [])), slow: player.slowRide } : null,   // COATS3D: on a horse (never the cart), the Morrowind body sits a 3D horse in this look (STOREFRONT: my mount look over it); HORSE-WALK: held under the gallop on a slow ride
           ...(_driverSeat ? { seated: true, stopped: true, feet: _driverSeat.feet } : {}),   // WAGONS3: seated on it, still on it, the camera's feet the seat's (after `feet`: it wins)
           pivotFloor: _driverSeat ? hcc.cameraFloor() : null,   // BENCH-CAM: the third-person camera turns about a pivot over my wagon's roof, never in my head
           cart: player.transportMode === TRANSPORT_MODES.Cart, onExteriorPath: _surfPath,   // EOTB-IL: UpdateWagon's two host facts
@@ -5892,7 +5890,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     camps.draw(renderer, texRemap, streetCull);   // SURV3: the tents; PERF-WAGON: by the street's view test
     hcc.draw(renderer, texRemap, undefined, streetCull);   // HCC: the wagon and its cargo; PERF-WAGON: by the street's view test
     try { lefay.frame(); } catch (e) { console.warn('[lefay] monument', e?.message ?? e); }   // LEFAY1: stood, its flowers in flight and laid
-    lefay.draw(renderer);   // LEFAY1: the monument to Julian LeFay
+    lefay.draw(renderer);   // LEFAY1: the monuments
     renderer.setWindowRooms(realWindowsMode());   // RW1 (render/realWindows.js): this frame's rooms behind the town's glass, asked after its beginFrame (world.js's twin); and the street kept for a building's view out
     // GROUND-LAST (2026-09-21): the ground is drawn AFTER every opaque
     // mesh - the buildings, the mills, the rig, the arrows - below, just
@@ -6126,7 +6124,6 @@ export async function bootExterior(canvas, renderer, params, status) {
     renderer.drawBillboards(_visBatches, camRight, UP_Y);
     if (_castBatches.length) renderer.recordShadowBillboards(_castBatches, camRight, UP_Y);   // SHADOW-REACH: for the maps alone, on the same wind
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, UP_Y);   // M2: spell missiles in flight
-    magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes
     // T1: the wandering townsfolk - population ticks at 10Hz, the
     // politeness idle gate whole (mobilePerson.personWantsToStop),
     // daytime only; live persons render as C11-style mobile batches
@@ -6219,6 +6216,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         grounded: !walkMode || !!player.grounded, settings: hazeFrameSettings() });   // AUDIT ENVIRONS W4 (world.js's twin): the ease on the real clock, the shimmer on the game's
       if (hz.visible && hazeGl.draw(hz, proj, view, renderer.worldViewportPx ?? [0, 0, renderer.gl.drawingBufferWidth, renderer.gl.drawingBufferHeight], hz.seconds)) renderer.markForeignPass();
     }
+    magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes; STOREFRONT (AUDIT STOREFRONT RENDER L3): with the kill effects, after the walkers, the watch, the foes and the Windfall - no depth written, so a flat drawn after them painted over them (world.js's twin note)
     // WX2: what falls is what the front SHOWS (world.js's twin note)
     eye32[0] = eye[0]; eye32[1] = eye[1]; eye32[2] = eye[2];
     const precipShown = enhancedFront ? fx.shown : precipMode;
