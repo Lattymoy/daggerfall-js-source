@@ -696,8 +696,9 @@ test('DS1 seam: the controller stands the mod beside the dome on the one lane, a
   // row starts
   const world = read('src/scenes/world.js');
   assert.match(world, /sky\.dynamic \? fogForWeather\(w, sky\.fogSettings\) : scaleFogForDistance\(fogForWeather\(w\), fogDistance\)/);
-  assert.match(world, /fogStart: fogNow\.start \?\? 0, fogEnd: fogNow\.end,/);
+  assert.match(world, /fogColor, fog: fogNow,/);   // PIN MOVED (RED-MOUNTAIN-SEEN): the row itself, its ramp read by render/farRing.js ringFogOf
   const ring = read('src/render/farRing.js');
+  assert.match(ring, /_clearAir\.start = row\.start \?\? 0; _clearAir\.end = row\.end;/);
   assert.match(ring, /uniform float uFogStart;/);
   // PIN MOVED (FAR-SEA1): the ramp is the horizon's one law (render/horizonHaze.js), the ring hands it the fog's start
   assert.match(ring, /horizonHaze\(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold\(uHazeHold, vDist\)\)/);   // PIN MOVED (RED-MOUNTAIN): the hold eased over the summits; PIN MOVED (AUDIT RED-MOUNTAIN F6): and by the eye's distance

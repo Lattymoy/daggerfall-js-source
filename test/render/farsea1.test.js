@@ -300,11 +300,11 @@ test('FAR-SEA1: the world host - the ring takes the water\'s sky, body and eye, 
   const at = w.indexOf('    const frameRing = () => {   // PERF-V8');
   assert.ok(at > 0);
   const ring = w.slice(at, w.indexOf('    frameRing();', at));
-  assert.ok(ring.includes("if (farRing && fogNow.mode === 'linear') {"), 'the ring\'s own gate');
+  assert.ok(ring.includes('if (farRing && ringFogOf(fogNow)) {'), 'the ring\'s own gate');   // PIN MOVED (RED-MOUNTAIN-SEEN): the fog row says how it stands
   assert.ok(ring.includes('skyZenith: waterSkyNow?.zenith, skyHorizon: waterSkyNow?.horizon, eye: renderer._camPos, worldProj: renderer._proj,'), 'the dome\'s sky; the eye and the world\'s own lens the fill is counted from');
   assert.ok(ring.includes('seaTiles: waterSkyNow ? snowCover.arrayOf(seaGroundArchive()) : null, seaTint: _dwFrame && !_dwFrame.underwater ? _dwFrame.look.topColor : null,'), 'the water\'s own body: the camera climate\'s tiles, Iliac Puddle No More\'s tint');   // AUDIT PRECIP GROUND-2 (PIN MOVED): the set as the snow lane holds it - its twin, whose first half it is
   assert.match(ring, /\n      if \(waterSkyNow\) renderer\.setSeaHaze\(RING_HAZE_HOLD, seaYNow\);\n    \}\n    \};\n$/,
-    'the gate\'s last statement, only with a sky to reflect - never on a frame without the ring (?ring=off, exp fog), where the held sea would meet the bare sky');
+    'the gate\'s last statement, only with a sky to reflect - never on a frame without the ring (?ring=off, a fog over the sky), where the held sea would meet the bare sky');
   // AUDIT FAR-SEA1 C3: found, and before the ring
   const seaYAt = w.indexOf('    const seaYNow = farRing ? tvSeaY() : 0;');
   assert.ok(seaYAt > 0 && seaYAt < at, 'the sea\'s height read before the ring');
@@ -314,7 +314,7 @@ test('FAR-SEA1: the world host - the ring takes the water\'s sky, body and eye, 
   // one home for the sea's climate: Iliac Puddle No More's sea and the ring's sea read the same archive
   assert.equal((w.match(/snowCover\.arrayOf\(seaGroundArchive\(\)\)/g) || []).length, 2, 'the open sea and the ring\'s sea, one body');   // AUDIT PRECIP GROUND-2 (PIN MOVED)
   assert.equal((w.match(/renderer\.tileArrays\.get\(seaGroundArchive\(\)\)/g) || []).length, 0, 'never the bare set, which the snow lane does not upload');
-  assert.match(w, /import \{ FarRingRenderer, ringDisabled, ringGroundAt, RING_HAZE_HOLD, BuiltPixels \} from '\.\.\/render\/farRing\.js';/);   // PIN MOVED (RELIEF-PEAKS): the ring's ground at a pixel's centre; PIN MOVED (OW-HORIZON, 2026-10-20): and the built pixels the ring's hole is keyed by; PIN MOVED (BREATHTAKER2 on the horizon): the height at its pixel, the continent's lift with it
+  assert.match(w, /import \{ FarRingRenderer, ringDisabled, ringGroundAt, RING_HAZE_HOLD, BuiltPixels, ringFogOf \} from '\.\.\/render\/farRing\.js';/);   // PIN MOVED (RED-MOUNTAIN-SEEN): and the fog row's law; PIN MOVED (RELIEF-PEAKS): the ring's ground at a pixel's centre; PIN MOVED (OW-HORIZON, 2026-10-20): and the built pixels the ring's hole is keyed by; PIN MOVED (BREATHTAKER2 on the horizon): the height at its pixel, the continent's lift with it
   // THE FOUR HOSTS: the fixed city draws the water and no ring, the interiors and the dungeons neither - none sets it
   for (const f of ['src/scenes/exterior.js', 'src/scenes/dungeonContext.js', 'src/scenes/worldModes.js', 'src/tools/waterLab.js']) assert.ok(!rd(f).includes('setSeaHaze'), `${f}: the world's fog alone`);
   // the lens reads back the world's far plane

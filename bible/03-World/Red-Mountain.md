@@ -192,16 +192,38 @@ about 130 m off the far views' smooth ground there. By day it keeps 30% of its n
   RED-MOUNTAIN).
 - The snowpack's levels reach 8 km (section A's BIOME PRECIPITATION law; the classic lane is untouched).
 - The plume leans the same way every day: no wind is read (the rite smoke's own reading).
-- The lava casts no light on the ground, and the plume is not drawn when the far ring is not (bad weather, `?ring=off`).
+- The lava casts no light on the ground. The lava and the plume are not drawn under a weather fog, nor where the far
+  ring is not (the classic skin, the heavy fog, the sandstorm, `?ring=off`).
 - The Ghostfence stands with the Landforms row or without it (the Tribunal's, not the land's). Its curtain and halos
   are the far ring's pass: on the classic skin, in rain, snow or ASHFALL1's ashfall (exp fog, Red Mountain's half of
   its hours) and by `?ring=off` its pylons stand and their orbs glow, without them.
+- **RED-MOUNTAIN-SEEN** (FIELD FEEDBACK 2026-10-31, #feature-feedback: "Red Mountain doesn't always render, not sure if
+  bug or just issue with how distant terrain works. Or an issue with my setup."). Past the streamed grid the cone stands
+  in the far views alone, and they were drawn under a linear fog row only. Every exp row has hidden the ground by the
+  grid's edge (4,096 m at the default Land View): the rain 5e-6 of it, the ash 2e-11, Dynamic Skies' overcast 8e-5, a
+  rain sprinkle's thinnest 4.6%. So nothing was lost through the fog, but under a sky drawn clear (`excludeSky`: rain,
+  snow, the ash, and with Dynamic Skies on, its overcast) the land's shape against the sky went too: the cone went with
+  the sun, and came back with it.
+- Now such a row stands the far views wholly in the fog's colour (`render/farRing.js` `ringFogOf`: the ramp closed,
+  the hold 1, no summit in thinner air): the cone's shape stands against the sky, as the streamed ground's own far hills
+  do, and nothing shows through. A fog over the sky (the heavy fog, the sandstorm) stands none - there is no shape to
+  see. The host hands the frame's row (`world.js:"    if (farRing && ringFogOf(fogNow)) {"`).
+- Not changed: after a fast travel past the far field's reach (480 pixels about its base) the ring alone closes the
+  horizon at 28 km until the new field is laid - in node a cold field took 1.3 s about Vvardenfell and 0.26 s in the Bay,
+  a band at a time between the stream's pixel jobs; a nearer jump keeps the old field standing. On the classic skin, and
+  offline with the Landforms row off, no cone stands past the grid. The far field's rim is 361 km.
 - Ghostgate is the gate alone: no Temple compound, no garrison, no road to it (nothing within the fence is a road's).
 - ASHFALL1's ashfall (`07-Rendering/Weather-Arc.md` E) falls on Red Mountain's zone half its hours, the Ashlands' 30%.
   It is the zone's weather: not born in the crater, as the lore's storms are, and the plume does not feed it.
 - Not yet: Dagoth Ur's citadel in the crater, the held map's caret for the cone (its bytes are the relief's).
 
 ## Pins
+
+- **`test/world/redmountain_seen.test.js` (3)** and **`tools/mutants/redmountainseen.json` (13, all dead):** the rows
+  (the classic and Dynamic Skies'), the reading at the grid's edge, the draw under a GL stub (the ash, clear air, the
+  heavy fog) and the host by source. **PIN MOVED:** `test/ui/farring.test.js` and `test/render/farsea1.test.js` (the
+  gate), `test/render/tv4_weather_above.test.js` (the reading, the ash added), `test/systems/dynamicSkies.test.js` (the
+  row handed whole).
 
 - **`test/world/redmountain.test.js` (8, one gated on ARENA2):** the flank's measure and its directions; the frame on
   the authored shape and on a fit; the land (past its reach to the bit, the floor, the crown, the keep, the breach, each
