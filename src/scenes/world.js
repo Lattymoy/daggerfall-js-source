@@ -28403,7 +28403,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   // TV-BEYOND: off the map is the sea where the world streams nothing there (DFU's empty edge), and the ground's own
   // bytes where TAMRIEL2 streams the land beyond the Bay - `woods` is its composed reader then, the sea past the frame
   const tvWater = (px, py) => (!woods.isTamrielGround && !woods.etherLaw?.(px, py) && (px < 0 || py < 0 || px >= 1000 || py >= 500)) || woods.getHeightMapValue(px, py) <= WATER_BYTE;   // AUDIT CAPTAIN'S SEA G5: the Eltheric Ocean's isles land, whatever the continent's switch says
-  const kernelSea = createKernelSea(() => woods);   // the kernel's sea at a native point (world/water/kernelSea.js) - the lanes' and the raiders'
+  const kernelSea = createKernelSea(() => woods, landformsHere);   // the kernel's sea at a native point (world/water/kernelSea.js) - the lanes' and the raiders'
   setSeaLegKernel(kernelSea, tvWater);   // a journey's sailed legs mended round the kernel's land (systems/travel/seaLegsMend.js)
   /** The trip is over when Travel Options no longer walks it - arrived, stopped, or replaced by a journey of its own. */
   const tvTripLive = () => !!tvTrip.plan && !!travelOptions?.route && travelOptions.route === tvTrip.plan.route;

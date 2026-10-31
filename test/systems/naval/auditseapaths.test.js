@@ -6,13 +6,14 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  createWaterGrid, errandFor, stepErrand, gridClearOf, reachOf, WATER_CELL, WATER_CLEAR, REACH_M, VOYAGE_DIST, OUTBOUND_MIN,
+  createWaterGrid, errandFor, stepErrand, gridClearOf, wayReachOf, WATER_CELL, WATER_CLEAR, REACH_M, VOYAGE_DIST, OUTBOUND_MIN,
   PROGRESS_S, GRID_MARGIN, CLEAR_STEP, PATH_NODES, PATH_BUDGET_K, courseVia, waterOf,
 } from '../../../src/systems/naval/shipLife.js';
 import { hullBuild } from '../../../src/systems/naval/navalShips.js';
 import { SWEEP_WAY } from '../../../src/systems/naval/navalAI.js';
 import { holdsLine, laneNetwork, laneWay, wayOffSea, subWay, packetsAt, LANE_PACKETS_MAX } from '../../../src/systems/naval/seaLanes.js';
 import { kernelLine, createKernelSea } from '../../../src/world/water/kernelSea.js';
+import { createLandforms } from '../../../src/world/landforms.js';
 import { mendSeaLegs } from '../../../src/systems/travel/seaLegsMend.js';
 import { raiderOf } from '../../../src/systems/seaRaiders.js';
 import { bayLaneWater, bayLanePorts, nearWay, beyondPathPx, worldLaneWater, beyondLaneWay } from '../../../src/scenes/naval/worldLanes.js';
@@ -83,9 +84,9 @@ test('AUDIT SEA PATHS AI-2: under way and getting nowhere is a stall - a point p
   assert.equal(c.errand.detour, null, 'a detour she cannot fetch is let go');
   // the reach: half her length for the galley, REACH_M for the rest
   const g = hullBuild(3);
-  assert.equal(reachOf(3), (g.bowZ - g.aftZ) / 2);
-  assert.ok(reachOf(3) > REACH_M + 10);
-  assert.equal(reachOf(2), REACH_M);
+  assert.equal(wayReachOf(3), (g.bowZ - g.aftZ) / 2);
+  assert.ok(wayReachOf(3) > REACH_M + 10);
+  assert.equal(wayReachOf(2), REACH_M);
   const gal = shipAt(0, -1955, { hull: 3, errand: { kind: 'voyage', harbour: 'g', to: null, path: [[0, 0], [0, -2000]], i: 1 } });
   stepErrand(gal, 0.1, ctx);
   assert.notEqual(gal.errand?.harbour, 'g', 'a galley 45 m off the mouth has made it');
@@ -436,7 +437,7 @@ test('AUDIT SEA PATHS O3 with ARENA2: the kernel\'s sea answers the ground the g
   const tvWater = (px, py) => woods.getHeightMapValue(px, py) <= WATER_BYTE;
   const law = bayLaneWater(tvWater, (px, py) => inBay(px, py) && undilatedClimateIndex(maps, px, py) === CLIMATES.Ocean);
   const lawN = (x, z) => { const q = pixelOfNative(x, z); return law(q.x, q.y); };
-  const kernel = createKernelSea(() => woods);
+  const kernel = createKernelSea(() => woods, () => createLandforms({ woods }));
   const P = NATIVE_PIXEL, isletAt = { x: (748 + 3.5 / 8) * P, z: (499 - 278 + 1 - 4.5 / 8) * P };
   assert.equal(law(748, 278), true, 'the four-corner law calls its pixel lane water');
   assert.equal(kernel(isletAt.x, isletAt.z), false, 'the kernel stands an islet there');
@@ -497,7 +498,7 @@ const pastBayWorld = () => (_pastBay ??= (async () => {
   const places = createWorldPlaces();
   places.register('tesa', pastBayPlaceRows({ pixels: arenaPixels(), templateOf: () => ({ exterior: { exteriorData: { width: 1, height: 1 } } }), capitals: true }));
   const ports = createWorldPorts({ places, openSea, regionAt: (x, y) => maps.getRegionIndexAt(x, y) });
-  const kernel = createKernelSea(() => woods);
+  const kernel = createKernelSea(() => woods, () => createLandforms({ woods }));
   const wl = createWorldLanes({ mapDict: () => buildMapDict(maps), maps, portIds: PORT_LOCATION_IDS, ports, bayOpen: laneOpen, bayOpenNative: laneOpenNative, water: tvWater, beyond: () => true, kernel });
   return { wl, ports, woods, kernel, laneOpen, tvWater, maps };
 })());
@@ -595,9 +596,9 @@ test('AUDIT SEA PATHS C1 with ARENA2: a lane past the Bay whose search finds no 
   assert.ok(Math.max(...long.map((l) => wl.way(l).len)) > 4.5e6, 'the Imperial City\'s to Skyrim round the land');
   // the kernel's last pixel kept: a sweep up a column across a coast answers as a reader asked afresh each time
   const sweep = (sea, reset) => { let s = ''; for (let z = 463 * NATIVE_PIXEL; z < 467 * NATIVE_PIXEL; z += NATIVE_PIXEL / 8) { if (reset) sea(0, 0); s += sea(162.5 * NATIVE_PIXEL, z) ? 1 : 0; } return s; };
-  const fresh = sweep(createKernelSea(() => woods), true);
+  const fresh = sweep(createKernelSea(() => woods, () => createLandforms({ woods })), true);
   assert.ok(fresh.includes('0') && fresh.includes('1'), fresh);
-  assert.equal(sweep(createKernelSea(() => woods), false), fresh);
+  assert.equal(sweep(createKernelSea(() => woods, () => createLandforms({ woods })), false), fresh);
 });
 
 test('AUDIT SEA PATHS C1: the diagonal steps past a picture cell\'s corner are kept each by its own bearing - a wall\'s one gap on the slant the Bay\'s scale refuses stays shut though the cell\'s other slants are open (mutants: the steps kept by their cell alone)', () => {

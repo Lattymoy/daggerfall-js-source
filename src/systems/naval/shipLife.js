@@ -117,7 +117,7 @@ export const LEG_END_M = 60;
 export const REACH_M = 35;
 /** a hull reaches a point within REACH_M or half her length, the longer - the galley's 93 m was
  *  held to 35 m and circled a mark she lay across. */
-export const reachOf = (hull) => {
+export const wayReachOf = (hull) => {
   const b = hullBuild(hull);
   return Math.max(REACH_M, (b.bowZ - b.aftZ) / 2);
 };
@@ -951,7 +951,7 @@ export const PASS_ASK_S = 1;
  *  her detours counted afresh. */
 function follow(ship, e, clear = null, dt = 0) {
   const here = flat(ship.pos),
-    reach = reachOf(ship.hull);
+    reach = wayReachOf(ship.hull);
   e.passWait = (e.passWait ?? 0) - dt;
   while (e.i < e.path.length - 1) {
     const p = e.path[e.i],
@@ -1017,7 +1017,7 @@ export function stepErrand(ship, dt, ctx) {
     // AUDIT SHIP-LIFE A1: whatever sail she carries - the last of a berthing's way and a captain boxed in by the land
     // both shorten it, and a hulk across either held her there for good
     e.stall = ship.speed < STALL_WAY ? (e.stall ?? 0) + dt : 0;
-    const held = e.detour ? 0 : progress(e, here, dt, reachOf(ship.hull));
+    const held = e.detour ? 0 : progress(e, here, dt, wayReachOf(ship.hull));
     // under way and getting nowhere - on to the next point of her way where the water carries her
     // straight to it, else a stall as any other
     if (held >= PROGRESS_S && e.path && e.i < e.path.length - 1 && ctx.grid(ship.hull).clear(here, e.path[e.i + 1])) {
@@ -1060,7 +1060,7 @@ export function stepErrand(ship, dt, ctx) {
     if (e.detour) {
       // a detour is PROGRESS_S of her time at most - one she could not fetch was chased for good
       e.detourS = (e.detourS ?? 0) + dt;
-      if (dist2(here, e.detour) > reachOf(ship.hull) && e.detourS < PROGRESS_S) return plan(e.detour, 0.6);
+      if (dist2(here, e.detour) > wayReachOf(ship.hull) && e.detourS < PROGRESS_S) return plan(e.detour, 0.6);
       e.detour = null;
       e.path = null;
       e.detourS = 0;
@@ -1118,7 +1118,7 @@ export function stepErrand(ship, dt, ctx) {
           : null,
       );
       if (!p) return giveUp();
-      if (dist2(here, hb.mouth) <= reachOf(ship.hull) * 1.5) {
+      if (dist2(here, hb.mouth) <= wayReachOf(ship.hull) * 1.5) {
         const r = errandRng(ship.seed ^ Math.floor(ship.clock));
         if (ship.cls?.faction === 'navy')
           ship.errand = { kind: 'patrol', harbour: e.harbour, since: ship.clock, path: null, i: 0, spin: r() };
@@ -1153,7 +1153,7 @@ export function stepErrand(ship, dt, ctx) {
       }
       const p = hb ? way(to) : to; // out of the world: straight, her lookout's own land swing on the way
       if (!p) return giveUp();
-      if (dist2(here, to) <= reachOf(ship.hull) * 1.5) {
+      if (dist2(here, to) <= wayReachOf(ship.hull) * 1.5) {
         if (hb) {
           const berth = hb.berths.findIndex((_, i) => ctx.free?.(e.harbour, i) ?? true);
           ship.errand =
@@ -1220,7 +1220,7 @@ export function stepErrand(ship, dt, ctx) {
         e.path = ringOver(ring, [hb.mouth[0], hb.mouth[1]], grid.clear);
         e.i = 0;
       }
-      if (dist2(here, e.path[e.i]) <= reachOf(ship.hull)) {
+      if (dist2(here, e.path[e.i]) <= wayReachOf(ship.hull)) {
         e.i = (e.i + 1) % e.path.length;
         e.detours = 0;
       }
@@ -1247,7 +1247,7 @@ export function stepErrand(ship, dt, ctx) {
         e.path = ringOver(ring, [at[0], at[1]], clear);
         e.i = 0;
       }
-      if (dist2(here, e.path[e.i]) <= reachOf(ship.hull)) {
+      if (dist2(here, e.path[e.i]) <= wayReachOf(ship.hull)) {
         e.i = (e.i + 1) % e.path.length;
         e.detours = 0;
       }
