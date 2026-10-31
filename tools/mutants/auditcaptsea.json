@@ -2,8 +2,8 @@
   {
     "name": "ACS-B2-shop",
     "file": "src/systems/shopStock.js",
-    "old": "  && !goodOfTemplate(item.templateIndex)\n",
-    "new": "",
+    "old": "  !goodOfTemplate(item.templateIndex) &&\n  // SHIPYARDS (2026-10-11, Mac: \"Shipyard only\"): nor a boat's parts or deed - a port town's shipyard buys a ship back",
+    "new": "  // SHIPYARDS (2026-10-11, Mac: \"Shipyard only\"): nor a boat's parts or deed - a port town's shipyard buys a ship back",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

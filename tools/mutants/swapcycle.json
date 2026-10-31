@@ -42,8 +42,8 @@
   {
     "name": "SWAP-CYCLE-shortfall-class-only",
     "file": "src/systems/skillSwap.js",
-    "old": "Math.max(0, heldSum(entity) - levelUpSkillSum({",
-    "new": "Math.max(0, levelUpSkillSum(entity) - levelUpSkillSum({",
+    "old": "    ? Math.max(0, heldSum(entity) - levelUpSkillSum({ ...entity, career: swappedCareer(entity, out, inn) }))",
+    "new": "    ? Math.max(0, levelUpSkillSum(entity) - levelUpSkillSum({ ...entity, career: swappedCareer(entity, out, inn) }))",
     "tests": [
       "test/systems/swapcycle.test.js"
     ],

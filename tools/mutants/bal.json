@@ -112,8 +112,8 @@
   {
     "name": "BAL3-the-threat-starts-at-a-cemetery",
     "file": "src/systems/skillSoftcap.js",
-    "old": "export const PLACE_THREAT = Object.freeze({ from: 4, full: 18,",
-    "new": "export const PLACE_THREAT = Object.freeze({ from: 3, full: 18,",
+    "old": "export const PLACE_THREAT = Object.freeze({ from: 4, full: 18, wilderness: Object.freeze({ day: 5, night: 7 }) });",
+    "new": "export const PLACE_THREAT = Object.freeze({ from: 3, full: 18, wilderness: Object.freeze({ day: 5, night: 7 }) });",
     "tests": [
       "test/systems/bal_arc.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "BAL3-the-full-row-at-21",
     "file": "src/systems/skillSoftcap.js",
-    "old": "export const PLACE_THREAT = Object.freeze({ from: 4, full: 18,",
-    "new": "export const PLACE_THREAT = Object.freeze({ from: 4, full: 21,",
+    "old": "export const PLACE_THREAT = Object.freeze({ from: 4, full: 18, wilderness: Object.freeze({ day: 5, night: 7 }) });",
+    "new": "export const PLACE_THREAT = Object.freeze({ from: 4, full: 21, wilderness: Object.freeze({ day: 5, night: 7 }) });",
     "tests": [
       "test/systems/bal_arc.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "BAL3-the-night-is-the-day",
     "file": "src/systems/skillSoftcap.js",
-    "old": "wilderness: Object.freeze({ day: 5, night: 7 }) });",
-    "new": "wilderness: Object.freeze({ day: 5, night: 5 }) });",
+    "old": "export const PLACE_THREAT = Object.freeze({ from: 4, full: 18, wilderness: Object.freeze({ day: 5, night: 7 }) });",
+    "new": "export const PLACE_THREAT = Object.freeze({ from: 4, full: 18, wilderness: Object.freeze({ day: 5, night: 5 }) });",
     "tests": [
       "test/systems/bal_arc.test.js"
     ]
@@ -139,7 +139,7 @@
   {
     "name": "BAL3-no-tier-reads-nan",
     "file": "src/systems/skillSoftcap.js",
-    "old": "export const placeVeteran = (tier) => (Number.isFinite(tier) ? clamp01((tier - PLACE_THREAT.from) / (PLACE_THREAT.full - PLACE_THREAT.from)) : 0);",
+    "old": "export const placeVeteran = (tier) =>\n  Number.isFinite(tier) ? clamp01((tier - PLACE_THREAT.from) / (PLACE_THREAT.full - PLACE_THREAT.from)) : 0;",
     "new": "export const placeVeteran = (tier) => clamp01((tier - PLACE_THREAT.from) / (PLACE_THREAT.full - PLACE_THREAT.from));",
     "tests": [
       "test/systems/bal_arc.test.js"
@@ -157,8 +157,8 @@
   {
     "name": "BAL3-the-layers-add",
     "file": "src/systems/skillSoftcap.js",
-    "old": "  const vet = Math.max(clamp01(fShare) * p, share * v);",
-    "new": "  const vet = clamp01(fShare) * p + share * v;",
+    "old": "  const vet = Math.max(clamp01(fShare) * p, share * v); // BAL3: the place's veteran, the foe's share of it - Master Skills' a floor beside it",
+    "new": "  const vet = clamp01(fShare) * p + share * v; // BAL3: the place's veteran, the foe's share of it - Master Skills' a floor beside it",
     "tests": [
       "test/systems/bal_arc.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "BAL3-a-rat-is-a-dragon",
     "file": "src/systems/skillSoftcap.js",
-    "old": "  const vet = Math.max(clamp01(fShare) * p, share * v);",
-    "new": "  const vet = Math.max(p, share * v);",
+    "old": "  const vet = Math.max(clamp01(fShare) * p, share * v); // BAL3: the place's veteran, the foe's share of it - Master Skills' a floor beside it",
+    "new": "  const vet = Math.max(p, share * v); // BAL3: the place's veteran, the foe's share of it - Master Skills' a floor beside it",
     "tests": [
       "test/systems/bal_arc.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "BAL3-the-place-skips-the-floor",
     "file": "src/systems/skillSoftcap.js",
-    "old": "  const vet = Math.max(clamp01(fShare) * p, share * v);",
-    "new": "  const vet = clamp01(fShare) * p;",
+    "old": "  const vet = Math.max(clamp01(fShare) * p, share * v); // BAL3: the place's veteran, the foe's share of it - Master Skills' a floor beside it",
+    "new": "  const vet = clamp01(fShare) * p; // BAL3: the place's veteran, the foe's share of it - Master Skills' a floor beside it",
     "tests": [
       "test/systems/bal_arc.test.js"
     ]
@@ -499,8 +499,8 @@
   {
     "name": "AUDIT-BAL-a-search-elite-anywhere",
     "file": "src/systems/searchables.js",
-    "old": "rolls() < SEARCH_ELITE_CHANCE && elitesAllowed() && eliteRenownOpen();",
-    "new": "rolls() < SEARCH_ELITE_CHANCE && eliteRenownOpen();",
+    "old": "export const rollSearchElite = (rolls = Math.random) =>\n  rolls() < SEARCH_ELITE_CHANCE && elitesAllowed() && eliteRenownOpen();",
+    "new": "export const rollSearchElite = (rolls = Math.random) => rolls() < SEARCH_ELITE_CHANCE && eliteRenownOpen();",
     "tests": [
       "test/systems/bal_arc.test.js"
     ]
@@ -508,8 +508,8 @@
   {
     "name": "AUDIT-BAL-the-search-roll-skipped",
     "file": "src/systems/searchables.js",
-    "old": "rolls() < SEARCH_ELITE_CHANCE && elitesAllowed() && eliteRenownOpen();",
-    "new": "elitesAllowed() && rolls() < SEARCH_ELITE_CHANCE && eliteRenownOpen();",
+    "old": "  rolls() < SEARCH_ELITE_CHANCE && elitesAllowed() && eliteRenownOpen();",
+    "new": "  elitesAllowed() && rolls() < SEARCH_ELITE_CHANCE && eliteRenownOpen();",
     "tests": [
       "test/systems/bal_arc.test.js"
     ]

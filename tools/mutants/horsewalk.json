@@ -110,8 +110,8 @@
   {
     "name": "HORSEWALK-clop-edge-only",
     "file": "src/systems/riding.js",
-    "old": "        if (walking) {\n          // HORSE-WALK: the walk's slow clop is its state",
-    "new": "        if (false) {\n          // HORSE-WALK: the walk's slow clop is its state",
+    "old": "        if (walking) {",
+    "new": "        if (false) {",
     "tests": [
       "test/systems/horsewalk.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "HORSEWALK-edge-unarmed",
     "file": "src/systems/riding.js",
-    "old": "          // HORSE-WALK: the walk's slow clop is its state, and the edge stands armed for the gallop's first frame\n          this.wasMovingLessThanHalfSpeed = true;\n",
-    "new": "          // HORSE-WALK: the walk's slow clop is its state, and the edge stands armed for the gallop's first frame\n",
+    "old": "          // HORSE-WALK: the walk's slow clop is its state, and the edge stands armed for the gallop's first frame\n          this.wasMovingLessThanHalfSpeed = true;\n          this.clip = RIDING_SOUND.horseSlow;",
+    "new": "          // HORSE-WALK: the walk's slow clop is its state, and the edge stands armed for the gallop's first frame\n          this.clip = RIDING_SOUND.horseSlow;",
     "tests": [
       "test/systems/horsewalk.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "HORSEWALK-walk-volume-full",
     "file": "src/systems/riding.js",
-    "old": "const volume = (movingLessThanHalfSpeed || walking ? RIDING_VOLUME_SCALE * 0.5 : RIDING_VOLUME_SCALE) * soundVolume;",
-    "new": "const volume = (movingLessThanHalfSpeed ? RIDING_VOLUME_SCALE * 0.5 : RIDING_VOLUME_SCALE) * soundVolume;",
+    "old": "    const volume = (movingLessThanHalfSpeed || walking ? RIDING_VOLUME_SCALE * 0.5 : RIDING_VOLUME_SCALE) * soundVolume;",
+    "new": "    const volume = (movingLessThanHalfSpeed ? RIDING_VOLUME_SCALE * 0.5 : RIDING_VOLUME_SCALE) * soundVolume;",
     "tests": [
       "test/systems/horsewalk.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "HORSEWALK-walk-clock-dfu",
     "file": "src/systems/riding.js",
-    "old": "(walking ? WALK_FRAME_TIME : ANIM_FRAME_TIME)",
-    "new": "(ANIM_FRAME_TIME)",
+    "old": "      else if (this.now > this.lastFrameTime + (walking ? WALK_FRAME_TIME : ANIM_FRAME_TIME)) {",
+    "new": "      else if (this.now > this.lastFrameTime + ANIM_FRAME_TIME) {",
     "tests": [
       "test/systems/horsewalk.test.js"
     ]

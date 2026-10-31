@@ -293,8 +293,8 @@
   {
     "name": "TIDE3-ed-said",
     "file": "src/systems/seatEdicts.js",
-    "old": "host.orcCamp(site, region).then((r) => { if (r?.counted) host.say?.(ORC_CAMP_TEXT, 4); }).catch(() => {});",
-    "new": "host.orcCamp(site, region).then((r) => { host.say?.(ORC_CAMP_TEXT, 4); }).catch(() => {});",
+    "old": "          if (r?.counted) host.say?.(ORC_CAMP_TEXT, 4);",
+    "new": "          host.say?.(ORC_CAMP_TEXT, 4);",
     "tests": [
       "test/net/tide_orcs.test.js"
     ]

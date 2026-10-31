@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-SHIPS-A2-turned-straight-back",
     "file": "src/systems/seaHelm.js",
-    "old": "  else if (blocked) course = foldDeg(q.heading);\n",
-    "new": "",
+    "old": "  if (avoiding)\n    course = foldDeg(q.heading + (q.freer ?? 1) * 90); // land close ahead: hard over to the freer hand\n  else if (blocked) course = foldDeg(q.heading);",
+    "new": "  if (avoiding) course = foldDeg(q.heading + (q.freer ?? 1) * 90); // land close ahead: hard over to the freer hand",
     "tests": [
       "test/systems/auditships_sail.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-SHIPS-A4-the-calm-under-sail-free",
     "file": "src/systems/seaHelm.js",
-    "old": "(q.free ? windLen > 0 : windLen >= H.calm)",
-    "new": "windLen >= H.calm",
+    "old": "  const sailable = q.hasSails && (q.free ? windLen > 0 : windLen >= H.calm) && !rowingIn && !avoiding && !crewRows;",
+    "new": "  const sailable = q.hasSails && windLen >= H.calm && !rowingIn && !avoiding && !crewRows;",
     "tests": [
       "test/systems/auditships_sail.test.js"
     ]

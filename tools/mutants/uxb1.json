@@ -101,7 +101,7 @@
   {
     "name": "UXB1-K-hours-read-as-days",
     "file": "src/systems/repairService.js",
-    "old": "  const span = c.minutesLeft >= MINUTES_PER_DAY ? `${days} day${days === 1 ? '' : 's'}` : `${hours} hour${hours === 1 ? '' : 's'}`;",
+    "old": "  const span =\n    c.minutesLeft >= MINUTES_PER_DAY ? `${days} day${days === 1 ? '' : 's'}` : `${hours} hour${hours === 1 ? '' : 's'}`;",
     "new": "  const span = `${days} day${days === 1 ? '' : 's'}`;",
     "tests": [
       "test/systems/uxb1k_shops.test.js"
@@ -137,8 +137,8 @@
   {
     "name": "UXB1-O-yesterdays-lid-stays-searched",
     "file": "src/systems/shopStock.js",
-    "old": "  && container.openedOn === container.stockedDate && !needsRestock(container, today);",
-    "new": "  && container.openedOn === container.stockedDate;",
+    "old": "  Number.isFinite(container?.openedOn) &&\n  container.openedOn > 0 &&\n  container.openedOn === container.stockedDate &&\n  !needsRestock(container, today);",
+    "new": "  Number.isFinite(container?.openedOn) && container.openedOn > 0 && container.openedOn === container.stockedDate;",
     "tests": [
       "test/systems/uxb1n_containerplaque.test.js"
     ]

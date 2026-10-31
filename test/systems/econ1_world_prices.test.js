@@ -135,7 +135,7 @@ test('ECON1 by source: the shared clock installs and removes the world\'s price 
   assert.ok(rd('src/scenes/world.js').includes("if (onlineOn) townTalk.ensureFactions?.().then(() => { if (townTalk.factionDict) setWorldPriceTilt(worldPriceTiltOf(townTalk.factionDict)); }).catch(() => {});"), 'AUDIT ALL E1: the host installs the tilt off the FILE\'s dict once FACTION.TXT is read, online alone');
   assert.ok(sh.includes("const adjusted = priceWalkStep(adj, Math.trunc((merchants.power - regionFaction.power) / 5), rolls());"), 'the player\'s step through the same home, tilted');
   assert.ok(sh.includes("applyPriceConditionFlags(conditions, i, adjusted, rolls);"), 'the flag half, one home');
-  assert.equal((sh.match(/Math\.trunc\(51 \* adj \/ 50\)/g) ?? []).length, 1, 'the 51/50 arithmetic has one home');
+  assert.equal((sh.match(/Math\.trunc\(\(51 \* adj\) \/ 50\)/g) ?? []).length, 1, 'the 51/50 arithmetic has one home');
   for (const f of ['src/scenes/world.js', 'src/scenes/worldModes.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js', 'src/ui/native/nativeTrade.js', 'src/systems/tradeModes.js', 'src/systems/guild/guildServiceActions.js', 'src/systems/repairService.js', 'src/systems/quest/machine.js']) {
     assert.equal(/regionPrices\[/.test(rd(f)), false, `${f} reads the region\'s index through the seam, never the player\'s table`);
   }

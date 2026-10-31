@@ -602,8 +602,8 @@
   {
     "name": "WB12d-no-gold",
     "file": "src/systems/riteChest.js",
-    "old": "const items = [goldStack(Math.round(lv * (lo + rolls() * (hi - lo))))];",
-    "new": "const items = [];",
+    "old": "  const items = [goldStack(Math.round(lv * (lo + rolls() * (hi - lo))))];",
+    "new": "  const items = [];",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -611,8 +611,8 @@
   {
     "name": "WB12d-the-brand-never",
     "file": "src/systems/riteChest.js",
-    "old": "if (rolls() * RITE_BRAND_IN < 1) items.push",
-    "new": "if (false) items.push",
+    "old": "  if (rolls() * RITE_BRAND_IN < 1) items.push(riteBrand(lv, rolls));",
+    "new": "  if (false) items.push(riteBrand(lv, rolls));",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -620,7 +620,7 @@
   {
     "name": "WB12d-the-brand-with-no-sigil",
     "file": "src/systems/riteChest.js",
-    "old": "it.sigil = { set: RITE_BRAND_SET, party: sigilParty(1), xp: 0 };",
+    "old": "  it.sigil = { set: RITE_BRAND_SET, party: sigilParty(1), xp: 0 };",
     "new": "",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
@@ -629,8 +629,8 @@
   {
     "name": "WB12d-a-heart-every-time",
     "file": "src/systems/riteChest.js",
-    "old": "rolls() < RITE_HEART_CHANCE ? RITE_HEART",
-    "new": "rolls() < 1 ? RITE_HEART",
+    "old": "      rolls() < RITE_HEART_CHANCE\n        ? RITE_HEART\n        : RITE_REAGENTS[Math.floor(rolls() * RITE_REAGENTS.length) % RITE_REAGENTS.length];",
+    "new": "      rolls() < 1 ? RITE_HEART : RITE_REAGENTS[Math.floor(rolls() * RITE_REAGENTS.length) % RITE_REAGENTS.length];",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -638,8 +638,8 @@
   {
     "name": "WB12d-the-day-forgotten",
     "file": "src/systems/riteChest.js",
-    "old": "getSaveData: () => ({ day: _day }),",
-    "new": "getSaveData: () => ({ day: -1 }),",
+    "old": "  getSaveData: () => ({ day: _day }),",
+    "new": "  getSaveData: () => ({ day: -1 }),",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -1199,8 +1199,8 @@
   {
     "name": "AUDIT-WB12d-the-memory-unsaved",
     "file": "src/systems/riteChest.js",
-    "old": "getSaveData: () => ({ ..._rite, slain: { ..._rite.slain } }),",
-    "new": "getSaveData: () => blank(-1),",
+    "old": "  getSaveData: () => ({ ..._rite, slain: { ..._rite.slain } }),",
+    "new": "  getSaveData: () => blank(-1),",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js",
       "test/net/gate/wb12d_rite_host.test.js"
@@ -1209,8 +1209,8 @@
   {
     "name": "AUDIT-WB12d-a-save-s-junk-believed",
     "file": "src/systems/riteChest.js",
-    "old": "if (/^\\d{1,4}$/.test(k) && Number.isSafeInteger(v) && v > 0) slain[k] = Math.min(v, SLAIN_MAX);",
-    "new": "slain[k] = v;",
+    "old": "    for (const [k, v] of Object.entries(r.slain && typeof r.slain === 'object' ? r.slain : {}))\n      if (/^\\d{1,4}$/.test(k) && Number.isSafeInteger(v) && v > 0) slain[k] = Math.min(v, SLAIN_MAX);",
+    "new": "    for (const [k, v] of Object.entries(r.slain && typeof r.slain === 'object' ? r.slain : {})) slain[k] = v;",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -2998,8 +2998,8 @@
   {
     "name": "AUDIT-WB12d-T-chest-two-or-three-reagents",
     "file": "src/systems/riteChest.js",
-    "old": "(RITE_REAGENTS_MAX - RITE_REAGENTS_MIN + 1)",
-    "new": "(RITE_REAGENTS_MAX - RITE_REAGENTS_MIN)",
+    "old": "  const n = RITE_REAGENTS_MIN + Math.floor(rolls() * (RITE_REAGENTS_MAX - RITE_REAGENTS_MIN + 1));",
+    "new": "  const n = RITE_REAGENTS_MIN + Math.floor(rolls() * (RITE_REAGENTS_MAX - RITE_REAGENTS_MIN));",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js",
       "test/net/gate/wb12d_rite_law.test.js",
@@ -3010,8 +3010,8 @@
   {
     "name": "AUDIT-WB12d-T-chest-one-reagent-kind",
     "file": "src/systems/riteChest.js",
-    "old": "RITE_REAGENTS[Math.floor(rolls() * RITE_REAGENTS.length) % RITE_REAGENTS.length]",
-    "new": "RITE_REAGENTS[0]",
+    "old": "    const r =\n      rolls() < RITE_HEART_CHANCE\n        ? RITE_HEART\n        : RITE_REAGENTS[Math.floor(rolls() * RITE_REAGENTS.length) % RITE_REAGENTS.length];",
+    "new": "    const r = rolls() < RITE_HEART_CHANCE ? RITE_HEART : RITE_REAGENTS[0];",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js",
       "test/net/gate/wb12d_rite_law.test.js",
@@ -3022,8 +3022,8 @@
   {
     "name": "AUDIT-WB12d-T-chest-brand-not-faint",
     "file": "src/systems/riteChest.js",
-    "old": "party: sigilParty(1), xp: 0",
-    "new": "party: sigilParty(4), xp: 0",
+    "old": "  it.sigil = { set: RITE_BRAND_SET, party: sigilParty(1), xp: 0 };",
+    "new": "  it.sigil = { set: RITE_BRAND_SET, party: sigilParty(4), xp: 0 };",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js",
       "test/net/gate/wb12d_rite_law.test.js",

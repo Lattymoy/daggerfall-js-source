@@ -95,7 +95,10 @@ export const seaHelmReach = (way) => Math.max(SEA_HELM.avoidM, Math.max(0, way) 
 export const seaHelmLook = (st, way) => Math.max(seaHelmReach(way), st?.reach ?? 0);
 
 /** An angle folded into (-180, 180]. */
-export const foldDeg = (d) => { const a = ((d % 360) + 540) % 360 - 180; return a === -180 ? 180 : a; };
+export const foldDeg = (d) => {
+  const a = (((d % 360) + 540) % 360) - 180;
+  return a === -180 ? 180 : a;
+};
 /** A flat direction's heading - degrees clockwise from north (+z), as the port's yaw counts. */
 export const headingOf = (x, z) => (Math.atan2(x, z) * 180) / Math.PI;
 
@@ -122,7 +125,7 @@ export function seaHelmStep(st, q) {
   const windLen = Math.hypot(q.wind[0] ?? 0, q.wind[1] ?? 0);
   const ahead = q.landAhead ?? Infinity;
   const reach = seaHelmLook(st, q.way);
-  const avoiding = (!q.landfall && ahead <= reach) || (q.hullAhead ?? Infinity) <= reach;   // AUDIT FERRY-CLEAR F1: a hull on any leg
+  const avoiding = (!q.landfall && ahead <= reach) || (q.hullAhead ?? Infinity) <= reach; // AUDIT FERRY-CLEAR F1: a hull on any leg
   // AUDIT SHIPS A2: her bow clear, the mark's line still running onto land within reach - she holds the heading that
   // cleared it (let go as her bow cleared it, the hand turned her straight back onto the islet she was turning off).
   // AUDIT FERRY-CLEAR F1: a landfall's line is read for its hulls alone (the host's), so it holds off a ship there too
@@ -136,27 +139,31 @@ export function seaHelmStep(st, q) {
   const sailable = q.hasSails && (q.free ? windLen > 0 : windLen >= H.calm) && !rowingIn && !avoiding && !crewRows;
   let course = foldDeg(q.bearing);
   if (sailable) {
-    const eye = headingOf(-(q.wind[0] ?? 0), -(q.wind[1] ?? 0));   // where the wind comes from
-    const noGo = q.free ? 0 : q.squareOnly ? H.noGoSquare : H.noGoFore;   // SAIL-FREE: the responsive helm sails straight up
+    const eye = headingOf(-(q.wind[0] ?? 0), -(q.wind[1] ?? 0)); // where the wind comes from
+    const noGo = q.free ? 0 : q.squareOnly ? H.noGoSquare : H.noGoFore; // SAIL-FREE: the responsive helm sails straight up
     const off = foldDeg(q.bearing - eye);
     if (Math.abs(off) < noGo) {
       if (st.tack === 0) st.tack = off >= 0 ? 1 : -1;
-      else if (st.tack * off < -H.laneDeg) st.tack = -st.tack;   // the mark swung past the eye: go about
+      else if (st.tack * off < -H.laneDeg) st.tack = -st.tack; // the mark swung past the eye: go about
       course = foldDeg(eye + st.tack * noGo);
     } else st.tack = 0;
   } else st.tack = 0;
-  if (avoiding) course = foldDeg(q.heading + (q.freer ?? 1) * 90);   // land close ahead: hard over to the freer hand
+  if (avoiding)
+    course = foldDeg(q.heading + (q.freer ?? 1) * 90); // land close ahead: hard over to the freer hand
   else if (blocked) course = foldDeg(q.heading);
   const err = foldDeg(course - q.heading);
   // the stall: under sail, on the course, and making no way ahead
   if (q.sailsUp && q.way < H.stallMps && Math.abs(err) <= H.sailTurnMax) {
     st.stall += q.dt;
-    if (st.stall >= H.stallS) { st.stall = 0; st.oars = H.oarsS; }
+    if (st.stall >= H.stallS) {
+      st.stall = 0;
+      st.oars = H.oarsS;
+    }
   } else st.stall = 0;
   const sailsWanted = sailable && st.oars <= 0 && Math.abs(err) <= H.sailTurnMax;
   const sails = sailsWanted && !q.sailsUp && q.canSail ? 'raise' : !sailsWanted && q.sailsUp ? 'lower' : null;
   const turn = err > H.deadDeg ? 1 : err < -H.deadDeg ? -1 : 0;
-  return { turn, sails, row: !sailsWanted || (!q.sailsUp && !q.canSail), course };   // AUDIT FERRY-CLEAR F2: no sail to raise, the oars
+  return { turn, sails, row: !sailsWanted || (!q.sailsUp && !q.canSail), course }; // AUDIT FERRY-CLEAR F2: no sail to raise, the oars
 }
 
 /**
@@ -164,4 +171,5 @@ export function seaHelmStep(st, q) {
  * `noGoFore`. `boat` is Come Sail Away's Boat (its sails' lists).
  * @param {{ Sails?: any[], SailsSquare?: any[] }} boat
  */
-export const squareOnly = (boat) => (boat?.Sails?.length ?? 0) > 0 && (boat?.SailsSquare?.length ?? 0) === (boat?.Sails?.length ?? 0);
+export const squareOnly = (boat) =>
+  (boat?.Sails?.length ?? 0) > 0 && (boat?.SailsSquare?.length ?? 0) === (boat?.Sails?.length ?? 0);

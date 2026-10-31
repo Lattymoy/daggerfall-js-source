@@ -502,8 +502,8 @@
   {
     "name": "AUDITLIVED1B-A3-shelf-later-day-never-stands",
     "file": "src/systems/shopStock.js",
-    "old": "(isOnlinePage() && kept.day > today && _mintedThisSession.has(kept))",
-    "new": "false",
+    "old": "const shelfStands = (kept, today) =>\n  !!kept &&\n  Array.isArray(kept.items) &&\n  (kept.day === today || (isOnlinePage() && kept.day > today && _mintedThisSession.has(kept)));",
+    "new": "const shelfStands = (kept, today) => !!kept && Array.isArray(kept.items) && (kept.day === today || false);",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -511,8 +511,8 @@
   {
     "name": "AUDITLIVED1B-A3-shelf-never-marked-minted",
     "file": "src/systems/shopStock.js",
-    "old": "  _mintedThisSession.add(shelf);\n",
-    "new": "",
+    "old": "  _mintedThisSession.add(shelf);\n  if (store) store[service] = shelf;",
+    "new": "  if (store) store[service] = shelf;",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]
@@ -520,8 +520,8 @@
   {
     "name": "AUDITLIVED1B-A3-shelf-sweep-takes-the-later-day",
     "file": "src/systems/shopStock.js",
-    "old": "if (store[k]?.day !== today && !shelfStands(store[k], today)) delete store[k];",
-    "new": "if (store[k]?.day !== today) delete store[k];",
+    "old": "  if (store)\n    for (const k of Object.keys(store)) if (store[k]?.day !== today && !shelfStands(store[k], today)) delete store[k]; // AUDIT GUILD-SHELF A10: a past day's shelf is never shown again - it goes, and the save with it",
+    "new": "  if (store) for (const k of Object.keys(store)) if (store[k]?.day !== today) delete store[k]; // AUDIT GUILD-SHELF A10: a past day's shelf is never shown again - it goes, and the save with it",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]

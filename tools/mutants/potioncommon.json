@@ -57,8 +57,8 @@
   {
     "name": "POTION-COMMON-shelf-loop-dropped",
     "file": "src/systems/shopStock.js",
-    "old": "  if (shelfIndex === 0) for (let n = healingShelfCount(buildingType, quality); n > 0; n--) add(mintHealingPotion());\n",
-    "new": "",
+    "old": "  if (shelfIndex === 0) for (let n = healingShelfCount(buildingType, quality); n > 0; n--) add(mintHealingPotion());\n  return items;",
+    "new": "  return items;",
     "tests": [
       "test/systems/potion_common.test.js",
       "test/systems/shopstock.test.js"

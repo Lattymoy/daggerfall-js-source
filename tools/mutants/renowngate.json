@@ -83,8 +83,8 @@
   {
     "name": "RENOWN-GATE-search-roll-ungated",
     "file": "src/systems/searchables.js",
-    "old": "rolls() < SEARCH_ELITE_CHANCE && elitesAllowed() && eliteRenownOpen();",
-    "new": "rolls() < SEARCH_ELITE_CHANCE && elitesAllowed();",
+    "old": "export const rollSearchElite = (rolls = Math.random) =>\n  rolls() < SEARCH_ELITE_CHANCE && elitesAllowed() && eliteRenownOpen();",
+    "new": "export const rollSearchElite = (rolls = Math.random) => rolls() < SEARCH_ELITE_CHANCE && elitesAllowed();",
     "tests": [
       "test/systems/renowngate.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RENOWN-GATE-search-roll-gate-before-the-draw",
     "file": "src/systems/searchables.js",
-    "old": "rolls() < SEARCH_ELITE_CHANCE && elitesAllowed() && eliteRenownOpen();",
-    "new": "eliteRenownOpen() && rolls() < SEARCH_ELITE_CHANCE && elitesAllowed();",
+    "old": "  rolls() < SEARCH_ELITE_CHANCE && elitesAllowed() && eliteRenownOpen();",
+    "new": "  eliteRenownOpen() && rolls() < SEARCH_ELITE_CHANCE && elitesAllowed();",
     "tests": [
       "test/systems/renowngate.test.js"
     ]

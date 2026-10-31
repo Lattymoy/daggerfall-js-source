@@ -2,8 +2,8 @@
   {
     "name": "PS-the-counters-line-restored",
     "file": "src/systems/shopStock.js",
-    "old": "if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n }); }",
-    "new": "if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n }); if (n > 0) add({ ...createWeapon(561, 0, () => 0), stackCount: n }); }",
+    "old": "    if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n });\n  }",
+    "new": "    if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n });\n    if (n > 0) add({ ...createWeapon(561, 0, () => 0), stackCount: n });\n  }",
     "tests": [
       "test/systems/pelletsscarce.test.js"
     ]

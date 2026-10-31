@@ -155,8 +155,8 @@
   {
     "name": "BAL11-a-threat-under-one-taken",
     "file": "src/systems/skillSoftcap.js",
-    "old": "  const hd = hero?.damage > 1 ? hero.damage : 1, hh = hero?.health > 1 ? hero.health : 1;   // BAL11: never under 1",
-    "new": "  const hd = hero?.damage ?? 1, hh = hero?.health ?? 1;   // BAL11: never under 1",
+    "old": "  const hd = hero?.damage > 1 ? hero.damage : 1,\n    hh = hero?.health > 1 ? hero.health : 1; // BAL11: never under 1",
+    "new": "  const hd = hero?.damage ?? 1,\n    hh = hero?.health ?? 1; // BAL11: never under 1",
     "tests": [
       "test/systems/bal11_hero.test.js"
     ]
@@ -175,7 +175,7 @@
     "name": "BAL11-the-health-without-the-hero",
     "file": "src/systems/skillSoftcap.js",
     "old": "    healthMult: (1 + V.health * vet + O.health * over) * hh,",
-    "new": "    healthMult: (1 + V.health * vet + O.health * over),",
+    "new": "    healthMult: 1 + V.health * vet + O.health * over,",
     "tests": [
       "test/systems/bal11_hero.test.js",
       "test/systems/bal_arc.test.js"
@@ -185,7 +185,7 @@
     "name": "BAL11-the-blows-without-the-hero",
     "file": "src/systems/skillSoftcap.js",
     "old": "    damageMult: (1 + V.damage * vet + O.damage * over) * hd,",
-    "new": "    damageMult: (1 + V.damage * vet + O.damage * over),",
+    "new": "    damageMult: 1 + V.damage * vet + O.damage * over,",
     "tests": [
       "test/systems/bal11_hero.test.js",
       "test/systems/bal_arc.test.js"
@@ -195,7 +195,7 @@
     "name": "BAL11-the-hero-added-not-multiplied",
     "file": "src/systems/skillSoftcap.js",
     "old": "    healthMult: (1 + V.health * vet + O.health * over) * hh,",
-    "new": "    healthMult: (V.health * vet + O.health * over) + hh,",
+    "new": "    healthMult: V.health * vet + O.health * over + hh,",
     "tests": [
       "test/systems/bal11_hero.test.js",
       "test/systems/bal_arc.test.js"

@@ -38,7 +38,7 @@ lowers it, and no raise does either - `raiseSkills` stores the class's sum only 
 (`advancement.js:"if (raised.length)"`).
 A swap reads that sum first, caught up with the class's own where a point no raise has stored yet stands (intensive
 training's SetPermanentSkillValue, `worldModes.js` applyIntensive), and moves both sums only by what it takes the class's
-sum ABOVE it (`skillSwap.js:"const rise = Math.max(0, levelUpSkillSum(entity) - held);"`). So:
+sum ABOVE it (`skillSwap.js:"const rise = Math.max"`). So:
 
 - a trained skill given up for a less trained one moves nothing: the level and its progress stand, and the class's skills
   make the ground up before the next level comes any closer;

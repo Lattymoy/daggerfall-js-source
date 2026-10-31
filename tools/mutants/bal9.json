@@ -38,8 +38,8 @@
   {
     "name": "BAL9a-the-floor-dropped",
     "file": "src/systems/skillSoftcap.js",
-    "old": "q = Math.max(UNCHALLENGED_MAGIC_WEIGHT, ch ? challengeQuality(ch.tier, skill) : 0);",
-    "new": "q = ch ? challengeQuality(ch.tier, skill) : UNCHALLENGED_MAGIC_WEIGHT;",
+    "old": "    q = Math.max(UNCHALLENGED_MAGIC_WEIGHT, ch ? challengeQuality(ch.tier, skill) : 0); // BAL9a: a spell now answers its foe (scenes/hostMagic.js) - a tough one raises its weight, a weak one never takes it under a cast at a wall",
+    "new": "    q = ch ? challengeQuality(ch.tier, skill) : UNCHALLENGED_MAGIC_WEIGHT; // BAL9a: a spell now answers its foe (scenes/hostMagic.js) - a tough one raises its weight, a weak one never takes it under a cast at a wall",
     "tests": [
       "test/systems/bal9_destruction.test.js"
     ]

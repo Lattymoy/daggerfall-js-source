@@ -130,7 +130,7 @@
     "name": "BAG-SHELF-none-to-a-bag-owner",
     "file": "src/systems/shopStock.js",
     "old": "    if (isOnlinePage()) add({ group: 'UselessItems2', templateIndex: BAG_TEMPLATE });",
-    "new": "    if (isOnlinePage() && !(playerEntity.items ?? []).some((it) => it?.templateIndex === BAG_TEMPLATE)) add({ group: 'UselessItems2', templateIndex: BAG_TEMPLATE });",
+    "new": "    if (isOnlinePage() && !(playerEntity.items ?? []).some((it) => it?.templateIndex === BAG_TEMPLATE))\n      add({ group: 'UselessItems2', templateIndex: BAG_TEMPLATE });",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]

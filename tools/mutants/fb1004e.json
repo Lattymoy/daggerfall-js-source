@@ -842,8 +842,8 @@
   {
     "name": "WILDROAD-class-foes-trivial",
     "file": "src/systems/roadEncounters.js",
-    "old": "(ENEMY_BASICS)[mobileType]?.level;",
-    "new": "(ENEMY_BASICS)[mobileType]?.level ?? 0;",
+    "old": "  const lv = /** @type {any} */ (ENEMY_BASICS)[mobileType]?.level; // none for a class foe (built at the traveller's level)",
+    "new": "  const lv = /** @type {any} */ (ENEMY_BASICS)[mobileType]?.level ?? 0; // none for a class foe (built at the traveller's level)",
     "tests": [
       "test/systems/fb1004e_road.test.js"
     ],

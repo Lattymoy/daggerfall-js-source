@@ -507,8 +507,8 @@
   {
     "name": "BLS-se-gap-for-camps-too",
     "file": "src/systems/seatEdicts.js",
-    "old": "    if (!camp) {\n      const now = host.nowMs?.() ?? Date.now(), was = denAsked.get(site);",
-    "new": "    if (true) {\n      const now = host.nowMs?.() ?? Date.now(), was = denAsked.get(site);",
+    "old": "    if (!camp) {",
+    "new": "    if (true) {",
     "tests": [
       "test/net/bayleftsea_bounty.test.js"
     ]
@@ -516,8 +516,8 @@
   {
     "name": "BLS-se-gap-unremembered",
     "file": "src/systems/seatEdicts.js",
-    "old": "      denAsked.set(site, now);",
-    "new": "      ;",
+    "old": "      denAsked.set(site, now);\n    }",
+    "new": "    }",
     "tests": [
       "test/net/bayleftsea_bounty.test.js"
     ]
@@ -525,8 +525,8 @@
   {
     "name": "BLS-se-gap-the-game-clock",
     "file": "src/systems/seatEdicts.js",
-    "old": "      const now = host.nowMs?.() ?? Date.now(), was = denAsked.get(site);",
-    "new": "      const now = Date.now(), was = denAsked.get(site);",
+    "old": "      const now = host.nowMs?.() ?? Date.now(),",
+    "new": "      const now = Date.now(),",
     "tests": [
       "test/net/bayleftsea_bounty.test.js"
     ]
@@ -543,7 +543,7 @@
   {
     "name": "BLS-se-rout-unclaimed",
     "file": "src/systems/seatEdicts.js",
-    "old": "    hideoutRouted: (h) => { denCleared('hideout', h?.px, h?.py).catch(() => {}); },",
+    "old": "    hideoutRouted: (h) => {\n      denCleared('hideout', h?.px, h?.py).catch(() => {});\n    },",
     "new": "    hideoutRouted: () => {},",
     "tests": [
       "test/net/bayleftsea_bounty.test.js"
@@ -562,7 +562,7 @@
     "name": "BLS-se-lair-a-hideout",
     "file": "src/systems/seatEdicts.js",
     "old": "export const lairDenOf = (loc) => (loc?.country?.dungeon ? bountyDenId('lair', loc.country.px, loc.country.py) : null);",
-    "new": "export const lairDenOf = (loc) => (loc?.country?.dungeon ? bountyDenId('hideout', loc.country.px, loc.country.py) : null);",
+    "new": "export const lairDenOf = (loc) =>\n  loc?.country?.dungeon ? bountyDenId('hideout', loc.country.px, loc.country.py) : null;",
     "tests": [
       "test/net/bayleftsea_bounty.test.js"
     ]

@@ -192,8 +192,8 @@
   {
     "name": "AUDITREST2-H8-every-shelf-cc",
     "file": "src/systems/shopStock.js",
-    "old": "provisionsStock(quality, rolls, { campfires: shelfIndex === 0 })",
-    "new": "provisionsStock(quality, rolls, { campfires: true })",
+    "old": "    if (survivalOn()) for (const it of provisionsStock(quality, rolls, { campfires: shelfIndex === 0 })) items.push(it);",
+    "new": "    if (survivalOn()) for (const it of provisionsStock(quality, rolls, { campfires: true })) items.push(it);",
     "tests": [
       "test/systems/auditrest2_camps.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "AUDITREST2-H8-every-shelf-online",
     "file": "src/systems/shopStock.js",
-    "old": "    else if (sharedClockOn() && shelfIndex === 0) for (const it of campfireStock(rolls))",
-    "new": "    else if (sharedClockOn()) for (const it of campfireStock(rolls))",
+    "old": "    else if (sharedClockOn() && shelfIndex === 0) for (const it of campfireStock(rolls)) items.push(it); // REST2: online the Campfire is the rest's, the arc on or off",
+    "new": "    else if (sharedClockOn()) for (const it of campfireStock(rolls)) items.push(it); // REST2: online the Campfire is the rest's, the arc on or off",
     "tests": [
       "test/systems/auditrest2_camps.test.js"
     ]

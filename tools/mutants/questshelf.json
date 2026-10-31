@@ -434,8 +434,8 @@
   {
     "name": "QS-A-its-rumors-told",
     "file": "src/systems/rumorMill.js",
-    "old": "      if (entry.questID !== 0 && this.deps.questAway?.(entry.questID)) continue;   // QUEST-SHELF's audit\n",
-    "new": "",
+    "old": "      if (entry.questID !== 0 && this.deps.questAway?.(entry.questID)) continue; // QUEST-SHELF's audit\n      if (entry.rumorType === RUMOR_TYPE.CommonRumor) {",
+    "new": "      if (entry.rumorType === RUMOR_TYPE.CommonRumor) {",
     "tests": [
       "test/systems/quest/questshelf.test.js"
     ]

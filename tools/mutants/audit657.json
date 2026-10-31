@@ -167,8 +167,8 @@
   {
     "name": "AUDIT657-B7-the-fields-own-walk",
     "file": "src/systems/siegeField.js",
-    "old": "const at = noticeBoardIndex(boards, bounty, centre);",
-    "new": "const at = boards.reduce((b, x, i) => (bounty.has(i) || (b >= 0 && Math.hypot(...boxMid(x.box).map((v, k) => v - centre[k])) >= Math.hypot(...boxMid(boards[b].box).map((v, k) => v - centre[k]))) ? b : i), -1);",
+    "old": "  const at = noticeBoardIndex(boards, bounty, centre);",
+    "new": "  const at = boards.reduce(\n    (b, x, i) =>\n      bounty.has(i) ||\n      (b >= 0 &&\n        Math.hypot(...boxMid(x.box).map((v, k) => v - centre[k])) >=\n          Math.hypot(...boxMid(boards[b].box).map((v, k) => v - centre[k])))\n        ? b\n        : i,\n    -1,\n  );",
     "tests": [
       "test/ui/audit657_board.test.js"
     ],

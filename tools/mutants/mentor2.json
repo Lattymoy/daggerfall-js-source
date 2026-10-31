@@ -146,8 +146,8 @@
   {
     "name": "MENTOR2-the-pupil-unpaid",
     "file": "src/systems/skills.js",
-    "old": "entity.skillUses[skillId] += entity._pupil ? pupilUses(entity, skillId, amount) : amount;",
-    "new": "entity.skillUses[skillId] += amount;",
+    "old": "  entity.skillUses[skillId] += entity._pupil ? pupilUses(entity, skillId, amount) : amount;",
+    "new": "  entity.skillUses[skillId] += amount;",
     "tests": [
       "test/systems/mentor2.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "MENTOR2-the-real-skill-weighed",
     "file": "src/systems/skills.js",
-    "old": "overcapTallyWeight(entity, skillId, amount, mentoredSkill(entity, real))",
-    "new": "overcapTallyWeight(entity, skillId, amount, real)",
+    "old": "      : overcapTallyWeight(entity, skillId, amount, mentoredSkill(entity, real)); // MOVE-REAL; MENTOR2",
+    "new": "      : overcapTallyWeight(entity, skillId, amount, real); // MOVE-REAL; MENTOR2",
     "tests": [
       "test/systems/mentor2.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "MENTOR2-the-pupil-fraction-dropped",
     "file": "src/systems/skills.js",
-    "old": "frac[skillId] = total - whole;\n  return whole;",
-    "new": "frac[skillId] = 0;\n  return whole;",
+    "old": "  const whole = Math.floor(total + 1e-9);\n  frac[skillId] = total - whole;",
+    "new": "  const whole = Math.floor(total + 1e-9);\n  frac[skillId] = 0;",
     "tests": [
       "test/systems/mentor2.test.js"
     ]

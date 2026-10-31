@@ -573,8 +573,8 @@
   {
     "name": "WAGONS2-AUDIT-a-piece-folded-twice",
     "file": "src/systems/sceneCache.js",
-    "old": "for (const pc of c.decor) if (!ids.has(pc.id)) {",
-    "new": "for (const pc of c.decor) if (true) {",
+    "old": "      if (!ids.has(pc.id)) {",
+    "new": "      if (true) {",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ]

@@ -170,8 +170,8 @@
   {
     "name": "AWD3-SALE-KEEPS-VISITS",
     "file": "src/systems/sceneCache.js",
-    "old": "  for (const n of [...cache.permanent]) if (n.startsWith(`${sceneName}|`)) cache.permanent.delete(n);",
-    "new": "",
+    "old": "  for (const n of [...cache.permanent]) if (n.startsWith(`${sceneName}|`)) cache.permanent.delete(n); // WD3: and its other layouts' visits",
+    "new": "  // WD3: and its other layouts' visits",
     "tests": [
       "test/systems/wd3_layoutPins.test.js"
     ]
@@ -260,8 +260,8 @@
   {
     "name": "AWD3-TICKET-BY-KEY-ONLY",
     "file": "src/systems/repairService.js",
-    "old": "  && (recordStands(item.repairData) ? item.repairData.buildingKey === buildingKey : mapId != null && item.repairData.mapId === mapId);",
-    "new": "  && item.repairData.buildingKey === buildingKey;",
+    "old": "  isBeingRepaired(item) &&\n  (recordStands(item.repairData)\n    ? item.repairData.buildingKey === buildingKey\n    : mapId != null && item.repairData.mapId === mapId);",
+    "new": "  isBeingRepaired(item) && item.repairData.buildingKey === buildingKey;",
     "tests": [
       "test/systems/wd3_layoutPins.test.js"
     ]

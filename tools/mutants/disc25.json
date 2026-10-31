@@ -346,8 +346,8 @@
   {
     "name": "D25B-no-retro-gate",
     "file": "src/systems/retroMode.js",
-    "old": "  const aspect = retroRenderingMode() !== 0 ? retroAspectCorrection() : 0;\n  if (!aspect || !(screenW > 0) || !(screenH > 0)) return null;",
-    "new": "  const aspect = retroAspectCorrection();\n  if (!aspect || !(screenW > 0) || !(screenH > 0)) return null;",
+    "old": "  const aspect = retroRenderingMode() !== 0 ? retroAspectCorrection() : 0;",
+    "new": "  const aspect = retroAspectCorrection();",
     "tests": [
       "test/systems/disc25b_retro_map.test.js"
     ]

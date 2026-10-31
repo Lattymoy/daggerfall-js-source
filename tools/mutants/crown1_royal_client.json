@@ -425,8 +425,8 @@
   {
     "name": "CROWN1C-ring-banner",
     "file": "src/systems/siegeField.js",
-    "old": "? [siegeWorldPoint(px, py, f.banners[3])] : null);",
-    "new": "? [siegeWorldPoint(px, py, f.banners[0])] : null);",
+    "old": "  f && f.banners.length >= 4 ? [siegeWorldPoint(px, py, f.banners[3])] : null;",
+    "new": "  f && f.banners.length >= 4 ? [siegeWorldPoint(px, py, f.banners[0])] : null;",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "CROWN1C-ring-crown",
     "file": "src/systems/siegeField.js",
-    "old": "(f && f.banners.length >= 4 ?",
-    "new": "(f ?",
+    "old": "export const royalRingWire = (px, py, f) =>\n  f && f.banners.length >= 4 ? [siegeWorldPoint(px, py, f.banners[3])] : null;",
+    "new": "export const royalRingWire = (px, py, f) => (f ? [siegeWorldPoint(px, py, f.banners[3])] : null);",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]

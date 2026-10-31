@@ -184,8 +184,8 @@
   {
     "name": "DECOR2b-the-store-unstocked",
     "file": "src/systems/shopStock.js",
-    "old": "  [BUILDING_TYPES.FurnitureStore]: [0x08, FURNISHER_CHANCE],\n",
-    "new": "",
+    "old": "  [BUILDING_TYPES.FurnitureStore]: [0x08, FURNISHER_CHANCE],\n});",
+    "new": "});",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "DECOR2b-the-store-skipping-its-own",
     "file": "src/systems/shopStock.js",
-    "old": "if ((group === 'Furniture' && buildingType !== BUILDING_TYPES.FurnitureStore) || group === 'UselessItems1') continue;",
-    "new": "if (group === 'Furniture' || group === 'UselessItems1') continue;",
+    "old": "    if ((group === 'Furniture' && buildingType !== BUILDING_TYPES.FurnitureStore) || group === 'UselessItems1')\n      continue; // DECOR2b: the furnisher's own",
+    "new": "    if (group === 'Furniture' || group === 'UselessItems1') continue; // DECOR2b: the furnisher's own",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "DECOR2b-every-shop-its-furniture",
     "file": "src/systems/shopStock.js",
-    "old": "if ((group === 'Furniture' && buildingType !== BUILDING_TYPES.FurnitureStore) || group === 'UselessItems1') continue;",
-    "new": "if (group === 'UselessItems1') continue;",
+    "old": "    if ((group === 'Furniture' && buildingType !== BUILDING_TYPES.FurnitureStore) || group === 'UselessItems1')\n      continue; // DECOR2b: the furnisher's own",
+    "new": "    if (group === 'UselessItems1') continue; // DECOR2b: the furnisher's own",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ],

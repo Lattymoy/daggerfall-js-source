@@ -2,8 +2,8 @@
   {
     "name": "SEASON-BOOK-the-realm-day-off-by-one",
     "file": "src/systems/seasonBook.js",
-    "old": "? arenaSeasonDay(s) : 1;",
-    "new": "? arenaSeasonDay(s) + 1 : 1;",
+    "old": "  const day = Number.isFinite(s) && s >= ARENA_SEASON_EPOCH_S ? arenaSeasonDay(s) : 1;",
+    "new": "  const day = Number.isFinite(s) && s >= ARENA_SEASON_EPOCH_S ? arenaSeasonDay(s) + 1 : 1;",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "SEASON-BOOK-the-day-wrapping-before-the-epoch",
     "file": "src/systems/seasonBook.js",
-    "old": "Number.isFinite(s) && s >= ARENA_SEASON_EPOCH_S ? arenaSeasonDay(s) : 1",
-    "new": "arenaSeasonDay(s)",
+    "old": "  const day = Number.isFinite(s) && s >= ARENA_SEASON_EPOCH_S ? arenaSeasonDay(s) : 1;",
+    "new": "  const day = arenaSeasonDay(s);",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "SEASON-BOOK-the-seat-week-from-zero",
     "file": "src/systems/seasonBook.js",
-    "old": "week: week - s.start + 1,",
-    "new": "week: week - s.start,",
+    "old": "    week: week - s.start + 1,",
+    "new": "    week: week - s.start,",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "SEASON-BOOK-season-zero-not-a-trial",
     "file": "src/systems/seasonBook.js",
-    "old": "trial: s.n === 0, month",
-    "new": "trial: false, month",
+    "old": "    trial: s.n === 0,",
+    "new": "    trial: false,",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "SEASON-BOOK-a-shut-seat-shown",
     "file": "src/systems/seasonBook.js",
-    "old": "if (!open || zero == null) return null;",
-    "new": "if (zero == null) return null;",
+    "old": "  if (!open || zero == null) return null;",
+    "new": "  if (zero == null) return null;",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "SEASON-BOOK-the-trial-crowning",
     "file": "src/systems/seasonBook.js",
-    "old": "...(seat.trial ? [] : [",
-    "new": "...(false ? [] : [",
+    "old": "        ...(seat.trial",
+    "new": "        ...(false",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "SEASON-BOOK-the-english-season-name",
     "file": "src/systems/seasonBook.js",
-    "old": "monthNames()[seat.month] ?? ''",
-    "new": "['Morning Star'][seat.month] ?? ''",
+    "old": "  const month = `${monthNames()[seat.month] ?? ''}${seat.numeral ? ` ${seat.numeral}` : ''}`;",
+    "new": "  const month = `${['Morning Star'][seat.month] ?? ''}${seat.numeral ? ` ${seat.numeral}` : ''}`;",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "SEASON-BOOK-the-numeral-lost",
     "file": "src/systems/seasonBook.js",
-    "old": "${seat.numeral ? ` ${seat.numeral}` : ''}",
-    "new": "",
+    "old": "  const month = `${monthNames()[seat.month] ?? ''}${seat.numeral ? ` ${seat.numeral}` : ''}`;",
+    "new": "  const month = `${monthNames()[seat.month] ?? ''}`;",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "SEASON-BOOK-a-host-with-no-reads-reading-forever",
     "file": "src/systems/seasonBook.js",
-    "old": "  if (!b) return null;\n  if (b.state",
-    "new": "  if (!b) return t('season.book.asking', 'Reading the board...');\n  if (b.state",
+    "old": "  if (!b) return null;",
+    "new": "  if (!b) return t('season.book.asking', 'Reading the board...');",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "SEASON-BOOK-a-guest-ranked",
     "file": "src/systems/seasonBook.js",
-    "old": "  if (src?.guest) return t('season.book.guest', 'Add a username to be ranked.');\n",
-    "new": "",
+    "old": "  if (src?.guest) return t('season.book.guest', 'Add a username to be ranked.');\n  if (src?.signedIn === false) return t('season.book.signin', 'Sign in to be ranked.');",
+    "new": "  if (src?.signedIn === false) return t('season.book.signin', 'Sign in to be ranked.');",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "SEASON-BOOK-signed-out-ranked",
     "file": "src/systems/seasonBook.js",
-    "old": "  if (src?.signedIn === false) return t('season.book.signin', 'Sign in to be ranked.');\n",
-    "new": "",
+    "old": "  if (src?.signedIn === false) return t('season.book.signin', 'Sign in to be ranked.');\n  if (!b) return null;",
+    "new": "  if (!b) return null;",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "SEASON-BOOK-an-unread-board-as-asking",
     "file": "src/systems/seasonBook.js",
-    "old": "if (b.state !== 'ok' || !b.data) return t('season.book.unread', 'The board can\\'t be read right now.');",
-    "new": "if (b.state !== 'ok' || !b.data) return t('season.book.asking', 'Reading the board...');",
+    "old": "  if (b.state !== 'ok' || !b.data) return t('season.book.unread', \"The board can't be read right now.\");",
+    "new": "  if (b.state !== 'ok' || !b.data) return t('season.book.asking', 'Reading the board...');",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "SEASON-BOOK-last-seasons-voyage-counted",
     "file": "src/systems/seasonBook.js",
-    "old": "if (!figures || figures.n !== n || ",
-    "new": "if (!figures || ",
+    "old": "  if (!figures || figures.n !== n || (!(figures.deepest > 0) && !(figures.legends > 0)))",
+    "new": "  if (!figures || (!(figures.deepest > 0) && !(figures.legends > 0)))",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "SEASON-BOOK-the-arena-door-without-its-host",
     "file": "src/systems/seasonBook.js",
-    "old": "door: src?.doors?.arena && !src?.guest ? 'arena' : null",
-    "new": "door: 'arena'",
+    "old": "        door: src?.doors?.arena && !src?.guest ? 'arena' : null,",
+    "new": "        door: 'arena',",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "SEASON-BOOK-a-guest-given-the-arena-door",
     "file": "src/systems/seasonBook.js",
-    "old": "src?.doors?.arena && !src?.guest ?",
-    "new": "src?.doors?.arena ?",
+    "old": "        door: src?.doors?.arena && !src?.guest ? 'arena' : null,",
+    "new": "        door: src?.doors?.arena ? 'arena' : null,",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "SEASON-BOOK-the-spire-door-without-its-host",
     "file": "src/systems/seasonBook.js",
-    "old": "door: src?.doors?.spire ? 'spire' : null",
-    "new": "door: 'spire'",
+    "old": "        door: src?.doors?.spire ? 'spire' : null,",
+    "new": "        door: 'spire',",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "SEASON-BOOK-the-festival-end-for-its-opening",
     "file": "src/systems/seasonBook.js",
-    "old": "at: open ? fest.toMs : fest.fromMs",
-    "new": "at: fest.toMs",
+    "old": "      at: open ? fest.toMs : fest.fromMs,",
+    "new": "      at: fest.toMs,",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "SEASON-BOOK-the-festival-opening-said-as-an-end",
     "file": "src/systems/seasonBook.js",
-    "old": "atLabel: open ? 'ends' : 'opens'",
-    "new": "atLabel: 'ends'",
+    "old": "      atLabel: open ? 'ends' : 'opens',",
+    "new": "      atLabel: 'ends',",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "SEASON-BOOK-the-pinned-rank-unread",
     "file": "src/systems/seasonBook.js",
-    "old": "[...(Array.isArray(data.rows) ? data.rows : []), data.pinned]",
-    "new": "[...(Array.isArray(data.rows) ? data.rows : [])]",
+    "old": "  const mine = [...(Array.isArray(data.rows) ? data.rows : []), data.pinned].find((r) => r?.you);",
+    "new": "  const mine = [...(Array.isArray(data.rows) ? data.rows : [])].find((r) => r?.you);",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "SEASON-BOOK-a-board-with-no-rows-throws",
     "file": "src/systems/seasonBook.js",
-    "old": "[...(Array.isArray(data.rows) ? data.rows : []), data.pinned]",
-    "new": "[...data.rows, data.pinned]",
+    "old": "  const mine = [...(Array.isArray(data.rows) ? data.rows : []), data.pinned].find((r) => r?.you);",
+    "new": "  const mine = [...data.rows, data.pinned].find((r) => r?.you);",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "SEASON-BOOK-no-bouts-read-as-rated",
     "file": "src/systems/seasonBook.js",
-    "old": "const line = !bouts ?",
-    "new": "const line = false ?",
+    "old": "  const line = !bouts",
+    "new": "  const line = false",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "SEASON-BOOK-the-banner-total",
     "file": "src/systems/seasonBook.js",
-    "old": "'{line} - {points, plural, one {# point} other {# points}} for the {banner}'",
-    "new": "'{line}. {banner}: {points, plural, one {# point} other {# points}}'",
+    "old": "    ? t('season.book.arena.withBanner', '{line} - {points, plural, one {# point} other {# points}} for the {banner}', {",
+    "new": "    ? t('season.book.arena.withBanner', '{line}. {banner}: {points, plural, one {# point} other {# points}}', {",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js",
       "test/systems/l10n1b.test.js"
@@ -223,8 +223,8 @@
   {
     "name": "SEASON-BOOK-the-spire-said-deepest",
     "file": "src/systems/seasonBook.js",
-    "old": "'Your best Descent: Hall {hall}'",
-    "new": "'Deepest this season: Hall {hall}'",
+    "old": "    ? t('season.book.spire.best', 'Your best Descent: Hall {hall}', { hall: h })",
+    "new": "    ? t('season.book.spire.best', 'Deepest this season: Hall {hall}', { hall: h })",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js",
       "test/systems/l10n1b.test.js"
@@ -234,8 +234,8 @@
   {
     "name": "SEASON-BOOK-a-grouped-rating",
     "file": "src/systems/seasonBook.js",
-    "old": "const rating = Number(me.pvp?.rating) || 0,",
-    "new": "const rating = (Number(me.pvp?.rating) || 0).toLocaleString('en-US'),",
+    "old": "  const rating = Number(me.pvp?.rating) || 0,",
+    "new": "  const rating = (Number(me.pvp?.rating) || 0).toLocaleString('en-US'),",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -244,8 +244,8 @@
   {
     "name": "SEASON-BOOK-draws-not-bouts",
     "file": "src/systems/seasonBook.js",
-    "old": " + (Number(me.pvp?.draws) || 0);",
-    "new": ";",
+    "old": "    bouts = (Number(me.pvp?.wins) || 0) + (Number(me.pvp?.losses) || 0) + (Number(me.pvp?.draws) || 0);",
+    "new": "    bouts = (Number(me.pvp?.wins) || 0) + (Number(me.pvp?.losses) || 0);",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -254,8 +254,8 @@
   {
     "name": "SEASON-BOOK-losses-not-bouts",
     "file": "src/systems/seasonBook.js",
-    "old": "(Number(me.pvp?.wins) || 0) + (Number(me.pvp?.losses) || 0)",
-    "new": "(Number(me.pvp?.wins) || 0)",
+    "old": "    bouts = (Number(me.pvp?.wins) || 0) + (Number(me.pvp?.losses) || 0) + (Number(me.pvp?.draws) || 0);",
+    "new": "    bouts = (Number(me.pvp?.wins) || 0) + (Number(me.pvp?.draws) || 0);",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -264,8 +264,8 @@
   {
     "name": "SEASON-BOOK-wins-not-bouts",
     "file": "src/systems/seasonBook.js",
-    "old": "bouts = (Number(me.pvp?.wins) || 0) + ",
-    "new": "bouts = ",
+    "old": "    bouts = (Number(me.pvp?.wins) || 0) + (Number(me.pvp?.losses) || 0) + (Number(me.pvp?.draws) || 0);",
+    "new": "    bouts = (Number(me.pvp?.losses) || 0) + (Number(me.pvp?.draws) || 0);",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -274,8 +274,8 @@
   {
     "name": "SEASON-BOOK-rank-zero-a-rank",
     "file": "src/systems/seasonBook.js",
-    "old": "Number.isSafeInteger(me.rank) && me.rank > 0 ?",
-    "new": "Number.isSafeInteger(me.rank) ?",
+    "old": "    : Number.isSafeInteger(me.rank) && me.rank > 0",
+    "new": "    : Number.isSafeInteger(me.rank)",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -284,8 +284,8 @@
   {
     "name": "SEASON-BOOK-legends-alone-uncounted",
     "file": "src/systems/seasonBook.js",
-    "old": "(!(figures.deepest > 0) && !(figures.legends > 0))",
-    "new": "!(figures.deepest > 0)",
+    "old": "  if (!figures || figures.n !== n || (!(figures.deepest > 0) && !(figures.legends > 0)))",
+    "new": "  if (!figures || figures.n !== n || !(figures.deepest > 0))",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -294,8 +294,8 @@
   {
     "name": "SEASON-BOOK-hall-zero-shown",
     "file": "src/systems/seasonBook.js",
-    "old": "Number.isSafeInteger(h) && h > 0 ?",
-    "new": "Number.isSafeInteger(h) && h >= 0 ?",
+    "old": "  return Number.isSafeInteger(h) && h > 0",
+    "new": "  return Number.isSafeInteger(h) && h >= 0",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -304,8 +304,8 @@
   {
     "name": "SEASON-BOOK-the-foot-names-the-spire",
     "file": "src/systems/seasonBook.js",
-    "old": "'Arena Champion, Iliac Champion and Grandmaster are worn by the leader, once they have {games} rated bouts or games against {foes} different opponents.'",
-    "new": "'A champion title needs {games} ranked games against {foes} different rivals.'",
+    "old": "    foot: t(\n      'season.book.realm.foot',\n      'Arena Champion, Iliac Champion and Grandmaster are worn by the leader, once they have {games} rated bouts or games against {foes} different opponents.',\n      { games: SEASON_TITLE_GAMES, foes: SEASON_TITLE_FOES },\n    ),",
+    "new": "    foot: t('season.book.realm.foot', 'A champion title needs {games} ranked games against {foes} different rivals.', {\n      games: SEASON_TITLE_GAMES,\n      foes: SEASON_TITLE_FOES,\n    }),",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js",
       "test/systems/l10n1b.test.js"
@@ -315,8 +315,8 @@
   {
     "name": "SEASON-BOOK-the-beta-lead-on-every-season",
     "file": "src/systems/seasonBook.js",
-    "old": "lead: seat.trial\n        ? t(",
-    "new": "lead: true\n        ? t(",
+    "old": "      lead: seat.trial",
+    "new": "      lead: true",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -325,8 +325,8 @@
   {
     "name": "SEASON-BOOK-the-seats-end-said-as-opening",
     "file": "src/systems/seasonBook.js",
-    "old": "at: seat.endMs, atLabel: 'ends',",
-    "new": "at: seat.endMs, atLabel: 'opens',",
+    "old": "      atLabel: 'ends',",
+    "new": "      atLabel: 'opens',",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -335,8 +335,8 @@
   {
     "name": "SEASON-BOOK-marks-and-tracks",
     "file": "src/systems/seasonBook.js",
-    "old": "Silver, the Stores and your professions stay.",
-    "new": "Marks, Stores and profession tracks stay.",
+    "old": "            \"Season 0 is the beta. When it ends, the seats' war is wiped and no one is crowned. Silver, the Stores and your professions stay.\",",
+    "new": "            \"Season 0 is the beta. When it ends, the seats' war is wiped and no one is crowned. Marks, Stores and profession tracks stay.\",",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js",
       "test/systems/l10n1b.test.js"
@@ -346,8 +346,8 @@
   {
     "name": "SEASON-BOOK-the-tides-every-kingdom",
     "file": "src/systems/seasonBook.js",
-    "old": "'Each week every kingdom, the Marches and the Free Lands draw a Tide - a harvest, a plague, raiders - or stay Calm.'",
-    "new": "'A Tide a week in every kingdom, changing its trade and influence.'",
+    "old": "          about: t(\n            'season.book.tides.about',\n            'Each week every kingdom, the Marches and the Free Lands draw a Tide - a harvest, a plague, raiders - or stay Calm.',\n          ),",
+    "new": "          about: t('season.book.tides.about', 'A Tide a week in every kingdom, changing its trade and influence.'),",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js",
       "test/systems/l10n1b.test.js"
@@ -357,8 +357,8 @@
   {
     "name": "SEASON-BOOK-the-cakes-the-dead-alone",
     "file": "src/systems/seasonBook.js",
-    "old": "'Found on foes, the dead and the summoned most often, and in gathering, crafting, looting and at sea. Spend them with the Wyrd Sister outside any tavern. Finds count double on 31 October (UTC) and on in-game nights the dead walk.'",
-    "new": "'Found on the dead and the summoned and in deeds. Finds count double on 31 October and on the nights the dead walk.'",
+    "old": "            'Found on foes, the dead and the summoned most often, and in gathering, crafting, looting and at sea. Spend them with the Wyrd Sister outside any tavern. Finds count double on 31 October (UTC) and on in-game nights the dead walk.',",
+    "new": "            'Found on the dead and the summoned and in deeds. Finds count double on 31 October and on the nights the dead walk.',",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js",
       "test/systems/l10n1b.test.js"
@@ -368,8 +368,8 @@
   {
     "name": "SEASON-BOOK-the-keeper-a-guilds",
     "file": "src/systems/seasonBook.js",
-    "old": "The guildmaster of a guild that holds a seat all Season earns Keeper of its town.",
-    "new": "A guild that holds a seat all Season earns Keeper of its town.",
+    "old": "                  \"Each crown's guildmaster earns Crowned in Season {n}. The guildmaster of a guild that holds a seat all Season earns Keeper of its town.\",",
+    "new": "                  \"Each crown's guildmaster earns Crowned in Season {n}. A guild that holds a seat all Season earns Keeper of its town.\",",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js",
       "test/systems/l10n1b.test.js"
@@ -379,8 +379,8 @@
   {
     "name": "SEASON-BOOK-the-real-calendar-lead",
     "file": "src/systems/seasonBook.js",
-    "old": "      lead: null,   // AUDIT SEASON-BOOK W5",
-    "new": "      lead: 'Runs on the real-world calendar.',   // AUDIT SEASON-BOOK W5",
+    "old": "      lead: null, // AUDIT SEASON-BOOK W5: its days are the real calendar's, its nights the sky's - each row says which",
+    "new": "      lead: 'Runs on the real-world calendar.', // AUDIT SEASON-BOOK W5: its days are the real calendar's, its nights the sky's - each row says which",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -389,8 +389,8 @@
   {
     "name": "SEASON-BOOK-the-festival-shut-unsaid",
     "file": "src/systems/seasonBook.js",
-    "old": "foot: src?.guest ? t('season.book.festival.guest'",
-    "new": "foot: false ? t('season.book.festival.guest'",
+    "old": "      foot: src?.guest",
+    "new": "      foot: false",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -399,8 +399,8 @@
   {
     "name": "SEASON-BOOK-the-ranked-season-name",
     "file": "src/systems/seasonBook.js",
-    "old": "t('season.book.realm.title', 'Season {n}'",
-    "new": "t('season.book.realm.title', 'Ranked Season {n}'",
+    "old": "    title: t('season.book.realm.title', 'Season {n}', { n: realm.n }),",
+    "new": "    title: t('season.book.realm.title', 'Ranked Season {n}', { n: realm.n }),",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js",
       "test/systems/l10n1b.test.js"

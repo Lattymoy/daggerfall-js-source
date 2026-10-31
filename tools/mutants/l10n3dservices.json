@@ -212,8 +212,8 @@
   {
     "name": "L10N3d2-systems-repairService-201-repairDone",
     "file": "src/systems/repairService.js",
-    "old": "  if (repairDone) return localizedText('repairDone', 'DONE');   // Internal_Strings.csv:817 (key repairDone), verbatim",
-    "new": "  if (repairDone) return 'DONE';   // Internal_Strings.csv:817 (key repairDone), verbatim",
+    "old": "  if (repairDone) return localizedText('repairDone', 'DONE'); // Internal_Strings.csv:817 (key repairDone), verbatim",
+    "new": "  if (repairDone) return 'DONE'; // Internal_Strings.csv:817 (key repairDone), verbatim",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_services.test.js"
@@ -222,8 +222,8 @@
   {
     "name": "L10N3d2-systems-repairService-205-repairDays",
     "file": "src/systems/repairService.js",
-    "old": "  return localizedText('repairDays', '%d days').replaceAll('%d', String(daysUntil(doneAt, nowMinutes)));   // .Replace(\"%d\", ...)",
-    "new": "  return '%d days'.replaceAll('%d', String(daysUntil(doneAt, nowMinutes)));   // .Replace(\"%d\", ...)",
+    "old": "  return localizedText('repairDays', '%d days').replaceAll('%d', String(daysUntil(doneAt, nowMinutes))); // .Replace(\"%d\", ...)",
+    "new": "  return '%d days'.replaceAll('%d', String(daysUntil(doneAt, nowMinutes))); // .Replace(\"%d\", ...)",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_services.test.js"

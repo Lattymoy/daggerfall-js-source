@@ -2,8 +2,8 @@
   {
     "name": "GRAVE-PARTY-the-name-dropped",
     "file": "src/systems/searchables.js",
-    "old": "t: nowMinutes, w: typeof who === 'string' && who ? who.slice(0, SEARCH_WHO_MAX) : null });",
-    "new": "t: nowMinutes, w: null });",
+    "old": "  _ledger.set(key, {\n    ...(e ?? { u: false }),\n    t: nowMinutes,\n    w: typeof who === 'string' && who ? who.slice(0, SEARCH_WHO_MAX) : null,\n  });",
+    "new": "  _ledger.set(key, { ...(e ?? { u: false }), t: nowMinutes, w: null });",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "GRAVE-PARTY-an-earlier-word-shortens",
     "file": "src/systems/searchables.js",
-    "old": "  if (e && Number.isFinite(e.t) && e.t > nowMinutes) return;\n",
-    "new": "",
+    "old": "  if (e && Number.isFinite(e.t) && e.t > nowMinutes) return;\n  _ledger.set(key, {",
+    "new": "  _ledger.set(key, {",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "GRAVE-PARTY-the-text-never-names",
     "file": "src/systems/searchables.js",
-    "old": "return w ? t('search.searchedBy', 'Already searched by {name}.', { name: w }) : SEARCHED_TEXT; };",
-    "new": "return SEARCHED_TEXT; };",
+    "old": "  return w ? t('search.searchedBy', 'Already searched by {name}.', { name: w }) : SEARCHED_TEXT;",
+    "new": "  return SEARCHED_TEXT;",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "GRAVE-PARTY-the-save-drops-the-name",
     "file": "src/systems/searchables.js",
-    "old": "rows.push(e.w ? [k, Number.isFinite(e.t) ? e.t : null, e.u ? 1 : 0, e.w] : [k,",
-    "new": "rows.push(e.w ? [k, Number.isFinite(e.t) ? e.t : null, e.u ? 1 : 0] : [k,",
+    "old": "        e.w\n          ? [k, Number.isFinite(e.t) ? e.t : null, e.u ? 1 : 0, e.w]\n          : [k, Number.isFinite(e.t) ? e.t : null, e.u ? 1 : 0],",
+    "new": "        e.w ? [k, Number.isFinite(e.t) ? e.t : null, e.u ? 1 : 0] : [k, Number.isFinite(e.t) ? e.t : null, e.u ? 1 : 0],",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "GRAVE-PARTY-the-restore-drops-the-name",
     "file": "src/systems/searchables.js",
-    "old": "_ledger.set(r[0], { t, u: r[2] === 1, w: typeof r[3] === 'string' && r[3] ? r[3].slice(0, SEARCH_WHO_MAX) : null });",
-    "new": "_ledger.set(r[0], { t, u: r[2] === 1, w: null });",
+    "old": "    _ledger.set(r[0], { t, u: r[2] === 1, w: typeof r[3] === 'string' && r[3] ? r[3].slice(0, SEARCH_WHO_MAX) : null });",
+    "new": "    _ledger.set(r[0], { t, u: r[2] === 1, w: null });",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -72,7 +72,7 @@
   {
     "name": "GRAVE-PARTY-the-reach-from-the-eye",
     "file": "src/systems/searchables.js",
-    "old": "  return searchBodyDistance(aabb, feet, Number.isFinite(top) ? top : feet[1]) <= SEARCH_REACH ? RAY_DISTANCE : SEARCH_REACH;",
+    "old": "  return searchBodyDistance(aabb, feet, Number.isFinite(top) ? top : feet[1]) <= SEARCH_REACH\n    ? RAY_DISTANCE\n    : SEARCH_REACH;",
     "new": "  return SEARCH_REACH;",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
@@ -82,7 +82,7 @@
   {
     "name": "GRAVE-PARTY-the-reach-unbounded",
     "file": "src/systems/searchables.js",
-    "old": "  return searchBodyDistance(aabb, feet, Number.isFinite(top) ? top : feet[1]) <= SEARCH_REACH ? RAY_DISTANCE : SEARCH_REACH;",
+    "old": "  return searchBodyDistance(aabb, feet, Number.isFinite(top) ? top : feet[1]) <= SEARCH_REACH\n    ? RAY_DISTANCE\n    : SEARCH_REACH;",
     "new": "  return RAY_DISTANCE;",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "GRAVE-PARTY-the-body-has-no-height",
     "file": "src/systems/searchables.js",
-    "old": "  const lo = Math.min(feet[1], top), hi = Math.max(feet[1], top);",
-    "new": "  const lo = feet[1], hi = feet[1];",
+    "old": "  const lo = Math.min(feet[1], top),\n    hi = Math.max(feet[1], top);",
+    "new": "  const lo = feet[1],\n    hi = feet[1];",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],

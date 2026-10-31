@@ -687,8 +687,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-scene-cache-drops-it",
     "file": "src/systems/sceneCache.js",
-    "old": "  groundFrame: d.groundFrame ?? null,\n",
-    "new": "",
+    "old": "  groundFrame: d.groundFrame ?? null,\n  // WD3: the layout of the town an interior was cached in (systems/layoutPins.js) - only where a layout mod changed the",
+    "new": "  // WD3: the layout of the town an interior was cached in (systems/layoutPins.js) - only where a layout mod changed the",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ]

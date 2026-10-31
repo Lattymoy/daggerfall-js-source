@@ -718,8 +718,8 @@
   {
     "name": "SEAT1d-edicts-curfew-all-day",
     "file": "src/systems/seatEdicts.js",
-    "old": "(curfew() && isNight(((minuteOfDay % MINUTES_A_DAY) + MINUTES_A_DAY) % MINUTES_A_DAY) ? CURFEW.guardLevels : 0)",
-    "new": "(curfew() ? CURFEW.guardLevels : 0)",
+    "old": "    guardLevelBonus: (minuteOfDay) =>\n      curfew() && isNight(((minuteOfDay % MINUTES_A_DAY) + MINUTES_A_DAY) % MINUTES_A_DAY) ? CURFEW.guardLevels : 0,",
+    "new": "    guardLevelBonus: (minuteOfDay) => (curfew() ? CURFEW.guardLevels : 0),",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ]
@@ -736,8 +736,8 @@
   {
     "name": "SEAT1d-edicts-festive-two-days",
     "file": "src/systems/seatEdicts.js",
-    "old": "festiveUntil = host.minutes() + FESTIVE.gameDays * MINUTES_A_DAY;",
-    "new": "festiveUntil = host.minutes() + 2 * MINUTES_A_DAY;",
+    "old": "        festiveUntil = host.minutes() + FESTIVE.gameDays * MINUTES_A_DAY;",
+    "new": "        festiveUntil = host.minutes() + 2 * MINUTES_A_DAY;",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ]
@@ -745,8 +745,8 @@
   {
     "name": "SEAT1d-edicts-no-news",
     "file": "src/systems/seatEdicts.js",
-    "old": "      if (news) host.say?.(news, 5);\n",
-    "new": "",
+    "old": "      if (news) host.say?.(news, 5);\n      if (seat?.holder?.edict === 'festival') {",
+    "new": "      if (seat?.holder?.edict === 'festival') {",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ]

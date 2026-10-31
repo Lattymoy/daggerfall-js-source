@@ -706,8 +706,8 @@
   {
     "name": "AUDIT-SCHOOLS-L4-4-minted-in-the-buyers-language",
     "file": "src/systems/signatureSpells.js",
-    "old": "name: s.nameEn, icon: s.icon,",
-    "new": "name: s.name, icon: s.icon,",
+    "old": "      name: s.nameEn,",
+    "new": "      name: s.name,",
     "tests": [
       "test/systems/audit_schools.test.js"
     ]

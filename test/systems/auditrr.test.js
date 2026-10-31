@@ -266,7 +266,7 @@ test('AUDIT-RR (RRI) F3/F5/F6/F7/F8/F9/F10: shops stock the registered custom it
   // F3: the shelf's second loop
   const shop = rd('src/systems/shopStock.js');
   assert.match(shop, /const customs = customItemsForGroup\(group\);\s+let customChanceMod = chanceMod;\s+if \(customChanceMod === 0 && group === 'Transportation'\) customChanceMod = 20;/);
-  assert.match(shop, /const stockChance = Math\.trunc\(customChanceMod \* 5 \* \(21 - t\.rarity\) \/ 100\);\s+if \(!dice100\(stockChance, rolls\(\)\)\) continue;\s+if \(group === 'Weapons'\) add\(\{ group, templateIndex, material: randomMaterial\(level, rolls\), flags: 0 \}\);\s+else if \(group === 'Armor'\) add\(\{ group, templateIndex, material: randomArmorMaterial\(level, rolls\) \}\);/);
+  assert.match(shop, /const stockChance = Math\.trunc\(\(customChanceMod \* 5 \* \(21 - t\.rarity\)\) \/ 100\);\n\s*if \(!dice100\(stockChance, rolls\(\)\)\) continue;\n\s*if \(group === 'Weapons'\) add\(\{ group, templateIndex, material: randomMaterial\(level, rolls\), flags: 0 \}\);\n\s*else if \(group === 'Armor'\) add\(\{ group, templateIndex, material: randomArmorMaterial\(level, rolls\) \}\);/);
   // F6: random armor minted through setItemFields (named); F9: a mod spell serialised whole; F10: loot items converted too
   assert.match(rd('src/systems/loot/loot.js'), /AUDIT-RR F6: the class ctor names the item from its template BEFORE SetVariant/);
   assert.ok(!/rriVariantFields/.test(rd('src/systems/loot/loot.js')), 'the mint runs the variant fold, not the loot');

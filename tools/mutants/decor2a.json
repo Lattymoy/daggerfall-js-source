@@ -247,8 +247,8 @@
   {
     "name": "DECOR2a-the-scene-shares-them",
     "file": "src/systems/sceneCache.js",
-    "old": "decorOwn: Object.fromEntries(Object.entries(d.decorOwn ?? {}).map(([id, item]) => [id, { ...item }])),",
-    "new": "decorOwn: d.decorOwn ?? {},",
+    "old": "  decorOwn: Object.fromEntries(Object.entries(d.decorOwn ?? {}).map(([id, item]) => [id, { ...item }])),",
+    "new": "  decorOwn: d.decorOwn ?? {},",
     "tests": [
       "test/systems/decor2a.test.js"
     ]

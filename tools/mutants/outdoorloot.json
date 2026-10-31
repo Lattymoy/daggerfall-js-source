@@ -295,8 +295,8 @@
   {
     "name": "OUTDOOR-LOOT-stored-piece-handed-uncopied",
     "file": "src/systems/roomLoot.js",
-    "old": "const piece = { ...it, stackCount: left };   // OUTDOOR-LOOT (DESIGN 6.2)",
-    "new": "const piece = left === pieceCount(it) ? it : { ...it, stackCount: left };   // OUTDOOR-LOOT (DESIGN 6.2)",
+    "old": "    const piece = { ...it, stackCount: left }; // OUTDOOR-LOOT (DESIGN 6.2): ALWAYS A COPY - a window that splits an undrawn stack mutates the record it was handed, and the state's own record is the judge's: a partial take read the mutated count and spliced the whole piece, destroying the remainder",
+    "new": "    const piece = left === pieceCount(it) ? it : { ...it, stackCount: left }; // OUTDOOR-LOOT (DESIGN 6.2): ALWAYS A COPY - a window that splits an undrawn stack mutates the record it was handed, and the state's own record is the judge's: a partial take read the mutated count and spliced the whole piece, destroying the remainder",
     "tests": [
       "test/net/containerloot_protocol.test.js"
     ]
@@ -304,8 +304,8 @@
   {
     "name": "OUTDOOR-LOOT-equal-mints-break-on-the-higher-signature",
     "file": "src/systems/roomLoot.js",
-    "old": "return typeof a.h === 'string' && typeof b.h === 'string' && a.h < b.h;",
-    "new": "return typeof a.h === 'string' && typeof b.h === 'string' && a.h > b.h;",
+    "old": "  return typeof a.h === 'string' && typeof b.h === 'string' && a.h < b.h;",
+    "new": "  return typeof a.h === 'string' && typeof b.h === 'string' && a.h > b.h;",
     "tests": [
       "test/systems/roomloot_carried.test.js"
     ]
@@ -323,8 +323,8 @@
   {
     "name": "OUTDOOR-LOOT-grant-gives-a-piece-the-taker-carries",
     "file": "src/systems/roomLoot.js",
-    "old": "if (!notCarried([item])?.length) return;",
-    "new": "void 0;",
+    "old": "  if (!notCarried([item])?.length) return;",
+    "new": "  void 0;",
     "tests": [
       "test/net/bodyloot_protocol.test.js",
       "test/net/containerloot_protocol.test.js"

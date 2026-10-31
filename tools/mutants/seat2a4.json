@@ -488,8 +488,8 @@
   {
     "name": "SEAT2a4-field-defend",
     "file": "src/systems/siegeField.js",
-    "old": "export const SIEGE_FIELD = Object.freeze({ thronePaceM: 1.5, defendCampM: 12,",
-    "new": "export const SIEGE_FIELD = Object.freeze({ thronePaceM: 1.5, defendCampM: 8,",
+    "old": "  defendCampM: 12,",
+    "new": "  defendCampM: 8,",
     "tests": [
       "test/net/siege/seat2a_siege_play.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "SEAT2a4-field-farthest",
     "file": "src/systems/siegeField.js",
-    "old": "    if (d > far) { far = d; gate = m; }",
-    "new": "    if (d > far && !gate) { far = d; gate = m; }",
+    "old": "    if (d > far) {",
+    "new": "    if (d > far && !gate) {",
     "tests": [
       "test/net/siege/seat2a_siege_play.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "SEAT2a4-field-hall",
     "file": "src/systems/siegeField.js",
-    "old": "      if (area > big) { big = area; temple = step(f.at, f.out, SIEGE_FIELD.templePaceM); }",
-    "new": "      if (big < 0) { big = area; temple = step(f.at, f.out, SIEGE_FIELD.templePaceM); }",
+    "old": "      if (area > big) {",
+    "new": "      if (big < 0) {",
     "tests": [
       "test/net/siege/seat2a_siege_play.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "SEAT2a4-field-world-z",
     "file": "src/systems/siegeField.js",
-    "old": "Math.round((499 - py) * PIXEL_UNITS + p[1] * SIEGE_UNITS_PER_M)",
-    "new": "Math.round((500 - py) * PIXEL_UNITS + p[1] * SIEGE_UNITS_PER_M)",
+    "old": "  Math.round((499 - py) * PIXEL_UNITS + p[1] * SIEGE_UNITS_PER_M),",
+    "new": "  Math.round((500 - py) * PIXEL_UNITS + p[1] * SIEGE_UNITS_PER_M),",
     "tests": [
       "test/net/siege/seat2a_siege_play.test.js"
     ]

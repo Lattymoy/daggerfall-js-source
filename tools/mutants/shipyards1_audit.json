@@ -642,8 +642,8 @@
   {
     "name": "AUDIT-SHIPYARDS-sold-at-the-asking",
     "file": "src/systems/shipyards.js",
-    "old": "  return Math.max(0, getTradePrice('Sell', calculateCost(",
-    "new": "  return Math.max(0, getTradePrice('Buy', calculateCost(",
+    "old": "      'Sell',",
+    "new": "      'Buy',",
     "tests": [
       "test/systems/shipyards1_audit.test.js"
     ]

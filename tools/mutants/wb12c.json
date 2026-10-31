@@ -92,8 +92,8 @@
   {
     "name": "WB12c-the-house-s-the-shelf-s",
     "file": "src/systems/shopStock.js",
-    "old": "        item = createRandomBook(rolls);   // A2: the book FILE's price, same member as the shelf",
-    "new": "        item = createShelfBook(rolls);   // A2: the book FILE's price, same member as the shelf",
+    "old": "        item = createRandomBook(rolls); // A2: the book FILE's price, same member as the shelf",
+    "new": "        item = createShelfBook(rolls); // A2: the book FILE's price, same member as the shelf",
     "tests": [
       "test/systems/wb12c_burning_doors.test.js"
     ]

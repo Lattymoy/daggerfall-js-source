@@ -29,8 +29,8 @@
   {
     "name": "CLIMB-PAST-below-100-slows-the-climb",
     "file": "src/systems/skillSoftcap.js",
-    "old": "  return gain > 0 ? 1 + gain * CLIMB_OVERCAP_SPEED_PER_POINT : 1;",
-    "new": "  return 1 + gain * CLIMB_OVERCAP_SPEED_PER_POINT;",
+    "old": "  return gain > 0 ? 1 + gain * CLIMB_OVERCAP_SPEED_PER_POINT : 1; // a missing value (NaN) climbs as DFU's",
+    "new": "  return 1 + gain * CLIMB_OVERCAP_SPEED_PER_POINT; // a missing value (NaN) climbs as DFU's",
     "tests": [
       "test/systems/fb1001_climb.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "MOVE-BANK-the-20000-bucket-back",
     "file": "src/systems/skills.js",
-    "old": "    entity.skillUses[skillId] += whole;\n    return;\n  }",
-    "new": "    amount = whole;\n  }",
+    "old": "    entity.skillUses[skillId] += whole;\n    return;",
+    "new": "    amount = whole;",
     "tests": [
       "test/systems/fb1001_move.test.js"
     ]

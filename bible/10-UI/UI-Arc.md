@@ -20609,7 +20609,7 @@ already keeps.
     the season's captains (the deepest voyage and the legends ended, off the captain's ledger) - and its foot the rule
     the three title boards share, naming them (L1/W4: "Arena Champion, Iliac Champion and Grandmaster are worn by the
     leader, once they have 10 rated bouts or games against 5 different opponents" - Spire Champion is each bracket's top
-    ten's, through the next season, and the foot had read as all five rows'). `seasonBook.js:"export const SEASON_TITLE_GAMES = 10;"`
+    ten's, through the next season, and the foot had read as all five rows'). `seasonBook.js:"export const SEASON_TITLE_GAMES"`
     is held to the arena's constants and the service's Iliac and Gambit ones alike (L13/P16). L10: before the epoch, or
     with no clock, the day holds at 1 (the arena's day wrapped while its season held).
   - THE SEATS' SEASON (`net/townSeatLaw.js` seasonOf, off the service's zero): *The Seats: Season 0, Week 3 of 4*, to its
@@ -20625,7 +20625,7 @@ already keeps.
     on the sky's nights - the Starfall says "every in-game night, about once a real hour". L6/L7: Soul Cakes are found on
     any foe (the dead and the summoned most often) and in gathering, crafting, looting and at sea, and count double on 31
     October UTC. L4: a guest is told the festival is a registered account's (`Add a username to join the festival.`).
-- **The standings** (`seasonBook.js:"function boardLine("`): each board's line in its state - *Reading the board...*
+- **The standings** (`seasonBook.js:"function boardLine"`): each board's line in its state - *Reading the board...*
   while asked, *The board can't be read right now.* on a failure with nothing kept, and the player's own line otherwise.
   AUDIT R4/L4: every board answers a guest's `me`, and no guest's game is ever kept - a guest is told *Add a username to
   be ranked.* (the game's own words for it), and no one signed in *Sign in to be ranked.*; neither is asked anything. R7:

@@ -247,8 +247,8 @@
   {
     "name": "BASEHIDE-the-save-forgets",
     "file": "src/systems/sceneCache.js",
-    "old": "  hiddenBase: (Array.isArray(d.hiddenBase) ? d.hiddenBase : []).filter((k) => typeof k === 'string'),\n",
-    "new": "",
+    "old": "  hiddenBase: (Array.isArray(d.hiddenBase) ? d.hiddenBase : []).filter((k) => typeof k === 'string'),\n  // GUILD-SHELF: a guild's day's Buy shelves, by service, as bought down (scenes/worldModes.js guildShelf) - so",
+    "new": "  // GUILD-SHELF: a guild's day's Buy shelves, by service, as bought down (scenes/worldModes.js guildShelf) - so",
     "tests": [
       "test/server/basehide.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "BASEHIDE-a-sale-clears-nothing",
     "file": "src/systems/sceneCache.js",
-    "old": "  if (d) d.hiddenBase = [];\n",
-    "new": "",
+    "old": "  if (d) d.hiddenBase = [];\n  return n;",
+    "new": "  return n;",
     "tests": [
       "test/server/basehide.test.js"
     ]

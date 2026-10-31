@@ -547,8 +547,8 @@
   {
     "name": "AUDIT-PASSAGE-B4-her-cabin-mine",
     "file": "src/systems/sailingCabin.js",
-    "old": "=> !!boat && !boat.charter && cabinUid(boat.uid)",
-    "new": "=> !!boat && cabinUid(boat.uid)",
+    "old": "  !!boat && !boat.charter && cabinUid(boat.uid) && cabinBlockName(boat.hull) !== null && !boat.inside; // AUDIT PASSAGE B4: no cabin of mine in a booked ship - what was put in it went with her",
+    "new": "  !!boat && cabinUid(boat.uid) && cabinBlockName(boat.hull) !== null && !boat.inside; // AUDIT PASSAGE B4: no cabin of mine in a booked ship - what was put in it went with her",
     "tests": [
       "test/scenes/naval/passageaudit.test.js"
     ]

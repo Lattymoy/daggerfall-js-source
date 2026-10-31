@@ -282,8 +282,8 @@
   {
     "name": "AUDIT-1019-L5-4-unmarked",
     "file": "src/systems/skillSwap.js",
-    "old": "entity.career[key].map((id) => (id === out ? inn : id)), swapped: true };",
-    "new": "entity.career[key].map((id) => (id === out ? inn : id)) };",
+    "old": "  return { ...entity.career, [key]: entity.career[key].map((id) => (id === out ? inn : id)), swapped: true };",
+    "new": "  return { ...entity.career, [key]: entity.career[key].map((id) => (id === out ? inn : id)) };",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
     ],
@@ -312,8 +312,8 @@
   {
     "name": "AUDIT-1019-L6-2-offline-words",
     "file": "src/systems/skillSwap.js",
-    "old": "  return entity._online === true\n    ? t('skillswap.refuse.gold',",
-    "new": "  return true\n    ? t('skillswap.refuse.gold',",
+    "old": "  return entity._online === true",
+    "new": "  return true",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
     ],
@@ -322,8 +322,8 @@
   {
     "name": "AUDIT-1019-L6-2-group-word-fixed",
     "file": "src/systems/skillSwap.js",
-    "old": "group: groupWord(group) }) };",
-    "new": "group: 'minor' }) };",
+    "old": "      group: groupWord(group),",
+    "new": "      group: 'minor',",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
     ],

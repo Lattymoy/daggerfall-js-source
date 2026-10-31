@@ -120,7 +120,7 @@ spell 14, 1,500 uses) on a Holy Dagger, minted by `systems/loot/loot.js:"export 
 enchanted piece Magic. Salvage reads the ladder's own grade (`reforge.js:"export function salvageShards"`), so
 the piece is worth no shards, and the Salvage page's filter (shards over 0) and the card's button dropped it without a
 word. That is LOOT9's law, not a slip: DFU's own magic and made pieces are "worth none: shards come from what was found,
-never bought" - `shopStock.js:"export function stockGuildMagicItems("` shelves these pieces every day, a pawn shop sells
+never bought" - `shopStock.js:"export function stockGuildMagicItems"` shelves these pieces every day, a pawn shop sells
 them, a found one is a bought one's twin, and five shards buy a Portal Stone (online's fast travel). No ladder piece was
 dropped. The service has no salvage law (its disenchant takes crafted pieces), so client and service agree.
 

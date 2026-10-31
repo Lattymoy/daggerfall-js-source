@@ -2,8 +2,8 @@
   {
     "name": "CASTLE-GATE-highest",
     "file": "src/systems/siegeField.js",
-    "old": "    if (Number.isFinite(y) && y < low - 1e-6) { low = y; best = { door: d.door, box: [...d.box], normal }; }",
-    "new": "    if (Number.isFinite(y) && -y < low - 1e-6) { low = -y; best = { door: d.door, box: [...d.box], normal }; }",
+    "old": "    if (Number.isFinite(y) && y < low - 1e-6) {\n      low = y;",
+    "new": "    if (Number.isFinite(y) && -y < low - 1e-6) {\n      low = -y;",
     "tests": [
       "test/scenes/castle_gate.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CASTLE-GATE-last-on-tie",
     "file": "src/systems/siegeField.js",
-    "old": "    if (Number.isFinite(y) && y < low - 1e-6) { low = y; best = { door: d.door, box: [...d.box], normal }; }",
-    "new": "    if (Number.isFinite(y) && y <= low + 1e-6) { low = y; best = { door: d.door, box: [...d.box], normal }; }",
+    "old": "    if (Number.isFinite(y) && y < low - 1e-6) {",
+    "new": "    if (Number.isFinite(y) && y <= low + 1e-6) {",
     "tests": [
       "test/scenes/castle_gate.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CASTLE-GATE-box-shared",
     "file": "src/systems/siegeField.js",
-    "old": "    if (Number.isFinite(y) && y < low - 1e-6) { low = y; best = { door: d.door, box: [...d.box], normal }; }",
-    "new": "    if (Number.isFinite(y) && y < low - 1e-6) { low = y; best = { door: d.door, box: d.box, normal }; }",
+    "old": "      best = { door: d.door, box: [...d.box], normal };",
+    "new": "      best = { door: d.door, box: d.box, normal };",
     "tests": [
       "test/scenes/castle_gate.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CASTLE-GATE-G3-unfaceable-taken",
     "file": "src/systems/siegeField.js",
-    "old": "    if (!doorFace({ door: d.door, box: d.box, normal })) continue;   // AUDIT G3: a door no face is taken from\n",
-    "new": "",
+    "old": "    if (!doorFace({ door: d.door, box: d.box, normal })) continue; // AUDIT G3: a door no face is taken from\n    if (Number.isFinite(y) && y < low - 1e-6) {",
+    "new": "    if (Number.isFinite(y) && y < low - 1e-6) {",
     "tests": [
       "test/scenes/castle_gate.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "CASTLE-GATE-G1-normal-not-carried",
     "file": "src/systems/siegeField.js",
-    "old": "    if (Number.isFinite(y) && y < low - 1e-6) { low = y; best = { door: d.door, box: [...d.box], normal }; }",
-    "new": "    if (Number.isFinite(y) && y < low - 1e-6) { low = y; best = { door: d.door, box: [...d.box], normal: null }; }",
+    "old": "      best = { door: d.door, box: [...d.box], normal };",
+    "new": "      best = { door: d.door, box: [...d.box], normal: null };",
     "tests": [
       "test/scenes/castle_gate.test.js"
     ]

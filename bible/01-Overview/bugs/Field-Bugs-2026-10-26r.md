@@ -610,7 +610,7 @@ smith ever repaired sells at 19%; kits a wear apart credited 14,748 of a room th
 
 FIXED. `foundMark.js:"export function spendOwnMends(item, at = item?.currentCondition) {"` cuts `selfMended` to what the
 piece holds above its mark, and every rise of a found piece's condition calls it first: an own mend before it credits
-(creditOwnMend, at its `from`), a smith's paid repair before it restores - `repairService.js:"export function repairWhole(item) {"`,
+(creditOwnMend, at its `from`), a smith's paid repair before it restores - `repairService.js:"export function repairWhole"`,
 the one door every paid repair restores through (the finished job's `repairJobsAt`, and the two InstantRepairs arms of
 the interior host, the counter's and the keyed flow's). A fall needs nothing: a sale reads the count no higher than the
 piece holds. The cuirass reads 19% after the smith, and 26% after the two kits a wear apart. Economy-Arc's MEND-THIRD

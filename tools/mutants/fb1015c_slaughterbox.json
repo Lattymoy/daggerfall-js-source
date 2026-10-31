@@ -2,8 +2,8 @@
   {
     "name": "SLAUGHTER-BOX-the-swimmers-drawn",
     "file": "src/systems/searchables.js",
-    "old": "t >= 0 && !WATER_SPECIES.has(t)))];",
-    "new": "t >= 0))];",
+    "old": "  const pool = [...new Set((roster ?? []).filter((t) => Number.isInteger(t) && t >= 0 && !WATER_SPECIES.has(t)))];",
+    "new": "  const pool = [...new Set((roster ?? []).filter((t) => Number.isInteger(t) && t >= 0))];",
     "tests": [
       "test/systems/search1_searchables.test.js"
     ]

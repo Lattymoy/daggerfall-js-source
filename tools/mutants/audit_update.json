@@ -305,8 +305,8 @@
   {
     "name": "AUDIT-UPDATE-E3-every-row-an-arrow",
     "file": "src/systems/shopStock.js",
-    "old": "  const took = (bought ?? []).filter(isShelfArrow).reduce(",
-    "new": "  const took = ((bought ?? []).every(isShelfArrow) ? (bought ?? []) : []).reduce(",
+    "old": "  const took = (bought ?? [])\n    .filter(isShelfArrow)\n    .reduce((n, it) => n + Math.max(1, Math.trunc(it.stackCount ?? 1)), 0);",
+    "new": "  const took = ((bought ?? []).every(isShelfArrow) ? (bought ?? []) : []).reduce(\n    (n, it) => n + Math.max(1, Math.trunc(it.stackCount ?? 1)),\n    0,\n  );",
     "tests": [
       "test/systems/endless_arrows.test.js"
     ],

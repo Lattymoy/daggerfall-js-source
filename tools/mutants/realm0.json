@@ -249,8 +249,8 @@
   {
     "name": "REALM0-sale-uncapped",
     "file": "src/systems/shopStock.js",
-    "old": "    if (!online) return sale;\n",
-    "new": "    return sale;\n",
+    "old": "    if (!online) return sale;",
+    "new": "    return sale;",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -267,8 +267,8 @@
   {
     "name": "REALM0-sale-cap-the-sale",
     "file": "src/systems/shopStock.js",
-    "old": "calculateTradePrice(cost, shopQuality, best, false) * ONLINE_SALE_SHARE",
-    "new": "calculateTradePrice(cost, shopQuality, best, true, { online: false }) * ONLINE_SALE_SHARE",
+    "old": "    const half = Math.floor(calculateTradePrice(cost, shopQuality, best, false) * ONLINE_SALE_SHARE); // REALM P0.4; MERC-RISE: half the least it asks",
+    "new": "    const half = Math.floor(calculateTradePrice(cost, shopQuality, best, true, { online: false }) * ONLINE_SALE_SHARE); // REALM P0.4; MERC-RISE: half the least it asks",
     "tests": [
       "test/systems/realm0.test.js"
     ]

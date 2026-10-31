@@ -252,8 +252,8 @@
   {
     "name": "AUDIT1003-W7-ARENA-TAKEN",
     "file": "src/systems/siegeField.js",
-    "old": "    if (d?.arena) continue;   // AUDIT PRE-MERGE 1003 W7",
-    "new": "",
+    "old": "    if (d?.arena) continue; // AUDIT PRE-MERGE 1003 W7\n    if (!d?.door || !Array.isArray(d.door.a) || !Array.isArray(d.door.b) || !Array.isArray(d.box) || d.box.length < 6)",
+    "new": "    if (!d?.door || !Array.isArray(d.door.a) || !Array.isArray(d.door.b) || !Array.isArray(d.box) || d.box.length < 6)",
     "tests": [
       "test/world/audit1003_world.test.js",
       "test/scenes/castle_gate.test.js"

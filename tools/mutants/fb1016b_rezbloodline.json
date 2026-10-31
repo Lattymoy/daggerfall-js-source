@@ -1028,8 +1028,8 @@
   {
     "name": "REZ-BLOODLINE-the-refusal-nameless",
     "file": "src/systems/resurrect.js",
-    "old": "{ name: name || t('resurrect.companion', 'Your companion') }",
-    "new": "{ name: t('resurrect.companion', 'Your companion') }",
+    "old": "      name: name || t('resurrect.companion', 'Your companion'),",
+    "new": "      name: t('resurrect.companion', 'Your companion'),",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]

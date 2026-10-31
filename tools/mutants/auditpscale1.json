@@ -284,8 +284,8 @@
   {
     "name": "AUDIT-PSCALE1-a-squad-of-liches",
     "file": "src/systems/roadEncounters.js",
-    "old": "  if (solitary(mobileType)) return 1;\n",
-    "new": "",
+    "old": "  if (solitary(mobileType)) return 1;\n  return Math.min(ROAD_PARTY_MAX, 1 + Math.max(0, partyExtra | 0) + Math.max(0, company | 0));",
+    "new": "  return Math.min(ROAD_PARTY_MAX, 1 + Math.max(0, partyExtra | 0) + Math.max(0, company | 0));",
     "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e WILD-ROAD): the count's one home is roadEncounters.js wandererCount",
     "tests": [
       "test/systems/party/pscale1.test.js",

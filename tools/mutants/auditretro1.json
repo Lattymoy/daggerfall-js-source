@@ -11,8 +11,8 @@
   {
     "name": "AUDITRETRO1-A1-no-hud-twin-in-the-config",
     "file": "src/systems/retroMode.js",
-    "old": "hud = retroTargetSize(mode, true);",
-    "new": "hud = retroTargetSize(mode, false);",
+    "old": "    hud = retroTargetSize(mode, true);",
+    "new": "    hud = retroTargetSize(mode, false);",
     "tests": [
       "test/render/auditretro1.test.js",
       "test/render/retro1.test.js"
@@ -388,7 +388,7 @@
   {
     "name": "AUDITRETRO1-D6-double-for-float",
     "file": "src/systems/retroMode.js",
-    "old": "  const heightRatio = Math.fround(Math.fround(screenH / 6) / 200);\n  const viewWidth = Math.trunc(Math.fround(Math.fround(320 * (aspect === RETRO_ASPECT.FOUR_THREE ? 5 : 6)) * heightRatio));",
+    "old": "  const heightRatio = Math.fround(Math.fround(screenH / 6) / 200);\n  const viewWidth = Math.trunc(\n    Math.fround(Math.fround(320 * (aspect === RETRO_ASPECT.FOUR_THREE ? 5 : 6)) * heightRatio),\n  );",
     "new": "  const heightRatio = screenH / 6 / 200;\n  const viewWidth = Math.trunc(320 * (aspect === RETRO_ASPECT.FOUR_THREE ? 5 : 6) * heightRatio);",
     "tests": [
       "test/render/auditretro1.test.js"

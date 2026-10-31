@@ -138,8 +138,8 @@
   {
     "name": "AUDITLOCK-B4-whole-on-any",
     "file": "src/systems/shopStock.js",
-    "old": "n += restockLockpicks(shelfItems, (bought ?? []).filter(isLockpick).reduce((k, it) => k + Math.max(1, Math.trunc(it.stackCount ?? 1)), 0));",
-    "new": "n += restockLockpicks(shelfItems, 999);",
+    "old": "  n += restockLockpicks(\n    shelfItems,\n    (bought ?? []).filter(isLockpick).reduce((k, it) => k + Math.max(1, Math.trunc(it.stackCount ?? 1)), 0),\n  ); // AUDIT LOCKPICK B4: what the purchase took",
+    "new": "  n += restockLockpicks(shelfItems, 999); // AUDIT LOCKPICK B4: what the purchase took",
     "tests": [
       "test/systems/lockpick/lockpick_audit.test.js"
     ]

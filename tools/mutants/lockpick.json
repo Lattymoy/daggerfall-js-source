@@ -438,8 +438,8 @@
   {
     "name": "LOCKPICK-shop-forgets-the-counter",
     "file": "src/systems/shopStock.js",
-    "old": "|| isRations(item) || isLockpick(item);",
-    "new": "|| isRations(item);",
+    "old": "  isBagItem(item) || (isSurvivalItem(item) && isCampfireKit(item)) || isRations(item) || isLockpick(item); // LOCKPICK: and the counter's picks",
+    "new": "  isBagItem(item) || (isSurvivalItem(item) && isCampfireKit(item)) || isRations(item); // LOCKPICK: and the counter's picks",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]

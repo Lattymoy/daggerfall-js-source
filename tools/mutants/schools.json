@@ -20,8 +20,8 @@
   {
     "name": "SCHOOLS3-the-record-forgets-its-path",
     "file": "src/systems/signatureSpells.js",
-    "old": "name: s.nameEn, icon: s.icon, index: s.index }), path: p.id };",
-    "new": "name: s.nameEn, icon: s.icon, index: s.index }) };",
+    "old": "    path: p.id,\n  }; // AUDIT SCHOOLS L4 4: its canonical English name - shown in the player's language (loot.js shownSpellName)",
+    "new": "  }; // AUDIT SCHOOLS L4 4: its canonical English name - shown in the player's language (loot.js shownSpellName)",
     "tests": [
       "test/systems/schools_arcane.test.js"
     ]

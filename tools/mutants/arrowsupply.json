@@ -371,8 +371,8 @@
   {
     "name": "SHOP-ARROWS-the-counters-max-halved",
     "file": "src/systems/shopStock.js",
-    "old": "shopAmmoStack(buildingType, quality, SHOP_ARROWS_MAX);",
-    "new": "shopAmmoStack(buildingType, quality, SHOP_ARROWS_MAX / 2);",
+    "old": "export const shopArrowStack = (buildingType, quality) => shopAmmoStack(buildingType, quality, SHOP_ARROWS_MAX);",
+    "new": "export const shopArrowStack = (buildingType, quality) => shopAmmoStack(buildingType, quality, SHOP_ARROWS_MAX / 2);",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "SHOP-ARROWS-every-shelf",
     "file": "src/systems/shopStock.js",
-    "old": "  if (shelfIndex === 0) { const n = endlessArrowsAt(buildingType)",
-    "new": "  if (shelfIndex >= 0) { const n = endlessArrowsAt(buildingType)",
+    "old": "  if (shelfIndex === 0) {",
+    "new": "  if (shelfIndex >= 0) {",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "SHOP-ARROWS-a-roll-drawn",
     "file": "src/systems/shopStock.js",
-    "old": "add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n }); }",
-    "new": "add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n + Math.floor(rolls() * 0) }); }",
+    "old": "    if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n });",
+    "new": "    if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n + Math.floor(rolls() * 0) });",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "SHOP-ARROWS-not-merged",
     "file": "src/systems/shopStock.js",
-    "old": "if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n }); }",
-    "new": "if (n > 0) items.push({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n }); }",
+    "old": "    if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n });",
+    "new": "    if (n > 0) items.push({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n });",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "SHOP-ARROWS-another-mint",
     "file": "src/systems/shopStock.js",
-    "old": "add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n }); }",
-    "new": "add({ group: 'Weapons', templateIndex: ARROW_TEMPLATE, stackCount: n }); }",
+    "old": "    if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n });",
+    "new": "    if (n > 0) add({ group: 'Weapons', templateIndex: ARROW_TEMPLATE, stackCount: n });",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "SHOP-ARROWS-a-shop-without-weapons",
     "file": "src/systems/shopStock.js",
-    "old": "  if (!(chance > 0)) return 0;\n  const most",
-    "new": "  if (!(chance > 0)) chance = 10;\n  const most",
+    "old": "  if (!(chance > 0)) return 0;",
+    "new": "  if (!(chance > 0)) chance = 10;",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]

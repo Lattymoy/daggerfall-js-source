@@ -106,7 +106,7 @@ the fallen's own take-out, and the words, the host's line and the risen line. `t
 
 ## TRADE-WRAP: a lot's price never wraps
 
-FOUND (the client sweep). CalculateTradePrice (`shopStock.js:"export function calculateTradePrice("`) haggles a lot ONCE,
+FOUND (the client sweep). CalculateTradePrice (`shopStock.js:"export function calculateTradePrice"`) haggles a lot ONCE,
 as DFU does: the whole basket's cost (`tradeModes.js tradeCost`, CalculateCost summed) times the haggle's factor, then
 `>> 8` - C#'s `int` in DFU, JS's int32 here. Past 2^31 the product wraps. Measured on the real counter: the first wrong
 price comes at a cost of 9.65 million (a quality-1 shop, Mercantile and Personality 100) to 18 million (quality 10,

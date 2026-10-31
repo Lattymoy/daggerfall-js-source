@@ -3,7 +3,7 @@
     "name": "MERCHANT-YARDS-the-horse-back-on-the-general-store",
     "file": "src/systems/shopStock.js",
     "old": "    if (isOnlinePage()) add({ group: 'UselessItems2', templateIndex: BAG_TEMPLATE });",
-    "new": "    add({ group: 'Transportation', templateIndex: TRANSPORT_HORSE }); if (isOnlinePage()) add({ group: 'UselessItems2', templateIndex: BAG_TEMPLATE });",
+    "new": "    add({ group: 'Transportation', templateIndex: TRANSPORT_HORSE });\n    if (isOnlinePage()) add({ group: 'UselessItems2', templateIndex: BAG_TEMPLATE });",
     "tests": [
       "test/world/merchantyards1.test.js"
     ]
@@ -12,7 +12,7 @@
     "name": "MERCHANT-YARDS-the-general-store-buys-transport",
     "file": "src/systems/shopStock.js",
     "old": "  [BUILDING_TYPES.GeneralStore]: ['Books', 'MensClothing', 'WomensClothing', 'Jewellery', 'Weapons', 'UselessItems2'],",
-    "new": "  [BUILDING_TYPES.GeneralStore]: ['Books', 'MensClothing', 'WomensClothing', 'Transportation', 'Jewellery', 'Weapons', 'UselessItems2'],",
+    "new": "  [BUILDING_TYPES.GeneralStore]: [\n    'Books',\n    'MensClothing',\n    'WomensClothing',\n    'Transportation',\n    'Jewellery',\n    'Weapons',\n    'UselessItems2',\n  ],",
     "tests": [
       "test/world/merchantyards1.test.js"
     ]

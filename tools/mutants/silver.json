@@ -92,8 +92,8 @@
   {
     "name": "SILVER-the-bounty-old",
     "file": "src/systems/seatEdicts.js",
-    "old": "`The Bounty pays you ${n} silver for the camp.`",
-    "new": "`The Bounty pays you ${n} Drakes for the camp.`",
+    "old": "export const bountyPaidText = (n) => `The Bounty pays you ${n} silver for the camp.`;",
+    "new": "export const bountyPaidText = (n) => `The Bounty pays you ${n} Drakes for the camp.`;",
     "tests": [
       "test/net/silver.test.js"
     ]

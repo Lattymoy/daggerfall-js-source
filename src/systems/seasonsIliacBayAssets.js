@@ -28,7 +28,7 @@
 // The loose folders are read only per prefix.
 
 import { readUnityBundle } from '../formats/unity/unityBundle.js';
-import { toColor32 } from '../formats/color32Order.js';   // ROAD-H H4: the flip moved to the shared door M-TEX takes too; TEX1: in the SHAPE the upload path reads, so the two hosts hand the image over whole
+import { toColor32 } from '../formats/color32Order.js'; // ROAD-H H4: the flip moved to the shared door M-TEX takes too; TEX1: in the SHAPE the upload path reads, so the two hosts hand the image over whole
 import { decodePng } from './textureReplacement.js';
 import { SEASONS_MOD, PREFIX_FOLDER, filesForPrefix } from './seasonsIliacBay.js';
 
@@ -77,8 +77,8 @@ export function seasonsAssetKey(relativePath) {
 
 let _names = [];
 let _load = null;
-let _bundles = new Map();   // stored name -> Promise<bundle | null>
-let _seasonsBundle = null;  // Promise<{ files, textures } | null> for the mod's own bundle
+let _bundles = new Map(); // stored name -> Promise<bundle | null>
+let _seasonsBundle = null; // Promise<{ files, textures } | null> for the mod's own bundle
 
 /** Register the stored names and a `load(name) -> bytes` loader. Returns
  *  how many stored entries belong to this mod (bundles count one). */
@@ -88,7 +88,11 @@ export function setSeasonsSources(fileNames, load) {
   // no other), so this door opened each one WHOLE, on the main thread, to read its manifest. The store now holds any
   // mod the player attaches - DREAM's are gigabytes - and that walk read every one of them into memory to find a
   // manifest that was never there. The name says which is Seasons', as it did when the pick decided.
-  const names = (fileNames ?? []).filter((n) => (n.startsWith(DFMOD_KEY_PREFIX) && isSeasonsDfmod(n.slice(DFMOD_KEY_PREFIX.length))) || n.startsWith(LOOSE_KEY_PREFIX));
+  const names = (fileNames ?? []).filter(
+    (n) =>
+      (n.startsWith(DFMOD_KEY_PREFIX) && isSeasonsDfmod(n.slice(DFMOD_KEY_PREFIX.length))) ||
+      n.startsWith(LOOSE_KEY_PREFIX),
+  );
   const loader = typeof load === 'function' ? load : null;
   // The boot seam registers on EVERY host boot (ensureAudio is called
   // by each host, some twice); the same names and loader keep the
@@ -110,16 +114,19 @@ export const seasonsSourcesCount = () => _names.length;
 
 async function openBundle(name) {
   if (!_bundles.has(name)) {
-    _bundles.set(name, (async () => {
-      try {
-        const bytes = await _load(name);
-        if (!bytes || !bytes.byteLength) return null;
-        return readUnityBundle(bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes));
-      } catch (e) {
-        console.warn(`[seasons] ${name} would not open:`, e?.message ?? e);
-        return null;
-      }
-    })());
+    _bundles.set(
+      name,
+      (async () => {
+        try {
+          const bytes = await _load(name);
+          if (!bytes || !bytes.byteLength) return null;
+          return readUnityBundle(bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes));
+        } catch (e) {
+          console.warn(`[seasons] ${name} would not open:`, e?.message ?? e);
+          return null;
+        }
+      })(),
+    );
   }
   return _bundles.get(name);
 }
@@ -128,7 +135,11 @@ async function openBundle(name) {
 export function bundleManifest(bundle) {
   for (const t of bundle?.textAssets ?? []) {
     if (!/\.dfmod$/i.test(t.name)) continue;
-    try { return JSON.parse(t.text); } catch { /* not this one */ }
+    try {
+      return JSON.parse(t.text);
+    } catch {
+      /* not this one */
+    }
   }
   return null;
 }
@@ -147,7 +158,10 @@ async function seasonsBundle() {
         if (!manifest) continue;
         if (manifest.GUID === SEASONS_MOD.guid || manifest.ModTitle === SEASONS_MOD.title) {
           // SIB2: the port is 1.1's IL, method by method; a later build may wire what 1.1 leaves unreachable
-          if (manifest.ModVersion && String(manifest.ModVersion) !== SEASONS_MOD.version) console.warn(`[seasons] the bundle is ${manifest.ModTitle} ${manifest.ModVersion}; the port is ${SEASONS_MOD.version}'s script - a later version may do what this one does not`);
+          if (manifest.ModVersion && String(manifest.ModVersion) !== SEASONS_MOD.version)
+            console.warn(
+              `[seasons] the bundle is ${manifest.ModTitle} ${manifest.ModVersion}; the port is ${SEASONS_MOD.version}'s script - a later version may do what this one does not`,
+            );
           return { bundle, manifest, files: manifest.Files ?? [] };
         }
       }
@@ -196,7 +210,10 @@ export async function loadSeasonsTextures(prefix, { decode = decodePng } = {}) {
       const base = file.slice(file.lastIndexOf('/') + 1);
       const stem = base.replace(/\.[^.]*$/, '');
       const tex = byName.get(stem);
-      if (!tex) { console.warn(`LoadTexturesFromMod: failed to load asset ${base}`); continue; }
+      if (!tex) {
+        console.warn(`LoadTexturesFromMod: failed to load asset ${base}`);
+        continue;
+      }
       try {
         const image = toColor32(tex.rgba());
         out.push({ name: base, width: image.width, height: image.height, image });

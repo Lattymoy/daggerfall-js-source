@@ -384,8 +384,8 @@
   {
     "name": "SILVER-FINDS-roll-any-kind",
     "file": "src/systems/silverFinds.js",
-    "old": "if (!_finder || !FIND_KINDS.includes(kind)) return false;",
-    "new": "if (!_finder) return false;",
+    "old": "  if (!_finder || !FIND_KINDS.includes(kind)) return false;",
+    "new": "  if (!_finder) return false;",
     "why": "a harvest's kind rolled on a loot door",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -394,8 +394,8 @@
   {
     "name": "SILVER-FINDS-roll-again",
     "file": "src/systems/silverFinds.js",
-    "old": "  if (seen(container)) return false;\n",
-    "new": "",
+    "old": "  if (seen(container)) return false;\n  remember(container);",
+    "new": "  remember(container);",
     "why": "a container rolled at every open",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -404,8 +404,8 @@
   {
     "name": "SILVER-FINDS-roll-unremembered",
     "file": "src/systems/silverFinds.js",
-    "old": "  remember(container);\n",
-    "new": "",
+    "old": "  remember(container);\n  if (!(roll() < findChanceOf(kind))) return false;",
+    "new": "  if (!(roll() < findChanceOf(kind))) return false;",
     "why": "a container never remembered",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -414,8 +414,8 @@
   {
     "name": "SILVER-FINDS-roll-edge",
     "file": "src/systems/silverFinds.js",
-    "old": "if (!(roll() < findChanceOf(kind))) return false;",
-    "new": "if (!(roll() <= findChanceOf(kind))) return false;",
+    "old": "  if (!(roll() < findChanceOf(kind))) return false;",
+    "new": "  if (!(roll() <= findChanceOf(kind))) return false;",
     "why": "the chance itself a find",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -424,8 +424,8 @@
   {
     "name": "SILVER-FINDS-keys-bound-early",
     "file": "src/systems/silverFinds.js",
-    "old": "if (_rolledKeys.size > SILVER_FINDS_KEPT)",
-    "new": "if (_rolledKeys.size >= SILVER_FINDS_KEPT)",
+    "old": "  if (_rolledKeys.size > SILVER_FINDS_KEPT) _rolledKeys.delete(_rolledKeys.values().next().value);",
+    "new": "  if (_rolledKeys.size >= SILVER_FINDS_KEPT) _rolledKeys.delete(_rolledKeys.values().next().value);",
     "why": "one key short of the bound",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -444,7 +444,7 @@
   {
     "name": "SILVER-FINDS-throw-uncaught",
     "file": "src/systems/silverFinds.js",
-    "old": "  try { _finder(kind); } catch (e) { console.warn('[silver] a find', /** @type {any} */ (e)?.message ?? e); }",
+    "old": "  try {\n    _finder(kind);\n  } catch (e) {\n    console.warn('[silver] a find', /** @type {any} */ (e)?.message ?? e);\n  }",
     "new": "  _finder(kind);",
     "why": "a host's throw out through the loot door",
     "tests": [
@@ -454,8 +454,8 @@
   {
     "name": "SILVER-FINDS-empty-key",
     "file": "src/systems/silverFinds.js",
-    "old": " || container === '') return false;",
-    "new": ") return false;",
+    "old": "  if (container == null || (typeof container !== 'string' && typeof container !== 'object') || container === '')\n    return false;",
+    "new": "  if (container == null || (typeof container !== 'string' && typeof container !== 'object')) return false;",
     "why": "an empty key a container",
     "tests": [
       "test/net/silverfinds_client.test.js"

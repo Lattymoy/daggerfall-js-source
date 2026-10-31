@@ -172,8 +172,8 @@
   {
     "name": "AUDITREST-the-pawn-shop-shelves-none",
     "file": "src/systems/shopStock.js",
-    "old": "  if (shelfIndex === 0 && buildingType === BUILDING_TYPES.PawnShop && sharedClockOn()) for",
-    "new": "  if (false) for",
+    "old": "  if (shelfIndex === 0 && buildingType === BUILDING_TYPES.PawnShop && sharedClockOn())\n    for (const it of campfireStock(rolls, 0, 2)) addItem(items, it); // AUDIT REST: REST2's Pawn Shop, 0-2 online",
+    "new": "  if (false) for (const it of campfireStock(rolls, 0, 2)) addItem(items, it); // AUDIT REST: REST2's Pawn Shop, 0-2 online",
     "tests": [
       "test/systems/survival/auditrest.test.js"
     ]

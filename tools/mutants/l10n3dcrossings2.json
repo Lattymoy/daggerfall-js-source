@@ -112,7 +112,7 @@
   {
     "name": "L10N3d2-systems-skills-58-orcish",
     "file": "src/systems/skills.js",
-    "old": "  if (k === 'Orcish') return getLocalizedTextWithReversion('orcishSkill', TextCollections.Internal, false, localizedText('orcish', 'Orcish'));",
+    "old": "  if (k === 'Orcish')\n    return getLocalizedTextWithReversion(\n      'orcishSkill',\n      TextCollections.Internal,\n      false,\n      localizedText('orcish', 'Orcish'),\n    );",
     "new": "  if (k === 'Orcish') return getLocalizedTextWithReversion('orcishSkill', TextCollections.Internal, false, 'Orcish');",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
@@ -122,7 +122,7 @@
   {
     "name": "L10N3d2-systems-skills-59-daedric",
     "file": "src/systems/skills.js",
-    "old": "  if (k === 'Daedric') return getLocalizedTextWithReversion('daedricSkill', TextCollections.Internal, false, localizedText('daedric', 'Daedric'));",
+    "old": "  if (k === 'Daedric')\n    return getLocalizedTextWithReversion(\n      'daedricSkill',\n      TextCollections.Internal,\n      false,\n      localizedText('daedric', 'Daedric'),\n    );",
     "new": "  if (k === 'Daedric') return getLocalizedTextWithReversion('daedricSkill', TextCollections.Internal, false, 'Daedric');",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
@@ -202,8 +202,8 @@
   {
     "name": "L10N3dX2-skill-names-frozen-english",
     "file": "src/systems/skills.js",
-    "old": "export const SKILL_NAMES = Object.freeze(SKILL_KEYS.reduce((a, k, id) => Object.defineProperty(a, id, { enumerable: true, get: () => skillWord(k) }), []));",
-    "new": "export const SKILL_NAMES = Object.freeze(SKILL_KEYS.map((k) => (k === 'HandToHand' ? 'Hand-to-Hand' : k.replace(/([a-z])([A-Z])/g, '$1 $2'))));",
+    "old": "  SKILL_KEYS.reduce((a, k, id) => Object.defineProperty(a, id, { enumerable: true, get: () => skillWord(k) }), []),",
+    "new": "  SKILL_KEYS.map((k) => (k === 'HandToHand' ? 'Hand-to-Hand' : k.replace(/([a-z])([A-Z])/g, '$1 $2'))),",
     "tests": [
       "test/systems/l10n3d_crossings.test.js",
       "test/systems/l10n3d_sites.test.js"
@@ -212,7 +212,7 @@
   {
     "name": "L10N3dX2-orcish-no-reversion",
     "file": "src/systems/skills.js",
-    "old": "  if (k === 'Orcish') return getLocalizedTextWithReversion('orcishSkill', TextCollections.Internal, false, localizedText('orcish', 'Orcish'));",
+    "old": "  if (k === 'Orcish')\n    return getLocalizedTextWithReversion(\n      'orcishSkill',\n      TextCollections.Internal,\n      false,\n      localizedText('orcish', 'Orcish'),\n    );",
     "new": "  if (k === 'Orcish') return SKILL_TEXT.orcishSkill;",
     "tests": [
       "test/systems/l10n3d_crossings.test.js",

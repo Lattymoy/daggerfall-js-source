@@ -69,8 +69,8 @@
   {
     "name": "SHIPYARDS-the-refits-whole",
     "file": "src/systems/shipyards.js",
-    "old": "return Math.max(1, Math.round((value + refitGold(rec) * REFIT_RESALE) * k));",
-    "new": "return Math.max(1, Math.round((value + refitGold(rec)) * k));",
+    "old": "  return Math.max(1, Math.round((value + refitGold(rec) * REFIT_RESALE) * k));",
+    "new": "  return Math.max(1, Math.round((value + refitGold(rec)) * k));",
     "tests": [
       "test/systems/shipyards1.test.js"
     ]
@@ -78,8 +78,8 @@
   {
     "name": "SHIPYARDS-a-wreck-whole",
     "file": "src/systems/shipyards.js",
-    "old": "const k = SALE_FLOOR + (1 - SALE_FLOOR) * Math.max(0, Math.min(1, Number.isFinite(hullShare) ? hullShare : 1));",
-    "new": "const k = 1;",
+    "old": "  const k = SALE_FLOOR + (1 - SALE_FLOOR) * Math.max(0, Math.min(1, Number.isFinite(hullShare) ? hullShare : 1));",
+    "new": "  const k = 1;",
     "tests": [
       "test/systems/shipyards1.test.js",
       "test/systems/shipyards1_host.test.js"
@@ -88,8 +88,8 @@
   {
     "name": "SHIPYARDS-bought-at-the-sale",
     "file": "src/systems/shipyards.js",
-    "old": "return getTradePrice('Buy', calculateCost(Math.max(0, value), SHIPYARD_QUALITY, SHIPYARD_PRICE_INDEX), SHIPYARD_QUALITY, skills, pieces);",
-    "new": "return getTradePrice('Sell', calculateCost(Math.max(0, value), SHIPYARD_QUALITY, SHIPYARD_PRICE_INDEX), SHIPYARD_QUALITY, skills, pieces);",
+    "old": "    'Buy',",
+    "new": "    'Sell',",
     "tests": [
       "test/systems/shipyards1.test.js",
       "test/systems/shipyards1_host.test.js"
@@ -98,8 +98,8 @@
   {
     "name": "SHIPYARDS-sold-from-the-helm",
     "file": "src/systems/shipyards.js",
-    "old": "  if (where === 'sailing') return 'Step away from the helm first.';\n",
-    "new": "",
+    "old": "  if (where === 'sailing') return 'Step away from the helm first.';\n  if (where === 'away') return 'Bring the ship to this port first. The shipmaster buys only what he can see.';",
+    "new": "  if (where === 'away') return 'Bring the ship to this port first. The shipmaster buys only what he can see.';",
     "tests": [
       "test/systems/shipyards1.test.js",
       "test/systems/shipyards1_host.test.js"
@@ -108,8 +108,8 @@
   {
     "name": "SHIPYARDS-sold-in-a-fight",
     "file": "src/systems/shipyards.js",
-    "old": "  if (fighting) return 'Not while the ship is in combat.';\n",
-    "new": "",
+    "old": "  if (fighting) return 'Not while the ship is in combat.';\n  if (aboard > 0) return 'Another player is aboard.';",
+    "new": "  if (aboard > 0) return 'Another player is aboard.';",
     "tests": [
       "test/systems/shipyards1.test.js"
     ]
@@ -117,8 +117,8 @@
   {
     "name": "SHIPYARDS-sold-her-hands-ashore",
     "file": "src/systems/shipyards.js",
-    "old": "  if (ashore > 0) return 'Some of the crew are ashore with you. Send them back aboard first.';\n",
-    "new": "",
+    "old": "  if (ashore > 0) return 'Some of the crew are ashore with you. Send them back aboard first.';\n  if (hold > 0) return 'Empty the hold first. The shipmaster does not buy cargo.';",
+    "new": "  if (hold > 0) return 'Empty the hold first. The shipmaster does not buy cargo.';",
     "tests": [
       "test/systems/shipyards1.test.js"
     ]
@@ -126,8 +126,8 @@
   {
     "name": "SHIPYARDS-sold-with-her-cargo",
     "file": "src/systems/shipyards.js",
-    "old": "  if (hold > 0) return 'Empty the hold first. The shipmaster does not buy cargo.';\n",
-    "new": "",
+    "old": "  if (hold > 0) return 'Empty the hold first. The shipmaster does not buy cargo.';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/shipyards1.test.js",
       "test/systems/shipyards1_host.test.js"
@@ -136,7 +136,7 @@
   {
     "name": "SHIPYARDS-the-general-store-buys-a-ship",
     "file": "src/systems/shopStock.js",
-    "old": " && item.templateIndex !== BOAT_PARTS_TEMPLATE && item.templateIndex !== BOAT_DEED_TEMPLATE",
+    "old": "  item.templateIndex !== BOAT_PARTS_TEMPLATE &&\n  item.templateIndex !== BOAT_DEED_TEMPLATE &&",
     "new": "",
     "tests": [
       "test/systems/shipyards1.test.js",

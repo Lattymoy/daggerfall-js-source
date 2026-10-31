@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-A10-stale-day-kept",
     "file": "src/systems/shopStock.js",
-    "old": "  if (store) for (const k of Object.keys(store)) if (store[k]?.day !== today && !shelfStands(store[k], today)) delete store[k];",
-    "new": "",
+    "old": "  if (store)\n    for (const k of Object.keys(store)) if (store[k]?.day !== today && !shelfStands(store[k], today)) delete store[k]; // AUDIT GUILD-SHELF A10: a past day's shelf is never shown again - it goes, and the save with it",
+    "new": "  // AUDIT GUILD-SHELF A10: a past day's shelf is never shown again - it goes, and the save with it",
     "tests": [
       "test/systems/guildshelf.test.js"
     ]

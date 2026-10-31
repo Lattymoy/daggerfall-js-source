@@ -310,8 +310,8 @@
   {
     "name": "DOMAIN3-news-charter",
     "file": "src/systems/seatEdicts.js",
-    "old": "      const seat = town?.charterSeat ?? town;",
-    "new": "      const seat = town;",
+    "old": "      const seat = town?.charterSeat ?? town; // DOMAIN3: a holding's news is its Charter's",
+    "new": "      const seat = town; // DOMAIN3: a holding's news is its Charter's",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]

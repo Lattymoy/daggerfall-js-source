@@ -346,8 +346,8 @@
   {
     "name": "LPT1-B3-installing-never-up",
     "file": "src/systems/seasonsIliacBay.js",
-    "old": "get installing() { return !!this._applying; }",
-    "new": "get installing() { return false; }",
+    "old": "    return !!this._applying;",
+    "new": "    return false;",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]

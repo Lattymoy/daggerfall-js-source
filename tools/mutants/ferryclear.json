@@ -67,8 +67,8 @@
   {
     "name": "AUDITFERRY-F1-a-landfall-blind-to-hulls",
     "file": "src/systems/seaHelm.js",
-    "old": "  const avoiding = (!q.landfall && ahead <= reach) || (q.hullAhead ?? Infinity) <= reach;",
-    "new": "  const avoiding = !q.landfall && ahead <= reach;",
+    "old": "  const avoiding = (!q.landfall && ahead <= reach) || (q.hullAhead ?? Infinity) <= reach; // AUDIT FERRY-CLEAR F1: a hull on any leg",
+    "new": "  const avoiding = !q.landfall && ahead <= reach; // AUDIT FERRY-CLEAR F1: a hull on any leg",
     "tests": [
       "test/systems/auditships_sail.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "AUDITFERRY-F2-no-oar-without-a-sail",
     "file": "src/systems/seaHelm.js",
-    "old": "row: !sailsWanted || (!q.sailsUp && !q.canSail), course };",
-    "new": "row: !sailsWanted, course };",
+    "old": "  return { turn, sails, row: !sailsWanted || (!q.sailsUp && !q.canSail), course }; // AUDIT FERRY-CLEAR F2: no sail to raise, the oars",
+    "new": "  return { turn, sails, row: !sailsWanted, course }; // AUDIT FERRY-CLEAR F2: no sail to raise, the oars",
     "tests": [
       "test/systems/auditships_sail.test.js"
     ]

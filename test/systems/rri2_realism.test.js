@@ -486,7 +486,7 @@ test('RRI2 wiring: the install registers the six delegates; the read-through sit
   assert.match(rd('src/systems/inventory.js'), /if \(isRriStackable\(item\)\) return true;/);
   assert.match(rd('src/systems/shopStock.js'), /let cost = conditionBasedPricesOn\(\) \? conditionCostBase\(baseValue, conditionPercentage\) : baseValue;/);
   assert.match(rd('src/systems/tradeModes.js'), /calculateCost\(counterValueOf\(item\), quality, priceAdjustment, saleConditionPercentage\(item, \{ online \}\)\) \* stack;/, 'the Sell arm passes ConditionPercentage (:462) - offline as it is, online the find and a third of its owner\'s own mends past it (SELL-AS-FOUND, MEND-THIRD - test/systems/sell_as_found.test.js, mend_third.test.js)');   // PIN MOVED (CRAFT-WORTH): the value the counter pays on (tradeModes.js counterValueOf)
-  assert.match(rd('src/systems/repairService.js'), /conditionBasedPricesOn\(\) \? conditionRepairCostBase\(baseItemValue, condition, max, instantRepairs\) : Math\.trunc\(10 \* baseItemValue \/ 100\)/);
+  assert.match(rd('src/systems/repairService.js'), /conditionBasedPricesOn\(\)\n\s*\? conditionRepairCostBase\(baseItemValue, condition, max, instantRepairs\)\n\s*: Math\.trunc\(\(10 \* baseItemValue\) \/ 100\)/);
   assert.match(rd('src/systems/chargenSession.js'), /assignStartingSpells\(setIndex, spellsByIndex, result\.career\)/);
   assert.match(rd('src/systems/chargenSession.js'), /assignStartingEquipment\(playerEntity, \{ classIndex: result\.careerIndex/);
   // PIN MOVED (TWO-HANDS, bible/05-Combat/Two-Hands.md): the clone's own three fields, unless the rig hands its swing's
