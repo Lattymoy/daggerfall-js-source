@@ -946,6 +946,9 @@
 !/src/scenes/superDungeon/sdSpoils.js
 !/src/scenes/superDungeon/sdThrough.js
 !/src/scenes/superDungeon/sdVoice.js
+!/src/scenes/tamrielPortsHost.js
+!/src/scenes/townEconHost.js
+!/src/scenes/townMeetsHost.js
 !/src/scenes/wagon/
 /src/scenes/wagon/*/
 !/src/scenes/windowWorld.js

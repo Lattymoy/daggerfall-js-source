@@ -309,8 +309,8 @@
   {
     "name": "BLS-audit-host-page-unhanded",
     "file": "src/scenes/townEconHost.js",
-    "old": "      towns.audit(regionHere(), cmd.page ?? 0).then((r) => {",
-    "new": "      towns.audit(regionHere(), 0).then((r) => {",
+    "old": "      towns.audit(regionHere(), cmd.page ?? 0).then(",
+    "new": "      towns.audit(regionHere(), 0).then(",
     "tests": [
       "test/net/townecon_client.test.js"
     ]

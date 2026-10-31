@@ -293,8 +293,8 @@
   {
     "name": "TOWNECON-AUDIT2-CLI6-device-clock",
     "file": "src/scenes/townEconHost.js",
-    "old": "relayNowS: () => (clockHeard() ? Math.floor(reading.nowMs() / 1000) : null), turnMs: dayTurnMs() }) : null;",
-    "new": "relayNowS: () => Math.floor(reading.nowMs() / 1000), turnMs: dayTurnMs() }) : null;",
+    "old": "        relayNowS: () => (clockHeard() ? Math.floor(reading.nowMs() / 1000) : null),",
+    "new": "        relayNowS: () => Math.floor(reading.nowMs() / 1000),",
     "tests": [
       "test/net/townecon_client.test.js"
     ],
@@ -303,8 +303,8 @@
   {
     "name": "TOWNECON-AUDIT2-CLI1-frozen-early",
     "file": "src/scenes/townEconHost.js",
-    "old": "      if (!ready()) return econ.bandOf(town?.mapId);\n",
-    "new": "",
+    "old": "      if (!ready()) return econ.bandOf(town?.mapId);\n      const k = `${town?.mapId >>> 0}:${day}`;",
+    "new": "      const k = `${town?.mapId >>> 0}:${day}`;",
     "tests": [
       "test/net/townecon_client.test.js"
     ],
@@ -313,8 +313,8 @@
   {
     "name": "TOWNECON-AUDIT2-CLI1-plans-kept",
     "file": "src/scenes/townEconHost.js",
-    "old": "    setTimeout(() => { try { onBandsReady(); } catch { /* the trips' memo not yet stood: nothing planned on it */ } }, 0);\n",
-    "new": "",
+    "old": "    setTimeout(() => {\n      try {\n        onBandsReady();\n      } catch {\n        /* the trips' memo not yet stood: nothing planned on it */\n      }\n    }, 0);\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/net/townecon_client.test.js"
     ],
@@ -323,7 +323,7 @@
   {
     "name": "TOWNECON-AUDIT2-LIV8-wiped",
     "file": "src/scenes/townEconHost.js",
-    "old": "        if (marketBands.size >= MARKET_BANDS_MAX) marketBands.delete(/** @type {string} */ (marketBands.keys().next().value));",
+    "old": "        if (marketBands.size >= MARKET_BANDS_MAX)\n          marketBands.delete(/** @type {string} */ (marketBands.keys().next().value));",
     "new": "        if (marketBands.size >= MARKET_BANDS_MAX) marketBands.clear();",
     "tests": [
       "test/net/townecon_client.test.js"

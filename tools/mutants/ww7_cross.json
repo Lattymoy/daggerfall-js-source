@@ -762,8 +762,8 @@
   {
     "name": "WW7-10-trade-the-bays-end-counted",
     "file": "src/scenes/townEconHost.js",
-    "old": "          if (inBay(p.px, p.py) && !inBay(q.px, q.py)) continue;   // WW7-10: the Bay's end of a lane across the edge\n",
-    "new": "",
+    "old": "          if (inBay(p.px, p.py) && !inBay(q.px, q.py)) continue; // WW7-10: the Bay's end of a lane across the edge\n          const k = `${p.px},${p.py}`;",
+    "new": "          const k = `${p.px},${p.py}`;",
     "tests": [
       "test/world/worldWide/ww7_cross.test.js"
     ],

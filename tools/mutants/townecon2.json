@@ -322,8 +322,8 @@
   {
     "name": "TOWNECON2-host-unshared",
     "file": "src/scenes/townEconHost.js",
-    "old": "players: (mapId) => book?.shareOf(mapId) ?? 0",
-    "new": "players: () => 0",
+    "old": "    players: (mapId) => book?.shareOf(mapId) ?? 0,",
+    "new": "    players: () => 0,",
     "tests": [
       "test/net/townecon_client.test.js"
     ],

@@ -438,8 +438,8 @@
   {
     "name": "MEET-types-unread",
     "file": "src/scenes/townMeetsHost.js",
-    "old": "MEET_TYPES.has(loc.mapTableData?.locationType)",
-    "new": "true",
+    "old": "export const meetsTown = (loc) =>\n  !!loc?.exterior?.exteriorData && MEET_TYPES.has(loc.mapTableData?.locationType) && !loc.spawned && !loc.capital;",
+    "new": "export const meetsTown = (loc) => !!loc?.exterior?.exteriorData && true && !loc.spawned && !loc.capital;",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -448,8 +448,8 @@
   {
     "name": "MEET-spawn-met",
     "file": "src/scenes/townMeetsHost.js",
-    "old": " && !loc.spawned",
-    "new": "",
+    "old": "  !!loc?.exterior?.exteriorData && MEET_TYPES.has(loc.mapTableData?.locationType) && !loc.spawned && !loc.capital;",
+    "new": "  !!loc?.exterior?.exteriorData && MEET_TYPES.has(loc.mapTableData?.locationType) && !loc.capital;",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -458,8 +458,8 @@
   {
     "name": "MEET-capital-met",
     "file": "src/scenes/townMeetsHost.js",
-    "old": " && !loc.capital",
-    "new": "",
+    "old": "  !!loc?.exterior?.exteriorData && MEET_TYPES.has(loc.mapTableData?.locationType) && !loc.spawned && !loc.capital;",
+    "new": "  !!loc?.exterior?.exteriorData && MEET_TYPES.has(loc.mapTableData?.locationType) && !loc.spawned;",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -468,8 +468,8 @@
   {
     "name": "MEET-bay-unread",
     "file": "src/scenes/townMeetsHost.js",
-    "old": "      if (!inBay(x, y)) continue;\n",
-    "new": "",
+    "old": "        if (!inBay(x, y)) continue;\n        const shape = dx || dy ? outlineAt(x, y) : ownShape;",
+    "new": "        const shape = dx || dy ? outlineAt(x, y) : ownShape;",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],

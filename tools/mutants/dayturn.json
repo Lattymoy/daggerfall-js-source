@@ -146,8 +146,8 @@
   {
     "name": "DT-host-town-unwired",
     "file": "src/scenes/townEconHost.js",
-    "old": ", turnMs: dayTurnMs() }) : null;",
-    "new": " }) : null;",
+    "old": "        turnMs: dayTurnMs(),\n      })",
+    "new": "      })",
     "tests": [
       "test/net/dayturn.test.js"
     ]

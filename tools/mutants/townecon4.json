@@ -152,8 +152,8 @@
   {
     "name": "TOWNECON4-host-ether",
     "file": "src/scenes/townEconHost.js",
-    "old": "if (!port || port.ether || !Number.isSafeInteger(port.px)",
-    "new": "if (!port || !Number.isSafeInteger(port.px)",
+    "old": "    if (!port || port.ether || !Number.isSafeInteger(port.px) || !Number.isSafeInteger(port.py)) return null;",
+    "new": "    if (!port || !Number.isSafeInteger(port.px) || !Number.isSafeInteger(port.py)) return null;",
     "tests": [
       "test/systems/naval/townecon_sea.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "TOWNECON4-host-deal-unbooked",
     "file": "src/scenes/townEconHost.js",
-    "old": "? book.seaDeal(port.px, port.py) : false),",
-    "new": "? false : false),",
+    "old": "    seaDeal: (port) => (book && portTown(port) != null ? book.seaDeal(port.px, port.py) : false),",
+    "new": "    seaDeal: (port) => (book && portTown(port) != null ? false : false),",
     "tests": [
       "test/systems/naval/townecon_sea.test.js"
     ],
