@@ -1,5 +1,5 @@
 // @ts-check
-// PI1 (2026-10-07): PHYSICAL ITEMS IN THE SCENE - demifiend000's mod (vendor/physical-items; its law is
+// PI1 (2026-10-07): PHYSICAL ITEMS IN THE SCENE - demifiend000's mod (Physical Items 0.1.29; its law is
 // systems/physicalItems.js, its record bible/06-Systems/Physical-Items.md) as one layer every host's ground-pile pool
 // builds for itself (scenes/droppedLoot.js createDroppedLoot - THE ONE CONSTRUCTION SEAM: four hosts, one constructor),
 // so its pictures, its ray targets, its plaque, its lines and its recentre ride the doors each host already calls on

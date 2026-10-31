@@ -366,7 +366,7 @@ export function drawSpellCastHands(renderer, canvas, art, frameIndex, {
 
 /**
  * RSH1 (2026-10-11, Mac: "can we implement this mod into the source"): READIED SPELLCASTING HANDS 1.3 (jefetienne,
- * vendor/readied-spellcasting-hands/, MIT). The mod's whole change is AnimateSpellCast
+ * MIT). The mod's whole change is AnimateSpellCast
  * (Modded_FPSSpellCasting_Ready.cs, the coroutine): every step it shows FRAME 0 of the readied spell's element while
  *
  *   `pef.HasReadySpell && pef.ReadySpell.Settings.TargetType != TargetTypes.CasterOnly && !psc.IsPlayingAnim`

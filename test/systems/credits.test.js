@@ -10,6 +10,7 @@ import { OVERHAUL_PANELS } from '../../src/systems/overhauls.js';
 import { UI_PACKS } from '../../src/systems/uiPack.js';
 import { ENVIRONMENT_PACK_MODS } from '../../src/systems/vanillaEnhanced/vanillaEnhancedPack.js';   // ALIKR1 / SNOWFALL1: the shipped environment packs
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
+import { retiredKeys } from '../ownWork.mjs';   // OWN-WORK1: the keys Own-Work.md records as retired
 
 // CR1 - THE CREDITS (Mac, 2026-08-30: "as we integrate these I really
 // want to give credit to the mod developer who created it").
@@ -41,12 +42,27 @@ test('CR1: every vendored folder is credited, and every credited folder exists w
   }
 });
 
+test('OWN-WORK1: a retired credit names a key Own-Work.md records, and no folder', () => {
+  const retired = retiredKeys();
+  const folders = readdirSync(join(root, 'vendor'));
+  const named = rows.flatMap((r) => r.retired ?? []);
+  assert.ok(named.length >= 12, `only ${named.length} retired credits`);
+  for (const r of rows) {
+    for (const k of r.retired ?? []) {
+      assert.ok(retired.has(k), `"${r.title}" is retired as ${k} and Own-Work.md has no row for it`);
+      assert.ok(!folders.includes(k), `"${r.title}" is retired and vendor/${k} is still there`);
+      assert.ok(!(r.vendor ?? []).includes(k), `"${r.title}" names ${k} as both vendored and retired`);
+    }
+  }
+  assert.deepEqual([...retired].filter((k) => !named.includes(k)), [], 'a retired key has lost its credit on the About screen');
+});
+
 test('CR1: a mod row carries what a modder is owed - title, author, what it is, the terms it is carried under', () => {
   assert.ok(CREDITS.mods.length >= 1, 'no mods credited');
   for (const m of CREDITS.mods) {
-    for (const k of ['title', 'author', 'what', 'terms', 'vendor']) assert.ok(m[k], `mod "${m.title}" lacks ${k}`);
+    for (const k of ['title', 'author', 'what', 'terms']) assert.ok(m[k], `mod "${m.title}" lacks ${k}`);
     assert.match(m.terms, /permission/i, 'a mod is carried with permission or not at all');
-    assert.ok(m.vendor.length >= 1);
+    assert.ok((m.vendor?.length ?? 0) + (m.retired?.length ?? 0) >= 1, `mod "${m.title}" names neither its folder nor its retired key`);
     // No invented contact: it is the manifest's own words or absent.
     if (m.contact) assert.doesNotMatch(m.contact, /^https?:/, 'a contact is a name from the manifest, not a guessed URL');
   }
@@ -125,7 +141,7 @@ test('WM3: every mod on the credits screen has a row on the Features home', () =
   // form of that mod for this one, systems/enemyExpansion/dexSwitches.js), so the Meaner Monsters row turns it off
   if (named.has('meanerMonsters') && named.has('daggerfall-enemy-expansion')) named.add('mudex');
   const missing = CREDITS.mods
-    .flatMap((r) => (r.vendor ?? []).map((v) => [r.title, v]))
+    .flatMap((r) => [...(r.vendor ?? []), ...(r.retired ?? [])].map((v) => [r.title, v]))
     .filter(([, v]) => !named.has(v) && !named.has(v.toLowerCase()));
   assert.deepEqual(missing.map(([t, v]) => `${t} (vendor/${v})`), [],
     'these mods are credited on the About page and have no row on the Features home, so a player\n'

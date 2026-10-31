@@ -1,8 +1,8 @@
 // WORLD TOOLTIPS 1.1 (jefetienne, MIT) - THE NAMING LADDER.
 //
 // Ported 1:1 from the mod's OWN source, which the bundle ships as a
-// Unity TextAsset: `vendor/world-tooltips/Scripts/
-// Modded_HUDTooltipWindow.cs`. Every arm below cites the line it comes
+// Unity TextAsset: World Tooltips 1.1's
+// Modded_HUDTooltipWindow.cs. Every arm below cites the line it comes
 // from. Nothing here is a decompile and nothing here is invented.
 //
 // WHAT THIS MODULE IS, AND WHAT IT IS NOT. It is the WORDS - which

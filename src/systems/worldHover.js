@@ -1,7 +1,7 @@
 // WORLD-HOVER - WHAT THE CROSSHAIR IS ON, AS A RECORD.
 //
-// Mac handed over World Tooltips 1.1 (jefetienne, MIT, vendored whole
-// under vendor/world-tooltips/) with two conditions of his own: an
+// Mac handed over World Tooltips 1.1 (jefetienne, MIT, its own C#
+// source in the release's bundle) with two conditions of his own: an
 // enhanced skin for it rather than the mod's Daggerfall tooltip panel,
 // and a merge with the loot plaque the port already had (PX21c,
 // ui/lootHover.js). This is the model half of both.

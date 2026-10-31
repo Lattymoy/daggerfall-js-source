@@ -1,7 +1,7 @@
 // AUDIT PI1 (2026-10-07, Mac: "Lets do a conprehensive audit and ensure this is perfection"): PHYSICAL ITEMS audited -
-// the scene layer, the law, the four hosts' halves and the record, read against the shipped assembly's IL
-// (vendor/physical-items/il) and the port's own laws. One test a finding group; each names the finding ids it holds
-// (bible/01-Overview/audits/Audit-PI1.md). Mutants: tools/mutants/audit_pi1.json.
+// the scene layer, the law, the four hosts' halves and the record, read against the shipped assembly's IL (Physical
+// Items 0.1.29's PhysicalItems.dll) and the port's own laws. One test a finding group; each names the finding ids it
+// holds (bible/01-Overview/audits/Audit-PI1.md). Mutants: tools/mutants/audit_pi1.json.
 import '../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

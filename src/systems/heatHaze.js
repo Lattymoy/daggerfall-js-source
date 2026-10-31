@@ -1,6 +1,6 @@
 // HAZE1 (2026-10-08, Mac: "We have permission to use and implement everything into the codebase. These should be on
-// by default and integrate into our enhanced environments seamlessly") - HEAT HAZE 1.0.1 (demifiend000, vendored at
-// vendor/heat-haze/), ported off its assembly: HeatHazeEligibility whole, and HeatHazeMod's state - its settings, the
+// by default and integrate into our enhanced environments seamlessly") - HEAT HAZE 1.0.1 (demifiend000, the shipped
+// release), ported off its assembly: HeatHazeEligibility whole, and HeatHazeMod's state - its settings, the
 // ring's place and scale, the strength's ease and the noise it bends the view by. Pure: the host hands it the frame
 // (render/heatHaze.js draws what it answers).
 //

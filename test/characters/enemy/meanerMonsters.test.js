@@ -72,21 +72,21 @@ test('MM1: the row at mint - the edit over the base row under the mod\'s Enabled
   assert.equal(modSettingIfDeclared('meanerMonsters', 'Enabled'), true, 'MO1: on by default');
 });
 
-test('MM1: the forty-six xml files - the vendored files equal the table (werewolf and wereboar x1.2, the dragonling x2.5, its corpse x2), and DFU\'s SetBillboardScale applies them after the record\'s own scale, under the switch alone (mutants: the scale before the truncation, or always on)', () => {
-  // the vendored xml, parsed
-  const parsed = {};
-  for (const dir of ['Werewolf', 'Wereboar', 'AlternateDragon']) {
-    for (const f of readdirSync(new URL(`../../../vendor/meanerMonsters/xml/${dir}`, import.meta.url))) {
-      const m = /^(\d+)_(\d+)-0\.xml$/.exec(f); assert.ok(m, f);
-      const x = rd(`vendor/meanerMonsters/xml/${dir}/${f}`);
-      const sx = /<scaleX>([\d.]+)<\/scaleX>/.exec(x), sy = /<scaleY>([\d.]+)<\/scaleY>/.exec(x);
-      (parsed[Number(m[1])] ??= {})[Number(m[2])] = [Number(sx[1]), Number(sy[1])];
-    }
-  }
-  assert.equal(Object.values(parsed).reduce((n, a) => n + Object.keys(a).length, 0), 46);
-  assert.deepEqual(JSON.parse(JSON.stringify(MEANER_MONSTERS_BILLBOARD_XML)), parsed, 'the table IS the files');
-  const manifest = JSON.parse(rd('vendor/meanerMonsters/MeanerMonsters.dfmod.json'));
-  assert.equal(manifest.Files.filter((f) => f.endsWith('.xml')).length, 46); assert.equal(manifest.ModVersion, '1.5.2'); assert.equal(manifest.ModAuthor, 'Ralzar');
+test('MM1: the forty-six xml files - the shipped files equal the table (werewolf and wereboar x1.2, the dragonling x2.5, its corpse x2), and DFU\'s SetBillboardScale applies them after the record\'s own scale, under the switch alone (mutants: the scale before the truncation, or always on)', () => {
+  // OWN-WORK1 (2026-10-31): the forty-six xml files of Meaner Monsters 1.5.2 (`<archive>_<record>-0.xml`, each
+  // `<info><scaleX>..</scaleX><scaleY>..</scaleY></info>`), read off the files and written out when
+  // vendor/meanerMonsters left the tree: archive -> record -> [scaleX, scaleY]
+  const shipped = {
+    96: { 0: [2, 2] },
+    264: { 0: [1.2, 1.2], 1: [1.2, 1.2], 2: [1.2, 1.2], 3: [1.2, 1.2], 4: [1.2, 1.2], 5: [1.2, 1.2], 6: [1.2, 1.2], 7: [1.2, 1.2],
+      8: [1.2, 1.2], 9: [1.2, 1.2], 10: [1.2, 1.2], 11: [1.2, 1.2], 12: [1.2, 1.2], 13: [1.2, 1.2], 14: [1.2, 1.2] },
+    269: { 0: [1.2, 1.2], 1: [1.2, 1.2], 2: [1.2, 1.2], 3: [1.2, 1.2], 4: [1.2, 1.2], 5: [1.2, 1.2], 6: [1.2, 1.2], 7: [1.2, 1.2],
+      8: [1.2, 1.2], 9: [1.2, 1.2], 10: [1.2, 1.2], 11: [1.2, 1.2], 12: [1.2, 1.2], 13: [1.2, 1.2], 14: [1.2, 1.2] },
+    295: { 0: [2.5, 2.5], 1: [2.5, 2.5], 2: [2.5, 2.5], 3: [2.5, 2.5], 4: [2.5, 2.5], 5: [2.5, 2.5], 6: [2.5, 2.5], 7: [2.5, 2.5],
+      8: [2.5, 2.5], 9: [2.5, 2.5], 10: [2.5, 2.5], 11: [2.5, 2.5], 12: [2.5, 2.5], 13: [2.5, 2.5], 14: [2.5, 2.5] },
+  };
+  assert.equal(Object.values(shipped).reduce((n, a) => n + Object.keys(a).length, 0), 46, 'the manifest named forty-six xml files');
+  assert.deepEqual(JSON.parse(JSON.stringify(MEANER_MONSTERS_BILLBOARD_XML)), shipped, 'the table IS the files');
   // the registry and the size law
   unregisterBillboardXml(MEANER_MONSTERS_VENDOR);
   let on = false;
@@ -126,7 +126,7 @@ test('MM1: the forty-six xml files - the vendored files equal the table (werewol
   installMeanerMonsters();   // the real switch back
 });
 
-test('MM1: the seams - the archive on a parsed TEXTURE.###, every billboard sized through the one door, the boot install before the overhaul\'s, the Mods pane entry, the credit, the vendor README, and the overhaul\'s two compatibility switches GONE (mutant: any)', () => {
+test('MM1: the seams - the archive on a parsed TEXTURE.###, every billboard sized through the one door, the boot install before the overhaul\'s, the Mods pane entry, the credit, and the overhaul\'s two compatibility switches GONE (mutant: any)', () => {
   assert.match(rd('src/formats/textureFile.js'), /this\.archive = Number\.parseInt\(fileName\.slice\('TEXTURE\.'\.length\), 10\);/);
   for (const f of readdirSync(new URL('../../../src/scenes', import.meta.url), { recursive: true }).filter((x) => x.endsWith('.js'))) {   // TIDY2: and the feature folders
     const s = rd(`src/scenes/${f}`);
@@ -149,7 +149,10 @@ test('MM1: the seams - the archive on a parsed TEXTURE.###, every billboard size
   assert.equal(MOD_SETTINGS.pcaao.keys.meanerMonsters, undefined, 'Mac: no compatibility switches between mods');
   assert.equal(MOD_SETTINGS.pcaao.keys.rolePlayRealismArchery, undefined);
   const credit = CREDITS.mods.find((c) => c.title === 'Meaner Monsters');
-  assert.ok(credit); assert.equal(credit.author, 'Ralzar'); assert.equal(credit.version, '1.5.2'); assert.deepEqual([...credit.vendor], ['meanerMonsters']); assert.match(credit.terms, /MIT/);
-  assert.match(rd('vendor/meanerMonsters/README.md'), /Ralzar/); assert.match(rd('vendor/meanerMonsters/README.md'), /MIT/);
+  assert.ok(credit); assert.equal(credit.author, 'Ralzar'); assert.equal(credit.version, '1.5.2'); assert.deepEqual([...credit.retired], ['meanerMonsters']); assert.match(credit.terms, /MIT/);   // OWN-WORK1: retired from vendor/
   assert.match(rd('src/characters/enemy/enemyEntity.js'), /const basics = editAtMint\(mobileType, pcaaoMeanerMonstersRow\(mobileType, applyMeanerMonsters\(mobileType, basicsIn\)\)\);/, 'Ralzar\'s row, then the overhaul\'s edit over it (DEX1: and a Start-time mod\'s over both, registerMintRowEditor)');
+});
+
+test('OWN-WORK1: the record of the retired vendor/meanerMonsters is Own-Work.md\'s row - Ralzar, MIT', () => {
+  assert.match(readFileSync(new URL('../../../bible/01-Overview/Own-Work.md', import.meta.url), 'utf8'), /^\| `meanerMonsters` \|.*Ralzar.*MIT/m);
 });

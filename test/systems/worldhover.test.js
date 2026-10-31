@@ -769,8 +769,8 @@ test('WORLD-HOVER: the seam composes the context\'s own families and the host\'s
 
 // ── WORLD TOOLTIPS' NAMING LADDER ────────────────────────────────
 //
-// The mod's own words, ported 1:1 from `vendor/world-tooltips/Scripts/
-// Modded_HUDTooltipWindow.cs`. Every assertion names the line it holds.
+// The mod's own words, ported 1:1 from World Tooltips 1.1's
+// Modded_HUDTooltipWindow.cs. Every assertion names the line it holds.
 
 test('WORLD TOOLTIPS: the sixteen Daedra by BILLBOARD RECORD, which is not the summoning table\'s order', async () => {
   const wt = await import('../../src/systems/worldTooltips.js');

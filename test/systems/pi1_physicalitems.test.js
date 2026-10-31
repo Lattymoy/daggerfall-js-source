@@ -1,8 +1,8 @@
 // PI1 (2026-10-07, Mac: "This is the next mod I would like to integrate (permission has been granted). This should work
 // for both morrowind and the sprite system, and should also included the rarity treatment (like we do for the world
 // boss)"): PHYSICAL ITEMS 0.1.29, by demifiend000 - a body's items thrown out round it, a shift-drop laid ahead of the
-// player, each item its own picture, taken on a press. The port's law is the shipped assembly's IL
-// (vendor/physical-items/il); every pin names the offsets it holds the port to (bible/06-Systems/Physical-Items.md).
+// player, each item its own picture, taken on a press. The port's law is the shipped assembly's IL (Physical Items
+// 0.1.29's PhysicalItems.dll); every pin names the offsets it holds the port to (bible/06-Systems/Physical-Items.md).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -27,11 +27,20 @@ import { CANNOT_REMOVE_ITEM_TEXT } from '../../src/systems/createItem.js';
 import { setPref } from '../../src/systems/uiPrefs.js';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
-const VENDOR = 'vendor/physical-items';
-const IL = read(`${VENDOR}/il/PhysicalItems.il.txt`);
-const SHIPPED = JSON.parse(read(`${VENDOR}/modsettings.json`));
-/** One method body out of the IL dump. */
-const method = (name) => { const i = IL.indexOf(`---- ${name} `); assert.ok(i >= 0, name); const j = IL.indexOf('\n---- ', i + 1); return IL.slice(i, j < 0 ? undefined : j); };
+// OWN-WORK1 (2026-10-31): the shipped modsettings.json, written out here - its copy left the tree. Each key in the file's
+// order: [section.name, default, min, max] (a toggle has no range). The Interaction section is the four names below it.
+const SHIPPED = [
+  ['Enemy Loot.Physical Enemy Drops', true], ['Enemy Loot.Impulse Strength', 200, 0, 400],
+  ...['Weapons', 'Arrows', 'Armor', 'Clothing', 'Ingredients', 'Gold', 'Potions', 'Books', 'Gems', 'Jewellery', 'Maps', 'Magic Items',
+    'Religious Items', 'Quest Items', 'Transportation', 'Other Items'].map((n) => [`Enemy Categories.${n}`, true]),
+  ['Item Sizes.Weapons', 0.8, 0.1, 1.5], ['Item Sizes.Arrows', 0.32, 0.1, 1.5], ['Item Sizes.Armor', 0.65, 0.1, 1.5], ['Item Sizes.Clothing', 0.52, 0.1, 1.5],
+  ...['Ingredients', 'Gold', 'Potions', 'Books', 'Gems', 'Jewellery', 'Maps', 'Magic Items', 'Religious Items', 'Quest Items', 'Transportation',
+    'Other Items'].map((n) => [`Item Sizes.${n}`, 0.4, 0.1, 1.5]),
+  ...['Dagger', 'Tanto', 'Staff', 'Shortsword', 'Wakazashi', 'Broadsword', 'Saber', 'Longsword', 'Katana', 'Claymore', 'Dai Katana', 'Mace', 'Flail',
+    'Warhammer', 'Battle Axe', 'War Axe', 'Short Bow', 'Long Bow', 'Arrow'].map((n) => [`Weapon Sizes.${n}`, 0, 0, 1.5]),
+  ...['Cuirass', 'Gauntlets', 'Greaves', 'Pauldrons', 'Helm', 'Boots', 'Buckler', 'Round Shield', 'Kite Shield', 'Tower Shield'].map((n) => [`Armor Sizes.${n}`, 0, 0, 1.5]),
+];
+const SHIPPED_INTERACTION = ['Placement Mode Key', 'Freeze Placement Key', 'Scroll Mode Key', 'Character Item Collision'];
 /** The settings as shipped, with `over` laid on - no store. */
 const shippedRead = (over = {}) => {
   const base = Object.fromEntries(Object.entries(MOD_SETTINGS[PHYSICAL_ITEMS_VENDOR].keys).map(([k, d]) => [k, d.default]));
@@ -41,13 +50,11 @@ const shippedRead = (over = {}) => {
 const fixed = (...xs) => { let i = 0; return () => xs[i++ % xs.length]; };
 const sword = () => createWeapon(120, 0, () => 0.5);
 
-test('PI1 the record: the manifest verbatim, and every key the port reads restated under the vendor in the file\'s order with the author\'s words, ranges and defaults - the Interaction section alone not declared', () => {
-  const mf = JSON.parse(read(`${VENDOR}/physical-items.dfmod.json`));
-  assert.deepEqual([mf.ModTitle, mf.ModVersion, mf.ModAuthor, mf.DFUnity_Version, mf.GUID, mf.Dependencies.map((d) => d.Name)],
-    ['Physical Items', '0.1.29', 'demifiend000', '1.1.1', '8764ae71-a464-4a5e-b646-fbc464670137', ['daggerfall.harmony']]);
+test('PI1 the record: the manifest\'s title and author, and every key the port reads restated under the vendor in the file\'s order with the author\'s words, ranges and defaults - the Interaction section alone not declared', () => {
+  // the shipped manifest's ModTitle and ModAuthor (0.1.29, GUID 8764ae71-a464-4a5e-b646-fbc464670137)
+  assert.deepEqual([MOD_SETTINGS[PHYSICAL_ITEMS_VENDOR].title, MOD_SETTINGS[PHYSICAL_ITEMS_VENDOR].author], ['Physical Items', 'demifiend000']);
   const keys = MOD_SETTINGS[PHYSICAL_ITEMS_VENDOR].keys;
-  const shipped = SHIPPED.Sections.filter((s) => s.Name !== 'Interaction').flatMap((s) => s.Keys.map((k) => [`${s.Name}.${k.Name}`, k]));
-  assert.deepEqual(Object.keys(keys).filter((k) => k !== 'Enabled'), shipped.map(([n]) => n));
+  assert.deepEqual(Object.keys(keys).filter((k) => k !== 'Enabled'), SHIPPED.map(([n]) => n));
   // PLAIN-TEXT (2026-10-19): the author's lines spoke of artwork dimensions, detection volumes and a slider's midpoint; each is said plainly for a player - their words, exactly
   const PLAIN = {
     'Enemy Loot.Physical Enemy Drops': 'Shows a fallen enemy’s loot on the ground around it, for the kinds of item turned on below. What the body holds stays the same.',
@@ -114,22 +121,19 @@ test('PI1 the record: the manifest verbatim, and every key the port reads restat
     'Armor Sizes.Kite Shield': 'Size of a kite shield on the ground. 0 uses the Armor size.',
     'Armor Sizes.Tower Shield': 'Size of a tower shield on the ground. 0 uses the Armor size.',
   };
-  for (const [name, k] of shipped) {
-    assert.equal(keys[name].description, PLAIN[name] ?? k.Description, `${name}: the author's words, or their plain rewording`);
-    assert.equal(keys[name].default, k.Value, `${name}: the shipped default`);
-    if ('Min' in k) assert.deepEqual([keys[name].min, keys[name].max], [k.Min, k.Max], `${name}: the slider's range`);
+  for (const [name, value, min, max] of SHIPPED) {
+    assert.equal(keys[name].description, PLAIN[name], `${name}: the author's words, said plainly`);
+    assert.equal(keys[name].default, value, `${name}: the shipped default`);
+    if (min !== undefined) assert.deepEqual([keys[name].min, keys[name].max], [min, max], `${name}: the slider's range`);
   }
-  assert.deepEqual(SHIPPED.Sections.find((s) => s.Name === 'Interaction').Keys.map((k) => k.Name),
-    ['Placement Mode Key', 'Freeze Placement Key', 'Scroll Mode Key', 'Character Item Collision'], 'the four undeclared keys are the placement section, as the page says');
+  for (const n of SHIPPED_INTERACTION) assert.equal(keys[`Interaction.${n}`], undefined, `${n}: the placement section, undeclared, as the page says`);
   assert.equal(keys.Enabled.default, true);
   assert.ok(ONLINE_PLAYERS_OWN_MODS.includes(PHYSICAL_ITEMS_VENDOR), 'online: the player\'s own');
   assert.deepEqual(MOD_CURATED[PHYSICAL_ITEMS_VENDOR], ['Enemy Loot.Physical Enemy Drops', 'Enemy Loot.Impulse Strength', 'Item Sizes.Weapons', 'Item Sizes.Armor']);
 });
 
 test('PI1 the categories: ItemCategories (.cctor [IL_7dac]) in the mod\'s order, and GetItemCategory [IL_28e4] over every producer the port mints from', () => {
-  const ordered = [...method('PhysicalItemManager::.cctor').matchAll(/ldstr\s+"([^"]+)"/g)].map((m) => m[1]);
-  assert.deepEqual(PI_CATEGORIES, ordered);
-  assert.deepEqual(SHIPPED.Sections.find((s) => s.Name === 'Enemy Categories').Keys.map((k) => k.Name), [...PI_CATEGORIES]);
+  assert.deepEqual([...PI_CATEGORIES], SHIPPED.filter(([n]) => n.startsWith('Enemy Categories.')).map(([n]) => n.slice('Enemy Categories.'.length)));
   const maps = []; randomlyAddMap(1, maps, () => 0);
   const minted = [sword(), createWeapon(131, 0, () => 0.5), createRandomArmor(1, () => 0.3), createRandomClothing('male', () => 0.3), createRandomPotion(() => 0.1), maps[0], goldStack(7)];
   assert.deepEqual(minted.map(itemCategory), ['Weapons', 'Arrows', 'Armor', 'Clothing', 'Potions', 'Maps', 'Gold']);
@@ -141,8 +145,6 @@ test('PI1 the categories: ItemCategories (.cctor [IL_7dac]) in the mod\'s order,
 });
 
 test('PI1 the sizes: GetDefaultWorldHeight [IL_2a08] as the IL holds it, the overrides by enum name (ApplySettings [IL_2f73] - both pauldrons one key), and the clamps', () => {
-  const body = method('PhysicalItemManager::GetDefaultWorldHeight');
-  for (const v of ['0.800000011920929', '0.3199999928474426', '0.5199999809265137', '0.6499999761581421', '0.4000000059604645']) assert.ok(body.includes(`ldc.r4         ${v}`), v);
   assert.deepEqual([sword(), createWeapon(131, 0, () => 0.5), createRandomArmor(1, () => 0.3), createRandomClothing('male', () => 0.3), goldStack(3)].map(defaultWorldHeight), [0.8, 0.32, 0.65, 0.52, 0.4]);
   const s = readPhysicalItemsSettings(shippedRead({ 'Weapon Sizes.Longsword': 1.2, 'Armor Sizes.Pauldrons': 0.05, 'Item Sizes.Gold': 9, 'Weapon Sizes.Dai Katana': 0, 'Enemy Loot.Impulse Strength': 500, 'Enemy Categories.Gems': false }));
   assert.equal(worldHeight(sword(), s), 1.2, 'a weapon\'s own override');
@@ -174,14 +176,10 @@ test('PI1 the picture: the visible box at alpha 128 [IL_0d39], the whole picture
 test('PI1 the scatter and the throw: RandomScatterOffset [IL_51d8] and CreateCorpseProxy\'s launch [IL_4fe6] - out, up, scaled by Impulse Strength only at the fall', () => {
   // insideUnitCircle off (0.5, 1) = (0, 1) (passiveFish.js's rejection draw); the range's roll 0.5 -> 0.65 m out; 0.65 up
   assert.deepEqual(scatterOffset(fixed(0.5, 1, 0.5)).map((v) => +v.toFixed(6)), [0, 0.65, 0.65]);
-  const body = method('PhysicalItemManager::RandomScatterOffset');
-  for (const v of ['0.44999998807907104', '0.8500000238418579', '0.6499999761581421']) assert.ok(body.includes(v), v);
   // the nudge: 0.08 along the bearing and 0.08 up, never scaled
   assert.deepEqual(proxyLaunch([3, 0, 4], false, 2, fixed(0.5)).map((v) => +v.toFixed(6)), [0.048, 0.08, 0.064]);
   // the fall: 0.75..1 of 0.85 along it (roll 0 -> 0.6375), a tenth of the disc ((0.5, 0.5) -> the centre), 0.7..1.1 up (roll 0.5 -> 0.9), times 2
   assert.deepEqual(proxyLaunch([0, 0, 1], true, 2, fixed(0, 0.5, 0.5, 0.5)).map((v) => +v.toFixed(6)), [0, 1.8, 1.275]);
-  const launch = method('PhysicalItemManager::CreateCorpseProxy');
-  for (const v of ['0.07999999821186066', '0.8500000238418579', '0.75', '0.699999988079071', '1.100000023841858', 'PhysicalItemManager::enemyImpulseStrength']) assert.ok(launch.includes(v), v);
 });
 
 test('PI1 the spiral: GetBatchDropPosition [IL_4028] - 0.78 * sqrt(i) at the golden angle, 1.1 m ahead, a point refused for no floor, a blocked way or another drop\'s footprint, the anchor past 256 tries', () => {
@@ -189,8 +187,6 @@ test('PI1 the spiral: GetBatchDropPosition [IL_4028] - 0.78 * sqrt(i) at the gol
   const p4 = spiralPoint([0, 0, 0], 4);
   assert.ok(Math.abs(Math.hypot(p4[0], p4[2]) - 1.56) < 1e-9);
   assert.ok(Math.abs(p4[0] - 1.56 * Math.cos(4 * 2.399963140487671)) < 1e-9 && Math.abs(p4[2] - 1.56 * Math.sin(4 * 2.399963140487671)) < 1e-9);
-  assert.ok(method('PhysicalItemManager::GetBatchDropPosition').includes('2.399963140487671'));
-  assert.ok(method('PhysicalItemManager::GetBatchDropAnchor').length && method('PhysicalItemManager::GetBatchSpreadCentre').includes('1.100000023841858'));
   const next = { i: 0 };
   const placed = [{ pos: [0, 0, 0], r: 0.2 }];
   const at = spiralDrop([0, 0, -1.1], [0, 0, 0], 0.2, next, placed, () => 0);
@@ -230,11 +226,6 @@ test('PI1 the body: a drop falls, a hard landing bounces at 0.35 and a soft one 
   assert.ok(lost.settled, 'no ground ever: the port\'s floor stands it');
   assert.deepEqual({ ...PI_BODY }, { gravity: 9.81, dt: 0.02, drag: 0.9, bounce: 0.35, bounceThreshold: 2, dynamicGrip: (0.45 + 0.6) / 2, staticGrip: (0.55 + 0.6) / 2, settleSq: 0.0025, settleS: 0.5, reach: 0.1, flightMaxS: 8 },
     'the rigidbody as the mod sets it, against Unity\'s defaults (the material 0.6/0.6, the bounce threshold 2, gravity 9.81, the 0.02 s step)');
-  const upd = method('PhysicalItemInstance::Update');
-  assert.ok(upd.includes('0.002500000176951289') && upd.includes('ldc.r4         0.5'), 'Update\'s quiet speed and time');
-  const res = method('PhysicalItemManager::CreatePresentationResources');
-  for (const v of ['0.3499999940395355', '0.44999998807907104', '0.550000011920929']) assert.ok(res.includes(v), v);
-  assert.ok(method('PhysicalItemInstance::BuildVisual').includes('0.8999999761581421'), 'the drag');
 });
 
 test('PI1 the shoulder: FixedUpdate [IL_1e94] - two slow bodies on one spot by the ground ease apart at 0.45 m/s; a fast, a settled or a flying one is left alone', () => {
@@ -372,9 +363,6 @@ test('PI1 the lines: a presented item leaves its body\'s line and stands its own
 
 test('PI1 the shift-drop law: the mod\'s Transportation refusal in its words, the pack\'s ground guards, the whole stack moved, a map read and not dropped', () => {
   assert.deepEqual(shiftDropRefusal({ group: 'Transportation', templateIndex: 0 }), { text: CANNOT_REMOVE_ITEM_TEXT });
-  const pre = method('InventoryPatches::LocalItemLeftClickPrefix');
-  assert.ok(pre.includes('ldc.i4.s       23') && pre.includes('"cannotRemoveItem"'), 'ItemGroups.Transportation');
-  assert.ok(pre.includes('ldc.i4         304') && pre.includes('ldc.i4         303'), 'either Shift');
   const arrows = createWeapon(131, 0, () => 0.5);
   const items = [arrows];
   let laid = null;

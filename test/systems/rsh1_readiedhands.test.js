@@ -1,24 +1,21 @@
 // RSH1 (2026-10-11, Mac: "can we implement this mod into the source") - READIED SPELLCASTING HANDS 1.3 (jefetienne,
-// vendor/readied-spellcasting-hands/, MIT): while a spell that is not CasterOnly is readied and the cast is not
+// MIT): while a spell that is not CasterOnly is readied and the cast is not
 // playing, the element's casting hands stand at frame 0 (Modded_FPSSpellCasting_Ready.cs AnimateSpellCast). Driven
 // through the REAL weapon rig over a synthetic six-record casting CIF, whose records differ in width so a drawn quad
-// names its own frame; and the mod's own source pinned byte for byte, with the one condition the port reads quoted
-// from it.
+// names its own frame; and the one condition the port reads, as the mod's source read (OWN-WORK1 retired the
+// vendored copy).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { createHash } from 'node:crypto';
 import { createWeaponRig } from '../../src/combat/weapon/weaponRig.js';
-import { fpsSpellCasting, readiedHandsFrame, READIED_HANDS_FRAME, SpellCastAnim } from '../../src/combat/fpsSpellCasting.js';
+import { fpsSpellCasting, readiedHandsFrame, READIED_HANDS_FRAME, SpellCastAnim, SMALL_FRAME_ADJUST } from '../../src/combat/fpsSpellCasting.js';
 import { resetToDefaults } from '../../src/systems/settings/settings.js';
 import { setModSetting, _resetModSettings, MOD_SETTINGS } from '../../src/systems/modSettings.js';
 import { ONLINE_PLAYERS_OWN_MODS } from '../../src/systems/online/onlineLane.js';
 import { CREDITS } from '../../src/ui/credits.js';
 import { featureForControl } from '../../src/systems/features.js';
-import { READIED_HANDS_ASSETS } from '../../tools/readiedHandsAssets.mjs';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url));
-const sha = (p) => createHash('sha256').update(read(p)).digest('hex');
 
 /** A plain casting CIF: six single-frame records of (20 + r) x 30, uncompressed, every pixel palette index 1. */
 function castCif() {
@@ -127,24 +124,18 @@ test('RSH1: the rig reads the readied hands under the cast hands\' own two lane 
   assert.match(read('src/scenes/hostMagic.js').toString(), /readied: \(\) => readiedSpell,/, 'the engine\'s own PlayerEffectManager.ReadySpell');
 });
 
-test('RSH1: the mod\'s own source, byte for byte, and the one condition the port reads quoted from it (mutant: a re-saved or hand-edited vendor file)', () => {
-  const V = 'vendor/readied-spellcasting-hands/';
-  assert.deepEqual({
-    cs: sha(`${V}Scripts/Modded_FPSSpellCasting_Ready.cs`),
-    loader: sha(`${V}Scripts/ModLoader.cs`),
-    manifest: sha(`${V}readiedSpellCastHand.dfmod.json`),
-    licence: sha(`${V}LICENSE`),
-  }, {
-    cs: '341f456d7804bd51cf13bdea50e91de70e3cb4e73425306616e62a4af3fe8ac5',
-    loader: '94bc0133d2fb99ce8169269c3b842832d57289306205c9a85b60d9969eb917a9',
-    manifest: '4181383a64cc07294c5a80c9c73f636eaf7f1c231e2c5940ed32b232c161e1b3',
-    licence: '083333793efdf6e784ac94de40937130adbbb00860baf5f2cc8369352ce55e56',
-  });
-  const cs = read(`${V}Scripts/Modded_FPSSpellCasting_Ready.cs`).toString();
-  assert.ok(cs.includes('if (pef.HasReadySpell && pef.ReadySpell.Settings.TargetType != TargetTypes.CasterOnly && !psc.IsPlayingAnim)'));
-  assert.ok(cs.includes('currentFrame = 0;'), 'frame 0');
-  assert.ok(cs.includes('const float smallFrameAdjust = 0.134f;'), 'the cast\'s own layout - the port\'s SMALL_FRAME_ADJUST');
-  assert.deepEqual(Object.values(READIED_HANDS_ASSETS).sort(), ['Scripts/ModLoader.cs', 'Scripts/Modded_FPSSpellCasting_Ready.cs', 'readiedSpellCastHand.dfmod.json'], 'the extraction tool writes the three bundle files');
+test('RSH1: the mod\'s one condition, its frame and the cast\'s layout, as its source read (mutants: a leg of the condition dropped, the inset moved)', () => {
+  // OWN-WORK1 (2026-10-31): vendor/readied-spellcasting-hands is retired. Modded_FPSSpellCasting_Ready.cs, at 1b97b3a8f:
+  //   if (pef.HasReadySpell && pef.ReadySpell.Settings.TargetType != TargetTypes.CasterOnly && !psc.IsPlayingAnim)
+  //     currentFrame = 0;
+  // and `const float smallFrameAdjust = 0.134f;`, the cast's own layout.
+  const SHIPPED = { frame: 0, smallFrameAdjust: 0.134 };
+  for (const ready of [false, true]) for (const casterOnly of [false, true]) for (const playing of [false, true]) {
+    const spell = ready ? { element: 1, rangeType: casterOnly ? 0 : 2 } : null;
+    const want = ready && !casterOnly && !playing ? SHIPPED.frame : -1;
+    assert.equal(readiedHandsFrame(spell, playing), want, `HasReadySpell ${ready}, CasterOnly ${casterOnly}, IsPlayingAnim ${playing}`);
+  }
+  assert.equal(SMALL_FRAME_ADJUST, SHIPPED.smallFrameAdjust, 'the cast\'s own layout - the port\'s SMALL_FRAME_ADJUST');
   assert.equal(new SpellCastAnim().frameIndex, -1);
 });
 
@@ -156,7 +147,7 @@ test('RSH1: registered as every vendored mod is - its switch on by default, its 
   const row = featureForControl('mods', 'Enabled', 'readied-spellcasting-hands');
   assert.equal(row.group, 'combat');
   assert.equal(row.effect, 'Takes effect at once.');
-  const credit = CREDITS.mods.find((c) => c.vendor?.includes('readied-spellcasting-hands'));
+  const credit = CREDITS.mods.find((c) => c.retired?.includes('readied-spellcasting-hands'));   // OWN-WORK1: a retired credit
   assert.ok(credit && credit.author === 'jefetienne' && credit.version === '1.3' && /mods\/91$/.test(credit.link));
   assert.ok(ONLINE_PLAYERS_OWN_MODS.includes('readied-spellcasting-hands'), 'hands on my own screen - the room shares nothing of it');
 });

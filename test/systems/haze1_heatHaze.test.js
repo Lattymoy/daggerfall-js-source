@@ -1,6 +1,6 @@
 // HAZE1 (2026-10-08, Mac: "We have permission to use and implement everything into the codebase. These should be on
 // by default and integrate into our enhanced environments seamlessly") - HEAT HAZE 1.0.1 (demifiend000), ported off its
-// assembly and its compiled shader (vendor/heat-haze/). bible/07-Rendering/Heat-Haze.md is the record.
+// assembly and its compiled shader (HeatHaze.dll and its DXBC). bible/07-Rendering/Heat-Haze.md is the record.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -86,20 +86,24 @@ test('HAZE1 the strength: eases toward Intensity x daylight x weather with a 0.8
 test('HAZE1 the settings: the mod\'s keys, its own Enabled the port\'s switch (on by default, MO1), clamped as LoadSettings clamps them; `?haze=off` the kill door (mutants: a clamp dropped; off by default)', () => {
   assert.equal(MOD_SETTINGS[HEAT_HAZE_VENDOR].keys.Enabled.default, true);
   assert.deepEqual(Object.keys(MOD_SETTINGS[HEAT_HAZE_VENDOR].keys), ['Enabled', 'Heat Haze.AllowSubtropical', 'Heat Haze.Intensity', 'Heat Haze.FullStrengthDistance', 'Heat Haze.RingHeight', 'Heat Haze.NoiseScale', 'Heat Haze.AnimationSpeed']);
-  const ms = JSON.parse(read('vendor/heat-haze/modsettings.json').replace(/^﻿/, ''));
-  // PLAIN-TEXT (2026-10-19): four of the mod's lines that spoke in engine terms, said plainly for a player - their words, exactly
-  const PLAIN = {
+  // OWN-WORK1 (2026-10-31): the shipped modsettings.json's one section, written out - its copy left the tree. Each key
+  // but Enabled: [name, default, min, max] (a toggle has no range).
+  const SHIPPED = [['AllowSubtropical', false], ['Intensity', 1.5, 0, 3], ['FullStrengthDistance', 400.4, 50, 3000], ['RingHeight', 1006, 50, 1500],
+    ['NoiseScale', 4.5, 0.25, 6], ['AnimationSpeed', 4, 0, 4]];
+  // the mod's words; PLAIN-TEXT (2026-10-19) said four that spoke in engine terms plainly for a player - their words, exactly
+  const WORDS = {
+    'AllowSubtropical': 'Also allow heat haze in subtropical climates during sunny or cloudy daytime weather.',
     'Intensity': 'How strongly the haze bends the view, in pixels.',
     'FullStrengthDistance': 'Distance from you, in meters, of the ring of haze.',
     'RingHeight': 'Height of the haze, in meters.',
     'NoiseScale': 'How fine the shimmer’s ripples are.',
+    'AnimationSpeed': 'Speed of the rising-air motion.',
   };
-  for (const k of ms.Sections[0].Keys) {
-    if (k.Name === 'Enabled') continue;
-    const def = MOD_SETTINGS[HEAT_HAZE_VENDOR].keys[`Heat Haze.${k.Name}`];
-    assert.equal(def.default, k.Value, `${k.Name}: the mod's default`);
-    assert.equal(def.description, PLAIN[k.Name] ?? k.Description, `${k.Name}: the mod's words, or their plain rewording`);
-    if ('Min' in k) assert.deepEqual([def.min, def.max], [k.Min, k.Max], `${k.Name}: the mod's range`);
+  for (const [name, value, min, max] of SHIPPED) {
+    const def = MOD_SETTINGS[HEAT_HAZE_VENDOR].keys[`Heat Haze.${name}`];
+    assert.equal(def.default, value, `${name}: the mod's default`);
+    assert.equal(def.description, WORDS[name], `${name}: the mod's words, or their plain rewording`);
+    if (min !== undefined) assert.deepEqual([def.min, def.max], [min, max], `${name}: the mod's range`);
   }
   const wild = { Enabled: true, 'Heat Haze.AllowSubtropical': true, 'Heat Haze.Intensity': 9, 'Heat Haze.FullStrengthDistance': 1, 'Heat Haze.RingHeight': 99999, 'Heat Haze.NoiseScale': 0, 'Heat Haze.AnimationSpeed': -3 };
   assert.deepEqual(heatHazeSettings((k) => wild[k]), { enabled: true, allowSubtropical: true, intensity: 3, distance: 50, ringHeight: 1500, noiseScale: 0.25, animationSpeed: 0 });
@@ -110,13 +114,10 @@ test('HAZE1 the settings: the mod\'s keys, its own Enabled the port\'s switch (o
   try { assert.equal(heatHazeOn(''), false); } finally { setModSetting(HEAT_HAZE_VENDOR, 'Enabled', true); }
 });
 
-test('HAZE1 the shader: every constant the DXBC carries, as the vendored listing reads them - the fade 25 to 70 (1/45), the two world axes, the 1.5 up, 0.0022 x 3.6 and 7.2, the drift, 1.15 and 0.85, the (0.3, 1) bend - and the cylinder 128 sides, +-70 (mutants: an axis; a scale; the drift; the bend\'s mix)', () => {
-  const listing = read('vendor/heat-haze/shaders/HeatHaze.glsl');
-  const floats = new Set([...listing.matchAll(/-?\d+\.\d+(?:e-?\d+)?/g)].map((m) => Math.fround(Number(m[0]))));
-  const has = (v) => floats.has(Math.fround(v));
-  for (const v of [0.02222222276031970977783203125, ...HAZE_AXES.a, ...HAZE_AXES.b, HAZE_AXES.up, HAZE_AXES.scale, HAZE_AXES.k1, HAZE_AXES.k2, ...HAZE_DRIFT, 1.15, 0.85, 0.3, 0.9999, 25.0]) {
-    assert.ok(has(v) || has(-v), `${v} is a constant of the mod's shader`);
-  }
+test('HAZE1 the shader: every constant the DXBC carries - the fade 25 to 70 (1/45), the two world axes, the 1.5 up, 0.0022 x 3.6 and 7.2, the drift, 1.15 and 0.85, the (0.3, 1) bend - and the cylinder 128 sides, +-70 (mutants: an axis; a scale; the drift; the bend\'s mix)', () => {
+  // OWN-WORK1 (2026-10-31): the shader's constants as its DXBC read back (Heat Haze 1.0.1), written out - the listing left the tree
+  assert.deepEqual(HAZE_AXES, { a: [0.9239, 0.3827], b: [-0.4226, 0.9063], up: 1.5, scale: 0.0022, k1: 3.6, k2: 7.2 });
+  assert.deepEqual(HAZE_DRIFT, [0.026, -0.30, -0.043, -0.48]);
   const fs = read('src/render/heatHaze.js');
   for (const t of ['(abs(vObjY) - 25.0) * 0.0222222228', 'if (0.9999 - s < 0.0) discard;', 'vec2(0.9239, 0.3827)', 'vec2(-0.4226, 0.9063)', 'vWorld.y * 1.5',
     'uNoiseScale * 0.0022', 'vec4(3.6, 3.6, 7.2, 7.2)', 'texture(uNoise, uv.xy).xy - 0.5', 'texture(uNoise, uv.zw).yx - 0.5', '(n1 * 1.15 + n2 * 0.85) * vec2(0.3, 1.0) * strength']) {

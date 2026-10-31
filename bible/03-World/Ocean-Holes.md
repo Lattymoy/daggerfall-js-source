@@ -7,6 +7,16 @@ are to be compatible and implemented 1:1." Provenance is
 REQUIRES Iliac Puddle No More 1.2.2 (`03-World/Deep-Waters.md`): the pits
 are cut into that mod's carved seafloor, through that mod's own API.
 
+**OWN-WORK1 (2026-10-31, the owner).** vendor/ocean-holes is retired: the
+shipped manifest, its settings file, the assembly (`There's a Hole in the
+Bottom of the Ocean.dll`) and the README left the tree. The port's own code is
+now the record of the behaviour: `src/world/oceanHoles.js` (the law),
+`src/scenes/oceanHolesHost.js`, `src/scenes/oceanHolesAbyss.js`,
+`src/render/oceanHolesRender.js`, `src/world/oceanHolesMiasma.js` and the
+keys in `src/systems/modSettings.js`. `test/scenes/oh_host.test.js` holds the
+shipped settings as a literal table. Git history holds the vendored copy
+(commit `1b97b3a8f`); the provenance is `01-Overview/Own-Work.md`'s.
+
 "There's a hole in the bottom of the sea": on one open-ocean map pixel in
 48 (at the slider's midpoint) a black hole opens in the seafloor under a
 plume of purple miasma, and swimming down into it leads to a drowned

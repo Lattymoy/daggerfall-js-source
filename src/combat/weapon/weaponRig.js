@@ -2337,7 +2337,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         const castHands = (art, f) => (side ? drawSpellHand(renderer, c, art, f, { side, tint: fpTint, guard: fpsSpellCasting.isPlayingAnim ? 0 : _spellGuard.hand }) : drawSpellCastHands(renderer, c, art, f, { tint: fpTint }));
         castHands(spellArtFor(fpsSpellCasting.element), fpsSpellCasting.frameIndex);
         spellHandsDrawn = fpsSpellCasting.isPlayingAnim;
-        // RSH1 (vendor/readied-spellcasting-hands, Modded_FPSSpellCasting_Ready.cs AnimateSpellCast): A READIED SPELL
+        // RSH1 (Readied Spellcasting Hands 1.3, Modded_FPSSpellCasting_Ready.cs AnimateSpellCast): A READIED SPELL
         // RAISES THE HANDS. While a spell that is not CasterOnly waits for the click - and the cast itself is not
         // playing (readiedHandsFrame) - its element's frame 0 stands where the cast will start from: the same archive,
         // the same layout, the same light, under the same two lane gates the cast's hands stand under (the Morrowind arm

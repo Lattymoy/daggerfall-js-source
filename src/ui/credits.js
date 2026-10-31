@@ -16,7 +16,7 @@
 //   - BUILT ON: the game itself and the source the game began as a 1:1 port of (SCOPE1: now its reference).
 //   - MODS: a modder's own work, carried with the author's permission
 //     (never without - the roads were removed whole for exactly that).
-//     `vendor` names the folder whose README records the permission.
+//     `vendor` names the folder whose README records the permission; `retired`, a mod whose files left vendor/ (OWN-WORK1).
 //
 // No URLs are invented: a contact is what the author's own manifest
 // says it is.
@@ -107,7 +107,7 @@ export const CREDITS = Object.freeze({
       get what() { return t('credits.meanerMonsters.what', 'Twenty monsters made tougher, with new damage, health, level and armor. Rats, bats and zombies are gentler. Werewolves and wereboars are a fifth larger, and the dragonling is two and a half times its size. Based on version 1.5.2. With the combat overhaul on, Kirk.O\u2019s version of these numbers is used instead.'); },
       get terms() { return t('credits.meanerMonsters.terms', 'Used with permission under its MIT License (Copyright (C) 2020 Ralzar; Author: Hazelnut & Ralzar).'); },
       get contact() { return t('credits.contact.manifest', '{contact}', { contact: 'forums.dfworkshop.com' }); },
-      vendor: Object.freeze(['meanerMonsters']),
+      retired: Object.freeze(['meanerMonsters']),
       link: 'https://github.com/Ralzar81/Meaner-Monsters',
     }),
     Object.freeze({
@@ -117,7 +117,7 @@ export const CREDITS = Object.freeze({
       get what() { return t('credits.unleveledLoot.what', 'Loot and shop stock no longer scale with your level. Weapon and armor materials depend on your luck, the shop\u2019s quality and the kind of dungeon. Gold on bodies is divided by your level and multiplied by your luck. Daedra and Orcs can drop their own metals, and any material can stand in for another.'); },
       get terms() { return t('credits.unleveledLoot.terms', 'Used with permission under its MIT License (Copyright (C) 2020 Ralzar).'); },
       get contact() { return t('credits.unleveledLoot.contact', '{author}, through the Nexus page ({page})', { author: 'Ralzar', page: 'daggerfallunity mod 135' }); },
-      vendor: Object.freeze(['unleveledLoot']),
+      retired: Object.freeze(['unleveledLoot']),
       link: 'https://github.com/Ralzar81/Unleveled-Loot',
     }),
     Object.freeze({
@@ -127,7 +127,7 @@ export const CREDITS = Object.freeze({
       get what() { return t('credits.pcaao.what', 'The combat overhaul. Armor reduces the damage you take instead of your chance to be hit, and your skills and stats decide whether you hit. Weapons and armor wear by their kind and material, using his Believable Equipment Characteristics And Durability. Shields block by their material and your stats, critical hits multiply damage, and monsters have their own hides. His versions of Ralzar\u2019s Meaner Monsters and of Roleplay & Realism\u2019s archery apply when those mods are on.'); },
       get terms() { return t('credits.pcaao.terms', 'Used with the author\u2019s permission. Based on the released mod and its public source, which states no license.'); },
       get contact() { return t('credits.contact.manifest', '{contact}', { contact: 'kirkoliveri@gmail.com' }); },
-      vendor: Object.freeze(['pcaao']),
+      retired: Object.freeze(['pcaao']),
       link: 'https://github.com/magicono43/DFU-Mod_Physical-Combat-And-Armor-Overhaul',
     }),
     Object.freeze({
@@ -137,7 +137,7 @@ export const CREDITS = Object.freeze({
       get what() { return t('credits.weaponWidget.what', 'Reworks the first-person weapon. Swings wind up from the idle pose and recover, the weapon shows in the hand you swing with, and sheathing slides it off the screen. Adds a walking bob, look inertia, stepped movement, double-size idle sprites from the mod, and recoil when you hit, parry or miss. The Morrowind arms move the same way.'); },
       get terms() { return t('credits.weaponWidget.terms', 'Used with the author\u2019s permission.'); },
       get contact() { return t('credits.contact.nexus', '{author}, through the Nexus page ({page})', { author: 'RedRoryOTheGlen', page: 'daggerfallunity mod 860' }); },
-      vendor: Object.freeze(['weapon-widget']),
+      retired: Object.freeze(['weapon-widget']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/860',
     }),
     Object.freeze({
@@ -227,7 +227,7 @@ export const CREDITS = Object.freeze({
       get what() { return t('credits.worldTooltips.what', 'Shows a name under the crosshair for what you are looking at: a person, a shop sign and its opening hours, a door and its lock level, a dungeon entrance, a lever, a wheel, a ladder, a bookshelf, a summoned Daedra, and what a chest or a body holds. On the Enhanced skin it appears at the crosshair instead of in the mod\u2019s tooltip panel.'); },
       get terms() { return t('credits.worldTooltips.terms', 'Used with permission under its MIT License (Copyright (c) 2009-2018 jefetienne), with a second MIT notice for Daggerfall Workshop.'); },
       get contact() { return t('credits.contact.forumsManifest', '{author}, on the DFU forums', { author: 'jefetienne' }); },
-      vendor: Object.freeze(['world-tooltips']),
+      retired: Object.freeze(['world-tooltips']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/158',
     }),
     Object.freeze({
@@ -237,7 +237,7 @@ export const CREDITS = Object.freeze({
       what: 'Your hands stay raised while a spell is readied, in the spell\u2019s element, instead of an empty screen. The cast plays on from them when you click. Works with the classic first-person hands.',
       terms: 'Used with permission under its MIT License (Copyright (c) 2009-2018 jefetienne), with a second MIT notice for Daggerfall Workshop.',
       contact: 'jefetienne, on the DFU forums',
-      vendor: Object.freeze(['readied-spellcasting-hands']),
+      retired: Object.freeze(['readied-spellcasting-hands']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/91',
     }),
     Object.freeze({
@@ -308,7 +308,7 @@ export const CREDITS = Object.freeze({
       get what() { return t('credits.seasons.what', 'Autumn, spring and winter repaints of the trees, rocks and plants in woodland, hill, haunted and mountain areas. The textures are not included: they are read from your own copy of the mod.'); },
       get terms() { return t('credits.seasons.terms', 'Used with the author\u2019s permission.'); },
       get contact() { return t('credits.contact.discordServer', '{server} Discord server', { server: 'Lysandus\' Tomb' }); },
-      vendor: Object.freeze(['seasons-iliac-bay']),
+      retired: Object.freeze(['seasons-iliac-bay']),
     }),
     Object.freeze({
       title: 'Ambient Text',
@@ -353,13 +353,13 @@ export const CREDITS = Object.freeze({
       // in the shipped archive names them - no licence file, no script
       // header, an empty author field in the `.omwaddon` - so the
       // screen says so and names the page the mod comes from, rather
-      // than crediting a guess. The record is open in
-      // vendor/oblivion-remaster-leveling/README.md and in the
-      // registry row, and it is filled in the moment Mac has the name.
+      // than crediting a guess. The record is open in its row of
+      // bible/01-Overview/Own-Work.md (OWN-WORK1), and it is filled in
+      // the moment Mac has the name.
       get author() { return t('credits.author.unnamed', 'Unnamed ({source})', { source: 'Nexus Morrowind 56569' }); },
       get what() { return t('credits.oblivionLeveling.what', 'Another way to level, offered when you create a character. Raising skills fills a 100-point bar instead of Daggerfall’s skill total: primary and major skills fill it fastest, minor skills next and the rest slowest, and any overflow carries into the next level. Each level up gives you points to spend on a few attributes, with Luck costing more. You can set the points, how many attributes, and Luck’s cost on the mod’s tile. Originally an OpenMW Lua mod for Morrowind.'); },
       get terms() { return t('credits.oblivionLeveling.terms', 'Used with the author\u2019s permission, on Mac\u2019s word. The archive states no license and names no author.'); },
-      vendor: Object.freeze(['oblivion-remaster-leveling']),
+      retired: Object.freeze(['oblivion-remaster-leveling']),
     }),
     Object.freeze({
       title: 'Horse Cart and Cargo',
@@ -461,7 +461,7 @@ export const CREDITS = Object.freeze({
       get what() { return t('credits.oceanHoles.what', 'Blue holes in the deep. Far out in Iliac Puddle No More’s sea, the seafloor drops into a black pit under a plume of miasma. Swim down to reach a drowned, lightless dungeon where creatures of the deep replace the fire creatures, and loot is one material better.'); },
       get terms() { return t('credits.oceanHoles.terms', 'Used with the author\u2019s permission.'); },
       get contact() { return t('credits.contact.nexus', '{author}, through the Nexus page ({page})', { author: 'jet082', page: 'daggerfallunity mod 1313' }); },
-      vendor: Object.freeze(['ocean-holes']),
+      retired: Object.freeze(['ocean-holes']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/1313',
     }),
     Object.freeze({
@@ -503,7 +503,7 @@ export const CREDITS = Object.freeze({
       what: 'Items lie in the world as themselves. A fallen enemy\u2019s gear scatters around the body to be picked up piece by piece, and Shift-clicking an item in your pack drops it in front of you. Each shows its own picture (its Morrowind one when Morrowind data is attached) and a rarity glow.',
       terms: 'Used with the author’s permission. It includes no art.',
       contact: 'demifiend000, through the Nexus page (daggerfallunity mod 1411)',
-      vendor: Object.freeze(['physical-items']),
+      retired: Object.freeze(['physical-items']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/1411',
     }),
     // HAZE1 / WINDFALL1 / SNOWFALL1 / ALIKR1 (2026-10-08, Mac: "We have permission to use and
@@ -515,7 +515,7 @@ export const CREDITS = Object.freeze({
       what: 'Heat shimmer in the desert. On sunny and cloudy days the distant land and sky waver in the heat, fading in after sunrise and out before sunset. Part of the enhanced outdoors.',
       terms: 'Used with the author\u2019s permission, on Mac\u2019s word.',
       contact: 'demifiend000, through the Nexus page (daggerfallunity mod 1397)',
-      vendor: Object.freeze(['heat-haze']),
+      retired: Object.freeze(['heat-haze']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/1397',
     }),
     Object.freeze({
@@ -555,7 +555,7 @@ export const CREDITS = Object.freeze({
       get author() { return t('credits.author.unnamed', 'Unnamed ({source})', { source: 'thekingsgambit.dfmod' }); },
       get what() { return t('credits.kingsGambit.what', 'A battle of armies and kings, played at a tavern\u2019s card table against the regulars, or online against another player. Its units use the Iliac Hand cards\u2019 pictures, and its kings the Bay deck\u2019s.'); },
       get terms() { return t('credits.kingsGambit.terms', 'Used with permission, on Mac\u2019s word. The bundle names no author.'); },
-      vendor: Object.freeze(['kings-gambit']),
+      retired: Object.freeze(['kings-gambit']),
     }),
     // DEX0 (bible/04-Characters/Enemy-Expansion.md): Kamer & Kab's fifty enemies and their encounter tables.
     Object.freeze({

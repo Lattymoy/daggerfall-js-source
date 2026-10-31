@@ -8,7 +8,7 @@ import {
   matSwitchList, orcishDrops, daedricDrops, unleveledLootPreTransition, unleveledLootExteriorTransition,
   dungeonQuality, shopLevel, randomHighTier, randomMat, shopMat, materialSwitch, wpnMatSelector, armMatSelector,
   unleveledRandomMaterial, unleveledRandomArmorMaterial, unleveledGoldLootPiles, addDaedric, addOrcish, unlevelDroppedLoot,
-  installUnleveledLoot, uninstallUnleveledLoot,
+  installUnleveledLoot, uninstallUnleveledLoot, UNLEVELED_LOOT_VERSION,
 } from '../../src/systems/unleveledLoot.js';
 import { randomMaterial, randomArmorMaterial } from '../../src/combat/enemyEquipment.js';
 import { formulaOverride } from '../../src/combat/formulas.js';
@@ -179,7 +179,7 @@ test('UL1: ModifyFoundLootItems is DEAD in DFU 1.1.1 - registered, read by nothi
   }
 });
 
-test('UL1: the registry - installed, the two rolls answer the mod\'s when Enabled and DFU\'s when not; OnEnemyDeath raised at the three kills; the seams (choice keys on the pane, the credit, the vendor, the boot order, the world reader)', () => {
+test('UL1: the registry - installed, the two rolls answer the mod\'s when Enabled and DFU\'s when not; OnEnemyDeath raised at the three kills; the seams (choice keys on the pane, the credit, the shipped settings, the boot order, the world reader)', () => {
   _resetUnleveledLoot(); uninstallUnleveledLoot();
   world({ luck: 50 });
   const stock = randomMaterial(1, fixed(0.5));
@@ -212,9 +212,12 @@ test('UL1: the registry - installed, the two rolls answer the mod\'s when Enable
   // the pane
   const m = MOD_SETTINGS.unleveledLoot;
   assert.equal(m.author, 'Ralzar'); assert.deepEqual(Object.keys(m.keys), ['Enabled', ...UNLEVELED_MATERIAL_NAMES]); assert.equal(m.keys.Enabled.default, true);   // MO1
-  const shipped = JSON.parse(rd('vendor/unleveledLoot/modsettings.json').replace(/,(\s*[}\]])/g, '$1')).Sections[0];
-  assert.equal(shipped.Name, 'MaterialSwitching');
-  for (const k of shipped.Keys) {
+  // OWN-WORK1 (2026-10-31): the shipped modsettings' one section, MaterialSwitching, written out when
+  // vendor/unleveledLoot left the tree - ten MultipleChoiceKeys named for the materials, each offering all ten,
+  // each Value its own index, all ten with the one description
+  const SHIPPED_OPTIONS = ['Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril', 'Adamantium', 'Ebony', 'Orcish', 'Daedric'];
+  const shipped = SHIPPED_OPTIONS.map((Name, Value) => ({ Name, Value, Options: SHIPPED_OPTIONS, Description: 'Whenever this material would drop, change it to the selected material.' }));
+  for (const k of shipped) {
     const def = m.keys[k.Name];
     assert.ok(isChoiceKey(def), `${k.Name} is a MultipleChoiceKey`); assert.deepEqual([...def.options], k.Options); assert.equal(def.default, k.Value); assert.equal(def.description, k.Description);
   }
@@ -225,14 +228,18 @@ test('UL1: the registry - installed, the two rolls answer the mod\'s when Enable
   assert.match(rd('src/ui/enhanced/enhancedMenu.js'), /if \(isChoiceKey\(def\)\) \{/, 'the pane steps the choice keys by name');
   assert.ok(Object.keys(MOD_SETTINGS).indexOf('pcaao') < Object.keys(MOD_SETTINGS).indexOf('unleveledLoot'), 'listed after the overhaul, as its manifest orders it');
   const credit = CREDITS.mods.find((c) => c.title === 'Unleveled Loot');
-  assert.ok(credit); assert.equal(credit.version, '1.1.2'); assert.deepEqual([...credit.vendor], ['unleveledLoot']);
-  const manifest = JSON.parse(rd('vendor/unleveledLoot/UnleveledLoot.dfmod.json'));
-  assert.equal(manifest.ModVersion, '1.1.2'); assert.deepEqual(manifest.Dependencies.map((d) => d.Name), ['roleplayrealism', 'roleplayrealism-items']);
-  assert.match(rd('vendor/unleveledLoot/README.md'), /Ralzar/); assert.match(rd('vendor/unleveledLoot/README.md'), /MIT/);
+  assert.ok(credit); assert.equal(credit.version, '1.1.2'); assert.deepEqual([...credit.retired], ['unleveledLoot']);   // OWN-WORK1: retired from vendor/
+  // OWN-WORK1: the shipped manifest's version and its two required dependencies, written out; the port's header records them
+  assert.equal(UNLEVELED_LOOT_VERSION, '1.1.2', 'the manifest\'s ModVersion');
+  assert.match(rd('src/systems/unleveledLoot.js'), /The manifest REQUIRES roleplayrealism and roleplayrealism-items;/);
   const wt = rd('src/systems/worldTick.js');
   assert.ok(wt.indexOf('installPcaao();') < wt.indexOf('installUnleveledLoot();'), 'installed last');
   const wm = rd('src/scenes/worldModes.js');
   assert.match(wm, /setUnleveledLootWorld\(\{/); assert.match(wm, /insideOpenShop: \(\) => mode === 'interior' && !!interiorBuilding\?\.insideOpenShop,/); assert.match(wm, /locationDungeonType: \(\) => host\.currentLocation\?\.\(\)\?\.mapTableData\?\.dungeonType \?\? 255,/);
   for (const h of ['world', 'exterior']) assert.match(rd(`src/scenes/${h}.js`), /currentRegionIndex: \(\) =>/, `${h}: hands the machine the region`);
   setUnleveledLootWorld(saved);
+});
+
+test('OWN-WORK1: the record of the retired vendor/unleveledLoot is Own-Work.md\'s row - Ralzar, MIT', () => {
+  assert.match(rd('bible/01-Overview/Own-Work.md'), /^\| `unleveledLoot` \|.*Ralzar.*MIT/m);
 });

@@ -43,20 +43,76 @@ const rd = (p) => hostText(p);
 const T = WEAPON_TYPES, S = STATE_INDEX;
 const near = (a, b, eps = 1e-6, msg) => assert.ok(Math.abs(a - b) <= eps, msg ?? `${a} ~ ${b}`);
 
+// OWN-WORK1 (2026-10-31): vendor/weapon-widget is retired. Its manifest and modsettings.json, as they read at
+// 1b97b3a8f, are written here so a changed default, range or word still fails the pins below.
+const METALS = ['Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril', 'Adamantium', 'Ebony', 'Orcish', 'Daedric'];
+const TEXTURE_FILES = ['WEAPON00', 'WEAPON01', 'WEAPON02', 'WEAPON03', 'WEAPON04', 'WEAPON05', 'WEAPON06', 'WEAPON07', 'WEAPON08', 'WEAPON09',
+  'WEAPO101', 'WEAPO102', 'WEAPO104', 'WEAPO105', 'WEAPO106', 'WEAPO107', 'WEAPO108'];
+const SHIPPED_MANIFEST = Object.freeze({
+  ModTitle: 'Weapon Widget', ModVersion: '1.6', ModAuthor: 'RedRoryOTheGlen', GUID: '9f301f2b-298b-43d8-8f3f-c54deaa841e0',
+  // Files: the script, the settings and the manifest, then 173 textures, by name without `.png`
+  script: 'Assets/Game/Mods/FPSWeaponClone/Scripts/FPSWeaponClone.cs',
+  textures: Object.freeze([...TEXTURE_FILES.flatMap((f) => METALS.map((m) => `w_${f}.CIF_0-0_${m}`)),
+    'w_WEAPO101.CIF_0-0', 'w_WEAPON10.CIF_0-0', 'w_WEAPON11.CIF_0-0']),
+});
+/** modsettings.json, key by key: [section.name, $type, Value, [Min, Max] or Options, Description]. */
+const SHIPPED_SETTINGS = Object.freeze([
+  ['Modules.Swings', 'ToggleKey', true],
+  ['Modules.Ambidexterity', 'ToggleKey', true],
+  ['Modules.Offset', 'ToggleKey', true],
+  ['Modules.Bob', 'ToggleKey', true],
+  ['Modules.Inertia', 'ToggleKey', false],
+  ['Modules.Step', 'ToggleKey', false],
+  ['Modules.DoubleScaleTextures', 'ToggleKey', false],
+  ['Modules.TrueTextureSize', 'ToggleKey', false],
+  ['Modules.Recoil', 'ToggleKey', false],
+  ['Swings.Speed', 'SliderFloatKey', 1, [0, 5]],
+  ['Swings.Windup', 'MultipleChoiceKey', 1, ['Hide', 'Idle', 'First Frame']],
+  ['Swings.Recovery', 'MultipleChoiceKey', 0, ['Hide', 'Last Frame']],
+  ['Swings.VanillaAlignmentOverride', 'ToggleKey', true],
+  ['Swings.VanillaRecoveryOverride', 'ToggleKey', true, null, 'Plays the StrikeUp animation in reverse during recovery for some vanilla weapons'],
+  ['Swings.NoDaggerMirroredStrikes', 'ToggleKey', true, null, 'Prevents Daggers from using the opposite hand animations'],
+  ['Offset.Speed', 'SliderFloatKey', 1, [0, 5]],
+  ['Bob.Length', 'SliderIntKey', 100, [0, 200], 'Amount of bobs in a single stride'],
+  ['Bob.Offset', 'SliderFloatKey', 0, [0, 1], 'Advances the bob timing. For use with weapon bob.'],
+  ['Bob.SizeX', 'SliderFloatKey', 1, [0, 2], 'Extent of horizontal movement when bobbing'],
+  ['Bob.SizeY', 'SliderFloatKey', 1, [0, 2], 'Extent of vertical movement when bobbing'],
+  ['Bob.SpeedMove', 'SliderFloatKey', 1, [0, 2], 'Speed of transition between stationary and moving'],
+  ['Bob.SpeedState', 'SliderFloatKey', 1, [0, 2], 'Speed of transition between movement states'],
+  ['Bob.Shape', 'MultipleChoiceKey', 0, ['U', 'Sideways 8', 'Inverted U'], 'Shape of bob'],
+  ['Bob.BobWhileIdle', 'ToggleKey', true, null, 'Whether the shield will slightly bob while stationary'],
+  ['Step.Length', 'SliderIntKey', 1, [1, 10], 'The number (x8) whose multiples will be used for snapping'],
+  ['Step.Condition', 'MultipleChoiceKey', 0, ['Sheathe/Attack Only', 'All Transforms'], 'Whether the snapping only affects Sheathing or also other options like Bob, Inertia and Recoil'],
+  ['Inertia.Scale', 'SliderFloatKey', 1, [0, 2], 'The maximum distance that the sprite will be offset'],
+  ['Inertia.Speed', 'SliderFloatKey', 1, [0, 2], 'The speed that the sprite will move at towards the target offset'],
+  ['Inertia.ForwardDepth', 'SliderFloatKey', 1, [0, 2], 'Multiplier for the change in scale when moving forward or backward'],
+  ['Inertia.ForwardSpeed', 'SliderFloatKey', 1, [0, 2], 'The speed that the sprite will scale towards the target depth'],
+  ['TrueTextureSize.TextureScaleFactor', 'SliderIntKey', 1, [1, 8]],
+  ['Recoil.Condition', 'MultipleChoiceKey', 0, ['Hits Only', 'Hits and Parries', 'Parries Only', 'Parries and Misses', 'Misses Only', 'All Attacks']],
+  ['Recoil.Chance', 'SliderIntKey', 100, [0, 100], '% chance of recoil happening when condition is met'],
+  ['Recoil.PlayEntityMissEffects', 'ToggleKey', true],
+  ['Recoil.DetectEnvironment', 'ToggleKey', true, null, ''],
+  ['Recoil.PlayEnvironmentMissEffects', 'ToggleKey', true],
+  ['Recoil.MissEffectPlacement', 'MultipleChoiceKey', 0, ['Target', 'Crosshair']],
+  ['Miscellaneous.MirrorBows', 'ToggleKey', false],
+  ['Miscellaneous.MirrorTwoHandedSwords', 'ToggleKey', false],
+  ['Miscellaneous.MirrorTwoHandedAxes', 'ToggleKey', false],
+  ['Miscellaneous.MirrorTwoHandedBlunts', 'ToggleKey', false],
+]);
+
 // ═══ the settings ═══════════════════════════════════════════════════════
 
 test('WW1: the Mods pane entry is the shipped modsettings.json - every key, its kind, its range or options, its default, and the mod\'s own words where it wrote any', () => {
   const m = MOD_SETTINGS[WEAPON_WIDGET_VENDOR];
   assert.ok(m, 'the vendor entry');
-  const manifest = JSON.parse(rd('vendor/weapon-widget/weapon-widget.dfmod.json'));
+  const manifest = SHIPPED_MANIFEST;
   assert.equal(manifest.GUID, WEAPON_WIDGET_MOD.guid);
   assert.equal(manifest.ModTitle, WEAPON_WIDGET_MOD.title);
   assert.equal(manifest.ModVersion, WEAPON_WIDGET_MOD.version);
   assert.equal(manifest.ModAuthor, WEAPON_WIDGET_MOD.author);
   assert.equal(m.title, manifest.ModTitle); assert.equal(m.author, manifest.ModAuthor);
-  assert.equal(manifest.Files.filter((f) => /\.png$/i.test(f)).length, 173, 'the 173 double-scale textures the manifest names, none vendored');
-  assert.ok(manifest.Files.some((f) => /FPSWeaponClone\.cs$/.test(f)), 'the one script the manifest names and the bundle does not carry');
-  const shipped = JSON.parse(rd('vendor/weapon-widget/modsettings.json'));
+  assert.equal(manifest.textures.length, 173, 'the 173 double-scale textures the manifest names, none vendored');
+  assert.match(manifest.script, /FPSWeaponClone\.cs$/, 'the one script the manifest names and the bundle does not carry');
   // PLAIN-TEXT (2026-10-19): three of the mod's lines said plainly for a player (the idle bob named the shield) - their words, exactly
   const PLAIN = {
     'Bob.BobWhileIdle': 'Whether the weapon will slightly bob while stationary',
@@ -64,22 +120,19 @@ test('WW1: the Mods pane entry is the shipped modsettings.json - every key, its 
     'Recoil.Chance': 'Chance, in percent, of a recoil when the condition is met',
   };
   let n = 0;
-  for (const section of shipped.Sections) {
-    for (const k of section.Keys) {
-      n += 1;
-      const name = `${section.Name}.${k.Name}`;
-      const def = m.keys[name];
-      assert.ok(def, `${name} is on the pane`);
-      const kind = k.$type.slice(k.$type.lastIndexOf('.') + 1);
-      if (kind === 'ToggleKey') { assert.equal(typeof def.default, 'boolean', name); assert.equal(def.default, k.Value, `${name} defaults as shipped`); assert.ok(!isIntKey(def) && !isFloatKey(def) && !isChoiceKey(def), name); }
-      else if (kind === 'SliderIntKey') { assert.ok(isIntKey(def), `${name} is an int slider`); assert.deepEqual([def.default, def.min, def.max], [k.Value, k.Min, k.Max], name); }
-      else if (kind === 'SliderFloatKey') { assert.ok(isFloatKey(def), `${name} is a float slider`); assert.deepEqual([def.default, def.min, def.max], [k.Value, k.Min, k.Max], name); assert.ok(def.step > 0 && def.step <= (k.Max - k.Min), `${name} has a stepper`); }
-      else if (kind === 'MultipleChoiceKey') { assert.ok(isChoiceKey(def), `${name} is a choice`); assert.deepEqual([...def.options], k.Options, name); assert.equal(def.default, k.Value, name); }
-      else assert.fail(`${name}: an unknown key kind ${kind}`);
-      if (k.Description) assert.equal(def.description, PLAIN[name] ?? k.Description, `${name}'s description is the mod's own, or its plain rewording`);
-      else assert.ok(def.description?.length > 8, `${name}: the mod wrote no description, the port did`);
-      if (PLAIN[name]) assert.ok(k.Description && PLAIN[name] !== k.Description, `${name}: a plain rewording replaces words the mod wrote`);
-    }
+  for (const [name, kind, Value, range, Description] of SHIPPED_SETTINGS) {
+    const k = { Value, Min: range?.[0], Max: range?.[1], Options: range, Description };
+    n += 1;
+    const def = m.keys[name];
+    assert.ok(def, `${name} is on the pane`);
+    if (kind === 'ToggleKey') { assert.equal(typeof def.default, 'boolean', name); assert.equal(def.default, k.Value, `${name} defaults as shipped`); assert.ok(!isIntKey(def) && !isFloatKey(def) && !isChoiceKey(def), name); }
+    else if (kind === 'SliderIntKey') { assert.ok(isIntKey(def), `${name} is an int slider`); assert.deepEqual([def.default, def.min, def.max], [k.Value, k.Min, k.Max], name); }
+    else if (kind === 'SliderFloatKey') { assert.ok(isFloatKey(def), `${name} is a float slider`); assert.deepEqual([def.default, def.min, def.max], [k.Value, k.Min, k.Max], name); assert.ok(def.step > 0 && def.step <= (k.Max - k.Min), `${name} has a stepper`); }
+    else if (kind === 'MultipleChoiceKey') { assert.ok(isChoiceKey(def), `${name} is a choice`); assert.deepEqual([...def.options], k.Options, name); assert.equal(def.default, k.Value, name); }
+    else assert.fail(`${name}: an unknown key kind ${kind}`);
+    if (k.Description) assert.equal(def.description, PLAIN[name] ?? k.Description, `${name}'s description is the mod's own, or its plain rewording`);
+    else assert.ok(def.description?.length > 8, `${name}: the mod wrote no description, the port did`);
+    if (PLAIN[name]) assert.ok(k.Description && PLAIN[name] !== k.Description, `${name}: a plain rewording replaces words the mod wrote`);
   }
   assert.equal(n, 41, 'the nine sections carry 41 keys');
   assert.equal(Object.keys(m.keys).length, 42, 'plus the port\'s Enabled, and nothing else');
@@ -97,10 +150,9 @@ test('WW1: the Mods pane entry is the shipped modsettings.json - every key, its 
   assert.deepEqual([row.control.store, row.control.vendor ?? row.control.mod ?? row.control.key], ['mods', row.control.vendor ?? row.control.mod ?? row.control.key]);
   assert.match(JSON.stringify(row.control), /weapon-widget/);
   const credit = CREDITS.mods.find((c) => c.title === 'Weapon Widget');
-  assert.ok(credit); assert.equal(credit.author, 'RedRoryOTheGlen'); assert.equal(credit.version, '1.6'); assert.deepEqual([...credit.vendor], ['weapon-widget']);
+  assert.ok(credit); assert.equal(credit.author, 'RedRoryOTheGlen'); assert.equal(credit.version, '1.6'); assert.deepEqual([...credit.retired], ['weapon-widget'], 'OWN-WORK1: a retired credit');
   assert.match(credit.link ?? '', /nexusmods\.com\/daggerfallunity\/mods\/860/);
-  const readme = rd('vendor/weapon-widget/README.md');
-  assert.match(readme, /RedRoryOTheGlen/); assert.match(readme, /Permission/); assert.match(readme, /173 textures/); assert.match(readme, /Weapon Widget\.dll/);
+  // OWN-WORK1: the vendor README's four text pins left with it.
   // a float key coerces: clamped to its range, rounded to a thousandth; the pane steps it
   _resetModSettings();
   setModSetting(WEAPON_WIDGET_VENDOR, 'Swings.Speed', 7.7);
@@ -658,8 +710,7 @@ test('WW1: the bundle door - TryImportCifRci\'s spelling with the w_ prefix and 
   assert.equal(widgetTextureName('WEAPON10.CIF', 0, 0, WEAPON_MATERIALS.None), 'w_WEAPON10.CIF_0-0', 'MetalTypes.None adds nothing');
   assert.equal(widgetTextureName('WEAPON11.CIF', 0, 0, null), 'w_WEAPON11.CIF_0-0');
   assert.equal(widgetTextureName('WEAPO104.CIF', 0, 0, WEAPON_MATERIALS.Daedric), 'w_WEAPO104.CIF_0-0_Daedric');
-  const manifest = JSON.parse(rd('vendor/weapon-widget/weapon-widget.dfmod.json'));
-  const shippedNames = manifest.Files.filter((f) => /\.png$/i.test(f)).map((f) => f.slice(f.lastIndexOf('/') + 1).replace(/\.png$/i, ''));
+  const shippedNames = SHIPPED_MANIFEST.textures;
   assert.ok(shippedNames.includes('w_WEAPON04.CIF_0-0_Elven'), 'the manifest names the spelling the port asks for');
   assert.ok(shippedNames.includes('w_WEAPON10.CIF_0-0'), 'bare hands, no metal');
   assert.ok(shippedNames.every((n) => /^w_WEAPO(N\d\d|1\d\d)\.CIF_0-0(_[A-Za-z]+)?$/.test(n)), 'every shipped texture is record 0 frame 0 of a weapon file');

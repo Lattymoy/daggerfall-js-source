@@ -68,7 +68,7 @@ test('FT9: a mod row is the mod\'s own - the creator in the title, the modsettin
   // KG3: a pref row carries its creator too (AUDIT SURV E) - The King's Gambit's bundle names none, so the credits' own
   // unnamed form, one source: the row says what the About pane says (mutant: the creator dropped)
   const kg = FEATURES.find((f) => f.id === 'mod-kings-gambit');
-  const credit = CREDITS.mods.find((m) => m.vendor?.includes('kings-gambit'));
+  const credit = CREDITS.mods.find((m) => m.retired?.includes('kings-gambit'));   // OWN-WORK1: a retired credit
   assert.equal(kg.title, `${credit.title} by ${credit.author}`);
   assert.equal(kg.title, 'The King\u2019s Gambit by Unnamed (thekingsgambit.dfmod)');
 });

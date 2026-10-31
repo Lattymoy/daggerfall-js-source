@@ -18,6 +18,14 @@ DFU without the mod listed, until MO1 (2026-09-12, Mac: "All mods
 should be enabled by default") turned it on - and while it is on, both lanes fight by
 its formulas.
 
+**OWN-WORK1 (2026-10-31, the owner).** vendor/pcaao is retired: the shipped
+manifest, its modsettings and the README left the tree. The port's own code is
+now the record of the behaviour: `src/combat/pcaao.js` (every formula),
+`src/combat/pcaaoMeanerMonsters.js` (its Meaner Monsters table) and the keys in
+`src/systems/modSettings.js`. `test/systems/pcaao.test.js` holds the seven
+shipped Modules keys as a literal table. Git history holds the vendored copy
+(commit `1b97b3a8f`); the provenance is `01-Overview/Own-Work.md`'s.
+
 ## The source the port reads
 
 The shipped bundle carries a compiled DLL (45,056 bytes) and no source.

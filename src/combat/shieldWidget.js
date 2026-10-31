@@ -25,7 +25,7 @@
 // thirty. They are the mod's own art and are read at play time FROM THE
 // PLAYER'S OWN COPY OF THE MOD, never from this repository
 // (combat/shieldWidgetAssets.js) - the doctrine
-// vendor/weapon-widget/README.md records for the sibling's repaints.
+// bible/05-Combat/Weapon-Widget.md records for the sibling's repaints.
 //
 // THE SHAPE HERE. createShieldWidget() is the component; the host owns
 // one and feeds it what Unity handed the MonoBehaviour - the frame's

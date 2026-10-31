@@ -10,6 +10,16 @@ Fall, flowers in Spring and snow in Winter, and draw at 3.1 times their
 classic size. Ledger row SIB1; the permission record and the doctrine
 ruling on its textures are in `vendor/seasons-iliac-bay/README.md`.
 
+**OWN-WORK1 (2026-10-31, the owner).** vendor/seasons-iliac-bay is retired:
+the mod's manifest and the README left the tree. The feature stays, because the
+textures were always read from the player's own copy of the mod. The port's own
+code is now the record of the behaviour: `src/systems/seasonsIliacBay.js` (the
+script) and `src/systems/seasonsIliacBayAssets.js` (the player's files).
+`test/systems/seasonsIliacBay.test.js` holds the manifest's identity and its
+372 texture names as a literal table. Git history holds the vendored copy, the
+permission record and the textures ruling (commit `1b97b3a8f`); the provenance is
+`01-Overview/Own-Work.md`'s.
+
 ## What the mod is
 
 One script and 372 textures. The script, `SeasonHelper`, ships only as

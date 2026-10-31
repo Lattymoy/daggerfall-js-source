@@ -18,6 +18,15 @@ is the player's choice in the Mods pane - `Enabled`, off by default, as
 DFU without the mod listed, until MO1 (2026-09-12, Mac: "All mods
 should be enabled by default") turned it on.
 
+**OWN-WORK1 (2026-10-31, the owner).** vendor/meanerMonsters is retired: the
+shipped manifest, the forty-six sprite-scale xml files and the README left the
+tree. The port's own code is now the record of the behaviour:
+`src/characters/meanerMonsters.js` (the table, its fold, the xml table, the
+switch) and `src/world/billboardXml.js` (DFU's xml billboard scale).
+`test/characters/enemy/meanerMonsters.test.js` holds the forty-six scales as a
+literal table. Git history holds the vendored copy (commit `1b97b3a8f`); the
+provenance is `01-Overview/Own-Work.md`'s.
+
 ## The source the port reads
 
 The shipped `meaner monsters.dfmod` is a UnityFS bundle: a compiled

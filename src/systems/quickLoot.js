@@ -422,7 +422,7 @@ export function quickLootTake(key, hooks, playerEntity, say = () => {}, { getQue
 /**
  * PI1 (Physical Items - scenes/physicalItemsLayer.js): ONE ITEM, NO WINDOW. The press on an item lying in the world as
  * itself takes it through this file's one-item door (`takeThrough`: the quest click, planTake's summoned refusal and
- * carry check, gold into the purse) - the mod's own TryPickup (vendor/physical-items, [IL_847c]) asks the same
+ * carry check, gold into the purse) - the mod's own TryPickup (Physical Items 0.1.29, IL_847c) asks the same
  * questions, and these are the port's answers to them. No switch and no armed key: the item is the press's target.
  * Answers the item moved, QUICK_LOOT_REFUSED (the refusal said), or null for a map - the caller's (planTake's map arm
  * reads it, never moves it). Quick loot's own one-row take is this (quickLootTake above): one law for one item.

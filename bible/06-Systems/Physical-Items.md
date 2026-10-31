@@ -12,6 +12,16 @@ The vendored record is `vendor/physical-items/README.md` (the permission line is
 open: `01-Overview/Mod-Registry.md`). The same author's Horse Cart and Cargo is
 `06-Systems/Horse-Cart-And-Cargo.md`'s.
 
+**OWN-WORK1 (2026-10-31, the owner).** vendor/physical-items is retired: the
+shipped manifest, its settings file, `PhysicalItems.dll`, its IL dump and the
+README left the tree. The port's own code is now the record of the behaviour:
+`src/systems/physicalItems.js` (the law), `src/scenes/physicalItemsLayer.js`
+(the scene half) and the keys in `src/systems/modSettings.js`. An `[IL_xxxx]`
+below names an offset in the 0.1.29 assembly, not a file here.
+`test/systems/pi1_physicalitems.test.js` holds the shipped settings as a
+literal table. Git history holds the vendored copy (commit `1b97b3a8f`); the
+provenance is `01-Overview/Own-Work.md`'s.
+
 ## What it is
 
 An item in the world is drawn as ITSELF - its inventory picture on a billboard -

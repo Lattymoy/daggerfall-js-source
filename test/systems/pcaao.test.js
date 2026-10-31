@@ -30,7 +30,7 @@ import {
   pcaaoShieldBlockChanceCalculation, pcaaoCompareShieldToUnderArmor, pcaaoNaturalDamageResistance, pcaaoAttackDamage,
   pcaaoProficiencyModifiers, pcaaoRacialModifiers, installPcaao, uninstallPcaao, SILVER_DOUBLED_CAREERS, PCAAO_REDUCTION_ROWS,
   MEANER_MONSTERS, meanerMonstersRow, _shieldBlockSuccess,
-  pcaaoFades,
+  pcaaoFades, PCAAO_VERSION,
 } from '../../src/combat/pcaao.js';
 import { calculateAttackDamage, damageModifier, damageEquipment, formulaOverride, registerFormulaOverride, adjustWeaponHitChanceMod, adjustWeaponAttackDamage, weaponAttackDamage } from '../../src/combat/formulas.js';
 import { ENEMY_BASICS } from '../../src/characters/enemy/enemyBasics.js';
@@ -501,11 +501,15 @@ test('PCO1: the Meaner Monsters edit rides the row a foe is minted from, only un
   assert.equal(plain.basics.minHealth, ENEMY_BASICS[0].minHealth);
 });
 
-test('PCO1: the seams - the Mods pane entry, the credit, the vendor folder, worldTick\'s install, the bow\'s draw timer', () => {
+test('PCO1: the seams - the Mods pane entry, the credit, the shipped manifest and settings, worldTick\'s install, the bow\'s draw timer', () => {
   const m = MOD_SETTINGS.pcaao;
-  const manifest = JSON.parse(rd('vendor/pcaao/physicalcombatandarmoroverhaul.dfmod.json'));
-  assert.equal(m.author, manifest.ModAuthor); assert.equal(manifest.ModVersion, '1.44');
-  const shipped = JSON.parse(rd('vendor/pcaao/modsettings.json')).Sections[0].Keys;
+  // OWN-WORK1 (2026-10-31): the shipped manifest's author and version and its modsettings' one section, `Modules` -
+  // the seven ToggleKeys, name and Value in order - written out when vendor/pcaao left the tree
+  assert.equal(m.author, 'Kirk.O', 'the manifest\'s ModAuthor'); assert.equal(PCAAO_VERSION, '1.44', 'the manifest\'s ModVersion');
+  const shipped = [
+    ['equipmentDamageEnhanced', true], ['fadingEnchantedItems', true], ['fixedStrengthDamageModifier', true], ['armorHitFormulaRedone', true],
+    ['criticalStrikesIncreaseDamage', true], ['conditionBasedEffectiveness', true], ['softMaterialRequirements', true],
+  ].map(([Name, Value]) => ({ Name, Value }));
   // PLAIN-TEXT (2026-10-19): the seven module lines (Title Case, "!!!!", a DFU version number) said plainly for a player - their words, exactly
   const PLAIN = {
     'equipmentDamageEnhanced': 'Your equipment wears out much faster, depending on its material, what hit it and more.',
@@ -520,13 +524,12 @@ test('PCO1: the seams - the Mods pane entry, the credit, the vendor folder, worl
     assert.ok(m.keys[k.Name], `the shipped key ${k.Name} is on the pane`);
     if (k.Name === 'equipmentDamageEnhanced' || k.Name === 'fadingEnchantedItems') { assert.equal(k.Value, true); assert.equal(m.keys[k.Name].default, false, `WEAR-VANILLA: ${k.Name} ships on, the port's default is off`); }
     else assert.equal(m.keys[k.Name].default, k.Value, `${k.Name} defaults as shipped`);
-    assert.equal(m.keys[k.Name].description, PLAIN[k.Name] ?? k.Description, `${k.Name}'s description is the mod's own, or its plain rewording`);
+    assert.equal(m.keys[k.Name].description, PLAIN[k.Name], `${k.Name}'s description is the plain rewording of the mod's own`);
   }
   assert.equal(m.keys.Enabled.default, true, 'MO1 (Mac, 2026-09-12): every mod is on by default; the Mods pane is where it is turned off');
   assert.equal(m.keys.rolePlayRealismArchery, undefined, 'MM1: no compatibility switches between mods (Mac)'); assert.equal(m.keys.meanerMonsters, undefined);
   const credit = CREDITS.mods.find((c) => c.title === 'Physical Combat And Armor Overhaul');
-  assert.ok(credit); assert.equal(credit.author, 'Kirk.O'); assert.deepEqual([...credit.vendor], ['pcaao']); assert.equal(credit.version, '1.44');
-  assert.match(rd('vendor/pcaao/README.md'), /Kirk\.O/);
+  assert.ok(credit); assert.equal(credit.author, 'Kirk.O'); assert.deepEqual([...credit.retired], ['pcaao']); assert.equal(credit.version, '1.44');   // OWN-WORK1: retired from vendor/
   assert.match(rd('src/systems/worldTick.js'), /installPcaao\(\);/, 'every host installs the overrides through worldTick');
   const pw = rd('src/combat/playerWeapon.js');
   // AUDIT 68 S08-bow-draw-time-wallclock: the draw is the machine's held ticks (GetAnimTime), written at every
@@ -540,6 +543,10 @@ test('PCO1: the seams - the Mods pane entry, the credit, the vendor folder, worl
   assert.equal((ws.match(/Mathf\.Clamp/g) || []).length >= 4, true, 'the four discarded clamps are named');
   assert.equal(pcaaoAdjustmentsToHit(mkPlayer()), -50);
   assert.ok(SKILLS.CriticalStrike === 34 && SKILLS.Dodging === 20, 'the skill ids the C# numbers');
+});
+
+test('OWN-WORK1: the record of the retired vendor/pcaao is Own-Work.md\'s row - the release and its author', () => {
+  assert.match(rd('bible/01-Overview/Own-Work.md'), /^\| `pcaao` \|.*1\.44.*Kirk\.O/m);
 });
 
 // ═══ AUDIT PCO1 (2026-09-12) - the 1:1 audit, method for method against

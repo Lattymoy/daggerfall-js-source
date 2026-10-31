@@ -9,6 +9,17 @@ author's own still to come - `RECORD OPEN`) are `vendor/heat-haze/`'s. Its
 siblings from the same message: `07-Rendering/Windfall.md`,
 `03-World/Snowfall.md`, `07-Rendering/Sands-Of-The-Alikr.md`.
 
+**OWN-WORK1 (2026-10-31, the owner).** vendor/heat-haze is retired: the
+shipped manifest, its settings file, `HeatHaze.dll`, its IL dump, the shader
+read back as GLSL and the README left the tree, and
+`tools/environmentModsExtract.mjs` lost its Heat Haze arm. The port's own code
+is now the record of the behaviour: `src/systems/heatHaze.js` (the law),
+`src/render/heatHaze.js` (the shader's translation) and the keys in
+`src/systems/modSettings.js`. `test/systems/haze1_heatHaze.test.js` holds the
+shipped settings and the shader's constants as literals. Git history holds the
+vendored copy (commit `1b97b3a8f`); the provenance is
+`01-Overview/Own-Work.md`'s.
+
 ## What the mod is
 
 One MonoBehaviour (`HeatHazeMod`), its rules (`HeatHazeEligibility`) and one

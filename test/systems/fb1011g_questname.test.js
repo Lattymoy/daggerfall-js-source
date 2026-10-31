@@ -53,11 +53,4 @@ test('QUEST-NAME by source: both hosts\' plaques ask it BEFORE the item gate - t
   assert.equal((WM.match(/if \(!res \|\| res\.isPerson === true \|\| res\.isFoe === true\) return null;/g) ?? []).length, 2);
 });
 
-test('QUEST-NAME: the mod\'s own order - its StaticNPC arm (`ret = npc.DisplayName`) is asked before its quest-resource arm, whose `is Item` gate names items alone; the reading this fix rests on (the vendored source)', () => {
-  const cs = read('vendor/world-tooltips/Scripts/Modded_HUDTooltipWindow.cs');
-  const npcArm = cs.indexOf('if (CheckComponent<StaticNPC>(hit, out comp))');
-  const questArm = cs.indexOf('else if (CheckComponent<QuestResourceBehaviour>(hit, out comp))');
-  assert.ok(npcArm > 0 && questArm > npcArm, 'the StaticNPC arm first');
-  assert.ok(cs.indexOf('ret = npc.DisplayName;', npcArm) < questArm, 'and it names the person');
-  assert.ok(cs.indexOf('if (qrb.TargetResource is Item)', questArm) > questArm, 'the quest arm names an item');
-});
+// The mod's own order, read from its vendored source, was the third pin here: OWN-WORK1 retired that file.

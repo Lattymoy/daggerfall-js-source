@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════
 // OH-B (2026-09-26): THERE'S A HOLE IN THE BOTTOM OF THE OCEAN 1.1.0
-// (jet082, vendor/ocean-holes/) - THE PURE LAW. Everything the mod's one
+// (jet082, the shipped release) - THE PURE LAW. Everything the mod's one
 // class, OceanHoles, decides without touching the scene: which map pixels
 // open a pit (StableHash, IsPitPixel), where in the pixel the pit stands
 // (PlacementFraction), how the seafloor falls into it (GetFloorPitDepth,

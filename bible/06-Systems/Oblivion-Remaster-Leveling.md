@@ -13,6 +13,17 @@ from the author's own Lua, vendored whole in
 character answers). Pinned by `test/systems/orl1_leveling.test.js` (44); mutants in
 `tools/mutants/orl1.json` (72: 67 dead, 5 equivalent as recorded). Registry row: `01-Overview/Mod-Registry.md`.
 
+**OWN-WORK1 (2026-10-31, the owner).** vendor/oblivion-remaster-leveling is
+retired: all ten shipped files - the five Lua scripts, the `.omwaddon`, the
+`.omwscripts` manifest, both l10n yaml and the author's README - and the vendor
+README left the tree. The port's own code is now the record of the behaviour:
+`src/systems/oblivionLeveling.js`, `src/ui/virtueLevelUp.js`,
+`src/ui/levelingChoice.js` and the keys in `src/systems/modSettings.js`.
+`test/systems/orl1_leveling.test.js` holds the GMST, the seven settings, the two
+caps, the window's strings, the version and the Lua's line count as literals.
+The `.lua:` cites below name the 0.5.3 release's files. Git history holds the
+vendored copy (commit `1b97b3a8f`); the provenance is `01-Overview/Own-Work.md`'s.
+
 ---
 
 ## THE FIRST MORROWIND MOD, AND WHAT THAT CHANGES

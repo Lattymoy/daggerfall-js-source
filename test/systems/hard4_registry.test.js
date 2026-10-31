@@ -34,6 +34,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { retiredKeys, OWN_WORK } from '../ownWork.mjs';   // OWN-WORK1: the keys retired from vendor/
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -155,7 +156,18 @@ test('HARD4: every row names a bible page that exists, and every player-visible 
   const ms = read('src/systems/modSettings.js');
   const keys = [...ms.matchAll(/^ {2}'([a-zA-Z][\w-]*)':\s*Object\.freeze\(\{/gm)].map((m) => m[1]);
   assert.ok(keys.length >= 8, `only ${keys.length} vendor keys were read out of modSettings.js`);
-  assert.deepEqual(keys.filter((k) => !reg.has(k)), [],
+  // OWN-WORK1 (2026-10-31): a mod whose files left vendor/ keeps its switch, and its provenance moves to Own-Work.md.
+  const retired = retiredKeys();
+  assert.deepEqual(keys.filter((k) => !reg.has(k) && !retired.has(k)), [],
     'these mods are switchable by the player and carry no registry row - a mod cannot become\n'
     + 'player-visible without its provenance being written down');
+});
+
+test('OWN-WORK1: a retired key has its row in Own-Work.md, no vendor/ directory and no registry row', () => {
+  const retired = retiredKeys();
+  const reg = rows();
+  const dirs = vendorDirs();
+  assert.ok(retired.size >= 12, `only ${retired.size} retired rows were read out of ${OWN_WORK}`);
+  assert.deepEqual([...retired].filter((k) => dirs.includes(k)), [], 'a retired key still has its vendor/ directory');
+  assert.deepEqual([...retired].filter((k) => reg.has(k)), [], 'a retired key still has its registry row');
 });

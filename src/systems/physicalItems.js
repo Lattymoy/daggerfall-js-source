@@ -2,7 +2,7 @@
 // PI1 (2026-10-07, Mac: "This is the next mod I would like to integrate (permission has been granted). This should work
 // for both morrowind and the sprite system, and should also included the rarity treatment (like we do for the world
 // boss)"): PHYSICAL ITEMS 0.1.29 - demifiend000's items in the world as themselves. THE LAW, PURE: what the mod's
-// assembly decides (vendor/physical-items/il/PhysicalItems.il.txt - every `[IL_xxxx]` below is an offset in it, the
+// assembly decides (Physical Items 0.1.29's PhysicalItems.dll - every `[IL_xxxx]` below is an offset in its IL, the
 // method named beside it), read off the IL because the bundle carries the build and not the sources. The scene half -
 // the proxies, their pictures, their flight and their press - is scenes/physicalItemsLayer.js; the design is
 // bible/06-Systems/Physical-Items.md.

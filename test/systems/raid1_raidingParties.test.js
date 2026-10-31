@@ -480,7 +480,7 @@ test('RAID1 the lane, the row, the credit: the switch on by default, the room\'s
   assert.equal(row.group, 'world');
   assert.equal(row.title, 'World Events - Raiding Parties by Kamer');
   assert.equal(row.effect, 'Takes effect at once.');
-  const credit = CREDITS.mods.find((m) => m.vendor.includes(RAIDING_PARTIES_VENDOR));
+  const credit = CREDITS.mods.find((m) => m.vendor?.includes(RAIDING_PARTIES_VENDOR));
   assert.equal(credit.version, '1.1');
   assert.equal(credit.terms, 'Made by Kamer for this game, used with his permission, with some bugs fixed.');
 });

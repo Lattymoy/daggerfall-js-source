@@ -3,7 +3,7 @@
 **MUDEX** - "Meaner Unleveled Daggerfall Enemy Expansion", version 1.0.1, by
 **Ralzar** (GUID `7241df16-730c-47c9-9afc-3e65d694706f`) - is the author's own
 form of Meaner Monsters for a game with Daggerfall Enemy Expansion loaded.
-Meaner Monsters 1.5.2 (`vendor/meanerMonsters/`, the same author) looks for
+Meaner Monsters 1.5.2 (`src/characters/meanerMonsters.js`, the same author) looks for
 DEX by its GUID and, finding it, tells the player: "Please switch to MUDEX -
 Meaner Unleveled Daggerfall Enemy Expansion" and "Meaner Monsters and
 Unleveled Mobs is incompatible with DEX." (MeanerMonsters.cs:24, :94,

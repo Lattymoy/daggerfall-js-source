@@ -1,7 +1,7 @@
 // @ts-check
 // HAZE1 (2026-10-08, Mac: "These should be on by default and integrate into our enhanced environments seamlessly") -
 // HEAT HAZE's RING, DRAWN. The translation of the mod's one shader, `Daggerfall/Mods/HeatHaze`
-// (vendor/heat-haze/shaders/HeatHaze.glsl, read back from its DXBC), and of the mesh and textures HeatHazeMod makes
+// (Heat Haze 1.0.1's shader, read back from its DXBC), and of the mesh and textures HeatHazeMod makes
 // (CreateCylinderMesh, CreateNoiseTexture - systems/heatHaze.js hazeNoise).
 //
 // THE PASS, AS UNITY RAN IT: a GrabPass (`_HeatHazeGrabTexture`) - the frame as it stands, copied - then the ring
@@ -12,7 +12,7 @@
 // with DEPTH_TEST on and the depth mask and CULL_FACE off, then the renderer's baseline back (the host calls
 // markForeignPass after, EV6).
 //
-// THE SHADER, LINE FOR LINE (HeatHaze.glsl's two programs):
+// THE SHADER, LINE FOR LINE (the DXBC's two programs):
 //   vertex   - world position; the object-space y kept for the fade (`o2.w = v0.y`);
 //   fragment - edge = saturate((|y| - 25) / 45); s = smoothstep(edge); discard where 0.9999 - s < 0; strength =
 //              (1 - s) x _IntensityPixels. The noise is read twice over the world: across x and z turned two ways -
@@ -31,7 +31,7 @@
 import { buildProgram } from './glProgram.js';
 import { HAZE, hazeNoise } from '../systems/heatHaze.js';
 
-/** The two noise reads' world axes and scales (HeatHaze.glsl, verbatim). */
+/** The two noise reads' world axes and scales (the 1.0.1 shader's, verbatim). */
 export const HAZE_AXES = Object.freeze({ a: [0.9239, 0.3827], b: [-0.4226, 0.9063], up: 1.5, scale: 0.0022, k1: 3.6, k2: 7.2 });
 /** The two reads' drift per second of _AnimationSpeed x _Time.y: (u1, v1, u2, v2). */
 export const HAZE_DRIFT = Object.freeze([0.026, -0.30, -0.043, -0.48]);

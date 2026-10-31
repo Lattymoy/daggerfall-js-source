@@ -42,6 +42,21 @@ import { TextureFile } from '../../src/formats/textureFile.js';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const read = (p) => hostText(p);
 
+// OWN-WORK1 (2026-10-31): Seasons of the Iliac Bay 1.1's manifest, written out when vendor/seasons-iliac-bay left the
+// tree - its identity and its 372 textures, `Textures/<folder>/<prefix><record>.<ext>`, as folder -> [prefix, first
+// record, last record, extension]. Its other two Files are the script and the manifest itself.
+const SHIPPED_MANIFEST = Object.freeze({
+  ModTitle: 'Seasons of the Iliac Bay', ModVersion: '1.1', ModAuthor: 'RosyTheRascal', GUID: '25064a75-7e50-40b0-9d08-e2c3418f0940',
+  textures: Object.freeze({
+    HauntedF: ['A', 0, 32, 'PNG'], HauntedS: ['B', 1, 32, 'PNG'], HauntedW: ['C', 1, 32, 'PNG'],
+    HillsF: ['D', 0, 31, 'PNG'], HillsS: ['E', 0, 37, 'PNG'], HillsW: ['F', 0, 31, 'PNG'],
+    MountainF: ['G', 0, 32, 'PNG'], MountainsS: ['H', 0, 35, 'PNG'],
+    TempF: ['I', 0, 33, 'PNG'], TempS: ['J', 0, 37, 'PNG'], TempW: ['K', 0, 31, 'png'],
+  }),
+});
+const SHIPPED_FILES = Object.entries(SHIPPED_MANIFEST.textures).flatMap(([folder, [prefix, first, last, ext]]) =>
+  Array.from({ length: last - first + 1 }, (_, i) => `Assets/Game/Mods/Seasons of the Iliac Bay/Textures/${folder}/${prefix}${first + i}.${ext}`));
+
 // ═══ the script's tables ════════════════════════════════════════════════
 
 test('SIB1: GetManagedArchivesForSeason - the four woodland sets below Summer, the three snow sets in Winter, nothing in Summer', () => {
@@ -70,8 +85,9 @@ test('SIB1: ArchiveForSeason - the eleven prefixes, and null everywhere else', (
   assert.equal(archivePrefix(SEASONS.Fall, 505), null);
   assert.equal(archivePrefix(SEASONS.Spring, 507), null);
   // every prefix has a folder in the manifest, and the folders are the
-  // manifest's own (the vendored manifest names each one)
-  const manifest = JSON.parse(read('vendor/seasons-iliac-bay/seasons-of-the-iliac-bay.dfmod.json'));
+  // manifest's own (the shipped manifest names each one: SHIPPED_MANIFEST)
+  const manifest = { ...SHIPPED_MANIFEST, Files: SHIPPED_FILES };
+  assert.equal(manifest.Files.length, 372, 'the 372 textures');
   const folders = new Set(manifest.Files.map((f) => f.split('/').slice(-2, -1)[0]));
   for (const [prefix, folder] of Object.entries(PREFIX_FOLDER)) {
     assert.ok(folders.has(folder), `${folder} is a manifest folder`);
@@ -631,17 +647,18 @@ test('SIB1: both climate hosts take the cache\'s answer for a flat, and the stre
   const row = CREDITS.mods.find((m) => m.title === 'Seasons of the Iliac Bay');
   assert.ok(row, 'a credits row');
   assert.equal(row.author, 'RosyTheRascal');
-  assert.deepEqual([...row.vendor], ['seasons-iliac-bay']);
+  assert.deepEqual([...row.retired], ['seasons-iliac-bay'], 'OWN-WORK1: retired from vendor/');
 });
 
-test('SIB1: the vendor tree carries the manifest and the record, and NO raster - the textures are the player\'s to supply', () => {
+test('SIB1: the tree carries NO file of the mod and no raster - the textures are the player\'s to supply (OWN-WORK1: the manifest and the record left with vendor/seasons-iliac-bay)', () => {
   const tracked = execFileSync('git', ['ls-files', 'vendor/seasons-iliac-bay'], { cwd: root, encoding: 'utf8' }).split('\n').filter(Boolean);
-  assert.deepEqual([...tracked].sort(), ['vendor/seasons-iliac-bay/README.md', 'vendor/seasons-iliac-bay/seasons-of-the-iliac-bay.dfmod.json'],
-    'the folder holds the manifest and the record and nothing else');
-  const readme = read('vendor/seasons-iliac-bay/README.md');
-  assert.match(readme, /permission/i);
-  assert.match(readme, /re-shaded sprite|silhouette/i, 'the README says why the textures are not here');
+  assert.deepEqual(tracked, [], 'the folder is retired; git history holds it');
+  assert.match(read('src/systems/seasonsIliacBay.js'), /re-shaded sprite|silhouette/i, 'the port says why the textures are not here');
   assert.ok(existsSync(join(root, 'bible/07-Rendering/Seasons-Iliac-Bay.md')), 'the bible page');
+});
+
+test('OWN-WORK1: the record of the retired vendor/seasons-iliac-bay is Own-Work.md\'s row - RosyTheRascal, and the permission', () => {
+  assert.match(readFileSync(join(root, 'bible/01-Overview/Own-Work.md'), 'utf8'), /^\| `seasons-iliac-bay` \|.*RosyTheRascal.*(granted|permission)/im);
 });
 
 // ---- SIB2 (2026-09-08, Mac: "ensure the seasons mod is 1:1 and working") --
@@ -657,7 +674,7 @@ test('SIB2: the bundle is the mod by its MANIFEST, not by one guessed file name;
   assert.match(assets, /const isSeasonsDfmod = \(name\) => \/\\\.dfmod\$\/i\.test\(name\) && \/season\/i\.test\(name\);/);
   assert.match(assets, /if \(manifest\.GUID === SEASONS_MOD\.guid \|\| manifest\.ModTitle === SEASONS_MOD\.title\) \{/, 'the identity is the manifest\'s');
   assert.match(assets, /if \(manifest\.ModVersion && String\(manifest\.ModVersion\) !== SEASONS_MOD\.version\) console\.warn/, 'a later build is said, not assumed');
-  assert.equal(SEASONS_MOD.version, JSON.parse(read('vendor/seasons-iliac-bay/seasons-of-the-iliac-bay.dfmod.json')).ModVersion, 'the port\'s script is the vendored manifest\'s version');
+  assert.equal(SEASONS_MOD.version, SHIPPED_MANIFEST.ModVersion, 'the port\'s script is the shipped manifest\'s version');
   // the events per caller: the travel popup's arm raises OnPostFastTravel (+ OnUpdateTerrainsEnd), a quickload and the
   // classic import raise OnLoad, every other teleport raises neither (their terrains' OnInstantiateTerrain is the mod\'s word)
   const world = hostText('src/scenes/world.js');

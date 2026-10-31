@@ -24,6 +24,16 @@ the arithmetic is untouched) and `src/combat/weapon/weaponWidgetAssets.js`
 (the door for its textures). On
 by default (MO1). Pins: 14 in `test/combat/weapon/ww1_weaponwidget.test.js`.
 
+**OWN-WORK1 (2026-10-31, the owner).** vendor/weapon-widget is retired: the
+shipped manifest, its modsettings and the README left the tree. The port's own
+code is now the record of the behaviour: `src/combat/weapon/weaponWidget.js`,
+`src/combat/weapon/weaponWidgetMotion.js`, `src/combat/weapon/weaponWidgetAssets.js`
+and the keys in `src/systems/modSettings.js`.
+`test/combat/weapon/ww1_weaponwidget.test.js` holds the 41 shipped keys and the
+manifest's 173 texture names as literals, and `test/combat/disc16.test.js` the
+defaults it reads. Git history holds the vendored copy (commit `1b97b3a8f`);
+the provenance is `01-Overview/Own-Work.md`'s.
+
 ## The source the port reads
 
 The bundle carries `Weapon Widget.dll` (42,496 bytes) and no source;

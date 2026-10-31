@@ -89,5 +89,5 @@ index. Nothing visible changes; the bytes under the cutout do.
 | GUID | message | in the port? |
 | --- | --- | --- |
 | `2942ea8c-dbd4-42af-bdf9-8199d2f4a0aa` | `onToggleOffset` | **yes** - Eye of the Beholder (`vendor/eye-of-the-beholder/`). Its third-person toggle hides the sprite. |
-| `fb086c76-38e7-4d83-91dc-f29e6f1bb17e` | `onAttackDamageCalculated` | **yes** - PCAAO (`vendor/pcaao/`). The settings pane calls it "Vanilla Combat Event Handler"; it is the Recoil module's whole trigger. |
+| `fb086c76-38e7-4d83-91dc-f29e6f1bb17e` | `onAttackDamageCalculated` | **yes** - PCAAO (`src/combat/pcaao.js`). The settings pane calls it "Vanilla Combat Event Handler"; it is the Recoil module's whole trigger. |
 | `41284af0-81c7-4630-bbc5-a976efa162a0` | `getAnimator` | **no.** An FPS-models mod the port does not have. Its arm plays a `ShieldHand_` / `ShieldArm_` / `Unarmed_` + `Recoil` animator state and suppresses the sprite draw entirely. Recorded, not carried - the day that mod is integrated, the arm's condition becomes its own switch, as Meaner Monsters' unleveled-mobs arm does. |

@@ -144,7 +144,7 @@ test('IF1: the Mods pane entry is the shipped modsettings.json - every key, its 
   assert.equal(row.control.store, 'mods'); assert.equal(row.control.key, 'Enabled'); assert.match(JSON.stringify(row.control), /immersive-footsteps/);
   assert.equal(row.effect, 'Takes effect at once.'); assert.equal(row.group, 'sound');   // FT18: under Sound
   for (const k of MOD_CURATED[V]) assert.ok(m.keys[k], `curated ${k} is a real key`);
-  const credit = CREDITS.mods.find((c) => c.vendor.includes(V));
+  const credit = CREDITS.mods.find((c) => c.vendor?.includes(V));
   assert.ok(credit, 'credited on the About screen');
   assert.equal(credit.title, 'Immersive Footsteps'); assert.equal(credit.version, '1.01'); assert.equal(credit.author, 'Kirk.O');
   assert.match(credit.terms, /MIT/); assert.match(credit.terms, /210/);

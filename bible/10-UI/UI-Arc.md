@@ -18640,6 +18640,16 @@ bug in a new coat. So this is not the mod bolted on beside the plaque;
 it is one surface with one resolver, and the mod's ladder and the
 port's item rows are two STATES of it.
 
+**OWN-WORK1 (2026-10-31, the owner).** vendor/world-tooltips is retired: the
+mod's own `Modded_HUDTooltipWindow.cs`, its manifest, its modsettings, its
+licence and the README left the tree, and so did the tool that wrote them. The
+port's own code is now the record of the behaviour: `src/systems/worldTooltips.js`
+(the naming ladder), `src/systems/worldHover.js` (the model) and
+`src/ui/worldPlaque.js` (the draw). The `.cs:` cites in this section name the 1.1
+release's file; `citedrift.test.js` no longer resolves them (its CD9 went with
+the file). Git history holds the vendored copy (commit `1b97b3a8f`); the
+provenance is `01-Overview/Own-Work.md`'s.
+
 ### The law the whole slice exists to keep
 
 **The plaque and the button can never disagree.** PX21c said it first,

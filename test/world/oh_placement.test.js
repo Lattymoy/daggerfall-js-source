@@ -1,6 +1,6 @@
 // OH-B (2026-09-26) - THERE'S A HOLE IN THE BOTTOM OF THE OCEAN 1.1.0, THE
 // PURE LAW (src/world/oceanHoles.js) against the assembly
-// (vendor/ocean-holes/There's a Hole in the Bottom of the Ocean.dll, read
+// (There's a Hole in the Bottom of the Ocean 1.1.0's own, read
 // back to C#): the hash and its fixed point, the pit pixels' buckets, the
 // placement, the floor's fall, the carve's vertex pass, the names and the
 // map id, the template the abyss borrows, the water it is flooded to, the

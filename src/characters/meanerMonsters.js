@@ -151,7 +151,7 @@ export function applyMeanerMonsters(mobileType, baseRow, on = meanerMonstersAlon
 }
 
 /** The forty-six xml files: `<archive>_<record>-0.xml` ->
- *  [scaleX, scaleY], as vendor/meanerMonsters/xml carries them
+ *  [scaleX, scaleY], as Meaner Monsters 1.5.2's xml files ship them
  *  (Werewolf 264 and Wereboar 269 x1.2 on records 0-14, the
  *  Dragonling 295 x2.5 on 0-14, its corpse 96/0 x2). */
 const records = (n, s) => Object.freeze(Object.fromEntries(Array.from({ length: n }, (_, i) => [i, Object.freeze([s, s])])));

@@ -27,8 +27,8 @@ names. So the recipe is three steps:
 Only the variants a port reads are written: each pass's program with the
 fewest keywords (the plain DIRECTIONAL forward base, a shadow caster's
 SHADOWS_DEPTH, an unlit pass's none). The listings are read beside the port
-(render/heatHaze.js, render/renderer.js, render/snowSurface.js cite them by
-file); nothing compiles them.
+(render/renderer.js, render/snowSurface.js cite them by file; Heat Haze's
+left the tree in OWN-WORK1); nothing compiles them.
 """
 import os
 import re

@@ -247,7 +247,7 @@ import { LabGrassRenderer, createGrassField, discSlotCount, LAB_GRASS, LAB_DIM, 
 import { windDrive, floraSwayOn, gustPhaseAfterShift, gustClock } from '../systems/wind/windDrive.js';   // WIND3: the one wind in every consumer's units; the flats' sway
 import { WindWispsRenderer, wispsOn } from '../render/windWisps.js'; import { DryFallRenderer } from '../render/dryFall.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program - ASHFALL1: the dry falls, the sand and the ash, one renderer
 import { HeatHazeRenderer } from '../render/heatHaze.js';   // HAZE1: Heat Haze's ring, drawn
-import { createHeatHaze, hazeFrameSettings } from '../systems/heatHaze.js';   // HAZE1: Heat Haze's law (demifiend000, vendor/heat-haze/)
+import { createHeatHaze, hazeFrameSettings } from '../systems/heatHaze.js';   // HAZE1: Heat Haze's law (demifiend000's Heat Haze 1.0.1)
 import { createWindfallHost } from './windfallHost.js';   // WINDFALL1: Windfall (demifiend000, vendor/windfall/) - its wind, its sounds, its leaves
 import { createAmbientLifeHost, streamedWorld } from './ambientLifeHost.js';   // AMBIENT-LIFE: the birds, bats and small animals outdoors
 import { createSnowfallHost } from './snowfallHost.js';   // SNOWFALL1: Snowfall (demifiend000, vendor/snowfall/) - the snow on the ground, its tracks
@@ -4436,7 +4436,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // whose blocks come next, and no variant names a clone)
     ether: etherSea ? etherPlaceRects(_etherTemplates, locationRectReader(maps, blocks, { regionIndex: ETHER_REGION, locationIndex: -1000 })) : null,   // AUDIT ETHER-OW C1-4: one tilemap for the walk; BOOT-RECTS: and each block parsed once (terrainTiles.js locationRectReader)
   }) : null;
-  /** OH-B: THERE'S A HOLE IN THE BOTTOM OF THE OCEAN 1.1.0 (jet082, vendor/ocean-holes/) - made below, after the decorations its
+  /** OH-B: THERE'S A HOLE IN THE BOTTOM OF THE OCEAN 1.1.0 (jet082, the shipped release) - made below, after the decorations its
    *  pits keep out; the sea's floor builds are late-bound to it (a promote lands only after the world is up). */
   let oceanHoles = null;
   let ohAbyss = null;   // OH-D: the abyss (scenes/oceanHolesAbyss.js) - the pit's way down, built with the pits below

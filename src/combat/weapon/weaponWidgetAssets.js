@@ -4,7 +4,7 @@
 // 0 frame 0 (the idle pose), one per metal, repainted at double size
 // for its DoubleScaleTextures and Inertia modules. They are renders of
 // ARENA2 art and so are NOT in this repository (the doctrine ruling is
-// in vendor/weapon-widget/README.md); they reach the game the way
+// in bible/05-Combat/Weapon-Widget.md); they reach the game the way
 // Seasons of the Iliac Bay's repaints do: the player attaches the
 // `.dfmod` through the textures pick, and this door reads the bundle by
 // its manifest's GUID and answers a texture by the name the mod asks

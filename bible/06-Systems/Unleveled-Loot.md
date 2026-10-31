@@ -16,6 +16,14 @@ default") turned it on - and with it the mod's arms decline without a
 player to read (no world yet: DFU's own roll stands). Since 2026-10-19 it is 1:1 save for the moves named under
 Departures, below.
 
+**OWN-WORK1 (2026-10-31, the owner).** vendor/unleveledLoot is retired: the
+shipped manifest, its modsettings and the README left the tree. The port's own
+code is now the record of the behaviour: `src/systems/unleveledLoot.js` and the
+keys in `src/systems/modSettings.js`. `test/systems/unleveledLoot.test.js` holds
+the ten shipped MaterialSwitching keys as a literal table. Git history holds
+the vendored copy (commit `1b97b3a8f`); the provenance is
+`01-Overview/Own-Work.md`'s.
+
 ## The source the port reads
 
 The shipped `unleveled loot.dfmod` is a UnityFS bundle: a compiled

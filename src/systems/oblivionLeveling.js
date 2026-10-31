@@ -2,7 +2,7 @@
 // integrate and the first one I'd like to add is this. On new game, I
 // want the player to receive a notification on which leveling system
 // they would like to use") - OBLIVION-REMASTER-LIKE LEVELING 0.5.3,
-// ported 1:1 from the author's own Lua (vendor/oblivion-remaster-leveling/).
+// ported 1:1 from the author's own Lua (the 0.5.3 release's scripts/*.lua).
 //
 // THE FIRST MORROWIND MOD IN THIS TREE. Every other vendored mod is a
 // Daggerfall Unity mod read off a `.dfmod`; this one is OpenMW Lua, so

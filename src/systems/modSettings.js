@@ -1144,8 +1144,8 @@ export const MOD_SETTINGS = Object.freeze({
   'oblivion-remaster-leveling': Object.freeze({
     title: 'Oblivion Remaster Like Leveling',
     // The archive names no author (no LICENCE, no script header, an
-    // empty `.omwaddon` author field). The registry row and the vendor
-    // README both carry the same open record; until Mac fills it in,
+    // empty `.omwaddon` author field). Its row in Own-Work.md
+    // (OWN-WORK1) carries the open record; until Mac fills it in,
     // the pane says what is true rather than inventing a name.
     author: 'Nexus Morrowind 56569',
     keys: Object.freeze({
@@ -1344,7 +1344,7 @@ export const MOD_SETTINGS = Object.freeze({
   }),
   // PI1 (2026-10-07, Mac: "This is the next mod I would like to integrate (permission has been granted)"): PHYSICAL ITEMS
   // - demifiend000's items in the world as themselves, 0.1.29, its five sections the port reads restated verbatim
-  // (vendor/physical-items/modsettings.json), the author's own words. Read live by the layer (systems/physicalItems.js
+  // (Physical Items 0.1.29's modsettings.json), the author's own words. Read live by the layer (systems/physicalItems.js
   // readPhysicalItemsSettings, again whenever this store changes) - the mod reads them at its load and on a settings
   // change (ApplySettings). NOT DECLARED: the Interaction section's four keys (the placement keys P, O and LeftControl,
   // and Character Item Collision) - their placement is not ported (bible/06-Systems/Physical-Items.md), and a key the
@@ -1425,7 +1425,7 @@ export const MOD_SETTINGS = Object.freeze({
   }),
   // HAZE1 / WINDFALL1 / SNOWFALL1 (2026-10-08, Mac: "We have permission to use and implement everything into the
   // codebase. These should be on by default and integrate into our enhanced environments seamlessly"): demifiend000's
-  // three environment mods, their modsettings restated verbatim (vendor/heat-haze/, vendor/windfall/ and
+  // three environment mods, their modsettings restated verbatim (Heat Haze 1.0.1's, vendor/windfall/ and
   // vendor/snowfall/ modsettings.json) - every name, default, range and description the mod's, section and name joined
   // with a dot. Each mod's own Enabled (Heat Haze's in its one section, Windfall's and Snowfall's in General) IS the
   // port's `Enabled`, the mod's switch, on by default (MO1), with the port's words for the Features row; a slider's

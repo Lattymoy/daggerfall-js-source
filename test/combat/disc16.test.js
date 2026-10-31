@@ -84,10 +84,14 @@ test('DISC16-B: the weapons move as they did before Diverse Weapons - the mod on
   _resetModSettings();
   assert.equal(moddedWeaponHUDAnimsEnabled(), true, 'Diverse Weapons on: its sprites (MO1 - every mod ships on)');
   assert.equal(diverseWeaponsPresetOn(), false, 'and no preset laid over Weapon Widget');
-  const shipped = {};
-  for (const sec of JSON.parse(rd('vendor/weapon-widget/modsettings.json')).Sections) for (const k of sec.Keys) shipped[`${sec.Name}.${k.Name}`] = k.Value;
+  // OWN-WORK1 (2026-10-31): Weapon Widget 1.6's modsettings.json values, as they read before vendor/weapon-widget was retired
+  const shipped = {
+    'Modules.Swings': true, 'Modules.Ambidexterity': true, 'Modules.Offset': true, 'Modules.Bob': true, 'Modules.Inertia': false,
+    'Modules.Step': false, 'Modules.DoubleScaleTextures': false, 'Modules.TrueTextureSize': false, 'Modules.Recoil': false,
+    'Inertia.Scale': 1, 'Bob.Length': 100,
+  };
   const store = modSettingsOf(WEAPON_WIDGET_VENDOR);
-  const on = (v) => v === true || v === 'True';   // the vendored file's booleans
+  const on = (v) => v === true || v === 'True';   // the shipped file's booleans
   assert.equal(store['Modules.DoubleScaleTextures'], on(shipped['Modules.DoubleScaleTextures']), 'DoubleScaleTextures: the mod\'s own');
   assert.equal(store['Inertia.Scale'], Number(shipped['Inertia.Scale']), 'Inertia.Scale: the mod\'s own');
   // what draws is the store, module for module, as the mod ships it

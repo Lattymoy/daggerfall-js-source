@@ -321,20 +321,25 @@ test('OH-B ApplySettings off the declared keys: the midpoint\'s values, as the C
   assert.equal(s.dungeonVisualIntensity, 0.5);
   assert.deepEqual(Object.keys(MOD_SETTINGS['ocean-holes'].keys), ['Enabled', 'General.PitSpawnRate', 'General.SurfaceHoleSize', 'General.SeafloorHoleSize',
     'General.MiasmaParticleCount', 'General.MiasmaHeight', 'General.DungeonVisualIntensity', 'General.DungeonVisualDarkness'], 'the shipped order');
-  const shipped = JSON.parse(readFileSync(new URL('../../vendor/ocean-holes/modsettings.json', import.meta.url), 'utf8'));
-  // PLAIN-TEXT (2026-10-19): four of the mod's lines said plainly for a player - their words, exactly
-  const PLAIN = {
+  // OWN-WORK1 (2026-10-31): the shipped modsettings.json's General section, written out - its copy left the tree. Seven
+  // 0..1 sliders, each 0.5 by default, in the file's order, with the words the port shows: the mod's own, or (PLAIN-TEXT,
+  // 2026-10-19) four of them said plainly for a player - their words, exactly.
+  const SHIPPED = {
     PitSpawnRate: 'How many blue holes there are: none at 0, 1 square in 48 at the middle, 1 in 24 at most',
+    SurfaceHoleSize: 'Surface hole size',
+    SeafloorHoleSize: 'Sea floor hole size',
     MiasmaParticleCount: 'Amount of mist over a hole',
     MiasmaHeight: 'Height of the mist over a hole',
+    DungeonVisualIntensity: 'Underwater dungeon fog intensity',
     DungeonVisualDarkness: 'How dark the fog and light are in flooded dungeons',
   };
-  for (const k of shipped.Sections[0].Keys) {
-    const d = MOD_SETTINGS['ocean-holes'].keys[`General.${k.Name}`];
-    assert.equal(d.default, k.Value, k.Name);
-    assert.equal(d.description, PLAIN[k.Name] ?? k.Description, k.Name);
-    assert.equal(d.min, k.Min);
-    assert.equal(d.max, k.Max);
+  assert.deepEqual(Object.keys(MOD_SETTINGS['ocean-holes'].keys).slice(1), Object.keys(SHIPPED).map((n) => `General.${n}`));
+  for (const [name, words] of Object.entries(SHIPPED)) {
+    const d = MOD_SETTINGS['ocean-holes'].keys[`General.${name}`];
+    assert.equal(d.default, 0.5, name);
+    assert.equal(d.description, words, name);
+    assert.equal(d.min, 0);
+    assert.equal(d.max, 1);
   }
 });
 

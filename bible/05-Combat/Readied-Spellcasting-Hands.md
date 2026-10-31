@@ -9,10 +9,19 @@ Its own description: "Displays hands when ready for spellcasting".
 
 Its source is vendored under `vendor/readied-spellcasting-hands/` (the two
 C# files and the manifest, which the bundle carries as TextAssets, and the
-zip's MIT licence; `tools/readiedHandsAssets.mjs` reproduces them through
+zip's MIT licence; `tools/readiedHandsAssets.mjs` (RETIRED, OWN-WORK1) reproduces them through
 `src/formats/unity/unityBundle.js`), it is credited on the About screen, and it is
 one switch: Features -> Combat -> Readied Spellcasting Hands by jefetienne,
 on by default (MO1).
+
+**OWN-WORK1 (2026-10-31, the owner).** vendor/readied-spellcasting-hands is
+retired: the mod's two C# files, its manifest, its licence and the README left
+the tree, and so did the tool that wrote them. The port's own code is now the
+record of the behaviour: `src/combat/fpsSpellCasting.js` (`readiedHandsFrame`)
+and the draw in `src/combat/weapon/weaponRig.js`.
+`test/systems/rsh1_readiedhands.test.js` holds the mod's condition, frame 0 and
+the 0.134 inset as literals. Git history holds the vendored copy (commit
+`1b97b3a8f`); the provenance is `01-Overview/Own-Work.md`'s.
 
 ## What DFU shows, and what the mod changes
 

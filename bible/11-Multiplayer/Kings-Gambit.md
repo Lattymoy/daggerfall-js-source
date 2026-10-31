@@ -13,6 +13,12 @@ cards, the regulars, the panel, the relay's tables. Sections 1-2 read the mod of
 the card table; section 8 slices it; section 9 asked and section 10 decides. Every DECIDED below binds the slices; a
 slice that ships one records any change here first.
 
+**OWN-WORK1 (2026-10-31, the owner).** vendor/kings-gambit is retired: the bundle's manifest, `TheKingsGambit.dll`,
+its IL dump and the README left the tree. The port's own code is now the record of the behaviour:
+`src/net/kingsGambit.js` (the law) and `src/systems/gambit/gambitPatrons.js` (the innkeeper's play), pinned by
+`test/net/kg1_law.test.js` and `test/tooling/kg2_patrons.test.js`. Sections 1 and 2 read the assembly as it was. Git
+history holds the vendored copy (commit `1b97b3a8f`); the provenance is `01-Overview/Own-Work.md`'s.
+
 ## The words
 
 - The owner, 2026-10-13, handing over `thekingsgambit.dfmod`: **"How can we implement this using the illiac bay card

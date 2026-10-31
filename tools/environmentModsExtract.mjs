@@ -1,21 +1,19 @@
 #!/usr/bin/env node
 // HAZE1 / WINDFALL1 / SNOWFALL1 / ALIKR1 (2026-10-08, Mac: "We have permission to use and implement everything into
-// the codebase. These should be on by default and integrate into our enhanced environments seamlessly.") - THE FOUR
-// ENVIRONMENT MODS, OUT OF THE ARCHIVES MAC HANDED OVER.
+// the codebase. These should be on by default and integrate into our enhanced environments seamlessly.") - THE
+// ENVIRONMENT MODS, OUT OF THE ARCHIVES MAC HANDED OVER. OWN-WORK1 (2026-10-31) retired vendor/heat-haze/, and with it
+// this tool's Heat Haze arm: the port's own code is that mod's record now (bible/07-Rendering/Heat-Haze.md).
 //
 //   node tools/environmentModsExtract.mjs \
-//     --heat     "<path-to>/heat-haze.dfmod" \
 //     --windfall "<path-to>/windfall.dfmod" --windfall-readme "<path-to>/README-Windfall-Console-Commands.txt" \
 //     --snowfall "<path-to>/snowfall.dfmod" \
 //     --sands    "<path-to>/Sands of the Alik'r/Textures" \
 //     [--write]
 //
 // Without --write the committed tree is checked against what the archives make, file by file (sha256); with it, the
-// files are written. The output is a function of the four archives alone - nothing of the player's ARENA2 is read.
+// files are written. The output is a function of the three archives alone - nothing of the player's ARENA2 is read.
 //
 // What is written, and from where:
-//   vendor/heat-haze/      heat-haze.dfmod.json, modsettings.json (the bundle's TextAssets, verbatim), HeatHaze.dll
-//                          (byte for byte)
 //   vendor/windfall/       windfall.dfmod.json, modsettings.json, Windfall.dll, README-Windfall-Console-Commands.txt
 //                          (the zip's own note, verbatim); Textures/{spring_summer_leaves,fall_leaves,snowflake}.png -
 //                          the bundle's three Texture2D objects (RGBA32, one mip: the PNG is the texture exactly);
@@ -57,9 +55,8 @@ const byRecord = (a, b) => {
   return (Number(pa[1]) - Number(pb[1])) || (Number(pa[2]) - Number(pb[2])) || (Number(pa[3]) - Number(pb[3]));
 };
 
-/** Where the Nexus pages are - the archives' own names carry the mod ids (`Heat_Haze_1397_1.0.1_...`). */
+/** Where the Nexus pages are - the archives' own names carry the mod ids (`Windfall_1396_...`). */
 export const SOURCES = Object.freeze({
-  'heat-haze': 'https://www.nexusmods.com/daggerfallunity/mods/1397',
   windfall: 'https://www.nexusmods.com/daggerfallunity/mods/1396',
   snowfall: 'https://www.nexusmods.com/daggerfallunity/mods/1401',
   'sands-of-the-alikr': 'https://www.nexusmods.com/daggerfallunity/mods/1390',
@@ -143,18 +140,6 @@ function setupHeaders() {
 }
 
 const json = (v) => Buffer.from(`${JSON.stringify(v, null, 2)}\n`);
-
-/** Heat Haze: the manifest, the settings and the assembly. */
-export function heatHazeFiles(bytes) {
-  const b = openBundle(bytes);
-  const assets = textAssets(b);
-  const m = manifestOf(assets, 'heat-haze.dfmod');
-  const out = new Map();
-  out.set('vendor/heat-haze/heat-haze.dfmod.json', m.bytes);
-  out.set('vendor/heat-haze/modsettings.json', need(assets, 'modsettings', 'heat-haze.dfmod'));
-  out.set('vendor/heat-haze/HeatHaze.dll', need(assets, 'HeatHaze.dll', 'heat-haze.dfmod'));
-  return { out, report: [`heat-haze: ${m.json.ModTitle} ${m.json.ModVersion}`] };
-}
 
 /** Windfall: the manifest, the settings, the assembly, the console note, its three pictures and 27 clips. */
 export function windfallFiles(bytes, readmeBytes) {
@@ -308,13 +293,12 @@ function arg(name) {
 }
 
 function main() {
-  const heat = arg('--heat'), wind = arg('--windfall'), windReadme = arg('--windfall-readme'), snow = arg('--snowfall'), sands = arg('--sands');
-  if (!heat || !wind || !windReadme || !snow || !sands) {
-    console.error('usage: node tools/environmentModsExtract.mjs --heat <heat-haze.dfmod> --windfall <windfall.dfmod> --windfall-readme <README-Windfall-Console-Commands.txt> --snowfall <snowfall.dfmod> --sands <Textures dir> [--write]');
+  const wind = arg('--windfall'), windReadme = arg('--windfall-readme'), snow = arg('--snowfall'), sands = arg('--sands');
+  if (!wind || !windReadme || !snow || !sands) {
+    console.error('usage: node tools/environmentModsExtract.mjs --windfall <windfall.dfmod> --windfall-readme <README-Windfall-Console-Commands.txt> --snowfall <snowfall.dfmod> --sands <Textures dir> [--write]');
     process.exit(2);
   }
   const parts = [
-    heatHazeFiles(new Uint8Array(readFileSync(heat))),
     windfallFiles(new Uint8Array(readFileSync(wind)), new Uint8Array(readFileSync(windReadme))),
     snowfallFiles(new Uint8Array(readFileSync(snow))),
     sandsFiles(sands),
@@ -338,7 +322,7 @@ function main() {
   }
   for (const p of have) if (!out.has(p)) bad.push(`${p}: in the tree, not made by the archives`);
   if (bad.length) { console.error(bad.slice(0, 40).join('\n') + (bad.length > 40 ? `\n... ${bad.length - 40} more` : '')); process.exit(1); }
-  console.log(`the tree matches: ${out.size} files (${basename(heat)}, ${basename(wind)}, ${basename(snow)}, ${basename(sands)})`);
+  console.log(`the tree matches: ${out.size} files (${basename(wind)}, ${basename(snow)}, ${basename(sands)})`);
 }
 
 if (isMain(import.meta.url)) main();

@@ -165,7 +165,7 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
     return pile;
   }
 
-  /** PI1: THE SHIFT-DROP (QueueInventoryPhysicalDrop, vendor/physical-items [IL_34b8]) - each item its own pile (the
+  /** PI1: THE SHIFT-DROP (QueueInventoryPhysicalDrop, Physical Items 0.1.29, IL_34b8) - each item its own pile (the
    *  mod's one-item Independent container), laid out on the spiral ahead of `feet` along `forward`
    *  (physicalItemsLayer.js placeDrops), a DroppedLoot container in every other way (the bag rolled as dropPile rolls
    *  it - worn when the mod is off - the pixel, the save). Answers the piles. */

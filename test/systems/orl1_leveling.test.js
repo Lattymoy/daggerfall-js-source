@@ -11,6 +11,8 @@
 // THE MINIMA, THE TWO CAPS AND THE BAR'S SIZE ARE READ OUT OF THE
 // VENDORED MOD AND COMPARED, never retyped. A pin that retypes the
 // mod's numbers measures a constant against itself.
+// OWN-WORK1 (2026-10-31): the vendored mod is retired, so those numbers are
+// SHIPPED below - a record of the files, not of the port's own constants.
 //
 // Then the laws, each driven through the port's own producers
 // (createCharacter for the entity, the real MOD_SETTINGS shape for the
@@ -56,12 +58,34 @@ import { ChargenFlow } from '../../src/ui/chargen.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rd = (p) => readFileSync(join(root, p), 'utf8');
-// The mod's Lua and yaml ship with CRLF endings (OpenMW does not
-// care and neither does the port); the parsers below read content,
-// so the endings are normalised once rather than in five regexes.
-const rdMod = (p) => rd(p).replace(/\r\n/g, '\n');
 const V = ORL_VENDOR;
-const MOD = `vendor/${V}`;
+// OWN-WORK1: what these pins read out of the mod's files, as the files read at 1b97b3a8f.
+const SHIPPED = Object.freeze({
+  // OblivionRemasterLikeLeveling.omwaddon: a TES3 plugin with exactly one record, GMST NAME "iLevelupTotal" INTV 100
+  gmst: Object.freeze({ iLevelupTotal: 100 }),
+  // scripts/settings.lua: each key's default and `min` (it declares no `max`), and its description in l10n/en.yaml
+  settings: Object.freeze({
+    attributePoints: { def: 12, min: 0, desc: 'Amount of points for increasing attributes' },
+    maxUpdatableAttribute: { def: 3, min: 2, desc: 'The number of attributes to be increased in one level up' },
+    allowLuckIncrease: { def: true, min: undefined, desc: 'Allow Luck to be increased by more than one point' },
+    luckIncreaseCost: { def: 4, min: 1, desc: 'Cost to upgrade Luck by one point' },
+    majorSkillsImpact: { def: 8, min: 0, desc: 'Points given by a Major Skill level up (100 points required to level up)' },
+    minorSkillsImpact: { def: 6, min: 0, desc: 'Points given by a Minor Skill level up (100 points required to level up)' },
+    miscSkillsImpact: { def: 2, min: 0, desc: 'Points given by a Misc Skill level up (100 points required to level up)' },
+  }),
+  // scripts/constants.lua, the mod's own spelling of ATRIBUTE kept
+  constants: Object.freeze({ MAX_ATTRIBUTE_VALUE: 100, MAX_SKILL_VALUE: 100, ATRIBUTE_INCREASE_LIMIT: 5 }),
+  // l10n/en.yaml, the level-up window's three strings
+  window: Object.freeze({
+    remaining_points_error: 'You must distribute all your points to continue.',
+    remaining_points_label: 'Virtues left',
+    choose_attributes_label: 'Choose {count} Attributes to increase',
+  }),
+  // README.upstream.md's newest heading, `## Release v0.5.3`
+  version: '0.5.3',
+  // the five scripts/*.lua, counted by line (templates.lua ends without a newline)
+  luaLines: 1314,
+});
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
 
 // The mod's own settings, as an injected reader - the seam
@@ -89,65 +113,33 @@ const zeroDeltas = () => Object.fromEntries(STAT_KEYS_ORDER.map((k) => [k, 0]));
 
 // ── THE PRODUCER ───────────────────────────────────────────────────
 
-test('ORL1: the bar\'s size is READ OUT OF THE .omwaddon - the mod\'s whole data layer is one GMST', () => {
-  // OblivionRemasterLikeLeveling.omwaddon is a TES3 plugin carrying
-  // exactly one record: GMST NAME "iLevelupTotal" INTV <int32>. The
-  // port's LEVELUP_TOTAL is that number, so it is read rather than
-  // trusted - and this is the only pin in the tree that parses an
-  // OpenMW data file.
-  const b = readFileSync(join(root, MOD, 'OblivionRemasterLikeLeveling.omwaddon'));
-  const text = b.toString('latin1');
-  assert.match(text, /^TES3/, 'the vendored file is a TES3 plugin');
-  const nameAt = text.indexOf('NAME');
-  assert.ok(nameAt > 0, 'the GMST carries a NAME subrecord');
-  const len = b.readUInt32LE(nameAt + 4);
-  const gmst = text.slice(nameAt + 8, nameAt + 8 + len).replace(/\0+$/, '');
-  assert.equal(gmst, 'iLevelupTotal', 'the one record the mod overrides');
-  const intvAt = text.indexOf('INTV', nameAt);
-  assert.ok(intvAt > nameAt, 'and its value is an INTV');
-  assert.equal(b.readUInt32LE(intvAt + 4), 4, 'a 4-byte integer');
-  assert.equal(b.readInt32LE(intvAt + 8), LEVELUP_TOTAL, 'the port\'s bar IS the mod\'s iLevelupTotal');
-  // ...and nothing else is in the file: one record, and the port is not
-  // quietly ignoring a second override.
-  assert.equal((text.match(/GMST/g) ?? []).length, 1, 'exactly one GMST in the plugin');
+test('ORL1: the bar\'s size is the .omwaddon\'s one GMST - the mod\'s whole data layer', () => {
+  // OblivionRemasterLikeLeveling.omwaddon carried exactly one record,
+  // GMST NAME "iLevelupTotal" INTV 100 (SHIPPED.gmst). The port's
+  // LEVELUP_TOTAL is that number, and nothing else was overridden.
+  assert.deepEqual(Object.keys(SHIPPED.gmst), ['iLevelupTotal'], 'the one record the mod overrides');
+  assert.equal(LEVELUP_TOTAL, SHIPPED.gmst.iLevelupTotal, 'the port\'s bar IS the mod\'s iLevelupTotal');
 });
 
-test('ORL1: every setting default and minimum is READ OUT OF settings.lua, and every description out of the author\'s en.yaml', () => {
-  const lua = rdMod(`${MOD}/scripts/settings.lua`);
-  const yaml = rdMod(`${MOD}/l10n/en.yaml`);
-  // settings.lua declares each key as a block: key = '<name>' ... default = <v>,
-  // with `min = <v>` inside its `argument` table where it has one.
-  const blocks = lua.split(/\n    \{\n/).slice(1);
-  const shipped = new Map();
-  for (const b of blocks) {
-    const key = /key = '([^']+)'/.exec(b)?.[1];
-    if (!key) continue;
-    const def = /default = ([^,\n]+)/.exec(b)?.[1]?.trim();
-    const min = /min = (-?\d+)/.exec(b)?.[1];
-    const name = /name = '([^']+)'/.exec(b)?.[1];
-    const desc = /description = '([^']+)'/.exec(b)?.[1];
-    shipped.set(key, { def, min: min === undefined ? undefined : Number(min), name, desc });
-  }
-  assert.equal(shipped.size, 7, 'the mod ships seven settings across its two groups');
+test('ORL1: every setting default and minimum is settings.lua\'s, and every description the author\'s en.yaml', () => {
+  const shipped = SHIPPED.settings;
+  assert.equal(Object.keys(shipped).length, 7, 'the mod ships seven settings across its two groups');
 
   const ours = MOD_SETTINGS[V].keys;
-  for (const [key, s] of shipped) {
+  for (const [key, s] of Object.entries(shipped)) {
     const k = ours[key];
     assert.ok(k, `${key} is declared in the port's store`);
-    const want = s.def === 'true' ? true : s.def === 'false' ? false : Number(s.def);
-    assert.equal(k.default, want, `${key}: the port's default is the mod's (${s.def})`);
+    assert.equal(k.default, s.def, `${key}: the port's default is the mod's (${s.def})`);
     if (s.min !== undefined) assert.equal(k.min, s.min, `${key}: the port's minimum is the mod's`);
     // The pane shows the author's OWN English, out of the mod's l10n -
     // the same law every other mod row follows.
-    const label = new RegExp(`^${s.desc}: "(.*)"$`, 'm').exec(yaml)?.[1];
-    assert.ok(label, `${s.desc} is a string the mod ships`);
-    assert.equal(k.description, label, `${key}: the description is the author's own words`);
+    assert.equal(k.description, s.desc, `${key}: the description is the author's own words`);
   }
 
   // THE PORT'S OWN TWO, named as such. `Enabled` every vendored mod
   // carries; primarySkillsImpact exists because Daggerfall has a tier
   // of chosen skills Morrowind does not.
-  const extra = Object.keys(ours).filter((k) => !shipped.has(k));
+  const extra = Object.keys(ours).filter((k) => !Object.hasOwn(shipped, k));
   assert.deepEqual(extra.sort(), ['Enabled', 'primarySkillsImpact']);
   // PIN MOVED (PLAIN-TEXT, 2026-10-19): the words a player reads, exactly - why the row exists, said for the player
   // (Morrowind has no Primary tier) rather than as a note that the knob is the port's
@@ -158,11 +150,9 @@ test('ORL1: every setting default and minimum is READ OUT OF settings.lua, and e
   // where Morrowind's major (5) does.
   assert.equal(ours.primarySkillsImpact.default, ours.majorSkillsImpact.default);
 
-  // EVERY MAXIMUM IS THE PORT'S - OpenMW's number renderer declares
-  // only a minimum, and the port's store reads a numeric key only with
-  // both bounds. The page records them as port-chosen; this holds that
-  // none of them was taken from the mod.
-  assert.equal(/max\s*=/.test(lua), false, 'the mod declares no maxima at all');
+  // EVERY MAXIMUM IS THE PORT'S - settings.lua declared no `max` at all,
+  // and the port's store reads a numeric key only with both bounds. The
+  // page records them as port-chosen.
   for (const key of ['attributePoints', 'maxUpdatableAttribute', 'luckIncreaseCost',
     'primarySkillsImpact', 'majorSkillsImpact', 'minorSkillsImpact', 'miscSkillsImpact']) {
     assert.equal(typeof ours[key].max, 'number', `${key} carries a port-chosen maximum`);
@@ -170,22 +160,16 @@ test('ORL1: every setting default and minimum is READ OUT OF settings.lua, and e
   }
 });
 
-test('ORL1: the two caps are constants.lua\'s, and the version cell is the author\'s changelog', () => {
-  const c = rdMod(`${MOD}/scripts/constants.lua`);
-  assert.equal(Number(/constants\.MAX_ATTRIBUTE_VALUE = (\d+)/.exec(c)[1]), MAX_ATTRIBUTE_VALUE);
-  assert.equal(Number(/constants\.MAX_SKILL_VALUE = (\d+)/.exec(c)[1]), MAX_SKILL_VALUE);
+test('ORL1: the two caps are constants.lua\'s, and the credit\'s version is the author\'s changelog', () => {
+  assert.equal(MAX_ATTRIBUTE_VALUE, SHIPPED.constants.MAX_ATTRIBUTE_VALUE);
+  assert.equal(MAX_SKILL_VALUE, SHIPPED.constants.MAX_SKILL_VALUE);
   // the mod's own spelling of the name is kept in the port's comment;
   // the VALUE is what this holds.
-  assert.equal(Number(/constants\.ATRIBUTE_INCREASE_LIMIT = (\d+)/.exec(c)[1]), ATTRIBUTE_INCREASE_LIMIT);
-  // HARD4's manifest gate skips a directory with no `*.dfmod.json`, so
-  // the registry's version cell is unchecked THERE. It is checked here,
-  // against the newest release heading in the author's own README.
-  const upstream = rdMod(`${MOD}/README.upstream.md`);
-  const newest = /^## Release v(\d+\.\d+\.\d+)/m.exec(upstream)[1];
-  assert.equal(newest, '0.5.3', 'the vendored archive is the version the row claims');
-  assert.match(rd('bible/01-Overview/Mod-Registry.md'),
-    new RegExp(`\\| \`${V}\` \\|[^\\n]*\\| ${newest.replace(/\./g, '\\.')} \\|`),
-    'and the registry row says so');
+  assert.equal(ATTRIBUTE_INCREASE_LIMIT, SHIPPED.constants.ATRIBUTE_INCREASE_LIMIT);
+  // The version was the registry row's cell, checked against README.upstream.md's
+  // newest heading. OWN-WORK1 took both out; the About screen's credit carries it.
+  const credit = CREDITS.mods.find((m) => m.retired?.includes(V));
+  assert.equal(credit?.version, SHIPPED.version, 'the credit names the release the port was read from');
 });
 
 // ── L1: THE BAR ────────────────────────────────────────────────────
@@ -218,9 +202,8 @@ test('ORL1 L1: a skill raise puts its TIER\'s points in the bar (player.lua:39-4
 test('ORL1 L1: a skill standing at 100 feeds the bar NOTHING - the 0.5.3 fix, and it is law', () => {
   // The author's changelog: "Fixed ... Infinite Leveling increase and
   // roll over after a skill reach 100". The Lua's whole handler body
-  // sits inside `if constants.MAX_SKILL_VALUE > skillbase`.
-  assert.match(rdMod(`${MOD}/scripts/player.lua`), /if constants\.MAX_SKILL_VALUE > skillbase then/);
-  assert.match(rdMod(`${MOD}/README.upstream.md`), /Infinite Leveling increase and roll over after a skill reach 100/);
+  // sits inside `if constants.MAX_SKILL_VALUE > skillbase`. (OWN-WORK1:
+  // the two text pins on player.lua and README.upstream.md left with them.)
   const p = virtuePlayer();
   p.skills[SKILLS.LongBlade] = MAX_SKILL_VALUE;
   p.levelProgress = 0;
@@ -815,8 +798,7 @@ test('ORL1: the window\'s three strings are the AUTHOR\'S OWN, out of en.yaml', 
   // The settings descriptions are pinned against the mod's l10n; these
   // three said the same thing about themselves and were pinned by
   // nothing (the pins lens). Same file, same law.
-  const yaml = rdMod(`${MOD}/l10n/en.yaml`);
-  const line = (k) => new RegExp(`^${k}: "(.*)"$`, 'm').exec(yaml)?.[1];
+  const line = (k) => SHIPPED.window[k];
   assert.equal(REMAINING_POINTS_ERROR, line('remaining_points_error'));
   assert.equal(REMAINING_POINTS_LABEL, line('remaining_points_label'));
   // the count label is the author's with {count} filled in, not re-worded
@@ -1176,7 +1158,7 @@ test('ORL1: the choice and the bar ride the SAVE, not the mod-settings store', (
   assert.equal(usesVirtueLeveling({ levelingSystem: LEVELING_VIRTUE }), true);
 });
 
-test('ORL1: the tile, the group, the credit and the registry row', () => {
+test('ORL1: the tile, the group and the credit', () => {
   const row = FEATURES.find((f) => f.control?.vendor === V);
   assert.ok(row, 'the mod has a Features row');
   assert.deepEqual(row.kinds, ['mod']);
@@ -1198,14 +1180,13 @@ test('ORL1: the tile, the group, the credit and the registry row', () => {
   assert.equal(MOD_CURATED[V].length, 8);
   for (const k of MOD_CURATED[V]) assert.ok(MOD_SETTINGS[V].keys[k], `${k} is a key the mod ships`);
   // the credit says what is true about the author
-  const credit = CREDITS.mods.find((m) => m.vendor.includes(V));
-  assert.ok(credit, 'the About screen credits it');
+  const credit = CREDITS.mods.find((m) => m.retired?.includes(V));
+  assert.ok(credit, 'the About screen credits it, as a retired mod (OWN-WORK1)');
   assert.equal(credit.version, '0.5.3');
   assert.match(credit.author, /Unnamed/, 'the one row whose author the archive does not name');
   assert.match(credit.terms, /permission/i);
-  // and the registry row still carries the open record, both ways
-  assert.match(rd(`${MOD}/README.md`), /\[Mac: record the author's permission/);
-  assert.match(rd('bible/01-Overview/Mod-Registry.md'), new RegExp(`\\| \`${V}\` \\|[^\\n]*RECORD OPEN`));
+  // OWN-WORK1: the vendor README and the registry row, which held the open
+  // record, left the tree; Own-Work.md's row holds it now.
 });
 
 test('ORL1: the mod ships ON, and a switched-off mod asks nobody', () => {
@@ -1714,28 +1695,18 @@ test('ORL1 deep audit: the font-less escape re-plans from SCRATCH, and a partly 
   assert.equal(gained, 12, 'twelve of purse buys twelve points, whatever was pressed first');
 });
 
-test('ORL1 deep audit: the records\' count of the mod\'s SIZE is the mod\'s size', () => {
-  // The page and the vendor README both quote it, and both have been
-  // wrong once already: the first figure was the Lua PLUS the l10n yaml
-  // counted as Lua (71 lines over), and the correction used `wc -l`,
-  // which under-counts `templates.lua` because that file ends without a
-  // newline. Counted here off the files, so neither record can drift.
-  const files = ['player', 'helper', 'settings', 'constants', 'templates'];
-  const lines = (p) => { const t = rdMod(p); return t === '' ? 0 : t.split('\n').length - (t.endsWith('\n') ? 1 : 0); };
-  const lua = files.reduce((n, f) => n + lines(`${MOD}/scripts/${f}.lua`), 0);
-  const yaml = ['en', 'fr'].reduce((n, f) => n + lines(`${MOD}/l10n/${f}.yaml`), 0);
-  assert.equal(lua, 1314, 'the Lua');
-  assert.equal(yaml, 72, 'the l10n yaml, which is NOT Lua and was once counted as it');
+test('ORL1 deep audit: the page\'s count of the mod\'s SIZE is the mod\'s size', () => {
+  // The page and the vendor README both quoted it, and both were wrong
+  // once: the first figure was the Lua PLUS the l10n yaml counted as Lua
+  // (71 lines over), and the correction used `wc -l`, which under-counts
+  // `templates.lua` because that file ends without a newline. OWN-WORK1:
+  // the files and the README left the tree; SHIPPED.luaLines is their count.
   const page = rd('bible/06-Systems/Oblivion-Remaster-Leveling.md');
-  const readme = rd(`${MOD}/README.md`);
-  for (const [name, text] of [['the page', page], ['the vendor README', readme]]) {
-    assert.match(text, new RegExp(`1,3${String(lua).slice(2)} lines of Lua`), `${name} quotes the Lua count`);
-    // the CLAIM, not the number: both records name the old figure in a
-    // note saying it was wrong, and a note about a mistake is not the
-    // mistake.
-    assert.doesNotMatch(text, /1,384 lines of Lua and a/, `${name} must not still CLAIM the Lua-plus-yaml figure`);
-  }
-  assert.match(readme, new RegExp(`${yaml} more of l10n yaml`), 'and the README keeps the two apart');
+  assert.equal(SHIPPED.luaLines, 1314, 'the Lua');
+  assert.match(page, new RegExp(`1,3${String(SHIPPED.luaLines).slice(2)} lines of Lua`), 'the page quotes the Lua count');
+  // the CLAIM, not the number: the page names the old figure in a note
+  // saying it was wrong, and a note about a mistake is not the mistake.
+  assert.doesNotMatch(page, /1,384 lines of Lua and a/, 'the page must not still CLAIM the Lua-plus-yaml figure');
 });
 
 test('ORL1 deep audit: an owed level-up is RE-OFFERED, because the first offer may reach a busy slot', () => {
